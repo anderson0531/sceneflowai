@@ -132,6 +132,16 @@ describe('buildIdentityTraitsClause', () => {
     ).toBe('dark brown skin, bald head, clean-shaven, late 40s')
   })
 
+  it('omits clean-shaven on female characters so they are not anchored as male', () => {
+    expect(
+      buildIdentityTraitsClause({
+        visionDescription:
+          'An East Asian woman in her late 30s with straight dark brown hair and a clean-shaven face.',
+        gender: 'female',
+      })
+    ).toBe('East Asian, straight dark brown hair, late 30s')
+  })
+
   it('returns nothing when there is no description and no hair field', () => {
     expect(buildIdentityTraitsClause({ visionDescription: '' })).toBeUndefined()
     expect(buildIdentityTraitsClause({ appearanceDescription: 'He is tall and moves quickly.' })).toBeUndefined()

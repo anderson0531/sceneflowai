@@ -19,6 +19,7 @@ import {
 import { extractPropScalePhrase, formatPropScaleDescriptor } from '@/lib/imagen/propScaleClause'
 
 export const PAIR_DESCRIPTOR_WORD_CAP = 34
+export const CHARACTER_PAIR_DESCRIPTOR_WORD_CAP = 48
 
 export type InterleavedReferencePairRole =
   | 'IDENTITY'
@@ -36,6 +37,7 @@ export interface InterleavedPairCharacter {
   hairStyle?: string
   hairColor?: string
   height?: string | null
+  gender?: string | null
   wardrobeDescription?: string | null
   defaultWardrobe?: string | null
   appearance?: string | null
@@ -90,10 +92,12 @@ export function formatInterleavedReferencePair(args: {
           : args.role === 'PROP'
             ? 'prop'
             : 'location'
+  const descriptorCap =
+    args.role === 'CHARACTER' ? CHARACTER_PAIR_DESCRIPTOR_WORD_CAP : PAIR_DESCRIPTOR_WORD_CAP
   return formatNextImageCaption({
     role,
     token: args.token,
-    descriptor: clipPairDescriptor(args.descriptor, PAIR_DESCRIPTOR_WORD_CAP),
+    descriptor: clipPairDescriptor(args.descriptor, descriptorCap),
   })
 }
 
@@ -152,6 +156,7 @@ function identityDescriptor(
     hairStyle: character?.hairStyle,
     hairColor: character?.hairColor,
     height: character?.height,
+    gender: character?.gender,
   })
   return traits
     ? `Facial reference for ${characterName}: ${traits}`
@@ -168,11 +173,13 @@ function characterCompositeDescriptor(
     hairStyle: character?.hairStyle,
     hairColor: character?.hairColor,
     height: character?.height,
+    gender: character?.gender,
     wordCap: 10,
   })
-  const outfit = formatWardrobeLegendClause(
+  const rawOutfit = formatWardrobeLegendClause(
     character?.wardrobeDescription || character?.defaultWardrobe || character?.wardrobe
   )
+  const outfit = rawOutfit ? clipPairDescriptor(rawOutfit, 12) : undefined
   const detailParts = [traits, outfit].filter(Boolean)
   const detail = detailParts.length > 0 ? `: ${detailParts.join('; ')}` : ''
   return `Use face close-up for exact facial identity and full-body standing figure for wardrobe of ${characterName}${detail}; Do not copy the character-card layout or headshot overlay`

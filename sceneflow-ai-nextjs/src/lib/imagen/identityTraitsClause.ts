@@ -193,7 +193,13 @@ function extractHair(
   )
 }
 
-function extractFacialHair(text: string): string | undefined {
+const FEMALE_TEXT_RE = /\b(?:woman|female|girl|she|her|hers)\b/i
+
+function extractFacialHair(text: string, gender?: string | null): string | undefined {
+  const isFemale =
+    (typeof gender === 'string' && /^(?:female|woman|girl|f)$/i.test(gender.trim())) ||
+    FEMALE_TEXT_RE.test(text)
+  if (isFemale) return undefined
   if (/\bclean[- ]shaven\b/i.test(text)) return 'clean-shaven'
   return extractTraitPhrase(text, FACIAL_HAIR_NOUNS, FACIAL_HAIR_MODIFIERS)
 }
@@ -274,6 +280,7 @@ export function buildIdentityTraitsClause(character: {
   hairStyle?: string
   hairColor?: string
   height?: string | null
+  gender?: string | null
   wordCap?: number
 }): string | undefined {
   const text = (character.visionDescription || character.appearanceDescription || '').trim()
@@ -285,7 +292,7 @@ export function buildIdentityTraitsClause(character: {
     extractEthnicity(character.visionDescription),
     extractTraitPhrase(text, SKIN_NOUNS, SKIN_MODIFIERS),
     extractHair(text, character),
-    extractFacialHair(text),
+    extractFacialHair(text, character.gender),
     extractAge(text),
     extractCharacterHeightPhrase(character),
   ]

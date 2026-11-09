@@ -1446,6 +1446,7 @@ export function stillRefsFromAttachedImages(args: {
     hairStyle?: string
     hairColor?: string
     height?: string | null
+    gender?: string | null
     wardrobeDescription?: string | null
     defaultWardrobe?: string | null
   }>
@@ -1518,6 +1519,7 @@ export function stillRefsFromAttachedImages(args: {
               hairStyle: char?.hairStyle,
               hairColor: char?.hairColor,
               height: char?.height,
+              gender: char?.gender,
               wordCap: args.identityTraitsWordCap,
             })
           : undefined,

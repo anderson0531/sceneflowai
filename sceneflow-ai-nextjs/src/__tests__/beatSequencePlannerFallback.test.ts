@@ -411,6 +411,29 @@ Strictly Avoid: Mannequin geometry.`
     expect(framing.match(/induction coil/gi)).toHaveLength(1)
   })
 
+  it('does not leak off-camera character names from actionDescription as Readable detail', () => {
+    const framing = composeBeatActionFraming({
+      beatId: 'bt_c1fcb3d8-94f',
+      sequenceIndex: 2,
+      kind: 'dialogue',
+      character: 'Piper Hayes',
+      line: "The physics work and you know it. You didn't bury yourself in this tomb because the math failed.",
+      actionDescription:
+        "Piper Hayes confronts Gideon Croft from across the workbench, holding her ground with unyielding intensity. Her neck tenses as her lips deliver each biting word, exhaling faint condensation into the vault's humid air.",
+      beatDirection: {
+        shotType: 'Close-Up',
+        cameraAngle: 'slightly low angle',
+        frozenMoment:
+          'Piper Hayes stands motionless with her lips pressed into a flat, resolved line over set teeth and her chin held firm.',
+        castInFrame: ['Piper Hayes'],
+      },
+    })
+
+    expect(framing).toContain('Piper Hayes stands motionless')
+    expect(framing).not.toContain('Gideon Croft')
+    expect(framing).not.toContain('Readable detail')
+  })
+
   it('puts expanded face and body tells in Action/Framing, not a two-word mood footer', () => {
     const framing = composeBeatActionFraming({
       beatId: 'bt_gideon',

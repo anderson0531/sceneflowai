@@ -140,14 +140,9 @@ import {
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
 import {
-  consolidateBeatCharacterRefsIntoPipBadges,
   cropIdentityReferenceImagesForPro,
+  expandLeftoverDiptychSheetsIntoDualSlots,
 } from '@/lib/character/composeIdentityWardrobeDiptych'
-import {
-  persistCombinedCharacterRefUrl,
-  uploadCombinedCharacterRef,
-  wardrobeExpectedFingerprint,
-} from '@/lib/character/combinedCharacterRef'
 import { overlayLocationScaleOnReferenceImages } from '@/lib/vision/locationScaleOverlay'
 import {
   buildCombinedCharacterConsumptionLine,
@@ -661,7 +656,7 @@ async function postGenerateImage(req: NextRequest) {
       lookbook: passedLookbook,
       generationMode = 'default',
       includeWardrobeReferenceImages = true,
-      includeWardrobeDiptych = true,
+      includeWardrobeDiptych = false,
       fromDialog = false,
       negativePrompt,
       thinkingLevel,
@@ -1843,7 +1838,7 @@ async function postGenerateImage(req: NextRequest) {
         sceneIndex,
         characterWardrobes: effectiveCharacterWardrobes,
         includeWardrobeReferenceImages,
-        includeWardrobeDiptych: includeWardrobeDiptych !== false,
+        includeWardrobeDiptych: Boolean(includeWardrobeDiptych),
       })
       const hasExplicitTextOverride = Boolean(
         wardrobeOverrides && char.name && wardrobeOverrides[char.name]?.trim()
@@ -1927,6 +1922,7 @@ async function postGenerateImage(req: NextRequest) {
           appearanceDescription: char.appearanceDescription,
           hairStyle: char.hairStyle,
           hairColor: char.hairColor,
+          gender: resolvedGender.gender,
         })
         if (visionLandmarks) {
           keyFeatures.push(
@@ -2067,32 +2063,8 @@ async function postGenerateImage(req: NextRequest) {
       }
     })
 
-    if (isBeatFrame && includeWardrobeDiptych !== false) {
-      characterReferences = await consolidateBeatCharacterRefsIntoPipBadges(characterReferences, {
-        persistCombined: async ({ ref, composite }) => {
-          const r = ref as any
-          if (!projectId || !r.characterId || !r.wardrobeId) return null
-          const uploadedUrl = await uploadCombinedCharacterRef({
-            composite,
-            projectId: String(projectId),
-            characterId: String(r.characterId),
-            wardrobeId: String(r.wardrobeId),
-          })
-          if (!uploadedUrl) return null
-          if (r.resolvedWardrobe) {
-            await persistCombinedCharacterRefUrl({
-              projectId: String(projectId),
-              characterId: String(r.characterId),
-              wardrobeId: String(r.wardrobeId),
-              combinedCharacterRefUrl: uploadedUrl,
-              expectedFingerprint: wardrobeExpectedFingerprint(r.resolvedWardrobe),
-            }).catch((err) =>
-              console.warn('[Scene Image] Failed to persist combinedCharacterRefUrl:', err)
-            )
-          }
-          return uploadedUrl
-        },
-      })
+    if (characterReferences.some((ref: any) => ref.hasWardrobeDiptych || ref.isStoredPip)) {
+      characterReferences = await expandLeftoverDiptychSheetsIntoDualSlots(characterReferences)
       for (const ref of characterReferences) {
         if (ref.identityReferenceId || ref.wardrobeReferenceId || ref.diptychReferenceId) {
           console.log(

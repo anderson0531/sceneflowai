@@ -284,11 +284,20 @@ function restatesSpokenLine(frozenMoment: string, spokenLine: string): boolean {
  * are what an image model otherwise invents. The still still leads with the
  * frozen instant; only the missing facts are appended.
  */
-export function lockedReadableDetail(action: string, frozen: string): string {
+export function lockedReadableDetail(
+  action: string,
+  frozen: string,
+  options?: { castInFrame?: string[]; keyProps?: string[] }
+): string {
   const source = action.trim()
   const held = frozen.trim()
   if (!source || !held) return ''
   const heldFold = held.toLowerCase()
+  const depictions = depictionClauses(source, heldFold)
+  const depictionFold = depictions.join(' ').toLowerCase()
+  const keyPropFolds = (options?.keyProps ?? [])
+    .map((p) => p.trim().toLowerCase())
+    .filter(Boolean)
   const facts: string[] = []
   const seen = new Set<string>()
   const add = (fact: string) => {
@@ -309,9 +318,21 @@ export function lockedReadableDetail(action: string, frozen: string): string {
   for (const match of source.matchAll(
     /\b(?:\d{3,4}\s+)?[A-Z][A-Za-z0-9'’]+(?:\s+[A-Z][A-Za-z0-9'’]+){1,6}\b/g
   )) {
-    add(match[0])
+    const candidate = match[0].trim()
+    const candidateFold = candidate.toLowerCase()
+    const hasYearLead = /^\d{3,4}\s+/.test(candidate)
+    const inDepiction = depictionFold.includes(candidateFold)
+    const inKeyProps = keyPropFolds.some(
+      (prop) =>
+        prop === candidateFold ||
+        prop.includes(candidateFold) ||
+        candidateFold.includes(prop)
+    )
+    if (hasYearLead || inDepiction || inKeyProps) {
+      add(candidate)
+    }
   }
-  for (const clause of depictionClauses(source, heldFold)) add(clause)
+  for (const clause of depictions) add(clause)
   return facts.length > 0 ? `Readable detail: ${facts.join('; ')}.` : ''
 }
 
@@ -529,7 +550,17 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
 
   appendFacet(parts, policySafe(cleanSingleCastText(frozen || described)))
   if (frozen && described) {
-    appendFacet(parts, policySafe(cleanSingleCastText(lockedReadableDetail(described, frozen))))
+    appendFacet(
+      parts,
+      policySafe(
+        cleanSingleCastText(
+          lockedReadableDetail(described, frozen, {
+            castInFrame: namedCast,
+            keyProps: direction?.keyProps,
+          })
+        )
+      )
+    )
   }
   // "Blocking" and "Prop handling" are stage-direction words, and direction
   // written under them reads as choreography: a move, or a run of them. A still

@@ -159,6 +159,33 @@ describe('buildInterleavedReferencePairCaptions', () => {
     expect(caption.name).toContain('Do not copy the character-card layout or headshot overlay')
     expect(isIdentityReferencePartName(caption.name)).toBe(false)
   })
+
+  it('preserves the anti-card instruction on a composite plate even with full vision traits and long wardrobe text', () => {
+    const [caption] = buildInterleavedReferencePairCaptions(
+      [
+        {
+          imageUrl: 'https://example.com/piper-diptych.jpg',
+          name: 'Character reference: Char_Piper_Hayes — face and full-body wardrobe',
+          role: 'identity',
+          refRole: 'wardrobe-diptych',
+          characterName: 'Piper Hayes',
+          subjectOrdinal: 1,
+        },
+      ],
+      [
+        {
+          name: 'Piper Hayes',
+          promptToken: 'person [1]',
+          subjectOrdinal: 1,
+          visionDescription: PIPER_VISION,
+          wardrobeDescription:
+            'Heavy soot-caked dark canvas duster/parka over a damp dark wool knit sweater, rugged utility trousers, and heavy boots',
+        },
+      ]
+    )
+
+    expect(caption.name).toContain('Do not copy the character-card layout or headshot overlay')
+  })
 })
 
 describe('applyInterleavedPairCaptionsToNamedImages', () => {
