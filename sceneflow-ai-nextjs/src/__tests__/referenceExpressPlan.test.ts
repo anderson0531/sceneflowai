@@ -26,7 +26,9 @@ import { runLocationCatalogSyncStep } from '@/lib/vision/referenceExpress/catalo
 import {
   locationAgentChecklist,
   withRequiredBaseStill,
+  buildSequentialLocationSetAgentSelection,
 } from '@/lib/vision/locationAgentSelection'
+import { resolveReferenceExpressWindow } from '@/lib/vision/referenceExpress/window'
 import type { LocationReference } from '@/types/visionReferences'
 
 const cast = (over: Partial<CastSource> = {}): CastSource => ({
@@ -931,5 +933,84 @@ describe('location catalog selection', () => {
       'location:l1',
     ])
     expect(rows.some((row) => row.locationId === 'l1' && !row.versionId)).toBe(true)
+  })
+
+  it('cascades downstream set versions when an upstream version is checked and isolates connected location items in resolveReferenceExpressWindow', () => {
+    const locations = [
+      {
+        id: 'l-vault',
+        location: 'VAULT',
+        locationDisplay: 'INT. VAULT - NIGHT',
+        imageUrl: 'https://cdn/vault-base.png',
+        sourceSceneIndex: 0,
+        sourceSceneHeading: 'INT. VAULT - NIGHT',
+        pinnedAt: '',
+        sceneNumbers: [1, 2, 3, 4],
+        versions: [
+          {
+            id: 'v-s2',
+            name: 'Chalk slash',
+            stateNotes: 'Chalk slash on slate board',
+            sceneNumbers: [2],
+            appliesFrom: { sceneNumber: 2, beatIndex: 0 },
+            imageUrl: 'https://cdn/v-s2.png',
+            needsImageRegen: true,
+            createdAt: '',
+          },
+          {
+            id: 'v-s3',
+            name: 'Scratched drum',
+            stateNotes: 'Chalk slash; scratched seismograph drum',
+            sceneNumbers: [3],
+            appliesFrom: { sceneNumber: 3, beatIndex: 0 },
+            imageUrl: 'https://cdn/v-s3.png',
+            needsImageRegen: false,
+            createdAt: '',
+          },
+          {
+            id: 'v-s4',
+            name: 'Hatch sheared open',
+            stateNotes: 'Chalk slash; scratched drum; hatch sheared open',
+            sceneNumbers: [4],
+            appliesFrom: { sceneNumber: 4, beatIndex: 0 },
+            imageUrl: 'https://cdn/v-s4.png',
+            needsImageRegen: false,
+            createdAt: '',
+          },
+        ],
+      },
+    ] as LocationReference[]
+
+    // Checking v-s2 cascades to downstream v-s3 and v-s4
+    const seq = buildSequentialLocationSetAgentSelection('l-vault', locations, {
+      fromVersionId: 'v-s2',
+    })
+    expect(seq.itemKeys).toEqual([
+      'location:l-vault::v-s2',
+      'location:l-vault::v-s3',
+      'location:l-vault::v-s4',
+    ])
+
+    // Planning those items yields them in chronological order with forceRegenerate
+    const planned = planSelectedLocationExpressItems(
+      { characters: [], locations, props: [] },
+      {
+        kinds: ['location'],
+        includeNestedStills: true,
+        locationIds: seq.locationIds,
+        itemKeys: seq.itemKeys,
+        preexistingVersionIds: ['v-s2', 'v-s3', 'v-s4'],
+      }
+    )
+    expect(planned.map((item) => item.versionId)).toEqual(['v-s2', 'v-s3', 'v-s4'])
+
+    // Worker windowing never runs two versions of the same location in the same parallel window
+    const size1 = resolveReferenceExpressWindow(planned, 0, 4)
+    expect(size1).toBe(1)
+    expect(planned.slice(0, size1).map((item) => item.versionId)).toEqual(['v-s2'])
+
+    const size2 = resolveReferenceExpressWindow(planned, 1, 4)
+    expect(size2).toBe(1)
+    expect(planned.slice(1, 1 + size2).map((item) => item.versionId)).toEqual(['v-s3'])
   })
 })

@@ -38,7 +38,9 @@ export function compareBeatPosition(a: BeatPosition, b: BeatPosition): number {
   return a.beatIndex - b.beatIndex
 }
 
-export function versionStart(version: LocationVersion): BeatPosition | null {
+export function versionStart(
+  version: Pick<LocationVersion, 'appliesFrom' | 'sceneNumbers'>
+): BeatPosition | null {
   if (
     version.appliesFrom &&
     Number.isFinite(version.appliesFrom.sceneNumber) &&
@@ -52,6 +54,95 @@ export function versionStart(version: LocationVersion): BeatPosition | null {
   const scenes = (version.sceneNumbers || []).filter((n) => Number.isFinite(n) && n > 0)
   if (scenes.length === 0) return null
   return { sceneNumber: Math.min(...scenes), beatIndex: 0 }
+}
+
+/**
+ * Sort location set versions in strict chronological story order (`appliesFrom`
+ * scene/beat, falling back to earliest `sceneNumbers`, then original array order).
+ * Connected set versions must always be planned, displayed, and chained in this order.
+ */
+export function sortLocationVersionsChronologically<
+  T extends Pick<LocationVersion, 'appliesFrom' | 'sceneNumbers'>,
+>(versions: readonly T[] | null | undefined): T[] {
+  if (!Array.isArray(versions) || versions.length === 0) return []
+  return versions
+    .map((version, index) => ({ version, index, start: versionStart(version) }))
+    .sort((a, b) => {
+      if (a.start && b.start) {
+        const cmp = compareBeatPosition(a.start, b.start)
+        if (cmp !== 0) return cmp
+      } else if (a.start && !b.start) {
+        return -1
+      } else if (!a.start && b.start) {
+        return 1
+      }
+      return a.index - b.index
+    })
+    .map((entry) => entry.version)
+}
+
+export type LocationVersionAnchorResolution<
+  V extends Pick<
+    LocationVersion,
+    'id' | 'name' | 'stateNotes' | 'imageUrl' | 'appliesFrom' | 'sceneNumbers'
+  > = LocationVersion,
+> = {
+  version: V | undefined
+  previousVersion: V | undefined
+  anchorVersion: V | undefined
+  anchorImageUrl: string | undefined
+  anchorLabel: string
+  chronologicalIndex: number
+  sortedVersions: V[]
+}
+
+/**
+ * Resolve the sequential visual & state-notes anchor for a set version:
+ * - Step 1 (`chronologicalIndex === 0`) anchors to the Base location image.
+ * - Step k (`chronologicalIndex > 0`) anchors to the closest preceding drawn set
+ *   version (`v_{k-1}.imageUrl`), falling back to Base if no earlier version is drawn yet,
+ *   and takes `previousStateNotes` from `v_{k-1}` so only the incremental delta is applied.
+ */
+export function resolveAnchorForLocationVersion<
+  V extends Pick<
+    LocationVersion,
+    'id' | 'name' | 'stateNotes' | 'imageUrl' | 'appliesFrom' | 'sceneNumbers'
+  >,
+>(
+  location: { imageUrl?: string; versions?: readonly V[] | null },
+  versionId: string | null | undefined
+): LocationVersionAnchorResolution<V> {
+  const sortedVersions = sortLocationVersionsChronologically(location.versions)
+  const chronologicalIndex = versionId
+    ? sortedVersions.findIndex((entry) => entry.id === versionId)
+    : -1
+  const version = chronologicalIndex >= 0 ? sortedVersions[chronologicalIndex] : undefined
+  const previousVersion =
+    chronologicalIndex > 0 ? sortedVersions[chronologicalIndex - 1] : undefined
+
+  let anchorVersion: V | undefined
+  for (let idx = chronologicalIndex - 1; idx >= 0; idx -= 1) {
+    const candidate = sortedVersions[idx]
+    if (candidate?.imageUrl?.trim()) {
+      anchorVersion = candidate
+      break
+    }
+  }
+
+  const anchorImageUrl = anchorVersion?.imageUrl?.trim() || location.imageUrl?.trim() || undefined
+  const anchorLabel = anchorVersion
+    ? anchorVersion.name?.trim() || `Step ${sortedVersions.indexOf(anchorVersion) + 1}`
+    : 'Base'
+
+  return {
+    version,
+    previousVersion,
+    anchorVersion,
+    anchorImageUrl,
+    anchorLabel,
+    chronologicalIndex,
+    sortedVersions,
+  }
 }
 
 export function findLocationVersion(
@@ -120,9 +211,30 @@ export function locationReferenceForGeneration(
 export function withStaleVersionsAfterBaseChange(
   location: LocationReference
 ): LocationReference {
-  const versions = (location.versions || []).map((version) =>
+  const versions = sortLocationVersionsChronologically(location.versions || []).map((version) =>
     version.imageUrl?.trim() ? { ...version, needsImageRegen: true } : version
   )
+  return { ...location, versions }
+}
+
+/**
+ * After an earlier set version changes (`changedVersionId`), any downstream
+ * version chronologically after it that already has an image is marked stale
+ * so the connected chain can be updated in order.
+ */
+export function withStaleDownstreamVersionsAfterVersionChange(
+  location: LocationReference,
+  changedVersionId: string
+): LocationReference {
+  const sorted = sortLocationVersionsChronologically(location.versions || [])
+  const changedIndex = sorted.findIndex((version) => version.id === changedVersionId)
+  if (changedIndex < 0) return location
+  const versions = sorted.map((version, index) => {
+    if (index > changedIndex && version.imageUrl?.trim()) {
+      return { ...version, needsImageRegen: true }
+    }
+    return version
+  })
   return { ...location, versions }
 }
 
@@ -131,7 +243,7 @@ export function patchLocationVersion(
   versionId: string,
   patch: Partial<LocationVersion>
 ): LocationReference {
-  const versions = (location.versions || []).map((version) =>
+  const versions = sortLocationVersionsChronologically(location.versions || []).map((version) =>
     version.id === versionId ? { ...version, ...patch } : version
   )
   return { ...location, versions }

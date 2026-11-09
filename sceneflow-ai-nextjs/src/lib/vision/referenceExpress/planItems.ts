@@ -21,10 +21,18 @@ import {
 } from './types'
 import {
   parseLocationVersionRequirementId,
+  sortLocationVersionsChronologically,
 } from '@/lib/vision/locationVersionResolve'
 import { filterScenesForLocation } from '@/lib/vision/mountedSetFixtures'
-import { sortLocationsParentsFirst } from '@/lib/vision/locationFamily'
-import { isSceneScriptReadyForReferences } from '@/lib/vision/sceneScriptReadiness'
+import {
+  resolveParentLocationAnchor,
+  sortLocationsParentsFirst,
+} from '@/lib/vision/locationFamily'
+import {
+  isSceneOutline,
+  isSceneScriptReadyForReferences,
+  sceneHasScreenplayBody,
+} from '@/lib/vision/sceneScriptReadiness'
 
 export type CastSource = {
   id?: string
@@ -79,6 +87,11 @@ export type LocationSource = {
     generationPrompt?: string
     needsImageRegen?: boolean
     sceneNumbers?: number[]
+    appliesFrom?: {
+      sceneNumber: number
+      beatIndex: number
+      beatId?: string
+    }
   }>
   [key: string]: unknown
 }
@@ -309,22 +322,47 @@ export function planReferenceExpressItems(
   orderedLocations.forEach((location) => {
     if (hasImage(location.imageUrl)) return
     if (!location.id) return
+    const parentAnchor = resolveParentLocationAnchor(location, orderedLocations)
+    const parentTargetId = parentAnchor?.parentLocation?.id
     items.push({
       kind: 'location',
       targetId: location.id,
       label: location.location?.trim() || location.locationDisplay?.trim() || 'Location',
       sourceFingerprint: locationFingerprint(location),
+      ...(parentTargetId ? { parentTargetId } : {}),
     })
   })
 
   if (includeNested) {
+    const perLocationVersionItems: ReferenceExpressItem[][] = []
     orderedLocations.forEach((location) => {
       if (!location.id) return
-      for (const version of location.versions || []) {
-        if (!versionNeedsGeneration(location, version)) continue
-        items.push(locationVersionItem(location, version))
+      const sortedVersions = sortLocationVersionsChronologically(location.versions || [])
+      const locVersionItems: ReferenceExpressItem[] = []
+      let upstreamUpdating = false
+      for (const version of sortedVersions) {
+        if (!version.id || !version.stateNotes?.trim()) continue
+        if (versionNeedsGeneration(location, version)) {
+          locVersionItems.push(locationVersionItem(location, version))
+          upstreamUpdating = true
+        } else if (upstreamUpdating && hasImage(location.imageUrl) && hasImage(version.imageUrl)) {
+          // Cascade downstream drawn versions in chronological order so they update on top of the new upstream version
+          locVersionItems.push({ ...locationVersionItem(location, version), forceRegenerate: true })
+        }
+      }
+      if (locVersionItems.length > 0) {
+        perLocationVersionItems.push(locVersionItems)
       }
     })
+    const maxVersionDepth = perLocationVersionItems.reduce(
+      (max, list) => Math.max(max, list.length),
+      0
+    )
+    for (let depth = 0; depth < maxVersionDepth; depth += 1) {
+      for (const list of perLocationVersionItems) {
+        if (list[depth]) items.push(list[depth]!)
+      }
+    }
   }
 
   input.props.forEach((prop) => {
@@ -362,20 +400,25 @@ export function collectPreexistingVersionIds(
   return ids
 }
 
-function locationBaseItem(location: LocationSource, force: boolean): ReferenceExpressItem {
+function locationBaseItem(
+  location: LocationSource,
+  force: boolean,
+  parentTargetId?: string
+): ReferenceExpressItem {
   return {
     kind: 'location',
     targetId: location.id,
     label: location.location?.trim() || location.locationDisplay?.trim() || 'Location',
     sourceFingerprint: locationFingerprint(location),
     ...(force ? { forceRegenerate: true } : {}),
+    ...(parentTargetId ? { parentTargetId } : {}),
   }
 }
 
 /**
  * Stills the Location Agent checklist asked for, plus set versions catalog
- * sync just created on those locations. Versions the user left unchecked,
- * and every other location, stay out.
+ * sync just created on those locations, plus any downstream drawn set versions
+ * that depend on an upstream base or earlier version being updated.
  */
 export function planSelectedLocationExpressItems(
   input: ReferenceExpressPlanInput,
@@ -387,16 +430,22 @@ export function planSelectedLocationExpressItems(
   const trackPreexisting = Array.isArray(scope.preexistingVersionIds)
   const preexisting = new Set(scope.preexistingVersionIds ?? [])
   const items: ReferenceExpressItem[] = []
+  const orderedLocations = sortLocationsParentsFirst(input.locations)
 
-  for (const location of sortLocationsParentsFirst(input.locations)) {
+  for (const location of orderedLocations) {
     if (!location.id || !locationIds.has(location.id)) continue
+    const parentAnchor = resolveParentLocationAnchor(location, orderedLocations)
+    const parentTargetId = parentAnchor?.parentLocation?.id
     const baseKey = referenceExpressItemKey({ kind: 'location', targetId: location.id })
-    if (itemKeys.has(baseKey.toLowerCase())) {
-      items.push(locationBaseItem(location, hasImage(location.imageUrl)))
+    const baseSelected = itemKeys.has(baseKey.toLowerCase())
+    if (baseSelected) {
+      items.push(locationBaseItem(location, hasImage(location.imageUrl), parentTargetId))
     }
 
     if (!hasImage(location.imageUrl)) continue
-    for (const version of location.versions || []) {
+    let upstreamUpdating = baseSelected
+    const sortedVersions = sortLocationVersionsChronologically(location.versions || [])
+    for (const version of sortedVersions) {
       if (!version.id || !version.stateNotes?.trim()) continue
       const key = referenceExpressItemKey({
         kind: 'location',
@@ -408,14 +457,21 @@ export function planSelectedLocationExpressItems(
       const drawn = hasImage(version.imageUrl)
       if (selected && drawn) {
         items.push({ ...locationVersionItem(location, version), forceRegenerate: true })
+        upstreamUpdating = true
         continue
       }
       if (selected && !drawn) {
         items.push(locationVersionItem(location, version))
+        upstreamUpdating = true
         continue
       }
       if (isNew && (!drawn || version.needsImageRegen)) {
         items.push(locationVersionItem(location, version))
+        upstreamUpdating = true
+        continue
+      }
+      if (upstreamUpdating && drawn) {
+        items.push({ ...locationVersionItem(location, version), forceRegenerate: true })
       }
     }
   }
@@ -434,6 +490,9 @@ export function retainLocationItemsForReadyScenes(
 ): ReferenceExpressItem[] {
   const scenes = input.scenes
   if (!scenes?.length) return items
+  if (!scenes.some((scene) => sceneHasScreenplayBody(scene) || isSceneOutline(scene))) {
+    return items
+  }
   return items.filter((item) => {
     if (item.kind !== 'location') return true
     const location = input.locations.find((row) => row.id === item.targetId)
@@ -748,7 +807,7 @@ export function planFollowOnNestedItems(
     const itemKeys = new Set((scope.itemKeys ?? []).map((key) => key.trim().toLowerCase()))
     const trackPreexisting = Array.isArray(scope.preexistingVersionIds)
     const preexisting = new Set(scope.preexistingVersionIds ?? [])
-    return (location.versions || [])
+    return sortLocationVersionsChronologically(location.versions || [])
       .filter((version) => {
         if (!versionNeedsGeneration(location, version)) return false
         if (wanted && !wanted.has(version.id!)) return false
@@ -761,7 +820,8 @@ export function planFollowOnNestedItems(
           }).toLowerCase()
           const selected = itemKeys.has(key)
           const isNew = trackPreexisting && !!version.id && !preexisting.has(version.id)
-          if (!selected && !isNew) return false
+          const staleFromBaseRegen = hasImage(version.imageUrl) && !!version.needsImageRegen
+          if (!selected && !isNew && !staleFromBaseRegen) return false
         }
         return true
       })

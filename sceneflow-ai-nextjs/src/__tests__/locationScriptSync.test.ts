@@ -7,6 +7,11 @@ import {
   accumulateStateNotes,
   stampLocationVersionAppliesFrom,
 } from '@/lib/vision/locationScriptSync'
+import {
+  resolveAnchorForLocationVersion,
+  sortLocationVersionsChronologically,
+  withStaleDownstreamVersionsAfterVersionChange,
+} from '@/lib/vision/locationVersionResolve'
 
 describe('locationScriptSync', () => {
   const existing = [
@@ -201,5 +206,112 @@ describe('locationScriptSync', () => {
     expect(accumulated[2].match(/wall-mounted acoustic seismograph/gi)).toHaveLength(1)
     expect(accumulated[2]).toContain('irregular zig-zag arcs')
     expect(accumulated[2]).toContain('overhead eighteen-inch pneumatic mail dispatch hatch is sheared open')
+  })
+
+  it('preserves existing drawn stateNotes and avoids marking imageStale when a resync suggestion is already covered', () => {
+    const drawnVersions = [
+      {
+        id: 'ver-s2',
+        name: 'Chalk-slashed slate board',
+        stateNotes:
+          "A thick, jagged horizontal chalk slash marks the massive slate board over the equation 'RESONANCE FLUX = 0'.",
+        sceneNumbers: [2],
+        appliesFrom: { sceneNumber: 2, beatIndex: 0, beatId: 'b-s2' },
+        imageUrl: 'https://blob.example/s2.png',
+        needsImageRegen: false,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]
+
+    const diff = buildLocationVersionSyncDiff('loc-vault', 'VAULT', drawnVersions, [
+      {
+        name: 'Slate board chalk slash',
+        stateNotes: 'Horizontal chalk slash across the massive slate board.',
+        sceneNumbers: [2, 3],
+        appliesFrom: { sceneNumber: 2, beatIndex: 0, beatId: 'b-s2' },
+        reason: 'Chalk slash on board',
+      },
+    ])
+
+    expect(diff.creates).toHaveLength(0)
+    expect(diff.updates).toHaveLength(1)
+    expect(diff.updates[0].imageStale).toBe(false)
+    expect(diff.updates[0].patch.stateNotes).toBeUndefined()
+    expect(diff.updates[0].patch.sceneNumbers).toEqual([2, 3])
+    const merged = mergeLocationVersionSyncDiff(drawnVersions, diff)
+    expect(merged.versions[0]?.stateNotes).toBe(drawnVersions[0].stateNotes)
+    expect(merged.versions[0]?.needsImageRegen).toBe(false)
+  })
+
+  it('sorts versions chronologically, resolves sequential anchors (Base -> V1 -> V2), and cascades downstream staleness', () => {
+    const location = {
+      id: 'loc-vault',
+      location: 'VAULT',
+      locationDisplay: 'INT. VAULT - NIGHT',
+      imageUrl: 'https://blob.example/base.png',
+      description: 'Subterranean brick vault with intact slate board.',
+      sourceSceneIndex: 0,
+      sourceSceneHeading: 'INT. VAULT - NIGHT',
+      pinnedAt: '2026-01-01T00:00:00.000Z',
+      versions: [
+        {
+          id: 'ver-s4',
+          name: 'Pneumatic hatch sheared open',
+          stateNotes: 'Chalk slash on slate board; seismograph drum scratched; pneumatic hatch sheared open.',
+          sceneNumbers: [4],
+          appliesFrom: { sceneNumber: 4, beatIndex: 2 },
+          imageUrl: 'https://blob.example/s4.png',
+          needsImageRegen: false,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'ver-s2',
+          name: 'Chalk-slashed slate board',
+          stateNotes: 'Chalk slash on slate board.',
+          sceneNumbers: [2],
+          appliesFrom: { sceneNumber: 2, beatIndex: 1 },
+          imageUrl: 'https://blob.example/s2.png',
+          needsImageRegen: false,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'ver-s3',
+          name: 'Scratched seismograph drum',
+          stateNotes: 'Chalk slash on slate board; seismograph drum scratched.',
+          sceneNumbers: [3],
+          appliesFrom: { sceneNumber: 3, beatIndex: 0 },
+          imageUrl: 'https://blob.example/s3.png',
+          needsImageRegen: false,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    }
+
+    const sorted = sortLocationVersionsChronologically(location.versions)
+    expect(sorted.map((v) => v.id)).toEqual(['ver-s2', 'ver-s3', 'ver-s4'])
+
+    const anchorS2 = resolveAnchorForLocationVersion(location, 'ver-s2')
+    expect(anchorS2.anchorVersion).toBeUndefined()
+    expect(anchorS2.anchorLabel).toBe('Base')
+    expect(anchorS2.anchorImageUrl).toBe('https://blob.example/base.png')
+    expect(anchorS2.chronologicalIndex).toBe(0)
+
+    const anchorS3 = resolveAnchorForLocationVersion(location, 'ver-s3')
+    expect(anchorS3.anchorVersion?.id).toBe('ver-s2')
+    expect(anchorS3.anchorImageUrl).toBe('https://blob.example/s2.png')
+    expect(anchorS3.previousVersion?.stateNotes).toBe('Chalk slash on slate board.')
+    expect(anchorS3.chronologicalIndex).toBe(1)
+
+    const anchorS4 = resolveAnchorForLocationVersion(location, 'ver-s4')
+    expect(anchorS4.anchorVersion?.id).toBe('ver-s3')
+    expect(anchorS4.anchorImageUrl).toBe('https://blob.example/s3.png')
+    expect(anchorS4.chronologicalIndex).toBe(2)
+
+    // Regenerating ver-s2 marks ver-s3 and ver-s4 stale, leaving ver-s2 fresh
+    const cascaded = withStaleDownstreamVersionsAfterVersionChange(location, 'ver-s2')
+    const byId = new Map((cascaded.versions || []).map((v) => [v.id, v]))
+    expect(byId.get('ver-s2')?.needsImageRegen).toBe(false)
+    expect(byId.get('ver-s3')?.needsImageRegen).toBe(true)
+    expect(byId.get('ver-s4')?.needsImageRegen).toBe(true)
   })
 })

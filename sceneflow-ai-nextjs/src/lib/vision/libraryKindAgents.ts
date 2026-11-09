@@ -10,6 +10,7 @@ import {
   summarizeLocationVersionSyncDiff,
   type LocationVersionSyncDiff,
 } from '@/lib/vision/locationScriptSync'
+import { sortLocationVersionsChronologically } from '@/lib/vision/locationVersionResolve'
 import {
   extractResidentSetPiecesFromText,
   locationDescriptionWithMountedFixtures,
@@ -305,19 +306,24 @@ type LocationActionRow = {
     stateNotes?: string
     imageUrl?: string
     needsImageRegen?: boolean
+    appliesFrom?: LocationVersion['appliesFrom']
+    sceneNumbers?: number[]
   }>
 }
 
 /**
  * Base stills that do not exist yet are Add. Noted set versions with no
  * still are Missing. A drawn version flagged by script sync is Changed.
+ * Set versions are inspected in chronological order so `primary` always
+ * points to the earliest step in the connected set chain.
  */
 export function locationReferenceActions(location: LocationActionRow): ReferenceActionSummary {
   const items: ReferenceActionItem[] = []
   if (!hasImage(location.imageUrl)) {
     items.push({ id: 'base', name: 'Base', action: 'add' })
   }
-  for (const [index, version] of (location.versions || []).entries()) {
+  const orderedVersions = sortLocationVersionsChronologically(location.versions || [])
+  for (const [index, version] of orderedVersions.entries()) {
     const notes = version.stateNotes?.trim()
     const drawn = hasImage(version.imageUrl)
     const name = version.name?.trim() || 'Set version'
@@ -735,5 +741,86 @@ export function applyLocationUpdateFromSyncDiff(
     created: summary.createCount,
     updated: summary.updateCount,
     stale: summary.staleImageCount,
+  }
+}
+
+/**
+ * Automatically push newly introduced scene-heading locations into the
+ * Continuity Library and keep existing locations' scene assignments synced
+ * whenever script scenes are saved.
+ */
+export function autoSyncLocationsFromScriptScenes(
+  scenes: HeadingLocationScene[],
+  existingLocations: LocationReference[] = []
+): {
+  locations: LocationReference[]
+  addedCount: number
+  changed: boolean
+} {
+  if (!Array.isArray(scenes) || scenes.length === 0) {
+    return { locations: existingLocations, addedCount: 0, changed: false }
+  }
+
+  const extracted = extractHeadingLocationsFromScenes(scenes)
+  if (extracted.length === 0) {
+    return { locations: existingLocations, addedCount: 0, changed: false }
+  }
+
+  const extractedByLocation = new Map(extracted.map((entry) => [entry.location, entry]))
+  let changed = false
+
+  const updatedExisting = existingLocations.map((existing) => {
+    const match = extractedByLocation.get(existing.location)
+    if (!match) return existing
+
+    const prevScenes = existing.sceneNumbers || []
+    const nextScenes = match.sceneNumbers || []
+    const scenesDiffer =
+      prevScenes.length !== nextScenes.length ||
+      prevScenes.some((num, idx) => num !== nextScenes[idx])
+    const nextIntExt = existing.intExt || match.intExt
+    const nextTimeOfDay = existing.timeOfDay || match.timeOfDay
+    const nextDescription = existing.description || match.description
+
+    if (
+      !scenesDiffer &&
+      nextIntExt === existing.intExt &&
+      nextTimeOfDay === existing.timeOfDay &&
+      nextDescription === existing.description
+    ) {
+      return existing
+    }
+
+    changed = true
+    return {
+      ...existing,
+      sceneNumbers: nextScenes,
+      intExt: nextIntExt,
+      timeOfDay: nextTimeOfDay,
+      description: nextDescription,
+    }
+  })
+
+  const missing = collectMissingExtractedLocations(extracted, existingLocations)
+  if (missing.length === 0) {
+    return {
+      locations: changed ? updatedExisting : existingLocations,
+      addedCount: 0,
+      changed,
+    }
+  }
+
+  const now = Date.now()
+  const additions = missing.map((loc, idx) =>
+    toLocationReferenceFromExtracted(
+      loc,
+      `loc-auto-${now}-${idx}-${Math.random().toString(36).slice(2, 8)}`
+    )
+  )
+
+  return {
+    locations: [...updatedExisting, ...additions],
+    addedCount: additions.length,
+    changed: true,
   }
 }

@@ -54,10 +54,15 @@ import {
 } from '@/lib/vision/libraryKindAgents'
 import { ReferenceActionCue } from './ReferenceActionCue'
 import { LocationAgentConfirmDialog } from './LocationAgentConfirmDialog'
+import { buildSequentialLocationSetAgentSelection } from '@/lib/vision/locationAgentSelection'
 import type { ReferenceExpressScope, ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
 import { LibraryKindToolbar } from './LibraryKindToolbar'
 import { usePendingKindAgentRun } from './usePendingKindAgentRun'
-import { patchLocationVersion } from '@/lib/vision/locationVersionResolve'
+import {
+  patchLocationVersion,
+  resolveAnchorForLocationVersion,
+  sortLocationVersionsChronologically,
+} from '@/lib/vision/locationVersionResolve'
 import {
   DeferredImageSkeleton,
   isDeferredImageUrl,
@@ -101,13 +106,15 @@ function buildScenesPayloadForLocationVersions(scenes: LocationLibraryProps['sce
 
 /**
  * Return 1-based scene numbers mapped to this location that are missing `sceneDirection`.
- * Scenes that already have `sceneDirection` are not flagged as "outdated" because
- * Scene Director updates scene and shot direction automatically when revising scenes.
+ * Once a location already has its base reference still drawn, do not flag missing scene
+ * direction on the location card — the location set is an input to Scene Direction, not
+ * dependent on it, which prevents a Scene Direction ↔ Location Set update loop.
  */
 export function getLocationMissingDirectionSceneNumbers(
   loc: LocationReference,
   scenes: LocationLibraryProps['scenes']
 ): number[] {
+  if (isDisplayableImageUrl(loc.imageUrl)) return []
   const sceneNumbers =
     loc.sceneNumbers && loc.sceneNumbers.length > 0
       ? loc.sceneNumbers
@@ -252,7 +259,6 @@ function LocationStillOverlay({
   showEdit,
   alwaysVisible = false,
   onQuickGenerate,
-  onPromptBuilder,
   onDirector,
   onEdit,
   onUpload,
@@ -296,24 +302,6 @@ function LocationStillOverlay({
             </button>
           </TooltipTrigger>
           <TooltipContent>Quick Regenerate Image</TooltipContent>
-        </Tooltip>
-      )}
-      {onPromptBuilder && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onPromptBuilder()
-              }}
-              disabled={isGenerating}
-              className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
-            >
-              <Wand2 className="w-5 h-5 text-white" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>Open Prompt Builder</TooltipContent>
         </Tooltip>
       )}
       {onDirector && (
@@ -582,21 +570,21 @@ export function LocationLibrary({
             nextScenes[idx] = { ...nextScenes[idx], sceneDirection: dir }
           }
         }
-        const refreshedExtracted = extractHeadingLocationsFromScenes(nextScenes)
-        const extractedMatch = refreshedExtracted.find((e) => e.location === location.location)
-        let updatedLoc: LocationReference = {
-          ...location,
-          description: location.description || extractedMatch?.description || '',
+        if (!location.description?.trim() && !isDisplayableImageUrl(location.imageUrl)) {
+          const refreshedExtracted = extractHeadingLocationsFromScenes(nextScenes)
+          const extractedMatch = refreshedExtracted.find((e) => e.location === location.location)
+          if (extractedMatch?.description) {
+            const updatedLoc: LocationReference = {
+              ...location,
+              description: extractedMatch.description,
+            }
+            await onUpdateLocations(
+              locationReferences.map((row) => (row.id === location.id ? updatedLoc : row))
+            )
+          }
         }
-        if (isDisplayableImageUrl(updatedLoc.imageUrl)) {
-          const synced = await syncLocationVersions(updatedLoc, nextScenes)
-          if (synced) updatedLoc = synced.location
-        }
-        await onUpdateLocations(
-          locationReferences.map((row) => (row.id === location.id ? updatedLoc : row))
-        )
         toast.success(
-          `Generated scene direction for Scene ${missingSceneNumbers.join(', ')} and synced ${location.location}.`
+          `Generated scene direction for Scene ${missingSceneNumbers.join(', ')}.`
         )
       } catch (error: any) {
         toast.error(error?.message || 'Failed to generate scene direction')
@@ -615,22 +603,6 @@ export function LocationLibrary({
     setIsUpdatingLocations(true)
     try {
       const nextScenes = [...effectiveScenes]
-      if (projectId || onGenerateSceneDirection) {
-        for (let idx = 0; idx < nextScenes.length; idx++) {
-          const s = nextScenes[idx] as Record<string, unknown> | undefined
-          if (!s || isSceneOutline(s)) continue
-          if (!sceneHasScreenplayBody(s) && getSceneBeats(s).length === 0) continue
-          if (!s.sceneDirection) {
-            try {
-              const dir = await generateDirectionForSceneIndex(idx)
-              if (dir) nextScenes[idx] = { ...nextScenes[idx], sceneDirection: dir }
-            } catch (dirErr) {
-              console.warn(`[LocationLibrary] Auto direction skipped for Scene ${idx + 1}:`, dirErr)
-            }
-          }
-        }
-      }
-
       const newLocations = extractMissingLocations()
       let working: LocationReference[] = [...locationReferences, ...newLocations]
       let created = 0
@@ -665,11 +637,8 @@ export function LocationLibrary({
   }, [
     effectiveScenes,
     extractMissingLocations,
-    generateDirectionForSceneIndex,
     locationReferences,
-    onGenerateSceneDirection,
     onUpdateLocations,
-    projectId,
     screenplayContext,
     t,
   ])
@@ -860,21 +829,7 @@ export function LocationLibrary({
     }
     setAnalyzingLocationId(location.id)
     try {
-      const nextScenes = [...effectiveScenes]
-      const missingNumbers = getLocationMissingDirectionSceneNumbers(location, nextScenes)
-      if (missingNumbers.length > 0 && (projectId || onGenerateSceneDirection)) {
-        for (const sceneNum of missingNumbers) {
-          const idx = sceneNum - 1
-          if (idx < 0 || idx >= nextScenes.length) continue
-          try {
-            const dir = await generateDirectionForSceneIndex(idx)
-            if (dir) nextScenes[idx] = { ...nextScenes[idx], sceneDirection: dir }
-          } catch (dirErr) {
-            console.warn(`[LocationLibrary] Auto direction skipped for Scene ${sceneNum}:`, dirErr)
-          }
-        }
-      }
-      const result = await syncLocationVersions(location, nextScenes)
+      const result = await syncLocationVersions(location, effectiveScenes)
       if (!result) return
       await onUpdateLocations(
         mergedLocations.map((loc) => (loc.id === location.id ? result.location : loc))
@@ -948,6 +903,43 @@ export function LocationLibrary({
     })
   }
 
+  const handleRunLocationSetAgent = useCallback(
+    async (
+      location: LocationReference,
+      options?: { fromVersionId?: string; forceFromBase?: boolean }
+    ) => {
+      if (onExpressGenerateReferences) {
+        const selection = buildSequentialLocationSetAgentSelection(
+          location.id,
+          mergedLocations,
+          options
+        )
+        if (selection.itemKeys.length > 0 || selection.locationIds.length > 0) {
+          await onExpressGenerateReferences({
+            kinds: ['location'],
+            includeNestedStills: true,
+            locationIds: selection.locationIds,
+            itemKeys: selection.itemKeys,
+          })
+          return
+        }
+      }
+      if (!isDisplayableImageUrl(location.imageUrl) || options?.forceFromBase) {
+        onGenerateLocationImage?.(location)
+        return
+      }
+      const sorted = sortLocationVersionsChronologically(location.versions || [])
+      const targetVersion =
+        (options?.fromVersionId && sorted.find((v) => v.id === options.fromVersionId)) ||
+        sorted.find((v) => !isDisplayableImageUrl(v.imageUrl) || v.needsImageRegen) ||
+        sorted[0]
+      if (targetVersion) {
+        onGenerateLocationVersion?.(location, targetVersion)
+      }
+    },
+    [mergedLocations, onExpressGenerateReferences, onGenerateLocationImage, onGenerateLocationVersion]
+  )
+
   usePendingKindAgentRun(
     pendingKindAgentRun,
     'location',
@@ -974,17 +966,13 @@ export function LocationLibrary({
     <div className="space-y-3">
       {scenes.length > 0 && (
         <LibraryKindToolbar
-          updateLabel={t('updateLocations')}
           agentLabel={locationAgentLabel}
-          onUpdate={() => void handleUpdateLocations()}
           onAgent={
             onExpressGenerateReferences ? () => void handleLocationAgent() : undefined
           }
-          isUpdating={isUpdatingLocations}
           isAgentRunning={isExpressGeneratingReferences}
           agentHasWork={locationAgentCount > 0}
-          updateTitle="Extract missing locations from scene headings and sync set versions from the script"
-          agentTitle="Update locations from the script, draw missing bases, then generate set-version stills from those bases"
+          agentTitle="Update locations from the script, draw missing bases, then sequentially generate connected set-version stills"
         />
       )}
 
@@ -993,7 +981,7 @@ export function LocationLibrary({
         <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
           <MapPin className="w-6 h-6 mx-auto mb-2 text-gray-400" />
           <p className="font-medium">No locations yet</p>
-          <p className="text-xs mt-1">Click &quot;Update Locations&quot; to extract locations from scene headings</p>
+          <p className="text-xs mt-1">Locations are automatically added from scene headings in your script</p>
           <p className="text-xs text-gray-400 mt-2">Location references ensure visual consistency<br />across scenes at the same location</p>
         </div>
       ) : (
@@ -1415,191 +1403,287 @@ export function LocationLibrary({
                       {!splitLayout && locationImagePanel}
 
                       <div className="pt-2 space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-[11px] font-medium text-slate-300">{t('versions')}</p>
-                          <div className="flex gap-1">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setDirectedLocation(loc)
-                              }}
-                              className="text-[10px] px-1.5 py-0.5 rounded text-cyan-300 hover:bg-cyan-500/10"
-                            >
-                              {t('addDirectedVersion')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                void handleUpdateOneLocation(loc)
-                              }}
-                              disabled={
-                                analyzingLocationId === loc.id ||
-                                scenes.length === 0 ||
-                                !hasImage
-                              }
-                              className="text-[10px] px-1.5 py-0.5 rounded text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-50"
-                            >
-                              {analyzingLocationId === loc.id ? t('analyzing') : t('update')}
-                            </button>
-                          </div>
-                        </div>
-                        {(loc.versions || []).length === 0 ? (
-                          <p className="text-[10px] text-slate-500">{t('noVersions')}</p>
-                        ) : (
-                          <div className="space-y-2">
-                            {(loc.versions || []).map((version) => {
-                              const versionGenerating =
-                                generatingLocationId === locationVersionGeneratingId(loc.id, version.id)
-                              const versionUploading =
-                                uploadingForId === locationVersionGeneratingId(loc.id, version.id)
-                              const versionHasImage = isDisplayableImageUrl(version.imageUrl)
-                              const versionUploadId = `location-version-upload-${version.id}`
-                              const openVersionPromptBuilder = () =>
-                                setPromptBuilderOpenFor({ locationId: loc.id, versionId: version.id })
-                              const quickGenerateVersion = () => {
-                                if (!isDisplayableImageUrl(loc.imageUrl)) {
-                                  toast.info(t('baseImageRequired'))
-                                  return
-                                }
-                                onGenerateLocationVersion?.(loc, version)
-                              }
-                              const versionAction = stillActions.items.find((item) => item.id === version.id)
-                              return (
-                                <div
-                                  key={version.id}
-                                  id={`location-version-${version.id}`}
-                                  className={`rounded border border-slate-700 bg-slate-900/40 p-2 space-y-1.5 ${
-                                    focusedVersionId === version.id ? 'ring-2 ring-amber-400/80' : ''
-                                  }`}
-                                >
-                                  <div className="flex items-start gap-1">
-                                    <p className="text-[11px] font-medium text-white truncate flex-1">
-                                      {version.name}
-                                    </p>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        openVersionPreview(loc.id, version.id)
-                                      }}
-                                      className="p-0.5 rounded text-slate-500 hover:text-white hover:bg-slate-700 flex-shrink-0"
-                                      title={t('expandVersion')}
-                                    >
-                                      <Maximize2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                  <p className="text-[10px] text-slate-400 line-clamp-2">
-                                    {version.stateNotes}
-                                  </p>
-                                  {version.appliesFrom && (
-                                    <p className="text-[10px] text-slate-500">
-                                      {t('appliesFrom', {
-                                        scene: version.appliesFrom.sceneNumber,
-                                        beat: version.appliesFrom.beatIndex + 1,
-                                      })}
-                                    </p>
-                                  )}
-                                  {versionAction && (
-                                    <ReferenceActionCue
-                                      summary={{
-                                        tone: versionAction.action === 'changed' ? 'attention' : 'action',
-                                        items: [versionAction],
-                                        primary: versionAction,
-                                      }}
-                                      onSelect={() => quickGenerateVersion()}
-                                    />
-                                  )}
-                                  <input
-                                    id={versionUploadId}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={(e) => handleVersionFileUpload(loc.id, version.id, e)}
-                                  />
-                                  {/* version overlay: Prompt Builder + Edit */}
-                                  {versionHasImage ? (
-                                    <div className="relative rounded-md overflow-hidden bg-slate-800 group aspect-video">
-                                      <img
-                                        src={version.imageUrl}
-                                        alt={version.name}
-                                        className="w-full h-full object-cover"
-                                      />
+                        {(() => {
+                          const sortedVersions = sortLocationVersionsChronologically(
+                            loc.versions || []
+                          )
+                          const pendingSetCount = stillActions.items.filter(
+                            (item) => item.id !== 'base'
+                          ).length
+                          return (
+                            <>
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-[11px] font-medium text-slate-300">
+                                  {t('versions')}
+                                </p>
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setDirectedLocation(loc)
+                                    }}
+                                    className="text-[10px] px-1.5 py-0.5 rounded text-cyan-300 hover:bg-cyan-500/10"
+                                  >
+                                    {t('addDirectedVersion')}
+                                  </button>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
                                       <button
                                         type="button"
                                         onClick={(e) => {
                                           e.stopPropagation()
-                                          openVersionPreview(loc.id, version.id)
+                                          if (onExpressGenerateReferences) {
+                                            void handleRunLocationSetAgent(loc)
+                                          } else {
+                                            void handleUpdateOneLocation(loc)
+                                          }
                                         }}
-                                        className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-                                        title={t('expandVersion')}
+                                        disabled={
+                                          analyzingLocationId === loc.id ||
+                                          isExpressGeneratingReferences ||
+                                          scenes.length === 0 ||
+                                          (!hasImage && !onExpressGenerateReferences)
+                                        }
+                                        className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-medium transition-colors disabled:opacity-50 ${
+                                          pendingSetCount > 0
+                                            ? 'border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25'
+                                            : 'border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20'
+                                        }`}
                                       >
-                                        <Maximize2 className="w-4 h-4" />
+                                        {analyzingLocationId === loc.id ||
+                                        isExpressGeneratingReferences ? (
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                          <Zap className="w-3 h-3" />
+                                        )}
+                                        <span>
+                                          {analyzingLocationId === loc.id
+                                            ? t('analyzing')
+                                            : pendingSetCount > 0
+                                              ? `Set Agent (${pendingSetCount})`
+                                              : 'Set Agent'}
+                                        </span>
                                       </button>
-                                      <LocationStillOverlay
-                                        isGenerating={versionGenerating}
-                                        isUploading={versionUploading}
-                                        showQuickGenerate={!!onGenerateLocationVersion}
-                                        showEdit={!!onEditLocationImage && !!version.imageUrl}
-                                        onQuickGenerate={quickGenerateVersion}
-                                        onPromptBuilder={openVersionPromptBuilder}
-                                        onDirector={() =>
-                                          setDirectorTarget({ locationId: loc.id, versionId: version.id })
-                                        }
-                                        onEdit={() =>
-                                          onEditLocationImage?.(loc.id, version.imageUrl!, version.id)
-                                        }
-                                        onUpload={() =>
-                                          document.getElementById(versionUploadId)?.click()
-                                        }
-                                        onDownload={() => {
-                                          void saveImageFile({
-                                            url: version.imageUrl!,
-                                            label: `location-${loc.location}-${version.name}`,
-                                          })
-                                            .then((saved) => {
-                                              if (saved) toast.success('Location version image saved')
-                                            })
-                                            .catch(() => toast.error('Failed to download location image'))
-                                        }}
-                                      />
-                                    </div>
-                                  ) : versionGenerating || versionUploading ? (
-                                    <div className="relative rounded-md overflow-hidden bg-slate-800 aspect-video flex flex-col items-center justify-center gap-2">
-                                      <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-                                      <span className="text-xs text-gray-400">
-                                        {versionUploading ? 'Uploading...' : 'Generating...'}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <div className="relative rounded-md overflow-hidden bg-slate-800 group aspect-video">
-                                      <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 pointer-events-none">
-                                        <ImageIcon className="w-8 h-8 text-gray-400 mb-1" />
-                                        <span className="text-xs">{t('noVersionImage')}</span>
-                                      </div>
-                                      <LocationStillOverlay
-                                        alwaysVisible
-                                        isGenerating={versionGenerating}
-                                        isUploading={versionUploading}
-                                        showQuickGenerate={!!onGenerateLocationVersion}
-                                        showEdit={false}
-                                        onQuickGenerate={quickGenerateVersion}
-                                        onPromptBuilder={openVersionPromptBuilder}
-                                        onDirector={() =>
-                                          setDirectorTarget({ locationId: loc.id, versionId: version.id })
-                                        }
-                                        onUpload={() =>
-                                          document.getElementById(versionUploadId)?.click()
-                                        }
-                                      />
-                                    </div>
-                                  )}
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs text-xs">
+                                      Sync set changes from the script and update connected set versions sequentially in chronological order (Base → Step 1 → Step 2).
+                                    </TooltipContent>
+                                  </Tooltip>
                                 </div>
-                              )
-                            })}
-                          </div>
-                        )}
+                              </div>
+                              {sortedVersions.length === 0 ? (
+                                <p className="text-[10px] text-slate-500">{t('noVersions')}</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {sortedVersions.map((version, versionIdx) => {
+                                    const versionGenerating =
+                                      generatingLocationId ===
+                                      locationVersionGeneratingId(loc.id, version.id)
+                                    const versionUploading =
+                                      uploadingForId ===
+                                      locationVersionGeneratingId(loc.id, version.id)
+                                    const versionHasImage = isDisplayableImageUrl(version.imageUrl)
+                                    const versionUploadId = `location-version-upload-${version.id}`
+                                    const openVersionPromptBuilder = () =>
+                                      setPromptBuilderOpenFor({
+                                        locationId: loc.id,
+                                        versionId: version.id,
+                                      })
+                                    const versionAnchor = resolveAnchorForLocationVersion(
+                                      loc,
+                                      version.id
+                                    )
+                                    const quickGenerateVersion = () => {
+                                      if (!isDisplayableImageUrl(loc.imageUrl)) {
+                                        if (onExpressGenerateReferences) {
+                                          void handleRunLocationSetAgent(loc, {
+                                            fromVersionId: version.id,
+                                          })
+                                          return
+                                        }
+                                        toast.info(t('baseImageRequired'))
+                                        return
+                                      }
+                                      onGenerateLocationVersion?.(loc, version)
+                                    }
+                                    const versionAction = stillActions.items.find(
+                                      (item) => item.id === version.id
+                                    )
+                                    return (
+                                      <div
+                                        key={version.id}
+                                        id={`location-version-${version.id}`}
+                                        className={`rounded border border-slate-700 bg-slate-900/40 p-2 space-y-1.5 ${
+                                          focusedVersionId === version.id
+                                            ? 'ring-2 ring-amber-400/80'
+                                            : ''
+                                        }`}
+                                      >
+                                        <div className="flex items-start gap-1.5">
+                                          <span className="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700 shrink-0">
+                                            Step {versionIdx + 1}
+                                          </span>
+                                          <p className="text-[11px] font-medium text-white truncate flex-1">
+                                            {version.name}
+                                          </p>
+                                          <span
+                                            className="text-[9px] text-slate-400 truncate max-w-[130px] shrink-0"
+                                            title={`Builds on ${versionAnchor.anchorLabel}`}
+                                          >
+                                            From {versionAnchor.anchorLabel}
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              openVersionPreview(loc.id, version.id)
+                                            }}
+                                            className="p-0.5 rounded text-slate-500 hover:text-white hover:bg-slate-700 flex-shrink-0"
+                                            title={t('expandVersion')}
+                                          >
+                                            <Maximize2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 line-clamp-2">
+                                          {version.stateNotes}
+                                        </p>
+                                        {version.appliesFrom && (
+                                          <p className="text-[10px] text-slate-500">
+                                            {t('appliesFrom', {
+                                              scene: version.appliesFrom.sceneNumber,
+                                              beat: version.appliesFrom.beatIndex + 1,
+                                            })}
+                                          </p>
+                                        )}
+                                        {versionAction && (
+                                          <ReferenceActionCue
+                                            summary={{
+                                              tone:
+                                                versionAction.action === 'changed'
+                                                  ? 'attention'
+                                                  : 'action',
+                                              items: [versionAction],
+                                              primary: versionAction,
+                                            }}
+                                            onSelect={() => {
+                                              if (onExpressGenerateReferences) {
+                                                void handleRunLocationSetAgent(loc, {
+                                                  fromVersionId: version.id,
+                                                })
+                                              } else {
+                                                quickGenerateVersion()
+                                              }
+                                            }}
+                                          />
+                                        )}
+                                        <input
+                                          id={versionUploadId}
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={(e) =>
+                                            handleVersionFileUpload(loc.id, version.id, e)
+                                          }
+                                        />
+                                        {/* version overlay */}
+                                        {versionHasImage ? (
+                                          <div className="relative rounded-md overflow-hidden bg-slate-800 group aspect-video">
+                                            <img
+                                              src={version.imageUrl}
+                                              alt={version.name}
+                                              className="w-full h-full object-cover"
+                                            />
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                openVersionPreview(loc.id, version.id)
+                                              }}
+                                              className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                                              title={t('expandVersion')}
+                                            >
+                                              <Maximize2 className="w-4 h-4" />
+                                            </button>
+                                            <LocationStillOverlay
+                                              isGenerating={versionGenerating}
+                                              isUploading={versionUploading}
+                                              showQuickGenerate={!!onGenerateLocationVersion}
+                                              showEdit={!!onEditLocationImage && !!version.imageUrl}
+                                              onQuickGenerate={quickGenerateVersion}
+                                              onPromptBuilder={openVersionPromptBuilder}
+                                              onDirector={() =>
+                                                setDirectorTarget({
+                                                  locationId: loc.id,
+                                                  versionId: version.id,
+                                                })
+                                              }
+                                              onEdit={() =>
+                                                onEditLocationImage?.(
+                                                  loc.id,
+                                                  version.imageUrl!,
+                                                  version.id
+                                                )
+                                              }
+                                              onUpload={() =>
+                                                document.getElementById(versionUploadId)?.click()
+                                              }
+                                              onDownload={() => {
+                                                void saveImageFile({
+                                                  url: version.imageUrl!,
+                                                  label: `location-${loc.location}-${version.name}`,
+                                                })
+                                                  .then((saved) => {
+                                                    if (saved)
+                                                      toast.success('Location version image saved')
+                                                  })
+                                                  .catch(() =>
+                                                    toast.error('Failed to download location image')
+                                                  )
+                                              }}
+                                            />
+                                          </div>
+                                        ) : versionGenerating || versionUploading ? (
+                                          <div className="relative rounded-md overflow-hidden bg-slate-800 aspect-video flex flex-col items-center justify-center gap-2">
+                                            <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+                                            <span className="text-xs text-gray-400">
+                                              {versionUploading ? 'Uploading...' : 'Generating...'}
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <div className="relative rounded-md overflow-hidden bg-slate-800 group aspect-video">
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 pointer-events-none">
+                                              <ImageIcon className="w-8 h-8 text-gray-400 mb-1" />
+                                              <span className="text-xs">{t('noVersionImage')}</span>
+                                            </div>
+                                            <LocationStillOverlay
+                                              alwaysVisible
+                                              isGenerating={versionGenerating}
+                                              isUploading={versionUploading}
+                                              showQuickGenerate={!!onGenerateLocationVersion}
+                                              showEdit={false}
+                                              onQuickGenerate={quickGenerateVersion}
+                                              onPromptBuilder={openVersionPromptBuilder}
+                                              onDirector={() =>
+                                                setDirectorTarget({
+                                                  locationId: loc.id,
+                                                  versionId: version.id,
+                                                })
+                                              }
+                                              onUpload={() =>
+                                                document.getElementById(versionUploadId)?.click()
+                                              }
+                                            />
+                                          </div>
+                                        )}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </>
+                          )
+                        })()}
                       </div>
 
                       <div className="flex justify-end pt-1">
@@ -1706,6 +1790,8 @@ export function LocationLibrary({
                     storedPrompt: version.generationPrompt,
                     locationName: location.location,
                     stateNotes: version.stateNotes,
+                    previousStateNotes: resolveAnchorForLocationVersion(location, version.id)
+                      .previousVersion?.stateNotes,
                     intExt: location.intExt,
                     timeOfDay: location.timeOfDay,
                     description: locationDescriptionWithMountedFixtures(location, scenes),

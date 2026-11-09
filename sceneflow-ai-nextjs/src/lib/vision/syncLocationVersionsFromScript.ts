@@ -141,12 +141,12 @@ ${existingList}
 TASK: Produce the DISTINCT lasting set-state versions ${locationName} needs NOW based on the current script.
 
 RESYNC RULES:
-1. Prefer updating an existing version (same name / same damage) with refreshed sceneNumbers and stateNotes over creating near-duplicates.
+1. Prefer updating an existing version (same name / same damage). When an existing version already accurately describes the set state for that beat/scene, reuse its EXACT name and EXACT stateNotes verbatim so already-rendered reference stills are not unnecessarily invalidated.
 2. Create a new version only for a clearly different lasting set state.
 3. stateNotes is the lasting structural DELTA only — what changed — not a rewrite of the base room description. A cracked, shattered, or red-pegged wall-mounted instrument (pressure gauge, galvanometer, manometer, dial) belongs here. stateNotes must NOT include character blocking, beat keyProps, propInteraction, or objects a character handles or introduces (journals, vellum, framed photos, tools, weapons). Those belong on the beat frame, not this still.
 4. Lasting practical set changes DO include doors/windows/gates opening or shutting and practical lights/lamps going on or off — including when a character only says it ("Shut the damn door", "kill the lights"). Do NOT invent versions for mood lighting, camera, people walking, or handheld beat props.
 5. The intact base is not a version — omit it.
-6. appliesFrom is the first beat where this state is visible. Spoken commands count as that beat.
+6. appliesFrom is the first beat where this state is visible (0-based beatIndex matching [Beat 0], [Beat 1], etc.). Spoken commands count as that beat.
 
 For each DISTINCT version, provide name, stateNotes, sceneNumbers, appliesFrom, reason, confidence.
 
@@ -157,7 +157,7 @@ Respond with valid JSON only:
       "name": "string",
       "stateNotes": "string",
       "sceneNumbers": [1],
-      "appliesFrom": { "sceneNumber": 1, "beatIndex": 1 },
+      "appliesFrom": { "sceneNumber": 1, "beatIndex": 0 },
       "reason": "string",
       "confidence": 0.9
     }
@@ -166,7 +166,7 @@ Respond with valid JSON only:
 }`
 
   const result = await generateText(analysisPrompt, {
-    temperature: 0.5,
+    temperature: 0.1,
     maxOutputTokens: 4096,
     responseMimeType: 'application/json',
   })

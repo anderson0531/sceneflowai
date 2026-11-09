@@ -9,7 +9,11 @@ import {
   stripCharacterMetaphorsAndPosture,
   type LocationAnalysisSceneInput,
 } from '@/lib/vision/locationStateAnalysis'
-import { compareBeatPosition, versionStart } from '@/lib/vision/locationVersionResolve'
+import {
+  compareBeatPosition,
+  sortLocationVersionsChronologically,
+  versionStart,
+} from '@/lib/vision/locationVersionResolve'
 import type {
   LocationReference,
   LocationVersion,
@@ -89,11 +93,57 @@ const STOP_WORDS = new Set([
   'by',
   'from',
   'as',
+  'into',
+  'onto',
+  'over',
+  'under',
+  'through',
+  'across',
+  'when',
+  'while',
+  'after',
+  'before',
+  'during',
+  'its',
+  'his',
+  'her',
+  'their',
+  'this',
+  'that',
+  'these',
+  'those',
+  'are',
+  'was',
+  'were',
+  'been',
+  'being',
+  'has',
+  'have',
+  'had',
   'same',
   'location',
   'set',
   'room',
 ])
+
+function stemToken(token: string): string {
+  if (token.length <= 4) return token
+  if (token.endsWith('ing') && token.length > 5) {
+    const base = token.slice(0, -3)
+    return /(.)\1$/.test(base) ? base.slice(0, -1) : base
+  }
+  if (token.endsWith('ed') && token.length > 4) {
+    const base = token.slice(0, -2)
+    return /(.)\1$/.test(base) ? base.slice(0, -1) : base
+  }
+  if (token.endsWith('es') && token.length > 4) {
+    return token.slice(0, -2)
+  }
+  if (token.endsWith('s') && !token.endsWith('ss') && token.length > 4) {
+    return token.slice(0, -1)
+  }
+  return token
+}
 
 function significantTokens(text: string): Set<string> {
   const cleaned = (text || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ')
@@ -102,6 +152,7 @@ function significantTokens(text: string): Set<string> {
       .split(/\s+/)
       .map((t) => t.trim())
       .filter((t) => t.length > 2 && !STOP_WORDS.has(t))
+      .map(stemToken)
   )
 }
 
@@ -138,6 +189,13 @@ export function notesCoverState(existingNotes: string, nextNotes: string): boole
     if (existingSet.has(token)) covered++
   }
   return covered / nextTokens.size >= NOTES_COVERAGE_THRESHOLD
+}
+
+export function notesShareSetState(existingNotes: string, nextNotes: string): boolean {
+  const existingSet = significantTokens(existingNotes)
+  const nextSet = significantTokens(nextNotes)
+  if (existingSet.size === 0 || nextSet.size === 0) return false
+  return tokenJaccard(existingSet, nextSet) >= 0.3 || notesCoverState(existingNotes, nextNotes)
 }
 
 function sceneOverlapScore(a?: number[], b?: number[]): number {
@@ -184,6 +242,20 @@ export function matchSuggestionToExistingVersion(
   const suggestionName = canonicalName(suggestion.name)
   const byName = candidates.find((v) => canonicalName(v.name) === suggestionName)
   if (byName) return byName
+
+  if (suggestion.appliesFrom) {
+    const byAppliesFrom = candidates.find(
+      (v) =>
+        Boolean(
+          v.appliesFrom &&
+            ((suggestion.appliesFrom?.beatId &&
+              v.appliesFrom.beatId &&
+              v.appliesFrom.beatId === suggestion.appliesFrom.beatId) ||
+              appliesFromEqual(suggestion.appliesFrom, v.appliesFrom))
+        ) && notesShareSetState(v.stateNotes || '', suggestion.stateNotes || '')
+    )
+    if (byAppliesFrom) return byAppliesFrom
+  }
 
   const suggestionTokens = significantTokens(suggestion.stateNotes)
   let best: ExistingLocationVersionLike | null = null
@@ -425,12 +497,18 @@ export function buildLocationVersionSyncDiff(
 
     claimedIds.add(match.id)
 
-    const nextNotes = stateNotes.trim() || match.stateNotes
-    const notesChanged = isLocationStateNotesChanged(match.stateNotes, nextNotes)
+    const rawNextNotes = stateNotes.trim() || match.stateNotes
+    const matchHasDrawnImage = Boolean(match.imageUrl?.trim()) && !match.needsImageRegen
+    const alreadyCovered = matchHasDrawnImage && notesCoverState(match.stateNotes, rawNextNotes)
+    const nextNotes = alreadyCovered ? match.stateNotes : rawNextNotes
+    const notesChanged = alreadyCovered
+      ? false
+      : isLocationStateNotesChanged(match.stateNotes, nextNotes)
     const nextScenes =
       sceneNumbers.length > 0 ? sceneNumbers : normalizeSceneNumbers(match.sceneNumbers)
     const scenesChanged = !arraysEqual(nextScenes, normalizeSceneNumbers(match.sceneNumbers))
-    const nameChanged = canonicalName(suggestion.name) !== canonicalName(match.name)
+    const nameChanged =
+      !alreadyCovered && canonicalName(suggestion.name) !== canonicalName(match.name)
     const appliesChanged = !appliesFromEqual(suggestion.appliesFrom, match.appliesFrom)
     const imageStale = notesChanged
 
@@ -520,7 +598,8 @@ export function mergeLocationVersionSyncDiff(
     })
   }
 
-  return { versions, staleVersionIds }
+  const orderedVersions = sortLocationVersionsChronologically(versions)
+  return { versions: orderedVersions, staleVersionIds }
 }
 
 /** Merge beat-derived set-state notes into suggestions when the LLM omitted them. */
@@ -625,10 +704,20 @@ export function appendDirectedLocationVersion(
     createdAt: now,
     needsImageRegen: true,
   }
+  const ordered = sortLocationVersionsChronologically([
+    ...(location.versions || []),
+    version,
+  ])
+  const insertedIndex = ordered.findIndex((entry) => entry.id === version.id)
+  const cascaded = ordered.map((entry, idx) =>
+    insertedIndex >= 0 && idx > insertedIndex && entry.imageUrl?.trim()
+      ? { ...entry, needsImageRegen: true }
+      : entry
+  )
   return {
     location: {
       ...location,
-      versions: [...(location.versions || []), version],
+      versions: cascaded,
     },
     version,
   }

@@ -31,6 +31,7 @@ import {
   withMountedFixturesInLocationDescription,
 } from '@/lib/vision/mountedSetFixtures'
 import { resolveParentLocationAnchor } from '@/lib/vision/locationFamily'
+import { resolveAnchorForLocationVersion } from '@/lib/vision/locationVersionResolve'
 import { generateAndUploadFullBodyWardrobe } from '@/lib/character/sceneCharacterHeadshot'
 import { resolveAnchorWardrobeForTransition } from '@/lib/character/characterReferencePrompts'
 import {
@@ -442,9 +443,8 @@ async function runLocationVersionItem(input: {
   locale: Awaited<ReturnType<typeof resolveStoryLocale>>
 }): Promise<ReferenceExpressItemResult> {
   const { userId, projectId, item, location, locale } = input
-  const versionsList = location.versions || []
-  const versionIndex = versionsList.findIndex((row) => row.id === item.versionId)
-  const version = versionIndex >= 0 ? versionsList[versionIndex] : undefined
+  const anchor = resolveAnchorForLocationVersion(location, item.versionId)
+  const version = anchor.version
   if (!version?.id) return skipped(item, 'missing')
   if (!hasImage(location.imageUrl)) return skipped(item, 'missing')
   if (!version.stateNotes?.trim()) return skipped(item, 'missing')
@@ -452,7 +452,8 @@ async function runLocationVersionItem(input: {
     return skipped(item, 'already-generated')
   }
 
-  const previousVersion = versionIndex > 0 ? versionsList[versionIndex - 1] : undefined
+  const previousVersion = anchor.previousVersion
+  const baseImageUrl = anchor.anchorImageUrl || location.imageUrl!.trim()
   const usedFingerprint = locationVersionFingerprint(location, version)
   const generated = await generateLocationVersionReferenceImage({
     userId,
@@ -462,7 +463,7 @@ async function runLocationVersionItem(input: {
     timeOfDay: location.timeOfDay,
     description: location.description,
     locale,
-    baseImageUrl: location.imageUrl!.trim(),
+    baseImageUrl,
     stateNotes: version.stateNotes,
     previousStateNotes: previousVersion?.stateNotes,
     versionId: version.id,

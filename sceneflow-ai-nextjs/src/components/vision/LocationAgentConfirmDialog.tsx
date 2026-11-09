@@ -115,6 +115,7 @@ export function LocationAgentConfirmDialog({
       if (checked) {
         const base = locationRows.find((row) => !row.versionId) ?? locationRows[0]
         if (base?.baseMissing) keys.add(base.baseKey)
+        if (base?.parentBaseKey) keys.add(base.parentBaseKey)
       }
       return [...keys]
     })
@@ -126,6 +127,12 @@ export function LocationAgentConfirmDialog({
     for (const row of rows) {
       if (row.baseMissing && selectedSet.has(row.key) && !locationIds.includes(row.locationId)) {
         locationIds.push(row.locationId)
+      }
+      if (row.parentBaseKey && selectedSet.has(row.parentBaseKey)) {
+        const parentLocId = row.parentBaseKey.replace(/^location:/i, '')
+        if (parentLocId && !locationIds.includes(parentLocId)) {
+          locationIds.push(parentLocId)
+        }
       }
     }
     const extraBaseIds = rows
@@ -239,6 +246,11 @@ export function LocationAgentConfirmDialog({
                               />
                               <span className="min-w-0 flex-1">
                                 <span className="flex items-center gap-2 text-sm text-gray-100">
+                                  {row.versionId && row.stepIndex ? (
+                                    <span className="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-800 text-cyan-300 border border-gray-700 shrink-0">
+                                      Step {row.stepIndex}
+                                    </span>
+                                  ) : null}
                                   <span className="truncate">
                                     {row.versionId ? row.name : t('base')}
                                   </span>
@@ -249,6 +261,10 @@ export function LocationAgentConfirmDialog({
                                 {row.versionId && row.baseMissing ? (
                                   <span className="block text-[10px] text-amber-200/80 mt-0.5">
                                     {t('drawnFromBase')}
+                                  </span>
+                                ) : row.cascadedFromUpstream ? (
+                                  <span className="block text-[10px] text-cyan-300/80 mt-0.5">
+                                    Updates sequentially after earlier set state
                                   </span>
                                 ) : null}
                               </span>

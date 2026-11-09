@@ -184,4 +184,55 @@ describe('locationStateAnalysis', () => {
     expect(hits[0].notes).not.toMatch(/at\s+t\s*=\s*0s/i)
     expect(hits[0].notes).not.toMatch(/zero electrical light/i)
   })
+
+  it('ignores shot-director camera/lighting/staging fields when screenplay action is present so direction does not trigger location version loops', () => {
+    const baseScene = {
+      sceneNumber: 2,
+      heading: 'INT. SUB-BASEMENT VAULT - NIGHT',
+      beats: [
+        {
+          beatId: 'b1',
+          actionDescription: 'Gideon slashes a thick horizontal chalk line across the massive slate board.',
+        },
+        {
+          beatId: 'b2',
+          actionDescription: 'Gideon studies the calculations in silence.',
+        },
+      ],
+    }
+
+    const directedScene = {
+      ...baseScene,
+      beats: [
+        {
+          ...baseScene.beats[0],
+          beatDirection: {
+            startFrame: 'Medium two-shot of Gideon standing beside the massive slate board and oak desk.',
+            frozenMoment: 'Gideon slashes a chalk line across the slate board under flickering amber lamps.',
+            lightingAccent: 'Harsh amber practical lamp light casts deep shadows across the walls.',
+            propInteraction: 'Chalk stick pressed hard against the slate board.',
+          },
+        },
+        {
+          ...baseScene.beats[1],
+          beatDirection: {
+            startFrame: 'Close-up of Gideon beside the glass cabinet and brass gauges.',
+            frozenMoment: 'Gideon stares at the slate board as dust settles on the floor.',
+            lightingAccent: 'Cold blue rim light from the overhead fixture.',
+          },
+        },
+      ],
+    }
+
+    const beforeHits = extractLocationStateHitsFromScene(baseScene)
+    const afterHits = extractLocationStateHitsFromScene(directedScene)
+
+    expect(afterHits).toEqual(beforeHits)
+    expect(afterHits).toHaveLength(1)
+    expect(afterHits[0].beatId).toBe('b1')
+
+    const formattedBefore = formatSceneForLocationVersionAnalysis(baseScene)
+    const formattedAfter = formatSceneForLocationVersionAnalysis(directedScene)
+    expect(formattedAfter).toBe(formattedBefore)
+  })
 })

@@ -74,14 +74,14 @@ export const SET_PIECE_NOUN_PATTERN =
 
 const APERTURE_NOUN = '(?:doors?|windows?|gates?|hatch(?:es)?)'
 const APERTURE_ADJ =
-  '(?:damn\\s+|goddamn\\s+|bloody\\s+|front\\s+|back\\s+|side\\s+|heavy\\s+|overhead\\s+|eighteen[- ]inch\\s+|pneumatic\\s+|mail\\s+|dispatch\\s+|cast[- ]iron\\s+)*'
+  '(?:damn\\s+|goddamn\\s+|bloody\\s+|front\\s+|back\\s+|side\\s+|heavy\\s+|iron\\s+|steel\\s+|brass\\s+|wooden\\s+|oak\\s+|vault\\s+|overhead\\s+|eighteen[- ]inch\\s+|pneumatic\\s+|mail\\s+|dispatch\\s+|cast[- ]iron\\s+)*'
 
 /**
  * Door / window / gate / hatch opening or shutting — lasting set state, including
- * spoken commands ("Shut the damn door") that never use explode/shatter.
+ * spoken commands ("Shut the damn door") and active transitions ("The heavy iron door slams shut").
  */
 export const REVERSIBLE_APERTURE_PATTERN = new RegExp(
-  String.raw`\b(?:(?:shut|clos(?:e|es|ed|ing)|slam(?:s|med|ming)?|lock(?:s|ed|ing)?|unlock(?:s|ed|ing)?|open(?:s|ed|ing)?|swing(?:s|ing)?|shear(?:s|ed)?\s+open)\s+(?:the\s+)?${APERTURE_ADJ}${APERTURE_NOUN}|(?:the\s+)?${APERTURE_ADJ}${APERTURE_NOUN}\s+(?:is|are|stays?|remain(?:s)?)?\s*(?:sheared\s+open|shut|closed|open(?:ed)?|locked|unlocked|slammed))\b`,
+  String.raw`\b(?:(?:shut|clos(?:e|es|ed|ing)|slam(?:s|med|ming)?|lock(?:s|ed|ing)?|unlock(?:s|ed|ing)?|open(?:s|ed|ing)?|swing(?:s|ing)?|shear(?:s|ed)?\s+open)\s+(?:the\s+)?${APERTURE_ADJ}${APERTURE_NOUN}|(?:the\s+)?${APERTURE_ADJ}${APERTURE_NOUN}\s+(?:(?:is|are|was|were|stays?|remain(?:s)?)?\s*(?:sheared\s+open|shut|closed|open(?:ed)?|locked|unlocked|slammed(?:\s+shut)?)|(?:slams?|swings?|slides?|clicks?|bolts?)\s+(?:shut|closed|open)|bursts?\s+open))\b`,
   'i'
 )
 
@@ -162,18 +162,18 @@ export function resolveBeatActionText(beat: LocationAnalysisBeatInput): string {
 }
 
 /**
- * Only scan beat fields that can describe set state (action, dialogue commands,
- * frozenMoment, lightingAccent). Never scan `blocking` or `propInteraction`,
- * which describe character posture and handheld props.
+ * Scan screenplay-level beat fields (action and dialogue commands) for set-state
+ * changes, falling back to `frozenMoment` only when the beat has no screenplay text.
+ * Never scan shot-director camera/lighting/blocking fields (`startFrame`, `lightingAccent`,
+ * `blocking`, `propInteraction`) so generating Scene/Shot Direction never invents or
+ * re-stales Location Set versions.
  */
 export function beatSetStateText(beat: LocationAnalysisBeatInput): string {
-  return [
-    resolveBeatActionText(beat),
-    beat.line,
-    beat.startFrame,
-    beat.frozenMoment,
-    beat.lightingAccent,
-  ]
+  const screenplayText = [resolveBeatActionText(beat), beat.line]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .join(' ')
+  if (screenplayText) return screenplayText
+  return [beat.frozenMoment]
     .filter((part): part is string => Boolean(part?.trim()))
     .join(' ')
 }
@@ -200,15 +200,7 @@ export function extractStartFrameEnvironmentNotes(
       ? rawStart
       : rawFrozen && beatHasOpeningEnvironmentState(rawFrozen)
         ? rawFrozen
-        : rawStart &&
-            beatHasLocationStateChange(
-              [resolveBeatActionText(beat), beat.clipAction, beat.endFrame]
-                .filter(Boolean)
-                .join(' ')
-            ) &&
-            SET_PIECE_NOUN_PATTERN.test(rawStart)
-          ? rawStart
-          : ''
+        : ''
   if (!candidate) return undefined
 
   const strippedTime = candidate
@@ -283,16 +275,16 @@ export function formatSceneForLocationVersionAnalysis(
       const action = resolveBeatActionText(beat)
       const line = beat.line?.trim()
       const startFrame = beat.startFrame?.trim()
-      const frozen = beat.frozenMoment?.trim()
-      const props = beat.propInteraction?.trim()
-      const lighting = beat.lightingAccent?.trim()
+      const openingState =
+        startFrame && beatHasOpeningEnvironmentState(startFrame)
+          ? extractStartFrameEnvironmentNotes(beat)
+          : undefined
+      const frozen = !action && !line ? beat.frozenMoment?.trim() : undefined
       const chunks = [
         action ? `action: ${action}` : '',
         line ? `line: ${line}` : '',
-        startFrame ? `startFrame: ${startFrame}` : '',
+        openingState ? `openingState: ${openingState}` : '',
         frozen ? `frozenMoment: ${frozen}` : '',
-        props ? `propInteraction: ${props}` : '',
-        lighting ? `lightingAccent: ${lighting}` : '',
       ].filter(Boolean)
       if (chunks.length === 0) return
       const id = beat.beatId ? ` id=${beat.beatId}` : ''

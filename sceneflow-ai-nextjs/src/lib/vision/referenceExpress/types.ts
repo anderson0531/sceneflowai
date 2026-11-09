@@ -35,6 +35,12 @@ export type ReferenceExpressItem = {
    * never sets this, so filled stills stay skipped in a batch.
    */
   forceRegenerate?: boolean
+  /**
+   * Parent complex location id for sub-area location base items, so the worker
+   * never places a child sub-location in the same concurrent window as its
+   * un-persisted parent complex base.
+   */
+  parentTargetId?: string
 }
 
 /** Stable identity for planning, de-dupe, and scene `itemKeys`. */

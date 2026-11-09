@@ -20,7 +20,7 @@ import type { ReferenceExpressItem } from './types'
 export const DEFAULT_REFERENCE_EXPRESS_CONCURRENCY = 6
 
 export type ReferenceExpressWindowItem = Pick<ReferenceExpressItem, 'kind' | 'versionId'> &
-  Partial<Pick<ReferenceExpressItem, 'wardrobeId' | 'targetId'>>
+  Partial<Pick<ReferenceExpressItem, 'wardrobeId' | 'targetId' | 'parentTargetId'>>
 
 function isCastIdentityItem(item: ReferenceExpressWindowItem): boolean {
   return item.kind === 'cast' && !item.wardrobeId
@@ -47,8 +47,15 @@ function isLocationVersionItem(item: ReferenceExpressWindowItem): boolean {
  * except two wardrobe items for the *same* character (`targetId`) never share
  * a window so the character's base/preceding wardrobe finishes and persists its
  * `fullBodyUrl` before a transition wardrobe for that character draws.
- * Location bases and set versions also never share a window so a version is not
- * drawn against a base that has not persisted yet.
+ *
+ * Location bases and set versions never share a window so a version is not
+ * drawn against a base that has not persisted yet. Furthermore:
+ * - A child sub-location base item (`parentTargetId`) never shares a window
+ *   with its parent complex location base (`targetId === parentTargetId`), so
+ *   the parent complex persists its `imageUrl` before the child anchors to it.
+ * - Two set-version items (`versionId`) for the *same* location (`targetId`)
+ *   never share a window, so Set Version 1 finishes and persists its `imageUrl`
+ *   before Set Version 2 draws on top of Set Version 1.
  */
 export function resolveReferenceExpressWindow(
   items: ReferenceExpressWindowItem[],
@@ -65,6 +72,14 @@ export function resolveReferenceExpressWindow(
   if (isCastWardrobeItem(start) && start.targetId) {
     seenWardrobeTargetIds.add(start.targetId)
   }
+  const seenLocationBaseTargetIds = new Set<string>()
+  if (startIsBase && start.targetId) {
+    seenLocationBaseTargetIds.add(start.targetId)
+  }
+  const seenLocationVersionTargetIds = new Set<string>()
+  if (startIsVersion && start.targetId) {
+    seenLocationVersionTargetIds.add(start.targetId)
+  }
 
   let size = 1
   while (
@@ -78,6 +93,15 @@ export function resolveReferenceExpressWindow(
     if (isCastWardrobeItem(next) && next.targetId) {
       if (seenWardrobeTargetIds.has(next.targetId)) break
       seenWardrobeTargetIds.add(next.targetId)
+    }
+    if (isLocationBaseItem(next)) {
+      if (next.targetId && seenLocationBaseTargetIds.has(next.targetId)) break
+      if (next.parentTargetId && seenLocationBaseTargetIds.has(next.parentTargetId)) break
+      if (next.targetId) seenLocationBaseTargetIds.add(next.targetId)
+    }
+    if (isLocationVersionItem(next) && next.targetId) {
+      if (seenLocationVersionTargetIds.has(next.targetId)) break
+      seenLocationVersionTargetIds.add(next.targetId)
     }
     size += 1
   }

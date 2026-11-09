@@ -41,6 +41,7 @@ import {
   appendDirectedLocationVersion,
   dedupeStateNoteClauses,
   notesCoverState,
+  notesShareSetState,
   stampLocationVersionAppliesFrom,
 } from '@/lib/vision/locationScriptSync'
 import {
@@ -418,14 +419,16 @@ export function syncSceneDirectionToContinuityCatalog(args: {
         const versions = updatedLoc.versions ?? []
         const exactBeatVer = versions.find(
           (v) =>
-            v.appliesFrom?.sceneNumber === hit.sceneNumber &&
-            v.appliesFrom?.beatIndex === hit.beatIndex
+            (v.appliesFrom?.sceneNumber === hit.sceneNumber &&
+              v.appliesFrom?.beatIndex === hit.beatIndex) ||
+            (Boolean(hit.beatId) && v.appliesFrom?.beatId === hit.beatId)
         )
         const sceneCoveringVer = versions.find(
           (v) =>
             (v.sceneNumbers?.includes(hit.sceneNumber) ||
               v.appliesFrom?.sceneNumber === hit.sceneNumber) &&
-            notesCoverState(v.stateNotes || '', hit.notes)
+            (notesCoverState(v.stateNotes || '', hit.notes) ||
+              notesShareSetState(v.stateNotes || '', hit.notes))
         )
 
         if (sceneCoveringVer) {

@@ -120,8 +120,12 @@ import {
 import {
   locationReferenceForGeneration,
   patchLocationVersion,
+  resolveAnchorForLocationVersion,
+  sortLocationVersionsChronologically,
+  withStaleDownstreamVersionsAfterVersionChange,
   withStaleVersionsAfterBaseChange,
 } from '@/lib/vision/locationVersionResolve'
+import { autoSyncLocationsFromScriptScenes } from '@/lib/vision/libraryKindAgents'
 import {
   appendDirectedLocationVersion,
   stampLocationVersionAppliesFrom,
@@ -12605,6 +12609,79 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
+   * Sequentially generate/update connected location set versions in strict
+   * chronological order (`Base -> Step 1 -> Step 2 -> ...`), feeding each step's
+   * newly generated image into the next step so no downstream version is left
+   * out of order or stuck in a `Changed` (`needsImageRegen`) state.
+   */
+  const cascadeLocationVersionsSequentially = async (
+    initialLocation: LocationReference,
+    options: {
+      runId: string
+      catalogPropNames: string[]
+      /** Chronological index to begin cascading from (0 = all versions after Base). */
+      startChronologicalIndex: number
+    }
+  ): Promise<LocationReference> => {
+    let workingLocation = initialLocation
+    const sortedVersions = sortLocationVersionsChronologically(workingLocation.versions || [])
+    const queue = sortedVersions
+      .slice(options.startChronologicalIndex)
+      .filter(
+        (v) =>
+          Boolean(v.id && v.stateNotes?.trim()) &&
+          (Boolean(v.imageUrl?.trim()) || Boolean(v.needsImageRegen))
+      )
+
+    for (let idx = 0; idx < queue.length; idx++) {
+      const targetVer = queue[idx]!
+      const verLabel = `${workingLocation.location} — ${targetVer.name || `Step ${idx + 1}`}`
+      setGeneratingLocationId(`${workingLocation.id}::${targetVer.id}`)
+      patchAgentRun(options.runId, {
+        subtitle: `Updating connected set step ${idx + 1}/${queue.length}: ${verLabel}...`,
+        progressPct: Math.min(90, 65 + Math.round(((idx + 0.5) / queue.length) * 25)),
+      })
+
+      const anchor = resolveAnchorForLocationVersion(workingLocation, targetVer.id)
+      const verResponse = await fetch('/api/vision/generate-location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          locationName: workingLocation.location,
+          intExt: workingLocation.intExt,
+          timeOfDay: workingLocation.timeOfDay,
+          description: workingLocation.description,
+          locationPrompt: targetVer.generationPrompt?.trim() || undefined,
+          baseImageUrl: anchor.anchorImageUrl || workingLocation.imageUrl,
+          stateNotes: targetVer.stateNotes,
+          previousStateNotes: anchor.previousVersion?.stateNotes,
+          versionId: targetVer.id,
+          catalogPropNames: options.catalogPropNames,
+        }),
+      })
+      if (!verResponse.ok) {
+        const err = await verResponse.json().catch(() => ({}))
+        throw new Error(err.error || `Failed to generate set version ${targetVer.name}`)
+      }
+      const verResult = await verResponse.json()
+      workingLocation = patchLocationVersion(workingLocation, targetVer.id, {
+        imageUrl: verResult.imageUrl,
+        generationPrompt: verResult.prompt,
+        needsImageRegen: false,
+      })
+      const currentList = locationReferencesRef.current || locationReferences
+      const nextList = currentList.map((ref) =>
+        ref.id === workingLocation.id ? workingLocation : ref
+      )
+      setLocationReferences(nextList)
+      locationReferencesRef.current = nextList
+    }
+
+    return workingLocation
+  }
+
+  /**
    * Generate a location reference image via AI
    * Uses animated overlay to block UI during generation (~15-30s)
    */
@@ -12637,6 +12714,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         : undefined
       const parentAnchor = resolveParentLocationAnchor(location, locationReferencesRef.current || locationReferences)
       const parentLoc = parentAnchor?.parentLocation
+      const catalogPropNames = (objectReferencesRef.current || [])
+        .map((obj) => obj.name)
+        .filter((name): name is string => Boolean(name?.trim()))
       
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
@@ -12670,22 +12750,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const result = await response.json()
       
-      patchAgentRun(runId, { subtitle: 'Saving location reference...', progressPct: 85 })
-      
-      // Update location with the generated image
-      const updatedLocations = locationReferences.map(ref =>
-        ref.id === location.id
-          ? withStaleVersionsAfterBaseChange({
-              ...ref,
-              imageUrl: result.imageUrl,
-              generationPrompt: result.prompt,
-              description,
-            })
-          : ref
+      let nextLoc = withStaleVersionsAfterBaseChange({
+        ...location,
+        imageUrl: result.imageUrl,
+        generationPrompt: result.prompt,
+        description,
+      })
+      let updatedLocations = (locationReferencesRef.current || locationReferences).map(ref =>
+        ref.id === location.id ? nextLoc : ref
+      )
+      setLocationReferences(updatedLocations)
+      locationReferencesRef.current = updatedLocations
+
+      // Sequentially cascade any connected set versions on top of the new Base image
+      nextLoc = await cascadeLocationVersionsSequentially(nextLoc, {
+        runId,
+        catalogPropNames,
+        startChronologicalIndex: 0,
+      })
+      updatedLocations = (locationReferencesRef.current || locationReferences).map(ref =>
+        ref.id === location.id ? nextLoc : ref
       )
       setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations
       
+      patchAgentRun(runId, { subtitle: 'Saving location reference...', progressPct: 95 })
       // Persist
       await persistLocationReferences(updatedLocations)
       
@@ -12763,9 +12852,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         ? resolveParentLocationAnchor(location, locationReferencesRef.current || locationReferences)
         : null
       const parentLoc = parentAnchor?.parentLocation
-      const versionsList = location.versions || []
-      const versionIdx = version ? versionsList.findIndex((v) => v.id === version.id) : -1
-      const previousVersion = versionIdx > 0 ? versionsList[versionIdx - 1] : undefined
+      const versionAnchor = version
+        ? resolveAnchorForLocationVersion(location, version.id)
+        : null
+      const previousVersion = versionAnchor?.previousVersion
 
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
@@ -12799,7 +12889,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           },
           ...(version
             ? {
-                baseImageUrl: location.imageUrl,
+                baseImageUrl: versionAnchor?.anchorImageUrl || location.imageUrl,
                 stateNotes: version.stateNotes,
                 previousStateNotes: previousVersion?.stateNotes,
                 versionId: version.id,
@@ -12818,27 +12908,47 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const result = await response.json()
 
-      patchAgentRun(runId, { subtitle: 'Saving location reference...', progressPct: 85 })
-
-      const updatedLocations = locationReferences.map((ref) => {
-        if (ref.id !== location.id) return ref
-        if (version) {
-          return patchLocationVersion(ref, version.id, {
+      let nextLoc: LocationReference
+      let startCascadeIdx = 0
+      if (version) {
+        nextLoc = withStaleDownstreamVersionsAfterVersionChange(
+          patchLocationVersion(location, version.id, {
             imageUrl: result.imageUrl,
             generationPrompt: result.prompt,
             needsImageRegen: false,
-          })
-        }
-        return withStaleVersionsAfterBaseChange({
-          ...ref,
+          }),
+          version.id
+        )
+        startCascadeIdx = (versionAnchor?.chronologicalIndex ?? 0) + 1
+      } else {
+        nextLoc = withStaleVersionsAfterBaseChange({
+          ...location,
           imageUrl: result.imageUrl,
           generationPrompt: result.prompt,
           description,
         })
-      })
+        startCascadeIdx = 0
+      }
+
+      let updatedLocations = (locationReferencesRef.current || locationReferences).map((ref) =>
+        ref.id === location.id ? nextLoc : ref
+      )
       setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations
 
+      // Cascade any downstream connected set versions sequentially
+      nextLoc = await cascadeLocationVersionsSequentially(nextLoc, {
+        runId,
+        catalogPropNames,
+        startChronologicalIndex: startCascadeIdx,
+      })
+      updatedLocations = (locationReferencesRef.current || locationReferences).map((ref) =>
+        ref.id === location.id ? nextLoc : ref
+      )
+      setLocationReferences(updatedLocations)
+      locationReferencesRef.current = updatedLocations
+
+      patchAgentRun(runId, { subtitle: 'Saving location reference...', progressPct: 95 })
       await persistLocationReferences(updatedLocations)
 
       finishAgentRun(runId, { subtitle: `${locationLabel} image generated` })
@@ -12892,9 +13002,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
-    setGeneratingLocationId(`${location.id}::${version.id}`)
-    const locationLabel = `${location.location} — ${version.name}`
-    const runId = `location:${location.id}::${version.id}`
+    const catalogPropNames = (objectReferencesRef.current || [])
+      .map((obj) => obj.name)
+      .filter((name): name is string => Boolean(name?.trim()))
+    const sortedVersions = sortLocationVersionsChronologically(location.versions || [])
+    const requestedIdx = sortedVersions.findIndex((entry) => entry.id === version.id)
+    const firstPendingIdx = sortedVersions.findIndex(
+      (entry) =>
+        Boolean(entry.id && entry.stateNotes?.trim()) &&
+        (!entry.imageUrl?.trim() || Boolean(entry.needsImageRegen))
+    )
+    // Never update a later set version out of order while an earlier step is still missing/stale
+    const startIdx =
+      firstPendingIdx >= 0 && requestedIdx >= 0
+        ? Math.min(firstPendingIdx, requestedIdx)
+        : requestedIdx >= 0
+          ? requestedIdx
+          : 0
+    const startVersion = sortedVersions[startIdx] || version
+
+    setGeneratingLocationId(`${location.id}::${startVersion.id}`)
+    const locationLabel = `${location.location} — ${startVersion.name}`
+    const runId = `location:${location.id}::${startVersion.id}`
     startAgentRun({
       id: runId,
       title: 'Location',
@@ -12908,6 +13037,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         progressPct: 10,
       })
 
+      const startAnchor = resolveAnchorForLocationVersion(location, startVersion.id)
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -12917,13 +13047,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           intExt: location.intExt,
           timeOfDay: location.timeOfDay,
           description: location.description,
-          locationPrompt: version.generationPrompt?.trim() || undefined,
-          baseImageUrl: location.imageUrl,
-          stateNotes: version.stateNotes,
-          versionId: version.id,
-          catalogPropNames: (objectReferencesRef.current || [])
-            .map((obj) => obj.name)
-            .filter((name): name is string => Boolean(name?.trim())),
+          locationPrompt: startVersion.generationPrompt?.trim() || undefined,
+          baseImageUrl: startAnchor.anchorImageUrl || location.imageUrl,
+          stateNotes: startVersion.stateNotes,
+          previousStateNotes: startAnchor.previousVersion?.stateNotes,
+          versionId: startVersion.id,
+          catalogPropNames,
         }),
       })
 
@@ -12935,19 +13064,37 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const result = await response.json()
-      patchAgentRun(runId, { subtitle: 'Saving location version...', progressPct: 85 })
-
-      const updatedLocations = locationReferences.map((ref) =>
-        ref.id === location.id
-          ? patchLocationVersion(ref, version.id, {
-              imageUrl: result.imageUrl,
-              generationPrompt: result.prompt,
-              needsImageRegen: false,
-            })
-          : ref
+      let nextLoc = withStaleDownstreamVersionsAfterVersionChange(
+        patchLocationVersion(location, startVersion.id, {
+          imageUrl: result.imageUrl,
+          generationPrompt: result.prompt,
+          needsImageRegen: false,
+        }),
+        startVersion.id
+      )
+      // Also ensure the user's explicitly requested version (if later than startIdx) is marked to run in the cascade
+      if (requestedIdx > startIdx) {
+        nextLoc = patchLocationVersion(nextLoc, version.id, { needsImageRegen: true })
+      }
+      let updatedLocations = (locationReferencesRef.current || locationReferences).map((ref) =>
+        ref.id === location.id ? nextLoc : ref
       )
       setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations
+
+      // Sequentially cascade all subsequent connected set versions in chronological order
+      nextLoc = await cascadeLocationVersionsSequentially(nextLoc, {
+        runId,
+        catalogPropNames,
+        startChronologicalIndex: startIdx + 1,
+      })
+      updatedLocations = (locationReferencesRef.current || locationReferences).map((ref) =>
+        ref.id === location.id ? nextLoc : ref
+      )
+      setLocationReferences(updatedLocations)
+      locationReferencesRef.current = updatedLocations
+
+      patchAgentRun(runId, { subtitle: 'Saving location version...', progressPct: 95 })
       await persistLocationReferences(updatedLocations)
 
       finishAgentRun(runId, { subtitle: `${locationLabel} generated` })
@@ -19965,6 +20112,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
 
+      // Auto-push newly introduced scene-heading locations into the Location Library
+      const currentLocations =
+        locationReferencesRef.current ||
+        existingVisionPhase.references?.locationReferences ||
+        locationReferences ||
+        []
+      const locationAutoSync = autoSyncLocationsFromScriptScenes(derivedScenes, currentLocations)
+      if (locationAutoSync.changed) {
+        locationReferencesRef.current = locationAutoSync.locations
+        setLocationReferences(locationAutoSync.locations)
+        if (metadataToPersist?.visionPhase) {
+          metadataToPersist = {
+            ...metadataToPersist,
+            visionPhase: {
+              ...metadataToPersist.visionPhase,
+              references: {
+                ...(metadataToPersist.visionPhase.references || {}),
+                locationReferences: locationAutoSync.locations,
+              },
+            },
+          }
+        }
+      }
+
       const { scenes: scenesToSend, persistSceneIds } = persistSceneIdsForChangedScenes(
         canonicalScenes,
         derivedScenes
@@ -19987,6 +20158,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             scriptUpdatedAt,
             ...(updatedReviews ? { reviews: updatedReviews } : {}),
             ...(castAutoSync.changed ? { characters: castAutoSync.characters } : {}),
+            ...(locationAutoSync.changed
+              ? {
+                  references: {
+                    ...(existingVisionPhase.references || {}),
+                    locationReferences: locationAutoSync.locations,
+                  },
+                }
+              : {}),
           },
         },
       }
