@@ -157,6 +157,178 @@ function normalizeStringArray(
   return options.keepEmpty ? [] : undefined
 }
 
+const SPOKEN_DELIVERY_CLAUSE_RE =
+  /(?:,\s*)?\b(?:(?:as|while)\s+(?:he|she|they)\s+)?(?:deliver(?:s|ing)|speak(?:s|ing)|say(?:s|ing)|utter(?:s|ing)|recit(?:es|ing))(?:\s+the\s+(?:line|words|dialogue|phrase))?\s*:?\s*(?:"[^"\n]{3,}"|“[^”\n]{3,}”|'[^'\n]{3,}')/gi
+
+/**
+ * Strips spoken dialogue delivery clauses (e.g. `delivering the line: "..."`)
+ * from visual staging fields (`frozenMoment`, `startFrame`, `clipAction`, `endFrame`)
+ * while preserving genuine physical inscriptions/signage.
+ */
+export function stripSpokenDeliveryClause(value?: string | null): string | undefined {
+  const raw = trimmedString(value)
+  if (!raw) return undefined
+  if (!SPOKEN_DELIVERY_CLAUSE_RE.test(raw)) {
+    SPOKEN_DELIVERY_CLAUSE_RE.lastIndex = 0
+    return raw
+  }
+  SPOKEN_DELIVERY_CLAUSE_RE.lastIndex = 0
+  const endedWithTerminalPunctuation = /[.!?]["”']?$/.test(raw)
+  let cleaned = raw
+    .replace(SPOKEN_DELIVERY_CLAUSE_RE, '')
+    .replace(/\s+([.,;!?])/g, '$1')
+    .replace(/([.,;])\s*\1+/g, '$1')
+    .replace(/,\s*\./g, '.')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+  if (!cleaned) return raw
+  if (endedWithTerminalPunctuation && !/[.!?]$/.test(cleaned)) {
+    cleaned = `${cleaned.replace(/[,;:]$/, '')}.`
+  }
+  return cleaned
+}
+
+const CAST_TITLE_STOPWORDS = new Set([
+  'dr',
+  'mr',
+  'mrs',
+  'ms',
+  'miss',
+  'prof',
+  'professor',
+  'sir',
+  'lady',
+  'lord',
+  'father',
+  'mother',
+  'sister',
+  'brother',
+  'captain',
+  'general',
+  'colonel',
+  'major',
+  'lieutenant',
+  'sergeant',
+  'detective',
+  'inspector',
+  'officer',
+  'agent',
+  'saint',
+  'st',
+])
+
+const MULTI_CHARACTER_SHOT_TYPE_RE =
+  /\b(?:two[- ]shot|three[- ]shot|group\s+shot|over[- ]the[- ]shoulder|ots)\b/i
+
+const OFF_CAMERA_LISTENER_GAZE_RE =
+  /\b(?:off[- ]camera|outside\s+the\s+frame|out\s+of\s+frame|unseen\s+listener)\b/i
+
+const COLLECTIVE_STAGING_RE =
+  /\b(?:both\s+of\s+them|both\s+figures|both\s+men|both\s+women|both\s+characters|all\s+three|all\s+four|all\s+of\s+them|each\s+other|one\s+another|two\s+figures|three\s+figures|crowd|group\s+of)\b/i
+
+function escapeRegexLiteral(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+export function hasVisualStagingForCastFilter(direction: BeatDirection | undefined): boolean {
+  if (!direction) return false
+  const hasOpening = Boolean(direction.frozenMoment?.trim() || direction.startFrame?.trim())
+  const hasBlocking = Boolean(direction.blocking?.trim())
+  const hasMotion = Boolean(direction.clipAction?.trim() || direction.endFrame?.trim())
+  const isMultiShotType = Boolean(
+    direction.shotType && MULTI_CHARACTER_SHOT_TYPE_RE.test(direction.shotType)
+  )
+  const hasOffCameraListenerGaze = Boolean(
+    direction.gaze && OFF_CAMERA_LISTENER_GAZE_RE.test(direction.gaze)
+  )
+  if (isMultiShotType && !hasOffCameraListenerGaze) {
+    return hasOpening && hasBlocking && hasMotion
+  }
+  return hasOpening || hasBlocking || hasMotion
+}
+
+/**
+ * Prunes characters from `castInFrame` when the shot's visual staging fields
+ * (`Still`, `Start Frame`, `Clip Action`, `Blocking`, `Emotion`, `End Frame`,
+ * `Gaze`, `Interaction`) only stage a subset of `castInFrame` on camera (e.g.
+ * when other characters were only mentioned in spoken dialogue, off-camera
+ * eyelines, or possessive prop names).
+ */
+export function filterCastInFrameByVisualStaging(
+  direction: BeatDirection | undefined
+): string[] | undefined {
+  if (!direction || !Array.isArray(direction.castInFrame)) return direction?.castInFrame
+  if (direction.castInFrame.length <= 1) return direction.castInFrame
+  if (!hasVisualStagingForCastFilter(direction)) return direction.castInFrame
+
+  const cleanedGaze = direction.gaze
+    ? direction.gaze.replace(
+        /\b(?:toward|towards|at|to|on)\s+[^.,;]+?\s+(?:off[- ]camera|outside\s+the\s+frame|out\s+of\s+frame)\b/gi,
+        ' '
+      )
+    : ''
+
+  let visualStagingText = [
+    stripSpokenDeliveryClause(direction.frozenMoment),
+    stripSpokenDeliveryClause(direction.startFrame),
+    stripSpokenDeliveryClause(direction.clipAction),
+    stripSpokenDeliveryClause(direction.endFrame),
+    direction.blocking,
+    direction.emotion,
+    direction.propInteraction,
+    cleanedGaze,
+  ]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .join(' ')
+
+  if (!visualStagingText.trim()) return direction.castInFrame
+
+  // Strip any remaining long quoted speech so names inside spoken dialogue never count as visual staging
+  visualStagingText = visualStagingText
+    .replace(/"[^"\n]{10,}"/g, ' ')
+    .replace(/“[^”\n]{10,}”/g, ' ')
+
+  // Mask keyProps (e.g. "Clara's Atmospheric Induction Coil") so possessive prop names do not count as cast
+  for (const prop of direction.keyProps ?? []) {
+    const trimmedProp = prop?.trim()
+    if (!trimmedProp) continue
+    visualStagingText = visualStagingText.replace(
+      new RegExp(escapeRegexLiteral(trimmedProp), 'gi'),
+      ' '
+    )
+  }
+
+  if (COLLECTIVE_STAGING_RE.test(visualStagingText)) {
+    return direction.castInFrame
+  }
+
+  const matched = direction.castInFrame.filter((rawMember) => {
+    const member = rawMember?.trim()
+    if (!member) return false
+    if (
+      new RegExp(`\\b${escapeRegexLiteral(member)}\\b`, 'i').test(visualStagingText)
+    ) {
+      return true
+    }
+    const rawTokens = member
+      .split(/[\s.,'-]+/)
+      .map((tok) => tok.trim().toLowerCase())
+      .filter((tok) => tok.length >= 2 && !CAST_TITLE_STOPWORDS.has(tok))
+    const tokens =
+      rawTokens.some((tok) => tok.length >= 3)
+        ? rawTokens.filter((tok) => tok.length >= 3)
+        : rawTokens
+    return tokens.some((tok) =>
+      new RegExp(`\\b${escapeRegexLiteral(tok)}(?:'s|’s)?\\b`, 'i').test(visualStagingText)
+    )
+  })
+
+  if (matched.length > 0 && matched.length < direction.castInFrame.length) {
+    return matched
+  }
+  return direction.castInFrame
+}
+
 /**
  * Normalize a raw beatDirection payload from the LLM (or persisted JSON).
  *
@@ -219,23 +391,23 @@ export function normalizeBeatDirection(raw: unknown): BeatDirection | undefined 
   )
   if (lightingAccent) direction.lightingAccent = lightingAccent
 
-  const frozenMoment = trimmedString(
-    b.frozenMoment ?? b.frozen_moment ?? b.moment
+  const frozenMoment = stripSpokenDeliveryClause(
+    trimmedString(b.frozenMoment ?? b.frozen_moment ?? b.moment)
   )
   if (frozenMoment) direction.frozenMoment = frozenMoment
 
-  const startFrame = trimmedString(
-    b.startFrame ?? b.start_frame ?? b.openingFrame
+  const startFrame = stripSpokenDeliveryClause(
+    trimmedString(b.startFrame ?? b.start_frame ?? b.openingFrame)
   )
   if (startFrame) direction.startFrame = startFrame
 
-  const clipAction = trimmedString(
-    b.clipAction ?? b.clip_action ?? b.motionAction
+  const clipAction = stripSpokenDeliveryClause(
+    trimmedString(b.clipAction ?? b.clip_action ?? b.motionAction)
   )
   if (clipAction) direction.clipAction = clipAction
 
-  const endFrame = trimmedString(
-    b.endFrame ?? b.end_frame ?? b.closingFrame ?? b.endOn
+  const endFrame = stripSpokenDeliveryClause(
+    trimmedString(b.endFrame ?? b.end_frame ?? b.closingFrame ?? b.endOn)
   )
   if (endFrame) direction.endFrame = endFrame
 
@@ -259,6 +431,10 @@ export function normalizeBeatDirection(raw: unknown): BeatDirection | undefined 
 
   const updatedAt = trimmedString(b.updatedAt ?? b.updated_at)
   if (updatedAt) direction.updatedAt = updatedAt
+
+  if (direction.castInFrame) {
+    direction.castInFrame = filterCastInFrameByVisualStaging(direction)
+  }
 
   return Object.keys(direction).length > 0 ? direction : undefined
 }
@@ -306,8 +482,41 @@ export function normalizeBeatsForProduction(beats: SceneBeat[]): SceneBeat[] {
       beatId = mintBeatId()
     }
     seenBeatIds.add(beatId)
+    let beatDirection = raw.beatDirection
+    if (beatDirection) {
+      const nextFrozen = stripSpokenDeliveryClause(beatDirection.frozenMoment)
+      const nextStart = stripSpokenDeliveryClause(beatDirection.startFrame)
+      const nextClip = stripSpokenDeliveryClause(beatDirection.clipAction)
+      const nextEnd = stripSpokenDeliveryClause(beatDirection.endFrame)
+      const nextCast = filterCastInFrameByVisualStaging(beatDirection)
+      const strippedDelivery =
+        nextFrozen !== beatDirection.frozenMoment ||
+        nextStart !== beatDirection.startFrame ||
+        nextClip !== beatDirection.clipAction ||
+        nextEnd !== beatDirection.endFrame
+      const prunedCast =
+        Array.isArray(beatDirection.castInFrame) &&
+        Array.isArray(nextCast) &&
+        nextCast.length < beatDirection.castInFrame.length
+      if (strippedDelivery || prunedCast) {
+        beatDirection = {
+          ...beatDirection,
+          ...(nextFrozen !== undefined ? { frozenMoment: nextFrozen } : {}),
+          ...(nextStart !== undefined ? { startFrame: nextStart } : {}),
+          ...(nextClip !== undefined ? { clipAction: nextClip } : {}),
+          ...(nextEnd !== undefined ? { endFrame: nextEnd } : {}),
+          ...(nextCast !== undefined ? { castInFrame: nextCast } : {}),
+        }
+        // Clear cached prompt overrides if they baked in pruned cast or spoken delivery quotes
+        if (prunedCast || strippedDelivery) {
+          delete beatDirection.framePrompt
+          delete beatDirection.videoPrompt
+        }
+      }
+    }
     const beat: SceneBeat = {
       ...raw,
+      ...(beatDirection ? { beatDirection } : {}),
       beatId,
       sequenceIndex: index,
     }

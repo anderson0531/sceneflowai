@@ -7,7 +7,7 @@ import { formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
 import { formatLocationScaleDescriptor } from '@/lib/imagen/locationScaleClause'
 import { extractPropScalePhrase, formatPropScaleDescriptor } from '@/lib/imagen/propScaleClause'
 import { extractCharacterHeightPhrase } from '@/lib/imagen/identityTraitsClause'
-import { getSceneBeats } from '@/lib/script/beatMigration'
+import { getSceneBeats, hasVisualStagingForCastFilter } from '@/lib/script/beatMigration'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
@@ -163,18 +163,35 @@ export function resolveBeatElementSelection(args: ResolveBeatVideoReferencesArgs
         characterWardrobes: beatContext.characterWardrobes,
       }
 
-  const characterIds = selection.characterIds?.length
+  let characterIds = selection.characterIds?.length
     ? [...selection.characterIds]
     : beat.characterId
       ? [beat.characterId]
       : []
 
+  if (
+    shouldUseExplicitBeatReferences(beat) &&
+    hasVisualStagingForCastFilter(beat.beatDirection) &&
+    Array.isArray(beat.beatDirection?.castInFrame) &&
+    beatContext.characterIds.length > 0 &&
+    beatContext.characterIds.length < characterIds.length
+  ) {
+    characterIds = [...beatContext.characterIds]
+  }
+
+  const allowedCharSet = new Set(characterIds.map((id) => id.trim().toLowerCase()))
+  const baseWardrobes =
+    selection.characterWardrobes && selection.characterWardrobes.length > 0
+      ? selection.characterWardrobes
+      : beatContext.characterWardrobes ?? []
+  const characterWardrobes =
+    allowedCharSet.size > 0
+      ? baseWardrobes.filter((w) => allowedCharSet.has(w.characterId.trim().toLowerCase()))
+      : baseWardrobes
+
   return {
     characterIds,
-    characterWardrobes:
-      selection.characterWardrobes && selection.characterWardrobes.length > 0
-        ? selection.characterWardrobes
-        : beatContext.characterWardrobes ?? [],
+    characterWardrobes,
     objectRefIds: selection.objectRefIds ?? [],
     locationRefId: selection.locationRefId,
     locationVersionId: selection.locationVersionId,

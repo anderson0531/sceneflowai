@@ -1,4 +1,10 @@
-import { applyBeatsToScene, getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
+import {
+  applyBeatsToScene,
+  filterCastInFrameByVisualStaging,
+  getSceneBeats,
+  isBeatExcluded,
+  stripSpokenDeliveryClause,
+} from '@/lib/script/beatMigration'
 import type {
   BeatDirection,
   BeatReferenceSelection,
@@ -112,7 +118,15 @@ export function selectionFromBeat(
   beat: SceneBeat,
   resolved: ReturnType<typeof resolveBeatElementSelection>
 ): BeatReferenceSelection {
-  if (shouldUseExplicitBeatReferences(beat)) return beat.referenceSelection
+  if (shouldUseExplicitBeatReferences(beat)) {
+    return {
+      ...beat.referenceSelection,
+      characterIds: resolved.characterIds,
+      ...(resolved.characterWardrobes && resolved.characterWardrobes.length > 0
+        ? { characterWardrobes: resolved.characterWardrobes }
+        : {}),
+    }
+  }
   return {
     characterIds: resolved.characterIds,
     objectRefIds: resolved.objectRefIds,
@@ -697,11 +711,19 @@ export function directionFromDirectorPatch(
     'audioCue',
   ] as const
   for (const key of textKeys) {
-    const value = patch[key]?.trim()
+    const rawValue = patch[key]?.trim()
+    const value =
+      key === 'frozenMoment' ||
+      key === 'startFrame' ||
+      key === 'clipAction' ||
+      key === 'endFrame'
+        ? stripSpokenDeliveryClause(rawValue)
+        : rawValue
     if (value) next[key] = value
   }
   if (!next.frozenMoment?.trim() && patch.actionFraming?.trim()) {
-    next.frozenMoment = patch.actionFraming.trim()
+    next.frozenMoment =
+      stripSpokenDeliveryClause(patch.actionFraming.trim()) ?? patch.actionFraming.trim()
   }
   if (!next.frozenMoment?.trim() && next.startFrame?.trim()) {
     next.frozenMoment = next.startFrame.trim()
@@ -711,24 +733,37 @@ export function directionFromDirectorPatch(
   if (patch.transition) next.transition = patch.transition
 
   // If the new patch explicitly names a second library character in its visual
-  // staging (frozenMoment / actionFraming / blocking / gaze) on a non-empty-cast
-  // shot, include that character in castInFrame so their reference plate attaches.
+  // staging (frozenMoment / actionFraming / blocking) on a non-empty-cast shot
+  // without an off-camera listener eyeline, include that character in castInFrame.
   const explicitEmptyCast =
     (Array.isArray(patch.castInFrame) && patch.castInFrame.length === 0) ||
     (Array.isArray(next.castInFrame) && next.castInFrame.length === 0 && !patch.castInFrame)
-  if (!explicitEmptyCast && characters && characters.length > 0) {
+  const hasOffCameraListenerGaze =
+    /\b(?:off[- ]camera|outside\s+the\s+frame|out\s+of\s+frame|unseen\s+listener)\b/i.test(
+      next.gaze ?? ''
+    )
+  if (!explicitEmptyCast && !hasOffCameraListenerGaze && characters && characters.length > 0) {
+    const cleanedGaze = patch.gaze
+      ? patch.gaze.replace(
+          /\b(?:toward|towards|at|to|on)\s+[^.,;]+?\s+(?:off[- ]camera|outside\s+the\s+frame|out\s+of\s+frame)\b/gi,
+          ' '
+        )
+      : undefined
     const patchStagingText = [
-      patch.frozenMoment,
-      patch.actionFraming,
+      stripSpokenDeliveryClause(patch.frozenMoment),
+      stripSpokenDeliveryClause(patch.actionFraming),
       patch.blocking,
-      patch.gaze,
+      cleanedGaze,
     ]
       .filter((part): part is string => Boolean(part?.trim()))
       .join(' ')
+      .replace(/"[^"\n]{10,}"/g, ' ')
+      .replace(/“[^”\n]{10,}”/g, ' ')
     if (patchStagingText.trim()) {
       const detected = detectCharactersInText(
         patchStagingText,
-        characters.filter((c) => c.type !== 'narrator')
+        characters.filter((c) => c.type !== 'narrator'),
+        { excludePhrases: next.keyProps }
       )
       if (detected.length > 0) {
         const currentCast = Array.isArray(next.castInFrame) ? [...next.castInFrame] : []
@@ -747,6 +782,10 @@ export function directionFromDirectorPatch(
         }
       }
     }
+  }
+
+  if (Array.isArray(next.castInFrame)) {
+    next.castInFrame = filterCastInFrameByVisualStaging(next)
   }
 
   return next

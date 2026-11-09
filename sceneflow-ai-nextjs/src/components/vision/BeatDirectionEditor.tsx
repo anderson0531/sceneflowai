@@ -6,7 +6,11 @@ import { toast } from 'sonner'
 import { BeatDirectorDialog } from '@/components/vision/BeatDirectorDialog'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
 import { composeBeatAudioDirection } from '@/lib/audio/syncBeatAudioDirection'
-import { getSceneBeats } from '@/lib/script/beatMigration'
+import {
+  filterCastInFrameByVisualStaging,
+  getSceneBeats,
+  stripSpokenDeliveryClause,
+} from '@/lib/script/beatMigration'
 import type {
   BeatDirection,
   BeatDirectionTransition,
@@ -465,7 +469,7 @@ export function BeatDirectionEditor({
     ])
   }
 
-  const castInFrame = direction?.castInFrame
+  const castInFrame = useMemo(() => filterCastInFrameByVisualStaging(direction), [direction])
   const beatProse =
     beat.kind === 'action'
       ? beat.actionDescription?.trim()
@@ -605,20 +609,23 @@ export function BeatDirectionEditor({
           ) : null}
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            <DirectionTile label="Still" value={direction?.frozenMoment || direction?.startFrame} />
+            <DirectionTile
+              label="Still"
+              value={stripSpokenDeliveryClause(direction?.frozenMoment || direction?.startFrame)}
+            />
             <DirectionTile
               label="Start Frame"
-              value={
+              value={stripSpokenDeliveryClause(
                 direction?.startFrame ||
-                (hasStructuredDirection ? clipDirection.startFrame : undefined)
-              }
+                  (hasStructuredDirection ? clipDirection.startFrame : undefined)
+              )}
             />
             <DirectionTile
               label="Clip Action (10s)"
-              value={
+              value={stripSpokenDeliveryClause(
                 direction?.clipAction ||
-                (hasStructuredDirection ? clipDirection.clipAction : undefined)
-              }
+                  (hasStructuredDirection ? clipDirection.clipAction : undefined)
+              )}
             />
             <DirectionTile label="Camera" value={cameraChips.join(' • ')} />
             <DirectionTile

@@ -14,7 +14,12 @@ import {
   resolveBeatSpeaker,
   type DetectCharactersOptions,
 } from '@/lib/scene/characterDetection'
-import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
+import {
+  filterCastInFrameByVisualStaging,
+  getSceneBeats,
+  hasVisualStagingForCastFilter,
+  isNarratorBeat,
+} from '@/lib/script/beatMigration'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { mentionsWord, propHeadNoun } from '@/lib/script/propNameMatch'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
@@ -398,7 +403,7 @@ export function directedCastForBeat(
   beat: SceneBeat | undefined | null,
   projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters']
 ): ResolveBeatFrameGenerationContextArgs['projectCharacters'] | null {
-  const stated = beat?.beatDirection?.castInFrame
+  const stated = filterCastInFrameByVisualStaging(beat?.beatDirection)
   if (!Array.isArray(stated)) return null
   return resolveDirectedCast(stated, projectCharacters)
 }
@@ -799,7 +804,7 @@ export function resolveVerifiedBeatRefsForApi(args: {
   objectReferences: VisualReference[]
   filmTitle?: string
 }): ReturnType<typeof mapBeatReferenceSelectionForApi> {
-  const selection = shouldUseExplicitBeatReferences(args.beat)
+  let selection = shouldUseExplicitBeatReferences(args.beat)
     ? explicitBeatReferenceSelection({
         beat: args.beat,
         objectReferences: args.objectReferences,
@@ -815,6 +820,42 @@ export function resolveVerifiedBeatRefsForApi(args: {
           filmTitle: args.filmTitle,
         })
       )
+  if (
+    shouldUseExplicitBeatReferences(args.beat) &&
+    hasVisualStagingForCastFilter(args.beat.beatDirection) &&
+    Array.isArray(args.beat.beatDirection?.castInFrame) &&
+    args.projectCharacters.length > 0
+  ) {
+    const directedCast = directedCastForBeat(args.beat, args.projectCharacters)
+    if (
+      directedCast &&
+      directedCast.length > 0 &&
+      directedCast.length < (selection.characterIds?.length ?? 0)
+    ) {
+      const allowedKeys = new Set(
+        directedCast
+          .flatMap((c) => [c.id, c.name])
+          .filter((v): v is string => Boolean(v?.trim()))
+          .map((v) => v.trim().toLowerCase())
+      )
+      const prunedIds = selection.characterIds.filter((id) =>
+        allowedKeys.has(id.trim().toLowerCase())
+      )
+      if (prunedIds.length > 0) {
+        selection = {
+          ...selection,
+          characterIds: prunedIds,
+          ...(selection.characterWardrobes
+            ? {
+                characterWardrobes: selection.characterWardrobes.filter((w) =>
+                  allowedKeys.has(w.characterId.trim().toLowerCase())
+                ),
+              }
+            : {}),
+        }
+      }
+    }
+  }
   return mapBeatReferenceSelectionForApi(
     selection,
     args.projectCharacters,

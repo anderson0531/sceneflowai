@@ -375,6 +375,64 @@ describe('Shot Direction Agent', () => {
     expect(getSceneBeats(next[0])[0].referenceSelection).toEqual(nextSelection)
   })
 
+  it('keeps only the visually staged speaker in castInFrame and referenceSelection when spoken dialogue names other cast', () => {
+    const cast = [
+      { id: 'piper', name: 'Piper Hayes', referenceImage: 'https://blob.example/piper.jpg' },
+      { id: 'gideon', name: 'Gideon Croft', referenceImage: 'https://blob.example/gideon.jpg' },
+      { id: 'ward', name: 'Julian Ward', referenceImage: 'https://blob.example/ward.jpg' },
+    ]
+    const scenes = [
+      {
+        id: 'scene-tunnel',
+        beats: [
+          beat('b-piper', 0, {
+            kind: 'dialogue',
+            character: 'Piper Hayes',
+            characterId: 'piper',
+            line: "[cutting, fierce] Clara entrusted this to Father Sullivan at St. Jude's three hours before Ward's contractors cut her brake lines. Look at the alignment seal, Gideon.",
+          }),
+        ],
+      },
+    ]
+
+    const next = saveDirectorPatchToScenes({
+      scenes,
+      sceneIdx: 0,
+      beatId: 'b-piper',
+      patch: {
+        shotType: 'Medium Shot',
+        cameraAngle: 'low angle',
+        cameraMovement: 'slow push-in',
+        transition: 'CUT',
+        castInFrame: ['Piper Hayes', 'Gideon Croft', 'Julian Ward'],
+        frozenMoment:
+          'Piper Hayes is settled on her right knee on wet subterranean flagstones at screen-left, her spine planted against a dark riveted steel column, holding Clara\'s Atmospheric Induction Coil steady at chest height toward screen-right with her right fingers gripping its rectangular brass chassis; her left hand clenches her damp coat lapel, her jaw is tight, and her lips are parted delivering the line: "Clara entrusted this to Father Sullivan at St. Jude\'s three hours before Ward\'s contractors cut her brake lines. Look at the alignment seal, Gideon."',
+        startFrame:
+          'Piper Hayes is settled on her right knee on wet subterranean flagstones at screen-left, her spine planted against a dark riveted steel column, holding Clara\'s Atmospheric Induction Coil steady at chest height toward screen-right. Her left hand clenches the damp wool lapel of her dark coat against her chest, her lips are parted delivering "Clara entrusted this to Father Sullivan at St. Jude\'s three hours before Ward\'s contractors cut her brake lines. Look at the alignment seal, Gideon.", and her fierce gaze is angled toward upper screen-right off-camera.',
+        blocking:
+          'Piper Hayes is on her right knee on the wet subterranean flagstones at screen-left, her left foot planted flat bearing her forward weight, with her shoulder blades seated firmly against the riveted steel column.',
+        gaze:
+          'Piper Hayes directs her fierce gaze toward upper screen-right, angled slightly off-camera toward an unseen listener outside the frame.',
+        keyProps: ["Clara's Atmospheric Induction Coil"],
+      },
+      referenceSelection: {
+        characterIds: ['piper', 'gideon', 'ward'],
+        objectRefIds: ['coil'],
+        locationRefId: 'tunnel',
+        source: 'user',
+        resolvedAt: '2026-11-09T00:00:00.000Z',
+      },
+      characters: cast,
+      objectReferences: [{ id: 'coil', name: "Clara's Atmospheric Induction Coil" }],
+    })
+
+    const saved = getSceneBeats(next[0])[0]
+    expect(saved.beatDirection?.castInFrame).toEqual(['Piper Hayes'])
+    expect(saved.referenceSelection?.characterIds).toEqual(['piper'])
+    expect(saved.beatDirection?.frozenMoment).not.toContain('Gideon')
+    expect(saved.beatDirection?.frozenMoment).not.toContain('Ward')
+  })
+
   it('is the save the Direct Shot dialog uses', () => {
     expect(read('src/components/vision/BeatDirectionEditor.tsx')).toContain(
       'saveDirectorPatchToScenes({'

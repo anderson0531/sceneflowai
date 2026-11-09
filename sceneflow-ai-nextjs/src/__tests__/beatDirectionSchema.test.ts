@@ -146,4 +146,41 @@ describe('normalizeBeatDirection', () => {
     ])
     expect(beats[0].beatDirection).toBeUndefined()
   })
+
+  it('strips spoken delivery clauses from Still and Start Frame and prunes unreferenced cast from castInFrame', () => {
+    const d = normalizeBeatDirection({
+      shotType: 'Medium Shot',
+      cameraAngle: 'low angle',
+      cameraMovement: 'slow push-in',
+      transition: 'CUT',
+      castInFrame: ['Piper Hayes', 'Gideon Croft', 'Julian Ward'],
+      frozenMoment:
+        'Piper Hayes is settled on her right knee on wet subterranean flagstones at screen-left, her spine planted against a dark riveted steel column, holding Clara\'s Atmospheric Induction Coil steady at chest height toward screen-right with her right fingers gripping its rectangular brass chassis; her left hand clenches her damp coat lapel, her jaw is tight, and her lips are parted delivering the line: "Clara entrusted this to Father Sullivan at St. Jude\'s three hours before Ward\'s contractors cut her brake lines. Look at the alignment seal, Gideon."',
+      startFrame:
+        'Piper Hayes is settled on her right knee on wet subterranean flagstones at screen-left, her spine planted against a dark riveted steel column, holding Clara\'s Atmospheric Induction Coil steady at chest height toward screen-right. Her left hand clenches the damp wool lapel of her dark coat against her chest, her lips are parted delivering "Clara entrusted this to Father Sullivan at St. Jude\'s three hours before Ward\'s contractors cut her brake lines. Look at the alignment seal, Gideon.", and her fierce gaze is angled toward upper screen-right off-camera.',
+      clipAction:
+        'Piper Hayes pushes her right arm further forward into the raking amber lantern beam, tilting the rectangular brass chassis of Clara\'s Atmospheric Induction Coil upward to display its hand-tooled alignment notch and exposed twin copper windings. The camera executes a slow low-angle push-in toward her face as her speech hardens into accusation, her chest heaving with sharp breaths while dense plumes of pale condensation billow into the cold tunnel air.',
+      blocking:
+        'Piper Hayes is on her right knee on the wet subterranean flagstones at screen-left, her left foot planted flat bearing her forward weight, with her shoulder blades seated firmly against the riveted steel column. Her right arm is extended horizontally forward at chest height presenting the coil toward screen-right, while her left hand remains clenched on her damp coat lapel.',
+      emotion:
+        'Piper Hayes: brow contracted into sharp vertical furrows, lower eyelids narrowed with cutting intensity, jaw clenched tight between spoken syllables, neck tendons taut, and chest heaving with controlled, furious breaths.',
+      endFrame:
+        'Piper Hayes holds Clara\'s Atmospheric Induction Coil locked at forward chest height near screen-center, its exposed twin copper windings and hand-tooled alignment notch catching the raking amber lantern light. Her jaw is set in a rigid line, eyes burning toward upper screen-right off-camera, as curling plumes of exhaled breath drift past her cheek in the closer framing.',
+      gaze:
+        'Piper Hayes directs her fierce gaze toward upper screen-right, angled slightly off-camera toward an unseen listener outside the frame.',
+      lightingAccent: 'Specular reflections on dual copper wire coils and paraffin casing.',
+      propInteraction:
+        'Piper Hayes\'s bare right fingers grip the lower edge of the rectangular brass chassis of Clara\'s Atmospheric Induction Coil, angling its dual copper wire windings and hand-tooled alignment notch upward into the raking amber lantern beam.',
+      keyProps: ["Clara's Atmospheric Induction Coil"],
+    })
+
+    expect(d?.castInFrame).toEqual(['Piper Hayes'])
+    expect(d?.frozenMoment).not.toContain('delivering the line:')
+    expect(d?.frozenMoment).not.toContain('Ward\'s contractors')
+    expect(d?.frozenMoment).toMatch(/her jaw is tight, and her lips are parted\.$/)
+    expect(d?.startFrame).not.toContain('delivering "')
+    expect(d?.startFrame).toContain(
+      'her lips are parted, and her fierce gaze is angled toward upper screen-right off-camera.'
+    )
+  })
 })
