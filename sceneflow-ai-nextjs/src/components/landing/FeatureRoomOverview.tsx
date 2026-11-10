@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useLocale } from 'next-intl'
 import { Maximize, Minimize, Pause, Play, Volume2, VolumeX } from 'lucide-react'
+import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { cn } from '@/lib/utils'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import {
@@ -288,38 +289,43 @@ export function FeatureRoomOverview({
             </p>
           </>
         )}
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={togglePlay}
-            disabled={!hasVideo}
-            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3 py-2 text-xs font-medium text-white transition hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:opacity-70"
-            aria-label={filmEngaged && isPlaying ? pauseLabel : playLabel}
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <VideoControlTooltip
+            label={hasVideo ? (filmEngaged && isPlaying ? pauseLabel : playLabel) : comingSoonLabel}
           >
-            {filmEngaged && isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {hasVideo ? (filmEngaged && isPlaying ? pauseLabel : playLabel) : comingSoonLabel}
-          </button>
-          <button
-            type="button"
-            onClick={toggleMute}
-            disabled={!hasVideo}
-            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3 py-2 text-xs font-medium text-white transition hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:opacity-70"
-            aria-label={isMuted ? unmuteLabel : muteLabel}
-          >
-            {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            {isMuted ? unmuteLabel : muteLabel}
-          </button>
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            disabled={!hasVideo}
-            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3 py-2 text-xs font-medium text-white transition hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:opacity-70"
-            aria-label={isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
-            aria-pressed={isFullscreen}
-          >
-            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-            {isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
-          </button>
+            <button
+              type="button"
+              onClick={togglePlay}
+              disabled={!hasVideo}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition hover:border-cyan-400/50 hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-70"
+              aria-label={filmEngaged && isPlaying ? pauseLabel : playLabel}
+            >
+              {filmEngaged && isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </button>
+          </VideoControlTooltip>
+          <VideoControlTooltip label={isMuted ? unmuteLabel : muteLabel}>
+            <button
+              type="button"
+              onClick={toggleMute}
+              disabled={!hasVideo}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition hover:border-cyan-400/50 hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-70"
+              aria-label={isMuted ? unmuteLabel : muteLabel}
+            >
+              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </button>
+          </VideoControlTooltip>
+          <VideoControlTooltip label={isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}>
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              disabled={!hasVideo}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition hover:border-cyan-400/50 hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-70"
+              aria-label={isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
+              aria-pressed={isFullscreen}
+            >
+              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            </button>
+          </VideoControlTooltip>
           {watchLongformHref && watchLongformLabel ? (
             <a
               href={watchLongformHref}

@@ -25,6 +25,7 @@ import {
 } from '@/config/landing/heroVideoLocales'
 import { HeroTheaterModal } from '@/components/landing/HeroTheaterModal'
 import { HeroVideoBackground } from '@/components/landing/HeroVideoBackground'
+import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { NotifyCapture } from '@/components/landing/NotifyCapture'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { getDistributionDestinations } from '@/lib/network/destinations'
@@ -328,60 +329,51 @@ export function HeroSection() {
 
         <div className="absolute inset-x-0 top-16 z-20 flex items-center gap-1.5 bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8 sm:gap-3 lg:top-20">
           <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
-            {isMuted && !isBuffering && (
-              showUnmutePrompt ? (
-                <button
-                  type="button"
-                  data-hero-control
-                  onClick={unmuteWithSound}
-                  aria-label={t('playWithNarration')}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-cyan-400/40 bg-black/70 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:border-cyan-400/60 hover:bg-black/85 sm:h-auto sm:w-auto sm:px-2 sm:py-1 sm:text-sm"
-                >
-                  <Volume2 className="h-4 w-4 shrink-0 text-cyan-400" aria-hidden />
-                  <span className="hidden whitespace-nowrap sm:inline">{t('playWithNarration')}</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  data-hero-control
-                  onClick={unmuteWithSound}
-                  aria-label={t('tapToHear')}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/20 bg-black/60 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white sm:h-auto sm:w-auto sm:px-2 sm:py-1"
-                >
-                  <VolumeX className="h-4 w-4 shrink-0 text-cyan-400" aria-hidden />
-                  <span className="hidden whitespace-nowrap sm:inline">{t('tapToHear')}</span>
-                </button>
-              )
-            )}
-
-            <button
-              type="button"
-              data-hero-control
-              onClick={togglePlay}
-              className="flex h-8 w-8 shrink-0 items-center justify-center text-white transition hover:text-cyan-400"
-              aria-label={isPlaying ? t('pauseBackgroundVideo') : t('playBackgroundVideo')}
+            <VideoControlTooltip
+              label={isPlaying ? t('pauseBackgroundVideo') : t('playBackgroundVideo')}
             >
-              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </button>
-            <button
-              type="button"
-              data-hero-control
-              onClick={toggleMute}
-              className="flex h-8 w-8 shrink-0 items-center justify-center text-white transition hover:text-cyan-400"
-              aria-label={isMuted ? 'Unmute' : 'Mute'}
+              <button
+                type="button"
+                data-hero-control
+                onClick={togglePlay}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-cyan-300"
+                aria-label={isPlaying ? t('pauseBackgroundVideo') : t('playBackgroundVideo')}
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </button>
+            </VideoControlTooltip>
+            <VideoControlTooltip
+              label={
+                isMuted
+                  ? showUnmutePrompt
+                    ? t('playWithNarration')
+                    : t('tapToHear')
+                  : 'Mute'
+              }
             >
-              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </button>
-            <button
-              type="button"
-              data-hero-control
-              onClick={openTheater}
-              className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-black/50 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white sm:h-auto sm:w-auto sm:px-2 sm:py-1"
-              aria-label={t('fullscreen')}
-            >
-              <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span className="hidden whitespace-nowrap sm:inline">{t('fullscreen')}</span>
-            </button>
+              <button
+                type="button"
+                data-hero-control
+                onClick={isMuted ? unmuteWithSound : toggleMute}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-cyan-300 ${
+                  isMuted && showUnmutePrompt ? 'border-cyan-400/45 text-cyan-300' : 'border-white/20'
+                }`}
+                aria-label={isMuted ? 'Unmute' : 'Mute'}
+              >
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </button>
+            </VideoControlTooltip>
+            <VideoControlTooltip label={t('fullscreen')}>
+              <button
+                type="button"
+                data-hero-control
+                onClick={openTheater}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-gray-200 backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-white"
+                aria-label={t('fullscreen')}
+              >
+                <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              </button>
+            </VideoControlTooltip>
           </div>
         </div>
       </section>

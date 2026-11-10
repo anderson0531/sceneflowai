@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2, Pause, Play, Volume2, VolumeX, X } from 'lucide-react'
+import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { getModalVideoPreload } from '@/lib/landing/videoPreload'
 import {
@@ -40,6 +41,7 @@ type TwoModesTheaterModalProps = {
   activeLocaleId?: VideoLocaleId
   onSelectLocale?: (id: VideoLocaleId) => void
   soonLabel?: string
+  languageControl?: React.ReactNode
 }
 
 export function TwoModesTheaterModal({
@@ -55,6 +57,7 @@ export function TwoModesTheaterModal({
   activeLocaleId,
   onSelectLocale,
   soonLabel,
+  languageControl,
 }: TwoModesTheaterModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
@@ -160,7 +163,14 @@ export function TwoModesTheaterModal({
               </div>
             )}
 
-            {videoLocales && activeLocaleId && onSelectLocale && soonLabel ? (
+            {languageControl ? (
+              <div
+                className="absolute top-4 start-4 z-20"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {languageControl}
+              </div>
+            ) : videoLocales && activeLocaleId && onSelectLocale && soonLabel ? (
               <VideoLanguageControl
                 locales={videoLocales}
                 activeLocaleId={activeLocaleId}
@@ -171,41 +181,47 @@ export function TwoModesTheaterModal({
               />
             ) : null}
 
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation()
-                onClose()
-              }}
-              className="absolute top-4 end-4 z-20 rounded-lg border border-white/15 bg-black/50 p-2 text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white"
-              aria-label="Close fullscreen video"
-            >
-              <X className="h-6 w-6" />
-            </button>
+            <VideoControlTooltip label="Close fullscreen video">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onClose()
+                }}
+                className="absolute top-4 end-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/65 text-gray-200 backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-white"
+                aria-label="Close fullscreen video"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </VideoControlTooltip>
 
             <div
               className={cn(
-                'absolute inset-x-0 bottom-0 flex items-center gap-3',
+                'absolute inset-x-0 bottom-0 flex items-center gap-2.5',
                 'bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-10'
               )}
               onClick={(event) => event.stopPropagation()}
             >
-              <button
-                type="button"
-                onClick={togglePlay}
-                className="p-1 text-white transition hover:text-cyan-400"
-                aria-label={isPlaying ? pauseLabel : playLabel}
-              >
-                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-              </button>
-              <button
-                type="button"
-                onClick={toggleMute}
-                className="p-1 text-white transition hover:text-cyan-400"
-                aria-label={isMuted ? unmuteLabel : muteLabel}
-              >
-                {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-              </button>
+              <VideoControlTooltip label={isPlaying ? pauseLabel : playLabel} side="top">
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                  aria-label={isPlaying ? pauseLabel : playLabel}
+                >
+                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </button>
+              </VideoControlTooltip>
+              <VideoControlTooltip label={isMuted ? unmuteLabel : muteLabel} side="top">
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                  aria-label={isMuted ? unmuteLabel : muteLabel}
+                >
+                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                </button>
+              </VideoControlTooltip>
             </div>
           </motion.div>
         </motion.div>

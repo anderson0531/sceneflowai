@@ -258,13 +258,13 @@
     "exitFullscreenOverview": "Exit fullscreen",
     "watchLongformLabel": "Watch the longform",
     "screenshotLabel": "Screenshot",
-    "landingUiLanguagesLabel": "Produce, dub, and regenerate dialogue & signage clips in 44 languages. Full Studio UI and this site are localized for our 6 core Google AI markets:",
+    "landingUiLanguagesLabel": "Deliver true in-scene language sync, stem-separated audio, and regenerated dialogue & signage clips in 44 languages. Full Studio UI and this site ship in English plus our 6 core global AI markets:",
     "rooms": [
       {
         "id": "series-desk",
         "label": "Series Room",
         "headline": "Build a universe once. Produce episodes forever.",
-        "promise": "Develop a multi-episode season with one shared creative bible. Your cast, locations, story threads, and visual DNA carry automatically into every episode you spin up. Producing a standalone film? Skip straight to the Blueprint Room.",
+        "promise": "Develop a multi-episode drama, animated sitcom, documentary, creator podcast channel, or training curriculum from one shared Series Bible. Your locked cast, voice profiles, locations, props, and visual DNA carry automatically into every episode—or skip straight to the Blueprint Room for a standalone film or client memoir.",
         "features": [
           {
             "icon": "newSeries",
@@ -412,12 +412,12 @@
         "id": "blueprint-board",
         "label": "Blueprint Room",
         "headline": "Lock the story and the look before a single frame renders.",
-        "promise": "Whether you are launching an episode from the Series Room or starting a standalone feature, the Blueprint Room is where your creative DNA locks in. Perfect the beat sheet, cast, locations, and visual style here—so the Production Stage builds the right script on the first pass.",
+        "promise": "Launch an episode from your Series Room, pitch a new concept in plain language, or import an existing screenplay (PDF, FDX, Fountain). Lock the beat sheet, cast turnarounds, locations, and Audience Resonance™ scores here—so you validate the story and look before spending a single video credit.",
         "features": [
           {
             "icon": "startBlueprint",
             "title": "Start the Blueprint",
-            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
+            "description": "Bring in a pre-wired episode from your Series Room, pitch a brand-new standalone film or client memoir in plain language, or import an existing screenplay (PDF, FDX, Fountain) to extract characters, beats, and tone automatically.",
             "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
@@ -426,8 +426,8 @@
                   "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
-                  "title": "Standalone film or short",
-                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                  "title": "Plain-language pitch or screenplay import",
+                  "description": "Pitch a new concept in plain language or import an existing PDF, FDX, or Fountain screenplay to generate a structured treatment."
                 },
                 {
                   "title": "Narrated treatment overview",
@@ -619,21 +619,21 @@
               {
                 "icon": "continuity",
                 "title": "The Continuity Library",
-                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
+                "description": "Absolute visual and vocal consistency across your entire film, series, podcast, or client memoir. Lock AI-generated diptych portraits, multi-angle turnaround sheets, cloned voices, era-specific wardrobes, locations, and hero props—or upload live studio camera clips and real family reference photos for hybrid live-action + AI cinema with zero character drift.",
                 "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Cast identity & turnaround locks",
-                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
+                      "title": "Cast identity, voice & turnaround locks",
+                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked or cloned voice profiles across every shot and episode."
                     },
                     {
-                      "title": "Scene-specific wardrobes & props",
-                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
+                      "title": "Scene-specific wardrobes, eras & props",
+                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes, eras, and keepsakes stay unified."
                     },
                     {
-                      "title": "Generate, upload, or surgically edit",
-                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                      "title": "Hybrid live camera & photo uploads",
+                      "description": "Combine uploaded live podcast host cameras, family interviews, and vintage photos seamlessly with age-locked AI reconstructions."
                     },
                     {
                       "title": "Continuity readiness gate",
@@ -837,7 +837,7 @@
               {
                 "icon": "videoAgent",
                 "title": "The Clips Agent",
-                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
+                "description": "Once the Pre-Vis is approved, the Clips Agent renders high-fidelity motion clips and continuous dialogue scene extensions that adhere strictly to your approved stills, Frame-to-Video (`F2V`) start and end anchors, and continuity locks—backed by automated safety pre-flight checks.",
                 "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
                 "learnMore": {
                   "items": [
@@ -846,8 +846,8 @@
                       "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
                     },
                     {
-                      "title": "Strict keyframe & F2V adherence",
-                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                      "title": "Frame-to-Video & continuous scene extensions",
+                      "description": "Chain multi-shot continuous dialogue extensions and strict Start and End keyframe anchors so multi-minute scenes play without jarring clip resets."
                     },
                     {
                       "title": "Automated safety pre-flight",
@@ -971,29 +971,29 @@
               {
                 "icon": "languageStreams",
                 "title": "Streams (Multi-Language)",
-                "description": "Expand your global reach across 44 languages from one master timeline. Selectively regenerate only the specific shots containing spoken dialogue or in-scene text signage while retaining unselected master shots at zero extra credit cost. Extract embedded video audio and strip spoken dialogue (`htdemucs` neural stem separation) so generated SFX and music carry into every dub, and automatically align longer translated dialogue using elastic video slow-down (slowing a `10s` clip up to `15s` at `67%` speed), hybrid optical holds, or pitch-preserved audio tempo matching—while directing in a localized Studio UI.",
+                "description": "Deliver a generational leap beyond legacy voiceover dubbing with true In-Scene Language Sync across 44 languages from one master timeline. Selectively regenerate on-camera facial performance, lip-sync, and in-scene text signage only on spoken or stenciled shots while retaining unselected master action shots at zero extra credit cost. Neural stem separation (`htdemucs`) strips spoken source speech while preserving generated SFX, foley, and musical score—paired with elastic video slow-down (up to `15s` at `67%` speed) so translated performances land on every beat.",
                 "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Selective shot regeneration & retained master clips",
-                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
+                      "title": "True in-scene sync via selective shot regeneration",
+                      "description": "Regenerate only the specific shots containing on-camera spoken dialogue or in-scene signage in your target language while unselected action shots retain the master clip."
                     },
                     {
                       "title": "Dialogue-free stem extraction (keep generated SFX & music)",
-                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                      "description": "Neural stem separation removes spoken source dialogue from embedded clip audio while preserving generated foley, room ambience, and musical score across every language."
                     },
                     {
-                      "title": "Elastic video slow-down & multi-method dub alignment",
-                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                      "title": "Elastic video slow-down & multi-method alignment",
+                      "description": "Align longer translated performances naturally by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting audio tempo up to 1.25x."
                     },
                     {
-                      "title": "Regenerated dialogue & signage clips across 44 languages",
-                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                      "title": "Synchronized dialogue & signage across 44 languages",
+                      "description": "Deliver localized on-camera performances and regenerated in-scene signage across 44 languages so lip movement, props, and speech match every market natively."
                     },
                     {
-                      "title": "Localized Studio UI",
-                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
+                      "title": "7-language native Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, Arabic, and Thai."
                     }
                   ]
                 }
@@ -1001,25 +1001,25 @@
               {
                 "icon": "multilanguageUi",
                 "title": "Multilanguage Studio UI",
-                "description": "Direct, write, and produce in your team's native language across the entire SceneFlow AI Studio. Switch the studio interface on the fly between English, Español (`ES`), Português (`PT`), 中文 (简体) (`ZH`), हिन्दी (`HI`), and العربية (`AR`)—localizing every room, direction control, camera & lighting inspector, continuity library, and timeline while collaborating in real time across global production teams.",
-                "screenshot": "Multilanguage Studio UI — Interactive localized studio workspaces in Español (ES), Português (PT), 中文 (简体), and हिन्दी (HI)",
+                "description": "Direct, write, and produce in your team's native language across the entire SceneFlow AI Studio—while an intelligent English prompt normalization layer keeps underlying visual and motion models free from non-English prompt degradation. Switch the studio interface on the fly across 7 global languages: English, Español (`ES`), Português (`PT`), 中文 (简体) (`ZH`), हिन्दी (`HI`), العربية (`AR`), and ภาษาไทย (`TH`).",
+                "screenshot": "Multilanguage Studio UI — Interactive localized studio workspaces in Español (ES), Português (PT), 中文 (简体), हिन्दी (HI), العربية (AR), and ภาษาไทย (TH)",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Native studio workspace across 6 Tier-A interface languages",
-                      "description": "Switch the entire SceneFlow Studio UI—Series Studio, Blueprint Room, Production Stage, and Screening Room—between English, Spanish, Portuguese, Simplified Chinese, Hindi, and Arabic."
+                      "title": "Native studio workspace across 7 global interface languages",
+                      "description": "Switch the entire SceneFlow Studio UI—Series Room, Blueprint Room, Production Stage, and Screening Room—across English, Spanish, Portuguese, Simplified Chinese, Hindi, Arabic, and Thai."
                     },
                     {
-                      "title": "Localized direction, camera, blocking & continuity controls",
-                      "description": "Every tab, shot rail, camera lens selector, continuity lock, and mixer control renders natively in your selected language so global directors and editors work at full speed."
+                      "title": "3-layer localization with model prompt protection",
+                      "description": "Author stories and beat direction in your native language while SceneFlow automatically normalizes machine image and video prompts to English for peak visual fidelity."
                     },
                     {
                       "title": "Cross-border team collaboration on one shared project",
-                      "description": "A showrunner in Los Angeles, an editor in Madrid, a VFX lead in São Paulo, and a sound designer in Mumbai or Shanghai can each work on the same project in their preferred UI language."
+                      "description": "A showrunner in Los Angeles, an editor in Madrid, a VFX lead in São Paulo, and sound leads in Mumbai, Shanghai, Dubai, or Bangkok can collaborate on one project in their preferred UI language."
                     },
                     {
-                      "title": "Paired with 75+ landing & 44+ dubbing stream languages",
-                      "description": "Combine a native localized Studio UI with 44-language neural voice dubbing and lip-sync streams to produce and distribute globally from day one."
+                      "title": "Paired with 44-language in-scene sync streams",
+                      "description": "Combine a native 7-language Studio UI with 44-language in-scene synchronized video streams to produce and distribute globally from day one."
                     }
                   ]
                 }
@@ -1549,14 +1549,14 @@
       "title": "Two layers of localization: direct in your language, ship in theirs.",
       "pillars": [
         {
-          "badge": "Studio & Site UI · Top 6 Google AI Markets",
+          "badge": "Studio & Site UI · 7 Global Language Markets",
           "title": "Direct in your native language",
-          "description": "Navigate the Studio UI and write plain-language story, camera, and beat direction in English, Spanish, Portuguese, Hindi, Simplified Chinese, or Arabic."
+          "description": "Navigate the Studio UI and write plain-language story, camera, and beat direction in English, Spanish, Portuguese, Hindi, Simplified Chinese, Arabic, or Thai."
         },
         {
-          "badge": "Production Streams · 70+ Languages",
-          "title": "Selective shot regeneration, stem dubbing & elastic video alignment",
-          "description": "Go beyond subtitles: regenerate only dialogue and in-scene signage shots while retaining unselected master shots, strip spoken dialogue from video audio stems to preserve generated SFX and music, and align longer dubbed lines by slowing video clips up to 1.5x."
+          "badge": "In-Scene Sync Streams · 70+ Languages",
+          "title": "True in-scene language sync, stem separation & elastic alignment",
+          "description": "Move far beyond voiceover dubbing: selectively regenerate on-camera dialogue performance and in-scene signage shots while retaining unselected master clips, strip spoken speech from audio stems to preserve generated SFX and score, and align longer translated lines by elastically slowing video up to 1.5x."
         }
       ]
     },
@@ -2329,9 +2329,9 @@
     "badge": "Production Examples",
     "title": "See the Full Pipeline",
     "titleAccent": "in Action",
-    "subtitle": "Each example opens on a short trailer. The longform master — a complete production from Blueprint through Pre-Vis to the final cut — plays in the Screening Room.",
+    "subtitle": "Experience multi-minute, character-locked stories with true in-scene language sync across 7 global languages — each structured as a complete production from Series Bible and Blueprint through Production Stage to the Screening Room.",
     "subtitleTagline": "Long-form productions. Not clips.",
-    "screeningRoomInstruction": "Open the Screening Room first to experience the production the way a reviewer would — switch across Pre-Vis, Clips, Scenes, Chapters, Master, and Promo — then inspect the Series Room, Blueprint Room, and Production Stage underneath.",
+    "screeningRoomInstruction": "Preview the 4-stage Studio pipeline (Series Room, Blueprint Room, Production Stage, and Screening Room) — full interactive reviewer rooms unlock post-launch.",
     "trailerLabel": "Trailer",
     "watchLongform": "Watch the longform",
     "seriesDoor": "Series Room",
@@ -2858,8 +2858,8 @@
         }
       }
     },
-    "explorerHandoff": "These links are a finished production. Explorer is where you make your own.",
-    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
+    "explorerHandoff": "Switch languages with the globe control on any video above — Explorer is where you direct and ship your own.",
+    "languagesBanner": "In-Scene Language Sync across 7 languages (EN · ES · PT · HI · ZH · AR · TH) — featuring 21+ minutes of synchronized Cinematic Drama (7 × 3-minute editions), far beyond voiceover dubbing.",
     "workflowLabel": "Solutions",
     "startProduction": "Start Your Production",
     "cta": "Start Your Production",
@@ -2876,7 +2876,7 @@
       {
         "id": "drama",
         "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
-        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.",
+        "subtitle": "Hold character faces, wardrobe, and locations across multi-minute scenes with zero drift. Switch the globe control across 7 languages (21+ minutes of rendered cinema across seven 3-minute editions) to experience true in-scene performance sync — a major leap beyond dubbing.",
         "badge": "Series-Ready",
         "solutionPillars": [
           {

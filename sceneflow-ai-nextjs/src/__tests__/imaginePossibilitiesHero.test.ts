@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from 'fs'
+import { closeSync, existsSync, openSync, readFileSync, readSync, statSync } from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
@@ -27,6 +27,17 @@ import {
 } from '@/config/landing/productionPipelineDemo'
 
 const ROOT = path.resolve(__dirname, '../..')
+
+function readHeadSync(filePath: string, maxBytes = 262_144): Buffer {
+  const fd = openSync(filePath, 'r')
+  try {
+    const buf = Buffer.allocUnsafe(maxBytes)
+    const bytesRead = readSync(fd, buf, 0, maxBytes, 0)
+    return buf.subarray(0, bytesRead)
+  } finally {
+    closeSync(fd)
+  }
+}
 
 function readSource(relativePath: string): string {
   return readFileSync(path.join(ROOT, relativePath), 'utf8')
@@ -66,10 +77,19 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
     expect(heroComponent).toContain("tHero('fullscreen')")
     expect(heroComponent).toContain('openTwoModesOnPhoneOrTheater')
     expect(heroComponent).toContain('TwoModesTheaterModal')
+    expect(heroComponent).toContain('VideoGlobeLanguageSelector')
+    expect(heroComponent).toContain('VideoControlTooltip')
     expect(heroComponent).toContain('getVideoPreloadStrategy')
     expect(heroComponent).toContain('poster={activePoster}')
     expect(heroComponent).toContain('prefetchCategory')
     expect(heroComponent).toContain('warmNextTrailer')
+
+    const globeControl = readSource('src/components/landing/VideoGlobeLanguageSelector.tsx')
+    expect(globeControl).toContain('Globe')
+    expect(globeControl).toContain('Tooltip')
+    expect(globeControl).toContain('In-Scene Sync')
+    expect(globeControl).toContain('TRAILER_DUB_LOCALE_IDS')
+    expect(globeControl).not.toContain('ChevronDown')
 
     // Ensure removed showcase/example clutter is not rendered in the hero component
     expect(heroComponent).not.toContain('SceneFlow Studio Showcase')
@@ -152,6 +172,14 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
       expect(existsSync(mp4Abs), `missing ${mp4Rel}`).toBe(true)
       expect(statSync(webmAbs).size).toBeGreaterThan(1_000_000)
       expect(statSync(mp4Abs).size).toBeGreaterThan(1_000_000)
+
+      const webmBuf = readHeadSync(webmAbs)
+      const cuesOffset = webmBuf.indexOf(Buffer.from([0x1c, 0x53, 0xbb, 0x6b]), 200)
+      const firstClusterOffset = webmBuf.indexOf(Buffer.from([0x1f, 0x43, 0xb6, 0x75]), 200)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeGreaterThan(0)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeLessThan(
+        firstClusterOffset
+      )
     }
 
     for (const locale of ANIMATED_SERIES_DUB_LOCALE_IDS) {
@@ -169,6 +197,14 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
       expect(existsSync(mp4Abs), `missing ${mp4Rel}`).toBe(true)
       expect(statSync(webmAbs).size).toBeGreaterThan(1_000_000)
       expect(statSync(mp4Abs).size).toBeGreaterThan(1_000_000)
+
+      const webmBuf = readHeadSync(webmAbs)
+      const cuesOffset = webmBuf.indexOf(Buffer.from([0x1c, 0x53, 0xbb, 0x6b]), 200)
+      const firstClusterOffset = webmBuf.indexOf(Buffer.from([0x1f, 0x43, 0xb6, 0x75]), 200)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeGreaterThan(0)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeLessThan(
+        firstClusterOffset
+      )
     }
 
     for (const locale of DOCUMENTARY_DUB_LOCALE_IDS) {
@@ -186,6 +222,14 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
       expect(existsSync(mp4Abs), `missing ${mp4Rel}`).toBe(true)
       expect(statSync(webmAbs).size).toBeGreaterThan(1_000_000)
       expect(statSync(mp4Abs).size).toBeGreaterThan(1_000_000)
+
+      const webmBuf = readHeadSync(webmAbs)
+      const cuesOffset = webmBuf.indexOf(Buffer.from([0x1c, 0x53, 0xbb, 0x6b]), 200)
+      const firstClusterOffset = webmBuf.indexOf(Buffer.from([0x1f, 0x43, 0xb6, 0x75]), 200)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeGreaterThan(0)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeLessThan(
+        firstClusterOffset
+      )
     }
 
     for (const locale of TRAINING_SERIES_DUB_LOCALE_IDS) {
@@ -203,6 +247,14 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
       expect(existsSync(mp4Abs), `missing ${mp4Rel}`).toBe(true)
       expect(statSync(webmAbs).size).toBeGreaterThan(1_000_000)
       expect(statSync(mp4Abs).size).toBeGreaterThan(1_000_000)
+
+      const webmBuf = readHeadSync(webmAbs)
+      const cuesOffset = webmBuf.indexOf(Buffer.from([0x1c, 0x53, 0xbb, 0x6b]), 200)
+      const firstClusterOffset = webmBuf.indexOf(Buffer.from([0x1f, 0x43, 0xb6, 0x75]), 200)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeGreaterThan(0)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeLessThan(
+        firstClusterOffset
+      )
     }
 
     for (const locale of CREATOR_PODCAST_DUB_LOCALE_IDS) {
@@ -220,6 +272,14 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
       expect(existsSync(mp4Abs), `missing ${mp4Rel}`).toBe(true)
       expect(statSync(webmAbs).size).toBeGreaterThan(1_000_000)
       expect(statSync(mp4Abs).size).toBeGreaterThan(1_000_000)
+
+      const webmBuf = readHeadSync(webmAbs)
+      const cuesOffset = webmBuf.indexOf(Buffer.from([0x1c, 0x53, 0xbb, 0x6b]), 200)
+      const firstClusterOffset = webmBuf.indexOf(Buffer.from([0x1f, 0x43, 0xb6, 0x75]), 200)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeGreaterThan(0)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeLessThan(
+        firstClusterOffset
+      )
     }
 
     for (const locale of VIDEO_MEMOIR_DUB_LOCALE_IDS) {
@@ -237,6 +297,14 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
       expect(existsSync(mp4Abs), `missing ${mp4Rel}`).toBe(true)
       expect(statSync(webmAbs).size).toBeGreaterThan(1_000_000)
       expect(statSync(mp4Abs).size).toBeGreaterThan(1_000_000)
+
+      const webmBuf = readHeadSync(webmAbs)
+      const cuesOffset = webmBuf.indexOf(Buffer.from([0x1c, 0x53, 0xbb, 0x6b]), 200)
+      const firstClusterOffset = webmBuf.indexOf(Buffer.from([0x1f, 0x43, 0xb6, 0x75]), 200)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeGreaterThan(0)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeLessThan(
+        firstClusterOffset
+      )
     }
 
     for (const walkId of PRODUCTION_WALK_IDS) {
@@ -248,7 +316,7 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
       const sources = getProductionTrailerSources(walkId, 'en')
       expect(sources.posterSrc).toBe(PRODUCTION_TRAILER_POSTERS[walkId])
       const webmRel = sources.webmSrc.split('?')[0].replace(/^\//, '')
-      const webmBuf = readFileSync(path.join(ROOT, 'public', webmRel))
+      const webmBuf = readHeadSync(path.join(ROOT, 'public', webmRel))
       const cuesOffset = webmBuf.indexOf(Buffer.from([0x1c, 0x53, 0xbb, 0x6b]), 200)
       const firstClusterOffset = webmBuf.indexOf(Buffer.from([0x1f, 0x43, 0xb6, 0x75]), 200)
       expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeGreaterThan(0)

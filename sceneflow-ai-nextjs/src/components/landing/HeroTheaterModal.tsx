@@ -10,6 +10,7 @@ import {
   type HeroVideoLocaleId,
 } from '@/config/landing/heroVideoLocales'
 import { getModalVideoPreload } from '@/lib/landing/videoPreload'
+import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { cn } from '@/lib/utils'
 
 type HeroTheaterModalProps = {
@@ -141,41 +142,47 @@ export function HeroTheaterModal({
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onClose()
-              }}
-              className="absolute top-4 end-4 z-20 rounded-lg bg-black/50 border border-white/15 p-2 text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
-              aria-label="Close fullscreen video"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            <VideoControlTooltip label="Close fullscreen video">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onClose()
+                }}
+                className="absolute top-4 end-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/65 text-gray-200 backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-white"
+                aria-label="Close fullscreen video"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </VideoControlTooltip>
 
             <div
               className={cn(
-                'absolute inset-x-0 bottom-0 flex items-center gap-3',
+                'absolute inset-x-0 bottom-0 flex items-center gap-2.5',
                 'bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-10'
               )}
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                type="button"
-                onClick={togglePlay}
-                className="text-white hover:text-cyan-400 transition p-1"
-                aria-label={isPlaying ? 'Pause' : 'Play'}
-              >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-              </button>
-              <button
-                type="button"
-                onClick={toggleMute}
-                className="text-white hover:text-cyan-400 transition p-1"
-                aria-label={isMuted ? 'Unmute' : 'Mute'}
-              >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-              </button>
+              <VideoControlTooltip label={isPlaying ? 'Pause' : 'Play'} side="top">
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                  aria-label={isPlaying ? 'Pause' : 'Play'}
+                >
+                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                </button>
+              </VideoControlTooltip>
+              <VideoControlTooltip label={isMuted ? 'Unmute' : 'Mute'} side="top">
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                  aria-label={isMuted ? 'Unmute' : 'Mute'}
+                >
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </button>
+              </VideoControlTooltip>
             </div>
           </motion.div>
         </motion.div>

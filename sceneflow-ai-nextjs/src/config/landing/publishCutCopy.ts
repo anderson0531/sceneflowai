@@ -10,16 +10,16 @@ export const PUBLISH_CUT_COPY = {
     title: 'Two layers of localization: direct in your language, ship in theirs.',
     pillars: [
       {
-        badge: 'Studio & Site UI · Top 6 Google AI Markets',
+        badge: 'Studio & Site UI · 7 Global Language Markets',
         title: 'Direct in your native language',
         description:
-          'Navigate the Studio UI and write plain-language story, camera, and beat direction in English, Spanish, Portuguese, Hindi, Simplified Chinese, or Arabic.',
+          'Navigate the Studio UI and write plain-language story, camera, and beat direction in English, Spanish, Portuguese, Hindi, Simplified Chinese, Arabic, or Thai.',
       },
       {
-        badge: 'Production Streams · 70+ Languages',
-        title: 'Selective shot regeneration, stem dubbing & elastic video alignment',
+        badge: 'In-Scene Sync Streams · 70+ Languages',
+        title: 'True in-scene language sync, stem separation & elastic alignment',
         description:
-          'Go beyond subtitles: regenerate only dialogue and in-scene signage shots while retaining unselected master shots, strip spoken dialogue from video audio stems to preserve generated SFX and music, and align longer dubbed lines by slowing video clips up to 1.5x.',
+          'Move far beyond voiceover dubbing: selectively regenerate on-camera dialogue performance and in-scene signage shots while retaining unselected master clips, strip spoken speech from audio stems to preserve generated SFX and score, and align longer translated lines by elastically slowing video up to 1.5x.',
       },
     ],
   },

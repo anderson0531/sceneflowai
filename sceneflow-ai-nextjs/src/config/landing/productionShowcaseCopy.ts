@@ -6,10 +6,10 @@ export const PRODUCTION_SHOWCASE_COPY = {
   title: 'See the Full Pipeline',
   titleAccent: 'in Action',
   subtitle:
-    'Each example opens on a short trailer. The longform master — a complete production from Blueprint through Pre-Vis to the final cut — plays in the Screening Room.',
+    'Experience multi-minute, character-locked stories with true in-scene language sync across 7 global languages — each structured as a complete production from Series Bible and Blueprint through Production Stage to the Screening Room.',
   subtitleTagline: 'Long-form productions. Not clips.',
   screeningRoomInstruction:
-    'Open the Screening Room first to experience the production the way a reviewer would — switch across Pre-Vis, Clips, Scenes, Chapters, Master, and Promo — then inspect the Series Room, Blueprint Room, and Production Stage underneath.',
+    'Preview the 4-stage Studio pipeline (Series Room, Blueprint Room, Production Stage, and Screening Room) — full interactive reviewer rooms unlock post-launch.',
   trailerLabel: 'Trailer',
   watchLongform: 'Watch the longform',
   seriesDoor: 'Series Room',
@@ -81,9 +81,9 @@ export const PRODUCTION_SHOWCASE_COPY = {
     ),
   },
   explorerHandoff:
-    'These links are a finished production. Explorer is where you make your own.',
+    'Switch languages with the globe control on any video above — Explorer is where you direct and ship your own.',
   languagesBanner:
-    'Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.',
+    'In-Scene Language Sync across 7 languages (EN · ES · PT · HI · ZH · AR · TH) — featuring 21+ minutes of synchronized Cinematic Drama (7 × 3-minute editions), far beyond voiceover dubbing.',
   workflowLabel: 'Solutions',
   startProduction: 'Start Your Production',
   cta: 'Start Your Production',
@@ -102,7 +102,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
       id: 'drama',
       title: 'Feature-Length Cinematic Drama. Zero Character Drift.',
       subtitle:
-        'Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.',
+        'Hold character faces, wardrobe, and locations across multi-minute scenes with zero drift. Switch the globe control across 7 languages (21+ minutes of rendered cinema across seven 3-minute editions) to experience true in-scene performance sync — a major leap beyond dubbing.',
       badge: 'Series-Ready',
       solutionPillars: [
         {

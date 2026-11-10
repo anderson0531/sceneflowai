@@ -102,13 +102,15 @@ describe('Production Examples landing section', () => {
     expect(section).not.toContain("t('moreProductionsLabel')")
   })
 
-  it('uses a desktop grid and mobile accordion layout', () => {
+  it('uses a desktop grid and mobile accordion layout with wrapping mobile headers', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
     expect(section).toContain('hidden md:block')
     expect(section).toContain('md:hidden')
     expect(section).toContain('grid grid-cols-1 gap-6 md:grid-cols-2')
     expect(section).toContain('MobileAccordion')
     expect(section).toContain('CardGrid')
+    expect(section).toContain('whitespace-normal break-words')
+    expect(section).not.toContain('truncate text-sm font-bold')
   })
 })
 
@@ -504,10 +506,10 @@ describe('Production showcase videos', () => {
       getProductionShowcaseVideoLocales('drama').map((locale) => [locale.id, locale.src])
     )
 
-    expect(byId.en).toContain('scene-24.mp4')
-    expect(byId.es).toContain('The%20Cinematic%20Drama%20(Spanish).mp4')
-    expect(byId.zh).toContain('The%20Cinematic%20Drama%20(Chinese).mp4')
-    expect(byId.ar).toContain('The%20Cinematic%20Drama%20(Arabic).mp4')
+    expect(byId.en).toContain('English-Video-v11.mp4')
+    expect(byId.es).toContain('Spanish-Video-v1.mp4')
+    expect(byId.zh).toContain('Chinese-Mandarin-Video-v1.mp4')
+    expect(byId.ar).toContain('Arabic-Video-v2.mp4')
   })
 
   it('defaults to English and reports the card as having video', () => {
@@ -566,24 +568,27 @@ describe('Production showcase videos', () => {
     expect(card).not.toContain('localeToggle')
     expect(card).not.toContain('SolutionPillarBody')
     expect(card).toContain('TrailerPlayer')
+    expect(card).toContain('activeLocale={videoLocale}')
+    expect(card).toContain('onSelectLocale={setVideoLocale}')
     expect(card).toContain('enterFullscreenLabel')
     expect(card).toContain('PipelineReviewDialog')
     expect(card).toContain('aria-label="Production review"')
     expect(card).not.toContain('roughDoorLabel')
     expect(card).not.toContain('previsDoorLabel')
-    expect(card).toContain('SCREENING_ROOM_FEATURE_MODES')
-    for (const modeLabel of ['Pre-Vis', 'Clips', 'Scenes', 'Chapters', 'Master', 'Promo']) {
-      expect(card).toContain(`'${modeLabel}'`)
-    }
-    expect(card).toContain('Featured Player')
+    expect(card).not.toContain('Featured Player')
+    expect(card).not.toContain('Open Player')
+    expect(card).toContain('screeningMilestone')
+    expect(card).toContain('supportingMilestones')
+    expect(card).toContain('aria-disabled="true"')
     expect(card).toContain('grid-cols-3')
-    expect(card).toContain('Interactive Production Rooms')
     expect(card.indexOf('aria-label="Production review"')).toBeLessThan(
       card.indexOf('{showDetail && (')
     )
     expect(card).not.toContain('Rough Cut')
     expect(card).not.toContain('>Draft<')
     expect(card).toContain('explorerHandoff')
+    expect(player).toContain('VideoGlobeLanguageSelector')
+    expect(player).toContain('VideoControlTooltip')
     expect(player).toContain("aria-label={isMuted ? 'Unmute' : 'Mute'}")
     expect(player).toContain('video.muted = isMuted')
     expect(player).toContain('muted={isMuted}')
@@ -643,10 +648,10 @@ describe('Production showcase screening embeds', () => {
   it('ships a trailer and pipeline doors on every example before the longform master exists', () => {
     expect(getProductionExampleMedia('drama').isFlagship).toBe(true)
     expect(getProductionExampleMedia('drama').trailerSrc).toBe(
-      '/videos/cinematic-drama-trailer.webm?v=20261107'
+      '/videos/cinematic-drama-trailer.webm?v=20261110'
     )
     expect(getProductionExampleMedia('drama').trailerMp4Src).toBe(
-      '/videos/cinematic-drama-trailer.mp4?v=20261107'
+      '/videos/cinematic-drama-trailer.mp4?v=20261110'
     )
     expect(getProductionExampleMedia('drama').longformHref).toBeNull()
     expect(getProductionExampleMedia('animation').isFlagship).toBe(false)

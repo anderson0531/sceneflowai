@@ -1,19 +1,16 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useLocale } from 'next-intl'
 import {
   ArrowRight,
-  ArrowUpRight,
-  BookOpen,
   ChevronDown,
   ChevronUp,
   Clapperboard,
   Film,
   GraduationCap,
   Heart,
-  Layers,
   Mic,
   Palette,
   Play,
@@ -25,10 +22,13 @@ import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import {
   PRODUCTION_TRAILER_POSTERS,
   getProductionExampleMedia,
+  resolveTrailerDubLocale,
   type ProductionWalkId,
   type ReviewerMilestoneId,
+  type TrailerDubLocaleId,
 } from '@/config/landing/productionPipelineDemo'
 import { TrailerPlayer } from '@/components/landing/TrailerPlayer'
+import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { PipelineReviewDialog } from '@/components/landing/PipelineReviewDialog'
 import { SeriesInputPanel } from '@/components/landing/SeriesInputPanel'
 
@@ -145,9 +145,6 @@ export function ProductionStyleCard({
   explorerHandoff,
   showDetailLabel = 'Show more detail',
   hideDetailLabel = 'Hide detail',
-  featuredPlayerLabel = 'Featured Player',
-  openPlayerLabel = 'Open Player',
-  featureModes,
 }: {
   card: ProductionStyleCardData
   index: number
@@ -169,11 +166,16 @@ export function ProductionStyleCard({
   featureModes?: readonly string[]
 }) {
   const locale = useLocale()
+  const [videoLocale, setVideoLocale] = useState<TrailerDubLocaleId>(() =>
+    resolveTrailerDubLocale(locale)
+  )
+  useEffect(() => {
+    setVideoLocale(resolveTrailerDubLocale(locale))
+  }, [locale])
+
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
-  const media = getProductionExampleMedia(card.id, locale)
-  const resolvedFeatureModes =
-    featureModes && featureModes.length > 0 ? featureModes : SCREENING_ROOM_FEATURE_MODES
+  const media = getProductionExampleMedia(card.id, videoLocale)
   const watchLabel = media.longformRuntimeLabel
     ? `${watchLongformLabel} · ${media.longformRuntimeLabel}`
     : watchLongformLabel
@@ -220,6 +222,8 @@ export function ProductionStyleCard({
           label={trailerLabel}
           enterFullscreenLabel={enterFullscreenLabel}
           exitFullscreenLabel={exitFullscreenLabel}
+          activeLocale={videoLocale}
+          onSelectLocale={setVideoLocale}
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-black/35" />
         <div
@@ -231,89 +235,50 @@ export function ProductionStyleCard({
       </div>
 
       <div className="pointer-events-none relative z-10 flex flex-1 flex-col bg-gradient-to-b from-slate-950/95 via-slate-950 to-slate-950 p-4 sm:p-6">
-        {/* Interactive Example Links — directly below the trailer player for immediate discovery */}
+        {/* Clean Screening Room button with smaller Series Room, Blueprint Room & Production Stage buttons below (disabled pre-credit build) */}
         <nav
           aria-label="Production review"
-          className="pointer-events-auto mb-5 rounded-xl border border-white/10 bg-slate-900/60 p-3 shadow-inner backdrop-blur-sm"
+          title={screeningRoomInstruction}
+          className="pointer-events-auto mb-4 space-y-2"
         >
-          <div className="mb-2.5 flex items-center justify-between gap-2 px-0.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-cyan-300/90">
-              Interactive Production Rooms
-            </span>
-            {screeningRoomInstruction ? (
-              <span className="hidden truncate text-[11px] text-slate-400 sm:inline">
-                {screeningRoomInstruction}
+          {screeningMilestone ? (
+            <VideoControlTooltip label={`${milestoneLabels[screeningMilestone.id]} (Interactive preview coming soon)`}>
+              <span className="block w-full">
+                <button
+                  key={screeningMilestone.id}
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-white/15 bg-slate-900/60 px-4 py-2.5 text-sm font-semibold text-slate-400 opacity-75"
+                >
+                  <Play className={`h-3.5 w-3.5 shrink-0 ${style.accent} opacity-70`} />
+                  <span>{milestoneLabels[screeningMilestone.id]}</span>
+                </button>
               </span>
-            ) : null}
-          </div>
+            </VideoControlTooltip>
+          ) : null}
 
-          <div className="space-y-2.5">
-            {screeningMilestone ? (
-              <button
-                key={screeningMilestone.id}
-                type="button"
-                onClick={() => openReview(screeningMilestone.id)}
-                className={`group/screening relative flex w-full flex-col gap-2.5 rounded-xl bg-gradient-to-r p-3.5 text-left text-white shadow-lg ring-1 ring-white/25 transition-all hover:brightness-110 hover:ring-white/40 ${style.ctaGradient}`}
-              >
-                <div className="flex w-full items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/25 ring-1 ring-white/20">
-                      <Play className="h-4 w-4 fill-current text-white" />
-                    </span>
-                    <div>
-                      <span className="block text-[10px] font-bold uppercase tracking-widest text-white/80">
-                        {featuredPlayerLabel}
-                      </span>
-                      <span className="text-base font-bold tracking-tight text-white">
-                        {milestoneLabels[screeningMilestone.id]}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2.5 py-1 text-xs font-semibold text-white ring-1 ring-white/20 transition-transform group-hover/screening:translate-x-0.5">
-                    {openPlayerLabel}
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {resolvedFeatureModes.map((modeLabel) => (
-                    <span
-                      key={modeLabel}
-                      className="rounded-md bg-black/30 px-2 py-0.5 text-[11px] font-medium text-white/95 ring-1 ring-white/15"
-                    >
-                      {modeLabel}
-                    </span>
-                  ))}
-                </div>
-              </button>
-            ) : null}
-
-            {supportingMilestones.length > 0 ? (
-              <div className="grid grid-cols-3 gap-2">
-                {supportingMilestones.map((milestone) => {
-                  const MilestoneIcon =
-                    milestone.id === 'series'
-                      ? Layers
-                      : milestone.id === 'blueprint'
-                        ? BookOpen
-                        : Clapperboard
-                  return (
+          {supportingMilestones.length > 0 ? (
+            <div className="grid grid-cols-3 gap-1.5">
+              {supportingMilestones.map((milestone) => (
+                <VideoControlTooltip
+                  key={milestone.id}
+                  label={`${milestoneLabels[milestone.id]} (Interactive preview coming soon)`}
+                >
+                  <span className="block min-w-0">
                     <button
-                      key={milestone.id}
                       type="button"
-                      onClick={() => openReview(milestone.id)}
-                      className="group/room flex items-center justify-between gap-1.5 rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2.5 text-left text-xs font-semibold text-slate-200 transition-all hover:border-cyan-400/45 hover:bg-slate-800/90 hover:text-white"
+                      disabled
+                      aria-disabled="true"
+                      className="flex h-full w-full cursor-not-allowed items-center justify-center rounded-md border border-white/10 bg-slate-950/60 px-1.5 py-1.5 text-center text-[11px] font-medium leading-tight text-slate-500 opacity-75 sm:px-2 sm:text-xs"
                     >
-                      <span className="flex min-w-0 items-center gap-1.5">
-                        <MilestoneIcon className={`h-3.5 w-3.5 shrink-0 ${style.accent}`} />
-                        <span className="truncate">{milestoneLabels[milestone.id]}</span>
-                      </span>
-                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform group-hover/room:translate-x-0.5 group-hover/room:-translate-y-0.5 group-hover/room:text-cyan-300" />
+                      <span className="whitespace-normal break-words">{milestoneLabels[milestone.id]}</span>
                     </button>
-                  )
-                })}
-              </div>
-            ) : null}
-          </div>
+                  </span>
+                </VideoControlTooltip>
+              ))}
+            </div>
+          ) : null}
         </nav>
 
         {media.longformHref ? (
@@ -326,13 +291,17 @@ export function ProductionStyleCard({
         ) : null}
 
         {/* Card Title, Subtitle & Detail Toggle */}
-        <div className="mb-3 flex items-start gap-3.5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-900/60 ring-1 ring-white/10">
+        <div className="mb-3 flex items-start gap-3 sm:gap-3.5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-900/60 ring-1 ring-white/10 sm:h-11 sm:w-11">
             <Icon className={`h-5 w-5 ${style.accent}`} />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="mb-1 text-lg font-bold tracking-tight text-white">{card.title}</h3>
-            <p className="text-sm leading-relaxed text-gray-300">{card.subtitle}</p>
+            <h3 className="mb-1 whitespace-normal break-words text-base font-bold leading-snug tracking-tight text-white sm:text-lg">
+              {card.title}
+            </h3>
+            <p className="whitespace-normal break-words text-sm leading-relaxed text-gray-300">
+              {card.subtitle}
+            </p>
           </div>
         </div>
 

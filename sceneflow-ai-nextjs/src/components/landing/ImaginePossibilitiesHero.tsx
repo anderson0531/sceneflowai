@@ -8,6 +8,8 @@ import {
   openTwoModesOnPhoneOrTheater,
   TwoModesTheaterModal,
 } from '@/components/landing/TwoModesTheaterModal'
+import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
+import { VideoGlobeLanguageSelector } from '@/components/landing/VideoGlobeLanguageSelector'
 import {
   EXAMPLE_TRAILER_SCRIPTS,
   IMAGINE_POSSIBILITIES_COPY,
@@ -22,7 +24,9 @@ import {
   getProductionTrailerSources,
   getTrainingSeriesTrailerSources,
   getVideoMemoirTrailerSources,
+  resolveTrailerDubLocale,
   type ProductionWalkId,
+  type TrailerDubLocaleId,
 } from '@/config/landing/productionPipelineDemo'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { readHeroNetworkContext } from '@/lib/landing/heroPlaybackPolicy'
@@ -56,6 +60,9 @@ export function ImaginePossibilitiesHero() {
   )
 
   const [activeId, setActiveId] = useState<ProductionWalkId>('drama')
+  const [videoLocale, setVideoLocale] = useState<TrailerDubLocaleId>(() =>
+    resolveTrailerDubLocale(locale)
+  )
   const [isMuted, setIsMuted] = useState(true)
   const [isPlaying, setIsPlaying] = useState(!prefersReducedMotion)
   const [inViewport, setInViewport] = useState(true)
@@ -63,22 +70,27 @@ export function ImaginePossibilitiesHero() {
   const [isTheaterOpen, setIsTheaterOpen] = useState(false)
   const [videoPreload, setVideoPreload] = useState<VideoPreloadValue>('auto')
   const [prefetchedIds, setPrefetchedIds] = useState<ProductionWalkId[]>([])
+  const pendingSeekRef = useRef<{ time: number; duration: number } | null>(null)
+
+  useEffect(() => {
+    setVideoLocale(resolveTrailerDubLocale(locale))
+  }, [locale])
 
   const activeScript: ExampleTrailerScript =
     EXAMPLE_TRAILER_SCRIPTS.find((item) => item.id === activeId) ?? EXAMPLE_TRAILER_SCRIPTS[0]
   const activeSources =
     activeScript.id === 'drama'
-      ? getCinematicDramaTrailerSources(locale)
+      ? getCinematicDramaTrailerSources(videoLocale)
       : activeScript.id === 'animation'
-        ? getAnimatedSeriesTrailerSources(locale)
+        ? getAnimatedSeriesTrailerSources(videoLocale)
         : activeScript.id === 'documentary'
-          ? getDocumentaryTrailerSources(locale)
+          ? getDocumentaryTrailerSources(videoLocale)
           : activeScript.id === 'training'
-            ? getTrainingSeriesTrailerSources(locale)
+            ? getTrainingSeriesTrailerSources(videoLocale)
             : activeScript.id === 'podcast'
-              ? getCreatorPodcastTrailerSources(locale)
+              ? getCreatorPodcastTrailerSources(videoLocale)
               : activeScript.id === 'memoir'
-                ? getVideoMemoirTrailerSources(locale)
+                ? getVideoMemoirTrailerSources(videoLocale)
                 : { webmSrc: activeScript.webmSrc, mp4Src: activeScript.mp4Src }
   const activePoster = PRODUCTION_TRAILER_POSTERS[activeScript.id]
   const activeCategoryLabel = getCategoryLabel(activeScript)
@@ -120,12 +132,36 @@ export function ImaginePossibilitiesHero() {
     } else {
       video.pause()
     }
-  }, [activeScript.id, inViewport, isMuted, isPlaying, isTheaterOpen, prefersReducedMotion])
+  }, [activeScript.id, videoLocale, inViewport, isMuted, isPlaying, isTheaterOpen, prefersReducedMotion])
 
   const selectCategory = useCallback(
     (id: ProductionWalkId) => {
+      pendingSeekRef.current = null
       setActiveId(id)
       setIsBuffering(true)
+      if (!prefersReducedMotion) {
+        setIsPlaying(true)
+      }
+    },
+    [prefersReducedMotion]
+  )
+
+  const handleSelectVideoLocale = useCallback(
+    (nextLocale: TrailerDubLocaleId) => {
+      const video = videoRef.current
+      if (
+        video &&
+        Number.isFinite(video.currentTime) &&
+        Number.isFinite(video.duration) &&
+        video.duration > 0
+      ) {
+        pendingSeekRef.current = { time: video.currentTime, duration: video.duration }
+      } else {
+        pendingSeekRef.current = null
+      }
+      setVideoLocale(nextLocale)
+      setIsBuffering(true)
+      setIsMuted(false)
       if (!prefersReducedMotion) {
         setIsPlaying(true)
       }
@@ -212,6 +248,20 @@ export function ImaginePossibilitiesHero() {
             muted={isMuted || isTheaterOpen}
             playsInline
             preload={prefersReducedMotion ? 'none' : videoPreload}
+            onLoadedMetadata={(event) => {
+              const pending = pendingSeekRef.current
+              if (!pending) return
+              pendingSeekRef.current = null
+              const video = event.currentTarget
+              if (
+                Number.isFinite(video.duration) &&
+                Math.abs(video.duration - pending.duration) < 3 &&
+                pending.time > 0 &&
+                pending.time < video.duration - 0.5
+              ) {
+                video.currentTime = pending.time
+              }
+            }}
             onEnded={advanceToNextTrailer}
             onPlay={() => setIsPlaying(true)}
             onPause={() => {
@@ -242,7 +292,7 @@ export function ImaginePossibilitiesHero() {
         {prefetchedIds
           .filter((id) => id !== activeScript.id)
           .map((id) => {
-            const nextSources = getProductionTrailerSources(id, locale)
+            const nextSources = getProductionTrailerSources(id, videoLocale)
             return (
               <React.Fragment key={`prefetch-${id}`}>
                 <link rel="prefetch" as="image" href={nextSources.posterSrc} />
@@ -265,34 +315,48 @@ export function ImaginePossibilitiesHero() {
         {/* Top-Right Background Video Controls */}
         <div className="absolute inset-x-0 top-16 z-20 flex items-center justify-end bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8 lg:top-20">
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <button
-              type="button"
-              data-hero-control
-              onClick={togglePlay}
-              className="flex h-8 w-8 shrink-0 items-center justify-center text-white transition hover:text-cyan-400"
-              aria-label={isPlaying ? tHero('pauseBackgroundVideo') : tHero('playBackgroundVideo')}
+            <VideoGlobeLanguageSelector
+              activeLocale={videoLocale}
+              onSelectLocale={handleSelectVideoLocale}
+              variant="hero"
+              align="end"
+              markAsHeroControl
+            />
+            <VideoControlTooltip
+              label={isPlaying ? tHero('pauseBackgroundVideo') : tHero('playBackgroundVideo')}
             >
-              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </button>
-            <button
-              type="button"
-              data-hero-control
-              onClick={toggleMute}
-              className="flex h-8 w-8 shrink-0 items-center justify-center text-white transition hover:text-cyan-400"
-              aria-label={isMuted ? tCommon('unmute') : tCommon('mute')}
-            >
-              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </button>
-            <button
-              type="button"
-              data-hero-control
-              onClick={openTheater}
-              className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-black/50 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white sm:h-auto sm:w-auto sm:px-2 sm:py-1"
-              aria-label={tHero('fullscreen')}
-            >
-              <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span className="hidden whitespace-nowrap sm:inline">{tHero('fullscreen')}</span>
-            </button>
+              <button
+                type="button"
+                data-hero-control
+                onClick={togglePlay}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-cyan-300"
+                aria-label={isPlaying ? tHero('pauseBackgroundVideo') : tHero('playBackgroundVideo')}
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </button>
+            </VideoControlTooltip>
+            <VideoControlTooltip label={isMuted ? tCommon('unmute') : tCommon('mute')}>
+              <button
+                type="button"
+                data-hero-control
+                onClick={toggleMute}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-cyan-300"
+                aria-label={isMuted ? tCommon('unmute') : tCommon('mute')}
+              >
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </button>
+            </VideoControlTooltip>
+            <VideoControlTooltip label={tHero('fullscreen')}>
+              <button
+                type="button"
+                data-hero-control
+                onClick={openTheater}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-gray-200 backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-white"
+                aria-label={tHero('fullscreen')}
+              >
+                <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              </button>
+            </VideoControlTooltip>
           </div>
         </div>
 
@@ -366,6 +430,14 @@ export function ImaginePossibilitiesHero() {
         playLabel={tCommon('play')}
         muteLabel={tCommon('mute')}
         unmuteLabel={tCommon('unmute')}
+        languageControl={
+          <VideoGlobeLanguageSelector
+            activeLocale={videoLocale}
+            onSelectLocale={handleSelectVideoLocale}
+            variant="theater"
+            align="start"
+          />
+        }
       />
     </>
   )

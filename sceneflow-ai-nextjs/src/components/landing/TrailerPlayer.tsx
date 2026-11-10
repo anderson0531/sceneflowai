@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Maximize, Minimize, Pause, Play, Volume2, VolumeX, X } from 'lucide-react'
+import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
+import { VideoGlobeLanguageSelector } from '@/components/landing/VideoGlobeLanguageSelector'
+import type { TrailerDubLocaleId } from '@/config/landing/productionPipelineDemo'
 import { cn } from '@/lib/utils'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import {
@@ -20,6 +23,8 @@ type Props = {
   mode?: 'background' | 'stage'
   enterFullscreenLabel?: string
   exitFullscreenLabel?: string
+  activeLocale?: TrailerDubLocaleId
+  onSelectLocale?: (locale: TrailerDubLocaleId) => void
   className?: string
 }
 
@@ -31,10 +36,13 @@ export function TrailerPlayer({
   mode = 'stage',
   enterFullscreenLabel = 'Enter fullscreen',
   exitFullscreenLabel = 'Exit fullscreen',
+  activeLocale,
+  onSelectLocale,
   className,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const theaterRef = useRef<HTMLVideoElement>(null)
+  const pendingSeekRef = useRef<{ time: number; duration: number } | null>(null)
   const prefersReducedMotion = useReducedMotion()
   const [theaterOpen, setTheaterOpen] = useState(false)
   const [isPlaying, setIsPlaying] = useState(mode === 'background')
@@ -124,6 +132,39 @@ export function TrailerPlayer({
     if (!next) void video.play().catch(() => {})
   }
 
+  const handleSelectLocale = (nextLocale: TrailerDubLocaleId) => {
+    const activeVideo = theaterOpen ? theaterRef.current : videoRef.current
+    if (
+      activeVideo &&
+      Number.isFinite(activeVideo.currentTime) &&
+      Number.isFinite(activeVideo.duration) &&
+      activeVideo.duration > 0
+    ) {
+      pendingSeekRef.current = {
+        time: activeVideo.currentTime,
+        duration: activeVideo.duration,
+      }
+    } else {
+      pendingSeekRef.current = null
+    }
+    setIsMuted(false)
+    onSelectLocale?.(nextLocale)
+  }
+
+  const applyPendingSeek = (video: HTMLVideoElement) => {
+    const pending = pendingSeekRef.current
+    if (!pending) return
+    pendingSeekRef.current = null
+    if (
+      Number.isFinite(video.duration) &&
+      Math.abs(video.duration - pending.duration) < 3 &&
+      pending.time > 0 &&
+      pending.time < video.duration - 0.5
+    ) {
+      video.currentTime = pending.time
+    }
+  }
+
   const expand = () => {
     const video = videoRef.current
     if (!video) return
@@ -181,6 +222,7 @@ export function TrailerPlayer({
           preload={prefersReducedMotion || (background && !nearViewport) ? 'none' : 'metadata'}
           controls={!background || isFullscreen}
           controlsList={background && !isFullscreen ? undefined : 'nodownload'}
+          onLoadedMetadata={(event) => applyPendingSeek(event.currentTarget)}
           onContextMenu={(event) => event.preventDefault()}
           aria-label={label}
         >
@@ -188,37 +230,58 @@ export function TrailerPlayer({
           {mp4 ? <source src={mp4} type="video/mp4" /> : null}
         </video>
         {background ? null : (
-          <button
-            type="button"
-            onClick={expand}
-            className="pointer-events-auto absolute left-3 top-3 z-30 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-1.5 text-xs font-medium text-white hover:bg-black/85"
-            aria-label={enterFullscreenLabel}
-          >
-            <Maximize className="h-3.5 w-3.5" />
-            {enterFullscreenLabel}
-          </button>
+          <div className="pointer-events-auto absolute left-3 top-3 z-30 flex items-center gap-1.5">
+            {activeLocale && onSelectLocale ? (
+              <VideoGlobeLanguageSelector
+                activeLocale={activeLocale}
+                onSelectLocale={handleSelectLocale}
+                variant="card"
+                align="start"
+              />
+            ) : null}
+            <VideoControlTooltip label={enterFullscreenLabel}>
+              <button
+                type="button"
+                onClick={expand}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85"
+                aria-label={enterFullscreenLabel}
+              >
+                <Maximize className="h-3.5 w-3.5" />
+              </button>
+            </VideoControlTooltip>
+          </div>
         )}
       </div>
       {background && hasVideo ? (
-        <div className="pointer-events-auto absolute left-3 top-3 z-30 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggleMute}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-1.5 text-xs font-medium text-white hover:bg-black/85"
-            aria-label={isMuted ? 'Unmute' : 'Mute'}
-          >
-            {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-            {isMuted ? 'Unmute' : 'Mute'}
-          </button>
-          <button
-            type="button"
-            onClick={expand}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-1.5 text-xs font-medium text-white hover:bg-black/85"
-            aria-label={enterFullscreenLabel}
-          >
-            <Maximize className="h-3.5 w-3.5" />
-            {enterFullscreenLabel}
-          </button>
+        <div className="pointer-events-auto absolute left-3 top-3 z-30 flex items-center gap-1.5">
+          {activeLocale && onSelectLocale ? (
+            <VideoGlobeLanguageSelector
+              activeLocale={activeLocale}
+              onSelectLocale={handleSelectLocale}
+              variant="card"
+              align="start"
+            />
+          ) : null}
+          <VideoControlTooltip label={isMuted ? 'Unmute' : 'Mute'}>
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85"
+              aria-label={isMuted ? 'Unmute' : 'Mute'}
+            >
+              {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+            </button>
+          </VideoControlTooltip>
+          <VideoControlTooltip label={enterFullscreenLabel}>
+            <button
+              type="button"
+              onClick={expand}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85"
+              aria-label={enterFullscreenLabel}
+            >
+              <Maximize className="h-3.5 w-3.5" />
+            </button>
+          </VideoControlTooltip>
         </div>
       ) : null}
 
@@ -233,6 +296,7 @@ export function TrailerPlayer({
             loop={background}
             playsInline
             controlsList="nodownload"
+            onLoadedMetadata={(event) => applyPendingSeek(event.currentTarget)}
             onContextMenu={(event) => event.preventDefault()}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
@@ -240,45 +304,67 @@ export function TrailerPlayer({
             {webm ? <source src={webm} type="video/webm" /> : null}
             {mp4 ? <source src={mp4} type="video/mp4" /> : null}
           </video>
-          <button
-            type="button"
-            onClick={() => setTheaterOpen(false)}
-            className="absolute right-4 top-4 z-20 rounded-lg border border-white/15 bg-black/50 p-2 text-gray-200 hover:text-white"
-            aria-label={exitFullscreenLabel}
-          >
-            <X className="h-6 w-6" />
-          </button>
-          <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-10">
+          {activeLocale && onSelectLocale ? (
+            <div className="absolute left-4 top-4 z-20">
+              <VideoGlobeLanguageSelector
+                activeLocale={activeLocale}
+                onSelectLocale={handleSelectLocale}
+                variant="theater"
+                align="start"
+              />
+            </div>
+          ) : null}
+          <VideoControlTooltip label={exitFullscreenLabel}>
             <button
               type="button"
-              onClick={() => {
-                const video = theaterRef.current
-                if (!video) return
-                if (video.paused) void video.play().catch(() => {})
-                else video.pause()
-              }}
-              className="p-1 text-white hover:text-cyan-400"
-              aria-label={isPlaying ? 'Pause' : 'Play'}
+              onClick={() => setTheaterOpen(false)}
+              className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/65 text-gray-200 backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-white"
+              aria-label={exitFullscreenLabel}
             >
-              {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              <X className="h-5 w-5" />
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                const video = theaterRef.current
-                if (!video) return
-                video.muted = !video.muted
-                setIsMuted(video.muted)
-              }}
-              className="p-1 text-white hover:text-cyan-400"
-              aria-label={isMuted ? 'Unmute' : 'Mute'}
-            >
-              {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-            </button>
-            <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-white">
-              <Minimize className="h-3.5 w-3.5" />
-              {exitFullscreenLabel}
-            </span>
+          </VideoControlTooltip>
+          <div className="absolute inset-x-0 bottom-0 flex items-center gap-2.5 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-10">
+            <VideoControlTooltip label={isPlaying ? 'Pause' : 'Play'} side="top">
+              <button
+                type="button"
+                onClick={() => {
+                  const video = theaterRef.current
+                  if (!video) return
+                  if (video.paused) void video.play().catch(() => {})
+                  else video.pause()
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </button>
+            </VideoControlTooltip>
+            <VideoControlTooltip label={isMuted ? 'Unmute' : 'Mute'} side="top">
+              <button
+                type="button"
+                onClick={() => {
+                  const video = theaterRef.current
+                  if (!video) return
+                  video.muted = !video.muted
+                  setIsMuted(video.muted)
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                aria-label={isMuted ? 'Unmute' : 'Mute'}
+              >
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </button>
+            </VideoControlTooltip>
+            <VideoControlTooltip label={exitFullscreenLabel} side="top">
+              <button
+                type="button"
+                onClick={() => setTheaterOpen(false)}
+                className="ml-auto flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                aria-label={exitFullscreenLabel}
+              >
+                <Minimize className="h-4 w-4" />
+              </button>
+            </VideoControlTooltip>
           </div>
         </div>,
         document.body

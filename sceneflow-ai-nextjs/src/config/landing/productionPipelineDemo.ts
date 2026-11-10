@@ -13,15 +13,15 @@
 export const FLAGSHIP_PRODUCTION_ID = 'drama' as const
 
 export const CINEMATIC_DRAMA_SOURCE_BLOB_URL =
-  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/scene-24.mp4'
+  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/English-Video-v11.mp4'
 
-export const CINEMATIC_DRAMA_TRAILER_VERSION = '20261107'
+export const CINEMATIC_DRAMA_TRAILER_VERSION = '20261110'
 
 /** Same-path public files. The query busts previously cached trailers. */
 export const CINEMATIC_DRAMA_TRAILER_WEBM = `/videos/cinematic-drama-trailer.webm?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`
 export const CINEMATIC_DRAMA_TRAILER_MP4 = `/videos/cinematic-drama-trailer.mp4?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`
 
-export const CINEMATIC_DRAMA_DUB_LOCALE_IDS = [
+export const TRAILER_DUB_LOCALE_IDS = [
   'en',
   'es',
   'pt',
@@ -31,7 +31,31 @@ export const CINEMATIC_DRAMA_DUB_LOCALE_IDS = [
   'th',
 ] as const
 
+export type TrailerDubLocaleId = (typeof TRAILER_DUB_LOCALE_IDS)[number]
+
+export function resolveTrailerDubLocale(locale?: string): TrailerDubLocaleId {
+  const cleaned = (locale ?? 'en').trim().toLowerCase()
+  if (cleaned.startsWith('zh')) return 'zh'
+  const base = cleaned.split(/[-_]/)[0] ?? 'en'
+  if ((TRAILER_DUB_LOCALE_IDS as readonly string[]).includes(base)) {
+    return base as TrailerDubLocaleId
+  }
+  return 'en'
+}
+
+export const CINEMATIC_DRAMA_DUB_LOCALE_IDS = TRAILER_DUB_LOCALE_IDS
+
 export type CinematicDramaDubLocaleId = (typeof CINEMATIC_DRAMA_DUB_LOCALE_IDS)[number]
+
+export const CINEMATIC_DRAMA_SOURCE_BLOB_URLS: Record<CinematicDramaDubLocaleId, string> = {
+  en: CINEMATIC_DRAMA_SOURCE_BLOB_URL,
+  es: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Spanish-Video-v1.mp4',
+  pt: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Portuguese-Video-v1.mp4',
+  hi: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Hindi-Video-v1.mp4',
+  zh: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Chinese-Mandarin-Video-v1.mp4',
+  ar: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Arabic-Video-v2.mp4',
+  th: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Thai-Video-v2.mp4',
+}
 
 export const CINEMATIC_DRAMA_DUB_TRAILERS: Record<
   CinematicDramaDubLocaleId,

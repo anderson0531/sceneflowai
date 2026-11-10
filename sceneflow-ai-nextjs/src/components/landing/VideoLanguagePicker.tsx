@@ -1,6 +1,7 @@
 'use client'
 
-import { ChevronDown, Languages } from 'lucide-react'
+import React, { useState } from 'react'
+import { Globe } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import {
   DropdownMenu,
@@ -10,6 +11,12 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import type { VideoLocale, VideoLocaleId } from '@/config/landing/videoLocales'
 import { cn } from '@/lib/utils'
 
@@ -29,7 +36,7 @@ export type VideoLanguageControlProps = {
 }
 
 /**
- * Compact language control for landing video players — dropdown at all breakpoints.
+ * Icon-only Globe language control with tooltip for landing video players.
  */
 export function VideoLanguageControl({
   locales,
@@ -43,13 +50,19 @@ export function VideoLanguageControl({
   onOpenChange,
 }: VideoLanguageControlProps) {
   const tHero = useTranslations('hero')
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const stopPointerPropagation = (event: React.SyntheticEvent) => {
     event.stopPropagation()
   }
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    setMenuOpen(nextOpen)
+    onOpenChange?.(nextOpen)
+  }
+
   const handleSelect = (value: string) => {
-    onOpenChange?.(false)
+    handleOpenChange(false)
     onSelect(value as VideoLocaleId)
   }
 
@@ -63,6 +76,7 @@ export function VideoLanguageControl({
 
   const active = locales.find((locale) => locale.id === activeLocaleId)
   const menuLabel = 'Language'
+  const tooltipLabel = active ? `${menuLabel} (${nativeLabelOf(active.id)})` : menuLabel
 
   return (
     <div
@@ -75,29 +89,34 @@ export function VideoLanguageControl({
       onPointerDown={stopPointerPropagation}
       onClick={stopPointerPropagation}
     >
-      <DropdownMenu onOpenChange={onOpenChange}>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            aria-label={menuLabel}
-            onPointerDown={stopPointerPropagation}
-            onClick={stopPointerPropagation}
-            className={cn(
-              'flex min-w-0 items-center gap-1.5 rounded-lg border border-white/15 bg-black/50 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white',
-              variant === 'inline'
-                ? 'w-auto max-w-[9rem] shrink px-2 py-1 sm:max-w-xs'
-                : 'px-2.5 py-1.5'
-            )}
-          >
-            <Languages className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
-            <span className="truncate">{active ? nativeLabelOf(active.id) : ''}</span>
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
-          </button>
-        </DropdownMenuTrigger>
+      <DropdownMenu open={menuOpen} onOpenChange={handleOpenChange}>
+        <TooltipProvider delayDuration={150}>
+          <Tooltip open={menuOpen ? false : undefined}>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={tooltipLabel}
+                  onPointerDown={stopPointerPropagation}
+                  onClick={stopPointerPropagation}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-gray-200 backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-white"
+                >
+                  <Globe className="h-4 w-4 shrink-0 text-cyan-400" aria-hidden />
+                </button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              className="z-[120] border border-white/15 bg-slate-900/95 px-2.5 py-1 text-xs font-medium text-white shadow-lg backdrop-blur-md"
+            >
+              {tooltipLabel}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
         <DropdownMenuContent
           align={align}
-          className="w-60 border-white/10 bg-slate-900 text-gray-100"
+          className="z-[110] w-60 border-white/10 bg-slate-900 text-gray-100"
           onPointerDown={stopPointerPropagation}
           onClick={stopPointerPropagation}
           onCloseAutoFocus={(event) => event.preventDefault()}

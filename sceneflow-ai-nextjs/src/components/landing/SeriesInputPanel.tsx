@@ -68,12 +68,14 @@ export function SeriesInputPanel({ cardId }: { cardId: string }) {
   return (
     <div className="pointer-events-auto mb-4 rounded-xl border border-white/10 bg-black/45 p-3.5">
       <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-cyan-300">
             {panelCopy?.headerLabel || 'Series Bible & Episode 1'}
           </span>
           <span className="text-white/25">·</span>
-          <span className="text-sm font-bold text-white">{series.showTitle}</span>
+          <span className="whitespace-normal break-words text-sm font-bold text-white">
+            {series.showTitle}
+          </span>
         </div>
         <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2.5 py-0.5 text-[11px] font-medium text-cyan-200">
           {series.genre}

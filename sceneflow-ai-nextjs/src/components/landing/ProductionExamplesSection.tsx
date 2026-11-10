@@ -78,11 +78,15 @@ function MobileAccordion({
           className="overflow-hidden rounded-2xl border border-gray-700/40 bg-slate-900/50"
         >
           <AccordionTrigger className="px-4 py-4 text-left hover:no-underline [&[data-state=open]>svg]:rotate-180">
-            <div className="flex items-center gap-3 pr-4">
-              <Clapperboard className="h-5 w-5 shrink-0 text-cyan-400" />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-white">{card.title}</p>
-                <p className="mt-0.5 truncate text-xs text-gray-400">{card.badge}</p>
+            <div className="flex min-w-0 flex-1 items-start gap-3 pr-3">
+              <Clapperboard className="mt-0.5 h-5 w-5 shrink-0 text-cyan-400" />
+              <div className="min-w-0 flex-1">
+                <p className="whitespace-normal break-words text-sm font-bold leading-snug text-white">
+                  {card.title}
+                </p>
+                <p className="mt-0.5 whitespace-normal break-words text-xs text-gray-400">
+                  {card.badge}
+                </p>
               </div>
             </div>
           </AccordionTrigger>
@@ -150,7 +154,7 @@ export default function ProductionExamplesSection() {
             <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-1 text-sm font-semibold text-white">
               {t('subtitleTagline')}
             </span>
-            <span className="inline-flex items-center rounded-full border border-white/10 bg-slate-900/80 px-3.5 py-1 text-xs font-medium text-cyan-200">
+            <span className="inline-flex max-w-2xl items-center rounded-2xl border border-white/10 bg-slate-900/80 px-3.5 py-1.5 text-center text-xs font-medium leading-relaxed text-cyan-200 sm:rounded-full sm:py-1">
               {t('languagesBanner')}
             </span>
           </div>
