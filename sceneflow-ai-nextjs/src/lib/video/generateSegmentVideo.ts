@@ -31,7 +31,10 @@ import {
 } from '@/lib/vision/referenceImageBinding'
 import { isVertexRateLimitMessage, VERTEX_RATE_LIMIT_RETRY_AFTER_SECONDS } from '@/lib/gemini/vertexRateLimit'
 import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
-import { veoRefsToPrioritized } from '@/lib/video/normalizeReferenceImages'
+import {
+  prioritizeAndCapOmniVideoReferences,
+  veoRefsToPrioritized,
+} from '@/lib/video/normalizeReferenceImages'
 import { isVeoVideoRefValid } from '@/lib/gemini/geminiStudioVideoClient'
 import { getVideoDurationFromBuffer } from '@/lib/video/serverVideoDuration'
 import { separateAudioStemsWithRetry, type StemSeparationResult } from '@/lib/audio/stemSeparation'
@@ -270,7 +273,7 @@ export async function generateSegmentVideoCore(
     previousSegmentVeoRefExpiry,
     previousSegmentAssetUrl,
     previousSegmentLastFrameUrl,
-    referenceImages,
+    referenceImages: rawReferenceImages,
     sceneImageUrl,
     segmentIndex = 0,
     totalSegments = 1,
@@ -309,6 +312,9 @@ export async function generateSegmentVideoCore(
     expressMode,
     useBeatFrameAsStart = false,
   } = input
+
+  // Enforce Omni reference cap (max 8) and strict priority: Character -> Wardrobe -> Location -> Props
+  const referenceImages = prioritizeAndCapOmniVideoReferences(rawReferenceImages)
 
   const labeledRefUrls =
     referenceImages?.map((r) => r.url).filter((url): url is string => Boolean(url)) || []

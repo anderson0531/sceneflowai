@@ -144,9 +144,15 @@ import {
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
 import {
+  consolidateBeatCharacterRefsIntoPipBadges,
   cropIdentityReferenceImagesForPro,
   expandLeftoverDiptychSheetsIntoDualSlots,
 } from '@/lib/character/composeIdentityWardrobeDiptych'
+import {
+  persistCombinedCharacterRefUrl,
+  uploadCombinedCharacterRef,
+  wardrobeExpectedFingerprint,
+} from '@/lib/character/combinedCharacterRef'
 import { overlayLocationScaleOnReferenceImages } from '@/lib/vision/locationScaleOverlay'
 import {
   buildCombinedCharacterConsumptionLine,
@@ -660,8 +666,8 @@ async function postGenerateImage(req: NextRequest) {
       /** Pre-resolved look from an Express run — skips per-beat re-derivation. */
       lookbook: passedLookbook,
       generationMode = 'default',
-      includeWardrobeReferenceImages = false,
-      includeWardrobeDiptych = false,
+      includeWardrobeReferenceImages = true,
+      includeWardrobeDiptych = true,
       fromDialog = false,
       negativePrompt,
       thinkingLevel,
@@ -1856,7 +1862,7 @@ async function postGenerateImage(req: NextRequest) {
       }
       const hasWardrobeDiptych = refPair.hasWardrobeDiptych
       const wardrobeDiptychUrl = refPair.wardrobeDiptychUrl
-      const identitySlotUrl = refPair.identityUrl
+      const identitySlotUrl = hasWardrobeDiptych ? undefined : refPair.identityUrl
       const identityImageUrl = refPair.identityUrl
       const wardrobeImageUrl = includeWardrobeReferenceImages ? refPair.wardrobeUrl : undefined
       const hasDualReferences = refPair.hasDualReferences
@@ -2072,7 +2078,52 @@ async function postGenerateImage(req: NextRequest) {
       }
     })
 
-    if (characterReferences.some((ref: any) => ref.hasWardrobeDiptych || ref.isStoredPip)) {
+    if (
+      includeWardrobeDiptych &&
+      characterReferences.some(
+        (ref: any) => ref.hasDualReferences || ref.hasWardrobeDiptych || ref.isStoredPip
+      )
+    ) {
+      characterReferences = await consolidateBeatCharacterRefsIntoPipBadges(characterReferences, {
+        persistCombined: async ({ ref, composite }) => {
+          const r = ref as {
+            characterId?: string
+            wardrobeId?: string
+            resolvedWardrobe?: {
+              name?: string
+              description?: string
+              accessories?: string
+              appearanceNotes?: string
+            } | null
+          }
+          if (!projectId || !r.characterId || !r.wardrobeId) return null
+          const blobUrl = await uploadCombinedCharacterRef({
+            composite,
+            projectId,
+            characterId: r.characterId,
+            wardrobeId: r.wardrobeId,
+          })
+          if (!blobUrl) return null
+          await persistCombinedCharacterRefUrl({
+            projectId,
+            characterId: r.characterId,
+            wardrobeId: r.wardrobeId,
+            combinedCharacterRefUrl: blobUrl,
+            expectedFingerprint: wardrobeExpectedFingerprint(r.resolvedWardrobe || {}),
+          })
+          return blobUrl
+        },
+      })
+      for (const ref of characterReferences) {
+        if (ref.identityReferenceId || ref.wardrobeReferenceId || ref.diptychReferenceId) {
+          console.log(
+            `[Scene Image] ${ref.name} diptychRef: ${ref.diptychReferenceId ?? 'none'}, identityRef: ${ref.identityReferenceId ?? 'none'}, wardrobeRef: ${ref.wardrobeReferenceId ?? 'none'}`
+          )
+        }
+      }
+    } else if (
+      characterReferences.some((ref: any) => ref.hasWardrobeDiptych || ref.isStoredPip)
+    ) {
       characterReferences = await expandLeftoverDiptychSheetsIntoDualSlots(characterReferences)
       for (const ref of characterReferences) {
         if (ref.identityReferenceId || ref.wardrobeReferenceId || ref.diptychReferenceId) {

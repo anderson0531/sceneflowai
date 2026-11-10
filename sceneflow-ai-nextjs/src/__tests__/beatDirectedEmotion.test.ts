@@ -321,7 +321,7 @@ describe('generate-image beat frame acting and wardrobe regression guard', () =>
     expect(source).toMatch(/buildSubjectCountGuardrail/)
     expect(source).toContain('...(effectiveImageTier ? { modelTier: effectiveImageTier } : {})')
     expect(source).toContain('expandLeftoverDiptychSheetsIntoDualSlots')
-    expect(source).not.toContain('consolidateBeatCharacterRefsIntoPipBadges')
+    expect(source).toContain('consolidateBeatCharacterRefsIntoPipBadges')
     expect(source).toContain('Assembled scene prompt preview')
     expect(source).not.toContain('using ONLY "person [N]" tokens')
     const assemblySource = readFileSync(

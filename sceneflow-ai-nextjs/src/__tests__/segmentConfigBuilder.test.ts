@@ -3,12 +3,14 @@ import type { SceneSegment } from '@/components/vision/scene-production/types'
 import {
   applyEndFrameUrlToProductionSegments,
   applyStartFrameUrlToProductionSegments,
+  buildConsolidatedTakeConfig,
   buildDraftVideoGenerationConfig,
   detectRecommendedMethod,
   f2vStartFromPreviousEnd,
   resolveEffectiveStartFrameUrl,
   resolveExpressGenerationMethod,
   resolveF2VFrameUrls,
+  resolveInitialTakeReferenceImages,
   resolveSegmentFrameUrls,
   shouldAttachBeatStartFrame,
 } from '@/lib/vision/segmentConfigBuilder'
@@ -452,5 +454,187 @@ describe('buildDraftVideoGenerationConfig', () => {
     expect(config.startFrameUrl).toBeNull()
     expect(config.useBeatFrameAsStart).toBe(false)
     expect(config.mode).toBe('REF')
+  })
+})
+
+describe('buildConsolidatedTakeConfig & resolveInitialTakeReferenceImages', () => {
+  it('preselects ID-keyed beat character PiP references and matches DirectorDialog Take settings on Quick Generate Clip', () => {
+    const segment = makeSegment({
+      dialogueLines: [{ id: 'dl-1', character: 'Gideon Croft', line: 'The current bleeds out.' }],
+      shotType: 'Medium Close-Up',
+    })
+    const beat = {
+      beatId: BEAT_ID,
+      kind: 'dialogue',
+      character: 'Gideon Croft',
+      line: 'The current bleeds out.',
+      storyboardImageUrl: LIVE_BEAT_URL,
+      beatDirection: {
+        shotType: 'Medium Close-Up',
+        castInFrame: ['Gideon Croft'],
+        startFrame: 'Gideon Croft leans forward toward the slate wall.',
+      },
+      referenceSelection: {
+        characterIds: ['char-gideon-uuid'],
+        locationRefId: 'loc-vault',
+        objectRefIds: [],
+        source: 'user',
+        resolvedAt: '2026-11-10T00:00:00.000Z',
+      },
+    }
+    const projectCharacters = [
+      {
+        id: 'char-gideon-uuid',
+        name: 'Gideon Croft',
+        referenceImage: 'https://example.com/gideon-portrait.jpg',
+        visionDescription:
+          'A man in his early 50s with warm medium-brown skin, salt-and-pepper hair, and a short sculpted beard.',
+        wardrobes: [
+          {
+            id: 'w-vault',
+            name: 'Vault Archivist',
+            description: 'Dark charcoal canvas archivist smock over thermal underlayers',
+            sceneNumbers: [1],
+            fullBodyUrl: 'https://example.com/gideon-wardrobe.jpg',
+            combinedCharacterRefUrl: 'https://example.com/gideon-pip.jpg',
+          },
+        ],
+      },
+    ]
+    const guideContext = {
+      scene: { heading: 'INT. FREIGHT TUNNEL VAULT - NIGHT', dialogue: [] } as never,
+      sceneIndex: 0,
+      projectCharacters,
+      locationReferences: [
+        {
+          id: 'loc-vault',
+          location: 'FREIGHT TUNNEL VAULT',
+          locationDisplay: 'Freight Tunnel Vault',
+          imageUrl: 'https://example.com/vault.jpg',
+        },
+      ],
+      objectReferences: [],
+      fullScene: { heading: 'INT. FREIGHT TUNNEL VAULT - NIGHT', beats: [beat] },
+    }
+
+    const consolidated = buildConsolidatedTakeConfig({
+      segment,
+      allSegments: [segment],
+      sceneImageUrl: 'https://example.com/scene.jpg',
+      guideContext,
+      quality: 'draft',
+      generationMode: 'standard',
+      sourceMethod: 'reference',
+    })
+
+    expect(consolidated.mode).toBe('REF')
+    expect(consolidated.videoProvider).toBe('vertex')
+    expect(consolidated.startFrameUrl).toBeNull()
+    expect(consolidated.endFrameUrl).toBeNull()
+    expect(consolidated.useBeatFrameAsStart).toBe(false)
+    expect(consolidated.expressMode).toBeUndefined()
+    expect(consolidated.frameRate).toBe(24)
+    expect(consolidated.thinkingLevel).toBeDefined()
+    expect(consolidated.resolution).toBe('720p')
+    expect(consolidated.qualityTier).toBe('fast')
+
+    const refs = consolidated.referenceImages as Array<{
+      url: string
+      refRole?: string
+      characterName?: string
+      wardrobeDescription?: string
+      identityTraits?: string
+    }>
+    expect(refs).toBeDefined()
+    const charRef = refs.find((r) => r.characterName === 'Gideon Croft')
+    expect(charRef?.url).toBe('https://example.com/gideon-pip.jpg')
+    expect(charRef?.refRole).toBe('wardrobe-diptych')
+    expect(charRef?.identityTraits).toContain('short sculpted beard')
+    expect(charRef?.wardrobeDescription).toContain('archivist smock')
+  })
+
+  it('never hijacks Standard Reference mode into I2V from a static storyboard still when 0 refs resolve', () => {
+    const segment = makeSegment()
+    const beat = {
+      beatId: BEAT_ID,
+      kind: 'action',
+      actionDescription: 'Wind sweeps across the empty corridor.',
+      storyboardImageUrl: LIVE_BEAT_URL,
+      beatDirection: {
+        shotType: 'Wide Shot',
+        castInFrame: [],
+      },
+    }
+    const consolidated = buildConsolidatedTakeConfig({
+      segment,
+      allSegments: [segment],
+      sceneImageUrl: 'https://example.com/scene.jpg',
+      guideContext: {
+        scene: { heading: 'INT. CORRIDOR - NIGHT' } as never,
+        sceneIndex: 0,
+        projectCharacters: [],
+        locationReferences: [],
+        objectReferences: [],
+        fullScene: { heading: 'INT. CORRIDOR - NIGHT', beats: [beat] },
+      },
+      quality: 'final',
+      generationMode: 'standard',
+      sourceMethod: 'reference',
+    })
+
+    expect(consolidated.mode).toBe('T2V')
+    expect(consolidated.startFrameUrl).toBeNull()
+    expect(consolidated.useBeatFrameAsStart).toBe(false)
+    expect(consolidated.resolution).toBe('1080p')
+    expect(consolidated.qualityTier).toBe('premium')
+  })
+
+  it('backfills missing character PiP references into pre-fix user-approved configs that lacked character slots', () => {
+    const autoRefs = [
+      {
+        url: 'https://example.com/gideon-pip.jpg',
+        type: 'character' as const,
+        name: 'The next image is the identity and wardrobe of person [1].',
+        role: 'wardrobe',
+        refRole: 'wardrobe-diptych',
+        characterName: 'Gideon Croft',
+      },
+      {
+        url: 'https://example.com/vault.jpg',
+        type: 'style' as const,
+        name: 'The next image is location [1].',
+        role: 'location',
+        locationName: 'VAULT',
+      },
+    ]
+    const healed = resolveInitialTakeReferenceImages(autoRefs, {
+      mode: 'REF',
+      prompt: 'test',
+      motionPrompt: 'test',
+      visualPrompt: 'test',
+      negativePrompt: '',
+      aspectRatio: '16:9',
+      resolution: '720p',
+      duration: 10,
+      startFrameUrl: null,
+      endFrameUrl: null,
+      sourceVideoUrl: null,
+      approvalStatus: 'user-approved',
+      confidence: 80,
+      referenceImages: [
+        {
+          url: 'https://example.com/vault.jpg',
+          type: 'style',
+          name: 'The next image is location [1].',
+          role: 'location',
+          locationName: 'VAULT',
+        },
+      ],
+    }) as Array<{ url: string }>
+
+    expect(healed.map((r) => r.url)).toEqual([
+      'https://example.com/gideon-pip.jpg',
+      'https://example.com/vault.jpg',
+    ])
   })
 })

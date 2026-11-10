@@ -5521,27 +5521,65 @@ function SceneCard({
   )
   const directorCharacters = useMemo(
     () =>
-      (characters || []).map((c) => ({
-        name: c.name,
-        referenceImage: (c as { referenceImage?: string }).referenceImage,
-        description: c.description,
-        wardrobes: (
-          c as {
-            wardrobes?: Array<{
-              id: string
-              name: string
-              headshotUrl?: string
-              fullBodyUrl?: string
-              previewImageUrl?: string
-            }>
-          }
-        ).wardrobes?.map((w) => ({
-          id: w.id,
-          name: w.name,
-          headshotUrl: w.headshotUrl ?? w.previewImageUrl,
-          fullBodyUrl: w.fullBodyUrl ?? w.previewImageUrl,
-        })),
-      })),
+      (characters || []).map((c) => {
+        const raw = c as {
+          id?: string
+          type?: string
+          referenceImage?: string
+          appearance?: string
+          appearanceDescription?: string
+          visionDescription?: string
+          height?: string
+          gender?: string
+          hairStyle?: string
+          hairColor?: string
+          defaultWardrobe?: string
+          wardrobeAccessories?: string
+          wardrobes?: Array<{
+            id: string
+            name: string
+            description?: string
+            accessories?: string
+            appearanceNotes?: string
+            sceneNumbers?: number[]
+            isDefault?: boolean
+            needsImageRegen?: boolean
+            headshotUrl?: string
+            fullBodyUrl?: string
+            previewImageUrl?: string
+            combinedCharacterRefUrl?: string
+          }>
+        }
+        return {
+          id: raw.id,
+          name: c.name,
+          type: raw.type,
+          referenceImage: raw.referenceImage,
+          description: c.description,
+          appearanceDescription: raw.appearanceDescription ?? raw.appearance,
+          visionDescription: raw.visionDescription,
+          height: raw.height,
+          gender: raw.gender,
+          hairStyle: raw.hairStyle,
+          hairColor: raw.hairColor,
+          defaultWardrobe: raw.defaultWardrobe,
+          wardrobeAccessories: raw.wardrobeAccessories,
+          wardrobes: raw.wardrobes?.map((w) => ({
+            id: w.id,
+            name: w.name,
+            description: w.description,
+            accessories: w.accessories,
+            appearanceNotes: w.appearanceNotes,
+            sceneNumbers: w.sceneNumbers,
+            isDefault: w.isDefault,
+            needsImageRegen: w.needsImageRegen,
+            headshotUrl: w.headshotUrl ?? w.previewImageUrl,
+            fullBodyUrl: w.fullBodyUrl ?? w.previewImageUrl,
+            previewImageUrl: w.previewImageUrl,
+            combinedCharacterRefUrl: w.combinedCharacterRefUrl,
+          })),
+        }
+      }),
     [characters]
   )
   const handleDirectorProductionDataChange = useCallback(

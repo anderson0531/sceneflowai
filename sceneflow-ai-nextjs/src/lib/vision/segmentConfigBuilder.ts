@@ -9,13 +9,23 @@ import {
   collectDraftStoryboardFrameWarnings,
   resolveEffectiveStoryboardTier,
 } from '@/lib/storyboard/storyboardQuality'
-import { getSceneBeats } from '@/lib/script/beatMigration'
+import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import {
   beatDirectionOwnsVideoPrompt,
   compileBeatVideoPromptFromDirection,
   isStaleSavedVideoPrompt,
+  sameBeatOwnVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
+import { buildSceneStateLedger } from '@/lib/scene/sceneStateLedger'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
+import {
+  applyVideoGenerationToConfig,
+  resolveVideoGeneration,
+  type VideoGenerationMode,
+  type VideoGenerationQuality,
+  type VideoSourceMethod,
+} from '@/lib/video/videoGenerationPolicy'
 import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/scene-production/types'
 import {
   buildDefaultBatchGuidePrompt,
@@ -44,6 +54,10 @@ import {
   resolveSegmentVideoReferences,
   type LabeledVideoReference,
 } from '@/lib/vision/resolveBeatVideoReferences'
+import {
+  normalizeReferenceImages,
+  prioritizeAndCapOmniVideoReferences,
+} from '@/lib/video/normalizeReferenceImages'
 import type { LocationReference } from '@/types/visionReferences'
 import type { VisualReference } from '@/types/visionReferences'
 import { optimizeStandardOmniSettings } from '@/lib/intelligence/standard-shot-settings'
@@ -60,7 +74,17 @@ export type SegmentGuideContext = {
   projectCharacters?: Array<{
     id?: string
     name?: string
+    type?: string
     referenceImage?: string
+    description?: string
+    appearanceDescription?: string
+    visionDescription?: string
+    height?: string
+    gender?: string
+    hairStyle?: string
+    hairColor?: string
+    defaultWardrobe?: string
+    wardrobeAccessories?: string
     wardrobes?: unknown[]
   }>
   locationReferences?: LocationReference[]
@@ -534,7 +558,7 @@ export function resolveExpressGenerationMethod(
     return 'I2V'
   }
   if (preferredSourceMethod === 'reference') {
-    return hasRefs ? 'REF' : hasStartFrame && hasEndFrame ? 'FTV' : hasStartFrame ? 'I2V' : 'T2V'
+    return hasRefs ? 'REF' : 'T2V'
   }
   return hasRefs ? 'REF' : hasStartFrame && hasEndFrame ? 'FTV' : hasStartFrame ? 'I2V' : 'T2V'
 }
@@ -1137,4 +1161,377 @@ export function buildSegmentConfigsMap(
   }
 
   return configMap
+}
+
+function isCharacterConfigRef(ref: unknown): boolean {
+  if (!ref || typeof ref !== 'object') return false
+  const entry = ref as {
+    type?: string
+    role?: string
+    refRole?: string
+    characterName?: string
+  }
+  return (
+    entry.type === 'character' ||
+    entry.role === 'identity' ||
+    entry.role === 'wardrobe' ||
+    entry.refRole === 'identity' ||
+    entry.refRole === 'wardrobe' ||
+    entry.refRole === 'wardrobe-diptych' ||
+    Boolean(entry.characterName?.trim())
+  )
+}
+
+/**
+ * Resolve initial reference images for both Take Dialog (`DirectorDialog`) and
+ * consolidated Quick Generate / Regenerate Clip:
+ * - Always preselects beat-resolved references (including scene-assigned PiP character+wardrobe).
+ * - Preserves `user-approved` saved Take reference lists while backfilling missing character
+ *   references if an older pre-fix config saved without character slots.
+ */
+export function resolveInitialTakeReferenceImages(
+  autoRefs: VideoGenerationConfig['referenceImages'],
+  savedConfig?: VideoGenerationConfig
+): VideoGenerationConfig['referenceImages'] {
+  if (
+    savedConfig?.approvalStatus === 'user-approved' &&
+    Array.isArray(savedConfig.referenceImages) &&
+    savedConfig.referenceImages.length > 0
+  ) {
+    const saved = savedConfig.referenceImages
+    const savedHasCharacter = saved.some((entry) => isCharacterConfigRef(entry))
+    if (savedHasCharacter || !Array.isArray(autoRefs) || autoRefs.length === 0) {
+      const normalizedSaved = normalizeReferenceImages(saved)
+      return normalizedSaved
+        ? (prioritizeAndCapOmniVideoReferences(normalizedSaved) as VideoGenerationConfig['referenceImages'])
+        : saved
+    }
+    const existingUrls = new Set(
+      saved
+        .map((entry) => (typeof entry === 'string' ? entry : entry.url))
+        .filter(Boolean)
+    )
+    const missingCharacters = autoRefs.filter((entry) => {
+      if (typeof entry === 'string') return false
+      return isCharacterConfigRef(entry) && !existingUrls.has(entry.url)
+    })
+    if (missingCharacters.length === 0) return saved
+    const merged = normalizeReferenceImages([...missingCharacters, ...saved])
+    return merged
+      ? (prioritizeAndCapOmniVideoReferences(merged) as VideoGenerationConfig['referenceImages'])
+      : ([...missingCharacters, ...saved].slice(0, 8) as VideoGenerationConfig['referenceImages'])
+  }
+  const normalizedAuto = Array.isArray(autoRefs) ? normalizeReferenceImages(autoRefs) : undefined
+  return normalizedAuto
+    ? (prioritizeAndCapOmniVideoReferences(normalizedAuto) as VideoGenerationConfig['referenceImages'])
+    : autoRefs
+}
+
+export interface BuildConsolidatedTakeConfigInput {
+  segment: SceneSegment
+  allSegments: SceneSegment[]
+  sceneImageUrl?: string
+  guideContext?: SegmentGuideContext
+  savedConfig?: VideoGenerationConfig
+  defaultAspectRatio?: '16:9' | '9:16' | '1:1' | '4:3'
+  quality?: VideoGenerationQuality | null
+  generationMode?: VideoGenerationMode | null
+  sourceMethod?: VideoSourceMethod | null
+  artStyleId?: string
+  /** Optional engine duration snapper (e.g. snapDurationForEngine from videoEngineOptions). */
+  snapDuration?: (rawDuration: number, isCreative: boolean, quality?: VideoGenerationQuality | null) => number
+}
+
+/**
+ * Canonical Take configuration builder shared across:
+ * 1. Quick "Generate Clip" / "Regenerate Clip" (`onGenerateClip`)
+ * 2. "Clips Agent" (`handleVideoAgentConfirm`)
+ * 3. Aligned 1:1 with `DirectorDialog` (Take dialog) initialization & `handleGenerate`
+ *
+ * Guarantees identical character+wardrobe PiP reference attachment, REF vs FTV/I2V
+ * method selection (never hijacking Reference mode into I2V from a static still),
+ * beat-compiled prompt + guidePrompt, and Omni shot settings (`thinkingLevel`, `frameRate`).
+ */
+export function buildConsolidatedTakeConfig(
+  input: BuildConsolidatedTakeConfigInput
+): VideoGenerationConfig {
+  const {
+    segment,
+    allSegments,
+    sceneImageUrl,
+    guideContext,
+    savedConfig,
+    defaultAspectRatio = '16:9',
+    quality,
+    generationMode,
+    sourceMethod,
+    artStyleId,
+    snapDuration,
+  } = input
+
+  const { config: autoConfig } = buildDraftVideoGenerationConfig(
+    segment,
+    sceneImageUrl,
+    allSegments,
+    guideContext,
+    defaultAspectRatio
+  )
+
+  const isContinuation = Boolean(
+    segment.veoTimelineContinuation ||
+      segment.generationMethod === 'EXT' ||
+      segment.videoChain?.chainMethod === 'extension'
+  )
+
+  const takeMode: VideoGenerationMode = generationMode
+    ? generationMode
+    : savedConfig?.videoProvider
+      ? savedConfig.videoProvider === 'vertex'
+        ? 'standard'
+        : 'creative'
+      : autoConfig.videoProvider === 'kling' || autoConfig.videoProvider === 'aggregator'
+        ? 'creative'
+        : 'standard'
+
+  const policy = resolveVideoGeneration({
+    quality,
+    mode: takeMode,
+    sourceMethod,
+  })
+
+  const preferFrameMode =
+    takeMode === 'creative' ||
+    policy.sourceMethod === 'frame' ||
+    (sourceMethod == null &&
+      savedConfig?.approvalStatus === 'user-approved' &&
+      (savedConfig.mode === 'FTV' || savedConfig.mode === 'I2V'))
+
+  const fullScene = (guideContext?.fullScene ?? null) as Record<string, unknown> | null
+  const f2vFrames = resolveF2VFrameUrls(segment, fullScene)
+  const segFrames = resolveSegmentFrameUrls(segment, sceneImageUrl, fullScene)
+
+  let effectiveStartFrameUrl =
+    (preferFrameMode ? f2vFrames.startFrameUrl : null) ||
+    resolveEffectiveStartFrameUrl(segment, fullScene, sceneImageUrl) ||
+    savedConfig?.startFrameUrl?.trim() ||
+    segment.startFrameUrl?.trim() ||
+    segment.references?.startFrameUrl?.trim() ||
+    null
+
+  if (preferFrameMode && !effectiveStartFrameUrl && allSegments.length > 1) {
+    const segIdx = allSegments.findIndex((s) => s.segmentId === segment.segmentId)
+    if (segIdx > 0) {
+      const prevSeg = allSegments[segIdx - 1]
+      const beats = getSceneBeats(fullScene)
+      const prevBeat = prevSeg?.beatId
+        ? beats.find((b) => b.beatId === prevSeg.beatId)
+        : beats[segIdx - 1]
+      effectiveStartFrameUrl =
+        prevBeat?.storyboardEndImageUrl?.trim() ||
+        prevSeg?.endFrameUrl?.trim() ||
+        prevSeg?.references?.endFrameUrl?.trim() ||
+        null
+    }
+  }
+
+  const rawEnd =
+    f2vFrames.endFrameUrl ||
+    segFrames.endFrameUrl ||
+    savedConfig?.endFrameUrl?.trim() ||
+    segment.endFrameUrl?.trim() ||
+    segment.references?.endFrameUrl?.trim() ||
+    null
+  const cleanEnd = rawEnd && !/last[_-]?frame/i.test(rawEnd) ? rawEnd : null
+  const effectiveEndFrameUrl =
+    cleanEnd && cleanEnd !== effectiveStartFrameUrl ? cleanEnd : null
+
+  const resolvedReferenceImages = resolveInitialTakeReferenceImages(
+    autoConfig.referenceImages,
+    savedConfig
+  )
+  const refCount = Array.isArray(resolvedReferenceImages) ? resolvedReferenceImages.length : 0
+
+  const userOptedBeatStart =
+    savedConfig?.approvalStatus === 'user-approved' && savedConfig.useBeatFrameAsStart === true
+  const useBeatFrameAsStart = preferFrameMode || userOptedBeatStart
+
+  let effectiveMethod: VideoGenerationMethod
+  if (isContinuation) {
+    effectiveMethod = 'EXT'
+  } else if (preferFrameMode) {
+    effectiveMethod = effectiveStartFrameUrl && effectiveEndFrameUrl ? 'FTV' : 'I2V'
+  } else if (refCount > 0) {
+    effectiveMethod = 'REF'
+  } else if (useBeatFrameAsStart) {
+    effectiveMethod = effectiveStartFrameUrl && effectiveEndFrameUrl ? 'FTV' : 'I2V'
+  } else {
+    effectiveMethod = 'T2V'
+  }
+
+  const isFrameMode = effectiveMethod === 'FTV' || effectiveMethod === 'I2V'
+  const targetMethod: 'reference' | 'frame' = isFrameMode ? 'frame' : 'reference'
+
+  const allBeats = getSceneBeats(fullScene)
+  const beatIndex = segment.beatId
+    ? allBeats.findIndex((entry) => entry.beatId === segment.beatId)
+    : -1
+  const beat = beatIndex >= 0 ? allBeats[beatIndex] : undefined
+  const activeBeats = allBeats.filter((entry) => !isBeatExcluded(entry))
+  const activeBeatIndex = beat
+    ? activeBeats.findIndex((entry) => entry.beatId === beat.beatId)
+    : -1
+  const stateLedger = allBeats.length > 0 ? buildSceneStateLedger(activeBeats) : []
+  const musicCue =
+    activeBeatIndex >= 0 && fullScene
+      ? resolveBeatMusicCue(
+          parsePersistedMusicCues(fullScene.sceneMusicCues, activeBeats),
+          activeBeatIndex
+        )
+      : undefined
+  const sceneDirection = ((fullScene?.sceneDirection ??
+    fullScene?.detailedDirection ??
+    null) || null) as DetailedSceneDirection | null
+
+  const compiledForMethod = beat
+    ? compileBeatVideoPromptFromDirection(beat, sceneDirection, {
+        ...(artStyleId ? { artStyleId } : {}),
+        targetMethod,
+        previousBeat:
+          activeBeatIndex > 0
+            ? activeBeats[activeBeatIndex - 1]
+            : beatIndex > 0
+              ? allBeats[beatIndex - 1]
+              : undefined,
+        sceneState: activeBeatIndex >= 0 ? stateLedger[activeBeatIndex] : undefined,
+        excerpt: segment.dialoguePortion?.excerpt?.trim(),
+        continuesSameLine: (segment.dialoguePortion?.partIndex ?? 0) > 0,
+        ...(musicCue ? { musicCue } : {}),
+      }).prompt
+    : undefined
+
+  const spokenLine =
+    segment.dialoguePortion?.excerpt?.trim() || beat?.line?.trim() || undefined
+  const userEdited = segment.userEditedPrompt?.trim()
+  const hasGenuineUserEdited = Boolean(
+    userEdited &&
+      (!beat || !isStaleSavedVideoPrompt(beat, userEdited, spokenLine, targetMethod))
+  )
+  const preserveStoredForMethod =
+    !segment.isStale &&
+    Boolean(segment.generatedPrompt?.trim()) &&
+    sameBeatOwnVideoPrompt(segment.generatedPrompt, compiledForMethod)
+
+  let resolvedPrompt: string
+  if (hasGenuineUserEdited && userEdited) {
+    resolvedPrompt = userEdited
+  } else if (isFrameMode && effectiveMethod === 'FTV' && !compiledForMethod) {
+    resolvedPrompt = generateFTVMotionPrompt(segment)
+  } else {
+    resolvedPrompt =
+      (preserveStoredForMethod ? segment.generatedPrompt?.trim() : undefined) ||
+      compiledForMethod ||
+      (segment.generatedPrompt?.trim() && beat && beatDirectionOwnsVideoPrompt(beat)
+        ? segment.generatedPrompt.trim()
+        : undefined) ||
+      savedConfig?.prompt ||
+      autoConfig.visualPrompt
+  }
+
+  const dialogueText = segment.dialogueLines?.map((d) => d.line).join(' ') || ''
+  const spokenEstimate = dialogueText.trim()
+    ? Math.ceil(dialogueText.split(/\s+/).length / 2.5)
+    : undefined
+  const extVeoRef = isContinuation
+    ? resolveVeoRefForExtension(allSegments, segment)
+    : undefined
+  const optimized = optimizeStandardOmniSettings({
+    segment,
+    sceneHeading: guideContext?.scene?.heading,
+    sceneAction: guideContext?.scene?.action,
+    sceneNumber: guideContext?.sceneIndex,
+    ingredientCount: effectiveMethod === 'REF' ? refCount : 0,
+    spokenDurationSeconds: spokenEstimate,
+    isContinuation,
+    hasOmniInteractionRef: isOmniInteractionContinuationRef(extVeoRef),
+  })
+
+  const rawDuration = isContinuation
+    ? 10
+    : (savedConfig?.approvalStatus === 'user-approved' && savedConfig.duration
+        ? savedConfig.duration
+        : autoConfig.duration || 10)
+  const duration = snapDuration
+    ? snapDuration(rawDuration, takeMode === 'creative', quality)
+    : takeMode === 'creative'
+      ? Math.min(15, Math.max(3, Math.round(rawDuration)))
+      : rawDuration <= 5
+        ? 4
+        : rawDuration <= 7
+          ? 6
+          : rawDuration <= 9
+            ? 8
+            : 10
+
+  const effectiveResolution =
+    quality != null
+      ? policy.resolution
+      : ((savedConfig?.approvalStatus === 'user-approved' && savedConfig.resolution) ||
+          autoConfig.resolution ||
+          policy.resolution)
+
+  const effectiveQualityTier =
+    takeMode === 'standard'
+      ? effectiveResolution === '1080p' || effectiveResolution === '4k'
+        ? 'premium'
+        : 'fast'
+      : policy.qualityTier
+
+  const attachStart =
+    useBeatFrameAsStart ||
+    effectiveMethod === 'I2V' ||
+    effectiveMethod === 'FTV' ||
+    effectiveMethod === 'EXT'
+
+  const baseConfig: VideoGenerationConfig = {
+    ...(savedConfig ?? {}),
+    ...autoConfig,
+    mode: effectiveMethod,
+    prompt: resolvedPrompt,
+    motionPrompt: resolvedPrompt,
+    visualPrompt: resolvedPrompt,
+    negativePrompt: savedConfig?.negativePrompt || autoConfig.negativePrompt || '',
+    guidePrompt: autoConfig.guidePrompt || savedConfig?.guidePrompt || undefined,
+    aspectRatio: autoConfig.aspectRatio,
+    startFrameUrl: attachStart ? effectiveStartFrameUrl : null,
+    endFrameUrl: effectiveMethod === 'FTV' ? effectiveEndFrameUrl : null,
+    referenceImages: effectiveMethod === 'REF' ? resolvedReferenceImages : undefined,
+    useBeatFrameAsStart: attachStart,
+    useCustomApiPrompt: savedConfig?.useCustomApiPrompt ?? autoConfig.useCustomApiPrompt ?? false,
+    apiPromptOverride:
+      (savedConfig?.useCustomApiPrompt ?? autoConfig.useCustomApiPrompt)
+        ? (savedConfig?.apiPromptOverride ?? autoConfig.apiPromptOverride)?.trim() || undefined
+        : undefined,
+    frameRate: takeMode === 'standard' ? optimized.frameRate : undefined,
+    thinkingLevel: takeMode === 'standard' ? optimized.thinkingLevel : undefined,
+    omniMultiShot: takeMode === 'standard' ? optimized.omniMultiShot : undefined,
+    optimizedSettingsReason:
+      takeMode === 'standard'
+        ? optimized.reason.replace(/\b(?:360p|720p|1080p|4k)\b/i, effectiveResolution)
+        : undefined,
+    approvalStatus:
+      savedConfig?.approvalStatus === 'user-approved' ? 'user-approved' : 'auto-ready',
+  }
+
+  const applied = applyVideoGenerationToConfig(baseConfig, policy, {
+    mode: effectiveMethod,
+    duration,
+    resolution: effectiveResolution as '720p' | '1080p',
+  })
+
+  return {
+    ...applied,
+    resolution: effectiveResolution,
+    qualityTier: effectiveQualityTier,
+    expressMode: undefined,
+  }
 }

@@ -172,7 +172,7 @@ export function collectKlingElementSources(args: {
     characterWardrobes = [],
     scene,
     sceneIndex,
-    includeWardrobeReferenceImages = false,
+    includeWardrobeReferenceImages = true,
     objectReferences = [],
     objectRefIds = [],
     locationReferences = [],
@@ -241,22 +241,10 @@ export function collectKlingElementSources(args: {
     })
   }
 
-  for (const refId of objectRefIds) {
-    const prop = objectReferences.find((o) => o.id === refId)
-    if (!prop?.imageUrl) continue
-    sources.push({
-      id: prop.id,
-      name: prop.name,
-      imageUrl: prop.imageUrl,
-      frontalImageUrl: prop.imageUrl,
-      description: prop.description || prop.name,
-      tagId: 'o_104',
-      klingElementId: (prop as VisualReference & { klingElementId?: string }).klingElementId,
-      type: 'prop',
-      matchNames: [prop.name].filter((name): name is string => Boolean(name?.trim())),
-    })
-  }
-
+  // Priority order under Kling Omni's element cap (maxElements=4):
+  // 1. Characters (frontal identity + scene-assigned wardrobe refer_images)
+  // 2. Location
+  // 3. Props (critical -> important -> other)
   if (locationRefId) {
     const loc = locationReferences.find((l) => l.id === locationRefId)
     if (loc) {
@@ -277,6 +265,28 @@ export function collectKlingElementSources(args: {
         })
       }
     }
+  }
+
+  const propImportanceRank = (importance?: string): number =>
+    importance === 'critical' ? 0 : importance === 'important' ? 1 : 2
+
+  const orderedProps = objectRefIds
+    .map((refId) => objectReferences.find((o) => o.id === refId))
+    .filter((prop): prop is VisualReference => Boolean(prop?.imageUrl))
+    .sort((a, b) => propImportanceRank(a.importance) - propImportanceRank(b.importance))
+
+  for (const prop of orderedProps) {
+    sources.push({
+      id: prop.id,
+      name: prop.name,
+      imageUrl: prop.imageUrl!,
+      frontalImageUrl: prop.imageUrl!,
+      description: prop.description || prop.name,
+      tagId: 'o_104',
+      klingElementId: (prop as VisualReference & { klingElementId?: string }).klingElementId,
+      type: 'prop',
+      matchNames: [prop.name].filter((name): name is string => Boolean(name?.trim())),
+    })
   }
 
   return sources

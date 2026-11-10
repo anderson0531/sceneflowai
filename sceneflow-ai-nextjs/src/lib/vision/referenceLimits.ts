@@ -542,11 +542,12 @@ export function buildCharacterReferenceEntries(
       label = `Character reference ${refImageIndex}: ${ref.characterName} (mannequin outfit sheet)`
     }
     const wardrobeDescription =
-      ref.refRole === 'identity' && !matchingCharRef?.hasDualReferences && !matchingCharRef?.hasWardrobeDiptych
+      (ref.refRole === 'identity' && !matchingCharRef?.hasDualReferences) ||
+      ref.refRole === 'wardrobe-diptych'
         ? ref.wardrobeDescription || matchingCharRef?.wardrobeSummary || matchingCharRef?.wardrobeDescription
         : undefined
     const identityTraits =
-      ref.refRole === 'identity'
+      ref.refRole === 'identity' || ref.refRole === 'wardrobe-diptych'
         ? ref.identityTraits || matchingCharRef?.identityTraits
         : undefined
     entries.push({

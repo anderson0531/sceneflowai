@@ -42,7 +42,7 @@ const objects = [
 ]
 
 describe('resolveBeatVideoReferences', () => {
-  it('defaults to crisp character identity + consistent wardrobe description (omitting wardrobe/PiP images)', () => {
+  it('defaults to the scene-assigned PiP reference (character face + wardrobe) with consistent wardrobe description', () => {
     const beat: SceneBeat = {
       beatId: 'beat-1',
       sequenceIndex: 0,
@@ -65,11 +65,12 @@ describe('resolveBeatVideoReferences', () => {
       objectReferences: objects,
     })
 
-    expect(resolved.urlList).toContain('https://blob.example/elara.jpg')
+    expect(resolved.urlList).toContain('https://blob.example/elara-pip.jpg')
+    expect(resolved.urlList).not.toContain('https://blob.example/elara.jpg')
     expect(resolved.urlList).not.toContain('https://blob.example/elara-wardrobe.jpg')
-    expect(resolved.urlList).not.toContain('https://blob.example/elara-pip.jpg')
     const charRef = resolved.labeledRefs.find((r) => r.characterName === 'Elara Vance')
-    expect(charRef?.name.startsWith('The next image is the identity of person [1].')).toBe(true)
+    expect(charRef?.refRole).toBe('wardrobe-diptych')
+    expect(charRef?.name.startsWith('The next image is the identity and wardrobe of person [1].')).toBe(true)
     expect(charRef?.wardrobeDescription).toBe('Dark slate cardigan over charcoal trousers')
     expect(resolved.labeledRefs.some((r) => /Char_/.test(r.name))).toBe(false)
     expect(resolved.labeledRefs.some((r) => r.role === 'location')).toBe(true)
@@ -79,7 +80,7 @@ describe('resolveBeatVideoReferences', () => {
       refs: resolved.refs,
     })
     expect(omniPrompt).toContain(
-      'person [1] (Elara Vance) is the person in the identity image of person [1]. Clothes of person [1]: Dark slate cardigan over charcoal trousers.'
+      'person [1] (Elara Vance) is the person in the identity and wardrobe image of person [1]. Clothes of person [1]: Dark slate cardigan over charcoal trousers.'
     )
 
     const elements = resolveBeatElementSelection({
@@ -376,7 +377,7 @@ describe('resolveBeatVideoReferences', () => {
     ).toBe(false)
   })
 
-  it('replaces stale clientPiP/wardrobe refs with server-resolved identity + wardrobe description', () => {
+  it('replaces legacy unlabeled PiP/wardrobe captions or missing dialogue speaker refs', () => {
     const beat: SceneBeat = {
       beatId: 'beat-stale-pip',
       sequenceIndex: 0,
@@ -396,13 +397,26 @@ describe('resolveBeatVideoReferences', () => {
     expect(
       shouldReplaceClientVideoReferences(beat, [
         {
-          url: 'https://blob.example/gideon-wardrobe.jpg',
-          type: 'character',
-          role: 'wardrobe',
-          name: 'The next image is the wardrobe of person [1].',
+          url: 'https://blob.example/vault.jpg',
+          type: 'style',
+          role: 'location',
+          locationName: 'VAULT',
+          name: 'The next image is location [1].',
         },
       ])
     ).toBe(true)
+    expect(
+      shouldReplaceClientVideoReferences(beat, [
+        {
+          url: 'https://blob.example/gideon-pip.jpg',
+          type: 'character',
+          role: 'wardrobe',
+          refRole: 'wardrobe-diptych',
+          characterName: 'Gideon Croft',
+          name: 'The next image is the identity and wardrobe of person [1].',
+        },
+      ])
+    ).toBe(false)
   })
 
   it('preserves opted-in combination-image inset instructions and outfit descriptions through bindingFromCaption and formatNextImageCaption', () => {
@@ -420,6 +434,7 @@ describe('resolveBeatVideoReferences', () => {
           id: 'c1',
           name: 'Elara Vance',
           referenceImage: 'https://blob.example/elara-headshot.jpg',
+          visionDescription: 'Woman in her 30s with auburn hair and freckles.',
           wardrobes: [
             {
               id: 'w-pip',
@@ -434,7 +449,6 @@ describe('resolveBeatVideoReferences', () => {
       ],
       locationReferences: locations,
       objectReferences: [],
-      includeWardrobeDiptych: true,
     })
 
     const charRef = resolved.labeledRefs.find((r) => r.type === 'character')
@@ -442,6 +456,7 @@ describe('resolveBeatVideoReferences', () => {
     expect(charRef?.refRole).toBe('wardrobe-diptych')
     expect(charRef?.name).toContain('Extract exact facial identity from the face close-up')
     expect(charRef?.name).toContain('Charcoal wool trench coat')
+    expect(charRef?.identityTraits).toContain('auburn hair')
 
     const parsedBinding = bindingFromCaption(charRef!.name)
     expect(parsedBinding?.role).toBe('character')
@@ -451,7 +466,7 @@ describe('resolveBeatVideoReferences', () => {
     expect(reemittedCaption).toContain('Charcoal wool trench coat')
   })
 
-  it('sanitizes gore/injury wardrobe terms on default identity + wardrobe text before Omni REF submission', () => {
+  it('sanitizes gore/injury wardrobe terms on default PiP character + wardrobe reference before Omni REF submission', () => {
     const beat: SceneBeat = {
       beatId: 'beat-seawall',
       sequenceIndex: 0,
@@ -483,8 +498,9 @@ describe('resolveBeatVideoReferences', () => {
     })
 
     const charRef = resolved.labeledRefs.find((r) => r.type === 'character')
-    expect(charRef?.url).toBe('https://blob.example/piper-headshot.jpg')
-    expect(charRef?.name).toContain('The next image is the identity of person [1].')
+    expect(charRef?.url).toBe('https://blob.example/piper-diptych.jpg')
+    expect(charRef?.refRole).toBe('wardrobe-diptych')
+    expect(charRef?.name).toContain('The next image is the identity and wardrobe of person [1].')
     expect(charRef?.wardrobeDescription).not.toContain('bloodied')
     expect(charRef?.wardrobeDescription).not.toContain('gauze dressing')
     expect(charRef?.wardrobeDescription).toContain('dark cloth wrap')
@@ -496,5 +512,65 @@ describe('resolveBeatVideoReferences', () => {
     expect(omniPrompt).toContain('Clothes of person [1]:')
     expect(omniPrompt).toContain('dark cloth wrap')
     expect(omniPrompt).not.toContain('bloodied')
+  })
+
+  it('caps Omni video references at 8 and orders survivors strictly as character -> wardrobe -> location -> props', () => {
+    const beat: SceneBeat = {
+      beatId: 'beat-cap-order',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription:
+        'Gideon Croft and Piper Hayes examine Prop1, Prop2, Prop3, Prop4, and Prop5 in the vault.',
+      referenceSelection: {
+        characterIds: ['c-gideon', 'c-piper'],
+        locationRefId: 'loc-vault',
+        objectRefIds: ['p-other-1', 'p-crit', 'p-other-2', 'p-imp', 'p-other-3'],
+        source: 'user',
+        resolvedAt: '2026-11-10T00:00:00.000Z',
+      },
+    }
+    const resolved = resolveBeatVideoReferences({
+      scene: { heading: 'INT. VAULT - NIGHT', beats: [beat] },
+      beat,
+      includeWardrobeReferenceImages: true,
+      projectCharacters: [
+        {
+          id: 'c-gideon',
+          name: 'Gideon Croft',
+          referenceImage: 'https://blob.example/gideon-id.jpg',
+          wardrobes: [{ id: 'wg', name: 'Coat', fullBodyUrl: 'https://blob.example/gideon-wardrobe.jpg' }],
+        },
+        {
+          id: 'c-piper',
+          name: 'Piper Hayes',
+          referenceImage: 'https://blob.example/piper-id.jpg',
+          wardrobes: [{ id: 'wp', name: 'Parka', fullBodyUrl: 'https://blob.example/piper-wardrobe.jpg' }],
+        },
+      ],
+      locationReferences: [
+        { id: 'loc-vault', location: 'VAULT', imageUrl: 'https://blob.example/vault.jpg' },
+      ],
+      objectReferences: [
+        { id: 'p-other-1', name: 'Chalk', imageUrl: 'https://blob.example/p-other-1.jpg', importance: 'secondary', category: 'prop' },
+        { id: 'p-crit', name: 'Resonance Core', imageUrl: 'https://blob.example/p-crit.jpg', importance: 'critical', category: 'prop' },
+        { id: 'p-other-2', name: 'Rag', imageUrl: 'https://blob.example/p-other-2.jpg', importance: 'secondary', category: 'prop' },
+        { id: 'p-imp', name: 'Brass Spanner', imageUrl: 'https://blob.example/p-imp.jpg', importance: 'important', category: 'prop' },
+        { id: 'p-other-3', name: 'Bucket', imageUrl: 'https://blob.example/p-other-3.jpg', importance: 'secondary', category: 'prop' },
+      ],
+    })
+
+    // 2 characters + 2 wardrobes + 1 location + 5 props = 10 -> capped at 8, dropping 2 lowest props
+    expect(resolved.labeledRefs).toHaveLength(8)
+    expect(resolved.labeledRefs.map((r) => r.url)).toEqual([
+      'https://blob.example/gideon-id.jpg',
+      'https://blob.example/piper-id.jpg',
+      'https://blob.example/gideon-wardrobe.jpg',
+      'https://blob.example/piper-wardrobe.jpg',
+      'https://blob.example/vault.jpg',
+      'https://blob.example/p-crit.jpg',
+      'https://blob.example/p-imp.jpg',
+      'https://blob.example/p-other-1.jpg',
+    ])
+    expect(resolved.warnings.some((w) => w.includes('Dropped 2 reference(s) (cap=8)'))).toBe(true)
   })
 })

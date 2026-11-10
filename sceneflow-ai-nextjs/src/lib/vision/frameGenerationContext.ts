@@ -383,14 +383,15 @@ export function resolveFrameGenerationContext(args: ResolveFrameGenerationContex
     const refPair = resolveCharacterReferencePair({
       character: c,
       scene,
-      includeWardrobeReferenceImages: false,
-      includeWardrobeDiptych: false,
+      includeWardrobeReferenceImages: true,
+      includeWardrobeDiptych: true,
     })
     const resolvedWardrobe = resolveWardrobeForCharacter(c, scene)
     const wardrobeHeadshotUrl =
-      typeof resolvedWardrobe?.headshotUrl === 'string' && resolvedWardrobe.headshotUrl.trim()
+      refPair.wardrobeDiptychUrl ||
+      (typeof resolvedWardrobe?.headshotUrl === 'string' && resolvedWardrobe.headshotUrl.trim()
         ? resolvedWardrobe.headshotUrl.trim()
-        : undefined
+        : undefined)
     const hasDualReferences = refPair.hasDualReferences
     const hasSceneHeadshot = refPair.hasWardrobeDiptych && !hasDualReferences
     const hasCostumeReference = !!refPair.wardrobeUrl || hasSceneHeadshot

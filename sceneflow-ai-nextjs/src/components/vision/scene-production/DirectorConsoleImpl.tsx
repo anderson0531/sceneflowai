@@ -199,6 +199,7 @@ import { mergeStreamSelectorLanguages } from '@/lib/streams/projectStreams'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
 import {
+  buildConsolidatedTakeConfig,
   generateFTVMotionPrompt,
   resolveEffectiveStartFrameUrl,
   resolveExpressGenerationMethod,
@@ -321,10 +322,33 @@ export interface DirectorConsoleProps {
   guideCharacters?: GuideCharacterDemographic[]
   /** Character references for DirectorDialog REF library */
   characters?: Array<{
+    id?: string
     name: string
+    type?: string
     referenceImage?: string
     description?: string
-    wardrobes?: Array<{ id: string; name: string; headshotUrl?: string; fullBodyUrl?: string; previewImageUrl?: string }>
+    appearanceDescription?: string
+    visionDescription?: string
+    height?: string
+    gender?: string
+    hairStyle?: string
+    hairColor?: string
+    defaultWardrobe?: string
+    wardrobeAccessories?: string
+    wardrobes?: Array<{
+      id: string
+      name: string
+      description?: string
+      accessories?: string
+      appearanceNotes?: string
+      sceneNumbers?: number[]
+      isDefault?: boolean
+      needsImageRegen?: boolean
+      headshotUrl?: string
+      fullBodyUrl?: string
+      previewImageUrl?: string
+      combinedCharacterRefUrl?: string
+    }>
   }>
   /** Scene references for DirectorDialog REF library */
   sceneReferences?: Array<{ id: string; name: string; imageUrl?: string; description?: string }>
@@ -534,8 +558,10 @@ export function DirectorConsoleRoot({
 
   const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
     if (!scene) return undefined
+    const sceneMeta = scene as { heading?: string; sceneHeading?: string; filmTitle?: string }
     return {
       scene: {
+        heading: sceneMeta.heading || sceneMeta.sceneHeading,
         dialogue: scene.dialogue,
         sceneDirection: scene.sceneDirection,
         visualDescription: scene.visualDescription,
@@ -546,6 +572,7 @@ export function DirectorConsoleRoot({
       },
       characters: effectiveGuideCharacters,
       sceneIndex,
+      filmTitle: sceneMeta.filmTitle,
       projectCharacters: characters,
       locationReferences,
       objectReferences,
@@ -1898,125 +1925,42 @@ export function DirectorConsoleRoot({
         mode: options.generationMode,
         sourceMethod: options.sourceMethod ?? effectiveVideoSourceMethod,
       })
-      const sceneRecord = (scene as Record<string, unknown> | undefined) ?? null
-      const allBeats = getSceneBeats(sceneRecord)
       const segment = segments.find((s) => s.segmentId === item.segmentId)
-      const beatIndex = segment?.beatId
-        ? allBeats.findIndex((entry) => entry.beatId === segment.beatId)
-        : -1
-      const beat = beatIndex >= 0 ? allBeats[beatIndex] : undefined
-      const inputs = segmentHasVideoAgentInputs(item, segment)
-      const staleReferenceStartFrame =
-        policy.sourceMethod === 'reference' &&
-        Boolean(beat && isBeatFrameStale(beat) && !beat.storyboardStartImageUrl?.trim())
-      const expressMethod = resolveExpressGenerationMethod(
-        inputs.hasRefs,
-        staleReferenceStartFrame ? false : inputs.hasStartFrame,
-        inputs.hasEndFrame,
-        policy.sourceMethod
-      )
-      const isFrameMode =
-        policy.sourceMethod === 'frame' || expressMethod === 'FTV' || expressMethod === 'I2V'
-      const targetMethod: 'reference' | 'frame' = isFrameMode ? 'frame' : 'reference'
-      const selection =
-        policy.videoProvider === 'kling'
-          ? ({
-              engineId: SCENEFLOW_ENGINE_ID,
-              qualityTierId: options.quality === 'final' ? 'cinematic' : 'standard',
-            } as const)
-          : ({ engineId: 'natural-dialogue' } as const)
-      const duration = snapDurationForEngine(item.config.duration || 10, selection)
-      const sceneDirection = ((sceneRecord?.sceneDirection ??
-        sceneRecord?.detailedDirection ??
-        null) || null) as DetailedSceneDirection | null
-      const activeBeats = allBeats.filter((entry) => !isBeatExcluded(entry))
-      const activeBeatIndex = beat
-        ? activeBeats.findIndex((entry) => entry.beatId === beat.beatId)
-        : -1
-      const stateLedger = buildSceneStateLedger(activeBeats)
-      const musicCue =
-        activeBeatIndex >= 0
-          ? resolveBeatMusicCue(
-              parsePersistedMusicCues(sceneRecord?.sceneMusicCues, activeBeats),
-              activeBeatIndex
-            )
-          : undefined
-      const compiledForMethod = beat
-        ? compileBeatVideoPromptFromDirection(beat, sceneDirection, {
-            targetMethod,
-            previousBeat:
-              activeBeatIndex > 0
-                ? activeBeats[activeBeatIndex - 1]
-                : beatIndex > 0
-                  ? allBeats[beatIndex - 1]
-                  : undefined,
-            sceneState: activeBeatIndex >= 0 ? stateLedger[activeBeatIndex] : undefined,
-            excerpt: segment?.dialoguePortion?.excerpt?.trim(),
-            continuesSameLine: (segment?.dialoguePortion?.partIndex ?? 0) > 0,
-            ...(musicCue ? { musicCue } : {}),
-          }).prompt
-        : undefined
-      const userEdited = segment?.userEditedPrompt?.trim()
-      const hasGenuineUserEdited = Boolean(
-        userEdited &&
-          (!beat || !isStaleSavedVideoPrompt(beat, userEdited, beat.line?.trim(), targetMethod))
-      )
-      const preserveStoredForMethod =
-        !segment?.isStale &&
-        Boolean(segment?.generatedPrompt?.trim()) &&
-        sameBeatOwnVideoPrompt(segment?.generatedPrompt, compiledForMethod)
-      const freshOwnedPrompt =
-        !hasGenuineUserEdited &&
-        !item.config.useCustomApiPrompt &&
-        ((preserveStoredForMethod ? segment?.generatedPrompt?.trim() : undefined) ||
-          compiledForMethod ||
-          (segment?.generatedPrompt?.trim() && beat && beatDirectionOwnsVideoPrompt(beat)
-            ? segment.generatedPrompt.trim()
-            : undefined))
-      const baseNextRaw = applyVideoGenerationToConfig(item.config, policy, {
-        mode: expressMethod,
-        expressMode: true,
-        duration,
-        resolution: policy.resolution,
+      if (!segment) {
+        return applyVideoGenerationToConfig(item.config, policy, {
+          resolution: policy.resolution,
+        })
+      }
+      return buildConsolidatedTakeConfig({
+        segment,
+        allSegments: segments,
+        sceneImageUrl,
+        guideContext: segmentGuideContext,
+        savedConfig: item.config,
+        defaultAspectRatio: videoAspectRatio,
+        quality: options.quality,
+        generationMode: options.generationMode,
+        sourceMethod: options.sourceMethod ?? effectiveVideoSourceMethod,
+        artStyleId,
+        snapDuration: (rawDuration, isCreative, qualityOpt) => {
+          const selection = isCreative
+            ? ({
+                engineId: SCENEFLOW_ENGINE_ID,
+                qualityTierId: qualityOpt === 'final' ? 'cinematic' : 'standard',
+              } as const)
+            : ({ engineId: 'natural-dialogue' } as const)
+          return snapDurationForEngine(rawDuration, selection)
+        },
       })
-      const baseNext = freshOwnedPrompt
-        ? {
-            ...baseNextRaw,
-            prompt: freshOwnedPrompt,
-            visualPrompt: freshOwnedPrompt,
-            motionPrompt: freshOwnedPrompt,
-          }
-        : baseNextRaw
-      if (isFrameMode) {
-        const framePrompt =
-          (hasGenuineUserEdited ? userEdited : undefined) ||
-          compiledForMethod ||
-          (expressMethod === 'FTV' && segment
-            ? generateFTVMotionPrompt(segment)
-            : baseNext.prompt)
-        return {
-          ...baseNext,
-          mode: expressMethod,
-          startFrameUrl: inputs.resolvedStart || baseNext.startFrameUrl,
-          endFrameUrl:
-            expressMethod === 'FTV'
-              ? inputs.resolvedEnd || baseNext.endFrameUrl
-              : null,
-          referenceImages: undefined,
-          useBeatFrameAsStart: true,
-          prompt: framePrompt,
-          visualPrompt: framePrompt,
-          motionPrompt: framePrompt,
-        }
-      }
-      return {
-        ...baseNext,
-        startFrameUrl: null,
-        endFrameUrl: null,
-        useBeatFrameAsStart: false,
-      }
     },
-    [scene, segments, segmentHasVideoAgentInputs, effectiveVideoSourceMethod]
+    [
+      segments,
+      sceneImageUrl,
+      segmentGuideContext,
+      videoAspectRatio,
+      effectiveVideoSourceMethod,
+      artStyleId,
+    ]
   )
 
   const handleVideoAgentConfirm = useCallback(
@@ -3473,6 +3417,7 @@ export function DirectorConsoleRoot({
           locationReferences={locationReferences}
           projectAspectRatio={projectAspectRatio}
           sceneIndex={sceneIndex}
+          filmTitle={(scene as { filmTitle?: string } | undefined)?.filmTitle}
           videoGenerationQuality={videoGenerationQuality}
           videoGenerationMode={videoGenerationMode}
           videoSourceMethod={effectiveVideoSourceMethod}

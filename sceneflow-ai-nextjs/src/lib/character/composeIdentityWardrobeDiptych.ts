@@ -418,7 +418,8 @@ export async function splitLeftoverDiptychUrl(args: {
 }
 
 async function circularFaceBadge(identityBuffer: Buffer, diameter: number): Promise<Buffer> {
-  const resized = await sharp(identityBuffer)
+  const croppedFace = await cropIdentityPlateForPro(identityBuffer)
+  const resized = await sharp(croppedFace.buffer)
     .resize(diameter, diameter, { fit: 'cover', position: 'centre' })
     .ensureAlpha()
     .toBuffer()

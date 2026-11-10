@@ -168,7 +168,8 @@ function videoDiptychLabel(
   _index?: number,
   personTokenIndex?: number,
   heightPhrase?: string,
-  wardrobeSummary?: string
+  wardrobeSummary?: string,
+  identityTraits?: string
 ): string {
   const base = formatNextImageCaption({
     role: 'character',
@@ -176,7 +177,8 @@ function videoDiptychLabel(
   })
   const scaleSuffix = heightPhrase ? ` (${heightPhrase})` : ''
   const outfitClause = wardrobeSummary ? ` (${wardrobeSummary})` : ''
-  return `${base} Extract exact facial identity from the face close-up and outfit${outfitClause} from the full-body standing figure${scaleSuffix}; do not render the character-card layout or headshot overlay.`
+  const traitsSuffix = identityTraits ? ` Portrait features: ${identityTraits}.` : ''
+  return `${base} Extract exact facial identity from the face close-up and outfit${outfitClause} from the full-body standing figure${scaleSuffix}; do not render the character-card layout or headshot overlay.${traitsSuffix}`
 }
 
 /** Cast, location, and key props used for both Omni REF and Kling elements. */
@@ -284,7 +286,7 @@ export function resolveBeatVideoReferences(
     filmTitle,
   })
 
-  const selection = shouldUseExplicitBeatReferences(beat)
+  const rawSelection = shouldUseExplicitBeatReferences(beat)
     ? beat.referenceSelection
     : {
         characterIds: beatContext.characterIds,
@@ -294,12 +296,35 @@ export function resolveBeatVideoReferences(
         characterWardrobes: beatContext.characterWardrobes,
       }
 
+  // If explicit user characterIds are non-empty but none match projectCharacters (e.g. recreated
+  // character UUIDs or legacy name/id drift), fall back to beatContext.characterIds rather than
+  // silently dropping all cast.
+  const explicitCharIds = rawSelection.characterIds ?? []
+  const resolvedCharIds =
+    explicitCharIds.length > 0 &&
+    !explicitCharIds.some((id) => Boolean(findCharacterById(id, projectCharacters))) &&
+    beatContext.characterIds.length > 0
+      ? beatContext.characterIds
+      : explicitCharIds
+  const selection = {
+    ...rawSelection,
+    characterIds: resolvedCharIds,
+  }
+
   const characterWardrobes =
     selection.characterWardrobes && selection.characterWardrobes.length > 0
       ? selection.characterWardrobes
       : beatContext.characterWardrobes
 
   const tightUpperBodyShot = isBeatTightUpperBodyShot(beat)
+  const explicitDualOnly =
+    args.includeWardrobeReferenceImages === true && args.includeWardrobeDiptych === undefined
+  const explicitIdentityOnly =
+    args.includeWardrobeReferenceImages === false && !args.includeWardrobeDiptych
+  const includeWardrobeDiptych =
+    args.includeWardrobeDiptych ?? (!explicitDualOnly && !explicitIdentityOnly)
+  const includeWardrobeReferenceImages =
+    args.includeWardrobeReferenceImages ?? includeWardrobeDiptych
 
   const imageReferences: Array<{
     imageUrl: string
@@ -328,8 +353,8 @@ export function resolveBeatVideoReferences(
       scene,
       sceneIndex: beatSourceSceneIndex,
       characterWardrobes,
-      includeWardrobeReferenceImages: Boolean(args.includeWardrobeReferenceImages),
-      includeWardrobeDiptych: Boolean(args.includeWardrobeDiptych),
+      includeWardrobeReferenceImages,
+      includeWardrobeDiptych,
     })
 
     const sentDiptych = Boolean(refPair.hasWardrobeDiptych && refPair.wardrobeDiptychUrl)
@@ -371,6 +396,8 @@ export function resolveBeatVideoReferences(
         imageUrl: refPair.wardrobeDiptychUrl,
         refRole: 'wardrobe-diptych',
         characterName: char.name,
+        ...(wardrobeSummary ? { wardrobeDescription: wardrobeSummary } : {}),
+        ...(identityTraits ? { identityTraits } : {}),
       })
       continue
     }
@@ -407,9 +434,13 @@ export function resolveBeatVideoReferences(
     }
   }
 
+  const propImportanceRank = (importance?: string): number =>
+    importance === 'critical' ? 0 : importance === 'important' ? 1 : 2
+
   const objectImageReferences = (selection.objectRefIds ?? [])
     .map((id) => objectReferences.find((o) => o.id === id))
     .filter((o): o is VisualReference => !!o?.imageUrl)
+    .sort((a, b) => propImportanceRank(a.importance) - propImportanceRank(b.importance))
     .map((obj) => ({
       imageUrl: obj.imageUrl!,
       name: obj.name || 'prop',
@@ -447,7 +478,8 @@ export function resolveBeatVideoReferences(
       index,
       personTokenIndex,
       meta?.characterHeight,
-      meta?.wardrobeSummary
+      meta?.wardrobeSummary,
+      meta?.identityTraits
     )
   }
 
@@ -512,16 +544,18 @@ export function resolveBeatVideoReferences(
   }
   if (locationRefEntry) locationRefEntry.promptToken = 'location [1]'
 
+  // Priority & multimodal send order: Character -> Wardrobe -> Location -> Props
   const allPrioritized = [
     ...characterRefEntries,
-    ...propRefEntries,
     ...(locationRefEntry ? [locationRefEntry] : []),
+    ...propRefEntries,
   ]
 
   const { selected, dropped } = selectReferenceImagesInOrder(
     allPrioritized,
     MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
     {
+      groupByRole: true,
       buildIdentityLabel: buildIdentityWithHeight,
       buildWardrobeLabel: buildWardrobeWithSummary,
       buildDiptychLabel: buildDiptychWithHeight,
@@ -595,8 +629,8 @@ export function resolveBeatVideoReferences(
  * User-saved beat references replace whatever the client attached.
  * Also replaces stale client references when beatDirection specifies castInFrame
  * or keyProps that are missing from (or contradict) the client reference list,
- * or when clientRefs still carry legacy PiP composite / full-body wardrobe plates.
- * Otherwise only unlabeled client urls are rebuilt on the server.
+ * when a dialogue beat's speaker is missing from clientRefs, or when legacy
+ * unlabeled captions are still present.
  */
 export function shouldReplaceClientVideoReferences(
   beat: SceneBeat | null | undefined,
@@ -610,31 +644,32 @@ export function shouldReplaceClientVideoReferences(
     (ref): ref is Exclude<(typeof clientRefs)[number], string> =>
       Boolean(ref && typeof ref === 'object')
   )
-  const hasStaleWardrobeOrPipRef = structuredRefs.some(
-    (ref) =>
-      ref.refRole === 'wardrobe-diptych' ||
-      ref.refRole === 'wardrobe' ||
-      ref.role === 'wardrobe' ||
-      /^The next image is the (?:identity and wardrobe|wardrobe) of\b/i.test(
-        (ref.name || '').trim()
-      ) ||
-      /Match exact facial identity, bone structure, hair, and skin tone/i.test(
-        (ref.name || '').trim()
-      )
-  )
-  if (hasStaleWardrobeOrPipRef) {
+  const hasLegacyStaleRef = structuredRefs.some((ref) => {
+    const trimmedName = (ref.name || '').trim()
+    if (/Match exact facial identity, bone structure, hair, and skin tone/i.test(trimmedName)) {
+      return true
+    }
+    if (
+      /^The next image is the (?:identity and wardrobe|wardrobe) of\b/i.test(trimmedName) &&
+      !ref.characterName?.trim()
+    ) {
+      return true
+    }
+    return false
+  })
+  if (hasLegacyStaleRef) {
     return true
   }
   const dir = beat?.beatDirection
-  if (!dir) return false
-  if (Array.isArray(dir.castInFrame)) {
+  if (dir && Array.isArray(dir.castInFrame)) {
     const directedCast = dir.castInFrame.map((name) => name.trim()).filter(Boolean)
     if (directedCast.length === 0) {
       const hasClientCharacter = structuredRefs.some(
         (ref) =>
           Boolean(ref.characterName?.trim()) ||
           ref.role === 'identity' ||
-          ref.role === 'wardrobe'
+          ref.role === 'wardrobe' ||
+          ref.refRole === 'wardrobe-diptych'
       )
       if (hasClientCharacter) return true
     } else {
@@ -648,8 +683,20 @@ export function shouldReplaceClientVideoReferences(
       })
       if (missingDirectedCast) return true
     }
+  } else if (beat?.kind === 'dialogue' && beat.character?.trim()) {
+    const speaker = beat.character.trim()
+    const isNarrator = /\b(?:narrator|v\.?o\.?|voiceover)\b/i.test(speaker)
+    if (!isNarrator) {
+      const needle = speaker.toLowerCase()
+      const hasSpeakerRef = structuredRefs.some(
+        (ref) =>
+          ref.characterName?.trim().toLowerCase() === needle ||
+          ref.name?.toLowerCase().includes(needle)
+      )
+      if (!hasSpeakerRef) return true
+    }
   }
-  if (Array.isArray(dir.keyProps) && dir.keyProps.length > 0) {
+  if (dir && Array.isArray(dir.keyProps) && dir.keyProps.length > 0) {
     const directedProps = dir.keyProps.map((name) => name.trim()).filter(Boolean)
     const missingDirectedProp = directedProps.some((propName) => {
       const needle = propName.toLowerCase()
@@ -664,13 +711,47 @@ export function shouldReplaceClientVideoReferences(
   return false
 }
 
-/** Resolve references for a segment using its beatId. */
+/** Resolve references for a segment using its beatId (or segment metadata fallback when beatId is absent). */
 export function resolveSegmentVideoReferences(
-  segment: { beatId?: string | null },
+  segment: {
+    beatId?: string | null
+    sequenceIndex?: number
+    action?: string
+    actionPrompt?: string
+    generatedPrompt?: string
+    dialogueLines?: Array<{ character?: string; line?: string }>
+    references?: { characterIds?: string[]; objectRefIds?: string[] }
+  },
   scene: Record<string, unknown>,
   args: Omit<ResolveBeatVideoReferencesArgs, 'scene' | 'beat'>
 ): ResolvedBeatVideoReferences {
   const beatId = segment.beatId?.trim()
-  const beat = beatId ? getSceneBeats(scene).find((b) => b.beatId === beatId) : undefined
+  let beat = beatId ? getSceneBeats(scene).find((b) => b.beatId === beatId) : undefined
+  if (!beat) {
+    const firstLine = segment.dialogueLines?.[0]
+    const actionText = segment.action || segment.actionPrompt || segment.generatedPrompt || ''
+    const segCharIds = segment.references?.characterIds?.filter(Boolean) ?? []
+    if (firstLine?.character || firstLine?.line || actionText || segCharIds.length > 0) {
+      beat = {
+        beatId: beatId || `seg_fallback_${segment.sequenceIndex ?? 0}`,
+        sequenceIndex: segment.sequenceIndex ?? 0,
+        kind: firstLine?.line ? 'dialogue' : 'action',
+        character: firstLine?.character,
+        line: firstLine?.line,
+        actionDescription: actionText || undefined,
+        ...(segCharIds.length > 0
+          ? {
+              referenceSelection: {
+                characterIds: segCharIds,
+                objectRefIds: segment.references?.objectRefIds ?? [],
+                locationRefId: null,
+                source: 'user' as const,
+                resolvedAt: '1970-01-01T00:00:00.000Z',
+              },
+            }
+          : {}),
+      }
+    }
+  }
   return resolveBeatVideoReferences({ ...args, scene, beat })
 }

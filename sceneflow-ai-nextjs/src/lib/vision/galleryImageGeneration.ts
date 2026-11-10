@@ -1,14 +1,14 @@
 /** Options passed on manual Pre-Vis gallery generate calls (not Express). */
 export const GALLERY_MANUAL_GENERATE_OPTS = {
   generationMode: 'default' as const,
-  /** Identity-first default: send facial identity portrait + consistent wardrobe text description. */
-  includeWardrobeReferenceImages: false,
-  includeWardrobeDiptych: false,
+  /** PiP default: combine character facial identity + scene-assigned wardrobe reference. */
+  includeWardrobeReferenceImages: true,
+  includeWardrobeDiptych: true,
 }
 
 export const GALLERY_DIRECT_GENERATE_OPTS = {
   generationMode: 'direct' as const,
-  includeWardrobeReferenceImages: false,
-  includeWardrobeDiptych: false,
+  includeWardrobeReferenceImages: true,
+  includeWardrobeDiptych: true,
   fromDialog: true,
 }

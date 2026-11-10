@@ -93,6 +93,28 @@ describe('composeIdentityWardrobePipBuffers', () => {
   it('keeps stitchIdentityWardrobeBuffers as a PiP alias', async () => {
     expect(stitchIdentityWardrobeBuffers).toBe(composeIdentityWardrobePipBuffers)
   })
+
+  it('north-crops a tall 9:16 portrait so the circular PiP badge captures the upper face instead of the chest', async () => {
+    const topHead = await solidJpeg(600, 600, { r: 220, g: 30, b: 30 })
+    const lowerTorso = await solidJpeg(600, 600, { r: 20, g: 200, b: 40 })
+    const tallPortrait = await sharp({
+      create: { width: 600, height: 1200, channels: 3, background: { r: 0, g: 0, b: 0 } },
+    })
+      .composite([
+        { input: topHead, left: 0, top: 0 },
+        { input: lowerTorso, left: 0, top: 600 },
+      ])
+      .jpeg()
+      .toBuffer()
+    const wardrobe = await solidJpeg(800, 1200, { r: 30, g: 60, b: 180 })
+
+    const composed = await composeIdentityWardrobePipBuffers(tallPortrait, wardrobe)
+    const { data, info } = await sharp(composed).raw().toBuffer({ resolveWithObject: true })
+    const { x: bx, y: by } = badgeCenter()
+    const [br, bg] = pixelAt(data, info, bx, by)
+    expect(br).toBeGreaterThan(150)
+    expect(bg).toBeLessThan(80)
+  })
 })
 
 describe('diptych split then PiP', () => {

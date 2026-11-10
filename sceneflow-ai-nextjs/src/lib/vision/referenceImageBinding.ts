@@ -93,7 +93,15 @@ function ensureSentencePeriod(text: string): string {
 function personInstruction(slot: PersonSlot): string {
   const named = subjectLabel(slot.token, slot.name)
   if (slot.character && !slot.identity && !slot.wardrobe) {
-    return `${named} is the person in the identity and wardrobe image of ${slot.token}.`
+    const traits = slot.identityTraits?.replace(/[.;,\s]+$/g, '').trim()
+    const base = traits
+      ? `${named} is the person in the identity and wardrobe image of ${slot.token} (preserve exact portrait features: ${traits}).`
+      : `${named} is the person in the identity and wardrobe image of ${slot.token}.`
+    if (slot.wardrobeDescription?.trim()) {
+      const formatted = ensureSentencePeriod(slot.wardrobeDescription)
+      if (formatted) return `${base} Clothes of ${slot.token}: ${formatted}`
+    }
+    return base
   }
   const parts: string[] = []
   if (slot.identity || slot.character) {
@@ -117,7 +125,8 @@ function personInstruction(slot: PersonSlot): string {
 
 /**
  * Instruction lead. Points backward at the images already attached.
- * People, then props, then locations. The opening frame is named only on its caption.
+ * Priority order: People (character + wardrobe), then locations, then props.
+ * The opening frame is named only on its caption.
  */
 export function formatImagesAboveBinding(bindings: ReferenceImageBinding[]): string {
   const people = new Map<string, PersonSlot>()
@@ -159,16 +168,16 @@ export function formatImagesAboveBinding(bindings: ReferenceImageBinding[]): str
     const line = personInstruction(slot)
     if (line) lines.push(line)
   }
-  for (const binding of props) {
-    const token = binding.token!.replace(/\s+/g, ' ').trim()
-    lines.push(
-      `${subjectLabel(token, binding.name)} is the object in the prop image of ${token}.`
-    )
-  }
   for (const binding of locations) {
     const token = binding.token!.replace(/\s+/g, ' ').trim()
     lines.push(
       `${subjectLabel(token, binding.name)} is the place in the location image of ${token}.`
+    )
+  }
+  for (const binding of props) {
+    const token = binding.token!.replace(/\s+/g, ' ').trim()
+    lines.push(
+      `${subjectLabel(token, binding.name)} is the object in the prop image of ${token}.`
     )
   }
   if (lines.length === 0) return ''
@@ -290,18 +299,41 @@ export function bindingsFromReferenceRecords(
     const legacy = ref.name?.trim().match(LEGACY_LABEL)
     const legacyRole = legacy?.[1]?.toLowerCase()
     const legacyName = legacy?.[2]?.replace(/\s*\([^)]*\)\s*$/, '').trim()
-    const characterName = ref.characterName || (legacyRole === 'identity' || legacyRole === 'wardrobe' ? legacyName : undefined)
-    const propName = ref.propName || (legacyRole === 'prop' ? legacyName : undefined)
-    const locationName = ref.locationName || (legacyRole === 'location' ? legacyName : undefined)
-
+    const trimmedRawName = ref.name?.trim() || ''
+    const plainDisplayName =
+      trimmedRawName &&
+      !legacy &&
+      !isNextImageCaption(trimmedRawName) &&
+      !/^Reference\s+\d+$/i.test(trimmedRawName)
+        ? trimmedRawName.split('—')[0]?.trim() || trimmedRawName
+        : undefined
     const refRole = ref.refRole || ''
     const role = (ref.role || '').toLowerCase()
     const isWardrobe = refRole === 'wardrobe' || legacyRole === 'wardrobe' || role === 'wardrobe'
     const isDiptych =
       refRole === 'wardrobe-diptych' || role === 'wardrobe-diptych' || role === 'character'
-    const isProp = Boolean(propName) || role.startsWith('prop') || legacyRole === 'prop'
-    const isLocation = Boolean(locationName) || role === 'location' || legacyRole === 'location'
-    const isPerson = Boolean(characterName) || role === 'identity' || legacyRole === 'identity' || isWardrobe || isDiptych
+    const isProp = Boolean(ref.propName) || role.startsWith('prop') || legacyRole === 'prop'
+    const isLocation = Boolean(ref.locationName) || role === 'location' || legacyRole === 'location'
+    const isPerson =
+      Boolean(ref.characterName) ||
+      role === 'identity' ||
+      legacyRole === 'identity' ||
+      isWardrobe ||
+      isDiptych
+
+    const characterName =
+      ref.characterName ||
+      (legacyRole === 'identity' || legacyRole === 'wardrobe'
+        ? legacyName
+        : isPerson && !isProp && !isLocation
+          ? plainDisplayName
+          : undefined)
+    const propName =
+      ref.propName ||
+      (legacyRole === 'prop' ? legacyName : isProp ? plainDisplayName : undefined)
+    const locationName =
+      ref.locationName ||
+      (legacyRole === 'location' ? legacyName : isLocation ? plainDisplayName : undefined)
 
     if (isPerson && !isProp && !isLocation) {
       let key = (characterName || legacyName || '').toLowerCase()

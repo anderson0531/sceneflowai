@@ -42,11 +42,16 @@ describe('clip and still controls stay on separate paths', () => {
     expect(gallery).not.toContain('onRegenerateStill')
     expect(gallery).not.toContain('onUploadStill')
     const workflowStart = panel.indexOf('<DirectorWorkflow')
-    const workflowEnd = panel.indexOf('scene={{', workflowStart)
+    const workflowEnd = panel.indexOf('{(slots) => (', workflowStart)
+    expect(workflowStart).toBeGreaterThan(-1)
+    expect(workflowEnd).toBeGreaterThan(workflowStart)
     const workflow = panel.slice(workflowStart, workflowEnd)
     expect(workflow).not.toContain('onGenerateBeatFrame')
     expect(workflow).not.toContain('onDirectFrame')
     expect(workflow).not.toContain('onUploadBeatFrame')
+    expect(panel).toContain('id: raw.id')
+    expect(panel).toContain('combinedCharacterRefUrl: w.combinedCharacterRefUrl')
+    expect(consoleSrc).toContain('buildConsolidatedTakeConfig')
   })
 
   it('labels the video card clip and start frame as different actions', () => {

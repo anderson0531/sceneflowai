@@ -87,6 +87,7 @@ import {
   generateFTVMotionPrompt,
   resolveEffectiveStartFrameUrl,
   resolveF2VFrameUrls,
+  resolveInitialTakeReferenceImages,
   resolveSegmentFrameUrls,
 } from '@/lib/vision/segmentConfigBuilder'
 import {
@@ -99,7 +100,16 @@ import {
 } from '@/lib/kling/longTakePlanner'
 import { KLING_SINGLE_CLIP_MAX_SEC } from '@/lib/kling/types'
 import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits'
-import { wardrobesForScene } from '@/lib/character/characterReferenceAssembly'
+import {
+  omniVideoReferencePriorityRank,
+  prioritizeAndCapOmniVideoReferences,
+} from '@/lib/video/normalizeReferenceImages'
+import {
+  formatConsistentWardrobeDescription,
+  resolveWardrobeForCharacter,
+  wardrobesForScene,
+} from '@/lib/character/characterReferenceAssembly'
+import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import { resolveSegmentVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 import type { BlueprintAspectRatio } from '@/lib/treatment/blueprintFoundation'
 import { toVideoAspectRatio } from '@/lib/vision/artStyle'
@@ -161,6 +171,13 @@ interface DirectorLibraryReference {
   name: string
   imageUrl: string
   description?: string
+  role?: string
+  refRole?: string
+  characterName?: string
+  propName?: string
+  locationName?: string
+  wardrobeDescription?: string
+  identityTraits?: string
 }
 
 interface DirectorReferenceEntry {
@@ -202,10 +219,33 @@ interface DirectorDialogProps {
   objectReferences?: Array<{ id: string; name: string; imageUrl?: string; description?: string }>
   /** Character references for optional identity preservation during keyframe edit and REF library */
   characterReferences?: Array<{
+    id?: string
     name: string
+    type?: string
     referenceImage?: string
     description?: string
-    wardrobes?: Array<{ id: string; name: string; headshotUrl?: string; fullBodyUrl?: string }>
+    appearanceDescription?: string
+    visionDescription?: string
+    height?: string
+    gender?: string
+    hairStyle?: string
+    hairColor?: string
+    defaultWardrobe?: string
+    wardrobeAccessories?: string
+    wardrobes?: Array<{
+      id: string
+      name: string
+      description?: string
+      accessories?: string
+      appearanceNotes?: string
+      sceneNumbers?: number[]
+      isDefault?: boolean
+      needsImageRegen?: boolean
+      headshotUrl?: string
+      fullBodyUrl?: string
+      previewImageUrl?: string
+      combinedCharacterRefUrl?: string
+    }>
   }>
   /** Scene references for REF library */
   sceneReferences?: Array<{ id: string; name: string; imageUrl?: string; description?: string }>
@@ -261,10 +301,53 @@ function uiModeForMethod(method: VideoGenerationMethod): string {
   return methodToMode[method] ?? 'TEXT_TO_VIDEO'
 }
 
+function configRefsToDialogEntries(
+  refs: VideoGenerationConfig['referenceImages']
+): DirectorReferenceEntry[] {
+  if (!Array.isArray(refs) || refs.length === 0) return []
+  return refs.flatMap((entry, index): DirectorReferenceEntry[] => {
+    if (typeof entry === 'string') {
+      const trimmed = entry.trim()
+      return trimmed
+        ? [{ url: trimmed, name: `Reference ${index + 1}`, type: 'character' }]
+        : []
+    }
+    const url = entry?.url?.trim()
+    if (!url) return []
+    const role = entry.role
+    const type: DirectorReferenceType =
+      role === 'location'
+        ? 'location'
+        : role?.startsWith('prop-') || Boolean(entry.propName)
+          ? 'object'
+          : entry.refRole === 'wardrobe' || (role === 'wardrobe' && entry.refRole !== 'wardrobe-diptych')
+            ? 'wardrobe'
+            : entry.type === 'style'
+              ? 'location'
+              : 'character'
+    return [
+      {
+        url,
+        name: entry.name || entry.characterName || entry.propName || entry.locationName || `Reference ${index + 1}`,
+        type,
+        role: entry.role,
+        refRole: entry.refRole,
+        characterName: entry.characterName,
+        propName: entry.propName,
+        locationName: entry.locationName,
+        promptToken: entry.promptToken,
+        subjectOrdinal: entry.subjectOrdinal,
+        wardrobeDescription: entry.wardrobeDescription,
+        identityTraits: entry.identityTraits,
+      },
+    ]
+  })
+}
+
 function refsToConfig(entries: DirectorReferenceEntry[]): NonNullable<VideoGenerationConfig['referenceImages']> {
-  return entries.map((e) => {
+  const mapped = entries.map((e) => {
     const refType: 'style' | 'character' =
-      e.type === 'location' || e.type === 'object' ? 'style' : 'character'
+      e.type === 'location' || e.type === 'object' || e.type === 'scene' ? 'style' : 'character'
     return {
       url: e.url,
       type: refType,
@@ -280,6 +363,9 @@ function refsToConfig(entries: DirectorReferenceEntry[]): NonNullable<VideoGener
       identityTraits: e.identityTraits,
     }
   })
+  return (prioritizeAndCapOmniVideoReferences(mapped) ?? mapped) as NonNullable<
+    VideoGenerationConfig['referenceImages']
+  >
 }
 
 export const DirectorDialog: React.FC<DirectorDialogProps> = ({ 
@@ -410,9 +496,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   
   // Reference images state (Omni REF — up to 8 labeled references)
   const [referenceImages, setReferenceImages] = useState<DirectorReferenceEntry[]>([])
+  const [refsUserEdited, setRefsUserEdited] = useState(false)
 
   const autoResolvedRefs = useMemo(() => {
-    if (!scene || !segment.beatId) {
+    if (!scene) {
       return { entries: [] as DirectorReferenceEntry[], warnings: [] as string[] }
     }
     const resolved = resolveSegmentVideoReferences(segment, scene as unknown as Record<string, unknown>, {
@@ -430,7 +517,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           ? 'location'
           : ref.role?.startsWith('prop-')
             ? 'object'
-            : ref.role === 'wardrobe'
+            : ref.role === 'wardrobe' && ref.refRole !== 'wardrobe-diptych'
               ? 'wardrobe'
               : 'character',
       role: ref.role,
@@ -448,20 +535,50 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
   const combinedReferenceLibrary = useMemo((): DirectorLibraryReference[] => {
     const library: DirectorLibraryReference[] = []
+    const sceneRecord = (scene as unknown as Record<string, unknown> | undefined) ?? null
 
-    sceneReferences.forEach(ref => {
-      if (ref.imageUrl) {
+    // Priority order: Character -> Wardrobe -> Location -> Scene -> Props
+    characterReferences.forEach(char => {
+      const resolvedWardrobe = resolveWardrobeForCharacter(
+        char as unknown as Record<string, unknown>,
+        sceneRecord,
+        undefined,
+        sceneIndex
+      ) as {
+        id?: string
+        name?: string
+        description?: string
+        accessories?: string
+        appearanceNotes?: string
+        combinedCharacterRefUrl?: string
+      } | null
+      const wardrobeSummary = formatConsistentWardrobeDescription(resolvedWardrobe, {
+        defaultWardrobe: char.defaultWardrobe,
+        wardrobeAccessories: char.wardrobeAccessories,
+      })
+      const identityTraits = buildIdentityTraitsClause({
+        visionDescription: char.visionDescription,
+        appearanceDescription: char.appearanceDescription || char.description,
+        hairStyle: char.hairStyle,
+        hairColor: char.hairColor,
+        gender: char.gender,
+        omitHeight: true,
+      })
+
+      if (resolvedWardrobe?.combinedCharacterRefUrl?.trim()) {
         library.push({
-          id: ref.id,
-          type: 'scene',
-          name: ref.name,
-          imageUrl: ref.imageUrl,
-          description: ref.description,
+          id: `char-pip-${char.name}-${resolvedWardrobe.id ?? 'scene'}`,
+          type: 'character',
+          name: `${char.name} — ${resolvedWardrobe.name ?? 'Scene Wardrobe'} (PiP)`,
+          imageUrl: resolvedWardrobe.combinedCharacterRefUrl.trim(),
+          description: wardrobeSummary || char.description,
+          role: 'identity',
+          refRole: 'wardrobe-diptych',
+          characterName: char.name,
+          wardrobeDescription: wardrobeSummary,
+          identityTraits,
         })
       }
-    })
-
-    characterReferences.forEach(char => {
       if (char.referenceImage) {
         library.push({
           id: `char-${char.name}`,
@@ -469,6 +586,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           name: char.name,
           imageUrl: char.referenceImage,
           description: char.description,
+          role: 'identity',
+          refRole: 'identity',
+          characterName: char.name,
+          wardrobeDescription: wardrobeSummary,
+          identityTraits,
         })
       }
       wardrobesForScene(char, sceneIndex).forEach(wardrobe => {
@@ -477,6 +599,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           headshotUrl?: string
           previewImageUrl?: string
           name?: string
+          description?: string
+          accessories?: string
+          appearanceNotes?: string
         }
         const imageUrl =
           wardrobeWithPreview.fullBodyUrl ??
@@ -488,8 +613,45 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           type: 'wardrobe',
           name: `${char.name} — ${wardrobeWithPreview.name ?? wardrobe.id}`,
           imageUrl,
+          role: 'wardrobe',
+          refRole: 'wardrobe',
+          characterName: char.name,
+          wardrobeDescription: formatConsistentWardrobeDescription(wardrobeWithPreview, {
+            defaultWardrobe: char.defaultWardrobe,
+            wardrobeAccessories: char.wardrobeAccessories,
+          }),
+          identityTraits,
         })
       })
+    })
+
+    locationReferences.forEach(ref => {
+      if (ref.imageUrl) {
+        const locName = ref.locationDisplay || ref.location
+        library.push({
+          id: ref.id,
+          type: 'location',
+          name: locName,
+          imageUrl: ref.imageUrl,
+          description: ref.description,
+          role: 'location',
+          locationName: ref.location || locName,
+        })
+      }
+    })
+
+    sceneReferences.forEach(ref => {
+      if (ref.imageUrl) {
+        library.push({
+          id: ref.id,
+          type: 'scene',
+          name: ref.name,
+          imageUrl: ref.imageUrl,
+          description: ref.description,
+          role: 'location',
+          locationName: ref.name,
+        })
+      }
     })
 
     objectReferences.forEach(ref => {
@@ -500,34 +662,64 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           name: ref.name,
           imageUrl: ref.imageUrl,
           description: ref.description,
-        })
-      }
-    })
-
-    locationReferences.forEach(ref => {
-      if (ref.imageUrl) {
-        library.push({
-          id: ref.id,
-          type: 'location',
-          name: ref.locationDisplay || ref.location,
-          imageUrl: ref.imageUrl,
-          description: ref.description,
+          role: 'prop-important',
+          propName: ref.name,
         })
       }
     })
 
     return library
-  }, [sceneReferences, characterReferences, objectReferences, locationReferences, sceneIndex])
+  }, [scene, sceneReferences, characterReferences, objectReferences, locationReferences, sceneIndex])
+
+  const isLibraryRefDisabled = useCallback(
+    (ref: DirectorLibraryReference): boolean => {
+      if (referenceImages.some((e) => e.url === ref.imageUrl)) return true
+      if (referenceImages.length < MAX_VERTEX_GEMINI_REFERENCE_IMAGES) return false
+      const incomingRank = omniVideoReferencePriorityRank(ref)
+      const lowestExistingRank = referenceImages.reduce(
+        (worst, entry) => Math.max(worst, omniVideoReferencePriorityRank(entry)),
+        -1
+      )
+      return incomingRank >= lowestExistingRank
+    },
+    [referenceImages]
+  )
 
   const handleSelectLibraryReference = useCallback((ref: DirectorLibraryReference) => {
+    setRefsUserEdited(true)
     setReferenceImages(prev => {
-      if (prev.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || prev.some((p) => p.url === ref.imageUrl)) {
+      if (prev.some((p) => p.url === ref.imageUrl)) {
         return prev
       }
-      return [
-        ...prev,
-        { url: ref.imageUrl, name: ref.name, type: ref.type },
-      ]
+      const nextEntry: DirectorReferenceEntry = {
+        url: ref.imageUrl,
+        name: ref.name,
+        type: ref.type,
+        role: ref.role,
+        refRole: ref.refRole,
+        characterName: ref.characterName,
+        propName: ref.propName,
+        locationName: ref.locationName,
+        wardrobeDescription: ref.wardrobeDescription,
+        identityTraits: ref.identityTraits,
+      }
+      if (prev.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES) {
+        const incomingRank = omniVideoReferencePriorityRank(nextEntry)
+        const worstRank = prev.reduce(
+          (worst, entry) => Math.max(worst, omniVideoReferencePriorityRank(entry)),
+          -1
+        )
+        if (incomingRank >= worstRank) return prev
+      }
+      const combined = [...prev, nextEntry].map((entry, idx) => ({
+        entry,
+        idx,
+        rank: omniVideoReferencePriorityRank(entry),
+      }))
+      combined.sort((a, b) => (a.rank !== b.rank ? a.rank - b.rank : a.idx - b.idx))
+      return combined
+        .slice(0, MAX_VERTEX_GEMINI_REFERENCE_IMAGES)
+        .map((item) => item.entry)
     })
     if (takeMode === 'standard') {
       setMode((current) => (current === 'EXTEND' ? current : 'REFERENCE_IMAGES'))
@@ -890,7 +1082,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           : { engineId: inferred.engineId }
     setDuration(snapDurationForEngine(rawDuration, selection))
     setGuidePrompt(batchGuideSeed || autoConfig.guidePrompt || '')
-    setReferenceImages(autoResolvedRefs.entries)
+    setRefsUserEdited(false)
+    const initialRefs = configRefsToDialogEntries(
+      resolveInitialTakeReferenceImages(refsToConfig(autoResolvedRefs.entries), savedConfig)
+    )
+    setReferenceImages(initialRefs.length > 0 ? initialRefs : autoResolvedRefs.entries)
     setKeyframeEdit(null)
     setUseCustomApiPrompt(autoConfig.useCustomApiPrompt ?? savedConfig?.useCustomApiPrompt ?? false)
     setApiPromptOverride(autoConfig.apiPromptOverride ?? savedConfig?.apiPromptOverride ?? '')
@@ -988,6 +1184,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             promptToken: ref.promptToken,
             subjectOrdinal: ref.subjectOrdinal,
             wardrobeDescription: ref.wardrobeDescription,
+            identityTraits: ref.identityTraits,
           }))
         : undefined
 
@@ -1280,6 +1477,27 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }, [isOpen, segment.segmentId, effectiveStartFrameUrl, initializeDialogState])
 
   useEffect(() => {
+    if (!isOpen || refsUserEdited) return
+    if (autoResolvedRefs.entries.length > 0 && referenceImages.length === 0) {
+      setReferenceImages(autoResolvedRefs.entries)
+      return
+    }
+    const autoHasCharacter = autoResolvedRefs.entries.some((e) => e.type === 'character')
+    const currentHasCharacter = referenceImages.some((e) => e.type === 'character')
+    if (autoHasCharacter && !currentHasCharacter) {
+      setReferenceImages((prev) => {
+        const existingUrls = new Set(prev.map((p) => p.url))
+        const missingChars = autoResolvedRefs.entries.filter(
+          (e) => e.type === 'character' && !existingUrls.has(e.url)
+        )
+        return missingChars.length > 0
+          ? [...missingChars, ...prev].slice(0, MAX_VERTEX_GEMINI_REFERENCE_IMAGES)
+          : prev
+      })
+    }
+  }, [isOpen, refsUserEdited, autoResolvedRefs.entries, referenceImages])
+
+  useEffect(() => {
     if (!isOpen || settingsUserEdited || segment.userEditedPrompt?.trim()) return
     const nextPrompt =
       (mode === 'FRAME_TO_VIDEO' && effectiveEndFrameUrl)
@@ -1331,7 +1549,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       startFrameUrl: resolvedStartFrameUrl,
       endFrameUrl: resolvedEndFrameUrl,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
-      approvalStatus: 'auto-ready',
+      approvalStatus: 'user-approved',
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
       referenceImages:
@@ -1367,7 +1585,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       startFrameUrl: resolvedStartFrameUrl,
       endFrameUrl: resolvedEndFrameUrl,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
-      approvalStatus: 'auto-ready',
+      approvalStatus: refsUserEdited || settingsUserEdited ? 'user-approved' : 'auto-ready',
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
       referenceImages:
@@ -1704,7 +1922,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                             />
                           </div>
                           <button
-                            onClick={() => setReferenceImages(prev => prev.filter((_, i) => i !== index))}
+                            onClick={() => {
+                              setRefsUserEdited(true)
+                              setReferenceImages(prev => prev.filter((_, i) => i !== index))
+                            }}
                             className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <X className="w-3 h-3 text-white" />
@@ -1726,6 +1947,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                             if (file && referenceImages.length < MAX_VERTEX_GEMINI_REFERENCE_IMAGES) {
                               const reader = new FileReader()
                               reader.onload = () => {
+                                setRefsUserEdited(true)
                                 setReferenceImages(prev => [
                                   ...prev,
                                   {
@@ -1778,7 +2000,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                                 <button
                                   key={ref.id}
                                   type="button"
-                                  disabled={referenceImages.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || referenceImages.some((e) => e.url === ref.imageUrl)}
+                                  disabled={isLibraryRefDisabled(ref)}
                                   onClick={() => handleSelectLibraryReference(ref)}
                                   className="group relative aspect-square rounded-lg border border-slate-700 overflow-hidden hover:border-purple-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
@@ -1806,7 +2028,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                                 <button
                                   key={ref.id}
                                   type="button"
-                                  disabled={referenceImages.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || referenceImages.some((e) => e.url === ref.imageUrl)}
+                                  disabled={isLibraryRefDisabled(ref)}
                                   onClick={() => handleSelectLibraryReference(ref)}
                                   className="group relative aspect-square rounded-lg border border-slate-700 overflow-hidden hover:border-rose-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
@@ -1824,34 +2046,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                           </div>
                         )}
 
-                        {combinedReferenceLibrary.filter(r => r.type === 'scene').length > 0 && (
-                          <div>
-                            <h4 className="text-xs font-semibold text-blue-400 mb-2 flex items-center gap-1">
-                              <ImageIcon className="w-3.5 h-3.5" /> Scene References
-                            </h4>
-                            <div className="grid grid-cols-3 gap-2">
-                              {combinedReferenceLibrary.filter(r => r.type === 'scene').map(ref => (
-                                <button
-                                  key={ref.id}
-                                  type="button"
-                                  disabled={referenceImages.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || referenceImages.some((e) => e.url === ref.imageUrl)}
-                                  onClick={() => handleSelectLibraryReference(ref)}
-                                  className="group relative aspect-video rounded-lg border border-slate-700 overflow-hidden hover:border-blue-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                  <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                  <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
-                                    <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
-                                  </div>
-                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Plus className="w-5 h-5 text-white bg-blue-500 rounded-full p-1" />
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
                         {combinedReferenceLibrary.filter(r => r.type === 'location').length > 0 && (
                           <div>
                             <h4 className="text-xs font-semibold text-emerald-400 mb-2 flex items-center gap-1">
@@ -1862,7 +2056,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                                 <button
                                   key={ref.id}
                                   type="button"
-                                  disabled={referenceImages.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || referenceImages.some((e) => e.url === ref.imageUrl)}
+                                  disabled={isLibraryRefDisabled(ref)}
                                   onClick={() => handleSelectLibraryReference(ref)}
                                   className="group relative aspect-video rounded-lg border border-slate-700 overflow-hidden hover:border-emerald-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
@@ -1880,6 +2074,34 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                           </div>
                         )}
 
+                        {combinedReferenceLibrary.filter(r => r.type === 'scene').length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-blue-400 mb-2 flex items-center gap-1">
+                              <ImageIcon className="w-3.5 h-3.5" /> Scene References
+                            </h4>
+                            <div className="grid grid-cols-3 gap-2">
+                              {combinedReferenceLibrary.filter(r => r.type === 'scene').map(ref => (
+                                <button
+                                  key={ref.id}
+                                  type="button"
+                                  disabled={isLibraryRefDisabled(ref)}
+                                  onClick={() => handleSelectLibraryReference(ref)}
+                                  className="group relative aspect-video rounded-lg border border-slate-700 overflow-hidden hover:border-blue-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
+                                    <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
+                                  </div>
+                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Plus className="w-5 h-5 text-white bg-blue-500 rounded-full p-1" />
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         {combinedReferenceLibrary.filter(r => r.type === 'object').length > 0 && (
                           <div>
                             <h4 className="text-xs font-semibold text-amber-400 mb-2 flex items-center gap-1">
@@ -1890,7 +2112,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                                 <button
                                   key={ref.id}
                                   type="button"
-                                  disabled={referenceImages.length >= MAX_VERTEX_GEMINI_REFERENCE_IMAGES || referenceImages.some((e) => e.url === ref.imageUrl)}
+                                  disabled={isLibraryRefDisabled(ref)}
                                   onClick={() => handleSelectLibraryReference(ref)}
                                   className="group relative aspect-square rounded-lg border border-slate-700 overflow-hidden hover:border-amber-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >

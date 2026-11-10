@@ -70,16 +70,38 @@ describe('characterReferenceAssembly', () => {
     expect(pair.wardrobeUrl).toBe('https://example.com/suit.jpg')
   })
 
-  it('defaults to identity-only plus resolved wardrobe description (no wardrobe image dilution)', () => {
-    const pair = resolveCharacterReferencePair({ character: characterWithPortrait })
-    expect(pair.identityUrl).toBe('https://example.com/portrait.jpg')
-    expect(pair.wardrobeUrl).toBeUndefined()
-    expect(pair.wardrobeDiptychUrl).toBeUndefined()
-    expect(pair.hasWardrobeDiptych).toBe(false)
-    expect(pair.hasStoredCombinedCharacterRef).toBe(false)
-    expect(pair.hasDualReferences).toBe(false)
-    expect(pair.hasWardrobeOnlyReference).toBe(false)
-    expect(pair.resolvedWardrobe?.description).toBe('Navy suit')
+  it('defaults to PiP combined reference when stored, or face + wardrobe pair when PiP is not yet persisted', () => {
+    const dualPair = resolveCharacterReferencePair({ character: characterWithPortrait })
+    expect(dualPair.identityUrl).toBe('https://example.com/portrait.jpg')
+    expect(dualPair.wardrobeUrl).toBe('https://example.com/turnaround.jpg')
+    expect(dualPair.hasDualReferences).toBe(true)
+    expect(dualPair.resolvedWardrobe?.description).toBe('Navy suit')
+
+    const pipPair = resolveCharacterReferencePair({
+      character: {
+        ...characterWithPortrait,
+        wardrobes: [
+          {
+            ...characterWithPortrait.wardrobes[0],
+            combinedCharacterRefUrl: 'https://example.com/marcus-pip.jpg',
+          },
+        ],
+      },
+    })
+    expect(pipPair.wardrobeDiptychUrl).toBe('https://example.com/marcus-pip.jpg')
+    expect(pipPair.hasWardrobeDiptych).toBe(true)
+    expect(pipPair.hasStoredCombinedCharacterRef).toBe(true)
+    expect(pipPair.hasDualReferences).toBe(false)
+    expect(pipPair.wardrobeUrl).toBeUndefined()
+
+    const identityOnly = resolveCharacterReferencePair({
+      character: characterWithPortrait,
+      includeWardrobeReferenceImages: false,
+    })
+    expect(identityOnly.identityUrl).toBe('https://example.com/portrait.jpg')
+    expect(identityOnly.wardrobeUrl).toBeUndefined()
+    expect(identityOnly.hasWardrobeDiptych).toBe(false)
+    expect(identityOnly.hasDualReferences).toBe(false)
   })
 
   it('returns face-first dual references when includeWardrobeReferenceImages is opted in', () => {

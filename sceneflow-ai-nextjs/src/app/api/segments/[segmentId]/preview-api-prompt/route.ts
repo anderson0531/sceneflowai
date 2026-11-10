@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { buildSegmentEnhancedPrompt } from '@/lib/video/buildSegmentEnhancedPrompt'
-import { normalizeReferenceImages } from '@/lib/video/normalizeReferenceImages'
+import {
+  normalizeReferenceImages,
+  prioritizeAndCapOmniVideoReferences,
+} from '@/lib/video/normalizeReferenceImages'
 import type { VideoGenerationMethod } from '@/lib/vision/intelligentMethodSelection'
 
 export const runtime = 'nodejs'
@@ -69,7 +72,9 @@ export async function POST(
     }
 
     const method = resolvePreviewMethod(body)
-    const referenceImages = normalizeReferenceImages(body.referenceImages)?.map((ref) => ({
+    const referenceImages = prioritizeAndCapOmniVideoReferences(
+      normalizeReferenceImages(body.referenceImages)
+    )?.map((ref) => ({
       url: ref.url,
       type: (ref.type === 'character' ? 'character' : 'style') as 'style' | 'character',
       name: ref.name,

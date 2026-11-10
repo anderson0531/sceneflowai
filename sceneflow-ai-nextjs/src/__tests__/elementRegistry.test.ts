@@ -16,27 +16,27 @@ vi.mock('@/models/Project', () => ({
 import { registerKlingElement, registerKlingElementMulti } from '@/lib/kling/klingDirectClient'
 
 describe('collectKlingElementSources bind elements', () => {
-  it('defaults to single-image frontal identity with wardrobeDescription (no wardrobe image dilution)', () => {
-    const sources = collectKlingElementSources({
-      characters: [
+  it('defaults to binding character frontal identity + scene-assigned wardrobe refer_images (with identity-only opt-out)', () => {
+    const characterRow = {
+      id: 'char-sarah',
+      name: 'Sarah',
+      referenceImage: 'https://cdn.example.com/sarah-identity.jpg',
+      klingElementId: 'elem-char-frontal',
+      wardrobes: [
         {
-          id: 'char-sarah',
-          name: 'Sarah',
-          referenceImage: 'https://cdn.example.com/sarah-identity.jpg',
-          klingElementId: 'elem-char-frontal',
-          wardrobes: [
-            {
-              id: 'ward-casual',
-              name: 'Casual',
-              description: 'Charcoal wool coat over knit sweater',
-              accessories: 'Leather boots',
-              headshotUrl: 'https://cdn.example.com/sarah-casual-head.jpg',
-              fullBodyUrl: 'https://cdn.example.com/sarah-casual-body.jpg',
-              klingElementId: 'elem-wardrobe-old',
-            },
-          ],
+          id: 'ward-casual',
+          name: 'Casual',
+          description: 'Charcoal wool coat over knit sweater',
+          accessories: 'Leather boots',
+          headshotUrl: 'https://cdn.example.com/sarah-casual-head.jpg',
+          fullBodyUrl: 'https://cdn.example.com/sarah-casual-body.jpg',
+          klingElementId: 'elem-wardrobe-scene',
         },
       ],
+    }
+
+    const sources = collectKlingElementSources({
+      characters: [characterRow],
       characterIds: ['char-sarah'],
       characterWardrobes: [{ characterId: 'char-sarah', wardrobeId: 'ward-casual' }],
     })
@@ -45,12 +45,27 @@ describe('collectKlingElementSources bind elements', () => {
     expect(sources[0]).toMatchObject({
       name: 'Char_Sarah',
       frontalImageUrl: 'https://cdn.example.com/sarah-identity.jpg',
-      referImageUrls: undefined,
-      wardrobeId: undefined,
-      wardrobeDescription: 'Charcoal wool coat over knit sweater, Leather boots',
-      klingElementId: 'elem-char-frontal',
+      referImageUrls: [
+        'https://cdn.example.com/sarah-casual-head.jpg',
+        'https://cdn.example.com/sarah-casual-body.jpg',
+      ],
+      wardrobeId: 'ward-casual',
+      klingElementId: 'elem-wardrobe-scene',
       tagId: 'o_102',
       type: 'character',
+    })
+
+    const optOut = collectKlingElementSources({
+      characters: [characterRow],
+      characterIds: ['char-sarah'],
+      characterWardrobes: [{ characterId: 'char-sarah', wardrobeId: 'ward-casual' }],
+      includeWardrobeReferenceImages: false,
+    })
+    expect(optOut[0]).toMatchObject({
+      frontalImageUrl: 'https://cdn.example.com/sarah-identity.jpg',
+      referImageUrls: undefined,
+      wardrobeDescription: 'Charcoal wool coat over knit sweater, Leather boots',
+      klingElementId: 'elem-char-frontal',
     })
   })
 
@@ -140,15 +155,15 @@ describe('collectKlingElementSources bind elements', () => {
 
     expect(sources).toHaveLength(2)
     expect(sources[0]).toMatchObject({
-      type: 'prop',
-      frontalImageUrl: 'https://cdn.example.com/sword.jpg',
-      tagId: 'o_104',
-    })
-    expect(sources[0].referImageUrls).toBeUndefined()
-    expect(sources[1]).toMatchObject({
       type: 'location',
       frontalImageUrl: 'https://cdn.example.com/alley.jpg',
       tagId: 'o_106',
+    })
+    expect(sources[0].referImageUrls).toBeUndefined()
+    expect(sources[1]).toMatchObject({
+      type: 'prop',
+      frontalImageUrl: 'https://cdn.example.com/sword.jpg',
+      tagId: 'o_104',
     })
   })
 
@@ -268,5 +283,49 @@ describe('resolveKlingElementsFromSources registration routing', () => {
       'Magic Sword'
     )
     expect(registerKlingElementMulti).not.toHaveBeenCalled()
+  })
+
+  it('orders character+wardrobe -> location -> props so Kling Omni maxElements=4 never drops location for props', async () => {
+    vi.mocked(registerKlingElement).mockImplementation(async (_url, name) => `elem-${name}`)
+    vi.mocked(registerKlingElementMulti).mockImplementation(async ({ name }) => `elem-multi-${name}`)
+
+    const sources = collectKlingElementSources({
+      characters: [
+        {
+          id: 'c1',
+          name: 'Gideon',
+          referenceImage: 'https://cdn.example.com/gideon-id.jpg',
+          wardrobes: [{ id: 'w1', name: 'Smock', fullBodyUrl: 'https://cdn.example.com/gideon-body.jpg' }],
+        },
+        {
+          id: 'c2',
+          name: 'Piper',
+          referenceImage: 'https://cdn.example.com/piper-id.jpg',
+          wardrobes: [{ id: 'w2', name: 'Parka', fullBodyUrl: 'https://cdn.example.com/piper-body.jpg' }],
+        },
+      ],
+      characterIds: ['c1', 'c2'],
+      locationRefId: 'loc-vault',
+      locationReferences: [
+        { id: 'loc-vault', location: 'VAULT', imageUrl: 'https://cdn.example.com/vault.jpg' },
+      ],
+      objectRefIds: ['p-minor', 'p-hero'],
+      objectReferences: [
+        { id: 'p-minor', name: 'Chalk', imageUrl: 'https://cdn.example.com/chalk.jpg', importance: 'secondary', category: 'prop' },
+        { id: 'p-hero', name: 'Core', imageUrl: 'https://cdn.example.com/core.jpg', importance: 'critical', category: 'prop' },
+      ],
+    })
+
+    expect(sources.map((s) => s.type)).toEqual(['character', 'character', 'location', 'prop', 'prop'])
+    expect(sources[3].name).toBe('Core')
+
+    const resolved = await resolveKlingElementsFromSources(sources, 'kling-v3-omni')
+    expect(resolved.elementIds).toHaveLength(4)
+    expect(resolved.bindings.map((b) => b.name)).toEqual([
+      'Char_Gideon',
+      'Char_Piper',
+      'VAULT',
+      'Core',
+    ])
   })
 })

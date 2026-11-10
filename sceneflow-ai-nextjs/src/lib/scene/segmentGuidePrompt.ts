@@ -12,6 +12,7 @@ import type { SceneSegment } from '@/components/vision/scene-production/types'
 // ---------------------------------------------------------------------------
 
 export type GuidePromptSceneContext = {
+  heading?: string
   dialogue?: Array<{
     id?: string
     character: string

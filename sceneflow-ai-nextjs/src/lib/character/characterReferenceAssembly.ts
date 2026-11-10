@@ -570,9 +570,18 @@ export function resolveCharacterReferencePair(
     scene,
     sceneIndex,
     characterWardrobes,
-    includeWardrobeReferenceImages = false,
-    includeWardrobeDiptych = false,
   } = args
+  // Default to PiP combined reference (face close-up badge + scene-assigned wardrobe)
+  // unless the caller explicitly requests discrete dual slots (`includeWardrobeReferenceImages: true`
+  // without `includeWardrobeDiptych`) or identity-only (`includeWardrobeReferenceImages: false`).
+  const explicitDualOnly =
+    args.includeWardrobeReferenceImages === true && args.includeWardrobeDiptych === undefined
+  const explicitIdentityOnly =
+    args.includeWardrobeReferenceImages === false && !args.includeWardrobeDiptych
+  const includeWardrobeDiptych =
+    args.includeWardrobeDiptych ?? (!explicitDualOnly && !explicitIdentityOnly)
+  const includeWardrobeReferenceImages =
+    args.includeWardrobeReferenceImages ?? includeWardrobeDiptych
   const identityUrl = trimUrl(character.referenceImage)
   const resolvedWardrobe = resolveWardrobeForCharacter(
     character,
@@ -588,9 +597,9 @@ export function resolveCharacterReferencePair(
       ? trimUrl(resolvedWardrobe?.combinedCharacterRefUrl)
       : undefined
 
-  // Identity-first by default: attach only the facial identity portrait and describe
-  // wardrobe in text. Callers that explicitly opt into wardrobe reference images
-  // attach the full-body turnaround alongside identity (or stored PiP when requested).
+  // PiP-first by default: attach the stored combined card (face inset + scene wardrobe)
+  // when available; otherwise attach both identity portrait + full-body wardrobe so Stills
+  // can compose & persist the PiP card and Clips still receive both face and outfit.
   const allowWardrobeImageSlots = Boolean(includeWardrobeReferenceImages || includeWardrobeDiptych)
   const wardrobeUrl =
     !storedCombinedUrl && allowWardrobeImageSlots && identityUrl && fullBodyUrl

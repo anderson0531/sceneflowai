@@ -516,24 +516,21 @@ describe('the route composes a beat frame from its direction', () => {
     expect(routeSrc).toContain('sceneIdentityBindPreamble({')
   })
 
-  it('attaches identity and wardrobe as discrete slots, never a PiP badge card', () => {
-    expect(routeSrc).toContain('const identitySlotUrl = refPair.identityUrl')
+  it('attaches scene-assigned PiP combined character+wardrobe cards by default and persists missing PiP cards to Blob', () => {
+    expect(routeSrc).toContain('const identitySlotUrl = hasWardrobeDiptych ? undefined : refPair.identityUrl')
     expect(routeSrc).toContain('const identityImageUrl = refPair.identityUrl')
+    expect(routeSrc).toContain('consolidateBeatCharacterRefsIntoPipBadges')
+    expect(routeSrc).toContain('uploadCombinedCharacterRef')
+    expect(routeSrc).toContain('persistCombinedCharacterRefUrl')
     expect(routeSrc).toContain('expandLeftoverDiptychSheetsIntoDualSlots')
-    expect(routeSrc).not.toContain('consolidateBeatCharacterRefsIntoPipBadges')
-    expect(routeSrc).not.toContain('hasWardrobeDiptych ? undefined : refPair.identityUrl')
-    expect(routeSrc).not.toContain('const attachIdentityHeadshot =')
-    expect(routeSrc).not.toContain('Identity headshot beside combined character reference')
-    expect(routeSrc).toContain('includeWardrobeReferenceImages = false')
-    expect(routeSrc).toContain('includeWardrobeDiptych = false')
+    expect(routeSrc).toContain('includeWardrobeReferenceImages = true')
+    expect(routeSrc).toContain('includeWardrobeDiptych = true')
     const gallerySrc = readFileSync(
       join(process.cwd(), 'src/lib/vision/galleryImageGeneration.ts'),
       'utf8'
     )
-    expect(gallerySrc).toContain('includeWardrobeReferenceImages: false')
-    expect(gallerySrc).not.toMatch(/includeWardrobeReferenceImages:\s*true/)
-    expect(gallerySrc).toContain('includeWardrobeDiptych: false')
-    expect(gallerySrc).not.toMatch(/includeWardrobeDiptych:\s*true/)
+    expect(gallerySrc).toContain('includeWardrobeReferenceImages: true')
+    expect(gallerySrc).toContain('includeWardrobeDiptych: true')
   })
 })
 
