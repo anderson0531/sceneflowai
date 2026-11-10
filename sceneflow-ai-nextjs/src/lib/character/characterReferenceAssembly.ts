@@ -158,10 +158,101 @@ export interface ResolveCharacterReferencePairArgs {
   scene?: Record<string, unknown> | null
   sceneIndex?: number
   characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
-  /** When true (default), attach full-body wardrobe URL alongside identity when available. */
+  /**
+   * When true, attach full-body wardrobe URL alongside identity when available.
+   * Defaults to false so Stills and Clips receive only the crisp facial identity
+   * portrait plus a consistent wardrobe text description (full-body wardrobe
+   * renders lack close-up facial definition and dilute likeness).
+   */
   includeWardrobeReferenceImages?: boolean
-  /** Attach stored PiP combinedCharacterRefUrl. Vertex stills leave this off. */
+  /** Attach stored PiP combinedCharacterRefUrl (opt-in only; off by default). */
   includeWardrobeDiptych?: boolean
+}
+
+const DANGLING_WARDROBE_TAIL_WORDS = new Set([
+  'a',
+  'an',
+  'the',
+  'and',
+  'or',
+  'with',
+  'without',
+  'over',
+  'under',
+  'beneath',
+  'in',
+  'on',
+  'of',
+  'for',
+  'to',
+  'from',
+  'by',
+  'at',
+  'into',
+  'wearing',
+  'dressed',
+  'outfitted',
+  'clad',
+  'featuring',
+  'including',
+  'topped',
+  'paired',
+  'layered',
+])
+
+/**
+ * Build a clean, consistent wardrobe description from a resolved scene wardrobe
+ * (or legacy character defaultWardrobe) for identity-first Clips and Stills.
+ * Avoids chopping mid-clause on trailing prepositions/participles.
+ */
+export function formatConsistentWardrobeDescription(
+  wardrobe?: {
+    description?: string | null
+    accessories?: string | null
+    appearanceNotes?: string | null
+  } | null,
+  fallback?: {
+    defaultWardrobe?: string | null
+    wardrobeAccessories?: string | null
+  } | null,
+  options?: {
+    wordCap?: number
+    includeAppearanceNotes?: boolean
+  }
+): string | undefined {
+  const wordCap = options?.wordCap ?? 38
+  const primaryDesc = wardrobe?.description?.trim() || fallback?.defaultWardrobe?.trim() || ''
+  const primaryAcc = wardrobe?.accessories?.trim() || fallback?.wardrobeAccessories?.trim() || ''
+  const notes = options?.includeAppearanceNotes ? wardrobe?.appearanceNotes?.trim() || '' : ''
+
+  const cleanedParts = [primaryDesc, primaryAcc, notes]
+    .map((part) =>
+      part
+        .replace(/^(?:wearing|dressed in|outfitted in|clad in)\s+/i, '')
+        .replace(/\s+/g, ' ')
+        .replace(/[.;,\s]+$/g, '')
+        .trim()
+    )
+    .filter(Boolean)
+
+  if (cleanedParts.length === 0) return undefined
+
+  const combined = cleanedParts.join(', ')
+  const words = combined.split(/\s+/).filter(Boolean)
+  if (words.length <= wordCap) {
+    return combined.replace(/[.;,\s]+$/g, '').trim() || undefined
+  }
+
+  const sliced = words.slice(0, wordCap)
+  while (sliced.length > 6) {
+    const lastClean = sliced[sliced.length - 1]
+      .replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '')
+      .toLowerCase()
+    if (!DANGLING_WARDROBE_TAIL_WORDS.has(lastClean)) break
+    sliced.pop()
+  }
+
+  return sliced.join(' ').replace(/[.;,\s]+$/g, '').trim() || undefined
 }
 
 function trimUrl(value: unknown): string | undefined {
@@ -448,7 +539,7 @@ export function resolveCharacterReferencePair(
     scene,
     sceneIndex,
     characterWardrobes,
-    includeWardrobeReferenceImages = true,
+    includeWardrobeReferenceImages = false,
     includeWardrobeDiptych = false,
   } = args
   const identityUrl = trimUrl(character.referenceImage)
@@ -466,20 +557,18 @@ export function resolveCharacterReferencePair(
       ? trimUrl(resolvedWardrobe?.combinedCharacterRefUrl)
       : undefined
 
-  // Face-first dual ref: dedicated identity headshot + full-body wardrobe image.
-  // A stored PiP already combines those, so do not also attach the pair when
-  // the caller still wants the combined card (video). Vertex stills leave
-  // includeWardrobeDiptych off so dual slots stay dual.
+  // Identity-first by default: attach only the facial identity portrait and describe
+  // wardrobe in text. Callers that explicitly opt into wardrobe reference images
+  // attach the full-body turnaround alongside identity (or stored PiP when requested).
+  const allowWardrobeImageSlots = Boolean(includeWardrobeReferenceImages || includeWardrobeDiptych)
   const wardrobeUrl =
-    !storedCombinedUrl && includeWardrobeReferenceImages && identityUrl && fullBodyUrl
+    !storedCombinedUrl && allowWardrobeImageSlots && identityUrl && fullBodyUrl
       ? fullBodyUrl
       : undefined
 
-  // Leftover LEFT|RIGHT sheet when no full-body and no stored PiP. Split later
-  // via expandLeftoverDiptychSheetsIntoDualSlots — still attach even when PiP
-  // compose is off, otherwise wardrobe is dropped.
+  // Leftover LEFT|RIGHT sheet only when wardrobe image slots are opted in and no full-body exists.
   const leftoverSheetUrl =
-    !storedCombinedUrl && identityUrl && !fullBodyUrl
+    !storedCombinedUrl && allowWardrobeImageSlots && identityUrl && !fullBodyUrl
       ? trimUrl(resolvedWardrobe?.headshotUrl)
       : undefined
   const wardrobeDiptychUrl = storedCombinedUrl || leftoverSheetUrl

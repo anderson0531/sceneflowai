@@ -85,11 +85,56 @@ export type VeoReferenceImage = {
   locationName?: string
   promptToken?: string
   subjectOrdinal?: number
+  wardrobeDescription?: string
+}
+
+export type VeoReferenceImageInput = {
+  url: string
+  type?: 'style' | 'character' | string
+  name?: string
+  role?: PrioritizedReferenceImage['role'] | string
+  refRole?: PrioritizedReferenceImage['refRole'] | string
+  characterName?: string
+  propName?: string
+  locationName?: string
+  promptToken?: string
+  subjectOrdinal?: number
+  wardrobeDescription?: string
+}
+
+const VALID_PRIORITY_ROLES = new Set<PrioritizedReferenceImage['role']>([
+  'identity',
+  'wardrobe',
+  'location',
+  'prop-critical',
+  'prop-important',
+  'prop-other',
+])
+
+const VALID_CHARACTER_REF_ROLES = new Set<NonNullable<PrioritizedReferenceImage['refRole']>>([
+  'identity',
+  'wardrobe',
+  'wardrobe-diptych',
+])
+
+function narrowPriorityRole(role?: string): PrioritizedReferenceImage['role'] | undefined {
+  return role && VALID_PRIORITY_ROLES.has(role as PrioritizedReferenceImage['role'])
+    ? (role as PrioritizedReferenceImage['role'])
+    : undefined
+}
+
+function narrowCharacterRefRole(
+  refRole?: string
+): PrioritizedReferenceImage['refRole'] | undefined {
+  return refRole &&
+    VALID_CHARACTER_REF_ROLES.has(refRole as NonNullable<PrioritizedReferenceImage['refRole']>)
+    ? (refRole as NonNullable<PrioritizedReferenceImage['refRole']>)
+    : undefined
 }
 
 /** Accept string URLs (Director dialog) or structured labeled refs. */
 export function normalizeReferenceImages(
-  raw?: VeoReferenceImage[] | string[] | null,
+  raw?: ReadonlyArray<VeoReferenceImageInput | string> | null,
 ): VeoReferenceImage[] | undefined {
   if (!raw?.length) return undefined
   const normalized = raw
@@ -104,13 +149,14 @@ export function normalizeReferenceImages(
         url,
         type: item.type === 'style' ? 'style' : 'character',
         name: item.name,
-        role: item.role,
-        refRole: item.refRole,
+        role: narrowPriorityRole(item.role),
+        refRole: narrowCharacterRefRole(item.refRole),
         characterName: item.characterName,
         propName: item.propName,
         locationName: item.locationName,
         promptToken: item.promptToken,
         subjectOrdinal: item.subjectOrdinal,
+        wardrobeDescription: item.wardrobeDescription,
       }
     })
     .filter((item): item is VeoReferenceImage => item !== null)
@@ -118,30 +164,35 @@ export function normalizeReferenceImages(
 }
 
 export function veoRefsToPrioritized(
-  refs: VeoReferenceImage[]
+  refs: ReadonlyArray<VeoReferenceImageInput>
 ): PrioritizedReferenceImage[] {
-  return refs.map((ref, i) => ({
-    imageUrl: ref.url,
-    name: ref.name?.trim() || `Reference ${i + 1}`,
-    role:
-      ref.role ??
-      (ref.refRole === 'wardrobe'
-        ? 'wardrobe'
-        : ref.type === 'style'
-          ? 'location'
-          : 'identity'),
-    refRole: ref.refRole,
-    characterName: ref.characterName,
-    propName: ref.propName,
-    locationName: ref.locationName,
-    promptToken: ref.promptToken,
-    subjectOrdinal: ref.subjectOrdinal,
-  }))
+  return refs.map((ref, i) => {
+    const narrowedRole = narrowPriorityRole(ref.role)
+    const narrowedRefRole = narrowCharacterRefRole(ref.refRole)
+    return {
+      imageUrl: ref.url,
+      name: ref.name?.trim() || `Reference ${i + 1}`,
+      role:
+        narrowedRole ??
+        (narrowedRefRole === 'wardrobe'
+          ? 'wardrobe'
+          : ref.type === 'style'
+            ? 'location'
+            : 'identity'),
+      refRole: narrowedRefRole,
+      characterName: ref.characterName,
+      propName: ref.propName,
+      locationName: ref.locationName,
+      promptToken: ref.promptToken,
+      subjectOrdinal: ref.subjectOrdinal,
+      wardrobeDescription: ref.wardrobeDescription,
+    }
+  })
 }
 
 /** True when refs are empty or every entry lacks a non-empty name (bare URLs). */
 export function shouldRelabelRefs(
-  refs?: VeoReferenceImage[] | string[] | null,
+  refs?: ReadonlyArray<VeoReferenceImageInput | string> | null,
 ): boolean {
   if (!refs?.length) return true
   return refs.every((ref) => {

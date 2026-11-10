@@ -33,6 +33,7 @@ import {
   buildFrameEditReferenceImages,
   frameEditCorrectionTargetForCharacter,
   frameEditCorrectionTargetForLocation,
+  defaultFrameEditReferenceKeys,
   frameEditCorrectionTargetForProp,
   frameEditReferenceKeys,
   listFrameEditCorrectionTargets,
@@ -169,7 +170,7 @@ export function ImageEditModal({
   } | null>(null)
 
   const fallbackCharRefKeys = useMemo(
-    () => frameEditReferenceKeys(characterReferences ?? []),
+    () => defaultFrameEditReferenceKeys(characterReferences ?? []),
     [characterReferences]
   )
 

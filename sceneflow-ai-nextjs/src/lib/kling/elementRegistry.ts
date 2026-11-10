@@ -7,6 +7,10 @@ import { registerKlingElement, registerKlingElementMulti } from './klingDirectCl
 import { getKlingCapabilities } from './config'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
+import {
+  formatConsistentWardrobeDescription,
+  resolveWardrobeForCharacter,
+} from '@/lib/character/characterReferenceAssembly'
 import { locationReferenceForGeneration } from '@/lib/vision/locationVersionResolve'
 
 export type KlingElementSource = {
@@ -18,6 +22,8 @@ export type KlingElementSource = {
   /** Wardrobe or additional angle images (1-3) */
   referImageUrls?: string[]
   description?: string
+  /** Consistent scene wardrobe text when wardrobe reference images are omitted */
+  wardrobeDescription?: string
   tagId?: string
   klingElementId?: string
   type: 'character' | 'prop' | 'location'
@@ -132,10 +138,16 @@ export function collectKlingElementSources(args: {
     id?: string
     name?: string
     referenceImage?: string
+    defaultWardrobe?: string
+    wardrobeAccessories?: string
     klingElementId?: string
     wardrobes?: Array<{
       id?: string
       name?: string
+      description?: string
+      accessories?: string
+      appearanceNotes?: string
+      sceneNumbers?: number[]
       headshotUrl?: string
       fullBodyUrl?: string
       klingElementId?: string
@@ -143,6 +155,10 @@ export function collectKlingElementSources(args: {
   }>
   characterIds?: string[]
   characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
+  scene?: Record<string, unknown>
+  sceneIndex?: number
+  /** Opt-in: attach full-body/headshot wardrobe images to Kling element refer_images. Defaults to false (identity + wardrobe text). */
+  includeWardrobeReferenceImages?: boolean
   objectReferences?: VisualReference[]
   objectRefIds?: string[]
   locationReferences?: LocationReference[]
@@ -154,6 +170,9 @@ export function collectKlingElementSources(args: {
     characters = [],
     characterIds = [],
     characterWardrobes = [],
+    scene,
+    sceneIndex,
+    includeWardrobeReferenceImages = false,
     objectReferences = [],
     objectRefIds = [],
     locationReferences = [],
@@ -165,10 +184,20 @@ export function collectKlingElementSources(args: {
     const char = characters.find((c) => c.id === charId || c.name === charId)
     if (!char?.name) continue
 
-    const wardrobePick = characterWardrobes.find((w) => w.characterId === charId)
-    const wardrobe = wardrobePick
-      ? char.wardrobes?.find((w) => w.id === wardrobePick.wardrobeId)
-      : undefined
+    const wardrobePick = characterWardrobes.find(
+      (w) => w.characterId === charId || w.characterId === char.id || w.characterId === char.name
+    )
+    const wardrobe =
+      (wardrobePick
+        ? char.wardrobes?.find((w) => w.id === wardrobePick.wardrobeId)
+        : undefined) ??
+      (resolveWardrobeForCharacter(
+        char as unknown as Record<string, unknown>,
+        scene,
+        characterWardrobes,
+        sceneIndex
+      ) as NonNullable<typeof char.wardrobes>[number] | null) ??
+      undefined
 
     const identityUrl = char.referenceImage?.trim()
     const referCandidates = [wardrobe?.headshotUrl, wardrobe?.fullBodyUrl].filter(
@@ -176,15 +205,21 @@ export function collectKlingElementSources(args: {
     )
 
     let frontalImageUrl = identityUrl
-    let referImageUrls = referCandidates
+    let referImageUrls = includeWardrobeReferenceImages ? referCandidates : []
 
     if (!frontalImageUrl && referCandidates.length > 0) {
       frontalImageUrl = referCandidates[0]
-      referImageUrls = referCandidates.slice(1)
+      referImageUrls = includeWardrobeReferenceImages ? referCandidates.slice(1) : []
     }
 
     const imageUrl = frontalImageUrl || referImageUrls[0]
     if (!imageUrl) continue
+
+    const wardrobeDescription = formatConsistentWardrobeDescription(wardrobe, {
+      defaultWardrobe: char.defaultWardrobe,
+      wardrobeAccessories: char.wardrobeAccessories,
+    })
+    const usesWardrobeElement = Boolean(includeWardrobeReferenceImages && referImageUrls.length > 0)
 
     sources.push({
       id: char.id || char.name,
@@ -192,13 +227,16 @@ export function collectKlingElementSources(args: {
       imageUrl,
       frontalImageUrl,
       referImageUrls: referImageUrls.length ? referImageUrls : undefined,
-      description: wardrobe
+      description: wardrobe?.name
         ? `${toCharacterPromptAlias(char.name)} in ${wardrobe.name}`
         : toCharacterPromptAlias(char.name),
+      ...(wardrobeDescription && !usesWardrobeElement ? { wardrobeDescription } : {}),
       tagId: 'o_102',
-      klingElementId: wardrobe?.klingElementId || char.klingElementId,
+      klingElementId: usesWardrobeElement
+        ? wardrobe?.klingElementId || char.klingElementId
+        : char.klingElementId,
       type: 'character',
-      wardrobeId: wardrobe?.id,
+      wardrobeId: usesWardrobeElement ? wardrobe?.id : undefined,
       matchNames: [char.name, toCharacterPromptAlias(char.name)],
     })
   }

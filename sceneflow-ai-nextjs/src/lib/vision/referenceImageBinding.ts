@@ -22,6 +22,8 @@ export interface ReferenceImageBinding {
   name?: string
   /** Short physical note after the caption sentence. Shot rules stay in the task. */
   descriptor?: string
+  /** Consistent scene wardrobe text when no separate wardrobe image is attached. */
+  wardrobeDescription?: string
 }
 
 export const OPENING_FRAME_CAPTION = 'The next image is the opening frame.'
@@ -77,6 +79,12 @@ interface PersonSlot {
   identity: boolean
   wardrobe: boolean
   character: boolean
+  wardrobeDescription?: string
+}
+
+function ensureSentencePeriod(text: string): string {
+  const clean = text.replace(/[.;,\s]+$/g, '').trim()
+  return clean ? `${clean}.` : ''
 }
 
 function personInstruction(slot: PersonSlot): string {
@@ -90,6 +98,11 @@ function personInstruction(slot: PersonSlot): string {
   }
   if (slot.wardrobe) {
     parts.push(`Clothes of ${slot.token} are the wardrobe image of ${slot.token}.`)
+  } else if (!slot.character && slot.wardrobeDescription?.trim()) {
+    const formatted = ensureSentencePeriod(slot.wardrobeDescription)
+    if (formatted) {
+      parts.push(`Clothes of ${slot.token}: ${formatted}`)
+    }
   }
   return parts.join(' ')
 }
@@ -113,8 +126,12 @@ export function formatImagesAboveBinding(bindings: ReferenceImageBinding[]): str
         identity: false,
         wardrobe: false,
         character: false,
+        wardrobeDescription: undefined,
       }
       if (!slot.name && binding.name) slot.name = binding.name
+      if (!slot.wardrobeDescription && binding.wardrobeDescription?.trim()) {
+        slot.wardrobeDescription = binding.wardrobeDescription.trim()
+      }
       if (binding.role === 'identity') slot.identity = true
       if (binding.role === 'wardrobe') slot.wardrobe = true
       if (binding.role === 'character') slot.character = true
@@ -232,6 +249,7 @@ export function bindingsFromReferenceRecords(
     locationName?: string
     promptToken?: string
     subjectOrdinal?: number
+    wardrobeDescription?: string
   }>
 ): ReferenceImageBinding[] {
   const personByName = new Map<string, string>()
@@ -246,6 +264,9 @@ export function bindingsFromReferenceRecords(
       bindings.push({
         ...fromCaption,
         name: ref.characterName || ref.propName || ref.locationName || fromCaption.name,
+        ...(ref.wardrobeDescription?.trim()
+          ? { wardrobeDescription: ref.wardrobeDescription.trim() }
+          : {}),
       })
       continue
     }
@@ -293,6 +314,9 @@ export function bindingsFromReferenceRecords(
         role: isDiptych ? 'character' : isWardrobe ? 'wardrobe' : 'identity',
         token,
         name: characterName || legacyName,
+        ...(ref.wardrobeDescription?.trim()
+          ? { wardrobeDescription: ref.wardrobeDescription.trim() }
+          : {}),
       })
       continue
     }

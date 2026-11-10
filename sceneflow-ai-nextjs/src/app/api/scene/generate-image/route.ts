@@ -87,12 +87,14 @@ import {
   buildLocationPromptToken,
   buildPropPromptToken,
   dropDuplicateHeadNounMatches,
+  formatPairedIdentityLandmarkLines,
   formatStillReferencesLegend,
   formatWardrobeLegendClause,
   isStructuredStillPrompt,
   joinPromptBlocks,
   injectBeforeStyleOrExclusions,
   parseStillPromptSource,
+  personBindingsForStillRef,
   resolveLibraryItemPromptMatch,
   actionFramingForLibraryMatch,
   stillActionHasEmptyCast,
@@ -103,6 +105,7 @@ import {
   type LibraryItemPromptMatch,
 } from '@/lib/imagen/structuredStillPrompt'
 import { buildInterleavedReferencePairCaptions } from '@/lib/imagen/interleavedReferencePair'
+import { formatImagesAboveBinding } from '@/lib/vision/referenceImageBinding'
 import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
 import {
   collectEntityMaskPhrases,
@@ -135,6 +138,7 @@ import {
   BEAT_FRAME_ANTI_POSE_NEGATIVE_PROMPT,
   buildWardrobeBindingSummary,
   dualReferencePriorityBlock,
+  formatConsistentWardrobeDescription,
   sceneIdentityBindPreamble,
   EXPRESSION_OVERRIDE_INSTRUCTION,
   resolveCharacterReferencePair,
@@ -656,7 +660,7 @@ async function postGenerateImage(req: NextRequest) {
       /** Pre-resolved look from an Express run — skips per-beat re-derivation. */
       lookbook: passedLookbook,
       generationMode = 'default',
-      includeWardrobeReferenceImages = true,
+      includeWardrobeReferenceImages = false,
       includeWardrobeDiptych = false,
       fromDialog = false,
       negativePrompt,
@@ -2032,7 +2036,11 @@ async function postGenerateImage(req: NextRequest) {
         height: char.height,
         defaultWardrobe: hasWardrobeReference ? undefined : effectiveWardrobe,
         wardrobeAccessories: hasWardrobeReference ? undefined : effectiveAccessories,
-        wardrobeDescription: effectiveWardrobe,
+        wardrobeDescription:
+          formatConsistentWardrobeDescription(refPair.resolvedWardrobe, {
+            defaultWardrobe: effectiveWardrobe,
+            wardrobeAccessories: effectiveAccessories,
+          }) ?? effectiveWardrobe,
         hasCostumeReference,
         hasWardrobeDiptych,
         hasDualReferences,
@@ -3192,7 +3200,17 @@ async function postGenerateImage(req: NextRequest) {
               })
             : useInterleavedProRefs
               ? joinPromptBlocks(
-                  `${STILL_SECTION_TASK}\n${STILL_TASK_PRO_LEAD}`,
+                  formatImagesAboveBinding(
+                    stillRefs.flatMap((ref) =>
+                      ref.kind === 'person'
+                        ? personBindingsForStillRef(ref)
+                        : [{ role: ref.kind, token: ref.token, name: ref.name }]
+                    )
+                  ),
+                  `${STILL_SECTION_TASK}\n${[
+                    STILL_TASK_PRO_LEAD,
+                    ...formatPairedIdentityLandmarkLines(stillRefs, effectiveShotType),
+                  ].join('\n')}`,
                   remappedOptimizedPrompt
                 )
               : // Reference-first binding leaves `person [N]` as the only mention of
@@ -3400,7 +3418,7 @@ async function postGenerateImage(req: NextRequest) {
               : sanitizedGeminiPrompt
 
             const vertexReferenceImages = await overlayLocationScaleOnReferenceImages(
-              effectiveImageTier !== 'eco'
+              allReferenceImages.length > 0
                 ? await cropIdentityReferenceImagesForPro(allReferenceImages)
                 : allReferenceImages
             )

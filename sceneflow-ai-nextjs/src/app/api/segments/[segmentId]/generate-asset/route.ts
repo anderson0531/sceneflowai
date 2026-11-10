@@ -739,11 +739,13 @@ export async function POST(
                   type: ref.type,
                   name: ref.name,
                   role: ref.role,
+                  refRole: ref.refRole,
                   characterName: ref.characterName,
                   propName: ref.propName,
                   locationName: ref.locationName,
                   promptToken: ref.promptToken,
                   subjectOrdinal: ref.subjectOrdinal,
+                  wardrobeDescription: ref.wardrobeDescription,
                 })
               )
               console.log(
@@ -1010,6 +1012,8 @@ export async function POST(
               characters: (visionMeta.characters as never[]) || [],
               characterIds: elementSelection.characterIds,
               characterWardrobes: elementSelection.characterWardrobes,
+              scene: sceneForElements as Record<string, unknown>,
+              sceneIndex: elementSceneIndex >= 0 ? elementSceneIndex : undefined,
               objectReferences: (references.objectReferences || []) as never[],
               objectRefIds: elementSelection.objectRefIds,
               locationReferences: (references.locationReferences || []) as never[],
@@ -1026,6 +1030,15 @@ export async function POST(
                 ...resolvedElements.elementIds,
               ]
               elementBindings = buildElementPromptBindings(sources, resolvedElements.bindings)
+              const wardrobeLines = sources
+                .filter((s) => s.type === 'character' && s.wardrobeDescription?.trim())
+                .map((s) => {
+                  const displayName = s.matchNames?.[0] || s.name
+                  return `Clothes of ${displayName}: ${s.wardrobeDescription!.replace(/[.;,\s]+$/g, '')}.`
+                })
+              if (wardrobeLines.length > 0) {
+                effectivePrompt = `${wardrobeLines.join(' ')}\n\n${effectivePrompt}`
+              }
             }
             if (resolvedElements.newRegistrations.length) {
               await persistKlingElementIdsToProject(

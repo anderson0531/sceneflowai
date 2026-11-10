@@ -524,11 +524,14 @@ describe('the route composes a beat frame from its direction', () => {
     expect(routeSrc).not.toContain('hasWardrobeDiptych ? undefined : refPair.identityUrl')
     expect(routeSrc).not.toContain('const attachIdentityHeadshot =')
     expect(routeSrc).not.toContain('Identity headshot beside combined character reference')
+    expect(routeSrc).toContain('includeWardrobeReferenceImages = false')
     expect(routeSrc).toContain('includeWardrobeDiptych = false')
     const gallerySrc = readFileSync(
       join(process.cwd(), 'src/lib/vision/galleryImageGeneration.ts'),
       'utf8'
     )
+    expect(gallerySrc).toContain('includeWardrobeReferenceImages: false')
+    expect(gallerySrc).not.toMatch(/includeWardrobeReferenceImages:\s*true/)
     expect(gallerySrc).toContain('includeWardrobeDiptych: false')
     expect(gallerySrc).not.toMatch(/includeWardrobeDiptych:\s*true/)
   })

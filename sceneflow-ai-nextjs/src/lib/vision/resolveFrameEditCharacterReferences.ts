@@ -441,6 +441,27 @@ export function frameEditReferenceKeys(
   return keys
 }
 
+/**
+ * Default pre-selected character keys for frame editing: prefer only the crisp
+ * facial identity portrait (`identity:<name>`) so full-body wardrobe images do
+ * not dilute facial definition unless the user explicitly checks them.
+ */
+export function defaultFrameEditReferenceKeys(
+  refs: FrameEditCharacterReference[]
+): FrameEditReferenceSelectionKey[] {
+  const keys: FrameEditReferenceSelectionKey[] = []
+  for (const ref of refs) {
+    if (ref.identityImageUrl) {
+      keys.push(`identity:${ref.characterName}`)
+    } else if (ref.wardrobeDiptychUrl) {
+      keys.push(`diptych:${ref.characterName}`)
+    } else if (ref.wardrobeImageUrl) {
+      keys.push(`wardrobe:${ref.characterName}`)
+    }
+  }
+  return keys
+}
+
 export function listAllFrameEditCharacterReferences(args: {
   scene: Record<string, unknown> | null
   sceneIndex: number
@@ -739,7 +760,7 @@ export type FrameEditCorrectionTarget = {
 export function frameEditCorrectionTargetForCharacter(
   ref: FrameEditCharacterReference
 ): FrameEditCorrectionTarget | null {
-  const selectedKeys = frameEditReferenceKeys([ref])
+  const selectedKeys = defaultFrameEditReferenceKeys([ref])
   if (selectedKeys.length === 0) return null
   return {
     kind: 'character',

@@ -103,7 +103,19 @@ export interface GenerateSegmentVideoInput {
   previousSegmentAssetUrl?: string
   /** Prior chain segment last frame — used when Kling EXT downgrades to I2V. */
   previousSegmentLastFrameUrl?: string
-  referenceImages?: Array<{ url: string; type: 'style' | 'character'; name?: string; role?: string }>
+  referenceImages?: Array<{
+    url: string
+    type: 'style' | 'character'
+    name?: string
+    role?: string
+    refRole?: string
+    characterName?: string
+    propName?: string
+    locationName?: string
+    promptToken?: string
+    subjectOrdinal?: number
+    wardrobeDescription?: string
+  }>
   sceneImageUrl?: string
   segmentIndex?: number
   totalSegments?: number

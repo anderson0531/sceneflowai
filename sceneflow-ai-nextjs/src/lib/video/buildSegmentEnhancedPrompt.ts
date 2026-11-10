@@ -28,11 +28,13 @@ export type SegmentReferenceImage = {
   type: 'style' | 'character'
   name?: string
   role?: string
+  refRole?: string
   characterName?: string
   propName?: string
   locationName?: string
   promptToken?: string
   subjectOrdinal?: number
+  wardrobeDescription?: string
 }
 
 export interface BuildSegmentEnhancedPromptInput {

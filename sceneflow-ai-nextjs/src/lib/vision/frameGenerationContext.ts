@@ -383,7 +383,7 @@ export function resolveFrameGenerationContext(args: ResolveFrameGenerationContex
     const refPair = resolveCharacterReferencePair({
       character: c,
       scene,
-      includeWardrobeReferenceImages: true,
+      includeWardrobeReferenceImages: false,
       includeWardrobeDiptych: false,
     })
     const resolvedWardrobe = resolveWardrobeForCharacter(c, scene)
@@ -405,7 +405,7 @@ export function resolveFrameGenerationContext(args: ResolveFrameGenerationContex
       wardrobe: hasSceneHeadshot || hasCostumeReference
         ? undefined
         : pickWardrobeDescriptionForCharacter(c, scene),
-      wardrobeAccessories: hasSceneHeadshot
+      wardrobeAccessories: hasSceneHeadshot || hasCostumeReference
         ? undefined
         : (resolvedWardrobe?.accessories as string | undefined),
       hasCostumeReference,

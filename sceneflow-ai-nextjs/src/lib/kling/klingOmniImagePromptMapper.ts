@@ -6,6 +6,10 @@
  */
 
 import type { PrioritizedReferenceImage } from '@/lib/vision/referenceLimits'
+import {
+  formatConsistentWardrobeDescription,
+  resolveWardrobeForCharacter,
+} from '@/lib/character/characterReferenceAssembly'
 import type { KlingElementSource } from './elementRegistry'
 
 export const MAX_KLING_OMNI_REFERENCE_SLOTS = 10
@@ -176,10 +180,15 @@ export function buildKlingCharacterSourcesFromRefs(args: {
     id?: string
     name?: string
     referenceImage?: string
+    defaultWardrobe?: string
+    wardrobeAccessories?: string
     klingElementId?: string
     wardrobes?: Array<{
       id?: string
       name?: string
+      description?: string
+      accessories?: string
+      appearanceNotes?: string
       headshotUrl?: string
       fullBodyUrl?: string
       klingElementId?: string
@@ -218,9 +227,17 @@ export function buildKlingCharacterSourcesFromRefs(args: {
     const wardrobePick = characterWardrobes.find(
       (w) => w.characterId === char?.id || w.characterId === name
     )
-    const wardrobe = wardrobePick
-      ? char?.wardrobes?.find((w) => w.id === wardrobePick.wardrobeId)
-      : undefined
+    const wardrobe =
+      (wardrobePick
+        ? char?.wardrobes?.find((w) => w.id === wardrobePick.wardrobeId)
+        : undefined) ??
+      (char
+        ? (resolveWardrobeForCharacter(
+            char as unknown as Record<string, unknown>,
+            undefined,
+            characterWardrobes
+          ) as NonNullable<typeof char.wardrobes>[number] | null) ?? undefined
+        : undefined)
 
     const frontal =
       identityRef?.imageUrl?.trim() ||
@@ -231,17 +248,27 @@ export function buildKlingCharacterSourcesFromRefs(args: {
     const referImageUrls = wardrobeRefs
       .map((ref) => ref.imageUrl)
       .filter((url) => url && url !== frontal)
+    const usesWardrobeElement = referImageUrls.length > 0
+    const wardrobeDescription =
+      identityRef?.wardrobeDescription ||
+      formatConsistentWardrobeDescription(wardrobe, {
+        defaultWardrobe: char?.defaultWardrobe,
+        wardrobeAccessories: char?.wardrobeAccessories,
+      })
 
     sources.push({
       id: char?.id || name,
       name,
       imageUrl: frontal,
       frontalImageUrl: frontal,
-      referImageUrls: referImageUrls.length ? referImageUrls : undefined,
-      description: wardrobe ? `${name} in ${wardrobe.name}` : name,
-      klingElementId: wardrobe?.klingElementId || char?.klingElementId,
+      referImageUrls: usesWardrobeElement ? referImageUrls : undefined,
+      description: wardrobe?.name ? `${name} in ${wardrobe.name}` : name,
+      ...(wardrobeDescription && !usesWardrobeElement ? { wardrobeDescription } : {}),
+      klingElementId: usesWardrobeElement
+        ? wardrobe?.klingElementId || char?.klingElementId
+        : char?.klingElementId,
       type: 'character',
-      wardrobeId: wardrobe?.id,
+      wardrobeId: usesWardrobeElement ? wardrobe?.id : undefined,
     })
   }
 

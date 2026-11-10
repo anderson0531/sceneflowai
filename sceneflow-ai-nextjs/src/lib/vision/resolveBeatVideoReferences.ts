@@ -2,7 +2,10 @@
  * Resolve prioritized reference images for Omni REF video generation on a beat.
  */
 
-import { resolveCharacterReferencePair } from '@/lib/character/characterReferenceAssembly'
+import {
+  formatConsistentWardrobeDescription,
+  resolveCharacterReferencePair,
+} from '@/lib/character/characterReferenceAssembly'
 import { formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { formatLocationScaleDescriptor } from '@/lib/imagen/locationScaleClause'
@@ -41,6 +44,7 @@ export type LabeledVideoReference = {
   locationName?: string
   promptToken?: string
   subjectOrdinal?: number
+  wardrobeDescription?: string
 }
 
 export type ResolvedBeatVideoReferences = {
@@ -61,11 +65,17 @@ export type ResolveBeatVideoReferencesArgs = {
     height?: string
     appearanceDescription?: string
     visionDescription?: string
+    defaultWardrobe?: string
+    wardrobeAccessories?: string
     wardrobes?: unknown[]
   }>
   locationReferences: LocationReference[]
   objectReferences: VisualReference[]
   filmTitle?: string
+  /** Opt-in: attach full-body wardrobe reference image alongside identity. Defaults to false (identity + wardrobe text). */
+  includeWardrobeReferenceImages?: boolean
+  /** Opt-in: attach stored PiP combined character card instead of discrete identity portrait. Defaults to false. */
+  includeWardrobeDiptych?: boolean
 }
 
 function videoPersonToken(personTokenIndex?: number): string {
@@ -76,31 +86,41 @@ function videoIdentityLabel(
   _name: string,
   _index: number,
   personTokenIndex?: number,
-  heightPhrase?: string
+  heightPhrase?: string,
+  hasSeparateWardrobeImage?: boolean
 ): string {
   const base = formatNextImageCaption({
     role: 'identity',
     token: videoPersonToken(personTokenIndex),
   })
-  return heightPhrase ? `${base} Scale: ${heightPhrase}.` : base
+  const details: string[] = []
+  if (!hasSeparateWardrobeImage) {
+    details.push(
+      'Match exact facial identity, bone structure, hair, and skin tone from this portrait; ignore studio backdrop and portrait clothing.'
+    )
+  }
+  if (heightPhrase) {
+    details.push(`Scale: ${heightPhrase}.`)
+  }
+  return details.length > 0 ? `${base} ${details.join(' ')}` : base
 }
 
-function formatShortWardrobeSummary(wardrobe?: {
-  name?: string
-  description?: string
-  accessories?: string
-  appearanceNotes?: string
-} | null): string | undefined {
-  if (!wardrobe) return undefined
-  const rawParts = [wardrobe.description?.trim(), wardrobe.accessories?.trim()]
-    .filter(Boolean)
-    .join(', ')
-    .replace(/\s+/g, ' ')
-    .trim()
-  if (!rawParts) return undefined
-  const sanitized = autoSanitizePrompt(rawParts, { logChanges: false }).sanitizedPrompt
-  const words = sanitized.split(/\s+/)
-  return words.length > 16 ? `${words.slice(0, 16).join(' ')}` : sanitized
+function formatShortWardrobeSummary(
+  wardrobe?: {
+    name?: string
+    description?: string
+    accessories?: string
+    appearanceNotes?: string
+  } | null,
+  fallback?: {
+    defaultWardrobe?: string
+    wardrobeAccessories?: string
+  } | null
+): string | undefined {
+  const formatted = formatConsistentWardrobeDescription(wardrobe, fallback, { wordCap: 36 })
+  if (!formatted) return undefined
+  const sanitized = autoSanitizePrompt(formatted, { logChanges: false }).sanitizedPrompt
+  return sanitized.trim() || undefined
 }
 
 function videoWardrobeLabel(
@@ -256,6 +276,7 @@ export function resolveBeatVideoReferences(
     imageUrl: string
     refRole: 'identity' | 'wardrobe' | 'wardrobe-diptych'
     characterName: string
+    wardrobeDescription?: string
   }> = []
 
   const characterMeta: Array<{
@@ -276,8 +297,8 @@ export function resolveBeatVideoReferences(
       scene,
       sceneIndex: beatSourceSceneIndex,
       characterWardrobes,
-      includeWardrobeReferenceImages: true,
-      includeWardrobeDiptych: true,
+      includeWardrobeReferenceImages: Boolean(args.includeWardrobeReferenceImages),
+      includeWardrobeDiptych: Boolean(args.includeWardrobeDiptych),
     })
 
     const sentDiptych = Boolean(refPair.hasWardrobeDiptych && refPair.wardrobeDiptychUrl)
@@ -286,7 +307,10 @@ export function resolveBeatVideoReferences(
       appearanceDescription: char.appearanceDescription,
       visionDescription: char.visionDescription,
     })
-    const wardrobeSummary = formatShortWardrobeSummary(refPair.resolvedWardrobe)
+    const wardrobeSummary = formatShortWardrobeSummary(refPair.resolvedWardrobe, {
+      defaultWardrobe: char.defaultWardrobe,
+      wardrobeAccessories: char.wardrobeAccessories,
+    })
     characterMeta.push({
       name: char.name,
       hasDualReferences: sentDiptych ? false : refPair.hasDualReferences,
@@ -296,9 +320,6 @@ export function resolveBeatVideoReferences(
       wardrobeSummary,
     })
 
-    // Prefer the single-slot composite card (full-body wardrobe with top-right
-    // face close-up inset) when present so video generation preserves exact facial
-    // identity and wardrobe in a single reference slot without exhausting limits.
     if (sentDiptych && refPair.wardrobeDiptychUrl) {
       imageReferences.push({
         imageUrl: refPair.wardrobeDiptychUrl,
@@ -309,12 +330,18 @@ export function resolveBeatVideoReferences(
     }
 
     if (refPair.identityUrl) {
+      const hasSeparateWardrobe = Boolean(
+        refPair.wardrobeUrl && refPair.wardrobeUrl !== refPair.identityUrl
+      )
       imageReferences.push({
         imageUrl: refPair.identityUrl,
         refRole: 'identity',
         characterName: char.name,
+        ...(!hasSeparateWardrobe && wardrobeSummary
+          ? { wardrobeDescription: wardrobeSummary }
+          : {}),
       })
-      if (refPair.wardrobeUrl && refPair.wardrobeUrl !== refPair.identityUrl) {
+      if (hasSeparateWardrobe && refPair.wardrobeUrl) {
         imageReferences.push({
           imageUrl: refPair.wardrobeUrl,
           refRole: 'wardrobe',
@@ -353,7 +380,13 @@ export function resolveBeatVideoReferences(
 
   const buildIdentityWithHeight = (name: string, index: number, personTokenIndex?: number) => {
     const meta = characterMeta.find((c) => c.name === name)
-    return videoIdentityLabel(name, index, personTokenIndex, meta?.characterHeight)
+    return videoIdentityLabel(
+      name,
+      index,
+      personTokenIndex,
+      meta?.characterHeight,
+      Boolean(meta?.hasDualReferences)
+    )
   }
   const buildWardrobeWithSummary = (name: string, index: number, personTokenIndex?: number) => {
     const meta = characterMeta.find((c) => c.name === name)
@@ -495,6 +528,7 @@ export function resolveBeatVideoReferences(
     locationName: ref.locationName,
     promptToken: ref.promptToken,
     subjectOrdinal: ref.subjectOrdinal,
+    ...(ref.wardrobeDescription ? { wardrobeDescription: ref.wardrobeDescription } : {}),
   }))
 
   return {
@@ -508,7 +542,8 @@ export function resolveBeatVideoReferences(
 /**
  * User-saved beat references replace whatever the client attached.
  * Also replaces stale client references when beatDirection specifies castInFrame
- * or keyProps that are missing from (or contradict) the client reference list.
+ * or keyProps that are missing from (or contradict) the client reference list,
+ * or when clientRefs still carry legacy PiP composite / full-body wardrobe plates.
  * Otherwise only unlabeled client urls are rebuilt on the server.
  */
 export function shouldReplaceClientVideoReferences(
@@ -518,12 +553,25 @@ export function shouldReplaceClientVideoReferences(
   if (shouldUseExplicitBeatReferences(beat) || shouldRelabelRefs(clientRefs)) {
     return true
   }
-  const dir = beat?.beatDirection
-  if (!dir || !Array.isArray(clientRefs)) return false
+  if (!Array.isArray(clientRefs)) return false
   const structuredRefs = clientRefs.filter(
     (ref): ref is Exclude<(typeof clientRefs)[number], string> =>
       Boolean(ref && typeof ref === 'object')
   )
+  const hasStaleWardrobeOrPipRef = structuredRefs.some(
+    (ref) =>
+      ref.refRole === 'wardrobe-diptych' ||
+      ref.refRole === 'wardrobe' ||
+      ref.role === 'wardrobe' ||
+      /^The next image is the (?:identity and wardrobe|wardrobe) of\b/i.test(
+        (ref.name || '').trim()
+      )
+  )
+  if (hasStaleWardrobeOrPipRef) {
+    return true
+  }
+  const dir = beat?.beatDirection
+  if (!dir) return false
   if (Array.isArray(dir.castInFrame)) {
     const directedCast = dir.castInFrame.map((name) => name.trim()).filter(Boolean)
     if (directedCast.length === 0) {

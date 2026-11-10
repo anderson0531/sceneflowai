@@ -115,6 +115,8 @@ export interface PrioritizedReferenceImage {
   subjectOrdinal?: number
   /** Character height phrase (e.g. "6-foot tall"). */
   characterHeight?: string
+  /** Consistent scene wardrobe text when no separate wardrobe image is attached. */
+  wardrobeDescription?: string
 }
 
 /**
@@ -501,12 +503,15 @@ export function buildCharacterReferenceEntries(
     imageUrl: string
     refRole: CharacterRefRole
     characterName: string
+    wardrobeDescription?: string
   }>,
   characterReferences: Array<{
     name: string
     hasDualReferences?: boolean
     hasWardrobeDiptych?: boolean
     subjectOrdinal?: number
+    wardrobeSummary?: string
+    wardrobeDescription?: string
   }>,
   buildIdentityLabel: (name: string, index: number, personTokenIndex?: number) => string,
   buildWardrobeLabel: (name: string, index: number, personTokenIndex?: number) => string,
@@ -532,6 +537,10 @@ export function buildCharacterReferenceEntries(
     } else {
       label = `Character reference ${refImageIndex}: ${ref.characterName} (mannequin outfit sheet)`
     }
+    const wardrobeDescription =
+      ref.refRole === 'identity' && !matchingCharRef?.hasDualReferences && !matchingCharRef?.hasWardrobeDiptych
+        ? ref.wardrobeDescription || matchingCharRef?.wardrobeSummary || matchingCharRef?.wardrobeDescription
+        : undefined
     entries.push({
       imageUrl: ref.imageUrl,
       name: label,
@@ -540,6 +549,7 @@ export function buildCharacterReferenceEntries(
       characterName: ref.characterName,
       refRole: ref.refRole,
       subjectOrdinal,
+      ...(wardrobeDescription ? { wardrobeDescription } : {}),
     })
   }
 

@@ -12,7 +12,21 @@ interface PreviewApiPromptRequest {
   guidePrompt?: string
   generationMethod?: VideoGenerationMethod | 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF' | 'AUTO'
   genType?: 'T2V' | 'I2V'
-  referenceImages?: Array<{ url: string; type?: 'style' | 'character'; name?: string; role?: string }> | string[]
+  referenceImages?:
+    | Array<{
+        url: string
+        type?: 'style' | 'character'
+        name?: string
+        role?: string
+        refRole?: string
+        characterName?: string
+        propName?: string
+        locationName?: string
+        promptToken?: string
+        subjectOrdinal?: number
+        wardrobeDescription?: string
+      }>
+    | string[]
   startFrameUrl?: string
   endFrameUrl?: string
   segmentIndex?: number
@@ -59,6 +73,13 @@ export async function POST(
       type: (ref.type === 'character' ? 'character' : 'style') as 'style' | 'character',
       name: ref.name,
       role: ref.role,
+      refRole: ref.refRole,
+      characterName: ref.characterName,
+      propName: ref.propName,
+      locationName: ref.locationName,
+      promptToken: ref.promptToken,
+      subjectOrdinal: ref.subjectOrdinal,
+      wardrobeDescription: ref.wardrobeDescription,
     }))
 
     const { enhancedPrompt } = buildSegmentEnhancedPrompt({

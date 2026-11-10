@@ -29,7 +29,9 @@ import {
   bindingsFromReferenceRecords,
   formatImagesAboveBinding,
   formatNextImageCaption,
+  rewriteVisualNamesToTokens,
 } from '@/lib/vision/referenceImageBinding'
+import { formatConsistentWardrobeDescription } from '@/lib/character/characterReferenceAssembly'
 import {
   composeIdentityWardrobeDiptych,
   composeIdentityWardrobePipFromDiptychUrl,
@@ -672,6 +674,8 @@ export async function POST(req: NextRequest) {
         imageUrl: string
         name: string
         role?: string
+        characterName?: string
+        wardrobeDescription?: string
         locationName?: string
         locationDescription?: string
         base64Image?: string
@@ -694,11 +698,13 @@ export async function POST(req: NextRequest) {
         console.log('[Generate Frames] No-talent scene detected — skipping character references')
       }
 
-      // Resolve scene-specific wardrobe headshots (identity + wardrobe + beat appearance)
+      // Identity-first default: skip legacy diptych scene-headshot synthesis when a dedicated
+      // identity portrait (referenceUrl) is present; send the crisp identity plate + wardrobe text.
+      const charsNeedingLegacySceneHeadshot = charPool.filter((c) => !c.referenceUrl?.trim())
       const sceneHeadshotResults =
-        charPool.length > 0 && !isNoTalentSegment
+        charsNeedingLegacySceneHeadshot.length > 0 && !isNoTalentSegment
           ? await resolveSceneHeadshotsForBeatCharacters({
-              characters: charPool.map((c) => ({
+              characters: charsNeedingLegacySceneHeadshot.map((c) => ({
                 name: c.name,
                 referenceUrl: c.referenceUrl,
                 sceneHeadshotUrl: c.sceneHeadshotUrl,
@@ -760,6 +766,10 @@ export async function POST(req: NextRequest) {
 
       for (const c of charPool) {
         const sceneHeadshotUrl = sceneHeadshotByName.get(c.name)
+        const consistentWardrobe = formatConsistentWardrobeDescription({
+          description: c.wardrobe,
+          accessories: c.wardrobeAccessories,
+        })
 
         if (
           c.hasDualReferences &&
@@ -767,22 +777,6 @@ export async function POST(req: NextRequest) {
           c.wardrobeReferenceUrl &&
           allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES
         ) {
-          const pip = await composeIdentityWardrobeDiptych({
-            identityUrl: c.referenceUrl,
-            wardrobeUrl: c.wardrobeReferenceUrl,
-            label: c.name,
-          })
-          if (pip) {
-            allReferenceImages.push({
-              imageUrl: pip.dataUrl,
-              name: formatNextImageCaption({
-              role: 'character',
-              token: personTokenFor(c.name),
-              descriptor: c.name,
-            }),
-            })
-            continue
-          }
           allReferenceImages.push({
             imageUrl: c.referenceUrl,
             name: formatNextImageCaption({
@@ -790,6 +784,8 @@ export async function POST(req: NextRequest) {
               token: personTokenFor(c.name),
               descriptor: c.name,
             }),
+            role: 'identity',
+            characterName: c.name,
           })
           if (allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
             allReferenceImages.push({
@@ -799,12 +795,14 @@ export async function POST(req: NextRequest) {
                 token: personTokenFor(c.name),
                 descriptor: c.name,
               }),
+              role: 'wardrobe',
+              characterName: c.name,
             })
           }
           continue
         }
 
-        if (sceneHeadshotUrl && allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
+        if (sceneHeadshotUrl && !c.referenceUrl && allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
           const pip = await composeIdentityWardrobePipFromDiptychUrl({
             diptychUrl: sceneHeadshotUrl,
             label: c.name,
@@ -816,6 +814,8 @@ export async function POST(req: NextRequest) {
               token: personTokenFor(c.name),
               descriptor: c.name,
             }),
+            role: 'character',
+            characterName: c.name,
           })
           continue
         }
@@ -827,6 +827,9 @@ export async function POST(req: NextRequest) {
             token: personTokenFor(c.name),
             descriptor: c.name,
           }),
+          role: 'identity',
+          characterName: c.name,
+          ...(consistentWardrobe ? { wardrobeDescription: consistentWardrobe } : {}),
         })
       }
 
@@ -898,17 +901,24 @@ export async function POST(req: NextRequest) {
 
       const useInterleavedProRefs = modelTier !== 'eco'
       if (useInterleavedProRefs && allReferenceImages.length > 0) {
-        allReferenceImages = applyInterleavedPairCaptionsToNamedImages(allReferenceImages, {
+        const captioned = applyInterleavedPairCaptionsToNamedImages(allReferenceImages, {
           characters: charPool.map((c) => ({
             name: c.name,
             appearance: c.appearance,
-            wardrobe: c.wardrobe,
+            wardrobe: formatConsistentWardrobeDescription({
+              description: c.wardrobe,
+              accessories: c.wardrobeAccessories,
+            }) || c.wardrobe,
             hairStyle: c.hairStyle,
             hairColor: c.hairColor,
           })),
           objects: objectReferences,
           locations: locationRefs,
         })
+        allReferenceImages = allReferenceImages.map((prev, idx) => ({
+          ...prev,
+          name: captioned[idx]?.name ?? prev.name,
+        }))
       }
       
       console.log(`[Generate Frames] Using Gemini Studio with ${allReferenceImages.length} reference image(s)`)
@@ -953,17 +963,18 @@ Render this scene in ${selectedStyle.name} style.`
         }
       }
 
-      const referenceBinding = formatImagesAboveBinding(
-        bindingsFromReferenceRecords(
-          allReferenceImages.map((ref) => ({
-            name: ref.name,
-            role: ref.role,
-            locationName: ref.locationName,
-          }))
-        )
+      const frameBindings = bindingsFromReferenceRecords(
+        allReferenceImages.map((ref) => ({
+          name: ref.name,
+          role: ref.role,
+          characterName: ref.characterName,
+          wardrobeDescription: ref.wardrobeDescription,
+          locationName: ref.locationName,
+        }))
       )
+      const referenceBinding = formatImagesAboveBinding(frameBindings)
       if (referenceBinding) {
-        geminiPrompt = `${referenceBinding}\n\n${geminiPrompt}`
+        geminiPrompt = `${referenceBinding}\n\n${rewriteVisualNamesToTokens(geminiPrompt, frameBindings)}`
       }
 
       if (useInterleavedProRefs && !geminiPrompt.includes(STILL_SECTION_TASK)) {
@@ -985,6 +996,10 @@ Render this scene in ${selectedStyle.name} style.`
         }
         const klingRefs: PrioritizedReferenceImage[] = []
         for (const c of charPool) {
+          const consistentWardrobe = formatConsistentWardrobeDescription({
+            description: c.wardrobe,
+            accessories: c.wardrobeAccessories,
+          })
           if (c.referenceUrl) {
             klingRefs.push({
               imageUrl: c.referenceUrl,
@@ -992,9 +1007,12 @@ Render this scene in ${selectedStyle.name} style.`
               role: 'identity',
               refRole: 'identity',
               characterName: c.name,
+              ...(consistentWardrobe && !c.hasDualReferences
+                ? { wardrobeDescription: consistentWardrobe }
+                : {}),
             })
           }
-          if (c.wardrobeReferenceUrl) {
+          if (c.hasDualReferences && c.wardrobeReferenceUrl) {
             klingRefs.push({
               imageUrl: c.wardrobeReferenceUrl,
               name: `${c.name} wardrobe`,
@@ -1033,7 +1051,7 @@ Render this scene in ${selectedStyle.name} style.`
         startImageDataUrl = klingResult.imageBase64
       } else {
         const studioReferenceImages = await overlayLocationScaleOnReferenceImages(
-          modelTier !== 'eco' && allReferenceImages.length > 0
+          allReferenceImages.length > 0
             ? await cropIdentityReferenceImagesForPro(allReferenceImages)
             : allReferenceImages
         )

@@ -67,4 +67,26 @@ describe('buildOmniVideoReferencePrompt', () => {
     expect(text).not.toContain('Do not include')
     expect(text).not.toContain('Negative prompt')
   })
+
+  it('binds consistent wardrobe description to person [N] when only identity image is attached', () => {
+    const text = buildOmniVideoReferencePrompt({
+      scenePrompt: 'Gideon Croft hunches over the drafting table.',
+      refs: [
+        {
+          imageUrl: 'https://example.com/gideon-id.jpg',
+          name: 'The next image is the identity of person [1]. Match exact facial identity, bone structure, hair, and skin tone from this portrait; ignore studio backdrop and portrait clothing. Scale: 6-foot-7 tall.',
+          role: 'identity' as const,
+          refRole: 'identity' as const,
+          characterName: 'Gideon Croft',
+          wardrobeDescription:
+            'A dust-covered, rugged dark charcoal/slate canvas archivist smock and utilitarian work trousers over thermal underlayers',
+        },
+      ],
+    })
+
+    expect(text).toContain(
+      'person [1] (Gideon Croft) is the person in the identity image of person [1]. Clothes of person [1]: A dust-covered, rugged dark charcoal/slate canvas archivist smock and utilitarian work trousers over thermal underlayers.'
+    )
+    expect(text).toContain('person [1] hunches over the drafting table.')
+  })
 })

@@ -17,6 +17,7 @@ import {
   FACE_CLOSE_UP_DUAL_REFERENCE_PRIORITY_BLOCK,
   characterIdentityReferenceInstruction,
   dualReferencePriorityBlock,
+  formatConsistentWardrobeDescription,
   sceneIdentityBindPreamble,
   resolveCharacterReferencePair,
   resolveWardrobeIdForCharacterInScene,
@@ -69,8 +70,23 @@ describe('characterReferenceAssembly', () => {
     expect(pair.wardrobeUrl).toBe('https://example.com/suit.jpg')
   })
 
-  it('returns face-first dual references when identity and fullBodyUrl exist', () => {
+  it('defaults to identity-only plus resolved wardrobe description (no wardrobe image dilution)', () => {
     const pair = resolveCharacterReferencePair({ character: characterWithPortrait })
+    expect(pair.identityUrl).toBe('https://example.com/portrait.jpg')
+    expect(pair.wardrobeUrl).toBeUndefined()
+    expect(pair.wardrobeDiptychUrl).toBeUndefined()
+    expect(pair.hasWardrobeDiptych).toBe(false)
+    expect(pair.hasStoredCombinedCharacterRef).toBe(false)
+    expect(pair.hasDualReferences).toBe(false)
+    expect(pair.hasWardrobeOnlyReference).toBe(false)
+    expect(pair.resolvedWardrobe?.description).toBe('Navy suit')
+  })
+
+  it('returns face-first dual references when includeWardrobeReferenceImages is opted in', () => {
+    const pair = resolveCharacterReferencePair({
+      character: characterWithPortrait,
+      includeWardrobeReferenceImages: true,
+    })
     expect(pair.identityUrl).toBe('https://example.com/portrait.jpg')
     expect(pair.wardrobeUrl).toBe('https://example.com/turnaround.jpg')
     expect(pair.wardrobeDiptychUrl).toBeUndefined()
@@ -81,7 +97,7 @@ describe('characterReferenceAssembly', () => {
     expect(pair.resolvedWardrobe?.description).toBe('Navy suit')
   })
 
-  it('ignores stored PiP when includeWardrobeDiptych is off so dual slots stay dual', () => {
+  it('ignores stored PiP when includeWardrobeDiptych is off so opted-in dual slots stay dual', () => {
     const pair = resolveCharacterReferencePair({
       character: {
         id: 'char-1',
@@ -96,6 +112,7 @@ describe('characterReferenceAssembly', () => {
           },
         ],
       },
+      includeWardrobeReferenceImages: true,
     })
     expect(pair.identityUrl).toBe('https://example.com/portrait.jpg')
     expect(pair.wardrobeUrl).toBe('https://example.com/full-body.jpg')
@@ -104,7 +121,7 @@ describe('characterReferenceAssembly', () => {
     expect(pair.wardrobeDiptychUrl).toBeUndefined()
   })
 
-  it('still returns a leftover wardrobe sheet when includeWardrobeDiptych is off', () => {
+  it('still returns a leftover wardrobe sheet when includeWardrobeReferenceImages is opted in and includeWardrobeDiptych is off', () => {
     const pair = resolveCharacterReferencePair({
       character: {
         id: 'char-1',
@@ -119,6 +136,7 @@ describe('characterReferenceAssembly', () => {
           },
         ],
       },
+      includeWardrobeReferenceImages: true,
     })
     expect(pair.wardrobeDiptychUrl).toBe('https://example.com/elara-diptych-scene4.jpg')
     expect(pair.hasWardrobeDiptych).toBe(true)
@@ -336,7 +354,7 @@ describe('characterReferenceAssembly', () => {
     expect(pair.hasDualReferences).toBe(false)
   })
 
-  it('resolves wardrobe text via characterWardrobes and attaches fullBodyUrl', () => {
+  it('resolves wardrobe text via characterWardrobes and attaches fullBodyUrl when opted in', () => {
     const pair = resolveCharacterReferencePair({
       character: {
         id: 'char-1',
@@ -344,14 +362,31 @@ describe('characterReferenceAssembly', () => {
         referenceImage: 'https://example.com/portrait.jpg',
         wardrobes: [
           { id: 'w1', isDefault: true, fullBodyUrl: 'https://example.com/default.jpg' },
-          { id: 'w2', fullBodyUrl: 'https://example.com/scene-outfit.jpg' },
+          { id: 'w2', description: 'Charcoal coat', fullBodyUrl: 'https://example.com/scene-outfit.jpg' },
         ],
       },
       characterWardrobes: [{ characterId: 'char-1', wardrobeId: 'w2' }],
+      includeWardrobeReferenceImages: true,
     })
     expect(pair.wardrobeUrl).toBe('https://example.com/scene-outfit.jpg')
     expect(pair.hasDualReferences).toBe(true)
     expect(pair.resolvedWardrobe?.id).toBe('w2')
+  })
+
+  it('formatConsistentWardrobeDescription merges outfit + accessories cleanly without dangling words', () => {
+    expect(
+      formatConsistentWardrobeDescription(
+        {
+          description:
+            'Wearing a dust-covered, rugged dark charcoal/slate canvas archivist smock and utilitarian work trousers over thermal underlayers, outfitted in reinforced knee patches',
+          accessories: 'Brass pocket calipers',
+        },
+        undefined,
+        { wordCap: 16 }
+      )
+    ).toBe(
+      'a dust-covered, rugged dark charcoal/slate canvas archivist smock and utilitarian work trousers over thermal underlayers'
+    )
   })
 
   it('buildCharacterHairDescription formats bald and colored styles', () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { resolveBeatElementSelection, resolveBeatVideoReferences, shouldReplaceClientVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 import { bindingFromCaption, formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
+import { buildOmniVideoReferencePrompt } from '@/lib/gemini/buildOmniVideoReferencePrompt'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference } from '@/types/visionReferences'
 
@@ -13,7 +14,9 @@ const characters = [
       {
         id: 'w1',
         name: 'Casual',
+        description: 'Dark slate cardigan over charcoal trousers',
         fullBodyUrl: 'https://blob.example/elara-wardrobe.jpg',
+        combinedCharacterRefUrl: 'https://blob.example/elara-pip.jpg',
         isDefault: true,
       },
     ],
@@ -39,7 +42,7 @@ const objects = [
 ]
 
 describe('resolveBeatVideoReferences', () => {
-  it('resolves character, wardrobe, location, and prop refs for a dialogue beat', () => {
+  it('defaults to crisp character identity + consistent wardrobe description (omitting wardrobe/PiP images)', () => {
     const beat: SceneBeat = {
       beatId: 'beat-1',
       sequenceIndex: 0,
@@ -62,12 +65,22 @@ describe('resolveBeatVideoReferences', () => {
       objectReferences: objects,
     })
 
-    expect(resolved.urlList.length).toBeGreaterThanOrEqual(2)
     expect(resolved.urlList).toContain('https://blob.example/elara.jpg')
-    expect(resolved.urlList).toContain('https://blob.example/elara-wardrobe.jpg')
-    expect(resolved.labeledRefs.some((r) => r.name.startsWith('The next image is the identity of person [1].'))).toBe(true)
+    expect(resolved.urlList).not.toContain('https://blob.example/elara-wardrobe.jpg')
+    expect(resolved.urlList).not.toContain('https://blob.example/elara-pip.jpg')
+    const charRef = resolved.labeledRefs.find((r) => r.characterName === 'Elara Vance')
+    expect(charRef?.name.startsWith('The next image is the identity of person [1].')).toBe(true)
+    expect(charRef?.wardrobeDescription).toBe('Dark slate cardigan over charcoal trousers')
     expect(resolved.labeledRefs.some((r) => /Char_/.test(r.name))).toBe(false)
     expect(resolved.labeledRefs.some((r) => r.role === 'location')).toBe(true)
+
+    const omniPrompt = buildOmniVideoReferencePrompt({
+      scenePrompt: 'Elara Vance sips from her coffee mug.',
+      refs: resolved.refs,
+    })
+    expect(omniPrompt).toContain(
+      'person [1] (Elara Vance) is the person in the identity image of person [1]. Clothes of person [1]: Dark slate cardigan over charcoal trousers.'
+    )
 
     const elements = resolveBeatElementSelection({
       scene,
@@ -108,7 +121,7 @@ describe('resolveBeatVideoReferences', () => {
     expect(resolved.refs.length).toBeLessThanOrEqual(8)
   })
 
-  it('uses the single-slot composite card when combinedCharacterRefUrl is stored', () => {
+  it('uses the single-slot composite card only when includeWardrobeDiptych is explicitly opted in', () => {
     const beat: SceneBeat = {
       beatId: 'beat-sheet',
       sequenceIndex: 0,
@@ -134,6 +147,7 @@ describe('resolveBeatVideoReferences', () => {
       ],
       locationReferences: locations,
       objectReferences: objects,
+      includeWardrobeDiptych: true,
     })
 
     expect(resolved.urlList).toContain('https://blob.example/elara-sheet.jpg')
@@ -292,7 +306,36 @@ describe('resolveBeatVideoReferences', () => {
     ).toBe(false)
   })
 
-  it('preserves combination-image inset instructions and outfit descriptions through bindingFromCaption and formatNextImageCaption', () => {
+  it('replaces stale clientPiP/wardrobe refs with server-resolved identity + wardrobe description', () => {
+    const beat: SceneBeat = {
+      beatId: 'beat-stale-pip',
+      sequenceIndex: 0,
+      kind: 'dialogue',
+      character: 'Gideon Croft',
+      line: 'She grounded through the water table.',
+    }
+    expect(
+      shouldReplaceClientVideoReferences(beat, [
+        {
+          url: 'https://blob.example/gideon-pip.jpg',
+          type: 'character',
+          name: 'The next image is the identity and wardrobe of person [1].',
+        },
+      ])
+    ).toBe(true)
+    expect(
+      shouldReplaceClientVideoReferences(beat, [
+        {
+          url: 'https://blob.example/gideon-wardrobe.jpg',
+          type: 'character',
+          role: 'wardrobe',
+          name: 'The next image is the wardrobe of person [1].',
+        },
+      ])
+    ).toBe(true)
+  })
+
+  it('preserves opted-in combination-image inset instructions and outfit descriptions through bindingFromCaption and formatNextImageCaption', () => {
     const beat: SceneBeat = {
       beatId: 'beat-pip',
       sequenceIndex: 0,
@@ -321,6 +364,7 @@ describe('resolveBeatVideoReferences', () => {
       ],
       locationReferences: locations,
       objectReferences: [],
+      includeWardrobeDiptych: true,
     })
 
     const charRef = resolved.labeledRefs.find((r) => r.type === 'character')
@@ -329,7 +373,7 @@ describe('resolveBeatVideoReferences', () => {
     expect(charRef?.name).toContain('Extract exact facial identity from the face close-up')
     expect(charRef?.name).toContain('Charcoal wool trench coat')
 
-    const parsedBinding = bindingFromCaption(charRef!.name, charRef!.url)
+    const parsedBinding = bindingFromCaption(charRef!.name)
     expect(parsedBinding?.role).toBe('character')
     expect(parsedBinding?.token).toBe('person [1]')
     const reemittedCaption = formatNextImageCaption(parsedBinding!)
@@ -337,7 +381,7 @@ describe('resolveBeatVideoReferences', () => {
     expect(reemittedCaption).toContain('Charcoal wool trench coat')
   })
 
-  it('sanitizes gore/injury wardrobe terms in composite reference captions before Omni REF submission', () => {
+  it('sanitizes gore/injury wardrobe terms on default identity + wardrobe text before Omni REF submission', () => {
     const beat: SceneBeat = {
       beatId: 'beat-seawall',
       sequenceIndex: 0,
@@ -369,9 +413,18 @@ describe('resolveBeatVideoReferences', () => {
     })
 
     const charRef = resolved.labeledRefs.find((r) => r.type === 'character')
-    expect(charRef?.name).toContain('The next image is the identity and wardrobe of person [1].')
-    expect(charRef?.name).not.toContain('bloodied')
-    expect(charRef?.name).not.toContain('gauze dressing')
-    expect(charRef?.name).toContain('dark cloth wrap')
+    expect(charRef?.url).toBe('https://blob.example/piper-headshot.jpg')
+    expect(charRef?.name).toContain('The next image is the identity of person [1].')
+    expect(charRef?.wardrobeDescription).not.toContain('bloodied')
+    expect(charRef?.wardrobeDescription).not.toContain('gauze dressing')
+    expect(charRef?.wardrobeDescription).toContain('dark cloth wrap')
+
+    const omniPrompt = buildOmniVideoReferencePrompt({
+      scenePrompt: 'Piper Hayes braces on the granite rocks.',
+      refs: resolved.refs,
+    })
+    expect(omniPrompt).toContain('Clothes of person [1]:')
+    expect(omniPrompt).toContain('dark cloth wrap')
+    expect(omniPrompt).not.toContain('bloodied')
   })
 })

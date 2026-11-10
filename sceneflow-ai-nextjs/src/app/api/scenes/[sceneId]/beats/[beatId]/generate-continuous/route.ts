@@ -202,11 +202,13 @@ export async function POST(
                 type: ref.type,
                 name: ref.name,
                 role: ref.role,
+                refRole: ref.refRole,
                 characterName: ref.characterName,
                 propName: ref.propName,
                 locationName: ref.locationName,
                 promptToken: ref.promptToken,
                 subjectOrdinal: ref.subjectOrdinal,
+                wardrobeDescription: ref.wardrobeDescription,
               }))
             : undefined,
         previousSegmentVeoRef: previousVeoRef,

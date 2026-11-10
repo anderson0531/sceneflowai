@@ -168,6 +168,13 @@ interface DirectorReferenceEntry {
   name: string
   type: DirectorReferenceType
   role?: string
+  refRole?: string
+  characterName?: string
+  propName?: string
+  locationName?: string
+  promptToken?: string
+  subjectOrdinal?: number
+  wardrobeDescription?: string
 }
 
 interface DirectorDialogProps {
@@ -254,12 +261,23 @@ function uiModeForMethod(method: VideoGenerationMethod): string {
 }
 
 function refsToConfig(entries: DirectorReferenceEntry[]): NonNullable<VideoGenerationConfig['referenceImages']> {
-  return entries.map((e) => ({
-    url: e.url,
-    type: e.type === 'location' || e.type === 'object' ? 'style' : 'character',
-    name: e.name,
-    role: e.role,
-  }))
+  return entries.map((e) => {
+    const refType: 'style' | 'character' =
+      e.type === 'location' || e.type === 'object' ? 'style' : 'character'
+    return {
+      url: e.url,
+      type: refType,
+      name: e.name,
+      role: e.role,
+      refRole: e.refRole,
+      characterName: e.characterName,
+      propName: e.propName,
+      locationName: e.locationName,
+      promptToken: e.promptToken,
+      subjectOrdinal: e.subjectOrdinal,
+      wardrobeDescription: e.wardrobeDescription,
+    }
+  })
 }
 
 export const DirectorDialog: React.FC<DirectorDialogProps> = ({ 
@@ -414,6 +432,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               ? 'wardrobe'
               : 'character',
       role: ref.role,
+      refRole: ref.refRole,
+      characterName: ref.characterName,
+      propName: ref.propName,
+      locationName: ref.locationName,
+      promptToken: ref.promptToken,
+      subjectOrdinal: ref.subjectOrdinal,
+      wardrobeDescription: ref.wardrobeDescription,
     }))
     return { entries, warnings: resolved.warnings }
   }, [scene, segment, sceneIndex, characterReferences, locationReferences, objectReferences, filmTitle])
@@ -953,6 +978,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               | 'character',
             name: ref.name,
             role: ref.role,
+            refRole: ref.refRole,
+            characterName: ref.characterName,
+            propName: ref.propName,
+            locationName: ref.locationName,
+            promptToken: ref.promptToken,
+            subjectOrdinal: ref.subjectOrdinal,
+            wardrobeDescription: ref.wardrobeDescription,
           }))
         : undefined
 

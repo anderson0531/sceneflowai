@@ -11,6 +11,7 @@ import {
   BEAT_FRAME_CANDID_ACTION_CONSTRAINT_FACE_CLOSE_UP,
   LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
   beatFrameCandidActionConstraint,
+  formatConsistentWardrobeDescription,
   isWideEstablishingShotType,
 } from '@/lib/character/characterReferenceAssembly'
 import {
@@ -189,16 +190,28 @@ export const STILL_TASK_PAIRED_PLATES_MANDATORY_LINE =
 /** HUD-free Pro identity lock — no send-index / `[REFERENCES]` (those typeset onto the still). */
 export const PAIRED_IDENTITY_LANDMARK_PREFIX = 'must match the IDENTITY plate'
 
-export function formatPairedIdentityLandmarkLine(ref: StillPromptBoundRef): string | undefined {
-  if (ref.kind !== 'person' || !ref.identityTraits?.trim()) return undefined
+export function formatPairedIdentityLandmarkLine(
+  ref: StillPromptBoundRef,
+  shotType?: string | null
+): string | undefined {
+  if (ref.kind !== 'person') return undefined
+  const hasTraits = Boolean(ref.identityTraits?.trim())
+  const hasWardrobe = Boolean(ref.wardrobeClause?.trim())
+  if (!hasTraits && !hasWardrobe && !ref.isComposite) return undefined
   const named = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
-  let line = `${named} ${PAIRED_IDENTITY_LANDMARK_PREFIX} — ${ref.identityTraits.trim()}`
+  let line = hasTraits
+    ? `${named} ${PAIRED_IDENTITY_LANDMARK_PREFIX} — ${ref.identityTraits!.trim()}`
+    : `${named} ${PAIRED_IDENTITY_LANDMARK_PREFIX}`
   if (ref.isComposite) {
     line +=
       '. Extract exact facial bone structure from the face close-up and outfit from the full-body standing figure; do not render the character-card layout or headshot overlay'
   }
-  if (ref.wardrobeClause?.trim()) {
-    line += `. Garments at the collar and shoulders: ${ref.wardrobeClause.trim()}`
+  if (hasWardrobe) {
+    const wardrobeLabel =
+      !shotType?.trim() || isFaceCloseUpShot(shotType)
+        ? 'Garments at the collar and shoulders'
+        : 'Wardrobe'
+    line += `. ${wardrobeLabel}: ${ref.wardrobeClause!.trim()}`
   }
   return line
 }
@@ -229,9 +242,12 @@ export function formatProportionalScaleTaskLine(
   return `Proportional scale lock: maintain true spatial proportions between environment, fixtures, props, and standing characters (${parts.join('; ')}) — do not shrink ceiling or doors relative to characters. Ignore any right-margin scale ticks on the location plate; do not draw rulers, height marks, or stick figures into the frame.`
 }
 
-export function formatPairedIdentityLandmarkLines(refs: StillPromptBoundRef[]): string[] {
+export function formatPairedIdentityLandmarkLines(
+  refs: StillPromptBoundRef[],
+  shotType?: string | null
+): string[] {
   return refs
-    .map((ref) => formatPairedIdentityLandmarkLine(ref))
+    .map((ref) => formatPairedIdentityLandmarkLine(ref, shotType))
     .filter((line): line is string => Boolean(line))
 }
 
@@ -391,7 +407,7 @@ export function stillTaskLines(
       pairedOccupancy &&
       refsKnown
     ) {
-      lines.push(...formatPairedIdentityLandmarkLines(refs))
+      lines.push(...formatPairedIdentityLandmarkLines(refs, shot.shotHint || shotType))
     }
     if (pairedOccupancy && !refsKnown) {
       lines.push(STILL_TASK_PAIRED_PLATES_MANDATORY_LINE)
@@ -1218,35 +1234,46 @@ export function formatUnboundRefsInFrameLine(
   return `Also in frame: ${sentences.join(' ')}`
 }
 
-export function formatWardrobeLegendClause(description?: string | null): string | undefined {
-  const trimmed = (description || '').trim()
-  if (!trimmed) return undefined
-  const withoutWearing = trimmed.replace(/^wearing\s+/i, '').replace(/\s+/g, ' ').trim()
-  if (!withoutWearing) return undefined
-  const first = withoutWearing.split(/[.!?]/)[0]?.trim() || withoutWearing
-  const words = first.split(/\s+/).filter(Boolean).slice(0, 18)
-  return words.length > 0 ? words.join(' ') : undefined
+export function formatWardrobeLegendClause(
+  description?: string | null,
+  accessories?: string | null
+): string | undefined {
+  return formatConsistentWardrobeDescription(
+    { description, accessories },
+    undefined,
+    { wordCap: 36 }
+  )
 }
 
 /**
  * Bind a person token to the attached image(s) the model actually received.
  *
- * Action text uses `person [N]` only. Flash binds by send index — restating
- * ethnicity, hair, age, or outfit next to those photos is a T2I substitute.
- * Pro's 560-token plates need short vision-derived landmarks that must match
- * Reference image N, not replace it.
+ * Action text uses `person [N]` only. When no separate wardrobe plate is attached,
+ * the resolved scene wardrobe description is bound to `Clothes of person [N]: …`
+ * alongside the identity plate.
  */
-function personBindings(ref: StillPromptBoundRef): ReferenceImageBinding[] {
+export function personBindingsForStillRef(ref: StillPromptBoundRef): ReferenceImageBinding[] {
   if (ref.isComposite) {
     return [{ role: 'character', token: ref.token, name: ref.name }]
   }
   const bindings: ReferenceImageBinding[] = []
   const hasWardrobe = ref.wardrobeSendIndex != null
   const hasIdentity = ref.identitySendIndex != null || !hasWardrobe
-  if (hasIdentity) bindings.push({ role: 'identity', token: ref.token, name: ref.name })
+  if (hasIdentity) {
+    bindings.push({
+      role: 'identity',
+      token: ref.token,
+      name: ref.name,
+      ...(!hasWardrobe && ref.wardrobeClause?.trim()
+        ? { wardrobeDescription: ref.wardrobeClause.trim() }
+        : {}),
+    })
+  }
   if (hasWardrobe) bindings.push({ role: 'wardrobe', token: ref.token, name: ref.name })
   return bindings
 }
+
+const personBindings = personBindingsForStillRef
 
 export function formatPersonReferenceLegendLine(
   ref: StillPromptBoundRef,
@@ -1449,6 +1476,7 @@ export function stillRefsFromAttachedImages(args: {
     gender?: string | null
     wardrobeDescription?: string | null
     defaultWardrobe?: string | null
+    wardrobeAccessories?: string | null
   }>
   /** Unused for attached identity/wardrobe images unless Pro landmark lock is on. */
   identityTraitsWordCap?: number
@@ -1524,9 +1552,10 @@ export function stillRefsFromAttachedImages(args: {
             })
           : undefined,
         wardrobeClause:
-          args.includeAttachedIdentityTraits && !slot?.isComposite && slot?.wardrobeSendIndex == null
+          !slot?.isComposite && slot?.wardrobeSendIndex == null
             ? formatWardrobeLegendClause(
-                char?.wardrobeDescription || char?.defaultWardrobe
+                char?.wardrobeDescription || char?.defaultWardrobe,
+                char?.wardrobeAccessories
               )
             : undefined,
         identitySendIndex: slot?.identitySendIndex,

@@ -16,7 +16,45 @@ vi.mock('@/models/Project', () => ({
 import { registerKlingElement, registerKlingElementMulti } from '@/lib/kling/klingDirectClient'
 
 describe('collectKlingElementSources bind elements', () => {
-  it('binds character identity as frontal and wardrobe images as refer_images', () => {
+  it('defaults to single-image frontal identity with wardrobeDescription (no wardrobe image dilution)', () => {
+    const sources = collectKlingElementSources({
+      characters: [
+        {
+          id: 'char-sarah',
+          name: 'Sarah',
+          referenceImage: 'https://cdn.example.com/sarah-identity.jpg',
+          klingElementId: 'elem-char-frontal',
+          wardrobes: [
+            {
+              id: 'ward-casual',
+              name: 'Casual',
+              description: 'Charcoal wool coat over knit sweater',
+              accessories: 'Leather boots',
+              headshotUrl: 'https://cdn.example.com/sarah-casual-head.jpg',
+              fullBodyUrl: 'https://cdn.example.com/sarah-casual-body.jpg',
+              klingElementId: 'elem-wardrobe-old',
+            },
+          ],
+        },
+      ],
+      characterIds: ['char-sarah'],
+      characterWardrobes: [{ characterId: 'char-sarah', wardrobeId: 'ward-casual' }],
+    })
+
+    expect(sources).toHaveLength(1)
+    expect(sources[0]).toMatchObject({
+      name: 'Char_Sarah',
+      frontalImageUrl: 'https://cdn.example.com/sarah-identity.jpg',
+      referImageUrls: undefined,
+      wardrobeId: undefined,
+      wardrobeDescription: 'Charcoal wool coat over knit sweater, Leather boots',
+      klingElementId: 'elem-char-frontal',
+      tagId: 'o_102',
+      type: 'character',
+    })
+  })
+
+  it('binds character identity as frontal and wardrobe images as refer_images when opted in', () => {
     const sources = collectKlingElementSources({
       characters: [
         {
@@ -35,6 +73,7 @@ describe('collectKlingElementSources bind elements', () => {
       ],
       characterIds: ['char-sarah'],
       characterWardrobes: [{ characterId: 'char-sarah', wardrobeId: 'ward-casual' }],
+      includeWardrobeReferenceImages: true,
     })
 
     expect(sources).toHaveLength(1)
@@ -145,7 +184,7 @@ describe('collectKlingElementSources bind elements', () => {
     expect(sources[0].id).toBe('loc-alley')
   })
 
-  it('reuses cached wardrobe klingElementId without re-registering', () => {
+  it('reuses cached wardrobe klingElementId when wardrobe refer_images are opted in', () => {
     const sources = collectKlingElementSources({
       characters: [
         {
@@ -164,6 +203,7 @@ describe('collectKlingElementSources bind elements', () => {
       ],
       characterIds: ['char-sarah'],
       characterWardrobes: [{ characterId: 'char-sarah', wardrobeId: 'ward-casual' }],
+      includeWardrobeReferenceImages: true,
     })
 
     expect(sources[0].klingElementId).toBe('elem-cached-99')

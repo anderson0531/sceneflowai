@@ -1794,6 +1794,72 @@ describe('identity traits reach every reference-bearing frame', () => {
     })
     expect(replayed).toBe(prompt)
   })
+
+  it('binds consistent wardrobe text on both Flash [REFERENCES] and Pro medium/wide [TASK] when wardrobe plates are omitted', () => {
+    const flashRefs = stillRefsFromAttachedImages({
+      selected: [{ sendIndex: 1, characterName: 'Gideon Croft', refRole: 'identity' }],
+      characterReferences: [
+        {
+          name: 'Gideon Croft',
+          promptToken: 'person [1]',
+          subjectOrdinal: 1,
+          visionDescription: GIDEON_VISION,
+          wardrobeDescription: 'rugged dark charcoal canvas archivist smock and work trousers',
+          wardrobeAccessories: 'brass calipers',
+        },
+      ],
+      includeAttachedIdentityTraits: false,
+    })
+    expect(flashRefs[0].wardrobeClause).toBe(
+      'rugged dark charcoal canvas archivist smock and work trousers, brass calipers'
+    )
+    const flashPrompt = assembleStructuredStillPrompt({
+      actionOrStructured: 'Medium Shot. person [1] stands beside the bench.',
+      refs: flashRefs,
+      shotType: 'Medium Shot',
+    })
+    expect(flashPrompt).toContain(
+      'person [1] (Gideon Croft) is the person in the identity image of person [1]. Clothes of person [1]: rugged dark charcoal canvas archivist smock and work trousers, brass calipers.'
+    )
+
+    const proRefs = stillRefsFromAttachedImages({
+      selected: [{ sendIndex: 1, characterName: 'Gideon Croft', refRole: 'identity' }],
+      characterReferences: [
+        {
+          name: 'Gideon Croft',
+          promptToken: 'person [1]',
+          subjectOrdinal: 1,
+          visionDescription: GIDEON_VISION,
+          wardrobeDescription: 'rugged dark charcoal canvas archivist smock and work trousers',
+          wardrobeAccessories: 'brass calipers',
+        },
+      ],
+      includeAttachedIdentityTraits: true,
+    })
+    const proPrompt = assembleStructuredStillPrompt({
+      actionOrStructured: 'Two-Shot. person [1] stands beside the bench.',
+      refs: proRefs,
+      shotType: 'Two-Shot',
+      includeAttachedIdentityTraits: true,
+      omitReferencesSection: true,
+    })
+    expect(proPrompt).toContain(
+      'person [1] (Gideon Croft) is the person in the identity image of person [1]. Clothes of person [1]: rugged dark charcoal canvas archivist smock and work trousers, brass calipers.'
+    )
+    expect(proPrompt).toContain(
+      'Wardrobe: rugged dark charcoal canvas archivist smock and work trousers, brass calipers'
+    )
+    expect(proPrompt).not.toContain('Garments at the collar and shoulders:')
+    expect(
+      assembleStructuredStillPrompt({
+        actionOrStructured: proPrompt,
+        refs: proRefs,
+        shotType: 'Two-Shot',
+        includeAttachedIdentityTraits: true,
+        omitReferencesSection: true,
+      })
+    ).toBe(proPrompt)
+  })
 })
 
 describe('generate-image Direct/regen still payload', () => {
