@@ -1295,7 +1295,7 @@ describe('buildBeatFirstPlaybackTimeline preVisAnimatic', () => {
     expect(preVisResult.visualFrames[0]?.imageUrl).toBe('https://example.com/start.jpg')
   })
 
-  it('uses 10s hold for silent dialogue beats without voice URL', () => {
+  it('uses 5s hold for silent dialogue beats without voice URL', () => {
     const scene = {
       dialogue: [{ character: 'Alice', line: 'Hello' }],
       beats: [
@@ -1313,13 +1313,13 @@ describe('buildBeatFirstPlaybackTimeline preVisAnimatic', () => {
     const { visualFrames: preVis } = buildBeatFirstPlaybackTimeline(scene, 'en', {}, {
       preVisAnimatic: true,
     })
-    expect(preVis[0]?.duration).toBe(11)
+    expect(preVis[0]?.duration).toBe(6)
 
     const { visualFrames: defaultFrames } = buildBeatFirstPlaybackTimeline(scene, 'en')
     expect(defaultFrames[0]?.duration).toBe(4)
   })
 
-  it('uses 10s hold for action beats without durationSeconds', () => {
+  it('uses 5s hold for action beats without durationSeconds', () => {
     const scene = {
       beats: [
         {
@@ -1335,13 +1335,48 @@ describe('buildBeatFirstPlaybackTimeline preVisAnimatic', () => {
     const { visualFrames: preVis } = buildBeatFirstPlaybackTimeline(scene, 'en', {}, {
       preVisAnimatic: true,
     })
-    expect(preVis[0]?.duration).toBe(11)
+    expect(preVis[0]?.duration).toBe(6)
 
     const { visualFrames: defaultFrames } = buildBeatFirstPlaybackTimeline(scene, 'en')
     expect(defaultFrames[0]?.duration).toBe(5)
   })
 
-  it('holds a short spoken line to 10s without stretching the voice file', () => {
+  it('always holds action beats for 5s in Pre-Vis even when an 8s or 10s clip durationSeconds is stored', () => {
+    const scene = {
+      beats: [
+        {
+          beatId: 'bt_action_1',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide establishing shot',
+          durationSeconds: 10,
+          storyboardImageUrl: 'https://example.com/action1.jpg',
+        },
+        {
+          beatId: 'bt_action_2',
+          sequenceIndex: 1,
+          kind: 'action',
+          actionDescription: 'Tracking push-in',
+          durationSeconds: 8,
+          storyboardImageUrl: 'https://example.com/action2.jpg',
+        },
+      ],
+    }
+
+    const { visualFrames: preVis } = buildBeatFirstPlaybackTimeline(scene, 'en', {}, {
+      preVisAnimatic: true,
+    })
+    // First action beat: 5s hold + 0.3s inter-beat gap = 5.3s; second: 5s hold + 1s scene-fade tail = 6s.
+    expect(preVis[0]?.duration).toBeCloseTo(5.3, 5)
+    expect(preVis[1]?.duration).toBe(6)
+
+    // Non-Pre-Vis timeline still respects stored durationSeconds.
+    const { visualFrames: defaultFrames } = buildBeatFirstPlaybackTimeline(scene, 'en')
+    expect(defaultFrames[0]?.duration).toBeCloseTo(10.3, 5)
+    expect(defaultFrames[1]?.duration).toBe(9)
+  })
+
+  it('holds a short spoken line to 5s without stretching the voice file', () => {
     const scene = {
       dialogue: [{ character: 'Alice', line: 'Hello' }],
       beats: [
@@ -1353,7 +1388,7 @@ describe('buildBeatFirstPlaybackTimeline preVisAnimatic', () => {
           line: 'Hello',
           storyboardImageUrl: 'https://example.com/start.jpg',
           audioUrl: SARAH_URL,
-          durationSeconds: 4,
+          durationSeconds: 3,
         },
       ],
     }
@@ -1361,17 +1396,17 @@ describe('buildBeatFirstPlaybackTimeline preVisAnimatic', () => {
     const { voiceClips, visualFrames } = buildBeatFirstPlaybackTimeline(
       scene,
       'en',
-      { [SARAH_URL]: 6.2 },
+      { [SARAH_URL]: 3.2 },
       { preVisAnimatic: true }
     )
 
-    // Visual window is max(6.2, 10) + 1s scene-fade tail. The voice clip is
-    // extended to that window so it stays in range; the file itself is 6.2s.
-    expect(visualFrames[0]?.duration).toBe(11)
-    expect(voiceClips[0]?.duration).toBe(11)
+    // Visual window is max(3.2, 5) + 1s scene-fade tail. The voice clip is
+    // extended to that window so it stays in range; the file itself is 3.2s.
+    expect(visualFrames[0]?.duration).toBe(6)
+    expect(voiceClips[0]?.duration).toBe(6)
   })
 
-  it('lets a voice line longer than 10s keep its measured length', () => {
+  it('lets a voice line longer than 5s keep its measured length', () => {
     const scene = {
       dialogue: [{ character: 'Alice', line: 'Hello' }],
       beats: [

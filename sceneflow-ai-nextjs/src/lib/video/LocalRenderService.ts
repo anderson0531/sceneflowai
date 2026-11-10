@@ -34,6 +34,37 @@ interface CanvasCaptureMediaStreamTrack extends MediaStreamTrack {
   requestFrame(): void
 }
 
+/**
+ * Compute per-frame scale and pixel translation for a Pre-Vis / animatic still.
+ * Supports authored per-beat Ken Burns rects, legacy directional beat Ken Burns,
+ * synthesized gallery Ken Burns / lineZoom, and explicit static (`enabled: false`).
+ */
+export function computeAnimaticStillTransform(
+  kenBurns: BeatKenBurnsSettings | undefined,
+  progress: number,
+  canvasW: number,
+  canvasH: number
+): { scalePush: number; translateX: number; translateY: number } {
+  const p = Math.max(0, Math.min(1, progress))
+  const resolvedKb = resolveBeatKenBurnsSettings(kenBurns)
+  if (resolvedKb) {
+    const kbTransform = computeFrameKenBurnsTransform(resolvedKb, p)
+    return {
+      scalePush: kbTransform.scale,
+      translateX: (kbTransform.translateX / 100) * canvasW,
+      translateY: (kbTransform.translateY / 100) * canvasH,
+    }
+  }
+  if (kenBurns && kenBurns.enabled === false) {
+    return { scalePush: 1, translateX: 0, translateY: 0 }
+  }
+  return {
+    scalePush: 1 + p * 0.02,
+    translateX: 0,
+    translateY: 0,
+  }
+}
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -63,12 +94,14 @@ export interface LocalRenderSegment {
   videoTrimOutSec?: number
   /** Picture speed for this language version. 1 leaves source time unchanged. */
   playbackRate?: number
-  /** Optional authored Ken Burns viewport transform (Pre-Vis beat stills). */
+  /** Optional authored or synthesized Ken Burns viewport transform (Pre-Vis beat stills). */
   kenBurns?: BeatKenBurnsSettings
   /** Optional fade-in from black in seconds (Pre-Vis beat/scene transitionIn === 'fade'). */
   fadeInSec?: number
   /** Optional fade-out to black in seconds (Pre-Vis beat/scene transitionOut === 'fade'). */
   fadeOutSec?: number
+  /** Optional crossfade/dissolve in from previous still segment in seconds. */
+  dissolveInSec?: number
 }
 
 export interface LocalRenderAudioClip {
@@ -1504,7 +1537,7 @@ export class LocalRenderService {
   }
   
   /**
-   * Animatic still crossfade + subtle push-in or authored Ken Burns (matches Screening Room / ScenePreviewPlayer).
+   * Animatic still crossfade + Ken Burns camera motion (matches Screening Room / ScenePreviewPlayer).
    */
   private drawAnimaticStillPair(
     ctx: CanvasRenderingContext2D,
@@ -1514,26 +1547,32 @@ export class LocalRenderService {
     endImg: HTMLImageElement | undefined,
     progress: number,
     kenBurns?: BeatKenBurnsSettings,
-    fadeBlack?: number
+    fadeBlack?: number,
+    frameFit: 'cover' | 'contain' = 'cover',
+    layerAlpha = 1
   ): void {
     const p = Math.max(0, Math.min(1, progress))
-    const resolvedKb = resolveBeatKenBurnsSettings(kenBurns)
-    const kbTransform = resolvedKb ? computeFrameKenBurnsTransform(resolvedKb, p) : null
-    const scalePush = kbTransform ? kbTransform.scale : 1 + p * 0.02
-    const translateX = kbTransform ? (kbTransform.translateX / 100) * canvasW : 0
-    const translateY = kbTransform ? (kbTransform.translateY / 100) * canvasH : 0
+    const { scalePush, translateX, translateY } = computeAnimaticStillTransform(
+      kenBurns,
+      p,
+      canvasW,
+      canvasH
+    )
 
     const drawLayer = (img: HTMLImageElement, alpha: number) => {
       if (alpha <= 0) return
       ctx.save()
-      ctx.globalAlpha = alpha
+      ctx.globalAlpha = Math.max(0, Math.min(1, alpha))
       const aw = img.naturalWidth || img.width
       const ah = img.naturalHeight || img.height
       if (aw <= 0 || ah <= 0) {
         ctx.restore()
         return
       }
-      const baseScale = Math.max(canvasW / aw, canvasH / ah)
+      const baseScale =
+        frameFit === 'contain'
+          ? Math.min(canvasW / aw, canvasH / ah)
+          : Math.max(canvasW / aw, canvasH / ah)
       const s = baseScale * scalePush
       const sw = aw * s
       const sh = ah * s
@@ -1543,9 +1582,14 @@ export class LocalRenderService {
       ctx.restore()
     }
 
-    drawLayer(startImg, 1)
+    const lAlpha = Math.max(0, Math.min(1, layerAlpha))
     if (endImg && endImg.naturalWidth > 0) {
-      drawLayer(endImg, p)
+      const endAlpha = lAlpha * p
+      const startAlpha = endAlpha >= 1 ? 0 : (lAlpha * (1 - p)) / (1 - endAlpha)
+      drawLayer(startImg, startAlpha)
+      drawLayer(endImg, endAlpha)
+    } else {
+      drawLayer(startImg, lAlpha)
     }
     if (fadeBlack && fadeBlack > 0) {
       ctx.save()
@@ -1669,6 +1713,40 @@ export class LocalRenderService {
     if (asset instanceof HTMLVideoElement) {
       ctx.drawImage(asset, cropRect.sx, cropRect.sy, cropRect.sw, cropRect.sh, x, y, scaledWidth, scaledHeight)
     } else {
+      const segIdx = segs.indexOf(segment)
+      let layerAlpha = 1
+      if (
+        segIdx > 0 &&
+        segment.dissolveInSec &&
+        segment.dissolveInSec > 0 &&
+        localTime < segment.dissolveInSec
+      ) {
+        const prevSeg = segs[segIdx - 1]
+        const prevAsset = prevSeg ? assets.get(prevSeg.segmentId) : undefined
+        if (
+          prevSeg &&
+          prevAsset &&
+          !(prevAsset instanceof HTMLVideoElement) &&
+          prevSeg.assetUrl !== segment.assetUrl
+        ) {
+          const prevEndImg = assets.get(`${prevSeg.segmentId}__end`) as HTMLImageElement | undefined
+          this.drawAnimaticStillPair(
+            ctx,
+            width,
+            height,
+            prevAsset,
+            prevEndImg,
+            1,
+            prevSeg.kenBurns,
+            0,
+            fit,
+            1
+          )
+          const rawAlpha = Math.max(0, Math.min(1, localTime / segment.dissolveInSec))
+          layerAlpha = rawAlpha * rawAlpha * (3 - 2 * rawAlpha)
+        }
+      }
+
       const endImg = assets.get(`${segment.segmentId}__end`) as HTMLImageElement | undefined
       const progress =
         segment.duration > 0 ? Math.max(0, Math.min(1, localTime / segment.duration)) : 0
@@ -1689,7 +1767,9 @@ export class LocalRenderService {
         endImg,
         progress,
         segment.kenBurns,
-        fadeBlack
+        fadeBlack,
+        fit,
+        layerAlpha
       )
     }
   }

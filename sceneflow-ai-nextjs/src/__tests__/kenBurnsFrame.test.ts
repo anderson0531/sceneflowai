@@ -4,9 +4,12 @@ import {
   clampRect,
   computeFrameKenBurnsTransform,
   computeFrameProgress,
+  imageTransformToViewportRect,
   rectToImageTransform,
   rectToRenderKenBurns,
   resolveBeatKenBurnsSettings,
+  synthesizeGalleryKenBurnsSettings,
+  type BeatKenBurnsSettings,
 } from '@/lib/storyboard/kenBurnsFrame'
 
 describe('kenBurnsFrame', () => {
@@ -63,5 +66,51 @@ describe('kenBurnsFrame', () => {
     expect(applyEasing(0.5, 'smooth')).toBeGreaterThan(0)
     expect(applyEasing(0.5, 'smooth')).toBeLessThan(1)
     expect(applyEasing(1, 'dramatic')).toBe(1)
+  })
+
+  it('round-trips gallery pan/zoom transforms through viewport rects without clamping loss', () => {
+    const target = { scale: 1.1, translateX: -4, translateY: 2.5 }
+    const rect = imageTransformToViewportRect(target)
+    const recovered = rectToImageTransform(rect)
+    expect(recovered.scale).toBeCloseTo(target.scale, 5)
+    expect(recovered.translateX).toBeCloseTo(target.translateX, 5)
+    expect(recovered.translateY).toBeCloseTo(target.translateY, 5)
+  })
+
+  it('resolves legacy directional beat kenBurns objects into active pan/zoom rects', () => {
+    const legacy = {
+      enabled: true,
+      direction: 'left',
+      intensity: 'medium',
+    } as unknown as BeatKenBurnsSettings
+    const resolved = resolveBeatKenBurnsSettings(legacy)
+    expect(resolved?.enabled).toBe(true)
+    const startT = computeFrameKenBurnsTransform(resolved!, 0)
+    const endT = computeFrameKenBurnsTransform(resolved!, 1)
+    expect(startT.scale).toBeCloseTo(1.1, 3)
+    expect(endT.translateX).toBeGreaterThan(startT.translateX)
+  })
+
+  it('synthesizes varied gallery Ken Burns motion per directionIndex and static when off', () => {
+    const shot0 = synthesizeGalleryKenBurnsSettings({
+      mode: 'kenBurns',
+      intensity: 'medium',
+      directionIndex: 0,
+    })
+    const shot1 = synthesizeGalleryKenBurnsSettings({
+      mode: 'kenBurns',
+      intensity: 'medium',
+      directionIndex: 1,
+    })
+    const offShot = synthesizeGalleryKenBurnsSettings({
+      mode: 'off',
+      intensity: 'medium',
+      directionIndex: 0,
+    })
+
+    expect(shot0.enabled).toBe(true)
+    expect(shot1.enabled).toBe(true)
+    expect(shot0).not.toEqual(shot1)
+    expect(offShot.enabled).toBe(false)
   })
 })

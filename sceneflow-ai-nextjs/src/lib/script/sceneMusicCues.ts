@@ -203,9 +203,8 @@ function coerceExit(value: unknown): MusicCueExit | undefined {
 /**
  * Contiguous windows of at most three beats.
  *
- * The Screening Room hold is at least ten seconds, so three beats already
- * run to about half a minute and Lyria is asked for that length. Splitting
- * again to force a 30-second Clip would undo the three-beat score.
+ * Each cue is asked for the Screening Room length of the beats it covers;
+ * splitting again by seconds would undo the three-beat score.
  */
 function clipWindows(
   beatStart: number,

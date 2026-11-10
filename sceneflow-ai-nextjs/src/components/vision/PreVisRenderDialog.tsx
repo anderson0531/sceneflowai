@@ -12,6 +12,7 @@ import {
   Image as ImageIcon,
   Loader2,
   Mic,
+  Move,
   Music,
   Sparkles,
   Volume2,
@@ -44,6 +45,11 @@ import {
   renderPreVisSceneToBlobAndStream,
   type PreVisSceneSummary,
 } from '@/lib/storyboard/preVisSceneRender'
+import {
+  DEFAULT_GALLERY_IMAGE_EFFECT_PREFS,
+  type GalleryImageEffectPrefs,
+  type KenBurnsIntensity,
+} from '@/lib/storyboard/storyboardImageEffects'
 import { cn } from '@/lib/utils'
 import { getLocalRenderService } from '@/lib/video/LocalRenderService'
 
@@ -61,11 +67,29 @@ export interface PreVisRenderDialogProps {
   masterVolume?: number
   audioMode?: AnimaticAudioMode
   clipAudioByBeatId?: Record<string, string>
+  initialImageEffectPrefs?: GalleryImageEffectPrefs
   onSceneStreamRendered?: (
     sceneId: string,
     stream: ProductionStream,
     language: string
   ) => void
+}
+
+function resolveInitialRenderMotionPrefs(
+  prefs?: GalleryImageEffectPrefs
+): GalleryImageEffectPrefs {
+  if (!prefs || prefs.mode === 'off') {
+    return {
+      mode: 'kenBurns',
+      kenBurnsIntensity:
+        prefs?.kenBurnsIntensity ?? DEFAULT_GALLERY_IMAGE_EFFECT_PREFS.kenBurnsIntensity,
+    }
+  }
+  return {
+    mode: prefs.mode,
+    kenBurnsIntensity:
+      prefs.kenBurnsIntensity ?? DEFAULT_GALLERY_IMAGE_EFFECT_PREFS.kenBurnsIntensity,
+  }
 }
 
 interface SceneRenderItemState {
@@ -100,11 +124,15 @@ export function PreVisRenderDialog({
   masterVolume = 0.8,
   audioMode = 'lofi',
   clipAudioByBeatId,
+  initialImageEffectPrefs,
   onSceneStreamRendered,
 }: PreVisRenderDialogProps) {
   const [selectedLanguage, setSelectedLanguage] = useState<string>(initialLanguage || 'en')
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set())
   const [resolution, setResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
+  const [imageEffectPrefs, setImageEffectPrefs] = useState<GalleryImageEffectPrefs>(() =>
+    resolveInitialRenderMotionPrefs(initialImageEffectPrefs)
+  )
   const [includeCaptions, setIncludeCaptions] = useState<boolean>(true)
   const [saveToStreams, setSaveToStreams] = useState<boolean>(Boolean(projectId))
   const [combineSelectedScenes, setCombineSelectedScenes] = useState<boolean>(false)
@@ -182,6 +210,7 @@ export function PreVisRenderDialog({
     if (!open) return
     setSelectedLanguage(initialLanguage || 'en')
     setSaveToStreams(Boolean(projectId))
+    setImageEffectPrefs(resolveInitialRenderMotionPrefs(initialImageEffectPrefs))
 
     if (Array.isArray(initialSceneIndices) && initialSceneIndices.length > 0) {
       setSelectedIndices(
@@ -220,7 +249,7 @@ export function PreVisRenderDialog({
       .filter((idx) => idx >= 0)
 
     setSelectedIndices(new Set(playableIndices))
-  }, [open, initialLanguage, initialSceneIndices, currentSceneIndex, scenes, projectId, sceneProductionState])
+  }, [open, initialLanguage, initialSceneIndices, currentSceneIndex, scenes, projectId, sceneProductionState, initialImageEffectPrefs])
 
   const playableIndices = useMemo(
     () => sceneSummaries.filter((s) => s.isPlayable).map((s) => s.sceneIndex),
@@ -384,6 +413,7 @@ export function PreVisRenderDialog({
               audioMode,
               clipAudioByBeatId,
               includeCaptions,
+              imageEffectPrefs,
               onProgress: (prog) => {
                 setSceneStates((prev) => ({
                   ...prev,
@@ -474,6 +504,7 @@ export function PreVisRenderDialog({
               audioMode,
               clipAudioByBeatId,
               includeCaptions,
+              imageEffectPrefs,
             }
           )
 
@@ -537,6 +568,7 @@ export function PreVisRenderDialog({
     masterVolume,
     audioMode,
     includeCaptions,
+    imageEffectPrefs,
     combineSelectedScenes,
     onSceneStreamRendered,
   ])
@@ -917,6 +949,65 @@ export function PreVisRenderDialog({
                     {res}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Camera Motion (Ken Burns) selector */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-800/60">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-300">
+                <Move className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span className="font-medium text-zinc-200">Camera Motion</span>
+                <span className="text-[11px] text-zinc-500 hidden sm:inline">
+                  (per-beat authored motion always preserved)
+                </span>
+              </div>
+              <div
+                className="flex flex-wrap items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800"
+                role="group"
+                aria-label="Camera motion setting"
+              >
+                {(
+                  [
+                    { key: 'subtle', label: 'KB Subtle', mode: 'kenBurns', intensity: 'subtle' },
+                    { key: 'medium', label: 'KB Medium', mode: 'kenBurns', intensity: 'medium' },
+                    { key: 'dramatic', label: 'KB Dramatic', mode: 'kenBurns', intensity: 'dramatic' },
+                    { key: 'lineZoom', label: 'Line Zoom', mode: 'lineZoom' },
+                    { key: 'crossfade', label: 'Crossfade', mode: 'crossfade' },
+                    { key: 'off', label: 'Static', mode: 'off' },
+                  ] as Array<{
+                    key: string
+                    label: string
+                    mode: GalleryImageEffectPrefs['mode']
+                    intensity?: KenBurnsIntensity
+                  }>
+                ).map((opt) => {
+                  const active =
+                    opt.mode === 'kenBurns'
+                      ? imageEffectPrefs.mode === 'kenBurns' &&
+                        imageEffectPrefs.kenBurnsIntensity === opt.intensity
+                      : imageEffectPrefs.mode === opt.mode
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      disabled={isBatchRunning}
+                      onClick={() =>
+                        setImageEffectPrefs((prev) => ({
+                          mode: opt.mode,
+                          kenBurnsIntensity: opt.intensity ?? prev.kenBurnsIntensity,
+                        }))
+                      }
+                      className={cn(
+                        'px-2 py-1 rounded text-[11px] font-medium transition-colors',
+                        active
+                          ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/40'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 

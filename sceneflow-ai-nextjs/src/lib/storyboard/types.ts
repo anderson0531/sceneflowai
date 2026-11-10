@@ -40,7 +40,6 @@ import {
   transitionTailSec,
 } from '@/lib/storyboard/transitions'
 import type { PlayableTransition, ResolvedTransition } from '@/lib/storyboard/transitions'
-import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import {
   isStoredFrameBookendPromptAligned,
   resolveAlignedEndFrameInstruction,
@@ -55,8 +54,10 @@ const DEFAULT_CLIP_DURATION_SEC = 3
 export { SCENE_FADE_TO_BLACK_SEC }
 /** Silent establishing/action beat hold when no durationSeconds is stored. */
 const DEFAULT_ACTION_BEAT_DURATION_SEC = 4
-/** Pre-vis Screening Room: every still holds at least this long. Voice longer than this still wins. */
-export const ANIMATIC_MIN_FRAME_SEC = 10
+/** Pre-vis Screening Room: action beats/shots always hold for 5s for fluid progression. */
+export const ANIMATIC_ACTION_HOLD_SEC = 5
+/** Pre-vis Screening Room: spoken stills hold at least this long. Voice longer than this still wins. */
+export const ANIMATIC_MIN_FRAME_SEC = 5
 
 /** Storyboard image fields stored on each dialogue line object. */
 export interface DialogueStoryboardFrame {
@@ -1496,7 +1497,7 @@ export function buildStoryboardVoiceClips(
 }
 
 export interface BeatFirstPlaybackOptions {
-  /** Pre-Vis animatic: start frame only, 10s hold when no voice audio. */
+  /** Pre-Vis animatic: start frame only, 5s action hold and 5s minimum spoken hold. */
   preVisAnimatic?: boolean
   /**
    * The previous scene's `transitionToNext`, which owns the join this scene
@@ -1511,14 +1512,17 @@ function resolveActionBeatDuration(
   beat: ReturnType<typeof getSceneBeats>[number],
   preVisAnimatic?: boolean
 ): number {
+  if (preVisAnimatic) {
+    return ANIMATIC_ACTION_HOLD_SEC
+  }
   if (typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0) {
     return beat.durationSeconds
   }
-  return preVisAnimatic ? DEFAULT_VEO_CLIP_DURATION : DEFAULT_ACTION_BEAT_DURATION_SEC
+  return DEFAULT_ACTION_BEAT_DURATION_SEC
 }
 
 function resolveSilentBeatDuration(preVisAnimatic?: boolean): number {
-  return preVisAnimatic ? DEFAULT_VEO_CLIP_DURATION : DEFAULT_CLIP_DURATION_SEC
+  return preVisAnimatic ? ANIMATIC_MIN_FRAME_SEC : DEFAULT_CLIP_DURATION_SEC
 }
 
 function clampAnimaticFrameDuration(duration: number, preVisAnimatic?: boolean): number {
@@ -2116,7 +2120,7 @@ export interface ProjectAnimaticTimeline {
 }
 
 export interface ProjectAnimaticTimelineOptions {
-  /** Pre-Vis animatic: start frame only, 10s hold when no voice audio. */
+  /** Pre-Vis animatic: start frame only, 5s action hold and 5s minimum spoken hold. */
   preVisAnimatic?: boolean
   /** URL of a solid black image inserted between scenes for fade-to-black. */
   interSceneFadeUrl?: string

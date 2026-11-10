@@ -167,8 +167,14 @@ describe('planSceneMusicCues', () => {
     )
   })
 
-  it('keeps three long beats together and asks for their Screening Room length', () => {
-    const timed = beats(4, () => ({ durationSeconds: 12 }))
+  it('keeps three long spoken beats together and asks for their Screening Room length', () => {
+    const timed = beats(4, (index) => ({
+      kind: 'dialogue',
+      character: 'Aria',
+      line: `Line ${index}`,
+      audioUrl: `https://cdn.test/line-${index}.mp3`,
+      durationSeconds: 12,
+    }))
     const cues = planSceneMusicCues(
       [
         {
@@ -190,8 +196,14 @@ describe('planSceneMusicCues', () => {
     expect(estimateMusicCueDuration(cues[1], timed)).toBeGreaterThanOrEqual(12)
   })
 
-  it('keeps one long beat as a single cue and asks for its full hold', () => {
-    const timed = beats(1, () => ({ durationSeconds: 45 }))
+  it('keeps one long spoken beat as a single cue and asks for its full hold', () => {
+    const timed = beats(1, () => ({
+      kind: 'dialogue',
+      character: 'Aria',
+      line: 'Monologue',
+      audioUrl: 'https://cdn.test/monologue.mp3',
+      durationSeconds: 45,
+    }))
     const cues = planSceneMusicCues(
       [{ beatStart: 0, beatEnd: 0, description: 'Ambient score, uneasy mood, slow tempo' }],
       timed
@@ -722,12 +734,22 @@ describe('cue helpers', () => {
     expect(formatMusicCueSteer(undefined)).toBe('')
   })
 
-  it('sums the covered beats using the Screening Room hold', () => {
-    const measured = beats(8, (index) => (index >= 3 && index <= 6 ? { durationSeconds: 12 } : {}))
+  it('sums the covered spoken beats using their measured Screening Room hold', () => {
+    const measured = beats(8, (index) =>
+      index >= 3 && index <= 6
+        ? {
+            kind: 'dialogue',
+            character: 'Aria',
+            line: `Line ${index}`,
+            audioUrl: `https://cdn.test/line-${index}.mp3`,
+            durationSeconds: 12,
+          }
+        : {}
+    )
     expect(estimateMusicCueDuration(cue, measured)).toBe(49)
   })
 
-  it('uses the animatic minimum when a beat has no measured length', () => {
-    expect(estimateMusicCueDuration(cue, beats(8))).toBe(41)
+  it('uses the 5s animatic hold for action beats and unmeasured beats', () => {
+    expect(estimateMusicCueDuration(cue, beats(8))).toBe(21)
   })
 })

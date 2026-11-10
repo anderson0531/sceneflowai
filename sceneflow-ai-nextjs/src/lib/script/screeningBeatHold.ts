@@ -5,19 +5,20 @@
  * 30-second play setting, is what made Lyria Clip write a loop the animatic
  * then repeated. The numbers here match `buildBeatFirstPlaybackTimeline` with
  * `preVisAnimatic: true` in `src/lib/storyboard/types.ts`:
- * - action beats use `durationSeconds`, otherwise an 8-second Veo hold
+ * - action beats always hold for `SCREENING_ACTION_HOLD_SEC` (5s)
  * - spoken beats use the measured voice length when a clip exists
- * - every hold is at least `SCREENING_MIN_HOLD_SEC` (ANIMATIC_MIN_FRAME_SEC)
+ * - every spoken hold is at least `SCREENING_MIN_HOLD_SEC` (ANIMATIC_MIN_FRAME_SEC)
  * - frames are separated by `BEAT_GAP_SEC` (DIALOGUE_CLIP_BUFFER_SEC)
  * - the last picture beat carries the 1-second fade through black
  */
 
-import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
 import { SCENE_FADE_TO_BLACK_SEC } from '@/lib/storyboard/transitions'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 
+/** Matches ANIMATIC_ACTION_HOLD_SEC. Duplicated so this file does not import the storyboard timeline. */
+export const SCREENING_ACTION_HOLD_SEC = 5
 /** Matches ANIMATIC_MIN_FRAME_SEC. Duplicated so this file does not import the storyboard timeline. */
-export const SCREENING_MIN_HOLD_SEC = 10
+export const SCREENING_MIN_HOLD_SEC = 5
 /** Matches DIALOGUE_CLIP_BUFFER_SEC between beat frames. */
 export const SCREENING_BEAT_GAP_SEC = 0.3
 
@@ -119,14 +120,13 @@ export function screeningBeatHoldSeconds(
 ): number {
   if (beat.excluded) return 0
 
-  let raw: number
   if (beat.kind === 'action') {
-    raw = positive(beat.durationSeconds) ?? DEFAULT_VEO_CLIP_DURATION
-  } else {
-    raw =
-      spokenVoiceSeconds(beat, scene, dynamicDurations) ??
-      DEFAULT_VEO_CLIP_DURATION
+    return SCREENING_ACTION_HOLD_SEC
   }
+
+  const raw =
+    spokenVoiceSeconds(beat, scene, dynamicDurations) ??
+    SCREENING_MIN_HOLD_SEC
   return Math.max(raw, SCREENING_MIN_HOLD_SEC)
 }
 

@@ -33,6 +33,7 @@ import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { BeatDirectionTransition } from '@/lib/script/segmentTypes'
 import type { ProductionLanguage } from '@/lib/types/finalCut'
 import { applyHifiClipAudio, type AnimaticAudioMode } from '@/lib/storyboard/animaticAudioMode'
+import { synthesizeGalleryKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
 import {
   buildStoryboardMusicClips,
   collectSceneMusicUrls,
@@ -45,6 +46,12 @@ import {
 } from '@/lib/storyboard/playerTranslations'
 import { resolvePreVisSceneDisplay } from '@/lib/storyboard/preVisSceneDisplay'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
+import {
+  CROSSFADE_DURATION_MS,
+  DEFAULT_GALLERY_IMAGE_EFFECT_PREFS,
+  getImageObjectFit,
+  type GalleryImageEffectPrefs,
+} from '@/lib/storyboard/storyboardImageEffects'
 import {
   buildBeatFirstPlaybackTimeline,
   buildStoryboardVisualTimeline,
@@ -92,6 +99,12 @@ export interface BuildPreVisSceneRenderPlanOptions {
   clipAudioByBeatId?: Record<string, string>
   includeCaptions?: boolean
   tailHoldSec?: number
+  /**
+   * Still-image camera motion preferences matching Screening Room `GalleryImageEffectPrefs`.
+   * Defaults to `{ mode: 'kenBurns', kenBurnsIntensity: 'medium' }` so Pre-Vis renders
+   * include Ken Burns camera motion by default.
+   */
+  imageEffectPrefs?: GalleryImageEffectPrefs
 }
 
 export interface PreVisSceneRenderPlan {
@@ -520,6 +533,7 @@ export function buildPreVisSceneRenderPlan(
   const translations = safeScene.translations as Record<string, SceneTranslation> | undefined
   const sceneTranslation = language !== 'en' ? translations?.[language] : undefined
   const includeCaptions = options.includeCaptions ?? true
+  const effectiveImagePrefs = options.imageEffectPrefs ?? DEFAULT_GALLERY_IMAGE_EFFECT_PREFS
 
   let carryImageUrl = fallbackImageUrl
   for (let i = 0; i < visualFrames.length; i++) {
@@ -533,6 +547,24 @@ export function buildPreVisSceneRenderPlan(
     const segStart = isFirst ? 0 : frame.startTime
     const nextStart = !isLast ? visualFrames[i + 1].startTime : totalDuration
     const segDuration = Math.max(0.1, nextStart - segStart)
+    const directionIndex = Math.max(0, sceneIndex) * 7 + i
+    const segmentKenBurns = frame.kenBurns?.enabled
+      ? frame.kenBurns
+      : synthesizeGalleryKenBurnsSettings({
+          mode: effectiveImagePrefs.mode,
+          intensity: effectiveImagePrefs.kenBurnsIntensity,
+          directionIndex,
+        })
+    const dissolveInSec =
+      frame.transitionIn === 'dissolve'
+        ? frame.transitionInSec && frame.transitionInSec > 0
+          ? frame.transitionInSec
+          : CROSSFADE_DURATION_MS / 1000
+        : !isFirst &&
+            frame.transitionIn !== 'fade' &&
+            effectiveImagePrefs.mode === 'crossfade'
+          ? CROSSFADE_DURATION_MS / 1000
+          : undefined
 
     segments.push({
       segmentId: frame.clipId || `${sceneId}-seg-${i}`,
@@ -541,9 +573,10 @@ export function buildPreVisSceneRenderPlan(
       endFrameUrl: frame.endImageUrl?.trim() || undefined,
       startTime: segStart,
       duration: segDuration,
-      kenBurns: frame.kenBurns,
+      kenBurns: segmentKenBurns,
       fadeInSec: frame.transitionIn === 'fade' ? frame.transitionInSec : undefined,
       fadeOutSec: frame.transitionOut === 'fade' ? frame.transitionOutSec : undefined,
+      ...(dissolveInSec ? { dissolveInSec } : {}),
     })
 
     if (includeCaptions) {
@@ -655,6 +688,7 @@ export function buildPreVisSceneRenderPlan(
     })
   }
 
+  const frameFit = getImageObjectFit(effectiveImagePrefs.mode)
   const config: LocalRenderConfig = {
     segments,
     audioClips,
@@ -663,6 +697,7 @@ export function buildPreVisSceneRenderPlan(
     fps: options.fps ?? 30,
     totalDuration,
     exportFormat: 'mp4',
+    ...(frameFit === 'contain' ? { frameFit } : {}),
   }
 
   return {
@@ -806,6 +841,8 @@ export function buildMultiScenePreVisRenderPlan(
     cumulativeOffset += plan.totalDuration
   }
 
+  const effectiveImagePrefs = options.imageEffectPrefs ?? DEFAULT_GALLERY_IMAGE_EFFECT_PREFS
+  const frameFit = getImageObjectFit(effectiveImagePrefs.mode)
   const totalDuration = Math.max(1, cumulativeOffset)
   return {
     language,
@@ -819,6 +856,7 @@ export function buildMultiScenePreVisRenderPlan(
       fps: options.fps ?? 30,
       totalDuration,
       exportFormat: 'mp4',
+      ...(frameFit === 'contain' ? { frameFit } : {}),
     },
   }
 }

@@ -113,19 +113,19 @@ describe('the requested music length follows the beat timeline', () => {
     }))
   }
 
-  it('sums measured beats, assuming the animatic hold for unmeasured ones', () => {
-    expect(estimateSceneBeatDuration(timedBeats(15, 8))).toBe(155)
+  it('sums action beats at the 5s Screening Room hold regardless of stored clip durationSeconds', () => {
+    expect(estimateSceneBeatDuration(timedBeats(15, 8))).toBe(80)
     expect(estimateSceneBeatDuration([])).toBe(0)
     expect(
       estimateSceneBeatDuration([
         { beatId: 'b0', sequenceIndex: 0, kind: 'action', durationSeconds: 10 },
         { beatId: 'b1', sequenceIndex: 1, kind: 'action' },
       ])
-    ).toBe(21)
+    ).toBe(11)
   })
 
   it('prefers the beat timeline over the script’s own duration estimate', () => {
-    expect(resolveMusicRequestDuration({ duration: 40, beats: timedBeats(15, 8) })).toBe(155)
+    expect(resolveMusicRequestDuration({ duration: 40, beats: timedBeats(15, 8) })).toBe(80)
   })
 
   it('does not let a stored 30-second musicDuration override the beat span', () => {

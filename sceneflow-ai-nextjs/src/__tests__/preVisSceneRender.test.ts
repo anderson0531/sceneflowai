@@ -9,6 +9,7 @@ import {
   getPreVisSceneSummary,
   resolvePreVisSceneId,
 } from '@/lib/storyboard/preVisSceneRender'
+import { computeAnimaticStillTransform } from '@/lib/video/LocalRenderService'
 
 function createSampleScene(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -259,5 +260,108 @@ describe('preVisSceneRender', () => {
     )
     expect(publishScenes).toHaveLength(1)
     expect(publishScenes[0].mp4Url).toBe('https://cdn.example.com/previs-es.mp4')
+  })
+
+  it('includes default Ken Burns motion on un-authored beats and renders pan+zoom in LocalRenderService', () => {
+    const scene = createSampleScene({
+      beats: [
+        {
+          beatId: 'beat-a',
+          kind: 'action',
+          actionDescription: 'Wide shot of the observatory dome opening.',
+          storyboardImageUrl: 'https://cdn.example.com/dome-1.jpg',
+          beatDirection: { transition: 'DISSOLVE' },
+        },
+        {
+          beatId: 'beat-b',
+          kind: 'action',
+          actionDescription: 'Starlight floods the main console.',
+          storyboardImageUrl: 'https://cdn.example.com/dome-2.jpg',
+          beatDirection: { transition: 'CUT' },
+        },
+      ],
+    })
+
+    const plan = buildPreVisSceneRenderPlan(scene, 0, 'en')
+    expect(plan.segments).toHaveLength(2)
+
+    // Both un-authored beats receive active, distinct Ken Burns motion by default
+    expect(plan.segments[0].kenBurns?.enabled).toBe(true)
+    expect(plan.segments[1].kenBurns?.enabled).toBe(true)
+    expect(plan.segments[0].kenBurns).not.toEqual(plan.segments[1].kenBurns)
+
+    // DISSOLVE transition onto beat-b populates dissolveInSec
+    expect(plan.segments[1].dissolveInSec).toBeGreaterThan(0)
+
+    // LocalRenderService transform actually moves (scale + pan) across 0 -> 1 progress
+    const tStart = computeAnimaticStillTransform(plan.segments[0].kenBurns, 0, 1920, 1080)
+    const tEnd = computeAnimaticStillTransform(plan.segments[0].kenBurns, 1, 1920, 1080)
+    const moved =
+      Math.abs(tEnd.scalePush - tStart.scalePush) > 0.04 ||
+      Math.abs(tEnd.translateX - tStart.translateX) > 20 ||
+      Math.abs(tEnd.translateY - tStart.translateY) > 10
+    expect(moved).toBe(true)
+  })
+
+  it('supports lineZoom, crossfade, fit, and static (off) motion preferences in Pre-Vis render plans', () => {
+    const scene = createSampleScene({
+      beats: [
+        {
+          beatId: 'beat-1',
+          kind: 'action',
+          actionDescription: 'Shot one.',
+          storyboardImageUrl: 'https://cdn.example.com/shot-1.jpg',
+          beatDirection: { transition: 'CUT' },
+        },
+        {
+          beatId: 'beat-2',
+          kind: 'action',
+          actionDescription: 'Shot two.',
+          storyboardImageUrl: 'https://cdn.example.com/shot-2.jpg',
+          beatDirection: { transition: 'CUT' },
+        },
+      ],
+    })
+
+    const lineZoomPlan = buildPreVisSceneRenderPlan(
+      scene,
+      0,
+      'en',
+      {},
+      { imageEffectPrefs: { mode: 'lineZoom', kenBurnsIntensity: 'medium' } }
+    )
+    const lzStart = computeAnimaticStillTransform(lineZoomPlan.segments[0].kenBurns, 0, 1920, 1080)
+    const lzEnd = computeAnimaticStillTransform(lineZoomPlan.segments[0].kenBurns, 1, 1920, 1080)
+    expect(lzStart.scalePush).toBeCloseTo(1, 4)
+    expect(lzEnd.scalePush).toBeCloseTo(1.06, 3)
+    expect(lzEnd.translateX).toBeCloseTo(0, 3)
+
+    const crossfadePlan = buildPreVisSceneRenderPlan(
+      scene,
+      0,
+      'en',
+      {},
+      { imageEffectPrefs: { mode: 'crossfade', kenBurnsIntensity: 'medium' } }
+    )
+    expect(crossfadePlan.segments[1].dissolveInSec).toBeCloseTo(0.4, 3)
+
+    const fitPlan = buildPreVisSceneRenderPlan(
+      scene,
+      0,
+      'en',
+      {},
+      { imageEffectPrefs: { mode: 'fit', kenBurnsIntensity: 'medium' } }
+    )
+    expect(fitPlan.config.frameFit).toBe('contain')
+
+    const staticPlan = buildPreVisSceneRenderPlan(
+      scene,
+      0,
+      'en',
+      {},
+      { imageEffectPrefs: { mode: 'off', kenBurnsIntensity: 'medium' } }
+    )
+    const stEnd = computeAnimaticStillTransform(staticPlan.segments[0].kenBurns, 1, 1920, 1080)
+    expect(stEnd).toEqual({ scalePush: 1, translateX: 0, translateY: 0 })
   })
 })

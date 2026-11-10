@@ -1,4 +1,11 @@
-import type { ImageTransform } from '@/lib/storyboard/storyboardImageEffects'
+import {
+  GALLERY_KEN_BURNS_DIRECTIONS,
+  LINE_ZOOM_MAX_SCALE,
+  PAN_SETTINGS,
+  type ImageTransform,
+  type KenBurnsIntensity,
+  type StoryboardImageEffectMode,
+} from '@/lib/storyboard/storyboardImageEffects'
 import type { KenBurnsSettings } from '@/lib/video/renderTypes'
 
 /** Normalized viewport rectangle in object-cover space (0..1). */
@@ -144,6 +151,21 @@ export function rectToImageTransform(rect: FrameViewportRect): ImageTransform {
   }
 }
 
+/** Inverse of `rectToImageTransform`: convert CSS scale/translate into a normalized viewport rect. */
+export function imageTransformToViewportRect(transform: ImageTransform): FrameViewportRect {
+  const safeScale = Math.max(1, Math.min(1 / MIN_RECT_SIZE, transform.scale || 1))
+  const width = 1 / safeScale
+  const height = 1 / safeScale
+  const cx = 0.5 - (transform.translateX || 0) / (safeScale * 100)
+  const cy = 0.5 - (transform.translateY || 0) / (safeScale * 100)
+  return clampRect({
+    x: cx - width / 2,
+    y: cy - height / 2,
+    width,
+    height,
+  })
+}
+
 export function computeFrameKenBurnsTransform(
   settings: BeatKenBurnsSettings,
   progress: number
@@ -182,15 +204,173 @@ export function rectToRenderKenBurns(settings: BeatKenBurnsSettings): KenBurnsSe
   }
 }
 
+function resolveLegacyDirectionalRects(
+  direction: string | undefined,
+  intensityRaw: string | undefined
+): { start: FrameViewportRect; end: FrameViewportRect } | undefined {
+  if (!direction) return undefined
+  const intensity: KenBurnsIntensity =
+    intensityRaw === 'subtle' || intensityRaw === 'medium' || intensityRaw === 'dramatic'
+      ? intensityRaw
+      : 'medium'
+  const pan = PAN_SETTINGS[intensity]
+  const norm = direction.trim().toLowerCase()
+
+  if (norm === 'zoom-in' || norm === 'in') {
+    return {
+      start: FULL_FRAME_VIEWPORT,
+      end: imageTransformToViewportRect({ scale: pan.scale, translateX: 0, translateY: 0 }),
+    }
+  }
+  if (norm === 'zoom-out' || norm === 'out') {
+    return {
+      start: imageTransformToViewportRect({ scale: pan.scale, translateX: 0, translateY: 0 }),
+      end: FULL_FRAME_VIEWPORT,
+    }
+  }
+
+  // Viewport panning left means moving viewport x toward 0 (positive image translateX).
+  const dirVectors: Record<string, { tx: number; ty: number }> = {
+    left: { tx: 1, ty: 0 },
+    'pan-left': { tx: 1, ty: 0 },
+    right: { tx: -1, ty: 0 },
+    'pan-right': { tx: -1, ty: 0 },
+    up: { tx: 0, ty: 1 },
+    'pan-up': { tx: 0, ty: 1 },
+    down: { tx: 0, ty: -1 },
+    'pan-down': { tx: 0, ty: -1 },
+    'up-left': { tx: 0.8, ty: 0.8 },
+    'up-right': { tx: -0.8, ty: 0.8 },
+    'down-left': { tx: 0.8, ty: -0.8 },
+    'down-right': { tx: -0.8, ty: -0.8 },
+  }
+  const vec = dirVectors[norm]
+  if (!vec) return undefined
+
+  const maxShift = pan.translate * 0.85
+  return {
+    start: imageTransformToViewportRect({
+      scale: pan.scale,
+      translateX: -vec.tx * maxShift,
+      translateY: -vec.ty * maxShift,
+    }),
+    end: imageTransformToViewportRect({
+      scale: pan.scale,
+      translateX: vec.tx * maxShift,
+      translateY: vec.ty * maxShift,
+    }),
+  }
+}
+
 export function resolveBeatKenBurnsSettings(
   raw: BeatKenBurnsSettings | undefined | null
 ): BeatKenBurnsSettings | undefined {
   if (!raw?.enabled) return undefined
+  if (!raw.start && !raw.end) {
+    const legacy = raw as unknown as { direction?: string; intensity?: string }
+    const legacyRects = resolveLegacyDirectionalRects(legacy.direction, legacy.intensity)
+    if (legacyRects) {
+      return {
+        enabled: true,
+        start: legacyRects.start,
+        end: legacyRects.end,
+        easing: raw.easing ?? 'smooth',
+      }
+    }
+  }
   return {
     enabled: true,
     start: clampRect(raw.start ?? DEFAULT_BEAT_KEN_BURNS.start),
     end: clampRect(raw.end ?? DEFAULT_BEAT_KEN_BURNS.end),
     easing: raw.easing ?? 'smooth',
+  }
+}
+
+/**
+ * Synthesize deterministic per-shot `BeatKenBurnsSettings` matching Screening Room
+ * `GalleryImageEffectPrefs` when a beat has no explicitly authored `kenBurns`.
+ */
+export function synthesizeGalleryKenBurnsSettings(params: {
+  mode: StoryboardImageEffectMode
+  intensity: KenBurnsIntensity
+  directionIndex: number
+}): BeatKenBurnsSettings {
+  const { mode, intensity, directionIndex } = params
+
+  if (mode === 'lineZoom') {
+    return {
+      enabled: true,
+      start: FULL_FRAME_VIEWPORT,
+      end: imageTransformToViewportRect({
+        scale: LINE_ZOOM_MAX_SCALE,
+        translateX: 0,
+        translateY: 0,
+      }),
+      easing: 'smooth',
+    }
+  }
+
+  if (mode !== 'kenBurns') {
+    return {
+      enabled: false,
+      start: FULL_FRAME_VIEWPORT,
+      end: FULL_FRAME_VIEWPORT,
+      easing: 'linear',
+    }
+  }
+
+  const pan = PAN_SETTINGS[intensity] ?? PAN_SETTINGS.medium
+  const dirCount = GALLERY_KEN_BURNS_DIRECTIONS.length
+  const safeIdx = ((Math.trunc(directionIndex) % dirCount) + dirCount) % dirCount
+  const dir = GALLERY_KEN_BURNS_DIRECTIONS[safeIdx]
+
+  // Mix push-in, pull-out, and tracking pans without locking even/odd directions
+  const nonNegIdx = Math.abs(Math.trunc(directionIndex))
+  const moveVariant = (nonNegIdx + Math.floor(nonNegIdx / 3)) % 3
+
+  if (moveVariant === 1) {
+    // Pull-out reveal from zoomed offset to full frame
+    return {
+      enabled: true,
+      start: imageTransformToViewportRect({
+        scale: pan.scale,
+        translateX: dir.xDir * pan.translate,
+        translateY: dir.yDir * pan.translate,
+      }),
+      end: FULL_FRAME_VIEWPORT,
+      easing: 'smooth',
+    }
+  }
+
+  if (moveVariant === 2) {
+    // Lateral / diagonal tracking pan at zoom
+    const span = pan.translate * 0.85
+    return {
+      enabled: true,
+      start: imageTransformToViewportRect({
+        scale: pan.scale,
+        translateX: -dir.xDir * span,
+        translateY: -dir.yDir * span,
+      }),
+      end: imageTransformToViewportRect({
+        scale: pan.scale,
+        translateX: dir.xDir * span,
+        translateY: dir.yDir * span,
+      }),
+      easing: 'smooth',
+    }
+  }
+
+  // Push-in + directional pan (default / moveVariant === 0)
+  return {
+    enabled: true,
+    start: FULL_FRAME_VIEWPORT,
+    end: imageTransformToViewportRect({
+      scale: pan.scale,
+      translateX: dir.xDir * pan.translate,
+      translateY: dir.yDir * pan.translate,
+    }),
+    easing: 'smooth',
   }
 }
 

@@ -2656,6 +2656,7 @@ export function AudioGalleryPlayer({
             masterVolume={volume}
             audioMode={animaticAudioMode}
             clipAudioByBeatId={clipAudioByBeatId}
+            initialImageEffectPrefs={imageEffectPrefs}
           />
         )}
       </div>
