@@ -72,7 +72,8 @@ HARD RULES:
 4. Never ask for music, score, soundtrack, lyrics, SFX, foley, or audible dialogue. Score is mixed under the clip separately. Carry any scored-moment feeling only as pacing and performance.
 5. Do not write beatDirection JSON, still Action/Framing, lighting essays, style suffixes, or negative-prompt lists — code owns those.
 6. Do not shorten quoted dialogue. If the line is long, write motion for this excerpt only and continue the same line.
-7. Output ONLY the rewritten video prompt. No quotes, no markdown, no preamble.`
+7. Never describe character eye colors, hair/beard/clean-shaven traits, jaw muscles (masseters, jawline), cheek/chin contours, or eyebrow/nostril/lip geometry — attached reference portraits own all facial features and facial hair; convey emotion through acting state, breath, posture, and gaze.
+8. Output ONLY the rewritten video prompt. No quotes, no markdown, no preamble.`
 }
 
 export function buildVideoDirectorUserPrompt(options: {

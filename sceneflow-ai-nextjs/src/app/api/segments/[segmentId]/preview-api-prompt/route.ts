@@ -25,6 +25,7 @@ interface PreviewApiPromptRequest {
         promptToken?: string
         subjectOrdinal?: number
         wardrobeDescription?: string
+        identityTraits?: string
       }>
     | string[]
   startFrameUrl?: string
@@ -80,6 +81,7 @@ export async function POST(
       promptToken: ref.promptToken,
       subjectOrdinal: ref.subjectOrdinal,
       wardrobeDescription: ref.wardrobeDescription,
+      identityTraits: ref.identityTraits,
     }))
 
     const { enhancedPrompt } = buildSegmentEnhancedPrompt({

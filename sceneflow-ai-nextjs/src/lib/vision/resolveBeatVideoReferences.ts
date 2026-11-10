@@ -10,7 +10,10 @@ import { formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { formatLocationScaleDescriptor } from '@/lib/imagen/locationScaleClause'
 import { extractPropScalePhrase, formatPropScaleDescriptor } from '@/lib/imagen/propScaleClause'
-import { extractCharacterHeightPhrase } from '@/lib/imagen/identityTraitsClause'
+import {
+  buildIdentityTraitsClause,
+  extractCharacterHeightPhrase,
+} from '@/lib/imagen/identityTraitsClause'
 import { getSceneBeats, hasVisualStagingForCastFilter } from '@/lib/script/beatMigration'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -45,6 +48,7 @@ export type LabeledVideoReference = {
   promptToken?: string
   subjectOrdinal?: number
   wardrobeDescription?: string
+  identityTraits?: string
 }
 
 export type ResolvedBeatVideoReferences = {
@@ -63,6 +67,9 @@ export type ResolveBeatVideoReferencesArgs = {
     name?: string
     referenceImage?: string
     height?: string
+    gender?: string
+    hairStyle?: string
+    hairColor?: string
     appearanceDescription?: string
     visionDescription?: string
     defaultWardrobe?: string
@@ -82,12 +89,23 @@ function videoPersonToken(personTokenIndex?: number): string {
   return personTokenIndex != null ? `person [${personTokenIndex}]` : 'person [1]'
 }
 
+const TIGHT_UPPER_BODY_SHOT_RE =
+  /\b(?:extreme\s+close[- ]?up|close[- ]?up|medium\s+close[- ]?up|ecu|cu|mcu|chest[- ]up|shoulders[- ]up|head[- ]and[- ]shoulders|bust\s+shot)\b/i
+
+function isBeatTightUpperBodyShot(beat: SceneBeat | null | undefined): boolean {
+  if (!beat?.beatDirection) return false
+  const dir = beat.beatDirection
+  const shotText = [dir.shotType, dir.startFrame, dir.frozenMoment].filter(Boolean).join(' ')
+  return TIGHT_UPPER_BODY_SHOT_RE.test(shotText)
+}
+
 function videoIdentityLabel(
   _name: string,
   _index: number,
   personTokenIndex?: number,
   heightPhrase?: string,
-  hasSeparateWardrobeImage?: boolean
+  hasSeparateWardrobeImage?: boolean,
+  identityTraits?: string
 ): string {
   const base = formatNextImageCaption({
     role: 'identity',
@@ -96,8 +114,11 @@ function videoIdentityLabel(
   const details: string[] = []
   if (!hasSeparateWardrobeImage) {
     details.push(
-      'Match exact facial identity, bone structure, hair, and skin tone from this portrait; ignore studio backdrop and portrait clothing.'
+      'Preserve exact facial structure, eyes, eyebrows, nose, lips, hair, facial hair, and skin tone from this portrait; ignore studio backdrop and portrait clothing.'
     )
+  }
+  if (identityTraits) {
+    details.push(`Portrait features: ${identityTraits}.`)
   }
   if (heightPhrase) {
     details.push(`Scale: ${heightPhrase}.`)
@@ -115,9 +136,15 @@ function formatShortWardrobeSummary(
   fallback?: {
     defaultWardrobe?: string
     wardrobeAccessories?: string
-  } | null
+  } | null,
+  options?: {
+    upperBodyOnly?: boolean
+  }
 ): string | undefined {
-  const formatted = formatConsistentWardrobeDescription(wardrobe, fallback, { wordCap: 36 })
+  const formatted = formatConsistentWardrobeDescription(wardrobe, fallback, {
+    wordCap: 36,
+    upperBodyOnly: options?.upperBodyOnly,
+  })
   if (!formatted) return undefined
   const sanitized = autoSanitizePrompt(formatted, { logChanges: false }).sanitizedPrompt
   return sanitized.trim() || undefined
@@ -272,11 +299,14 @@ export function resolveBeatVideoReferences(
       ? selection.characterWardrobes
       : beatContext.characterWardrobes
 
+  const tightUpperBodyShot = isBeatTightUpperBodyShot(beat)
+
   const imageReferences: Array<{
     imageUrl: string
     refRole: 'identity' | 'wardrobe' | 'wardrobe-diptych'
     characterName: string
     wardrobeDescription?: string
+    identityTraits?: string
   }> = []
 
   const characterMeta: Array<{
@@ -286,6 +316,7 @@ export function resolveBeatVideoReferences(
     subjectOrdinal?: number
     characterHeight?: string
     wardrobeSummary?: string
+    identityTraits?: string
   }> = []
 
   for (const charId of selection.characterIds ?? []) {
@@ -302,15 +333,29 @@ export function resolveBeatVideoReferences(
     })
 
     const sentDiptych = Boolean(refPair.hasWardrobeDiptych && refPair.wardrobeDiptychUrl)
-    const heightPhrase = extractCharacterHeightPhrase({
-      height: char.height,
-      appearanceDescription: char.appearanceDescription,
+    const heightPhrase = tightUpperBodyShot
+      ? undefined
+      : extractCharacterHeightPhrase({
+          height: char.height,
+          appearanceDescription: char.appearanceDescription,
+          visionDescription: char.visionDescription,
+        })
+    const identityTraits = buildIdentityTraitsClause({
       visionDescription: char.visionDescription,
+      appearanceDescription: char.appearanceDescription,
+      hairStyle: char.hairStyle,
+      hairColor: char.hairColor,
+      gender: char.gender,
+      omitHeight: true,
     })
-    const wardrobeSummary = formatShortWardrobeSummary(refPair.resolvedWardrobe, {
-      defaultWardrobe: char.defaultWardrobe,
-      wardrobeAccessories: char.wardrobeAccessories,
-    })
+    const wardrobeSummary = formatShortWardrobeSummary(
+      refPair.resolvedWardrobe,
+      {
+        defaultWardrobe: char.defaultWardrobe,
+        wardrobeAccessories: char.wardrobeAccessories,
+      },
+      { upperBodyOnly: tightUpperBodyShot }
+    )
     characterMeta.push({
       name: char.name,
       hasDualReferences: sentDiptych ? false : refPair.hasDualReferences,
@@ -318,6 +363,7 @@ export function resolveBeatVideoReferences(
       subjectOrdinal: characterMeta.length + 1,
       characterHeight: heightPhrase,
       wardrobeSummary,
+      identityTraits,
     })
 
     if (sentDiptych && refPair.wardrobeDiptychUrl) {
@@ -340,6 +386,7 @@ export function resolveBeatVideoReferences(
         ...(!hasSeparateWardrobe && wardrobeSummary
           ? { wardrobeDescription: wardrobeSummary }
           : {}),
+        ...(identityTraits ? { identityTraits } : {}),
       })
       if (hasSeparateWardrobe && refPair.wardrobeUrl) {
         imageReferences.push({
@@ -385,7 +432,8 @@ export function resolveBeatVideoReferences(
       index,
       personTokenIndex,
       meta?.characterHeight,
-      Boolean(meta?.hasDualReferences)
+      Boolean(meta?.hasDualReferences),
+      meta?.identityTraits
     )
   }
   const buildWardrobeWithSummary = (name: string, index: number, personTokenIndex?: number) => {
@@ -496,10 +544,13 @@ export function resolveBeatVideoReferences(
       },
       buildLocationLabel: (_locationName, _sendIndex, promptToken) => {
         const base = formatNextImageCaption({ role: 'location', token: promptToken || 'location [1]' })
-        if (mappedLocation?.description?.trim() || mappedLocation?.canonicalScale) {
+        if (
+          !tightUpperBodyShot &&
+          (mappedLocation?.description?.trim() || mappedLocation?.canonicalScale)
+        ) {
           const scale = formatLocationScaleDescriptor(
             mappedLocation.description,
-            mappedLocation.location || mappedLocation.name,
+            mappedLocation.location || (mappedLocation as { name?: string }).name,
             mappedLocation.canonicalScale
           )
           return `${base} Environment scale: ${scale}.`
@@ -529,6 +580,7 @@ export function resolveBeatVideoReferences(
     promptToken: ref.promptToken,
     subjectOrdinal: ref.subjectOrdinal,
     ...(ref.wardrobeDescription ? { wardrobeDescription: ref.wardrobeDescription } : {}),
+    ...(ref.identityTraits ? { identityTraits: ref.identityTraits } : {}),
   }))
 
   return {
@@ -564,6 +616,9 @@ export function shouldReplaceClientVideoReferences(
       ref.refRole === 'wardrobe' ||
       ref.role === 'wardrobe' ||
       /^The next image is the (?:identity and wardrobe|wardrobe) of\b/i.test(
+        (ref.name || '').trim()
+      ) ||
+      /Match exact facial identity, bone structure, hair, and skin tone/i.test(
         (ref.name || '').trim()
       )
   )

@@ -450,6 +450,7 @@ export function toConfigReferenceImages(resolved: {
       promptToken: r.promptToken,
       subjectOrdinal: r.subjectOrdinal,
       wardrobeDescription: r.wardrobeDescription,
+      identityTraits: r.identityTraits,
     }))
   }
   if (resolved.referenceImages?.length) {

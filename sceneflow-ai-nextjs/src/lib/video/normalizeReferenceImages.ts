@@ -86,6 +86,7 @@ export type VeoReferenceImage = {
   promptToken?: string
   subjectOrdinal?: number
   wardrobeDescription?: string
+  identityTraits?: string
 }
 
 export type VeoReferenceImageInput = {
@@ -100,6 +101,7 @@ export type VeoReferenceImageInput = {
   promptToken?: string
   subjectOrdinal?: number
   wardrobeDescription?: string
+  identityTraits?: string
 }
 
 const VALID_PRIORITY_ROLES = new Set<PrioritizedReferenceImage['role']>([
@@ -157,6 +159,7 @@ export function normalizeReferenceImages(
         promptToken: item.promptToken,
         subjectOrdinal: item.subjectOrdinal,
         wardrobeDescription: item.wardrobeDescription,
+        identityTraits: item.identityTraits,
       }
     })
     .filter((item): item is VeoReferenceImage => item !== null)
@@ -186,6 +189,7 @@ export function veoRefsToPrioritized(
       promptToken: ref.promptToken,
       subjectOrdinal: ref.subjectOrdinal,
       wardrobeDescription: ref.wardrobeDescription,
+      identityTraits: ref.identityTraits,
     }
   })
 }

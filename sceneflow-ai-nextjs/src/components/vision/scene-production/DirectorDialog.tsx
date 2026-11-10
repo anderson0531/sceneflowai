@@ -175,6 +175,7 @@ interface DirectorReferenceEntry {
   promptToken?: string
   subjectOrdinal?: number
   wardrobeDescription?: string
+  identityTraits?: string
 }
 
 interface DirectorDialogProps {
@@ -276,6 +277,7 @@ function refsToConfig(entries: DirectorReferenceEntry[]): NonNullable<VideoGener
       promptToken: e.promptToken,
       subjectOrdinal: e.subjectOrdinal,
       wardrobeDescription: e.wardrobeDescription,
+      identityTraits: e.identityTraits,
     }
   })
 }
@@ -439,6 +441,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       promptToken: ref.promptToken,
       subjectOrdinal: ref.subjectOrdinal,
       wardrobeDescription: ref.wardrobeDescription,
+      identityTraits: ref.identityTraits,
     }))
     return { entries, warnings: resolved.warnings }
   }, [scene, segment, sceneIndex, characterReferences, locationReferences, objectReferences, filmTitle])

@@ -142,6 +142,21 @@ describe('buildIdentityTraitsClause', () => {
     ).toBe('East Asian, straight dark brown hair, late 30s')
   })
 
+  it('never drops facial hair when an unlisted modifier or bare noun precedes beard, and respects omitHeight', () => {
+    expect(
+      buildIdentityTraitsClause({
+        visionDescription: 'A man with warm brown skin and a beard, early 40s.',
+        height: '6-foot-7 tall',
+        omitHeight: true,
+      })
+    ).toBe('warm brown skin, beard, early 40s')
+    expect(
+      buildIdentityTraitsClause({
+        visionDescription: 'A man with olive skin, without a beard, mid 30s.',
+      })
+    ).toBe('olive skin, clean-shaven, mid 30s')
+  })
+
   it('returns nothing when there is no description and no hair field', () => {
     expect(buildIdentityTraitsClause({ visionDescription: '' })).toBeUndefined()
     expect(buildIdentityTraitsClause({ appearanceDescription: 'He is tall and moves quickly.' })).toBeUndefined()

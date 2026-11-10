@@ -3,6 +3,8 @@
  * carry identity — avoids re-describing face/body/injury and conflicting with refs.
  */
 
+import { sanitizeFacialFeatureConflicts } from '@/lib/character/sanitizeFacialFeatureConflicts'
+
 const REF_CONFLICT_PHRASES: Record<string, string> = {
   'faint shadowed mark visible on her temple': 'quiet emotional tension in the expression',
   'faint shadowed mark visible on his temple': 'quiet emotional tension in the expression',
@@ -66,7 +68,7 @@ const INLINE_FACIAL_TRAIT_PATTERNS: RegExp[] = [
 export function neutralizeReferenceConflictPrompt(scenePrompt: string): string {
   if (!scenePrompt?.trim()) return scenePrompt
 
-  let text = scenePrompt
+  let text = sanitizeFacialFeatureConflicts(scenePrompt)
 
   for (const [phrase, replacement] of Object.entries(REF_CONFLICT_PHRASES)) {
     const regex = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')

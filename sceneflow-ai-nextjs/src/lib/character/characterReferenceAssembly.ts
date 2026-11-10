@@ -200,10 +200,45 @@ const DANGLING_WARDROBE_TAIL_WORDS = new Set([
   'layered',
 ])
 
+const NARRATIVE_WARDROBE_PARENTHETICAL_RE =
+  /\s*\([^)]*\b(?:scene|scenes|act|beat|episode|chapter|which|who|whom|whose|that\s+(?:he|she|they)|removes?|removed|takes?\s+off|uses?|used\s+to|tourniquet|later|earlier|eventually|previously|formerly|inherited|given|stolen|flashback)\b[^)]*\)/gi
+
+const FOOTWEAR_ONLY_SENTENCE_RE =
+  /^(?:[a-z0-9/-]+(?:,\s*|\s+)){0,5}(?:boots|work\s+boots|combat\s+boots|shoes|sneakers|loafers|heels|sandals|footwear|greaves|spats|slippers|oxfords|brogues)(?:\s+(?:on\s+(?:his|her|their)\s+feet|with\s+[^.]+))?$/i
+
+const CONJOINED_LOWER_LEGWEAR_RE =
+  /\s+\band\s+(?:[a-z0-9/-]+,\s*)*(?:[a-z0-9/-]+\s+){0,4}(?:trousers|pants|jeans|slacks|leggings|shorts|chinos|breeches|culottes|work\s+pants|cargo\s+pants)\b/gi
+
+function sanitizeWardrobeTextPart(raw: string, upperBodyOnly?: boolean): string {
+  let cleaned = raw
+    .replace(NARRATIVE_WARDROBE_PARENTHETICAL_RE, '')
+    .replace(/^(?:wearing|dressed in|outfitted in|clad in)\s+/i, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (upperBodyOnly && cleaned) {
+    const sentences = cleaned
+      .split(/(?<=[.!?])\s+|\.\s+/)
+      .map((s) => s.replace(/[.!?]+$/g, '').trim())
+      .filter(Boolean)
+      .filter((s) => !FOOTWEAR_ONLY_SENTENCE_RE.test(s))
+      .map((s) => s.replace(CONJOINED_LOWER_LEGWEAR_RE, '').trim())
+      .filter(Boolean)
+    cleaned = sentences.join('. ')
+  }
+
+  return cleaned
+    .replace(/\s+,/g, ',')
+    .replace(/,\s*,/g, ',')
+    .replace(/\s+\./g, '.')
+    .replace(/[.;,\s]+$/g, '')
+    .trim()
+}
+
 /**
  * Build a clean, consistent wardrobe description from a resolved scene wardrobe
  * (or legacy character defaultWardrobe) for identity-first Clips and Stills.
- * Avoids chopping mid-clause on trailing prepositions/participles.
+ * Strips narrative plot parentheticals and avoids chopping mid-clause.
  */
 export function formatConsistentWardrobeDescription(
   wardrobe?: {
@@ -218,6 +253,8 @@ export function formatConsistentWardrobeDescription(
   options?: {
     wordCap?: number
     includeAppearanceNotes?: boolean
+    /** Omit standalone footwear and lower-legwear on Close-Up / Medium Close-Up shots. */
+    upperBodyOnly?: boolean
   }
 ): string | undefined {
   const wordCap = options?.wordCap ?? 38
@@ -226,13 +263,7 @@ export function formatConsistentWardrobeDescription(
   const notes = options?.includeAppearanceNotes ? wardrobe?.appearanceNotes?.trim() || '' : ''
 
   const cleanedParts = [primaryDesc, primaryAcc, notes]
-    .map((part) =>
-      part
-        .replace(/^(?:wearing|dressed in|outfitted in|clad in)\s+/i, '')
-        .replace(/\s+/g, ' ')
-        .replace(/[.;,\s]+$/g, '')
-        .trim()
-    )
+    .map((part) => sanitizeWardrobeTextPart(part, options?.upperBodyOnly))
     .filter(Boolean)
 
   if (cleanedParts.length === 0) return undefined

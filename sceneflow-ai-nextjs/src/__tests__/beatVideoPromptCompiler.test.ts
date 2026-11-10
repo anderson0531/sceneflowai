@@ -3,6 +3,7 @@ import {
   compileBeatVideoPrompt,
   compileBeatVideoPromptFromDirection,
   resolveBeatClipDirection,
+  sanitizeUnactuatedSurfaceInscriptions,
 } from '@/lib/scene/beatVideoPromptCompiler'
 import {
   estimateSyllables,
@@ -188,6 +189,15 @@ describe('compileBeatVideoPromptFromDirection', () => {
     }
     const result = compileBeatVideoPromptFromDirection(directed, null)
     expect(result.prompt).toBe('Hold on the doorway. No one enters.')
+  })
+
+  it('does not duplicate article when sanitizing unactuated clean chalk inscriptions', () => {
+    const cleaned = sanitizeUnactuatedSurfaceInscriptions(
+      "Gideon leans toward the damp slate wall covered in drafted equations and the clean chalk inscription 'RESONANCE FLUX = 0' on screen-left.",
+      'Gideon drags the chalk downward across the rock face.'
+    )
+    expect(cleaned).toContain('and the clean chalk inscription on screen-left.')
+    expect(cleaned).not.toContain('the clean the chalk')
   })
 
   it('closes an action beat without inviting dialogue or a second camera', () => {

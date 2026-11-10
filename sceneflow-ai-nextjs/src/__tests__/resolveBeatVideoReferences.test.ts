@@ -93,6 +93,76 @@ describe('resolveBeatVideoReferences', () => {
     expect(elements.locationRefId).toBe('loc-kitchen')
   })
 
+  it('locks portrait-verified facial hair/traits, strips wardrobe plot parentheticals, and omits full-body scale/boots on Medium Close-Up shots', () => {
+    const mcuBeat: SceneBeat = {
+      beatId: 'bt_3f0e54b8-977',
+      sequenceIndex: 0,
+      kind: 'dialogue',
+      character: 'Gideon Croft',
+      line: 'The current bleeds out.',
+      beatDirection: {
+        shotType: 'Medium Close-Up',
+        castInFrame: ['Gideon Croft'],
+      },
+    }
+    const gideonChars = [
+      {
+        id: 'char-gideon',
+        name: 'Gideon Croft',
+        height: '6-foot-7 tall',
+        referenceImage: 'https://blob.example/gideon-id.png',
+        visionDescription:
+          'A man in his early 50s with warm medium-brown skin, tightly curled salt-and-pepper hair, and a short sculpted beard.',
+        wardrobes: [
+          {
+            id: 'w-vault',
+            name: 'Vault Archivist',
+            description:
+              'A dust-covered, rugged dark charcoal/slate canvas archivist smock and utilitarian work trousers over thermal underlayers, outfitted with a thick webbed canvas utility belt (which he removes in Scene 9 to tourniquet Piper). Heavy reinforced work boots.',
+            isDefault: true,
+          },
+        ],
+      },
+    ]
+
+    const resolved = resolveBeatVideoReferences({
+      scene: { heading: 'INT. FREIGHT TUNNEL VAULT - NIGHT', beats: [mcuBeat] },
+      beat: mcuBeat,
+      projectCharacters: gideonChars,
+      locationReferences: [
+        {
+          id: 'loc-vault',
+          location: 'FREIGHT TUNNEL VAULT',
+          imageUrl: 'https://blob.example/vault.png',
+          description: 'Damp subterranean stone vault with 10-foot ceiling and 7-foot iron door.',
+        },
+      ],
+      objectReferences: [],
+    })
+
+    const gideonRef = resolved.labeledRefs.find((r) => r.characterName === 'Gideon Croft')
+    expect(gideonRef?.name).toContain('facial hair')
+    expect(gideonRef?.name).toContain('short sculpted beard')
+    expect(gideonRef?.name).not.toContain('6-foot-7 tall')
+    expect(gideonRef?.wardrobeDescription).not.toContain('Scene 9')
+    expect(gideonRef?.wardrobeDescription).not.toContain('Piper')
+    expect(gideonRef?.wardrobeDescription).not.toContain('work trousers')
+    expect(gideonRef?.wardrobeDescription).not.toContain('work boots')
+    expect(gideonRef?.wardrobeDescription).toContain('archivist smock')
+
+    const locRef = resolved.labeledRefs.find((r) => r.role === 'location')
+    expect(locRef?.name).toBe('The next image is location [1].')
+
+    const omniPrompt = buildOmniVideoReferencePrompt({
+      scenePrompt: 'Gideon Croft leans forward.',
+      refs: resolved.refs,
+    })
+    expect(omniPrompt).toContain('preserve exact portrait features:')
+    expect(omniPrompt).toContain('short sculpted beard')
+    expect(omniPrompt).not.toContain('Piper')
+    expect(omniPrompt).not.toContain('work boots')
+  })
+
   it('respects max reference cap', () => {
     const manyChars = Array.from({ length: 6 }, (_, i) => ({
       id: `c${i}`,

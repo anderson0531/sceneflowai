@@ -209,6 +209,7 @@ export async function POST(
                 promptToken: ref.promptToken,
                 subjectOrdinal: ref.subjectOrdinal,
                 wardrobeDescription: ref.wardrobeDescription,
+                identityTraits: ref.identityTraits,
               }))
             : undefined,
         previousSegmentVeoRef: previousVeoRef,

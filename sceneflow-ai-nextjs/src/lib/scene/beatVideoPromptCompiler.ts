@@ -276,12 +276,15 @@ export function sanitizeUnactuatedSurfaceInscriptions(
   }
   return raw
     .replace(
-      /\b(the\s+)?(?:crisp\s+|faint\s+|smudged\s+|fresh\s+|existing\s+)?(chalk(?:ed)?\s+|white\s+|painted\s+|carved\s+)?(inscription|formula|equation|writing|words|text)\s+(?:reading\s+|titled\s+)?'[^'\n]{2,80}'/gi,
-      (_match, det?: string, medium?: string, noun?: string) => {
-        const prefix = det ? det : 'the '
+      /\b(the\s+)?((?:(?:crisp|clean|neat|faint|smudged|fresh|existing|raw|bold|handwritten|drafted|scrawled)\s+)*)(chalk(?:ed)?\s+|white\s+|painted\s+|carved\s+)?(inscription|formula|equation|writing|words|text)\s+(?:reading\s+|titled\s+)?'[^'\n]{2,80}'/gi,
+      (_match, det?: string, adj?: string, medium?: string, noun?: string, offset?: number, fullStr?: string) => {
+        const before = typeof offset === 'number' && typeof fullStr === 'string' ? fullStr.slice(0, offset) : ''
+        const alreadyHasArticle = /\b(?:the|a|an)\s+(?:[a-z-]+\s+){0,2}$/i.test(before)
+        const prefix = det ? det : alreadyHasArticle ? '' : 'the '
+        const adjectives = adj || ''
         const med = medium ? medium : 'chalked '
         const kind = (noun || 'formula').toLowerCase()
-        return `${prefix}${med}${kind}`
+        return `${prefix}${adjectives}${med}${kind}`
       }
     )
     .replace(/\s{2,}/g, ' ')

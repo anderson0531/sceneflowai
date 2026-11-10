@@ -115,6 +115,7 @@ export interface GenerateSegmentVideoInput {
     promptToken?: string
     subjectOrdinal?: number
     wardrobeDescription?: string
+    identityTraits?: string
   }>
   sceneImageUrl?: string
   segmentIndex?: number

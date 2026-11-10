@@ -24,6 +24,8 @@ export interface ReferenceImageBinding {
   descriptor?: string
   /** Consistent scene wardrobe text when no separate wardrobe image is attached. */
   wardrobeDescription?: string
+  /** Portrait-verified permanent facial traits (skin, hair, facial hair, age) to lock likeness. */
+  identityTraits?: string
 }
 
 export const OPENING_FRAME_CAPTION = 'The next image is the opening frame.'
@@ -80,6 +82,7 @@ interface PersonSlot {
   wardrobe: boolean
   character: boolean
   wardrobeDescription?: string
+  identityTraits?: string
 }
 
 function ensureSentencePeriod(text: string): string {
@@ -94,7 +97,12 @@ function personInstruction(slot: PersonSlot): string {
   }
   const parts: string[] = []
   if (slot.identity || slot.character) {
-    parts.push(`${named} is the person in the identity image of ${slot.token}.`)
+    const traits = slot.identityTraits?.replace(/[.;,\s]+$/g, '').trim()
+    parts.push(
+      traits
+        ? `${named} is the person in the identity image of ${slot.token} (preserve exact portrait features: ${traits}).`
+        : `${named} is the person in the identity image of ${slot.token}.`
+    )
   }
   if (slot.wardrobe) {
     parts.push(`Clothes of ${slot.token} are the wardrobe image of ${slot.token}.`)
@@ -127,10 +135,14 @@ export function formatImagesAboveBinding(bindings: ReferenceImageBinding[]): str
         wardrobe: false,
         character: false,
         wardrobeDescription: undefined,
+        identityTraits: undefined,
       }
       if (!slot.name && binding.name) slot.name = binding.name
       if (!slot.wardrobeDescription && binding.wardrobeDescription?.trim()) {
         slot.wardrobeDescription = binding.wardrobeDescription.trim()
+      }
+      if (!slot.identityTraits && binding.identityTraits?.trim()) {
+        slot.identityTraits = binding.identityTraits.trim()
       }
       if (binding.role === 'identity') slot.identity = true
       if (binding.role === 'wardrobe') slot.wardrobe = true
@@ -250,6 +262,7 @@ export function bindingsFromReferenceRecords(
     promptToken?: string
     subjectOrdinal?: number
     wardrobeDescription?: string
+    identityTraits?: string
   }>
 ): ReferenceImageBinding[] {
   const personByName = new Map<string, string>()
@@ -266,6 +279,9 @@ export function bindingsFromReferenceRecords(
         name: ref.characterName || ref.propName || ref.locationName || fromCaption.name,
         ...(ref.wardrobeDescription?.trim()
           ? { wardrobeDescription: ref.wardrobeDescription.trim() }
+          : {}),
+        ...(ref.identityTraits?.trim()
+          ? { identityTraits: ref.identityTraits.trim() }
           : {}),
       })
       continue
@@ -316,6 +332,9 @@ export function bindingsFromReferenceRecords(
         name: characterName || legacyName,
         ...(ref.wardrobeDescription?.trim()
           ? { wardrobeDescription: ref.wardrobeDescription.trim() }
+          : {}),
+        ...(ref.identityTraits?.trim()
+          ? { identityTraits: ref.identityTraits.trim() }
           : {}),
       })
       continue

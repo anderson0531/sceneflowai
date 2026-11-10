@@ -117,6 +117,8 @@ export interface PrioritizedReferenceImage {
   characterHeight?: string
   /** Consistent scene wardrobe text when no separate wardrobe image is attached. */
   wardrobeDescription?: string
+  /** Portrait-verified permanent facial traits (skin, hair, facial hair, age). */
+  identityTraits?: string
 }
 
 /**
@@ -504,6 +506,7 @@ export function buildCharacterReferenceEntries(
     refRole: CharacterRefRole
     characterName: string
     wardrobeDescription?: string
+    identityTraits?: string
   }>,
   characterReferences: Array<{
     name: string
@@ -512,6 +515,7 @@ export function buildCharacterReferenceEntries(
     subjectOrdinal?: number
     wardrobeSummary?: string
     wardrobeDescription?: string
+    identityTraits?: string
   }>,
   buildIdentityLabel: (name: string, index: number, personTokenIndex?: number) => string,
   buildWardrobeLabel: (name: string, index: number, personTokenIndex?: number) => string,
@@ -541,6 +545,10 @@ export function buildCharacterReferenceEntries(
       ref.refRole === 'identity' && !matchingCharRef?.hasDualReferences && !matchingCharRef?.hasWardrobeDiptych
         ? ref.wardrobeDescription || matchingCharRef?.wardrobeSummary || matchingCharRef?.wardrobeDescription
         : undefined
+    const identityTraits =
+      ref.refRole === 'identity'
+        ? ref.identityTraits || matchingCharRef?.identityTraits
+        : undefined
     entries.push({
       imageUrl: ref.imageUrl,
       name: label,
@@ -550,6 +558,7 @@ export function buildCharacterReferenceEntries(
       refRole: ref.refRole,
       subjectOrdinal,
       ...(wardrobeDescription ? { wardrobeDescription } : {}),
+      ...(identityTraits ? { identityTraits } : {}),
     })
   }
 

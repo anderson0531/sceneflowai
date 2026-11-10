@@ -4,6 +4,7 @@
  */
 
 import { splitEmotionPrefix } from '@/lib/scene/translateGuideDialogue'
+import { distillReferenceSafeEmotionBody } from '@/lib/character/sanitizeFacialFeatureConflicts'
 
 export interface ParsedPerformanceCue {
   /** Raw bracket tag text, e.g. "thoughtful, to herself" */
@@ -102,7 +103,9 @@ const STILL_EMOTION_TELLS: Array<{ pattern: RegExp; tells: string }> = [
  * shoulders. Phrases that already name those stay as written.
  */
 export function expandEmotionForStill(emotion: string): string {
-  const trimmed = emotion.trim().replace(/[.]+$/u, '')
+  const raw = emotion.trim().replace(/[.]+$/u, '')
+  if (!raw) return ''
+  const trimmed = distillReferenceSafeEmotionBody(raw).replace(/[.]+$/u, '').trim()
   if (!trimmed) return ''
   if (FACE_BODY_TELL_PATTERN.test(trimmed)) return trimmed
 

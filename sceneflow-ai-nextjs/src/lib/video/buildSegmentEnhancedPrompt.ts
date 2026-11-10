@@ -35,6 +35,7 @@ export type SegmentReferenceImage = {
   promptToken?: string
   subjectOrdinal?: number
   wardrobeDescription?: string
+  identityTraits?: string
 }
 
 export interface BuildSegmentEnhancedPromptInput {

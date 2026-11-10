@@ -362,6 +362,7 @@ export interface VideoGenerationConfig {
         promptToken?: string
         subjectOrdinal?: number
         wardrobeDescription?: string
+        identityTraits?: string
       }>
   
   // Cinematic element settings (for CIN mode)

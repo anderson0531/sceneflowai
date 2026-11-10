@@ -51,10 +51,12 @@ const HAIR_MODIFIERS = new Set([
 ])
 
 const FACIAL_HAIR_MODIFIERS = new Set([
-  'short', 'full', 'thick', 'thin', 'trimmed', 'neat', 'neatly', 'close', 'cropped',
-  'grizzled', 'greying', 'graying', 'grey', 'gray', 'silver', 'white', 'black', 'brown',
-  'dark', 'light', 'red', 'salt', 'pepper', 'and', 'patchy', 'scruffy', 'heavy', 'groomed',
-  'well', 'untrimmed', 'wiry', 'curly', 'days', 'day', 'unshaven',
+  'short', 'full', 'thick', 'thin', 'trimmed', 'neat', 'neatly', 'close', 'closely', 'cropped',
+  'grizzled', 'greying', 'graying', 'grey', 'gray', 'silver', 'silvered', 'flecked', 'peppery',
+  'white', 'black', 'brown', 'dark', 'light', 'red', 'auburn', 'ginger', 'blonde', 'blond',
+  'salt', 'pepper', 'and', 'patchy', 'scruffy', 'heavy', 'groomed', 'well', 'untrimmed',
+  'wiry', 'curly', 'coarse', 'dense', 'bushy', 'rugged', 'weathered', 'sculpted', 'shaped',
+  'boxed', 'tapered', 'pointed', 'finely', 'sparse', 'shadow', 'days', 'day', 'unshaven',
 ])
 
 const SKIN_NOUNS = /\b(skin|complexion)\b/i
@@ -194,14 +196,21 @@ function extractHair(
 }
 
 const FEMALE_TEXT_RE = /\b(?:woman|female|girl|she|her|hers)\b/i
+const NEGATED_FACIAL_HAIR_RE =
+  /\b(?:no|without|zero|lacks?|lacking|free\s+of)\s+(?:a\s+|an\s+|any\s+|visible\s+)*(?:facial\s+hair|beard|moustache|mustache|goatee|stubble|sideburns)\b/i
 
 function extractFacialHair(text: string, gender?: string | null): string | undefined {
   const isFemale =
     (typeof gender === 'string' && /^(?:female|woman|girl|f)$/i.test(gender.trim())) ||
     FEMALE_TEXT_RE.test(text)
   if (isFemale) return undefined
-  if (/\bclean[- ]shaven\b/i.test(text)) return 'clean-shaven'
-  return extractTraitPhrase(text, FACIAL_HAIR_NOUNS, FACIAL_HAIR_MODIFIERS)
+  if (/\bclean[- ]shaven\b/i.test(text) || NEGATED_FACIAL_HAIR_RE.test(text)) {
+    return 'clean-shaven'
+  }
+  const withModifiers = extractTraitPhrase(text, FACIAL_HAIR_NOUNS, FACIAL_HAIR_MODIFIERS)
+  if (withModifiers) return withModifiers
+  const bareNoun = text.match(FACIAL_HAIR_NOUNS)
+  return bareNoun ? bareNoun[0].toLowerCase() : undefined
 }
 
 const HEIGHT_FEET_INCHES =
@@ -282,10 +291,11 @@ export function buildIdentityTraitsClause(character: {
   height?: string | null
   gender?: string | null
   wordCap?: number
+  omitHeight?: boolean
 }): string | undefined {
   const text = (character.visionDescription || character.appearanceDescription || '').trim()
   const hasStructuredHair = Boolean(character.hairStyle?.trim())
-  const hasExplicitHeight = Boolean(character.height?.trim())
+  const hasExplicitHeight = !character.omitHeight && Boolean(character.height?.trim())
   if (!text && !hasStructuredHair && !hasExplicitHeight) return undefined
 
   const candidates = [
@@ -294,7 +304,7 @@ export function buildIdentityTraitsClause(character: {
     extractHair(text, character),
     extractFacialHair(text, character.gender),
     extractAge(text),
-    extractCharacterHeightPhrase(character),
+    character.omitHeight ? undefined : extractCharacterHeightPhrase(character),
   ]
 
   const cap = character.wordCap ?? IDENTITY_TRAITS_WORD_CAP

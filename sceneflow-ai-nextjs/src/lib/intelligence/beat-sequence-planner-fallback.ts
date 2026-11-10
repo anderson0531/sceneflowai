@@ -22,6 +22,7 @@ import {
 } from '@/lib/generation/policySafePhrasing'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { isExplicitDirectToCameraBeat } from '@/lib/character/characterReferenceAssembly'
+import { sanitizeFacialFeatureConflicts } from '@/lib/character/sanitizeFacialFeatureConflicts'
 import {
   actionFramingFromStoredPrompt,
   assembleStructuredStillPrompt,
@@ -537,7 +538,7 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   const policySafe = (value?: string | null): string => {
     const softened = softenStillPhrasingForPolicy(value)
     policyChanges.push(...softened.changes)
-    return softened.text
+    return sanitizeFacialFeatureConflicts(softened.text)
   }
 
   const namedCast = Array.isArray(direction?.castInFrame)
@@ -762,7 +763,7 @@ CRITICAL RULES:
 5. Prefer each beat's coveragePurpose, lensEnergy, and spatialRelationship. Use direction.camera.shots only when a beat has no coverage of its own.
 6. Follow the narrative arc: opening → progression → climax → title_reveal (if title scene) → dissolve.
 7. "lighting" and "lensMm" place THIS beat inside the film's established grammar — a key-light accent and a focal length, never a new look. Derive both from the PROJECT LOOKBOOK. Leave a field empty rather than contradict the lookbook.
-8. The "prompt" field is Action/Framing ONLY: shot type (spatial when two or more people — both bodies fully in frame; Insert/Extreme Close-Up of a limb: tight macro, only the specified limb/hand, no full-body floor contact; Insert/Extreme Close-Up of an object with nobody in frame: the named instrument only, no limbs or faces), body blocking with weight and contact for EACH visible character on non-insert shots, who holds which named library prop, labeled gaze, and directed facial expression for EACH visible face (visible eyes/jaw/mouth/shoulders — not a two-word mood label, never under exclusions). Omit gaze and emotion when castInFrame is empty. Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — the lookbook and code own those.
+8. The "prompt" field is Action/Framing ONLY: shot type (spatial when two or more people — both bodies fully in frame; Insert/Extreme Close-Up of a limb: tight macro, only the specified limb/hand, no full-body floor contact; Insert/Extreme Close-Up of an object with nobody in frame: the named instrument only, no limbs or faces), body blocking with weight and contact for EACH visible character on non-insert shots, who holds which named library prop, labeled gaze, and directed facial expression for EACH visible face (conveyed through acting mood, posture, breath, and gaze — never invent eye colors, jaw/masseter muscle anatomy, eyebrow/nostril geometry, or facial-hair/clean-shaven traits that override the character reference portrait; never under exclusions). Omit gaze and emotion when castInFrame is empty. Do NOT write style dumps, lighting essays, exclusions, F2V, or start-frame language — the lookbook and code own those.
 9. Use EXACT character / prop / location labels from the REFERENCE LIBRARY. Do not invent objects that are not listed. Do not describe the visual appearance of library props or locations (reference images own appearance). Omit a library prop from Action/Framing unless this beat actually uses it.
 10. When art style is photorealistic, keep action language photographic (no illustration, cartoon, or anime). Populate negativeAdditions with anti-illustration terms.
 
