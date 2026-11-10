@@ -149,7 +149,8 @@ describe('preVisSceneRender', () => {
 
     // Verify visual segments are 100% contiguous from t=0 to totalDuration
     expect(plan.segments[0].startTime).toBe(0)
-    expect(plan.segments[0].videoUrl).toBe('https://cdn.example.com/beat-1.jpg')
+    expect(plan.segments[0].assetUrl).toBe('https://cdn.example.com/beat-1.jpg')
+    expect(plan.segments[0].assetType).toBe('image')
     expect(plan.segments[0].kenBurns).toMatchObject({
       enabled: true,
       direction: 'left',
@@ -160,7 +161,7 @@ describe('preVisSceneRender', () => {
     const seg0End = plan.segments[0].startTime + plan.segments[0].duration
     expect(plan.segments[1].startTime).toBeCloseTo(seg0End, 4)
     // Beat 2 had no dedicated image, so it falls back without dropping the beat window
-    expect(plan.segments[1].videoUrl).toBeTruthy()
+    expect(plan.segments[1].assetUrl).toBeTruthy()
     const seg1End = plan.segments[1].startTime + plan.segments[1].duration
     expect(seg1End).toBeCloseTo(plan.totalDuration, 4)
 

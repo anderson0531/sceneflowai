@@ -76,6 +76,9 @@ describe('buildInterleavedReferencePairCaptions', () => {
       /^The next image is the identity of person \[1\]\. Facial reference for Piper Hayes:/
     )
     expect(captions[0].name).toMatch(/East Asian/)
+    expect(captions[0].name).toContain(
+      'clone exact 1:1 craniofacial bone structure and unique non-celebrity likeness from this photo, never a celebrity or famous actor lookalike'
+    )
     expect(captions[1].name).toMatch(
       /^The next image is the wardrobe of person \[1\]\. Outfit reference:/
     )
@@ -185,6 +188,8 @@ describe('buildInterleavedReferencePairCaptions', () => {
     )
 
     expect(caption.name).toContain('Do not copy the character-card layout or headshot overlay')
+    expect(caption.name).toContain('exact 1:1 craniofacial bone structure')
+    expect(caption.name).toContain('never substitute a celebrity or famous actor lookalike')
   })
 })
 

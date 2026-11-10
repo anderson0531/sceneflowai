@@ -101,6 +101,7 @@ import {
   stillRefsFromAttachedImages,
   stillRefsFromNamedLibrary,
   STILL_SECTION_TASK,
+  STILL_TASK_CHARACTER_LIKENESS_LOCK_LINE,
   STILL_TASK_PRO_LEAD,
   type LibraryItemPromptMatch,
 } from '@/lib/imagen/structuredStillPrompt'
@@ -3260,6 +3261,9 @@ async function postGenerateImage(req: NextRequest) {
                   ),
                   `${STILL_SECTION_TASK}\n${[
                     STILL_TASK_PRO_LEAD,
+                    ...(stillRefs.some((ref) => ref.kind === 'person')
+                      ? [STILL_TASK_CHARACTER_LIKENESS_LOCK_LINE]
+                      : []),
                     ...formatPairedIdentityLandmarkLines(stillRefs, effectiveShotType),
                   ].join('\n')}`,
                   remappedOptimizedPrompt
@@ -3271,6 +3275,9 @@ async function postGenerateImage(req: NextRequest) {
                   formatStillReferencesLegend(stillRefs, effectiveShotType, {
                     includeAttachedIdentityTraits,
                   }),
+                  stillRefs.some((ref) => ref.kind === 'person')
+                    ? `${STILL_SECTION_TASK}\n${STILL_TASK_CHARACTER_LIKENESS_LOCK_LINE}`
+                    : '',
                   remappedOptimizedPrompt
                 )
           const structuredStill = isBeatFrame

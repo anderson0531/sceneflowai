@@ -18,8 +18,8 @@ import {
 } from '@/lib/imagen/locationScaleClause'
 import { extractPropScalePhrase, formatPropScaleDescriptor } from '@/lib/imagen/propScaleClause'
 
-export const PAIR_DESCRIPTOR_WORD_CAP = 34
-export const CHARACTER_PAIR_DESCRIPTOR_WORD_CAP = 48
+export const PAIR_DESCRIPTOR_WORD_CAP = 52
+export const CHARACTER_PAIR_DESCRIPTOR_WORD_CAP = 68
 
 export type InterleavedReferencePairRole =
   | 'IDENTITY'
@@ -158,9 +158,10 @@ function identityDescriptor(
     height: character?.height,
     gender: character?.gender,
   })
-  return traits
+  const base = traits
     ? `Facial reference for ${characterName}: ${traits}`
-    : `Facial reference for ${characterName}.`
+    : `Facial reference for ${characterName}`
+  return `${base}; clone exact 1:1 craniofacial bone structure and unique non-celebrity likeness from this photo, never a celebrity or famous actor lookalike`
 }
 
 function characterCompositeDescriptor(
@@ -182,7 +183,7 @@ function characterCompositeDescriptor(
   const outfit = rawOutfit ? clipPairDescriptor(rawOutfit, 12) : undefined
   const detailParts = [traits, outfit].filter(Boolean)
   const detail = detailParts.length > 0 ? `: ${detailParts.join('; ')}` : ''
-  return `Use face close-up for exact facial identity and full-body standing figure for wardrobe of ${characterName}${detail}; Do not copy the character-card layout or headshot overlay`
+  return `Use face close-up for exact 1:1 craniofacial bone structure and unique non-celebrity facial identity and full-body standing figure for wardrobe of ${characterName}${detail}; never substitute a celebrity or famous actor lookalike; Do not copy the character-card layout or headshot overlay`
 }
 
 function wardrobeDescriptor(character: InterleavedPairCharacter | undefined): string {

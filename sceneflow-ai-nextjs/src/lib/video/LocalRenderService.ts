@@ -183,6 +183,8 @@ export interface LocalRenderProgress {
   currentFrame?: number
   /** Total frames */
   totalFrames?: number
+  /** Optional status message */
+  message?: string
   /** Error message if failed */
   error?: string
 }
@@ -602,6 +604,10 @@ export class LocalRenderService {
       this.abortController.abort()
     }
     this.cleanup()
+  }
+
+  cancel(): void {
+    this.abort()
   }
   
   /**
@@ -2025,5 +2031,7 @@ export function getLocalRenderService(): LocalRenderService {
   }
   return localRenderServiceInstance
 }
+
+export const localRenderService = getLocalRenderService()
 
 export default LocalRenderService

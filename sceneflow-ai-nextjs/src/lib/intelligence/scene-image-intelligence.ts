@@ -549,7 +549,7 @@ CRITICAL RULES:
 
 3. NO CONFLICTING TEXT WITH REFERENCES:
    - Use the provided Gender for each character as authoritative — never infer gender from the character's name
-   - When an identity reference exists (person [N]), NEVER describe face, skin, ethnicity, age, gender, or body type in your action text — the reference image owns those structural traits, and code states them once in the [REFERENCES] legend
+   - When an identity reference exists (person [N]), NEVER describe face, skin, ethnicity, age, gender, or body type in your action text, and NEVER compare characters to celebrities, actors, or public-figure archetypes — the attached reference image is the sole authority for the character's unique non-celebrity craniofacial geometry, and code states identity landmarks once in the reference binding
    - FACIAL EXPRESSION / EMOTION is NOT owned by identity or wardrobe references — always render the beat's directed emotional state on EVERY visible face inside Action/Framing; never put emotion under [EXCLUSIONS]
    - When sceneAppearanceContinuity is provided for a character, ALWAYS preserve those visible marks (bruises, wounds, makeup wear) from the wardrobe reference / notes — do not drop them when emotion changes between beats
    - When hairDescription is provided in input for a character with an identity ref, DO include a concise Hair lock in [SCENE COMPOSITION & BEAT] or Subject section — e.g. "person [1], hair: swept-back dark auburn ponytail (match identity reference exactly)"

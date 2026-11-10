@@ -31,6 +31,7 @@ import {
 } from '@/lib/scene/screeningTrackVolume'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { BeatDirectionTransition } from '@/lib/script/segmentTypes'
+import type { ProductionLanguage } from '@/lib/types/finalCut'
 import { applyHifiClipAudio, type AnimaticAudioMode } from '@/lib/storyboard/animaticAudioMode'
 import {
   buildStoryboardMusicClips,
@@ -55,7 +56,7 @@ import {
   type StoryboardVisualFrame,
 } from '@/lib/storyboard/types'
 import {
-  localRenderService,
+  getLocalRenderService,
   type LocalRenderAudioClip,
   type LocalRenderConfig,
   type LocalRenderProgress,
@@ -302,14 +303,19 @@ export function collectScenePreVisAudioUrls(
   }
 
   for (const beat of getSceneBeats(scene)) {
-    if (typeof beat.audioUrl === 'string' && beat.audioUrl.trim()) {
-      urls.push(beat.audioUrl.trim())
+    const rawBeat = beat as unknown as {
+      audioUrl?: string
+      sfxUrl?: string
+      sfxAudio?: { url?: string }
     }
-    if (typeof beat.sfxUrl === 'string' && beat.sfxUrl.trim()) {
-      urls.push(beat.sfxUrl.trim())
+    if (typeof rawBeat.audioUrl === 'string' && rawBeat.audioUrl.trim()) {
+      urls.push(rawBeat.audioUrl.trim())
     }
-    if (typeof beat.sfxAudio?.url === 'string' && beat.sfxAudio.url.trim()) {
-      urls.push(beat.sfxAudio.url.trim())
+    if (typeof rawBeat.sfxUrl === 'string' && rawBeat.sfxUrl.trim()) {
+      urls.push(rawBeat.sfxUrl.trim())
+    }
+    if (typeof rawBeat.sfxAudio?.url === 'string' && rawBeat.sfxAudio.url.trim()) {
+      urls.push(rawBeat.sfxAudio.url.trim())
     }
   }
 
@@ -530,11 +536,11 @@ export function buildPreVisSceneRenderPlan(
 
     segments.push({
       segmentId: frame.clipId || `${sceneId}-seg-${i}`,
-      videoUrl: resolvedImageUrl,
+      assetUrl: resolvedImageUrl,
+      assetType: 'image',
       endFrameUrl: frame.endImageUrl?.trim() || undefined,
       startTime: segStart,
       duration: segDuration,
-      mediaType: 'image',
       kenBurns: frame.kenBurns,
       fadeInSec: frame.transitionIn === 'fade' ? frame.transitionInSec : undefined,
       fadeOutSec: frame.transitionOut === 'fade' ? frame.transitionOutSec : undefined,
@@ -598,11 +604,12 @@ export function buildPreVisSceneRenderPlan(
 
   for (const clip of mixed.voiceClips) {
     if (!clip.url?.trim()) continue
+    const clipVol = (clip as { volume?: number }).volume
     audioClips.push({
       url: clip.url.trim(),
       startTime: Math.max(0, clip.startTime),
       duration: Math.max(0.1, clip.duration),
-      volume: clampUnitVolume((clip.volume ?? 1) * dialogueGain, dialogueGain),
+      volume: clampUnitVolume((clipVol ?? 1) * dialogueGain, dialogueGain),
       type: 'dialogue',
     })
   }
@@ -632,14 +639,19 @@ export function buildPreVisSceneRenderPlan(
 
   for (const clip of mixed.sfxClips) {
     if (!clip.url?.trim()) continue
+    const sfxExtras = clip as {
+      volume?: number
+      fadeInSec?: number
+      fadeOutSec?: number
+    }
     audioClips.push({
       url: clip.url.trim(),
       startTime: Math.max(0, clip.startTime),
       duration: Math.max(0.1, clip.duration),
-      volume: clampUnitVolume((clip.volume ?? 1) * sfxGain, sfxGain),
+      volume: clampUnitVolume((sfxExtras.volume ?? 1) * sfxGain, sfxGain),
       type: 'sfx',
-      fadeInSec: clip.fadeInSec,
-      fadeOutSec: clip.fadeOutSec,
+      fadeInSec: sfxExtras.fadeInSec,
+      fadeOutSec: sfxExtras.fadeOutSec,
     })
   }
 
@@ -650,6 +662,7 @@ export function buildPreVisSceneRenderPlan(
     resolution: options.resolution ?? '1080p',
     fps: options.fps ?? 30,
     totalDuration,
+    exportFormat: 'mp4',
   }
 
   return {
@@ -692,7 +705,7 @@ export function getPreVisSceneSummary(
     : {}
   const existingAnimaticUrl = resolveSceneStreamUrl(stateMap, sceneId, {
     format: 'animatic',
-    language,
+    language: language as ProductionLanguage,
   }).url
 
   const hasAudio =
@@ -705,7 +718,7 @@ export function getPreVisSceneSummary(
     getScenePlayableThumbnailUrl(safeScene) ??
     getEstablishingFrameUrl(safeScene) ??
     getScreeningPosterUrl(safeScene) ??
-    plan.segments[0]?.videoUrl
+    plan.segments[0]?.assetUrl
 
   return {
     sceneId,
@@ -805,6 +818,7 @@ export function buildMultiScenePreVisRenderPlan(
       resolution: options.resolution ?? '1080p',
       fps: options.fps ?? 30,
       totalDuration,
+      exportFormat: 'mp4',
     },
   }
 }
@@ -841,7 +855,8 @@ export async function renderPreVisSceneToBlobAndStream(
     )
   }
 
-  const renderResult = await localRenderService.render(plan.config, (progress) => {
+  const renderService = getLocalRenderService()
+  const renderResult = await renderService.render(plan.config, (progress) => {
     if (!onProgress) return
     // Scale render progress to 0..88% when uploading to streams after encoding
     const scale = saveToStreams && projectId ? 0.88 : 1
@@ -851,6 +866,11 @@ export async function renderPreVisSceneToBlobAndStream(
     })
   })
 
+  if (!renderResult.success || !renderResult.blob || !renderResult.blobUrl) {
+    throw new Error(renderResult.error || `Failed to render Scene ${plan.sceneNumber} Pre-Vis.`)
+  }
+
+  const resolvedMimeType = renderResult.mimeType || 'video/mp4'
   let uploadedUrl: string | undefined
   let stream: ProductionStream | undefined
 
@@ -863,12 +883,12 @@ export async function renderPreVisSceneToBlobAndStream(
       message: `Uploading Scene ${plan.sceneNumber} Pre-Vis MP4 to cloud storage...`,
     })
 
-    const ext = renderResult.mimeType.includes('mp4') ? 'mp4' : 'webm'
+    const ext = resolvedMimeType.includes('mp4') ? 'mp4' : 'webm'
     const safeSceneId = plan.sceneId.replace(/[^a-zA-Z0-9_-]/g, '-')
     const pathname = `renders/previs/${projectId}/${safeSceneId}-${language}-${Date.now()}.${ext}`
 
     const file = new File([renderResult.blob], `${safeSceneId}-${language}.${ext}`, {
-      type: renderResult.mimeType || 'video/mp4',
+      type: resolvedMimeType,
     })
 
     const uploadedBlob = await upload(pathname, file, {

@@ -36,7 +36,7 @@ export function resolveScreeningVideoStreamUrl(
   if (videoUrl) return videoUrl
   return resolveSceneStreamUrl(sceneProductionState, sceneId, {
     format: 'animatic',
-    language,
+    language: language as ProductionLanguage,
   }).url
 }
 

@@ -16,6 +16,8 @@ import {
   STILL_TASK_FACE_CLOSE_UP_LINES,
   STILL_TASK_FACE_CLOSE_UP_IDENTITY_PLATE_LINES,
   PAIRED_IDENTITY_LANDMARK_PREFIX,
+  PAIRED_IDENTITY_NON_CELEBRITY_LOCK,
+  STILL_TASK_CHARACTER_LIKENESS_LOCK_LINE,
   STILL_TASK_LOCATION_NEARFIELD_LINE,
   STILL_TASK_LOCATION_ENVIRONMENT_LINE,
   STILL_TASK_MOUNTED_FIXTURE_LINE,
@@ -51,6 +53,7 @@ import {
   buildSceneAppearanceContinuityPromptSection,
 } from '@/lib/scene/performanceCues'
 import { compileBeatVideoPrompt } from '@/lib/scene/beatVideoPromptCompiler'
+import { sanitizePromptForIdentityRefs } from '@/lib/imagen/promptOptimizer'
 import {
   buildPlannerSystemPrompt,
   buildPlannerUserPrompt,
@@ -1859,6 +1862,58 @@ describe('identity traits reach every reference-bearing frame', () => {
         omitReferencesSection: true,
       })
     ).toBe(proPrompt)
+  })
+
+  it('enforces 1:1 non-celebrity craniofacial likeness lock across all person-reference stills without leaking into round-trip action', () => {
+    const proRefs = stillRefsFromAttachedImages({
+      selected: [{ sendIndex: 1, characterName: 'Gideon Croft', refRole: 'identity' }],
+      characterReferences: [
+        {
+          name: 'Gideon Croft',
+          promptToken: 'person [1]',
+          subjectOrdinal: 1,
+          visionDescription: GIDEON_VISION,
+        },
+      ],
+      includeAttachedIdentityTraits: true,
+    })
+
+    for (const shotType of ['Close-Up', 'Medium Shot', 'Two-Shot', 'Wide Shot']) {
+      const prompt = assembleStructuredStillPrompt({
+        actionOrStructured: `${shotType}. person [1] inspects the brass gauge.`,
+        refs: proRefs,
+        shotType,
+        includeAttachedIdentityTraits: true,
+        omitReferencesSection: true,
+      })
+      expect(prompt).toContain(STILL_TASK_CHARACTER_LIKENESS_LOCK_LINE)
+      expect(prompt).toContain(PAIRED_IDENTITY_NON_CELEBRITY_LOCK)
+      expect(prompt).toContain('never substitute a celebrity, famous actor, or public-figure lookalike')
+      expect(actionFramingFromStoredPrompt(prompt)).toBe(
+        `${shotType}. person [1] inspects the brass gauge.`
+      )
+    }
+
+    const locationOnly = assembleStructuredStillPrompt({
+      actionOrStructured: 'Wide Shot. Empty tunnel vault.',
+      refs: [
+        {
+          kind: 'location',
+          token: 'location [1]',
+          name: 'FREIGHT TUNNEL VAULT',
+          roleLabel: 'library location',
+        },
+      ],
+      shotType: 'Wide Shot',
+    })
+    expect(locationOnly).not.toContain(STILL_TASK_CHARACTER_LIKENESS_LOCK_LINE)
+
+    expect(
+      sanitizePromptForIdentityRefs(
+        'Medium Shot. person [1], resembling Morgan Freeman, stands at the console.',
+        [{ name: 'Gideon Croft', promptToken: 'person [1]' }]
+      )
+    ).not.toContain('Morgan Freeman')
   })
 })
 

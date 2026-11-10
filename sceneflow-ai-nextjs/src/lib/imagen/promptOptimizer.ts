@@ -206,6 +206,13 @@ export function sanitizePromptForIdentityRefs(
     /\b(a|an)\s+(young|old|elderly)\s+(man|woman|person)\b/gi,
     (match) => (/\bperson\s*\[\d+\]/i.test(sanitized) ? 'person' : match)
   )
+  // Strip celebrity comparison phrases (e.g. "resembling Morgan Freeman", "looks like Idris Elba") when person [N] tokens are bound
+  if (/\bperson\s*\[\d+\]/i.test(sanitized)) {
+    sanitized = sanitized.replace(
+      /,?\s*\b(?:resembling|who looks like|looking like|looks like|like a young|like an older|played by|modeled after|in the likeness of)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\b/g,
+      ''
+    )
+  }
 
   const isStructuredPrompt = /\[(?:GLOBAL STYLE ANCHOR|SCENE COMPOSITION & BEAT|EXCLUSIONS & BOUNDARIES)\]/i.test(
     sanitized

@@ -34,6 +34,7 @@ import type {
 } from '@/components/vision/scene-production/types'
 import { FLAG_EMOJIS, getLanguageName } from '@/constants/languages'
 import type { AnimaticAudioMode } from '@/lib/storyboard/animaticAudioMode'
+import type { BeatDirectionTransition } from '@/lib/script/segmentTypes'
 import {
   buildMultiScenePreVisRenderPlan,
   collectPreVisLanguages,
@@ -44,7 +45,7 @@ import {
   type PreVisSceneSummary,
 } from '@/lib/storyboard/preVisSceneRender'
 import { cn } from '@/lib/utils'
-import { localRenderService } from '@/lib/video/LocalRenderService'
+import { getLocalRenderService } from '@/lib/video/LocalRenderService'
 
 export interface PreVisRenderDialogProps {
   open: boolean
@@ -295,7 +296,7 @@ export function PreVisRenderDialog({
 
   const handleCancelRender = useCallback(() => {
     cancelledRef.current = true
-    localRenderService.cancel()
+    getLocalRenderService().abort()
     setIsBatchRunning(false)
     toast.info('Pre-Vis render cancelled')
   }, [])
@@ -361,9 +362,7 @@ export function PreVisRenderDialog({
 
         const prevScene = sceneIdx > 0 ? scenes[sceneIdx - 1] : undefined
         const sceneTransitionIn = prevScene?.transitionToNext as
-          | 'cut'
-          | 'fade'
-          | 'dissolve'
+          | BeatDirectionTransition
           | undefined
         const sceneId = summary?.sceneId ?? `scene-${sceneIdx}`
         const prodData = sceneProductionState?.[sceneId] ?? null
@@ -398,7 +397,9 @@ export function PreVisRenderDialog({
             }
           )
 
-          createdBlobUrlsRef.current.push(output.renderResult.blobUrl)
+          if (output.renderResult.blobUrl) {
+            createdBlobUrlsRef.current.push(output.renderResult.blobUrl)
+          }
 
           if (output.stream) {
             onSceneStreamRendered?.(output.sceneId, output.stream, selectedLanguage)
@@ -476,7 +477,7 @@ export function PreVisRenderDialog({
             }
           )
 
-          const combinedResult = await localRenderService.render(
+          const combinedResult = await getLocalRenderService().render(
             multiPlan.config,
             (prog) => {
               setCombinedState({
@@ -486,6 +487,10 @@ export function PreVisRenderDialog({
               })
             }
           )
+
+          if (!combinedResult.success || !combinedResult.blobUrl) {
+            throw new Error(combinedResult.error || 'Failed to stitch combined Pre-Vis video')
+          }
 
           createdBlobUrlsRef.current.push(combinedResult.blobUrl)
           setCombinedState({

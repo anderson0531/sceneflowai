@@ -190,6 +190,12 @@ export const STILL_TASK_PAIRED_PLATES_MANDATORY_LINE =
 /** HUD-free Pro identity lock — no send-index / `[REFERENCES]` (those typeset onto the still). */
 export const PAIRED_IDENTITY_LANDMARK_PREFIX = 'must match the IDENTITY plate'
 
+export const PAIRED_IDENTITY_NON_CELEBRITY_LOCK =
+  'exact 1:1 craniofacial bone structure, eye spacing, nose bridge, jawline, and unique non-celebrity likeness from the reference pixels (never cast or drift to a celebrity or famous actor lookalike)'
+
+export const STILL_TASK_CHARACTER_LIKENESS_LOCK_LINE =
+  'Every person in frame is the specific original non-celebrity individual from their attached reference image — clone exact 1:1 craniofacial bone structure, eye shape and spacing, nose bridge, jawline, and unique facial proportions from the reference pixels, and never substitute a celebrity, famous actor, or public-figure lookalike.'
+
 export function formatPairedIdentityLandmarkLine(
   ref: StillPromptBoundRef,
   shotType?: string | null
@@ -200,11 +206,11 @@ export function formatPairedIdentityLandmarkLine(
   if (!hasTraits && !hasWardrobe && !ref.isComposite) return undefined
   const named = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
   let line = hasTraits
-    ? `${named} ${PAIRED_IDENTITY_LANDMARK_PREFIX} — ${ref.identityTraits!.trim()}`
-    : `${named} ${PAIRED_IDENTITY_LANDMARK_PREFIX}`
+    ? `${named} ${PAIRED_IDENTITY_LANDMARK_PREFIX} — ${PAIRED_IDENTITY_NON_CELEBRITY_LOCK}; portrait landmarks: ${ref.identityTraits!.trim()}`
+    : `${named} ${PAIRED_IDENTITY_LANDMARK_PREFIX} — ${PAIRED_IDENTITY_NON_CELEBRITY_LOCK}`
   if (ref.isComposite) {
     line +=
-      '. Extract exact facial bone structure from the face close-up and outfit from the full-body standing figure; do not render the character-card layout or headshot overlay'
+      '. Extract exact facial bone structure and unique non-celebrity likeness from the face close-up (never substitute a celebrity or famous actor lookalike) and outfit from the full-body standing figure; do not render the character-card layout or headshot overlay'
   }
   if (hasWardrobe) {
     const wardrobeLabel =
@@ -429,6 +435,9 @@ export function stillTaskLines(
       }
     } else if (!emptyCast) {
       lines.push(...STILL_TASK_FULL_BODY_LINES)
+    }
+    if (!emptyCast && !shot.isInsertOrEcu && hasPersonRefs) {
+      lines.push(STILL_TASK_CHARACTER_LIKENESS_LOCK_LINE)
     }
   }
 
@@ -655,6 +664,7 @@ const STILL_BOILERPLATE_LINES = [
   STILL_TASK_PROP_SCALE_LINE,
   STILL_TASK_PAIRED_PROP_SCALE_LINE,
   STILL_TASK_PAIRED_PLATES_MANDATORY_LINE,
+  STILL_TASK_CHARACTER_LIKENESS_LOCK_LINE,
   ...STILL_TASK_FACE_CLOSE_UP_LINES,
   ...STILL_TASK_FACE_CLOSE_UP_IDENTITY_PLATE_LINES,
   ...LEGACY_STILL_TASK_LINES,
@@ -1289,7 +1299,7 @@ export function formatPersonReferenceLegendLine(
     ref.identityTraits?.trim() &&
     (ref.identitySendIndex != null || ref.isComposite)
   ) {
-    line += ` Facial landmarks: ${ref.identityTraits.trim()}.`
+    line += ` Facial landmarks: ${ref.identityTraits.trim()} (verify exact 1:1 non-celebrity portrait geometry from the attached identity image; never substitute a celebrity or famous actor lookalike).`
   }
   return line
 }
