@@ -205,6 +205,17 @@ export interface LocalRenderConfig {
    * media length and causes multi-minute slow / frozen video with normal-length audio.
    */
   trustSegmentDurations?: boolean
+  /**
+   * When true, silent compositions (zero audio clips / video audio) still attach a silent
+   * stereo audio track so every rendered scene shares an identical 2-stream (video + audio)
+   * container layout for lossless FFmpeg `-c copy` concatenation.
+   */
+  ensureAudioTrack?: boolean
+  /**
+   * Optional override for `LOCAL_RENDER_MAX_DURATION` (default 300s), used by multi-scene
+   * Pre-Vis local fallback when server stitching is unavailable.
+   */
+  maxDurationSec?: number
 }
 
 export interface LocalRenderProgress {
@@ -656,10 +667,14 @@ export class LocalRenderService {
       return { success: false, error: support.reason }
     }
     
-    if (config.totalDuration > LOCAL_RENDER_MAX_DURATION) {
+    const maxDurationLimit =
+      typeof config.maxDurationSec === 'number' && Number.isFinite(config.maxDurationSec) && config.maxDurationSec > 0
+        ? config.maxDurationSec
+        : LOCAL_RENDER_MAX_DURATION
+    if (config.totalDuration > maxDurationLimit) {
       return { 
         success: false, 
-        error: `Duration exceeds local render limit (${LOCAL_RENDER_MAX_DURATION}s). Use server rendering for longer videos.` 
+        error: `Duration exceeds local render limit (${maxDurationLimit}s). Use server rendering for longer videos.` 
       }
     }
     
@@ -970,12 +985,32 @@ export class LocalRenderService {
         }
       }
       
+      if (!preRenderedAudioBuffer && adjustedConfig.ensureAudioTrack && this.audioContext) {
+        try {
+          preRenderedAudioBuffer = this.audioContext.createBuffer(
+            2,
+            Math.max(1, totalSamples),
+            sampleRate
+          )
+          console.log('[LocalRender] Synthesized silent stereo audio buffer for stream parity:', {
+            duration: preRenderedAudioBuffer.duration,
+            channels: preRenderedAudioBuffer.numberOfChannels,
+            sampleRate: preRenderedAudioBuffer.sampleRate,
+          })
+        } catch (silentAudioError) {
+          console.warn('[LocalRender] Could not create silent audio buffer:', silentAudioError)
+        }
+      }
+
       // Create audio track for recorder only when we actually have pre-rendered audio.
       // Attaching an empty audio track can cause some browsers to emit zero chunks.
       let audioDestination: MediaStreamAudioDestinationNode | null = null
       if (preRenderedAudioBuffer) {
         const playbackAudioContext = new AudioContextClass()
         this.playbackAudioContext = playbackAudioContext
+        if (playbackAudioContext.state === 'suspended') {
+          await playbackAudioContext.resume().catch(() => {})
+        }
         audioDestination = playbackAudioContext.createMediaStreamDestination()
         const audioTrack = audioDestination.stream.getAudioTracks()[0]
         if (audioTrack) {
@@ -1240,49 +1275,59 @@ export class LocalRenderService {
       )
     }
 
-    await Promise.all(
-      imageSegments.map(async (segment) => {
-        if (signal.aborted) return
-
-        console.log('[LocalRender] Loading image asset:', segment.segmentId)
-        const img = new Image()
-        img.crossOrigin = 'anonymous'
-
-        await new Promise<void>((resolve, reject) => {
+    const IMAGE_LOAD_CONCURRENCY = 8
+    const imagePromiseCache = new Map<string, Promise<HTMLImageElement>>()
+    const loadCachedImage = (url: string, label: string, optional: boolean): Promise<HTMLImageElement | null> => {
+      let cached = imagePromiseCache.get(url)
+      if (!cached) {
+        cached = new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image()
+          img.crossOrigin = 'anonymous'
           img.onload = () => {
-            console.log('[LocalRender] Image loaded:', segment.segmentId, img.width, 'x', img.height)
-            resolve()
+            console.log('[LocalRender] Image loaded:', label, img.width, 'x', img.height)
+            resolve(img)
           }
           img.onerror = (e) => {
-            console.error('[LocalRender] Image load failed (CORS issue?):', segment.segmentId, e)
-            reject(new Error(`Failed to load image: ${segment.assetUrl}`))
+            imagePromiseCache.delete(url)
+            console.error('[LocalRender] Image load failed (CORS issue?):', label, e)
+            reject(new Error(`Failed to load image: ${url}`))
           }
-          img.src = segment.assetUrl
+          img.src = url
         })
+        imagePromiseCache.set(url, cached)
+      }
+      if (optional) {
+        return cached.catch(() => {
+          console.warn('[LocalRender] End frame failed, using start-only:', label)
+          return null
+        })
+      }
+      return cached
+    }
 
-        assets.set(segment.segmentId, img)
+    for (let i = 0; i < imageSegments.length; i += IMAGE_LOAD_CONCURRENCY) {
+      if (signal.aborted) break
+      const batch = imageSegments.slice(i, i + IMAGE_LOAD_CONCURRENCY)
+      await Promise.all(
+        batch.map(async (segment) => {
+          if (signal.aborted) return
 
-        if (segment.endFrameUrl && segment.endFrameUrl !== segment.assetUrl) {
-          const endKey = `${segment.segmentId}__end`
-          const endImg = new Image()
-          endImg.crossOrigin = 'anonymous'
-          await new Promise<void>((resolve) => {
-            endImg.onload = () => {
-              console.log('[LocalRender] End frame loaded:', segment.segmentId)
-              resolve()
-            }
-            endImg.onerror = () => {
-              console.warn('[LocalRender] End frame failed, using start-only:', segment.segmentId)
-              resolve()
-            }
-            endImg.src = segment.endFrameUrl!
-          })
-          if (endImg.complete && endImg.naturalWidth > 0) {
-            assets.set(endKey, endImg)
+          console.log('[LocalRender] Loading image asset:', segment.segmentId)
+          const img = await loadCachedImage(segment.assetUrl, segment.segmentId, false)
+          if (img) {
+            assets.set(segment.segmentId, img)
           }
-        }
-      })
-    )
+
+          if (segment.endFrameUrl && segment.endFrameUrl !== segment.assetUrl) {
+            const endKey = `${segment.segmentId}__end`
+            const endImg = await loadCachedImage(segment.endFrameUrl, endKey, true)
+            if (endImg && endImg.complete && endImg.naturalWidth > 0) {
+              assets.set(endKey, endImg)
+            }
+          }
+        })
+      )
+    }
 
     return assets
   }
@@ -1293,22 +1338,42 @@ export class LocalRenderService {
   ): Promise<Map<string, AudioBuffer>> {
     const buffers = new Map<string, AudioBuffer>()
     
-    if (!this.audioContext) return buffers
+    if (!this.audioContext || clips.length === 0) return buffers
     
-    await Promise.all(
-      clips.map(async (clip, index) => {
-        if (signal.aborted) return
-        
-        try {
-          const response = await fetch(clip.url, { signal })
-          const arrayBuffer = await response.arrayBuffer()
-          const audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer)
-          buffers.set(`${clip.type}-${index}`, audioBuffer)
-        } catch (error) {
-          console.warn(`Failed to load audio clip: ${clip.url}`, error)
-        }
-      })
-    )
+    const AUDIO_LOAD_CONCURRENCY = 6
+    const decodedByUrl = new Map<string, Promise<AudioBuffer | null>>()
+    const loadAudioByUrl = (url: string): Promise<AudioBuffer | null> => {
+      let existing = decodedByUrl.get(url)
+      if (!existing) {
+        existing = (async () => {
+          try {
+            const response = await fetch(url, { signal })
+            const arrayBuffer = await response.arrayBuffer()
+            return await this.audioContext!.decodeAudioData(arrayBuffer)
+          } catch (error) {
+            console.warn(`Failed to load audio clip: ${url}`, error)
+            return null
+          }
+        })()
+        decodedByUrl.set(url, existing)
+      }
+      return existing
+    }
+
+    for (let i = 0; i < clips.length; i += AUDIO_LOAD_CONCURRENCY) {
+      if (signal.aborted) break
+      const batch = clips.slice(i, i + AUDIO_LOAD_CONCURRENCY)
+      await Promise.all(
+        batch.map(async (clip, offset) => {
+          if (signal.aborted) return
+          const index = i + offset
+          const audioBuffer = await loadAudioByUrl(clip.url)
+          if (audioBuffer) {
+            buffers.set(`${clip.type}-${index}`, audioBuffer)
+          }
+        })
+      )
+    }
     
     return buffers
   }
@@ -2022,12 +2087,19 @@ export class LocalRenderService {
   }
   
   private sleep(ms: number, signal?: AbortSignal): Promise<void> {
+    if (signal?.aborted) {
+      return Promise.reject(new Error('Aborted'))
+    }
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(resolve, ms)
-      signal?.addEventListener('abort', () => {
+      const onAbort = () => {
         clearTimeout(timeout)
         reject(new Error('Aborted'))
-      })
+      }
+      const timeout = setTimeout(() => {
+        signal?.removeEventListener('abort', onAbort)
+        resolve()
+      }, ms)
+      signal?.addEventListener('abort', onAbort, { once: true })
     })
   }
   

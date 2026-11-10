@@ -41,6 +41,7 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "/api/sfx/extract-clip-audio": ["./node_modules/ffmpeg-static/ffmpeg"],
     "/api/tts/google/voice-clone": ["./node_modules/ffmpeg-static/ffmpeg"],
+    "/api/export/previs-stitch": ["./node_modules/ffmpeg-static/ffmpeg"],
   },
   // Hero MP4/WebM in public/ (or leftover local encodes) must not land in
   // serverless NFT. Tracing the whole project with those files produced a

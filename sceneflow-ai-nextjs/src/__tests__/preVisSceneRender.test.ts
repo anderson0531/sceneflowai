@@ -1,13 +1,17 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveScreeningVideoStreamUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
 import { collectPublishScenes } from '@/lib/publish/publishUnits'
+import * as stitchFinalCutMasterModule from '@/lib/streams/stitchFinalCutMaster'
 import {
+  PREVIS_MULTI_SCENE_MAX_DURATION_SEC,
   buildMultiScenePreVisRenderPlan,
   buildPreVisSceneRenderPlan,
   collectPreVisLanguages,
   collectScenePreVisAudioUrls,
   getPreVisSceneSummary,
   resolvePreVisSceneId,
+  stitchPreVisSceneOutputs,
+  type StitchablePreVisSceneClip,
 } from '@/lib/storyboard/preVisSceneRender'
 import { computeAnimaticStillTransform } from '@/lib/video/LocalRenderService'
 
@@ -363,5 +367,183 @@ describe('preVisSceneRender', () => {
     )
     const stEnd = computeAnimaticStillTransform(staticPlan.segments[0].kenBurns, 1, 1920, 1080)
     expect(stEnd).toEqual({ scalePush: 1, translateX: 0, translateY: 0 })
+  })
+
+  describe('16-scene combined Pre-Vis stitching & stream parity', () => {
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('enables ensureAudioTrack and raises maxDurationSec above 300s for 16-scene Pre-Vis plans', () => {
+      const sixteenScenes = Array.from({ length: 16 }, (_, idx) => ({
+        scene: createSampleScene({
+          id: `scene-${idx + 1}`,
+          sceneNumber: idx + 1,
+          dialogue: [
+            { character: 'ARIA', text: 'Long exposition line one.' },
+            { character: 'KAEL', text: 'Long exposition line two.' },
+          ],
+          dialogueAudio: {
+            en: [
+              {
+                audioUrl: `https://cdn.example.com/s${idx + 1}-1.mp3`,
+                duration: 12,
+                dialogueIndex: 0,
+                character: 'ARIA',
+              },
+              {
+                audioUrl: `https://cdn.example.com/s${idx + 1}-2.mp3`,
+                duration: 12,
+                dialogueIndex: 1,
+                character: 'KAEL',
+              },
+            ],
+          },
+        }),
+        sceneIndex: idx,
+      }))
+
+      const singleSilentPlan = buildPreVisSceneRenderPlan(
+        createSampleScene({ dialogue: [], dialogueAudio: {} }),
+        0,
+        'en'
+      )
+      expect(singleSilentPlan.config.ensureAudioTrack).toBe(true)
+
+      const multi = buildMultiScenePreVisRenderPlan(sixteenScenes, 'en')
+      expect(multi.scenePlans).toHaveLength(16)
+      expect(multi.totalDuration).toBeGreaterThan(300)
+      expect(multi.config.ensureAudioTrack).toBe(true)
+      expect(multi.config.maxDurationSec).toBe(PREVIS_MULTI_SCENE_MAX_DURATION_SEC)
+      expect(multi.config.maxDurationSec!).toBeGreaterThan(multi.totalDuration)
+    })
+
+    it('stitches 16 rendered scene clips in scene order via /api/export/previs-stitch', async () => {
+      const clips: StitchablePreVisSceneClip[] = Array.from({ length: 16 }, (_, idx) => ({
+        sceneId: `scene-${idx + 1}`,
+        sceneIndex: idx,
+        sceneNumber: idx + 1,
+        duration: 24,
+        uploadedUrl: `https://demo.public.blob.vercel-storage.com/renders/previs/scene-${idx + 1}.mp4`,
+        mimeType: 'video/mp4',
+      }))
+
+      // Shuffle input order to verify sceneIndex sorting
+      const reversedClips = [...clips].reverse()
+
+      const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url === '/api/export/previs-stitch') {
+          const body = JSON.parse(String(init?.body ?? '{}')) as { urls: string[] }
+          expect(body.urls).toHaveLength(16)
+          expect(body.urls[0]).toContain('scene-1.mp4')
+          expect(body.urls[15]).toContain('scene-16.mp4')
+          return new Response(
+            JSON.stringify({
+              success: true,
+              url: 'https://demo.public.blob.vercel-storage.com/renders/previs/combined-en.mp4',
+              downloadUrl:
+                'https://demo.public.blob.vercel-storage.com/renders/previs/combined-en.mp4?download=1',
+              mimeType: 'video/mp4',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          )
+        }
+        return new Response('mp4-bytes', {
+          status: 200,
+          headers: { 'Content-Type': 'video/mp4' },
+        })
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const result = await stitchPreVisSceneOutputs(reversedClips, {
+        projectId: 'proj-16',
+        projectTitle: 'Starlight',
+        language: 'en',
+      })
+
+      expect(result.strategy).toBe('server-ffmpeg')
+      expect(result.sceneCount).toBe(16)
+      expect(result.totalDuration).toBe(16 * 24)
+      expect(result.cloudUrl).toBe(
+        'https://demo.public.blob.vercel-storage.com/renders/previs/combined-en.mp4'
+      )
+      expect(result.downloadUrl).toBeTruthy()
+      expect(result.mimeType).toBe('video/mp4')
+    })
+
+    it('falls back to Cloud Run stitchFinalCutClips when /api/export/previs-stitch fails', async () => {
+      const clips: StitchablePreVisSceneClip[] = [
+        {
+          sceneId: 'scene-1',
+          sceneIndex: 0,
+          sceneNumber: 1,
+          duration: 180,
+          uploadedUrl: 'https://demo.public.blob.vercel-storage.com/s1.mp4',
+          mimeType: 'video/mp4',
+        },
+        {
+          sceneId: 'scene-2',
+          sceneIndex: 1,
+          sceneNumber: 2,
+          duration: 185,
+          uploadedUrl: 'https://demo.public.blob.vercel-storage.com/s2.mp4',
+          mimeType: 'video/mp4',
+        },
+      ]
+
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: RequestInfo | URL) => {
+          const url = String(input)
+          if (url === '/api/export/previs-stitch') {
+            return new Response(JSON.stringify({ error: 'Temporary server error' }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            })
+          }
+          return new Response('cloud-mp4-bytes', {
+            status: 200,
+            headers: { 'Content-Type': 'video/mp4' },
+          })
+        })
+      )
+
+      const cloudSpy = vi
+        .spyOn(stitchFinalCutMasterModule, 'stitchFinalCutClips')
+        .mockResolvedValue('https://demo.public.blob.vercel-storage.com/cloud-master.mp4')
+
+      const result = await stitchPreVisSceneOutputs(clips, {
+        projectId: 'proj-fallback',
+        projectTitle: 'Fallback Film',
+        language: 'en',
+        resolution: '1080p',
+      })
+
+      expect(cloudSpy).toHaveBeenCalledTimes(1)
+      expect(result.strategy).toBe('cloud-run')
+      expect(result.cloudUrl).toBe(
+        'https://demo.public.blob.vercel-storage.com/cloud-master.mp4'
+      )
+      expect(result.sceneCount).toBe(2)
+      expect(result.totalDuration).toBe(365)
+    })
+
+    it('rejects when fewer than 2 rendered scene clips are provided', async () => {
+      await expect(
+        stitchPreVisSceneOutputs(
+          [
+            {
+              sceneId: 'scene-1',
+              sceneIndex: 0,
+              sceneNumber: 1,
+              duration: 15,
+              uploadedUrl: 'https://demo.public.blob.vercel-storage.com/s1.mp4',
+            },
+          ],
+          { language: 'en' }
+        )
+      ).rejects.toThrow(/At least 2 rendered scenes/)
+    })
   })
 })

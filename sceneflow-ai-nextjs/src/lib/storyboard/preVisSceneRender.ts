@@ -18,6 +18,7 @@ import { getLanguageName } from '@/constants/languages'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { AUDIO_PROBE_CONCURRENCY, runBoundedPool } from '@/lib/audio/audioProbePool'
 import { resolveSceneStreamUrl } from '@/lib/final-cut/resolveSegmentMedia'
+import { stitchFinalCutClips } from '@/lib/streams/stitchFinalCutMaster'
 import {
   appendSceneRenderClient,
   dispatchAppendedSceneRender,
@@ -147,6 +148,43 @@ export interface RenderPreVisSceneOutput {
   renderResult: LocalRenderResult
   uploadedUrl?: string
   stream?: ProductionStream
+}
+
+/** Max duration (1 hour) allowed when falling back to local multi-scene Pre-Vis rendering. */
+export const PREVIS_MULTI_SCENE_MAX_DURATION_SEC = 3600
+
+export interface StitchablePreVisSceneClip {
+  sceneId: string
+  sceneIndex: number
+  sceneNumber: number
+  duration: number
+  uploadedUrl?: string
+  blob?: Blob
+  mimeType?: string
+}
+
+export interface StitchPreVisScenesOptions {
+  projectId?: string
+  projectTitle?: string
+  language: string
+  resolution?: '720p' | '1080p' | '4K'
+  /** Optional local multi-scene plan used only if both server stitchers are unavailable. */
+  fallbackMultiPlan?: MultiScenePreVisRenderPlan
+  isCancelled?: () => boolean
+  onProgress?: (progress: { progress: number; message: string }) => void
+}
+
+export interface StitchPreVisScenesResult {
+  /** Browser-downloadable URL (preferring same-origin `blob:` URL so custom filenames work). */
+  downloadUrl: string
+  /** True when `downloadUrl` is a newly created `blob:` URL that should be revoked on unmount. */
+  isObjectUrl: boolean
+  /** Public cloud URL when stitched via server/cloud storage. */
+  cloudUrl?: string
+  mimeType: string
+  totalDuration: number
+  sceneCount: number
+  strategy: 'server-ffmpeg' | 'cloud-run' | 'local-render'
 }
 
 /**
@@ -697,6 +735,7 @@ export function buildPreVisSceneRenderPlan(
     fps: options.fps ?? 30,
     totalDuration,
     exportFormat: 'mp4',
+    ensureAudioTrack: true,
     ...(frameFit === 'contain' ? { frameFit } : {}),
   }
 
@@ -856,6 +895,8 @@ export function buildMultiScenePreVisRenderPlan(
       fps: options.fps ?? 30,
       totalDuration,
       exportFormat: 'mp4',
+      ensureAudioTrack: true,
+      maxDurationSec: PREVIS_MULTI_SCENE_MAX_DURATION_SEC,
       ...(frameFit === 'contain' ? { frameFit } : {}),
     },
   }
@@ -970,4 +1011,302 @@ export async function renderPreVisSceneToBlobAndStream(
     uploadedUrl,
     stream,
   }
+}
+
+async function materializeDownloadableResult(
+  cloudUrl: string,
+  serverDownloadUrl: string | undefined,
+  fallbackMimeType: string,
+  onProgress?: (progress: { progress: number; message: string }) => void
+): Promise<{ downloadUrl: string; isObjectUrl: boolean; mimeType: string }> {
+  if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+    try {
+      onProgress?.({
+        progress: 88,
+        message: 'Preparing combined Pre-Vis video for download...',
+      })
+      const response = await fetch(cloudUrl)
+      if (response.ok) {
+        const blob = await response.blob()
+        if (blob.size > 0) {
+          const mimeType = blob.type || fallbackMimeType
+          return {
+            downloadUrl: URL.createObjectURL(blob),
+            isObjectUrl: true,
+            mimeType,
+          }
+        }
+      }
+    } catch (fetchErr) {
+      console.warn(
+        '[stitchPreVisSceneOutputs] Could not materialize local blob URL, falling back to cloud download URL:',
+        fetchErr
+      )
+    }
+  }
+
+  return {
+    downloadUrl: serverDownloadUrl || cloudUrl,
+    isObjectUrl: false,
+    mimeType: fallbackMimeType,
+  }
+}
+
+/**
+ * Stitch already-rendered per-scene Pre-Vis clips into one continuous video without
+ * re-rendering every scene on Canvas or hitting the 300-second browser render cap.
+ *
+ * Tier 1: Server-side lossless FFmpeg concat (`/api/export/previs-stitch`) — completes in seconds.
+ * Tier 2: Cloud Run FFmpeg stitch (`stitchFinalCutClips` / `/api/publish/stream/render`).
+ * Tier 3: Local browser composition fallback (`maxDurationSec: 3600`).
+ */
+export async function stitchPreVisSceneOutputs(
+  clips: readonly StitchablePreVisSceneClip[],
+  options: StitchPreVisScenesOptions
+): Promise<StitchPreVisScenesResult> {
+  if (clips.length < 2) {
+    throw new Error('At least 2 rendered scenes are required to stitch a combined Pre-Vis video.')
+  }
+
+  const orderedClips = [...clips].sort((a, b) => a.sceneIndex - b.sceneIndex)
+  const totalDuration = orderedClips.reduce(
+    (sum, clip) => sum + (Number.isFinite(clip.duration) && clip.duration > 0 ? clip.duration : 0),
+    0
+  )
+
+  const resolvedUrls: Array<string | undefined> = orderedClips.map((c) => c.uploadedUrl?.trim() || undefined)
+  const missingUploadIndices = orderedClips
+    .map((clip, idx) => (!resolvedUrls[idx] && clip.blob ? idx : -1))
+    .filter((idx) => idx >= 0)
+
+  // If the user unchecked "Save to Scene & Publishing Streams", upload temporary blobs
+  // for server stitching without mutating project streams.
+  if (missingUploadIndices.length > 0) {
+    const safeProject = (options.projectId || 'local').replace(/[^a-zA-Z0-9_-]/g, '-')
+    let uploadedTempCount = 0
+    try {
+      await runBoundedPool(
+        missingUploadIndices,
+        3,
+        async (clipIdx) => {
+          if (options.isCancelled?.()) return
+          const clip = orderedClips[clipIdx]
+          if (!clip?.blob) return
+          const mime = clip.mimeType || clip.blob.type || 'video/mp4'
+          const ext = mime.includes('mp4') ? 'mp4' : 'webm'
+          const safeScene = clip.sceneId.replace(/[^a-zA-Z0-9_-]/g, '-')
+          const pathname = `renders/previs-temp/${safeProject}/${safeScene}-${options.language}-${Date.now()}.${ext}`
+          const file = new File([clip.blob], `${safeScene}-${options.language}.${ext}`, {
+            type: mime,
+          })
+          const uploadedBlob = await upload(pathname, file, {
+            access: 'public',
+            handleUploadUrl: '/api/segments/upload-video-url',
+          })
+          resolvedUrls[clipIdx] = uploadedBlob.url
+          uploadedTempCount += 1
+          const pct = Math.min(30, 5 + Math.round((uploadedTempCount / missingUploadIndices.length) * 25))
+          options.onProgress?.({
+            progress: pct,
+            message: `Uploading temporary clip ${uploadedTempCount} of ${missingUploadIndices.length} for stitching...`,
+          })
+        },
+        options.isCancelled
+      )
+    } catch (tempUploadErr) {
+      console.warn('[stitchPreVisSceneOutputs] Temporary blob upload failed:', tempUploadErr)
+    }
+  }
+
+  if (options.isCancelled?.()) {
+    throw new Error('Render aborted')
+  }
+
+  const allPublicUrls = resolvedUrls.filter((u): u is string => Boolean(u))
+  let serverStitchError: string | undefined
+
+  // Tier 1: Fast lossless server FFmpeg concat
+  if (allPublicUrls.length === orderedClips.length) {
+    try {
+      options.onProgress?.({
+        progress: 35,
+        message: `Stitching ${orderedClips.length} scenes into combined Pre-Vis video...`,
+      })
+
+      const allMp4 = orderedClips.every((clip, idx) => {
+        const mime = clip.mimeType || ''
+        const url = allPublicUrls[idx] || ''
+        return mime.includes('mp4') || url.toLowerCase().includes('.mp4')
+      })
+
+      const response = await fetch('/api/export/previs-stitch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          urls: allPublicUrls,
+          projectId: options.projectId,
+          language: options.language,
+          container: allMp4 ? 'mp4' : undefined,
+        }),
+      })
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        success?: boolean
+        url?: string
+        downloadUrl?: string
+        mimeType?: string
+        error?: string
+      }
+
+      if (!response.ok || !payload.url) {
+        throw new Error(payload.error || `Server Pre-Vis stitch failed (${response.status})`)
+      }
+
+      if (options.isCancelled?.()) {
+        throw new Error('Render aborted')
+      }
+
+      const fallbackMime = payload.mimeType || (allMp4 ? 'video/mp4' : 'video/webm')
+      const materialized = await materializeDownloadableResult(
+        payload.url,
+        payload.downloadUrl,
+        fallbackMime,
+        options.onProgress
+      )
+
+      options.onProgress?.({
+        progress: 100,
+        message: `Combined ${orderedClips.length} scenes`,
+      })
+
+      return {
+        downloadUrl: materialized.downloadUrl,
+        isObjectUrl: materialized.isObjectUrl,
+        cloudUrl: payload.url,
+        mimeType: materialized.mimeType,
+        totalDuration,
+        sceneCount: orderedClips.length,
+        strategy: 'server-ffmpeg',
+      }
+    } catch (tier1Err) {
+      if (options.isCancelled?.()) throw tier1Err
+      serverStitchError =
+        tier1Err instanceof Error ? tier1Err.message : 'Server Pre-Vis stitch failed'
+      console.warn('[stitchPreVisSceneOutputs] Tier 1 server stitch failed:', serverStitchError)
+    }
+  }
+
+  // Tier 2: Cloud Run FFmpeg stitch fallback (when projectId + public URLs are available)
+  if (options.projectId && allPublicUrls.length === orderedClips.length) {
+    try {
+      options.onProgress?.({
+        progress: 45,
+        message: `Cloud stitching ${orderedClips.length} scenes...`,
+      })
+
+      let clipCursor = 0
+      const finalCutClips = orderedClips.map((clip, idx) => {
+        const dur = Math.max(1, clip.duration)
+        const startTime = clipCursor
+        const endTime = startTime + dur
+        clipCursor = endTime
+        return {
+          sceneId: clip.sceneId,
+          sceneNumber: clip.sceneNumber,
+          startTime,
+          endTime,
+          duration: dur,
+          url: allPublicUrls[idx],
+          streamType: 'animatic' as const,
+          language: options.language as ProductionLanguage,
+          availableVersions: [],
+          status: 'ready' as const,
+        }
+      })
+
+      const cloudUrl = await stitchFinalCutClips({
+        projectId: options.projectId,
+        filenameLabel: `${options.projectTitle || 'previs'}-${options.language}`,
+        resolution: options.resolution ?? '1080p',
+        clips: finalCutClips,
+        onProgress: (msg) => {
+          options.onProgress?.({
+            progress: 65,
+            message: msg,
+          })
+        },
+      })
+
+      if (options.isCancelled?.()) {
+        throw new Error('Render aborted')
+      }
+
+      const fallbackMime = cloudUrl.toLowerCase().includes('.webm') ? 'video/webm' : 'video/mp4'
+      const materialized = await materializeDownloadableResult(
+        cloudUrl,
+        undefined,
+        fallbackMime,
+        options.onProgress
+      )
+
+      options.onProgress?.({
+        progress: 100,
+        message: `Combined ${orderedClips.length} scenes`,
+      })
+
+      return {
+        downloadUrl: materialized.downloadUrl,
+        isObjectUrl: materialized.isObjectUrl,
+        cloudUrl,
+        mimeType: materialized.mimeType,
+        totalDuration,
+        sceneCount: orderedClips.length,
+        strategy: 'cloud-run',
+      }
+    } catch (tier2Err) {
+      if (options.isCancelled?.()) throw tier2Err
+      console.warn('[stitchPreVisSceneOutputs] Tier 2 cloud stitch failed:', tier2Err)
+    }
+  }
+
+  // Tier 3: Local browser render fallback (uses maxDurationSec: 3600 so >300s timelines work)
+  if (options.fallbackMultiPlan) {
+    const fallbackPlan: MultiScenePreVisRenderPlan = {
+      ...options.fallbackMultiPlan,
+      config: {
+        ...options.fallbackMultiPlan.config,
+        ensureAudioTrack: true,
+        maxDurationSec: Math.max(
+          PREVIS_MULTI_SCENE_MAX_DURATION_SEC,
+          Math.ceil(options.fallbackMultiPlan.totalDuration) + 60
+        ),
+      },
+    }
+
+    const combinedResult = await getLocalRenderService().render(fallbackPlan.config, (prog) => {
+      options.onProgress?.({
+        progress: prog.progress,
+        message: prog.message || `Rendering combined Pre-Vis locally (${prog.progress}%)...`,
+      })
+    })
+
+    if (!combinedResult.success || !combinedResult.blobUrl) {
+      throw new Error(
+        combinedResult.error ||
+          serverStitchError ||
+          'Failed to stitch combined Pre-Vis video'
+      )
+    }
+
+    return {
+      downloadUrl: combinedResult.blobUrl,
+      isObjectUrl: true,
+      mimeType: combinedResult.mimeType || 'video/mp4',
+      totalDuration: fallbackPlan.totalDuration,
+      sceneCount: fallbackPlan.scenePlans.length,
+      strategy: 'local-render',
+    }
+  }
+
+  throw new Error(serverStitchError || 'Failed to stitch combined Pre-Vis video')
 }

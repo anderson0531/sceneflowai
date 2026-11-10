@@ -14,6 +14,7 @@ import {
   Mic,
   Move,
   Music,
+  RotateCcw,
   Sparkles,
   Volume2,
   X,
@@ -43,7 +44,9 @@ import {
   getPreVisSceneSummary,
   probePreVisAudioDurations,
   renderPreVisSceneToBlobAndStream,
+  stitchPreVisSceneOutputs,
   type PreVisSceneSummary,
+  type StitchablePreVisSceneClip,
 } from '@/lib/storyboard/preVisSceneRender'
 import {
   DEFAULT_GALLERY_IMAGE_EFFECT_PREFS,
@@ -143,12 +146,16 @@ export function PreVisRenderDialog({
     progress: number
     message?: string
     downloadUrl?: string
+    cloudUrl?: string
     mimeType?: string
     error?: string
   }>({ status: 'idle', progress: 0 })
 
   const cancelledRef = useRef<boolean>(false)
+  const wasOpenRef = useRef<boolean>(false)
   const createdBlobUrlsRef = useRef<string[]>([])
+  const renderedClipsBySceneIndexRef = useRef<Record<number, StitchablePreVisSceneClip>>({})
+  const dynamicDurationsRef = useRef<Record<string, number>>({})
 
   // Cleanup any created object URLs on unmount
   useEffect(() => {
@@ -205,12 +212,21 @@ export function PreVisRenderDialog({
     return map
   }, [projectLanguages, scenes, sceneProductionState])
 
-  // Initialize selection when modal opens
+  // Initialize selection only when modal transitions closed -> open so live stream
+  // state updates during a multi-scene render never clobber user selection/settings.
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      wasOpenRef.current = false
+      return
+    }
+    if (wasOpenRef.current) return
+    wasOpenRef.current = true
+
     setSelectedLanguage(initialLanguage || 'en')
     setSaveToStreams(Boolean(projectId))
     setImageEffectPrefs(resolveInitialRenderMotionPrefs(initialImageEffectPrefs))
+    setCombinedState({ status: 'idle', progress: 0 })
+    renderedClipsBySceneIndexRef.current = {}
 
     if (Array.isArray(initialSceneIndices) && initialSceneIndices.length > 0) {
       setSelectedIndices(
@@ -250,6 +266,16 @@ export function PreVisRenderDialog({
 
     setSelectedIndices(new Set(playableIndices))
   }, [open, initialLanguage, initialSceneIndices, currentSceneIndex, scenes, projectId, sceneProductionState, initialImageEffectPrefs])
+
+  const handleSelectLanguage = useCallback(
+    (code: string) => {
+      if (isBatchRunning || code === selectedLanguage) return
+      setSelectedLanguage(code)
+      renderedClipsBySceneIndexRef.current = {}
+      setCombinedState({ status: 'idle', progress: 0 })
+    },
+    [isBatchRunning, selectedLanguage]
+  )
 
   const playableIndices = useMemo(
     () => sceneSummaries.filter((s) => s.isPlayable).map((s) => s.sceneIndex),
@@ -330,6 +356,157 @@ export function PreVisRenderDialog({
     toast.info('Pre-Vis render cancelled')
   }, [])
 
+  const runCombinedStitch = useCallback(
+    async (
+      clipsForStitch: StitchablePreVisSceneClip[],
+      dynamicDurations: Record<string, number>
+    ): Promise<void> => {
+      setCombinedState({
+        status: 'rendering',
+        progress: 5,
+        message: `Stitching ${clipsForStitch.length} rendered scenes into one combined Pre-Vis video...`,
+      })
+
+      const scenesWithIndices = clipsForStitch
+        .map((clip) => {
+          const s = scenes[clip.sceneIndex]
+          if (!s) return null
+          const sid = sceneSummaries[clip.sceneIndex]?.sceneId ?? clip.sceneId
+          return {
+            scene: s,
+            sceneIndex: clip.sceneIndex,
+            sceneProductionData: sceneProductionState?.[sid] ?? null,
+          }
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null)
+
+      const fallbackMultiPlan =
+        scenesWithIndices.length >= 2
+          ? buildMultiScenePreVisRenderPlan(
+              scenesWithIndices,
+              selectedLanguage,
+              dynamicDurations,
+              {
+                resolution,
+                fps: 30,
+                masterVolume,
+                audioMode,
+                clipAudioByBeatId,
+                includeCaptions,
+                imageEffectPrefs,
+              }
+            )
+          : undefined
+
+      const stitched = await stitchPreVisSceneOutputs(clipsForStitch, {
+        projectId,
+        projectTitle,
+        language: selectedLanguage,
+        resolution,
+        fallbackMultiPlan,
+        isCancelled: () => cancelledRef.current,
+        onProgress: (prog) => {
+          setCombinedState({
+            status: 'rendering',
+            progress: prog.progress,
+            message: prog.message,
+          })
+        },
+      })
+
+      if (stitched.isObjectUrl) {
+        createdBlobUrlsRef.current.push(stitched.downloadUrl)
+      }
+
+      const ext = stitched.mimeType.includes('mp4') ? 'mp4' : 'webm'
+      const combinedFilename = `${(projectTitle || 'sceneflow').replace(/[^a-zA-Z0-9_-]/g, '_')}-previs-${selectedLanguage}-combined.${ext}`
+
+      setCombinedState({
+        status: 'complete',
+        progress: 100,
+        message: `Combined ${stitched.sceneCount} scenes (${formatDurationShort(stitched.totalDuration)})`,
+        downloadUrl: stitched.downloadUrl,
+        cloudUrl: stitched.cloudUrl,
+        mimeType: stitched.mimeType,
+      })
+
+      // Auto-trigger browser download when stitching completes so the combined file is saved immediately
+      handleDownloadBlobUrl(stitched.downloadUrl, combinedFilename)
+    },
+    [
+      scenes,
+      sceneSummaries,
+      sceneProductionState,
+      selectedLanguage,
+      resolution,
+      masterVolume,
+      audioMode,
+      clipAudioByBeatId,
+      includeCaptions,
+      imageEffectPrefs,
+      projectId,
+      projectTitle,
+      handleDownloadBlobUrl,
+    ]
+  )
+
+  const handleRetryStitch = useCallback(async () => {
+    const orderedIndices = Array.from(selectedIndices).sort((a, b) => a - b)
+    const clipsForStitch: StitchablePreVisSceneClip[] = []
+    for (const idx of orderedIndices) {
+      const cached = renderedClipsBySceneIndexRef.current[idx]
+      if (cached && (cached.uploadedUrl || cached.blob)) {
+        clipsForStitch.push(cached)
+        continue
+      }
+      const summary = sceneSummaries[idx]
+      if (summary?.existingAnimaticUrl) {
+        clipsForStitch.push({
+          sceneId: summary.sceneId,
+          sceneIndex: idx,
+          sceneNumber: summary.sceneNumber,
+          duration: summary.estimatedDurationSec,
+          uploadedUrl: summary.existingAnimaticUrl,
+          mimeType: summary.existingAnimaticUrl.toLowerCase().includes('.webm')
+            ? 'video/webm'
+            : 'video/mp4',
+        })
+      }
+    }
+
+    if (clipsForStitch.length < 2) {
+      toast.error('At least 2 rendered scenes are required to stitch a combined Pre-Vis video')
+      return
+    }
+
+    cancelledRef.current = false
+    setIsBatchRunning(true)
+    try {
+      await runCombinedStitch(clipsForStitch, dynamicDurationsRef.current)
+      if (!cancelledRef.current) {
+        toast.success(
+          `Stitched combined Pre-Vis video (${clipsForStitch.length} scenes · ${getLanguageName(selectedLanguage)})`
+        )
+      }
+    } catch (combErr) {
+      if (!cancelledRef.current) {
+        const msg =
+          combErr instanceof Error
+            ? combErr.message
+            : 'Failed to stitch combined Pre-Vis video'
+        setCombinedState({
+          status: 'error',
+          progress: 0,
+          error: msg,
+          message: msg,
+        })
+        toast.error(`Combined Pre-Vis stitch failed: ${msg}`)
+      }
+    } finally {
+      setIsBatchRunning(false)
+    }
+  }, [selectedIndices, sceneSummaries, runCombinedStitch, selectedLanguage])
+
   const handleStartRender = useCallback(async () => {
     const orderedIndices = Array.from(selectedIndices).sort((a, b) => a - b)
     if (orderedIndices.length === 0) {
@@ -356,6 +533,7 @@ export function PreVisRenderDialog({
 
     let dynamicDurations: Record<string, number> = {}
     let completedCount = 0
+    const completedClips: StitchablePreVisSceneClip[] = []
 
     try {
       for (const sceneIdx of orderedIndices) {
@@ -435,6 +613,18 @@ export function PreVisRenderDialog({
             onSceneStreamRendered?.(output.sceneId, output.stream, selectedLanguage)
           }
 
+          const stitchClip: StitchablePreVisSceneClip = {
+            sceneId: output.sceneId,
+            sceneIndex: sceneIdx,
+            sceneNumber: output.sceneNumber,
+            duration: output.plan.totalDuration,
+            uploadedUrl: output.uploadedUrl,
+            blob: output.renderResult.blob,
+            mimeType: output.renderResult.mimeType,
+          }
+          completedClips.push(stitchClip)
+          renderedClipsBySceneIndexRef.current[sceneIdx] = stitchClip
+
           setSceneStates((prev) => ({
             ...prev,
             [sceneIdx]: {
@@ -466,91 +656,68 @@ export function PreVisRenderDialog({
         }
       }
 
-      // Optional combined multi-scene Pre-Vis render
-      if (
-        !cancelledRef.current &&
-        combineSelectedScenes &&
-        orderedIndices.length > 1 &&
-        completedCount > 0
-      ) {
-        setCombinedState({
-          status: 'rendering',
-          progress: 5,
-          message: 'Stitching selected scenes into combined Pre-Vis MP4...',
-        })
+      dynamicDurationsRef.current = dynamicDurations
 
-        try {
-          const scenesWithIndices = orderedIndices
-            .map((idx) => {
-              const s = scenes[idx]
-              if (!s) return null
-              const sid = sceneSummaries[idx]?.sceneId ?? `scene-${idx}`
-              return {
-                scene: s,
-                sceneIndex: idx,
-                sceneProductionData: sceneProductionState?.[sid] ?? null,
-              }
-            })
-            .filter((item): item is NonNullable<typeof item> => item !== null)
+      // Optional combined multi-scene Pre-Vis stitch
+      const shouldCombine = combineSelectedScenes && orderedIndices.length > 1
+      let stitchSucceeded = false
+      let stitchErrorMsg: string | null = null
 
-          const multiPlan = buildMultiScenePreVisRenderPlan(
-            scenesWithIndices,
-            selectedLanguage,
-            dynamicDurations,
-            {
-              resolution,
-              fps: 30,
-              masterVolume,
-              audioMode,
-              clipAudioByBeatId,
-              includeCaptions,
-              imageEffectPrefs,
-            }
-          )
-
-          const combinedResult = await getLocalRenderService().render(
-            multiPlan.config,
-            (prog) => {
+      if (!cancelledRef.current && shouldCombine) {
+        if (completedClips.length >= 2) {
+          try {
+            await runCombinedStitch(completedClips, dynamicDurations)
+            stitchSucceeded = true
+          } catch (combErr) {
+            if (!cancelledRef.current) {
+              const msg =
+                combErr instanceof Error
+                  ? combErr.message
+                  : 'Failed to stitch combined Pre-Vis video'
+              stitchErrorMsg = msg
+              console.error('[PreVisRenderDialog] Combined stitch error:', combErr)
               setCombinedState({
-                status: 'rendering',
-                progress: prog.progress,
-                message: prog.message,
+                status: 'error',
+                progress: 0,
+                error: msg,
+                message: msg,
               })
             }
-          )
-
-          if (!combinedResult.success || !combinedResult.blobUrl) {
-            throw new Error(combinedResult.error || 'Failed to stitch combined Pre-Vis video')
           }
-
-          createdBlobUrlsRef.current.push(combinedResult.blobUrl)
-          setCombinedState({
-            status: 'complete',
-            progress: 100,
-            message: `Combined ${multiPlan.scenePlans.length} scenes (${formatDurationShort(multiPlan.totalDuration)})`,
-            downloadUrl: combinedResult.blobUrl,
-            mimeType: combinedResult.mimeType,
-          })
-        } catch (combErr) {
-          const msg =
-            combErr instanceof Error
-              ? combErr.message
-              : 'Failed to stitch combined Pre-Vis video'
+        } else if (completedClips.length === 1) {
+          stitchErrorMsg =
+            'At least 2 scenes must succeed to stitch a combined Pre-Vis video (only 1 scene completed).'
           setCombinedState({
             status: 'error',
             progress: 0,
-            error: msg,
-            message: msg,
+            error: stitchErrorMsg,
+            message: stitchErrorMsg,
           })
         }
       }
 
-      if (!cancelledRef.current && completedCount > 0) {
-        toast.success(
-          completedCount === 1
-            ? `Rendered 1 Pre-Vis scene (${getLanguageName(selectedLanguage)})`
-            : `Rendered ${completedCount} Pre-Vis scenes (${getLanguageName(selectedLanguage)})`
-        )
+      if (!cancelledRef.current) {
+        if (shouldCombine) {
+          if (stitchSucceeded) {
+            toast.success(
+              `Rendered ${completedCount} Pre-Vis scenes & stitched combined video (${getLanguageName(selectedLanguage)})`
+            )
+          } else if (completedCount > 0) {
+            toast.error(
+              `Rendered ${completedCount} individual scenes, but combined Pre-Vis stitch failed: ${stitchErrorMsg || 'Unknown error'}`
+            )
+          } else {
+            toast.error('Failed to render selected Pre-Vis scenes')
+          }
+        } else if (completedCount > 0) {
+          toast.success(
+            completedCount === 1
+              ? `Rendered 1 Pre-Vis scene (${getLanguageName(selectedLanguage)})`
+              : `Rendered ${completedCount} Pre-Vis scenes (${getLanguageName(selectedLanguage)})`
+          )
+        } else {
+          toast.error('Failed to render selected Pre-Vis scenes')
+        }
       }
     } finally {
       setIsBatchRunning(false)
@@ -571,6 +738,7 @@ export function PreVisRenderDialog({
     imageEffectPrefs,
     combineSelectedScenes,
     onSceneStreamRendered,
+    runCombinedStitch,
   ])
 
   return (
@@ -617,9 +785,7 @@ export function PreVisRenderDialog({
               </label>
               <GroupedLanguageSelector
                 value={selectedLanguage}
-                onValueChange={(code) => {
-                  if (!isBatchRunning) setSelectedLanguage(code)
-                }}
+                onValueChange={handleSelectLanguage}
                 size="sm"
                 disabled={isBatchRunning}
                 placeholder="Select language..."
@@ -637,7 +803,7 @@ export function PreVisRenderDialog({
                     key={lang}
                     type="button"
                     disabled={isBatchRunning}
-                    onClick={() => setSelectedLanguage(lang)}
+                    onClick={() => handleSelectLanguage(lang)}
                     className={cn(
                       'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all',
                       active
@@ -1062,31 +1228,60 @@ export function PreVisRenderDialog({
                       Also stitch selected scenes into one combined Pre-Vis video ({selectedIndices.size} scenes)
                     </span>
                     <span className="text-[11px] text-zinc-500">
-                      Produces a single continuous file for all selected scenes in order.
+                      Losslessly concatenates the rendered scene clips into a single continuous file once individual scenes finish.
                     </span>
                   </span>
                 </label>
               ) : null}
             </div>
+          </div>
+        </div>
 
-            {/* Combined Multi-Scene Output Banner */}
-            {combinedState.status !== 'idle' ? (
-              <div className="mt-2 pt-2.5 border-t border-zinc-800 flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs font-medium text-zinc-200 flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                    Combined Multi-Scene Pre-Vis
-                  </div>
-                  <div className="text-[11px] text-zinc-400 truncate mt-0.5">
-                    {combinedState.message}
-                  </div>
+        {/* Pinned Combined Multi-Scene Output Status Bar (always visible above footer) */}
+        {combinedState.status !== 'idle' ? (
+          <div
+            className={cn(
+              'px-6 py-3 border-t flex flex-col gap-2',
+              combinedState.status === 'error'
+                ? 'border-red-500/30 bg-red-950/25'
+                : combinedState.status === 'complete'
+                  ? 'border-emerald-500/30 bg-emerald-950/20'
+                  : 'border-cyan-500/30 bg-cyan-950/20'
+            )}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-medium text-zinc-100 flex items-center gap-2">
+                  {combinedState.status === 'error' ? (
+                    <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  ) : combinedState.status === 'complete' ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  )}
+                  <span>Combined Multi-Scene Pre-Vis</span>
                 </div>
-                {combinedState.status === 'rendering' ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-cyan-300 font-mono">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    {combinedState.progress}%
-                  </span>
-                ) : combinedState.status === 'complete' && combinedState.downloadUrl ? (
+                <div
+                  className={cn(
+                    'text-[11px] mt-0.5 break-words',
+                    combinedState.status === 'error'
+                      ? 'text-red-300'
+                      : combinedState.status === 'complete'
+                        ? 'text-emerald-300'
+                        : 'text-zinc-300'
+                  )}
+                >
+                  {combinedState.message}
+                </div>
+              </div>
+
+              {combinedState.status === 'rendering' ? (
+                <span className="inline-flex items-center gap-1.5 text-xs text-cyan-300 font-mono shrink-0">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  {combinedState.progress}%
+                </span>
+              ) : combinedState.status === 'complete' && combinedState.downloadUrl ? (
+                <div className="flex items-center gap-1.5 shrink-0">
                   <Button
                     size="sm"
                     onClick={() => {
@@ -1101,11 +1296,43 @@ export function PreVisRenderDialog({
                     <Download className="w-3.5 h-3.5 mr-1.5" />
                     Download Combined Pre-Vis
                   </Button>
-                ) : null}
+                  {combinedState.cloudUrl ? (
+                    <a
+                      href={combinedState.cloudUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center h-8 w-8 rounded border border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white"
+                      title="Open stitched cloud video in new tab"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  ) : null}
+                </div>
+              ) : combinedState.status === 'error' ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={isBatchRunning}
+                  onClick={() => void handleRetryStitch()}
+                  className="h-8 text-xs border-red-500/40 bg-red-500/10 text-red-200 hover:bg-red-500/20 shrink-0"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                  Retry Stitch
+                </Button>
+              ) : null}
+            </div>
+
+            {combinedState.status === 'rendering' ? (
+              <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-cyan-400 transition-all duration-200"
+                  style={{ width: `${Math.max(5, combinedState.progress)}%` }}
+                />
               </div>
             ) : null}
           </div>
-        </div>
+        ) : null}
 
         {/* Footer */}
         <div className="px-6 py-3.5 border-t border-zinc-800/80 bg-zinc-900/70 flex items-center justify-between gap-3">
@@ -1157,13 +1384,18 @@ export function PreVisRenderDialog({
               {isBatchRunning ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                  Rendering Pre-Vis...
+                  {combinedState.status === 'rendering'
+                    ? 'Stitching Combined Pre-Vis...'
+                    : 'Rendering Pre-Vis...'}
                 </>
               ) : (
                 <>
                   <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
-                  Render {selectedIndices.size > 0 ? `${selectedIndices.size} ` : ''}Pre-Vis{' '}
-                  {selectedIndices.size === 1 ? 'Scene' : 'Scenes'}
+                  {combineSelectedScenes && selectedIndices.size > 1
+                    ? `Render & Stitch ${selectedIndices.size} Scenes`
+                    : `Render ${selectedIndices.size > 0 ? `${selectedIndices.size} ` : ''}Pre-Vis ${
+                        selectedIndices.size === 1 ? 'Scene' : 'Scenes'
+                      }`}
                 </>
               )}
             </Button>
