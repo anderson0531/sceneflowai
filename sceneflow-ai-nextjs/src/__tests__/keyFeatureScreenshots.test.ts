@@ -12,6 +12,12 @@ import {
   DIRECT_EPISODE_SCREENSHOT_WEBP,
   DIRECT_PUBLISHING_SCREENSHOT_WEBP,
   GO_TO_PRODUCTION_SCREENSHOT_WEBP,
+  MULTILANGUAGE_UI_AR_SCREENSHOT_WEBP,
+  MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP,
+  MULTILANGUAGE_UI_HI_SCREENSHOT_WEBP,
+  MULTILANGUAGE_UI_PT_SCREENSHOT_WEBP,
+  MULTILANGUAGE_UI_TH_SCREENSHOT_WEBP,
+  MULTILANGUAGE_UI_ZH_SCREENSHOT_WEBP,
   NEW_SERIES_SCREENSHOT_WEBM,
   PRE_VIS_ANIMATIC_SCREENSHOT_WEBP,
   PRODUCTION_AGENT_SCREENSHOT_WEBP,
@@ -221,6 +227,20 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('languageStreams')!)).toBe(
       STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('multilanguageUi')).toEqual({
+      imageUrl: MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP,
+      variants: [
+        { id: 'es', label: 'Español (ES)', imageUrl: MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP },
+        { id: 'pt', label: 'Português (PT)', imageUrl: MULTILANGUAGE_UI_PT_SCREENSHOT_WEBP },
+        { id: 'zh-CN', label: '中文 (简体)', imageUrl: MULTILANGUAGE_UI_ZH_SCREENSHOT_WEBP },
+        { id: 'hi', label: 'हिन्दी (HI)', imageUrl: MULTILANGUAGE_UI_HI_SCREENSHOT_WEBP },
+        { id: 'ar', label: 'العربية (AR)', imageUrl: MULTILANGUAGE_UI_AR_SCREENSHOT_WEBP },
+        { id: 'th', label: 'ภาษาไทย (TH)', imageUrl: MULTILANGUAGE_UI_TH_SCREENSHOT_WEBP },
+      ],
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('multilanguageUi')!)).toBe(
+      MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP
+    )
     expect(getKeyFeatureScreenshot('promoTrailers')).toEqual({
       imageUrl: PROMO_TRAILERS_SCREENSHOT_WEBP,
     })
@@ -360,6 +380,12 @@ describe('key feature screenshots', () => {
       PRODUCTION_AGENT_SCREENSHOT_WEBP,
       PRODUCTION_MIXER_SCREENSHOT_WEBP,
       STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP,
+      MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP,
+      MULTILANGUAGE_UI_PT_SCREENSHOT_WEBP,
+      MULTILANGUAGE_UI_ZH_SCREENSHOT_WEBP,
+      MULTILANGUAGE_UI_HI_SCREENSHOT_WEBP,
+      MULTILANGUAGE_UI_AR_SCREENSHOT_WEBP,
+      MULTILANGUAGE_UI_TH_SCREENSHOT_WEBP,
       PROMO_TRAILERS_SCREENSHOT_WEBP,
       DIRECT_PUBLISHING_SCREENSHOT_WEBP,
       SCREENING_PLAYER_SCREENSHOT_WEBP,

@@ -149,6 +149,12 @@ export const MULTILANGUAGE_UI_ZH_SCREENSHOT_WEBP =
 export const MULTILANGUAGE_UI_HI_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/multilanguage-ui-hi.webp'
 
+export const MULTILANGUAGE_UI_AR_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/multilanguage-ui-ar.webp'
+
+export const MULTILANGUAGE_UI_TH_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/multilanguage-ui-th.webp'
+
 export type KeyFeatureScreenshotVariant = {
   id: string
   label: string
@@ -212,6 +218,8 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
       { id: 'pt', label: 'Português (PT)', imageUrl: MULTILANGUAGE_UI_PT_SCREENSHOT_WEBP },
       { id: 'zh-CN', label: '中文 (简体)', imageUrl: MULTILANGUAGE_UI_ZH_SCREENSHOT_WEBP },
       { id: 'hi', label: 'हिन्दी (HI)', imageUrl: MULTILANGUAGE_UI_HI_SCREENSHOT_WEBP },
+      { id: 'ar', label: 'العربية (AR)', imageUrl: MULTILANGUAGE_UI_AR_SCREENSHOT_WEBP },
+      { id: 'th', label: 'ภาษาไทย (TH)', imageUrl: MULTILANGUAGE_UI_TH_SCREENSHOT_WEBP },
     ],
   },
   promoTrailers: { imageUrl: PROMO_TRAILERS_SCREENSHOT_WEBP },

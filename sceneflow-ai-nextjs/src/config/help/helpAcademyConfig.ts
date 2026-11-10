@@ -670,13 +670,13 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
     id: 'final-cut',
     title: 'Final Cut Assembly & Screening Room',
     shortTitle: 'Final Cut & Screening',
-    subtitle: 'Blend Animatic & Video streams, switch across 13+ dubbed languages, and share /s/ review links.',
+    subtitle: 'Blend Animatic & Video streams, switch across 70+ dubbed languages, and share /s/ review links.',
     badge: 'Phase 3 • Final Cut',
     estimatedTime: '2–5 mins',
     screenshotSrc: '/images/help/final-cut-screening-screenshot.svg',
-    screenshotAlt: 'Final Cut and Screening Room showing Master Video Player, 13+ Language Audio Switcher, and Reviewer Screening Link panel',
+    screenshotAlt: 'Final Cut and Screening Room showing Master Video Player, 70+ Language Audio Switcher, and Reviewer Screening Link panel',
     summary:
-      'Final Cut & Screening Room is your post-production suite and private screening theater. Seamlessly mix Animatic keyframes and motion video clips, preview dubbed audio tracks in 13+ languages, and share a /s/ link for timestamped feedback.',
+      'Final Cut & Screening Room is your post-production suite and private screening theater. Seamlessly mix Animatic keyframes and motion video clips, preview dubbed audio tracks in 70+ languages, and share a /s/ link for timestamped feedback.',
     hotspots: [
       {
         id: 'fc-stream-selector',
@@ -698,10 +698,10 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         x: 34,
         y: 83,
         spotlight: { left: 2, top: 73, width: 65, height: 23.5 },
-        label: '13+ Language Audio & Subtitle Switcher',
+        label: '70+ Language Audio & Subtitle Switcher',
         locationTag: 'Below Screening Player',
         summary:
-          'Generate and preview localized dialogue tracks and synced captions in Spanish, Japanese, French, German, Portuguese, Mandarin, Hindi, and more.',
+          'Generate and preview localized dialogue tracks and synced captions in Spanish, Portuguese, Mandarin, Hindi, Arabic, Thai, Japanese, French, German, and 70+ languages.',
         proTip: 'SceneFlow preserves each character’s vocal timbre across languages while keeping your SFX and musical score intact.',
         creditNote: '~15–30 cr per language track',
       },
@@ -1263,8 +1263,8 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
 
   {
     id: 'series-and-global-dubbing',
-    title: 'Multi-Episode Series & 13+ Language Global Release',
-    subtitle: 'Scale a recurring show universe and publish simultaneously in English, Spanish, Japanese, and more.',
+    title: 'Multi-Episode Series & 70+ Language Global Release',
+    subtitle: 'Scale a recurring show universe and publish simultaneously in English, Spanish, Portuguese, Mandarin, Hindi, Arabic, Thai, and 70+ languages.',
     level: 'Showrunner',
     totalDuration: '6 mins',
     badgeColor: 'amber',
@@ -1291,7 +1291,7 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
       {
         id: 'sg-2',
         stepNumber: 2,
-        title: 'Dub Your Master into 13+ Languages in Final Cut',
+        title: 'Dub Your Master into 70+ Languages in Final Cut',
         duration: '3 mins',
         contextId: 'final-cut',
         screenshotSrc: '/images/help/final-cut-screening-screenshot.svg',
@@ -1377,7 +1377,7 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
     recommendedPlanHref: '/dashboard/settings/billing',
     iconName: 'Layers',
     workflowSummary:
-      'High-velocity episodic production with 85+ Audience Resonance hooks, full motion video, and 13+ language dubbing.',
+      'High-velocity episodic production with 85+ Audience Resonance hooks, full motion video, and 70+ language dubbing.',
     milestones: [
       {
         phase: '1. Hook Optimization',
@@ -1390,8 +1390,8 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
         creditTip: '15,000 monthly credits supports 8–12 rich episodes per month.',
       },
       {
-        phase: '3. 13+ Language Dubbing',
-        action: 'Export Spanish, Japanese, Portuguese, and French audio tracks in Final Cut.',
+        phase: '3. 70+ Language Dubbing',
+        action: 'Export Spanish, Portuguese, Mandarin, Hindi, Arabic, Thai, and 70+ language audio tracks in Final Cut.',
         creditTip: '~20 credits per language track multiplies international channel RPM.',
       },
     ],
@@ -1581,8 +1581,8 @@ export const HELP_KNOWLEDGE_ARTICLES: HelpKnowledgeArticle[] = [
   {
     id: 'kb-multitrack-audio',
     category: 'production',
-    title: 'Multitrack Audio: Voices, Foley SFX, Music & 13+ Languages',
-    summary: 'How to cast expressive neural voices, layer atmospheric sound effects, and dub your film into 13+ languages.',
+    title: 'Multitrack Audio: Voices, Foley SFX, Music & 70+ Languages',
+    summary: 'How to cast expressive neural voices, layer atmospheric sound effects, and dub your film into 70+ languages.',
     readTime: '3 min read',
     tags: ['audio', 'voices', 'music', 'sfx', 'dubbing', 'languages', 'translation'],
     bullets: [

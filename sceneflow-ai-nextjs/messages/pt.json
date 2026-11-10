@@ -258,7 +258,7 @@
     "exitFullscreenOverview": "Sair da tela cheia",
     "watchLongformLabel": "Assista ao conteúdo de formato longo",
     "screenshotLabel": "Captura de tela",
-    "landingUiLanguagesLabel": "Produza, duble e regenere clipes de diálogo e sinalização em 44 idiomas. A IU completa do Studio e este site estão localizados para nossos 6 principais mercados de IA do Google:",
+    "landingUiLanguagesLabel": "Entregue verdadeira sincronização de idioma em cena, áudio separado por stems e clipes de diálogo e sinalização regenerados em mais de 70 idiomas. A interface completa do Studio e este site estão disponíveis em inglês mais nossos 6 principais mercados globais de IA (7 idiomas de interface no total):",
     "rooms": [
       {
         "id": "series-desk",
@@ -619,25 +619,25 @@
               {
                 "icon": "continuity",
                 "title": "O Continuity Library",
-                "description": "Consistência visual e vocal absoluta em todo o seu filme ou série. Gere automaticamente ou atribua manualmente retratos de referência bloqueados, folhas de rotação em vários ângulos, guarda-roupas específicos de cena, locais e adereços essenciais, garantindo que cada foto corresponda ao Blueprint sem desvio de personagem.",
+                "description": "Consistência visual e vocal absoluta em todo o seu filme, série, podcast ou documentário. Trave referências discretas de identidade facial, composições PiP de personagem e figurino, folhas de rotação multiângulo, vozes clonadas, cenários do Agente de Locações e objetos de cena com sincronização automática de figurino a partir do roteiro—ou envie vídeos de câmera ao vivo e fotos reais para cinema híbrido sem desvio de personagem.",
                 "screenshot": "O Continuity Library — elenco, guarda-roupas, locações e adereços essenciais",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Elenco de identidade e bloqueios de recuperação",
-                      "description": "Ancore cada personagem com retratos dípticos, folhas de reviravolta e perfis de voz bloqueados em cada cena e episódio."
+                      "title": "Travas de identidade facial e figurino composto PiP",
+                      "description": "Ancore cada personagem com retratos discretos de identidade facial, composições PiP de corpo inteiro com figurino, folhas de rotação e perfis de voz travados ou clonados em cada plano e episódio."
                     },
                     {
-                      "title": "Roupeiros e adereços específicos para cada cena",
-                      "description": "Atribua guarda-roupas específicos de época ou cena e adereços essenciais aos heróis por cena, para que os trajes e os itens portáteis permaneçam unificados."
+                      "title": "Agente de Cenários e figurinos sincronizados com o roteiro",
+                      "description": "Gere cenários mestres multiângulo sequenciais com o Agente de Locações e sincronize automaticamente figurinos de época ou por cena e objetos essenciais diretamente do roteiro."
                     },
                     {
-                      "title": "Gere, carregue ou edite cirurgicamente",
-                      "description": "Gere imagens de referência automaticamente, carregue placas de estúdio personalizadas ou refine detalhes com Intelligent Assistant Director."
+                      "title": "Câmera ao vivo híbrida e envio de fotos reais",
+                      "description": "Combine câmeras de apresentadores de podcast, entrevistas familiares e fotos antigas perfeitamente com reconstruções de IA com idade controlada."
                     },
                     {
-                      "title": "Portão de prontidão para continuidade",
-                      "description": "Verifique se todas as âncoras de elenco, guarda-roupa, local e suporte estão bloqueadas na guia Continuidade antes de gerar quadros-chave de cena."
+                      "title": "Portão de prontidão de continuidade",
+                      "description": "Verifique se todas as âncoras de elenco, figurino, locação e objetos estão travadas na aba Continuidade antes de gerar os quadros-chave da cena."
                     }
                   ]
                 }
@@ -789,7 +789,7 @@
               {
                 "icon": "stillsWorkbench",
                 "title": "Estúdio de Stills e Keyframes em Tela Cheia",
-                "description": "Acesse a bancada Stills em tela cheia para parear quadros inicial e final Frame-to-Video (F2V), alternar entre resolução Draft e Final 4K ou modos Standard e Creative, personalizar o movimento Ken Burns do Pre-Vis e aplicar edições cirúrgicas em linguagem simples com o Diretor Assistente Inteligente (IAD).",
+                "description": "Entre na bancada de tela cheia `Stills` para controle preciso de quadros-chave. Emparelhe quadros inicial e final para interpolação Frame-to-Video (`F2V`), alterne entre resolução `Draft` e `Final 4K` ou modos `Standard` e `Creative`, personalize o movimento Ken Burns do Pre-Vis, faça edições cirúrgicas em linguagem simples com o `IAD` e conte com diagnóstico inteligente de renderização com acionamento de suporte em um clique.",
                 "screenshot": "Fullscreen Stills & Keyframe Studio – emparelhamento de quadro-chave inicial e final F2V, controles finais em 4K e edição cirúrgica IAD",
                 "learnMore": {
                   "items": [
@@ -802,8 +802,8 @@
                       "description": "Edite acessórios específicos, texto no quadro-negro, detalhes do guarda-roupa ou iluminação em linguagem simples, mantendo o restante do quadro-chave bloqueado."
                     },
                     {
-                      "title": "Modos Rascunho vs Final 4K e Criativo",
-                      "description": "Alterne entre pré-visualizações rápidas de rascunho e resolução final de 4K, além dos modos de síntese Padrão ou Criativo por foto."
+                      "title": "Rascunho vs Final 4K, modo Criativo e recuperação de erros",
+                      "description": "Alterne entre prévias rápidas em Rascunho e resolução Final 4K, modos Padrão ou Criativo, e diagnósticos guiados com escalonamento para suporte em um clique."
                     },
                     {
                       "title": "Enquadramento de movimento pré-visualização de Ken Burns",
@@ -859,7 +859,7 @@
               {
                 "icon": "clipsWorkbench",
                 "title": "Estúdio de Clipes Multi-Take e Retakes",
-                "description": "Dirija e selecione cada render de movimento no estúdio Clips em tela cheia. Ouça e compare takes ilimitados no cofre não destrutivo (Take 1 / Take 2 / Take 3), filtre planos pelo status In the Can, acione Smart Retakes com o IAD e gerencie takes localizados por stream de idioma para diálogos e placas.",
+                "description": "Dirija e selecione cada renderização de movimento dentro do estúdio de tela cheia `Clips`. Audicione tomadas ilimitadas no cofre não destrutivo Multi-Take (`Take 1 / Take 2 / Take 3`), filtre seu trilho por prontidão `In the Can`, acione retakes inteligentes do IAD com otimização de prompt Referência-vs-Quadro, alterne legendas em clipes localizados e gerencie tomadas de vídeo localizadas por stream.",
                 "screenshot": "Multi-Take Clips & Retake Studio – Take 1/2/3 vault não destrutivo, IAD Smart Retake e tomadas de stream localizadas",
                 "learnMore": {
                   "items": [
@@ -868,12 +868,12 @@
                       "description": "Cada renderização de movimento é preservada no shot vault para que você possa comparar Take 1, Take 2 e Take 3 e promover seu take favorito ao vivo."
                     },
                     {
-                      "title": "IAD Smart Retake e vídeo direto",
-                      "description": "Refine o movimento da câmera, a física do objeto ou o desempenho facial com os controles pré-voo Intelligent Assistant Director e Direct Video."
+                      "title": "Smart Retake IAD e otimização Referência-vs-Quadro",
+                      "description": "Refine movimento de câmera, física ou atuação facial com higienização de prompt Referência-vs-Quadro, controles de Vídeo Direto e recuperação guiada de falhas."
                     },
                     {
-                      "title": "Capturas localizadas por stream",
-                      "description": "Alterne entre sua versão Master em inglês e clipes localizados regenerados para diálogo falado e sinalização na cena por fluxo de idioma."
+                      "title": "Tomadas localizadas por stream e botão de legendas",
+                      "description": "Alterne entre sua tomada mestre em inglês e clipes localizados regenerados para diálogo falado e letreiros em cena por idioma, com botão instantâneo para ativar ou ocultar legendas."
                     },
                     {
                       "title": "Preparação de tronco sem diálogo",
@@ -885,7 +885,7 @@
               {
                 "icon": "scriptSupervisor",
                 "title": "TERMO DIRETOR SFAIFLOW",
-                "description": "Revise MP4s de cenas renderizadas e clipes individuais na aba `FlowDirector` em tela cheia usando inteligência de vídeo multimodal que une supervisão e ação sob as perspectivas de Audience Resonance (`AR Score`) e do Diretor. Inspecione subpontuações de público em 5 eixos, telemetria de conformidade de roteiro e continuidade e atribuição de anomalias (`Keyframe`, `Motion Video` ou `Scene Direction`), aplicando recomendações e correções opcionais pelo Shot Director ou Scene Director.",
+                "description": "Posicionado logo após `Clips` no fluxo de cena, o `FlowDirector` usa inteligência de vídeo multimodal para iterar e otimizar seus quadros e clipes antes da mixagem final e da geração de streams multilíngues. Unindo a supervisão de Ressonância de Público (`AR Score`) e do Diretor—com revisões independentes salvas por idioma tanto para o Master em inglês quanto para cada stream localizado—ele inspeciona subpontuações em 5 eixos, conformidade de roteiro e continuidade, e atribuição de causa-raiz (`Keyframe`, `Motion Video` ou `Scene Direction`) para aplicar correções opcionais com um clique.",
                 "screenshot": "FlowDirector — revisão multimodal de vídeo com Audience Resonance (AR Score) e Diretor, matriz de conformidade por tomada e pickups opcionais",
                 "learnMore": {
                   "items": [
@@ -894,8 +894,8 @@
                       "description": "Avalie clipes renderizados e MP4s de cena simultaneamente para obter o AR Score em 5 eixos e a conformidade de roteiro e continuidade do Diretor."
                     },
                     {
-                      "title": "Conformidade tomada a tomada e atribuição de anomalias",
-                      "description": "Identifique desvios de continuidade visual, objetos ausentes, falhas de sincronia labial e atritos de ritmo com atribuição precisa da causa raiz."
+                      "title": "Revisões multimodais distintas por idioma",
+                      "description": "Audite de forma independente tanto o seu corte mestre em inglês quanto cada stream de idioma localizado, com histórico salvo por idioma e verificação de sincronia labial."
                     },
                     {
                       "title": "Correções e patches de prompt em 1 clique via Shot Director",
@@ -971,7 +971,7 @@
               {
                 "icon": "languageStreams",
                 "title": "Streams (Multi-Idiomas)",
-                "description": "Expanda seu alcance global em 44 idiomas a partir de uma linha do tempo mestre. Regenere seletivamente apenas os planos com diálogo falado ou sinalização em cena enquanto mantém os planos mestres não selecionados sem custo extra de créditos. Extraia o áudio do vídeo e remova o diálogo falado (htdemucs) preservando SFX e música gerados para dublagem MP3 limpa, e alinhe falas traduzidas mais longas desacelerando o clipe de vídeo (de 10s para até 15s a 67% da velocidade).",
+                "description": "Entregue um salto geracional além da dublagem tradicional com verdadeira Sincronização de Idioma em Cena em mais de 70 idiomas a partir de uma única linha do tempo mestre. Regenere seletivamente a atuação facial em câmera, a sincronia labial e os letreiros em cena apenas nos planos falados ou sinalizados, mantendo os planos mestres de ação sem custo extra de créditos. A separação neural de stems (`htdemucs`) remove a fala original preservando os efeitos sonoros, o foley e a trilha musical—combinada com desaceleração elástica de vídeo (até `15s` a `67%` da velocidade) para que cada fala traduzida encaixe perfeitamente.",
                 "screenshot": "Streams (multilíngue) — Regeneração seletiva de tomadas versus capturas master retidas, extração de haste sem diálogo e alinhamento elástico de dublagem de vídeo lento",
                 "learnMore": {
                   "items": [
@@ -988,12 +988,12 @@
                       "description": "Alinhe diálogos traduzidos mais longos diminuindo a velocidade de um videoclipe de 10s em até 15s (até 67% da velocidade), combinando uma desaceleração de 80% com uma retenção de zoom de 103% ou ajustando o ritmo do áudio de dublagem em até 1,25x."
                     },
                     {
-                      "title": "Diálogos regenerados e clipes de sinalização em 44 idiomas",
-                      "description": "Regenere tomadas de diálogo localizadas e clipes de sinalização na cena diretamente na cena em 44 idiomas para que recursos visuais, estênceis e fala correspondam a cada público."
+                      "title": "Diálogo e sinalização sincronizados em mais de 70 idiomas",
+                      "description": "Entregue atuações em câmera localizadas e letreiros em cena regenerados em mais de 70 idiomas para que o movimento labial, os objetos e a fala combinem nativamente com cada mercado."
                     },
                     {
-                      "title": "UI localizada do Studio",
-                      "description": "Direcione e produza em sua interface nativa em inglês, espanhol, português, hindi, chinês simplificado e árabe."
+                      "title": "Interface de Estúdio nativa em 7 idiomas",
+                      "description": "Dirija e produza na sua interface nativa em inglês, espanhol, português, hindi, chinês simplificado, árabe e tailandés."
                     }
                   ]
                 }
@@ -1001,25 +1001,25 @@
               {
                 "icon": "multilanguageUi",
                 "title": "Interface de Estúdio Multilíngue",
-                "description": "Dirija, escreva e produza no idioma nativo da sua equipe em todo o SceneFlow AI Studio. Alterne a interface do estúdio instantaneamente entre Português (`PT`), Español (`ES`), 中文 (简体) (`ZH`), हिन्दी (`HI`), العربية (`AR`) e Inglês—localizando cada sala, controle de direção, inspetor de câmera e linha do tempo.",
-                "screenshot": "Interface de Estúdio Multilíngue — Espaços de trabalho localizados em Español (ES), Português (PT), 中文 (简体) e हिन्दी (HI)",
+                "description": "Dirija, escreva e produza no idioma nativo da sua equipe em todo o SceneFlow AI Studio—enquanto uma camada inteligente de normalização de prompts em inglês protege os modelos visuais e de movimento contra degradação em outros idiomas. Alterne a interface do estúdio instantaneamente entre 7 idiomas globais: English, Español (`ES`), Português (`PT`), 中文 (简体) (`ZH`), हिन्दी (`HI`), العربية (`AR`) e ภาษาไทย (`TH`).",
+                "screenshot": "Interface de Estúdio Multilíngue — Espaços de trabalho localizados interativos em Español (ES), Português (PT), 中文 (简体), हिन्दी (HI), العربية (AR) e ภาษาไทย (TH)",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Espaço de trabalho de estúdio nativo em 6 linguagens de interface Tier-A",
-                      "description": "Alterne toda a UI do SceneFlow Studio – Series Studio, Blueprint Room, Production Stage e Screening Room – entre inglês, espanhol, português, chinês simplificado, hindi e árabe."
+                      "title": "Espaço de trabalho nativo em 7 idiomas globais de interface",
+                      "description": "Alterne toda a interface do SceneFlow Studio—Sala de Séries, Sala de Blueprint, Palco de Produção e Sala de Exibição—entre inglês, espanhol, português, chinês simplificado, hindi, árabe e tailandês."
                     },
                     {
                       "title": "Controles localizados de direção, câmera, bloqueio e continuidade",
                       "description": "Cada guia, trilho de cena, seletor de lente de câmera, bloqueio de continuidade e controle de mixer são renderizados nativamente no idioma selecionado para que diretores e editores globais trabalhem a toda velocidade."
                     },
                     {
-                      "title": "Colaboração de equipe internacional em um projeto compartilhado",
-                      "description": "Um showrunner em Los Angeles, um editor em Madrid, um líder de efeitos visuais em São Paulo e um designer de som em Mumbai ou Xangai podem trabalhar no mesmo projeto em sua linguagem de UI preferida."
+                      "title": "Colaboração internacional em um único projeto compartilhado",
+                      "description": "Um showrunner em Los Angeles, um editor em Madri, um líder de VFX em São Paulo e líderes de som em Mumbai, Xangai, Dubai ou Bangkok podem colaborar no mesmo projeto no idioma de interface de sua preferência."
                     },
                     {
-                      "title": "Emparelhado com mais de 75 idiomas de streaming de destino e mais de 44 idiomas de dublagem",
-                      "description": "Combine uma UI nativa do Studio localizada com dublagem de voz neural em 44 idiomas e streams de sincronização labial para produzir e distribuir globalmente desde o primeiro dia."
+                      "title": "Combinado com streams de sincronização em cena em mais de 70 idiomas",
+                      "description": "Combine uma interface de Estúdio nativa em 7 idiomas com streams de vídeo sincronizados em cena em mais de 70 idiomas para produzir e distribuir globalmente desde o primeiro dia."
                     }
                   ]
                 }
@@ -1241,7 +1241,7 @@
       },
       {
         "id": "series-and-global-dubbing",
-        "title": "Série de vários episódios e lançamento global em mais de 13 idiomas",
+        "title": "Séries Multi-Episódio e Lançamento Global em 70+ Idiomas",
         "totalDuration": "6 minutos"
       }
     ],
@@ -1342,10 +1342,10 @@
           ]
         },
         "final-cut": {
-          "tabLabel": "4. Final Cut e mais de 13 idiomas",
+          "tabLabel": "4. Final Cut e 70+ Idiomas",
           "stepBadge": "Fase 3–4 • Exibição e dublagem",
           "shortTitle": "Final Cut e triagem",
-          "subtitle": "Combine Animatic e fluxos de vídeo, alterne entre mais de 13 idiomas dublados e compartilhe links de revisão /s/.",
+          "subtitle": "Combine streams de Animatic e Vídeo, alterne entre mais de 70 idiomas dublados e compartilhe links de revisão /s/.",
           "quickSteps": [
             {
               "number": "1",
@@ -1547,18 +1547,18 @@
     "title": "Exporte para qualquer lugar. Premiere no SceneFlow assim que você o conquistar.",
     "subtitle": "Exporte um master e distribua em qualquer lugar ou publique cenas e capítulos finalizados diretamente no {longForm} com trailers verticais cortados para {shorts} — imagem, música e narração já editadas. Localize cada lançamento com áudio dublado e diálogos multilíngues regenerados e clipes de sinalização, verifique todos os rascunhos no Screening Room antes do lançamento e inscreva-se na rede SceneFlow somente para convidados para aceleração de audiência financiada.",
     "localizationCallout": {
-      "badge": "Produção Global e UI Nativa",
-      "title": "Duas camadas de localização: direta no seu idioma, enviada no deles.",
+      "badge": "Produção Global e Interface Nativa",
+      "title": "Duas camadas de localização: dirija no seu idioma, publique no deles.",
       "pillars": [
         {
-          "badge": "UI do Studio e do site · Os seis principais mercados de IA do Google",
-          "title": "Direto em seu idioma nativo",
-          "description": "Navegue pela interface do Studio e escreva histórias, câmeras e direções de batida em linguagem simples em inglês, espanhol, português, hindi, chinês simplificado ou árabe."
+          "badge": "Interface do Estúdio e Site · 7 Mercados Globais de Idioma",
+          "title": "Dirija no seu idioma nativo",
+          "description": "Navegue pela interface do Estúdio e escreva direção de história, câmera e ritmo em linguagem simples em inglês, espanhol, português, hindi, chinês simplificado, árabe ou tailandês."
         },
         {
-          "badge": "Fluxos de produção · Mais de 70 idiomas",
-          "title": "Áudio dublado + diálogos regenerados e clipes de sinalização",
-          "description": "Vá além das legendas: gere fluxos de idiomas alternativos com dublagem clonada por voz, sincronização labial, diálogos regenerados e clipes de sinalização na cena."
+          "badge": "Streams de Sincronização em Cena · Mais de 70 Idiomas",
+          "title": "Verdadeira sincronização em cena, separação de stems e alinhamento elástico",
+          "description": "Vá muito além da dublagem tradicional: regenere seletivamente a atuação falada em câmera e planos com letreiros mantendo os clipes mestres de ação, separe os stems de áudio para preservar os efeitos sonoros e a trilha gerados, e alinhe falas traduzidas mais longas desacelerando elasticamente o vídeo em até 1.5x."
         }
       ]
     },
@@ -2331,7 +2331,7 @@
     "badge": "Exemplos de produção",
     "title": "Veja o pipeline completo",
     "titleAccent": "em ação",
-    "subtitle": "Cada exemplo começa com um trailer curto. A versão final completa — uma produção que abrange desde o projeto inicial e a pré-visualização até a montagem final — é exibida na sala de projeção.",
+    "subtitle": "Experimente histórias de vários minutos com personagens consistentes e verdadeira sincronização de idioma em cena em 7 idiomas globais — cada uma estruturada como uma produção completa, da Bíblia da Série e Blueprint até o Palco de Produção e a Sala de Exibição.",
     "subtitleTagline": "Produções de longa duração. Não clipes.",
     "screeningRoomInstruction": "Abra Screening Room primeiro para experimentar a produção da mesma forma que um revisor faria - alternando entre Pré-Vis, Clipes, Cenas, Capítulos, Master e Promo - e então inspecione Series Room, Blueprint Room e Production Stage abaixo.",
     "trailerLabel": "Reboque",
@@ -2861,7 +2861,7 @@
       }
     },
     "explorerHandoff": "Estes links representam um trabalho finalizado. O Explorer é o lugar onde você cria o seu próprio.",
-    "languagesBanner": "Os exemplos públicos estão disponíveis em 7 idiomas: inglês, espanhol, português, hindi, chinês, árabe e tailandês.",
+    "languagesBanner": "Sincronização de Idioma em Cena em 7 idiomas (EN · ES · PT · HI · ZH · AR · TH) — apresentando mais de 21 minutos de Drama Cinematográfico sincronizado (7 edições de 3 minutos), muito além da dublagem tradicional.",
     "workflowLabel": "Soluções",
     "startProduction": "Comece sua produção",
     "cta": "Comece sua produção",
@@ -2878,7 +2878,7 @@
       {
         "id": "drama",
         "title": "Drama cinematográfico de longa-metragem. Desvio de personagem inexistente.",
-        "subtitle": "Mantenha os rostos dos personagens, o figurino e as locações da cena 1 à cena 100. Percorra a sala de exibição para ver a pré-visualização (Pre-Vis), o vídeo de movimento de cada cena e o master final em ProRes 4K — depois, alterne o idioma para ouvir a dublagem completa.",
+        "subtitle": "Mantenha rostos de personagens, figurinos e locações em cenas de vários minutos sem desvio visual. Alterne o controle de idioma entre 7 idiomas (mais de 21 minutos de cinema renderizado em sete edições de 3 minutos) para experimentar a verdadeira sincronização de atuação em cena — um salto além da dublagem.",
         "badge": "Pronto para virar série",
         "solutionPillars": [
           {

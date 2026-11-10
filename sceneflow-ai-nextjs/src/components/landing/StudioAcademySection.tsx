@@ -71,7 +71,7 @@ const SHOWCASE_SCREENS: {
   },
   {
     id: 'final-cut',
-    tabLabel: '4. Final Cut & 13+ Languages',
+    tabLabel: '4. Final Cut & 70+ Languages',
     stepBadge: 'Phase 3–4 • Screening & Dubs',
   },
 ]

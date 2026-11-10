@@ -272,7 +272,8 @@ describe('keyFeatures structure', () => {
     expect(text).toContain('Prove the cut before you spend the compute.')
     expect(text).not.toContain('Veo 3.1')
     expect(text).not.toContain('January 2027')
-    expect(text).not.toContain('70+')
+    expect(text).toContain('70+ languages')
+    expect(text).not.toContain('44 languages')
     expect(text).not.toContain('Google AI Studio')
     expect(text).not.toContain('Omni already')
   })
@@ -374,9 +375,10 @@ describe('keyFeatures structure', () => {
     expect(languagesBlock).toBeGreaterThan(featureList)
     expect(detail.slice(descriptionEnd, screenshotStart)).not.toContain('LandingUiLanguagesBlock')
 
-    expect(en.keyFeatures.landingUiLanguagesLabel).toContain('44 languages')
+    expect(en.keyFeatures.landingUiLanguagesLabel).toContain('70+ languages')
     expect(en.keyFeatures.landingUiLanguagesLabel).toContain('6')
-    expect(en.keyFeatures.landingUiLanguagesLabel).not.toContain('70+')
+    expect(en.keyFeatures.landingUiLanguagesLabel).toContain('7 UI languages')
+    expect(en.keyFeatures.landingUiLanguagesLabel).not.toContain('44 languages')
 
     const webmAt = overview.indexOf('type="video/webm"')
     const mp4At = overview.indexOf('type="video/mp4"')

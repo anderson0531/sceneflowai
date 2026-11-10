@@ -139,7 +139,7 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
   },
   {
     match: 'scene-workflow.webp',
-    preset: { width: 5120, height: 2856, contentWidthFraction: 0.94, anchorY: -0.92 },
+    preset: { width: 5120, height: 2845, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'continuity-library.webp',

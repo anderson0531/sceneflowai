@@ -258,7 +258,7 @@
     "exitFullscreenOverview": "Exit fullscreen",
     "watchLongformLabel": "Watch the longform",
     "screenshotLabel": "Screenshot",
-    "landingUiLanguagesLabel": "Deliver true in-scene language sync, stem-separated audio, and regenerated dialogue & signage clips in 44 languages. Full Studio UI and this site ship in English plus our 6 core global AI markets:",
+    "landingUiLanguagesLabel": "Deliver true in-scene language sync, stem-separated audio, and regenerated dialogue & signage clips in 70+ languages. Full Studio UI and this site ship in English plus our 6 core global AI markets (7 UI languages total):",
     "rooms": [
       {
         "id": "series-desk",
@@ -619,17 +619,17 @@
               {
                 "icon": "continuity",
                 "title": "The Continuity Library",
-                "description": "Absolute visual and vocal consistency across your entire film, series, podcast, or client memoir. Lock AI-generated diptych portraits, multi-angle turnaround sheets, cloned voices, era-specific wardrobes, locations, and hero props—or upload live studio camera clips and real family reference photos for hybrid live-action + AI cinema with zero character drift.",
+                "description": "Absolute visual and vocal consistency across your entire film, series, podcast, or client memoir. Lock discrete facial identity references, PiP character-and-wardrobe composites, multi-angle turnaround sheets, cloned voices, Location Set Agent plates, and hero props with automatic script-to-continuity wardrobe sync—or upload live studio camera clips and real family reference photos for hybrid live-action + AI cinema with zero character drift.",
                 "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Cast identity, voice & turnaround locks",
-                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked or cloned voice profiles across every shot and episode."
+                      "title": "Facial identity & PiP wardrobe composite locks",
+                      "description": "Anchor every character with discrete facial identity portraits, PiP full-body wardrobe composites, turnaround sheets, and locked or cloned voice profiles across every shot and episode."
                     },
                     {
-                      "title": "Scene-specific wardrobes, eras & props",
-                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes, eras, and keepsakes stay unified."
+                      "title": "Location Set Agent & script-synced wardrobes",
+                      "description": "Generate sequential multi-angle master sets with the Location Set Agent and automatically sync period or scene-specific wardrobes and essential hero props from your script."
                     },
                     {
                       "title": "Hybrid live camera & photo uploads",
@@ -789,7 +789,7 @@
               {
                 "icon": "stillsWorkbench",
                 "title": "Fullscreen Stills & Keyframe Studio",
-                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, and perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`).",
+                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`), and rely on intelligent render diagnostics with one-click customer support escalation.",
                 "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
                 "learnMore": {
                   "items": [
@@ -802,8 +802,8 @@
                       "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
                     },
                     {
-                      "title": "Draft vs Final 4K & Creative modes",
-                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                      "title": "Draft vs Final 4K, Creative & error recovery",
+                      "description": "Toggle between rapid Draft previews and Final 4K resolution, Standard or Creative synthesis modes, and guided policy/render diagnostics with 1-click support escalation."
                     },
                     {
                       "title": "Pre-Vis Ken Burns motion framing",
@@ -859,7 +859,7 @@
               {
                 "icon": "clipsWorkbench",
                 "title": "Multi-Take Clips & Retake Studio",
-                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes, and manage per-stream localized video takes for dialogue and signage shots.",
+                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes with Reference-vs-Frame prompt optimization, toggle localized clip captions on or off, and manage per-stream localized video takes for dialogue and signage shots.",
                 "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
                 "learnMore": {
                   "items": [
@@ -868,12 +868,12 @@
                       "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
                     },
                     {
-                      "title": "IAD Smart Retake & Direct Video",
-                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
+                      "title": "IAD Smart Retake & Reference-vs-Frame optimization",
+                      "description": "Refine camera motion, subject physics, or facial performance with Reference-vs-Frame prompt sanitization, Direct Video pre-flight controls, and guided error recovery."
                     },
                     {
-                      "title": "Per-stream localized shot takes",
-                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
+                      "title": "Per-stream localized shot takes & caption toggle",
+                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream, with instant caption overlay toggle."
                     },
                     {
                       "title": "Dialogue-free stem readiness",
@@ -885,7 +885,7 @@
               {
                 "icon": "scriptSupervisor",
                 "title": "FlowDirector",
-                "description": "Positioned right after `Clips` in the Scene Workflow, `FlowDirector` uses multimodal video intelligence to iterate and optimize your Stills and Clips before final edits in the Mixer and multi-language Stream generation. Uniting oversight and action from both the Audience Resonance (`AR Score`) and Director perspectives, it inspects 5-axis audience sub-scores, script and continuity compliance telemetry, and root-cause anomaly attribution (`Keyframe`, `Motion Video`, or `Scene Direction`)—so you can selectively apply optional pickup recommendations and fixes through the Shot Director or Scene Director.",
+                "description": "Positioned right after `Clips` in the Scene Workflow, `FlowDirector` uses multimodal video intelligence to iterate and optimize your Stills and Clips before final edits in the Mixer and multi-language Stream generation. Uniting oversight and action from both the Audience Resonance (`AR Score`) and Director perspectives—with language-distinctive reviews saved independently for your English Master and each localized language stream—it inspects 5-axis audience sub-scores, script and continuity compliance telemetry, and root-cause anomaly attribution (`Keyframe`, `Motion Video`, or `Scene Direction`) so you can selectively apply optional pickup fixes through the Shot Director or Scene Director.",
                 "screenshot": "FlowDirector — multimodal Audience Resonance (AR Score) and Director video review, shot compliance matrix, and optional Shot & Scene Director pickups",
                 "learnMore": {
                   "items": [
@@ -894,8 +894,8 @@
                       "description": "Evaluate rendered clips and scene MP4s simultaneously for 5-axis Audience Resonance (AR Score) and Director script and continuity compliance."
                     },
                     {
-                      "title": "Shot-by-shot compliance & anomaly attribution",
-                      "description": "Spot visual continuity drift, missing props, lip-sync gaps, and pacing friction with root-cause attribution across Keyframe, Motion, or Scene Direction."
+                      "title": "Language-distinctive multimodal reviews",
+                      "description": "Audit both your English Master cut and localized language streams independently, with per-language saved review histories and lip-sync verification."
                     },
                     {
                       "title": "1-click Shot Director fixes & prompt patches",
@@ -971,7 +971,7 @@
               {
                 "icon": "languageStreams",
                 "title": "Streams (Multi-Language)",
-                "description": "Deliver a generational leap beyond legacy voiceover dubbing with true In-Scene Language Sync across 44 languages from one master timeline. Selectively regenerate on-camera facial performance, lip-sync, and in-scene text signage only on spoken or stenciled shots while retaining unselected master action shots at zero extra credit cost. Neural stem separation (`htdemucs`) strips spoken source speech while preserving generated SFX, foley, and musical score—paired with elastic video slow-down (up to `15s` at `67%` speed) so translated performances land on every beat.",
+                "description": "Deliver a generational leap beyond legacy voiceover dubbing with true In-Scene Language Sync across 70+ languages from one master timeline. Selectively regenerate on-camera facial performance, lip-sync, and in-scene text signage only on spoken or stenciled shots while retaining unselected master action shots at zero extra credit cost. Neural stem separation (`htdemucs`) strips spoken source speech while preserving generated SFX, foley, and musical score—paired with elastic video slow-down (up to `15s` at `67%` speed) so translated performances land on every beat.",
                 "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
@@ -988,8 +988,8 @@
                       "description": "Align longer translated performances naturally by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting audio tempo up to 1.25x."
                     },
                     {
-                      "title": "Synchronized dialogue & signage across 44 languages",
-                      "description": "Deliver localized on-camera performances and regenerated in-scene signage across 44 languages so lip movement, props, and speech match every market natively."
+                      "title": "Synchronized dialogue & signage across 70+ languages",
+                      "description": "Deliver localized on-camera performances and regenerated in-scene signage across 70+ languages so lip movement, props, and speech match every market natively."
                     },
                     {
                       "title": "7-language native Studio UI",
@@ -1018,8 +1018,8 @@
                       "description": "A showrunner in Los Angeles, an editor in Madrid, a VFX lead in São Paulo, and sound leads in Mumbai, Shanghai, Dubai, or Bangkok can collaborate on one project in their preferred UI language."
                     },
                     {
-                      "title": "Paired with 44-language in-scene sync streams",
-                      "description": "Combine a native 7-language Studio UI with 44-language in-scene synchronized video streams to produce and distribute globally from day one."
+                      "title": "Paired with 70+ language in-scene sync streams",
+                      "description": "Combine a native 7-language Studio UI with 70+ language in-scene synchronized video streams to produce and distribute globally from day one."
                     }
                   ]
                 }
@@ -1241,7 +1241,7 @@
       },
       {
         "id": "series-and-global-dubbing",
-        "title": "Multi-Episode Series & 13+ Language Global Release",
+        "title": "Multi-Episode Series & 70+ Language Global Release",
         "totalDuration": "6 mins"
       }
     ],
@@ -1342,10 +1342,10 @@
           ]
         },
         "final-cut": {
-          "tabLabel": "4. Final Cut & 13+ Languages",
+          "tabLabel": "4. Final Cut & 70+ Languages",
           "stepBadge": "Phase 3–4 • Screening & Dubs",
           "shortTitle": "Final Cut & Screening",
-          "subtitle": "Blend Animatic & Video streams, switch across 13+ dubbed languages, and share /s/ review links.",
+          "subtitle": "Blend Animatic & Video streams, switch across 70+ dubbed languages, and share /s/ review links.",
           "quickSteps": [
             {
               "number": "1",
