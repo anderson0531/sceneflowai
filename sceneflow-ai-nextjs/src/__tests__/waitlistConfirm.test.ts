@@ -139,7 +139,7 @@ describe('POST /api/waitlist', () => {
     expect(payload.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click')
     expect(String(payload.html)).toContain('LifeFocus, LLC')
     expect(String(payload.html)).toContain('/brand/sf-badge.png')
-    expect(String(payload.text)).toContain('131 Continental Dr')
+    expect(String(payload.text)).toContain('2900 W Anderson Ln')
     expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
   })
 

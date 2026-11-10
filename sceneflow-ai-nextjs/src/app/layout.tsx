@@ -105,10 +105,10 @@ const organizationStructuredData = {
   email: LEGAL_SUPPORT_EMAIL,
   address: {
     '@type': 'PostalAddress',
-    streetAddress: '131 Continental Dr, Suite 305',
-    addressLocality: 'Newark',
-    addressRegion: 'DE',
-    postalCode: '19713',
+    streetAddress: '2900 W Anderson Ln, Suite C200',
+    addressLocality: 'Austin',
+    addressRegion: 'TX',
+    postalCode: '78757',
     addressCountry: 'US',
   },
   contactPoint: [

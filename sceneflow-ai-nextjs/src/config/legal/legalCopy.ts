@@ -7,7 +7,7 @@ export const LEGAL_REGISTERED_AGENT = 'Legalinc Corporate Services, Inc.'
 export const LEGAL_SERVICE_NAME = 'SceneFlow Studio'
 export const LEGAL_LAST_UPDATED = 'July 31, 2026'
 export const LEGAL_WEBSITE = 'https://sceneflowai.studio'
-export const LEGAL_ADDRESS = '131 Continental Dr, Suite 305, Newark, DE 19713, United States'
+export const LEGAL_ADDRESS = '2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States'
 
 export const LEGAL_EMAIL_DOMAIN = 'sceneflowai.studio'
 export const LEGAL_SUPPORT_EMAIL = 'support@sceneflowai.studio'

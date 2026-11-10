@@ -44,7 +44,7 @@ describe('legal document consistency', () => {
     expect(LEGAL_SUPPORT_EMAIL).toBe('support@sceneflowai.studio')
     expect(LEGAL_ABUSE_EMAIL).toBe('abuse@sceneflowai.studio')
     expect(LEGAL_TRUST_EMAIL).toBe('trust@sceneflowai.studio')
-    expect(LEGAL_ADDRESS).toBe('131 Continental Dr, Suite 305, Newark, DE 19713, United States')
+    expect(LEGAL_ADDRESS).toBe('2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States')
     expect(LEGAL_LEGAL_EMAIL).toBe('legal@sceneflowai.studio')
   })
 })
