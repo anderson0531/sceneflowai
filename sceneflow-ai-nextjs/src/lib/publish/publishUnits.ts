@@ -151,7 +151,9 @@ interface StreamLike {
 }
 
 function pickReadyStream(streams: StreamLike[] | undefined, language: string): StreamLike | undefined {
-  const ready = (streams || []).filter((stream) => stream.status === 'ready' && stream.mp4Url)
+  const ready = (streams || []).filter(
+    (stream) => (stream.status === 'ready' || stream.status === 'complete') && stream.mp4Url
+  )
   const inLanguage = ready.filter((stream) => stream.language === language)
   const pool = inLanguage.length > 0 ? inLanguage : ready
   const video = pool.filter((stream) => stream.streamType === 'video')

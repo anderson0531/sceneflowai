@@ -9,8 +9,10 @@ import {
   Play,
   ChevronDown,
   ChevronUp,
+  Clapperboard,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { PreVisRenderDialog } from '@/components/vision/PreVisRenderDialog'
 import { cn } from '@/lib/utils'
 import { FinalCutStreamsPanel } from '@/components/final-cut/FinalCutStreamsPanel'
 import { buildFinalCutClips, type BuildFinalCutClipsArgs } from '@/lib/final-cut/useFinalCutClips'
@@ -95,6 +97,7 @@ interface StreamCardProps {
   script?: unknown
   onSaveStreams: PublishingFinalStreamsTabProps['onSaveStreams']
   onPreviewStream: (language: string) => void
+  onOpenPreVisRender: (language: string) => void
   allStreams: PublishingStreamRecord[]
 }
 
@@ -106,6 +109,7 @@ function StreamCard({
   script,
   onSaveStreams,
   onPreviewStream,
+  onOpenPreVisRender,
   allStreams,
 }: StreamCardProps) {
   const [expanded, setExpanded] = useState(false)
@@ -322,6 +326,15 @@ function StreamCard({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onOpenPreVisRender(stream.language)}
+            className="border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50"
+          >
+            <Clapperboard className="w-3.5 h-3.5 mr-1 text-cyan-300" />
+            Render Pre-Vis
+          </Button>
           {stream.mp4Url ? (
             <Button
               size="sm"
@@ -421,10 +434,65 @@ export function PublishingFinalStreamsTab({
   streams,
   onSaveStreams,
   onPreviewStream,
+  sceneProductionState,
 }: PublishingFinalStreamsTabProps) {
+  const [preVisDialogOpen, setPreVisDialogOpen] = useState(false)
+  const [preVisDialogLanguage, setPreVisDialogLanguage] = useState<string>('en')
+
+  const effectiveMetadata = useMemo(() => {
+    const baseMeta = (metadata && typeof metadata === 'object' ? metadata : {}) as Record<
+      string,
+      unknown
+    >
+    const vp = (
+      baseMeta.visionPhase && typeof baseMeta.visionPhase === 'object'
+        ? baseMeta.visionPhase
+        : {}
+    ) as Record<string, unknown>
+    const prod = (
+      vp.production && typeof vp.production === 'object' ? vp.production : {}
+    ) as Record<string, unknown>
+    const metaScenes = (
+      prod.scenes && typeof prod.scenes === 'object' ? prod.scenes : {}
+    ) as Record<string, unknown>
+    return {
+      ...baseMeta,
+      visionPhase: {
+        ...vp,
+        production: {
+          ...prod,
+          scenes: {
+            ...metaScenes,
+            ...sceneProductionState,
+          },
+        },
+      },
+    }
+  }, [metadata, sceneProductionState])
+
+  const projectScenes = useMemo<Array<Record<string, unknown>>>(() => {
+    const rawScript = script as
+      | { script?: { scenes?: unknown }; scenes?: unknown }
+      | undefined
+    const fromScript = rawScript?.script?.scenes ?? rawScript?.scenes
+    if (Array.isArray(fromScript) && fromScript.length > 0) {
+      return fromScript as Array<Record<string, unknown>>
+    }
+    const vp = (
+      effectiveMetadata as {
+        visionPhase?: {
+          script?: { script?: { scenes?: unknown }; scenes?: unknown }
+          scenes?: unknown
+        }
+      }
+    )?.visionPhase
+    const fromMeta = vp?.script?.script?.scenes ?? vp?.script?.scenes ?? vp?.scenes
+    return Array.isArray(fromMeta) ? (fromMeta as Array<Record<string, unknown>>) : []
+  }, [script, effectiveMetadata])
+
   const publishingStreams = useMemo(
-    () => getPublishingState(metadata).streams,
-    [metadata, streams]
+    () => getPublishingState(effectiveMetadata).streams,
+    [effectiveMetadata, streams]
   )
 
   const readiness = useMemo(
@@ -432,40 +500,84 @@ export function PublishingFinalStreamsTab({
       computePublishingReadiness(
         {
           id: projectId,
-          metadata,
+          metadata: effectiveMetadata,
           script:
             (script as { script?: { scenes?: unknown } } | undefined)?.script ??
             (script as { scenes?: unknown } | undefined),
         } as ProjectLike,
         publishingStreams
       ),
-    [projectId, metadata, script, publishingStreams]
+    [projectId, effectiveMetadata, script, publishingStreams]
   )
+
+  const handleOpenPreVisRender = useCallback((lang = 'en') => {
+    setPreVisDialogLanguage(lang)
+    setPreVisDialogOpen(true)
+  }, [])
 
   if (publishingStreams.length === 0) {
     return (
-      <div className="rounded-xl border border-zinc-800/70 bg-zinc-950/45 p-8 text-center">
-        <Film className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
-        <p className="text-sm text-zinc-400">No language streams yet.</p>
-        <p className="text-xs text-zinc-500 mt-1">
-          Generate a language stream from the Streams view first.
-        </p>
-      </div>
+      <>
+        <div className="rounded-xl border border-zinc-800/70 bg-zinc-950/45 p-8 text-center">
+          <Film className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
+          <p className="text-sm text-zinc-400">No language streams yet.</p>
+          <p className="text-xs text-zinc-500 mt-1">
+            Generate a language stream from the Streams view first, or render synced Pre-Vis scenes directly below.
+          </p>
+          {projectScenes.length > 0 ? (
+            <div className="mt-4 flex justify-center">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleOpenPreVisRender('en')}
+                className="border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50"
+              >
+                <Clapperboard className="w-3.5 h-3.5 mr-1.5 text-cyan-300" />
+                Render Synced Pre-Vis Scenes
+              </Button>
+            </div>
+          ) : null}
+        </div>
+        <PreVisRenderDialog
+          open={preVisDialogOpen}
+          onOpenChange={setPreVisDialogOpen}
+          scenes={projectScenes}
+          projectId={projectId}
+          projectTitle={projectTitle}
+          initialLanguage={preVisDialogLanguage}
+          sceneProductionState={sceneProductionState}
+        />
+      </>
     )
   }
 
   return (
     <div className="space-y-4 overflow-y-auto flex-1 min-h-0 pr-1">
-      <div className="flex items-center justify-between gap-2 shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-2 shrink-0">
         <p className="text-xs text-zinc-500">
           {readiness.readyStreamCount}/{readiness.totalStreamCount} streams ready · render all
           scenes then stitch a delivery-quality master per language.
         </p>
-        {readiness.blockers.length > 0 ? (
-          <span className="text-[10px] text-amber-400 shrink-0">
-            {readiness.blockers.length} blocker{readiness.blockers.length !== 1 ? 's' : ''}
-          </span>
-        ) : null}
+        <div className="flex items-center gap-2 shrink-0">
+          {readiness.blockers.length > 0 ? (
+            <span className="text-[10px] text-amber-400 shrink-0">
+              {readiness.blockers.length} blocker{readiness.blockers.length !== 1 ? 's' : ''}
+            </span>
+          ) : null}
+          {projectScenes.length > 0 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                handleOpenPreVisRender(publishingStreams[0]?.language || 'en')
+              }
+              className="h-7 text-xs border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50"
+            >
+              <Clapperboard className="w-3.5 h-3.5 mr-1.5 text-cyan-300" />
+              Render Pre-Vis Scenes
+            </Button>
+          ) : null}
+        </div>
       </div>
       {publishingStreams.map((stream) => (
         <StreamCard
@@ -473,13 +585,24 @@ export function PublishingFinalStreamsTab({
           stream={stream}
           projectId={projectId}
           projectTitle={projectTitle}
-          metadata={metadata}
+          metadata={effectiveMetadata}
           script={script}
           onSaveStreams={onSaveStreams}
           onPreviewStream={onPreviewStream}
+          onOpenPreVisRender={handleOpenPreVisRender}
           allStreams={publishingStreams}
         />
       ))}
+      <PreVisRenderDialog
+        open={preVisDialogOpen}
+        onOpenChange={setPreVisDialogOpen}
+        scenes={projectScenes}
+        projectId={projectId}
+        projectTitle={projectTitle}
+        initialLanguage={preVisDialogLanguage}
+        availableLanguages={publishingStreams.map((s) => s.language)}
+        sceneProductionState={sceneProductionState}
+      />
     </div>
   )
 }

@@ -19,6 +19,11 @@
 
 import { clampWatermarkCropPercent, getFrameCropSourceRect } from './segmentVideoCrop'
 import { deliveryFrameSize, type DeliveryAspectRatio } from './renderTypes'
+import {
+  computeFrameKenBurnsTransform,
+  resolveBeatKenBurnsSettings,
+  type BeatKenBurnsSettings,
+} from '@/lib/storyboard/kenBurnsFrame'
 
 // =============================================================================
 // Canvas capture (video/mixed exports)
@@ -58,6 +63,12 @@ export interface LocalRenderSegment {
   videoTrimOutSec?: number
   /** Picture speed for this language version. 1 leaves source time unchanged. */
   playbackRate?: number
+  /** Optional authored Ken Burns viewport transform (Pre-Vis beat stills). */
+  kenBurns?: BeatKenBurnsSettings
+  /** Optional fade-in from black in seconds (Pre-Vis beat/scene transitionIn === 'fade'). */
+  fadeInSec?: number
+  /** Optional fade-out to black in seconds (Pre-Vis beat/scene transitionOut === 'fade'). */
+  fadeOutSec?: number
 }
 
 export interface LocalRenderAudioClip {
@@ -1487,7 +1498,7 @@ export class LocalRenderService {
   }
   
   /**
-   * Animatic still crossfade + subtle push-in (matches ScenePreviewPlayer image-sequence).
+   * Animatic still crossfade + subtle push-in or authored Ken Burns (matches Screening Room / ScenePreviewPlayer).
    */
   private drawAnimaticStillPair(
     ctx: CanvasRenderingContext2D,
@@ -1495,10 +1506,16 @@ export class LocalRenderService {
     canvasH: number,
     startImg: HTMLImageElement,
     endImg: HTMLImageElement | undefined,
-    progress: number
+    progress: number,
+    kenBurns?: BeatKenBurnsSettings,
+    fadeBlack?: number
   ): void {
     const p = Math.max(0, Math.min(1, progress))
-    const scalePush = 1 + p * 0.02
+    const resolvedKb = resolveBeatKenBurnsSettings(kenBurns)
+    const kbTransform = resolvedKb ? computeFrameKenBurnsTransform(resolvedKb, p) : null
+    const scalePush = kbTransform ? kbTransform.scale : 1 + p * 0.02
+    const translateX = kbTransform ? (kbTransform.translateX / 100) * canvasW : 0
+    const translateY = kbTransform ? (kbTransform.translateY / 100) * canvasH : 0
 
     const drawLayer = (img: HTMLImageElement, alpha: number) => {
       if (alpha <= 0) return
@@ -1514,8 +1531,8 @@ export class LocalRenderService {
       const s = baseScale * scalePush
       const sw = aw * s
       const sh = ah * s
-      const x = (canvasW - sw) / 2
-      const y = (canvasH - sh) / 2
+      const x = (canvasW - sw) / 2 + translateX
+      const y = (canvasH - sh) / 2 + translateY
       ctx.drawImage(img, x, y, sw, sh)
       ctx.restore()
     }
@@ -1523,6 +1540,13 @@ export class LocalRenderService {
     drawLayer(startImg, 1)
     if (endImg && endImg.naturalWidth > 0) {
       drawLayer(endImg, p)
+    }
+    if (fadeBlack && fadeBlack > 0) {
+      ctx.save()
+      ctx.globalAlpha = Math.max(0, Math.min(1, fadeBlack))
+      ctx.fillStyle = '#000000'
+      ctx.fillRect(0, 0, canvasW, canvasH)
+      ctx.restore()
     }
   }
 
@@ -1642,7 +1666,25 @@ export class LocalRenderService {
       const endImg = assets.get(`${segment.segmentId}__end`) as HTMLImageElement | undefined
       const progress =
         segment.duration > 0 ? Math.max(0, Math.min(1, localTime / segment.duration)) : 0
-      this.drawAnimaticStillPair(ctx, width, height, asset, endImg, progress)
+      const fadeIn =
+        segment.fadeInSec && segment.fadeInSec > 0
+          ? Math.max(0, 1 - localTime / segment.fadeInSec)
+          : 0
+      const fadeOut =
+        segment.fadeOutSec && segment.fadeOutSec > 0
+          ? Math.max(0, 1 - (segment.duration - localTime) / segment.fadeOutSec)
+          : 0
+      const fadeBlack = Math.min(1, Math.max(fadeIn, fadeOut))
+      this.drawAnimaticStillPair(
+        ctx,
+        width,
+        height,
+        asset,
+        endImg,
+        progress,
+        segment.kenBurns,
+        fadeBlack
+      )
     }
   }
   

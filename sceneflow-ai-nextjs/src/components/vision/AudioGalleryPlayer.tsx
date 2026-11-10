@@ -10,11 +10,12 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import NextImage from 'next/image'
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, Maximize, Minimize, Share2, ExternalLink, Film, Loader2 } from 'lucide-react'
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, Maximize, Minimize, Share2, ExternalLink, Film, Loader2, Clapperboard } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import { PreVisRenderDialog } from '@/components/vision/PreVisRenderDialog'
 import { cn } from '@/lib/utils'
 import { resolvePreVisSceneDisplay } from '@/lib/storyboard/preVisSceneDisplay'
 import {
@@ -399,6 +400,8 @@ interface AudioGalleryPlayerProps {
   selectedLanguage: string
   onLanguageChange: (language: string) => void
   availableLanguages: string[]
+  projectId?: string
+  projectTitle?: string
   onClose?: () => void
   onShare?: (opts?: { viewOnly?: boolean }) => void
   onSceneChange?: (index: number) => void
@@ -480,6 +483,8 @@ export function AudioGalleryPlayer({
   selectedLanguage,
   onLanguageChange,
   availableLanguages: _availableLanguages,
+  projectId,
+  projectTitle,
   onClose,
   onShare,
   onSceneChange,
@@ -506,6 +511,7 @@ export function AudioGalleryPlayer({
   onSceneMixChange,
 }: AudioGalleryPlayerProps) {
   const [viewOnlyShare, setViewOnlyShare] = useState(false)
+  const [preVisRenderOpen, setPreVisRenderOpen] = useState(false)
   const [currentSceneIndex, setCurrentSceneIndex] = useState(() =>
     typeof screeningPlaybackHint?.sceneIndex === 'number' && screeningPlaybackHint.sceneIndex >= 0
       ? screeningPlaybackHint.sceneIndex
@@ -1814,6 +1820,29 @@ export function AudioGalleryPlayer({
           useScreeningLayout && 'w-full'
         )}
       >
+        {!isSharedView && !embedMode && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (effectiveIsPlaying) {
+                    toggleEffectivePlayback()
+                  }
+                  setPreVisRenderOpen(true)
+                }}
+                className="h-7 text-xs bg-cyan-950/60 border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/60 hover:text-white"
+              >
+                <Clapperboard className="w-3.5 h-3.5 mr-1.5 text-cyan-300" />
+                Render Pre-Vis
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Render synced Pre-Vis (stills, voice, music, SFX) for selected scenes and languages
+            </TooltipContent>
+          </Tooltip>
+        )}
         {onGenVideo && !isSharedView && (
           <Button
             variant="outline"
@@ -2612,6 +2641,22 @@ export function AudioGalleryPlayer({
             size="gallery"
           />
         </div>
+        )}
+        {!isSharedView && !embedMode && (
+          <PreVisRenderDialog
+            open={preVisRenderOpen}
+            onOpenChange={setPreVisRenderOpen}
+            scenes={scenes}
+            projectId={projectId || scenes[0]?.projectId}
+            projectTitle={projectTitle}
+            initialLanguage={selectedLanguage}
+            currentSceneIndex={currentSceneIndex}
+            availableLanguages={_availableLanguages}
+            sceneProductionState={sceneProductionState}
+            masterVolume={volume}
+            audioMode={animaticAudioMode}
+            clipAudioByBeatId={clipAudioByBeatId}
+          />
         )}
       </div>
     </TooltipProvider>

@@ -2,8 +2,10 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { Download, Facebook, Loader2, Music2, Youtube } from 'lucide-react'
+import { Clapperboard, Download, Facebook, Loader2, Music2, Youtube } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { PreVisRenderDialog } from '@/components/vision/PreVisRenderDialog'
+import { collectPreVisLanguages } from '@/lib/storyboard/preVisSceneRender'
 import { cn } from '@/lib/utils'
 import { getLanguageDisplayName } from '@/lib/publish/buildLanguageAudioTrack'
 import { promoAssetForLanguage } from '@/lib/publish/promoLanguage'
@@ -90,26 +92,35 @@ export function PublishingPackageShipTab({
   const [tiktokConnected, setTiktokConnected] = useState(false)
   const [busy, setBusy] = useState<'prepare' | 'ship' | 'meta' | null>(null)
   const [statusText, setStatusText] = useState('')
+  const [preVisRenderOpen, setPreVisRenderOpen] = useState(false)
 
   const production = useMemo(() => {
-    if (sceneProductionState && Object.keys(sceneProductionState).length > 0) {
-      return sceneProductionState as Record<string, { productionStreams?: unknown[]; renderedSceneUrl?: string | null }>
-    }
-    return getSceneProductionStateFromMetadata(metadata) as Record<
+    const fromMeta = getSceneProductionStateFromMetadata(metadata) as Record<
       string,
       { productionStreams?: unknown[]; renderedSceneUrl?: string | null }
     >
+    if (sceneProductionState && Object.keys(sceneProductionState).length > 0) {
+      return {
+        ...fromMeta,
+        ...(sceneProductionState as Record<
+          string,
+          { productionStreams?: unknown[]; renderedSceneUrl?: string | null }
+        >),
+      }
+    }
+    return fromMeta
   }, [sceneProductionState, metadata])
 
+  const rawScenes = useMemo(() => scenesFromProps(script, metadata), [script, metadata])
   const scenes = useMemo(
-    () => collectPublishScenes(scenesFromProps(script, metadata), production as never, language),
-    [script, metadata, production, language]
+    () => collectPublishScenes(rawScenes, production as never, language),
+    [rawScenes, production, language]
   )
   const chapters = useMemo(() => listPublishChapters(scenes), [scenes])
   const languages = useMemo(() => {
     const fromStreams = streams.map((stream) => stream.language).filter(Boolean)
-    return fromStreams.length > 0 ? Array.from(new Set(fromStreams)) : ['en']
-  }, [streams])
+    return collectPreVisLanguages(rawScenes, fromStreams)
+  }, [rawScenes, streams])
 
   useEffect(() => {
     if (!languages.includes(language)) setLanguage(languages[0] || 'en')
@@ -125,7 +136,6 @@ export function PublishingPackageShipTab({
 
   const publishingState = useMemo(() => getPublishingState(metadata), [metadata])
   const promo = promoAssetForLanguage(publishingState.promo, language)
-  const rawScenes = useMemo(() => scenesFromProps(script, metadata), [script, metadata])
   const resolvedPromoStreamUrl = useMemo(
     () =>
       resolvePromoScreeningVideoUrl({
@@ -442,33 +452,69 @@ export function PublishingPackageShipTab({
       </div>
 
       {kind === 'scene' ? (
-        <select
-          value={sceneId}
-          onChange={(event) => setSceneId(event.target.value)}
-          className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-        >
-          {scenes.map((scene) => (
-            <option key={scene.id} value={scene.id}>
-              {scene.title}
-              {scene.mp4Url ? '' : ' (not rendered)'}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={sceneId}
+            onChange={(event) => setSceneId(event.target.value)}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+          >
+            {scenes.map((scene) => (
+              <option key={scene.id} value={scene.id}>
+                {scene.title}
+                {scene.mp4Url ? '' : ' (not rendered)'}
+              </option>
+            ))}
+          </select>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setPreVisRenderOpen(true)}
+            className="border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50"
+          >
+            <Clapperboard className="w-3.5 h-3.5 mr-1.5 text-cyan-300" />
+            Render Pre-Vis Scene
+          </Button>
+        </div>
       ) : null}
 
       {kind === 'chapter' ? (
-        <select
-          value={beatIndex ?? ''}
-          onChange={(event) => setBeatIndex(Number(event.target.value))}
-          className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-        >
-          {chapters.length === 0 ? <option value="">No Blueprint chapters linked</option> : null}
-          {chapters.map((chapter) => (
-            <option key={chapter.beatIndex} value={chapter.beatIndex}>
-              {chapter.title}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={beatIndex ?? ''}
+            onChange={(event) => setBeatIndex(Number(event.target.value))}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+          >
+            {chapters.length === 0 ? <option value="">No Blueprint chapters linked</option> : null}
+            {chapters.map((chapter) => (
+              <option key={chapter.beatIndex} value={chapter.beatIndex}>
+                {chapter.title}
+              </option>
+            ))}
+          </select>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setPreVisRenderOpen(true)}
+            className="border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50"
+          >
+            <Clapperboard className="w-3.5 h-3.5 mr-1.5 text-cyan-300" />
+            Render Chapter Pre-Vis
+          </Button>
+        </div>
+      ) : null}
+
+      {kind === 'master' && rawScenes.length > 0 ? (
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setPreVisRenderOpen(true)}
+            className="border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50"
+          >
+            <Clapperboard className="w-3.5 h-3.5 mr-1.5 text-cyan-300" />
+            Render Pre-Vis Scenes ({getLanguageDisplayName(language)})
+          </Button>
+        </div>
       ) : null}
 
       <div className="flex flex-wrap gap-1">
@@ -589,6 +635,28 @@ export function PublishingPackageShipTab({
       ) : null}
       {statusText ? <p className="text-xs text-zinc-400">{statusText}</p> : null}
       {readyUrl ? <p className="truncate text-[11px] text-emerald-300">Ready · {readyUrl}</p> : null}
+      <PreVisRenderDialog
+        open={preVisRenderOpen}
+        onOpenChange={setPreVisRenderOpen}
+        scenes={rawScenes}
+        projectId={projectId}
+        projectTitle={projectTitle}
+        initialLanguage={language}
+        initialSceneIndices={
+          kind === 'scene'
+            ? (() => {
+                const idx = scenes.findIndex((s) => s.id === sceneId)
+                return idx >= 0 ? [idx] : undefined
+              })()
+            : kind === 'chapter'
+              ? scenes
+                  .map((s, idx) => (s.beatIndex === beatIndex ? idx : -1))
+                  .filter((idx) => idx >= 0)
+              : undefined
+        }
+        availableLanguages={languages}
+        sceneProductionState={production as Record<string, SceneProductionData>}
+      />
     </div>
   )
 }

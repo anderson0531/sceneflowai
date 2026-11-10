@@ -3022,13 +3022,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const rememberAppendedSceneRender = useCallback((sceneId: string, stream: ProductionStream) => {
     const prev = sceneProductionStateRef.current
-    const current = prev[sceneId]
-    if (!current) return
+    const current = prev[sceneId] ?? ({} as SceneProductionData)
 
     const nextScene = withAppendedProductionStream(current, stream)
     const nextState = { ...prev, [sceneId]: nextScene }
     sceneProductionStateRef.current = nextState
     setSceneProductionState(nextState)
+
+    setProject((prevProject: any) => {
+      if (!prevProject) return prevProject
+      const existingVisionPhase = prevProject.metadata?.visionPhase || {}
+      const existingProduction = existingVisionPhase.production || {}
+      const existingScenes = existingProduction.scenes || {}
+      return {
+        ...prevProject,
+        metadata: {
+          ...(prevProject.metadata || {}),
+          visionPhase: {
+            ...existingVisionPhase,
+            production: {
+              ...existingProduction,
+              scenes: {
+                ...existingScenes,
+                [sceneId]: nextScene,
+              },
+            },
+          },
+        },
+      }
+    })
 
     setScenes((prevScenes) => {
       let changed = false

@@ -32,7 +32,12 @@ export function resolveScreeningVideoStreamUrl(
     language,
     perSceneOverrides: screeningOverrideForLanguage(sceneId, language, finalCut),
   }
-  return resolveSceneStreamUrl(sceneProductionState, sceneId, selection).url
+  const videoUrl = resolveSceneStreamUrl(sceneProductionState, sceneId, selection).url
+  if (videoUrl) return videoUrl
+  return resolveSceneStreamUrl(sceneProductionState, sceneId, {
+    format: 'animatic',
+    language,
+  }).url
 }
 
 export interface ResolvePromoScreeningVideoOptions {

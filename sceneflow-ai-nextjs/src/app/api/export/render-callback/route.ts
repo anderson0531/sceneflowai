@@ -168,6 +168,40 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    if (
+      status === 'COMPLETED' &&
+      downloadUrl &&
+      job.render_type === 'scene_animatic' &&
+      job.project_id &&
+      job.scene_id
+    ) {
+      try {
+        const { appendSceneRender } = await import('@/lib/projects/appendSceneRender')
+        const { getLanguageName } = await import('@/constants/languages')
+        const lang = job.language || 'en'
+        await appendSceneRender({
+          projectId: job.project_id,
+          sceneId: job.scene_id,
+          stream: {
+            id: `scene-animatic-${jobId}`,
+            language: lang,
+            languageLabel: getLanguageName(lang),
+            status: 'complete',
+            streamType: 'animatic',
+            mp4Url: downloadUrl,
+            completedAt: new Date().toISOString(),
+            source: 'render',
+            ...(typeof job.estimated_duration === 'number' && job.estimated_duration > 0
+              ? { duration: job.estimated_duration }
+              : {}),
+          },
+        })
+        console.log(`[Render Callback] Appended scene_animatic stream for scene ${job.scene_id}`)
+      } catch (appendErr) {
+        console.error('[Render Callback] Failed to append scene_animatic stream:', appendErr)
+      }
+    }
+
     console.log(`[Render Callback] Job ${jobId} updated successfully to ${status}`);
 
     return NextResponse.json({

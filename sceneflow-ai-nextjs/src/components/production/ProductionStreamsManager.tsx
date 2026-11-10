@@ -12,8 +12,10 @@ import {
   Plus,
   ChevronDown,
   ChevronUp,
+  Clapperboard,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { PreVisRenderDialog } from '@/components/vision/PreVisRenderDialog'
 import { cn } from '@/lib/utils'
 import { FinalCutStreamsPanel } from '@/components/final-cut/FinalCutStreamsPanel'
 import { ProductionPublishPanel } from '@/components/production/ProductionPublishPanel'
@@ -95,6 +97,7 @@ interface StreamCardProps {
   userId?: string
   onSaveStreams: ProductionStreamsManagerProps['onSaveStreams']
   onPreviewStream: (language: string) => void
+  onOpenPreVisRender: (language: string) => void
   allStreams: ProjectStream[]
   sceneProductionState: Record<string, SceneProductionData>
   onPersistSceneProduction: ProductionStreamsManagerProps['onPersistSceneProduction']
@@ -110,6 +113,7 @@ function StreamCard({
   userId,
   onSaveStreams,
   onPreviewStream,
+  onOpenPreVisRender,
   allStreams,
   sceneProductionState,
   onPersistSceneProduction,
@@ -327,6 +331,15 @@ function StreamCard({
           <Button
             size="sm"
             variant="outline"
+            className="border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50"
+            onClick={() => onOpenPreVisRender(stream.language)}
+          >
+            <Clapperboard className="w-3.5 h-3.5 mr-1.5 text-cyan-300" />
+            Render Pre-Vis
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
             className="border-zinc-700 text-zinc-200"
             disabled={stream.status !== 'ready' || !stream.mp4Url}
             onClick={() => onPreviewStream(stream.language)}
@@ -461,25 +474,83 @@ export function ProductionStreamsManager({
   const [addLanguageOpen, setAddLanguageOpen] = useState(false)
   const [selectedNewLanguage, setSelectedNewLanguage] = useState<string>('es')
   const [addingLanguage, setAddingLanguage] = useState(false)
+  const [preVisDialogOpen, setPreVisDialogOpen] = useState(false)
+  const [preVisDialogLanguage, setPreVisDialogLanguage] = useState<string>('en')
+
+  const effectiveMetadata = useMemo(() => {
+    const baseMeta = (metadata && typeof metadata === 'object' ? metadata : {}) as Record<
+      string,
+      unknown
+    >
+    const vp = (
+      baseMeta.visionPhase && typeof baseMeta.visionPhase === 'object'
+        ? baseMeta.visionPhase
+        : {}
+    ) as Record<string, unknown>
+    const prod = (
+      vp.production && typeof vp.production === 'object' ? vp.production : {}
+    ) as Record<string, unknown>
+    const metaScenes = (
+      prod.scenes && typeof prod.scenes === 'object' ? prod.scenes : {}
+    ) as Record<string, unknown>
+    return {
+      ...baseMeta,
+      visionPhase: {
+        ...vp,
+        production: {
+          ...prod,
+          scenes: {
+            ...metaScenes,
+            ...sceneProductionState,
+          },
+        },
+      },
+    }
+  }, [metadata, sceneProductionState])
+
+  const projectScenes = useMemo<Array<Record<string, unknown>>>(() => {
+    const rawScript = script as
+      | { script?: { scenes?: unknown }; scenes?: unknown }
+      | undefined
+    const fromScript = rawScript?.script?.scenes ?? rawScript?.scenes
+    if (Array.isArray(fromScript) && fromScript.length > 0) {
+      return fromScript as Array<Record<string, unknown>>
+    }
+    const vp = (
+      effectiveMetadata as {
+        visionPhase?: {
+          script?: { script?: { scenes?: unknown }; scenes?: unknown }
+          scenes?: unknown
+        }
+      }
+    )?.visionPhase
+    const fromMeta = vp?.script?.script?.scenes ?? vp?.script?.scenes ?? vp?.scenes
+    return Array.isArray(fromMeta) ? (fromMeta as Array<Record<string, unknown>>) : []
+  }, [script, effectiveMetadata])
 
   const projectLike = useMemo<ProjectLike>(
     () =>
       ({
         id: projectId,
-        metadata,
+        metadata: effectiveMetadata,
         script:
           (script as { script?: { scenes?: unknown } } | undefined)?.script ??
           (script as { scenes?: unknown } | undefined),
       }) as ProjectLike,
-    [projectId, metadata, script]
+    [projectId, effectiveMetadata, script]
   )
 
   const mergedStreams = useMemo(
-    () => mergeStreamsWithLanguages(metadata, projectLike),
-    [metadata, projectLike]
+    () => mergeStreamsWithLanguages(effectiveMetadata, projectLike),
+    [effectiveMetadata, projectLike]
   )
 
   const displayStreams = streams.length > 0 ? streams : mergedStreams
+
+  const handleOpenPreVisRender = useCallback((lang = 'en') => {
+    setPreVisDialogLanguage(lang)
+    setPreVisDialogOpen(true)
+  }, [])
 
   const existingLanguages = useMemo(
     () => new Set(displayStreams.map((s) => s.language)),
@@ -527,16 +598,31 @@ export function ProductionStreamsManager({
               mix it in the Mixer, then render the master.
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-zinc-600 text-zinc-200"
-            disabled={addableLanguages.length === 0}
-            onClick={() => setAddLanguageOpen((v) => !v)}
-          >
-            <Plus className="w-4 h-4 mr-1.5" />
-            Add language
-          </Button>
+          <div className="flex items-center gap-2">
+            {projectScenes.length > 0 ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50"
+                onClick={() =>
+                  handleOpenPreVisRender(displayStreams[0]?.language || 'en')
+                }
+              >
+                <Clapperboard className="w-4 h-4 mr-1.5 text-cyan-300" />
+                Render Pre-Vis Scenes
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-zinc-600 text-zinc-200"
+              disabled={addableLanguages.length === 0}
+              onClick={() => setAddLanguageOpen((v) => !v)}
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              Add language
+            </Button>
+          </div>
         </div>
 
         {addLanguageOpen ? (
@@ -586,11 +672,12 @@ export function ProductionStreamsManager({
               stream={stream}
               projectId={projectId}
               projectTitle={projectTitle}
-              metadata={metadata}
+              metadata={effectiveMetadata}
               script={script}
               userId={userId}
               onSaveStreams={onSaveStreams}
               onPreviewStream={onPreviewStream}
+              onOpenPreVisRender={handleOpenPreVisRender}
               allStreams={displayStreams}
               sceneProductionState={sceneProductionState}
               onPersistSceneProduction={onPersistSceneProduction}
@@ -599,6 +686,16 @@ export function ProductionStreamsManager({
           ))
         )}
       </div>
+      <PreVisRenderDialog
+        open={preVisDialogOpen}
+        onOpenChange={setPreVisDialogOpen}
+        scenes={projectScenes}
+        projectId={projectId}
+        projectTitle={projectTitle}
+        initialLanguage={preVisDialogLanguage}
+        availableLanguages={displayStreams.map((s) => s.language)}
+        sceneProductionState={sceneProductionState}
+      />
     </div>
   )
 }

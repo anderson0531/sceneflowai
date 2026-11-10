@@ -775,6 +775,8 @@ export function SceneGallery({
             selectedLanguage={selectedLanguage}
             onLanguageChange={handleLanguageSelect}
             availableLanguages={availableLanguages}
+            projectId={currentProject?.id || scenes[0]?.projectId}
+            projectTitle={projectTitle || currentProject?.title}
             sceneTranslations={activeSceneTranslations}
             playerLabels={activePlayerLabels}
             onShare={handleShareStoryboard}
