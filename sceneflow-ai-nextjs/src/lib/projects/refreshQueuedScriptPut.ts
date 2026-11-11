@@ -76,9 +76,21 @@ export function scenesToPersistForScriptPut(
   if (!Array.isArray(previous) || previous.length !== next.length || next.length === 0) {
     return next
   }
-  const changed = next.filter((scene, index) => scene !== previous[index])
-  if (changed.length === 0 || changed.length === next.length) return next
-  return changed
+  const changedByRef = next.filter((scene, index) => scene !== previous[index])
+  if (changedByRef.length === 0) return next
+  if (changedByRef.length < next.length) return changedByRef
+
+  // Bulk `.map()` callers allocate fresh scene objects even for untouched scenes;
+  // check serialized content so a 1-scene update in a 24-scene array only sends 1 scene.
+  const changedByContent = next.filter((scene, index) => {
+    try {
+      return JSON.stringify(scene) !== JSON.stringify(previous[index])
+    } catch {
+      return true
+    }
+  })
+  if (changedByContent.length === 0 || changedByContent.length === next.length) return next
+  return changedByContent
 }
 
 export function persistSceneIdsForChangedScenes(

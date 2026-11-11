@@ -272,13 +272,55 @@ function putBodyWithScenes(
   body: ProjectPutBody,
   scenes: any[],
   scriptUpdatedAt: string,
-  options?: { partialSceneBatch?: boolean }
+  options?: {
+    partialSceneBatch?: boolean
+    stripNonScriptFields?: boolean
+    isFinalBatch?: boolean
+  }
 ): ProjectPutBody {
   const vision = body.metadata?.visionPhase
   if (!vision || typeof vision !== 'object') return body
+
+  if (options?.stripNonScriptFields) {
+    const minimalScript = replaceScriptScenes(
+      vision.script && typeof vision.script === 'object'
+        ? { script: { scenes: [] } }
+        : vision.script,
+      scenes
+    )
+    const next: ProjectPutBody = {
+      ...(options?.partialSceneBatch ? { partialSceneBatch: true } : {}),
+      ...(options?.isFinalBatch && Array.isArray(body.sceneOrderIds)
+        ? { sceneOrderIds: body.sceneOrderIds }
+        : {}),
+      ...(options?.isFinalBatch && Array.isArray(body.deletedSceneIds)
+        ? { deletedSceneIds: body.deletedSceneIds }
+        : {}),
+      metadata: {
+        visionPhase: {
+          script: minimalScript,
+          scriptUpdatedAt,
+        },
+      },
+    }
+    return next
+  }
+
+  const {
+    sceneOrderIds: _orderIds,
+    deletedSceneIds: _deletedIds,
+    ...restBody
+  } = body
+
   return {
-    ...body,
+    ...restBody,
     ...(options?.partialSceneBatch ? { partialSceneBatch: true } : {}),
+    ...(options?.isFinalBatch && Array.isArray(body.sceneOrderIds)
+      ? { sceneOrderIds: body.sceneOrderIds }
+      : {}),
+    ...(options?.isFinalBatch && Array.isArray(body.deletedSceneIds)
+      ? { deletedSceneIds: body.deletedSceneIds }
+      : {}),
     metadata: {
       ...body.metadata,
       visionPhase: {
@@ -290,10 +332,56 @@ function putBodyWithScenes(
   }
 }
 
+function extractNonScriptPutBody(body: ProjectPutBody): ProjectPutBody | null {
+  const metadata = body.metadata
+  if (!metadata || typeof metadata !== 'object') return null
+  const vision = metadata.visionPhase
+  const { visionPhase: _vp, ...restMeta } = metadata
+
+  let nextVision: Record<string, unknown> | undefined
+  if (vision && typeof vision === 'object') {
+    const {
+      script: _script,
+      scenes: _scenes,
+      scriptUpdatedAt: _at,
+      production: _prod,
+      ...restVision
+    } = vision
+    if (Object.keys(restVision).length > 0) {
+      nextVision = restVision
+    }
+  }
+
+  const {
+    partialSceneBatch: _psb,
+    sceneOrderIds: _soi,
+    deletedSceneIds: _dsi,
+    confirmScriptReplace: _csr,
+    metadata: _m,
+    ...restTopBody
+  } = body
+
+  const hasMeta = Object.keys(restMeta).length > 0 || Boolean(nextVision)
+  const hasTop = Object.keys(restTopBody).length > 0
+  if (!hasMeta && !hasTop) return null
+
+  return {
+    ...restTopBody,
+    ...(hasMeta
+      ? {
+          metadata: {
+            ...restMeta,
+            ...(nextVision ? { visionPhase: nextVision } : {}),
+          },
+        }
+      : {}),
+  }
+}
+
 /**
  * Split a still-too-large script PUT into scene batches that each fit.
- * Returns null when the body is not a multi-scene script PUT, or when a
- * single scene still exceeds the budget.
+ * Returns null when the body has no script scenes, or when even a stripped
+ * single-scene batch exceeds the budget.
  */
 export function splitScriptPutIntoFittingBatches(
   body: ProjectPutBody,
@@ -301,7 +389,7 @@ export function splitScriptPutIntoFittingBatches(
 ): ProjectPutBody[] | null {
   const budget = options?.budgetBytes ?? VERCEL_FUNCTION_REQUEST_BUDGET_BYTES
   const rawScenes = scriptScenes(visionPhaseScript(body))
-  if (!Array.isArray(rawScenes) || rawScenes.length <= 1) return null
+  if (!Array.isArray(rawScenes) || rawScenes.length === 0) return null
 
   const scenes = rawScenes.map((scene: any, idx: number) => {
     if (!scene || typeof scene !== 'object') return scene
@@ -311,26 +399,88 @@ export function splitScriptPutIntoFittingBatches(
   })
 
   const timestamp = () => options?.nowIso?.() ?? new Date().toISOString()
-  const fits = (slice: any[]) =>
-    jsonByteLength(putBodyWithScenes(body, slice, timestamp(), { partialSceneBatch: true })) <
-    budget
 
-  const batches: ProjectPutBody[] = []
+  const nonScriptLeadBatch = extractNonScriptPutBody(body)
+  let stripNonScriptFromFirstSceneBatch = false
+
+  // Check if Batch #1 with [scenes[0]] + non-script fields fits; if not, emit non-script
+  // fields as their own lightweight lead batch first so every scene batch is script-only!
+  if (
+    jsonByteLength(
+      putBodyWithScenes(body, [scenes[0]], timestamp(), {
+        partialSceneBatch: true,
+        stripNonScriptFields: false,
+      })
+    ) >= budget
+  ) {
+    if (!nonScriptLeadBatch || jsonByteLength(nonScriptLeadBatch) >= budget) {
+      return null
+    }
+    stripNonScriptFromFirstSceneBatch = true
+  }
+
+  if (scenes.length === 1 && !stripNonScriptFromFirstSceneBatch) {
+    return null
+  }
+
+  const sceneSlices: any[][] = []
   let current: any[] = []
+
   for (const scene of scenes) {
-    const next = [...current, scene]
-    if (fits(next)) {
-      current = next
+    const isFirstSceneBatch = sceneSlices.length === 0
+    const stripNonScript = stripNonScriptFromFirstSceneBatch || !isFirstSceneBatch
+    const candidate = [...current, scene]
+    const fits =
+      jsonByteLength(
+        putBodyWithScenes(body, candidate, timestamp(), {
+          partialSceneBatch: true,
+          stripNonScriptFields: stripNonScript,
+          isFinalBatch: true,
+        })
+      ) < budget
+
+    if (fits) {
+      current = candidate
       continue
     }
+
     if (current.length === 0) return null
-    batches.push(putBodyWithScenes(body, current, timestamp(), { partialSceneBatch: true }))
+    sceneSlices.push(current)
+
+    // Subsequent slices always strip non-script fields
+    const singleFits =
+      jsonByteLength(
+        putBodyWithScenes(body, [scene], timestamp(), {
+          partialSceneBatch: true,
+          stripNonScriptFields: true,
+          isFinalBatch: true,
+        })
+      ) < budget
+    if (!singleFits) return null
     current = [scene]
-    if (!fits(current)) return null
   }
+
   if (current.length > 0) {
-    batches.push(putBodyWithScenes(body, current, timestamp(), { partialSceneBatch: true }))
+    sceneSlices.push(current)
   }
+
+  const batches: ProjectPutBody[] = []
+  if (stripNonScriptFromFirstSceneBatch && nonScriptLeadBatch) {
+    batches.push(nonScriptLeadBatch)
+  }
+
+  for (let i = 0; i < sceneSlices.length; i++) {
+    const isFirstSceneBatch = i === 0
+    const isFinalBatch = i === sceneSlices.length - 1
+    batches.push(
+      putBodyWithScenes(body, sceneSlices[i], timestamp(), {
+        partialSceneBatch: true,
+        stripNonScriptFields: stripNonScriptFromFirstSceneBatch || !isFirstSceneBatch,
+        isFinalBatch,
+      })
+    )
+  }
+
   return batches.length > 1 ? batches : null
 }
 

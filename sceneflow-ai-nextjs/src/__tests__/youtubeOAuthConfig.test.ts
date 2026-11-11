@@ -207,4 +207,34 @@ describe('youtube OAuth config', () => {
     expect(configRoute).toContain('isAdminEmail')
     expect(configRoute).toContain('status: 403')
   })
+
+  it('opens social OAuth in a popup and relays completion across BroadcastChannel, localStorage, and postMessage', async () => {
+    const { buildOAuthPopupHtmlResponse } = await import('@/lib/publish/oauthPopupResponse')
+    const res = buildOAuthPopupHtmlResponse({
+      platform: 'youtube',
+      status: 'connected',
+    })
+    expect(res.headers.get('content-type')).toContain('text/html')
+    const html = await res.text()
+    expect(html).toContain('sceneflow:social-oauth')
+    expect(html).toContain('BroadcastChannel')
+    expect(html).toContain('window.opener')
+    expect(html).toContain('window.close()')
+
+    const shipTab = readFileSync(
+      path.join(process.cwd(), 'src/components/publishing/PublishingPackageShipTab.tsx'),
+      'utf8'
+    )
+    expect(shipTab).toContain('openSocialOAuthPopup')
+    expect(shipTab).toContain('const [oauthConfigured, setOauthConfigured] = useState(false)')
+  })
+
+  it('bypasses Service Worker runtime caching for document navigations, API routes, and social OAuth paths', () => {
+    const sw = readFileSync(path.join(process.cwd(), 'src/sw.ts'), 'utf8')
+    expect(sw).toContain("request.mode === 'navigate'")
+    expect(sw).toContain("url.pathname.startsWith('/api/')")
+    expect(sw).toContain("'/api/publish/youtube/auth'")
+    expect(sw).toContain("'/api/auth/callback/youtube'")
+    expect(sw).toContain('navigationPreload: false')
+  })
 })

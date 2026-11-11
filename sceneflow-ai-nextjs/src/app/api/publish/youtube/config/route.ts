@@ -17,6 +17,12 @@ import { resolveUserId } from '@/lib/userHelper'
 
 export const dynamic = 'force-dynamic'
 
+function buildRecommendedRedirectUris(originRedirectUri: string): string[] {
+  const prodUri = `https://sceneflowai.studio${YOUTUBE_OAUTH_CALLBACK_PATH}`
+  const vercelUri = `https://sceneflow-ai-nextjs.vercel.app${YOUTUBE_OAUTH_CALLBACK_PATH}`
+  return Array.from(new Set([prodUri, originRedirectUri, vercelUri].filter(Boolean)))
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -25,6 +31,7 @@ export async function GET(req: NextRequest) {
 
     if (!isAdmin) {
       return NextResponse.json({
+        isAdmin: false,
         configured,
         facebookConfigured: facebookConfigured(),
         tiktokConfigured: tiktokConfigured(),
@@ -32,10 +39,13 @@ export async function GET(req: NextRequest) {
     }
 
     const source = await getYouTubeOAuthPlatformSource()
+    const redirectUri = youtubeRedirectUri(req.nextUrl.origin)
     return NextResponse.json({
+      isAdmin: true,
       configured,
       source,
-      redirectUri: youtubeRedirectUri(req.nextUrl.origin),
+      redirectUri,
+      recommendedRedirectUris: buildRecommendedRedirectUris(redirectUri),
       callbackPath: YOUTUBE_OAUTH_CALLBACK_PATH,
       facebookConfigured: facebookConfigured(),
       facebookRedirectUri: facebookRedirectUri(),
@@ -44,7 +54,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to inspect social OAuth status'
-    return NextResponse.json({ configured: false, error: message }, { status: 500 })
+    return NextResponse.json({ isAdmin: false, configured: false, error: message }, { status: 500 })
   }
 }
 
@@ -89,11 +99,14 @@ export async function POST(req: NextRequest) {
     }
 
     await saveYouTubeOAuthClientConfig(adminUserId, { clientId, clientSecret })
+    const redirectUri = youtubeRedirectUri(req.nextUrl.origin)
 
     return NextResponse.json({
+      isAdmin: true,
       configured: true,
       source: await getYouTubeOAuthPlatformSource(),
-      redirectUri: youtubeRedirectUri(req.nextUrl.origin),
+      redirectUri,
+      recommendedRedirectUris: buildRecommendedRedirectUris(redirectUri),
       callbackPath: YOUTUBE_OAUTH_CALLBACK_PATH,
     })
   } catch (err: unknown) {

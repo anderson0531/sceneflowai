@@ -2,8 +2,13 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 import { defaultCache } from '@serwist/turbopack/worker'
-import type { PrecacheEntry, RuntimeCaching, SerwistGlobalConfig } from 'serwist'
-import { NetworkOnly, Serwist } from 'serwist'
+import type {
+  PrecacheEntry,
+  RuntimeCaching,
+  RouteMatchCallbackOptions,
+  SerwistGlobalConfig,
+} from 'serwist'
+import { Serwist } from 'serwist'
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -13,27 +18,58 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope
 
-/** Document navigations. NetworkFirst on /api/* turns OAuth redirects into no-response. */
-const socialOAuthNavigation: RuntimeCaching = {
-  matcher: ({ sameOrigin, url: { pathname } }) =>
-    sameOrigin &&
-    (pathname === '/api/publish/youtube/auth' ||
-      pathname === '/api/auth/callback/youtube' ||
-      pathname === '/api/publish/youtube/callback' ||
-      pathname === '/api/publish/facebook/auth' ||
-      pathname === '/api/publish/facebook/callback' ||
-      pathname === '/api/publish/tiktok/auth' ||
-      pathname === '/api/publish/tiktok/callback'),
-  handler: new NetworkOnly(),
+const SOCIAL_OAUTH_PATHS = new Set([
+  '/api/publish/youtube/auth',
+  '/api/auth/callback/youtube',
+  '/api/publish/youtube/callback',
+  '/api/publish/facebook/auth',
+  '/api/publish/facebook/callback',
+  '/api/publish/tiktok/auth',
+  '/api/publish/tiktok/callback',
+])
+
+function shouldBypassServiceWorker(options: RouteMatchCallbackOptions): boolean {
+  const { request, url } = options
+  if (SOCIAL_OAUTH_PATHS.has(url.pathname)) return true
+  // Never intercept document navigations (prevents Serwist `no-response` crashes on
+  // OAuth 302/307 redirects and dynamic `/dashboard/workflow/vision/[id]` SSR loads).
+  if (request.mode === 'navigate') return true
+  // Never intercept API routes or Next.js App Router RSC flight payloads.
+  if (url.pathname.startsWith('/api/')) return true
+  if (url.searchParams.has('_rsc') || request.headers.get('RSC') === '1') return true
+  return false
 }
+
+function wrapMatcher(
+  matcher: RuntimeCaching['matcher']
+): (options: RouteMatchCallbackOptions) => boolean {
+  return (options: RouteMatchCallbackOptions): boolean => {
+    if (shouldBypassServiceWorker(options)) return false
+    if (typeof matcher === 'function') {
+      return Boolean(matcher(options))
+    }
+    if (matcher instanceof RegExp) {
+      return matcher.test(options.url.href)
+    }
+    if (typeof matcher === 'string') {
+      return options.url.href === matcher || options.url.pathname === matcher
+    }
+    return false
+  }
+}
+
+const staticAssetRuntimeCaching: RuntimeCaching[] = defaultCache.map((entry) => ({
+  ...entry,
+  matcher: wrapMatcher(entry.matcher),
+}))
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
-  // Activate immediately so the Social OAuth NetworkOnly rule is not stuck behind an old worker.
+  // Activate immediately so old workers intercepting navigations/OAuth are replaced right away.
   skipWaiting: true,
   clientsClaim: true,
-  navigationPreload: true,
-  runtimeCaching: [socialOAuthNavigation, ...defaultCache],
+  navigationPreload: false,
+  runtimeCaching: staticAssetRuntimeCaching,
 })
 
 serwist.addEventListeners()

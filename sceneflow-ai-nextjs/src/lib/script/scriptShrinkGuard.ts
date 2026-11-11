@@ -34,6 +34,7 @@ export function scenesAfterUnconfirmedShrinkGuard(
     deletedSceneIds?: string[]
     confirmScriptReplace?: boolean
     partialSceneBatch?: boolean
+    sceneOrderIds?: string[]
   }
 ): { scenes: any[]; rejectedShrink: boolean } {
   const existing = Array.isArray(existingScenes) ? existingScenes : []
@@ -42,6 +43,7 @@ export function scenesAfterUnconfirmedShrinkGuard(
   const merged = mergeSceneArraysForPersistence(existing, incoming, {
     deletedSceneIds,
     partialSceneBatch: options?.partialSceneBatch,
+    sceneOrderIds: options?.sceneOrderIds,
   })
   if (
     isUnconfirmedScriptShrink(existing.length, merged.length, {

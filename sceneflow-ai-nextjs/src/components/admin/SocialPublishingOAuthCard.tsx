@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { CheckCircle2, Copy, KeyRound, Loader2, ShieldAlert } from 'lucide-react'
+import { CheckCircle2, Copy, ExternalLink, KeyRound, Loader2, ShieldAlert, Youtube } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 
 interface PlatformOAuthStatus {
+  isAdmin?: boolean
   configured: boolean
   source?: 'env' | 'admin_db' | 'none'
   redirectUri?: string
+  recommendedRedirectUris?: string[]
   facebookConfigured?: boolean
   facebookRedirectUri?: string
   tiktokConfigured?: boolean
@@ -125,24 +127,27 @@ export function SocialPublishingOAuthCard() {
                     </span>
                   )}
                 </div>
-                {status?.redirectUri ? (
+                {(status?.recommendedRedirectUris?.length || status?.redirectUri) ? (
                   <div className="text-[11px] text-gray-400 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span>Callback URI:</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void navigator.clipboard.writeText(status.redirectUri!)
-                          toast.success('Copied YouTube callback URI')
-                        }}
-                        className="inline-flex items-center gap-1 text-violet-300 hover:text-violet-200"
-                      >
-                        <Copy className="w-3 h-3" /> Copy
-                      </button>
-                    </div>
-                    <code className="block rounded bg-gray-950 px-2 py-1 text-[10px] text-gray-200 break-all">
-                      {status.redirectUri}
-                    </code>
+                    <span>Authorized Redirect URIs:</span>
+                    {(status?.recommendedRedirectUris?.length
+                      ? status.recommendedRedirectUris
+                      : [status!.redirectUri!]
+                    ).map((uri) => (
+                      <div key={uri} className="flex items-center justify-between gap-1.5 rounded bg-gray-950 px-2 py-1">
+                        <code className="text-[10px] text-gray-200 break-all">{uri}</code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(uri)
+                            toast.success('Copied YouTube callback URI')
+                          }}
+                          className="inline-flex items-center gap-1 text-violet-300 hover:text-violet-200 shrink-0"
+                        >
+                          <Copy className="w-3 h-3" /> Copy
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 ) : null}
                 <Button
@@ -270,5 +275,144 @@ export function SocialPublishingOAuthCard() {
         )}
       </CardContent>
     </Card>
+  )
+}
+
+export function AdminYoutubeQuickEnablePanel({
+  redirectUris,
+  onSavedAndConnect,
+}: {
+  redirectUris: string[]
+  onSavedAndConnect: () => void
+}) {
+  const [credentialsJson, setCredentialsJson] = useState('')
+  const [clientId, setClientId] = useState('')
+  const [clientSecret, setClientSecret] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    if (!credentialsJson.trim() && (!clientId.trim() || !clientSecret.trim())) {
+      toast.error('Paste client_secret.json or enter SceneFlow Google OAuth Client ID & Secret')
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch('/api/publish/youtube/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          credentialsJson: credentialsJson.trim() || undefined,
+          clientId: clientId.trim() || undefined,
+          clientSecret: clientSecret.trim() || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to save platform OAuth credentials')
+      setCredentialsJson('')
+      setClientSecret('')
+      toast.success('SceneFlow Google OAuth enabled! Opening Google Sign-In…')
+      onSavedAndConnect()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save platform OAuth credentials')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-violet-500/35 bg-violet-950/20 p-3 space-y-2.5 text-xs">
+      <div className="space-y-1">
+        <p className="font-medium text-violet-200">
+          One-Time SceneFlow Platform OAuth Setup (Visible to Admins Only)
+        </p>
+        <p className="text-[11px] text-zinc-300 leading-relaxed">
+          Google requires SceneFlow&apos;s own OAuth 2.0 Web Client (
+          <code className="text-violet-300">GOOGLE_OAUTH_CLIENT_ID</code> &amp;{' '}
+          <code className="text-violet-300">GOOGLE_OAUTH_CLIENT_SECRET</code>) before it can
+          display the user &ldquo;Sign in with Google&rdquo; YouTube consent screen. Create one
+          Web OAuth Client in SceneFlow&apos;s Google Cloud Console (with{' '}
+          <strong>YouTube Data API v3</strong> enabled), register the Authorized Redirect URI(s)
+          below, and save once:
+        </p>
+      </div>
+
+      {redirectUris.length > 0 ? (
+        <div className="space-y-1">
+          <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-medium">
+            Authorized Redirect URIs to register in Google Cloud Console:
+          </span>
+          <div className="space-y-1">
+            {redirectUris.map((uri) => (
+              <div
+                key={uri}
+                className="flex items-center justify-between gap-2 rounded bg-zinc-950/90 border border-zinc-800 px-2 py-1"
+              >
+                <code className="text-[11px] text-zinc-200 break-all">{uri}</code>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(uri)
+                    toast.success('Copied redirect URI')
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] text-violet-300 hover:text-violet-200 shrink-0"
+                >
+                  <Copy className="h-3 w-3" />
+                  Copy
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="space-y-2 pt-1">
+        <textarea
+          value={credentialsJson}
+          onChange={(e) => setCredentialsJson(e.target.value)}
+          rows={2}
+          placeholder='Paste Google Cloud client_secret.json ({"web":{"client_id":"...","client_secret":"..."}}) — or enter ID & Secret below'
+          className="w-full rounded border border-zinc-700 bg-zinc-950 px-2.5 py-1.5 text-xs text-white font-mono"
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <input
+            type="text"
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
+            placeholder="GOOGLE_OAUTH_CLIENT_ID"
+            className="rounded border border-zinc-700 bg-zinc-950 px-2.5 py-1.5 text-xs text-white"
+          />
+          <input
+            type="password"
+            value={clientSecret}
+            onChange={(e) => setClientSecret(e.target.value)}
+            placeholder="GOOGLE_OAUTH_CLIENT_SECRET"
+            className="rounded border border-zinc-700 bg-zinc-950 px-2.5 py-1.5 text-xs text-white"
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          <a
+            href="/dashboard/settings/admin"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-200 underline"
+          >
+            Open Admin Settings <ExternalLink className="h-3 w-3" />
+          </a>
+          <Button
+            size="sm"
+            disabled={saving}
+            onClick={() => void handleSave()}
+            className="h-8 text-xs bg-red-600 hover:bg-red-500 text-white"
+          >
+            {saving ? (
+              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Youtube className="h-3.5 w-3.5 mr-1.5" />
+            )}
+            Save &amp; Sign In with Google
+          </Button>
+        </div>
+      </div>
+    </div>
   )
 }

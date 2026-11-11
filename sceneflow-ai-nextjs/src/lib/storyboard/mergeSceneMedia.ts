@@ -903,6 +903,11 @@ export interface MergeSceneArraysOptions {
    * scenes are never dropped by `preservedScenes`.
    */
   partialSceneBatch?: boolean
+  /**
+   * Optional explicit scene ID order from the client when a partial/delta save
+   * also reordered or inserted scenes without resending every unchanged scene.
+   */
+  sceneOrderIds?: string[]
 }
 
 function resolveFallbackSceneId(scene: any, fallbackIndex?: number): string | undefined {
@@ -1012,9 +1017,61 @@ export function mergeSceneArraysForPersistence(
     return !incomingScenesById.has(existingId)
   })
 
-  if (preservedScenes.length === 0) return merged
+  if (preservedScenes.length === 0 && !options?.sceneOrderIds?.length) return merged
 
-  return [...merged, ...preservedScenes].sort(
+  const combined = [...merged, ...preservedScenes]
+
+  if (Array.isArray(options?.sceneOrderIds) && options.sceneOrderIds.length > 0) {
+    const byId = new Map<string, any>()
+    const withoutId: any[] = []
+    for (const s of combined) {
+      const id = s?.id || s?.sceneId
+      if (id) byId.set(id, s)
+      else withoutId.push(s)
+    }
+    const ordered: any[] = []
+    const placed = new Set<string>()
+    for (const id of options.sceneOrderIds) {
+      const match = byId.get(id)
+      if (match && !placed.has(id)) {
+        ordered.push(match)
+        placed.add(id)
+      }
+    }
+    for (const [id, scene] of byId.entries()) {
+      if (!placed.has(id)) ordered.push(scene)
+    }
+    return [...ordered, ...withoutId]
+  }
+
+  if (isPartialBatch) {
+    // Replace matched scenes in place inside normalizedExistingScenes so Promo/Title
+    // scenes without `sceneNumber` never jump to index 0 on a partial scene save.
+    const mergedById = new Map<string, any>()
+    const appendedNew: any[] = []
+    for (const s of merged) {
+      const id = s?.id || s?.sceneId
+      if (id && existingScenesById.has(id)) {
+        mergedById.set(id, s)
+      } else {
+        appendedNew.push(s)
+      }
+    }
+    const inPlace = normalizedExistingScenes
+      .filter((existingScene: any) => {
+        const existingId = existingScene?.id || existingScene?.sceneId
+        return !existingId || !deletedSceneIds.has(existingId)
+      })
+      .map((existingScene: any) => {
+        const existingId = existingScene?.id || existingScene?.sceneId
+        return existingId && mergedById.has(existingId)
+          ? mergedById.get(existingId)
+          : existingScene
+      })
+    return [...inPlace, ...appendedNew]
+  }
+
+  return combined.sort(
     (a: any, b: any) => (a.sceneNumber || 0) - (b.sceneNumber || 0)
   )
 }

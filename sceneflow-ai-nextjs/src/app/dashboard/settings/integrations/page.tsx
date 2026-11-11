@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import {
@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ExternalLink,
   Facebook,
+  KeyRound,
   Link2,
   Loader2,
   Music2,
@@ -20,6 +21,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
+import { openSocialOAuthPopup } from '@/lib/publish/socialOAuthPopup'
 
 interface YouTubeChannelInfo {
   id: string
@@ -31,23 +33,32 @@ interface YouTubeChannelInfo {
 export default function IntegrationsPage() {
   const [loadingSocial, setLoadingSocial] = useState(true)
   const [disconnecting, setDisconnecting] = useState<'youtube' | 'facebook' | 'tiktok' | null>(null)
+  const [authorizing, setAuthorizing] = useState<'youtube' | 'facebook' | 'tiktok' | null>(null)
+  const [isAdminUser, setIsAdminUser] = useState(false)
+  const oauthCleanupRef = useRef<(() => void) | null>(null)
 
   const [youtubeConnected, setYoutubeConnected] = useState(false)
   const [youtubeNeedsReconnect, setYoutubeNeedsReconnect] = useState(false)
   const [youtubeChannel, setYoutubeChannel] = useState<YouTubeChannelInfo | null>(null)
-  const [youtubePlatformReady, setYoutubePlatformReady] = useState(true)
+  const [youtubePlatformReady, setYoutubePlatformReady] = useState(false)
 
   const [facebookConnected, setFacebookConnected] = useState(false)
   const [facebookPageName, setFacebookPageName] = useState<string | null>(null)
-  const [facebookPlatformReady, setFacebookPlatformReady] = useState(true)
+  const [facebookPlatformReady, setFacebookPlatformReady] = useState(false)
 
   const [tiktokConnected, setTiktokConnected] = useState(false)
-  const [tiktokPlatformReady, setTiktokPlatformReady] = useState(true)
+  const [tiktokPlatformReady, setTiktokPlatformReady] = useState(false)
+
+  useEffect(() => {
+    return () => {
+      oauthCleanupRef.current?.()
+    }
+  }, [])
 
   const refreshSocialStatus = useCallback(async () => {
     setLoadingSocial(true)
     try {
-      const [yt, fb, tt] = await Promise.all([
+      const [yt, fb, tt, ytCfg] = await Promise.all([
         fetch('/api/publish/youtube/upload')
           .then((r) => r.json())
           .catch(() => ({})),
@@ -57,19 +68,23 @@ export default function IntegrationsPage() {
         fetch('/api/publish/tiktok/upload')
           .then((r) => r.json())
           .catch(() => ({})),
+        fetch('/api/publish/youtube/config')
+          .then((r) => r.json())
+          .catch(() => ({})),
       ])
 
       setYoutubeConnected(Boolean(yt.connected))
       setYoutubeNeedsReconnect(Boolean(yt.needsReconnect))
       setYoutubeChannel(yt.channel || null)
-      setYoutubePlatformReady(yt.oauthConfigured !== false)
+      setYoutubePlatformReady(Boolean(yt.oauthConfigured || ytCfg.configured))
+      setIsAdminUser(Boolean(ytCfg.isAdmin))
 
       setFacebookConnected(Boolean(fb.connected))
       setFacebookPageName(fb.pageName || fb.pages?.[0]?.name || null)
-      setFacebookPlatformReady(fb.oauthConfigured !== false)
+      setFacebookPlatformReady(Boolean(fb.oauthConfigured))
 
       setTiktokConnected(Boolean(tt.connected))
-      setTiktokPlatformReady(tt.oauthConfigured !== false)
+      setTiktokPlatformReady(Boolean(tt.oauthConfigured))
     } finally {
       setLoadingSocial(false)
     }
@@ -118,7 +133,30 @@ export default function IntegrationsPage() {
 
   const authorizePlatform = (platform: 'youtube' | 'facebook' | 'tiktok') => {
     const params = new URLSearchParams({ returnTo: '/dashboard/settings/integrations' })
-    window.location.href = `/api/publish/${platform}/auth?${params.toString()}`
+    const authUrl = `/api/publish/${platform}/auth?${params.toString()}`
+    oauthCleanupRef.current?.()
+    setAuthorizing(platform)
+    const { usedPopup, cleanup } = openSocialOAuthPopup({
+      platform,
+      authUrl,
+      onComplete: (result) => {
+        setAuthorizing(null)
+        oauthCleanupRef.current = null
+        if (result.status === 'connected') {
+          toast.success(
+            `${platform === 'youtube' ? 'YouTube' : platform === 'facebook' ? 'Facebook' : 'TikTok'} account authorized!`
+          )
+        } else if (result.status === 'not_configured') {
+          toast.error('Platform OAuth credentials need to be configured in Admin Settings first.')
+        } else if (result.status !== 'popup_closed') {
+          toast.error(result.message || 'Authorization was cancelled or did not complete.')
+        }
+        void refreshSocialStatus()
+      },
+    })
+    if (usedPopup) {
+      oauthCleanupRef.current = cleanup
+    }
   }
 
   const disconnectPlatform = async (platform: 'youtube' | 'facebook' | 'tiktok') => {
@@ -253,15 +291,33 @@ export default function IntegrationsPage() {
                     )}
                   </Button>
                 </>
+              ) : !loadingSocial && !youtubePlatformReady && isAdminUser ? (
+                <Link href="/dashboard/settings/admin">
+                  <Button
+                    size="sm"
+                    className="bg-violet-600 hover:bg-violet-500 text-white text-xs"
+                  >
+                    <KeyRound className="w-3.5 h-3.5 mr-1.5" />
+                    Enable Platform OAuth (Admin)
+                  </Button>
+                </Link>
               ) : (
                 <Button
                   size="sm"
-                  disabled={loadingSocial || !youtubePlatformReady}
+                  disabled={loadingSocial || !youtubePlatformReady || authorizing === 'youtube'}
                   onClick={() => authorizePlatform('youtube')}
                   className="bg-red-600 hover:bg-red-500 text-white text-xs disabled:opacity-50"
                 >
-                  <Link2 className="w-3.5 h-3.5 mr-1.5" />
-                  {youtubeNeedsReconnect ? 'Re-authorize YouTube' : 'Authorize YouTube'}
+                  {loadingSocial || authorizing === 'youtube' ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <Link2 className="w-3.5 h-3.5 mr-1.5" />
+                  )}
+                  {authorizing === 'youtube'
+                    ? 'Waiting for Google Sign-In…'
+                    : youtubeNeedsReconnect
+                      ? 'Re-authorize YouTube'
+                      : 'Authorize YouTube'}
                 </Button>
               )}
             </div>

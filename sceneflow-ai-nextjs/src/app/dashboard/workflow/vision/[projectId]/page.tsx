@@ -27,6 +27,15 @@ import {
   stringifyProjectPut,
   visionPhasePut,
 } from '@/lib/projects/slimProjectPutPayload'
+import {
+  advanceSaveBaselineAfterPut,
+  captureSaveBaselineFromMetadata,
+  createEmptySaveBaselineSnapshot,
+  diffProjectPutAgainstBaseline,
+  fastJsonFingerprint,
+  persistPublishingMetadataPatch,
+  type ProjectSaveBaselineSnapshot,
+} from '@/lib/projects/deltaProjectSave'
 import { mergeDroppedObjectReferenceIds, visionReferencesPutPayload } from '@/lib/projects/mergeVisionPhaseReferences'
 import {
   persistSceneIdsForChangedScenes,
@@ -1091,6 +1100,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // concurrent writes from racing each other and causing data loss.
   // Each call waits for the previous save to finish before executing.
   const saveQueueRef = useRef<Promise<Response | null>>(Promise.resolve(null))
+  const saveBaselineRef = useRef<ProjectSaveBaselineSnapshot>(createEmptySaveBaselineSnapshot())
   const pendingProductionPayloadsRef = useRef<
     Map<string, { payload: string; productionData: SceneProductionData }>
   >(new Map())
@@ -1122,13 +1132,69 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
 
+      const fullIncomingScenes =
+        bodyToSend?.metadata?.visionPhase?.script?.script?.scenes ??
+        bodyToSend?.metadata?.visionPhase?.script?.scenes
+
+      // Delta-diff against last saved server baseline & peel off any `persistProduction`
+      // scenes into lightweight per-scene PATCH calls so full-project PUTs never 413.
+      const delta = diffProjectPutAgainstBaseline(bodyToSend, saveBaselineRef.current)
+      bodyToSend = delta.body
+
+      if (delta.changedProductionScenes.length > 0) {
+        console.log(
+          `[SAVE-QUEUE] ${label} persisting ${delta.changedProductionScenes.length} changed production scene(s) via lightweight PATCH`
+        )
+        for (const item of delta.changedProductionScenes) {
+          try {
+            const patchRes = await fetch(`/api/projects/${projectId}/production`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sceneId: item.sceneId,
+                productionData: item.productionData,
+              }),
+            })
+            if (patchRes.ok) {
+              saveBaselineRef.current.productionSceneDigests.set(
+                item.sceneId,
+                fastJsonFingerprint(item.productionData)
+              )
+            } else {
+              console.warn(
+                `[SAVE-QUEUE] ${label} production PATCH failed for ${item.sceneId}: status=${patchRes.status}`
+              )
+            }
+          } catch (prodErr) {
+            console.warn(
+              `[SAVE-QUEUE] ${label} production PATCH error for ${item.sceneId}:`,
+              prodErr
+            )
+          }
+        }
+      }
+
+      if (delta.omittedUnchangedScenes > 0) {
+        console.log(
+          `[SAVE-QUEUE] ${label} delta save omitted ${delta.omittedUnchangedScenes} unchanged scene(s) (dirty=${delta.dirtySceneIds.length})`
+        )
+      }
+
+      if (delta.noOp) {
+        console.log(`[SAVE-QUEUE] ${label} skipped — no changes relative to saved baseline`)
+        return new Response(JSON.stringify({ success: true, skippedNoOp: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+
       const inspectStaleScriptWrite = async (
         response: Response,
         sentBody: Record<string, any>,
         batchLabel: string
-      ) => {
-        if (!response.ok) return
-        if (!options?.refreshLiveScript && !options?.mintScriptUpdatedAt) return
+      ): Promise<boolean> => {
+        if (!response.ok) return false
+        if (!options?.refreshLiveScript && !options?.mintScriptUpdatedAt) return false
         try {
           const json = await response.clone().json()
           const sentAt = sentBody?.metadata?.visionPhase?.scriptUpdatedAt as string | undefined
@@ -1155,18 +1221,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }
                 projectRef.current = refreshedProject
                 setProject(refreshedProject)
+                saveBaselineRef.current = captureSaveBaselineFromMetadata(refreshedProject.metadata)
               }
               toast.warning(
                 'That script edit did not save because a newer copy was already stored. The editor was updated to match.'
               )
             }
+            return true
           }
         } catch (error) {
           console.warn(`[SAVE-QUEUE] ${batchLabel} could not inspect PUT response for stale script`, error)
         }
+        return false
       }
 
-      const putOne = async (payloadBody: Record<string, any>, batchLabel: string): Promise<Response> => {
+      const putOne = async (
+        payloadBody: Record<string, any>,
+        batchLabel: string,
+        fullScenesForBaseline?: unknown[]
+      ): Promise<Response> => {
         const fitted = fitProjectPutPayload(payloadBody)
         const payload = JSON.stringify(fitted.body)
         if (fitted.exceedsLimit) {
@@ -1190,7 +1263,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             body: payload,
           })
           console.log(`[SAVE-QUEUE] Completed save: ${batchLabel}, status=${response.status}`)
-          await inspectStaleScriptWrite(response, fitted.body, batchLabel)
+          const wasStale = await inspectStaleScriptWrite(response, fitted.body, batchLabel)
+          if (response.ok && !wasStale) {
+            // Advance baseline using the unfitted `payloadBody` (so local MediaVersion arrays
+            // stripped on wire don't falsely re-mark the scene dirty on the next edit)
+            advanceSaveBaselineAfterPut(
+              saveBaselineRef.current,
+              payloadBody,
+              fullScenesForBaseline
+            )
+          }
           return response
         } catch (error) {
           console.error(`[SAVE-QUEUE] Failed save: ${batchLabel}`, error)
@@ -1206,14 +1288,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           let last: Response = await putOne(batches[0], `${label}#1/${batches.length}`)
           if (!last.ok) return last
           for (let i = 1; i < batches.length; i++) {
-            last = await putOne(batches[i], `${label}#${i + 1}/${batches.length}`)
+            const isFinal = i === batches.length - 1
+            last = await putOne(
+              batches[i],
+              `${label}#${i + 1}/${batches.length}`,
+              isFinal && !body.partialSceneBatch && Array.isArray(fullIncomingScenes)
+                ? fullIncomingScenes
+                : undefined
+            )
             if (!last.ok) return last
           }
+          // Once all fitted batches succeed, sync full scene digests from `bodyToSend`
+          advanceSaveBaselineAfterPut(
+            saveBaselineRef.current,
+            bodyToSend,
+            !body.partialSceneBatch && Array.isArray(fullIncomingScenes)
+              ? fullIncomingScenes
+              : undefined
+          )
           return last
         }
       }
 
-      return putOne(bodyToSend, label)
+      return putOne(
+        bodyToSend,
+        label,
+        !body.partialSceneBatch && Array.isArray(fullIncomingScenes)
+          ? fullIncomingScenes
+          : undefined
+      )
     })
     // Update the queue head (swallow rejections so the queue keeps moving)
     saveQueueRef.current = resultPromise.catch(() => null)
@@ -2173,10 +2276,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     >
   }, [project?.metadata?.visionPhase?.beatCaptionSettings])
   
-  // Save translations callback
+  // Save translations callback (delta PUT — sends only translations slice)
   const handleSaveTranslations = useCallback(async (langCode: string, translations: Record<number, { heading?: string; description?: string; action?: string; narration?: string; dialogue?: string[]; beatsByBeatId?: Record<string, { overlayText?: string; overlayEdited?: boolean }> }>) => {
     try {
-      const existingMetadata = project?.metadata || {}
+      const currentProject = projectRef.current || project
+      const existingMetadata = currentProject?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}
       const existingTranslations = existingVisionPhase.translations || {}
       
@@ -2185,19 +2289,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         [langCode]: translations
       }
       
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: stringifyProjectPut({
-          metadata: {
-            ...existingMetadata,
-            visionPhase: {
-              ...existingVisionPhase,
-              translations: updatedTranslations
-            }
-          }
-        })
-      })
+      const response = await serializedProjectSave(
+        visionPhasePut({ translations: updatedTranslations }),
+        `handleSaveTranslations:${langCode}`
+      )
       
       if (!response.ok) {
         throw new Error('Failed to save translations')
@@ -2206,7 +2301,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Update local project state to reflect saved translations
       setProject(prev => {
         if (!prev) return prev
-        return {
+        const next = {
           ...prev,
           metadata: {
             ...prev.metadata,
@@ -2216,6 +2311,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           }
         }
+        projectRef.current = next
+        return next
       })
       
       console.log(`[VisionPage] Saved ${Object.keys(translations).length} scene translations for ${langCode}`)
@@ -2223,27 +2320,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       console.error('[VisionPage] Error saving translations:', error)
       throw error
     }
-  }, [project, projectId])
+  }, [project, serializedProjectSave])
 
   const handleBeatCaptionSettingsChange = useCallback(
     async (settings: Record<string, boolean>) => {
       try {
-        const existingMetadata = project?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
-
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut({
-            metadata: {
-              ...existingMetadata,
-              visionPhase: {
-                ...existingVisionPhase,
-                beatCaptionSettings: settings,
-              },
-            },
-          }),
-        })
+        const response = await serializedProjectSave(
+          visionPhasePut({ beatCaptionSettings: settings }),
+          'handleBeatCaptionSettingsChange'
+        )
 
         if (!response.ok) {
           throw new Error('Failed to save shot caption settings')
@@ -2251,7 +2336,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         setProject((prev) => {
           if (!prev) return prev
-          return {
+          const next = {
             ...prev,
             metadata: {
               ...prev.metadata,
@@ -2261,13 +2346,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               },
             },
           }
+          projectRef.current = next
+          return next
         })
       } catch (error) {
         console.error('[VisionPage] Error saving shot caption settings:', error)
         throw error
       }
     },
-    [project, projectId]
+    [serializedProjectSave]
   )
 
   const projectStreams = useMemo(
@@ -2281,7 +2368,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       compat?: { exportedVideoUrl?: string; exportedAnimaticUrl?: string }
     ) => {
       try {
-        const existingMetadata = project?.metadata || {}
+        const currentProject = projectRef.current || project
+        const existingMetadata = currentProject?.metadata || {}
         const nextMetadata = upsertPublishingState(
           {
             ...existingMetadata,
@@ -2293,24 +2381,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           { streams }
         )
 
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut({
-            metadata: nextMetadata,
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to save project streams')
-        }
+        // Lightweight delta PATCH (~3 KB instead of resaving the entire 10+ MB project)
+        await persistPublishingMetadataPatch(projectId, nextMetadata)
+        saveBaselineRef.current.visionKeyDigests.set(
+          'streams',
+          fastJsonFingerprint((nextMetadata.visionPhase as any)?.streams)
+        )
+        saveBaselineRef.current.visionKeyDigests.set(
+          'publishing',
+          fastJsonFingerprint((nextMetadata.visionPhase as any)?.publishing)
+        )
 
         setProject((prev) => {
           if (!prev) return prev
-          return {
+          const next = {
             ...prev,
             metadata: nextMetadata,
           }
+          projectRef.current = next
+          return next
         })
       } catch (error) {
         console.error('[VisionPage] Error saving project streams:', error)
@@ -2323,14 +2412,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleSavePublishingMetadata = useCallback(
     async (metadataPatch: Record<string, unknown>) => {
       try {
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut({ metadata: metadataPatch }),
-        })
-        if (!response.ok) {
-          throw new Error('Failed to save publishing metadata')
-        }
+        // Lightweight delta PATCH (~3 KB instead of resaving the entire 10+ MB project)
+        await persistPublishingMetadataPatch(projectId, metadataPatch)
+        saveBaselineRef.current.visionKeyDigests.set(
+          'streams',
+          fastJsonFingerprint((metadataPatch.visionPhase as any)?.streams)
+        )
+        saveBaselineRef.current.visionKeyDigests.set(
+          'publishing',
+          fastJsonFingerprint((metadataPatch.visionPhase as any)?.publishing)
+        )
+
         const patchedScenes = getSceneProductionStateFromMetadata(metadataPatch) as Record<
           string,
           SceneProductionData
@@ -2344,7 +2436,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         setProject((prev) => {
           if (!prev) return prev
-          return { ...prev, metadata: metadataPatch }
+          const prevMeta = (prev.metadata || {}) as Record<string, any>
+          const prevVision = (prevMeta.visionPhase || {}) as Record<string, any>
+          const patchVision = (metadataPatch.visionPhase as Record<string, any> | undefined) || {}
+          const next = {
+            ...prev,
+            metadata: {
+              ...prevMeta,
+              ...metadataPatch,
+              visionPhase: {
+                ...prevVision,
+                ...patchVision,
+                // Keep live script/characters/references from local state if caller passed a partial patch
+                script: patchVision.script ?? prevVision.script,
+                scenes: patchVision.scenes ?? prevVision.scenes,
+                characters: patchVision.characters ?? prevVision.characters,
+                references: patchVision.references ?? prevVision.references,
+              },
+            },
+          }
+          projectRef.current = next
+          return next
         })
       } catch (error) {
         console.error('[VisionPage] Error saving publishing metadata:', error)
@@ -2611,21 +2723,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       })
 
-      const existingMetadata = project?.metadata || {}
-      const nextMetadata = {
-        ...existingMetadata,
-        visionPhase: {
-          ...(existingMetadata.visionPhase || {}),
-          bookmark: bookmark ? bookmark : null
-        }
-      }
-
       try {
-        await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut({ metadata: nextMetadata })
-        })
+        const res = await serializedProjectSave(
+          visionPhasePut({ bookmark: bookmark ? bookmark : null }),
+          'handleSaveBookmark'
+        )
+        if (!res.ok) throw new Error(`Bookmark save failed: ${res.status}`)
       } catch (error) {
         console.error('[Bookmark] Failed to save bookmark', error)
         try {
@@ -2634,7 +2737,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         } catch {}
       }
     },
-    [projectId, project]
+    [serializedProjectSave]
   )
 
   // Handle marking workflow steps as complete
@@ -2668,41 +2771,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
       
-      // Update local state
-      const updatedScript = {
-        ...script,
-        script: {
-          ...script.script,
-          scenes: updatedScenes
-        }
-      }
-      setScript(updatedScript)
-      
-      // Persist to database
-      try {
-        const existingMetadata = project?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
-        
-        await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut({
-            metadata: {
-              ...existingMetadata,
-              visionPhase: {
-                ...existingVisionPhase,
-                script: updatedScript
-              }
-            }
-          })
-        })
-      } catch (error) {
-        console.error('[MarkWorkflowComplete] Failed to save:', error)
+      const ok = await persistVisionScriptScenes(updatedScenes, 'handleMarkWorkflowComplete')
+      if (!ok) {
         const { toast } = require('sonner')
         toast.error('Failed to save workflow status')
       }
     },
-    [script, project, projectId]
+    [script, persistVisionScriptScenes]
   )
 
   // Handle dismissing stale warnings
@@ -2712,6 +2787,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const updatedScenes = [...script.script.scenes]
       const currentScene = updatedScenes[sceneIdx]
+      if (!currentScene) return
       
       // Update dismissed stale warnings on the scene
       const dismissedStaleWarnings = currentScene.dismissedStaleWarnings || {}
@@ -2723,39 +2799,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
       
-      // Update local state
-      const updatedScript = {
-        ...script,
-        script: {
-          ...script.script,
-          scenes: updatedScenes
-        }
-      }
-      setScript(updatedScript)
-      
-      // Persist to database
-      try {
-        const existingMetadata = project?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
-        
-        await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut({
-            metadata: {
-              ...existingMetadata,
-              visionPhase: {
-                ...existingVisionPhase,
-                script: updatedScript
-              }
-            }
-          })
-        })
-      } catch (error) {
-        console.error('[DismissStaleWarning] Failed to save:', error)
-      }
+      await persistVisionScriptScenes(updatedScenes, 'handleDismissStaleWarning')
     },
-    [script, project, projectId]
+    [script, persistVisionScriptScenes]
   )
 
   // Scene production handlers
@@ -7669,16 +7715,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 : currentVisionPhase.script,
             }
             
-            const nextMetadata = {
-              ...currentMetadata,
-              visionPhase: nextVisionPhase,
-            }
-            
-            await fetch(`/api/projects/${project.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: stringifyProjectPut({ metadata: nextMetadata }),
-            })
+            await serializedProjectSave(
+              visionPhasePut({
+                script: currentVisionPhase.script
+                  ? {
+                      ...currentVisionPhase.script,
+                      script: {
+                        ...currentVisionPhase.script.script,
+                        scenes: updatedScenes,
+                      },
+                    }
+                  : { script: { scenes: updatedScenes } },
+                scriptUpdatedAt: new Date().toISOString(),
+              }),
+              'handleAudioClipChange',
+              { refreshLiveScript: true, mintScriptUpdatedAt: true }
+            )
             
             console.log('[Audio Clip Change] Persisted to database', { sceneIndex, trackType, clipId, changes })
           } catch (error) {
@@ -7689,7 +7741,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       console.log('[Audio Clip Change]', { sceneIndex, trackType, clipId, changes })
     },
-    [project?.id, project?.metadata, scenes]
+    [project?.id, project?.metadata, scenes, serializedProjectSave]
   )
   
   // Track stale URLs pending cleanup - used to avoid race conditions with regeneration
@@ -7765,22 +7817,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               const currentMetadata = projectRef.current?.metadata ?? project.metadata ?? {}
               const currentVisionPhase = currentMetadata.visionPhase ?? {}
 
-              const nextVisionPhase = {
-                ...currentVisionPhase,
-                scenes: updatedScenes,
-                script: updatedScript ?? currentVisionPhase.script,
-              }
-
-              await fetch(`/api/projects/${project.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: stringifyProjectPut({
-                  metadata: {
-                    ...currentMetadata,
-                    visionPhase: nextVisionPhase,
-                  },
+              await serializedProjectSave(
+                visionPhasePut({
+                  script: updatedScript ?? currentVisionPhase.script,
+                  scriptUpdatedAt: new Date().toISOString(),
                 }),
-              })
+                'handleCleanupStaleAudioUrl',
+                { refreshLiveScript: true, mintScriptUpdatedAt: true }
+              )
 
               console.log('[Stale Audio Cleanup] Persisted cleanup')
             } catch (error) {
@@ -7790,7 +7834,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }, 2000)
     },
-    [project?.id, project?.metadata]
+    [project?.id, project?.metadata, serializedProjectSave]
   )
   
   // Revise script state
@@ -10247,6 +10291,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } else {
         console.warn('[Load Project] Production GET skipped:', productionRes.status)
       }
+      // Capture raw server-loaded metadata & production baseline BEFORE client migrations
+      // so delta saves only upload scenes & slices that actually changed.
+      saveBaselineRef.current = captureSaveBaselineFromMetadata(proj.metadata)
+
       const liteMode = !!data.liteMode
       const base64Size = typeof data.base64Size === 'number' ? data.base64Size : 0
       const skipLitePersist = liteMode && base64Size > 0
@@ -12022,27 +12070,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const updatedSceneRefs = [...sceneReferences, newReference]
     setSceneReferences(updatedSceneRefs)
     
-    // Save to database
+    // Save to database (delta PUT — references slice only)
     try {
-      const existingMetadata = project?.metadata || {}
-      const existingVisionPhase = existingMetadata.visionPhase || {}
-      
-      await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: stringifyProjectPut({
-          metadata: {
-            ...existingMetadata,
-            visionPhase: {
-              ...existingVisionPhase,
-              references: {
-                sceneReferences: updatedSceneRefs,
-                objectReferences
-              }
-            }
-          }
-        })
-      })
+      await serializedProjectSave(
+        visionPhasePut({
+          references: {
+            sceneReferences: updatedSceneRefs,
+            objectReferences,
+          },
+        }),
+        'handleAddToReferenceLibrary'
+      )
     } catch (error) {
       console.error('[handleAddToReferenceLibrary] Error saving:', error)
     }
@@ -12513,23 +12551,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         setScript(updatedScript)
         
-        // Persist to database so scene references survive refresh
+        // Persist changed scene via delta save queue so scene references survive refresh
         try {
-          const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } = project?.metadata?.visionPhase || {}
-          await fetch(`/api/projects/${project?.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: stringifyProjectPut({
-              metadata: {
-                ...project?.metadata,
-                visionPhase: {
-                  ...visionPhaseWithoutCharacters,
-                  characters: characters,
-                  script: updatedScript
-                }
-              }
-            })
-          })
+          await persistVisionScriptScenes(updatedScenes, 'handleGenerateSceneReferenceImage')
         } catch (saveError) {
           console.error('[handleGenerateSceneReferenceImage] Failed to persist:', saveError)
         }
@@ -12601,23 +12625,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       setScript(updatedScript)
       
-      // Persist to database so uploaded references survive refresh
+      // Persist changed scene via delta save queue so uploaded references survive refresh
       try {
-        const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } = project?.metadata?.visionPhase || {}
-        await fetch(`/api/projects/${project?.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: stringifyProjectPut({
-            metadata: {
-              ...project?.metadata,
-              visionPhase: {
-                ...visionPhaseWithoutCharacters,
-                characters: characters,
-                script: updatedScript
-              }
-            }
-          })
-        })
+        await persistVisionScriptScenes(updatedScenes, 'handleUploadSceneReferenceImage')
       } catch (saveError) {
         console.error('[handleUploadSceneReferenceImage] Failed to persist:', saveError)
       }

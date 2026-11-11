@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
+import {
+  buildOAuthPopupHtmlResponse,
+  type SocialOAuthPopupStatus,
+} from '@/lib/publish/oauthPopupResponse'
 import { exchangeYouTubeCode, saveYouTubeTokens } from '@/lib/publish/youtubeClient'
 
 interface YouTubeOAuthState {
   userId: string
   returnTo?: string
   redirectUri?: string
+  popup?: boolean
 }
 
 function parseOAuthState(stateRaw: string | null): YouTubeOAuthState | null {
@@ -17,13 +22,21 @@ function parseOAuthState(stateRaw: string | null): YouTubeOAuthState | null {
   }
 }
 
-function buildReturnRedirect(
+function buildReturnResponse(
   req: NextRequest,
-  returnTo: string | undefined,
-  status: string
+  state: YouTubeOAuthState | null,
+  status: SocialOAuthPopupStatus,
+  message?: string
 ): NextResponse {
+  if (state?.popup) {
+    return buildOAuthPopupHtmlResponse({
+      platform: 'youtube',
+      status,
+      message,
+    })
+  }
   const fallback = `${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard`
-  const target = returnTo || fallback
+  const target = state?.returnTo || fallback
   if (target.startsWith('http://') || target.startsWith('https://')) {
     const dest = new URL(target)
     dest.searchParams.set('youtube', status)
@@ -42,10 +55,17 @@ export async function handleYouTubeOAuthCallback(req: NextRequest): Promise<Next
   const parsedState = parseOAuthState(stateRaw)
 
   if (error) {
-    return buildReturnRedirect(req, parsedState?.returnTo, 'error')
+    return buildReturnResponse(
+      req,
+      parsedState,
+      'error',
+      error === 'access_denied'
+        ? 'Google sign-in or YouTube permission was cancelled.'
+        : `Google OAuth error: ${error}`
+    )
   }
   if (!code || !stateRaw || !parsedState?.userId) {
-    return buildReturnRedirect(req, parsedState?.returnTo, 'missing_code')
+    return buildReturnResponse(req, parsedState, 'missing_code')
   }
 
   try {
@@ -55,9 +75,10 @@ export async function handleYouTubeOAuthCallback(req: NextRequest): Promise<Next
       parsedState.userId
     )
     await saveYouTubeTokens(parsedState.userId, tokens)
-    return buildReturnRedirect(req, parsedState.returnTo, 'connected')
+    return buildReturnResponse(req, parsedState, 'connected')
   } catch (err) {
     console.error('[YouTube Callback]', err)
-    return buildReturnRedirect(req, parsedState.returnTo, 'callback_failed')
+    const msg = err instanceof Error ? err.message : 'Failed to verify authorization code'
+    return buildReturnResponse(req, parsedState, 'callback_failed', msg)
   }
 }

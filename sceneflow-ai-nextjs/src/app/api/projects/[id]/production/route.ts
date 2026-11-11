@@ -6,6 +6,10 @@ import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { findSceneById, getVisionScriptScenes } from '@/lib/script/resolveSceneById'
 import { appendSceneRender } from '@/lib/projects/appendSceneRender'
 import { savePreVisMaster } from '@/lib/projects/savePreVisMaster'
+import {
+  mergePublishingMetadataPatch,
+  type PublishingMetadataPatch,
+} from '@/lib/projects/deltaProjectSave'
 import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
 import type { ProductionStream } from '@/components/vision/scene-production/types'
 import type { PreVisMasterAsset } from '@/types/publishingAssets'
@@ -80,7 +84,42 @@ export async function PATCH(
     const { id } = await params
     const body = await request.json()
     
-    const { sceneId, productionData, appendStream, previsMaster } = body
+    const { sceneId, productionData, appendStream, previsMaster, publishingPatch } = body
+
+    if (publishingPatch && typeof publishingPatch === 'object') {
+      if (isDemoProjectId(id)) {
+        return NextResponse.json({
+          success: true,
+          projectId: id,
+          updatedAt: new Date().toISOString(),
+          demoMode: true,
+        })
+      }
+      await sequelize.authenticate()
+      const txResult = await sequelize.transaction(async (transaction) => {
+        const project = await Project.findByPk(id, {
+          transaction,
+          lock: transaction.LOCK.UPDATE,
+        })
+        if (!project) {
+          return { notFound: true as const }
+        }
+        const updatedMetadata = mergePublishingMetadataPatch(
+          project.metadata || {},
+          publishingPatch as PublishingMetadataPatch
+        )
+        await project.update({ metadata: updatedMetadata }, { transaction })
+        return { notFound: false as const }
+      })
+      if (txResult.notFound) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+      }
+      return NextResponse.json({
+        success: true,
+        projectId: id,
+        updatedAt: new Date().toISOString(),
+      })
+    }
 
     if (previsMaster && typeof previsMaster === 'object') {
       const asset = previsMaster as PreVisMasterAsset

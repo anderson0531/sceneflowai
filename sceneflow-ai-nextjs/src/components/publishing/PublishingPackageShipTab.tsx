@@ -11,6 +11,7 @@ import {
   Facebook,
   Globe,
   Image as ImageIcon,
+  KeyRound,
   Languages,
   Link2,
   Loader2,
@@ -22,6 +23,8 @@ import {
   Youtube,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { AdminYoutubeQuickEnablePanel } from '@/components/admin/SocialPublishingOAuthCard'
+import { openSocialOAuthPopup } from '@/lib/publish/socialOAuthPopup'
 import { PreVisRenderDialog } from '@/components/vision/PreVisRenderDialog'
 import { collectPreVisLanguages } from '@/lib/storyboard/preVisSceneRender'
 import { cn } from '@/lib/utils'
@@ -388,15 +391,22 @@ export function PublishingPackageShipTab({
 
   const [pageId, setPageId] = useState<string>('')
   const [pages, setPages] = useState<Array<{ id: string; name: string }>>([])
+  const [checkingConnections, setCheckingConnections] = useState(true)
+  const [authorizingPlatform, setAuthorizingPlatform] = useState<
+    'youtube' | 'facebook' | 'tiktok' | null
+  >(null)
   const [youtubeConnected, setYoutubeConnected] = useState(false)
   const [youtubeNeedsReconnect, setYoutubeNeedsReconnect] = useState(false)
   const [youtubeChannel, setYoutubeChannel] = useState<YouTubeChannelInfo | null>(null)
-  const [oauthConfigured, setOauthConfigured] = useState(true)
+  const [oauthConfigured, setOauthConfigured] = useState(false)
+  const [isAdminUser, setIsAdminUser] = useState(false)
+  const [adminRedirectUris, setAdminRedirectUris] = useState<string[]>([])
+  const [showAdminOauthForm, setShowAdminOauthForm] = useState(true)
 
   const [facebookConnected, setFacebookConnected] = useState(false)
-  const [facebookOauthConfigured, setFacebookOauthConfigured] = useState(true)
+  const [facebookOauthConfigured, setFacebookOauthConfigured] = useState(false)
   const [tiktokConnected, setTiktokConnected] = useState(false)
-  const [tiktokOauthConfigured, setTiktokOauthConfigured] = useState(true)
+  const [tiktokOauthConfigured, setTiktokOauthConfigured] = useState(false)
   const [busy, setBusy] = useState<
     'prepare' | 'ship' | 'ship-all' | 'meta' | 'translate' | 'thumb' | 'disconnect' | null
   >(null)
@@ -632,28 +642,42 @@ export function PublishingPackageShipTab({
   }, [plan.id, language])
 
   const refreshConnections = useCallback(async () => {
-    const query = userId ? `?userId=${encodeURIComponent(userId)}` : ''
-    const [youtube, facebook, tiktok] = await Promise.all([
-      fetch(`/api/publish/youtube/upload${query}`)
-        .then((r) => r.json())
-        .catch(() => ({})),
-      fetch(`/api/publish/facebook/upload${query}`)
-        .then((r) => r.json())
-        .catch(() => ({})),
-      fetch(`/api/publish/tiktok/upload${query}`)
-        .then((r) => r.json())
-        .catch(() => ({})),
-    ])
-    setYoutubeConnected(Boolean(youtube.connected))
-    setYoutubeNeedsReconnect(Boolean(youtube.needsReconnect))
-    setYoutubeChannel(youtube.channel || null)
-    setOauthConfigured(youtube.oauthConfigured !== false)
-    setFacebookConnected(Boolean(facebook.connected))
-    setFacebookOauthConfigured(facebook.oauthConfigured !== false)
-    setTiktokConnected(Boolean(tiktok.connected))
-    setTiktokOauthConfigured(tiktok.oauthConfigured !== false)
-    setPages(Array.isArray(facebook.pages) ? facebook.pages : [])
-    if (facebook.pageId) setPageId(facebook.pageId)
+    setCheckingConnections(true)
+    try {
+      const query = userId ? `?userId=${encodeURIComponent(userId)}` : ''
+      const [youtube, facebook, tiktok, ytConfig] = await Promise.all([
+        fetch(`/api/publish/youtube/upload${query}`)
+          .then((r) => r.json())
+          .catch(() => ({})),
+        fetch(`/api/publish/facebook/upload${query}`)
+          .then((r) => r.json())
+          .catch(() => ({})),
+        fetch(`/api/publish/tiktok/upload${query}`)
+          .then((r) => r.json())
+          .catch(() => ({})),
+        fetch('/api/publish/youtube/config')
+          .then((r) => r.json())
+          .catch(() => ({})),
+      ])
+      setYoutubeConnected(Boolean(youtube.connected))
+      setYoutubeNeedsReconnect(Boolean(youtube.needsReconnect))
+      setYoutubeChannel(youtube.channel || null)
+      setOauthConfigured(Boolean(youtube.oauthConfigured || ytConfig.configured))
+      setIsAdminUser(Boolean(ytConfig.isAdmin))
+      if (Array.isArray(ytConfig.recommendedRedirectUris)) {
+        setAdminRedirectUris(ytConfig.recommendedRedirectUris)
+      } else if (typeof ytConfig.redirectUri === 'string' && ytConfig.redirectUri) {
+        setAdminRedirectUris([ytConfig.redirectUri])
+      }
+      setFacebookConnected(Boolean(facebook.connected))
+      setFacebookOauthConfigured(Boolean(facebook.oauthConfigured))
+      setTiktokConnected(Boolean(tiktok.connected))
+      setTiktokOauthConfigured(Boolean(tiktok.oauthConfigured))
+      setPages(Array.isArray(facebook.pages) ? facebook.pages : [])
+      if (facebook.pageId) setPageId(facebook.pageId)
+    } finally {
+      setCheckingConnections(false)
+    }
   }, [userId])
 
   useEffect(() => {
@@ -744,6 +768,13 @@ export function PublishingPackageShipTab({
     [effectiveYoutubeByLanguage, onSaveMetadata]
   )
 
+  const oauthPopupCleanupRef = useRef<(() => void) | null>(null)
+  useEffect(() => {
+    return () => {
+      oauthPopupCleanupRef.current?.()
+    }
+  }, [])
+
   const connect = (platform: 'youtube' | 'facebook' | 'tiktok') => {
     const returnUrl = new URL(window.location.href)
     returnUrl.searchParams.set('view', 'streams')
@@ -756,7 +787,47 @@ export function PublishingPackageShipTab({
     const returnTo = `${returnUrl.pathname}${returnUrl.search}`
     const params = new URLSearchParams({ returnTo })
     if (userId) params.set('userId', userId)
-    window.location.href = `/api/publish/${platform}/auth?${params.toString()}`
+    const authUrl = `/api/publish/${platform}/auth?${params.toString()}`
+
+    oauthPopupCleanupRef.current?.()
+    setAuthorizingPlatform(platform)
+
+    const { usedPopup, cleanup } = openSocialOAuthPopup({
+      platform,
+      authUrl,
+      onComplete: (result) => {
+        setAuthorizingPlatform(null)
+        oauthPopupCleanupRef.current = null
+        if (result.status === 'connected') {
+          toast.success(
+            `${platform === 'youtube' ? 'YouTube' : platform === 'facebook' ? 'Facebook' : 'TikTok'} account authorized!`
+          )
+          void refreshConnections()
+        } else if (result.status === 'not_configured') {
+          if (platform === 'youtube' && isAdminUser) {
+            setShowAdminOauthForm(true)
+            toast.error(
+              'SceneFlow Google OAuth Client ID & Secret need to be saved once before Google Sign-In can open.'
+            )
+          } else {
+            toast.error('Social platform authorization is not yet enabled on this server.')
+          }
+          void refreshConnections()
+        } else if (result.status === 'popup_closed') {
+          // Popup may have closed right as callback completed — refresh connection state silently
+          void refreshConnections()
+        } else {
+          toast.error(
+            result.message || 'Authorization was cancelled or could not be completed.'
+          )
+          void refreshConnections()
+        }
+      },
+    })
+
+    if (usedPopup) {
+      oauthPopupCleanupRef.current = cleanup
+    }
   }
 
   const disconnectYoutube = async () => {
@@ -1869,14 +1940,20 @@ export function PublishingPackageShipTab({
                   ) : (
                     <>
                       <p className="text-xs font-medium text-zinc-200">
-                        {youtubeNeedsReconnect
-                          ? 'YouTube authorization expired — please reconnect'
-                          : 'Authorize SceneFlow to publish to YouTube'}
+                        {checkingConnections
+                          ? 'Checking YouTube authorization…'
+                          : youtubeNeedsReconnect
+                            ? 'YouTube authorization expired — please reconnect'
+                            : 'Authorize SceneFlow to publish to YouTube'}
                       </p>
                       <p className="text-[11px] text-zinc-400">
-                        {oauthConfigured
-                          ? 'Sign in with Google once to grant SceneFlow permission to upload videos, thumbnails & localized metadata to your channel.'
-                          : 'YouTube publishing is temporarily unavailable until SceneFlow platform authorization is enabled.'}
+                        {checkingConnections
+                          ? 'Verifying Google OAuth status…'
+                          : oauthConfigured
+                            ? 'Sign in with Google in a popup window to grant SceneFlow permission to upload videos, thumbnails & localized metadata to your channel.'
+                            : isAdminUser
+                              ? 'Admin one-time setup needed: add SceneFlow’s Google OAuth Web Client ID & Secret once so Google Sign-In can open for users.'
+                              : 'YouTube publishing is temporarily unavailable until SceneFlow platform authorization is enabled.'}
                       </p>
                     </>
                   )}
@@ -1889,10 +1966,15 @@ export function PublishingPackageShipTab({
                     <Button
                       size="sm"
                       variant="outline"
+                      disabled={authorizingPlatform === 'youtube'}
                       onClick={() => connect('youtube')}
                       className="h-7 text-xs border-zinc-700 text-zinc-300"
                     >
-                      <RefreshCw className="h-3 w-3 mr-1" />
+                      {authorizingPlatform === 'youtube' ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                      )}
                       Switch Channel
                     </Button>
                     <Button
@@ -1911,18 +1993,58 @@ export function PublishingPackageShipTab({
                     </Button>
                   </>
                 ) : (
-                  <Button
-                    size="sm"
-                    disabled={!oauthConfigured}
-                    onClick={() => connect('youtube')}
-                    className="h-8 text-xs bg-red-600 hover:bg-red-500 text-white disabled:opacity-50"
-                  >
-                    <Link2 className="h-3.5 w-3.5 mr-1.5" />
-                    {youtubeNeedsReconnect ? 'Re-authorize YouTube' : 'Authorize YouTube'}
-                  </Button>
+                  <>
+                    {!checkingConnections && !oauthConfigured && isAdminUser ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowAdminOauthForm((v) => !v)}
+                        className="h-8 text-xs border-violet-500/40 bg-violet-950/30 text-violet-200 hover:bg-violet-900/40"
+                      >
+                        <KeyRound className="h-3.5 w-3.5 mr-1.5" />
+                        {showAdminOauthForm ? 'Hide Admin Key Panel' : 'Enable Platform Auth (Admin)'}
+                      </Button>
+                    ) : null}
+                    <Button
+                      size="sm"
+                      disabled={
+                        checkingConnections ||
+                        !oauthConfigured ||
+                        authorizingPlatform === 'youtube'
+                      }
+                      onClick={() => connect('youtube')}
+                      className="h-8 text-xs bg-red-600 hover:bg-red-500 text-white disabled:opacity-50"
+                    >
+                      {checkingConnections || authorizingPlatform === 'youtube' ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Link2 className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      {authorizingPlatform === 'youtube'
+                        ? 'Waiting for Google Sign-In…'
+                        : youtubeNeedsReconnect
+                          ? 'Re-authorize YouTube'
+                          : 'Authorize YouTube'}
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
+
+            {!checkingConnections &&
+            !youtubeConnected &&
+            !oauthConfigured &&
+            isAdminUser &&
+            showAdminOauthForm ? (
+              <AdminYoutubeQuickEnablePanel
+                redirectUris={adminRedirectUris}
+                onSavedAndConnect={() => {
+                  setShowAdminOauthForm(false)
+                  setOauthConfigured(true)
+                  connect('youtube')
+                }}
+              />
+            ) : null}
           </div>
         ) : null}
 
@@ -1935,9 +2057,11 @@ export function PublishingPackageShipTab({
               <p className="text-[11px] text-zinc-400">
                 {facebookConnected
                   ? 'Select the Facebook Page to publish to.'
-                  : facebookOauthConfigured
-                    ? 'Sign in with Facebook once to grant SceneFlow permission to publish videos to your Page.'
-                    : 'Facebook publishing is temporarily unavailable until SceneFlow platform authorization is enabled.'}
+                  : checkingConnections
+                    ? 'Checking Facebook connection…'
+                    : facebookOauthConfigured
+                      ? 'Sign in with Facebook once to grant SceneFlow permission to publish videos to your Page.'
+                      : 'Facebook publishing is temporarily unavailable until SceneFlow platform authorization is enabled.'}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -1959,14 +2083,26 @@ export function PublishingPackageShipTab({
                 size="sm"
                 variant={facebookConnected ? 'outline' : 'default'}
                 onClick={() => connect('facebook')}
-                disabled={!facebookConnected && !facebookOauthConfigured}
+                disabled={
+                  checkingConnections ||
+                  authorizingPlatform === 'facebook' ||
+                  (!facebookConnected && !facebookOauthConfigured)
+                }
                 className={cn(
                   'h-8 text-xs disabled:opacity-50',
                   !facebookConnected && 'bg-blue-600 hover:bg-blue-500 text-white'
                 )}
               >
-                <Link2 className="h-3.5 w-3.5 mr-1.5" />
-                {facebookConnected ? 'Switch Account' : 'Authorize Facebook'}
+                {authorizingPlatform === 'facebook' ? (
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <Link2 className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                {authorizingPlatform === 'facebook'
+                  ? 'Waiting for Facebook…'
+                  : facebookConnected
+                    ? 'Switch Account'
+                    : 'Authorize Facebook'}
               </Button>
             </div>
           </div>
@@ -1979,23 +2115,37 @@ export function PublishingPackageShipTab({
                 {tiktokConnected ? 'TikTok account connected' : 'Authorize SceneFlow to publish to TikTok'}
               </p>
               <p className="text-[11px] text-zinc-400">
-                {tiktokOauthConfigured
-                  ? 'Sign in with TikTok once to grant SceneFlow permission to post videos to your account.'
-                  : 'TikTok publishing is temporarily unavailable until SceneFlow platform authorization is enabled.'}
+                {checkingConnections
+                  ? 'Checking TikTok connection…'
+                  : tiktokOauthConfigured
+                    ? 'Sign in with TikTok once to grant SceneFlow permission to post videos to your account.'
+                    : 'TikTok publishing is temporarily unavailable until SceneFlow platform authorization is enabled.'}
               </p>
             </div>
             <Button
               size="sm"
               variant={tiktokConnected ? 'outline' : 'default'}
               onClick={() => connect('tiktok')}
-              disabled={!tiktokConnected && !tiktokOauthConfigured}
+              disabled={
+                checkingConnections ||
+                authorizingPlatform === 'tiktok' ||
+                (!tiktokConnected && !tiktokOauthConfigured)
+              }
               className={cn(
                 'h-8 text-xs disabled:opacity-50',
                 !tiktokConnected && 'bg-zinc-100 hover:bg-white text-zinc-950'
               )}
             >
-              <Link2 className="h-3.5 w-3.5 mr-1.5" />
-              {tiktokConnected ? 'Switch Account' : 'Authorize TikTok'}
+              {authorizingPlatform === 'tiktok' ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Link2 className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              {authorizingPlatform === 'tiktok'
+                ? 'Waiting for TikTok…'
+                : tiktokConnected
+                  ? 'Switch Account'
+                  : 'Authorize TikTok'}
             </Button>
           </div>
         ) : null}

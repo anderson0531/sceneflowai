@@ -364,11 +364,14 @@ export async function PUT(
           scriptSafeguardTriggered = true
         }
         // Case 2: Incoming has no script at all - preserve existing
+        // (Delta PUTs intentionally omit `script` when updating other visionPhase slices.)
         else if (existingSceneCount > 0 && !incomingScript) {
-          console.warn('[Projects PUT] PREVENTED SCRIPT DELETION (no incoming script):', {
-            existingSceneCount,
-            preservingExistingScript: true
-          })
+          if ('script' in body.metadata.visionPhase) {
+            console.warn('[Projects PUT] PREVENTED SCRIPT DELETION (no incoming script):', {
+              existingSceneCount,
+              preservingExistingScript: true
+            })
+          }
           mergedMetadata.visionPhase.script = existingScript
           scriptSafeguardTriggered = true
         }
@@ -407,11 +410,14 @@ export async function PUT(
               const incomingScenes = incomingScript.script.scenes
               const deletedSceneIds = body.deletedSceneIds || []
               const partialSceneBatch = body.partialSceneBatch === true
+              const sceneOrderIds = Array.isArray(body.sceneOrderIds)
+                ? body.sceneOrderIds
+                : undefined
 
               const shrinkGuard = scenesAfterUnconfirmedShrinkGuard(
                 existingScenes,
                 incomingScenes,
-                { deletedSceneIds, confirmScriptReplace, partialSceneBatch }
+                { deletedSceneIds, confirmScriptReplace, partialSceneBatch, sceneOrderIds }
               )
               const mergedScenes = shrinkGuard.scenes
               if (shrinkGuard.rejectedShrink) {

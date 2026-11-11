@@ -10,7 +10,7 @@ import { ExportBundlePanel } from '@/components/premiere/ExportBundlePanel'
 import { PublishingPackageShipTab } from '@/components/publishing/PublishingPackageShipTab'
 import { usePremiereScreenings } from '@/hooks/premiere/usePremiereScreenings'
 import { getProjectStreams } from '@/lib/streams/projectStreams'
-import { stringifyProjectPut } from '@/lib/projects/slimProjectPutPayload'
+import { persistPublishingMetadataPatch } from '@/lib/projects/deltaProjectSave'
 import { useSession } from 'next-auth/react'
 import { usePremiereAnalytics, type PremiereFeedback } from '@/hooks/premiere/usePremiereAnalytics'
 import { premiereSharePath } from '@/lib/premiere/screeningLookup'
@@ -296,12 +296,7 @@ export function ScreeningRoomPublishPanel({
             streams={getProjectStreams(currentProject?.metadata)}
             onSaveMetadata={async (next) => {
               updateProject(projectId, { metadata: next })
-              const res = await fetch(`/api/projects/${projectId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: stringifyProjectPut({ metadata: next }),
-              })
-              if (!res.ok) throw new Error('Failed to save publishing metadata')
+              await persistPublishingMetadataPatch(projectId, next)
             }}
           />
         )}
