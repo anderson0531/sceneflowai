@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { exchangeFacebookCode, saveFacebookTokens } from '@/lib/publish/facebookClient'
-import { buildOAuthPopupHtmlResponse } from '@/lib/publish/oauthPopupResponse'
+import {
+  buildOAuthPopupHtmlResponse,
+  isTrustedSceneFlowOrigin,
+} from '@/lib/publish/oauthPopupResponse'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,9 +11,13 @@ export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code')
   const stateRaw = req.nextUrl.searchParams.get('state')
   const error = req.nextUrl.searchParams.get('error')
-  const fallback = `${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard`
 
-  let parsedState: { userId?: string; returnTo?: string; popup?: boolean } | null = null
+  let parsedState: {
+    userId?: string
+    returnTo?: string
+    openerOrigin?: string
+    popup?: boolean
+  } | null = null
   if (stateRaw) {
     try {
       parsedState = JSON.parse(Buffer.from(stateRaw, 'base64url').toString('utf8'))
@@ -19,33 +26,57 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  const baseOrigin = isTrustedSceneFlowOrigin(parsedState?.openerOrigin)
+    ? parsedState!.openerOrigin!
+    : req.url
+  const buildFallbackRedirect = (status: string) => {
+    const target = parsedState?.returnTo || '/dashboard'
+    const dest = new URL(target.startsWith('/') ? target : '/dashboard', baseOrigin)
+    dest.searchParams.set('facebook', status)
+    return NextResponse.redirect(dest, { headers: { 'Cache-Control': 'no-store' } })
+  }
+
   if (error) {
     if (parsedState?.popup) {
-      return buildOAuthPopupHtmlResponse({ platform: 'facebook', status: 'error' })
+      return buildOAuthPopupHtmlResponse({
+        platform: 'facebook',
+        status: 'error',
+        openerOrigin: parsedState.openerOrigin,
+      })
     }
-    return NextResponse.redirect(`${fallback}?facebook=error`)
+    return buildFallbackRedirect('error')
   }
   if (!code || !stateRaw || !parsedState?.userId) {
     if (parsedState?.popup) {
-      return buildOAuthPopupHtmlResponse({ platform: 'facebook', status: 'missing_code' })
+      return buildOAuthPopupHtmlResponse({
+        platform: 'facebook',
+        status: 'missing_code',
+        openerOrigin: parsedState?.openerOrigin,
+      })
     }
-    return NextResponse.redirect(`${fallback}?facebook=missing_code`)
+    return buildFallbackRedirect('missing_code')
   }
 
   try {
     const tokens = await exchangeFacebookCode(code)
     await saveFacebookTokens(parsedState.userId, tokens)
     if (parsedState.popup) {
-      return buildOAuthPopupHtmlResponse({ platform: 'facebook', status: 'connected' })
+      return buildOAuthPopupHtmlResponse({
+        platform: 'facebook',
+        status: 'connected',
+        openerOrigin: parsedState.openerOrigin,
+      })
     }
-    const returnTo = parsedState.returnTo || fallback
-    const sep = returnTo.includes('?') ? '&' : '?'
-    return NextResponse.redirect(`${returnTo}${sep}facebook=connected`)
+    return buildFallbackRedirect('connected')
   } catch (err) {
     console.error('[Facebook Callback]', err)
     if (parsedState?.popup) {
-      return buildOAuthPopupHtmlResponse({ platform: 'facebook', status: 'callback_failed' })
+      return buildOAuthPopupHtmlResponse({
+        platform: 'facebook',
+        status: 'callback_failed',
+        openerOrigin: parsedState.openerOrigin,
+      })
     }
-    return NextResponse.redirect(`${fallback}?facebook=callback_failed`)
+    return buildFallbackRedirect('callback_failed')
   }
 }

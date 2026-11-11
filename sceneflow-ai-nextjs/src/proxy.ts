@@ -56,7 +56,7 @@ export async function proxy(req: NextRequest) {
       hasAuthSecretConfigured: hasAuthSecretConfigured(),
       cookieNamesTried: SESSION_COOKIE_CANDIDATES,
     })
-    return redirectToLogin(req, pathname)
+    return redirectToLogin(req, `${pathname}${req.nextUrl.search}`)
   }
 
   return NextResponse.next()

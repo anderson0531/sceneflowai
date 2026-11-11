@@ -43,7 +43,13 @@ export async function GET(req: NextRequest) {
     const creds = await resolveYouTubeOAuthCredentials(userId)
     const redirectUri = youtubeRedirectUri(req.nextUrl.origin)
     const state = Buffer.from(
-      JSON.stringify({ userId, returnTo, redirectUri, ...(popup ? { popup: true } : {}) })
+      JSON.stringify({
+        userId,
+        returnTo,
+        redirectUri,
+        openerOrigin: req.nextUrl.origin,
+        ...(popup ? { popup: true } : {}),
+      })
     ).toString('base64url')
     const url = getYouTubeAuthUrl(state, req.nextUrl.origin, creds)
     return NextResponse.redirect(url, { headers: NO_STORE })

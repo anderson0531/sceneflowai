@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
 import {
   buildOAuthPopupHtmlResponse,
+  isTrustedSceneFlowOrigin,
   type SocialOAuthPopupStatus,
 } from '@/lib/publish/oauthPopupResponse'
 import { exchangeYouTubeCode, saveYouTubeTokens } from '@/lib/publish/youtubeClient'
@@ -10,6 +11,7 @@ interface YouTubeOAuthState {
   userId: string
   returnTo?: string
   redirectUri?: string
+  openerOrigin?: string
   popup?: boolean
 }
 
@@ -33,16 +35,19 @@ function buildReturnResponse(
       platform: 'youtube',
       status,
       message,
+      openerOrigin: state.openerOrigin,
     })
   }
-  const fallback = `${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard`
-  const target = state?.returnTo || fallback
+  const baseOrigin = isTrustedSceneFlowOrigin(state?.openerOrigin)
+    ? state!.openerOrigin!
+    : req.url
+  const target = state?.returnTo || '/dashboard'
   if (target.startsWith('http://') || target.startsWith('https://')) {
     const dest = new URL(target)
     dest.searchParams.set('youtube', status)
     return NextResponse.redirect(dest, { headers: { 'Cache-Control': 'no-store' } })
   }
-  const dest = new URL(target.startsWith('/') ? target : '/dashboard', req.url)
+  const dest = new URL(target.startsWith('/') ? target : '/dashboard', baseOrigin)
   dest.searchParams.set('youtube', status)
   return NextResponse.redirect(dest, { headers: { 'Cache-Control': 'no-store' } })
 }
@@ -60,7 +65,7 @@ export async function handleYouTubeOAuthCallback(req: NextRequest): Promise<Next
       parsedState,
       'error',
       error === 'access_denied'
-        ? 'Google sign-in or YouTube permission was cancelled.'
+        ? 'Google sign-in was cancelled or blocked. If Google said "has not completed the Google verification process", add your Gmail under Google Cloud Console → Google Auth Platform → Audience → Test users (or click Publish App), then click Authorize YouTube again.'
         : `Google OAuth error: ${error}`
     )
   }

@@ -310,7 +310,9 @@ export function AdminYoutubeQuickEnablePanel({
       if (!res.ok) throw new Error(data.error || 'Failed to save platform OAuth credentials')
       setCredentialsJson('')
       setClientSecret('')
-      toast.success('SceneFlow Google OAuth enabled! Opening Google Sign-In…')
+      toast.success(
+        'SceneFlow Google OAuth enabled! Now click "Authorize YouTube" above to open Google Sign-In.'
+      )
       onSavedAndConnect()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save platform OAuth credentials')
@@ -409,7 +411,7 @@ export function AdminYoutubeQuickEnablePanel({
             ) : (
               <Youtube className="h-3.5 w-3.5 mr-1.5" />
             )}
-            Save &amp; Sign In with Google
+            Save Platform OAuth
           </Button>
         </div>
       </div>

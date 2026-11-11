@@ -13,6 +13,25 @@ export interface OAuthPopupHtmlOptions {
   platform: SocialOAuthPlatform
   status: SocialOAuthPopupStatus
   message?: string
+  openerOrigin?: string
+}
+
+export function isTrustedSceneFlowOrigin(origin: string | undefined | null): boolean {
+  if (!origin) return false
+  try {
+    const u = new URL(origin)
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return false
+    const host = u.hostname.toLowerCase()
+    return (
+      host === 'sceneflowai.studio' ||
+      host.endsWith('.sceneflowai.studio') ||
+      host.endsWith('.vercel.app') ||
+      host === 'localhost' ||
+      host === '127.0.0.1'
+    )
+  } catch {
+    return false
+  }
 }
 
 const PLATFORM_LABELS: Record<SocialOAuthPlatform, string> = {
@@ -62,6 +81,11 @@ export function buildOAuthPopupHtmlResponse(options: OAuthPopupHtmlOptions): Nex
     message: options.message || undefined,
     ts: Date.now(),
   }).replace(/</g, '\\u003c')
+
+  const safeOpenerOrigin = isTrustedSceneFlowOrigin(options.openerOrigin)
+    ? new URL(options.openerOrigin!).origin
+    : ''
+  const openerOriginJson = JSON.stringify(safeOpenerOrigin).replace(/</g, '\\u003c')
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -153,7 +177,14 @@ export function buildOAuthPopupHtmlResponse(options: OAuthPopupHtmlOptions): Nex
       } catch (e) {}
       try {
         if (window.opener && !window.opener.closed) {
-          window.opener.postMessage(payload, window.location.origin);
+          var targetOrigins = [window.location.origin];
+          var openerOrigin = ${openerOriginJson};
+          if (openerOrigin && openerOrigin !== window.location.origin) {
+            targetOrigins.push(openerOrigin);
+          }
+          for (var i = 0; i < targetOrigins.length; i++) {
+            try { window.opener.postMessage(payload, targetOrigins[i]); } catch (e) {}
+          }
         }
       } catch (e) {}
       setTimeout(function () {

@@ -37,7 +37,12 @@ export async function GET(req: NextRequest) {
     }
     const userId = await resolveUserId(userIdRaw)
     const state = Buffer.from(
-      JSON.stringify({ userId, returnTo, ...(popup ? { popup: true } : {}) })
+      JSON.stringify({
+        userId,
+        returnTo,
+        openerOrigin: req.nextUrl.origin,
+        ...(popup ? { popup: true } : {}),
+      })
     ).toString('base64url')
     const url = getTikTokAuthUrl(state)
     return NextResponse.redirect(url, { headers: NO_STORE })

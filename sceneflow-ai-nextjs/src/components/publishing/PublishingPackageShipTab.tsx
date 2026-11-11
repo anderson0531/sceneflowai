@@ -2041,7 +2041,7 @@ export function PublishingPackageShipTab({
                 onSavedAndConnect={() => {
                   setShowAdminOauthForm(false)
                   setOauthConfigured(true)
-                  connect('youtube')
+                  void refreshConnections()
                 }}
               />
             ) : null}

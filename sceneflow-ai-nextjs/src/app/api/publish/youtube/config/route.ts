@@ -19,8 +19,9 @@ export const dynamic = 'force-dynamic'
 
 function buildRecommendedRedirectUris(originRedirectUri: string): string[] {
   const prodUri = `https://sceneflowai.studio${YOUTUBE_OAUTH_CALLBACK_PATH}`
+  const wwwProdUri = `https://www.sceneflowai.studio${YOUTUBE_OAUTH_CALLBACK_PATH}`
   const vercelUri = `https://sceneflow-ai-nextjs.vercel.app${YOUTUBE_OAUTH_CALLBACK_PATH}`
-  return Array.from(new Set([prodUri, originRedirectUri, vercelUri].filter(Boolean)))
+  return Array.from(new Set([prodUri, wwwProdUri, originRedirectUri, vercelUri].filter(Boolean)))
 }
 
 export async function GET(req: NextRequest) {

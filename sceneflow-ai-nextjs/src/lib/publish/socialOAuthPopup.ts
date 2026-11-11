@@ -1,6 +1,7 @@
-import type {
-  SocialOAuthPlatform,
-  SocialOAuthPopupStatus,
+import {
+  isTrustedSceneFlowOrigin,
+  type SocialOAuthPlatform,
+  type SocialOAuthPopupStatus,
 } from '@/lib/publish/oauthPopupResponse'
 
 export interface SocialOAuthCompletionEvent {
@@ -47,8 +48,14 @@ export function openSocialOAuthPopup({
   )
 
   if (!popup) {
-    // Popup blocked by browser — fall back to top-level navigation without popup=1
-    window.location.href = authUrl
+    // Never navigate the main Studio tab away (prevents cross-domain logout & unsaved state loss).
+    onComplete({
+      type: 'sceneflow:social-oauth',
+      platform,
+      status: 'error',
+      message:
+        'Your browser blocked the sign-in popup window. Please allow popups for SceneFlow and click Authorize again.',
+    })
     return { usedPopup: false, cleanup: () => undefined }
   }
 
@@ -76,7 +83,7 @@ export function openSocialOAuthPopup({
   }
 
   const onWindowMessage = (evt: MessageEvent) => {
-    if (evt.origin !== window.location.origin) return
+    if (evt.origin !== window.location.origin && !isTrustedSceneFlowOrigin(evt.origin)) return
     if (isMatchingPayload(evt.data)) {
       finish(evt.data)
     }
