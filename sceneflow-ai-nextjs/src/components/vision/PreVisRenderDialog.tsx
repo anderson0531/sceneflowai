@@ -36,6 +36,11 @@ import type {
 } from '@/components/vision/scene-production/types'
 import { FLAG_EMOJIS, getLanguageName } from '@/constants/languages'
 import { appendSceneRenderClient } from '@/lib/projects/appendSceneRenderClient'
+import {
+  dispatchSavedPreVisMaster,
+  savePreVisMasterClient,
+} from '@/lib/projects/savePreVisMasterClient'
+import type { PreVisMasterAsset } from '@/types/publishingAssets'
 import type { AnimaticAudioMode } from '@/lib/storyboard/animaticAudioMode'
 import type { BeatDirectionTransition } from '@/lib/script/segmentTypes'
 import {
@@ -73,11 +78,13 @@ export interface PreVisRenderDialogProps {
   audioMode?: AnimaticAudioMode
   clipAudioByBeatId?: Record<string, string>
   initialImageEffectPrefs?: GalleryImageEffectPrefs
+  initialCombineSelectedScenes?: boolean
   onSceneStreamRendered?: (
     sceneId: string,
     stream: ProductionStream,
     language: string
   ) => void
+  onCombinedStreamRendered?: (asset: PreVisMasterAsset) => void
 }
 
 function resolveInitialRenderMotionPrefs(
@@ -130,7 +137,9 @@ export function PreVisRenderDialog({
   audioMode = 'lofi',
   clipAudioByBeatId,
   initialImageEffectPrefs,
+  initialCombineSelectedScenes,
   onSceneStreamRendered,
+  onCombinedStreamRendered,
 }: PreVisRenderDialogProps) {
   const [selectedLanguage, setSelectedLanguage] = useState<string>(initialLanguage || 'en')
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set())
@@ -140,7 +149,9 @@ export function PreVisRenderDialog({
   )
   const [includeCaptions, setIncludeCaptions] = useState<boolean>(true)
   const [saveToStreams, setSaveToStreams] = useState<boolean>(Boolean(projectId))
-  const [combineSelectedScenes, setCombineSelectedScenes] = useState<boolean>(false)
+  const [combineSelectedScenes, setCombineSelectedScenes] = useState<boolean>(
+    Boolean(initialCombineSelectedScenes)
+  )
   const [isBatchRunning, setIsBatchRunning] = useState<boolean>(false)
   const [sceneStates, setSceneStates] = useState<Record<number, SceneRenderItemState>>({})
   const [combinedState, setCombinedState] = useState<{
@@ -226,6 +237,9 @@ export function PreVisRenderDialog({
 
     setSelectedLanguage(initialLanguage || 'en')
     setSaveToStreams(Boolean(projectId))
+    if (typeof initialCombineSelectedScenes === 'boolean') {
+      setCombineSelectedScenes(initialCombineSelectedScenes)
+    }
     setImageEffectPrefs(resolveInitialRenderMotionPrefs(initialImageEffectPrefs))
     setCombinedState({ status: 'idle', progress: 0 })
     renderedClipsBySceneIndexRef.current = {}
@@ -267,7 +281,7 @@ export function PreVisRenderDialog({
       .filter((idx) => idx >= 0)
 
     setSelectedIndices(new Set(playableIndices))
-  }, [open, initialLanguage, initialSceneIndices, currentSceneIndex, scenes, projectId, sceneProductionState, initialImageEffectPrefs])
+  }, [open, initialLanguage, initialSceneIndices, currentSceneIndex, scenes, projectId, sceneProductionState, initialImageEffectPrefs, initialCombineSelectedScenes])
 
   const handleSelectLanguage = useCallback(
     (code: string) => {
@@ -432,6 +446,28 @@ export function PreVisRenderDialog({
         mimeType: stitched.mimeType,
       })
 
+      if (stitched.cloudUrl) {
+        const masterAsset: PreVisMasterAsset = {
+          mp4Url: stitched.cloudUrl,
+          language: selectedLanguage,
+          durationSec: stitched.totalDuration,
+          sceneCount: stitched.sceneCount,
+          resolution,
+          renderedAt: new Date().toISOString(),
+          status: 'ready',
+        }
+        dispatchSavedPreVisMaster(projectId, masterAsset)
+        onCombinedStreamRendered?.(masterAsset)
+        if (saveToStreams && projectId) {
+          savePreVisMasterClient(projectId, masterAsset).catch((saveErr) => {
+            console.warn(
+              '[PreVisRenderDialog] Failed to persist stitched Pre-Vis master to project:',
+              saveErr
+            )
+          })
+        }
+      }
+
       // Auto-trigger browser download when stitching completes so the combined file is saved immediately
       handleDownloadBlobUrl(stitched.downloadUrl, combinedFilename)
     },
@@ -448,6 +484,8 @@ export function PreVisRenderDialog({
       imageEffectPrefs,
       projectId,
       projectTitle,
+      saveToStreams,
+      onCombinedStreamRendered,
       handleDownloadBlobUrl,
     ]
   )

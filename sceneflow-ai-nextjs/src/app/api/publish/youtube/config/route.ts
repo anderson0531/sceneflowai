@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import '@/models'
+import { authOptions } from '@/lib/auth'
 import {
   YOUTUBE_OAUTH_CALLBACK_PATH,
   isYouTubeOAuthConfigured,
@@ -13,8 +15,12 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
-    const userIdParam = req.nextUrl.searchParams.get('userId')
-    const userId = userIdParam ? await resolveUserId(userIdParam).catch(() => undefined) : undefined
+    let userIdRaw = req.nextUrl.searchParams.get('userId')?.trim() || ''
+    if (!userIdRaw) {
+      const session = await getServerSession(authOptions)
+      userIdRaw = session?.user?.id || session?.user?.email || ''
+    }
+    const userId = userIdRaw ? await resolveUserId(userIdRaw).catch(() => undefined) : undefined
     const configured = await isYouTubeOAuthConfigured(userId)
     return NextResponse.json({
       configured,
@@ -36,11 +42,16 @@ export async function POST(req: NextRequest) {
       credentialsJson?: string
     }
 
-    if (!body.userId) {
+    let userIdRaw = body.userId?.trim() || ''
+    if (!userIdRaw) {
+      const session = await getServerSession(authOptions)
+      userIdRaw = session?.user?.id || session?.user?.email || ''
+    }
+    if (!userIdRaw) {
       return NextResponse.json({ error: 'Sign in required (`userId` missing).' }, { status: 400 })
     }
 
-    const userId = await resolveUserId(body.userId)
+    const userId = await resolveUserId(userIdRaw)
 
     const parsedJson =
       parseGoogleOAuthClientJson(body.credentialsJson) ||

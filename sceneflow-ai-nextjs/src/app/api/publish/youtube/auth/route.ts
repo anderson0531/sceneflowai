@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import '@/models'
+import { authOptions } from '@/lib/auth'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
 import {
   getYouTubeAuthUrl,
@@ -20,11 +22,15 @@ function returnPath(raw: string | null): string {
 export async function GET(req: NextRequest) {
   const returnTo = returnPath(req.nextUrl.searchParams.get('returnTo'))
   try {
-    const userIdParam = req.nextUrl.searchParams.get('userId')
-    if (!userIdParam) {
+    let userIdRaw = req.nextUrl.searchParams.get('userId')?.trim() || ''
+    if (!userIdRaw) {
+      const session = await getServerSession(authOptions)
+      userIdRaw = session?.user?.id || session?.user?.email || ''
+    }
+    if (!userIdRaw) {
       return NextResponse.json({ error: 'userId required' }, { status: 400 })
     }
-    const userId = await resolveUserId(userIdParam)
+    const userId = await resolveUserId(userIdRaw)
     const creds = await resolveYouTubeOAuthCredentials(userId)
     const redirectUri = youtubeRedirectUri(req.nextUrl.origin)
     const state = Buffer.from(JSON.stringify({ userId, returnTo, redirectUri })).toString(

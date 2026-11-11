@@ -21,13 +21,28 @@ export interface YoutubePublishBundle {
   title: string
   description: string
   thumbnailUrl?: string
+  thumbnailPrompt?: string
   tags?: string[]
   categoryId?: string
   privacyStatus: 'private' | 'unlisted' | 'public'
   madeForKids?: boolean
+  videoId?: string
   youtubeUrl?: string
   publishedAt?: string
+  localizedLanguages?: string[]
+  audioTrackLanguages?: string[]
   status: 'draft' | 'ready' | 'published' | 'error'
+  error?: string
+}
+
+export interface PreVisMasterAsset {
+  mp4Url: string
+  language: string
+  durationSec: number
+  sceneCount: number
+  resolution?: StreamDeliveryResolution
+  renderedAt: string
+  status?: 'ready' | 'rendering' | 'error'
   error?: string
 }
 
@@ -159,9 +174,11 @@ export interface PublishingStreamRecord extends ProjectStream {
 export interface ProjectPublishingState {
   streams: PublishingStreamRecord[]
   promo?: ProjectPublishingPromo
+  /** Stitched combined Pre-Vis renders keyed by language code (e.g. 'en', 'es'). */
+  previsByLanguage?: Record<string, PreVisMasterAsset>
   youtubeByLanguage: Record<string, YoutubePublishBundle>
   readiness?: PublishingReadiness
-  /** Prepared scene, chapter, master, and promo packages. */
+  /** Prepared scene, chapter, pre-vis, master, and promo packages. */
   units?: PublishUnitRecord[]
 }
 

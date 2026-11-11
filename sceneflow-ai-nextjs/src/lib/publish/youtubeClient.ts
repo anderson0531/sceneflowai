@@ -29,6 +29,18 @@ export type YouTubeTokens = {
   token_type?: string
 }
 
+export interface YouTubeChannelProfile {
+  id: string
+  title: string
+  customUrl?: string
+  thumbnailUrl?: string
+}
+
+export interface YouTubeVideoLocalizationEntry {
+  title: string
+  description: string
+}
+
 /** Registered on the Google OAuth web client. The publish callback remains an alias. */
 export const YOUTUBE_OAUTH_CALLBACK_PATH = '/api/auth/callback/youtube'
 
@@ -287,6 +299,7 @@ export function getYouTubeAuthUrl(
   return client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
+    include_granted_scopes: true,
     scope: YOUTUBE_SCOPES,
     state,
   })
@@ -305,7 +318,13 @@ export async function exchangeYouTubeCode(
 
 export async function saveYouTubeTokens(userId: string, tokens: YouTubeTokens): Promise<void> {
   const UserIntegration = await ensureUserIntegrationTable()
-  const encrypted = EncryptionService.encrypt(JSON.stringify(tokens))
+  const existing = await loadYouTubeTokens(userId).catch(() => null)
+  const merged: YouTubeTokens = {
+    ...(existing || {}),
+    ...tokens,
+    refresh_token: tokens.refresh_token || existing?.refresh_token,
+  }
+  const encrypted = EncryptionService.encrypt(JSON.stringify(merged))
   const [row] = await UserIntegration.findOrCreate({
     where: { user_id: userId, provider: 'youtube' },
     defaults: {
@@ -320,6 +339,19 @@ export async function saveYouTubeTokens(userId: string, tokens: YouTubeTokens): 
   }
 }
 
+export async function disconnectYouTubeAccount(userId: string): Promise<void> {
+  const UserIntegration = await ensureUserIntegrationTable()
+  const row = await UserIntegration.findOne({
+    where: { user_id: userId, provider: 'youtube' },
+  })
+  if (row) {
+    await row.update({
+      encrypted_credentials: EncryptionService.encrypt(JSON.stringify({})),
+      is_valid: false,
+    })
+  }
+}
+
 export async function loadYouTubeTokens(userId: string): Promise<YouTubeTokens | null> {
   const UserIntegration = await ensureUserIntegrationTable()
   const row = await UserIntegration.findOne({
@@ -328,7 +360,9 @@ export async function loadYouTubeTokens(userId: string): Promise<YouTubeTokens |
   if (!row) return null
   try {
     const raw = EncryptionService.decrypt(row.encrypted_credentials)
-    return JSON.parse(raw) as YouTubeTokens
+    const parsed = JSON.parse(raw) as YouTubeTokens
+    if (!parsed?.access_token && !parsed?.refresh_token) return null
+    return parsed
   } catch {
     return null
   }
@@ -336,17 +370,199 @@ export async function loadYouTubeTokens(userId: string): Promise<YouTubeTokens |
 
 export async function getAuthorizedYouTubeClient(userId: string): Promise<OAuth2Client | null> {
   const tokens = await loadYouTubeTokens(userId)
-  if (!tokens?.access_token) return null
+  if (!tokens?.access_token && !tokens?.refresh_token) return null
   const creds = await resolveYouTubeOAuthCredentials(userId)
   const client = getOAuthClient(undefined, creds)
   client.setCredentials(tokens)
 
   client.on('tokens', async (newTokens) => {
-    const merged = { ...tokens, ...newTokens }
-    await saveYouTubeTokens(userId, merged)
+    const merged: YouTubeTokens = {
+      ...tokens,
+      ...(newTokens as Partial<YouTubeTokens>),
+      access_token: newTokens.access_token || tokens.access_token,
+      refresh_token: newTokens.refresh_token || tokens.refresh_token,
+    }
+    await saveYouTubeTokens(userId, merged).catch((err) => {
+      console.warn('[YouTube OAuth] Failed to persist refreshed token from event:', err)
+    })
   })
 
   return client
+}
+
+async function getValidYouTubeAccessToken(userId: string): Promise<string> {
+  const tokens = await loadYouTubeTokens(userId)
+  const client = await getAuthorizedYouTubeClient(userId)
+  if (!client) {
+    throw new Error('YouTube account not connected. Please authorize first.')
+  }
+  const { token } = await client.getAccessToken()
+  if (!token) throw new Error('YouTube access token unavailable')
+
+  const latest = client.credentials as Partial<YouTubeTokens>
+  if (
+    latest.access_token &&
+    (latest.access_token !== tokens?.access_token ||
+      (latest.refresh_token && latest.refresh_token !== tokens?.refresh_token))
+  ) {
+    await saveYouTubeTokens(userId, {
+      ...(tokens || { access_token: latest.access_token }),
+      ...latest,
+      access_token: latest.access_token,
+      refresh_token: latest.refresh_token || tokens?.refresh_token,
+    }).catch((err) => {
+      console.warn('[YouTube OAuth] Explicit refreshed token persistence failed:', err)
+    })
+  }
+  return token
+}
+
+export async function getYouTubeChannelProfile(
+  userId: string
+): Promise<{
+  connected: boolean
+  needsReconnect?: boolean
+  channel?: YouTubeChannelProfile
+}> {
+  const tokens = await loadYouTubeTokens(userId)
+  if (!tokens?.access_token && !tokens?.refresh_token) {
+    return { connected: false }
+  }
+  try {
+    const token = await getValidYouTubeAccessToken(userId)
+    const res = await fetch(
+      'https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true',
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(6500),
+      }
+    )
+    if (res.status === 401) {
+      return { connected: false, needsReconnect: true }
+    }
+    if (!res.ok) {
+      return { connected: true }
+    }
+    const data = (await res.json()) as {
+      items?: Array<{
+        id?: string
+        snippet?: {
+          title?: string
+          customUrl?: string
+          thumbnails?: {
+            default?: { url?: string }
+            medium?: { url?: string }
+          }
+        }
+      }>
+    }
+    const first = data.items?.[0]
+    if (!first?.id) {
+      return { connected: true }
+    }
+    return {
+      connected: true,
+      channel: {
+        id: first.id,
+        title: first.snippet?.title || 'YouTube Channel',
+        customUrl: first.snippet?.customUrl,
+        thumbnailUrl:
+          first.snippet?.thumbnails?.medium?.url || first.snippet?.thumbnails?.default?.url,
+      },
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message.toLowerCase() : ''
+    if (msg.includes('invalid_grant') || msg.includes('token has been expired or revoked')) {
+      return { connected: false, needsReconnect: true }
+    }
+    return { connected: Boolean(tokens?.access_token) }
+  }
+}
+
+const YOUTUBE_MAX_TITLE_LENGTH = 100
+const YOUTUBE_MAX_DESCRIPTION_LENGTH = 5000
+const YOUTUBE_MAX_THUMBNAIL_BYTES = 1_850_000
+
+/**
+ * YouTube Data API v3 rejects any title or description containing `<` or `>`,
+ * and enforces <= 100 chars on title and <= 5000 chars on description.
+ */
+export function sanitizeYouTubeTitle(rawTitle: string, fallback = 'SceneFlow Video'): string {
+  const cleaned = (rawTitle || '')
+    .replace(/</g, '‹')
+    .replace(/>/g, '›')
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const effective = cleaned || fallback
+  const chars = Array.from(effective)
+  if (chars.length <= YOUTUBE_MAX_TITLE_LENGTH) return effective
+  return `${chars.slice(0, YOUTUBE_MAX_TITLE_LENGTH - 1).join('').trimEnd()}…`
+}
+
+export function sanitizeYouTubeDescription(rawDescription: string): string {
+  const cleaned = (rawDescription || '')
+    .replace(/</g, '‹')
+    .replace(/>/g, '›')
+    .replace(/\r\n/g, '\n')
+    .trim()
+  const chars = Array.from(cleaned)
+  if (chars.length <= YOUTUBE_MAX_DESCRIPTION_LENGTH) return cleaned
+  return `${chars.slice(0, YOUTUBE_MAX_DESCRIPTION_LENGTH - 1).join('').trimEnd()}…`
+}
+
+export function sanitizeYouTubeTags(rawTags?: string[]): string[] | undefined {
+  if (!Array.isArray(rawTags) || rawTags.length === 0) return undefined
+  const out: string[] = []
+  const seen = new Set<string>()
+  let budget = 0
+  for (const raw of rawTags) {
+    if (typeof raw !== 'string') continue
+    const cleaned = raw
+      .replace(/[<>"]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+    if (!cleaned || cleaned.length > 60) continue
+    const lower = cleaned.toLowerCase()
+    if (seen.has(lower)) continue
+    // YouTube counts quotes around multi-word tags + comma separators toward 500 chars
+    const cost = cleaned.includes(' ') ? cleaned.length + 3 : cleaned.length + 1
+    if (budget + cost > 460) break
+    seen.add(lower)
+    out.push(cleaned)
+    budget += cost
+  }
+  return out.length > 0 ? out : undefined
+}
+
+async function normalizeThumbnailForYouTube(
+  inputBuffer: Buffer,
+  inputContentType: string
+): Promise<{ buffer: Buffer; contentType: string }> {
+  const lowerType = inputContentType.toLowerCase()
+  const supportedType = lowerType.includes('jpeg') || lowerType.includes('jpg') || lowerType.includes('png')
+  if (supportedType && inputBuffer.length <= YOUTUBE_MAX_THUMBNAIL_BYTES) {
+    return {
+      buffer: inputBuffer,
+      contentType: lowerType.includes('png') ? 'image/png' : 'image/jpeg',
+    }
+  }
+  try {
+    const sharp = (await import('sharp')).default
+    const compressed = await sharp(inputBuffer)
+      .resize({
+        width: 1280,
+        height: 720,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: 86, mozjpeg: true })
+      .toBuffer()
+    return { buffer: compressed, contentType: 'image/jpeg' }
+  } catch (err) {
+    console.warn('[YouTube Thumbnail] sharp compression fallback:', err)
+    return { buffer: inputBuffer, contentType: supportedType ? inputContentType : 'image/jpeg' }
+  }
 }
 
 export async function uploadYouTubeThumbnail(
@@ -354,23 +570,39 @@ export async function uploadYouTubeThumbnail(
   videoId: string,
   thumbnailUrl: string
 ): Promise<void> {
-  const thumbRes = await fetch(thumbnailUrl)
-  if (!thumbRes.ok) {
-    throw new Error(`Failed to fetch thumbnail: ${thumbRes.status}`)
+  let rawBuffer: Buffer
+  let rawContentType = 'image/jpeg'
+
+  if (thumbnailUrl.startsWith('data:image')) {
+    const match = thumbnailUrl.match(/^data:([^;]+);base64,(.+)$/)
+    if (!match) {
+      throw new Error('Invalid base64 thumbnail data URI')
+    }
+    rawContentType = match[1] || 'image/png'
+    rawBuffer = Buffer.from(match[2], 'base64')
+  } else {
+    const thumbRes = await fetch(thumbnailUrl)
+    if (!thumbRes.ok) {
+      throw new Error(`Failed to fetch thumbnail: ${thumbRes.status}`)
+    }
+    rawContentType = thumbRes.headers.get('content-type') || 'image/jpeg'
+    rawBuffer = Buffer.from(await thumbRes.arrayBuffer())
   }
 
-  const contentType = thumbRes.headers.get('content-type') || 'image/jpeg'
-  const thumbBuffer = Buffer.from(await thumbRes.arrayBuffer())
+  const { buffer: thumbBuffer, contentType } = await normalizeThumbnailForYouTube(
+    rawBuffer,
+    rawContentType
+  )
 
   const setRes = await fetch(
-    `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${videoId}`,
+    `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${encodeURIComponent(videoId)}`,
     {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': contentType,
       },
-      body: thumbBuffer,
+      body: new Uint8Array(thumbBuffer),
     }
   )
 
@@ -378,6 +610,24 @@ export async function uploadYouTubeThumbnail(
     const errText = await setRes.text()
     throw new Error(`YouTube thumbnail upload failed: ${setRes.status} ${errText}`)
   }
+}
+
+const YT_LOCALIZATION_CODE_MAP: Record<string, string> = {
+  pt: 'pt-BR',
+  zh: 'zh-CN',
+  no: 'no',
+  nb: 'no',
+  fil: 'fil',
+  tl: 'fil',
+  he: 'iw',
+}
+
+export function toYouTubeLocalizationCode(lang: string): string {
+  const trimmed = (lang || 'en').trim()
+  if (!trimmed) return 'en'
+  if (trimmed.includes('-')) return trimmed
+  const lower = trimmed.toLowerCase()
+  return YT_LOCALIZATION_CODE_MAP[lower] || lower
 }
 
 export async function uploadVideoToYouTube(
@@ -390,22 +640,27 @@ export async function uploadVideoToYouTube(
     language?: string
     tags?: string[]
     categoryId?: string
+    madeForKids?: boolean
     thumbnailUrl?: string
   }
-): Promise<{ videoId: string; url: string; thumbnailUploaded: boolean }> {
-  const client = await getAuthorizedYouTubeClient(userId)
-  if (!client) {
-    throw new Error('YouTube account not connected. Please authorize first.')
-  }
-
-  const { token } = await client.getAccessToken()
-  if (!token) throw new Error('YouTube access token unavailable')
+): Promise<{
+  videoId: string
+  url: string
+  thumbnailUploaded: boolean
+  thumbnailError?: string
+}> {
+  const token = await getValidYouTubeAccessToken(userId)
 
   const videoRes = await fetch(options.videoUrl)
   if (!videoRes.ok) {
     throw new Error(`Failed to fetch video for upload: ${videoRes.status}`)
   }
   const videoBuffer = Buffer.from(await videoRes.arrayBuffer())
+
+  const safeTitle = sanitizeYouTubeTitle(options.title)
+  const safeDescription = sanitizeYouTubeDescription(options.description)
+  const safeTags = sanitizeYouTubeTags(options.tags)
+  const ytLang = toYouTubeLocalizationCode(options.language || 'en')
 
   const initRes = await fetch(
     'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
@@ -419,15 +674,16 @@ export async function uploadVideoToYouTube(
       },
       body: JSON.stringify({
         snippet: {
-          title: options.title,
-          description: options.description,
-          tags: options.tags,
-          categoryId: options.categoryId || '28',
-          defaultLanguage: options.language || 'en',
+          title: safeTitle,
+          description: safeDescription,
+          ...(safeTags ? { tags: safeTags } : {}),
+          categoryId: options.categoryId || '24',
+          defaultLanguage: ytLang,
+          defaultAudioLanguage: ytLang,
         },
         status: {
           privacyStatus: options.privacyStatus,
-          selfDeclaredMadeForKids: false,
+          selfDeclaredMadeForKids: Boolean(options.madeForKids),
         },
       }),
     }
@@ -447,7 +703,7 @@ export async function uploadVideoToYouTube(
       'Content-Type': 'video/mp4',
       'Content-Length': String(videoBuffer.length),
     },
-    body: videoBuffer,
+    body: new Uint8Array(videoBuffer),
   })
 
   if (!uploadRes.ok) {
@@ -460,11 +716,13 @@ export async function uploadVideoToYouTube(
   if (!videoId) throw new Error('YouTube upload succeeded but no video ID returned')
 
   let thumbnailUploaded = false
+  let thumbnailError: string | undefined
   if (options.thumbnailUrl) {
     try {
       await uploadYouTubeThumbnail(token, videoId, options.thumbnailUrl)
       thumbnailUploaded = true
     } catch (err) {
+      thumbnailError = err instanceof Error ? err.message : 'Thumbnail upload failed'
       console.warn('[YouTube Upload] Thumbnail upload failed:', err)
     }
   }
@@ -473,7 +731,90 @@ export async function uploadVideoToYouTube(
     videoId,
     url: `https://www.youtube.com/watch?v=${videoId}`,
     thumbnailUploaded,
+    ...(thumbnailError ? { thumbnailError } : {}),
   }
+}
+
+/**
+ * Attach multi-language translated titles and descriptions onto an uploaded YouTube video
+ * using YouTube Data API v3 `videos.update` (`part=snippet,localizations`).
+ * Works on ALL YouTube channels (no partner MLA gate).
+ */
+export async function setYouTubeVideoLocalizations(
+  userId: string,
+  options: {
+    videoId: string
+    defaultLanguage: string
+    defaultTitle: string
+    defaultDescription: string
+    categoryId?: string
+    tags?: string[]
+    localizations: Record<string, YouTubeVideoLocalizationEntry>
+  }
+): Promise<{ appliedLanguages: string[] }> {
+  const entries = Object.entries(options.localizations || {}).filter(
+    ([, val]) => Boolean(val?.title?.trim())
+  )
+  if (entries.length === 0) {
+    return { appliedLanguages: [] }
+  }
+
+  const token = await getValidYouTubeAccessToken(userId)
+  const defaultCode = toYouTubeLocalizationCode(options.defaultLanguage || 'en')
+  const safeDefaultTitle = sanitizeYouTubeTitle(options.defaultTitle)
+  const safeDefaultDesc = sanitizeYouTubeDescription(options.defaultDescription)
+  const safeTags = sanitizeYouTubeTags(options.tags)
+
+  const formattedLocalizations: Record<string, { title: string; description: string }> = {
+    [defaultCode]: {
+      title: safeDefaultTitle,
+      description: safeDefaultDesc,
+    },
+  }
+  const appliedLanguages: string[] = []
+
+  for (const [rawLang, loc] of entries) {
+    const code = toYouTubeLocalizationCode(rawLang)
+    const locTitle = sanitizeYouTubeTitle(loc.title, safeDefaultTitle)
+    const locDesc = sanitizeYouTubeDescription(loc.description || safeDefaultDesc)
+    formattedLocalizations[code] = {
+      title: locTitle,
+      description: locDesc,
+    }
+    if (!appliedLanguages.includes(rawLang)) {
+      appliedLanguages.push(rawLang)
+    }
+  }
+
+  const res = await fetch(
+    'https://www.googleapis.com/youtube/v3/videos?part=snippet,localizations',
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: options.videoId,
+        snippet: {
+          title: safeDefaultTitle,
+          description: safeDefaultDesc,
+          categoryId: options.categoryId || '24',
+          defaultLanguage: defaultCode,
+          defaultAudioLanguage: defaultCode,
+          ...(safeTags ? { tags: safeTags } : {}),
+        },
+        localizations: formattedLocalizations,
+      }),
+    }
+  )
+
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`YouTube localizations update failed: ${res.status} ${errText}`)
+  }
+
+  return { appliedLanguages }
 }
 
 /** Map SceneFlow language codes to BCP-47 for YouTube MLA */

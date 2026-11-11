@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = await resolveUserId(session.user.id).catch(() => session.user.id)
+    const sessionUserId = session.user.id
+    const userId = await resolveUserId(sessionUserId).catch(() => sessionUserId)
     const dbTokens = await loadYouTubeTokens(userId).catch(() => null)
     if (dbTokens?.access_token) {
       return NextResponse.json({

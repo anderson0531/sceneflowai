@@ -5,6 +5,7 @@ import {
 } from '@/lib/streams/projectStreams'
 import type { PublishUnitRecord } from '@/lib/publish/publishUnits'
 import type {
+  PreVisMasterAsset,
   ProjectPublishingState,
   PublishingReadiness,
   PublishingStreamRecord,
@@ -24,6 +25,47 @@ function emptyPublishingState(): ProjectPublishingState {
   }
 }
 
+function hydratePreVisByLanguage(
+  metadata: unknown,
+  rawPrevis?: Record<string, PreVisMasterAsset>,
+  streams?: PublishingStreamRecord[]
+): Record<string, PreVisMasterAsset> {
+  const out: Record<string, PreVisMasterAsset> = { ...(rawPrevis || {}) }
+  for (const stream of streams || []) {
+    if (
+      stream.format === 'animatic' &&
+      stream.language &&
+      stream.mp4Url &&
+      !out[stream.language]
+    ) {
+      out[stream.language] = {
+        mp4Url: stream.mp4Url,
+        language: stream.language,
+        durationSec: 0,
+        sceneCount: 0,
+        resolution: stream.renderSettings?.resolution,
+        renderedAt: stream.renderedAt || new Date(0).toISOString(),
+        status: stream.status === 'error' ? 'error' : 'ready',
+      }
+    }
+  }
+  const legacyUrl =
+    metadata && typeof metadata === 'object'
+      ? (metadata as { exportedAnimaticUrl?: unknown }).exportedAnimaticUrl
+      : undefined
+  if (typeof legacyUrl === 'string' && legacyUrl.trim() && !out.en) {
+    out.en = {
+      mp4Url: legacyUrl.trim(),
+      language: 'en',
+      durationSec: 0,
+      sceneCount: 0,
+      renderedAt: new Date(0).toISOString(),
+      status: 'ready',
+    }
+  }
+  return out
+}
+
 /** Read publishing state from project metadata, hydrating from legacy streams. */
 export function getPublishingState(metadata: unknown, project?: ProjectLike): ProjectPublishingState {
   const visionPhase = (metadata as { visionPhase?: Record<string, unknown> } | null)?.visionPhase
@@ -37,6 +79,7 @@ export function getPublishingState(metadata: unknown, project?: ProjectLike): Pr
   if (!raw) {
     return {
       streams: mergedStreams,
+      previsByLanguage: hydratePreVisByLanguage(metadata, undefined, mergedStreams),
       youtubeByLanguage: buildYoutubeFromStreams(mergedStreams),
       promo: undefined,
       units: [],
@@ -52,6 +95,7 @@ export function getPublishingState(metadata: unknown, project?: ProjectLike): Pr
       return hydrateStreamRecord(s, fromRaw ? [fromRaw] : undefined)
     }),
     promo: raw.promo,
+    previsByLanguage: hydratePreVisByLanguage(metadata, raw.previsByLanguage, mergedStreams),
     youtubeByLanguage: { ...buildYoutubeFromStreams(mergedStreams), ...raw.youtubeByLanguage },
     units: raw.units ?? [],
     readiness: raw.readiness ?? computePublishingReadiness(project, mergedStreams),
@@ -144,6 +188,7 @@ export function upsertPublishingState(
   const next: ProjectPublishingState = {
     streams: patch.streams ?? current.streams,
     promo: patch.promo ?? current.promo,
+    previsByLanguage: patch.previsByLanguage ?? current.previsByLanguage,
     youtubeByLanguage: patch.youtubeByLanguage ?? current.youtubeByLanguage,
     units: patch.units ?? current.units,
     readiness: patch.readiness ?? current.readiness,
@@ -199,6 +244,56 @@ export function upsertYoutubeBundle(
       [language]: { ...existing, ...bundle, language },
     },
   })
+}
+
+export function upsertYoutubeBundles(
+  metadata: Record<string, unknown>,
+  bundlesByLanguage: Record<string, Partial<YoutubePublishBundle>>
+): Record<string, unknown> {
+  const state = getPublishingState(metadata)
+  const nextYoutubeByLanguage: Record<string, YoutubePublishBundle> = {
+    ...state.youtubeByLanguage,
+  }
+  for (const [lang, patch] of Object.entries(bundlesByLanguage)) {
+    if (!lang) continue
+    const existing = nextYoutubeByLanguage[lang] ?? {
+      language: lang,
+      title: '',
+      description: '',
+      privacyStatus: 'private' as const,
+      status: 'draft' as const,
+    }
+    nextYoutubeByLanguage[lang] = { ...existing, ...patch, language: lang }
+  }
+  return upsertPublishingState(metadata, {
+    youtubeByLanguage: nextYoutubeByLanguage,
+  })
+}
+
+export function upsertPreVisMaster(
+  metadata: Record<string, unknown>,
+  language: string,
+  asset: PreVisMasterAsset
+): Record<string, unknown> {
+  const state = getPublishingState(metadata)
+  const nextPrevis: Record<string, PreVisMasterAsset> = {
+    ...(state.previsByLanguage || {}),
+    [language]: {
+      ...asset,
+      language,
+      status: asset.status ?? 'ready',
+    },
+  }
+  const nextMeta = upsertPublishingState(metadata, {
+    previsByLanguage: nextPrevis,
+  })
+  if (language === 'en' && asset.mp4Url) {
+    return {
+      ...nextMeta,
+      exportedAnimaticUrl: asset.mp4Url,
+    }
+  }
+  return nextMeta
 }
 
 export function upsertPublishUnit(

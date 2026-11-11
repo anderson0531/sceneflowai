@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import {
   getPublishingState,
+  upsertPreVisMaster,
   upsertPublishingState,
   upsertPublishUnit,
   upsertYoutubeBundle,
+  upsertYoutubeBundles,
   computePublishingReadiness,
 } from '@/lib/publish/publishingState'
 import type { ProjectStream } from '@/lib/streams/projectStreams'
@@ -82,5 +84,68 @@ describe('publishingState', () => {
     const readiness = computePublishingReadiness(undefined, [baseStream])
     expect(readiness.readyStreamCount).toBe(1)
     expect(readiness.totalStreamCount).toBe(1)
+  })
+
+  it('upsertPreVisMaster persists stitched Pre-Vis per language and syncs legacy exportedAnimaticUrl', () => {
+    const hydratedLegacy = getPublishingState({
+      exportedAnimaticUrl: 'https://example.com/legacy-animatic.mp4',
+    })
+    expect(hydratedLegacy.previsByLanguage?.en?.mp4Url).toBe(
+      'https://example.com/legacy-animatic.mp4'
+    )
+
+    const updatedEn = upsertPreVisMaster({}, 'en', {
+      mp4Url: 'https://example.com/previs-en.mp4',
+      language: 'en',
+      durationSec: 94,
+      sceneCount: 3,
+      resolution: '1080p',
+      renderedAt: '2026-11-11T10:00:00.000Z',
+    })
+    const updatedBoth = upsertPreVisMaster(updatedEn, 'es', {
+      mp4Url: 'https://example.com/previs-es.mp4',
+      language: 'es',
+      durationSec: 98,
+      sceneCount: 3,
+      resolution: '1080p',
+      renderedAt: '2026-11-11T10:05:00.000Z',
+    })
+
+    expect((updatedBoth as { exportedAnimaticUrl?: string }).exportedAnimaticUrl).toBe(
+      'https://example.com/previs-en.mp4'
+    )
+    const state = getPublishingState(updatedBoth)
+    expect(state.previsByLanguage?.en?.mp4Url).toBe('https://example.com/previs-en.mp4')
+    expect(state.previsByLanguage?.es?.mp4Url).toBe('https://example.com/previs-es.mp4')
+    expect(state.previsByLanguage?.es?.sceneCount).toBe(3)
+  })
+
+  it('upsertYoutubeBundles saves batch multi-language translations atomically', () => {
+    const next = upsertYoutubeBundles({}, {
+      en: {
+        title: 'Northline — Pre-Vis',
+        description: 'English synopsis',
+        tags: ['Northline', 'Sci-Fi'],
+        thumbnailUrl: 'https://example.com/thumb.jpg',
+        status: 'ready',
+      },
+      es: {
+        title: 'Northline — Previsualización',
+        description: 'Sinopsis en español',
+        tags: ['Northline', 'Ciencia Ficción'],
+        thumbnailUrl: 'https://example.com/thumb.jpg',
+        status: 'ready',
+      },
+      fr: {
+        title: 'Northline — Prévisualisation',
+        description: 'Synopsis en français',
+        status: 'ready',
+      },
+    })
+    const state = getPublishingState(next)
+    expect(state.youtubeByLanguage.en?.title).toBe('Northline — Pre-Vis')
+    expect(state.youtubeByLanguage.es?.title).toBe('Northline — Previsualización')
+    expect(state.youtubeByLanguage.fr?.title).toBe('Northline — Prévisualisation')
+    expect(state.youtubeByLanguage.es?.thumbnailUrl).toBe('https://example.com/thumb.jpg')
   })
 })

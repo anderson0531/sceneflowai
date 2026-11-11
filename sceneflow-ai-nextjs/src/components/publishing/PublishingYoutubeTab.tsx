@@ -109,37 +109,35 @@ export function PublishingYoutubeTab({
   }, [bundle, projectTitle, selectedLanguage, persistBundle])
 
   const handleGenerateThumbnail = useCallback(async () => {
-    if (!userId) {
-      toast.error('Sign in to generate thumbnails.')
-      return
-    }
     setGeneratingThumb(true)
     try {
-      const res = await fetch('/api/thumbnails/generate', {
+      const res = await fetch('/api/publish/youtube/thumbnail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
-          ideas: [
-            {
-              id: 'publish-thumb',
-              thumbnail_prompt: `YouTube thumbnail for "${bundle.title || projectTitle}" — cinematic, high contrast, readable at small size, language: ${selectedLanguage}`,
-            },
-          ],
+          projectId,
+          projectTitle,
+          videoTitle: bundle.title || projectTitle,
+          language: selectedLanguage,
+          aspectRatio: '16:9',
         }),
       })
       const data = await res.json()
-      if (!data.success) throw new Error(data.error || 'Thumbnail generation failed')
-      const thumbUrl = data.thumbnails?.['publish-thumb']?.imageUrl
-      if (!thumbUrl) throw new Error('No thumbnail returned')
-      await persistBundle({ thumbnailUrl: thumbUrl, status: 'ready' })
+      if (!res.ok || !data.thumbnailUrl) {
+        throw new Error(data.error || 'Thumbnail generation failed')
+      }
+      await persistBundle({
+        thumbnailUrl: data.thumbnailUrl,
+        thumbnailPrompt: data.promptUsed,
+        status: 'ready',
+      })
       toast.success('Thumbnail generated')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Thumbnail failed')
     } finally {
       setGeneratingThumb(false)
     }
-  }, [userId, bundle.title, projectTitle, selectedLanguage, persistBundle])
+  }, [projectId, bundle.title, projectTitle, selectedLanguage, persistBundle])
 
   const assetBadges = [
     { label: 'Video', ok: !!stream?.mp4Url },
@@ -242,6 +240,10 @@ export function PublishingYoutubeTab({
         userId={userId}
         videoUrl={stream?.mp4Url}
         title={bundle.title}
+        description={bundle.description}
+        thumbnailUrl={bundle.thumbnailUrl}
+        tags={bundle.tags}
+        privacyStatus={bundle.privacyStatus}
         projectTitle={projectTitle}
         metadata={metadata}
         masterLanguage={selectedLanguage}

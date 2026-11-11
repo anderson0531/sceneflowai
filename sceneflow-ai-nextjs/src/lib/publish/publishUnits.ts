@@ -1,5 +1,5 @@
 /**
- * Package & Ship units: a scene, a Blueprint chapter, the master, or a promo.
+ * Package & Ship units: a scene, a Blueprint chapter, a stitched Pre-Vis, the master, or a promo.
  * A chapter is the scenes that share one blueprintBeatIndex.
  */
 
@@ -7,7 +7,7 @@ import type { DeliveryAspectRatio } from '@/lib/video/renderTypes'
 import { deliveryFrameSize } from '@/lib/video/renderTypes'
 
 export type PublishAspectRatio = DeliveryAspectRatio
-export type PublishUnitKind = 'scene' | 'chapter' | 'master' | 'promo'
+export type PublishUnitKind = 'scene' | 'chapter' | 'previs' | 'master' | 'promo'
 export type PublishDestinationId = 'youtube' | 'facebook' | 'tiktok' | 'download'
 
 export interface PublishDestinationStatus {
@@ -57,6 +57,13 @@ export interface PublishPromoInput {
   aspect?: '16:9' | '9:16'
 }
 
+export interface PublishPreVisInput {
+  mp4Url?: string
+  durationSec?: number
+  sceneCount?: number
+  status?: string
+}
+
 export interface PublishStitchClip {
   sceneId: string
   sceneNumber: number
@@ -99,6 +106,7 @@ export function publishUnitId(
 ): string {
   if (kind === 'scene') return `scene:${sceneId || 'unknown'}:${language}:${aspectRatio}`
   if (kind === 'chapter') return `chapter:${beatIndex ?? 'unknown'}:${language}:${aspectRatio}`
+  if (kind === 'previs') return `previs:${language}:${aspectRatio}`
   if (kind === 'promo') return `promo:${aspectRatio}`
   return `master:${language}:${aspectRatio}`
 }
@@ -148,6 +156,15 @@ interface StreamLike {
   streamType?: string
   streamVersion?: number
   duration?: number
+  completedAt?: string
+}
+
+function compareStreamFreshness(a: StreamLike, b: StreamLike): number {
+  const versionDiff = (b.streamVersion ?? 1) - (a.streamVersion ?? 1)
+  if (versionDiff !== 0) return versionDiff
+  const timeB = b.completedAt ? Date.parse(b.completedAt) || 0 : 0
+  const timeA = a.completedAt ? Date.parse(a.completedAt) || 0 : 0
+  return timeB - timeA
 }
 
 function pickReadyStream(streams: StreamLike[] | undefined, language: string): StreamLike | undefined {
@@ -157,10 +174,38 @@ function pickReadyStream(streams: StreamLike[] | undefined, language: string): S
   const inLanguage = ready.filter((stream) => stream.language === language)
   const pool = inLanguage.length > 0 ? inLanguage : ready
   const video = pool.filter((stream) => stream.streamType === 'video')
-  const chosen = (video.length > 0 ? video : pool).slice().sort(
-    (a, b) => (b.streamVersion ?? 1) - (a.streamVersion ?? 1)
-  )
+  const chosen = (video.length > 0 ? video : pool).slice().sort(compareStreamFreshness)
   return chosen[0]
+}
+
+function pickReadyAnimaticStream(
+  streams: StreamLike[] | undefined,
+  language: string
+): StreamLike | undefined {
+  const ready = (streams || []).filter(
+    (stream) =>
+      (stream.status === 'ready' || stream.status === 'complete') &&
+      stream.streamType === 'animatic' &&
+      Boolean(stream.mp4Url)
+  )
+  const matching = ready.filter(
+    (stream) => stream.language === language || (!stream.language && language === 'en')
+  )
+  return matching.slice().sort(compareStreamFreshness)[0]
+}
+
+function estimateFallbackSceneDuration(scene: Record<string, unknown>): number | undefined {
+  if (typeof scene.duration === 'number' && Number.isFinite(scene.duration) && scene.duration > 0) {
+    return scene.duration
+  }
+  if (
+    typeof scene.estimatedDuration === 'number' &&
+    Number.isFinite(scene.estimatedDuration) &&
+    scene.estimatedDuration > 0
+  ) {
+    return scene.estimatedDuration
+  }
+  return undefined
 }
 
 export function collectPublishScenes(
@@ -185,6 +230,40 @@ export function collectPublishScenes(
       blueprintBeatTitle: typeof beatTitle === 'string' ? beatTitle : undefined,
       mp4Url: mp4Url || undefined,
       duration: typeof stream?.duration === 'number' && stream.duration > 0 ? stream.duration : undefined,
+    }
+  })
+}
+
+/**
+ * Collect per-scene Pre-Vis (`streamType === 'animatic'`) renders strictly for the target language.
+ * Keeps Pre-Vis packaging cleanly separated from final `video` streams while supporting server-side
+ * stitching of individual Pre-Vis scene renders in Package & Ship.
+ */
+export function collectPublishPreVisScenes(
+  scenes: Array<Record<string, unknown>>,
+  production: Record<string, { productionStreams?: StreamLike[]; renderedSceneUrl?: string | null } | undefined>,
+  language: string
+): PublishSceneInput[] {
+  return scenes.map((scene, index) => {
+    const id = sceneRecordId(scene, index)
+    const stream = pickReadyAnimaticStream(production[id]?.productionStreams, language)
+    const beatIndex = scene.blueprintBeatIndex
+    const beatTitle = scene.blueprintBeatTitle
+    const resolvedDuration =
+      typeof stream?.duration === 'number' && stream.duration > 0
+        ? stream.duration
+        : stream?.mp4Url
+          ? estimateFallbackSceneDuration(scene)
+          : undefined
+    return {
+      id,
+      index,
+      sceneNumber: typeof scene.sceneNumber === 'number' ? scene.sceneNumber : index + 1,
+      title: sceneHeading(scene, index),
+      blueprintBeatIndex: typeof beatIndex === 'number' ? beatIndex : undefined,
+      blueprintBeatTitle: typeof beatTitle === 'string' ? beatTitle : undefined,
+      mp4Url: stream?.mp4Url || undefined,
+      duration: resolvedDuration,
     }
   })
 }
@@ -276,15 +355,120 @@ export function resolvePublishDelivery(args: {
   sceneId?: string
   beatIndex?: number
   scenes: PublishSceneInput[]
+  previsScenes?: PublishSceneInput[]
+  previs?: PublishPreVisInput
   streams: PublishStreamInput[]
   promo?: PublishPromoInput
   projectTitle?: string
 }): PublishDeliveryPlan {
-  const { kind, aspectRatio, language, scenes, streams, promo, projectTitle } = args
+  const { kind, aspectRatio, language, scenes, previsScenes, previs, streams, promo, projectTitle } = args
   const base = {
     kind,
     aspectRatio,
     language,
+  }
+
+  if (kind === 'previs') {
+    const id = publishUnitId('previs', aspectRatio, language)
+    const title = projectTitle ? `${projectTitle} · Pre-Vis` : 'Pre-Vis'
+    const stitchedReady = Boolean(previs?.mp4Url) && previs?.status !== 'error'
+    if (aspectRatio === '16:9' && stitchedReady && previs?.mp4Url) {
+      return {
+        id,
+        ...base,
+        title,
+        mp4Url: previs.mp4Url,
+        clips: [],
+        needsRender: false,
+      }
+    }
+    if (
+      aspectRatio === '9:16' &&
+      stitchedReady &&
+      previs?.mp4Url &&
+      typeof previs.durationSec === 'number' &&
+      previs.durationSec > 0
+    ) {
+      return {
+        id,
+        ...base,
+        title,
+        clips: [
+          {
+            sceneId: 'previs',
+            sceneNumber: 0,
+            url: previs.mp4Url,
+            duration: previs.durationSec,
+            heading: 'Pre-Vis',
+          },
+        ],
+        needsRender: true,
+        aspectNote: PAD_NOTE,
+      }
+    }
+
+    const pool = previsScenes ?? scenes
+    const readyMembers = pool.filter((scene) => Boolean(scene.mp4Url))
+    if (readyMembers.length === 0) {
+      return {
+        id,
+        ...base,
+        title,
+        clips: [],
+        needsRender: false,
+        blockedReason: stitchedReady
+          ? 'Pre-Vis duration is unknown, so it cannot be fitted to 9:16 yet.'
+          : 'Render & stitch your Pre-Vis scenes before shipping.',
+      }
+    }
+    if (pool.length > 1 && readyMembers.length === 1) {
+      return {
+        id,
+        ...base,
+        title,
+        clips: [],
+        needsRender: false,
+        blockedReason: `Only 1 of ${pool.length} scenes has a Pre-Vis render (${language.toUpperCase()}). Render & stitch at least 2 scenes to ship a combined Pre-Vis.`,
+      }
+    }
+    const { clips, missingDuration } = clipsFromScenes(readyMembers)
+    if (missingDuration.length > 0) {
+      return {
+        id,
+        ...base,
+        title,
+        clips,
+        needsRender: true,
+        blockedReason: `Pre-Vis scene length is unknown for ${missingDuration.join(', ')}. Re-render those Pre-Vis scenes, then ship.`,
+      }
+    }
+    if (aspectRatio === '16:9' && clips.length === 1 && pool.length === 1) {
+      return {
+        id,
+        ...base,
+        title,
+        mp4Url: clips[0]?.url,
+        clips: [],
+        needsRender: false,
+      }
+    }
+    const partialNote =
+      readyMembers.length < pool.length
+        ? `${readyMembers.length} of ${pool.length} scenes have Pre-Vis renders in ${language.toUpperCase()} and will be stitched.`
+        : undefined
+    return {
+      id,
+      ...base,
+      title,
+      clips,
+      needsRender: true,
+      aspectNote:
+        aspectRatio === '9:16'
+          ? partialNote
+            ? `${partialNote} ${PAD_NOTE}`
+            : PAD_NOTE
+          : partialNote,
+    }
   }
 
   if (kind === 'promo') {

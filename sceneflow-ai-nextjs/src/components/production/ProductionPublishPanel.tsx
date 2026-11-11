@@ -39,6 +39,11 @@ export interface ProductionPublishPanelProps {
   userId?: string
   videoUrl?: string | null
   title?: string
+  description?: string
+  thumbnailUrl?: string
+  tags?: string[]
+  privacyStatus?: 'private' | 'unlisted' | 'public'
+  localizations?: Record<string, { title: string; description: string }>
   projectTitle?: string
   metadata?: unknown
   /** Override master language for MLA publish (per-stream). */
@@ -54,6 +59,11 @@ export function ProductionPublishPanel({
   userId,
   videoUrl,
   title,
+  description,
+  thumbnailUrl,
+  tags,
+  privacyStatus: initialPrivacyStatus,
+  localizations,
   projectTitle,
   metadata,
   masterLanguage: masterLanguageOverride,
@@ -104,15 +114,18 @@ export function ProductionPublishPanel({
   )
 
   useEffect(() => {
-    setYoutubeConfig((c) => ({ ...c, title: title || projectTitle || c.title, language: masterLanguage }))
-  }, [title, projectTitle, masterLanguage])
+    setYoutubeConfig((c) => ({
+      ...c,
+      title: title || projectTitle || c.title,
+      description: description !== undefined ? description : c.description,
+      privacyStatus: initialPrivacyStatus || c.privacyStatus,
+      language: masterLanguage,
+    }))
+  }, [title, description, initialPrivacyStatus, projectTitle, masterLanguage])
 
   useEffect(() => {
-    if (!userId) {
-      setCheckingAuth(false)
-      return
-    }
-    fetch(`/api/publish/youtube/upload?userId=${encodeURIComponent(userId)}`)
+    const query = userId ? `?userId=${encodeURIComponent(userId)}` : ''
+    fetch(`/api/publish/youtube/upload${query}`)
       .then((r) => r.json())
       .then((d) => {
         setYoutubeConnected(!!d.connected)
@@ -131,19 +144,13 @@ export function ProductionPublishPanel({
   }, [userId])
 
   const startYouTubeOAuthRedirect = () => {
-    if (!userId) {
-      toast.error('Sign in to connect YouTube')
-      return
-    }
     const returnTo = `${window.location.pathname}${window.location.search}`
-    window.location.href = `/api/publish/youtube/auth?userId=${encodeURIComponent(userId)}&returnTo=${encodeURIComponent(returnTo)}`
+    const params = new URLSearchParams({ returnTo })
+    if (userId) params.set('userId', userId)
+    window.location.href = `/api/publish/youtube/auth?${params.toString()}`
   }
 
   const handleConnectYouTube = () => {
-    if (!userId) {
-      toast.error('Sign in to connect YouTube')
-      return
-    }
     if (!oauthConfigured) {
       setShowOAuthSetup(true)
       return
@@ -214,7 +221,7 @@ export function ProductionPublishPanel({
   }
 
   const handlePublishToYoutube = async () => {
-    if (!videoUrl || !userId) return
+    if (!videoUrl) return
 
     setPublishPhase('stitching')
     setPublishProgress(0)
@@ -266,6 +273,9 @@ export function ProductionPublishPanel({
           description: youtubeConfig.description,
           privacyStatus: youtubeConfig.privacyStatus,
           language: masterLanguage,
+          thumbnailUrl: thumbnailUrl || undefined,
+          tags: tags && tags.length > 0 ? tags : undefined,
+          localizations,
           audioTracks: preparedTracks,
         }),
       })

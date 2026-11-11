@@ -5,8 +5,10 @@ import { loadProjectProduction } from '@/lib/projects/loadProjectRead'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { findSceneById, getVisionScriptScenes } from '@/lib/script/resolveSceneById'
 import { appendSceneRender } from '@/lib/projects/appendSceneRender'
+import { savePreVisMaster } from '@/lib/projects/savePreVisMaster'
 import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
 import type { ProductionStream } from '@/components/vision/scene-production/types'
+import type { PreVisMasterAsset } from '@/types/publishingAssets'
 import { getUiSandboxProject, isDemoProjectId } from '@/lib/demo/uiSandboxProject'
 
 // Increase timeout for production updates
@@ -78,7 +80,43 @@ export async function PATCH(
     const { id } = await params
     const body = await request.json()
     
-    const { sceneId, productionData, appendStream } = body
+    const { sceneId, productionData, appendStream, previsMaster } = body
+
+    if (previsMaster && typeof previsMaster === 'object') {
+      const asset = previsMaster as PreVisMasterAsset
+      const mp4Url = typeof asset.mp4Url === 'string' ? asset.mp4Url.trim() : ''
+      const language = typeof asset.language === 'string' && asset.language.trim() ? asset.language.trim() : 'en'
+      if (!mp4Url) {
+        return NextResponse.json(
+          { error: 'previsMaster requires mp4Url' },
+          { status: 400 }
+        )
+      }
+      if (isDemoProjectId(id)) {
+        return NextResponse.json({
+          success: true,
+          projectId: id,
+          language,
+          updatedAt: new Date().toISOString(),
+          demoMode: true,
+        })
+      }
+      await sequelize.authenticate()
+      const saved = await savePreVisMaster({
+        projectId: id,
+        asset: { ...asset, mp4Url, language },
+      })
+      if (!saved) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+      }
+      return NextResponse.json({
+        success: true,
+        projectId: id,
+        language,
+        mp4Url,
+        updatedAt: new Date().toISOString(),
+      })
+    }
 
     if (!sceneId) {
       return NextResponse.json(

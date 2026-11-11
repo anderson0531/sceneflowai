@@ -291,6 +291,7 @@ export function ScreeningRoomPublishPanel({
             projectId={projectId}
             projectTitle={currentProject?.title}
             metadata={currentProject?.metadata}
+            script={currentProject?.script}
             userId={userId || undefined}
             streams={getProjectStreams(currentProject?.metadata)}
             onSaveMetadata={async (next) => {

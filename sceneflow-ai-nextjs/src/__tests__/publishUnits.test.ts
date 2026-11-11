@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { deliveryFrameSize } from '@/lib/video/renderTypes'
 import {
+  collectPublishPreVisScenes,
   collectPublishScenes,
   listPublishChapters,
+  publishUnitId,
   resolvePublishDelivery,
 } from '@/lib/publish/publishUnits'
 
@@ -205,5 +207,129 @@ describe('publish units', () => {
     expect(collected[0]?.mp4Url).toBe('https://example.com/v2.mp4')
     expect(collected[0]?.blueprintBeatIndex).toBe(2)
     expect(collected[0]?.title).toBe('INT. DOCK')
+  })
+
+  it('ships a stitched Pre-Vis directly in 16:9 and fits it for 9:16', () => {
+    expect(publishUnitId('previs', '16:9', 'es')).toBe('previs:es:16:9')
+
+    const landscape = resolvePublishDelivery({
+      kind: 'previs',
+      aspectRatio: '16:9',
+      language: 'en',
+      scenes: [],
+      streams: [],
+      previs: {
+        mp4Url: 'https://example.com/previs-combined-en.mp4',
+        durationSec: 125,
+        sceneCount: 3,
+        status: 'ready',
+      },
+      projectTitle: 'Northline',
+    })
+    expect(landscape.needsRender).toBe(false)
+    expect(landscape.mp4Url).toBe('https://example.com/previs-combined-en.mp4')
+    expect(landscape.title).toBe('Northline · Pre-Vis')
+    expect(landscape.blockedReason).toBeUndefined()
+
+    const vertical = resolvePublishDelivery({
+      kind: 'previs',
+      aspectRatio: '9:16',
+      language: 'en',
+      scenes: [],
+      streams: [],
+      previs: {
+        mp4Url: 'https://example.com/previs-combined-en.mp4',
+        durationSec: 125,
+        sceneCount: 3,
+        status: 'ready',
+      },
+      projectTitle: 'Northline',
+    })
+    expect(vertical.needsRender).toBe(true)
+    expect(vertical.clips).toHaveLength(1)
+    expect(vertical.clips[0]?.url).toBe('https://example.com/previs-combined-en.mp4')
+    expect(vertical.aspectNote).toContain('pads')
+  })
+
+  it('collects per-scene animatic Pre-Vis streams by language and stitches multi-scene Pre-Vis', () => {
+    const rawScenes = [
+      { id: 's1', sceneNumber: 1, heading: 'INT. LAB', duration: 18 },
+      { id: 's2', sceneNumber: 2, heading: 'EXT. ROOFTOP', duration: 24 },
+    ]
+    const production = {
+      s1: {
+        productionStreams: [
+          {
+            status: 'complete',
+            language: 'en',
+            streamType: 'video',
+            mp4Url: 'https://example.com/s1-video.mp4',
+            duration: 18,
+          },
+          {
+            status: 'complete',
+            language: 'en',
+            streamType: 'animatic',
+            mp4Url: 'https://example.com/s1-animatic-old.mp4',
+            duration: 17,
+            completedAt: '2026-01-01T00:00:00.000Z',
+          },
+          {
+            status: 'complete',
+            language: 'en',
+            streamType: 'animatic',
+            mp4Url: 'https://example.com/s1-animatic-new.mp4',
+            duration: 18,
+            completedAt: '2026-02-01T00:00:00.000Z',
+          },
+        ],
+      },
+      s2: {
+        productionStreams: [
+          {
+            status: 'complete',
+            language: 'en',
+            streamType: 'animatic',
+            mp4Url: 'https://example.com/s2-animatic.mp4',
+          },
+        ],
+      },
+    }
+
+    const enPreVisScenes = collectPublishPreVisScenes(rawScenes, production, 'en')
+    expect(enPreVisScenes[0]?.mp4Url).toBe('https://example.com/s1-animatic-new.mp4')
+    expect(enPreVisScenes[1]?.mp4Url).toBe('https://example.com/s2-animatic.mp4')
+    expect(enPreVisScenes[1]?.duration).toBe(24)
+
+    // Non-rendered Spanish language does not leak English Pre-Vis streams
+    const esPreVisScenes = collectPublishPreVisScenes(rawScenes, production, 'es')
+    expect(esPreVisScenes[0]?.mp4Url).toBeUndefined()
+    expect(esPreVisScenes[1]?.mp4Url).toBeUndefined()
+
+    const toStitch = resolvePublishDelivery({
+      kind: 'previs',
+      aspectRatio: '16:9',
+      language: 'en',
+      scenes: [],
+      previsScenes: enPreVisScenes,
+      streams: [],
+      projectTitle: 'Northline',
+    })
+    expect(toStitch.needsRender).toBe(true)
+    expect(toStitch.blockedReason).toBeUndefined()
+    expect(toStitch.clips.map((c) => c.url)).toEqual([
+      'https://example.com/s1-animatic-new.mp4',
+      'https://example.com/s2-animatic.mp4',
+    ])
+
+    const blockedEs = resolvePublishDelivery({
+      kind: 'previs',
+      aspectRatio: '16:9',
+      language: 'es',
+      scenes: [],
+      previsScenes: esPreVisScenes,
+      streams: [],
+    })
+    expect(blockedEs.blockedReason).toContain('Render & stitch')
   })
 })
