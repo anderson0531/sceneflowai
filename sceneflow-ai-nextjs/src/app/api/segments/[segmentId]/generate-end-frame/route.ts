@@ -10,6 +10,14 @@ import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBase
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { mergeBeatFrameNegativePrompt } from '@/lib/character/sceneCharacterHeadshot'
 import { evaluateGenerationErrorForApi } from '@/lib/errors/generationErrorServerEvaluator'
+import {
+  getArtStyleNegativeTerms,
+  getArtStylePromptSuffix,
+  isPhotorealisticArtStyle,
+  resolveProjectArtStyle,
+} from '@/lib/vision/artStyle'
+import Project from '@/models/Project'
+import { ensureDatabaseConnection } from '@/config/database'
 
 export const maxDuration = 60 // 1 minute for image generation
 export const runtime = 'nodejs'
@@ -22,6 +30,8 @@ interface GenerateEndFrameRequest {
   segmentPrompt: string
   segmentDuration?: number
   aspectRatio?: '16:9' | '9:16'
+  artStyle?: string
+  projectId?: string
   // Optional character references for consistency
   characterRefs?: Array<{ url: string; name?: string }>
 }
@@ -84,9 +94,22 @@ export async function POST(
     // The segment prompt carries scene text in the creator's language, and this
     // instruction is an image edit, so it is normalized to English first.
     const { storyLocale, properNouns } = await resolveRequestStoryLocale(req, {
-      projectId: (body as { projectId?: string }).projectId,
+      projectId: body.projectId,
     })
-    const instruction = await englishForModel(
+    let effectiveArtStyle = body.artStyle?.trim() || ''
+    if (body.projectId && (!effectiveArtStyle || effectiveArtStyle === 'photorealistic')) {
+      try {
+        await ensureDatabaseConnection('segments/generate-end-frame')
+        const project = await Project.findByPk(body.projectId, { attributes: ['id', 'metadata'] })
+        const globalStyle = resolveProjectArtStyle(project?.metadata)
+        if (globalStyle && globalStyle !== 'photorealistic') {
+          effectiveArtStyle = globalStyle
+        }
+      } catch {
+        // Non-fatal fallback
+      }
+    }
+    const baseInstruction = await englishForModel(
       buildPreVisEndFrameEditInstruction({
         startFramePrompt: segmentPrompt,
         durationSeconds: segmentDuration,
@@ -94,6 +117,10 @@ export async function POST(
       storyLocale,
       properNouns
     )
+    const instruction =
+      effectiveArtStyle && !isPhotorealisticArtStyle(effectiveArtStyle)
+        ? `${baseInstruction}\n\nGLOBAL ART STYLE LOCK: Preserve the exact stylized rendering medium (${getArtStylePromptSuffix(effectiveArtStyle)}) of the source start frame. Do NOT introduce live-action photorealism.`
+        : baseInstruction
     const identityRef = characterRefs.find(c => c.url && c.url !== startFrameUrl)?.url
 
     const result = await editImageWithGeminiStudio({
@@ -104,7 +131,11 @@ export async function POST(
       imageSize: '1K',
       editIntent: 'keyframeEnd',
       segmentDurationSeconds: segmentDuration,
-      negativePrompt: mergeBeatFrameNegativePrompt(),
+      negativePrompt: mergeBeatFrameNegativePrompt(
+        effectiveArtStyle && !isPhotorealisticArtStyle(effectiveArtStyle)
+          ? getArtStyleNegativeTerms(effectiveArtStyle)
+          : undefined
+      ),
     })
 
     const endFrameUrl = await uploadImageToBlob(

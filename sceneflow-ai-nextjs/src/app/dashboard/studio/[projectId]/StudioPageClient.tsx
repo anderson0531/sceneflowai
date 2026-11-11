@@ -343,12 +343,25 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const syncVariantToProductionProject = useCallback(
     async (variant: Record<string, unknown>, productionProjectId: string) => {
       try {
+        const normalizedVariant = normalizeVariantFoundation(variant)
+        const { resolveVariantArtStyleSpec } = await import('@/lib/treatment/blueprintFoundation')
+        const { serializeArtStyleValue } = await import('@/lib/artStyle/globalArtStyle')
+        const resolvedSpec = resolveVariantArtStyleSpec(normalizedVariant)
+        const serializedArtStyle = serializeArtStyleValue(resolvedSpec)
+
         const res = await fetch(`/api/projects/${productionProjectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             metadata: {
-              filmTreatmentVariant: normalizeVariantFoundation(variant),
+              artStyle: serializedArtStyle,
+              artStyleSpec: resolvedSpec,
+              filmTreatmentVariant: normalizedVariant,
+              visionPhase: {
+                artStyle: serializedArtStyle,
+                artStyleSpec: resolvedSpec,
+                lookbook: null,
+              },
             },
           }),
         })
@@ -1045,6 +1058,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     duration?: string;
     targetAudience?: string;
     artStyle?: string;
+    artStyleSpec?: import('@/lib/artStyle/globalArtStyle').ArtStyleSpec;
     aspectRatio?: string;
     hasStoryDirections?: boolean;
     generateThreeDirections?: boolean;
@@ -1080,6 +1094,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           ...(opts?.tone && { tone: opts.tone }),
           ...(opts?.targetAudience && { targetAudience: opts.targetAudience }),
           ...(opts?.artStyle && { artStyle: opts.artStyle }),
+          ...(opts?.artStyleSpec && { artStyleSpec: opts.artStyleSpec }),
           ...(opts?.aspectRatio && { aspectRatio: opts.aspectRatio }),
           ...(opts?.contentIntent && { contentIntent: opts.contentIntent }),
           ...(opts?.format && { format: opts.format }),
@@ -1714,9 +1729,21 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               existingVisionPhase
             )
           : null
+        const normalizedActiveVariant = activeVariant
+          ? normalizeVariantFoundation(activeVariant as Record<string, unknown>)
+          : null
+        const nextArtStyle = normalizedActiveVariant?.artStyle as string | undefined
+        const nextArtStyleSpec = normalizedActiveVariant?.artStyleSpec
+        const styleChanged =
+          Boolean(nextArtStyle) &&
+          Boolean(existingVisionPhase?.artStyle) &&
+          existingVisionPhase.artStyle !== nextArtStyle
         const nextVisionPhase = syncedContinuity
           ? {
               ...(existingVisionPhase || {}),
+              ...(nextArtStyle ? { artStyle: nextArtStyle } : {}),
+              ...(nextArtStyleSpec ? { artStyleSpec: nextArtStyleSpec } : {}),
+              ...(styleChanged ? { lookbook: undefined } : {}),
               characters: syncedContinuity.characters,
               references: syncedContinuity.references,
             }
@@ -1727,14 +1754,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           description: '',
           metadata: {
             ...(currentProject?.metadata || {}),
+            ...(nextArtStyle ? { artStyle: nextArtStyle } : {}),
+            ...(nextArtStyleSpec ? { artStyleSpec: nextArtStyleSpec } : {}),
             blueprintInput: lastInput,
             filmTreatment: guide.filmTreatment,
             treatmentVariants: treatmentVariants,
             ...(nextVisionPhase && { visionPhase: nextVisionPhase }),
-            ...(shouldSyncFoundation && {
-              filmTreatmentVariant: normalizeVariantFoundation(
-                activeVariant as Record<string, unknown>
-              ),
+            ...(shouldSyncFoundation && normalizedActiveVariant && {
+              filmTreatmentVariant: normalizedActiveVariant,
             }),
             beats: beatsView,
             estimatedRuntime: estimatedRuntime,
@@ -2110,6 +2137,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         existingVariant={activeTreatmentVariant}
         focusField={foundationFocus}
         projectId={projectId}
+        lockedBySeries={(() => {
+          const meta = currentProject?.metadata as Record<string, unknown> | undefined
+          return meta?.seriesId
+            ? {
+                seriesId: String(meta.seriesId),
+                seriesTitle: meta.seriesTitle ? String(meta.seriesTitle) : undefined,
+              }
+            : null
+        })()}
         fallback={{
           synopsis:
             (currentProject?.metadata?.episodeSeed as { synopsis?: string } | undefined)
@@ -2128,6 +2164,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             duration: opts?.duration,
             targetAudience: opts?.targetAudience,
             artStyle: opts?.artStyle,
+            artStyleSpec: opts?.artStyleSpec,
             aspectRatio: opts?.aspectRatio,
             variantCount: 1,
             rigor: opts?.rigor,
@@ -2150,6 +2187,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         onClose={() => setShowReimaginDialog(false)}
         projectId={projectId}
         defaultImportOpen={searchParams.get('import') === 'true'}
+        lockedBySeries={(() => {
+          const meta = currentProject?.metadata as Record<string, unknown> | undefined
+          return meta?.seriesId
+            ? {
+                seriesId: String(meta.seriesId),
+                seriesTitle: meta.seriesTitle ? String(meta.seriesTitle) : undefined,
+              }
+            : null
+        })()}
         existingVariant={
           activeTreatmentVariant ||
           (currentProject?.metadata?.blueprintPrimeInput || currentProject?.metadata?.seriesId
@@ -2203,6 +2249,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             duration: opts?.duration,
             targetAudience: opts?.targetAudience,
             artStyle: opts?.artStyle,
+            artStyleSpec: opts?.artStyleSpec,
             aspectRatio: opts?.aspectRatio,
             variantCount: opts?.variantCount,
             rigor: opts?.rigor,

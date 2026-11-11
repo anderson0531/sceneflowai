@@ -853,7 +853,13 @@ export function applyProjectToSeriesTransfer(
   if (selection.includeSettings) {
     aesthetic = {
       ...aesthetic,
-      visualStyle: proj.generationSettings.imageStyle || aesthetic.visualStyle,
+      // Series Art Style stays locked at the Series level; episode settings never overwrite it
+      artStyle: aesthetic.artStyle,
+      artStyleSpec: aesthetic.artStyleSpec,
+      artStyleLocked: aesthetic.artStyleLocked,
+      visualStyle: aesthetic.artStyleLocked
+        ? aesthetic.visualStyle
+        : proj.generationSettings.imageStyle || aesthetic.visualStyle,
       aspectRatio: proj.generationSettings.aspectRatio || aesthetic.aspectRatio,
       colorPalette: proj.generationSettings.colorPalette || aesthetic.colorPalette,
     }
@@ -964,11 +970,19 @@ export function applySeriesToProjectTransfer(
   }
 
   if (selection.includeSettings && bible.aesthetic) {
+    if (bible.aesthetic.artStyle) {
+      visionPhase.artStyle = bible.aesthetic.artStyle
+      metadata.artStyle = bible.aesthetic.artStyle
+    }
+    if (bible.aesthetic.artStyleSpec) {
+      visionPhase.artStyleSpec = bible.aesthetic.artStyleSpec
+      metadata.artStyleSpec = bible.aesthetic.artStyleSpec
+    }
     visionPhase.generationSettings = {
       ...visionPhase.generationSettings,
-      imageStyle: bible.aesthetic.visualStyle,
-      aspectRatio: bible.aesthetic.aspectRatio,
-      colorPalette: bible.aesthetic.colorPalette,
+      imageStyle: bible.aesthetic.visualStyle || visionPhase.generationSettings?.imageStyle,
+      aspectRatio: bible.aesthetic.aspectRatio || visionPhase.generationSettings?.aspectRatio,
+      colorPalette: bible.aesthetic.colorPalette || visionPhase.generationSettings?.colorPalette,
     }
   }
 
@@ -983,6 +997,7 @@ export function applySeriesToProjectTransfer(
   metadata.visionPhase = visionPhase
   metadata.seriesBibleRef = {
     version: bible.version,
+    aesthetic: bible.aesthetic,
     syncedAt: new Date().toISOString(),
     direction: 'pull_from_series',
   }

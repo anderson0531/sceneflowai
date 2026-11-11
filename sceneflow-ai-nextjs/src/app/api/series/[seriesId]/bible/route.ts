@@ -136,12 +136,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       updatedBible.locations = result.merged
     }
     
-    // Sync aesthetic settings
+    // Sync aesthetic settings (preserve Series-locked artStyle & artStyleSpec!)
     if (syncAll || syncFields.includes('aesthetic')) {
       const projectAesthetic = visionPhase.generationSettings || {}
+      const lockedSeriesArtStyle = currentBible.aesthetic?.artStyle
+      const lockedSeriesArtStyleSpec = currentBible.aesthetic?.artStyleSpec
       changes.aesthetic = {
         before: currentBible.aesthetic || {},
-        after: { ...currentBible.aesthetic, ...projectAesthetic }
+        after: {
+          ...currentBible.aesthetic,
+          ...projectAesthetic,
+          ...(lockedSeriesArtStyle ? { artStyle: lockedSeriesArtStyle } : {}),
+          ...(lockedSeriesArtStyleSpec ? { artStyleSpec: lockedSeriesArtStyleSpec } : {}),
+          ...(currentBible.aesthetic?.artStyleLocked !== undefined
+            ? { artStyleLocked: currentBible.aesthetic.artStyleLocked }
+            : {}),
+        },
       }
       if (!preview) {
         updatedBible.aesthetic = changes.aesthetic.after
@@ -203,6 +213,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         ...projectMetadata,
         seriesBibleRef: {
           version: updatedBible.version,
+          seriesTitle: series.title,
+          aesthetic: updatedBible.aesthetic,
           syncedAt: new Date().toISOString(),
           direction: 'push_to_series'
         }
@@ -299,13 +311,31 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }))
     }
     
-    // Pull aesthetic settings
+    // Pull aesthetic settings & Series-locked Global Art Style
+    const { applyArtStyleToProjectMetadata, resolveSeriesArtStyleSpec, serializeArtStyleValue } =
+      await import('@/lib/artStyle/globalArtStyle')
+    const seriesArtStyleSpec = {
+      ...resolveSeriesArtStyleSpec({
+        seriesId,
+        seriesTitle: series.title,
+        metadata: series.metadata,
+        productionBible: bible,
+      }),
+      confirmed: true,
+      source: 'series' as const,
+      lockedBySeriesId: seriesId,
+      lockedBySeriesTitle: series.title,
+    }
+    const serializedSeriesArtStyle = serializeArtStyleValue(seriesArtStyleSpec)
+
     if (syncFields.includes('aesthetic') || syncFields.includes('all')) {
+      updatedVisionPhase.artStyle = serializedSeriesArtStyle
+      updatedVisionPhase.artStyleSpec = seriesArtStyleSpec
       updatedVisionPhase.generationSettings = {
         ...visionPhase.generationSettings,
-        imageStyle: bible.aesthetic?.visualStyle,
-        aspectRatio: bible.aesthetic?.aspectRatio,
-        colorPalette: bible.aesthetic?.colorPalette
+        imageStyle: bible.aesthetic?.visualStyle || seriesArtStyleSpec.title,
+        aspectRatio: bible.aesthetic?.aspectRatio || visionPhase.generationSettings?.aspectRatio,
+        colorPalette: bible.aesthetic?.colorPalette || visionPhase.generationSettings?.colorPalette,
       }
     }
     
@@ -319,17 +349,30 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       continuitySnapshot.consistencyRules = bible.consistencyRules || []
     }
     
-    await project.update({
-      metadata: {
-        ...projectMetadata,
-        visionPhase: updatedVisionPhase,
-        ...(Object.keys(continuitySnapshot).length > 0 ? { seriesContinuity: continuitySnapshot } : {}),
-        seriesBibleRef: {
-          version: bible.version,
-          syncedAt: new Date().toISOString(),
-          direction: 'pull_from_series'
-        }
+    const baseMergedMeta = {
+      ...projectMetadata,
+      visionPhase: updatedVisionPhase,
+      ...(Object.keys(continuitySnapshot).length > 0 ? { seriesContinuity: continuitySnapshot } : {}),
+      seriesBibleRef: {
+        version: bible.version,
+        seriesTitle: series.title,
+        aesthetic: {
+          ...(bible.aesthetic || {}),
+          artStyle: serializedSeriesArtStyle,
+          artStyleSpec: seriesArtStyleSpec,
+          artStyleLocked: true,
+        },
+        syncedAt: new Date().toISOString(),
+        direction: 'pull_from_series'
       }
+    }
+    const finalMergedMeta =
+      syncFields.includes('aesthetic') || syncFields.includes('all')
+        ? applyArtStyleToProjectMetadata(baseMergedMeta, seriesArtStyleSpec)
+        : baseMergedMeta
+
+    await project.update({
+      metadata: finalMergedMeta as any,
     })
     
     console.log(`[${timestamp}] [PUT /api/series/${seriesId}/bible] Pulled to project ${projectId}`)

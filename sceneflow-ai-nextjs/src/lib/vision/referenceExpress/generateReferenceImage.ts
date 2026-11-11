@@ -38,8 +38,14 @@ import {
 } from '@/lib/character/enhanceIdentityImage'
 import {
   OBJECT_REFERENCE_NEGATIVE_PROMPT,
+  buildObjectReferenceNegativePrompt,
   withObjectReferenceInstruction,
 } from '@/lib/vision/objectReferencePrompts'
+import {
+  buildArtStyleSpecFromValue,
+  isPhotorealisticArtStyle,
+} from '@/lib/artStyle/globalArtStyle'
+import { getArtStyleNegativeTerms, resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import type { ObjectCategory } from '@/types/visionReferences'
 
 export type ReferenceAspectRatio = '1:1' | '4:3' | '3:4' | '16:9' | '9:16'
@@ -66,6 +72,27 @@ export type ScreenplayContext = {
   tone?: string
   setting?: string
   visualStyle?: string
+}
+
+async function resolveEffectiveArtStyle(
+  explicitArtStyle?: string | null,
+  projectId?: string | null
+): Promise<string | undefined> {
+  if (typeof explicitArtStyle === 'string' && explicitArtStyle.trim()) {
+    return explicitArtStyle.trim()
+  }
+  const pid = projectId?.trim()
+  if (!pid || pid === 'default') return undefined
+  try {
+    const { Project } = await import('@/models/Project')
+    const project = await Project.findByPk(pid)
+    if (project?.metadata) {
+      return resolveProjectArtStyle(project.metadata)
+    }
+  } catch {
+    // Optional DB lookup fallback for unit tests or standalone invocations
+  }
+  return undefined
 }
 
 // ---------------------------------------------------------------------------
@@ -101,6 +128,7 @@ export type GenerateLocationImageInput = {
   parentLocationDescription?: string
   subZoneLabel?: string
   parentReferenceImageUrl?: string
+  artStyle?: string | null
   locale: StoryLocaleContext
 }
 
@@ -130,6 +158,8 @@ export async function generateLocationReferenceImage(
 
   const creditCost = IMAGE_CREDITS.SCENE_REFERENCE
   const hasParentReferenceImage = Boolean(parentReferenceImageUrl?.trim())
+  const effectiveArtStyle = await resolveEffectiveArtStyle(input.artStyle, projectId)
+  const isStylized = Boolean(effectiveArtStyle && !isPhotorealisticArtStyle(effectiveArtStyle))
 
   let prompt =
     locationPrompt && locationPrompt.trim()
@@ -139,7 +169,15 @@ export async function generateLocationReferenceImage(
           parentLocationDescription,
           subZoneLabel,
           hasParentReferenceImage,
+          artStyle: effectiveArtStyle,
         })
+
+  if (locationPrompt && locationPrompt.trim() && isStylized && effectiveArtStyle) {
+    const spec = buildArtStyleSpecFromValue(effectiveArtStyle)
+    if (!prompt.toLowerCase().includes(spec.title.toLowerCase())) {
+      prompt = `${prompt.replace(/[.]+$/, '')}. ${spec.locationRefDirective}`
+    }
+  }
 
   if (
     locationPrompt &&
@@ -167,12 +205,18 @@ export async function generateLocationReferenceImage(
     ...locale.properNouns,
   ])
 
+  const baseLocationNegatives =
+    'people, persons, humans, actors, characters, figures, silhouettes, faces, crowds'
+  const locationNegativePrompt =
+    effectiveArtStyle && effectiveArtStyle !== 'photorealistic'
+      ? `${baseLocationNegatives}, ${getArtStyleNegativeTerms(effectiveArtStyle)}`
+      : baseLocationNegatives
+
   // negativePrompt enforces no people in location shots.
   const result = await generateImageWithGeminiStudio({
     prompt,
     aspectRatio,
-    negativePrompt:
-      'people, persons, humans, actors, characters, figures, silhouettes, faces, crowds',
+    negativePrompt: locationNegativePrompt,
     ...(hasParentReferenceImage
       ? {
           referenceImages: [
@@ -259,6 +303,8 @@ export async function generateLocationVersionReferenceImage(
   }
 
   const creditCost = IMAGE_CREDITS.SCENE_REFERENCE
+  const effectiveArtStyle = await resolveEffectiveArtStyle(input.artStyle, projectId)
+  const isStylized = Boolean(effectiveArtStyle && !isPhotorealisticArtStyle(effectiveArtStyle))
 
   let prompt =
     locationPrompt && locationPrompt.trim()
@@ -271,18 +317,32 @@ export async function generateLocationVersionReferenceImage(
           timeOfDay,
           description,
           catalogPropNames,
+          artStyle: effectiveArtStyle,
         })
+
+  if (locationPrompt && locationPrompt.trim() && isStylized && effectiveArtStyle) {
+    const spec = buildArtStyleSpecFromValue(effectiveArtStyle)
+    if (!prompt.toLowerCase().includes(spec.title.toLowerCase())) {
+      prompt = `${prompt.replace(/[.]+$/, '')}. ${spec.locationRefDirective}`
+    }
+  }
 
   prompt = await englishForModel(prompt, locale.storyLocale, [
     locationName,
     ...locale.properNouns,
   ])
 
+  const baseVersionNegatives =
+    'people, persons, humans, actors, characters, figures, silhouettes, faces, crowds, restored undamaged set, intact destroyed features'
+  const versionNegativePrompt =
+    effectiveArtStyle && effectiveArtStyle !== 'photorealistic'
+      ? `${baseVersionNegatives}, ${getArtStyleNegativeTerms(effectiveArtStyle)}`
+      : baseVersionNegatives
+
   const result = await generateImageWithGeminiStudio({
     prompt,
     aspectRatio,
-    negativePrompt:
-      'people, persons, humans, actors, characters, figures, silhouettes, faces, crowds, restored undamaged set, intact destroyed features',
+    negativePrompt: versionNegativePrompt,
     referenceImages: [
       {
         imageUrl: baseImageUrl,
@@ -330,7 +390,8 @@ export async function generateLocationVersionReferenceImage(
 export function buildObjectImagePrompt(
   prompt: string,
   category: ObjectCategory = 'other',
-  hasReference: boolean
+  hasReference: boolean,
+  artStyle?: string | null
 ): string {
   const studioModifiers = [
     'Clean studio lighting',
@@ -339,21 +400,26 @@ export function buildObjectImagePrompt(
     'Centered composition',
   ]
 
+  const isLiveAction = isPhotorealisticArtStyle(artStyle)
+
   const categoryEnhancements: Record<ObjectCategory, string[]> = {
     prop: ['Detailed texture visible', 'Subject isolation'],
     vehicle: ['3/4 angle, entire vehicle visible'],
-    'set-piece': ['Architectural detail photography', 'Environmental context minimal'],
+    'set-piece': [
+      isLiveAction ? 'Architectural detail photography' : 'Architectural detail reference',
+      'Environmental context minimal',
+    ],
     costume: ['On dress form', 'Fabric texture detailed', 'Full garment visible'],
     technology: ['Entire device visible', 'Interface visible if applicable'],
     other: ['Clear subject isolation'],
   }
 
   const enhancements = categoryEnhancements[category] || categoryEnhancements.other
-  const body = withObjectReferenceInstruction(prompt)
+  const body = withObjectReferenceInstruction(prompt, artStyle)
   const extras = `${enhancements.join(', ')}. ${studioModifiers.join(', ')}.`
 
   if (hasReference) {
-    return `Create a clean, studio-quality reference image based on the provided reference photo. ${body} ${extras} Remove background clutter, enhance clarity.`
+    return `Create a clean, studio-quality reference image based on the provided reference image. ${body} ${extras} Remove background clutter, enhance clarity.`
   }
 
   return `${body} ${extras}`
@@ -361,12 +427,14 @@ export function buildObjectImagePrompt(
 
 export type GenerateObjectImageInput = {
   userId: string
+  projectId?: string
   name: string
   prompt: string
   category?: ObjectCategory
   referenceImageUrl?: string
   referenceImageBase64?: string
   aspectRatio?: ReferenceAspectRatio
+  artStyle?: string | null
   locale: StoryLocaleContext
 }
 
@@ -380,6 +448,7 @@ export async function generateObjectReferenceImage(
 }> {
   const {
     userId,
+    projectId,
     name,
     prompt: enteredPrompt,
     category = 'other',
@@ -398,6 +467,7 @@ export async function generateObjectReferenceImage(
   }
 
   let creditCost = getCreditCost('IMAGE_GENERATION')
+  const effectiveArtStyle = await resolveEffectiveArtStyle(input.artStyle, projectId)
 
   // Typed in the creator's language; the image model needs English.
   const prompt = await englishForModel(enteredPrompt, locale.storyLocale, [
@@ -406,7 +476,12 @@ export async function generateObjectReferenceImage(
   ])
 
   const hasReferenceSource = Boolean(referenceImageUrl || referenceImageBase64)
-  const optimizedPrompt = buildObjectImagePrompt(prompt, category, hasReferenceSource)
+  const optimizedPrompt = buildObjectImagePrompt(
+    prompt,
+    category,
+    hasReferenceSource,
+    effectiveArtStyle
+  )
 
   const referenceImages = hasReferenceSource
     ? [
@@ -422,17 +497,10 @@ export async function generateObjectReferenceImage(
   const result = await generateImageWithGeminiStudio({
     prompt: optimizedPrompt,
     aspectRatio,
-    // A prop sheet is a lit object on a clean background — the thing pro buys
-    // over flash is facial likeness, which no object needs. Left unset, Vertex
-    // defaults to `designer`, so a scene's worth of props was generating on pro
-    // at four times the latency for no visible gain. `eco` caps at 2K, which is
-    // the size already requested here. When the user attached a photo of the
-    // real object, `escalateEcoRefusalToPro` still buys one pro attempt if
-    // flash refuses the frame, so the cheap tier cannot cost the image.
     modelTier: 'eco',
     imageSize: '2K',
     referenceImages,
-    negativePrompt: OBJECT_REFERENCE_NEGATIVE_PROMPT,
+    negativePrompt: buildObjectReferenceNegativePrompt(effectiveArtStyle),
   })
 
   const safeName = name.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 50)
@@ -475,6 +543,7 @@ export type GenerateCastImageInput = {
   quality?: string
   rawMode?: boolean
   skipAutoEnhance?: boolean
+  artStyle?: string | null
 }
 
 export async function generateCastReferenceImage(
@@ -501,10 +570,19 @@ export async function generateCastReferenceImage(
     throw new ReferenceGenerationError('Prompt is required', 400)
   }
 
+  const effectiveArtStyle = await resolveEffectiveArtStyle(input.artStyle, projectId)
+  const isLiveAction = isPhotorealisticArtStyle(effectiveArtStyle)
+
   if (!rawMode && !promptHasIdentityReferenceAnchor(finalPrompt)) {
     finalPrompt = buildCharacterIdentityReferencePrompt({
       appearanceDescription: finalPrompt,
+      artStyle: effectiveArtStyle,
     })
+  } else if (rawMode && !isLiveAction && effectiveArtStyle) {
+    const spec = buildArtStyleSpecFromValue(effectiveArtStyle)
+    if (!finalPrompt.toLowerCase().includes(spec.title.toLowerCase())) {
+      finalPrompt = `${spec.title} character identity reference portrait.\n\n${finalPrompt}\n\nStyle: ${spec.characterRefDirective}`
+    }
   }
 
   const resolvedCharacterName =
@@ -518,6 +596,9 @@ export async function generateCastReferenceImage(
     aspectRatio: ENHANCE_IDENTITY_ASPECT_RATIO,
     imageSize: quality === 'max' ? '4K' : ENHANCE_IDENTITY_IMAGE_SIZE,
     modelTier: ENHANCE_IDENTITY_MODEL_TIER,
+    ...(effectiveArtStyle && effectiveArtStyle !== 'photorealistic'
+      ? { negativePrompt: getArtStyleNegativeTerms(effectiveArtStyle) }
+      : {}),
   })
 
   const draftBase64 = `data:${draftResult.mimeType};base64,${draftResult.imageBase64}`
@@ -531,7 +612,10 @@ export async function generateCastReferenceImage(
   let visionDescription: string | null = null
   let autoEnhanced = false
 
-  if (!skipAutoEnhance) {
+  // Stylized mediums (2D anime/Ghibli, 3D Pixar, painterly, graphic illustration)
+  // already render at designer 2K/4K with their locked ArtStyleSpec directive;
+  // running the live-action casting polish pass risks introducing DSLR human skin pores.
+  if (!skipAutoEnhance && isLiveAction) {
     console.log('[Character Image] Auto-enhancing identity reference...')
     const enhanced = await enhanceIdentityImage({
       sourceImageUrl: draftImageUrl,
@@ -543,6 +627,7 @@ export async function generateCastReferenceImage(
       skipIterationGuard: true,
       skipPreAnalysis: true,
       identitySource: 'description',
+      artStyle: effectiveArtStyle,
     })
     imageUrl = enhanced.enhancedImageUrl
     visionDescription = enhanced.visionDescription

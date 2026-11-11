@@ -28,6 +28,10 @@ import {
   primaryLocationResidentInstrument,
   propPlateIdentifiesInstrument,
 } from '@/lib/vision/locationResidentInstruments'
+import {
+  buildArtStyleSpecFromValue,
+  isPhotorealisticArtStyle,
+} from '@/lib/artStyle/globalArtStyle'
 
 export const LOCATION_REFERENCE_ASPECT_RATIO = '16:9' as const
 
@@ -36,6 +40,7 @@ export interface BuildLocationBasePromptOptions {
   parentLocationDescription?: string
   subZoneLabel?: string
   hasParentReferenceImage?: boolean
+  artStyle?: string | null
 }
 
 /**
@@ -95,12 +100,33 @@ export function buildLocationBasePrompt(
     if (lighting) parts.push(lighting)
   }
 
-  parts.push(
-    LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
-    'Cinematic production design, professional film set quality',
-    'High resolution, sharp focus, detailed textures',
-    'Film production location reference photograph for visual consistency across scenes'
-  )
+  const rawStyle = options?.artStyle?.trim()
+  const isDefaultPhotoreal = !rawStyle || rawStyle === 'photorealistic'
+  const isLiveAction = isDefaultPhotoreal || isPhotorealisticArtStyle(rawStyle)
+
+  if (isLiveAction) {
+    parts.push(
+      LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
+      'Cinematic production design, professional film set quality',
+      'High resolution, sharp focus, detailed textures',
+      'Film production location reference photograph for visual consistency across scenes'
+    )
+    if (!isDefaultPhotoreal && rawStyle) {
+      const spec = buildArtStyleSpecFromValue(rawStyle)
+      parts.push(`Global Art Style grade: ${spec.stylePrompt}`)
+    }
+  } else {
+    const spec = buildArtStyleSpecFromValue(rawStyle)
+    const stylizedTurnaround = LOCATION_TURNAROUND_GENERATION_INSTRUCTION.replace(
+      'One photograph capturing',
+      `One unified ${spec.title} establishing plate capturing`
+    )
+    parts.push(
+      stylizedTurnaround,
+      spec.locationRefDirective.replace(/[.]+$/, ''),
+      'High resolution, sharp focus, detailed environment continuity plate across scenes'
+    )
+  }
 
   return parts.filter(Boolean).join('. ') + '.'
 }
@@ -385,6 +411,7 @@ export interface LocationVersionPromptInput {
   timeOfDay?: string
   description?: string
   catalogPropNames?: string[]
+  artStyle?: string | null
 }
 
 export function buildLocationVersionPrompt(input: LocationVersionPromptInput): string {
@@ -396,9 +423,24 @@ export function buildLocationVersionPrompt(input: LocationVersionPromptInput): s
     structuralNotes,
     input.previousStateNotes
   )
+  const rawStyle = input.artStyle?.trim()
+  const isDefaultPhotoreal = !rawStyle || rawStyle === 'photorealistic'
+  const isLiveAction = isDefaultPhotoreal || isPhotorealisticArtStyle(rawStyle)
+  const spec = !isDefaultPhotoreal && rawStyle ? buildArtStyleSpecFromValue(rawStyle) : undefined
+
+  const turnaroundLine = isLiveAction
+    ? LOCATION_TURNAROUND_GENERATION_INSTRUCTION
+    : LOCATION_TURNAROUND_GENERATION_INSTRUCTION.replace(
+        'One photograph capturing',
+        `One unified ${spec!.title} establishing plate capturing`
+      )
+  const versionLine = isLiveAction
+    ? LOCATION_VERSION_GENERATION_INSTRUCTION
+    : LOCATION_VERSION_GENERATION_INSTRUCTION.replace(/photograph/g, 'reference plate')
+
   const lines = [
-    LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
-    LOCATION_VERSION_GENERATION_INSTRUCTION,
+    turnaroundLine,
+    versionLine,
     `Location: ${input.locationName}.`,
   ]
   if (input.description?.trim()) {
@@ -426,7 +468,11 @@ export function buildLocationVersionPrompt(input: LocationVersionPromptInput): s
   }
   lines.push(
     'Empty scene with NO people or characters present.',
-    'Cinematic production design, professional film set quality. High resolution, sharp focus, detailed textures.'
+    isLiveAction
+      ? spec
+        ? `Cinematic production design, professional film set quality (${spec.stylePrompt}). High resolution, sharp focus, detailed textures.`
+        : 'Cinematic production design, professional film set quality. High resolution, sharp focus, detailed textures.'
+      : `${spec!.locationRefDirective} High resolution, sharp focus, detailed environment continuity plate.`
   )
   return lines.join(' ')
 }

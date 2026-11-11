@@ -178,6 +178,7 @@ export default function SeriesStudioPage() {
   const [episodeCount, setEpisodeCount] = useState(NEW_SERIES_EPISODE_COUNT)
   const [format, setFormat] = useState(DEFAULT_SERIES_PRODUCTION_FORMAT)
   const [artStyle, setArtStyle] = useState(DEFAULT_ART_STYLE)
+  const [artStyleSpec, setArtStyleSpec] = useState<import('@/lib/artStyle/globalArtStyle').ArtStyleSpec | null>(null)
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ description: '', source: 'series' })
   )
@@ -240,6 +241,7 @@ export default function SeriesStudioPage() {
     setFormat(seed.format)
     setEpisodeCount(seed.episodeCount)
     setArtStyle(seed.artStyle)
+    setArtStyleSpec(seed.artStyleSpec)
     setAudienceDef(seed.audience)
     setLockedSynopsis(seed.locked)
     setSynopsisDraft(seed.draft)
@@ -376,6 +378,7 @@ export default function SeriesStudioPage() {
           ideaTopic,
           format,
           artStyle,
+          ...(artStyleSpec ? { artStyleSpec: { ...artStyleSpec, confirmed: true, source: 'series' } } : {}),
           genre: lockedSynopsis?.genre ?? null,
           tone: lockedSynopsis?.tone ?? null,
           episodeCount,
@@ -1021,7 +1024,11 @@ export default function SeriesStudioPage() {
                 audience={audienceDef}
                 onAudienceChange={setAudienceDef}
                 artStyle={artStyle}
-                onArtStyleChange={setArtStyle}
+                artStyleSpec={artStyleSpec}
+                onArtStyleChange={(nextStyle, nextSpec) => {
+                  setArtStyle(nextStyle)
+                  if (nextSpec) setArtStyleSpec(nextSpec)
+                }}
                 episodeCount={episodeCount}
                 initialDraft={synopsisDraft}
                 initialLock={lockedSynopsis}

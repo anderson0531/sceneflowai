@@ -103,6 +103,7 @@ import {
   STILL_SECTION_TASK,
   STILL_TASK_CHARACTER_LIKENESS_LOCK_LINE,
   STILL_TASK_PRO_LEAD,
+  STYLIZED_STILL_TASK_PRO_LEAD,
   type LibraryItemPromptMatch,
 } from '@/lib/imagen/structuredStillPrompt'
 import { buildInterleavedReferencePairCaptions } from '@/lib/imagen/interleavedReferencePair'
@@ -195,7 +196,12 @@ import {
   getPhotorealisticPromptAnchor,
 } from '@/lib/storyboard/storyboardQuality'
 import { usesFlashDraftTier } from '@/lib/sceneGeneration/animaticImageModel'
-import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/artStyle'
+import {
+  getArtStyleNegativeTerms,
+  getArtStylePromptSuffix,
+  isPhotorealisticArtStyle,
+  resolveProjectArtStyle,
+} from '@/lib/vision/artStyle'
 import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import {
   buildEndFramePrompt,
@@ -636,7 +642,7 @@ async function postGenerateImage(req: NextRequest) {
       sceneIndex,
       scenePrompt: enteredScenePrompt,           // Legacy support
       customPrompt: enteredCustomPrompt,          // NEW: From prompt builder
-      artStyle,              // NEW: User's art style selection
+      artStyle: requestedArtStyle,              // NEW: User's art style selection
       shotType,              // NEW: Camera framing
       cameraAngle,           // NEW: Camera angle
       lighting,              // NEW: Lighting selection
@@ -683,6 +689,10 @@ async function postGenerateImage(req: NextRequest) {
       stillGenerationMode: stillGenerationModeRaw,
     } = body
 
+    let artStyle: string | undefined =
+      typeof requestedArtStyle === 'string' && requestedArtStyle.trim()
+        ? requestedArtStyle.trim()
+        : undefined
     const stillGenerationMode = parseStillGenerationMode(
       stillGenerationModeRaw ?? stillPolicyModeRaw
     )
@@ -822,6 +832,21 @@ async function postGenerateImage(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
       }
 
+      const projectGlobalArtStyle = resolveProjectArtStyle(project.metadata)
+      const hasSeriesArtLock = Boolean(
+        project.metadata?.seriesId &&
+          projectGlobalArtStyle &&
+          projectGlobalArtStyle !== 'photorealistic'
+      )
+      if (hasSeriesArtLock) {
+        artStyle = projectGlobalArtStyle
+      } else if (
+        !artStyle ||
+        (artStyle === 'photorealistic' && projectGlobalArtStyle !== 'photorealistic')
+      ) {
+        artStyle = projectGlobalArtStyle
+      }
+
       const allCharacters = project.metadata?.visionPhase?.characters || []
       projectCharacters = allCharacters
       const scenesForType = project.metadata?.visionPhase?.script?.script?.scenes || []
@@ -929,11 +954,14 @@ async function postGenerateImage(req: NextRequest) {
                 clipPrompt,
                 scene: resolvedScene as Record<string, unknown>,
               })
-            const instruction = buildPreVisStartFrameEditInstruction({
+            const baseStartInstruction = buildPreVisStartFrameEditInstruction({
               shotStillPrompt: shotStillPrompt || startPrompt,
               startFramePrompt: startPrompt,
               customPrompt: userCustomPrompt,
             })
+            const instruction = !isPhotorealisticArtStyle(artStyle)
+              ? `${baseStartInstruction}\n\nGLOBAL ART STYLE LOCK: Preserve the exact rendering medium (${getArtStylePromptSuffix(artStyle)}) of the source frame. Do NOT introduce live-action photorealism.`
+              : baseStartInstruction
 
             const editResult = await editImageWithGeminiStudio({
               sourceImage: resolvedStillUrl,
@@ -942,7 +970,9 @@ async function postGenerateImage(req: NextRequest) {
               imageSize: '1K',
               editIntent: 'keyframeStart',
               segmentDurationSeconds: durationSeconds,
-              negativePrompt: mergeBeatFrameNegativePrompt(),
+              negativePrompt: mergeBeatFrameNegativePrompt(
+                !isPhotorealisticArtStyle(artStyle) ? getArtStyleNegativeTerms(artStyle) : undefined
+              ),
               deadlineAt: imageDeadlineAt,
               signal: req.signal,
             })
@@ -1042,11 +1072,14 @@ async function postGenerateImage(req: NextRequest) {
             }) ||
             shotStillPrompt ||
             endPrompt
-          const instruction = buildPreVisEndFrameEditInstruction({
+          const baseEndInstruction = buildPreVisEndFrameEditInstruction({
             startFramePrompt: startPromptForEnd,
             endFramePrompt: endPrompt,
             durationSeconds,
           })
+          const instruction = !isPhotorealisticArtStyle(artStyle)
+            ? `${baseEndInstruction}\n\nGLOBAL ART STYLE LOCK: Preserve the exact rendering medium (${getArtStylePromptSuffix(artStyle)}) of the source frame. Do NOT introduce live-action photorealism.`
+            : baseEndInstruction
 
           const editResult = await editImageWithGeminiStudio({
             sourceImage: resolvedStartUrl,
@@ -1055,7 +1088,9 @@ async function postGenerateImage(req: NextRequest) {
             imageSize: '1K',
             editIntent: 'keyframeEnd',
             segmentDurationSeconds: durationSeconds,
-            negativePrompt: mergeBeatFrameNegativePrompt(),
+            negativePrompt: mergeBeatFrameNegativePrompt(
+              !isPhotorealisticArtStyle(artStyle) ? getArtStyleNegativeTerms(artStyle) : undefined
+            ),
             deadlineAt: imageDeadlineAt,
             signal: req.signal,
           })
@@ -2258,7 +2293,7 @@ async function postGenerateImage(req: NextRequest) {
       // appendSceneImagePromptModifiers and still assembly own; appending a
       // comma-spliced suffix here would leave it dangling after [EXCLUSIONS].
       const effectiveArtStyle = artStyle || 'photorealistic'
-      if (effectiveArtStyle === 'photorealistic' && !isStructuredStillPrompt(optimizedPrompt)) {
+      if (isPhotorealisticArtStyle(effectiveArtStyle) && !isStructuredStillPrompt(optimizedPrompt)) {
         const lower = optimizedPrompt.toLowerCase()
         const hasRealismKeywords =
           lower.includes('photorealistic') ||
@@ -2267,6 +2302,11 @@ async function postGenerateImage(req: NextRequest) {
           lower.includes('photograph')
         if (!hasRealismKeywords) {
           optimizedPrompt = `${optimizedPrompt.trim()}, ${getArtStylePromptSuffix(effectiveArtStyle)}`
+        }
+      } else if (!isPhotorealisticArtStyle(effectiveArtStyle) && !isStructuredStillPrompt(optimizedPrompt)) {
+        const suffix = getArtStylePromptSuffix(effectiveArtStyle)
+        if (suffix && !optimizedPrompt.toLowerCase().includes(suffix.toLowerCase())) {
+          optimizedPrompt = `${optimizedPrompt.trim()}, ${suffix}`
         }
       }
     } else if (effectiveExcludeCharacters) {
@@ -2775,6 +2815,7 @@ async function postGenerateImage(req: NextRequest) {
     }
     const finalNegativePrompt = buildSceneImageNegativePrompt({
       allowTypography,
+      artStyle,
       extraTerms: [mergeBeatFrameNegativePrompt(negativePromptParts.join(', '))],
     })
     
@@ -3240,6 +3281,7 @@ async function postGenerateImage(req: NextRequest) {
                   resolvedGen.storyboardQuality,
                   artStyle
                 ),
+                artStyle,
                 includeCandid: !isExplicitDirectToCameraBeat(beatForEmotion),
                 // Exclusions belong in their own section mid-prompt. Passed as a
                 // negative prompt they are appended last, so the request ends on
@@ -3260,7 +3302,9 @@ async function postGenerateImage(req: NextRequest) {
                     )
                   ),
                   `${STILL_SECTION_TASK}\n${[
-                    STILL_TASK_PRO_LEAD,
+                    isPhotorealisticArtStyle(artStyle)
+                      ? STILL_TASK_PRO_LEAD
+                      : STYLIZED_STILL_TASK_PRO_LEAD,
                     ...(stillRefs.some((ref) => ref.kind === 'person')
                       ? [STILL_TASK_CHARACTER_LIKENESS_LOCK_LINE]
                       : []),
@@ -3528,6 +3572,7 @@ async function postGenerateImage(req: NextRequest) {
                   resolvedGen.storyboardQuality,
                   artStyle
                 ),
+                artStyle,
                 includeCandid: !isExplicitDirectToCameraBeat(beatForEmotion),
                 shotType: effectiveShotType,
                 allowTypography,

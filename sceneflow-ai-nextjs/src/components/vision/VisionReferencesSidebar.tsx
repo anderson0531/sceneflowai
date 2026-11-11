@@ -89,6 +89,8 @@ export interface VisionReferencesSidebarProps extends Omit<
 > {
   /** Project ID for uploads */
   projectId?: string
+  /** Global Art Style resolved from project / series */
+  artStyle?: string
   /** Series context — enables import/share with series reference library */
   seriesId?: string | null
   seriesTitle?: string
@@ -245,6 +247,8 @@ interface DraggableReferenceCardProps {
   referenceType?: 'scene' | 'object'
   /** Project ID for uploads */
   projectId?: string
+  /** Global Art Style for object reference generation */
+  artStyle?: string
   /** Callback when an image is uploaded */
   onImageUploaded?: (referenceId: string, referenceType: 'scene' | 'object', imageUrl: string) => void
   /** Open prompt dialog for object reference regeneration (Objects tab) */
@@ -268,6 +272,7 @@ function DraggableReferenceCard({
   onEditImage,
   referenceType,
   projectId,
+  artStyle,
   onImageUploaded,
   onOpenObjectPromptDialog,
   onOpenObjectDirector,
@@ -342,9 +347,11 @@ function DraggableReferenceCard({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          projectId,
+          artStyle,
           name: reference.name,
           description: reference.description || '',
-          prompt: buildObjectReferencePrompt(reference),
+          prompt: buildObjectReferencePrompt(reference, artStyle),
           category: reference.category || 'other',
         }),
       })
@@ -1207,11 +1214,15 @@ function AddReferenceDialog({ open, onClose, onSubmit, onGenerateObject, type, i
 function ObjectReferencePromptDialog({
   open,
   reference,
+  projectId,
+  artStyle,
   onClose,
   onUpdateReferenceImage,
 }: {
   open: boolean
   reference: VisualReference | null
+  projectId?: string
+  artStyle?: string
   onClose: () => void
   onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
 }) {
@@ -1220,9 +1231,9 @@ function ObjectReferencePromptDialog({
 
   useEffect(() => {
     if (reference && open) {
-      setPrompt(buildObjectReferencePrompt(reference))
+      setPrompt(buildObjectReferencePrompt(reference, artStyle))
     }
-  }, [reference, open])
+  }, [reference, open, artStyle])
 
   const handleGenerate = async () => {
     if (!reference || !prompt.trim() || !onUpdateReferenceImage) return
@@ -1232,6 +1243,8 @@ function ObjectReferencePromptDialog({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          projectId,
+          artStyle,
           name: reference.name,
           description: reference.description || '',
           prompt: prompt.trim(),
@@ -1533,6 +1546,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          projectId,
+          artStyle: props.artStyle,
           name: payload.name,
           description: payload.description,
           prompt: payload.prompt,
@@ -1972,6 +1987,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
             </div>
             <CharacterLibrary
               projectId={projectId}
+              defaultArtStyle={props.artStyle || props.defaultArtStyle}
               characters={characters}
               scenes={scenes}
               onRegenerateCharacter={onRegenerateCharacter}
@@ -2042,6 +2058,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               </div>
             ) : (
             <LocationLibrary
+              defaultArtStyle={props.artStyle || props.defaultArtStyle}
               locationReferences={visibleLocations}
               scenes={allScenes}
               onUpdateLocations={(locations) => onUpdateLocationReferences?.(locations)}
@@ -2102,6 +2119,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                 pendingKindAgentRun === 'prop') &&
                 onObjectGenerated) && (
                 <ObjectSuggestionPanel
+                  projectId={projectId}
+                  artStyle={props.artStyle || props.defaultArtStyle}
                   scenes={scenesForSuggestion}
                   existingObjects={objectReferences}
                   onObjectGenerated={onObjectGenerated}
@@ -2173,6 +2192,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                     onEditImage={handleEditReferenceImage}
                     referenceType="object"
                     projectId={projectId}
+                    artStyle={props.artStyle || props.defaultArtStyle}
                     splitLayout={splitLayout}
                     onOpenObjectPromptDialog={(ref) => setObjectRegenerateTarget(ref)}
                     onOpenObjectDirector={(ref) => setObjectDirectorTarget(ref)}
@@ -2195,6 +2215,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
       <ObjectReferencePromptDialog
         open={!!objectRegenerateTarget}
         reference={objectRegenerateTarget}
+        projectId={projectId}
+        artStyle={props.artStyle || props.defaultArtStyle}
         onClose={() => setObjectRegenerateTarget(null)}
         onUpdateReferenceImage={onUpdateReferenceImage}
       />
@@ -2208,7 +2230,10 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           projectId={projectId}
           kind="object"
           label={objectDirectorTarget.name}
-          currentPrompt={seedObjectDirectorPrompt(objectDirectorTarget)}
+          currentPrompt={seedObjectDirectorPrompt(
+            objectDirectorTarget,
+            props.artStyle || props.defaultArtStyle
+          )}
           context={{
             name: objectDirectorTarget.name,
             description: objectDirectorTarget.description,
@@ -2221,6 +2246,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
+                projectId,
+                artStyle: props.artStyle || props.defaultArtStyle,
                 name: objectDirectorTarget.name,
                 description: objectDirectorTarget.description || '',
                 prompt,

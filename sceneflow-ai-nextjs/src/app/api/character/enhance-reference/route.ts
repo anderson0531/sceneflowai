@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       appearanceDescription,
       wardrobeDescription,
       iterationCount = 0,
+      artStyle,
     } = body
 
     if (!sourceImageUrl) {
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
       characterId,
       projectId,
       iterationCount,
+      artStyle,
     })
 
     let newBalance: number | undefined

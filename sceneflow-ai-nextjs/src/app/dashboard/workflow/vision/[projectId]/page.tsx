@@ -368,6 +368,12 @@ import {
 import { useStore } from '@/store/useStore'
 import { resolveProjectArtStyle, resolveProjectAspectRatio, toVideoAspectRatio } from '@/lib/vision/artStyle'
 import {
+  applyArtStyleToProjectMetadata,
+  resolveProjectArtStyleSpec,
+  type ArtStyleSpec,
+} from '@/lib/artStyle/globalArtStyle'
+import { GlobalArtStyleDialog } from '@/components/vision/GlobalArtStyleDialog'
+import {
   ReimagineFoundationDialog,
   type ReimagineFoundationField,
 } from '@/components/vision/ReimagineFoundationDialog'
@@ -1775,6 +1781,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     () => resolveProjectArtStyle(project?.metadata),
     [project?.metadata]
   )
+
+  const lockedArtStyleSpec = useMemo(
+    () => resolveProjectArtStyleSpec(project?.metadata),
+    [project?.metadata]
+  )
+
+  const [globalArtStyleDialogOpen, setGlobalArtStyleDialogOpen] = useState(false)
 
   const projectLookbook = useMemo((): ProjectLookbook | undefined => {
     const lookbook = (
@@ -4267,7 +4280,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // NEW: Visual setup for prompt construction (from guided mode)
             visualSetup: options?.visualSetup,
             // Art style for frame generation
-            artStyle: options?.artStyle,
+            artStyle: options?.artStyle || lockedArtStyle,
             // Model quality tier for image generation cost control
             modelTier:
               options?.modelTier ||
@@ -11887,10 +11900,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          projectId,
           prompt,
           characterName: namedCharacter?.name,
-          // Use builder selections if provided; remove hard-coded defaults
-          artStyle: isObjectPayload ? promptOrPayload.artStyle : undefined,
+          // Use builder selections if provided; fall back to Global Art Style
+          artStyle: (isObjectPayload ? promptOrPayload.artStyle : undefined) || lockedArtStyle,
           shotType: isObjectPayload ? promptOrPayload.shotType : undefined,
           cameraAngle: isObjectPayload ? promptOrPayload.cameraAngle : undefined,
           lighting: isObjectPayload ? promptOrPayload.lighting : undefined,
@@ -12841,6 +12855,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
+          artStyle: lockedArtStyle,
           locationName: workingLocation.location,
           intExt: workingLocation.intExt,
           timeOfDay: workingLocation.timeOfDay,
@@ -12916,6 +12931,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
+          artStyle: lockedArtStyle,
           locationName: location.location,
           intExt: location.intExt,
           timeOfDay: location.timeOfDay,
@@ -13060,7 +13076,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           timeOfDay: location.timeOfDay,
           description,
           locationPrompt,
-          artStyle: payload.artStyle,
+          artStyle: payload.artStyle || lockedArtStyle,
           shotType: payload.shotType,
           cameraAngle: payload.cameraAngle,
           lighting: payload.lighting,
@@ -13236,6 +13252,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
+          artStyle: lockedArtStyle,
           locationName: location.location,
           intExt: location.intExt,
           timeOfDay: location.timeOfDay,
@@ -13880,7 +13897,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         scenePrompt: promptData.scenePrompt || scene.visualDescription || scene.action || scene.heading,
         // Legacy support: customPrompt (if provided, will be used by API)
         customPrompt: promptData.customPrompt,
-        artStyle: promptData.artStyle,
+        artStyle: promptData.artStyle || lockedArtStyle,
         shotType: promptData.shotType,
         cameraAngle: promptData.cameraAngle,
         lighting: promptData.lighting,
@@ -14657,7 +14674,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           visualSetup: options.visualSetup,
           talentDirection: options.talentDirection,
           userDirection: options.userDirection,
-          artStyle: options.artStyle,
+          artStyle: options.artStyle || lockedArtStyle,
           modelTier: options.modelTier,
           thinkingLevel: options.thinkingLevel,
           negativePrompt: options.negativePrompt,
@@ -18290,7 +18307,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           body: JSON.stringify({
             projectId,
             language: options.language || 'en',
-            artStyle: options.artStyle || 'photorealistic',
+            artStyle: options.artStyle || lockedArtStyle || 'photorealistic',
             includeMusic: !!options.includeMusic,
             includeSFX: !!options.includeSFX,
             includeEndFrames: !!options.includeEndFrames,
@@ -18521,7 +18538,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     missingFramesOnly: true,
                     framesOnly: true,
                     language: options.language || 'en',
-                    artStyle: options.artStyle,
+                    artStyle: options.artStyle || lockedArtStyle,
                     storyboardQuality: options.storyboardQuality ?? 'draft',
                   })
                 },
@@ -18546,7 +18563,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     missingFramesOnly: true,
                     framesOnly: true,
                     language: options.language || 'en',
-                    artStyle: options.artStyle,
+                    artStyle: options.artStyle || lockedArtStyle,
                     storyboardQuality: options.storyboardQuality ?? 'draft',
                   })
                 },
@@ -18567,7 +18584,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     missingFramesOnly: true,
                     framesOnly: true,
                     language: options.language || 'en',
-                    artStyle: options.artStyle,
+                    artStyle: options.artStyle || lockedArtStyle,
                     storyboardQuality: options.storyboardQuality ?? 'draft',
                   })
                 },
@@ -21337,6 +21354,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onUpdateAllDirections={handleUpdateAllDirections}
                 isUpdatingAllDirections={isUpdatingAllDirections}
                 onShowTreatmentReview={() => setShowTreatmentReview(true)}
+                onOpenGlobalArtStyle={() => setGlobalArtStyleDialogOpen(true)}
                 onRefactorFoundation={() => handleRefactorFoundation('artStyle')}
                 hasBYOK={!!byokSettings?.videoProvider}
                 onOpenBYOK={() => setShowBYOKSettings(true)}
@@ -21571,6 +21589,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         }}
         projectId={projectId}
+        artStyle={lockedArtStyle}
         seriesId={project?.series_id}
         seriesTitle={seriesInfo?.seriesTitle}
         seriesBibleVersion={seriesInfo?.seriesBibleVersion}
@@ -21959,7 +21978,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             locationReferences={locationReferences}
             objectReferences={objectReferences}
             filmTitle={project?.title}
-            lockedArtStyle={project?.metadata?.visionPhase?.artStyle as string | undefined}
+            lockedArtStyle={lockedArtStyle}
             defaultModelTier={
               resolveStoryboardGeneration({ storyboardQuality: frameGenerationQuality }).modelTier
             }
@@ -22239,6 +22258,127 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         currentArtStyle={lockedArtStyle}
         currentAspectRatio={lockedAspectRatio}
         onConfirm={navigateToBlueprintReimagine}
+      />
+
+      <GlobalArtStyleDialog
+        open={globalArtStyleDialogOpen}
+        onClose={() => setGlobalArtStyleDialogOpen(false)}
+        artStyle={lockedArtStyle}
+        artStyleSpec={lockedArtStyleSpec}
+        storyContext={{
+          title: project?.title || script?.title || '',
+          logline: script?.logline || project?.description || '',
+          storyline:
+            project?.metadata?.filmTreatmentVariant?.synopsis ||
+            project?.description ||
+            '',
+          genre: project?.genre || '',
+          tone:
+            project?.tone ||
+            project?.metadata?.filmTreatmentVariant?.tone_description ||
+            '',
+          format: project?.series_id ? 'series' : 'film',
+          isSeries: Boolean(project?.series_id),
+        }}
+        lockedBySeries={
+          project?.series_id || lockedArtStyleSpec.lockedBySeriesId
+            ? {
+                seriesId:
+                  String(project?.series_id || lockedArtStyleSpec.lockedBySeriesId || ''),
+                seriesTitle:
+                  seriesInfo?.seriesTitle || lockedArtStyleSpec.lockedBySeriesTitle,
+              }
+            : null
+        }
+        existingReferenceCount={
+          characters.filter((c: any) => c.type !== 'narrator' && Boolean(c.referenceImage)).length +
+          locationReferences.filter((l) => Boolean(l.imageUrl)).length +
+          objectReferences.filter((o) => Boolean(o.imageUrl)).length
+        }
+        onSaveGlobalArtStyle={async (nextArtStyle: string, nextSpec: ArtStyleSpec) => {
+          const nextMetadata = applyArtStyleToProjectMetadata(
+            project?.metadata as Record<string, unknown> | undefined,
+            nextArtStyle,
+            nextSpec
+          )
+          const res = await fetch(`/api/projects/${projectId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              metadata: {
+                artStyle: nextArtStyle,
+                artStyleSpec: nextSpec,
+                visionPhase: {
+                  artStyle: nextArtStyle,
+                  artStyleSpec: nextSpec,
+                  lookbook: null,
+                },
+                ...(nextMetadata.filmTreatmentVariant
+                  ? { filmTreatmentVariant: nextMetadata.filmTreatmentVariant }
+                  : {}),
+              },
+            }),
+          })
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}))
+            toast.error(err.error || 'Failed to save Global Art Style')
+            throw new Error(err.error || 'Failed to save Global Art Style')
+          }
+          const blueprintId = resolveBlueprintProjectId(
+            project?.metadata as Record<string, unknown> | undefined
+          )
+          if (blueprintId && blueprintId !== projectId) {
+            void fetch(`/api/projects/${blueprintId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                metadata: {
+                  artStyle: nextArtStyle,
+                  artStyleSpec: nextSpec,
+                  visionPhase: {
+                    artStyle: nextArtStyle,
+                    artStyleSpec: nextSpec,
+                    lookbook: null,
+                  },
+                },
+              }),
+            }).catch(() => {})
+          }
+          setProject((prev: any) =>
+            prev
+              ? {
+                  ...prev,
+                  metadata: nextMetadata,
+                }
+              : prev
+          )
+          toast.success(`Global Art Style locked: ${nextSpec.title}`)
+        }}
+        onSyncFromSeriesBible={
+          project?.series_id
+            ? async () => {
+                const res = await fetch(`/api/series/${project.series_id}/bible`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    projectId,
+                    action: 'syncFromBible',
+                    syncCharacters: false,
+                    syncLocations: false,
+                    syncProps: false,
+                    syncAesthetic: true,
+                  }),
+                })
+                if (!res.ok) {
+                  const err = await res.json().catch(() => ({}))
+                  toast.error(err.error || 'Failed to sync Series Art Style')
+                  throw new Error(err.error || 'Failed to sync Series Art Style')
+                }
+                await loadProject(true)
+                toast.success('Synced Global Art Style from Series Continuity Library')
+              }
+            : undefined
+        }
       />
 
       {/*

@@ -10,6 +10,11 @@
  * are safe to list as exclusions.
  */
 
+import {
+  buildArtStyleSpecFromValue,
+  isPhotorealisticArtStyle,
+} from '@/lib/artStyle/globalArtStyle'
+
 export const TYPOGRAPHY_NEGATIVE_TERMS = [
   'text overlay',
   'captions',
@@ -48,6 +53,12 @@ export const ESSENTIAL_QUALITY_NEGATIVE_TERMS = [
   'plastic skin',
   'cartoon style',
   '3D render',
+  'faceless figures',
+  'extra limbs',
+  'deformed anatomy',
+]
+
+export const STYLIZED_QUALITY_NEGATIVE_TERMS = [
   'faceless figures',
   'extra limbs',
   'deformed anatomy',
@@ -131,10 +142,19 @@ export function stripIdentityNegationTerms(
  */
 export function buildSceneImageNegativePrompt(input: {
   allowTypography?: boolean
+  artStyle?: string | null
   extraTerms?: Array<string | null | undefined>
 }): string {
+  const isStylized = Boolean(input.artStyle?.trim() && !isPhotorealisticArtStyle(input.artStyle))
+  const baseQualityTerms = isStylized
+    ? STYLIZED_QUALITY_NEGATIVE_TERMS
+    : ESSENTIAL_QUALITY_NEGATIVE_TERMS
+  const styleNegativeTerms = isStylized
+    ? buildArtStyleSpecFromValue(input.artStyle).negativeTerms
+    : []
   const terms = stripIdentityNegationTerms([
-    ...ESSENTIAL_QUALITY_NEGATIVE_TERMS,
+    ...baseQualityTerms,
+    ...styleNegativeTerms,
     ...(input.allowTypography ? [] : TYPOGRAPHY_NEGATIVE_TERMS),
     ...(input.extraTerms ?? []),
   ])

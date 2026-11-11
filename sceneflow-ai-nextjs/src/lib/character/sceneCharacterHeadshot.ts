@@ -12,6 +12,11 @@ import {
   resolveWardrobeForCharacter,
 } from '@/lib/character/characterReferenceAssembly'
 import { buildFullBodyWardrobePrompt } from '@/lib/character/characterReferencePrompts'
+import {
+  buildArtStyleSpecFromValue,
+  isPhotorealisticArtStyle,
+} from '@/lib/artStyle/globalArtStyle'
+import { getArtStyleNegativeTerms } from '@/lib/vision/artStyle'
 import { stripDialoguePrompt } from '@/lib/vision/framePromptBaseline'
 
 export const FULL_BODY_WARDROBE_ASPECT_RATIO = '3:4' as const
@@ -85,6 +90,8 @@ export interface FullBodyWardrobeInput {
   forceRegenerate?: boolean
   /** Directed prompt; when set, skip rebuild from outfit fields. */
   promptOverride?: string
+  /** Global project/series art style ID or custom ArtStyleSpec string. */
+  artStyle?: string | null
 }
 
 export interface SceneCharacterHeadshotInput {
@@ -106,6 +113,8 @@ export interface SceneCharacterHeadshotInput {
   existingFullBodyWardrobeUrl?: string
   /** When true, always generate a fresh image (skip cache reuse) */
   forceRegenerate?: boolean
+  /** Global project/series art style ID or custom ArtStyleSpec string. */
+  artStyle?: string | null
 }
 
 export interface SimplifiedBeatFramePromptInput {
@@ -203,17 +212,34 @@ export function buildSceneCharacterHeadshotPrompt(input: SceneCharacterHeadshotI
       hairColor: input.hairColor,
     })
 
-  const lines = [
-    SCENE_CHARACTER_HEADSHOT_ANCHOR,
-    '',
-    `Character: ${input.characterName}. Same real human in both panels.`,
-    '',
-    'Layout: horizontal two-panel diptych, equal width, neutral soft studio background.',
-    '',
-    'LEFT panel (50% width) — IDENTITY close-up:',
-    'Match the identity reference image exactly: face shape, skin tone, age, ethnicity, bone structure.',
-    'Tight crop — face and hair fill the panel; neck only. NO clothing, NO outfit details visible.',
-  ]
+  const rawStyle = input.artStyle?.trim()
+  const isDefaultPhotoreal = !rawStyle || rawStyle === 'photorealistic'
+  const isLiveAction = isDefaultPhotoreal || isPhotorealisticArtStyle(rawStyle)
+  const spec = !isDefaultPhotoreal && rawStyle ? buildArtStyleSpecFromValue(rawStyle) : undefined
+
+  const lines = isLiveAction
+    ? [
+        SCENE_CHARACTER_HEADSHOT_ANCHOR,
+        '',
+        `Character: ${input.characterName}. Same real human in both panels.`,
+        '',
+        'Layout: horizontal two-panel diptych, equal width, neutral soft studio background.',
+        '',
+        'LEFT panel (50% width) — IDENTITY close-up:',
+        'Match the identity reference image exactly: face shape, skin tone, age, ethnicity, bone structure.',
+        'Tight crop — face and hair fill the panel; neck only. NO clothing, NO outfit details visible.',
+      ]
+    : [
+        `${spec!.title} cinematic 16:9 character wardrobe reference diptych for scene beat consistency.`,
+        '',
+        `Character: ${input.characterName}. Same character in both panels rendered strictly in ${spec!.title}.`,
+        '',
+        'Layout: horizontal two-panel diptych, equal width, neutral soft studio background.',
+        '',
+        'LEFT panel (50% width) — IDENTITY close-up:',
+        `Match the identity reference image exactly: face shape, skin tone, age, ethnicity, facial design, and ${spec!.title} art style.`,
+        'Tight crop — face and hair fill the panel; neck only. NO clothing, NO outfit details visible.',
+      ]
 
   const leftPanelDetails: string[] = []
   if (hairAnchor) {
@@ -263,7 +289,11 @@ export function buildSceneCharacterHeadshotPrompt(input: SceneCharacterHeadshotI
 
   lines.push(
     '',
-    'Output one 16:9 diptych reference sheet with exactly two photorealistic panels side by side.',
+    isLiveAction
+      ? spec
+        ? `Output one 16:9 diptych reference sheet with exactly two photorealistic panels side by side (${spec.stylePrompt}).`
+        : 'Output one 16:9 diptych reference sheet with exactly two photorealistic panels side by side.'
+      : `Output one 16:9 diptych reference sheet with exactly two ${spec!.title} panels side by side. ${spec!.characterRefDirective}`,
     'No text labels, watermarks, mannequins, multi-view turnaround grids, or 4-panel sheets.'
   )
 
@@ -386,6 +416,7 @@ export async function generateFullBodyWardrobeImage(
     baseWardrobeUrl: input.baseWardrobeUrl,
     baseWardrobeDescription: input.baseWardrobeDescription,
     baseWardrobeName: input.baseWardrobeName,
+    artStyle: input.artStyle,
   })
 
   const referenceImages: Array<{ imageUrl: string; name: string }> = [
@@ -405,15 +436,18 @@ export async function generateFullBodyWardrobeImage(
     })
   }
 
+  const isLiveAction = isPhotorealisticArtStyle(input.artStyle)
+  const wardrobeNegatives = isLiveAction
+    ? 'mannequin, faceless figure, turnaround sheet, diptych, split panel, illustration, cartoon'
+    : `mannequin, faceless figure, turnaround sheet, diptych, split panel, ${getArtStyleNegativeTerms(input.artStyle)}`
+
   const result = await generateImageWithGeminiStudio({
     prompt,
     aspectRatio: FULL_BODY_WARDROBE_ASPECT_RATIO,
     imageSize: FULL_BODY_WARDROBE_IMAGE_SIZE,
     modelTier: FULL_BODY_WARDROBE_MODEL_TIER,
     referenceImages,
-    negativePrompt: mergePhysicsNegativePrompt(
-      'mannequin, faceless figure, turnaround sheet, diptych, split panel, illustration, cartoon'
-    ),
+    negativePrompt: mergePhysicsNegativePrompt(wardrobeNegatives),
   })
 
   return { imageBase64: result.imageBase64, prompt }
@@ -440,6 +474,9 @@ export async function generateSceneCharacterHeadshotImage(
   input: SceneCharacterHeadshotInput
 ): Promise<{ imageBase64: string; prompt: string }> {
   const prompt = buildSceneCharacterHeadshotPrompt(input)
+  const diptychNegatives = isPhotorealisticArtStyle(input.artStyle)
+    ? DIPTYCH_GENERATION_NEGATIVE_PROMPT
+    : `${DIPTYCH_GENERATION_NEGATIVE_PROMPT}, ${getArtStyleNegativeTerms(input.artStyle)}`
   const result = await generateImageWithGeminiStudio({
     prompt,
     aspectRatio: SCENE_CHARACTER_HEADSHOT_ASPECT_RATIO,
@@ -451,7 +488,7 @@ export async function generateSceneCharacterHeadshotImage(
         name: `Identity: ${input.characterName}`,
       },
     ],
-    negativePrompt: mergePhysicsNegativePrompt(DIPTYCH_GENERATION_NEGATIVE_PROMPT),
+    negativePrompt: mergePhysicsNegativePrompt(diptychNegatives),
   })
   return { imageBase64: result.imageBase64, prompt }
 }
@@ -479,6 +516,7 @@ export async function resolveSceneHeadshotsForBeatCharacters(args: {
   beatAction: string
   sceneAction?: string
   uploadPathPrefix: string
+  artStyle?: string | null
 }): Promise<
   Array<{
     name: string
@@ -551,6 +589,7 @@ export async function resolveSceneHeadshotsForBeatCharacters(args: {
       appearanceNotes: wardrobe.appearanceNotes,
       existingWardrobeHeadshotUrl: wardrobe.headshotUrl,
       existingFullBodyWardrobeUrl: wardrobe.fullBodyUrl,
+      artStyle: args.artStyle,
     }
 
     const cached = pickSceneHeadshotUrl(headshotInput)

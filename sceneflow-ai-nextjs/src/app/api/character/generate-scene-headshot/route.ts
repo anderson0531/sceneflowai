@@ -18,6 +18,7 @@ import {
   composeUploadAndPersistCombinedCharacterRef,
   wardrobeExpectedFingerprint,
 } from '@/lib/character/combinedCharacterRef'
+import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -104,6 +105,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'identityReferenceUrl is required' }, { status: 400 })
     }
 
+    let resolvedArtStyle =
+      typeof headshotFields.artStyle === 'string' && headshotFields.artStyle.trim()
+        ? headshotFields.artStyle.trim()
+        : undefined
+    if (!resolvedArtStyle && projectId && projectId !== 'default') {
+      try {
+        const { Project } = await import('@/models/Project')
+        const project = await Project.findByPk(projectId)
+        if (project?.metadata) {
+          resolvedArtStyle = resolveProjectArtStyle(project.metadata)
+        }
+      } catch {
+        // Optional DB lookup fallback
+      }
+    }
+
     const safeName = characterName.replace(/[^a-z0-9_-]+/gi, '-').toLowerCase()
 
     if (referenceMode === 'fullBody') {
@@ -122,6 +139,7 @@ export async function POST(req: NextRequest) {
         appearanceDescription: headshotFields.appearanceDescription,
         appearanceNotes: headshotFields.appearanceNotes,
         promptOverride: headshotFields.promptOverride,
+        artStyle: resolvedArtStyle,
       }
 
       const cachedFullBody = forceRegenerate ? undefined : pickFullBodyWardrobeUrl(fullBodyInput)
@@ -150,6 +168,7 @@ export async function POST(req: NextRequest) {
             wardrobeDescription: fullBodyInput.wardrobeDescription,
             wardrobeAccessories: fullBodyInput.wardrobeAccessories,
             appearanceNotes: fullBodyInput.appearanceNotes,
+            artStyle: resolvedArtStyle,
           }),
           generated: false,
           reusedExistingHeadshot: true,
@@ -209,6 +228,7 @@ export async function POST(req: NextRequest) {
       identityReferenceUrl: identityReferenceUrl.trim(),
       forceRegenerate: forceRegenerate === true,
       ...headshotFields,
+      artStyle: resolvedArtStyle,
     }
 
     const cachedUrl = forceRegenerate ? undefined : pickSceneHeadshotUrl(headshotInput)

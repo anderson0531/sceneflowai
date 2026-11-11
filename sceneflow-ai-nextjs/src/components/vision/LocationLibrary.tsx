@@ -236,6 +236,7 @@ interface LocationLibraryProps {
     versionId?: string
     nonce?: number
   } | null
+  defaultArtStyle?: string
 }
 
 /**
@@ -412,6 +413,7 @@ export function LocationLibrary({
   catalogPropNames: catalogPropNamesProp = [],
   onGenerateSceneDirection,
   focusTarget = null,
+  defaultArtStyle,
 }: LocationLibraryProps) {
   const t = useTranslations('production.direction.locationLibrary')
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null)
@@ -1725,6 +1727,7 @@ export function LocationLibrary({
         <LocationPromptBuilder
           open={!!promptBuilderOpenFor}
           onClose={() => setPromptBuilderOpenFor(null)}
+          defaultArtStyle={defaultArtStyle}
           location={mergedLocations.find((l) => l.id === promptBuilderOpenFor.locationId) || null}
           version={
             promptBuilderOpenFor.versionId
@@ -1796,6 +1799,7 @@ export function LocationLibrary({
                     timeOfDay: location.timeOfDay,
                     description: locationDescriptionWithMountedFixtures(location, scenes),
                     catalogPropNames,
+                    artStyle: defaultArtStyle,
                   })
                 : seedLocationDirectorPrompt({
                     storedPrompt: location.generationPrompt,
@@ -1803,6 +1807,7 @@ export function LocationLibrary({
                     intExt: location.intExt,
                     timeOfDay: location.timeOfDay,
                     description: locationDescriptionWithMountedFixtures(location, scenes),
+                    artStyle: defaultArtStyle,
                   })
             }
             context={{

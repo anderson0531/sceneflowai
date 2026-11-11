@@ -133,6 +133,7 @@ export async function POST(req: NextRequest) {
           description: body.description,
           aspectRatio: body.aspectRatio,
           locationPrompt: body.locationPrompt,
+          artStyle: body.artStyle,
           locale,
           baseImageUrl: body.baseImageUrl!,
           stateNotes: body.stateNotes!,
@@ -153,6 +154,7 @@ export async function POST(req: NextRequest) {
           parentLocationDescription: body.parentLocationDescription,
           subZoneLabel: body.subZoneLabel,
           parentReferenceImageUrl: body.parentReferenceImageUrl,
+          artStyle: body.artStyle,
           locale,
         })
 

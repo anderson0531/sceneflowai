@@ -254,7 +254,7 @@ export function buildLookbookSystemPrompt(): string {
 RULES:
 1. Define ONE look for the whole film. Do not describe individual shots, story events, characters, or props.
 2. Be concrete and photographic: name the palette, the key-light direction and quality, the lens family, and the grade. Avoid vague adjectives like "cinematic", "beautiful", or "high quality" on their own.
-3. Honor the supplied Art Style. When it is photorealistic, describe real photographic behavior (film stock, grain, contrast curve, falloff) and never illustration language.
+3. Honor the supplied Art Style strictly. When it is photorealistic, describe real photographic behavior (film stock, grain, contrast curve, falloff) and never illustration language. When it is stylized (2D anime/Ghibli, 3D Pixar/feature animation, watercolor/painterly, comic/ink, stop-motion, or custom direction), describe medium-authentic linework, brushwork, cel/shader behavior, and surface craft — never live-action film stock — and include "photorealistic live-action photography" in negativeStyleTerms.
 4. The lighting grammar must be reusable in any location. Describe HOW light behaves in this film (source motivation, contrast ratio, falloff, practicals), not where a lamp sits in one room.
 5. sceneLooks is for scenes that must legitimately depart from the master look (a night exterior inside a daylight film, a title card). Each note is one short clause describing the departure, and only include scenes that genuinely need one. Omit the array when every scene shares the master look.
 6. negativeStyleTerms are rendering styles to suppress, not story content.

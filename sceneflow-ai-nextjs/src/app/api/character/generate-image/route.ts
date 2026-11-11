@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
       quality: body.quality,
       rawMode: body.rawMode,
       skipAutoEnhance: body.skipAutoEnhance,
+      artStyle: body.artStyle,
     })
 
     let newBalance: number | undefined

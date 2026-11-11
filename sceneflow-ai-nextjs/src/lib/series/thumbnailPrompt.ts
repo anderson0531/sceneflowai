@@ -1,5 +1,6 @@
 import type Series from '@/models/Series'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { resolveSeriesArtStyleSpec } from '@/lib/artStyle/globalArtStyle'
 
 /** Imagen prompt length guard — long bible fields can exceed API limits and return 400. */
 export const SERIES_THUMBNAIL_PROMPT_MAX = 2800
@@ -93,12 +94,23 @@ export function buildSeriesThumbnailPrompt(series: Series, customPrompt?: string
     .filter(Boolean)
     .join('\n')
 
-  const prompt = `Professional cinematic 16:9 streaming series key art thumbnail.
+  const styleSpec = resolveSeriesArtStyleSpec({
+    seriesId: series.id,
+    seriesTitle: series.title,
+    metadata: series.metadata,
+    productionBible: bible,
+  })
+  const styleLine =
+    styleSpec.medium === 'live-action'
+      ? `Style: ${styleSpec.stylePrompt}, award-winning television marketing still, dramatic lighting, rich environment, high production value, 16:9 landscape, no text or watermarks.`
+      : `Locked Art Style (${styleSpec.title}): ${styleSpec.stylePrompt}. Render strictly in ${styleSpec.title} medium (avoid: ${styleSpec.negativeTerms.slice(0, 4).join(', ')}), 16:9 widescreen series key art, rich environment, no text or watermarks.`
+
+  const prompt = `Professional 16:9 streaming series key art thumbnail in ${styleSpec.title} aesthetic.
 Wide establishing shot with characters in a dynamic scene (not a close-up portrait).
 
 ${seriesInfo}
 
-Style: award-winning television marketing still, dramatic lighting, rich environment, high production value, 16:9 landscape, no text or watermarks.`
+${styleLine}`
 
   return prompt.length <= SERIES_THUMBNAIL_PROMPT_MAX
     ? prompt
@@ -107,6 +119,12 @@ Style: award-winning television marketing still, dramatic lighting, rich environ
 
 /** Safer prompt without detailed appearance — used when Imagen filters the full prompt. */
 export function buildSeriesThumbnailFallbackPrompt(series: Series): string {
+  const styleSpec = resolveSeriesArtStyleSpec({
+    seriesId: series.id,
+    seriesTitle: series.title,
+    metadata: series.metadata,
+    productionBible: series.production_bible,
+  })
   const bits = [
     series.title ? `Series: ${asPromptText(series.title, 120)}` : '',
     series.genre ? `Genre: ${asPromptText(series.genre, 60)}` : '',
@@ -117,7 +135,7 @@ export function buildSeriesThumbnailFallbackPrompt(series: Series): string {
     .filter(Boolean)
     .join('. ')
 
-  const prompt = `Professional cinematic streaming series poster, 16:9 widescreen. ${bits}. Dynamic wide shot, atmospheric lighting, family-friendly broadcast quality, no text or logos.`
+  const prompt = `Professional streaming series key art, 16:9 widescreen, rendered in ${styleSpec.title} (${styleSpec.stylePrompt}). ${bits}. Dynamic wide shot, atmospheric lighting, family-friendly broadcast quality, no text or logos.`
   return prompt.length <= SERIES_THUMBNAIL_PROMPT_MAX
     ? prompt
     : prompt.slice(0, SERIES_THUMBNAIL_PROMPT_MAX)
@@ -125,9 +143,15 @@ export function buildSeriesThumbnailFallbackPrompt(series: Series): string {
 
 /** Environment-only prompt — last resort when person generation is blocked. */
 export function buildSeriesThumbnailMinimalPrompt(series: Series): string {
+  const styleSpec = resolveSeriesArtStyleSpec({
+    seriesId: series.id,
+    seriesTitle: series.title,
+    metadata: series.metadata,
+    productionBible: series.production_bible,
+  })
   const title = asPromptText(series.title, 120) || 'Television series'
   const genre = asPromptText(series.genre, 60)
-  return `Cinematic ${genre ? `${genre} ` : ''}television series promotional landscape for "${title}". Wide atmospheric environment, dramatic sky, moody lighting, 16:9, professional color grading, no people, no text, no watermarks.`
+  return `Wide atmospheric ${genre ? `${genre} ` : ''}series promotional landscape for "${title}" rendered in ${styleSpec.title} (${styleSpec.stylePrompt}). Moody lighting, 16:9, no people, no text, no watermarks.`
 }
 
 type ThumbnailImagenOptions = NonNullable<Parameters<typeof generateImageWithGemini>[1]>

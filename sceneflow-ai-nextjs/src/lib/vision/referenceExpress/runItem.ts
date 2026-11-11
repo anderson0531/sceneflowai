@@ -90,14 +90,20 @@ export async function runReferenceExpressItem(input: {
     if (!character) return skipped(item, 'missing')
 
     if (item.wardrobeId) {
-      return runWardrobeItem({ userId, projectId, item, character })
+      return runWardrobeItem({
+        userId,
+        projectId,
+        item,
+        character,
+        artStyle: context.artStyle,
+      })
     }
 
     if (hasImage(character.referenceImage) && !item.forceRegenerate) {
       return skipped(item, 'already-generated')
     }
 
-    const resolvedPrompt = resolveCastIdentityGenerationPrompt(character)
+    const resolvedPrompt = resolveCastIdentityGenerationPrompt(character, context.artStyle)
     const prompt = resolvedPrompt.prompt
     const usedFingerprint = castFingerprint(character)
 
@@ -108,6 +114,7 @@ export async function runReferenceExpressItem(input: {
       characterId: item.targetId,
       characterName: character.name,
       rawMode: resolvedPrompt.rawMode,
+      ...(context.artStyle ? { artStyle: context.artStyle } : {}),
     })
 
     const appearance = castAppearanceAfterImage({
@@ -187,7 +194,14 @@ export async function runReferenceExpressItem(input: {
     if (!location) return skipped(item, 'missing')
 
     if (item.versionId) {
-      return runLocationVersionItem({ userId, projectId, item, location, locale })
+      return runLocationVersionItem({
+        userId,
+        projectId,
+        item,
+        location,
+        locale,
+        artStyle: context.artStyle,
+      })
     }
 
     if (hasImage(location.imageUrl) && !item.forceRegenerate) {
@@ -219,6 +233,7 @@ export async function runReferenceExpressItem(input: {
       parentLocationDescription: parentLoc?.description,
       subZoneLabel: parentAnchor?.subZoneLabel,
       parentReferenceImageUrl: parentLoc?.imageUrl,
+      ...(context.artStyle ? { artStyle: context.artStyle } : {}),
       locale,
     })
 
@@ -255,9 +270,11 @@ export async function runReferenceExpressItem(input: {
 
   const generated = await generateObjectReferenceImage({
     userId,
+    projectId,
     name: prop.name || item.label,
-    prompt: buildObjectReferencePrompt(prop as unknown as VisualReference),
+    prompt: buildObjectReferencePrompt(prop as unknown as VisualReference, context.artStyle),
     category: prop.category as ObjectCategory | undefined,
+    ...(context.artStyle ? { artStyle: context.artStyle } : {}),
     locale,
   })
 
@@ -337,8 +354,9 @@ async function runWardrobeItem(input: {
   projectId: string
   item: ReferenceExpressItem
   character: CastSource
+  artStyle?: string
 }): Promise<ReferenceExpressItemResult> {
-  const { userId, projectId, item, character } = input
+  const { userId, projectId, item, character, artStyle } = input
   const wardrobe = (character.wardrobes || []).find((row) => row.id === item.wardrobeId)
   if (!wardrobe?.id) return skipped(item, 'missing')
   if (!hasImage(character.referenceImage)) return skipped(item, 'missing')
@@ -374,6 +392,7 @@ async function runWardrobeItem(input: {
         !!wardrobe.needsImageRegen ||
         !!wardrobeLookUrl(wardrobe),
       promptOverride: wardrobe.generationPrompt?.trim() || undefined,
+      ...(artStyle ? { artStyle } : {}),
     },
     uploadPath
   )
@@ -441,8 +460,9 @@ async function runLocationVersionItem(input: {
   item: ReferenceExpressItem
   location: LocationSource
   locale: Awaited<ReturnType<typeof resolveStoryLocale>>
+  artStyle?: string
 }): Promise<ReferenceExpressItemResult> {
-  const { userId, projectId, item, location, locale } = input
+  const { userId, projectId, item, location, locale, artStyle } = input
   const anchor = resolveAnchorForLocationVersion(location, item.versionId)
   const version = anchor.version
   if (!version?.id) return skipped(item, 'missing')
@@ -471,6 +491,7 @@ async function runLocationVersionItem(input: {
       typeof version.generationPrompt === 'string' && version.generationPrompt.trim()
         ? version.generationPrompt
         : undefined,
+    ...(artStyle ? { artStyle } : {}),
   })
 
   const { saved, staleSource } = await persistReferenceImage({

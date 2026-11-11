@@ -8,6 +8,7 @@ import {
   ConcurrentTask,
   CONCURRENCY_DEFAULTS 
 } from '../../../../lib/utils/concurrent-processor'
+import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
         }
 
         const visionPhase = project.metadata?.visionPhase
+        const projectArtStyle = resolveProjectArtStyle(project.metadata)
         const characters = visionPhase?.characters || []
         const scenes = visionPhase?.script?.script?.scenes || []
         const baseUrl = `${request.headers.get('x-forwarded-proto') || 'http'}://${request.headers.get('host')}`
@@ -229,6 +231,7 @@ export async function POST(request: NextRequest) {
                   projectId,
                   sceneIndex: index,
                   scenePrompt,  // Use pre-built prompt (prefers sceneDirectionText)
+                  artStyle: projectArtStyle,
                   selectedCharacters: detectedChars.map((c: any) => c.id),
                   characterWardrobes,  // Auto-resolved wardrobe assignments per character
                   quality: imageQuality || 'auto',

@@ -11,6 +11,8 @@ import {
   resolveDefaultWardrobeDescription,
   type EnhanceIdentitySource,
 } from '@/lib/character/characterReferencePrompts'
+import { isPhotorealisticArtStyle } from '@/lib/artStyle/globalArtStyle'
+import { getArtStyleNegativeTerms, resolveProjectArtStyle } from '@/lib/vision/artStyle'
 
 export const ENHANCE_IDENTITY_ASPECT_RATIO = '9:16' as const
 export const ENHANCE_IDENTITY_IMAGE_SIZE = '2K' as const
@@ -45,6 +47,7 @@ export interface EnhanceIdentityImageInput {
    * photo: a picture the user supplied. Keep that person.
    */
   identitySource?: EnhanceIdentitySource
+  artStyle?: string | null
 }
 
 export interface EnhanceIdentityImageResult {
@@ -245,19 +248,37 @@ export async function enhanceIdentityImage(
           imageAnalysis.physicalTraits
         )
 
+  let effectiveArtStyle = input.artStyle?.trim() || undefined
+  if (!effectiveArtStyle && projectId && projectId !== 'default') {
+    try {
+      const { Project } = await import('@/models/Project')
+      const project = await Project.findByPk(projectId)
+      if (project?.metadata) {
+        effectiveArtStyle = resolveProjectArtStyle(project.metadata)
+      }
+    } catch {
+      // Optional DB lookup fallback
+    }
+  }
+
   const enhancementPrompt = buildEnhanceIdentityReferencePrompt({
     characterName,
     appearanceDescription: appearance,
     wardrobeDescription: wardrobe,
     subjectDescription,
     identitySource,
+    artStyle: effectiveArtStyle,
   })
 
+  const isLiveAction = isPhotorealisticArtStyle(effectiveArtStyle)
   const result = await generateImageWithGeminiStudio({
     prompt: enhancementPrompt,
     aspectRatio: ENHANCE_IDENTITY_ASPECT_RATIO,
     imageSize: ENHANCE_IDENTITY_IMAGE_SIZE,
     modelTier: ENHANCE_IDENTITY_MODEL_TIER,
+    ...(effectiveArtStyle && !isLiveAction
+      ? { negativePrompt: getArtStyleNegativeTerms(effectiveArtStyle) }
+      : {}),
     referenceImages: [
       {
         imageUrl: sourceImageUrl,

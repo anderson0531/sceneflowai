@@ -76,6 +76,7 @@ interface ScenePromptBuilderProps {
   locationReferences?: LocationReference[]
   /** Zero-based scene index for wardrobe sceneNumbers resolution */
   sceneIndex?: number
+  defaultArtStyle?: string
   onGenerateImage: (selectedCharacters: any[] | any) => void
   isGenerating?: boolean
 }
@@ -189,6 +190,7 @@ export function ScenePromptBuilder({
   objectReferences = [],
   locationReferences = [],
   sceneIndex,
+  defaultArtStyle,
   onGenerateImage,
   isGenerating = false
 }: ScenePromptBuilderProps) {
@@ -228,10 +230,20 @@ export function ScenePromptBuilder({
     talentBlocking: '',
     emotionalBeat: '',
     keyProps: '',
-    artStyle: 'photorealistic',
+    artStyle: defaultArtStyle || 'photorealistic',
     additionalDetails: '',
     negativePrompt: 'blurry, low quality, distorted, poor composition'
   })
+
+  useEffect(() => {
+    if (open && defaultArtStyle) {
+      setStructure((prev) =>
+        prev.artStyle === 'photorealistic' && defaultArtStyle !== 'photorealistic'
+          ? { ...prev, artStyle: defaultArtStyle }
+          : prev
+      )
+    }
+  }, [open, defaultArtStyle])
   
   const [advancedPrompt, setAdvancedPrompt] = useState('')
   const [copied, setCopied] = useState(false)

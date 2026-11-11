@@ -1126,6 +1126,9 @@ export function compileBeatVideoPromptFromDirection(
     if (performance && !/performance:/i.test(prompt)) {
       prompt = normalizePromptJoin(prompt, performance)
     }
+    if (styleSuffix && !tokenAlreadyInPrompt(styleSuffix.slice(0, 40), prompt)) {
+      prompt = normalizePromptJoin(prompt, styleSuffix)
+    }
     return {
       prompt,
       negativePrompt: videoNegatives(beat, styleNegative),

@@ -33,6 +33,11 @@ import {
   isSceneScriptReadyForReferences,
   sceneHasScreenplayBody,
 } from '@/lib/vision/sceneScriptReadiness'
+import {
+  resolveProjectArtStyleSpec,
+  type ArtStyleSpec,
+} from '@/lib/artStyle/globalArtStyle'
+import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 
 export type CastSource = {
   id?: string
@@ -998,6 +1003,9 @@ export function planContinuityItems(
 export type ReferenceExpressContext = ReferenceExpressPlanInput & {
   /** Same shape the vision page passes to the Casting Brief generator. */
   screenplayContext: ScreenplayContext
+  /** Global project/series art style ID or custom ArtStyleSpec string. */
+  artStyle?: string
+  artStyleSpec?: ArtStyleSpec
 }
 
 /** Read the reference slices of a project's metadata. */
@@ -1011,12 +1019,16 @@ export async function loadReferenceExpressContext(
   const visionPhase: Record<string, any> = metadata.visionPhase || {}
   const sources = readProjectReferenceSources(project)
   const treatment: Record<string, any> = metadata.filmTreatmentVariant || {}
+  const artStyleSpec = resolveProjectArtStyleSpec(metadata)
+  const artStyle = resolveProjectArtStyle(metadata)
 
   return {
     characters: sources.characters,
     locations: sources.locationReferences,
     props: sources.objectReferences,
     scenes: sources.scenes,
+    artStyle,
+    artStyleSpec,
     screenplayContext: {
       genre: project.genre,
       tone: project.tone || treatment.tone_description || treatment.tone,

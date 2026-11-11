@@ -279,6 +279,15 @@ export async function POST(request: NextRequest) {
       console.warn('[POST /api/projects] Project limit check failed:', error)
     }
     
+    const { applyArtStyleToProjectMetadata, resolveProjectArtStyleSpec } = await import(
+      '@/lib/artStyle/globalArtStyle'
+    )
+    const rawMeta = metadata && typeof metadata === 'object' ? metadata : {}
+    const normalizedMeta =
+      rawMeta.artStyle || rawMeta.artStyleSpec || rawMeta.filmTreatmentVariant || rawMeta.visionPhase?.artStyle
+        ? applyArtStyleToProjectMetadata(rawMeta, resolveProjectArtStyleSpec(rawMeta))
+        : rawMeta
+
     // Create
     const created = await Project.create({
       user_id: userId,
@@ -287,7 +296,7 @@ export async function POST(request: NextRequest) {
       status: 'draft',
       current_step: normalizeWorkflowStep(currentStep || 'blueprint'),
       step_progress: {},
-      metadata: metadata || {}
+      metadata: normalizedMeta
     } as any)
 
     return NextResponse.json({ success: true, project: created })

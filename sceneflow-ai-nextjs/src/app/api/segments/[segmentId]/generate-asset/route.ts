@@ -41,7 +41,12 @@ import {
   resolveBeatMusicCue,
 } from '@/lib/script/sceneMusicCues'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
-import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
+import {
+  getArtStyleNegativeTerms,
+  getArtStyleVideoPromptSuffix,
+  isPhotorealisticArtStyle,
+  resolveProjectArtStyle,
+} from '@/lib/vision/artStyle'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { resolveUserId } from '@/lib/userHelper'
@@ -865,6 +870,24 @@ export async function POST(
           '[Segment Asset Generation] Preflight clip rewrite failed; using the compiled prompt:',
           preflightError
         )
+      }
+    }
+
+    if (cachedProject) {
+      const globalArtStyleId = resolveProjectArtStyle(cachedProject.metadata)
+      if (globalArtStyleId && !isPhotorealisticArtStyle(globalArtStyleId)) {
+        const videoStyleSuffix = getArtStyleVideoPromptSuffix(globalArtStyleId)
+        if (
+          videoStyleSuffix &&
+          prompt &&
+          !prompt.toLowerCase().includes(videoStyleSuffix.slice(0, 32).toLowerCase())
+        ) {
+          prompt = `${prompt.replace(/\.+\s*$/, '')}. ${videoStyleSuffix}`
+        }
+        const styleNeg = getArtStyleNegativeTerms(globalArtStyleId)
+        if (styleNeg) {
+          negativePrompt = negativePrompt ? `${negativePrompt}, ${styleNeg}` : styleNeg
+        }
       }
     }
 

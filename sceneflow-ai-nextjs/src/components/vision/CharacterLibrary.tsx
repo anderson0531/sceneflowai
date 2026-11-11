@@ -270,6 +270,7 @@ export interface CharacterLibraryProps {
     wardrobeId?: string;
     nonce?: number;
   } | null;
+  defaultArtStyle?: string;
 }
 
 // Wardrobe item in collection with scene-aware tracking
@@ -548,6 +549,7 @@ interface CharacterCardProps {
   retainVoiceIds?: string[];
   focusWardrobeId?: string;
   focusNonce?: number;
+  defaultArtStyle?: string;
 }
 
 export function CharacterLibrary({
@@ -588,6 +590,7 @@ export function CharacterLibrary({
   pendingKindAgentRun = null,
   onPendingKindAgentRunConsumed,
   focusTarget = null,
+  defaultArtStyle,
 }: CharacterLibraryProps) {
   const effectiveVoiceProvider =
     voiceAssignmentProvider ?? ttsProvider ?? "elevenlabs";
@@ -871,12 +874,12 @@ export function CharacterLibrary({
         onGenerate={async () => {
           setGeneratingChars((prev) => new Set(prev).add(charId));
           try {
-            const resolved = resolveCastIdentityGenerationPrompt(char);
+            const resolved = resolveCastIdentityGenerationPrompt(char, defaultArtStyle);
             await onGenerateCharacter(
               charId,
               resolved.rawMode
-                ? { characterPrompt: resolved.prompt, rawMode: true }
-                : resolved.prompt,
+                ? { characterPrompt: resolved.prompt, rawMode: true, artStyle: defaultArtStyle }
+                : { characterPrompt: resolved.prompt, artStyle: defaultArtStyle },
             );
           } finally {
             setGeneratingChars((prev) => {
@@ -937,6 +940,7 @@ export function CharacterLibrary({
         }}
         screenplayContext={screenplayContext}
         projectId={projectId}
+        defaultArtStyle={defaultArtStyle}
         forceExpanded={cardOptions?.forceExpanded}
         splitLayout={cardOptions?.splitLayout}
         focusWardrobeId={
@@ -1266,6 +1270,7 @@ export function CharacterLibrary({
             <CharacterPromptBuilder
               open={!!promptBuilderOpenFor}
               onClose={() => setPromptBuilderOpenFor(null)}
+              defaultArtStyle={defaultArtStyle}
               character={characters
                 .filter((c) => c.type !== "narrator")
                 .find(
@@ -1327,6 +1332,7 @@ export function CharacterLibrary({
             <CharacterPromptBuilder
               open={!!promptBuilderOpenFor}
               onClose={() => setPromptBuilderOpenFor(null)}
+              defaultArtStyle={defaultArtStyle}
               character={characters
                 .filter((c) => c.type !== "narrator")
                 .find(
@@ -1550,6 +1556,7 @@ const CharacterCard = ({
   retainVoiceIds = [],
   focusWardrobeId,
   focusNonce,
+  defaultArtStyle,
 }: CharacterCardProps) => {
   const [imageError, setImageError] = useState(false); // Track if image failed to load
 
@@ -3260,6 +3267,7 @@ const CharacterCard = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          projectId,
           characterId,
           sourceImageUrl: character.referenceImage,
           characterName: character.name,
@@ -5442,7 +5450,7 @@ const CharacterCard = ({
             }
             currentPrompt={
               directorTarget.kind === "cast"
-                ? seedCastDirectorPrompt(character)
+                ? seedCastDirectorPrompt(character, defaultArtStyle)
                 : seedWardrobeDirectorPrompt({
                     storedPrompt: (character.wardrobes || []).find(
                       (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
@@ -5460,6 +5468,7 @@ const CharacterCard = ({
                     appearanceNotes: (character.wardrobes || []).find(
                       (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
                     )?.appearanceNotes,
+                    artStyle: defaultArtStyle,
                   })
             }
             context={

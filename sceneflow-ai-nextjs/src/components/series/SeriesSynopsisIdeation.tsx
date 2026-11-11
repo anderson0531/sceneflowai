@@ -5,12 +5,13 @@ import { CheckCircle2, Loader2, RotateCcw, Sparkles, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
-import { ArtStyleGrid } from '@/components/image-gen/ArtStyleGrid'
+import { ArtStyleDirectorField } from '@/components/art-style/ArtStyleDirectorField'
 import {
   getSeriesProductionProfile,
   seriesProductionFormatsByCategory,
 } from '@/config/series/productionFormats'
 import type { AudienceDefinition } from '@/lib/types/audienceResonance'
+import type { ArtStyleSpec } from '@/lib/artStyle/globalArtStyle'
 import type {
   ClarifySynopsisResult,
   ClarifySynopsisSurface,
@@ -25,7 +26,12 @@ interface SeriesSynopsisIdeationProps {
   audience: AudienceDefinition
   onAudienceChange: (audience: AudienceDefinition) => void
   artStyle?: string
-  onArtStyleChange: (artStyle: string) => void
+  artStyleSpec?: ArtStyleSpec | null
+  onArtStyleChange: (artStyle: string, spec?: ArtStyleSpec) => void
+  lockedBySeries?: {
+    seriesId: string
+    seriesTitle?: string
+  } | null
   episodeCount: number
   /** Quiet “Starts as 5 episodes.” line under the format chips. */
   showEpisodeHint?: boolean
@@ -50,7 +56,9 @@ export function SeriesSynopsisIdeation({
   audience,
   onAudienceChange,
   artStyle = DEFAULT_ART_STYLE,
+  artStyleSpec,
   onArtStyleChange,
+  lockedBySeries,
   episodeCount,
   showEpisodeHint = false,
   surface = 'series',
@@ -77,7 +85,7 @@ export function SeriesSynopsisIdeation({
   const [typesOpen, setTypesOpen] = useState(false)
 
   const audienceText = (audience.description || '').trim()
-  const contextSignature = `${format}::${audienceText}::${artStyle}`
+  const contextSignature = `${format}::${audienceText}`
   const signedRef = useRef<string | null>(initialLock ? contextSignature : null)
   const contextSignatureRef = useRef(contextSignature)
   contextSignatureRef.current = contextSignature
@@ -280,8 +288,6 @@ export function SeriesSynopsisIdeation({
         />
       </div>
 
-      <ArtStyleGrid artStyle={artStyle || DEFAULT_ART_STYLE} onArtStyleChange={onArtStyleChange} />
-
       <div className="space-y-3">
         <label className="block text-sm font-medium text-gray-300">
           Synopsis <span className="text-cyan-400">*</span>
@@ -411,6 +417,24 @@ export function SeriesSynopsisIdeation({
 
         {error ? <p className="text-[11px] text-red-300">{error}</p> : null}
       </div>
+
+      <ArtStyleDirectorField
+        artStyle={artStyle || DEFAULT_ART_STYLE}
+        artStyleSpec={artStyleSpec}
+        onArtStyleChange={onArtStyleChange}
+        lockedBySeries={lockedBySeries}
+        scopeLabel={surface === 'series' ? 'series' : 'blueprint'}
+        surface="gray"
+        storyContext={{
+          storyline: locked?.synopsis || proposed || draft || undefined,
+          genre: locked?.genre || inferred.genre,
+          tone: locked?.tone || inferred.tone,
+          targetAudience: audienceText || undefined,
+          format,
+          isSeries: surface === 'series',
+          episodeCount,
+        }}
+      />
     </div>
   )
 }

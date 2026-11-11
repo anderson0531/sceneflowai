@@ -215,6 +215,67 @@ export async function POST(request: NextRequest) {
     const inheritedEpisodeNumber =
       sourceProject?.episode_number ?? sourceMetadata.episodeNumber ?? undefined
 
+    const {
+      resolveProjectArtStyleSpec,
+      resolveSeriesArtStyleSpec,
+      serializeArtStyleValue,
+    } = await import('@/lib/artStyle/globalArtStyle')
+
+    let linkedSeries: any = null
+    let effectiveArtStyleSpec = resolveProjectArtStyleSpec({
+      ...sourceMetadata,
+      filmTreatmentVariant: variant,
+    })
+
+    if (inheritedSeriesId) {
+      try {
+        const SeriesModel = (await import('@/models/Series')).default
+        linkedSeries = await SeriesModel.findByPk(inheritedSeriesId)
+        if (linkedSeries) {
+          effectiveArtStyleSpec = {
+            ...resolveSeriesArtStyleSpec({
+              seriesId: inheritedSeriesId,
+              seriesTitle: linkedSeries.title,
+              metadata: linkedSeries.metadata,
+              productionBible: linkedSeries.production_bible,
+            }),
+            confirmed: true,
+            source: 'series',
+            lockedBySeriesId: inheritedSeriesId,
+            lockedBySeriesTitle: linkedSeries.title,
+          }
+        }
+      } catch (seriesErr) {
+        console.warn('[from-variant] Failed to load linked series:', seriesErr)
+      }
+    }
+
+    const effectiveArtStyle = serializeArtStyleValue(effectiveArtStyleSpec)
+    const normalizedVariant = {
+      ...variant,
+      artStyle: effectiveArtStyle,
+      artStyleSpec: effectiveArtStyleSpec,
+      visual_style:
+        effectiveArtStyleSpec.presetId && effectiveArtStyleSpec.presetId !== 'custom'
+          ? variant?.visual_style || effectiveArtStyleSpec.title
+          : effectiveArtStyleSpec.stylePrompt || variant?.visual_style || effectiveArtStyleSpec.title,
+    }
+
+    const inheritedSeriesBibleRef = linkedSeries
+      ? {
+          ...(sourceMetadata.seriesBibleRef || {}),
+          version: linkedSeries.production_bible?.version || sourceMetadata.seriesBibleRef?.version,
+          seriesTitle: linkedSeries.title,
+          aesthetic: {
+            ...(linkedSeries.production_bible?.aesthetic || {}),
+            artStyle: effectiveArtStyle,
+            artStyleSpec: effectiveArtStyleSpec,
+            artStyleLocked: true,
+          },
+          syncedAt: new Date().toISOString(),
+        }
+      : sourceMetadata.seriesBibleRef
+
     // Create project
     const project = await Project.create({
       user_id: userId,
@@ -230,12 +291,18 @@ export async function POST(request: NextRequest) {
       status: 'in_progress',
       metadata: {
         // Save complete Film Treatment variant for script generation
-        filmTreatmentVariant: variant,
+        filmTreatmentVariant: normalizedVariant,
+        artStyle: effectiveArtStyle,
+        artStyleSpec: effectiveArtStyleSpec,
         blueprintInput: variant.content || variant.synopsis,
         sourceBlueprintProjectId: sourceBlueprintProjectId || undefined,
         ...(inheritedSeriesId && { seriesId: inheritedSeriesId }),
-        ...(sourceMetadata.seriesTitle && { seriesTitle: sourceMetadata.seriesTitle }),
+        ...((linkedSeries?.title || sourceMetadata.seriesTitle) && {
+          seriesTitle: linkedSeries?.title || sourceMetadata.seriesTitle,
+        }),
+        ...(sourceMetadata.episodeId && { episodeId: sourceMetadata.episodeId }),
         ...(inheritedEpisodeNumber !== undefined && { episodeNumber: inheritedEpisodeNumber }),
+        ...(inheritedSeriesBibleRef && { seriesBibleRef: inheritedSeriesBibleRef }),
         audienceDefinition: inheritedAudienceDefinition || undefined,
         blueprintAudienceResonance: inheritedBlueprintAR || undefined,
         visionPhase: {
@@ -244,17 +311,39 @@ export async function POST(request: NextRequest) {
           charactersGenerated: continuity.characters.length > 0,
           scenesGenerated: false,
           script: null,
-          artStyle: resolveVariantArtStyle(variant),
+          artStyle: effectiveArtStyle,
+          artStyleSpec: effectiveArtStyleSpec,
           characters: continuity.characters,
           references: continuity.references,
           scenes: [],
           beatSheet: variant.act_breakdown || null,
         },
         generationSettings: {
+          imageStyle: effectiveArtStyleSpec.title,
           aspectRatio: resolveVariantAspectRatio(variant) || DEFAULT_ASPECT_RATIO,
         },
       }
     })
+
+    // Keep Series episode_blueprints[i].projectId pointed at the live Production Project
+    // so Series -> Production propagation and Continue Episode never orphan!
+    if (linkedSeries && Array.isArray(linkedSeries.episode_blueprints)) {
+      const updatedBps = linkedSeries.episode_blueprints.map((ep: any) => {
+        const matchesSource =
+          (sourceBlueprintProjectId && ep.projectId === sourceBlueprintProjectId) ||
+          (sourceMetadata.episodeId && ep.id === sourceMetadata.episodeId) ||
+          (inheritedEpisodeNumber !== undefined && ep.episodeNumber === inheritedEpisodeNumber)
+        if (matchesSource) {
+          return {
+            ...ep,
+            projectId: project.id,
+            status: 'in_progress',
+          }
+        }
+        return ep
+      })
+      await linkedSeries.update({ episode_blueprints: updatedBps })
+    }
     
     // LOG CREATED PROJECT
     console.log('[from-variant] Created project:', {

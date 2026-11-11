@@ -8,6 +8,8 @@
  * to ensure it can be used in client-side code without bundling Node.js dependencies.
  */
 
+import type { ArtStyleSpec } from '@/lib/artStyle/globalArtStyle'
+
 // Episode limits - soft limit allows flexibility, hard limit enforces UI constraints
 export const DEFAULT_MAX_EPISODES = 40
 export const ABSOLUTE_MAX_EPISODES = 40
@@ -207,8 +209,12 @@ export interface SeriesAesthetic {
   cinematography?: string
   colorPalette?: Record<string, string[]>
   aspectRatio?: string
-  /** Art style preset id, locked when the series is created. */
+  /** Global Art Style value, locked across all episodes of the series. */
   artStyle?: string
+  /** Structured AI-directed Global Art Style specification for continuity, stills & clips. */
+  artStyleSpec?: ArtStyleSpec
+  /** True when explicitly confirmed as a series-wide consistency lock. */
+  artStyleLocked?: boolean
   visualStyle?: string
   lightingStyle?: string
   lockedPromptTokens?: {

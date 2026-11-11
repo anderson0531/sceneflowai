@@ -90,6 +90,9 @@ export interface SeriesAesthetic {
   cinematography?: string
   colorPalette?: Record<string, string[]>
   aspectRatio?: string
+  artStyle?: string
+  artStyleSpec?: import('@/lib/artStyle/globalArtStyle').ArtStyleSpec
+  artStyleLocked?: boolean
   visualStyle?: string
   lightingStyle?: string
   lockedPromptTokens?: {
@@ -100,7 +103,8 @@ export interface SeriesAesthetic {
 }
 
 /** Canonical shape lives in @/types/series (includes props, continuity fields). */
-export type { SeriesProductionBible } from '@/types/series'
+import type { SeriesProductionBible } from '@/types/series'
+export type { SeriesProductionBible }
 
 export interface SeriesAttributes {
   id: string

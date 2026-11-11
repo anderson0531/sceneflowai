@@ -457,6 +457,7 @@ export interface BuildPromoSceneInput {
   campaignLanguages?: string[]
   promoAspect?: PromoFrameAspect
   musicAudioUrl?: string
+  artStyleId?: string
 }
 
 export interface BuildPromoSceneResult {
@@ -686,7 +687,8 @@ function resolveSegmentGeneratedPromptForBeat(
 function buildSeedSegments(
   sceneId: string,
   beats: PromoSceneBeat[],
-  sceneDirection?: DetailedSceneDirection | null
+  sceneDirection?: DetailedSceneDirection | null,
+  artStyleId?: string
 ): SceneSegment[] {
   let cursor = 0
   const activeBeats = beats.filter((b) => !b.excluded)
@@ -699,7 +701,10 @@ function buildSeedSegments(
     const generatedPrompt = resolveSegmentGeneratedPromptForBeat(
       beat,
       previousBeat,
-      sceneDirection
+      sceneDirection,
+      undefined,
+      undefined,
+      artStyleId ? { artStyleId } : undefined
     )
     const dialogueMeta = buildSegmentDialogueLinesForBeat(beat)
     const segment: SceneSegment = {
@@ -967,7 +972,8 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
   const segments = buildSeedSegments(
     existingId,
     beats,
-    defaultSceneDirection as DetailedSceneDirection
+    defaultSceneDirection as DetailedSceneDirection,
+    input.artStyleId
   )
   const productionSeed = {
     sceneId: existingId,

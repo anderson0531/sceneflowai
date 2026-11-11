@@ -2,24 +2,31 @@
 
 import React from 'react'
 import { cn } from '@/lib/utils'
-import { ArtStyleGrid } from '@/components/image-gen/ArtStyleGrid'
+import { ArtStyleDirectorField } from '@/components/art-style/ArtStyleDirectorField'
 import { OUTPUT_FORMATS } from '@/config/landing/outputFormatsCopy'
 import {
   type BlueprintAspectRatio,
   DEFAULT_ART_STYLE,
   DEFAULT_ASPECT_RATIO,
 } from '@/lib/treatment/blueprintFoundation'
+import type { ArtStyleSpec, ArtStyleStoryContext } from '@/lib/artStyle/globalArtStyle'
 import { Monitor } from 'lucide-react'
 
 type Props = {
   artStyle: string
+  artStyleSpec?: ArtStyleSpec | null
   aspectRatio: BlueprintAspectRatio
-  onArtStyleChange: (value: string) => void
+  onArtStyleChange: (value: string, spec?: ArtStyleSpec) => void
   onAspectRatioChange: (value: BlueprintAspectRatio) => void
+  storyContext?: ArtStyleStoryContext
+  lockedBySeries?: {
+    seriesId: string
+    seriesTitle?: string
+  } | null
   className?: string
   highlightArtStyle?: boolean
   highlightAspectRatio?: boolean
-  /** Inception dialogs show art style above the synopsis. Aspect ratio stays here. */
+  /** Inception dialogs show art style alongside the synopsis. Aspect ratio stays here. */
   showArtStyle?: boolean
   /** Match the New Series dialog chrome. Reimagine keeps the slate surface. */
   surface?: 'slate' | 'gray'
@@ -27,9 +34,12 @@ type Props = {
 
 export function BlueprintFoundationFields({
   artStyle,
+  artStyleSpec,
   aspectRatio,
   onArtStyleChange,
   onAspectRatioChange,
+  storyContext,
+  lockedBySeries,
   className,
   highlightArtStyle,
   highlightAspectRatio,
@@ -48,9 +58,14 @@ export function BlueprintFoundationFields({
     <div className={cn('space-y-4', className)}>
       {showArtStyle ? (
         <div className={cn(highlightArtStyle && 'ring-2 ring-amber-500/50 rounded-lg p-1')}>
-          <ArtStyleGrid
+          <ArtStyleDirectorField
             artStyle={artStyle || DEFAULT_ART_STYLE}
+            artStyleSpec={artStyleSpec}
             onArtStyleChange={onArtStyleChange}
+            storyContext={storyContext}
+            lockedBySeries={lockedBySeries}
+            scopeLabel="blueprint"
+            surface={surface}
           />
         </div>
       ) : null}

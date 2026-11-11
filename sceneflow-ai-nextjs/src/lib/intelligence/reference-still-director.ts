@@ -25,7 +25,7 @@ export async function directReferenceStill(
   request: DirectReferenceStillRequest
 ): Promise<DirectReferenceStillResult> {
   const options: TextGenerationOptions = {
-    systemInstruction: buildReferenceStillDirectorSystemPrompt(request.kind),
+    systemInstruction: buildReferenceStillDirectorSystemPrompt(request.kind, request.artStyle),
     temperature: 0.4,
     maxOutputTokens: 4096,
     responseMimeType: 'application/json',
@@ -53,6 +53,6 @@ export async function directReferenceStill(
 
   return {
     usedAI: true,
-    prompt: ensureReferenceKindAnchor(request.kind, prompt),
+    prompt: ensureReferenceKindAnchor(request.kind, prompt, request.artStyle),
   }
 }

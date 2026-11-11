@@ -7,52 +7,53 @@ import {
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
 import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
-import { resolveVariantArtStyle } from '@/lib/treatment/blueprintFoundation'
+import {
+  type ArtStyleSpec,
+  resolveSeriesArtStyleSpec,
+  serializeArtStyleValue,
+} from '@/lib/artStyle/globalArtStyle'
 
 export interface SeriesIdeationSeedSource {
   maxEpisodes?: number
   targetAudience?: string | null
   metadata?: Record<string, unknown> | null
+  productionBible?: {
+    aesthetic?: {
+      artStyle?: unknown
+      artStyleSpec?: unknown
+      visualStyle?: unknown
+    }
+  } | null
 }
 
 export interface SeriesIdeationSeed {
   format: string
   episodeCount: number
   artStyle: string
+  artStyleSpec: ArtStyleSpec
   draft: string
   locked: SeriesSynopsisLock | null
   audience: AudienceDefinition
 }
 
 /**
- * Preset id for a series, from an explicit request, series metadata, the bible,
- * or the vision phase copied onto an episode project.
+ * Global Art Style value for a series, from an explicit request, series metadata,
+ * the production bible, or the vision phase copied onto an episode project.
  */
 export function resolveSeriesArtStyle(source: {
   artStyle?: unknown
+  artStyleSpec?: unknown
   metadata?: Record<string, unknown> | null
-  productionBible?: { aesthetic?: { artStyle?: unknown; visualStyle?: unknown } } | null
+  productionBible?: {
+    aesthetic?: {
+      artStyle?: unknown
+      artStyleSpec?: unknown
+      visualStyle?: unknown
+    }
+  } | null
 }): string {
-  const meta =
-    source.metadata && typeof source.metadata === 'object' && !Array.isArray(source.metadata)
-      ? source.metadata
-      : {}
-  const visionPhase = meta.visionPhase
-  const visionArtStyle =
-    visionPhase && typeof visionPhase === 'object' && !Array.isArray(visionPhase)
-      ? (visionPhase as { artStyle?: unknown }).artStyle
-      : undefined
-  const aesthetic = source.productionBible?.aesthetic
-  const explicit =
-    (typeof source.artStyle === 'string' && source.artStyle.trim()) ||
-    (typeof meta.artStyle === 'string' && meta.artStyle.trim()) ||
-    (typeof aesthetic?.artStyle === 'string' && aesthetic.artStyle.trim()) ||
-    (typeof visionArtStyle === 'string' && visionArtStyle.trim()) ||
-    undefined
-  return resolveVariantArtStyle({
-    artStyle: explicit,
-    visual_style: typeof aesthetic?.visualStyle === 'string' ? aesthetic.visualStyle : undefined,
-  })
+  const spec = resolveSeriesArtStyleSpec(source)
+  return serializeArtStyleValue(spec)
 }
 
 function optionalMetaString(value: unknown): string | undefined {
@@ -113,10 +114,16 @@ export function readSeriesIdeationSeed(series: SeriesIdeationSeedSource): Series
           source: 'series',
         })
 
+  const artStyleSpec = resolveSeriesArtStyleSpec({
+    metadata: meta,
+    productionBible: series.productionBible ?? undefined,
+  })
+
   return {
     format,
     episodeCount,
-    artStyle: resolveSeriesArtStyle({ metadata: meta }),
+    artStyle: serializeArtStyleValue(artStyleSpec),
+    artStyleSpec,
     draft: locked ? '' : ideaTopic,
     locked,
     audience,

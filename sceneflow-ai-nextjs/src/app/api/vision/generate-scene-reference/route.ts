@@ -4,6 +4,11 @@ import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibrar
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import {
+  buildArtStyleSpecFromValue,
+  isPhotorealisticArtStyle,
+} from '@/lib/artStyle/globalArtStyle'
+import { getArtStyleNegativeTerms, resolveProjectArtStyle } from '@/lib/vision/artStyle'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -15,6 +20,8 @@ interface GenerateSceneReferenceRequest {
   sourceSceneNumber?: number
   aspectRatio?: '16:9' | '9:16' | '1:1'
   negativePrompt?: string
+  projectId?: string
+  artStyle?: string
 }
 
 /**
@@ -56,10 +63,35 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Reference Generation] Prompt:', prompt.substring(0, 200))
     console.log('[Scene Reference Generation] Source scene:', sourceSceneNumber)
 
+    let effectiveArtStyle = body.artStyle?.trim() || undefined
+    if (!effectiveArtStyle && body.projectId) {
+      try {
+        const { Project } = await import('@/models/Project')
+        const project = await Project.findByPk(body.projectId)
+        if (project?.metadata) {
+          effectiveArtStyle = resolveProjectArtStyle(project.metadata)
+        }
+      } catch {
+        // Optional DB lookup fallback
+      }
+    }
+
+    const styleLine =
+      effectiveArtStyle && effectiveArtStyle !== 'photorealistic'
+        ? isPhotorealisticArtStyle(effectiveArtStyle)
+          ? `\nGlobal Art Style grade: ${buildArtStyleSpecFromValue(effectiveArtStyle).stylePrompt}.`
+          : `\n${buildArtStyleSpecFromValue(effectiveArtStyle).locationRefDirective}`
+        : ''
+
     // Enhance prompt to explicitly exclude people
     const enhancedPrompt = `${prompt}
 
-Environment only. No people, no characters, no human figures. Empty scene showing only the location, props, lighting, and atmosphere.`
+Environment only. No people, no characters, no human figures. Empty scene showing only the location, props, lighting, and atmosphere.${styleLine}`
+
+    const mergedNegativePrompt =
+      effectiveArtStyle && effectiveArtStyle !== 'photorealistic'
+        ? `${negativePrompt}, ${getArtStyleNegativeTerms(effectiveArtStyle)}`
+        : negativePrompt
 
     // Generate image using Gemini 3.0 with personGeneration: 'dont_allow'
     const base64Image = await generateImageWithGemini(enhancedPrompt, {
@@ -67,7 +99,7 @@ Environment only. No people, no characters, no human figures. Empty scene showin
       numberOfImages: 1,
       imageSize: '2K',
       personGeneration: 'dont_allow',  // Critical: ensures no people in scene reference
-      negativePrompt: negativePrompt,
+      negativePrompt: mergedNegativePrompt,
     })
 
     console.log('[Scene Reference Generation] Image generated, uploading to storage...')

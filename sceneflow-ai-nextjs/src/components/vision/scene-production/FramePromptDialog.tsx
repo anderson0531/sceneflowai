@@ -143,6 +143,7 @@ export interface FramePromptDialogProps {
   sceneHeading?: string
   /** Vision scene fields for the same reference resolver as Quick Generate */
   frameResolverScene?: Record<string, unknown> | null
+  defaultArtStyle?: string
 }
 
 export type StartTransitionMode = 'continuous' | 'camera_cut' | 'none'
@@ -213,6 +214,7 @@ export function FramePromptDialog({
   locationReferences = [],
   sceneHeading,
   frameResolverScene = null,
+  defaultArtStyle,
 }: FramePromptDialogProps) {
   const t = useTranslations('production.direction.framePrompt')
   const tPreVis = useTranslations('production.direction.preVis')
@@ -252,8 +254,14 @@ export function FramePromptDialog({
   // Auto-matched location ref IDs from scene heading
   const [autoMatchedLocationRefIds, setAutoMatchedLocationRefIds] = useState<Set<string>>(new Set())
   
-  // Art style state (default to photorealistic for backward compatibility)
-  const [artStyle, setArtStyle] = useState<string>('photorealistic')
+  // Art style state (default to Global Art Style or photorealistic)
+  const [artStyle, setArtStyle] = useState<string>(defaultArtStyle || 'photorealistic')
+
+  useEffect(() => {
+    if (open && defaultArtStyle) {
+      setArtStyle(defaultArtStyle)
+    }
+  }, [open, defaultArtStyle])
   
   // Model quality tier and thinking level state
   // Default to 'eco' (Draft) for cost-optimized iteration — users upgrade to 'designer' (Final) when ready

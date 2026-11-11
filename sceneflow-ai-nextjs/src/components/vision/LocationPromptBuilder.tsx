@@ -13,6 +13,7 @@ import {
   LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
   buildLocationVersionPrompt,
 } from '@/lib/vision/locationReferencePrompts'
+import { getArtStylePromptSuffix, isPhotorealisticArtStyle } from '@/lib/vision/artStyle'
 import { withMountedFixturesInLocationDescription } from '@/lib/vision/mountedSetFixtures'
 
 export interface LocationPromptPayload {
@@ -38,6 +39,7 @@ interface LocationPromptBuilderProps {
   /** Mounted architectural hardware harvested from beats at this location. */
   mountedFixtures?: string[]
   isGenerating?: boolean
+  defaultArtStyle?: string
   onGenerateImage: (payload: LocationPromptPayload) => void
   /** Screenplay context for richer prompt generation */
   screenplayContext?: {
@@ -56,6 +58,7 @@ export function LocationPromptBuilder({
   catalogPropNames,
   mountedFixtures = [],
   isGenerating = false,
+  defaultArtStyle,
   onGenerateImage,
   screenplayContext
 }: LocationPromptBuilderProps) {
@@ -63,7 +66,7 @@ export function LocationPromptBuilder({
   const [shotType, setShotType] = useState('extreme-wide')
   const [cameraAngle, setCameraAngle] = useState('eye-level')
   const [lighting, setLighting] = useState('natural')
-  const [artStyle, setArtStyle] = useState('')
+  const [artStyle, setArtStyle] = useState(defaultArtStyle || '')
   const [additionalDetails, setAdditionalDetails] = useState('')
   // Modes & prompt state
   const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
@@ -75,6 +78,12 @@ export function LocationPromptBuilder({
   const [isOptimizing, setIsOptimizing] = useState(false)
   // UI
   const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    if (open && defaultArtStyle && !artStyle) {
+      setArtStyle(defaultArtStyle)
+    }
+  }, [open, defaultArtStyle, artStyle])
 
   // Build base prompt from location attributes when opened
   useEffect(() => {
@@ -89,6 +98,7 @@ export function LocationPromptBuilder({
       mountedFixtures
     )
 
+    const effectiveStyle = artStyle || defaultArtStyle
     if (version) {
       const constructed = buildLocationVersionPrompt({
         locationName: location.location,
@@ -97,6 +107,7 @@ export function LocationPromptBuilder({
         timeOfDay: location.timeOfDay,
         description,
         catalogPropNames,
+        artStyle: effectiveStyle,
       })
       setShotType('extreme-wide')
       setBasePrompt(constructed)
@@ -208,7 +219,8 @@ export function LocationPromptBuilder({
     if (additionalDetails) parts.push(additionalDetails)
 
     // Art style
-    const stylePreset = artStyle ? artStylePresets.find(s => s.id === artStyle) : null
+    const effectiveStyle = artStyle || defaultArtStyle
+    const stylePreset = effectiveStyle ? artStylePresets.find(s => s.id === effectiveStyle) : null
     if (stylePreset) {
       const existing = parts.join(', ').toLowerCase()
       const primaryTerm = stylePreset.id.split('-')[0]
@@ -216,6 +228,11 @@ export function LocationPromptBuilder({
                               existing.includes(stylePreset.name.toLowerCase())
       if (!alreadyHasStyle) {
         parts.push(stylePreset.promptSuffix)
+      }
+    } else if (effectiveStyle && !isPhotorealisticArtStyle(effectiveStyle)) {
+      const suffix = getArtStylePromptSuffix(effectiveStyle)
+      if (suffix && !parts.join(', ').toLowerCase().includes(suffix.toLowerCase())) {
+        parts.push(suffix)
       }
     }
 

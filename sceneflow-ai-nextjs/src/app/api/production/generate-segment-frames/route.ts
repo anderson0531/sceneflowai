@@ -40,7 +40,15 @@ import {
 import { overlayLocationScaleOnReferenceImages } from '@/lib/vision/locationScaleOverlay'
 import { sanitizeBeatStillPrompt } from '@/lib/imagen/sanitizeBeatStillPrompt'
 import { applyInterleavedPairCaptionsToNamedImages } from '@/lib/imagen/interleavedReferencePair'
-import { STILL_SECTION_TASK, STILL_TASK_PRO_LEAD } from '@/lib/imagen/structuredStillPrompt'
+import {
+  STILL_SECTION_TASK,
+  STILL_TASK_PRO_LEAD,
+  STYLIZED_STILL_TASK_PRO_LEAD,
+} from '@/lib/imagen/structuredStillPrompt'
+import { buildArtStyleSpecFromValue, isPhotorealisticArtStyle } from '@/lib/artStyle/globalArtStyle'
+import { getArtStyleNegativeTerms, resolveProjectArtStyle } from '@/lib/vision/artStyle'
+import Project from '@/models/Project'
+import { ensureDatabaseConnection } from '@/config/database'
 import {
   formatVisualExpressionCue,
   parsePerformanceCue,
@@ -416,7 +424,7 @@ export async function POST(req: NextRequest) {
       // NEW: Location references for environment consistency
       locationReferences = [],
       // NEW: Art style for frame generation
-      artStyle = 'photorealistic',
+      artStyle: requestedArtStyle,
       // Model quality tier: 'eco' (Draft) for cost-optimized iteration, 'designer' (Final) for production
       modelTier = 'eco',
       // Thinking level: 'low' for fast iteration, 'high' for complex multi-character scenes
@@ -437,7 +445,41 @@ export async function POST(req: NextRequest) {
       stillGenerationModeRaw ?? stillPolicyModeRaw
     )
 
-    const mergedNegativePrompt = mergeBeatFrameNegativePrompt(negativePrompt)
+    let artStyle: string =
+      typeof requestedArtStyle === 'string' && requestedArtStyle.trim()
+        ? requestedArtStyle.trim()
+        : ''
+    if (projectId && (!artStyle || artStyle === 'photorealistic')) {
+      try {
+        await ensureDatabaseConnection('production/generate-segment-frames')
+        const project = await Project.findByPk(projectId, { attributes: ['id', 'metadata'] })
+        const projectGlobalArtStyle = resolveProjectArtStyle(project?.metadata)
+        if (projectGlobalArtStyle && projectGlobalArtStyle !== 'photorealistic') {
+          artStyle = projectGlobalArtStyle
+        }
+      } catch (projectErr) {
+        console.warn('[Generate Frames] Could not resolve project artStyle:', projectErr)
+      }
+    }
+    if (!artStyle) artStyle = 'photorealistic'
+
+    const isPhotorealistic = isPhotorealisticArtStyle(artStyle)
+    const styleSpec = buildArtStyleSpecFromValue(artStyle)
+    const selectedStyle =
+      artStylePresets.find((s) => s.id === artStyle) || {
+        id: styleSpec.presetId || artStyle,
+        name: styleSpec.title || artStyle,
+        promptSuffix: styleSpec.stylePrompt || artStyle,
+      }
+
+    const mergedNegativePrompt = mergeBeatFrameNegativePrompt(
+      [
+        negativePrompt,
+        !isPhotorealistic ? getArtStyleNegativeTerms(artStyle) : undefined,
+      ]
+        .filter(Boolean)
+        .join(', ') || undefined
+    )
 
     const { skipStartGeneration, preservedStartUrl } = resolveStartFrameGenerationPlan({
       frameType,
@@ -497,11 +539,7 @@ export async function POST(req: NextRequest) {
     
     console.log('[Generate Frames] Transition type:', transitionType)
 
-    // Get art style info for explicit style injection in prompts
-    // This is defined at the top level so both start and end frame generation can use it
-    const selectedStyle = artStylePresets.find(s => s.id === artStyle) || artStylePresets.find(s => s.id === 'photorealistic')!
-    const isPhotorealistic = artStyle === 'photorealistic' || !artStyle
-    
+    // Art style info resolved above for both start and end frame generation
     console.log(`[Generate Frames] Art style: ${selectedStyle.name} (photorealistic: ${isPhotorealistic})`)
 
     let generatedStartFrameUrl: string | undefined
@@ -622,10 +660,9 @@ export async function POST(req: NextRequest) {
           )
           
           // Apply art style to fallback prompt (replace generic quality suffix with selected style)
-          const selectedStyleForStart = artStylePresets.find(s => s.id === artStyle) || artStylePresets.find(s => s.id === 'photorealistic')!
           startFramePrompt = startFramePrompt.replace(
             /professional cinematography, 8K quality, film grain/i,
-            `Cinematic quality, 8K, ${selectedStyleForStart.promptSuffix}`
+            `Cinematic quality, 8K, ${selectedStyle.promptSuffix}`
           )
         }
         
@@ -723,6 +760,7 @@ export async function POST(req: NextRequest) {
               beatAction: effectivePrompt,
               sceneAction: sceneContext?.heading || sceneContext?.location,
               uploadPathPrefix: `scenes/${sceneId}/segments/${segmentId}/scene-headshots`,
+              artStyle,
             })
           : []
 
@@ -978,7 +1016,8 @@ Render this scene in ${selectedStyle.name} style.`
       }
 
       if (useInterleavedProRefs && !geminiPrompt.includes(STILL_SECTION_TASK)) {
-        geminiPrompt = `${STILL_SECTION_TASK}\n${STILL_TASK_PRO_LEAD}\n\n${geminiPrompt}`
+        const proLead = isPhotorealistic ? STILL_TASK_PRO_LEAD : STYLIZED_STILL_TASK_PRO_LEAD
+        geminiPrompt = `${STILL_SECTION_TASK}\n${proLead}\n\n${geminiPrompt}`
       }
       
       const studioPrompt = geminiPrompt
@@ -1209,14 +1248,17 @@ Render this scene in ${selectedStyle.name} style.`
         )
         
         // Apply art style to fallback end frame prompt (replace generic quality suffix with selected style)
-        const selectedStyleForEnd = artStylePresets.find(s => s.id === artStyle) || artStylePresets.find(s => s.id === 'photorealistic')!
         endFramePrompt = endFramePrompt.replace(
           /professional cinematography, 8K quality, film grain/i,
-          `Cinematic quality, 8K, ${selectedStyleForEnd.promptSuffix}`
+          `Cinematic quality, 8K, ${selectedStyle.promptSuffix}`
         )
       }
       
       console.log('[Generate Frames] End frame prompt:', endFramePrompt.substring(0, 150))
+
+      if (!isPhotorealistic) {
+        endFramePrompt = `GLOBAL ART STYLE LOCK (${selectedStyle.name}): Preserve the exact stylized rendering medium (${selectedStyle.promptSuffix}) of the source start frame. Do NOT introduce live-action photorealism.\n\n${endFramePrompt}`
+      }
 
       if (transitionType === 'CONTINUE') {
         endFramePrompt =

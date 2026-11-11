@@ -7,6 +7,12 @@
  * scene instead of a plate.
  */
 
+import {
+  buildArtStyleSpecFromValue,
+  isPhotorealisticArtStyle,
+} from '@/lib/artStyle/globalArtStyle'
+import { getArtStyleNegativeTerms } from '@/lib/vision/artStyle'
+
 /** Lead: this still exists to lock identity of the object, not to illustrate a beat. */
 export const OBJECT_REFERENCE_PURPOSE =
   'Create the image to be used as a reference image for consistency across image and video generations.'
@@ -46,18 +52,47 @@ const LEGACY_RULER_SENTENCE_RE =
   /\s*(?:Place a simple ruler or height\/width scale beside the object, on the backdrop, so real-world size stays measurable\.|A simple ruler or height\/width marks on the object are allowed so real-world size stays measurable\.)(?:\s*Never engrave, print, paint, or draw measurements, tick marks, or inch\/cm labels on the object itself\.)?(?:\s*Nothing else\.)?/gi
 
 /** Append purpose, isolation, and real-world scale when a user/AI description omitted them, stripping legacy backdrop-ruler instructions. */
-export function withObjectReferenceInstruction(prompt: string): string {
+export function withObjectReferenceInstruction(prompt: string, artStyle?: string | null): string {
   const next = (prompt || '')
     .replace(LEGACY_RULER_SENTENCE_RE, ' ')
     .trim()
     .replace(/\s{2,}/g, ' ')
-  if (!next) return OBJECT_REFERENCE_GENERATION_INSTRUCTION
+  const rawStyle = artStyle?.trim()
+  const isDefaultPhotoreal = !rawStyle || rawStyle === 'photorealistic'
+  const isLiveAction = isDefaultPhotoreal || isPhotorealisticArtStyle(rawStyle)
+
+  if (!next) {
+    if (isDefaultPhotoreal) return OBJECT_REFERENCE_GENERATION_INSTRUCTION
+    const spec = buildArtStyleSpecFromValue(rawStyle)
+    return isLiveAction
+      ? `${OBJECT_REFERENCE_GENERATION_INSTRUCTION} Global Art Style grade: ${spec.stylePrompt}.`
+      : `${OBJECT_REFERENCE_GENERATION_INSTRUCTION} ${spec.propRefDirective}`
+  }
 
   const parts: string[] = []
   if (!PURPOSE_RE.test(next)) parts.push(OBJECT_REFERENCE_PURPOSE)
   if (!ISOLATION_RE.test(next)) parts.push(OBJECT_REFERENCE_ISOLATION)
   if (!SCALE_RE.test(next)) parts.push(OBJECT_REFERENCE_REAL_WORLD_SCALE)
   if (!STUDIO_RE.test(next)) parts.push(OBJECT_REFERENCE_STUDIO)
+  if (!isDefaultPhotoreal && rawStyle) {
+    const spec = buildArtStyleSpecFromValue(rawStyle)
+    const styleDirective = isLiveAction
+      ? `Global Art Style grade: ${spec.stylePrompt}.`
+      : spec.propRefDirective
+    if (!next.toLowerCase().includes(spec.title.toLowerCase())) {
+      parts.push(styleDirective)
+    }
+  }
   if (parts.length === 0) return next
   return `${next} ${parts.join(' ')}`
+}
+
+export function buildObjectReferenceNegativePrompt(artStyle?: string | null): string {
+  const rawStyle = artStyle?.trim()
+  if (!rawStyle || rawStyle === 'photorealistic') {
+    return OBJECT_REFERENCE_NEGATIVE_PROMPT
+  }
+  const styleNegatives = getArtStyleNegativeTerms(rawStyle)
+  if (!styleNegatives) return OBJECT_REFERENCE_NEGATIVE_PROMPT
+  return `${OBJECT_REFERENCE_NEGATIVE_PROMPT}, ${styleNegatives}`
 }

@@ -34,12 +34,18 @@ interface SuggestObjectsScene {
 interface SuggestObjectsRequest {
   scenes: SuggestObjectsScene[]
   existingObjects?: string[] // Names of already-added objects to exclude
+  artStyle?: string
 }
 
 /**
  * Object suggestion prompts optimized for clean reference image generation
  */
-function buildObjectPrompt(_name: string, category: ObjectCategory, description: string): string {
+function buildObjectPrompt(
+  _name: string,
+  category: ObjectCategory,
+  description: string,
+  artStyle?: string
+): string {
   const categoryStyles: Record<ObjectCategory, string> = {
     prop: 'Detailed texture visible, plain studio backdrop',
     vehicle: '3/4 angle, entire vehicle visible, plain studio backdrop',
@@ -51,7 +57,7 @@ function buildObjectPrompt(_name: string, category: ObjectCategory, description:
 
   const baseStyle = categoryStyles[category] || categoryStyles.other
 
-  return withObjectReferenceInstruction(`${description}. ${baseStyle}`)
+  return withObjectReferenceInstruction(`${description}. ${baseStyle}`, artStyle)
 }
 
 /**
@@ -65,7 +71,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body: SuggestObjectsRequest = await req.json()
-    const { scenes, existingObjects = [] } = body
+    const { scenes, existingObjects = [], artStyle } = body
 
     if (!scenes || scenes.length === 0) {
       return NextResponse.json(
@@ -176,7 +182,7 @@ Respond with valid JSON only:
         dimensions: typeof s.dimensions === 'string' && s.dimensions.trim() ? s.dimensions.trim() : undefined,
         category: s.category as ObjectCategory,
         importance: s.importance as ObjectImportance,
-        suggestedPrompt: buildObjectPrompt(s.name, s.category, s.description),
+        suggestedPrompt: buildObjectPrompt(s.name, s.category, s.description, artStyle),
         sceneNumbers: s.sceneNumbers || [],
         confidence: s.confidence || 0.7
       }))
@@ -221,7 +227,8 @@ Respond with valid JSON only:
       suggestedPrompt: buildObjectPrompt(
         usage.name,
         'prop',
-        `${usage.name}, recurring production prop`
+        `${usage.name}, recurring production prop`,
+        artStyle
       ),
     }))
     const filteredSuggestions = mergeNewObjectCandidates(

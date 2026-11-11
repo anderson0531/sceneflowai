@@ -11,6 +11,7 @@ import {
   type ReferenceStillDirectorMode,
 } from '@/lib/intelligence/reference-still-director-fallback'
 import { directReferenceStill } from '@/lib/intelligence/reference-still-director'
+import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const runtime = 'nodejs'
@@ -65,6 +66,10 @@ export async function POST(req: NextRequest) {
       ? await englishForModel(enteredUserDirection, storyLocale, properNouns)
       : undefined
 
+    const resolvedArtStyle =
+      (typeof body.artStyle === 'string' && body.artStyle.trim()) ||
+      resolveProjectArtStyle(project.metadata)
+
     const request: DirectReferenceStillRequest = {
       kind,
       mode,
@@ -72,6 +77,7 @@ export async function POST(req: NextRequest) {
       userDirection,
       policyCompliance,
       context,
+      artStyle: resolvedArtStyle,
     }
 
     try {

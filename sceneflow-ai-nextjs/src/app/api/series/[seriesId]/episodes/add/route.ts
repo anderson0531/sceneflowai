@@ -133,6 +133,13 @@ async function generateEpisodeBatch(
   
   const format = (series as any).metadata?.format || 'narrative'
   const contentIntent = resolveSeriesContentIntent(format, series.genre)
+  const { resolveSeriesArtStyleSpec, serializeArtStyleValue } = await import('@/lib/artStyle/globalArtStyle')
+  const seriesStyleSpec = resolveSeriesArtStyleSpec({
+    seriesId: series.id,
+    seriesTitle: series.title,
+    metadata: (series as any).metadata,
+    productionBible: bible,
+  })
 
   const prompt = buildEpisodeBatchPrompt({
     seriesTitle: series.title,
@@ -142,6 +149,8 @@ async function generateEpisodeBatch(
     tone: bible.toneGuidelines,
     format,
     contentIntent,
+    artStyle: serializeArtStyleValue(seriesStyleSpec),
+    artStyleSpec: seriesStyleSpec,
     characters: bible.characters,
     protagonist: bible.protagonist,
     antagonistConflict: bible.antagonistConflict,

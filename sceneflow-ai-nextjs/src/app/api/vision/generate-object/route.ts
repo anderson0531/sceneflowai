@@ -23,6 +23,7 @@ interface GenerateObjectRequest {
   referenceImageUrl?: string // Optional reference image to base generation on
   referenceImageBase64?: string // Alternative: base64 encoded reference
   aspectRatio?: ReferenceAspectRatio
+  artStyle?: string
 }
 
 /**
@@ -68,12 +69,14 @@ export async function POST(req: NextRequest) {
 
     const result = await generateObjectReferenceImage({
       userId,
+      projectId: body.projectId,
       name,
       prompt: body.prompt,
       category,
       referenceImageUrl: body.referenceImageUrl,
       referenceImageBase64: body.referenceImageBase64,
       aspectRatio: body.aspectRatio,
+      artStyle: body.artStyle,
       locale,
     })
 

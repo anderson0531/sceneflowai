@@ -27,6 +27,7 @@ import {
 } from '@/lib/intelligence/project-lookbook-fallback'
 import type { FilmContext } from '@/lib/intelligence/scene-direction-metadata'
 import { safeParseJsonFromText } from '@/lib/safeJson'
+import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 
 export type {
   LookbookSceneSummary,
@@ -191,14 +192,17 @@ function getProjectScenes(project: any): unknown[] {
 }
 
 export function buildProjectFilmContext(project: any): FilmContext {
-  const treatment = project?.metadata?.visionPhase?.treatment || project?.metadata?.treatmentPhase
-  const genre = treatment?.genre
+  const treatment =
+    project?.metadata?.visionPhase?.treatment ||
+    project?.metadata?.treatmentPhase ||
+    project?.metadata?.filmTreatmentVariant
+  const genre = treatment?.genre || project?.metadata?.genre
   return {
     title: project?.metadata?.title || project?.title || undefined,
-    logline: treatment?.logline || treatment?.synopsis || undefined,
+    logline: treatment?.logline || treatment?.synopsis || project?.metadata?.logline || undefined,
     genre: genre ? (Array.isArray(genre) ? genre : [genre]) : undefined,
-    tone: treatment?.tone || undefined,
-    visualStyle: treatment?.visualStyle || undefined,
+    tone: treatment?.tone || treatment?.tone_description || undefined,
+    visualStyle: treatment?.visualStyle || treatment?.visual_style || undefined,
   }
 }
 
@@ -206,11 +210,18 @@ export function buildProjectLookbookRequest(
   project: any,
   artStyle?: string
 ): ProjectLookbookRequest {
+  const resolvedGlobalStyle = resolveProjectArtStyle(project?.metadata)
+  const effectiveArtStyle =
+    (artStyle && artStyle.trim() && artStyle.trim() !== 'photorealistic'
+      ? artStyle.trim()
+      : undefined) ||
+    resolvedGlobalStyle ||
+    artStyle ||
+    'photorealistic'
   return {
     scenes: summarizeScenesForLookbook(getProjectScenes(project)),
     filmContext: buildProjectFilmContext(project),
-    artStyle:
-      artStyle || project?.metadata?.visionPhase?.artStyle || 'photorealistic',
+    artStyle: effectiveArtStyle,
     projectId: project?.id,
   }
 }

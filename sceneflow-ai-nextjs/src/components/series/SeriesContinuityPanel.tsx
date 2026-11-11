@@ -15,6 +15,9 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { ProductTabList } from '@/components/product'
 import { ProductionBiblePanel } from '@/components/series/ProductionBiblePanel'
+import { ArtStyleDirectorField } from '@/components/art-style/ArtStyleDirectorField'
+import { resolveSeriesArtStyleSpec, serializeArtStyleValue, type ArtStyleSpec } from '@/lib/artStyle/globalArtStyle'
+import { toast } from 'sonner'
 import type { EpisodeBlueprintResponse, SeriesProductionBible, SeriesBibleEvent } from '@/types/series'
 
 type ContinuitySection = 'aesthetics' | 'key-events' | 'story-threads' | 'review-updates'
@@ -120,7 +123,16 @@ export function SeriesContinuityPanel({
           <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
         </div>
       ) : section === 'aesthetics' ? (
-        <ContinuityAestheticsSection bible={bible} />
+        <ContinuityAestheticsSection
+          seriesId={seriesId}
+          seriesTitle={seriesTitle}
+          bible={bible}
+          episodeCount={episodes.length}
+          onSaved={async () => {
+            await refreshBible()
+            onRefresh()
+          }}
+        />
       ) : section === 'key-events' ? (
         <ContinuityKeyEventsSection bible={bible} />
       ) : section === 'story-threads' ? (
@@ -140,39 +152,114 @@ export function SeriesContinuityPanel({
   )
 }
 
-function ContinuityAestheticsSection({ bible }: { bible: SeriesProductionBible | null | undefined }) {
+function ContinuityAestheticsSection({
+  seriesId,
+  seriesTitle,
+  bible,
+  episodeCount,
+  onSaved,
+}: {
+  seriesId: string
+  seriesTitle: string
+  bible: SeriesProductionBible | null | undefined
+  episodeCount: number
+  onSaved: () => Promise<void>
+}) {
   const aesthetic = bible?.aesthetic
-  const empty = !aesthetic && !bible?.toneGuidelines && !bible?.visualGuidelines
+  const initialSpec = resolveSeriesArtStyleSpec({
+    seriesId,
+    seriesTitle,
+    productionBible: bible ?? undefined,
+  })
+  const [draftArtStyle, setDraftArtStyle] = useState(() => serializeArtStyleValue(initialSpec))
+  const [draftSpec, setDraftSpec] = useState<ArtStyleSpec>(initialSpec)
 
-  if (empty) {
-    return (
-      <EmptyContinuityState
-        icon={<Palette className="w-12 h-12" />}
-        title="No aesthetic guidelines yet"
-        hint="Visual style syncs from Production Stage when you push updates to the Series Bible."
-      />
-    )
+  useEffect(() => {
+    const next = resolveSeriesArtStyleSpec({
+      seriesId,
+      seriesTitle,
+      productionBible: bible ?? undefined,
+    })
+    setDraftArtStyle(serializeArtStyleValue(next))
+    setDraftSpec(next)
+  }, [seriesId, seriesTitle, bible])
+
+  const handleSaveSeriesArtStyle = async (confirmedStyle: string, confirmedSpec: ArtStyleSpec) => {
+    const res = await fetch(`/api/series/${seriesId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productionBible: {
+          aesthetic: {
+            ...(bible?.aesthetic || {}),
+            artStyle: confirmedStyle,
+            artStyleSpec: confirmedSpec,
+            artStyleLocked: true,
+            visualStyle: confirmedSpec.stylePrompt || confirmedSpec.title,
+          },
+        },
+        metadata: {
+          artStyle: confirmedStyle,
+          artStyleSpec: confirmedSpec,
+        },
+      }),
+    })
+    const data = await res.json().catch(() => null)
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || 'Failed to save Series Global Art Style')
+    }
+    toast.success(`Locked "${confirmedSpec.title}" across all episodes of ${seriesTitle}`)
+    await onSaved()
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {aesthetic?.visualStyle ? (
-        <InfoCard title="Visual Style" value={aesthetic.visualStyle} />
-      ) : null}
-      {aesthetic?.cinematography ? (
-        <InfoCard title="Cinematography" value={aesthetic.cinematography} />
-      ) : null}
-      {aesthetic?.aspectRatio ? (
-        <InfoCard title="Aspect Ratio" value={aesthetic.aspectRatio} />
-      ) : null}
-      {aesthetic?.lightingStyle ? (
-        <InfoCard title="Lighting" value={aesthetic.lightingStyle} />
-      ) : null}
-      {bible?.toneGuidelines ? (
-        <InfoCard title="Tone Guidelines" value={bible.toneGuidelines} className="md:col-span-2" />
-      ) : null}
-      {bible?.visualGuidelines ? (
-        <InfoCard title="Visual Guidelines" value={bible.visualGuidelines} className="md:col-span-2" />
+    <div className="space-y-6">
+      <ArtStyleDirectorField
+        artStyle={draftArtStyle}
+        artStyleSpec={draftSpec}
+        onArtStyleChange={(nextStyle, nextSpec) => {
+          setDraftArtStyle(nextStyle)
+          if (nextSpec) setDraftSpec(nextSpec)
+        }}
+        onConfirmSave={handleSaveSeriesArtStyle}
+        scopeLabel="series"
+        surface="gray"
+        storyContext={{
+          title: seriesTitle,
+          logline: bible?.logline,
+          storyline: bible?.synopsis,
+          tone: bible?.toneGuidelines,
+          aspectRatio: aesthetic?.aspectRatio,
+          isSeries: true,
+          episodeCount,
+        }}
+      />
+
+      {aesthetic?.cinematography ||
+      aesthetic?.aspectRatio ||
+      aesthetic?.lightingStyle ||
+      bible?.toneGuidelines ||
+      bible?.visualGuidelines ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {aesthetic?.visualStyle ? (
+            <InfoCard title="Visual Style Directive" value={aesthetic.visualStyle} />
+          ) : null}
+          {aesthetic?.cinematography ? (
+            <InfoCard title="Cinematography" value={aesthetic.cinematography} />
+          ) : null}
+          {aesthetic?.aspectRatio ? (
+            <InfoCard title="Aspect Ratio" value={aesthetic.aspectRatio} />
+          ) : null}
+          {aesthetic?.lightingStyle ? (
+            <InfoCard title="Lighting" value={aesthetic.lightingStyle} />
+          ) : null}
+          {bible?.toneGuidelines ? (
+            <InfoCard title="Tone Guidelines" value={bible.toneGuidelines} className="md:col-span-2" />
+          ) : null}
+          {bible?.visualGuidelines ? (
+            <InfoCard title="Visual Guidelines" value={bible.visualGuidelines} className="md:col-span-2" />
+          ) : null}
+        </div>
       ) : null}
     </div>
   )

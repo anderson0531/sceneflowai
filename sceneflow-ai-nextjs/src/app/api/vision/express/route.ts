@@ -13,6 +13,7 @@ import {
   formatReferenceReadinessMessage,
   resolveProjectSceneReferenceReadiness,
 } from '@/lib/vision/referenceReadiness'
+import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 
 export const runtime = 'nodejs'
 export const maxDuration = 600
@@ -135,7 +136,11 @@ async function persistExpressScenes(
             ...(orchestratedVisionPhase.lookbook
               ? { lookbook: orchestratedVisionPhase.lookbook }
               : {}),
-            artStyle: options.artStyle || freshVisionPhase.artStyle || 'photorealistic',
+            artStyle:
+              options.artStyle ||
+              resolveProjectArtStyle(freshMetadata) ||
+              freshVisionPhase.artStyle ||
+              'photorealistic',
             scenes: mergedScenes,
             scriptUpdatedAt: new Date().toISOString(),
             script: nested
@@ -252,10 +257,22 @@ export async function POST(req: NextRequest) {
   const baseUrl = `${protocol}://${host}`
   const authCookie = req.headers.get('cookie') || ''
 
+  const projectGlobalArtStyle = resolveProjectArtStyle(project.metadata)
+  const hasSeriesArtLock = Boolean(
+    project.metadata?.seriesId &&
+      projectGlobalArtStyle &&
+      projectGlobalArtStyle !== 'photorealistic'
+  )
+  const effectiveArtStyle = hasSeriesArtLock
+    ? projectGlobalArtStyle
+    : body.artStyle && body.artStyle !== 'photorealistic'
+      ? body.artStyle
+      : projectGlobalArtStyle || artStyle || 'photorealistic'
+
   const options: ExpressOptions = {
     projectId,
     language,
-    artStyle,
+    artStyle: effectiveArtStyle,
     includeMusic,
     includeSFX,
     includeEndFrames: !!includeEndFrames,

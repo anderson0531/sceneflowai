@@ -56,6 +56,8 @@ import {
   formatImagesAboveBinding,
   type ReferenceImageBinding,
 } from '@/lib/vision/referenceImageBinding'
+import { isPhotorealisticArtStyle } from '@/lib/artStyle/globalArtStyle'
+import { describeArtStyleAnchor } from '@/lib/vision/artStyle'
 
 export const STILL_SECTION_REFERENCES = '[REFERENCES]'
 export const STILL_SECTION_TASK = '[TASK]'
@@ -65,6 +67,9 @@ export const STILL_SECTION_EXCLUSIONS = '[EXCLUSIONS]'
 
 export const STILL_PURPOSE_LINE =
   'Cinematic live-action film still of this beat, photographed on 35mm. Unbroken single-camera frame, unified 16:9 cinematic perspective, seamless single-layer optical exposure. Not a video start frame. No camera motion.'
+
+export const STYLIZED_STILL_PURPOSE_LINE =
+  'Cinematic stylized film still of this beat in the project Global Art Style. Unbroken single-camera frame, unified 16:9 cinematic perspective, cohesive single-layer artwork. Not a video start frame. No camera motion.'
 
 export const STILL_WIDE_SPATIAL_LINE =
   'Continuous wide shot — one unified 16:9 cinematic perspective.'
@@ -105,6 +110,9 @@ export const STILL_TASK_INSTANT_LINES = [
   'Produce one photograph of a single instant — a 1/500s exposure, everything in it simultaneous.',
   'Choose the most legible instant of the described action and render only that instant: the settled pose a viewer reads the whole action from, not the movement that produced it.',
 ] as const
+
+export const STYLIZED_STILL_TASK_INSTANT_LINE_0 =
+  'Produce one still frame of a single instant — everything in it simultaneous.'
 
 export const STILL_TASK_FULL_BODY_LINES = [
   'Each subject has one head, two arms and two legs, each in exactly one settled pose, with anatomically distinct silhouettes.',
@@ -147,6 +155,9 @@ export const STILL_TASK_PERSON_PROP_TOKEN_LINE =
 
 /** Compact Pro TASK lead — descriptors already sit on the interleaved plates. */
 export const STILL_TASK_PRO_LEAD = 'Generate a cinematic 35mm live-action still.'
+
+export const STYLIZED_STILL_TASK_PRO_LEAD =
+  'Generate a cinematic stylized still in the project Global Art Style.'
 
 export const STILL_TASK_PAIRED_TOKEN_LINE =
   'Every person, prop, and location token in this task appears in this frame and matches its paired reference image.'
@@ -292,6 +303,8 @@ export interface StillTaskLineOptions {
    * `[REFERENCES]` wall is omitted.
    */
   includeAttachedIdentityTraits?: boolean
+  /** Use medium-neutral instant lead instead of 35mm/1/500s photography language. */
+  stylized?: boolean
 }
 
 export function stillActionHasEmptyCast(actionFraming?: string | null): boolean {
@@ -363,7 +376,9 @@ export function stillTaskLines(
   shotType?: string | null,
   options?: StillTaskLineOptions
 ): string[] {
-  const lines: string[] = [...STILL_TASK_INSTANT_LINES]
+  const lines: string[] = options?.stylized
+    ? [STYLIZED_STILL_TASK_INSTANT_LINE_0, STILL_TASK_INSTANT_LINES[1]]
+    : [...STILL_TASK_INSTANT_LINES]
   const shot = resolveStillShotClass(shotType, options?.actionFraming)
   const emptyCast =
     options?.emptyCast ?? stillActionHasEmptyCast(options?.actionFraming)
@@ -520,14 +535,36 @@ export const PIP_REPRODUCTION_EXCLUSION_TERMS = [
 export const DEFAULT_STILL_QUALITY_EXCLUSIONS =
   'Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, faceless figures, extra limbs, deformed anatomy. Maintain 100% photographic realism when art style is photorealistic.'
 
+export const DEFAULT_STYLIZED_STILL_QUALITY_EXCLUSIONS =
+  'Strictly Avoid: Photorealistic live-action photography, raw DSLR human skin pores, faceless figures, extra limbs, deformed anatomy. Maintain 100% adherence to the project Global Art Style across characters, wardrobe, props, and environment.'
+
 export const DEFAULT_STILL_TEXT_EXCLUSIONS =
   'No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).'
 
 export const DEFAULT_STILL_EXCLUSIONS =
   `${DEFAULT_STILL_QUALITY_EXCLUSIONS} ${DEFAULT_STILL_TEXT_EXCLUSIONS}`
 
-function defaultStillExclusions(allowTypography?: boolean): string {
+export const DEFAULT_STYLIZED_STILL_EXCLUSIONS =
+  `${DEFAULT_STYLIZED_STILL_QUALITY_EXCLUSIONS} ${DEFAULT_STILL_TEXT_EXCLUSIONS}`
+
+function defaultStillExclusions(allowTypography?: boolean, stylized?: boolean): string {
+  if (stylized) {
+    return allowTypography
+      ? DEFAULT_STYLIZED_STILL_QUALITY_EXCLUSIONS
+      : DEFAULT_STYLIZED_STILL_EXCLUSIONS
+  }
   return allowTypography ? DEFAULT_STILL_QUALITY_EXCLUSIONS : DEFAULT_STILL_EXCLUSIONS
+}
+
+function sanitizeStylizedExclusions(text?: string): string {
+  if (!text?.trim()) return ''
+  return text
+    .replace(/\bMaintain 100% photographic realism when art style is photorealistic\.?/gi, '')
+    .replace(/\b(?:mannequin geometry|plastic skin|cartoon style|3d render aesthetics|3d render|canvas textures)\s*,?\s*/gi, '')
+    .replace(/Strictly Avoid:\s*\./gi, '')
+    .replace(/,\s*\./g, '.')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }
 
 function stripTypographyExclusionLanguage(text: string): string {
@@ -640,14 +677,17 @@ const NEXT_SECTION =
 /** Lines this module owns and re-emits, so they must never read back as action. */
 const STILL_BOILERPLATE_LINES = [
   STILL_PURPOSE_LINE,
+  STYLIZED_STILL_PURPOSE_LINE,
   STILL_WIDE_SPATIAL_LINE,
   ...LEGACY_STILL_PURPOSE_LINES,
   BEAT_FRAME_CANDID_ACTION_CONSTRAINT,
   BEAT_FRAME_CANDID_ACTION_CONSTRAINT_FACE_CLOSE_UP,
   ...LEGACY_BEAT_FRAME_CANDID_ACTION_CONSTRAINTS,
   ...STILL_TASK_LINES,
+  STYLIZED_STILL_TASK_INSTANT_LINE_0,
   STILL_TASK_TOKEN_LINE,
   STILL_TASK_PRO_LEAD,
+  STYLIZED_STILL_TASK_PRO_LEAD,
   STILL_TASK_INSERT_FRAMING_LINE,
   STILL_TASK_OBJECT_INSERT_LINE,
   STILL_TASK_DETAIL_TOKEN_LINE,
@@ -1720,6 +1760,7 @@ export function assembleStructuredStillPrompt(input: {
   actionOrStructured: string
   refs?: StillPromptBoundRef[]
   photorealisticAnchor?: string
+  artStyle?: string | null
   includeCandid?: boolean
   exclusions?: string
   shotType?: string
@@ -1732,6 +1773,8 @@ export function assembleStructuredStillPrompt(input: {
   omitReferencesSection?: boolean
 }): string {
   const parsed = parseStillPromptSource(input.actionOrStructured)
+  const styleSignal = input.artStyle?.trim() || parsed.style
+  const isStylized = Boolean(styleSignal && !isPhotorealisticArtStyle(styleSignal))
   const boundRefs =
     input.refs && input.refs.length > 0
       ? input.refs
@@ -1748,7 +1791,9 @@ export function assembleStructuredStillPrompt(input: {
   const emptyCast = stillActionHasEmptyCast(actionFraming)
   const shot = resolveStillShotClass(input.shotType, actionFraming)
 
-  const stillLines = input.omitReferencesSection ? [] : [STILL_PURPOSE_LINE]
+  const stillLines = input.omitReferencesSection
+    ? []
+    : [isStylized ? STYLIZED_STILL_PURPOSE_LINE : STILL_PURPOSE_LINE]
   if (isWideEstablishingShotType(shot.shotHint || input.shotType)) {
     stillLines.push(STILL_WIDE_SPATIAL_LINE)
   }
@@ -1764,14 +1809,26 @@ export function assembleStructuredStillPrompt(input: {
   }
 
   let style = parsed.style
-  if (input.photorealisticAnchor && !styleAlreadyHasPhotoreal(style) && !styleAlreadyHasPhotoreal(actionFraming)) {
+  if (isStylized && !style && input.artStyle?.trim()) {
+    style = describeArtStyleAnchor(input.artStyle)
+  }
+  if (
+    !isStylized &&
+    input.photorealisticAnchor &&
+    !styleAlreadyHasPhotoreal(style) &&
+    !styleAlreadyHasPhotoreal(actionFraming)
+  ) {
     style = joinPromptBlocks(style, input.photorealisticAnchor)
   }
 
-  const mergedExclusions = mergeExclusions(
-    parsed.exclusions || defaultStillExclusions(input.allowTypography),
-    input.exclusions
-  )
+  const baseExclusions = isStylized
+    ? sanitizeStylizedExclusions(parsed.exclusions) ||
+      defaultStillExclusions(input.allowTypography, true)
+    : parsed.exclusions || defaultStillExclusions(input.allowTypography)
+  const extraExclusions = isStylized
+    ? sanitizeStylizedExclusions(input.exclusions)
+    : input.exclusions
+  const mergedExclusions = mergeExclusions(baseExclusions, extraExclusions)
   const exclusions = input.allowTypography
     ? stripTypographyExclusionLanguage(mergedExclusions)
     : mergedExclusions
@@ -1800,7 +1857,11 @@ export function assembleStructuredStillPrompt(input: {
           includeAttachedIdentityTraits: input.includeAttachedIdentityTraits,
         }),
     `${STILL_SECTION_TASK}\n${[
-      input.omitReferencesSection ? STILL_TASK_PRO_LEAD : '',
+      input.omitReferencesSection
+        ? isStylized
+          ? STYLIZED_STILL_TASK_PRO_LEAD
+          : STILL_TASK_PRO_LEAD
+        : '',
       ...stillTaskLines(input.shotType, {
         allowTypography: input.allowTypography,
         actionFraming,
@@ -1809,6 +1870,7 @@ export function assembleStructuredStillPrompt(input: {
         occupancyMode: input.omitReferencesSection ? 'paired' : 'references-section',
         includeAttachedIdentityTraits:
           Boolean(input.omitReferencesSection && input.includeAttachedIdentityTraits),
+        stylized: isStylized,
       }),
     ]
       .filter(Boolean)

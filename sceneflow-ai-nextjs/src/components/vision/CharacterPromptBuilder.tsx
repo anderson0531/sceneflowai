@@ -16,6 +16,7 @@ interface CharacterPromptBuilderProps {
   open: boolean
   onClose: () => void
   character?: any
+  defaultArtStyle?: string
   isGenerating?: boolean
   onGenerateImage: (payload: {
     character?: any
@@ -32,6 +33,7 @@ export function CharacterPromptBuilder({
   open,
   onClose,
   character,
+  defaultArtStyle,
   isGenerating = false,
   onGenerateImage
 }: CharacterPromptBuilderProps) {
@@ -39,7 +41,7 @@ export function CharacterPromptBuilder({
   const [shotType, setShotType] = useState('close-up')
   const [cameraAngle, setCameraAngle] = useState('eye-level')
   const [lighting, setLighting] = useState('natural')
-  const [artStyle, setArtStyle] = useState('') // Default to no style to prevent overrides
+  const [artStyle, setArtStyle] = useState(defaultArtStyle || '') // Seed from Global Art Style when provided
   const [additionalDetails, setAdditionalDetails] = useState('')
   // Modes & prompt state
   const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
@@ -52,6 +54,12 @@ export function CharacterPromptBuilder({
   // UI
   const [copied, setCopied] = useState(false)
 
+  useEffect(() => {
+    if (open && defaultArtStyle && !artStyle) {
+      setArtStyle(defaultArtStyle)
+    }
+  }, [open, defaultArtStyle, artStyle])
+
   // Build base prompt from character attributes when opened
   useEffect(() => {
     if (!open) return
@@ -60,10 +68,14 @@ export function CharacterPromptBuilder({
       return
     }
 
-    const constructed = buildCharacterIdentityReferencePromptFromCharacter(character)
+    const effectiveStyle = artStyle || defaultArtStyle
+    const constructed = buildCharacterIdentityReferencePromptFromCharacter(
+      character,
+      effectiveStyle
+    )
     setBasePrompt(constructed)
     if (!hasUserEditedAdvanced) setAdvancedPrompt(constructed)
-  }, [open, character, hasUserEditedAdvanced])
+  }, [open, character, artStyle, defaultArtStyle, hasUserEditedAdvanced])
 
   // Cleanup on close - reset all state including hasUserEditedAdvanced to ensure fresh prompts
   useEffect(() => {
@@ -210,6 +222,20 @@ export function CharacterPromptBuilder({
               </div>
               <div className="mt-4 space-y-4 p-3 rounded border border-gray-700 bg-gray-800/50">
                 <h3 className="text-sm font-semibold text-gray-200">Art Style</h3>
+                {defaultArtStyle && !artStylePresets.some((s) => s.id === defaultArtStyle) ? (
+                  <button
+                    type="button"
+                    onClick={() => setArtStyle(defaultArtStyle)}
+                    className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition ${
+                      artStyle === defaultArtStyle
+                        ? 'border-cyan-400 bg-cyan-500/10'
+                        : 'border-gray-700 bg-gray-800/50 hover:bg-gray-800'
+                    }`}
+                  >
+                    <div className="font-semibold text-cyan-200">Global Art Style (Project Lock)</div>
+                    <div className="text-[10px] text-gray-300 line-clamp-2">{defaultArtStyle}</div>
+                  </button>
+                ) : null}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {artStylePresets.map(style => (
                     <button

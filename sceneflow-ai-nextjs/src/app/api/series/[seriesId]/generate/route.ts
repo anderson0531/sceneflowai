@@ -13,6 +13,11 @@ import { getGeminiProductModel } from '@/lib/config/modelConfig'
 import { buildArtStylePromptBlock, getArtStylePresetName } from '@/lib/treatment/blueprintFoundation'
 import { resolveSeriesArtStyle } from '@/lib/series/seriesIdeation'
 import {
+  isArtStyleSpecLike,
+  resolveSeriesArtStyleSpec,
+  serializeArtStyleValue,
+} from '@/lib/artStyle/globalArtStyle'
+import {
   getSeriesFormatMapping,
   seriesBibleSchemaBlock,
   seriesBibleTaskBlock,
@@ -229,9 +234,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         ? (series.metadata as Record<string, unknown>)
         : {}
     const requestedArtStyle = typeof artStyle === 'string' ? artStyle.trim() : ''
-    const storedArtStyle =
-      typeof existingMetaForStyle.artStyle === 'string' ? existingMetaForStyle.artStyle.trim() : ''
-    const lockedArtStyleId = requestedArtStyle || storedArtStyle || undefined
+    const requestedArtStyleSpec = isArtStyleSpecLike((body as any)?.artStyleSpec)
+      ? (body as any).artStyleSpec
+      : undefined
+    const resolvedSeriesStyleSpec = resolveSeriesArtStyleSpec({
+      seriesId,
+      seriesTitle: series.title,
+      artStyle: requestedArtStyle || undefined,
+      artStyleSpec: requestedArtStyleSpec,
+      metadata: existingMetaForStyle,
+      productionBible: series.production_bible,
+    })
+    const lockedSeriesStyleSpec = {
+      ...resolvedSeriesStyleSpec,
+      confirmed: true,
+      source: 'series' as const,
+      lockedBySeriesId: seriesId,
+      lockedBySeriesTitle: series.title,
+    }
+    const lockedArtStyleId = serializeArtStyleValue(lockedSeriesStyleSpec)
 
     if (regenerateField) {
       // Regenerate specific field
@@ -259,13 +280,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     updatedBible.version = incrementVersion(currentBible.version || '1.0.0')
     updatedBible.lastUpdated = new Date().toISOString()
     if (lockedArtStyleId) {
-      const resolvedArtStyle = resolveSeriesArtStyle({ artStyle: lockedArtStyleId })
+      const resolvedArtStyle = resolveSeriesArtStyle({
+        artStyle: lockedArtStyleId,
+        artStyleSpec: lockedSeriesStyleSpec,
+      })
+      const finalSpec = {
+        ...lockedSeriesStyleSpec,
+        lockedBySeriesTitle: generatedData.title && !preserveExisting ? generatedData.title : series.title,
+      }
       updatedBible.aesthetic = {
         ...(updatedBible.aesthetic && typeof updatedBible.aesthetic === 'object'
           ? updatedBible.aesthetic
           : {}),
         artStyle: resolvedArtStyle,
-        visualStyle: getArtStylePresetName(resolvedArtStyle),
+        artStyleSpec: finalSpec,
+        artStyleLocked: true,
+        visualStyle:
+          finalSpec.presetId && finalSpec.presetId !== 'custom'
+            ? getArtStylePresetName(resolvedArtStyle)
+            : finalSpec.stylePrompt || finalSpec.title,
       }
     }
     
@@ -288,7 +321,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         ...existingMeta,
         format,
         ...(lockedArtStyleId
-          ? { artStyle: resolveSeriesArtStyle({ artStyle: lockedArtStyleId }) }
+          ? {
+              artStyle: resolveSeriesArtStyle({
+                artStyle: lockedArtStyleId,
+                artStyleSpec: lockedSeriesStyleSpec,
+              }),
+              artStyleSpec: updatedBible.aesthetic?.artStyleSpec ?? lockedSeriesStyleSpec,
+            }
           : {}),
         ...(preservedIdeaTopic !== undefined && preservedIdeaTopic !== null
           ? { ideaTopic: preservedIdeaTopic }

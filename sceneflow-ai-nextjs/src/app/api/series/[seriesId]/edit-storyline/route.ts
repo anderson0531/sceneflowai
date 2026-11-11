@@ -211,6 +211,19 @@ async function refactorProductionBible(
     }
   }
   
+  const { resolveSeriesArtStyleSpec, serializeArtStyleValue } = await import('@/lib/artStyle/globalArtStyle')
+  const { buildArtStylePromptBlock } = await import('@/lib/treatment/blueprintFoundation')
+  const seriesStyleSpec = resolveSeriesArtStyleSpec({
+    seriesId: series.id,
+    seriesTitle: series.title,
+    metadata: series.metadata,
+    productionBible: currentBible,
+  })
+  const artStyleBlock = buildArtStylePromptBlock(
+    serializeArtStyleValue(seriesStyleSpec),
+    seriesStyleSpec
+  )
+
   const prompt = `You are a TV series showrunner refactoring a storyline based on user instruction.
 
 INSTRUCTION: "${instruction}"
@@ -223,6 +236,7 @@ Synopsis: ${currentBible.synopsis || 'Not set'}
 Protagonist: ${JSON.stringify(currentBible.protagonist || {})}
 Characters: ${JSON.stringify((currentBible.characters || []).slice(0, 6))}
 Locations: ${JSON.stringify((currentBible.locations || []).slice(0, 8))}
+${artStyleBlock}
 
 TASK: Apply the instruction to the TARGET ASPECT and related fields only.
 - plot/all: logline + synopsis

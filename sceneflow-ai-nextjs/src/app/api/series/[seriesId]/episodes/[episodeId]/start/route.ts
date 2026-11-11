@@ -12,6 +12,7 @@ import {
   resolveSeriesTone,
 } from '@/lib/series/episodeBlueprintBrief'
 import { getArtStylePresetName } from '@/lib/treatment/blueprintFoundation'
+import { resolveSeriesArtStyleSpec, serializeArtStyleValue } from '@/lib/artStyle/globalArtStyle'
 import { v4 as uuidv4 } from 'uuid'
 
 export const dynamic = 'force-dynamic'
@@ -88,14 +89,26 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const seriesTone = resolveSeriesTone(bible)
     console.log(`[${timestamp}] [DEBUG_START_PROJECT] Built prime input (len: ${blueprintPrimeInput.length}):`, blueprintPrimeInput.substring(0, 100).replace(/\n/g, ' '));
 
-    // Inherit the shared audience definition from the series so every episode
-    // blueprint is analyzed against the same audience.
+    // Inherit the shared audience definition & locked Global Art Style from the series
+    // so every episode blueprint and production matches the Shared Continuity Library.
     const seriesMeta = (series.metadata || {}) as Record<string, any>
-    const seriesArtStyle = resolveSeriesArtStyle({
-      metadata: seriesMeta,
-      productionBible: bible,
-    })
-    const seriesArtStyleName = getArtStylePresetName(seriesArtStyle)
+    const seriesArtStyleSpec = {
+      ...resolveSeriesArtStyleSpec({
+        seriesId,
+        seriesTitle: series.title,
+        metadata: seriesMeta,
+        productionBible: bible,
+      }),
+      confirmed: true,
+      source: 'series' as const,
+      lockedBySeriesId: seriesId,
+      lockedBySeriesTitle: series.title,
+    }
+    const seriesArtStyle = serializeArtStyleValue(seriesArtStyleSpec)
+    const seriesArtStyleName =
+      seriesArtStyleSpec.presetId && seriesArtStyleSpec.presetId !== 'custom'
+        ? getArtStylePresetName(seriesArtStyle)
+        : seriesArtStyleSpec.stylePrompt || seriesArtStyleSpec.title
     const seriesDef = seriesMeta.audienceDefinition as
       | { description?: string }
       | undefined
@@ -132,6 +145,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         genre: series.genre || undefined,
         tone: seriesTone,
         artStyle: seriesArtStyle,
+        artStyleSpec: seriesArtStyleSpec,
         aspectRatio: bible.aesthetic?.aspectRatio || '16:9',
         contentIntent: resolveContentIntentFromMetadata({
           format: series.metadata?.format,
@@ -143,11 +157,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         // Episode seed from series bible (do not store under approvedTreatment
         // so Studio does not mistake the ungenerated episode outline for a
         // completed Blueprint and skip first-pass generation)
-        episodeSeed: treatmentFromEpisode,
+        episodeSeed: {
+          ...treatmentFromEpisode,
+          artStyle: seriesArtStyle,
+          artStyleSpec: seriesArtStyleSpec,
+          visual_style: seriesArtStyleName,
+        },
         
-        // Vision phase with inherited characters
+        // Vision phase with inherited characters & locked Series Art Style
         visionPhase: {
           artStyle: seriesArtStyle,
+          artStyleSpec: seriesArtStyleSpec,
           characters: visionPhaseCharacters,
           scenes: [],
           references: {
@@ -161,9 +181,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           }
         },
         
-        // Series reference library reference (for "Save to Bible" feature)
+        // Series reference library reference (enforces Series Art Style Lock across Production)
         seriesBibleRef: {
           version: bible.version,
+          seriesTitle: series.title,
+          aesthetic: {
+            ...(bible.aesthetic || {}),
+            artStyle: seriesArtStyle,
+            artStyleSpec: seriesArtStyleSpec,
+            artStyleLocked: true,
+            visualStyle: seriesArtStyleName,
+          },
           syncedAt: new Date().toISOString()
         }
       }

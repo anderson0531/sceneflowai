@@ -43,6 +43,7 @@ import {
 import { normalizeStreamLanguage } from '@/lib/scene/languageClipVersions'
 import { resolvePromoNarrationVoiceId } from '@/lib/publish/promoNarrationVoice'
 import { promoShotIncluded, sanitizePromoTimeline } from '@/lib/publish/promoTimeline'
+import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import {
   DEFAULT_GEMINI_TTS_MODEL,
   NARRATION_CHUNK_BYTES,
@@ -560,6 +561,7 @@ export async function POST(request: NextRequest) {
         campaignObjective,
         campaignLanguages: targetLanguages,
         promoAspect: aspect,
+        artStyleId: resolveProjectArtStyle(metadata),
       })
       scenes = upsertPromoSceneInScenes(scenes, scene, {
         promoId: scene.id,
@@ -635,6 +637,7 @@ export async function POST(request: NextRequest) {
         campaignObjective,
         campaignLanguages: targetLanguages,
         promoAspect: aspect,
+        artStyleId: resolveProjectArtStyle(metadata),
       })
 
       scenes = upsertPromoSceneInScenes(scenes, scene, {
@@ -798,6 +801,7 @@ export async function POST(request: NextRequest) {
             : campaignObjective,
         campaignLanguages: targetLanguages,
         promoAspect: aspect,
+        artStyleId: resolveProjectArtStyle(metadata),
       })
 
       const priorAudio =

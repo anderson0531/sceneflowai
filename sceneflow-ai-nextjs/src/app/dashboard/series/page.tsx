@@ -73,6 +73,7 @@ export default function SeriesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [format, setFormat] = useState(DEFAULT_SERIES_PRODUCTION_FORMAT)
   const [artStyle, setArtStyle] = useState(DEFAULT_ART_STYLE)
+  const [artStyleSpec, setArtStyleSpec] = useState<import('@/lib/artStyle/globalArtStyle').ArtStyleSpec | null>(null)
   const [episodeCount, setEpisodeCount] = useState<number>(NEW_SERIES_EPISODE_COUNT)
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ description: '', source: 'series' })
@@ -113,6 +114,7 @@ export default function SeriesPage() {
   const resetCreateForm = () => {
     setFormat(DEFAULT_SERIES_PRODUCTION_FORMAT)
     setArtStyle(DEFAULT_ART_STYLE)
+    setArtStyleSpec(null)
     setEpisodeCount(NEW_SERIES_EPISODE_COUNT)
     setAudienceDef(createAudienceDefinition({ description: '', source: 'series' }))
     setLockedSynopsis(null)
@@ -140,6 +142,7 @@ export default function SeriesPage() {
           ideaTopic,
           format,
           artStyle,
+          ...(artStyleSpec ? { artStyleSpec: { ...artStyleSpec, confirmed: true, source: 'series' } } : {}),
           genre: lockedSynopsis?.genre,
           tone: lockedSynopsis?.tone,
           episodeCount,
@@ -429,7 +432,11 @@ export default function SeriesPage() {
               audience={audienceDef}
               onAudienceChange={setAudienceDef}
               artStyle={artStyle}
-              onArtStyleChange={setArtStyle}
+              artStyleSpec={artStyleSpec}
+              onArtStyleChange={(nextStyle, nextSpec) => {
+                setArtStyle(nextStyle)
+                if (nextSpec) setArtStyleSpec(nextSpec)
+              }}
               episodeCount={episodeCount}
               showEpisodeHint
               initialLock={lockedSynopsis}

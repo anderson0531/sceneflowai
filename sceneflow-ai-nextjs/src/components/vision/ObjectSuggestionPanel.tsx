@@ -98,6 +98,8 @@ interface ObjectSuggestionPanelProps {
     options?: { waitUntilDone?: boolean }
   ) => Promise<unknown>
   isExpressGeneratingReferences?: boolean
+  projectId?: string
+  artStyle?: string
 }
 
 export interface AutoAddedObject {
@@ -264,6 +266,8 @@ export function ObjectSuggestionPanel({
   onDeleteDuplicateObjects,
   onIgnoreObjectDuplicates,
   objectDuplicateIgnores = [],
+  projectId,
+  artStyle,
 }: ObjectSuggestionPanelProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isUpdatingObjects, setIsUpdatingObjects] = useState(false)
@@ -351,7 +355,8 @@ export function ObjectSuggestionPanel({
           description: s.description,
           beats: slimSceneForObjectUsage(s, idx).beats
         })),
-        existingObjects: existingObjects.map(o => o.name)
+        existingObjects: existingObjects.map(o => o.name),
+        artStyle,
       })
     })
 
@@ -362,7 +367,7 @@ export function ObjectSuggestionPanel({
 
     const data = await response.json()
     return (data.suggestions || []) as ObjectSuggestion[]
-  }, [scenes, existingObjects])
+  }, [scenes, existingObjects, artStyle])
 
   const addMissingSuggestionsAsRows = async (nextSuggestions: ObjectSuggestion[]) => {
     if (!onObjectsAutoAdded) return 0
@@ -477,6 +482,8 @@ export function ObjectSuggestionPanel({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          projectId,
+          artStyle,
           name: suggestion.name,
           description: suggestion.description,
           prompt,
@@ -515,7 +522,7 @@ export function ObjectSuggestionPanel({
         return next
       })
     }
-  }, [onObjectGenerated])
+  }, [onObjectGenerated, projectId, artStyle])
 
   const handleDismiss = useCallback((id: string) => {
     setSuggestions(prev => prev.filter(s => s.id !== id))
@@ -564,6 +571,8 @@ export function ObjectSuggestionPanel({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              projectId,
+              artStyle,
               name: suggestion.name,
               description: suggestion.description,
               prompt: suggestion.suggestedPrompt,

@@ -11,6 +11,8 @@ import {
 } from '@/config/series/productionFormats'
 import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPrompt'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
+import { buildArtStylePromptBlock } from '@/lib/treatment/blueprintFoundation'
+import type { ArtStyleSpec } from '@/lib/artStyle/globalArtStyle'
 
 export interface EpisodeBatchPromptInput {
   seriesTitle: string
@@ -20,6 +22,8 @@ export interface EpisodeBatchPromptInput {
   tone?: string
   format?: string
   contentIntent?: ContentIntent
+  artStyle?: string
+  artStyleSpec?: Partial<ArtStyleSpec> | null
   characters?: Array<{ name?: string; role?: string; description?: string }>
   protagonist?: { name?: string; goal?: string; flaw?: string; characterId?: string }
   antagonistConflict?: { description?: string; type?: string }
@@ -347,7 +351,7 @@ Generate ${input.count} NEW episodes starting from Episode ${input.startEpisodeN
 ${continuationRules}
 
 ${mapping.mappingInstruction}
-${languageBlock}
+${input.artStyle || input.artStyleSpec ? `${buildArtStylePromptBlock(input.artStyle, input.artStyleSpec)}\nKeep every installment strictly in this locked series art style.\n` : ''}${languageBlock}
 Return ONLY valid JSON array:
 [
   {

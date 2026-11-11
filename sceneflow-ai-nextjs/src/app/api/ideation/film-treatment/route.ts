@@ -425,9 +425,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const {
+      buildArtStyleSpecFromValue,
+      isArtStyleSpecLike,
+      resolveProjectArtStyleSpec,
+      resolveSeriesArtStyleSpec,
+      serializeArtStyleValue,
+    } = await import('@/lib/artStyle/globalArtStyle')
+
     const bodyArtStyle = (body as any).artStyle || (body as any).visualStyle
+    const bodyArtStyleSpec = isArtStyleSpecLike((body as any).artStyleSpec)
+      ? (body as any).artStyleSpec
+      : undefined
     const bodyAspectRatio = (body as any).aspectRatio
-    const lockedArtStyle = bodyArtStyle ? resolveVariantArtStyle({ artStyle: bodyArtStyle, visual_style: bodyArtStyle }) : DEFAULT_ART_STYLE
+    let effectiveArtStyleSpec = bodyArtStyle || bodyArtStyleSpec
+      ? buildArtStyleSpecFromValue(bodyArtStyle, bodyArtStyleSpec)
+      : buildArtStyleSpecFromValue(DEFAULT_ART_STYLE)
     const lockedAspectRatio = isBlueprintAspectRatio(bodyAspectRatio) ? bodyAspectRatio : DEFAULT_ASPECT_RATIO
 
     let seriesContinuityBlock = ''
@@ -437,6 +450,31 @@ export async function POST(request: NextRequest) {
       try {
         const project = await Project.findByPk(body.projectId)
         if (project?.user_id === session.user.id) {
+          // Enforce Series Consistency Lock if this Blueprint belongs to a Series!
+          const linkedSeriesId =
+            project.series_id || (project.metadata as any)?.seriesId || body.seriesId
+          if (linkedSeriesId) {
+            const SeriesModel = (await import('@/models/Series')).default
+            const linkedSeries = await SeriesModel.findByPk(linkedSeriesId)
+            if (linkedSeries) {
+              effectiveArtStyleSpec = {
+                ...resolveSeriesArtStyleSpec({
+                  seriesId: linkedSeriesId,
+                  seriesTitle: linkedSeries.title,
+                  metadata: linkedSeries.metadata,
+                  productionBible: linkedSeries.production_bible,
+                }),
+                confirmed: true,
+                source: 'series',
+                lockedBySeriesId: linkedSeriesId,
+                lockedBySeriesTitle: linkedSeries.title,
+              }
+            } else {
+              effectiveArtStyleSpec = resolveProjectArtStyleSpec(project.metadata)
+            }
+          } else if (!bodyArtStyle && !bodyArtStyleSpec) {
+            effectiveArtStyleSpec = resolveProjectArtStyleSpec(project.metadata)
+          }
           const continuityCtx = await loadContinuityContextForProject(project)
           if (continuityCtx) {
             seriesContinuityBlock = continuityCtx.continuityPromptBlock
@@ -457,6 +495,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const lockedArtStyle = serializeArtStyleValue(effectiveArtStyleSpec)
+
     const context = { 
       targetAudience, 
       keyMessage, 
@@ -467,8 +507,12 @@ export async function POST(request: NextRequest) {
       format, 
       contentIntent,
       artStyle: lockedArtStyle,
+      artStyleSpec: effectiveArtStyleSpec,
       aspectRatio: lockedAspectRatio,
-      visualStyle: getArtStylePresetName(lockedArtStyle),
+      visualStyle:
+        effectiveArtStyleSpec.presetId && effectiveArtStyleSpec.presetId !== 'custom'
+          ? getArtStylePresetName(lockedArtStyle)
+          : effectiveArtStyleSpec.stylePrompt || effectiveArtStyleSpec.title,
       targetMinutes: cappedTargetMinutes, 
       autoScope,
       advisoryScopeLabel,
@@ -644,8 +688,9 @@ async function generateFilmTreatment(
     const result = {
       // Legacy minimal
       film_treatment: filmTreatmentText,
-      visual_style: parsed.visual_style || parsed.style || getArtStylePresetName(context?.artStyle || DEFAULT_ART_STYLE),
+      visual_style: parsed.visual_style || parsed.style || context?.visualStyle || getArtStylePresetName(context?.artStyle || DEFAULT_ART_STYLE),
       artStyle: context?.artStyle || DEFAULT_ART_STYLE,
+      ...(context?.artStyleSpec ? { artStyleSpec: context.artStyleSpec } : {}),
       aspectRatio: context?.aspectRatio || DEFAULT_ASPECT_RATIO,
       tone_description: parsed.tone_description || parsed.tone || context?.tone || DEFAULT_BLUEPRINT_TONE,
       target_audience: parsed.target_audience || 'General audience',

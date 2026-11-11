@@ -2,8 +2,32 @@
  * Prompt builders for character identity reference images (Pre-Vis / scene generation).
  */
 
+import {
+  buildArtStyleSpecFromValue,
+  isPhotorealisticArtStyle,
+} from '@/lib/artStyle/globalArtStyle'
+
 export const CHARACTER_IDENTITY_REFERENCE_ANCHOR =
   'Photorealistic headshot to be used as a character reference.'
+
+const STYLIZED_IDENTITY_ANCHOR_RE = /^[^\n]+ character identity reference portrait\./i
+
+function buildStylizedIdentityDirectives(artStyle: string): {
+  anchor: string
+  directives: string
+} {
+  const spec = buildArtStyleSpecFromValue(artStyle)
+  return {
+    anchor: `${spec.title} character identity reference portrait.`,
+    directives: [
+      'Framing: vertical 9:16 portrait, face dominant in frame, eyes in the upper third, head-and-shoulders only — no wide establishing crop.',
+      'Expression: neutral relaxed expression, mouth closed, direct eye contact.',
+      'Lighting: clear studio key light with crisp catchlights in both eyes; clean readable facial features.',
+      'Background: plain neutral gray studio backdrop, no props or distractions.',
+      `Style: ${spec.characterRefDirective}`,
+    ].join('\n'),
+  }
+}
 
 /** Shared photographic realism block for identity headshots and enhance-reference. */
 export const IDENTITY_PHOTO_REALISM_DIRECTIVES = [
@@ -35,10 +59,16 @@ export type EnhanceIdentitySource = 'description' | 'photo'
 /** Body paragraph inside a wrapped identity prompt. A bare appearance string is returned as-is. */
 export function identityAppearanceFromPrompt(prompt: string): string {
   const trimmed = prompt.trim()
-  if (!trimmed.includes(CHARACTER_IDENTITY_REFERENCE_ANCHOR)) return trimmed
-  const afterAnchor = trimmed
-    .slice(trimmed.indexOf(CHARACTER_IDENTITY_REFERENCE_ANCHOR) + CHARACTER_IDENTITY_REFERENCE_ANCHOR.length)
-    .trim()
+  let afterAnchor = ''
+  if (trimmed.includes(CHARACTER_IDENTITY_REFERENCE_ANCHOR)) {
+    afterAnchor = trimmed
+      .slice(trimmed.indexOf(CHARACTER_IDENTITY_REFERENCE_ANCHOR) + CHARACTER_IDENTITY_REFERENCE_ANCHOR.length)
+      .trim()
+  } else {
+    const stylizedMatch = trimmed.match(STYLIZED_IDENTITY_ANCHOR_RE)
+    if (!stylizedMatch) return trimmed
+    afterAnchor = trimmed.slice(stylizedMatch[0].length).trim()
+  }
   const lockAt = afterAnchor.indexOf(IDENTITY_APPEARANCE_LOCK)
   const body = (lockAt >= 0 ? afterAnchor.slice(0, lockAt) : afterAnchor).trim()
   return body || trimmed
@@ -49,6 +79,8 @@ export interface CharacterIdentityReferencePromptInput {
   wardrobeDescription?: string | null
   /** When true, omit wardrobe line (enhance pass uses appearance only). */
   omitWardrobe?: boolean
+  /** Global project/series art style ID or custom ArtStyleSpec string. */
+  artStyle?: string | null
 }
 
 export interface CharacterForWardrobeResolution {
@@ -76,6 +108,8 @@ export interface FullBodyWardrobePromptInput {
   baseWardrobeDescription?: string
   /** Name of the base or preceding wardrobe (e.g. "Default", "Scene 1"). */
   baseWardrobeName?: string
+  /** Global project/series art style ID or custom ArtStyleSpec string. */
+  artStyle?: string | null
 }
 
 export interface WardrobeTransitionCandidate {
@@ -285,8 +319,23 @@ export function buildCharacterIdentityReferencePrompt(
   input: CharacterIdentityReferencePromptInput
 ): string {
   const appearance = input.appearanceDescription.trim()
+  const rawStyle = input.artStyle?.trim()
+  const isDefaultPhotoreal = !rawStyle || rawStyle === 'photorealistic'
+  const isLiveAction = isDefaultPhotoreal || isPhotorealisticArtStyle(rawStyle)
+
+  let anchor = CHARACTER_IDENTITY_REFERENCE_ANCHOR
+  let styleDirectives = IDENTITY_PHOTO_REALISM_DIRECTIVES
+  if (!isLiveAction && rawStyle) {
+    const stylized = buildStylizedIdentityDirectives(rawStyle)
+    anchor = stylized.anchor
+    styleDirectives = stylized.directives
+  } else if (!isDefaultPhotoreal && rawStyle) {
+    const spec = buildArtStyleSpecFromValue(rawStyle)
+    styleDirectives = `${IDENTITY_PHOTO_REALISM_DIRECTIVES}\nGlobal Art Style grade: ${spec.stylePrompt}.`
+  }
+
   const lines = [
-    CHARACTER_IDENTITY_REFERENCE_ANCHOR,
+    anchor,
     '',
     appearance,
     '',
@@ -294,7 +343,7 @@ export function buildCharacterIdentityReferencePrompt(
     '',
     IDENTITY_ANTI_LIKENESS_DIRECTIVES,
     '',
-    IDENTITY_PHOTO_REALISM_DIRECTIVES,
+    styleDirectives,
   ]
 
   if (!input.omitWardrobe) {
@@ -308,11 +357,13 @@ export function buildCharacterIdentityReferencePrompt(
 }
 
 export function buildCharacterIdentityReferencePromptFromCharacter(
-  character: CharacterForWardrobeResolution & Parameters<typeof buildAppearanceDescriptionFromAttributes>[0]
+  character: CharacterForWardrobeResolution & Parameters<typeof buildAppearanceDescriptionFromAttributes>[0],
+  artStyle?: string | null
 ): string {
   return buildCharacterIdentityReferencePrompt({
     appearanceDescription: buildAppearanceDescriptionFromAttributes(character),
     wardrobeDescription: resolveDefaultWardrobeDescription(character),
+    artStyle,
   })
 }
 
@@ -324,32 +375,53 @@ export function buildEnhanceIdentityReferencePrompt(input: {
   subjectDescription?: string
   /** description: written body wins. photo: keep the person already in the picture. */
   identitySource?: EnhanceIdentitySource
+  artStyle?: string | null
 }): string {
   const appearance = input.appearanceDescription.trim()
   const fromDescription = input.identitySource === 'description'
+  const rawStyle = input.artStyle?.trim()
+  const isLiveAction = !rawStyle || rawStyle === 'photorealistic' || isPhotorealisticArtStyle(rawStyle)
+
   const subjectLine = fromDescription
     ? `Subject: ${appearance}`
     : input.subjectDescription?.trim()
       ? `Subject: ${input.subjectDescription}.`
-      : 'Subject: the exact person shown in the reference photo.'
+      : isLiveAction
+        ? 'Subject: the exact person shown in the reference photo.'
+        : 'Subject: the exact character shown in the reference image.'
+
+  const prefixLine = isLiveAction
+    ? fromDescription
+      ? ENHANCE_IDENTITY_FROM_DESCRIPTION_PREFIX
+      : ENHANCE_IDENTITY_REFERENCE_PREFIX
+    : fromDescription
+      ? `Polish this into a clean character reference portrait in ${buildArtStyleSpecFromValue(rawStyle).title}. The written identity overrides the draft image wherever they disagree.`
+      : `Refine this character reference portrait in ${buildArtStyleSpecFromValue(rawStyle).title}. Preserve the exact character design, facial features, age, ethnicity, and hairstyle.`
 
   const lines = [
-    fromDescription ? ENHANCE_IDENTITY_FROM_DESCRIPTION_PREFIX : ENHANCE_IDENTITY_REFERENCE_PREFIX,
+    prefixLine,
     '',
     subjectLine,
   ]
   if (!fromDescription && appearance) {
     lines.push('', appearance)
   }
+
+  const styleDirectives = isLiveAction
+    ? IDENTITY_PHOTO_REALISM_DIRECTIVES
+    : buildStylizedIdentityDirectives(rawStyle!).directives
+
   lines.push(
     '',
     IDENTITY_ANTI_LIKENESS_DIRECTIVES,
     '',
-    IDENTITY_PHOTO_REALISM_DIRECTIVES,
+    styleDirectives,
     '',
     fromDescription
       ? 'Correct ethnicity, skin tone, age, face shape, hair, and eyes to the written identity. The reference photo is only the starting composition.'
-      : 'Transform lighting to bright professional studio quality while keeping facial features identical to the reference.',
+      : isLiveAction
+        ? 'Transform lighting to bright professional studio quality while keeping facial features identical to the reference.'
+        : 'Refine studio lighting and linework/shading clarity while keeping facial features and art style identical to the reference.',
   )
 
   const wardrobe = input.wardrobeDescription?.trim()
@@ -369,18 +441,38 @@ export function buildFullBodyWardrobePrompt(input: FullBodyWardrobePromptInput):
     Boolean
   ) as string[]
 
-  const lines = [
-    FULL_BODY_WARDROBE_REFERENCE_ANCHOR,
-    '',
-    `Character: ${input.characterName}. Same real person as the attached identity reference photo — match face exactly.`,
-    '',
-    'Pose: full-length front-facing standing pose, relaxed neutral stance, head to feet visible including footwear.',
-    'Hands: empty and visible at the sides. The subject holds, carries, or wears NO props — no tools, weapons, bags, documents, books, phones, cups, or objects of any kind. This image is copied as costume into every downstream frame, so anything held here appears in scenes that never directed it.',
-    'Framing: single subject centered, entire outfit visible with no cropping at ankles or head.',
-    'Background: plain neutral gray studio backdrop matching the identity headshot.',
-    'Lighting: soft even studio lighting, photorealistic human photography.',
-    'Style: photorealistic only — no illustration, mannequin, faceless figure, or turnaround sheet layout.',
-  ]
+  const rawStyle = input.artStyle?.trim()
+  const isDefaultPhotoreal = !rawStyle || rawStyle === 'photorealistic'
+  const isLiveAction = isDefaultPhotoreal || isPhotorealisticArtStyle(rawStyle)
+  const spec = !isDefaultPhotoreal && rawStyle ? buildArtStyleSpecFromValue(rawStyle) : undefined
+
+  const lines = isLiveAction
+    ? [
+        FULL_BODY_WARDROBE_REFERENCE_ANCHOR,
+        '',
+        `Character: ${input.characterName}. Same real person as the attached identity reference photo — match face exactly.`,
+        '',
+        'Pose: full-length front-facing standing pose, relaxed neutral stance, head to feet visible including footwear.',
+        'Hands: empty and visible at the sides. The subject holds, carries, or wears NO props — no tools, weapons, bags, documents, books, phones, cups, or objects of any kind. This image is copied as costume into every downstream frame, so anything held here appears in scenes that never directed it.',
+        'Framing: single subject centered, entire outfit visible with no cropping at ankles or head.',
+        'Background: plain neutral gray studio backdrop matching the identity headshot.',
+        'Lighting: soft even studio lighting, photorealistic human photography.',
+        spec
+          ? `Style: photorealistic only (${spec.stylePrompt}) — no illustration, mannequin, faceless figure, or turnaround sheet layout.`
+          : 'Style: photorealistic only — no illustration, mannequin, faceless figure, or turnaround sheet layout.',
+      ]
+    : [
+        `${spec!.title} full-body wardrobe reference for cinematic character consistency.`,
+        '',
+        `Character: ${input.characterName}. Exact same character design and face as the attached identity reference — match facial features, proportions, and ${spec!.title} art style exactly.`,
+        '',
+        'Pose: full-length front-facing standing pose, relaxed neutral stance, head to feet visible including footwear.',
+        'Hands: empty and visible at the sides. The subject holds, carries, or wears NO props — no tools, weapons, bags, documents, books, phones, cups, or objects of any kind. This image is copied as costume into every downstream frame, so anything held here appears in scenes that never directed it.',
+        'Framing: single subject centered, entire outfit visible with no cropping at ankles or head.',
+        'Background: plain neutral gray studio backdrop matching the identity headshot.',
+        `Lighting: clean even studio lighting matching ${spec!.title}.`,
+        `Style: ${spec!.characterRefDirective} No mannequin, faceless figure, turnaround sheet layout, or live-action human photography.`,
+      ]
 
   if (input.hairAnchor?.trim()) {
     lines.push(`Hairstyle (match identity reference): ${input.hairAnchor.trim()}.`)
@@ -418,7 +510,9 @@ export function buildFullBodyWardrobePrompt(input: FullBodyWardrobePromptInput):
 
   lines.push(
     '',
-    'The face must match the attached identity reference exactly for bone structure and likeness.',
+    isLiveAction
+      ? 'The face must match the attached identity reference exactly for bone structure and likeness.'
+      : `The face and art style must match the attached identity reference exactly in ${spec!.title}.`,
     'This image is the wardrobe source of truth for outfit AND any visible scene marks (bruises, wounds, makeup wear) in downstream frames.'
   )
 
@@ -426,5 +520,8 @@ export function buildFullBodyWardrobePrompt(input: FullBodyWardrobePromptInput):
 }
 
 export function promptHasIdentityReferenceAnchor(prompt: string): boolean {
-  return prompt.includes(CHARACTER_IDENTITY_REFERENCE_ANCHOR)
+  return (
+    prompt.includes(CHARACTER_IDENTITY_REFERENCE_ANCHOR) ||
+    STYLIZED_IDENTITY_ANCHOR_RE.test(prompt.trim())
+  )
 }

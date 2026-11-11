@@ -5,6 +5,12 @@ import { Project } from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { resolveUser } from '@/lib/userHelper'
 import { resetEpisodesForMissingProjects } from '@/lib/series/seriesHealth'
+import {
+  applyArtStyleToProjectMetadata,
+  isArtStyleSpecLike,
+  resolveSeriesArtStyleSpec,
+  serializeArtStyleValue,
+} from '@/lib/artStyle/globalArtStyle'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -146,27 +152,129 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
     
     // Merge reference library (partial update)
-    if (productionBible !== undefined) {
-      const currentBible = series.production_bible || {}
-      updates.production_bible = {
-        ...currentBible,
-        ...productionBible,
-        version: incrementVersion(currentBible.version || '1.0.0'),
-        lastUpdated: new Date().toISOString()
+    const currentBible = series.production_bible || ({} as any)
+    let nextBible = productionBible !== undefined
+      ? {
+          ...currentBible,
+          ...productionBible,
+          aesthetic:
+            productionBible?.aesthetic || currentBible?.aesthetic
+              ? { ...(currentBible?.aesthetic || {}), ...(productionBible?.aesthetic || {}) }
+              : undefined,
+          version: incrementVersion(currentBible.version || '1.0.0'),
+          lastUpdated: new Date().toISOString(),
+        }
+      : undefined
+
+    let nextMetadata =
+      metadata !== undefined ? { ...(series.metadata || {}), ...metadata } : undefined
+
+    // Keep Series Global Art Style synchronized across production_bible.aesthetic and series.metadata,
+    // and propagate changes to all linked episode Projects (Series Consistency Lock Rule).
+    const incomingAesthetic = productionBible?.aesthetic
+    const incomingMetaStyle = metadata?.artStyle
+    const incomingMetaSpec = metadata?.artStyleSpec
+    const artStyleTouched = Boolean(
+      incomingAesthetic?.artStyle !== undefined ||
+        incomingAesthetic?.artStyleSpec !== undefined ||
+        incomingMetaStyle !== undefined ||
+        incomingMetaSpec !== undefined
+    )
+
+    let syncedSeriesStyleSpec: ReturnType<typeof resolveSeriesArtStyleSpec> | null = null
+    if (artStyleTouched) {
+      syncedSeriesStyleSpec = resolveSeriesArtStyleSpec({
+        seriesId,
+        seriesTitle: title ?? series.title,
+        artStyle: incomingAesthetic?.artStyle ?? incomingMetaStyle,
+        artStyleSpec:
+          (isArtStyleSpecLike(incomingAesthetic?.artStyleSpec) && incomingAesthetic.artStyleSpec) ||
+          (isArtStyleSpecLike(incomingMetaSpec) && incomingMetaSpec) ||
+          undefined,
+        metadata: nextMetadata ?? (series.metadata || {}),
+        productionBible: nextBible ?? currentBible,
+      })
+      const confirmedSeriesSpec = {
+        ...syncedSeriesStyleSpec,
+        confirmed: true,
+        source: 'series' as const,
+        lockedBySeriesId: seriesId,
+        lockedBySeriesTitle: title ?? series.title,
       }
+      const serializedStyle = serializeArtStyleValue(confirmedSeriesSpec)
+      const baseBible = nextBible ?? {
+        ...currentBible,
+        version: incrementVersion(currentBible.version || '1.0.0'),
+        lastUpdated: new Date().toISOString(),
+      }
+      nextBible = {
+        ...baseBible,
+        aesthetic: {
+          ...(baseBible.aesthetic || {}),
+          artStyle: serializedStyle,
+          artStyleSpec: confirmedSeriesSpec,
+          artStyleLocked: true,
+          visualStyle:
+            confirmedSeriesSpec.stylePrompt ||
+            baseBible.aesthetic?.visualStyle ||
+            confirmedSeriesSpec.title,
+        },
+      }
+      nextMetadata = {
+        ...(nextMetadata ?? (series.metadata || {})),
+        artStyle: serializedStyle,
+        artStyleSpec: confirmedSeriesSpec,
+      }
+      syncedSeriesStyleSpec = confirmedSeriesSpec
     }
-    
+
+    if (nextBible !== undefined) {
+      updates.production_bible = nextBible
+    }
+
     // Replace episode blueprints (full replacement)
     if (episodeBlueprints !== undefined) {
       updates.episode_blueprints = episodeBlueprints
     }
-    
+
     // Merge metadata
-    if (metadata !== undefined) {
-      updates.metadata = { ...(series.metadata || {}), ...metadata }
+    if (nextMetadata !== undefined) {
+      updates.metadata = nextMetadata
     }
-    
+
     await series.update(updates)
+
+    if (syncedSeriesStyleSpec) {
+      try {
+        const bpList = (updates.episode_blueprints ?? series.episode_blueprints ?? []) as SeriesEpisodeBlueprint[]
+        const bpProjectIds = bpList.map((ep) => ep.projectId).filter((id): id is string => Boolean(id))
+        const linkedProjects = await Project.findAll({
+          where: bpProjectIds.length > 0
+            ? { [ (await import('sequelize')).Op.or ]: [{ series_id: seriesId }, { id: bpProjectIds }] }
+            : { series_id: seriesId },
+        })
+        for (const epProject of linkedProjects) {
+          const stamped = applyArtStyleToProjectMetadata(
+            (epProject.metadata || {}) as Record<string, unknown>,
+            syncedSeriesStyleSpec
+          )
+          const existingRef =
+            stamped.seriesBibleRef && typeof stamped.seriesBibleRef === 'object'
+              ? (stamped.seriesBibleRef as Record<string, unknown>)
+              : {}
+          stamped.seriesBibleRef = {
+            ...existingRef,
+            version: (updates.production_bible ?? series.production_bible)?.version,
+            seriesTitle: series.title,
+            aesthetic: (updates.production_bible ?? series.production_bible)?.aesthetic,
+            syncedAt: new Date().toISOString(),
+          }
+          await epProject.update({ metadata: stamped as any })
+        }
+      } catch (propErr) {
+        console.warn(`[PATCH /api/series/${seriesId}] Episode artStyle propagation warning:`, propErr)
+      }
+    }
     
     console.log(`[${timestamp}] [PATCH /api/series/${seriesId}] Updated series`)
     

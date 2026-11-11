@@ -46,8 +46,10 @@ import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
 import {
   type BlueprintAspectRatio,
   resolveVariantArtStyle,
+  resolveVariantArtStyleSpec,
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
+import type { ArtStyleSpec } from '@/lib/artStyle/globalArtStyle'
 import { resolveRequiredBlueprintFields } from '@/lib/blueprint/regenerateDefaults'
 
 // =============================================================================
@@ -70,6 +72,7 @@ type Props = {
     genre?: string
     tone?: string
     artStyle?: string
+    artStyleSpec?: ArtStyleSpec
     aspectRatio?: BlueprintAspectRatio
     duration?: string
     targetAudience?: string
@@ -94,6 +97,11 @@ type Props = {
     tone?: string
     contentIntent?: ContentIntent
   }
+  /** When linked to a Series, locks Art Style across all episodes. */
+  lockedBySeries?: {
+    seriesId: string
+    seriesTitle?: string
+  } | null
 }
 
 // Content type maps directly to ContentIntent and is the master switch that
@@ -139,6 +147,7 @@ export function BlueprintReimaginDialog({
   focusField,
   defaultImportOpen = false,
   fallback,
+  lockedBySeries,
 }: Props) {
   const t = useTranslations('blueprint.reimagine')
   const tc = useTranslations('common')
@@ -148,6 +157,7 @@ export function BlueprintReimaginDialog({
   const [genre, setGenre] = useState('')
   const [tone, setTone] = useState('')
   const [artStyle, setArtStyle] = useState(DEFAULT_ART_STYLE)
+  const [artStyleSpec, setArtStyleSpec] = useState<ArtStyleSpec | null>(null)
   const [aspectRatio, setAspectRatio] = useState<BlueprintAspectRatio>(DEFAULT_ASPECT_RATIO)
   const [duration, setDuration] = useState('auto')
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
@@ -205,6 +215,7 @@ export function BlueprintReimaginDialog({
       setTone(required.tone)
       setContentType(required.contentIntent)
       setArtStyle(resolveVariantArtStyle(existingVariant))
+      setArtStyleSpec(resolveVariantArtStyleSpec(existingVariant))
       setAspectRatio(resolveVariantAspectRatio(existingVariant))
       setDuration(existingVariant.duration || 'auto')
       setAudienceDef(
@@ -234,6 +245,7 @@ export function BlueprintReimaginDialog({
       setTone('')
       setContentType('')
       setArtStyle(DEFAULT_ART_STYLE)
+      setArtStyleSpec(null)
       setAspectRatio(DEFAULT_ASPECT_RATIO)
       setDuration('auto')
       setProductionFormat(DEFAULT_SERIES_PRODUCTION_FORMAT)
@@ -298,6 +310,7 @@ export function BlueprintReimaginDialog({
         genre: isReimaginMode ? genre.trim() : lockedSynopsis?.genre,
         tone: isReimaginMode ? tone.trim() : lockedSynopsis?.tone,
         artStyle,
+        artStyleSpec: artStyleSpec ?? undefined,
         aspectRatio,
         duration,
         targetAudience: audienceDef.description?.trim() || undefined,
@@ -402,7 +415,12 @@ export function BlueprintReimaginDialog({
               audience={audienceDef}
               onAudienceChange={setAudienceDef}
               artStyle={artStyle}
-              onArtStyleChange={setArtStyle}
+              artStyleSpec={artStyleSpec}
+              onArtStyleChange={(nextStyle, nextSpec) => {
+                setArtStyle(nextStyle)
+                if (nextSpec) setArtStyleSpec(nextSpec)
+              }}
+              lockedBySeries={lockedBySeries}
               episodeCount={1}
               surface="project"
               scope={scopeLabel}
@@ -527,9 +545,22 @@ export function BlueprintReimaginDialog({
             ) : null}
             <BlueprintFoundationFields
               artStyle={artStyle}
+              artStyleSpec={artStyleSpec}
               aspectRatio={aspectRatio}
-              onArtStyleChange={setArtStyle}
+              onArtStyleChange={(nextStyle, nextSpec) => {
+                setArtStyle(nextStyle)
+                if (nextSpec) setArtStyleSpec(nextSpec)
+              }}
               onAspectRatioChange={setAspectRatio}
+              lockedBySeries={lockedBySeries}
+              storyContext={{
+                storyline: synopsis.trim() || undefined,
+                genre: genre.trim() || undefined,
+                tone: tone.trim() || undefined,
+                targetAudience: audienceDef.description?.trim() || undefined,
+                format: contentType ? defaultFormatForIntent(contentType) : undefined,
+                aspectRatio,
+              }}
               highlightArtStyle={focusField === 'artStyle'}
               highlightAspectRatio={focusField === 'aspectRatio'}
               showArtStyle={isReimaginMode}
