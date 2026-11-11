@@ -17,6 +17,12 @@ export interface StitchFinalCutClipsArgs {
   aspectRatio?: DeliveryAspectRatio
   upscale?: boolean
   upscaleSettings?: UpscaleSettings
+  /**
+   * Skip browser `LocalRenderService` `<video>` seek-based stitching even when total duration <= 300s.
+   * Required when input clips are browser `MediaRecorder` fragmented MP4 / unindexed WebM files whose
+   * `<video>` duration/seeking metadata cannot be reliably scrubbed frame-by-frame in HTMLVideoElement.
+   */
+  forceCloudRun?: boolean
 }
 
 export async function stitchFinalCutClips({
@@ -28,6 +34,7 @@ export async function stitchFinalCutClips({
   aspectRatio = '16:9',
   upscale = false,
   upscaleSettings,
+  forceCloudRun = false,
 }: StitchFinalCutClipsArgs): Promise<string> {
   const readyClips = clips.filter((c) => c.status === 'ready' && c.url)
   if (readyClips.length === 0) {
@@ -52,7 +59,7 @@ export async function stitchFinalCutClips({
 
   const safeLabel = (filenameLabel || projectId).replace(/[^a-z0-9_-]+/gi, '_').slice(0, 40)
 
-  if (cursor <= 300) {
+  if (!forceCloudRun && cursor <= 300) {
     const [{ LocalRenderService }, { upload }] = await Promise.all([
       import('@/lib/video/LocalRenderService'),
       import('@vercel/blob/client'),
@@ -69,6 +76,7 @@ export async function stitchFinalCutClips({
         fps: 30,
         totalDuration: cursor,
         exportFormat: 'mp4',
+        trustSegmentDurations: true,
       },
       (p) => {
         if (p.phase === 'rendering' || p.phase === 'encoding') {

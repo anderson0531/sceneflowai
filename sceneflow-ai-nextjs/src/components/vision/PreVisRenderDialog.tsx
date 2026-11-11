@@ -35,6 +35,7 @@ import type {
   SceneProductionData,
 } from '@/components/vision/scene-production/types'
 import { FLAG_EMOJIS, getLanguageName } from '@/constants/languages'
+import { appendSceneRenderClient } from '@/lib/projects/appendSceneRenderClient'
 import type { AnimaticAudioMode } from '@/lib/storyboard/animaticAudioMode'
 import type { BeatDirectionTransition } from '@/lib/script/segmentTypes'
 import {
@@ -45,6 +46,7 @@ import {
   probePreVisAudioDurations,
   renderPreVisSceneToBlobAndStream,
   stitchPreVisSceneOutputs,
+  uploadAndPersistPreVisSceneOutput,
   type PreVisSceneSummary,
   type StitchablePreVisSceneClip,
 } from '@/lib/storyboard/preVisSceneRender'
@@ -507,6 +509,19 @@ export function PreVisRenderDialog({
     }
   }, [selectedIndices, sceneSummaries, runCombinedStitch, selectedLanguage])
 
+  const readySelectedCount = useMemo(() => {
+    let count = 0
+    for (const idx of selectedIndices) {
+      if (
+        sceneStates[idx]?.status === 'complete' ||
+        Boolean(sceneSummaries[idx]?.existingAnimaticUrl)
+      ) {
+        count += 1
+      }
+    }
+    return count
+  }, [selectedIndices, sceneStates, sceneSummaries])
+
   const handleStartRender = useCallback(async () => {
     const orderedIndices = Array.from(selectedIndices).sort((a, b) => a - b)
     if (orderedIndices.length === 0) {
@@ -524,18 +539,64 @@ export function PreVisRenderDialog({
       for (const idx of orderedIndices) {
         next[idx] = {
           status: 'probing',
-          progress: 2,
-          message: 'Waiting in queue...',
+          progress: 4,
+          message: `Measuring ${getLanguageName(selectedLanguage)} audio timings...`,
         }
       }
       return next
     })
 
-    let dynamicDurations: Record<string, number> = {}
+    let dynamicDurations: Record<string, number> = { ...dynamicDurationsRef.current }
     let completedCount = 0
     const completedClips: StitchablePreVisSceneClip[] = []
+    const shouldPersistStreams = saveToStreams && Boolean(projectId)
+
+    // Serialize DB stream PATCHes across scenes while allowing Vercel Blob uploads to run
+    // concurrently in the background while the next scene renders on Canvas.
+    let persistChain: Promise<void> = Promise.resolve()
+    const enqueuePersist = (projId: string, scId: string, stream: ProductionStream) => {
+      const next = persistChain.then(() =>
+        appendSceneRenderClient(projId, scId, stream).then(() => {})
+      )
+      persistChain = next.catch(() => {})
+      return next
+    }
+    const backgroundUploadTasks: Array<Promise<void>> = []
 
     try {
+      // 1. Probe all audio URLs across all selected scenes in one parallel batch upfront
+      const batchAudioUrls: string[] = []
+      for (const sceneIdx of orderedIndices) {
+        const scene = scenes[sceneIdx]
+        if (!scene) continue
+        batchAudioUrls.push(
+          ...collectScenePreVisAudioUrls(scene, selectedLanguage, clipAudioByBeatId)
+        )
+      }
+      dynamicDurations = await probePreVisAudioDurations(
+        batchAudioUrls,
+        dynamicDurations,
+        () => cancelledRef.current
+      )
+      dynamicDurationsRef.current = dynamicDurations
+
+      if (!cancelledRef.current && orderedIndices.length > 1) {
+        setSceneStates((prev) => {
+          const next = { ...prev }
+          for (const idx of orderedIndices.slice(1)) {
+            if (next[idx]?.status === 'probing') {
+              next[idx] = {
+                status: 'probing',
+                progress: 6,
+                message: 'Queued for render...',
+              }
+            }
+          }
+          return next
+        })
+      }
+
+      // 2. Render each selected scene sequentially on Canvas while pipelining cloud uploads
       for (const sceneIdx of orderedIndices) {
         if (cancelledRef.current) break
         const scene = scenes[sceneIdx]
@@ -545,27 +606,6 @@ export function PreVisRenderDialog({
         const sceneLabel = summary
           ? `Scene ${summary.sceneNumber}`
           : `Scene ${sceneIdx + 1}`
-
-        setSceneStates((prev) => ({
-          ...prev,
-          [sceneIdx]: {
-            status: 'probing',
-            progress: 5,
-            message: `Measuring ${getLanguageName(selectedLanguage)} audio timings...`,
-          },
-        }))
-
-        const audioUrls = collectScenePreVisAudioUrls(
-          scene,
-          selectedLanguage,
-          clipAudioByBeatId
-        )
-        dynamicDurations = await probePreVisAudioDurations(
-          audioUrls,
-          dynamicDurations,
-          () => cancelledRef.current
-        )
-        if (cancelledRef.current) break
 
         const prevScene = sceneIdx > 0 ? scenes[sceneIdx - 1] : undefined
         const sceneTransitionIn = prevScene?.transitionToNext as
@@ -581,7 +621,8 @@ export function PreVisRenderDialog({
             selectedLanguage,
             {
               projectId,
-              saveToStreams: saveToStreams && Boolean(projectId),
+              // Pipeline upload separately so Canvas immediately starts rendering the next scene
+              saveToStreams: false,
               dynamicDurations,
               resolution,
               fps: 30,
@@ -593,11 +634,14 @@ export function PreVisRenderDialog({
               includeCaptions,
               imageEffectPrefs,
               onProgress: (prog) => {
+                const scaledProgress = shouldPersistStreams
+                  ? Math.round(prog.progress * 0.88)
+                  : prog.progress
                 setSceneStates((prev) => ({
                   ...prev,
                   [sceneIdx]: {
-                    status: prog.progress >= 90 && saveToStreams && projectId ? 'uploading' : 'rendering',
-                    progress: prog.progress,
+                    status: 'rendering',
+                    progress: scaledProgress,
                     message: prog.message,
                   },
                 }))
@@ -609,9 +653,8 @@ export function PreVisRenderDialog({
             createdBlobUrlsRef.current.push(output.renderResult.blobUrl)
           }
 
-          if (output.stream) {
-            onSceneStreamRendered?.(output.sceneId, output.stream, selectedLanguage)
-          }
+          const localBlobUrl = output.renderResult.blobUrl
+          const localMimeType = output.renderResult.mimeType || 'video/mp4'
 
           const stitchClip: StitchablePreVisSceneClip = {
             sceneId: output.sceneId,
@@ -620,25 +663,82 @@ export function PreVisRenderDialog({
             duration: output.plan.totalDuration,
             uploadedUrl: output.uploadedUrl,
             blob: output.renderResult.blob,
-            mimeType: output.renderResult.mimeType,
+            mimeType: localMimeType,
           }
           completedClips.push(stitchClip)
           renderedClipsBySceneIndexRef.current[sceneIdx] = stitchClip
-
-          setSceneStates((prev) => ({
-            ...prev,
-            [sceneIdx]: {
-              status: 'complete',
-              progress: 100,
-              message: output.uploadedUrl
-                ? 'Rendered & saved to streams'
-                : 'Rendered locally',
-              downloadUrl: output.renderResult.blobUrl,
-              cloudUrl: output.uploadedUrl,
-              mimeType: output.renderResult.mimeType,
-            },
-          }))
           completedCount += 1
+
+          if (shouldPersistStreams && projectId && output.renderResult.blob) {
+            setSceneStates((prev) => ({
+              ...prev,
+              [sceneIdx]: {
+                status: 'uploading',
+                progress: 92,
+                message: 'Uploading MP4 to cloud streams in background...',
+                downloadUrl: localBlobUrl,
+                mimeType: localMimeType,
+              },
+            }))
+
+            const blobToUpload = output.renderResult.blob
+            const uploadTask = uploadAndPersistPreVisSceneOutput({
+              projectId,
+              sceneId: output.sceneId,
+              sceneNumber: output.sceneNumber,
+              language: selectedLanguage,
+              blob: blobToUpload,
+              mimeType: localMimeType,
+              totalDuration: output.plan.totalDuration,
+              resolution,
+              fps: 30,
+              persistStream: enqueuePersist,
+            })
+              .then((persisted) => {
+                stitchClip.uploadedUrl = persisted.uploadedUrl
+                onSceneStreamRendered?.(output.sceneId, persisted.stream, selectedLanguage)
+                setSceneStates((prev) => ({
+                  ...prev,
+                  [sceneIdx]: {
+                    status: 'complete',
+                    progress: 100,
+                    message: 'Rendered & saved to streams',
+                    downloadUrl: localBlobUrl,
+                    cloudUrl: persisted.uploadedUrl,
+                    mimeType: localMimeType,
+                  },
+                }))
+              })
+              .catch((uploadErr) => {
+                console.warn(
+                  `[PreVisRenderDialog] Background stream upload failed for ${sceneLabel}:`,
+                  uploadErr
+                )
+                setSceneStates((prev) => ({
+                  ...prev,
+                  [sceneIdx]: {
+                    status: 'complete',
+                    progress: 100,
+                    message: 'Rendered locally (cloud stream save failed)',
+                    downloadUrl: localBlobUrl,
+                    mimeType: localMimeType,
+                  },
+                }))
+              })
+
+            backgroundUploadTasks.push(uploadTask)
+          } else {
+            setSceneStates((prev) => ({
+              ...prev,
+              [sceneIdx]: {
+                status: 'complete',
+                progress: 100,
+                message: 'Rendered locally',
+                downloadUrl: localBlobUrl,
+                mimeType: localMimeType,
+              },
+            }))
+          }
         } catch (sceneErr) {
           if (cancelledRef.current) break
           const msg =
@@ -656,7 +756,9 @@ export function PreVisRenderDialog({
         }
       }
 
-      dynamicDurationsRef.current = dynamicDurations
+      if (backgroundUploadTasks.length > 0) {
+        await Promise.all(backgroundUploadTasks)
+      }
 
       // Optional combined multi-scene Pre-Vis stitch
       const shouldCombine = combineSelectedScenes && orderedIndices.length > 1
@@ -932,6 +1034,7 @@ export function PreVisRenderDialog({
                           <img
                             src={summary.thumbnailUrl}
                             alt=""
+                            crossOrigin="anonymous"
                             className="w-12 h-7 rounded object-cover border border-zinc-800 shrink-0 bg-zinc-900"
                           />
                         ) : (
@@ -1373,6 +1476,22 @@ export function PreVisRenderDialog({
                 Close
               </Button>
             )}
+
+            {!isBatchRunning &&
+            selectedIndices.size >= 2 &&
+            readySelectedCount === selectedIndices.size ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void handleRetryStitch()}
+                className="border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"
+                title="Stitch existing rendered Animatic clips immediately without re-rendering scenes"
+              >
+                <Film className="w-3.5 h-3.5 mr-1.5" />
+                Stitch Ready ({readySelectedCount})
+              </Button>
+            ) : null}
 
             <Button
               type="button"

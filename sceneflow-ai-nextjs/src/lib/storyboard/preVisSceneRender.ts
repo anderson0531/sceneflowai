@@ -736,6 +736,7 @@ export function buildPreVisSceneRenderPlan(
     totalDuration,
     exportFormat: 'mp4',
     ensureAudioTrack: true,
+    trustSegmentDurations: true,
     ...(frameFit === 'contain' ? { frameFit } : {}),
   }
 
@@ -896,10 +897,156 @@ export function buildMultiScenePreVisRenderPlan(
       totalDuration,
       exportFormat: 'mp4',
       ensureAudioTrack: true,
+      trustSegmentDurations: true,
       maxDurationSec: PREVIS_MULTI_SCENE_MAX_DURATION_SEC,
       ...(frameFit === 'contain' ? { frameFit } : {}),
     },
   }
+}
+
+async function verifyRenderedBlobHasVisualTrack(
+  blobUrl: string
+): Promise<'ok' | 'missing-video' | 'unverifiable'> {
+  if (
+    typeof document === 'undefined' ||
+    typeof document.createElement !== 'function' ||
+    (typeof navigator !== 'undefined' && /jsdom|happy-dom/i.test(navigator.userAgent || ''))
+  ) {
+    return 'unverifiable'
+  }
+
+  return new Promise((resolve) => {
+    let settled = false
+    const video = document.createElement('video')
+    video.preload = 'metadata'
+    video.muted = true
+    video.playsInline = true
+
+    const finish = (status: 'ok' | 'missing-video' | 'unverifiable') => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      video.onloadedmetadata = null
+      video.onerror = null
+      try {
+        video.removeAttribute('src')
+        video.load()
+      } catch {
+        // Ignore cleanup errors
+      }
+      resolve(status)
+    }
+
+    const timer = setTimeout(() => finish('unverifiable'), 1500)
+
+    video.onloadedmetadata = () => {
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        finish('ok')
+      } else {
+        finish('missing-video')
+      }
+    }
+
+    video.onerror = () => {
+      finish('unverifiable')
+    }
+
+    try {
+      video.src = blobUrl
+    } catch {
+      finish('unverifiable')
+    }
+  })
+}
+
+export interface UploadPreVisSceneOutputParams {
+  projectId: string
+  sceneId: string
+  sceneNumber: number
+  language: string
+  blob: Blob
+  mimeType: string
+  totalDuration: number
+  resolution?: '720p' | '1080p' | '4K'
+  fps?: number
+  onProgress?: (progress: LocalRenderProgress) => void
+  persistStream?: (
+    projectId: string,
+    sceneId: string,
+    stream: ProductionStream
+  ) => Promise<unknown>
+}
+
+/**
+ * Upload a rendered Pre-Vis scene blob to Vercel Blob and persist its `animatic`
+ * `ProductionStream`. Exported so batch dialogs can pipeline cloud uploads in the
+ * background while `LocalRenderService` immediately begins rendering the next scene.
+ */
+export async function uploadAndPersistPreVisSceneOutput(
+  params: UploadPreVisSceneOutputParams
+): Promise<{ uploadedUrl: string; stream: ProductionStream }> {
+  const {
+    projectId,
+    sceneId,
+    sceneNumber,
+    language,
+    blob,
+    mimeType,
+    totalDuration,
+    resolution = '1080p',
+    fps = 30,
+    onProgress,
+    persistStream = appendSceneRenderClient,
+  } = params
+
+  const totalFrames = Math.ceil(totalDuration * fps)
+  onProgress?.({
+    phase: 'encoding',
+    progress: 92,
+    currentFrame: totalFrames,
+    totalFrames,
+    message: `Uploading Scene ${sceneNumber} Pre-Vis MP4 to cloud storage...`,
+  })
+
+  const ext = mimeType.includes('mp4') ? 'mp4' : 'webm'
+  const safeSceneId = sceneId.replace(/[^a-zA-Z0-9_-]/g, '-')
+  const pathname = `renders/previs/${projectId}/${safeSceneId}-${language}-${Date.now()}.${ext}`
+
+  const file = new File([blob], `${safeSceneId}-${language}.${ext}`, {
+    type: mimeType,
+  })
+
+  const uploadedBlob = await upload(pathname, file, {
+    access: 'public',
+    handleUploadUrl: '/api/segments/upload-video-url',
+  })
+
+  const uploadedUrl = uploadedBlob.url
+  const stream: ProductionStream = {
+    id: `previs-animatic-${safeSceneId}-${language}-${Date.now()}`,
+    language,
+    languageLabel: getLanguageName(language),
+    status: 'complete',
+    streamType: 'animatic',
+    mp4Url: uploadedUrl,
+    completedAt: new Date().toISOString(),
+    source: 'render',
+    duration: totalDuration,
+    resolution,
+  }
+
+  dispatchAppendedSceneRender(sceneId, stream)
+  await persistStream(projectId, sceneId, stream)
+
+  onProgress?.({
+    phase: 'complete',
+    progress: 100,
+    currentFrame: totalFrames,
+    totalFrames,
+    message: `Scene ${sceneNumber} Pre-Vis saved to project streams!`,
+  })
+
+  return { uploadedUrl, stream }
 }
 
 /**
@@ -935,15 +1082,40 @@ export async function renderPreVisSceneToBlobAndStream(
   }
 
   const renderService = getLocalRenderService()
-  const renderResult = await renderService.render(plan.config, (progress) => {
+  const scale = saveToStreams && projectId ? 0.88 : 1
+  let renderResult = await renderService.render(plan.config, (progress) => {
     if (!onProgress) return
-    // Scale render progress to 0..88% when uploading to streams after encoding
-    const scale = saveToStreams && projectId ? 0.88 : 1
     onProgress({
       ...progress,
       progress: Math.round(progress.progress * scale),
     })
   })
+
+  // If the browser's hardware H.264 MediaRecorder dropped the visual track (audio-only MP4),
+  // automatically re-encode this scene using software WebM (VP8/VP9) so no scene loses video.
+  if (renderResult.success && renderResult.blobUrl && plan.config.exportFormat !== 'webm') {
+    const visualStatus = await verifyRenderedBlobHasVisualTrack(renderResult.blobUrl)
+    if (visualStatus === 'missing-video') {
+      console.warn(
+        `[PreVisSceneRender] Scene ${plan.sceneNumber} MP4 output had no visual video track; retrying with WebM software encoder`
+      )
+      try {
+        URL.revokeObjectURL(renderResult.blobUrl)
+      } catch {
+        // Ignore
+      }
+      renderResult = await renderService.render(
+        { ...plan.config, exportFormat: 'webm' },
+        (progress) => {
+          if (!onProgress) return
+          onProgress({
+            ...progress,
+            progress: Math.round(progress.progress * scale),
+          })
+        }
+      )
+    }
+  }
 
   if (!renderResult.success || !renderResult.blob || !renderResult.blobUrl) {
     throw new Error(renderResult.error || `Failed to render Scene ${plan.sceneNumber} Pre-Vis.`)
@@ -954,51 +1126,20 @@ export async function renderPreVisSceneToBlobAndStream(
   let stream: ProductionStream | undefined
 
   if (saveToStreams && projectId) {
-    onProgress?.({
-      phase: 'encoding',
-      progress: 92,
-      currentFrame: Math.ceil(plan.totalDuration * (plan.config.fps ?? 30)),
-      totalFrames: Math.ceil(plan.totalDuration * (plan.config.fps ?? 30)),
-      message: `Uploading Scene ${plan.sceneNumber} Pre-Vis MP4 to cloud storage...`,
-    })
-
-    const ext = resolvedMimeType.includes('mp4') ? 'mp4' : 'webm'
-    const safeSceneId = plan.sceneId.replace(/[^a-zA-Z0-9_-]/g, '-')
-    const pathname = `renders/previs/${projectId}/${safeSceneId}-${language}-${Date.now()}.${ext}`
-
-    const file = new File([renderResult.blob], `${safeSceneId}-${language}.${ext}`, {
-      type: resolvedMimeType,
-    })
-
-    const uploadedBlob = await upload(pathname, file, {
-      access: 'public',
-      handleUploadUrl: '/api/segments/upload-video-url',
-    })
-
-    uploadedUrl = uploadedBlob.url
-    stream = {
-      id: `previs-animatic-${safeSceneId}-${language}-${Date.now()}`,
+    const persisted = await uploadAndPersistPreVisSceneOutput({
+      projectId,
+      sceneId: plan.sceneId,
+      sceneNumber: plan.sceneNumber,
       language,
-      languageLabel: getLanguageName(language),
-      status: 'complete',
-      streamType: 'animatic',
-      mp4Url: uploadedUrl,
-      completedAt: new Date().toISOString(),
-      source: 'render',
-      duration: plan.totalDuration,
+      blob: renderResult.blob,
+      mimeType: resolvedMimeType,
+      totalDuration: plan.totalDuration,
       resolution: planOptions.resolution ?? '1080p',
-    }
-
-    dispatchAppendedSceneRender(plan.sceneId, stream)
-    await appendSceneRenderClient(projectId, plan.sceneId, stream)
-
-    onProgress?.({
-      phase: 'complete',
-      progress: 100,
-      currentFrame: Math.ceil(plan.totalDuration * (plan.config.fps ?? 30)),
-      totalFrames: Math.ceil(plan.totalDuration * (plan.config.fps ?? 30)),
-      message: `Scene ${plan.sceneNumber} Pre-Vis saved to project streams!`,
+      fps: plan.config.fps ?? 30,
+      onProgress,
     })
+    uploadedUrl = persisted.uploadedUrl
+    stream = persisted.stream
   }
 
   return {
@@ -1125,18 +1266,12 @@ export async function stitchPreVisSceneOutputs(
   const allPublicUrls = resolvedUrls.filter((u): u is string => Boolean(u))
   let serverStitchError: string | undefined
 
-  // Tier 1: Fast lossless server FFmpeg concat
+  // Tier 1: Normalized server FFmpeg stitch (handles MP4/WebM, stream-index swaps, and avcC normalization)
   if (allPublicUrls.length === orderedClips.length) {
     try {
       options.onProgress?.({
         progress: 35,
         message: `Stitching ${orderedClips.length} scenes into combined Pre-Vis video...`,
-      })
-
-      const allMp4 = orderedClips.every((clip, idx) => {
-        const mime = clip.mimeType || ''
-        const url = allPublicUrls[idx] || ''
-        return mime.includes('mp4') || url.toLowerCase().includes('.mp4')
       })
 
       const response = await fetch('/api/export/previs-stitch', {
@@ -1146,7 +1281,9 @@ export async function stitchPreVisSceneOutputs(
           urls: allPublicUrls,
           projectId: options.projectId,
           language: options.language,
-          container: allMp4 ? 'mp4' : undefined,
+          container: 'mp4',
+          durations: orderedClips.map((c) => c.duration),
+          resolution: options.resolution,
         }),
       })
 
@@ -1166,7 +1303,7 @@ export async function stitchPreVisSceneOutputs(
         throw new Error('Render aborted')
       }
 
-      const fallbackMime = payload.mimeType || (allMp4 ? 'video/mp4' : 'video/webm')
+      const fallbackMime = payload.mimeType || 'video/mp4'
       const materialized = await materializeDownloadableResult(
         payload.url,
         payload.downloadUrl,
@@ -1196,8 +1333,14 @@ export async function stitchPreVisSceneOutputs(
     }
   }
 
-  // Tier 2: Cloud Run FFmpeg stitch fallback (when projectId + public URLs are available)
-  if (options.projectId && allPublicUrls.length === orderedClips.length) {
+  const inputClipMissingVideo = Boolean(
+    serverStitchError && serverStitchError.includes('missing visual video stream')
+  )
+
+  // Tier 2: Cloud Run FFmpeg stitch fallback (forced onto Cloud Run so browser `<video>` seeking
+  // is never used on unindexed MediaRecorder fragmented MP4 / WebM clips; skipped if an input
+  // clip itself lacks a video track so Tier 3 can re-render from storyboard stills).
+  if (options.projectId && allPublicUrls.length === orderedClips.length && !inputClipMissingVideo) {
     try {
       options.onProgress?.({
         progress: 45,
@@ -1229,6 +1372,7 @@ export async function stitchPreVisSceneOutputs(
         filenameLabel: `${options.projectTitle || 'previs'}-${options.language}`,
         resolution: options.resolution ?? '1080p',
         clips: finalCutClips,
+        forceCloudRun: true,
         onProgress: (msg) => {
           options.onProgress?.({
             progress: 65,

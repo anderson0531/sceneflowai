@@ -623,6 +623,8 @@ export class LocalRenderService {
   private audioContext: AudioContext | null = null
   private playbackAudioContext: AudioContext | null = null // For playing pre-rendered audio into MediaRecorder
   private mediaRecorder: MediaRecorder | null = null
+  private activeCaptureStream: MediaStream | null = null
+  private activeAudioDestStream: MediaStream | null = null
   private recordedChunks: Blob[] = []
   private abortController: AbortController | null = null
   private isRendering = false
@@ -845,6 +847,7 @@ export class LocalRenderService {
       const stream = allSegmentsAreImages
         ? this.canvas.captureStream(captureFps)
         : this.canvas.captureStream(0)
+      this.activeCaptureStream = stream
       const canvasVideoTrack = !allSegmentsAreImages
         ? (stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack | undefined)
         : undefined
@@ -1012,6 +1015,7 @@ export class LocalRenderService {
           await playbackAudioContext.resume().catch(() => {})
         }
         audioDestination = playbackAudioContext.createMediaStreamDestination()
+        this.activeAudioDestStream = audioDestination.stream
         const audioTrack = audioDestination.stream.getAudioTracks()[0]
         if (audioTrack) {
           stream.addTrack(audioTrack)
@@ -1069,6 +1073,8 @@ export class LocalRenderService {
           })
           if (this.recordedChunks.length === 0 || totalChunkSize === 0) {
             console.error('[LocalRender] No data recorded - canvas may not have rendered any content')
+            reject(new Error('MediaRecorder produced 0 bytes of output'))
+            return
           }
           const blob = new Blob(this.recordedChunks, { type: mimeType })
           resolve(blob)
@@ -1078,87 +1084,42 @@ export class LocalRenderService {
           reject(new Error(`MediaRecorder error: ${event}`))
         }
       })
-      
-      this.mediaRecorder.start(100) // Capture every 100ms
-      
-      // Play back pre-rendered audio through the real-time context
-      // This will be captured by the MediaRecorder's audio track
-      if (preRenderedAudioBuffer && audioDestination && this.playbackAudioContext) {
-        const audioSource = this.playbackAudioContext.createBufferSource()
-        audioSource.buffer = preRenderedAudioBuffer
-        audioSource.connect(audioDestination)
-        audioSource.start(0)
-        console.log('[LocalRender] Pre-rendered audio playback started')
-      }
-      
-      // Render frames
-      const totalFrames = Math.ceil(adjustedConfig.totalDuration * adjustedConfig.fps)
-      const frameDuration = 1000 / adjustedConfig.fps
-      
-      console.log('[LocalRender] Starting render:', {
-        totalDuration: adjustedConfig.totalDuration,
-        fps: adjustedConfig.fps,
-        totalFrames,
-        frameDuration,
-        segmentCount: adjustedConfig.segments.length,
-        segments: adjustedConfig.segments.map(s => ({
-          id: s.segmentId,
-          startTime: s.startTime,
-          duration: s.duration,
-          assetType: s.assetType,
-          assetUrl: s.assetUrl?.substring(0, 50) + '...'
-        }))
-      })
 
-      for (let frame = 0; frame < totalFrames; frame++) {
-        if (signal.aborted) {
-          this.mediaRecorder.stop()
-          throw new Error('Render aborted')
-        }
-
-        const iterStart = typeof performance !== 'undefined' ? performance.now() : 0
-
-        const currentTime = frame / adjustedConfig.fps
-
+      const commitCompositionFrame = async (currentTime: number, verifyFirstFrame: boolean) => {
         // === DOUBLE-BUFFER PATTERN ===
         // All drawing happens on hiddenCtx first, then atomically copied to output
         // This fixes race conditions where captureStream captures incomplete frames
-
-        // Step 1: Draw base video frame to hidden buffer
         await this.drawFrame(currentTime, adjustedConfig, assets)
-        
-        // Step 2: Draw text overlays to hidden buffer
+
         if (adjustedConfig.textOverlays) {
           this.drawTextOverlays(currentTime, adjustedConfig.textOverlays)
         }
-        
-        // Step 3: Draw watermark to hidden buffer (always last/on top)
+
         if (adjustedConfig.watermark) {
           this.drawWatermark(adjustedConfig.watermark)
         }
-        
-        // Step 4: ATOMIC COMMIT - Copy completed frame to output buffer
-        // This single drawImage call ensures overlays/watermarks are never skipped
+
         if (this.ctx && this.hiddenCanvas) {
           this.ctx.drawImage(this.hiddenCanvas, 0, 0)
-          
-          // Step 5: SYNCHRONOUS FLUSH - Force GPU to complete all pending draws
-          // getImageData forces Chromium to resolve all pending operations
-          // This prevents "half-baked" frames in headless/GCP environments
-          this.ctx.getImageData(0, 0, 1, 1)
-          
-          // Step 5b: WATERMARK VERIFICATION (first frame only)
-          // Sample pixels from bottom-right watermark region to confirm drawing
-          if (frame === 0 && adjustedConfig.watermark) {
+
+          // Force GPU flush on frame 0 and on video-seek renders; skip per-frame GPU readback
+          // stalls on subsequent image-animatic frames so real-time 30fps pacing stays smooth.
+          if (verifyFirstFrame || !allSegmentsAreImages) {
+            this.ctx.getImageData(0, 0, 1, 1)
+          }
+
+          if (verifyFirstFrame && adjustedConfig.watermark && this.canvas) {
             const { width: cw, height: ch } = this.canvas
-            // Sample 10x10 region from watermark area (bottom-right, with padding)
             const sampleX = Math.max(0, cw - 200)
             const sampleY = Math.max(0, ch - 100)
             const sampleData = this.ctx.getImageData(sampleX, sampleY, 100, 50)
             let nonTransparentPixels = 0
             for (let i = 0; i < sampleData.data.length; i += 4) {
-              // Check if pixel differs from pure black (video background)
-              if (sampleData.data[i] > 10 || sampleData.data[i + 1] > 10 || sampleData.data[i + 2] > 10) {
+              if (
+                sampleData.data[i] > 10 ||
+                sampleData.data[i + 1] > 10 ||
+                sampleData.data[i + 2] > 10
+              ) {
                 nonTransparentPixels++
               }
             }
@@ -1170,45 +1131,164 @@ export class LocalRenderService {
             })
           }
         }
-        
-        // Step 6: SOFTWARE TICK - Allow browser task runner to catch up
-        // This microtask delay ensures the buffer state is registered
-        await new Promise(resolve => setTimeout(resolve, 0))
-
-        // One encoded video sample per composition frame (video/mixed path)
-        if (!allSegmentsAreImages && canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
-          canvasVideoTrack.requestFrame()
-        }
-
-        // Report progress
-        const progress = 40 + Math.round((frame / totalFrames) * 50)
-        onProgress?.({
-          phase: 'rendering',
-          progress,
-          currentFrame: frame,
-          totalFrames,
-        })
-
-        // Keep average wall time per frame ≈ frameDuration so MediaRecorder timeline matches audio.
-        // (Timed captureStream alone cannot do this — it keeps sampling for the whole long render.)
-        const elapsed =
-          typeof performance !== 'undefined' ? performance.now() - iterStart : 0
-        if (!allSegmentsAreImages && elapsed > frameDuration * 1.35) {
-          console.warn(
-            `[LocalRender] Frame ${frame} took ${elapsed.toFixed(0)}ms (budget ${frameDuration.toFixed(0)}ms) — export may drift; lower resolution or fps if A/V desyncs`
-          )
-        }
-        const wait = Math.max(0, frameDuration - elapsed)
-        await this.sleep(wait, signal)
       }
 
-      // Stop recording
-      onProgress?.({ phase: 'encoding', progress: 95 })
+      // Render frames
+      const totalFrames = Math.max(1, Math.ceil(adjustedConfig.totalDuration * adjustedConfig.fps))
+      const frameDuration = 1000 / adjustedConfig.fps
+
+      console.log('[LocalRender] Starting render:', {
+        totalDuration: adjustedConfig.totalDuration,
+        fps: adjustedConfig.fps,
+        totalFrames,
+        frameDuration,
+        segmentCount: adjustedConfig.segments.length,
+        segments: adjustedConfig.segments.map((s) => ({
+          id: s.segmentId,
+          startTime: s.startTime,
+          duration: s.duration,
+          assetType: s.assetType,
+          assetUrl: s.assetUrl?.substring(0, 50) + '...',
+        })),
+      })
+
+      // Paint frame t = 0 onto the output canvas BEFORE starting MediaRecorder or audio playback
+      // so the video encoder receives an immediate valid keyframe at t = 0 with zero blank lead-in.
+      await commitCompositionFrame(0, true)
+
+      this.mediaRecorder.start(100) // Capture every 100ms
       if (!allSegmentsAreImages && canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
         canvasVideoTrack.requestFrame()
       }
-      await this.sleep(Math.max(150, frameDuration * 2), signal)
-      this.mediaRecorder.stop()
+
+      let hasLiveAudioPlayback = false
+      let audioStartCtxTime = 0
+      if (preRenderedAudioBuffer && audioDestination && this.playbackAudioContext) {
+        const audioSource = this.playbackAudioContext.createBufferSource()
+        audioSource.buffer = preRenderedAudioBuffer
+        audioSource.connect(audioDestination)
+        audioStartCtxTime = this.playbackAudioContext.currentTime
+        audioSource.start(0)
+        hasLiveAudioPlayback = true
+        console.log('[LocalRender] Pre-rendered audio playback started')
+      }
+      const renderStartWallMs =
+        typeof performance !== 'undefined' ? performance.now() : Date.now()
+
+      onProgress?.({
+        phase: 'rendering',
+        progress: 40,
+        currentFrame: 0,
+        totalFrames,
+      })
+
+      if (allSegmentsAreImages) {
+        // Real-time audio-clock-anchored loop for image animatics:
+        // Keeps Ken Burns motion, beat cuts, and captions 100% locked to real-time audio even
+        // when browser timers coalesce or throttle, preventing +3-6s slow-motion tail drift.
+        const getElapsedCompositionSec = (): number => {
+          const nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now()
+          const wallSec = Math.max(0, (nowMs - renderStartWallMs) / 1000)
+          if (
+            hasLiveAudioPlayback &&
+            this.playbackAudioContext &&
+            this.playbackAudioContext.state === 'running'
+          ) {
+            const audioSec = this.playbackAudioContext.currentTime - audioStartCtxTime
+            if (Number.isFinite(audioSec) && audioSec >= 0 && wallSec - audioSec < 1.5) {
+              return audioSec
+            }
+          }
+          return wallSec
+        }
+
+        let lastRenderedFrame = 0
+        while (true) {
+          if (signal.aborted) {
+            this.mediaRecorder.stop()
+            throw new Error('Render aborted')
+          }
+
+          const elapsedSec = getElapsedCompositionSec()
+          if (elapsedSec >= adjustedConfig.totalDuration) {
+            break
+          }
+
+          const targetFrame = Math.min(
+            totalFrames - 1,
+            Math.floor(elapsedSec * adjustedConfig.fps)
+          )
+          if (targetFrame > lastRenderedFrame) {
+            await commitCompositionFrame(elapsedSec, false)
+            lastRenderedFrame = targetFrame
+
+            const progress = 40 + Math.round(((targetFrame + 1) / totalFrames) * 50)
+            onProgress?.({
+              phase: 'rendering',
+              progress,
+              currentFrame: targetFrame,
+              totalFrames,
+            })
+          }
+
+          const afterDrawSec = getElapsedCompositionSec()
+          const nextTickSec = Math.min(
+            adjustedConfig.totalDuration,
+            (Math.max(lastRenderedFrame, targetFrame) + 1) / adjustedConfig.fps
+          )
+          const waitMs = Math.max(2, (nextTickSec - afterDrawSec) * 1000)
+          await this.sleep(waitMs, signal)
+        }
+
+        // Commit final closing frame right before stopping recorder
+        await commitCompositionFrame(Math.max(0, adjustedConfig.totalDuration - 1e-3), false)
+        onProgress?.({ phase: 'encoding', progress: 95 })
+        await this.sleep(Math.min(120, Math.max(40, frameDuration * 1.5)), signal)
+        this.mediaRecorder.stop()
+      } else {
+        for (let frame = 1; frame < totalFrames; frame++) {
+          if (signal.aborted) {
+            this.mediaRecorder.stop()
+            throw new Error('Render aborted')
+          }
+
+          const iterStart = typeof performance !== 'undefined' ? performance.now() : 0
+          const currentTime = frame / adjustedConfig.fps
+
+          await commitCompositionFrame(currentTime, false)
+          await new Promise((resolve) => setTimeout(resolve, 0))
+
+          if (canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
+            canvasVideoTrack.requestFrame()
+          }
+
+          const progress = 40 + Math.round((frame / totalFrames) * 50)
+          onProgress?.({
+            phase: 'rendering',
+            progress,
+            currentFrame: frame,
+            totalFrames,
+          })
+
+          const elapsed =
+            typeof performance !== 'undefined' ? performance.now() - iterStart : 0
+          if (elapsed > frameDuration * 1.35) {
+            console.warn(
+              `[LocalRender] Frame ${frame} took ${elapsed.toFixed(0)}ms (budget ${frameDuration.toFixed(0)}ms) — export may drift; lower resolution or fps if A/V desyncs`
+            )
+          }
+          const wait = Math.max(0, frameDuration - elapsed)
+          await this.sleep(wait, signal)
+        }
+
+        // Stop recording
+        onProgress?.({ phase: 'encoding', progress: 95 })
+        if (canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
+          canvasVideoTrack.requestFrame()
+        }
+        await this.sleep(Math.max(150, frameDuration * 2), signal)
+        this.mediaRecorder.stop()
+      }
       
       // Wait for blob
       const blob = await recordingPromise
@@ -1276,23 +1356,97 @@ export class LocalRenderService {
     }
 
     const IMAGE_LOAD_CONCURRENCY = 8
+    const IMAGE_LOAD_TIMEOUT_MS = 30_000
     const imagePromiseCache = new Map<string, Promise<HTMLImageElement>>()
-    const loadCachedImage = (url: string, label: string, optional: boolean): Promise<HTMLImageElement | null> => {
-      let cached = imagePromiseCache.get(url)
-      if (!cached) {
-        cached = new Promise<HTMLImageElement>((resolve, reject) => {
-          const img = new Image()
-          img.crossOrigin = 'anonymous'
-          img.onload = () => {
+
+    const loadSingleImageAttempt = (srcUrl: string, label: string): Promise<HTMLImageElement> =>
+      new Promise<HTMLImageElement>((resolve, reject) => {
+        if (signal.aborted) {
+          reject(new Error('Render aborted'))
+          return
+        }
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        let settled = false
+
+        const cleanupListeners = () => {
+          clearTimeout(timer)
+          signal.removeEventListener('abort', onAbort)
+          img.onload = null
+          img.onerror = null
+        }
+
+        const onAbort = () => {
+          if (settled) return
+          settled = true
+          cleanupListeners()
+          img.src = ''
+          reject(new Error('Render aborted'))
+        }
+
+        const timer = setTimeout(() => {
+          if (settled) return
+          settled = true
+          cleanupListeners()
+          img.src = ''
+          reject(new Error(`Image load timed out (${label}): ${srcUrl}`))
+        }, IMAGE_LOAD_TIMEOUT_MS)
+
+        signal.addEventListener('abort', onAbort, { once: true })
+
+        img.onload = () => {
+          if (settled) return
+          settled = true
+          cleanupListeners()
+          const finish = () => {
             console.log('[LocalRender] Image loaded:', label, img.width, 'x', img.height)
             resolve(img)
           }
-          img.onerror = (e) => {
-            imagePromiseCache.delete(url)
-            console.error('[LocalRender] Image load failed (CORS issue?):', label, e)
-            reject(new Error(`Failed to load image: ${url}`))
+          if (typeof img.decode === 'function') {
+            img.decode().then(finish, finish)
+          } else {
+            finish()
           }
-          img.src = url
+        }
+
+        img.onerror = (e) => {
+          if (settled) return
+          settled = true
+          cleanupListeners()
+          console.warn('[LocalRender] Image load attempt failed:', label, e)
+          reject(new Error(`Failed to load image: ${srcUrl}`))
+        }
+
+        img.src = srcUrl
+      })
+
+    const loadCachedImage = (url: string, label: string, optional: boolean): Promise<HTMLImageElement | null> => {
+      let cached = imagePromiseCache.get(url)
+      if (!cached) {
+        cached = loadSingleImageAttempt(url, label).catch(async (primaryErr) => {
+          if (signal.aborted) {
+            imagePromiseCache.delete(url)
+            throw primaryErr
+          }
+          // Recover from GCS CORS issues via same-origin proxy, or bypass poisoned non-CORS
+          // browser cache entries (when an <img> rendered the same URL without crossOrigin).
+          try {
+            if (
+              !url.startsWith('/api/proxy/image') &&
+              (url.includes('storage.googleapis.com') || url.includes('storage.cloud.google.com'))
+            ) {
+              const proxiedUrl = `/api/proxy/image?url=${encodeURIComponent(url)}`
+              return await loadSingleImageAttempt(proxiedUrl, `${label} (proxy)`)
+            }
+            if (url.startsWith('https://')) {
+              const sep = url.includes('?') ? '&' : '?'
+              return await loadSingleImageAttempt(`${url}${sep}_cors=1`, `${label} (cors-retry)`)
+            }
+          } catch {
+            // Fall through to reject with primary error
+          }
+          imagePromiseCache.delete(url)
+          throw primaryErr
         })
         imagePromiseCache.set(url, cached)
       }
@@ -1697,8 +1851,8 @@ export class LocalRenderService {
       }
     }
     
-    // Debug logging for first frame and every 10 seconds
-    if (currentTime === 0 || Math.floor(currentTime) % 10 === 0) {
+    // Debug logging for first frame only (avoid 30Hz serialization overhead during live capture)
+    if (currentTime === 0) {
       console.log('[LocalRender] drawFrame at', currentTime, 'segments:', config.segments.map(s => ({
         id: s.segmentId,
         start: s.startTime,
@@ -2112,6 +2266,28 @@ export class LocalRenderService {
       } catch {
         // Ignore
       }
+    }
+
+    if (this.activeCaptureStream) {
+      for (const track of this.activeCaptureStream.getTracks()) {
+        try {
+          track.stop()
+        } catch {
+          // Ignore
+        }
+      }
+      this.activeCaptureStream = null
+    }
+
+    if (this.activeAudioDestStream) {
+      for (const track of this.activeAudioDestStream.getTracks()) {
+        try {
+          track.stop()
+        } catch {
+          // Ignore
+        }
+      }
+      this.activeAudioDestStream = null
     }
     
     if (this.audioContext && this.audioContext.state !== 'closed') {

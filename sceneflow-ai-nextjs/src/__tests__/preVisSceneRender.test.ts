@@ -409,11 +409,13 @@ describe('preVisSceneRender', () => {
         'en'
       )
       expect(singleSilentPlan.config.ensureAudioTrack).toBe(true)
+      expect(singleSilentPlan.config.trustSegmentDurations).toBe(true)
 
       const multi = buildMultiScenePreVisRenderPlan(sixteenScenes, 'en')
       expect(multi.scenePlans).toHaveLength(16)
       expect(multi.totalDuration).toBeGreaterThan(300)
       expect(multi.config.ensureAudioTrack).toBe(true)
+      expect(multi.config.trustSegmentDurations).toBe(true)
       expect(multi.config.maxDurationSec).toBe(PREVIS_MULTI_SCENE_MAX_DURATION_SEC)
       expect(multi.config.maxDurationSec!).toBeGreaterThan(multi.totalDuration)
     })
@@ -434,10 +436,19 @@ describe('preVisSceneRender', () => {
       const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input)
         if (url === '/api/export/previs-stitch') {
-          const body = JSON.parse(String(init?.body ?? '{}')) as { urls: string[] }
+          const body = JSON.parse(String(init?.body ?? '{}')) as {
+            urls: string[]
+            durations: number[]
+            container: string
+            resolution?: string
+          }
           expect(body.urls).toHaveLength(16)
           expect(body.urls[0]).toContain('scene-1.mp4')
           expect(body.urls[15]).toContain('scene-16.mp4')
+          expect(body.durations).toHaveLength(16)
+          expect(body.durations[0]).toBe(24)
+          expect(body.container).toBe('mp4')
+          expect(body.resolution).toBe('1080p')
           return new Response(
             JSON.stringify({
               success: true,
@@ -460,6 +471,7 @@ describe('preVisSceneRender', () => {
         projectId: 'proj-16',
         projectTitle: 'Starlight',
         language: 'en',
+        resolution: '1080p',
       })
 
       expect(result.strategy).toBe('server-ffmpeg')
@@ -472,13 +484,15 @@ describe('preVisSceneRender', () => {
       expect(result.mimeType).toBe('video/mp4')
     })
 
-    it('falls back to Cloud Run stitchFinalCutClips when /api/export/previs-stitch fails', async () => {
+    it('falls back to Cloud Run stitchFinalCutClips with forceCloudRun=true when /api/export/previs-stitch fails', async () => {
+      // Total duration is 35s (< 300s): forceCloudRun=true ensures we never fall into browser
+      // HTMLVideoElement seeking on unindexed MediaRecorder fragmented MP4s.
       const clips: StitchablePreVisSceneClip[] = [
         {
           sceneId: 'scene-1',
           sceneIndex: 0,
           sceneNumber: 1,
-          duration: 180,
+          duration: 15,
           uploadedUrl: 'https://demo.public.blob.vercel-storage.com/s1.mp4',
           mimeType: 'video/mp4',
         },
@@ -486,7 +500,7 @@ describe('preVisSceneRender', () => {
           sceneId: 'scene-2',
           sceneIndex: 1,
           sceneNumber: 2,
-          duration: 185,
+          duration: 20,
           uploadedUrl: 'https://demo.public.blob.vercel-storage.com/s2.mp4',
           mimeType: 'video/mp4',
         },
@@ -521,12 +535,16 @@ describe('preVisSceneRender', () => {
       })
 
       expect(cloudSpy).toHaveBeenCalledTimes(1)
+      expect(cloudSpy.mock.calls[0][0]).toMatchObject({
+        projectId: 'proj-fallback',
+        forceCloudRun: true,
+      })
       expect(result.strategy).toBe('cloud-run')
       expect(result.cloudUrl).toBe(
         'https://demo.public.blob.vercel-storage.com/cloud-master.mp4'
       )
       expect(result.sceneCount).toBe(2)
-      expect(result.totalDuration).toBe(365)
+      expect(result.totalDuration).toBe(35)
     })
 
     it('rejects when fewer than 2 rendered scene clips are provided', async () => {
