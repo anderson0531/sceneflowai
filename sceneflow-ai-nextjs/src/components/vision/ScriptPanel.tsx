@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Minimize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2, GalleryHorizontal } from 'lucide-react'
+import { FileText, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Minimize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, GalleryHorizontal } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import {
@@ -380,10 +380,8 @@ interface ScriptPanelProps {
   onShowReviews?: () => void
   onOpenReferences?: () => void
   onOpenPromo?: () => void
-  onOpenPublishing?: () => void
   onOpenProductionBuilder?: () => void
   isProductionAgentRunning?: boolean
-  publishingBlockerCount?: number
   onShowTreatmentReview?: () => void
   /** Route to Blueprint to change locked art style / aspect ratio. */
   onRefactorFoundation?: () => void
@@ -995,7 +993,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, isUpdatingPrompts = false, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onOpenScreeningRoom, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPromo, onOpenPublishing, onOpenProductionBuilder, isProductionAgentRunning = false, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, onEditScene, onEditSceneWithRecommendations, onPolishScene, polishingSceneIndex = null, revealPolishSceneIndex = null, onTogglePolishRecommendation, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onAddDirectedLocationVersion, onUpdateRequirementInline, onSyncContinuityCatalog, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onAudioRunReport, onVideoRunReport, onVideoRunCancelReady, onSceneRenderQueued, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatStartFrame, onGenerateBeatEndFrame, onGenerateBeatFrames, onUsePrevEndFrameAsStart, onDeleteBeatStartFrame, onDeleteBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onRestoreStillVersion, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onDirectorFrame, generatingDirectSlotKey = null, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, frameGenerationQuality = 'draft', onFrameGenerationQualityChange, frameGenerationMode = 'standard', onFrameGenerationModeChange, videoGenerationQuality = 'draft', onVideoGenerationQualityChange, videoGenerationMode = 'standard', onVideoGenerationModeChange, videoSourceMethod = 'reference', onVideoSourceMethodChange, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, pendingSceneReferencesIndex = null, onPendingSceneReferencesHandled, pendingDirectShot = null, onPendingDirectShotHandled, onOpenDirectShot, projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isUpdatingPrompts = false, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onOpenScreeningRoom, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPromo, onOpenProductionBuilder, isProductionAgentRunning = false, onShowTreatmentReview, onRefactorFoundation, onEditScene, onEditSceneWithRecommendations, onPolishScene, polishingSceneIndex = null, revealPolishSceneIndex = null, onTogglePolishRecommendation, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onAddDirectedLocationVersion, onUpdateRequirementInline, onSyncContinuityCatalog, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onAudioRunReport, onVideoRunReport, onVideoRunCancelReady, onSceneRenderQueued, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatStartFrame, onGenerateBeatEndFrame, onGenerateBeatFrames, onUsePrevEndFrameAsStart, onDeleteBeatStartFrame, onDeleteBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onRestoreStillVersion, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onDirectorFrame, generatingDirectSlotKey = null, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, frameGenerationQuality = 'draft', onFrameGenerationQualityChange, frameGenerationMode = 'standard', onFrameGenerationModeChange, videoGenerationQuality = 'draft', onVideoGenerationQualityChange, videoGenerationMode = 'standard', onVideoGenerationModeChange, videoSourceMethod = 'reference', onVideoSourceMethodChange, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, pendingSceneReferencesIndex = null, onPendingSceneReferencesHandled, pendingDirectShot = null, onPendingDirectShotHandled, onOpenDirectShot, projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
@@ -3237,35 +3235,6 @@ export function ScriptPanel({ script, onScriptChange, isUpdatingPrompts = false,
                   </TooltipTrigger>
                   <TooltipContent>
                     {tStudio('promoTooltip')}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-
-            {onOpenPublishing && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onOpenPublishing}
-                      className="flex items-center gap-2 border-emerald-500/30 hover:border-emerald-500/50 hover:bg-emerald-500/10 relative"
-                      title={tStudio('publishTooltip')}
-                    >
-                      <Share2 className="w-4 h-4 text-emerald-400" />
-                      <span className="text-sm hidden sm:inline">{tStudio('publish')}</span>
-                      {typeof publishingBlockerCount === 'number' && publishingBlockerCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white">
-                          {publishingBlockerCount}
-                        </span>
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {typeof publishingBlockerCount === 'number' && publishingBlockerCount > 0
-                      ? tStudio('publishBlockers', { count: publishingBlockerCount })
-                      : tStudio('publishTooltipAlt')}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

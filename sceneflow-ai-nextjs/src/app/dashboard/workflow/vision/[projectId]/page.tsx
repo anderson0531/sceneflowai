@@ -450,16 +450,11 @@ import {
 } from '@/components/vision/ReferenceLibraryDialog'
 import type { JitRequirementUpdatePayload } from '@/components/vision/SceneReferencesPanel'
 import type { AutoAddedObject } from '@/components/vision/ObjectSuggestionPanel'
-import {
-  PublishingLibraryDialog,
-} from '@/components/publishing/PublishingLibraryDialog'
 import { PromoStudioDialog } from '@/components/publishing/PromoStudioDialog'
 import {
-  computePublishingReadiness,
   getPublishingState,
   upsertPublishingState,
 } from '@/lib/publish/publishingState'
-import type { PublishingLibraryTab } from '@/types/publishingAssets'
 import { resolvePromoBeatMedia, resolvePromoPlayback } from '@/lib/publish/promoBeatMedia'
 import {
   findPromoSceneIndex,
@@ -906,13 +901,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     []
   )
 
-  // Publishing Library dialog
-  const [publishingLibraryOpen, setPublishingLibraryOpen] = useState(false)
-  const [publishingInitialTab, setPublishingInitialTab] = useState<PublishingLibraryTab | undefined>()
-  const openPublishing = useCallback((tab?: PublishingLibraryTab) => {
-    setPublishingInitialTab(tab)
-    setPublishingLibraryOpen(true)
-  }, [])
+  // Production Streams → Package & Ship signal (for menu/guide triggers)
+  const [packageShipSignal, setPackageShipSignal] = useState(0)
   const [promoStudioOpen, setPromoStudioOpen] = useState(false)
   const openPromo = useCallback(() => {
     setPromoStudioOpen(true)
@@ -2284,18 +2274,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     () => getProjectStreams(project?.metadata),
     [project?.metadata]
   )
-
-  const publishingReadiness = useMemo(() => {
-    const state = getPublishingState(project?.metadata, project ? {
-      id: projectId,
-      metadata: project.metadata,
-      script: script?.script ?? script,
-    } : undefined)
-    return computePublishingReadiness(
-      project ? { id: projectId, metadata: project.metadata, script: script?.script ?? script } : undefined,
-      state.streams
-    )
-  }, [project, projectId, script])
 
   const handleSaveProjectStreams = useCallback(
     async (
@@ -6583,7 +6561,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.error('That shot is no longer in the script.')
         return
       }
-      setPublishingLibraryOpen(false)
       setPromoStudioOpen(false)
       setProductionViewWithUrl('studio')
       setSelectedSceneIndex(target.sceneIndex)
@@ -10142,12 +10119,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       'production:screening-room': () => setProductionViewWithUrl('screening'),
       'production:streams': () => setProductionViewWithUrl('streams'),
       'production:render-all': () => setProductionViewWithUrl('streams'),
-      'production:publish': () => openPublishing('youtube'),
+      'production:publish': () => {
+        setProductionViewWithUrl('streams')
+        setPackageShipSignal((n) => n + 1)
+      },
       'screening-room:preview': () => setProductionViewWithUrl('screening'),
       'screening-room:assemble': () => setProductionViewWithUrl('streams'),
-      'screening-room:publish': () => openPublishing('youtube'),
+      'screening-room:publish': () => {
+        setProductionViewWithUrl('streams')
+        setPackageShipSignal((n) => n + 1)
+      },
       'studio:open-promo': () => openPromo(),
-      'screening-room:create-screening': () => openPublishing('screening'),
+      'screening-room:create-screening': () => setProductionViewWithUrl('screening'),
       'production:update-reviews': () => handlersRef.current.generateReviews(),
       'production:review-analysis': () => setShowReviewModal(true),
       'production:assign-voices': () => openReferenceLibrary('cast'),
@@ -10184,7 +10167,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         window.removeEventListener(eventName, listener)
       })
     }
-  }, [openScreeningRoomFromVisionUi, openReferenceLibrary, openPublishing, openPromo, setProductionViewWithUrl])
+  }, [openScreeningRoomFromVisionUi, openReferenceLibrary, openPromo, setProductionViewWithUrl])
   // ============================================================================
 
   const loadProject = async (
@@ -21338,10 +21321,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onShowReviews={handleAudienceHeaderClick}
                 onOpenReferences={() => openReferenceLibrary('cast')}
                 onOpenPromo={openPromo}
-                onOpenPublishing={() => openPublishing()}
                 onOpenProductionBuilder={() => setProductionBuilderOpen(true)}
                 isProductionAgentRunning={Boolean(productionAgentState?.running)}
-                publishingBlockerCount={publishingReadiness.blockers.length}
                 directionReadiness={directionReadiness}
                 onUpdateAllDirections={handleUpdateAllDirections}
                 isUpdatingAllDirections={isUpdatingAllDirections}
@@ -21498,6 +21479,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     userId={getUserId()}
                     streams={projectStreams}
                     onSaveStreams={handleSaveProjectStreams}
+                    onSaveMetadata={handleSavePublishingMetadata}
+                    onOpenPromo={openPromo}
+                    openPackageShipSignal={packageShipSignal}
                     onGenerateLanguage={handleGenerateLanguageStream}
                     onPreviewStream={handlePreviewStream}
                     sceneProductionState={sceneProductionState}
@@ -21707,29 +21691,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         getLatestLocations={() => locationReferencesRef.current}
       />
 
-      <PublishingLibraryDialog
-        open={publishingLibraryOpen}
-        onOpenChange={(open) => {
-          setPublishingLibraryOpen(open)
-          if (!open) setPublishingInitialTab(undefined)
-        }}
-        initialTab={publishingInitialTab}
-        projectId={projectId}
-        projectTitle={project?.title || script?.title}
-        metadata={project?.metadata}
-        script={script}
-        userId={getUserId()}
-        streams={projectStreams}
-        onSaveStreams={handleSaveProjectStreams}
-        onSaveMetadata={handleSavePublishingMetadata}
-        onPreviewStream={handlePreviewStream}
-        sceneProductionState={sceneProductionState}
-        onOpenScreeningView={() => {
-          setPublishingLibraryOpen(false)
-          setProductionViewWithUrl('screening')
-        }}
-      />
-
       <PromoStudioDialog
         open={promoStudioOpen}
         onOpenChange={setPromoStudioOpen}
@@ -21791,7 +21752,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }}
         onOpenPromoInStudio={(promoSceneId) => {
           setPromoStudioOpen(false)
-          setPublishingLibraryOpen(false)
           setProductionViewWithUrl('studio')
           const currentScenes = scriptRef.current?.script?.scenes || script?.script?.scenes || []
           const targetIdx =

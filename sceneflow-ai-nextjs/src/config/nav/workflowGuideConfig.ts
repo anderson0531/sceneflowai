@@ -147,7 +147,7 @@ export const screeningRoomWorkflowGroups: WorkflowGroup[] = [
     steps: [
       { id: 'select-stream-type', label: 'Choose Animatic or Video per scene', actionEventName: 'screening-room:assemble' },
       { id: 'select-language', label: 'Pick language stream', description: 'Mix languages across scenes' },
-      { id: 'export-master', label: 'Render master MP4', description: 'Opens Publishing Library → Final Streams', actionEventName: 'screening-room:assemble' },
+      { id: 'export-master', label: 'Render master MP4', description: 'Opens Production Streams', actionEventName: 'screening-room:assemble' },
     ],
   },
   {
@@ -156,9 +156,9 @@ export const screeningRoomWorkflowGroups: WorkflowGroup[] = [
     icon: 'Youtube',
     iconColor: 'text-red-500',
     steps: [
-      { id: 'create-screening', label: 'Create screening & share /s/ link', description: 'Opens Publishing Library → Screening tab', actionEventName: 'screening-room:create-screening' },
-      { id: 'review-insights', label: 'Review feedback insights', description: 'Opens Publishing Library', actionEventName: 'screening-room:publish' },
-      { id: 'publish-youtube', label: 'Package & Ship', description: 'Opens Publishing Library → Package & Ship', actionEventName: 'screening-room:publish' },
+      { id: 'create-screening', label: 'Create screening & share /s/ link', description: 'Opens Screening view', actionEventName: 'screening-room:create-screening' },
+      { id: 'review-insights', label: 'Review feedback insights', description: 'Opens Screening view', actionEventName: 'screening-room:create-screening' },
+      { id: 'publish-youtube', label: 'Package & Ship', description: 'Opens Production Streams → Package & Ship', actionEventName: 'screening-room:publish' },
       { id: 'export-bundle', label: 'Export bundle or short-form cuts', description: 'Opens Promo', actionEventName: 'studio:open-promo' },
     ],
   },

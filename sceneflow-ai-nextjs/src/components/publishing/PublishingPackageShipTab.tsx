@@ -73,13 +73,21 @@ import {
 import type { PreVisMasterAsset, YoutubePublishBundle } from '@/types/publishingAssets'
 import type { AudioTrackResult } from '@/app/api/publish/youtube/upload/route'
 
-const KINDS: Array<{ id: PublishUnitKind; label: string; hint: string }> = [
-  { id: 'scene', label: 'Scene', hint: 'Single rendered scene' },
-  { id: 'chapter', label: 'Chapter', hint: 'Scenes sharing a Blueprint beat' },
-  { id: 'previs', label: 'Pre-Vis', hint: 'Stitched multi-scene Pre-Vis render' },
-  { id: 'master', label: 'Master', hint: 'Final production master stream' },
-  { id: 'promo', label: 'Promo', hint: 'Rendered promo trailer' },
+const KINDS: Array<{ id: PublishUnitKind; label: string }> = [
+  { id: 'scene', label: 'Scene' },
+  { id: 'chapter', label: 'Chapter' },
+  { id: 'previs', label: 'Pre-Vis' },
+  { id: 'master', label: 'Master' },
+  { id: 'promo', label: 'Promo' },
 ]
+
+const KIND_HINTS: Record<PublishUnitKind, string> = {
+  scene: 'Single rendered scene',
+  chapter: 'Scenes sharing a Blueprint beat',
+  previs: 'Stitched multi-scene Pre-Vis render',
+  master: 'Final production master stream',
+  promo: 'Rendered promo trailer',
+}
 
 const ASPECTS: PublishAspectRatio[] = ['16:9', '9:16']
 
@@ -128,6 +136,11 @@ export interface PublishingPackageShipTabProps {
   streams: ProjectStream[]
   sceneProductionState?: Record<string, SceneProductionData>
   onSaveMetadata?: (metadata: Record<string, unknown>) => Promise<void>
+  initialKind?: PublishUnitKind
+  initialLanguage?: string
+  initialSceneId?: string
+  initialBeatIndex?: number
+  initialAspectRatio?: PublishAspectRatio
 }
 
 interface YouTubeChannelInfo {
@@ -254,6 +267,11 @@ export function PublishingPackageShipTab({
   streams,
   sceneProductionState,
   onSaveMetadata,
+  initialKind: initialKindProp,
+  initialLanguage: initialLanguageProp,
+  initialSceneId: initialSceneIdProp,
+  initialBeatIndex: initialBeatIndexProp,
+  initialAspectRatio: initialAspectRatioProp,
 }: PublishingPackageShipTabProps) {
   const [liveSceneStreams, setLiveSceneStreams] = useState<Record<string, ProductionStream[]>>({})
   const [livePreVisMasters, setLivePreVisMasters] = useState<Record<string, PreVisMasterAsset>>({})
@@ -314,8 +332,9 @@ export function PublishingPackageShipTab({
 
   const rawScenes = useMemo(() => scenesFromProps(script, metadata), [script, metadata])
 
-  // Default to Pre-Vis when a Pre-Vis render is available and no final Master MP4 exists yet
-  const initialKind = useMemo<PublishUnitKind>(() => {
+  // Default to explicit prop, or Pre-Vis when a Pre-Vis render is available and no final Master MP4 exists yet
+  const defaultKind = useMemo<PublishUnitKind>(() => {
+    if (initialKindProp) return initialKindProp
     const hasMasterReady = streams.some((s) => s.format !== 'animatic' && Boolean(s.mp4Url))
     if (hasMasterReady) return 'master'
     const hasStitchedPreVis = Object.values(effectivePreVisByLanguage).some((p) => Boolean(p?.mp4Url))
@@ -326,12 +345,32 @@ export function PublishingPackageShipTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const [kind, setKind] = useState<PublishUnitKind>(initialKind)
-  const [aspect, setAspect] = useState<PublishAspectRatio>('16:9')
+  const [kind, setKind] = useState<PublishUnitKind>(defaultKind)
+  const [aspect, setAspect] = useState<PublishAspectRatio>(initialAspectRatioProp || '16:9')
   const [destination, setDestination] = useState<PublishDestinationId>('youtube')
-  const [language, setLanguage] = useState('en')
-  const [sceneId, setSceneId] = useState<string>('')
-  const [beatIndex, setBeatIndex] = useState<number | undefined>(undefined)
+  const [language, setLanguage] = useState(initialLanguageProp || 'en')
+  const [sceneId, setSceneId] = useState<string>(initialSceneIdProp || '')
+  const [beatIndex, setBeatIndex] = useState<number | undefined>(initialBeatIndexProp)
+
+  useEffect(() => {
+    if (initialKindProp) setKind(initialKindProp)
+  }, [initialKindProp])
+
+  useEffect(() => {
+    if (initialLanguageProp) setLanguage(initialLanguageProp)
+  }, [initialLanguageProp])
+
+  useEffect(() => {
+    if (initialSceneIdProp) setSceneId(initialSceneIdProp)
+  }, [initialSceneIdProp])
+
+  useEffect(() => {
+    if (typeof initialBeatIndexProp === 'number') setBeatIndex(initialBeatIndexProp)
+  }, [initialBeatIndexProp])
+
+  useEffect(() => {
+    if (initialAspectRatioProp) setAspect(initialAspectRatioProp)
+  }, [initialAspectRatioProp])
 
   const [title, setTitle] = useState(projectTitle || '')
   const [description, setDescription] = useState('')
@@ -752,7 +791,15 @@ export function PublishingPackageShipTab({
       toast.error('Sign in to connect an account')
       return
     }
-    const returnTo = `${window.location.pathname}${window.location.search}`
+    const returnUrl = new URL(window.location.href)
+    returnUrl.searchParams.set('view', 'streams')
+    returnUrl.searchParams.set('shipKind', kind)
+    returnUrl.searchParams.set('shipLang', language)
+    if (kind === 'scene' && sceneId) returnUrl.searchParams.set('shipSceneId', sceneId)
+    if (kind === 'chapter' && typeof beatIndex === 'number') {
+      returnUrl.searchParams.set('shipBeatIndex', String(beatIndex))
+    }
+    const returnTo = `${returnUrl.pathname}${returnUrl.search}`
     const params = new URLSearchParams({ returnTo })
     if (userId) params.set('userId', userId)
     window.location.href = `/api/publish/${platform}/auth?${params.toString()}`
@@ -1483,7 +1530,7 @@ export function PublishingPackageShipTab({
               <button
                 key={item.id}
                 type="button"
-                title={item.hint}
+                title={KIND_HINTS[item.id]}
                 onClick={() => setKind(item.id)}
                 className={cn(
                   'rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',

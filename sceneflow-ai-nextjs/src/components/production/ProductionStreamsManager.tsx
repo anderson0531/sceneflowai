@@ -1,8 +1,13 @@
 'use client'
 
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Clapperboard,
+  ExternalLink,
   Film,
   Globe,
   Languages,
@@ -10,20 +15,24 @@ import {
   Loader2,
   Play,
   Plus,
-  ChevronDown,
-  ChevronUp,
-  Clapperboard,
+  Share2,
+  Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { PreVisRenderDialog } from '@/components/vision/PreVisRenderDialog'
+import {
+  PackageShipDialog,
+  type PackageShipTarget,
+} from '@/components/publishing/PackageShipDialog'
 import { cn } from '@/lib/utils'
 import { FinalCutStreamsPanel } from '@/components/final-cut/FinalCutStreamsPanel'
-import { ProductionPublishPanel } from '@/components/production/ProductionPublishPanel'
 import { StreamLocalizePanel } from '@/components/production/StreamLocalizePanel'
 import { buildFinalCutClips, type BuildFinalCutClipsArgs } from '@/lib/final-cut/useFinalCutClips'
 import { applyAssemblyPreset } from '@/lib/final-cut/finalCutPresets'
 import { getAvailableLanguagesForFormat } from '@/lib/final-cut/resolveSegmentMedia'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
+import { resolvePromoScreeningVideoUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
+import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import {
   buildDraftStream,
   isLocalizeEligibleLanguage,
@@ -32,13 +41,30 @@ import {
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
 import { getLanguageDisplayName } from '@/lib/publish/buildLanguageAudioTrack'
+import { promoAssetForLanguage } from '@/lib/publish/promoLanguage'
+import { getPublishingState, upsertPreVisMaster } from '@/lib/publish/publishingState'
+import {
+  collectPublishPreVisScenes,
+  collectPublishScenes,
+  listPublishChapters,
+  publishUnitId,
+  type PublishUnitKind,
+} from '@/lib/publish/publishUnits'
 import { LANGUAGE_CONFIGS } from '@/lib/types/finalCut'
 import type {
   FinalCutAssemblyPresetId,
   FinalCutSelection,
   ProductionLanguage,
 } from '@/lib/types/finalCut'
-import type { SceneProductionData } from '@/components/vision/scene-production/types'
+import type {
+  ProductionStream,
+  SceneProductionData,
+} from '@/components/vision/scene-production/types'
+import { SCENE_RENDER_APPENDED_EVENT } from '@/lib/projects/appendSceneRenderClient'
+import { PREVIS_MASTER_SAVED_EVENT } from '@/lib/projects/savePreVisMasterClient'
+import type { PreVisMasterAsset } from '@/types/publishingAssets'
+
+export const OPEN_PACKAGE_SHIP_EVENT = 'sceneflow:open-package-ship'
 
 type ProjectLike = NonNullable<BuildFinalCutClipsArgs['project']>
 
@@ -53,6 +79,10 @@ export interface ProductionStreamsManagerProps {
     streams: ProjectStream[],
     compat?: { exportedVideoUrl?: string; exportedAnimaticUrl?: string }
   ) => Promise<void>
+  onSaveMetadata?: (metadata: Record<string, unknown>) => Promise<void>
+  onOpenPromo?: () => void
+  /** Increment to open Package & Ship when navigating here from external menus/guides. */
+  openPackageShipSignal?: number
   onGenerateLanguage: (language: string) => Promise<void>
   onPreviewStream: (language: string) => void
   sceneProductionState: Record<string, SceneProductionData>
@@ -63,27 +93,25 @@ export interface ProductionStreamsManagerProps {
   reloadSceneProduction: () => Promise<Record<string, SceneProductionData>>
 }
 
-function statusBadge(status: ProjectStream['status']) {
-  const styles: Record<ProjectStream['status'], string> = {
-    draft: 'bg-zinc-700/60 text-zinc-300 border-zinc-600/50',
-    rendering: 'bg-amber-500/15 text-amber-200 border-amber-500/30',
-    ready: 'bg-emerald-500/15 text-emerald-200 border-emerald-500/30',
-    error: 'bg-red-500/15 text-red-200 border-red-500/30',
+function statusPill(ready: boolean, partial?: boolean, readyLabel = 'Ready', draftLabel = 'Not rendered') {
+  if (ready) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded border bg-emerald-500/15 text-emerald-200 border-emerald-500/30">
+        <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" />
+        {readyLabel}
+      </span>
+    )
   }
-  const labels: Record<ProjectStream['status'], string> = {
-    draft: 'Draft',
-    rendering: 'Rendering',
-    ready: 'Ready',
-    error: 'Error',
+  if (partial) {
+    return (
+      <span className="text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded border bg-amber-500/15 text-amber-200 border-amber-500/30">
+        {draftLabel}
+      </span>
+    )
   }
   return (
-    <span
-      className={cn(
-        'text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded border',
-        styles[status]
-      )}
-    >
-      {labels[status]}
+    <span className="text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded border bg-zinc-800/80 text-zinc-400 border-zinc-700/60">
+      {draftLabel}
     </span>
   )
 }
@@ -95,9 +123,13 @@ interface StreamCardProps {
   metadata: unknown
   script?: unknown
   userId?: string
+  projectScenes: Array<Record<string, unknown>>
+  previsMaster?: PreVisMasterAsset
   onSaveStreams: ProductionStreamsManagerProps['onSaveStreams']
   onPreviewStream: (language: string) => void
-  onOpenPreVisRender: (language: string) => void
+  onOpenPreVisRender: (language: string, combine?: boolean) => void
+  onOpenPackageShip: (target: PackageShipTarget) => void
+  onOpenPromo?: () => void
   allStreams: ProjectStream[]
   sceneProductionState: Record<string, SceneProductionData>
   onPersistSceneProduction: ProductionStreamsManagerProps['onPersistSceneProduction']
@@ -110,17 +142,20 @@ function StreamCard({
   projectTitle,
   metadata,
   script,
-  userId,
+  projectScenes,
+  previsMaster,
   onSaveStreams,
   onPreviewStream,
   onOpenPreVisRender,
+  onOpenPackageShip,
+  onOpenPromo,
   allStreams,
   sceneProductionState,
   onPersistSceneProduction,
   reloadSceneProduction,
 }: StreamCardProps) {
   const [expanded, setExpanded] = useState(false)
-  const [publishOpen, setPublishOpen] = useState(false)
+  const [scenesChaptersOpen, setScenesChaptersOpen] = useState(false)
   const [localizeOpen, setLocalizeOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [lastRenderUrl, setLastRenderUrl] = useState<string | null>(stream.mp4Url ?? null)
@@ -173,8 +208,121 @@ function StreamCard({
 
   const sceneIds = useMemo(() => clips.map((c) => c.sceneId), [clips])
 
+  // Compute all publishable deliverables in this language stream
+  const publishingState = useMemo(() => getPublishingState(metadata), [metadata])
+
+  const publishScenes = useMemo(
+    () => collectPublishScenes(projectScenes, sceneProductionState as never, stream.language),
+    [projectScenes, sceneProductionState, stream.language]
+  )
+  const previsScenes = useMemo(
+    () => collectPublishPreVisScenes(projectScenes, sceneProductionState as never, stream.language),
+    [projectScenes, sceneProductionState, stream.language]
+  )
+
+  // Merge scene readiness so Scenes & Chapters can ship either final video or Pre-Vis renders
+  const mergedSceneDeliverables = useMemo(
+    () =>
+      publishScenes.map((sc, idx) => {
+        const pv = previsScenes[idx]
+        const inLangVideo = (sceneProductionState[sc.id]?.productionStreams || []).find(
+          (s) =>
+            (s.status === 'complete' || String(s.status) === 'ready') &&
+            s.streamType === 'video' &&
+            s.language === stream.language &&
+            Boolean(s.mp4Url)
+        )
+        const mp4Url = inLangVideo?.mp4Url || pv?.mp4Url || (stream.language === 'en' ? sc.mp4Url : undefined)
+        const duration = inLangVideo?.duration || pv?.duration || sc.duration
+        return {
+          ...sc,
+          mp4Url,
+          duration,
+        }
+      }),
+    [publishScenes, previsScenes, sceneProductionState, stream.language]
+  )
+
+  const chapters = useMemo(
+    () => listPublishChapters(mergedSceneDeliverables),
+    [mergedSceneDeliverables]
+  )
+
+  const readyPreVisScenesCount = useMemo(
+    () => previsScenes.filter((s) => Boolean(s.mp4Url)).length,
+    [previsScenes]
+  )
+  const stitchedPreVisUrl =
+    previsMaster?.mp4Url || (stream.format === 'animatic' && stream.mp4Url ? stream.mp4Url : undefined)
+  const previsCanStitch =
+    !stitchedPreVisUrl &&
+    (readyPreVisScenesCount >= 2 ||
+      (previsScenes.length === 1 && readyPreVisScenesCount === 1))
+
+  const masterVideoUrl =
+    stream.format !== 'animatic' && stream.mp4Url ? stream.mp4Url : undefined
+  const readyScenesCount = useMemo(
+    () => mergedSceneDeliverables.filter((s) => Boolean(s.mp4Url)).length,
+    [mergedSceneDeliverables]
+  )
+  const readyChaptersCount = useMemo(
+    () =>
+      chapters.filter((ch) =>
+        mergedSceneDeliverables
+          .filter((s) => ch.sceneIds.includes(s.id))
+          .some((s) => Boolean(s.mp4Url))
+      ).length,
+    [chapters, mergedSceneDeliverables]
+  )
+
+  const promoAsset = promoAssetForLanguage(publishingState.promo, stream.language)
+  const promoUrl = useMemo(
+    () =>
+      resolvePromoScreeningVideoUrl({
+        scenes: projectScenes,
+        sceneProductionState: sceneProductionState as Record<string, unknown>,
+        language: stream.language,
+        finalCut: readFinalCutSelection(metadata),
+        activePromoId: publishingState.promo?.activePromoId,
+        fallbackPromoTrailerUrl: promoAsset?.mp4Url || null,
+      }),
+    [
+      projectScenes,
+      sceneProductionState,
+      stream.language,
+      metadata,
+      publishingState.promo?.activePromoId,
+      promoAsset?.mp4Url,
+    ]
+  )
+
+  const findPublishedYoutubeUrl = useCallback(
+    (kind: PublishUnitKind, targetSceneId?: string, targetBeatIndex?: number) => {
+      const id16 = publishUnitId(kind, '16:9', stream.language, targetSceneId, targetBeatIndex)
+      const id9 = publishUnitId(kind, '9:16', stream.language, targetSceneId, targetBeatIndex)
+      const unitMatch = publishingState.units?.find(
+        (u) =>
+          (u.id === id16 || u.id === id9) &&
+          u.destinations?.youtube?.status === 'published' &&
+          Boolean(u.destinations?.youtube?.url)
+      )
+      return unitMatch?.destinations?.youtube?.url
+    },
+    [publishingState.units, stream.language]
+  )
+
+  const readyDeliverableTotal =
+    (stitchedPreVisUrl || previsCanStitch ? 1 : 0) +
+    (masterVideoUrl ? 1 : 0) +
+    (promoUrl ? 1 : 0) +
+    readyScenesCount +
+    readyChaptersCount
+
   const persistStream = useCallback(
-    async (next: ProjectStream, compat?: { exportedVideoUrl?: string; exportedAnimaticUrl?: string }) => {
+    async (
+      next: ProjectStream,
+      compat?: { exportedVideoUrl?: string; exportedAnimaticUrl?: string }
+    ) => {
       setSaving(true)
       try {
         const updated = allStreams.map((s) =>
@@ -274,39 +422,14 @@ function StreamCard({
     [stream, localSelection, persistStream]
   )
 
-  const handleShareCreated = useCallback(
-    async (result: { shareUrl: string; shareSlug?: string }) => {
-      await persistStream({
-        ...stream,
-        publish: {
-          ...stream.publish,
-          shareUrl: result.shareUrl,
-          shareSlug: result.shareSlug,
-          publishedAt: new Date().toISOString(),
-        },
-      })
-    },
-    [stream, persistStream]
-  )
-
-  const handleYoutubePublished = useCallback(
-    async (result: { youtubeUrl: string }) => {
-      await persistStream({
-        ...stream,
-        publish: {
-          ...stream.publish,
-          youtubeUrl: result.youtubeUrl,
-          publishedAt: new Date().toISOString(),
-        },
-      })
-    },
-    [stream, persistStream]
-  )
-
-  const formatLabel = stream.format === 'animatic' ? 'Animatic' : 'Video'
+  const previsPublishedUrl = findPublishedYoutubeUrl('previs')
+  const masterPublishedUrl =
+    findPublishedYoutubeUrl('master') || stream.publish?.youtubeUrl || undefined
+  const promoPublishedUrl = findPublishedYoutubeUrl('promo')
 
   return (
-    <div className="rounded-xl border border-zinc-800/70 bg-zinc-950/45 backdrop-blur-md overflow-hidden">
+    <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/50 backdrop-blur-md overflow-hidden">
+      {/* Language Stream Header */}
       <div className="px-4 py-4 sm:px-5 flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className="w-9 h-9 rounded-lg bg-violet-500/15 border border-violet-500/30 flex items-center justify-center shrink-0">
@@ -318,11 +441,13 @@ function StreamCard({
                 {getLanguageDisplayName(stream.language)}
               </h3>
               <span className="text-[10px] text-zinc-500 uppercase">{stream.language}</span>
-              {statusBadge(stream.status)}
+              <span className="text-[10px] px-2 py-0.5 rounded-full border border-zinc-700/80 bg-zinc-900 text-zinc-300">
+                {readyDeliverableTotal} publishable asset{readyDeliverableTotal === 1 ? '' : 's'}
+              </span>
             </div>
             <p className="text-xs text-zinc-400 mt-0.5">
-              {formatLabel} · {coverage.ready}/{coverage.total} scenes ready
-              {coverage.missing > 0 ? ` · ${coverage.missing} missing` : ''}
+              Pre-Vis {readyPreVisScenesCount}/{previsScenes.length} scenes · Master{' '}
+              {coverage.ready}/{coverage.total} scenes
             </p>
           </div>
         </div>
@@ -332,7 +457,7 @@ function StreamCard({
             size="sm"
             variant="outline"
             className="border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50"
-            onClick={() => onOpenPreVisRender(stream.language)}
+            onClick={() => onOpenPreVisRender(stream.language, true)}
           >
             <Clapperboard className="w-3.5 h-3.5 mr-1.5 text-cyan-300" />
             Render Pre-Vis
@@ -341,20 +466,10 @@ function StreamCard({
             size="sm"
             variant="outline"
             className="border-zinc-700 text-zinc-200"
-            disabled={stream.status !== 'ready' || !stream.mp4Url}
-            onClick={() => onPreviewStream(stream.language)}
-          >
-            <Play className="w-3.5 h-3.5 mr-1.5" />
-            Preview
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-zinc-700 text-zinc-200"
             onClick={() => setExpanded((v) => !v)}
           >
             <Film className="w-3.5 h-3.5 mr-1.5" />
-            Render
+            Assemble Master
             {expanded ? (
               <ChevronUp className="w-3.5 h-3.5 ml-1" />
             ) : (
@@ -377,15 +492,280 @@ function StreamCard({
               )}
             </Button>
           ) : null}
-          <Button
-            size="sm"
-            className="bg-sf-primary hover:bg-sf-accent text-white"
-            disabled={!stream.mp4Url}
-            onClick={() => setPublishOpen((v) => !v)}
-          >
-            Publish
-          </Button>
+          {stream.status === 'ready' && stream.mp4Url ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-zinc-700 text-zinc-200"
+              onClick={() => onPreviewStream(stream.language)}
+            >
+              <Play className="w-3.5 h-3.5 mr-1.5" />
+              Preview
+            </Button>
+          ) : null}
         </div>
+      </div>
+
+      {/* Publishable Deliverables Shelf (Pre-Vis · Master · Promo · Scenes & Chapters) */}
+      <div className="border-t border-zinc-800/70 bg-zinc-900/25 px-4 py-3 sm:px-5 space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+          {/* 1. Stitched Pre-Vis */}
+          <div className="rounded-lg border border-zinc-800/90 bg-zinc-950/60 p-3 flex items-center justify-between gap-2">
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-white">Pre-Vis (Stitched)</span>
+                {statusPill(
+                  Boolean(stitchedPreVisUrl),
+                  previsCanStitch,
+                  'Ready',
+                  previsCanStitch ? `${readyPreVisScenesCount} scenes ready` : 'Not rendered'
+                )}
+              </div>
+              <p className="text-[11px] text-zinc-400 truncate">
+                {stitchedPreVisUrl
+                  ? 'Combined Pre-Vis MP4 ready to publish'
+                  : previsCanStitch
+                    ? 'Ready to stitch & publish in 1 click'
+                    : 'Render Pre-Vis scenes to stitch'}
+              </p>
+              {previsPublishedUrl ? (
+                <a
+                  href={previsPublishedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-emerald-400 hover:underline"
+                >
+                  Published on YouTube <ExternalLink className="h-2.5 w-2.5" />
+                </a>
+              ) : null}
+            </div>
+            <Button
+              size="sm"
+              disabled={!stitchedPreVisUrl && !previsCanStitch}
+              onClick={() =>
+                onOpenPackageShip({ kind: 'previs', language: stream.language })
+              }
+              className="h-8 text-xs bg-sf-primary hover:bg-sf-accent text-white shrink-0"
+            >
+              <Share2 className="w-3.5 h-3.5 mr-1" />
+              Publish
+            </Button>
+          </div>
+
+          {/* 2. Production Master */}
+          <div className="rounded-lg border border-zinc-800/90 bg-zinc-950/60 p-3 flex items-center justify-between gap-2">
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-white">Master</span>
+                {statusPill(
+                  Boolean(masterVideoUrl),
+                  coverage.ready > 0 && coverage.missing === 0,
+                  'Ready',
+                  `${coverage.ready}/${coverage.total} scenes`
+                )}
+              </div>
+              <p className="text-[11px] text-zinc-400 truncate">
+                {masterVideoUrl
+                  ? 'Final language Master MP4 ready'
+                  : 'Assemble & render Master stream'}
+              </p>
+              {masterPublishedUrl ? (
+                <a
+                  href={masterPublishedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-emerald-400 hover:underline"
+                >
+                  Published on YouTube <ExternalLink className="h-2.5 w-2.5" />
+                </a>
+              ) : null}
+            </div>
+            <Button
+              size="sm"
+              disabled={!masterVideoUrl}
+              onClick={() =>
+                onOpenPackageShip({ kind: 'master', language: stream.language })
+              }
+              className="h-8 text-xs bg-sf-primary hover:bg-sf-accent text-white shrink-0"
+            >
+              <Share2 className="w-3.5 h-3.5 mr-1" />
+              Publish
+            </Button>
+          </div>
+
+          {/* 3. Promo Trailer */}
+          <div className="rounded-lg border border-zinc-800/90 bg-zinc-950/60 p-3 flex items-center justify-between gap-2">
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-white">Promo</span>
+                {statusPill(Boolean(promoUrl), false, 'Ready', 'Draft')}
+              </div>
+              <p className="text-[11px] text-zinc-400 truncate">
+                {promoUrl
+                  ? 'Rendered Promo trailer ready'
+                  : 'Create trailer in Promo Builder'}
+              </p>
+              {promoPublishedUrl ? (
+                <a
+                  href={promoPublishedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-emerald-400 hover:underline"
+                >
+                  Published on YouTube <ExternalLink className="h-2.5 w-2.5" />
+                </a>
+              ) : null}
+            </div>
+            {promoUrl ? (
+              <Button
+                size="sm"
+                onClick={() =>
+                  onOpenPackageShip({ kind: 'promo', language: stream.language })
+                }
+                className="h-8 text-xs bg-sf-primary hover:bg-sf-accent text-white shrink-0"
+              >
+                <Share2 className="w-3.5 h-3.5 mr-1" />
+                Publish
+              </Button>
+            ) : onOpenPromo ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onOpenPromo}
+                className="h-8 text-xs border-fuchsia-500/35 text-fuchsia-200 hover:bg-fuchsia-500/10 shrink-0"
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1 text-fuchsia-400" />
+                Build Promo
+              </Button>
+            ) : (
+              <Button size="sm" disabled className="h-8 text-xs shrink-0">
+                Publish
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* 4. Scenes & Chapters Publish Drawer */}
+        {mergedSceneDeliverables.length > 0 ? (
+          <div className="rounded-lg border border-zinc-800/75 bg-zinc-950/40">
+            <button
+              type="button"
+              onClick={() => setScenesChaptersOpen((v) => !v)}
+              className="w-full px-3 py-2 flex items-center justify-between text-xs text-zinc-300 hover:text-white transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <span className="font-medium">Scenes &amp; Chapters</span>
+                <span className="text-[11px] text-zinc-400">
+                  {readyScenesCount}/{mergedSceneDeliverables.length} scenes ready
+                  {chapters.length > 0
+                    ? ` · ${readyChaptersCount}/${chapters.length} chapters ready`
+                    : ''}
+                </span>
+              </span>
+              {scenesChaptersOpen ? (
+                <ChevronUp className="h-3.5 w-3.5 text-zinc-400" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
+              )}
+            </button>
+
+            {scenesChaptersOpen ? (
+              <div className="border-t border-zinc-800/75 p-3 space-y-3">
+                {chapters.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+                      Chapters ({getLanguageDisplayName(stream.language)})
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {chapters.map((chapter) => {
+                        const chapterMembers = mergedSceneDeliverables.filter((s) =>
+                          chapter.sceneIds.includes(s.id)
+                        )
+                        const readyInChapter = chapterMembers.filter((s) =>
+                          Boolean(s.mp4Url)
+                        ).length
+                        const isChapterReady = readyInChapter > 0
+                        const pubUrl = findPublishedYoutubeUrl(
+                          'chapter',
+                          undefined,
+                          chapter.beatIndex
+                        )
+                        return (
+                          <div
+                            key={chapter.beatIndex}
+                            className="flex items-center justify-between gap-2 rounded-md border border-zinc-800 bg-zinc-900/50 px-2.5 py-1.5"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-xs text-zinc-200 truncate">{chapter.title}</p>
+                              <p className="text-[10px] text-zinc-500">
+                                {readyInChapter}/{chapterMembers.length} scene
+                                {chapterMembers.length === 1 ? '' : 's'} rendered
+                                {pubUrl ? ' · Published' : ''}
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              disabled={!isChapterReady}
+                              onClick={() =>
+                                onOpenPackageShip({
+                                  kind: 'chapter',
+                                  language: stream.language,
+                                  beatIndex: chapter.beatIndex,
+                                })
+                              }
+                              className="h-7 px-2.5 text-[11px] bg-sf-primary hover:bg-sf-accent text-white shrink-0"
+                            >
+                              Publish
+                            </Button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+                    Scenes ({getLanguageDisplayName(stream.language)})
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {mergedSceneDeliverables.map((scene) => {
+                      const pubUrl = findPublishedYoutubeUrl('scene', scene.id)
+                      return (
+                        <div
+                          key={scene.id}
+                          className="flex items-center justify-between gap-2 rounded-md border border-zinc-800 bg-zinc-900/50 px-2.5 py-1.5"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-xs text-zinc-200 truncate">{scene.title}</p>
+                            <p className="text-[10px] text-zinc-500">
+                              {scene.mp4Url ? 'Ready' : 'Not rendered'}
+                              {pubUrl ? ' · Published' : ''}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            disabled={!scene.mp4Url}
+                            onClick={() =>
+                              onOpenPackageShip({
+                                kind: 'scene',
+                                language: stream.language,
+                                sceneId: scene.id,
+                              })
+                            }
+                            className="h-7 px-2.5 text-[11px] bg-sf-primary hover:bg-sf-accent text-white shrink-0"
+                          >
+                            Publish
+                          </Button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {expanded ? (
@@ -416,7 +796,8 @@ function StreamCard({
           <div className="mb-3">
             <h4 className="text-sm font-semibold text-white">Localize Video</h4>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Each shot uses the Mixer choice for this language — double, lip-sync, or regenerate — then stitch a localized master.
+              Each shot uses the Mixer choice for this language — dub, lip-sync, or regenerate —
+              then stitch a localized master.
             </p>
           </div>
           <StreamLocalizePanel
@@ -434,25 +815,6 @@ function StreamCard({
           />
         </div>
       ) : null}
-
-      {publishOpen && stream.mp4Url ? (
-        <div className="border-t border-zinc-800/80 px-4 py-4 sm:px-5 sm:py-5">
-          <ProductionPublishPanel
-            projectId={projectId}
-            userId={userId}
-            videoUrl={stream.mp4Url}
-            title={`${projectTitle || 'Production'} (${getLanguageDisplayName(stream.language)})`}
-            projectTitle={projectTitle}
-            metadata={{
-              ...(typeof metadata === 'object' && metadata ? metadata : {}),
-              finalCut: localSelection,
-            }}
-            masterLanguage={stream.language}
-            onShareCreated={handleShareCreated}
-            onYoutubePublished={handleYoutubePublished}
-          />
-        </div>
-      ) : null}
     </div>
   )
 }
@@ -465,6 +827,9 @@ export function ProductionStreamsManager({
   userId,
   streams,
   onSaveStreams,
+  onSaveMetadata,
+  onOpenPromo,
+  openPackageShipSignal = 0,
   onGenerateLanguage,
   onPreviewStream,
   sceneProductionState,
@@ -476,6 +841,104 @@ export function ProductionStreamsManager({
   const [addingLanguage, setAddingLanguage] = useState(false)
   const [preVisDialogOpen, setPreVisDialogOpen] = useState(false)
   const [preVisDialogLanguage, setPreVisDialogLanguage] = useState<string>('en')
+  const [preVisCombineDefault, setPreVisCombineDefault] = useState<boolean>(true)
+  const [packageShipOpen, setPackageShipOpen] = useState(false)
+  const [packageShipTarget, setPackageShipTarget] = useState<PackageShipTarget | null>(null)
+  const lastHandledShipSignalRef = useRef(0)
+  const [liveSceneStreams, setLiveSceneStreams] = useState<Record<string, ProductionStream[]>>({})
+  const [livePreVisMasters, setLivePreVisMasters] = useState<Record<string, PreVisMasterAsset>>({})
+
+  useEffect(() => {
+    if (openPackageShipSignal > lastHandledShipSignalRef.current) {
+      lastHandledShipSignalRef.current = openPackageShipSignal
+      setPackageShipTarget(null)
+      setPackageShipOpen(true)
+    }
+  }, [openPackageShipSignal])
+
+  // Listen to live scene & stitched Pre-Vis renders + external Package & Ship open events
+  useEffect(() => {
+    const onSceneAppended = (evt: Event) => {
+      const detail = (evt as CustomEvent<{ sceneId?: string; stream?: ProductionStream }>).detail
+      if (!detail?.sceneId || !detail.stream) return
+      setLiveSceneStreams((prev) => ({
+        ...prev,
+        [detail.sceneId!]: [...(prev[detail.sceneId!] || []), detail.stream!],
+      }))
+    }
+    const onPreVisSaved = (evt: Event) => {
+      const detail = (evt as CustomEvent<{ projectId?: string; asset?: PreVisMasterAsset }>).detail
+      if (!detail?.asset?.language || !detail.asset.mp4Url) return
+      if (detail.projectId && detail.projectId !== projectId) return
+      setLivePreVisMasters((prev) => ({
+        ...prev,
+        [detail.asset!.language]: detail.asset!,
+      }))
+    }
+    const onOpenShipEvent = (evt: Event) => {
+      const detail = (evt as CustomEvent<PackageShipTarget | undefined>).detail
+      if (detail?.kind) {
+        setPackageShipTarget(detail)
+      }
+      setPackageShipOpen(true)
+    }
+    window.addEventListener(SCENE_RENDER_APPENDED_EVENT, onSceneAppended)
+    window.addEventListener(PREVIS_MASTER_SAVED_EVENT, onPreVisSaved)
+    window.addEventListener(OPEN_PACKAGE_SHIP_EVENT, onOpenShipEvent)
+    return () => {
+      window.removeEventListener(SCENE_RENDER_APPENDED_EVENT, onSceneAppended)
+      window.removeEventListener(PREVIS_MASTER_SAVED_EVENT, onPreVisSaved)
+      window.removeEventListener(OPEN_PACKAGE_SHIP_EVENT, onOpenShipEvent)
+    }
+  }, [projectId])
+
+  // Re-open Package & Ship automatically if returning from OAuth redirect with ?shipKind=...
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    const shipKind = url.searchParams.get('shipKind') as PublishUnitKind | null
+    if (!shipKind) return
+    const shipLang = url.searchParams.get('shipLang') || 'en'
+    const shipSceneId = url.searchParams.get('shipSceneId') || undefined
+    const shipBeatRaw = url.searchParams.get('shipBeatIndex')
+    const shipBeatIndex =
+      shipBeatRaw != null && shipBeatRaw !== '' && Number.isFinite(Number(shipBeatRaw))
+        ? Number(shipBeatRaw)
+        : undefined
+
+    setPackageShipTarget({
+      kind: shipKind,
+      language: shipLang,
+      sceneId: shipSceneId,
+      beatIndex: shipBeatIndex,
+    })
+    setPackageShipOpen(true)
+
+    url.searchParams.delete('shipKind')
+    url.searchParams.delete('shipLang')
+    url.searchParams.delete('shipSceneId')
+    url.searchParams.delete('shipBeatIndex')
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+  }, [])
+
+  const mergedSceneProductionState = useMemo(() => {
+    const next: Record<string, SceneProductionData> = { ...sceneProductionState }
+    for (const [sid, list] of Object.entries(liveSceneStreams)) {
+      const existing = next[sid]?.productionStreams || []
+      const map = new Map<string, ProductionStream>()
+      for (const s of existing) {
+        if (s?.id) map.set(s.id, s)
+      }
+      for (const s of list) {
+        if (s?.id) map.set(s.id, s)
+      }
+      next[sid] = {
+        ...(next[sid] || {}),
+        productionStreams: Array.from(map.values()),
+      } as SceneProductionData
+    }
+    return next
+  }, [sceneProductionState, liveSceneStreams])
 
   const effectiveMetadata = useMemo(() => {
     const baseMeta = (metadata && typeof metadata === 'object' ? metadata : {}) as Record<
@@ -493,7 +956,7 @@ export function ProductionStreamsManager({
     const metaScenes = (
       prod.scenes && typeof prod.scenes === 'object' ? prod.scenes : {}
     ) as Record<string, unknown>
-    return {
+    let combined: Record<string, unknown> = {
       ...baseMeta,
       visionPhase: {
         ...vp,
@@ -501,12 +964,21 @@ export function ProductionStreamsManager({
           ...prod,
           scenes: {
             ...metaScenes,
-            ...sceneProductionState,
+            ...mergedSceneProductionState,
           },
         },
       },
     }
-  }, [metadata, sceneProductionState])
+    for (const [lang, asset] of Object.entries(livePreVisMasters)) {
+      combined = upsertPreVisMaster(combined, lang, asset)
+    }
+    return combined
+  }, [metadata, mergedSceneProductionState, livePreVisMasters])
+
+  const publishingState = useMemo(
+    () => getPublishingState(effectiveMetadata),
+    [effectiveMetadata]
+  )
 
   const projectScenes = useMemo<Array<Record<string, unknown>>>(() => {
     const rawScript = script as
@@ -547,9 +1019,15 @@ export function ProductionStreamsManager({
 
   const displayStreams = streams.length > 0 ? streams : mergedStreams
 
-  const handleOpenPreVisRender = useCallback((lang = 'en') => {
+  const handleOpenPreVisRender = useCallback((lang = 'en', combine = true) => {
     setPreVisDialogLanguage(lang)
+    setPreVisCombineDefault(combine)
     setPreVisDialogOpen(true)
+  }, [])
+
+  const handleOpenPackageShip = useCallback((target: PackageShipTarget | null) => {
+    setPackageShipTarget(target)
+    setPackageShipOpen(true)
   }, [])
 
   const existingLanguages = useMemo(
@@ -594,22 +1072,23 @@ export function ProductionStreamsManager({
               <h2 className="text-lg font-semibold text-white">Production Streams</h2>
             </div>
             <p className="text-sm text-zinc-400 mt-1 max-w-2xl">
-              A stream is a language version of the film. Add a language, generate clips in Clips,
-              mix it in the Mixer, then render the master.
+              Manage every language stream of your film — render Pre-Vis, Scenes, Chapters, Master,
+              or Promo, then click <strong className="text-zinc-200 font-medium">Publish</strong> on
+              any ready asset to package &amp; ship.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {projectScenes.length > 0 ? (
               <Button
                 size="sm"
                 variant="outline"
                 className="border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50"
                 onClick={() =>
-                  handleOpenPreVisRender(displayStreams[0]?.language || 'en')
+                  handleOpenPreVisRender(displayStreams[0]?.language || 'en', true)
                 }
               >
                 <Clapperboard className="w-4 h-4 mr-1.5 text-cyan-300" />
-                Render Pre-Vis Scenes
+                Render &amp; Stitch Pre-Vis
               </Button>
             ) : null}
             <Button
@@ -663,29 +1142,34 @@ export function ProductionStreamsManager({
       <div className="flex-1 min-h-0 overflow-y-auto space-y-4 px-1 pb-6">
         {displayStreams.length === 0 ? (
           <div className="rounded-xl border border-zinc-800/70 bg-zinc-950/40 p-8 text-center text-sm text-zinc-400">
-            No language streams yet. Add a language to get started.
+            No language streams yet. Add a language or render Pre-Vis scenes above to get started.
           </div>
         ) : (
           displayStreams.map((stream) => (
             <StreamCard
-              key={stream.id}
+              key={stream.id || stream.language}
               stream={stream}
               projectId={projectId}
               projectTitle={projectTitle}
               metadata={effectiveMetadata}
               script={script}
               userId={userId}
+              projectScenes={projectScenes}
+              previsMaster={publishingState.previsByLanguage?.[stream.language]}
               onSaveStreams={onSaveStreams}
               onPreviewStream={onPreviewStream}
               onOpenPreVisRender={handleOpenPreVisRender}
+              onOpenPackageShip={handleOpenPackageShip}
+              onOpenPromo={onOpenPromo}
               allStreams={displayStreams}
-              sceneProductionState={sceneProductionState}
+              sceneProductionState={mergedSceneProductionState}
               onPersistSceneProduction={onPersistSceneProduction}
               reloadSceneProduction={reloadSceneProduction}
             />
           ))
         )}
       </div>
+
       <PreVisRenderDialog
         open={preVisDialogOpen}
         onOpenChange={setPreVisDialogOpen}
@@ -693,8 +1177,39 @@ export function ProductionStreamsManager({
         projectId={projectId}
         projectTitle={projectTitle}
         initialLanguage={preVisDialogLanguage}
+        initialCombineSelectedScenes={preVisCombineDefault}
         availableLanguages={displayStreams.map((s) => s.language)}
-        sceneProductionState={sceneProductionState}
+        sceneProductionState={mergedSceneProductionState}
+        onSceneStreamRendered={(renderedSceneId, stream) => {
+          setLiveSceneStreams((prev) => ({
+            ...prev,
+            [renderedSceneId]: [...(prev[renderedSceneId] || []), stream],
+          }))
+        }}
+        onCombinedStreamRendered={(asset) => {
+          setLivePreVisMasters((prev) => ({
+            ...prev,
+            [asset.language]: asset,
+          }))
+          if (onSaveMetadata) {
+            const nextMeta = upsertPreVisMaster(effectiveMetadata, asset.language, asset)
+            void onSaveMetadata(nextMeta).catch(() => undefined)
+          }
+        }}
+      />
+
+      <PackageShipDialog
+        open={packageShipOpen}
+        onOpenChange={setPackageShipOpen}
+        target={packageShipTarget}
+        projectId={projectId}
+        projectTitle={projectTitle}
+        metadata={effectiveMetadata}
+        script={script}
+        userId={userId}
+        streams={displayStreams}
+        sceneProductionState={mergedSceneProductionState}
+        onSaveMetadata={onSaveMetadata}
       />
     </div>
   )

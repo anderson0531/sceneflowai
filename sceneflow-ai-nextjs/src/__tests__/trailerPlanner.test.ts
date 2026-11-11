@@ -536,30 +536,41 @@ describe('resolvePromoBeatMedia', () => {
 })
 
 describe('promo source guards', () => {
-  it('opens Promo from the studio header and keeps it publishable', () => {
+  it('opens Promo from the studio header and publishes deliverables from Production Streams', () => {
     const panel = readFileSync(
       path.join(process.cwd(), 'src/components/vision/ScriptPanel.tsx'),
       'utf8'
     )
     const promo = panel.indexOf("tStudio('promo')")
-    const publish = panel.indexOf("tStudio('publish')")
     expect(promo).toBeGreaterThan(-1)
-    expect(publish).toBeGreaterThan(promo)
+    expect(panel.indexOf("tStudio('publish')")).toBe(-1)
     const manager = readFileSync(
       path.join(process.cwd(), 'src/components/publishing/PublishingManager.tsx'),
       'utf8'
     )
     expect(manager).not.toContain("key: 'promo'")
+    const streamsManager = readFileSync(
+      path.join(process.cwd(), 'src/components/production/ProductionStreamsManager.tsx'),
+      'utf8'
+    )
+    expect(streamsManager).toContain('<PackageShipDialog')
+    expect(streamsManager).toContain('Pre-Vis (Stitched)')
+    expect(streamsManager).toContain("kind: 'master'")
+    expect(streamsManager).toContain("kind: 'promo'")
+    expect(streamsManager).toContain("kind: 'chapter'")
+    expect(streamsManager).toContain("kind: 'scene'")
     const ship = readFileSync(
       path.join(process.cwd(), 'src/components/publishing/PublishingPackageShipTab.tsx'),
       'utf8'
     )
+    expect(ship).toContain("{ id: 'previs', label: 'Pre-Vis' }")
     expect(ship).toContain("{ id: 'promo', label: 'Promo' }")
     const page = readFileSync(
       path.join(process.cwd(), 'src/app/dashboard/workflow/vision/[projectId]/page.tsx'),
       'utf8'
     )
     expect(page).toContain('<PromoStudioDialog')
+    expect(page).not.toContain('<PublishingLibraryDialog')
     expect(page).toContain("searchParams.get('youtube') === 'not_configured'")
     const worker = readFileSync(path.join(process.cwd(), 'src/sw.ts'), 'utf8')
     expect(worker).toContain('/api/publish/youtube/auth')
