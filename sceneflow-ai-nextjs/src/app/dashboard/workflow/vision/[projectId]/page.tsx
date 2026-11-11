@@ -2061,7 +2061,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     if (searchParams.get('youtube') === 'not_configured') {
       toast.error(
-        'YouTube OAuth needs your Google Client ID & Secret. Complete OAuth Setup in the Publish panel or set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET.'
+        'YouTube publishing is temporarily unavailable while SceneFlow platform authorization is being enabled.'
       )
       setProductionView('streams')
       const newParams = new URLSearchParams(searchParams.toString())

@@ -180,4 +180,31 @@ describe('youtube OAuth config', () => {
     expect(callback).toContain('handleYouTubeOAuthCallback')
     expect(alias).toContain('handleYouTubeOAuthCallback')
   })
+
+  it('keeps end-user publishing UI free of GCP OAuth client setup while locking platform OAuth config to admins', () => {
+    const shipTab = readFileSync(
+      path.join(process.cwd(), 'src/components/publishing/PublishingPackageShipTab.tsx'),
+      'utf8'
+    )
+    expect(shipTab).toContain('Authorize YouTube')
+    expect(shipTab).toContain('Authorize Facebook')
+    expect(shipTab).toContain('Authorize TikTok')
+    expect(shipTab).not.toContain('Google OAuth Web Client Configuration')
+    expect(shipTab).not.toContain('client_secret.json')
+    expect(shipTab).not.toContain('OAuth Setup')
+
+    const publishPanel = readFileSync(
+      path.join(process.cwd(), 'src/components/production/ProductionPublishPanel.tsx'),
+      'utf8'
+    )
+    expect(publishPanel).not.toContain('Configure Google OAuth for YouTube')
+    expect(publishPanel).not.toContain('OAuth Setup')
+
+    const configRoute = readFileSync(
+      path.join(process.cwd(), 'src/app/api/publish/youtube/config/route.ts'),
+      'utf8'
+    )
+    expect(configRoute).toContain('isAdminEmail')
+    expect(configRoute).toContain('status: 403')
+  })
 })

@@ -17,7 +17,6 @@ import {
   Music2,
   Plus,
   RefreshCw,
-  Settings2,
   Sparkles,
   Unlink,
   Youtube,
@@ -393,17 +392,11 @@ export function PublishingPackageShipTab({
   const [youtubeNeedsReconnect, setYoutubeNeedsReconnect] = useState(false)
   const [youtubeChannel, setYoutubeChannel] = useState<YouTubeChannelInfo | null>(null)
   const [oauthConfigured, setOauthConfigured] = useState(true)
-  const [oauthRedirectUri, setOauthRedirectUri] = useState(
-    'https://sceneflowai.studio/api/auth/callback/youtube'
-  )
-  const [showOAuthSetup, setShowOAuthSetup] = useState(false)
-  const [oauthClientId, setOauthClientId] = useState('')
-  const [oauthClientSecret, setOauthClientSecret] = useState('')
-  const [oauthJsonInput, setOauthJsonInput] = useState('')
-  const [savingOAuth, setSavingOAuth] = useState(false)
 
   const [facebookConnected, setFacebookConnected] = useState(false)
+  const [facebookOauthConfigured, setFacebookOauthConfigured] = useState(true)
   const [tiktokConnected, setTiktokConnected] = useState(false)
+  const [tiktokOauthConfigured, setTiktokOauthConfigured] = useState(true)
   const [busy, setBusy] = useState<
     'prepare' | 'ship' | 'ship-all' | 'meta' | 'translate' | 'thumb' | 'disconnect' | null
   >(null)
@@ -639,35 +632,26 @@ export function PublishingPackageShipTab({
   }, [plan.id, language])
 
   const refreshConnections = useCallback(async () => {
-    const ytQuery = userId ? `?userId=${encodeURIComponent(userId)}` : ''
+    const query = userId ? `?userId=${encodeURIComponent(userId)}` : ''
     const [youtube, facebook, tiktok] = await Promise.all([
-      fetch(`/api/publish/youtube/upload${ytQuery}`)
+      fetch(`/api/publish/youtube/upload${query}`)
         .then((r) => r.json())
         .catch(() => ({})),
-      userId
-        ? fetch(`/api/publish/facebook/upload?userId=${encodeURIComponent(userId)}`)
-            .then((r) => r.json())
-            .catch(() => ({}))
-        : Promise.resolve({}),
-      userId
-        ? fetch(`/api/publish/tiktok/upload?userId=${encodeURIComponent(userId)}`)
-            .then((r) => r.json())
-            .catch(() => ({}))
-        : Promise.resolve({}),
+      fetch(`/api/publish/facebook/upload${query}`)
+        .then((r) => r.json())
+        .catch(() => ({})),
+      fetch(`/api/publish/tiktok/upload${query}`)
+        .then((r) => r.json())
+        .catch(() => ({})),
     ])
-    const isOauthOk = youtube.oauthConfigured !== false
     setYoutubeConnected(Boolean(youtube.connected))
     setYoutubeNeedsReconnect(Boolean(youtube.needsReconnect))
     setYoutubeChannel(youtube.channel || null)
-    setOauthConfigured(isOauthOk)
-    if (typeof youtube.redirectUri === 'string' && youtube.redirectUri) {
-      setOauthRedirectUri(youtube.redirectUri)
-    }
-    if (!isOauthOk) {
-      setShowOAuthSetup(true)
-    }
+    setOauthConfigured(youtube.oauthConfigured !== false)
     setFacebookConnected(Boolean(facebook.connected))
+    setFacebookOauthConfigured(facebook.oauthConfigured !== false)
     setTiktokConnected(Boolean(tiktok.connected))
+    setTiktokOauthConfigured(tiktok.oauthConfigured !== false)
     setPages(Array.isArray(facebook.pages) ? facebook.pages : [])
     if (facebook.pageId) setPageId(facebook.pageId)
   }, [userId])
@@ -690,9 +674,8 @@ export function PublishingPackageShipTab({
       setDestination('youtube')
       void refreshConnections()
     } else if (ytParam === 'not_configured') {
-      toast.error('Google OAuth Client ID & Secret are required before connecting YouTube.')
+      toast.error('YouTube publishing is temporarily unavailable while platform authorization is being enabled.')
       setDestination('youtube')
-      setShowOAuthSetup(true)
     } else if (ytParam === 'error' || ytParam === 'callback_failed') {
       toast.error('YouTube authorization was cancelled or failed. Please try again.')
       setDestination('youtube')
@@ -702,11 +685,17 @@ export function PublishingPackageShipTab({
       toast.success('Facebook account connected!')
       setDestination('facebook')
       void refreshConnections()
+    } else if (fbParam === 'not_configured') {
+      toast.error('Facebook publishing is temporarily unavailable while platform authorization is being enabled.')
+      setDestination('facebook')
     }
     if (ttParam === 'connected') {
       toast.success('TikTok account connected!')
       setDestination('tiktok')
       void refreshConnections()
+    } else if (ttParam === 'not_configured') {
+      toast.error('TikTok publishing is temporarily unavailable while platform authorization is being enabled.')
+      setDestination('tiktok')
     }
 
     url.searchParams.delete('youtube')
@@ -755,42 +744,7 @@ export function PublishingPackageShipTab({
     [effectiveYoutubeByLanguage, onSaveMetadata]
   )
 
-  const handleSaveOAuthConfig = async () => {
-    if (!oauthJsonInput.trim() && (!oauthClientId.trim() || !oauthClientSecret.trim())) {
-      toast.error('Paste client_secret.json or enter both Client ID and Client Secret')
-      return
-    }
-    setSavingOAuth(true)
-    try {
-      const res = await fetch('/api/publish/youtube/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          credentialsJson: oauthJsonInput.trim() || undefined,
-          clientId: oauthClientId.trim() || undefined,
-          clientSecret: oauthClientSecret.trim() || undefined,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to save OAuth configuration')
-      setOauthConfigured(true)
-      setShowOAuthSetup(false)
-      setOauthJsonInput('')
-      setOauthClientSecret('')
-      toast.success('YouTube OAuth configured — click Connect YouTube Account to authorize.')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save OAuth configuration')
-    } finally {
-      setSavingOAuth(false)
-    }
-  }
-
   const connect = (platform: 'youtube' | 'facebook' | 'tiktok') => {
-    if (platform !== 'youtube' && !userId) {
-      toast.error('Sign in to connect an account')
-      return
-    }
     const returnUrl = new URL(window.location.href)
     returnUrl.searchParams.set('view', 'streams')
     returnUrl.searchParams.set('shipKind', kind)
@@ -1917,11 +1871,12 @@ export function PublishingPackageShipTab({
                       <p className="text-xs font-medium text-zinc-200">
                         {youtubeNeedsReconnect
                           ? 'YouTube authorization expired — please reconnect'
-                          : 'Connect your YouTube account'}
+                          : 'Authorize SceneFlow to publish to YouTube'}
                       </p>
                       <p className="text-[11px] text-zinc-400">
-                        Link your YouTube channel once to publish videos, thumbnails & translated
-                        language metadata.
+                        {oauthConfigured
+                          ? 'Sign in with Google once to grant SceneFlow permission to upload videos, thumbnails & localized metadata to your channel.'
+                          : 'YouTube publishing is temporarily unavailable until SceneFlow platform authorization is enabled.'}
                       </p>
                     </>
                   )}
@@ -1956,94 +1911,35 @@ export function PublishingPackageShipTab({
                     </Button>
                   </>
                 ) : (
-                  <>
-                    {oauthConfigured ? (
-                      <Button
-                        size="sm"
-                        onClick={() => connect('youtube')}
-                        className="h-8 text-xs bg-red-600 hover:bg-red-500 text-white"
-                      >
-                        <Link2 className="h-3.5 w-3.5 mr-1.5" />
-                        {youtubeNeedsReconnect ? 'Reconnect YouTube' : 'Connect YouTube Account'}
-                      </Button>
-                    ) : null}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowOAuthSetup((v) => !v)}
-                      className="h-8 text-xs border-zinc-700 text-zinc-300"
-                    >
-                      <Settings2 className="h-3.5 w-3.5 mr-1" />
-                      OAuth Setup
-                    </Button>
-                  </>
+                  <Button
+                    size="sm"
+                    disabled={!oauthConfigured}
+                    onClick={() => connect('youtube')}
+                    className="h-8 text-xs bg-red-600 hover:bg-red-500 text-white disabled:opacity-50"
+                  >
+                    <Link2 className="h-3.5 w-3.5 mr-1.5" />
+                    {youtubeNeedsReconnect ? 'Re-authorize YouTube' : 'Authorize YouTube'}
+                  </Button>
                 )}
               </div>
             </div>
-
-            {showOAuthSetup ? (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 space-y-2">
-                <p className="text-xs font-medium text-amber-200">
-                  Google OAuth Web Client Configuration
-                </p>
-                <p className="text-[11px] text-zinc-400">
-                  Authorized redirect URI:{' '}
-                  <code className="rounded bg-zinc-900 px-1.5 py-0.5 text-amber-200 select-all">
-                    {oauthRedirectUri}
-                  </code>
-                </p>
-                <textarea
-                  value={oauthJsonInput}
-                  onChange={(e) => setOauthJsonInput(e.target.value)}
-                  rows={2}
-                  placeholder='Paste Google client_secret.json ({"web":{"client_id":"...","client_secret":"..."}}) or enter fields below'
-                  className="w-full rounded border border-zinc-700 bg-zinc-900/90 px-2.5 py-1.5 text-xs text-white font-mono"
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    value={oauthClientId}
-                    onChange={(e) => setOauthClientId(e.target.value)}
-                    placeholder="Google OAuth Client ID"
-                    className="rounded border border-zinc-700 bg-zinc-900/90 px-2.5 py-1.5 text-xs text-white"
-                  />
-                  <input
-                    type="password"
-                    value={oauthClientSecret}
-                    onChange={(e) => setOauthClientSecret(e.target.value)}
-                    placeholder="Google OAuth Client Secret"
-                    className="rounded border border-zinc-700 bg-zinc-900/90 px-2.5 py-1.5 text-xs text-white"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowOAuthSetup(false)}
-                    className="h-7 text-xs"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => void handleSaveOAuthConfig()}
-                    disabled={savingOAuth}
-                    className="h-7 text-xs bg-amber-600 hover:bg-amber-500 text-white"
-                  >
-                    {savingOAuth ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}
-                    Save OAuth Credentials
-                  </Button>
-                </div>
-              </div>
-            ) : null}
           </div>
         ) : null}
 
         {destination === 'facebook' ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-            <span className="text-xs text-zinc-300">
-              {facebookConnected ? 'Facebook Page connected' : 'Connect Facebook to publish'}
-            </span>
+            <div>
+              <p className="text-xs font-medium text-zinc-200">
+                {facebookConnected ? 'Facebook Page connected' : 'Authorize SceneFlow to publish to Facebook'}
+              </p>
+              <p className="text-[11px] text-zinc-400">
+                {facebookConnected
+                  ? 'Select the Facebook Page to publish to.'
+                  : facebookOauthConfigured
+                    ? 'Sign in with Facebook once to grant SceneFlow permission to publish videos to your Page.'
+                    : 'Facebook publishing is temporarily unavailable until SceneFlow platform authorization is enabled.'}
+              </p>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               {facebookConnected && pages.length > 0 ? (
                 <select
@@ -2061,12 +1957,16 @@ export function PublishingPackageShipTab({
               ) : null}
               <Button
                 size="sm"
-                variant="outline"
+                variant={facebookConnected ? 'outline' : 'default'}
                 onClick={() => connect('facebook')}
-                disabled={!userId}
-                className="h-7 text-xs"
+                disabled={!facebookConnected && !facebookOauthConfigured}
+                className={cn(
+                  'h-8 text-xs disabled:opacity-50',
+                  !facebookConnected && 'bg-blue-600 hover:bg-blue-500 text-white'
+                )}
               >
-                {facebookConnected ? 'Reconnect Facebook' : 'Connect Facebook'}
+                <Link2 className="h-3.5 w-3.5 mr-1.5" />
+                {facebookConnected ? 'Switch Account' : 'Authorize Facebook'}
               </Button>
             </div>
           </div>
@@ -2075,21 +1975,27 @@ export function PublishingPackageShipTab({
         {destination === 'tiktok' ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
             <div>
-              <p className="text-xs text-zinc-300">
-                {tiktokConnected ? 'TikTok account connected' : 'Connect TikTok to publish'}
+              <p className="text-xs font-medium text-zinc-200">
+                {tiktokConnected ? 'TikTok account connected' : 'Authorize SceneFlow to publish to TikTok'}
               </p>
-              <p className="text-[11px] text-zinc-500">
-                Unaudited TikTok apps post privately until approved for public publishing.
+              <p className="text-[11px] text-zinc-400">
+                {tiktokOauthConfigured
+                  ? 'Sign in with TikTok once to grant SceneFlow permission to post videos to your account.'
+                  : 'TikTok publishing is temporarily unavailable until SceneFlow platform authorization is enabled.'}
               </p>
             </div>
             <Button
               size="sm"
-              variant="outline"
+              variant={tiktokConnected ? 'outline' : 'default'}
               onClick={() => connect('tiktok')}
-              disabled={!userId}
-              className="h-7 text-xs"
+              disabled={!tiktokConnected && !tiktokOauthConfigured}
+              className={cn(
+                'h-8 text-xs disabled:opacity-50',
+                !tiktokConnected && 'bg-zinc-100 hover:bg-white text-zinc-950'
+              )}
             >
-              {tiktokConnected ? 'Reconnect TikTok' : 'Connect TikTok'}
+              <Link2 className="h-3.5 w-3.5 mr-1.5" />
+              {tiktokConnected ? 'Switch Account' : 'Authorize TikTok'}
             </Button>
           </div>
         ) : null}

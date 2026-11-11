@@ -14,22 +14,26 @@ declare global {
 declare const self: ServiceWorkerGlobalScope
 
 /** Document navigations. NetworkFirst on /api/* turns OAuth redirects into no-response. */
-const youtubeOAuthNavigation: RuntimeCaching = {
+const socialOAuthNavigation: RuntimeCaching = {
   matcher: ({ sameOrigin, url: { pathname } }) =>
     sameOrigin &&
     (pathname === '/api/publish/youtube/auth' ||
       pathname === '/api/auth/callback/youtube' ||
-      pathname === '/api/publish/youtube/callback'),
+      pathname === '/api/publish/youtube/callback' ||
+      pathname === '/api/publish/facebook/auth' ||
+      pathname === '/api/publish/facebook/callback' ||
+      pathname === '/api/publish/tiktok/auth' ||
+      pathname === '/api/publish/tiktok/callback'),
   handler: new NetworkOnly(),
 }
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
-  // Activate immediately so the YouTube OAuth NetworkOnly rule is not stuck behind an old worker.
+  // Activate immediately so the Social OAuth NetworkOnly rule is not stuck behind an old worker.
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: [youtubeOAuthNavigation, ...defaultCache],
+  runtimeCaching: [socialOAuthNavigation, ...defaultCache],
 })
 
 serwist.addEventListeners()

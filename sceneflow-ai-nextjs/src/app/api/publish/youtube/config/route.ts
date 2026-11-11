@@ -2,56 +2,73 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import '@/models'
 import { authOptions } from '@/lib/auth'
+import { isAdminEmail } from '@/lib/adminUtils'
 import {
   YOUTUBE_OAUTH_CALLBACK_PATH,
+  getYouTubeOAuthPlatformSource,
   isYouTubeOAuthConfigured,
   parseGoogleOAuthClientJson,
   saveYouTubeOAuthClientConfig,
   youtubeRedirectUri,
 } from '@/lib/publish/youtubeClient'
+import { facebookConfigured, facebookRedirectUri } from '@/lib/publish/facebookClient'
+import { tiktokConfigured, tiktokRedirectUri } from '@/lib/publish/tiktokClient'
 import { resolveUserId } from '@/lib/userHelper'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
-    let userIdRaw = req.nextUrl.searchParams.get('userId')?.trim() || ''
-    if (!userIdRaw) {
-      const session = await getServerSession(authOptions)
-      userIdRaw = session?.user?.id || session?.user?.email || ''
+    const session = await getServerSession(authOptions)
+    const isAdmin = isAdminEmail(session?.user?.email)
+    const configured = await isYouTubeOAuthConfigured()
+
+    if (!isAdmin) {
+      return NextResponse.json({
+        configured,
+        facebookConfigured: facebookConfigured(),
+        tiktokConfigured: tiktokConfigured(),
+      })
     }
-    const userId = userIdRaw ? await resolveUserId(userIdRaw).catch(() => undefined) : undefined
-    const configured = await isYouTubeOAuthConfigured(userId)
+
+    const source = await getYouTubeOAuthPlatformSource()
     return NextResponse.json({
       configured,
+      source,
       redirectUri: youtubeRedirectUri(req.nextUrl.origin),
       callbackPath: YOUTUBE_OAUTH_CALLBACK_PATH,
+      facebookConfigured: facebookConfigured(),
+      facebookRedirectUri: facebookRedirectUri(),
+      tiktokConfigured: tiktokConfigured(),
+      tiktokRedirectUri: tiktokRedirectUri(),
     })
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to inspect YouTube OAuth config'
+    const message = err instanceof Error ? err.message : 'Failed to inspect social OAuth status'
     return NextResponse.json({ configured: false, error: message }, { status: 500 })
   }
 }
 
+/**
+ * Platform-level OAuth configuration endpoint (SceneFlow Admin ONLY).
+ * End users never configure OAuth apps — they only authorize their social accounts.
+ */
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.email || !isAdminEmail(session.user.email)) {
+      return NextResponse.json(
+        { error: 'Forbidden — platform OAuth credentials can only be managed by a SceneFlow administrator.' },
+        { status: 403 }
+      )
+    }
+
     const body = (await req.json()) as {
-      userId?: string
       clientId?: string
       clientSecret?: string
       credentialsJson?: string
     }
 
-    let userIdRaw = body.userId?.trim() || ''
-    if (!userIdRaw) {
-      const session = await getServerSession(authOptions)
-      userIdRaw = session?.user?.id || session?.user?.email || ''
-    }
-    if (!userIdRaw) {
-      return NextResponse.json({ error: 'Sign in required (`userId` missing).' }, { status: 400 })
-    }
-
-    const userId = await resolveUserId(userIdRaw)
+    const adminUserId = await resolveUserId(session.user.id || session.user.email)
 
     const parsedJson =
       parseGoogleOAuthClientJson(body.credentialsJson) ||
@@ -65,22 +82,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            'Provide both a Google OAuth Client ID and Client Secret (or paste the downloaded client_secret.json).',
+            'Provide both SceneFlow Google OAuth Client ID and Client Secret (or paste client_secret.json).',
         },
         { status: 400 }
       )
     }
 
-    await saveYouTubeOAuthClientConfig(userId, { clientId, clientSecret })
+    await saveYouTubeOAuthClientConfig(adminUserId, { clientId, clientSecret })
 
     return NextResponse.json({
       configured: true,
+      source: await getYouTubeOAuthPlatformSource(),
       redirectUri: youtubeRedirectUri(req.nextUrl.origin),
       callbackPath: YOUTUBE_OAUTH_CALLBACK_PATH,
     })
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to save YouTube OAuth config'
-    console.error('[YouTube OAuth Config]', err)
+    const message = err instanceof Error ? err.message : 'Failed to save platform OAuth config'
+    console.error('[Social OAuth Admin Config]', err)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

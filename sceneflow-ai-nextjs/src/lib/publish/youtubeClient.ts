@@ -231,22 +231,20 @@ export async function saveYouTubeOAuthClientConfig(
   }
 }
 
+/**
+ * Load SceneFlow's platform-wide Google OAuth Web Client credentials when set via
+ * Admin Settings (fallback when GOOGLE_OAUTH_CLIENT_ID / SECRET env vars are not present).
+ * Never per-user: end users only authorize their own YouTube channel against SceneFlow's OAuth app.
+ */
 export async function loadYouTubeOAuthClientConfig(
-  userId?: string
+  _unusedUserId?: string
 ): Promise<{ clientId: string; clientSecret: string } | null> {
   try {
     const UserIntegration = await ensureUserIntegrationTable()
-    let row = userId
-      ? await UserIntegration.findOne({
-          where: { user_id: userId, provider: 'youtube_oauth_app', is_valid: true },
-        })
-      : null
-    if (!row) {
-      row = await UserIntegration.findOne({
-        where: { provider: 'youtube_oauth_app', is_valid: true },
-        order: [['updated_at', 'DESC']],
-      })
-    }
+    const row = await UserIntegration.findOne({
+      where: { provider: 'youtube_oauth_app', is_valid: true },
+      order: [['updated_at', 'DESC']],
+    })
     if (!row) return null
     const raw = EncryptionService.decrypt(row.encrypted_credentials)
     const parsed = JSON.parse(raw) as { clientId?: string; clientSecret?: string }
@@ -261,21 +259,31 @@ export async function loadYouTubeOAuthClientConfig(
   }
 }
 
+export async function getYouTubeOAuthPlatformSource(): Promise<'env' | 'admin_db' | 'none'> {
+  try {
+    youtubeOAuthCredentials()
+    return 'env'
+  } catch {
+    const stored = await loadYouTubeOAuthClientConfig()
+    return stored ? 'admin_db' : 'none'
+  }
+}
+
 export async function resolveYouTubeOAuthCredentials(
-  userId?: string
+  _unusedUserId?: string
 ): Promise<{ clientId: string; clientSecret: string }> {
   try {
     return youtubeOAuthCredentials()
   } catch (envErr) {
-    const stored = await loadYouTubeOAuthClientConfig(userId)
+    const stored = await loadYouTubeOAuthClientConfig()
     if (stored) return stored
     throw envErr
   }
 }
 
-export async function isYouTubeOAuthConfigured(userId?: string): Promise<boolean> {
+export async function isYouTubeOAuthConfigured(_unusedUserId?: string): Promise<boolean> {
   try {
-    await resolveYouTubeOAuthCredentials(userId)
+    await resolveYouTubeOAuthCredentials()
     return true
   } catch {
     return false

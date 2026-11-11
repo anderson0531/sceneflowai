@@ -9,13 +9,14 @@ import { LaunchEmailCard } from '@/components/admin/LaunchEmailCard'
 import { OriginalsSeedCard } from '@/components/admin/OriginalsSeedCard'
 import { ModelVersionsCard } from '@/components/admin/ModelVersionsCard'
 import { PricingRateCard } from '@/components/admin/PricingRateCard'
+import { SocialPublishingOAuthCard } from '@/components/admin/SocialPublishingOAuthCard'
 import { SupportEscalationsCard } from '@/components/admin/SupportEscalationsCard'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPage() {
   // Server-side admin check
-  const session = await getServerSession(authOptions as any)
+  const session = await getServerSession(authOptions)
   
   if (!session?.user?.email || !isAdminEmail(session.user.email)) {
     redirect('/dashboard/settings')
@@ -33,6 +34,7 @@ export default async function AdminPage() {
 
       {/* Admin Function Cards */}
       <div className="grid grid-cols-1 gap-6">
+        <SocialPublishingOAuthCard />
         <SupportEscalationsCard />
         <ModelVersionsCard />
         <PricingRateCard />

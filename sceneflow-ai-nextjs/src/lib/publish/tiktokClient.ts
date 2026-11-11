@@ -155,3 +155,12 @@ export async function uploadVideoToTikTok(
   }
   return { publishId: json.data.publish_id, privacyLevel }
 }
+
+export async function disconnectTikTokTokens(userId: string): Promise<void> {
+  const row = await UserIntegration.findOne({
+    where: { user_id: userId, provider: 'tiktok' },
+  })
+  if (row) {
+    await row.update({ is_valid: false, encrypted_credentials: '' })
+  }
+}

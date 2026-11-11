@@ -193,3 +193,12 @@ export async function uploadVideoToFacebook(
     url: `https://www.facebook.com/${pageId}/videos/${json.id}`,
   }
 }
+
+export async function disconnectFacebookTokens(userId: string): Promise<void> {
+  const row = await UserIntegration.findOne({
+    where: { user_id: userId, provider: 'facebook' },
+  })
+  if (row) {
+    await row.update({ is_valid: false, encrypted_credentials: '' })
+  }
+}

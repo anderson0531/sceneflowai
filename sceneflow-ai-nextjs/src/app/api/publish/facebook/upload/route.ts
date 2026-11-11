@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import '@/models'
+import { authOptions } from '@/lib/auth'
 import {
+  disconnectFacebookTokens,
+  facebookConfigured,
   listFacebookPages,
   loadFacebookTokens,
   selectFacebookPage,
@@ -11,23 +15,46 @@ import { resolveUserId } from '@/lib/userHelper'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
 
+async function getEffectiveUserId(req: NextRequest, bodyUserId?: string): Promise<string | null> {
+  const raw = bodyUserId?.trim() || req.nextUrl.searchParams.get('userId')?.trim() || ''
+  if (raw) return resolveUserId(raw)
+  const session = await getServerSession(authOptions)
+  const fromSession = session?.user?.id || session?.user?.email || ''
+  return fromSession ? resolveUserId(fromSession) : null
+}
+
 export async function GET(req: NextRequest) {
+  const oauthConfigured = facebookConfigured()
   try {
-    const userIdParam = req.nextUrl.searchParams.get('userId')
-    if (!userIdParam) return NextResponse.json({ connected: false, pages: [] })
-    const userId = await resolveUserId(userIdParam)
+    const userId = await getEffectiveUserId(req)
+    if (!userId) return NextResponse.json({ connected: false, oauthConfigured, pages: [] })
     const tokens = await loadFacebookTokens(userId)
-    if (!tokens?.access_token) return NextResponse.json({ connected: false, pages: [] })
+    if (!tokens?.access_token) {
+      return NextResponse.json({ connected: false, oauthConfigured, pages: [] })
+    }
     const pages = await listFacebookPages(userId)
     return NextResponse.json({
       connected: true,
+      oauthConfigured,
       pageId: tokens.pageId || null,
       pageName: tokens.pageName || null,
       pages: pages.map((page) => ({ id: page.id, name: page.name })),
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ connected: false, pages: [], error: message })
+    return NextResponse.json({ connected: false, oauthConfigured, pages: [], error: message })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const userId = await getEffectiveUserId(req)
+    if (!userId) return NextResponse.json({ error: 'Sign in required' }, { status: 401 })
+    await disconnectFacebookTokens(userId)
+    return NextResponse.json({ success: true, connected: false })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to disconnect Facebook'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
@@ -52,10 +79,10 @@ export async function POST(req: NextRequest) {
       selectPageOnly?: boolean
     }
 
-    if (!userIdParam) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 })
+    const userId = await getEffectiveUserId(req, userIdParam)
+    if (!userId) {
+      return NextResponse.json({ error: 'Sign in required' }, { status: 401 })
     }
-    const userId = await resolveUserId(userIdParam)
 
     if (selectPageOnly) {
       if (!pageId) return NextResponse.json({ error: 'pageId is required' }, { status: 400 })
