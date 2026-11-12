@@ -10,18 +10,20 @@
  * clobber concurrent script, wardrobe, or portrait updates.
  */
 
+import 'server-only'
+
 import '@/models'
 import { Project } from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { normalizeCharacterName } from '@/lib/character/detection'
 import {
   characterNeedsBaselineEnrichment,
-  enrichEnsembleCastWithIntelligence,
   isMinimalAppearanceDescription,
   isMinimalCharacterDescription,
   isPoisonedPlaceholderImagePrompt,
   type CastCharacterSyncUpdate,
 } from '@/lib/character/characterIntelligence'
+import { enrichEnsembleCastWithIntelligence } from '@/lib/character/characterIntelligence.server'
 import { loadBlueprintARFromMetadata } from '@/lib/types/audienceResonance'
 import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'

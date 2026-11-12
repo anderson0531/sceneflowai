@@ -6,10 +6,8 @@ import Project from '@/models/Project'
 import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 import { loadBlueprintARFromMetadata } from '@/lib/types/audienceResonance'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
-import {
-  enrichEnsembleCastWithIntelligence,
-  type CharacterLocalizationContext,
-} from '@/lib/character/characterIntelligence'
+import { type CharacterLocalizationContext } from '@/lib/character/characterIntelligence'
+import { enrichEnsembleCastWithIntelligence } from '@/lib/character/characterIntelligence.server'
 import { persistCastCatalogEnrichment } from '@/lib/vision/referenceExpress/castCatalogSync'
 
 export const runtime = 'nodejs'

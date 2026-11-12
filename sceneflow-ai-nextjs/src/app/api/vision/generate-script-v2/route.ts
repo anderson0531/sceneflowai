@@ -93,9 +93,9 @@ import { buildVisionPhaseContinuityFromVariant } from '@/lib/blueprint/blueprint
 import { extractCharactersFromScenes } from '@/lib/character/detection'
 import {
   characterNeedsBaselineEnrichment,
-  enrichEnsembleCastWithIntelligence,
   isPoisonedPlaceholderImagePrompt,
 } from '@/lib/character/characterIntelligence'
+import { enrichEnsembleCastWithIntelligence } from '@/lib/character/characterIntelligence.server'
 import { loadBlueprintARFromMetadata } from '@/lib/types/audienceResonance'
 import { CreditService } from '../../../../services/CreditService'
 import { BLUEPRINT_CREDITS, TEXT_CREDITS } from '@/lib/credits/creditCosts'

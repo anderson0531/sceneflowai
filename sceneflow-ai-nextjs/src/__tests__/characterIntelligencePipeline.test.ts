@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/models', () => ({}))
@@ -430,5 +432,31 @@ describe('Localization, Blueprint Handoff & Reference Express Ordering', () => {
     expect(anong.ethnicity).toBe('Southeast Asian (Thai)')
     expect(anong.imagePrompt).toBeUndefined()
     expect(anong.appearanceDescription).toContain('Southeast Asian (Thai)')
+  })
+
+  it('keeps client-imported character modules 100% free of static or dynamic server-only imports for Turbopack', () => {
+    const clientSafeModules = [
+      'src/lib/character/characterIntelligence.ts',
+      'src/lib/character/characterFamily.ts',
+      'src/lib/blueprint/blueprintContinuity.ts',
+      'src/lib/character/characterReferencePrompts.ts',
+      'src/lib/intelligence/reference-still-director-fallback.ts',
+    ]
+    const forbiddenImportPattern =
+      /(?:from\s+['"]|import\s*\(\s*['"])(?:@\/lib\/vertexai\/|@\/models|@\/config\/database|server-only|@\/lib\/character\/characterIntelligence\.server|@\/lib\/vision\/referenceExpress\/castCatalogSync|fs|child_process|net|tls)/
+
+    for (const relPath of clientSafeModules) {
+      const fullPath = join(process.cwd(), relPath)
+      const source = readFileSync(fullPath, 'utf8')
+      expect(source, `${relPath} must not import server-only modules`).not.toMatch(
+        forbiddenImportPattern
+      )
+    }
+
+    const serverModule = readFileSync(
+      join(process.cwd(), 'src/lib/character/characterIntelligence.server.ts'),
+      'utf8'
+    )
+    expect(serverModule).toContain("import 'server-only'")
   })
 })

@@ -5,7 +5,7 @@ import { generateText } from '@/lib/vertexai/gemini'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
-import { localePromptDirective } from '@/lib/prompts/localeDirective'
+import { localeDirective } from '@/lib/prompts/localeDirective'
 import {
   type ArtStyleSpec,
   type ArtStyleStoryContext,
@@ -102,8 +102,8 @@ export async function POST(request: NextRequest) {
     explicitLocale: body.storyLocale,
     userId: session.user.id,
   })
-  const localeBlock = localePromptDirective(storyLocale, {
-    visualPromptFields: ART_STYLE_ENGLISH_FIELDS,
+  const localeBlock = localeDirective(storyLocale, {
+    keepEnglishFields: ART_STYLE_ENGLISH_FIELDS,
   })
   const contextBlock = formatStoryContextBlock(storyContext)
   const model = getGeminiTextModel('flash')
