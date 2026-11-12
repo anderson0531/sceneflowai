@@ -38,6 +38,10 @@ import {
   type ArtStyleSpec,
 } from '@/lib/artStyle/globalArtStyle'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
+import {
+  sortCharactersFamilyAnchorsFirst,
+  type CharacterFamilyRelationship,
+} from '@/lib/character/characterFamily'
 
 export type CastSource = {
   id?: string
@@ -46,16 +50,24 @@ export type CastSource = {
   role?: string
   gender?: string
   ethnicity?: string
+  build?: string
+  hairStyle?: string
+  hairColor?: string
+  eyeColor?: string
+  keyFeature?: string
+  expression?: string
   referenceImage?: string
   description?: string
   appearance?: string
   appearanceDescription?: string
   age?: string | number
+  ageRange?: string
   personality?: string
   defaultWardrobe?: string
   wardrobeAccessories?: string
   voiceDescription?: string
   voiceConfig?: CastingBriefVoiceConfig
+  familyRelationships?: CharacterFamilyRelationship[]
   wardrobes?: Array<{
     id?: string
     name?: string
@@ -274,14 +286,22 @@ export function planReferenceExpressItems(
   const items: ReferenceExpressItem[] = []
   const includeNested = options?.includeNestedStills === true
 
-  input.characters.forEach((character, index) => {
+  const indexedCharacters = input.characters.map((character, originalIndex) => ({
+    ...character,
+    __planOriginalIndex: originalIndex,
+  }))
+  const orderedCharacters = sortCharactersFamilyAnchorsFirst(indexedCharacters)
+
+  orderedCharacters.forEach((character) => {
+    const index = character.__planOriginalIndex
     if (character.type === 'narrator') return
     if (hasImage(character.referenceImage)) return
+    const { __planOriginalIndex: _omit, ...cleanCharacter } = character
     items.push({
       kind: 'cast',
-      targetId: resolveCharacterId(character, index),
-      label: character.name?.trim() || `Character ${index + 1}`,
-      sourceFingerprint: castFingerprint(character),
+      targetId: resolveCharacterId(cleanCharacter as CastSource, index),
+      label: cleanCharacter.name?.trim() || `Character ${index + 1}`,
+      sourceFingerprint: castFingerprint(cleanCharacter as CastSource),
     })
   })
 

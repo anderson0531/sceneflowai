@@ -23,30 +23,39 @@ export const BANNED_AI_CHARACTER_NAMES = [
 
 /** Compact block for Series bible / episode prompts */
 export const SERIES_CHARACTER_NAMING_BLOCK = `
-CHARACTER NAMING — MANDATORY:
+CHARACTER NAMING, LOCALIZATION & FAMILY CONSISTENCY — MANDATORY:
 - Invent original, specific, memorable FULL names (first + last) that fit culture, era, genre, and setting
+- Names, ethnicities, ages, and styling MUST be culturally authentic to the story's setting, locations, and target audience
 - Names must be unique within the cast and pronounceable for text-to-speech
 - Prefer grounded, distinctive names over fantasy-catalog or celebrity-adjacent names
 - If the user's input already names characters, preserve those EXACT names
 - When inventing names, avoid well-known public-figure given names (e.g. Winston, Alexander)
 - NEVER reuse these overused LLM defaults: ${BANNED_AI_CHARACTER_NAMES.join(', ')}
-- Avoid single-name-only protagonists unless culturally appropriate (e.g., mononyms in documentary subjects)`
+- Avoid single-name-only protagonists unless culturally appropriate (e.g., mononyms in documentary subjects)
+- FAMILY & KINSHIP GENETICS:
+  * Biological relatives sharing the same parental lineage MUST share the exact same ethnicity, compatible skin undertone, hair/eye genetics, and subtle familial facial structure.
+  * When biological parents have DIFFERENT ethnicities, their biological children MUST explicitly have "Mixed [Parent A] and [Parent B] heritage" with blended physical traits from both parents.
+  * Enforce biologically plausible generational age gaps (parents 20–38 years older than children; grandparents 45–68 years older than grandchildren).`
 
 /** Extended block for Blueprint / film treatment */
 export const BLUEPRINT_CHARACTER_IDENTITY_BLOCK = `
-CHARACTER IDENTITY — MANDATORY:
-- Extract nationality, ethnicity, and cultural clues from the user's input
-- Character names MUST be culturally authentic to their ethnicity and the story's setting
-- If input mentions "Thai woman" → use authentic Thai names (e.g., Niran, Somchai, Malai)
-- If input mentions "Japanese" → use Japanese names (e.g., Yuki, Haruto, Kenji, Sakura)
-- If input mentions "Mexican" → use Spanish/Latin names (e.g., María, Diego, Carmen)
-- NEVER use generic Western names for non-Western characters unless explicitly stated
-- The ethnicity field must EXACTLY match what's implied in the input
+CHARACTER IDENTITY, LOCALIZATION & FAMILY CONSISTENCY — MANDATORY:
+- Extract nationality, ethnicity, region, and cultural clues from the user's input, setting, locations, and audience signals
+- Character names, ethnicities, grooming, and default wardrobes MUST be culturally authentic to their heritage and the story's setting
+- If input or setting indicates Thailand → use authentic Thai names & ethnicity (e.g., Niran Phan, Somchai, Malai)
+- If input or setting indicates Japan → use authentic Japanese names & ethnicity (e.g., Yuki Sato, Haruto, Kenji)
+- If input or setting indicates Mexico/Latin America → use authentic Spanish/Latin names & ethnicity (e.g., María Morales, Diego, Carmen)
+- NEVER use generic Western names or default Western demographics for non-Western settings unless explicitly stated as an outsider/expat
 - Invent original, specific, memorable FULL names — not stock fantasy or AI-catalog names
 - If the user's input already names characters, preserve those EXACT names; otherwise invent fresh ones
 - When inventing names, avoid well-known public-figure given names (e.g. Winston, Alexander)
 - NEVER reuse these overused LLM defaults: ${BANNED_AI_CHARACTER_NAMES.join(', ')}
-- Each character needs a distinct voice, want/need/flaw, and clear relationship to the protagonist — not interchangeable archetypes`
+- FAMILY & KINSHIP GENETICS (CRITICAL):
+  * Declare family links in "familyRelationships" (relation: "parent_of" | "child_of" | "sibling_of" | "grandparent_of" | "grandchild_of" | "spouse_of", biological: true/false).
+  * SAME-ETHNICITY PARENTS: Biological children and full siblings MUST share the exact same ethnicity and compatible eye/hair/facial genetics.
+  * MIXED-ETHNICITY PARENTS: When biological parents have DIFFERENT ethnicities (e.g. Japanese mother + African-American father), their biological children MUST be set to "Mixed [Parent A] and [Parent B] heritage" with blended physical features from both parents.
+  * AGE CONSISTENCY: Give every character a concrete "age" (e.g. "45" or "mid-40s"). Biological parents MUST be 20–38 years older than their children; grandparents 45–68 years older than grandchildren.
+- ENGAGING STORY BASELINE: Include every pivotal or speaking character from the beat sheet in character_descriptions with a distinct voice, playable contradiction, want/need/flaw, and vivid 2-3 sentence standing physical "appearance" aligned with the locations, props, and wardrobes.`
 
 /** For V2 BlueprintService and similar */
 export const BLUEPRINT_NAMING_REQUIREMENTS = `

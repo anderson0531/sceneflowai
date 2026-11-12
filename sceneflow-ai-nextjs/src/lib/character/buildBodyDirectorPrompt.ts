@@ -1,3 +1,5 @@
+import type { CharacterFamilyRelationship } from '@/lib/character/characterFamily'
+
 export type BodyDirectorRequest = {
   characterName: string
   characterRole?: string
@@ -12,6 +14,14 @@ export type BodyDirectorRequest = {
   currentAppearance?: string
   directorNotes?: string
   recommendMode?: boolean
+  familyRelationships?: CharacterFamilyRelationship[]
+  relatedFamilyMembers?: Array<{
+    name: string
+    relation?: string
+    ethnicity?: string
+    age?: string | number
+    appearanceDescription?: string
+  }>
 }
 
 export type BodyDirectorResult = {
@@ -70,10 +80,39 @@ function screenplayLines(request: BodyDirectorRequest): string {
     .join('\n')
 }
 
+function familyLineageLines(request: BodyDirectorRequest): string {
+  const lines: string[] = []
+  if (Array.isArray(request.familyRelationships) && request.familyRelationships.length > 0) {
+    for (const rel of request.familyRelationships) {
+      lines.push(
+        `- ${rel.label || `${rel.relation.replace(/_/g, ' ')} ${rel.relatedCharacterName}`} (${rel.biological ? 'biological' : 'non-biological'})`
+      )
+    }
+  }
+  if (Array.isArray(request.relatedFamilyMembers) && request.relatedFamilyMembers.length > 0) {
+    for (const m of request.relatedFamilyMembers) {
+      const details = [
+        m.relation ? `relation: ${m.relation}` : '',
+        m.age != null && String(m.age).trim() ? `age: ${m.age}` : '',
+        m.ethnicity ? `ethnicity: ${m.ethnicity}` : '',
+        m.appearanceDescription ? `look: ${m.appearanceDescription.slice(0, 140)}` : '',
+      ]
+        .filter(Boolean)
+        .join(', ')
+      lines.push(`- Relative ${m.name}${details ? ` (${details})` : ''}`)
+    }
+  }
+  return lines.join('\n')
+}
+
 export function buildBodyDirectorPrompt(request: BodyDirectorRequest): string {
   const current = request.currentAppearance?.trim()
   const identity = identityLines(request)
   const screenplay = screenplayLines(request)
+  const familyBlock = familyLineageLines(request)
+  const familySection = familyBlock
+    ? `\nFAMILY LINEAGE CONTINUITY (maintain shared ethnic heritage or mixed-parentage blending and generational age plausibility unless director's notes explicitly override):\n${familyBlock}\n`
+    : ''
 
   if (request.recommendMode) {
     const currentBlock = current
@@ -90,9 +129,9 @@ ${identity}
 
 SCREENPLAY CONTEXT:
 ${screenplay || '- Not specified'}
-${currentBlock}
+${familySection}${currentBlock}
 TASK:
-Recommend a specific physical identity that fits the character's role and screenplay. Do not describe clothing or wardrobe.
+Recommend a specific physical identity culturally grounded in the setting and consistent with any biological/mixed-heritage family relatives. Do not describe clothing or wardrobe.
 
 RESPONSE FORMAT (JSON):
 ${RESPONSE_SCHEMA}
@@ -111,7 +150,7 @@ ${current}
 
 CHARACTER (defaults — yield to the director's notes on conflict):
 ${identity}
-${screenplay ? `\nSCREENPLAY CONTEXT:\n${screenplay}\n` : ''}
+${screenplay ? `\nSCREENPLAY CONTEXT:\n${screenplay}\n` : ''}${familySection}
 ${currentBlock}
 DIRECTOR'S NOTES:
 "${request.directorNotes || ''}"

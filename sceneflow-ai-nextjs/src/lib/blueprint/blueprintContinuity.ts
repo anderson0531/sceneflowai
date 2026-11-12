@@ -6,6 +6,15 @@
  */
 
 import { toCanonicalName } from '@/lib/character/canonical'
+import {
+  enforceEnsembleFamilyConsistency,
+  type CharacterFamilyRelationship,
+} from '@/lib/character/characterFamily'
+import {
+  composeStandingAppearanceFromAttributes,
+  inferLocaleDefaultEthnicityHint,
+  isMinimalAppearanceDescription,
+} from '@/lib/character/characterIntelligence'
 import type { LocationReference, ObjectCategory, ObjectImportance, VisualReference } from '@/types/visionReferences'
 
 export type BlueprintContinuitySubSection = 'all' | 'cast' | 'locations' | 'props'
@@ -15,6 +24,9 @@ export interface BlueprintCastItem {
   name: string
   role: string
   subject?: string
+  age?: string | number
+  ageRange?: string
+  gender?: string
   ethnicity?: string
   keyFeature?: string
   hairStyle?: string
@@ -26,6 +38,8 @@ export interface BlueprintCastItem {
   wardrobeAccessories?: string
   appearance?: string
   description: string
+  voiceDescription?: string
+  familyRelationships?: CharacterFamilyRelationship[]
   externalGoal?: string
   internalNeed?: string
   fatalFlaw?: string
@@ -283,17 +297,26 @@ export function resolveBlueprintContinuity(
       name: shared?.name || name || `Character ${idx + 1}`,
       role: asString(c.role || shared?.role, 'supporting'),
       subject: asString(c.subject || shared?.name || name),
+      age: asString(c.age ?? c.ageRange ?? shared?.age ?? shared?.ageRange) || undefined,
+      ageRange: asString(c.ageRange ?? c.age ?? shared?.ageRange ?? shared?.age) || undefined,
+      gender: asString(c.gender || shared?.gender) || undefined,
       ethnicity: asString(c.ethnicity || shared?.ethnicity),
-      keyFeature: asString(c.keyFeature),
-      hairStyle: asString(c.hairStyle),
-      hairColor: asString(c.hairColor),
-      eyeColor: asString(c.eyeColor),
-      expression: asString(c.expression),
-      build: asString(c.build),
+      keyFeature: asString(c.keyFeature || shared?.keyFeature),
+      hairStyle: asString(c.hairStyle || shared?.hairStyle),
+      hairColor: asString(c.hairColor || shared?.hairColor),
+      eyeColor: asString(c.eyeColor || shared?.eyeColor),
+      expression: asString(c.expression || shared?.expression),
+      build: asString(c.build || shared?.build),
       defaultWardrobe: asString(c.defaultWardrobe || shared?.defaultWardrobe),
-      wardrobeAccessories: asString(c.wardrobeAccessories),
+      wardrobeAccessories: asString(c.wardrobeAccessories || shared?.wardrobeAccessories),
       appearance: asString(c.appearance || shared?.appearance || shared?.appearanceDescription),
       description: asString(c.description || shared?.description),
+      voiceDescription: asString(c.voiceDescription || shared?.voiceDescription) || undefined,
+      familyRelationships: Array.isArray(c.familyRelationships)
+        ? c.familyRelationships
+        : Array.isArray(shared?.familyRelationships)
+          ? shared.familyRelationships
+          : undefined,
       externalGoal: asString(c.externalGoal),
       internalNeed: asString(c.internalNeed),
       fatalFlaw: asString(c.fatalFlaw),
@@ -318,8 +341,22 @@ export function resolveBlueprintContinuity(
       id: item.id,
       name: asString(item.name),
       role: asString(item.role, 'supporting'),
+      age: asString(item.age ?? item.ageRange) || undefined,
+      ageRange: asString(item.ageRange ?? item.age) || undefined,
+      gender: asString(item.gender) || undefined,
+      ethnicity: asString(item.ethnicity),
+      keyFeature: asString(item.keyFeature),
+      hairStyle: asString(item.hairStyle),
+      hairColor: asString(item.hairColor),
+      eyeColor: asString(item.eyeColor),
+      expression: asString(item.expression),
+      build: asString(item.build),
+      defaultWardrobe: asString(item.defaultWardrobe),
+      wardrobeAccessories: asString(item.wardrobeAccessories),
       appearance: asString(item.appearance || item.appearanceDescription),
       description: asString(item.description || item.appearance),
+      voiceDescription: asString(item.voiceDescription) || undefined,
+      familyRelationships: Array.isArray(item.familyRelationships) ? item.familyRelationships : undefined,
       referenceImage: item.referenceImage || item.imageUrl || null,
       libraryCharacterId: item.bibleCharacterId || item.id,
       libraryAssetId: item.libraryAssetId,
@@ -447,15 +484,37 @@ export function resolveBlueprintContinuity(
     })
   }
 
+  const defaultEthHint = inferLocaleDefaultEthnicityHint({
+    setting: asString(variant?.setting),
+    targetAudience: asString(variant?.target_audience || variant?.audience),
+    locations,
+  })
+  const familyConsistentCast =
+    cast.length > 0
+      ? enforceEnsembleFamilyConsistency(cast, { defaultLocaleEthnicity: defaultEthHint }).map(
+          (c, idx, arr) => {
+            const existingLook = asString(c.appearance)
+            const composedLook = isMinimalAppearanceDescription(existingLook)
+              ? composeStandingAppearanceFromAttributes(c, arr) || existingLook
+              : existingLook
+            return {
+              ...c,
+              ...(composedLook ? { appearance: composedLook } : {}),
+              variantIndex: cast[idx]?.variantIndex,
+            } as BlueprintCastItem
+          }
+        )
+      : cast
+
   return {
-    cast,
+    cast: familyConsistentCast,
     locations,
     props,
     counts: {
-      cast: cast.length,
+      cast: familyConsistentCast.length,
       locations: locations.length,
       props: props.length,
-      total: cast.length + locations.length + props.length,
+      total: familyConsistentCast.length + locations.length + props.length,
     },
     isSeriesShared,
     seriesId: sharedSource?.seriesId ?? null,
@@ -527,12 +586,25 @@ export function buildVisionPhaseContinuityFromVariant(
   const characters = continuity.cast.map((c, idx) => {
     const key = normalizeKey(c.name)
     const prev = key ? existingCharByKey.get(key) : undefined
+    const resolvedAge = c.age ?? c.ageRange ?? prev?.age ?? prev?.ageRange
+    const resolvedAppearance =
+      (!isMinimalAppearanceDescription(prev?.appearanceDescription) ? prev?.appearanceDescription : '') ||
+      (!isMinimalAppearanceDescription(c.appearance) ? c.appearance : '') ||
+      composeStandingAppearanceFromAttributes(c, continuity.cast) ||
+      prev?.appearanceDescription ||
+      c.appearance ||
+      prev?.appearance ||
+      ''
     return {
       ...(prev || {}),
       id: prev?.id || c.id || `char-bp-${idx + 1}`,
       name: c.name,
       role: c.role || prev?.role || 'supporting',
       subject: c.subject || prev?.subject || c.name,
+      ...(resolvedAge !== undefined && String(resolvedAge).trim()
+        ? { age: String(resolvedAge).trim(), ageRange: String(resolvedAge).trim() }
+        : {}),
+      ...(c.gender || prev?.gender ? { gender: c.gender || prev?.gender } : {}),
       ethnicity: c.ethnicity || prev?.ethnicity || '',
       keyFeature: c.keyFeature || prev?.keyFeature || '',
       hairStyle: c.hairStyle || prev?.hairStyle || '',
@@ -542,10 +614,17 @@ export function buildVisionPhaseContinuityFromVariant(
       build: c.build || prev?.build || '',
       defaultWardrobe: c.defaultWardrobe || prev?.defaultWardrobe || '',
       wardrobeAccessories: c.wardrobeAccessories || prev?.wardrobeAccessories || '',
-      appearance: c.appearance || prev?.appearance || '',
-      appearanceDescription:
-        prev?.appearanceDescription || c.appearance || prev?.appearance || '',
+      appearance: resolvedAppearance,
+      appearanceDescription: resolvedAppearance,
       description: c.description || prev?.description || '',
+      ...(c.voiceDescription || prev?.voiceDescription
+        ? { voiceDescription: c.voiceDescription || prev?.voiceDescription }
+        : {}),
+      ...(Array.isArray(c.familyRelationships) && c.familyRelationships.length > 0
+        ? { familyRelationships: c.familyRelationships }
+        : Array.isArray(prev?.familyRelationships) && prev.familyRelationships.length > 0
+          ? { familyRelationships: prev.familyRelationships }
+          : {}),
       externalGoal: c.externalGoal || prev?.externalGoal,
       internalNeed: c.internalNeed || prev?.internalNeed,
       fatalFlaw: c.fatalFlaw || prev?.fatalFlaw,

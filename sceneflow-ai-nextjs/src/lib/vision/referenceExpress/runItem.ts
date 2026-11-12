@@ -83,10 +83,11 @@ export async function runReferenceExpressItem(input: {
   }
 
   if (item.kind === 'cast') {
-    const index = context.characters.findIndex(
+    let activeContext = context
+    let index = activeContext.characters.findIndex(
       (character, idx) => resolveCharacterId(character, idx) === item.targetId
     )
-    const character = index >= 0 ? (context.characters[index] as CastSource) : undefined
+    let character = index >= 0 ? (activeContext.characters[index] as CastSource) : undefined
     if (!character) return skipped(item, 'missing')
 
     if (item.wardrobeId) {
@@ -95,7 +96,7 @@ export async function runReferenceExpressItem(input: {
         projectId,
         item,
         character,
-        artStyle: context.artStyle,
+        artStyle: activeContext.artStyle,
       })
     }
 
@@ -103,7 +104,32 @@ export async function runReferenceExpressItem(input: {
       return skipped(item, 'already-generated')
     }
 
-    const resolvedPrompt = resolveCastIdentityGenerationPrompt(character, context.artStyle)
+    const { characterNeedsBaselineEnrichment, isPoisonedPlaceholderImagePrompt } = await import(
+      '@/lib/character/characterIntelligence'
+    )
+    if (
+      characterNeedsBaselineEnrichment(character) ||
+      isPoisonedPlaceholderImagePrompt(character.imagePrompt as string | undefined)
+    ) {
+      try {
+        const { ensureProjectCastEnsembleEnriched } = await import('./castCatalogSync')
+        const syncOutcome = await ensureProjectCastEnsembleEnriched(projectId)
+        if (syncOutcome.enriched) {
+          const reloaded = await loadReferenceExpressContext(projectId)
+          if (reloaded) {
+            activeContext = reloaded
+            index = activeContext.characters.findIndex(
+              (c, idx) => resolveCharacterId(c, idx) === item.targetId
+            )
+            character = index >= 0 ? (activeContext.characters[index] as CastSource) : character
+          }
+        }
+      } catch (castSyncErr) {
+        console.warn('[ReferenceExpress] Non-blocking cast ensemble sync failed:', castSyncErr)
+      }
+    }
+
+    const resolvedPrompt = resolveCastIdentityGenerationPrompt(character, activeContext.artStyle)
     const prompt = resolvedPrompt.prompt
     const usedFingerprint = castFingerprint(character)
 
@@ -114,7 +140,7 @@ export async function runReferenceExpressItem(input: {
       characterId: item.targetId,
       characterName: character.name,
       rawMode: resolvedPrompt.rawMode,
-      ...(context.artStyle ? { artStyle: context.artStyle } : {}),
+      ...(activeContext.artStyle ? { artStyle: activeContext.artStyle } : {}),
     })
 
     const appearance = castAppearanceAfterImage({

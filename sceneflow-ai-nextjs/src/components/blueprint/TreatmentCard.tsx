@@ -1160,6 +1160,16 @@ export function TreatmentCard({
                                         <div className="min-w-0">
                                           <div className="flex flex-wrap items-center gap-2">
                                             <span className="font-medium text-gray-100">{c.name}</span>
+                                            {c.age !== undefined && String(c.age).trim() && (
+                                              <span className="px-1.5 py-0.5 rounded border border-slate-600/70 bg-slate-900/60 text-[10px] text-gray-300">
+                                                Age {String(c.age)}
+                                              </span>
+                                            )}
+                                            {c.ethnicity && (
+                                              <span className="px-1.5 py-0.5 rounded border border-purple-500/30 bg-purple-500/10 text-[10px] text-purple-200">
+                                                {c.ethnicity}
+                                              </span>
+                                            )}
                                             {c.isSharedFromSeries && (
                                               <span className="px-1.5 py-0.5 rounded border border-cyan-500/35 bg-cyan-500/10 text-[10px] text-cyan-300">
                                                 {t('continuity.seriesAssetBadge')}
@@ -1179,6 +1189,24 @@ export function TreatmentCard({
                                     <div className="px-4 pb-4 pt-2 border-t border-slate-700/60 space-y-3">
                                       {description && (
                                         <div className="text-sm text-gray-300">{description}</div>
+                                      )}
+                                      {c.appearance && c.appearance !== description && (
+                                        <div className="text-xs text-gray-400 leading-relaxed">
+                                          <span className="font-semibold text-gray-300">Physical Continuity: </span>
+                                          {c.appearance}
+                                        </div>
+                                      )}
+                                      {c.familyRelationships && c.familyRelationships.length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {c.familyRelationships.map((rel, rIdx) => (
+                                            <span
+                                              key={`${rel.relatedCharacterName}-${rIdx}`}
+                                              className="px-2 py-0.5 rounded-md border border-amber-500/30 bg-amber-500/10 text-[11px] text-amber-200"
+                                            >
+                                              {rel.label || `${rel.relation.replace(/_/g, ' ')} ${rel.relatedCharacterName}`}
+                                            </span>
+                                          ))}
+                                        </div>
                                       )}
                                       {(externalGoal || internalNeed || fatalFlaw) && (
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

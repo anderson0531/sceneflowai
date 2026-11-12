@@ -86,16 +86,26 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
       "name": "CULTURALLY AUTHENTIC NAME - Must match the character's ethnicity",
       "role": "protagonist | supporting | antagonist",
       "subject": "Full name with title/nickname reflecting cultural background",
-      "ethnicity": "MUST match story context EXACTLY",
-      "keyFeature": "Defining characteristic or profession",
-      "hairStyle": "Specific style, length, texture",
-      "hairColor": "Exact color with detail",
-      "eyeColor": "Exact eye color",
-      "expression": "Typical facial expression/demeanor",
-      "build": "Body type, physique, movement style",
-      "defaultWardrobe": "Primary outfit/attire appropriate to role, setting, AND cultural background",
-      "wardrobeAccessories": "Consistent accessories worn throughout",
+      "age": "Concrete age or narrow band in English (e.g. '42' or 'early 40s') — biologically spaced across parents/children",
+      "gender": "male | female | non-binary",
+      "ethnicity": "Specific heritage in English (or 'Mixed [Parent A] and [Parent B] heritage' when biological parents differ)",
+      "keyFeature": "Defining natural facial/physical feature in English",
+      "hairStyle": "Specific style, length, texture in English",
+      "hairColor": "Exact hair color in English",
+      "eyeColor": "Exact eye color in English",
+      "expression": "Typical facial expression/demeanor in English",
+      "build": "Body type, physique, posture in English",
+      "appearance": "2-3 vivid English sentences of standing physical appearance (no clothing) for casting continuity",
+      "defaultWardrobe": "Primary outfit/attire appropriate to role, setting, AND cultural background in English",
+      "wardrobeAccessories": "Consistent accessories worn throughout in English",
       "description": "Role in narrative + playable behavioral contradiction, vocal cadence, and dynamic with other characters",
+      "familyRelationships": [
+        {
+          "relatedCharacterName": "Exact Name of related cast member",
+          "relation": "parent_of | child_of | sibling_of | grandparent_of | grandchild_of | spouse_of",
+          "biological": true
+        }
+      ],
       "externalGoal": "REQUIRED: What they visibly and actively pursue",
       "internalNeed": "REQUIRED: Deeper emotional truth that collides with their externalGoal",
       "fatalFlaw": "REQUIRED: Playable weakness/blind spot creating active obstacles",
@@ -220,8 +230,10 @@ export function buildTreatmentPrompt(opts: {
   referenceCatalogBlock?: string
   /** Series continuity block including asset roster */
   seriesContinuityBlock?: string
+  /** Cultural localization & family genetics directive block */
+  localizationBlock?: string
 }) {
-  const { input, coreConcept, targetMinutes, autoScope, advisoryScopeLabel, styleHint, context, beatStructure, persona, contentIntent, rigor = 'thorough', storyLocale, properNouns, referenceCatalogBlock, seriesContinuityBlock } = opts
+  const { input, coreConcept, targetMinutes, autoScope, advisoryScopeLabel, styleHint, context, beatStructure, persona, contentIntent, rigor = 'thorough', storyLocale, properNouns, referenceCatalogBlock, seriesContinuityBlock, localizationBlock } = opts
   const productionType = getSeriesProductionProfile(opts.format)
   const format = resolveBlueprintProductionFormat(opts.format)
   const intent = resolveContentIntentFromMetadata({
@@ -272,7 +284,7 @@ Start from a long-form assumption: unless the input clearly describes something 
     : ''
   const schemaOverride = intent === 'fiction' ? '' : `\n${NONFICTION_SCHEMA_OVERRIDE}\n`
   const characterIdentityBlock = seriesContinuityBlock
-    ? SERIES_LIBRARY_IDENTITY_BLOCK
+    ? `${SERIES_LIBRARY_IDENTITY_BLOCK}\n\n${CULTURAL_AUTHENTICITY_BLOCK}`
     : CULTURAL_AUTHENTICITY_BLOCK
   const libraryRules = seriesContinuityBlock
     ? `REFERENCE ASSET RULES:
@@ -307,6 +319,7 @@ ${pacingPhilosophy}
 
 ${scoringChecklist}
 ${characterIdentityBlock}
+${intent === 'fiction' && localizationBlock ? `\n${localizationBlock}\n` : ''}
 ${formatSpecifics.optimizationBlock}
 ${antiFictionBlock}
 

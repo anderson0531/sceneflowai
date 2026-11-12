@@ -29,6 +29,7 @@ import {
   buildArtStyleSpecFromValue,
   isPhotorealisticArtStyle,
 } from '@/lib/artStyle/globalArtStyle'
+import { isPoisonedPlaceholderImagePrompt } from '@/lib/character/characterIntelligence'
 import type { VisualReference } from '@/types/visionReferences'
 
 export const REFERENCE_STILL_KINDS = [
@@ -191,7 +192,8 @@ export function resolveCastIdentityGenerationPrompt(
       (stored.includes(CHARACTER_IDENTITY_REFERENCE_ANCHOR) ||
         /\bphotorealistic human photography\b/i.test(stored))
   )
-  if (stored && !styleConflict && (!appearance || stored.includes(appearance))) {
+  const poisonedStub = isPoisonedPlaceholderImagePrompt(stored)
+  if (stored && !styleConflict && !poisonedStub && (!appearance || stored.includes(appearance))) {
     return { prompt: stored, rawMode: true }
   }
   return {

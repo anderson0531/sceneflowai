@@ -326,24 +326,49 @@ function buildVisionPhaseReferences(bible: any) {
 
 function buildVisionPhaseCharacters(episode: any, bible: any) {
   const episodeCharacterIds = (episode.characters || []).map((ec: any) => ec.characterId)
-  
-  return (bible.characters || [])
-    .filter((char: any) => episodeCharacterIds.includes(char.id))
-    .map((char: any) => {
-      const episodeChar = episode.characters?.find((ec: any) => ec.characterId === char.id)
-      return {
-        id: char.id,
-        name: char.name,
-        role: episodeChar?.role || char.role,
-        description: char.description,
-        appearance: char.appearance,
-        referenceUrl: char.referenceImageUrl,
-        voiceId: char.voiceId,
-        // Inherited from series for visual consistency
-        lockedPromptTokens: char.lockedPromptTokens,
-        // Episode-specific arc
-        episodeArc: episodeChar?.episodeArc
-      }
-    })
+  const sourceChars = Array.isArray(bible.characters) ? bible.characters : []
+  const filtered =
+    episodeCharacterIds.length > 0
+      ? sourceChars.filter((char: any) => episodeCharacterIds.includes(char.id))
+      : sourceChars
+  const chosen = filtered.length > 0 ? filtered : sourceChars
+
+  return chosen.map((char: any) => {
+    const episodeChar = episode.characters?.find((ec: any) => ec.characterId === char.id)
+    const standingAppearance = char.appearanceDescription || char.appearance || ''
+    const refUrl = char.referenceImageUrl || char.referenceImage || char.referenceUrl || null
+    return {
+      id: char.id,
+      name: char.name,
+      role: episodeChar?.role || char.role,
+      description: char.description,
+      appearance: standingAppearance,
+      appearanceDescription: standingAppearance,
+      age: char.age,
+      ageRange: char.age ? String(char.age) : undefined,
+      gender: char.gender,
+      ethnicity: char.ethnicity,
+      build: char.build,
+      hairStyle: char.hairStyle,
+      hairColor: char.hairColor,
+      eyeColor: char.eyeColor,
+      keyFeature: char.keyFeature,
+      expression: char.expression,
+      defaultWardrobe: char.defaultWardrobe,
+      wardrobeAccessories: char.wardrobeAccessories,
+      voiceDescription: char.voiceDescription,
+      familyRelationships: char.familyRelationships,
+      personality: char.personality,
+      backstory: char.backstory,
+      wardrobes: char.wardrobes,
+      referenceUrl: refUrl,
+      referenceImage: refUrl,
+      voiceId: char.voiceId,
+      // Inherited from series for visual consistency
+      lockedPromptTokens: char.lockedPromptTokens,
+      // Episode-specific arc
+      episodeArc: episodeChar?.episodeArc,
+    }
+  })
 }
 

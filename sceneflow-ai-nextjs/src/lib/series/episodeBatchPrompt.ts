@@ -222,8 +222,39 @@ export function seriesBibleSchemaBlock(format: string): string {
     "protagonist": {"characterId": "char_1", "name": "Name", "goal": "What they want", "flaw": "Fatal flaw"},
     "antagonistConflict": {"type": "character|nature|society|self|technology", "description": "Central conflict", "characterId": "char_2"},
     "characters": [
-      {"id": "char_1", "name": "Name", "role": "protagonist", "description": "Character arc", "appearance": "Visual look", "personality": "Traits"},
-      {"id": "char_2", "name": "Name", "role": "antagonist", "description": "Motivation", "appearance": "Look", "personality": "Traits"}
+      {
+        "id": "char_1",
+        "name": "Culturally authentic full name",
+        "role": "protagonist",
+        "age": "Concrete age or narrow band in English, e.g. '36' or 'mid-30s'",
+        "gender": "male | female | non-binary",
+        "ethnicity": "Specific ethnicity grounded in setting/family in English (or 'Mixed X and Y heritage' if parents differ)",
+        "build": "Standing height + physique in English",
+        "hairStyle": "Specific style/texture in English",
+        "hairColor": "Specific color in English",
+        "eyeColor": "Specific eye color in English",
+        "keyFeature": "Distinctive physical trait in English",
+        "defaultWardrobe": "Signature baseline outfit matching setting/locations in English",
+        "description": "Engaging narrative role, playable contradiction, and relationship dynamic",
+        "appearance": "2-3 vivid English sentences of standing physical appearance (no clothing)",
+        "personality": "Playable traits and vocal cadence",
+        "familyRelationships": [
+          {"relatedCharacterName": "Exact relative name in cast", "relation": "parent_of | child_of | sibling_of | grandparent_of | grandchild_of | spouse_of", "biological": true}
+        ]
+      },
+      {
+        "id": "char_2",
+        "name": "Full name",
+        "role": "antagonist",
+        "age": "early 40s",
+        "gender": "male | female | non-binary",
+        "ethnicity": "Specific ethnicity in English",
+        "description": "Motivation, contradiction, and collision with protagonist",
+        "appearance": "2-3 vivid English sentences of standing physical appearance (no clothing)",
+        "defaultWardrobe": "Signature baseline outfit in English",
+        "personality": "Traits",
+        "familyRelationships": []
+      }
     ],
     "locations": [
       {"id": "loc_1", "name": "Name", "description": "Significance", "visualDescription": "Visual style"}

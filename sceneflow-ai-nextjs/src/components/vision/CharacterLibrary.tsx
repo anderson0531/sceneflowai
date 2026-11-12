@@ -122,6 +122,11 @@ import {
 import { ReferenceActionCue } from "./ReferenceActionCue";
 import type { ReferenceExpressKind, ReferenceExpressScope } from "@/lib/vision/referenceExpress/types";
 import { usePendingKindAgentRun } from "@/components/vision/usePendingKindAgentRun";
+import {
+  characterNeedsBaselineEnrichment,
+  isPoisonedPlaceholderImagePrompt,
+  type CastCharacterSyncUpdate,
+} from "@/lib/character/characterIntelligence";
 
 /** Parse API response body without throwing on Vercel HTML/plain-text error pages (504, etc.). */
 async function readJsonSafe(res: Response): Promise<Record<string, unknown>> {
@@ -965,12 +970,96 @@ export function CharacterLibrary({
   const activeCharacter =
     activeCharacterIndex >= 0 ? castCharacters[activeCharacterIndex] : null;
 
-  const handleUpdateAllWardrobesFromScript = async () => {
+  const handleSyncCastBaselinesFromScript = async (): Promise<any[]> => {
+    const currentCast = getLatestCharacters?.()?.filter((c) => c.type !== "description") ?? castCharacters;
+    if (!scenes || scenes.length === 0 || currentCast.length === 0) {
+      return currentCast;
+    }
+    const needsBaseline = currentCast.some(
+      (char) =>
+        characterNeedsBaselineEnrichment(char) ||
+        isPoisonedPlaceholderImagePrompt(char.imagePrompt),
+    );
+    if (!needsBaseline) {
+      return currentCast;
+    }
+
+    const runId = `cast-baseline-sync:${projectId || "default"}`;
+    startAgentRun({
+      id: runId,
+      title: "Cast Agent",
+      subtitle: "Enriching character descriptions, localization & family lineage...",
+    });
+
+    try {
+      const response = await fetch("/api/character/sync-cast-from-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId,
+          persist: Boolean(projectId),
+          characters: currentCast.map((char, idx) => ({
+            ...char,
+            id: getCharacterId(char, idx),
+          })),
+          scenes: buildScenesPayloadForWardrobeSync(scenes),
+          screenplayContext: {
+            genre: screenplayContext?.genre,
+            tone: screenplayContext?.tone,
+            setting: screenplayContext?.setting,
+            logline: screenplayContext?.logline,
+            artStyle: defaultArtStyle,
+          },
+        }),
+      });
+      const body = await readJsonSafe(response);
+      if (!response.ok) {
+        throw new Error(
+          (body.error as string) || "Failed to sync cast baselines from script",
+        );
+      }
+
+      const updates = (body.updates as CastCharacterSyncUpdate[]) || [];
+      if (updates.length > 0) {
+        const patchById = new Map<string, Record<string, any>>();
+        for (const u of updates) {
+          patchById.set(u.characterId, u.patch as Record<string, any>);
+          onUpdateCharacterAttributes?.(u.characterId, u.patch);
+          if (typeof u.patch.appearanceDescription === "string" && u.patch.appearanceDescription.trim()) {
+            onUpdateCharacterAppearance?.(u.characterId, u.patch.appearanceDescription);
+          }
+        }
+        finishAgentRun(runId, {
+          subtitle: `Enriched ${updates.length} character baseline(s) with world & family continuity`,
+        });
+        return currentCast.map((char, idx) => {
+          const cid = getCharacterId(char, idx);
+          const patch = patchById.get(cid);
+          return patch ? { ...char, ...patch } : char;
+        });
+      }
+
+      finishAgentRun(runId, { subtitle: "Character baselines already aligned" });
+      return currentCast;
+    } catch (err) {
+      console.warn("[Cast Baseline Sync] Non-blocking error:", err);
+      failAgentRun(
+        runId,
+        err instanceof Error ? err.message : "Failed to enrich character baselines",
+      );
+      return currentCast;
+    }
+  };
+
+  const handleUpdateAllWardrobesFromScript = async (
+    overrideCast?: any[],
+  ) => {
+    const sourceCast = overrideCast ?? castCharacters;
     if (!scenes || scenes.length === 0) {
       toast.error("No scenes available for analysis");
       return false;
     }
-    if (castCharacters.length === 0) {
+    if (sourceCast.length === 0) {
       toast.error("No characters to sync");
       return false;
     }
@@ -987,7 +1076,7 @@ export function CharacterLibrary({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          characters: castCharacters.map((char, idx) => ({
+          characters: sourceCast.map((char, idx) => ({
             id: getCharacterId(char, idx),
             name: char.name,
             role: char.role,
@@ -1089,7 +1178,8 @@ export function CharacterLibrary({
     }
     setIsCastAgentRunning(true);
     try {
-      const synced = await handleUpdateAllWardrobesFromScript();
+      const enrichedCast = await handleSyncCastBaselinesFromScript();
+      const synced = await handleUpdateAllWardrobesFromScript(enrichedCast);
       if (!synced) return;
       await onExpressGenerateReferences({ kinds: ["cast"], includeNestedStills: true });
     } finally {
@@ -3825,6 +3915,20 @@ const CharacterCard = ({
                       .filter((a: string) => a !== character.name)
                       .join(", ")}
                   </p>
+                )}
+              {Array.isArray(character.familyRelationships) &&
+                character.familyRelationships.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {character.familyRelationships.map((rel: any, rIdx: number) => (
+                      <span
+                        key={`${rel.relatedCharacterName}-${rIdx}`}
+                        className="inline-flex items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300"
+                      >
+                        {rel.label ||
+                          `${String(rel.relation || "").replace(/_/g, " ")} ${rel.relatedCharacterName}`}
+                      </span>
+                    ))}
+                  </div>
                 )}
             </div>
           </div>

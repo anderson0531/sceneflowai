@@ -7,6 +7,14 @@ import { callLLM } from '@/services/llmGateway'
 import { v4 as uuidv4 } from 'uuid'
 import { StoryThread } from '@/types/series'
 import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPrompt'
+import { enforceEnsembleFamilyConsistency } from '@/lib/character/characterFamily'
+import {
+  buildCharacterLocalizationPromptBlock,
+  composeStandingAppearanceFromAttributes,
+  inferLocaleDefaultEthnicityHint,
+  isMinimalAppearanceDescription,
+  type CharacterLocalizationContext,
+} from '@/lib/character/characterIntelligence'
 import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import { getGeminiProductModel } from '@/lib/config/modelConfig'
@@ -254,20 +262,52 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
     const lockedArtStyleId = serializeArtStyleValue(lockedSeriesStyleSpec)
 
+    const seriesLocalization: CharacterLocalizationContext = {
+      setting: series.production_bible?.setting || (typeof topic === 'string' ? topic : undefined),
+      timeframe: series.production_bible?.timeframe,
+      storyLocale,
+      targetAudience: (series as any).target_audience || undefined,
+      audienceDefinition: (existingMetaForStyle.audienceDefinition as any) || undefined,
+      locations: (series.production_bible?.locations || []).map((loc: any) => ({
+        name: loc.name,
+        description: loc.description || loc.visualDescription,
+      })),
+      props: (series.production_bible?.props || []).map((p: any) => ({
+        name: p.name,
+        category: p.category,
+        description: p.description,
+      })),
+    }
+
     if (regenerateField) {
       // Regenerate specific field
       generatedData = await regenerateSpecificField(
         series,
         regenerateField,
         topic || series.production_bible?.synopsis || series.title,
-        { genre, tone, targetEpisodeCount, format, artStyle: lockedArtStyleId }
+        {
+          genre,
+          tone,
+          targetEpisodeCount,
+          format,
+          storyLocale,
+          artStyle: lockedArtStyleId,
+          localization: seriesLocalization,
+        }
       )
     } else {
       // Generate full series storyline
       generatedData = await generateFullSeriesStoryline(
         topic,
         targetEpisodeCount,
-        { genre, tone, format, storyLocale, artStyle: lockedArtStyleId }
+        {
+          genre,
+          tone,
+          format,
+          storyLocale,
+          artStyle: lockedArtStyleId,
+          localization: seriesLocalization,
+        }
       )
     }
     
@@ -276,6 +316,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const updatedBible = preserveExisting
       ? { ...currentBible, ...generatedData.productionBible }
       : { ...generatedData.productionBible }
+
+    if (Array.isArray(updatedBible.characters) && updatedBible.characters.length > 0) {
+      updatedBible.characters = normalizeSeriesBibleCharacters(updatedBible.characters, {
+        ...seriesLocalization,
+        setting: updatedBible.setting || seriesLocalization.setting,
+        timeframe: updatedBible.timeframe || seriesLocalization.timeframe,
+        locations: (updatedBible.locations || seriesLocalization.locations || []).map((loc: any) => ({
+          name: loc.name,
+          description: loc.description || loc.visualDescription,
+        })),
+        props: (updatedBible.props || seriesLocalization.props || []).map((p: any) => ({
+          name: p.name,
+          category: p.category,
+          description: p.description,
+        })),
+      })
+    }
     
     updatedBible.version = incrementVersion(currentBible.version || '1.0.0')
     updatedBible.lastUpdated = new Date().toISOString()
@@ -406,6 +463,36 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+function normalizeSeriesBibleCharacters(
+  rawCharacters: any[],
+  localization?: CharacterLocalizationContext
+): SeriesCharacter[] {
+  const now = new Date().toISOString()
+  const seeded = rawCharacters.map((char: any, i: number) => ({
+    ...char,
+    id: char.id || `char_${i}_${uuidv4().slice(0, 8)}`,
+    createdAt: char.createdAt || now,
+    updatedAt: now,
+  }))
+  const familyConsistent = enforceEnsembleFamilyConsistency(seeded, {
+    defaultLocaleEthnicity: inferLocaleDefaultEthnicityHint(localization),
+  })
+  return familyConsistent.map((char: any) => {
+    const existingLook =
+      (typeof char.appearanceDescription === 'string' && char.appearanceDescription.trim()) ||
+      (typeof char.appearance === 'string' && char.appearance.trim()) ||
+      ''
+    const composedLook = isMinimalAppearanceDescription(existingLook)
+      ? composeStandingAppearanceFromAttributes(char, familyConsistent) || existingLook
+      : existingLook
+    return {
+      ...char,
+      appearance: composedLook,
+      appearanceDescription: composedLook || undefined,
+    } as SeriesCharacter
+  })
+}
+
 /**
  * Generate full series storyline from topic
  * Uses the Series Flash workhorse with low thinking for narrative coherence at Vercel-safe latency.
@@ -414,13 +501,27 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 async function generateFullSeriesStoryline(
   topic: string,
   episodeCount: number,
-  options: { genre?: string; tone?: string; format?: string; storyLocale?: string; artStyle?: string }
+  options: {
+    genre?: string
+    tone?: string
+    format?: string
+    storyLocale?: string
+    artStyle?: string
+    localization?: CharacterLocalizationContext
+  }
 ): Promise<any> {
   console.log(`[generateFullSeriesStoryline] Generating ${episodeCount} episodes with Flash workhorse`)
   
   const format = options.format || 'narrative'
   const artStyleBlock = options.artStyle ? buildArtStylePromptBlock(options.artStyle).trim() : ''
   const mapping = getSeriesFormatMapping(format)
+  const localizationBlock = mapping.nonFiction
+    ? ''
+    : buildCharacterLocalizationPromptBlock({
+        ...options.localization,
+        setting: options.localization?.setting || topic,
+        storyLocale: options.storyLocale,
+      })
 
   // The bible is authored first and then every episode batch inherits its
   // names, so the language directive has to be present from the bible onward or
@@ -442,7 +543,7 @@ TO GENERATE NOW: 0
 ${seriesBibleTaskBlock(format, episodeCount)}
 
 ${SERIES_CHARACTER_NAMING_BLOCK}
-
+${localizationBlock ? `\n${localizationBlock}\n` : ''}
 ${mapping.mappingInstruction}
 ${artStyleBlock ? `${artStyleBlock}\nvisualGuidelines must describe how this locked art style appears on screen. Do not switch to a different medium.\n` : ''}${languageBlock}
 Return ONLY valid JSON:
@@ -461,14 +562,16 @@ ${seriesBibleSchemaBlock(format)}`
   
   const parsed = safeParseJSON(bibleResponse)
   
-  // Ensure IDs are properly set
+  // Ensure IDs, family lineage, and standing appearances are properly normalized
   if (parsed.productionBible?.characters) {
-    parsed.productionBible.characters = parsed.productionBible.characters.map((char: any, i: number) => ({
-      ...char,
-      id: char.id || `char_${i}_${uuidv4().slice(0, 8)}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }))
+    parsed.productionBible.characters = normalizeSeriesBibleCharacters(
+      parsed.productionBible.characters,
+      {
+        ...options.localization,
+        setting: parsed.productionBible.setting || options.localization?.setting || topic,
+        timeframe: parsed.productionBible.timeframe || options.localization?.timeframe,
+      }
+    )
   }
   
   if (parsed.productionBible?.locations) {
@@ -637,7 +740,15 @@ async function regenerateSpecificField(
   series: Series,
   field: string,
   context: string,
-  options: { genre?: string; tone?: string; targetEpisodeCount: number; format?: string; artStyle?: string }
+  options: {
+    genre?: string
+    tone?: string
+    targetEpisodeCount: number
+    format?: string
+    storyLocale?: string
+    artStyle?: string
+    localization?: CharacterLocalizationContext
+  }
 ): Promise<any> {
   const currentBible = series.production_bible || {}
   const format = options.format || 'narrative'
@@ -646,10 +757,55 @@ async function regenerateSpecificField(
   const nonFictionGuard = mapping.nonFiction
     ? 'Do NOT invent a fictional plot, cast, antagonist, or fatal flaw. Stay with the stated subject.'
     : ''
+  const languageBlock = localeDirective(options.storyLocale, {
+    keepEnglishFields: ['act', 'status', 'type', 'role'],
+  })
+  const localizationBlock =
+    !mapping.nonFiction && (field === 'characters' || field === 'protagonist')
+      ? buildCharacterLocalizationPromptBlock({
+          ...options.localization,
+          setting: currentBible.setting || options.localization?.setting || context,
+          timeframe: currentBible.timeframe || options.localization?.timeframe,
+          storyLocale: options.storyLocale,
+        })
+      : ''
 
   // Limit episode generation to batches of 5 to avoid token limits
   const episodeBatchSize = Math.min(options.targetEpisodeCount, 5)
   
+  const characterSchemaSnippet = `{
+  "productionBible": {
+    "characters": [
+      {
+        "id": "char_1",
+        "name": "Culturally authentic full name",
+        "role": "protagonist | antagonist | supporting | recurring",
+        "age": "Concrete age or narrow band in English (e.g. '42' or 'early 40s')",
+        "gender": "male | female | non-binary",
+        "ethnicity": "Specific heritage in English (or 'Mixed [Parent A] and [Parent B] heritage' for mixed-parentage children)",
+        "build": "Physical build in English",
+        "hairStyle": "Hair length/texture/cut in English",
+        "hairColor": "Hair color in English",
+        "eyeColor": "Eye color in English",
+        "keyFeature": "Distinguishing natural facial detail in English",
+        "expression": "Resting demeanor in English",
+        "appearance": "2-3 vivid English sentences of standing physical appearance (no clothing)",
+        "defaultWardrobe": "Signature outfit grounded in setting/occupation in English",
+        "description": "3-4 rich sentences: dramatic role, playable contradiction, goals, relationships",
+        "personality": "Core temperament & speech style",
+        "voiceDescription": "Vocal timbre, register & cadence",
+        "familyRelationships": [
+          {
+            "relatedCharacterName": "Exact Name in cast",
+            "relation": "parent_of | child_of | sibling_of | grandparent_of | grandchild_of | spouse_of",
+            "biological": true
+          }
+        ]
+      }
+    ]
+  }
+}`
+
   const fieldPrompts: Record<string, string> = {
     title: `Generate a new series title for: ${context}\nCurrent title: ${series.title}\nReturn JSON: {"title": "New Title"}`,
     logline: `Generate a new logline for: ${context}\nReturn JSON: {"logline": "New logline"}`,
@@ -663,8 +819,8 @@ async function regenerateSpecificField(
     setting: `Generate a new setting for: ${context}\nReturn JSON: {"productionBible": {"setting": "New setting", "timeframe": "Timeframe"}}`,
     episodes: `Generate ${episodeBatchSize} episode blueprints (simple: title, logline, synopsis, 3 beats each) for: ${context}\nSynopsis: ${currentBible.synopsis}\n${nonFictionGuard}\nReturn JSON: {"episodeBlueprints": [...]}`,
     characters: mapping.nonFiction
-      ? `Generate narrators, hosts, or real subjects for: ${context}\nDo NOT invent a fictional cast.\nExisting: ${JSON.stringify(currentBible.characters || [])}\nReturn JSON: {"productionBible": {"characters": [...]}}`
-      : `Generate supporting characters for: ${context}\nExisting: ${JSON.stringify(currentBible.characters || [])}\nReturn JSON: {"productionBible": {"characters": [...]}}`
+      ? `Generate narrators, hosts, or real subjects for: ${context}\nDo NOT invent a fictional cast.\nExisting: ${JSON.stringify(currentBible.characters || [])}\nReturn JSON matching:\n${characterSchemaSnippet}`
+      : `Generate a deeply realized, story-aligned ensemble cast (preserving main anchors if cohesive, or upgrading thin stubs with rich physicality, localization, and family genetics) for: ${context}\nSynopsis: ${currentBible.synopsis || ''}\nSetting: ${currentBible.setting || ''}\nExisting cast context: ${JSON.stringify(currentBible.characters || [])}\nReturn JSON matching:\n${characterSchemaSnippet}`
   }
   
   const prompt = fieldPrompts[field]
@@ -679,7 +835,8 @@ Production type: ${format}
 ${mapping.mappingInstruction}
 ${options.artStyle ? buildArtStylePromptBlock(options.artStyle) : ''}
 ${field === 'characters' || field === 'protagonist' ? SERIES_CHARACTER_NAMING_BLOCK : ''}
-
+${localizationBlock}
+${languageBlock}
 Return ONLY valid JSON.`
 
   const response = await callLLM(

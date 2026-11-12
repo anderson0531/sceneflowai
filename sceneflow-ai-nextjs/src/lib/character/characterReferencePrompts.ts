@@ -6,6 +6,14 @@ import {
   buildArtStyleSpecFromValue,
   isPhotorealisticArtStyle,
 } from '@/lib/artStyle/globalArtStyle'
+import {
+  composeStandingAppearanceFromAttributes,
+  isMinimalAppearanceDescription,
+} from '@/lib/character/characterIntelligence'
+import {
+  buildFamilialVisualContinuityClause,
+  type CharacterFamilyRelationship,
+} from '@/lib/character/characterFamily'
 
 export const CHARACTER_IDENTITY_REFERENCE_ANCHOR =
   'Photorealistic headshot to be used as a character reference.'
@@ -178,7 +186,7 @@ export function resolveAnchorWardrobeForTransition(
       let bestMaxScene = -Infinity
       for (const candidate of otherDrawn) {
         const candidateScenes = Array.isArray(candidate.sceneNumbers)
-          ? candidate.sceneNumbers.filter((n) => typeof n === 'number' && Number.isFinite(n) && n <= minTargetScene)
+          ? candidate.sceneNumbers.filter((n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n <= minTargetScene)
           : []
         if (candidateScenes.length > 0) {
           const maxScene = Math.max(...candidateScenes)
@@ -280,6 +288,9 @@ export function resolveDefaultWardrobeDescription(
 /** Build appearance text from structured character attributes when vision description is missing. */
 export function buildAppearanceDescriptionFromAttributes(character: {
   name?: string
+  age?: string | number
+  ageRange?: string
+  gender?: string
   ethnicity?: string
   keyFeature?: string
   build?: string
@@ -290,28 +301,47 @@ export function buildAppearanceDescriptionFromAttributes(character: {
   appearanceDescription?: string
   appearance?: string
   description?: string
+  familyRelationships?: CharacterFamilyRelationship[]
 }): string {
-  const existing =
-    character.appearanceDescription?.trim() ||
-    character.appearance?.trim() ||
-    character.description?.trim()
-  if (existing) return existing
-
-  const parts: string[] = []
-  if (character.ethnicity) parts.push(character.ethnicity)
-  if (character.keyFeature) parts.push(character.keyFeature)
-  if (character.build) parts.push(character.build)
-  if (character.hairColor && character.hairStyle) {
-    parts.push(`${character.hairColor} ${character.hairStyle} hair`)
-  } else if (character.hairStyle) {
-    parts.push(`${character.hairStyle} hair`)
-  } else if (character.hairColor) {
-    parts.push(`${character.hairColor} hair`)
+  const familyClause = buildFamilialVisualContinuityClause(character)
+  const appendFamily = (base: string): string => {
+    if (!familyClause) return base
+    if (base.toLowerCase().includes('familial lineage:')) return base
+    return `${base.replace(/\.*\s*$/, '.')} ${familyClause}`
   }
-  if (character.eyeColor) parts.push(`${character.eyeColor} eyes`)
-  if (character.expression) parts.push(character.expression)
 
-  if (parts.length > 0) return parts.join(', ')
+  const explicitAppearanceDesc = character.appearanceDescription?.trim()
+  if (
+    explicitAppearanceDesc &&
+    !/^(character from script|character appearing in scene\b|visual look|look|not specified)$/i.test(
+      explicitAppearanceDesc
+    )
+  ) {
+    return appendFamily(explicitAppearanceDesc)
+  }
+
+  const explicitAppearance = character.appearance?.trim()
+  if (explicitAppearance && !isMinimalAppearanceDescription(explicitAppearance)) {
+    return appendFamily(explicitAppearance)
+  }
+
+  const composedFromStructured = composeStandingAppearanceFromAttributes(character)
+  if (composedFromStructured) {
+    return composedFromStructured
+  }
+
+  if (
+    explicitAppearance &&
+    !/^(character from script|visual look|look|not specified)$/i.test(explicitAppearance)
+  ) {
+    return appendFamily(explicitAppearance)
+  }
+
+  const desc = character.description?.trim()
+  if (desc && !isMinimalAppearanceDescription(desc)) {
+    return appendFamily(desc)
+  }
+
   return 'an original adult with a unique, unrecognizable face'
 }
 

@@ -346,8 +346,27 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         const normalizedVariant = normalizeVariantFoundation(variant)
         const { resolveVariantArtStyleSpec } = await import('@/lib/treatment/blueprintFoundation')
         const { serializeArtStyleValue } = await import('@/lib/artStyle/globalArtStyle')
+        const { buildVisionPhaseContinuityFromVariant } = await import('@/lib/blueprint/blueprintContinuity')
         const resolvedSpec = resolveVariantArtStyleSpec(normalizedVariant)
         const serializedArtStyle = serializeArtStyleValue(resolvedSpec)
+
+        let existingVisionPhase: Record<string, any> | null = null
+        try {
+          const existingRes = await fetch(`/api/projects/${productionProjectId}?lite=true`, {
+            cache: 'no-store',
+          })
+          if (existingRes.ok) {
+            const existingJson = await existingRes.json()
+            existingVisionPhase = existingJson?.project?.metadata?.visionPhase || null
+          }
+        } catch {
+          // Non-blocking: fall back to clean continuity merge
+        }
+
+        const mergedContinuity = buildVisionPhaseContinuityFromVariant(
+          normalizedVariant as Record<string, any>,
+          existingVisionPhase
+        )
 
         const res = await fetch(`/api/projects/${productionProjectId}`, {
           method: 'PUT',
@@ -361,6 +380,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 artStyle: serializedArtStyle,
                 artStyleSpec: resolvedSpec,
                 lookbook: null,
+                ...(mergedContinuity.characters.length > 0
+                  ? { characters: mergedContinuity.characters }
+                  : {}),
+                references: mergedContinuity.references,
               },
             },
           }),

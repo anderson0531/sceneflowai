@@ -5,6 +5,7 @@
  */
 
 import { toCanonicalName } from '@/lib/character/canonical'
+import type { CharacterFamilyRelationship } from '@/lib/character/characterFamily'
 
 export type LibraryCharacterLock = {
   id: string
@@ -12,6 +13,18 @@ export type LibraryCharacterLock = {
   role: string
   description: string
   appearance?: string
+  age?: string | number
+  gender?: string
+  ethnicity?: string
+  build?: string
+  hairStyle?: string
+  hairColor?: string
+  eyeColor?: string
+  keyFeature?: string
+  expression?: string
+  defaultWardrobe?: string
+  wardrobeAccessories?: string
+  familyRelationships?: CharacterFamilyRelationship[]
   referenceImage?: string | null
 }
 
@@ -61,6 +74,20 @@ function bindCharacters(
       subject: character.name,
       libraryCharacterId: character.id,
       ...(character.appearance ? { appearance: character.appearance } : {}),
+      ...(character.age !== undefined ? { age: character.age } : {}),
+      ...(character.gender ? { gender: character.gender } : {}),
+      ...(character.ethnicity ? { ethnicity: character.ethnicity } : {}),
+      ...(character.build ? { build: character.build } : {}),
+      ...(character.hairStyle ? { hairStyle: character.hairStyle } : {}),
+      ...(character.hairColor ? { hairColor: character.hairColor } : {}),
+      ...(character.eyeColor ? { eyeColor: character.eyeColor } : {}),
+      ...(character.keyFeature ? { keyFeature: character.keyFeature } : {}),
+      ...(character.expression ? { expression: character.expression } : {}),
+      ...(character.defaultWardrobe ? { defaultWardrobe: character.defaultWardrobe } : {}),
+      ...(character.wardrobeAccessories ? { wardrobeAccessories: character.wardrobeAccessories } : {}),
+      ...(character.familyRelationships && character.familyRelationships.length > 0
+        ? { familyRelationships: character.familyRelationships }
+        : {}),
       ...(character.referenceImage
         ? { referenceImage: character.referenceImage }
         : {}),

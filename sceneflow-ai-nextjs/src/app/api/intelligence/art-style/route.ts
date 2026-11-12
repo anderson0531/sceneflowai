@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { safeParseJsonFromText } from '@/lib/safeJson'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { localePromptDirective } from '@/lib/prompts/localeDirective'
 import {
   type ArtStyleSpec,
   type ArtStyleStoryContext,
@@ -16,11 +18,24 @@ import {
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
+const ART_STYLE_ENGLISH_FIELDS = [
+  'medium',
+  'presetId',
+  'stylePrompt',
+  'paletteAndLighting',
+  'characterRefDirective',
+  'locationRefDirective',
+  'propRefDirective',
+  'videoMotionDirective',
+  'negativeTerms',
+] as const
+
 interface ArtStyleIntelligenceRequest {
   mode?: 'recommend' | 'optimize'
   storyContext?: ArtStyleStoryContext
   userDirection?: string
   currentArtStyle?: string
+  storyLocale?: string
 }
 
 function formatStoryContextBlock(ctx?: ArtStyleStoryContext): string {
@@ -83,6 +98,13 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  const { storyLocale } = await resolveRequestStoryLocale(request, {
+    explicitLocale: body.storyLocale,
+    userId: session.user.id,
+  })
+  const localeBlock = localePromptDirective(storyLocale, {
+    visualPromptFields: ART_STYLE_ENGLISH_FIELDS,
+  })
   const contextBlock = formatStoryContextBlock(storyContext)
   const model = getGeminiTextModel('flash')
 
@@ -94,7 +116,7 @@ Your job is to analyze a project's storyline, genre, tone, audience, and format 
 3. Video Clips
 
 Do NOT trap the creator in generic labels. Craft an authentic, specific visual production design tailored to the story (whether grounded 35mm/65mm live-action cinema, tactile 3D feature animation, hand-painted 2D animation, graphic novel illustration, or editorial motion art), PLUS 2 distinct creative alternatives in contrasting mediums or visual grammars.
-Return valid JSON only.`
+Return valid JSON only.${localeBlock ? `\n\n${localeBlock}` : ''}`
 
     const prompt = `STORY & PRODUCTION CONTEXT:
 ${contextBlock}
@@ -165,7 +187,7 @@ Return a JSON object with this exact shape:
   const systemInstruction = `You are a Principal Film & Animation Production Designer for SceneFlow Studio.
 The creator has typed or voice-dictated their Global Art Style preference. Clean up any spoken dictation artifacts, honor their exact artistic intent and medium choice, harmonize it with the storyline's atmosphere, and compile a production-locked Global Art Style specification that keeps Character References, Location Plates, Prop References, Scene Stills, and Video Clips 100% visually unified.
 Never override a stylized user request back to photorealism, and never turn a live-action request into animation.
-Return valid JSON only.`
+Return valid JSON only.${localeBlock ? `\n\n${localeBlock}` : ''}`
 
   const prompt = `CREATOR ART STYLE DIRECTION (typed or voice-dictated):
 "${userDirection}"
@@ -202,7 +224,8 @@ ${SPEC_SCHEMA_GUIDANCE}`
     console.warn('[art-style intelligence] optimize fallback:', err)
   }
 
-  const fallbackOptimized = optimizeArtStyleDirectionFallback(userDirection, storyContext)
+  const englishDirection = await englishForModel(userDirection, storyLocale)
+  const fallbackOptimized = optimizeArtStyleDirectionFallback(englishDirection, storyContext)
   return NextResponse.json({
     success: true,
     optimized: fallbackOptimized,

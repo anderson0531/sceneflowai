@@ -66,11 +66,26 @@ export interface SeriesCharacter {
   role: 'protagonist' | 'antagonist' | 'supporting' | 'recurring'
   description: string
   appearance: string
+  appearanceDescription?: string
+  age?: string | number
+  gender?: string
+  ethnicity?: string
+  build?: string
+  hairStyle?: string
+  hairColor?: string
+  eyeColor?: string
+  keyFeature?: string
+  expression?: string
+  defaultWardrobe?: string
+  wardrobeAccessories?: string
+  voiceDescription?: string
+  familyRelationships?: import('@/lib/character/characterFamily').CharacterFamilyRelationship[]
   backstory?: string
   personality?: string
   voiceId?: string // ElevenLabs voice ID for consistency
   referenceImageUrl?: string // GCS-stored reference image
   lockedPromptTokens?: string[] // Visual DNA tokens for image generation
+  wardrobes?: import('@/types/series').SeriesCharacterWardrobe[]
   createdAt: string
   updatedAt: string
 }

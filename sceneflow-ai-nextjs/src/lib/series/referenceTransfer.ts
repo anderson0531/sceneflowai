@@ -187,12 +187,27 @@ function seriesPropToObject(prop: SeriesProp): VisualReference {
 
 export function toSeriesCharacter(pc: any): SeriesCharacter & { wardrobes?: SeriesCharacterWardrobe[] } {
   const now = new Date().toISOString()
+  const standingAppearance = pc.appearanceDescription || pc.appearance || ''
   return {
     id: pc.id,
     name: pc.name,
     role: pc.role || 'supporting',
     description: pc.description || '',
-    appearance: pc.appearance || pc.appearanceDescription || '',
+    appearance: standingAppearance,
+    appearanceDescription: standingAppearance || undefined,
+    age: pc.age ?? pc.ageRange,
+    gender: pc.gender,
+    ethnicity: pc.ethnicity,
+    build: pc.build,
+    hairStyle: pc.hairStyle,
+    hairColor: pc.hairColor,
+    eyeColor: pc.eyeColor,
+    keyFeature: pc.keyFeature,
+    expression: pc.expression,
+    defaultWardrobe: pc.defaultWardrobe,
+    wardrobeAccessories: pc.wardrobeAccessories,
+    voiceDescription: pc.voiceDescription,
+    familyRelationships: pc.familyRelationships,
     backstory: pc.backstory,
     personality: pc.personality,
     voiceId: pc.voiceId || pc.voiceConfig?.voiceId,
@@ -207,13 +222,30 @@ export function toSeriesCharacter(pc: any): SeriesCharacter & { wardrobes?: Seri
 function projectCharacterFromSeries(
   char: SeriesCharacter & { wardrobes?: SeriesCharacterWardrobe[] }
 ): any {
+  const standingAppearance = char.appearanceDescription || char.appearance || ''
   return {
     id: char.id,
     name: char.name,
     role: char.role,
     description: char.description,
-    appearance: char.appearance,
-    appearanceDescription: char.appearance,
+    appearance: standingAppearance,
+    appearanceDescription: standingAppearance,
+    age: char.age,
+    ageRange: char.age ? String(char.age) : undefined,
+    gender: char.gender,
+    ethnicity: char.ethnicity,
+    build: char.build,
+    hairStyle: char.hairStyle,
+    hairColor: char.hairColor,
+    eyeColor: char.eyeColor,
+    keyFeature: char.keyFeature,
+    expression: char.expression,
+    defaultWardrobe: char.defaultWardrobe,
+    wardrobeAccessories: char.wardrobeAccessories,
+    voiceDescription: char.voiceDescription,
+    familyRelationships: char.familyRelationships,
+    personality: char.personality,
+    backstory: char.backstory,
     referenceUrl: char.referenceImageUrl,
     referenceImage: char.referenceImageUrl,
     voiceId: char.voiceId,
@@ -308,6 +340,10 @@ export type DisplayReference = {
   name: string
   role?: string
   description?: string
+  appearance?: string
+  age?: string | number
+  ethnicity?: string
+  familyRelationships?: SeriesCharacter['familyRelationships']
   imageUrl?: string
   libraryAssetId?: string
 }
@@ -329,6 +365,10 @@ export function referencesFromProjectMetadata(
       name: character.name || 'Character',
       role: character.role,
       description: character.description || character.appearance || '',
+      appearance: character.appearanceDescription || character.appearance || undefined,
+      age: character.age ?? character.ageRange,
+      ethnicity: character.ethnicity,
+      familyRelationships: character.familyRelationships,
       imageUrl: character.referenceUrl || character.referenceImage || undefined,
       libraryAssetId: character.libraryAssetId,
     })),

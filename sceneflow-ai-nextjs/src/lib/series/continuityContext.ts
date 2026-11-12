@@ -280,29 +280,52 @@ export function lockedLibraryFromBible(
     : characters
   const cast = featured.length > 0 ? featured : characters
   return {
-    characters: cast.map((character) => ({
-      id: character.id,
-      name: character.name,
-      role: character.role,
-      description: character.description || character.appearance || '',
-      ...(character.appearance ? { appearance: character.appearance } : {}),
-      ...(character.referenceImage ? { referenceImage: character.referenceImage } : {}),
-    })),
-    locations: (bible.locations || []).map((location) => ({
-      id: location.id,
-      name: location.name,
-      description: location.description || location.visualDescription || '',
-      ...(location.referenceImage ? { referenceImage: location.referenceImage } : {}),
-    })),
-    props: (bible.props || []).map((prop) => ({
-      id: prop.id,
-      name: prop.name,
-      description: prop.description || '',
-      ...(prop.category ? { category: prop.category } : {}),
-      ...(prop.significance ? { significance: prop.significance } : {}),
-      ...(prop.importance ? { importance: prop.importance } : {}),
-      ...(prop.referenceImage ? { referenceImage: prop.referenceImage } : {}),
-    })),
+    characters: cast.map((character) => {
+      const refImage = character.referenceImageUrl || (character as any).referenceImage
+      const standingAppearance = character.appearanceDescription || character.appearance
+      return {
+        id: character.id,
+        name: character.name,
+        role: character.role,
+        description: character.description || standingAppearance || '',
+        ...(standingAppearance ? { appearance: standingAppearance } : {}),
+        ...(character.age !== undefined ? { age: String(character.age) } : {}),
+        ...(character.gender ? { gender: character.gender } : {}),
+        ...(character.ethnicity ? { ethnicity: character.ethnicity } : {}),
+        ...(character.build ? { build: character.build } : {}),
+        ...(character.hairStyle ? { hairStyle: character.hairStyle } : {}),
+        ...(character.hairColor ? { hairColor: character.hairColor } : {}),
+        ...(character.eyeColor ? { eyeColor: character.eyeColor } : {}),
+        ...(character.keyFeature ? { keyFeature: character.keyFeature } : {}),
+        ...(character.expression ? { expression: character.expression } : {}),
+        ...(character.defaultWardrobe ? { defaultWardrobe: character.defaultWardrobe } : {}),
+        ...(character.wardrobeAccessories ? { wardrobeAccessories: character.wardrobeAccessories } : {}),
+        ...(character.familyRelationships ? { familyRelationships: character.familyRelationships } : {}),
+        ...(refImage ? { referenceImage: refImage } : {}),
+      }
+    }),
+    locations: (bible.locations || []).map((location) => {
+      const locRefImage = location.referenceImageUrl || (location as any).referenceImage
+      return {
+        id: location.id,
+        name: location.name,
+        description: location.description || location.visualDescription || '',
+        ...(locRefImage ? { referenceImage: locRefImage } : {}),
+      }
+    }),
+    props: (bible.props || []).map((prop) => {
+      const propRefImage = prop.referenceImageUrl || (prop as any).referenceImage
+      const propAny = prop as any
+      return {
+        id: prop.id,
+        name: prop.name,
+        description: prop.description || '',
+        ...(propAny.category ? { category: propAny.category } : {}),
+        ...(propAny.significance ? { significance: propAny.significance } : {}),
+        ...(propAny.importance ? { importance: propAny.importance } : {}),
+        ...(propRefImage ? { referenceImage: propRefImage } : {}),
+      }
+    }),
   }
 }
 
@@ -322,8 +345,24 @@ function buildReferenceRosterFromBible(
     'REFERENCE ROSTER (locked series library — reuse these names, roles, and descriptions verbatim):',
   ]
   for (const character of library.characters) {
+    const metaParts: string[] = []
+    if (character.age !== undefined && String(character.age).trim()) {
+      metaParts.push(`age="${String(character.age).trim()}"`)
+    }
+    if (character.ethnicity) {
+      metaParts.push(`ethnicity="${character.ethnicity}"`)
+    }
+    if (character.appearance) {
+      metaParts.push(`appearance="${character.appearance}"`)
+    }
+    if (character.familyRelationships && character.familyRelationships.length > 0) {
+      const relStr = character.familyRelationships
+        .map((r) => `${r.relation}${r.biological === false ? '(non-bio)' : ''}->${r.relatedCharacterName}`)
+        .join(', ')
+      metaParts.push(`family="${relStr}"`)
+    }
     lines.push(
-      `  [CHARACTER] id=${character.id} name="${character.name}" role="${character.role}" description="${character.description}"`
+      `  [CHARACTER] id=${character.id} name="${character.name}" role="${character.role}"${metaParts.length ? ` ${metaParts.join(' ')}` : ''} description="${character.description}"`
     )
   }
   for (const location of library.locations) {

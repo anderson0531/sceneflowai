@@ -299,16 +299,45 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ? seriesChars.filter(c => episodeCharIds.includes(c.id))
         : seriesChars
       
-      updatedVisionPhase.characters = relevantChars.map((char: SeriesCharacter) => ({
-        id: char.id,
-        name: char.name,
-        role: char.role,
-        description: char.description,
-        appearance: char.appearance,
-        referenceUrl: char.referenceImageUrl,
-        voiceId: char.voiceId,
-        lockedPromptTokens: char.lockedPromptTokens
-      }))
+      const existingProjectChars: Array<Record<string, any>> = Array.isArray(updatedVisionPhase.characters)
+        ? updatedVisionPhase.characters
+        : []
+      const existingById = new Map(existingProjectChars.map((c) => [c.id, c]))
+
+      updatedVisionPhase.characters = relevantChars.map((char: SeriesCharacter) => {
+        const prev = existingById.get(char.id) || {}
+        const standingAppearance =
+          char.appearanceDescription || char.appearance || prev.appearanceDescription || prev.appearance || ''
+        const refImg =
+          char.referenceImageUrl || prev.referenceImage || prev.referenceUrl || null
+        return {
+          ...prev,
+          id: char.id,
+          name: char.name,
+          role: char.role || prev.role,
+          description: char.description || prev.description,
+          appearance: standingAppearance,
+          appearanceDescription: standingAppearance,
+          age: char.age ?? prev.age,
+          gender: char.gender ?? prev.gender,
+          ethnicity: char.ethnicity ?? prev.ethnicity,
+          build: char.build ?? prev.build,
+          hairStyle: char.hairStyle ?? prev.hairStyle,
+          hairColor: char.hairColor ?? prev.hairColor,
+          eyeColor: char.eyeColor ?? prev.eyeColor,
+          keyFeature: char.keyFeature ?? prev.keyFeature,
+          expression: char.expression ?? prev.expression,
+          defaultWardrobe: char.defaultWardrobe ?? prev.defaultWardrobe,
+          wardrobeAccessories: char.wardrobeAccessories ?? prev.wardrobeAccessories,
+          voiceDescription: char.voiceDescription ?? prev.voiceDescription,
+          familyRelationships: char.familyRelationships ?? prev.familyRelationships,
+          wardrobes: char.wardrobes ?? prev.wardrobes,
+          referenceUrl: refImg,
+          referenceImage: refImg,
+          voiceId: char.voiceId ?? prev.voiceId,
+          lockedPromptTokens: char.lockedPromptTokens ?? prev.lockedPromptTokens,
+        }
+      })
     }
     
     // Pull aesthetic settings & Series-locked Global Art Style
@@ -453,17 +482,36 @@ function syncCharacters(
       if (existing) {
         // Update existing
         const updatedFields: string[] = []
-        if (pc.appearance && pc.appearance !== existing.appearance) updatedFields.push('appearance')
-        if (pc.referenceUrl && pc.referenceUrl !== existing.referenceImageUrl) updatedFields.push('referenceImageUrl')
+        const pcAppearance = pc.appearanceDescription || pc.appearance
+        const pcRefImg = pc.referenceImage || pc.referenceUrl
+        if (pcAppearance && pcAppearance !== existing.appearance) updatedFields.push('appearance')
+        if (pcRefImg && pcRefImg !== existing.referenceImageUrl) updatedFields.push('referenceImageUrl')
         if (pc.voiceId && pc.voiceId !== existing.voiceId) updatedFields.push('voiceId')
+        if (pc.ethnicity && pc.ethnicity !== existing.ethnicity) updatedFields.push('ethnicity')
+        if (pc.age && pc.age !== existing.age) updatedFields.push('age')
         if (pc.lockedPromptTokens) updatedFields.push('lockedPromptTokens')
         
         if (updatedFields.length > 0) {
           const idx = merged.findIndex(c => c.id === pc.id)
           merged[idx] = {
             ...existing,
-            appearance: pc.appearance || existing.appearance,
-            referenceImageUrl: pc.referenceUrl || existing.referenceImageUrl,
+            appearance: pcAppearance || existing.appearance,
+            appearanceDescription: pcAppearance || existing.appearanceDescription,
+            age: pc.age ?? existing.age,
+            gender: pc.gender ?? existing.gender,
+            ethnicity: pc.ethnicity ?? existing.ethnicity,
+            build: pc.build ?? existing.build,
+            hairStyle: pc.hairStyle ?? existing.hairStyle,
+            hairColor: pc.hairColor ?? existing.hairColor,
+            eyeColor: pc.eyeColor ?? existing.eyeColor,
+            keyFeature: pc.keyFeature ?? existing.keyFeature,
+            expression: pc.expression ?? existing.expression,
+            defaultWardrobe: pc.defaultWardrobe ?? existing.defaultWardrobe,
+            wardrobeAccessories: pc.wardrobeAccessories ?? existing.wardrobeAccessories,
+            voiceDescription: pc.voiceDescription ?? existing.voiceDescription,
+            familyRelationships: pc.familyRelationships ?? existing.familyRelationships,
+            wardrobes: pc.wardrobes ?? existing.wardrobes,
+            referenceImageUrl: pcRefImg || existing.referenceImageUrl,
             voiceId: pc.voiceId || existing.voiceId,
             lockedPromptTokens: pc.lockedPromptTokens || existing.lockedPromptTokens,
             updatedAt: new Date().toISOString()
@@ -553,17 +601,33 @@ function extractLocationsFromProject(metadata: any): SeriesLocation[] {
  * Convert project character to series character format
  */
 function toSeriesCharacter(pc: any): SeriesCharacter {
+  const standingAppearance = pc.appearanceDescription || pc.appearance || ''
   return {
     id: pc.id,
     name: pc.name,
     role: pc.role || 'supporting',
     description: pc.description || '',
-    appearance: pc.appearance || '',
+    appearance: standingAppearance,
+    appearanceDescription: standingAppearance || undefined,
+    age: pc.age ?? pc.ageRange,
+    gender: pc.gender,
+    ethnicity: pc.ethnicity,
+    build: pc.build,
+    hairStyle: pc.hairStyle,
+    hairColor: pc.hairColor,
+    eyeColor: pc.eyeColor,
+    keyFeature: pc.keyFeature,
+    expression: pc.expression,
+    defaultWardrobe: pc.defaultWardrobe,
+    wardrobeAccessories: pc.wardrobeAccessories,
+    voiceDescription: pc.voiceDescription,
+    familyRelationships: pc.familyRelationships,
     backstory: pc.backstory,
     personality: pc.personality,
-    voiceId: pc.voiceId,
-    referenceImageUrl: pc.referenceUrl,
+    voiceId: pc.voiceId || pc.voiceConfig?.voiceId,
+    referenceImageUrl: pc.referenceImage || pc.referenceUrl,
     lockedPromptTokens: pc.lockedPromptTokens,
+    ...(Array.isArray(pc.wardrobes) ? { wardrobes: pc.wardrobes } : {}),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }

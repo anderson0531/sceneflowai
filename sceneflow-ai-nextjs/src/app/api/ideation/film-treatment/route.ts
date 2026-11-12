@@ -31,6 +31,14 @@ import { extractFallbackPropsFromSceneDescriptions } from '@/lib/blueprint/bluep
 import { DEFAULT_BLUEPRINT_TONE } from '@/lib/blueprint/regenerateDefaults'
 import { loadProjectReferenceCatalog } from '@/lib/referenceLibrary/catalogLoader'
 import { formatReferenceCatalogForPrompt } from '@/lib/referenceLibrary/projection'
+import { loadBlueprintARFromMetadata, type AudienceDefinition } from '@/lib/types/audienceResonance'
+import { enforceEnsembleFamilyConsistency } from '@/lib/character/characterFamily'
+import {
+  buildCharacterLocalizationPromptBlock,
+  composeStandingAppearanceFromAttributes,
+  inferLocaleDefaultEthnicityHint,
+  isMinimalAppearanceDescription,
+} from '@/lib/character/characterIntelligence'
 import Project from '@/models/Project'
 
 // Vercel function configuration - must match vercel.json
@@ -446,10 +454,16 @@ export async function POST(request: NextRequest) {
     let seriesContinuityBlock = ''
     let referenceCatalogBlock = ''
     let lockedLibrary: SeriesLibraryLock | undefined
+    let resolvedAudienceDefinition: AudienceDefinition | null = null
+    let seriesSettingHint = ''
     if (isExistingProject && session?.user?.id && body.projectId) {
       try {
         const project = await Project.findByPk(body.projectId)
         if (project?.user_id === session.user.id) {
+          const arState = loadBlueprintARFromMetadata((project.metadata || null) as Record<string, unknown> | null)
+          if (arState.audienceDefinition) {
+            resolvedAudienceDefinition = arState.audienceDefinition
+          }
           // Enforce Series Consistency Lock if this Blueprint belongs to a Series!
           const linkedSeriesId =
             project.series_id || (project.metadata as any)?.seriesId || body.seriesId
@@ -457,6 +471,12 @@ export async function POST(request: NextRequest) {
             const SeriesModel = (await import('@/models/Series')).default
             const linkedSeries = await SeriesModel.findByPk(linkedSeriesId)
             if (linkedSeries) {
+              if (!resolvedAudienceDefinition && (linkedSeries.metadata as any)?.audienceDefinition) {
+                resolvedAudienceDefinition = (linkedSeries.metadata as any).audienceDefinition
+              }
+              if (linkedSeries.production_bible?.setting) {
+                seriesSettingHint = linkedSeries.production_bible.setting
+              }
               effectiveArtStyleSpec = {
                 ...resolveSeriesArtStyleSpec({
                   seriesId: linkedSeriesId,
@@ -495,6 +515,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const localizationBlock =
+      contentIntent === 'fiction'
+        ? buildCharacterLocalizationPromptBlock({
+            setting: seriesSettingHint || input.slice(0, 600),
+            targetAudience,
+            audienceDefinition: resolvedAudienceDefinition,
+            storyLocale,
+          })
+        : ''
+
     const lockedArtStyle = serializeArtStyleValue(effectiveArtStyleSpec)
 
     const context = { 
@@ -526,6 +556,8 @@ export async function POST(request: NextRequest) {
       seriesContinuityBlock,
       referenceCatalogBlock,
       lockedLibrary,
+      localizationBlock,
+      audienceDefinition: resolvedAudienceDefinition,
     }
 
     const variantsStartMs = Date.now()
@@ -621,6 +653,7 @@ async function generateFilmTreatment(
     properNouns: context?.properNouns,
     seriesContinuityBlock: context?.seriesContinuityBlock,
     referenceCatalogBlock: context?.referenceCatalogBlock,
+    localizationBlock: context?.localizationBlock,
   }) + retryHint + strictJsonPromptSuffix
 
   const thinkingBudget = context?.thinkingBudget ?? getThinkingBudgetForRigor(context?.rigor || 'thorough')
@@ -729,6 +762,9 @@ async function generateFilmTreatment(
             name: String(c?.name || ''),
             role: String(c?.role || 'supporting'),
             subject: String(c?.subject || c?.name || ''),
+            ...(c?.age !== undefined && String(c.age).trim() ? { age: String(c.age).trim() } : {}),
+            ...(c?.ageRange ? { ageRange: String(c.ageRange) } : {}),
+            ...(c?.gender ? { gender: String(c.gender) } : {}),
             ethnicity: String(c?.ethnicity || ''),
             keyFeature: String(c?.keyFeature || ''),
             hairStyle: String(c?.hairStyle || ''),
@@ -740,6 +776,8 @@ async function generateFilmTreatment(
             wardrobeAccessories: String(c?.wardrobeAccessories || ''),
             ...(c?.appearance ? { appearance: String(c.appearance) } : {}),
             description: String(c?.description || ''),
+            ...(c?.voiceDescription ? { voiceDescription: String(c.voiceDescription) } : {}),
+            ...(Array.isArray(c?.familyRelationships) ? { familyRelationships: c.familyRelationships } : {}),
             ...(c?.externalGoal ? { externalGoal: String(c.externalGoal) } : {}),
             ...(c?.internalNeed ? { internalNeed: String(c.internalNeed) } : {}),
             ...(c?.fatalFlaw ? { fatalFlaw: String(c.fatalFlaw) } : {}),
@@ -823,7 +861,36 @@ async function generateFilmTreatment(
     }
     
     const locked = context?.lockedLibrary as SeriesLibraryLock | undefined
-    const bound = locked ? bindTreatmentToLibrary(result, locked) : result
+    const bound = locked ? bindTreatmentToLibrary(result as any, locked) : result
+
+    if (
+      context?.contentIntent === 'fiction' &&
+      Array.isArray((bound as any).character_descriptions) &&
+      (bound as any).character_descriptions.length > 0
+    ) {
+      const defaultEth = inferLocaleDefaultEthnicityHint({
+        setting: (bound as any).setting || input.slice(0, 600),
+        targetAudience: (bound as any).target_audience || context?.targetAudience,
+        audienceDefinition: context?.audienceDefinition || null,
+        locations: Array.isArray((bound as any).scene_descriptions)
+          ? (bound as any).scene_descriptions
+          : undefined,
+      })
+      const familyConsistent = enforceEnsembleFamilyConsistency(
+        (bound as any).character_descriptions,
+        { defaultLocaleEthnicity: defaultEth }
+      )
+      ;(bound as any).character_descriptions = familyConsistent.map((c: any) => {
+        const existingLook = typeof c.appearance === 'string' ? c.appearance.trim() : ''
+        const composedLook = isMinimalAppearanceDescription(existingLook)
+          ? composeStandingAppearanceFromAttributes(c, familyConsistent) || existingLook
+          : existingLook
+        return {
+          ...c,
+          ...(composedLook ? { appearance: composedLook } : {}),
+        }
+      })
+    }
 
     console.log('[Film Treatment] narrative_reasoning fields present:', !!((parsed as any).character_focus || (parsed as any).story_strengths))
     if ((parsed as any).character_focus || (parsed as any).story_strengths) {

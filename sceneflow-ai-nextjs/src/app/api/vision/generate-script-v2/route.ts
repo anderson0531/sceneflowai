@@ -90,6 +90,13 @@ import {
   buildScriptCraftPromptBlock,
 } from '@/lib/script/scriptCraftPrompt'
 import { buildVisionPhaseContinuityFromVariant } from '@/lib/blueprint/blueprintContinuity'
+import { extractCharactersFromScenes } from '@/lib/character/detection'
+import {
+  characterNeedsBaselineEnrichment,
+  enrichEnsembleCastWithIntelligence,
+  isPoisonedPlaceholderImagePrompt,
+} from '@/lib/character/characterIntelligence'
+import { loadBlueprintARFromMetadata } from '@/lib/types/audienceResonance'
 import { CreditService } from '../../../../services/CreditService'
 import { BLUEPRINT_CREDITS, TEXT_CREDITS } from '@/lib/credits/creditCosts'
 export const runtime = 'nodejs'
@@ -457,8 +464,22 @@ export async function POST(request: NextRequest) {
 
         const existingLocRefs = project.metadata?.visionPhase?.references?.locationReferences || []
         const existingObjRefs = project.metadata?.visionPhase?.references?.objectReferences || []
+        const existingNameSet = new Set(
+          existingCharacters.map((c: any) => normalizeCharacterName(c.name || '')).filter(Boolean)
+        )
+        const hasUnsyncedTreatmentCast =
+          Array.isArray(treatment.character_descriptions) &&
+          treatment.character_descriptions.some((tc: any) => {
+            const norm = normalizeCharacterName(tc?.name || '')
+            if (!norm) return false
+            if (!existingNameSet.has(norm)) return true
+            const prev = existingCharacters.find(
+              (ec: any) => normalizeCharacterName(ec.name || '') === norm
+            )
+            return Boolean(prev && characterNeedsBaselineEnrichment(prev))
+          })
         const needsContinuitySync =
-          (existingCharacters.length === 0 && Array.isArray(treatment.character_descriptions) && treatment.character_descriptions.length > 0) ||
+          hasUnsyncedTreatmentCast ||
           (existingLocRefs.length === 0 && Array.isArray(treatment.scene_descriptions) && treatment.scene_descriptions.length > 0) ||
           (existingObjRefs.length === 0 && Array.isArray(treatment.prop_descriptions) && treatment.prop_descriptions.length > 0)
 
@@ -467,16 +488,25 @@ export async function POST(request: NextRequest) {
             treatment,
             project.metadata?.visionPhase
           )
-          if (existingCharacters.length === 0) {
-            existingCharacters = syncedContinuity.characters.map((c: any) => ({
-              ...c,
-              id: c.id || uuidv4(),
-              name: toCanonicalName(c.name || ''),
-              version: 1,
-              lastModified: new Date().toISOString(),
-              referenceImage: c.referenceImage || null,
-              generating: false,
-            }))
+          if (syncedContinuity.characters.length > 0) {
+            const syncedByNorm = new Set(
+              syncedContinuity.characters.map((c: any) => normalizeCharacterName(c.name || ''))
+            )
+            const preservedExtras = existingCharacters.filter(
+              (ec: any) => !syncedByNorm.has(normalizeCharacterName(ec.name || ''))
+            )
+            existingCharacters = [
+              ...syncedContinuity.characters.map((c: any) => ({
+                ...c,
+                id: c.id || uuidv4(),
+                name: toCanonicalName(c.name || ''),
+                version: c.version || 1,
+                lastModified: c.lastModified || new Date().toISOString(),
+                referenceImage: c.referenceImage || null,
+                generating: false,
+              })),
+              ...preservedExtras,
+            ]
           }
 
           await project.update({
@@ -683,7 +713,6 @@ export async function POST(request: NextRequest) {
               id: uuidv4(),
               name: toCanonicalName(c.name || ''),
               role: c.role || 'supporting',
-              imagePrompt: `Professional character portrait: ${c.name}, ${c.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
               referenceImage: null,
               generating: false,
             })),
@@ -1146,18 +1175,77 @@ export async function POST(request: NextRequest) {
           !existingCharNamesNormalized.includes(normalizeCharacterName(c.name || ''))
         )
         
-        const allCharacters = [
+        let allCharacters = [
           ...existingCharacters,
           ...newChars.map((c: any) => ({
             ...c,
             id: uuidv4(),
             name: toCanonicalName(c.name || ''), // Normalize to canonical format
             role: c.role || 'supporting',
-            imagePrompt: `Professional character portrait: ${c.name}, ${c.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
             referenceImage: null,
             generating: false
           }))
         ]
+
+        if (contentIntent === 'fiction' && allCharacters.some((c: any) => characterNeedsBaselineEnrichment(c))) {
+          try {
+            safeEmit({
+              type: 'progress',
+              status: 'Enriching ensemble cast, localization & family continuity...',
+              batch: chunkPlan.chunks.length,
+              scenesGenerated: allScenes.length,
+              totalScenes: allScenes.length,
+              elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
+              estimatedRemainingSeconds: 2,
+              progress: 94,
+              ...(scriptJobId ? { jobId: scriptJobId } : {}),
+            })
+            const arState = loadBlueprintARFromMetadata(
+              (project.metadata || null) as Record<string, unknown> | null
+            )
+            const currentLocRefs =
+              project.metadata?.visionPhase?.references?.locationReferences || []
+            const currentObjRefs =
+              project.metadata?.visionPhase?.references?.objectReferences || []
+            const castIntel = await enrichEnsembleCastWithIntelligence({
+              characters: allCharacters,
+              storyContext: {
+                title: treatment.title,
+                logline: treatment.logline,
+                synopsis: treatment.synopsis || treatment.content,
+                genre: treatment.genre,
+                tone: treatment.tone,
+                setting: treatment.setting,
+                artStyle: resolveVariantArtStyle(treatment),
+              },
+              localization: {
+                setting: treatment.setting,
+                storyLocale,
+                targetAudience: treatment.target_audience || treatment.audience,
+                audienceDefinition: arState.audienceDefinition,
+                locations: currentLocRefs.map((l: any) => ({
+                  name: l.locationDisplay || l.location,
+                  description: l.description,
+                })),
+                props: currentObjRefs.map((o: any) => ({
+                  name: o.name,
+                  category: o.category,
+                  description: o.description,
+                })),
+              },
+              scenes: allScenes,
+            })
+            allCharacters = castIntel.characters.map((c: any) => ({
+              ...c,
+              name: toCanonicalName(c.name || ''),
+            }))
+            console.log(
+              `[Script Gen V2] Enriched ensemble cast (${castIntel.updates.length} characters updated, fallback=${castIntel.usedFallback})`
+            )
+          } catch (castErr) {
+            console.warn('[Script Gen V2] Non-blocking ensemble cast enrichment failed:', castErr)
+          }
+        }
 
         // Character name validation is now handled during embedding step (below)
         // Removing separate validation to reduce memory overhead
@@ -1264,16 +1352,26 @@ export async function POST(request: NextRequest) {
         
         // Merge: use new character data but preserve referenceImage, voiceConfig, etc. from existing
         const mergedCharacters = allCharacters.map((newChar: any) => {
-          const existingChar = existingCharMap.get(newChar.name?.toLowerCase())
+          const existingChar: any = existingCharMap.get(newChar.name?.toLowerCase())
           if (existingChar) {
-            // Preserve generated data from existing character
+            const cleanExistingImagePrompt = isPoisonedPlaceholderImagePrompt(existingChar.imagePrompt)
+              ? undefined
+              : existingChar.imagePrompt
+            const cleanNewImagePrompt = isPoisonedPlaceholderImagePrompt(newChar.imagePrompt)
+              ? undefined
+              : newChar.imagePrompt
+            // Preserve generated data from existing character while adopting enriched baselines
             return {
+              ...existingChar,
               ...newChar,
               id: existingChar.id || newChar.id,
               referenceImage: existingChar.referenceImage || newChar.referenceImage,
               voiceConfig: existingChar.voiceConfig || newChar.voiceConfig,
-              appearanceDescription: existingChar.appearanceDescription || newChar.appearanceDescription,
+              wardrobes: existingChar.wardrobes || newChar.wardrobes,
+              appearanceDescription:
+                existingChar.appearanceDescription || newChar.appearanceDescription,
               visionDescription: existingChar.visionDescription || newChar.visionDescription,
+              imagePrompt: cleanExistingImagePrompt || cleanNewImagePrompt,
               imageApproved: existingChar.imageApproved,
             }
           }
@@ -1651,11 +1749,28 @@ ${characterNames.map(name => `• "${name}"`).join('\n')}
 - Do NOT expand titles (wrong: "Doctor" when name uses "Dr.")
 - Do NOT use first name only unless that IS the full character name
 
-CHARACTER DETAILS:\n${characters.map((c: any) =>
-        `• ${c.name}${c.role ? ` (${c.role})` : ''}: ${c.description || 'No description'}
-        ${c.appearance ? `  Appearance: ${c.appearance}` : ''}
-        ${c.demeanor ? `  Demeanor: ${c.demeanor}` : ''}`
-      ).join('\n')}`
+CHARACTER DETAILS:\n${characters.map((c: any) => {
+        const meta: string[] = []
+        if (c.age) meta.push(`Age: ${c.age}`)
+        if (c.gender) meta.push(`Gender: ${c.gender}`)
+        if (c.ethnicity) meta.push(`Heritage: ${c.ethnicity}`)
+        const look = c.appearanceDescription || c.appearance
+        const family =
+          Array.isArray(c.familyRelationships) && c.familyRelationships.length > 0
+            ? c.familyRelationships
+                .map((r: any) => r.label || `${r.relation?.replace(/_/g, ' ')} ${r.relatedCharacterName}`)
+                .join(', ')
+            : ''
+        return [
+          `• ${c.name}${c.role ? ` (${c.role})` : ''}${meta.length ? ` [${meta.join(' | ')}]` : ''}: ${c.description || 'Supporting cast member'}`,
+          look ? `  Appearance: ${look}` : '',
+          c.defaultWardrobe ? `  Signature Attire: ${c.defaultWardrobe}` : '',
+          c.personality || c.demeanor ? `  Demeanor/Voice: ${c.personality || c.demeanor}` : '',
+          family ? `  Family Ties: ${family}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      }).join('\n')}`
     : ''
 
   const storyBeatsText =
@@ -2554,31 +2669,12 @@ function normalizeCharacterName(name: string): string {
 }
 
 function extractCharacters(scenes: any[], includeNarrator = true): any[] {
-  const charMap = new Map()
-  scenes.forEach((scene: any) => {
-    scene.dialogue?.forEach((d: any) => {
-      if (!d.character) return
-      
-      const normalizedName = normalizeCharacterName(d.character)
-      
-      // Use normalized name as key, but keep original (cleaned) name for display
-      if (!charMap.has(normalizedName)) {
-        // Clean the display name (remove V.O., etc. but keep proper case)
-        const cleanName = d.character.replace(/\s*\([^)]*\)\s*/g, '').trim()
-        
-        const isNarrator = cleanName.toUpperCase().includes('NARRATOR')
-        if (isNarrator && !includeNarrator) return
-
-        const dialogueSample = d.line ? d.line.substring(0, 100) + (d.line.length > 100 ? '...' : '') : ''
-        
-        charMap.set(normalizedName, {
-          name: cleanName,  // Use cleaned version (e.g., "Brian Anderson" not "BRIAN ANDERSON (V.O.)")
-          role: isNarrator ? 'narrator' : 'character',
-          description: isNarrator ? `Narrator for the scene. Tone reference: "${dialogueSample}"` : `Character from script`
-        })
-      }
-    })
-  })
-  return Array.from(charMap.values())
+  const extracted = extractCharactersFromScenes(scenes)
+  if (includeNarrator) return extracted
+  return extracted.filter(
+    (c) =>
+      String(c.role || '').toLowerCase() !== 'narrator' &&
+      !String(c.name || '').toUpperCase().includes('NARRATOR')
+  )
 }
 

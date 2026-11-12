@@ -177,6 +177,10 @@ export function SeriesReferenceLibraryPanel({
         name: character.name,
         role: character.role,
         description: character.description,
+        appearance: character.appearanceDescription || character.appearance,
+        age: character.age,
+        ethnicity: character.ethnicity,
+        familyRelationships: character.familyRelationships,
         imageUrl: character.referenceImageUrl,
       })),
       locations: (bible?.locations || []).map((location) => ({
@@ -389,7 +393,10 @@ function toSeriesCharacter(asset: DisplayReference): SeriesCharacterResponse {
     name: asset.name,
     role: (asset.role as SeriesCharacterResponse['role']) || 'supporting',
     description: asset.description || '',
-    appearance: '',
+    appearance: asset.appearance || '',
+    ...(asset.age !== undefined ? { age: asset.age } : {}),
+    ...(asset.ethnicity ? { ethnicity: asset.ethnicity } : {}),
+    ...(asset.familyRelationships ? { familyRelationships: asset.familyRelationships } : {}),
     referenceImageUrl: asset.imageUrl,
     createdAt: '',
     updatedAt: '',
@@ -472,10 +479,39 @@ function SeriesCastSection({
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <h4 className="font-semibold text-white">{char.name}</h4>
-                <p className="text-xs capitalize text-amber-200/80">{char.role}</p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <h4 className="font-semibold text-white">{char.name}</h4>
+                  {char.age !== undefined && String(char.age).trim() ? (
+                    <span className="rounded-full border border-white/10 bg-gray-900/70 px-2 py-0.5 text-[10px] font-medium text-gray-300">
+                      Age {String(char.age)}
+                    </span>
+                  ) : null}
+                  {char.ethnicity ? (
+                    <span className="rounded-full border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 text-[10px] font-medium text-purple-200">
+                      {char.ethnicity}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="text-xs capitalize text-amber-200/80 mt-0.5">{char.role}</p>
                 {char.description ? (
                   <p className="mt-1 text-sm leading-relaxed text-gray-400">{char.description}</p>
+                ) : null}
+                {char.appearance && char.appearance !== char.description ? (
+                  <p className="mt-1 text-xs leading-relaxed text-gray-500 line-clamp-2">
+                    <span className="text-gray-400 font-medium">Look:</span> {char.appearance}
+                  </p>
+                ) : null}
+                {char.familyRelationships && char.familyRelationships.length > 0 ? (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {char.familyRelationships.map((rel, idx) => (
+                      <span
+                        key={`${rel.relatedCharacterName}-${idx}`}
+                        className="rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-200"
+                      >
+                        {rel.label || `${rel.relation.replace(/_/g, ' ')} ${rel.relatedCharacterName}`}
+                      </span>
+                    ))}
+                  </div>
                 ) : null}
                 <AssetUsageMeta
                   usageEpisodes={getCharacterUsageEpisodes(char.id, episodeBlueprints)}
