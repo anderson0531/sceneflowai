@@ -63,13 +63,18 @@ import { audioSourceFingerprintForSpoken } from '@/lib/audio/beatAudioStale'
 import { resolveLineVoiceDirection } from '@/lib/tts/dialogueDirectorNotes'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
 import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
-import { applyGeneratedClipTake, isLanguageClipTarget } from '@/lib/scene/languageClipVersions'
+import {
+  applyGeneratedClipTake,
+  isLanguageClipTarget,
+  mergeLanguageClipVersions,
+} from '@/lib/scene/languageClipVersions'
 import {
   appendSegmentTake,
   assignStillUrl,
   CUSTOM_FRAME_STILL_SLOT,
   healMissingVideoPointer,
   segmentHasPlayableVideo,
+  unionRowsById,
 } from '@/lib/storyboard/mediaVersions'
 import {
   isPreVisStale,
@@ -5051,6 +5056,94 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     (sceneId: string, data: SceneProductionData) => {
       console.log('[handleProductionDataChange] Persisting production data:', { sceneId, hasStreams: !!data.productionStreams, streamCount: data.productionStreams?.length })
       applySceneProductionUpdate(sceneId, () => data)
+
+      // Keep Promo scenes in lockstep when a source scene switches clip versions or updates takes
+      const allScenes = (scriptRef.current?.script?.scenes ??
+        scriptRef.current?.scenes ??
+        []) as Array<Record<string, unknown>>
+      const sourceSceneIdx = allScenes.findIndex(
+        (s, i) => String(s.id || s.sceneId || `scene-${i}`) === sceneId
+      )
+      if (sourceSceneIdx >= 0 && !isPromoCinematicScene(allScenes[sourceSceneIdx])) {
+        type SegmentRow = SceneProductionData['segments'][number]
+        const sourceByBeatId = new Map<string, SegmentRow>()
+        for (const seg of data.segments ?? []) {
+          if (seg.beatId && !sourceByBeatId.has(seg.beatId)) {
+            sourceByBeatId.set(seg.beatId, seg)
+          }
+        }
+        if (sourceByBeatId.size > 0) {
+          allScenes.forEach((cand, cIdx) => {
+            if (!isPromoCinematicScene(cand)) return
+            const promoKey = String(cand.id || cand.sceneId || `scene-${cIdx}`)
+            if (promoKey === sceneId) return
+            const promoBeats = getSceneBeats(cand) as PromoSceneBeat[]
+            const linkedPromoBeatMap = new Map<string, SegmentRow>()
+            for (const pb of promoBeats) {
+              if (pb.sourceSceneIndex === sourceSceneIdx && pb.sourceBeatId) {
+                const srcSeg = sourceByBeatId.get(pb.sourceBeatId)
+                if (srcSeg) linkedPromoBeatMap.set(pb.beatId, srcSeg)
+              }
+            }
+            if (linkedPromoBeatMap.size === 0) return
+            applySceneProductionUpdate(promoKey, (currentPromo) => {
+              if (!currentPromo?.segments?.length) return currentPromo
+              let promoChanged = false
+              const nextPromoSegments = currentPromo.segments.map((promoSeg) => {
+                const srcSeg = promoSeg.beatId ? linkedPromoBeatMap.get(promoSeg.beatId) : undefined
+                if (!srcSeg) return promoSeg
+                const nextAssetUrl = srcSeg.activeAssetUrl ?? promoSeg.activeAssetUrl
+                const nextCurrentTakeId = srcSeg.currentTakeId ?? promoSeg.currentTakeId
+                const nextCurrentTakeSelectedAt =
+                  srcSeg.currentTakeSelectedAt ?? promoSeg.currentTakeSelectedAt
+                const unionedTakes = unionRowsById(
+                  srcSeg.takes,
+                  promoSeg.takes,
+                  'id'
+                ) as typeof promoSeg.takes
+                const takesChanged =
+                  JSON.stringify(unionedTakes ?? []) !== JSON.stringify(promoSeg.takes ?? [])
+                const nextLanguageVersions = mergeLanguageClipVersions(
+                  srcSeg.languageVersions,
+                  promoSeg.languageVersions
+                )
+                const langChanged =
+                  JSON.stringify(nextLanguageVersions ?? null) !==
+                  JSON.stringify(promoSeg.languageVersions ?? null)
+                if (
+                  (nextAssetUrl || null) === (promoSeg.activeAssetUrl || null) &&
+                  (nextCurrentTakeId || null) === (promoSeg.currentTakeId || null) &&
+                  (nextCurrentTakeSelectedAt || null) ===
+                    (promoSeg.currentTakeSelectedAt || null) &&
+                  !takesChanged &&
+                  !langChanged
+                ) {
+                  return promoSeg
+                }
+                promoChanged = true
+                return {
+                  ...promoSeg,
+                  activeAssetUrl: nextAssetUrl,
+                  currentTakeId: nextCurrentTakeId,
+                  ...(nextCurrentTakeSelectedAt
+                    ? { currentTakeSelectedAt: nextCurrentTakeSelectedAt }
+                    : {}),
+                  ...(srcSeg.resolution ? { resolution: srcSeg.resolution } : {}),
+                  ...(srcSeg.qualityTier ? { qualityTier: srcSeg.qualityTier } : {}),
+                  ...(srcSeg.actualVideoDuration != null
+                    ? { actualVideoDuration: srcSeg.actualVideoDuration }
+                    : {}),
+                  takes: takesChanged ? unionedTakes : promoSeg.takes,
+                  ...(nextLanguageVersions ? { languageVersions: nextLanguageVersions } : {}),
+                }
+              })
+              return promoChanged
+                ? { ...currentPromo, segments: nextPromoSegments }
+                : currentPromo
+            })
+          })
+        }
+      }
     },
     [applySceneProductionUpdate]
   )
@@ -5680,6 +5773,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               errorGuidance: undefined,
               takes: appendSegmentTake(segment.takes, newTake),
               currentTakeId: newTake.id,
+              currentTakeSelectedAt: newTake.createdAt,
                 references: {
                   ...segment.references,
                   startFrameUrl: resolvedStartFrameUrl || segment.references?.startFrameUrl,
@@ -5747,6 +5841,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   isStale: false,
                   takes: appendSegmentTake(seg.takes, takeToSync),
                   currentTakeId: takeToSync.id,
+                  currentTakeSelectedAt: takeToSync.createdAt,
                 }
               })
               if (!updatedSegId) return current
@@ -6045,6 +6140,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 isStale: false,
                                 takes: appendSegmentTake(seg.takes, newTake),
                                 currentTakeId: newTake.id,
+                                currentTakeSelectedAt: newTake.createdAt,
                                 errorMessage: undefined,
                                 lastContentPolicyFailure: undefined, // Clear failure flag on success
                                 stemSeparation: retryData.stemSeparation
@@ -6244,6 +6340,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 isStale: false,
                                 takes: appendSegmentTake(seg.takes, newTake),
                                 currentTakeId: newTake.id,
+                                currentTakeSelectedAt: newTake.createdAt,
                                 errorMessage: undefined,
                                 stemSeparation: retryData.stemSeparation
                                   ? {
@@ -7053,6 +7150,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   notes: `User upload${actualVideoDuration ? ` (${actualVideoDuration.toFixed(1)}s)` : ''}`,
                 }),
                 currentTakeId: takeId,
+                currentTakeSelectedAt: new Date().toISOString(),
               }
             }
             // Shift subsequent segments if this upload changed the timeline
@@ -7498,6 +7596,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ...segment,
               activeAssetUrl: takeAssetUrl,
               currentTakeId: takeId,
+              currentTakeSelectedAt: new Date().toISOString(),
               isStale: false,
               thumbnailUrl: selectedTake?.thumbnailUrl || segment.thumbnailUrl,
             }

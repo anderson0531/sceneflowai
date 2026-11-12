@@ -53,12 +53,27 @@ export function mergeProductionSegment(
     existing.references as unknown as Record<string, unknown> | undefined,
     END_FRAME_STILL_SLOT
   )
+  const incSelectedMs = Date.parse(incoming.currentTakeSelectedAt || '') || 0
+  const exSelectedMs = Date.parse(existing.currentTakeSelectedAt || '') || 0
+  const preferExistingTakeSelection =
+    exSelectedMs > 0 && incSelectedMs > 0
+      ? exSelectedMs > incSelectedMs
+      : exSelectedMs > 0 && !incoming.currentTakeId
+  const preferredTakeId = preferExistingTakeSelection
+    ? existing.currentTakeId ?? incoming.currentTakeId
+    : incoming.currentTakeId ?? existing.currentTakeId
+  const preferredAssetUrl = preferExistingTakeSelection
+    ? existing.activeAssetUrl ?? incoming.activeAssetUrl
+    : incoming.activeAssetUrl ?? existing.activeAssetUrl
   const currentTakeId = resolveCurrentTakeId(
     takes,
-    incoming.currentTakeId ?? existing.currentTakeId,
-    incoming.activeAssetUrl ?? existing.activeAssetUrl
+    preferredTakeId,
+    preferredAssetUrl
   )
   const currentTake = takes.find((take) => take.id === currentTakeId)
+  const mergedSelectedAt = preferExistingTakeSelection
+    ? existing.currentTakeSelectedAt || incoming.currentTakeSelectedAt
+    : incoming.currentTakeSelectedAt || existing.currentTakeSelectedAt
   const languageVersions = mergeLanguageClipVersions(
     incoming.languageVersions,
     existing.languageVersions
@@ -68,10 +83,12 @@ export function mergeProductionSegment(
     ...incoming,
     takes,
     currentTakeId,
+    ...(mergedSelectedAt ? { currentTakeSelectedAt: mergedSelectedAt } : {}),
     ...(languageVersions ? { languageVersions } : { languageVersions: undefined }),
     activeAssetUrl:
       currentTake?.assetUrl ||
       currentTake?.videoUrl ||
+      preferredAssetUrl ||
       incoming.activeAssetUrl ||
       existing.activeAssetUrl,
     references: refs as SceneSegmentReferences,
@@ -93,6 +110,7 @@ export function mergeProductionSegment(
     if (existing.assetType) merged.assetType = existing.assetType
     if (existing.status) merged.status = existing.status
     if (existing.currentTakeId) merged.currentTakeId = existing.currentTakeId
+    if (existing.currentTakeSelectedAt) merged.currentTakeSelectedAt = existing.currentTakeSelectedAt
   } else if (
     segmentHasPlayableVideo(merged) &&
     incoming.status !== 'GENERATING' &&

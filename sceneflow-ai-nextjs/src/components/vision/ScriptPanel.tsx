@@ -137,6 +137,7 @@ import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
 import { buildStoryboardMusicClips } from '@/lib/storyboard/musicPlayback'
 import { isBeatSfxMuted } from '@/lib/storyboard/sfxPlayback'
 import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
+import { unionRowsById } from '@/lib/storyboard/mediaVersions'
 import { mergeLanguageClipVersions } from '@/lib/scene/languageClipVersions'
 import {
   readBeatSfxAudio,
@@ -3875,11 +3876,23 @@ export function ScriptPanel({ script, onScriptChange, isUpdatingPrompts = false,
                                   const nextUserPrompt = seg.userEditedPrompt ?? srcSeg.userEditedPrompt
                                   const nextGenPrompt = srcSeg.generatedPrompt || seg.generatedPrompt
                                   const nextAssetUrl = seg.activeAssetUrl ?? srcSeg.activeAssetUrl
+                                  const nextCurrentTakeId = seg.currentTakeId ?? srcSeg.currentTakeId
+                                  const nextCurrentTakeSelectedAt =
+                                    seg.currentTakeSelectedAt ?? srcSeg.currentTakeSelectedAt
+                                  const nextResolution = seg.resolution ?? srcSeg.resolution
+                                  const nextQualityTier = seg.qualityTier ?? srcSeg.qualityTier
+                                  const nextActualDuration =
+                                    seg.actualVideoDuration ?? srcSeg.actualVideoDuration
                                   const nextStatus = seg.status || srcSeg.status
-                                  const nextTakes =
-                                    Array.isArray(seg.takes) && seg.takes.length > (srcSeg.takes?.length || 0)
-                                      ? seg.takes
-                                      : srcSeg.takes
+                                  const unionedTakes = unionRowsById(
+                                    seg.takes,
+                                    srcSeg.takes,
+                                    'id'
+                                  ) as typeof srcSeg.takes
+                                  const takesChanged =
+                                    JSON.stringify(unionedTakes ?? []) !==
+                                    JSON.stringify(srcSeg.takes ?? [])
+                                  const nextTakes = takesChanged ? unionedTakes : srcSeg.takes
                                   const nextLanguageVersions = mergeLanguageClipVersions(
                                     seg.languageVersions,
                                     srcSeg.languageVersions
@@ -3891,7 +3904,10 @@ export function ScriptPanel({ script, onScriptChange, isUpdatingPrompts = false,
                                     (nextUserPrompt || null) === (srcSeg.userEditedPrompt || null) &&
                                     (nextGenPrompt || '') === (srcSeg.generatedPrompt || '') &&
                                     (nextAssetUrl || null) === (srcSeg.activeAssetUrl || null) &&
-                                    nextTakes === srcSeg.takes &&
+                                    (nextCurrentTakeId || null) === (srcSeg.currentTakeId || null) &&
+                                    (nextCurrentTakeSelectedAt || null) ===
+                                      (srcSeg.currentTakeSelectedAt || null) &&
+                                    !takesChanged &&
                                     !languageVersionsChanged
                                   ) {
                                     return srcSeg
@@ -3902,6 +3918,15 @@ export function ScriptPanel({ script, onScriptChange, isUpdatingPrompts = false,
                                     userEditedPrompt: nextUserPrompt,
                                     generatedPrompt: nextGenPrompt,
                                     activeAssetUrl: nextAssetUrl,
+                                    currentTakeId: nextCurrentTakeId,
+                                    ...(nextCurrentTakeSelectedAt
+                                      ? { currentTakeSelectedAt: nextCurrentTakeSelectedAt }
+                                      : {}),
+                                    ...(nextResolution ? { resolution: nextResolution } : {}),
+                                    ...(nextQualityTier ? { qualityTier: nextQualityTier } : {}),
+                                    ...(nextActualDuration != null
+                                      ? { actualVideoDuration: nextActualDuration }
+                                      : {}),
                                     status: nextStatus,
                                     takes: nextTakes,
                                     ...(nextLanguageVersions

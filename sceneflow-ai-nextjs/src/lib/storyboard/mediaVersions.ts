@@ -673,10 +673,10 @@ export function stillVersionCount(row: Record<string, unknown> | undefined, spec
   return backfillVersionsFromUrl(row[spec.versionsKey], row[spec.urlKey]).length
 }
 
-type IdentifiedRow = Record<string, unknown> & { id?: string }
+type IdentifiedRow = { id?: string } & object
 
 function rowId(row: IdentifiedRow, idKey: string): string | undefined {
-  const value = row[idKey]
+  const value = (row as Record<string, unknown>)[idKey]
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
@@ -729,7 +729,7 @@ export function resolveCurrentTakeId(
   const complete = list.filter((take) => take.status === 'COMPLETE' || take.status === 'done')
   const pool = complete.length > 0 ? complete : list
   const latest = [...pool].sort(
-    (a, b) => Date.parse(b.createdAt || '') - Date.parse(a.createdAt || '')
+    (a, b) => (Date.parse(b.createdAt || '') || 0) - (Date.parse(a.createdAt || '') || 0)
   )[0]
   return latest?.id
 }
@@ -746,6 +746,14 @@ export interface PlayableTake {
   qualityTier?: 'fast' | 'premium'
   /** True when this row was inferred from activeAssetUrl and is not yet stored. */
   backfill?: boolean
+}
+
+export interface ClipVersionOption {
+  id: string
+  version: number
+  label: string
+  url: string
+  isCurrent: boolean
 }
 
 export interface TakeRow {
@@ -765,6 +773,7 @@ export interface VideoPointerSegment {
   assetType?: string | null
   activeAssetUrl?: string | null
   currentTakeId?: string
+  currentTakeSelectedAt?: string
   actualVideoDuration?: number
   resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
   qualityTier?: 'fast' | 'premium'
@@ -852,6 +861,64 @@ export function listPlayableTakes(
     })
   }
   return listed
+}
+
+/**
+ * Playable takes ordered chronologically oldest-first (`v1`..`vN`).
+ * Stored `takes` are prepend-ordered (newest at index 0), so equal or missing
+ * `createdAt` timestamps tie-break by reverse stored index (`b.index - a.index`).
+ */
+export function chronologicalPlayableTakes(
+  takes: TakeRow[] | undefined,
+  activeAssetUrl?: string | null
+): PlayableTake[] {
+  const playable = listPlayableTakes(takes, activeAssetUrl)
+  return playable
+    .map((take, index) => ({ take, index }))
+    .sort((a, b) => {
+      const aTime = takeTime(a.take)
+      const bTime = takeTime(b.take)
+      if (aTime !== bTime) return aTime - bTime
+      return b.index - a.index
+    })
+    .map((entry) => entry.take)
+}
+
+/** Oldest stored clip is v1. The live take pointer is marked `isCurrent`. */
+export function listClipVersionOptions(
+  takes: TakeRow[] | undefined,
+  currentTakeId?: string | null,
+  activeAssetUrl?: string | null
+): ClipVersionOption[] {
+  const chronological = chronologicalPlayableTakes(takes, activeAssetUrl)
+  if (chronological.length === 0) return []
+  const live = resolveLiveTake(takes, currentTakeId, activeAssetUrl)
+  const currentId =
+    live && chronological.some((take) => take.id === live.id)
+      ? live.id
+      : chronological[chronological.length - 1]?.id
+  return chronological.map((take, index) => ({
+    id: take.id,
+    version: index + 1,
+    label: `v${index + 1}`,
+    url: take.url,
+    isCurrent: take.id === currentId,
+  }))
+}
+
+export function latestClipVersionOption(
+  options: ClipVersionOption[]
+): ClipVersionOption | undefined {
+  return [...options].sort((a, b) => b.version - a.version)[0]
+}
+
+/** `latest` when the live pointer is the newest clip; otherwise that clip's id. */
+export function clipVersionSelectionValue(options: ClipVersionOption[]): string {
+  if (options.length === 0) return 'latest'
+  const newest = latestClipVersionOption(options)
+  const current = options.find((option) => option.isCurrent)
+  if (!current || !newest || current.id === newest.id) return 'latest'
+  return current.id
 }
 
 /**
@@ -962,13 +1029,16 @@ export function appendSegmentTake<T extends { id?: string }>(takes: T[] | undefi
 
 /** Point the segment at a stored or backfilled take and persist that row. */
 export function applyVideoTakeSelection<T extends VideoPointerSegment>(segment: T, takeId: string): T {
+  const selectedAt = new Date().toISOString()
   const selected = listPlayableTakes(segment.takes, segment.activeAssetUrl).find(
     (take) => take.id === takeId
   )
   if (selected) {
     let takes = segment.takes ?? []
-    const stored = takes.some((row) => row.id === selected.id || takeMediaUrl(row) === selected.url)
-    if (!stored) {
+    const matchIdx = takes.findIndex(
+      (row) => row.id?.trim() === selected.id || takeMediaUrl(row) === selected.url
+    )
+    if (matchIdx < 0) {
       takes = appendSegmentTake(takes, {
         id: selected.id,
         createdAt: selected.createdAt,
@@ -979,11 +1049,16 @@ export function applyVideoTakeSelection<T extends VideoPointerSegment>(segment: 
         ...(selected.resolution ? { resolution: selected.resolution } : {}),
         ...(selected.qualityTier ? { qualityTier: selected.qualityTier } : {}),
       })
+    } else if (takes[matchIdx]?.id?.trim() !== selected.id) {
+      takes = takes.map((row, idx) =>
+        idx === matchIdx ? { ...row, id: selected.id } : row
+      )
     }
     return {
       ...segment,
       takes,
       currentTakeId: selected.id,
+      currentTakeSelectedAt: selectedAt,
       activeAssetUrl: selected.url,
       assetType: 'video',
       status: 'COMPLETE',
@@ -1003,6 +1078,7 @@ export function applyVideoTakeSelection<T extends VideoPointerSegment>(segment: 
   return {
     ...segment,
     currentTakeId: takeId,
+    currentTakeSelectedAt: selectedAt,
     activeAssetUrl: rawUrl,
     isStale: false,
   }

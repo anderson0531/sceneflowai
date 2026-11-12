@@ -528,6 +528,8 @@ export type DurationMode = 'manual' | 'fill-to-next' | 'match-audio' | 'split-ev
 export interface LanguageClipVersionSet {
   takes: SceneSegmentTake[]
   currentTakeId?: string
+  /** ISO timestamp when `currentTakeId` was last explicitly selected or appended. */
+  selectedAt?: string
 }
 
 export type LanguageClipVersions = Record<string, LanguageClipVersionSet>
@@ -593,6 +595,8 @@ export interface SceneSegment {
   takes: SceneSegmentTake[]
   /** Explicit restore pointer; fallback is the latest COMPLETE take. */
   currentTakeId?: string
+  /** ISO timestamp when `currentTakeId` was last explicitly selected or appended. */
+  currentTakeSelectedAt?: string
   /**
    * Clip versions for a non-English stream. The English master stays on
    * `takes` and `activeAssetUrl`.

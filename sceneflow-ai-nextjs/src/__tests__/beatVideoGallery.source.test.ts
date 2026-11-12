@@ -131,4 +131,27 @@ describe('Video tab inline clip preview', () => {
     expect(directorDialog).toContain('Copy clip prompt for Google AI Studio')
     expect(directorDialog).toContain('Copy assembled API prompt for Google AI Studio')
   })
+
+  it('renders both the Version dropdown and selectable version buttons for master and language clips', () => {
+    const gallery = readSource(GALLERY)
+    const consoleSrc = readSource(CONSOLE)
+    const scriptPanel = readSource('src/components/vision/ScriptPanel.tsx')
+    const mixer = readSource('src/components/vision/scene-production/SceneProductionMixer.tsx')
+
+    expect(gallery).toContain('listClipVersionOptions')
+    expect(gallery).toContain('clipVersionSelectionValue')
+    expect(gallery).toContain("aria-label={languageStream ? 'Stream version' : 'Clip version'}")
+    expect(gallery).toContain('showVersionDropdown')
+    expect(gallery).toContain('version.id === activeVersionId')
+
+    expect(consoleSrc).toContain('ct: s.currentTakeId')
+    expect(consoleSrc).toContain('cts: s.currentTakeSelectedAt')
+    expect(consoleSrc).toContain('lv: s.languageVersions')
+
+    expect(scriptPanel).toContain('nextCurrentTakeId = seg.currentTakeId ?? srcSeg.currentTakeId')
+    expect(scriptPanel).toContain('currentTakeSelectedAt: nextCurrentTakeSelectedAt')
+
+    expect(mixer).toContain('chronologicalPlayableTakes(seg.takes, seg.activeAssetUrl)')
+    expect(mixer).not.toContain('listPlayableTakes(seg)')
+  })
 })

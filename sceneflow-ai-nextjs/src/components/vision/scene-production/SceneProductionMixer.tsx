@@ -104,6 +104,8 @@ import {
 } from 'lucide-react'
 import {
   listPlayableTakes,
+  chronologicalPlayableTakes,
+  resolveLiveTake,
   applyVideoTakeSelection,
 } from '@/lib/storyboard/mediaVersions'
 import { Button } from '@/components/ui/Button'
@@ -1642,7 +1644,12 @@ function SegmentBeatVideoControls({
               : 0
             const trimWindow = seg ? resolveVideoTrimWindow(seg, trimSource) : null
             const isTrimExpanded = !!seg && expandedTrimSegmentId === seg.segmentId
-            const playableTakes = seg ? listPlayableTakes(seg) : []
+            const playableTakes = seg
+              ? chronologicalPlayableTakes(seg.takes, seg.activeAssetUrl)
+              : []
+            const activeLiveTakeId = seg
+              ? resolveLiveTake(seg.takes, seg.currentTakeId, seg.activeAssetUrl)?.id
+              : undefined
             const langPlayback =
               languageActive && seg && languageCode
                 ? resolveLanguageClipPlayback(seg, languageCode)
@@ -1770,9 +1777,9 @@ function SegmentBeatVideoControls({
                   {seg && playableTakes.length > 1 && onTakeSelect && (
                     <div className="inline-flex items-center gap-0.5 ml-1 bg-zinc-900 border border-zinc-800 rounded px-1 py-0.5">
                       {playableTakes.map((take, tIdx) => {
-                        const isCurrentTake =
-                          take.assetUrl === seg.activeAssetUrl ||
-                          (!seg.activeAssetUrl && tIdx === playableTakes.length - 1)
+                        const isCurrentTake = activeLiveTakeId
+                          ? take.id === activeLiveTakeId
+                          : tIdx === playableTakes.length - 1
                         return (
                           <button
                             key={take.id}
@@ -5790,7 +5797,12 @@ export function SceneProductionMixer({
                         : 0
                       const trimWin = seg ? resolveVideoTrimWindow(seg, sourceDur) : null
                       const playDur = seg && included ? getPlaybackSegmentDuration(seg) : trimWin?.playableSec ?? 0
-                      const takes = seg ? listPlayableTakes(seg) : []
+                      const takes = seg
+                        ? chronologicalPlayableTakes(seg.takes, seg.activeAssetUrl)
+                        : []
+                      const activeTimelineTakeId = seg
+                        ? resolveLiveTake(seg.takes, seg.currentTakeId, seg.activeAssetUrl)?.id
+                        : undefined
                       const isLangRegenShot =
                         !isEnglish &&
                         !!seg &&
@@ -5945,9 +5957,9 @@ export function SceneProductionMixer({
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {takes.map((t, tIdx) => {
-                                    const activeTake =
-                                      t.assetUrl === seg.activeAssetUrl ||
-                                      (!seg.activeAssetUrl && tIdx === takes.length - 1)
+                                    const activeTake = activeTimelineTakeId
+                                      ? t.id === activeTimelineTakeId
+                                      : tIdx === takes.length - 1
                                     return (
                                       <button
                                         key={t.id}

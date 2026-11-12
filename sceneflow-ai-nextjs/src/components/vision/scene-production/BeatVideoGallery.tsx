@@ -46,6 +46,10 @@ import {
   type VideoQualityFilter,
 } from '@/lib/vision/videoClipFilters'
 import {
+  chronologicalPlayableTakes,
+  clipVersionSelectionValue,
+  latestClipVersionOption,
+  listClipVersionOptions,
   listPlayableTakes,
   resolveLiveTake,
   segmentHasPlayableVideo,
@@ -323,6 +327,24 @@ export function BeatVideoGallery({
   const languageOptions = languageStream
     ? listLanguageClipVersionOptions(previewSegment?.languageVersions?.[streamCode])
     : []
+  const masterOptions =
+    !languageStream && previewSegment
+      ? listClipVersionOptions(
+          previewSegment.takes,
+          previewSegment.currentTakeId,
+          previewSegment.activeAssetUrl
+        )
+      : []
+  const versionOptions = languageStream ? languageOptions : masterOptions
+  const newestVersionOption = languageStream
+    ? latestLanguageClipOption(languageOptions)
+    : latestClipVersionOption(masterOptions)
+  const activeVersionSelectValue = languageStream
+    ? languageClipSelectionValue(languageOptions)
+    : clipVersionSelectionValue(masterOptions)
+  const showVersionDropdown =
+    !!previewSegment &&
+    (languageStream ? languageOptions.length > 0 : masterOptions.length > 1)
   const languagePlayback = previewSegment
     ? resolveLanguageClipPlayback(previewSegment, streamLanguage)
     : undefined
@@ -346,7 +368,6 @@ export function BeatVideoGallery({
   const hasLocalizedPreviewClip =
     languageStream && !languagePlayback?.usingMaster && !!languagePlayback?.url
   const previewHasClip = !!previewVideoUrl
-  const languageVersionValue = languageClipSelectionValue(languageOptions)
   const generatingLanguageClip = !!previewSegment && generatingLanguageClipId === previewSegment.segmentId
   const previewStatus = (() => {
     if (!languageStream) return clipStatus(preview?.queueItem)
@@ -375,11 +396,16 @@ export function BeatVideoGallery({
   })()
   const formatStreamName = (lang: { code: string; name: string }) =>
     streamLanguageLabel(lang.code, lang.name)
-  const versionStrip = [...playableTakes].sort((a, b) => {
-    const aTime = Date.parse(a.createdAt || '')
-    const bTime = Date.parse(b.createdAt || '')
-    return (Number.isFinite(aTime) ? aTime : 0) - (Number.isFinite(bTime) ? bTime : 0)
-  })
+  const versionStrip = languageStream
+    ? chronologicalPlayableTakes(previewSegment?.languageVersions?.[streamCode]?.takes, undefined)
+    : previewSegment
+      ? chronologicalPlayableTakes(previewSegment.takes, previewSegment.activeAssetUrl)
+      : []
+  const activeVersionId = languageStream
+    ? hasLocalizedPreviewClip
+      ? liveTake?.id
+      : undefined
+    : liveTake?.id
 
   useEffect(() => {
     setIsPreviewPlaying(false)
@@ -552,64 +578,35 @@ export function BeatVideoGallery({
           }}
         >
           <div className="sticky top-2 flex w-full min-w-0 max-w-full flex-1 flex-col gap-2 self-start lg:min-w-[40rem]">
-            {((onStreamLanguageChange && streamLanguages.length > 0) ||
-              (languageStream && languageOptions.length > 0)) && (
+            {onStreamLanguageChange && streamLanguages.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 px-1">
-                {onStreamLanguageChange && streamLanguages.length > 0 && (
-                  <>
-                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                      Stream
-                    </span>
-                    <GroupedLanguageSelector
-                      value={streamCode}
-                      onValueChange={onStreamLanguageChange}
-                      filterCodes={streamLanguages}
-                      size="xs"
-                      intent="navigate"
-                      showFlags
-                      formatName={formatStreamName}
-                      placeholder="Select language..."
-                      className="h-7 min-w-[140px] border-slate-600 bg-slate-900/80 text-[11px]"
-                    />
-                    {onAddStreamLanguage && languagesNotYetGenerated.length > 0 && (
-                      <GroupedLanguageSelector
-                        value=""
-                        onValueChange={(code) => {
-                          onStreamLanguageChange(code)
-                          void onAddStreamLanguage(code)
-                        }}
-                        filterCodes={languagesNotYetGenerated}
-                        size="xs"
-                        intent="generate"
-                        placeholder="+ Add Language"
-                        className="h-7 w-auto min-w-[110px] border-purple-500/40 bg-gray-700/30 text-[11px] text-purple-200"
-                      />
-                    )}
-                  </>
-                )}
-                {languageStream && languageOptions.length > 0 && (
-                  <label className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                    Version
-                    <select
-                      aria-label="Stream version"
-                      className="h-7 rounded border border-slate-600 bg-slate-900 px-1.5 text-[11px] text-slate-200"
-                      value={languageVersionValue}
-                      onChange={(event) => {
-                        if (!previewSegment) return
-                        const value = event.target.value
-                        const newest = latestLanguageClipOption(languageOptions)
-                        const takeId = value === 'latest' ? newest?.id : value
-                        if (takeId) onRestoreLanguageVersion?.(previewSegment.segmentId, takeId)
-                      }}
-                    >
-                      <option value="latest">Latest</option>
-                      {[...languageOptions].reverse().map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                  Stream
+                </span>
+                <GroupedLanguageSelector
+                  value={streamCode}
+                  onValueChange={onStreamLanguageChange}
+                  filterCodes={streamLanguages}
+                  size="xs"
+                  intent="navigate"
+                  showFlags
+                  formatName={formatStreamName}
+                  placeholder="Select language..."
+                  className="h-7 min-w-[140px] border-slate-600 bg-slate-900/80 text-[11px]"
+                />
+                {onAddStreamLanguage && languagesNotYetGenerated.length > 0 && (
+                  <GroupedLanguageSelector
+                    value=""
+                    onValueChange={(code) => {
+                      onStreamLanguageChange(code)
+                      void onAddStreamLanguage(code)
+                    }}
+                    filterCodes={languagesNotYetGenerated}
+                    size="xs"
+                    intent="generate"
+                    placeholder="+ Add Language"
+                    className="h-7 w-auto min-w-[110px] border-purple-500/40 bg-gray-700/30 text-[11px] text-purple-200"
+                  />
                 )}
               </div>
             )}
@@ -682,9 +679,44 @@ export function BeatVideoGallery({
                   )}
                 </div>
               )}
-            <p className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
-              {previewVideoUrl ? 'Clip preview' : preview?.thumbnailUrl ? 'Start frame' : 'Clip preview'}
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                {previewVideoUrl ? 'Clip preview' : preview?.thumbnailUrl ? 'Start frame' : 'Clip preview'}
+              </p>
+              {showVersionDropdown && (
+                <label className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                  Version
+                  <select
+                    aria-label={languageStream ? 'Stream version' : 'Clip version'}
+                    className="h-7 cursor-pointer rounded border border-slate-600 bg-slate-900 px-2 text-[11px] text-slate-200 hover:border-slate-500 focus:border-cyan-400 focus:outline-none"
+                    value={activeVersionSelectValue}
+                    onChange={(event) => {
+                      if (!previewSegment) return
+                      const value = event.target.value
+                      const takeId = value === 'latest' ? newestVersionOption?.id : value
+                      if (!takeId) return
+                      if (languageStream) {
+                        onRestoreLanguageVersion?.(previewSegment.segmentId, takeId)
+                        return
+                      }
+                      onRestoreTake?.(previewSegment.segmentId, takeId)
+                    }}
+                  >
+                    <option value="latest">
+                      {newestVersionOption ? `Latest (${newestVersionOption.label})` : 'Latest'}
+                    </option>
+                    {[...versionOptions]
+                      .filter((option) => option.id !== newestVersionOption?.id)
+                      .reverse()
+                      .map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              )}
+            </div>
             {onUpload && previewSegment && !languageStream && (
               <input
                 type="file"
@@ -701,10 +733,16 @@ export function BeatVideoGallery({
             <div
               ref={previewStageRef}
               className={cn(
-                'group relative w-full overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50',
+                'w-full overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50',
                 isPreviewFullscreen && 'flex h-screen max-w-none items-center justify-center bg-black'
               )}
             >
+              <div
+                className={cn(
+                  'group relative w-full',
+                  isPreviewFullscreen && 'flex h-full items-center justify-center'
+                )}
+              >
               {/* Floating top-right status pills on rendered clips — matching Stills */}
               {previewVideoUrl && !isPreviewFullscreen && (
                 <div className="pointer-events-none absolute right-2 top-2 z-20 flex flex-wrap items-center gap-1.5">
@@ -1047,15 +1085,14 @@ export function BeatVideoGallery({
                   )}
                 </div>
               )}
-              {previewSegment && versionStrip.length > 1 && (
+              </div>
+              {previewSegment && versionStrip.length > 1 && !isPreviewFullscreen && (
                 <div
-                  className="flex gap-1 overflow-x-auto px-1.5 py-1 bg-slate-900/80 border-t border-slate-700/50"
+                  className="flex items-center gap-1 overflow-x-auto px-1.5 py-1 bg-slate-900/80 border-t border-slate-700/50"
                   onClick={(event) => event.stopPropagation()}
                 >
                   {versionStrip.map((version, index) => {
-                    const isCurrent = languageStream
-                      ? version.id === languagePlayback?.takeId || version.url === previewVideoUrl
-                      : version.id === previewSegment.currentTakeId || version.url === previewVideoUrl
+                    const isCurrent = !!activeVersionId && version.id === activeVersionId
                     return (
                       <button
                         key={version.id}
@@ -1069,10 +1106,10 @@ export function BeatVideoGallery({
                           }
                           onRestoreTake?.(previewSegment.segmentId, version.id)
                         }}
-                        className={`shrink-0 rounded border px-2 py-1 text-[10px] font-medium tabular-nums ${
+                        className={`shrink-0 rounded border px-2 py-1 text-[10px] font-medium tabular-nums transition-colors ${
                           isCurrent
                             ? 'border-cyan-400 bg-cyan-500/15 text-cyan-100 ring-1 ring-cyan-400/60'
-                            : 'border-slate-600 text-slate-300 hover:border-slate-400'
+                            : 'cursor-pointer border-slate-600 text-slate-300 hover:border-slate-400 hover:text-white'
                         }`}
                         title={`Restore version ${index + 1}`}
                         aria-label={`Restore version ${index + 1}`}

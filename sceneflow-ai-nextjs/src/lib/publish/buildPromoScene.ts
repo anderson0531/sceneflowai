@@ -23,6 +23,7 @@ import {
   BEAT_START_STILL_SLOT,
   mediaBlobUrlTimestamp,
   mediaRecencyMs,
+  resolveCurrentTakeId,
   stillVersionsOnRow,
   unionMediaVersions,
   type StillSlotSpec,
@@ -1682,16 +1683,41 @@ export function hydratePromoSceneWithSharedShots(
       existingPromoSeg?.languageVersions
     )
 
+    const promoSelectedMs = Date.parse(existingPromoSeg?.currentTakeSelectedAt || '') || 0
+    const sourceSelectedMs = Date.parse(sourceSeg?.currentTakeSelectedAt || '') || 0
     const promoClipTs = mediaBlobUrlTimestamp(existingPromoSeg?.activeAssetUrl || '')
     const sourceClipTs = mediaBlobUrlTimestamp(sourceSeg?.activeAssetUrl || '')
+    const promoLatestTakeMs = Math.max(
+      0,
+      ...(existingPromoSeg?.takes ?? []).map((t) => Date.parse(t.createdAt || '') || 0)
+    )
+    const sourceLatestTakeMs = Math.max(
+      0,
+      ...(sourceSeg?.takes ?? []).map((t) => Date.parse(t.createdAt || '') || 0)
+    )
+    const promoActivityMs = Math.max(promoSelectedMs, promoClipTs, promoLatestTakeMs)
+    const sourceActivityMs = Math.max(sourceSelectedMs, sourceClipTs, sourceLatestTakeMs)
     const promoClipWins =
       Boolean(existingPromoSeg?.activeAssetUrl) &&
       (!sourceSeg?.activeAssetUrl ||
-        (promoClipTs > 0 && promoClipTs > sourceClipTs) ||
-        (existingPromoSeg?.isStale === false && sourceSeg?.isStale === true))
-    const activeVideoUrl = promoClipWins
-      ? existingPromoSeg?.activeAssetUrl || sourceSeg?.activeAssetUrl || beat.promoVideoUrl || null
-      : sourceSeg?.activeAssetUrl || existingPromoSeg?.activeAssetUrl || beat.promoVideoUrl || null
+        (promoActivityMs > 0 && promoActivityMs > sourceActivityMs) ||
+        (promoActivityMs === sourceActivityMs &&
+          existingPromoSeg?.isStale === false &&
+          sourceSeg?.isStale === true))
+    const winnerSeg = promoClipWins ? existingPromoSeg : sourceSeg
+    const fallbackSeg = promoClipWins ? sourceSeg : existingPromoSeg
+    const activeVideoUrl =
+      winnerSeg?.activeAssetUrl || fallbackSeg?.activeAssetUrl || beat.promoVideoUrl || null
+    const resolvedCurrentTakeId = resolveCurrentTakeId(
+      mergedTakes,
+      winnerSeg?.currentTakeId || fallbackSeg?.currentTakeId,
+      activeVideoUrl
+    )
+    const resolvedTakeRow = resolvedCurrentTakeId
+      ? mergedTakes.find((t) => t.id === resolvedCurrentTakeId)
+      : undefined
+    const resolvedSelectedAt =
+      winnerSeg?.currentTakeSelectedAt || fallbackSeg?.currentTakeSelectedAt
     const resolvedIsStale =
       existingPromoSeg?.isStale === false || sourceSeg?.isStale === false
         ? false
@@ -1769,9 +1795,16 @@ export function hydratePromoSceneWithSharedShots(
         endFrameUrl: endFrame,
       },
       takes: mergedTakes,
-      currentTakeId: promoClipWins
-        ? existingPromoSeg?.currentTakeId || sourceSeg?.currentTakeId
-        : sourceSeg?.currentTakeId || existingPromoSeg?.currentTakeId,
+      currentTakeId: resolvedCurrentTakeId,
+      ...(resolvedSelectedAt ? { currentTakeSelectedAt: resolvedSelectedAt } : {}),
+      resolution:
+        resolvedTakeRow?.resolution ?? winnerSeg?.resolution ?? fallbackSeg?.resolution,
+      qualityTier:
+        resolvedTakeRow?.qualityTier ?? winnerSeg?.qualityTier ?? fallbackSeg?.qualityTier,
+      actualVideoDuration:
+        resolvedTakeRow?.durationSec ??
+        winnerSeg?.actualVideoDuration ??
+        fallbackSeg?.actualVideoDuration,
       ...(mergedLanguageVersions ? { languageVersions: mergedLanguageVersions } : {}),
       ...(sourceSeg?.mixerSettingsByLanguage || existingPromoSeg?.mixerSettingsByLanguage
         ? {

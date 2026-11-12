@@ -518,10 +518,23 @@ export function DirectorConsoleRoot({
         ue: s.userEditedPrompt || '',
         st: s.status || '',
         url: s.activeAssetUrl || '',
+        ct: s.currentTakeId || '',
+        cts: s.currentTakeSelectedAt || '',
+        res: s.resolution || '',
+        qt: s.qualityTier || '',
+        dur: s.actualVideoDuration ?? '',
         sf: s.startFrameUrl || s.references?.startFrameUrl || '',
         ef: s.endFrameUrl || s.references?.endFrameUrl || '',
         stale: Boolean(s.isStale),
         takes: s.takes?.length || 0,
+        lv: s.languageVersions
+          ? Object.entries(s.languageVersions)
+              .map(
+                ([k, v]) =>
+                  `${k}:${v?.currentTakeId || ''}:${v?.selectedAt || ''}:${v?.takes?.length || 0}`
+              )
+              .join(';')
+          : '',
       }))
     )
     if (lastRefreshedSegmentsRef.current?.sig === sig) {
@@ -2716,23 +2729,27 @@ export function DirectorConsoleRoot({
   }, [videoClips, productionTarget.language, queue, segments, scene])
 
   const handleRestoreVideoTake = useCallback((segmentId: string, takeId: string) => {
-    if (!onProductionDataChange || !productionData) return
+    const currentProd = productionDataRef.current ?? productionData
+    if (!onProductionDataChange || !currentProd) return
+    const baseSegments = pendingProductionRefresh ?? currentProd.segments
     onProductionDataChange({
-      ...productionData,
-      segments: productionData.segments.map((segment) =>
+      ...currentProd,
+      segments: baseSegments.map((segment) =>
         segment.segmentId === segmentId ? applyVideoTakeSelection(segment, takeId) : segment
       ),
     })
-  }, [onProductionDataChange, productionData])
+  }, [onProductionDataChange, productionData, pendingProductionRefresh])
 
   const handleRestoreLanguageVersion = useCallback((segmentId: string, takeId: string) => {
-    if (!onProductionDataChange || !productionData) return
+    const currentProd = productionDataRef.current ?? productionData
+    if (!onProductionDataChange || !currentProd) return
     const language = productionTarget.language
     if (isMasterStreamLanguage(language)) {
       handleRestoreVideoTake(segmentId, takeId)
       return
     }
-    const byLang = migrateMixerSettingsByLanguage(productionData)
+    const baseSegments = pendingProductionRefresh ?? currentProd.segments
+    const byLang = migrateMixerSettingsByLanguage(currentProd)
     const existingLangSettings = byLang[language] ?? {}
     const nextShotConfigs = {
       ...(existingLangSettings.languageShotConfigs ?? {}),
@@ -2742,8 +2759,8 @@ export function DirectorConsoleRoot({
       },
     }
     onProductionDataChange({
-      ...productionData,
-      segments: productionData.segments.map((segment) =>
+      ...currentProd,
+      segments: baseSegments.map((segment) =>
         segment.segmentId === segmentId
           ? withSelectedLanguageClip(segment, language, takeId)
           : segment
@@ -2756,7 +2773,13 @@ export function DirectorConsoleRoot({
         },
       },
     })
-  }, [onProductionDataChange, productionData, productionTarget.language, handleRestoreVideoTake])
+  }, [
+    onProductionDataChange,
+    productionData,
+    productionTarget.language,
+    pendingProductionRefresh,
+    handleRestoreVideoTake,
+  ])
 
   const handleStreamLanguageChange = useCallback((language: string) => {
     const next = { ...productionTarget, language }

@@ -3,13 +3,23 @@ import {
   MEDIA_VERSION_CAP,
   appendSegmentTake,
   applyVideoTakeSelection,
+  chronologicalPlayableTakes,
+  clipVersionSelectionValue,
   deriveClipQueueStatus,
   healMissingVideoPointer,
+  listClipVersionOptions,
   listPlayableTakes,
   resolveBeatStillTier,
   resolveLiveTake,
   resolveSegmentClipTier,
 } from '@/lib/storyboard/mediaVersions'
+import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
+import { hydratePromoSceneWithSharedShots } from '@/lib/publish/buildPromoScene'
+import {
+  appendLanguageClipTake,
+  presentSegmentForStream,
+  withSelectedLanguageClip,
+} from '@/lib/scene/languageClipVersions'
 import { buildBeatVideoClips } from '@/lib/scene/buildBeatVideoClips'
 import { videoRailStatus } from '@/lib/vision/videoClipFilters'
 
@@ -329,5 +339,228 @@ describe('resolveSegmentClipTier and Final 1080p clip status', () => {
         useBeatFrameAsStart: false,
       })
     ).toBe('final')
+  })
+})
+
+describe('master and promo clip version selection (dropdown + button strip)', () => {
+  it('orders master clip versions oldest-first (v1..vN) with equal-timestamp tie-breaking and pins older selections', () => {
+    const sameTs = '2026-04-01T10:00:00.000Z'
+    let takes = appendSegmentTake(undefined, {
+      id: 'take_1',
+      createdAt: sameTs,
+      assetUrl: CLIP_A,
+      status: 'COMPLETE' as const,
+    })
+    takes = appendSegmentTake(takes, {
+      id: 'take_2',
+      createdAt: sameTs,
+      assetUrl: CLIP_B,
+      status: 'COMPLETE' as const,
+    })
+
+    const chrono = chronologicalPlayableTakes(takes, CLIP_B)
+    expect(chrono.map((t) => t.id)).toEqual(['take_1', 'take_2'])
+
+    const initialOptions = listClipVersionOptions(takes, 'take_2', CLIP_B)
+    expect(initialOptions.map((o) => `${o.label}:${o.id}:${o.isCurrent}`)).toEqual([
+      'v1:take_1:false',
+      'v2:take_2:true',
+    ])
+    expect(clipVersionSelectionValue(initialOptions)).toBe('latest')
+
+    const restored = applyVideoTakeSelection(
+      {
+        status: 'COMPLETE',
+        assetType: 'video',
+        activeAssetUrl: CLIP_B,
+        currentTakeId: 'take_2',
+        takes,
+      },
+      'take_1'
+    )
+    expect(restored.currentTakeId).toBe('take_1')
+    expect(restored.activeAssetUrl).toBe(CLIP_A)
+    expect(restored.currentTakeSelectedAt).toBeTruthy()
+
+    const restoredOptions = listClipVersionOptions(
+      restored.takes,
+      restored.currentTakeId,
+      restored.activeAssetUrl
+    )
+    expect(restoredOptions.map((o) => `${o.label}:${o.id}:${o.isCurrent}`)).toEqual([
+      'v1:take_1:true',
+      'v2:take_2:false',
+    ])
+    expect(clipVersionSelectionValue(restoredOptions)).toBe('take_1')
+  })
+
+  it('persists restored older clip versions across server merge even when legacy takes lacked an id', () => {
+    const legacyTakes = [
+      { createdAt: '2026-04-02T00:00:00.000Z', assetUrl: CLIP_B, status: 'COMPLETE' as const },
+      { createdAt: '2026-04-01T00:00:00.000Z', assetUrl: CLIP_A, status: 'COMPLETE' as const },
+    ]
+    const options = listClipVersionOptions(legacyTakes as any, undefined, CLIP_B)
+    expect(options).toHaveLength(2)
+    const v1 = options[0]!
+
+    const selectedSeg = applyVideoTakeSelection(
+      {
+        segmentId: 'seg_1',
+        sequenceIndex: 0,
+        startTime: 0,
+        endTime: 8,
+        status: 'COMPLETE' as const,
+        assetType: 'video' as const,
+        activeAssetUrl: CLIP_B,
+        takes: legacyTakes as any,
+        references: { characterIds: [], sceneRefIds: [], objectRefIds: [] },
+      },
+      v1.id
+    )
+
+    const merged = mergeSceneProductionData(
+      {
+        isSegmented: true,
+        targetSegmentDuration: 8,
+        segments: [
+          {
+            ...selectedSeg,
+            activeAssetUrl: CLIP_B,
+            currentTakeId: options[1]!.id,
+            currentTakeSelectedAt: '2026-04-02T00:00:00.000Z',
+          } as any,
+        ],
+      },
+      {
+        isSegmented: true,
+        targetSegmentDuration: 8,
+        segments: [selectedSeg as any],
+      }
+    )!
+
+    expect(merged.segments[0]?.currentTakeId).toBe(v1.id)
+    expect(merged.segments[0]?.activeAssetUrl).toBe(CLIP_A)
+  })
+
+  it('does not snap back to the newest take during Promo shared-shot hydration when an older v1 take is selected', () => {
+    const v1Url = 'https://blob.vercel-storage.com/segments/seg-1790001000000.mp4'
+    const v2Url = 'https://blob.vercel-storage.com/segments/seg-1790002000000.mp4'
+    const sharedTakes = [
+      {
+        id: 'take_v2',
+        createdAt: '2026-04-01T12:00:00.000Z',
+        assetUrl: v2Url,
+        status: 'COMPLETE' as const,
+        resolution: '1080p' as const,
+      },
+      {
+        id: 'take_v1',
+        createdAt: '2026-04-01T10:00:00.000Z',
+        assetUrl: v1Url,
+        status: 'COMPLETE' as const,
+        resolution: '720p' as const,
+      },
+    ]
+
+    const promoScene = {
+      id: 'promo-main',
+      cinematicType: 'promo',
+      beats: [
+        {
+          beatId: 'bt_promo_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Hero turns toward the door.',
+          sourceSceneIndex: 0,
+          sourceSceneId: 'scene-1',
+          sourceBeatId: 'bt_src_0',
+          durationSeconds: 6,
+        },
+      ],
+    }
+    const scenes = [
+      {
+        id: 'scene-1',
+        beats: [
+          {
+            beatId: 'bt_src_0',
+            sequenceIndex: 0,
+            kind: 'action',
+            actionDescription: 'Hero turns toward the door.',
+          },
+        ],
+      },
+      promoScene,
+    ]
+
+    const baseSourceSeg = {
+      segmentId: 'seg_src_0',
+      beatId: 'bt_src_0',
+      sequenceIndex: 0,
+      startTime: 0,
+      endTime: 6,
+      status: 'COMPLETE' as const,
+      assetType: 'video' as const,
+      activeAssetUrl: v2Url,
+      currentTakeId: 'take_v2',
+      currentTakeSelectedAt: '2026-04-01T12:00:00.000Z',
+      resolution: '1080p' as const,
+      takes: sharedTakes,
+      references: { characterIds: [], sceneRefIds: [], objectRefIds: [] },
+    }
+    const basePromoSeg = {
+      ...baseSourceSeg,
+      segmentId: 'promo-main-seg-0',
+      beatId: 'bt_promo_0',
+    }
+
+    // 1. Selecting older v1 from Promo scene keeps v1 active even before/after source sync
+    const promoPickedV1 = applyVideoTakeSelection(basePromoSeg, 'take_v1')
+    const hydratedFromPromoPick = hydratePromoSceneWithSharedShots(promoScene, scenes, {
+      'scene-1': { isSegmented: true, targetSegmentDuration: 6, segments: [baseSourceSeg] },
+      'promo-main': { isSegmented: true, targetSegmentDuration: 6, segments: [promoPickedV1] },
+    } as never)
+    expect(hydratedFromPromoPick.productionData.segments[0]?.currentTakeId).toBe('take_v1')
+    expect(hydratedFromPromoPick.productionData.segments[0]?.activeAssetUrl).toBe(v1Url)
+    expect(hydratedFromPromoPick.productionData.segments[0]?.resolution).toBe('720p')
+
+    // 2. Selecting older v1 from Source scene keeps v1 active even when Promo held newer v2 blob URL
+    const sourcePickedV1 = applyVideoTakeSelection(baseSourceSeg, 'take_v1')
+    const hydratedFromSourcePick = hydratePromoSceneWithSharedShots(promoScene, scenes, {
+      'scene-1': { isSegmented: true, targetSegmentDuration: 6, segments: [sourcePickedV1] },
+      'promo-main': { isSegmented: true, targetSegmentDuration: 6, segments: [basePromoSeg] },
+    } as never)
+    expect(hydratedFromSourcePick.productionData.segments[0]?.currentTakeId).toBe('take_v1')
+    expect(hydratedFromSourcePick.productionData.segments[0]?.activeAssetUrl).toBe(v1Url)
+    expect(hydratedFromSourcePick.productionData.segments[0]?.resolution).toBe('720p')
+
+    // 3. Selecting older localized v1 on a language stream also stays pinned across Promo hydration
+    let langVersions = appendLanguageClipTake(undefined, 'es', {
+      id: 'es_v1',
+      createdAt: '2026-04-01T10:00:00.000Z',
+      assetUrl: 'https://cdn.example/es-v1.mp4',
+      status: 'COMPLETE',
+    })
+    langVersions = appendLanguageClipTake(langVersions, 'es', {
+      id: 'es_v2',
+      createdAt: '2026-04-01T12:00:00.000Z',
+      assetUrl: 'https://cdn.example/es-v2.mp4',
+      status: 'COMPLETE',
+    })
+    const promoWithLang = { ...basePromoSeg, languageVersions: langVersions }
+    const sourcePinnedLangV1 = withSelectedLanguageClip(
+      { ...baseSourceSeg, languageVersions: langVersions },
+      'es',
+      'es_v1'
+    )
+    const hydratedLangPick = hydratePromoSceneWithSharedShots(promoScene, scenes, {
+      'scene-1': { isSegmented: true, targetSegmentDuration: 6, segments: [sourcePinnedLangV1] },
+      'promo-main': { isSegmented: true, targetSegmentDuration: 6, segments: [promoWithLang] },
+    } as never)
+    const hydratedLangSeg = hydratedLangPick.productionData.segments[0]!
+    expect(hydratedLangSeg.languageVersions?.es.currentTakeId).toBe('es_v1')
+    expect(presentSegmentForStream(hydratedLangSeg, 'es').activeAssetUrl).toBe(
+      'https://cdn.example/es-v1.mp4'
+    )
   })
 })

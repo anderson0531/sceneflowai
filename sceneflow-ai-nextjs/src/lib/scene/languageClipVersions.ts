@@ -7,6 +7,7 @@ import type {
 import {
   MEDIA_VERSION_CAP,
   appendSegmentTake,
+  chronologicalPlayableTakes,
   listPlayableTakes,
   resolveLiveTake,
 } from '@/lib/storyboard/mediaVersions'
@@ -46,6 +47,7 @@ export function appendLanguageClipTake(
     [lang]: {
       takes: appendSegmentTake(existing?.takes, take),
       currentTakeId: take.id,
+      selectedAt: new Date().toISOString(),
     },
   }
 }
@@ -62,8 +64,7 @@ export interface LanguageClipVersionOption {
 export function listLanguageClipVersionOptions(
   set: LanguageClipVersionSet | undefined
 ): LanguageClipVersionOption[] {
-  const playable = listPlayableTakes(set?.takes, undefined)
-  const chronological = [...playable].reverse()
+  const chronological = chronologicalPlayableTakes(set?.takes, undefined)
   const newestId = chronological[chronological.length - 1]?.id
   const currentId =
     set?.currentTakeId && chronological.some((take) => take.id === set.currentTakeId)
@@ -100,12 +101,29 @@ export function withSelectedLanguageClip<T extends Pick<SceneSegment, 'languageV
 ): T {
   const lang = normalizeStreamLanguage(language)
   const set = segment.languageVersions?.[lang]
-  if (!set?.takes.some((take) => take.id === takeId)) return segment
+  if (!set) return segment
+  const playable = listPlayableTakes(set.takes, undefined)
+  const selected = playable.find((take) => take.id === takeId)
+  if (!selected && !set.takes.some((take) => take.id === takeId)) return segment
+  const normalizedTakes = selected
+    ? set.takes.map((row) => {
+        const rowUrl = row.videoUrl?.trim() || row.assetUrl?.trim()
+        if (!row.id?.trim() && rowUrl === selected.url) {
+          return { ...row, id: selected.id }
+        }
+        return row
+      })
+    : set.takes
   return {
     ...segment,
     languageVersions: {
       ...segment.languageVersions,
-      [lang]: { ...set, currentTakeId: takeId },
+      [lang]: {
+        ...set,
+        takes: normalizedTakes,
+        currentTakeId: selected?.id ?? takeId,
+        selectedAt: new Date().toISOString(),
+      },
     },
   }
 }
@@ -198,6 +216,10 @@ export function mergeLanguageClipVersions(
       0,
       ...exTakes.map((t) => Date.parse(t.createdAt || '') || 0)
     )
+    const incSelectedMs = Date.parse(inc?.selectedAt || '') || 0
+    const exSelectedMs = Date.parse(ex?.selectedAt || '') || 0
+    const incActivityMs = Math.max(incSelectedMs, incNewestMs)
+    const exActivityMs = Math.max(exSelectedMs, exNewestMs)
     const exHasNewerOnly =
       exTakes.some((t) => {
         const k = t.id?.trim() || t.assetUrl?.trim()
@@ -208,7 +230,7 @@ export function mergeLanguageClipVersions(
         return Boolean(k && !exKeys.has(k))
       })
     const preferExistingCurrent =
-      exNewestMs > incNewestMs || (exNewestMs === incNewestMs && exHasNewerOnly)
+      exActivityMs > incActivityMs || (exActivityMs === incActivityMs && exHasNewerOnly)
     const orderedCandidates = preferExistingCurrent
       ? [...exTakes, ...incTakes]
       : [...incTakes, ...exTakes]
@@ -234,9 +256,13 @@ export function mergeLanguageClipVersions(
       : inc?.currentTakeId ?? ex?.currentTakeId
     const currentTakeId =
       requested && takes.some((take) => take.id === requested) ? requested : takes[0]?.id
+    const selectedAt = preferExistingCurrent
+      ? ex?.selectedAt || inc?.selectedAt
+      : inc?.selectedAt || ex?.selectedAt
     merged[normalizeStreamLanguage(lang)] = {
       takes,
       ...(currentTakeId ? { currentTakeId } : {}),
+      ...(selectedAt ? { selectedAt } : {}),
     }
   }
   return Object.keys(merged).length > 0 ? merged : undefined
