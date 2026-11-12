@@ -480,58 +480,27 @@ export async function PUT(
           })
         }
         
-        // CRITICAL: Deep merge characters to preserve referenceImage, voiceConfig, etc.
+        // CRITICAL: Deep merge characters to preserve referenceImage, voiceConfig, and wardrobe stills
         if (body.metadata.visionPhase.characters && existingMetadata.visionPhase.characters) {
+          const { mergeVisionPhaseCharactersForPut } = await import(
+            '@/lib/vision/updateCharacterReference'
+          )
           const existingCharacters = existingMetadata.visionPhase.characters || []
           const incomingCharacters = body.metadata.visionPhase.characters || []
-          
-          // Create maps for quick lookup
-          const existingCharMap = new Map(existingCharacters.map((c: any) => [c.name?.toLowerCase(), c]))
-          const incomingCharMap = new Map(incomingCharacters.map((c: any) => [c.name?.toLowerCase(), c]))
-          
-          // Merge: incoming character data takes precedence, but preserve referenceImage, voiceConfig if not provided
-          const mergedCharacters = incomingCharacters.map((incomingChar: any) => {
-            const existingChar = existingCharMap.get(incomingChar.name?.toLowerCase())
-            if (existingChar) {
-              // Preserve generated/uploaded data from existing character if not in incoming
-              return {
-                ...existingChar,
-                ...incomingChar,
-                // CRITICAL: Preserve these fields unless explicitly set in incoming
-                referenceImage: pickPersistedMediaUrl(
-                  incomingChar.referenceImage,
-                  existingChar.referenceImage
-                ),
-                voiceConfig: incomingChar.voiceConfig ?? existingChar.voiceConfig,
-                appearanceDescription: incomingChar.appearanceDescription ?? existingChar.appearanceDescription,
-                visionDescription: incomingChar.visionDescription ?? existingChar.visionDescription,
-                imageApproved: incomingChar.imageApproved ?? existingChar.imageApproved,
-                defaultWardrobe: incomingChar.defaultWardrobe ?? existingChar.defaultWardrobe,
-                wardrobeAccessories: incomingChar.wardrobeAccessories ?? existingChar.wardrobeAccessories,
-              }
-            }
-            return incomingChar
-          })
-          
-          // CRITICAL FIX: Also preserve characters that exist in DB but NOT in incoming payload
-          // This prevents newly added characters from being deleted by stale client state
-          const preservedCharacters = existingCharacters.filter((existingChar: any) => 
-            !incomingCharMap.has(existingChar.name?.toLowerCase())
+
+          mergedMetadata.visionPhase.characters = mergeVisionPhaseCharactersForPut(
+            existingCharacters,
+            incomingCharacters,
+            pickPersistedMediaUrl
           )
-          
-          if (preservedCharacters.length > 0) {
-            console.log('[Projects PUT] Preserving characters not in incoming payload:', 
-              preservedCharacters.map((c: any) => c.name))
-          }
-          
-          mergedMetadata.visionPhase.characters = [...mergedCharacters, ...preservedCharacters]
-          
+
           console.log('[Projects PUT] Deep merged characters:', {
             existingCount: existingCharacters.length,
             incomingCount: incomingCharacters.length,
-            preservedCount: preservedCharacters.length,
             mergedCount: mergedMetadata.visionPhase.characters.length,
-            withReferenceImage: mergedMetadata.visionPhase.characters.filter((c: any) => !!c.referenceImage).length
+            withReferenceImage: mergedMetadata.visionPhase.characters.filter(
+              (c: any) => !!c.referenceImage
+            ).length,
           })
         }
         

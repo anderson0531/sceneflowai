@@ -94,9 +94,24 @@ export function mergeLocationReferences(
   return liteRefs.map((liteRef) => {
     const fullRef = liteRef?.id ? fullById.get(liteRef.id) : undefined
     if (!fullRef) return liteRef
+    const fullVersionsById = Array.isArray(fullRef.versions)
+      ? indexById(fullRef.versions)
+      : null
+    const mergedVersions =
+      Array.isArray(liteRef.versions) && fullVersionsById
+        ? liteRef.versions.map((liteVer) => {
+            const fullVer = liteVer?.id ? fullVersionsById.get(liteVer.id) : undefined
+            if (!fullVer) return liteVer
+            return {
+              ...liteVer,
+              imageUrl: pickImageUrl(liteVer.imageUrl, fullVer.imageUrl),
+            }
+          })
+        : liteRef.versions ?? fullRef.versions
     return {
       ...liteRef,
-      imageUrl: pickImageUrl(liteRef.imageUrl, fullRef.imageUrl),
+      imageUrl: pickImageUrl(liteRef.imageUrl, fullRef.imageUrl) ?? liteRef.imageUrl,
+      ...(mergedVersions ? { versions: mergedVersions } : {}),
     }
   })
 }

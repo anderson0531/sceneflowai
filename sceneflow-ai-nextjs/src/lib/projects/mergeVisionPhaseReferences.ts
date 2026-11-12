@@ -27,6 +27,12 @@ export type VisionPhaseReferencesSlice = {
 
 export type PickPersistedImageUrl = (incoming: unknown, existing: unknown) => string | undefined
 
+const defaultPickPersistedImageUrl: PickPersistedImageUrl = (incoming, existing) => {
+  if (typeof incoming === 'string' && incoming.trim().length > 0) return incoming
+  if (typeof existing === 'string' && existing.trim().length > 0) return existing
+  return undefined
+}
+
 function asRows(value: unknown): VisionPhaseReferenceRow[] {
   return Array.isArray(value) ? (value as VisionPhaseReferenceRow[]) : []
 }
@@ -41,6 +47,39 @@ export function mergeDroppedObjectReferenceIds(
   extra?: Iterable<string>
 ): string[] {
   return uniqueReferenceIds([...(existing ?? []), ...(incoming ?? []), ...(extra ?? [])])
+}
+
+function mergeNestedVersions(
+  existingVersions: unknown,
+  incomingVersions: unknown,
+  pickImageUrl: PickPersistedImageUrl
+): unknown {
+  if (!Array.isArray(incomingVersions)) {
+    return Array.isArray(existingVersions) ? existingVersions : incomingVersions
+  }
+  if (!Array.isArray(existingVersions) || existingVersions.length === 0) {
+    return incomingVersions
+  }
+  const existingById = new Map(
+    existingVersions
+      .filter(
+        (v): v is Record<string, unknown> & { id: string } =>
+          Boolean(v && typeof v === 'object' && typeof (v as { id?: unknown }).id === 'string')
+      )
+      .map((v) => [v.id, v])
+  )
+  return incomingVersions.map((inc) => {
+    if (!inc || typeof inc !== 'object') return inc
+    const incRec = inc as Record<string, unknown>
+    const id = typeof incRec.id === 'string' ? incRec.id : undefined
+    const extRec = id ? existingById.get(id) : undefined
+    if (!extRec) return inc
+    return {
+      ...extRec,
+      ...incRec,
+      imageUrl: pickImageUrl(incRec.imageUrl, extRec.imageUrl),
+    }
+  })
 }
 
 function mergeRowList(
@@ -58,10 +97,16 @@ function mergeRowList(
     .map((incomingRef) => {
       const existingRef = incomingRef?.id ? existingById.get(incomingRef.id) : undefined
       if (!existingRef) return incomingRef
+      const mergedVersions = mergeNestedVersions(
+        existingRef.versions,
+        incomingRef.versions,
+        pickImageUrl
+      )
       return {
         ...existingRef,
         ...incomingRef,
         imageUrl: pickImageUrl(incomingRef.imageUrl, existingRef.imageUrl),
+        ...(mergedVersions !== undefined ? { versions: mergedVersions } : {}),
       }
     })
 
@@ -124,7 +169,7 @@ export function visionReferencesPutPayload(args: {
 export function mergeVisionPhaseReferences(
   existing: VisionPhaseReferencesSlice | undefined,
   incoming: VisionPhaseReferencesSlice | undefined,
-  pickImageUrl: PickPersistedImageUrl
+  pickImageUrl: PickPersistedImageUrl = defaultPickPersistedImageUrl
 ): VisionPhaseReferencesSlice {
   const existingSlice = existing || {}
   const incomingSlice = incoming || {}

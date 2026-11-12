@@ -90,65 +90,87 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Reference Upload] Uploaded to Vercel Blob: ${blob.url}`)
 
-    // Update Database
+    // Update Database atomically under row lock while preserving locationReferences & tombstones
     await sequelize.authenticate()
-    const project = await Project.findByPk(projectId)
-    if (!project) {
-      console.error(`[Reference Upload] Project not found: ${projectId}`)
+    const exists = await sequelize.transaction(async (transaction) => {
+      const project = await Project.findByPk(projectId, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+      if (!project) {
+        console.error(`[Reference Upload] Project not found: ${projectId}`)
+        return false
+      }
+
+      const metadata = { ...(project.metadata || {}) }
+      const visionPhase = { ...(metadata.visionPhase || {}) }
+      const references = { ...(visionPhase.references || {}) }
+
+      const sceneReferences = Array.isArray(references.sceneReferences)
+        ? references.sceneReferences.map((ref: any) => ({ ...ref }))
+        : []
+      const objectReferences = Array.isArray(references.objectReferences)
+        ? references.objectReferences.map((ref: any) => ({ ...ref }))
+        : []
+
+      let updated = false
+      const nowIso = new Date().toISOString()
+
+      if (referenceType === 'scene') {
+        for (let i = 0; i < sceneReferences.length; i++) {
+          if (sceneReferences[i]?.id === referenceId) {
+            sceneReferences[i] = {
+              ...sceneReferences[i],
+              imageUrl: blob.url,
+              updatedAt: nowIso,
+              aiGenerated: false,
+            }
+            updated = true
+            console.log(`[Reference Upload] Updated scene reference ${referenceId}`)
+            break
+          }
+        }
+      } else {
+        for (let i = 0; i < objectReferences.length; i++) {
+          if (objectReferences[i]?.id === referenceId) {
+            objectReferences[i] = {
+              ...objectReferences[i],
+              imageUrl: blob.url,
+              updatedAt: nowIso,
+              aiGenerated: false,
+            }
+            updated = true
+            console.log(`[Reference Upload] Updated object reference ${referenceId}`)
+            break
+          }
+        }
+      }
+
+      if (!updated) {
+        console.warn(`[Reference Upload] Reference ${referenceId} not found in ${referenceType} references`)
+      }
+
+      const updatedMetadata = {
+        ...metadata,
+        visionPhase: {
+          ...visionPhase,
+          references: {
+            ...references,
+            sceneReferences,
+            objectReferences,
+          },
+        },
+      }
+
+      project.set('metadata', updatedMetadata)
+      project.changed('metadata', true)
+      await project.save({ transaction })
+      return true
+    })
+
+    if (!exists) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
-
-    const metadata = project.metadata || {}
-    const visionPhase = metadata.visionPhase || {}
-    const references = visionPhase.references || {}
-    
-    const sceneReferences = references.sceneReferences || []
-    const objectReferences = references.objectReferences || []
-    
-    // Update the specific reference
-    let updated = false
-    
-    if (referenceType === 'scene') {
-      for (let i = 0; i < sceneReferences.length; i++) {
-        if (sceneReferences[i].id === referenceId) {
-          sceneReferences[i].imageUrl = blob.url
-          sceneReferences[i].updatedAt = new Date().toISOString()
-          sceneReferences[i].aiGenerated = false // Mark as manually uploaded
-          updated = true
-          console.log(`[Reference Upload] Updated scene reference ${referenceId}`)
-          break
-        }
-      }
-    } else {
-      for (let i = 0; i < objectReferences.length; i++) {
-        if (objectReferences[i].id === referenceId) {
-          objectReferences[i].imageUrl = blob.url
-          objectReferences[i].updatedAt = new Date().toISOString()
-          objectReferences[i].aiGenerated = false // Mark as manually uploaded
-          updated = true
-          console.log(`[Reference Upload] Updated object reference ${referenceId}`)
-          break
-        }
-      }
-    }
-
-    if (!updated) {
-      console.warn(`[Reference Upload] Reference ${referenceId} not found in ${referenceType} references`)
-    }
-
-    // Save back to database
-    const updatedMetadata = {
-      ...metadata,
-      visionPhase: {
-        ...visionPhase,
-        references: {
-          sceneReferences,
-          objectReferences
-        }
-      }
-    }
-
-    await project.update({ metadata: updatedMetadata })
     console.log(`[Reference Upload] Database updated successfully`)
 
     return NextResponse.json({

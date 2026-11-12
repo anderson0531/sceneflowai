@@ -63,6 +63,10 @@ import {
 } from "@/lib/intelligence/reference-still-director-fallback";
 import { resolveAnchorWardrobeForTransition } from "@/lib/character/characterReferencePrompts";
 import {
+  defaultCharacterWardrobeId,
+  resolveCharacterId,
+} from "@/lib/vision/updateCharacterReference";
+import {
   AddCharacterModal,
   useOrphanCharacters,
 } from "@/components/vision/AddCharacterModal";
@@ -153,25 +157,35 @@ export interface CharacterLibraryProps {
     characterId: string,
     promptOrPayload: any,
   ) => Promise<void>;
-  onUploadCharacter: (characterId: string, file: File) => void;
-  onApproveCharacter: (characterId: string) => void;
-  onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void;
+  onUploadCharacter: (characterId: string, file: File) => Promise<void> | void;
+  onApproveCharacter: (characterId: string) => Promise<void> | void;
+  onUpdateCharacterAttributes?: (
+    characterId: string,
+    attributes: any,
+    options?: { quiet?: boolean },
+  ) => Promise<void> | void;
   onUpdateCharacterVoice?: (
     characterId: string,
     voiceConfig: any,
     options?: { quiet?: boolean },
-  ) => void;
+  ) => Promise<void> | void;
   onUpdateCharacterEdgeVoice?: (
     characterId: string,
     lang: string,
     edgeVoiceConfig: EdgeVoiceConfig | null,
-  ) => void;
+  ) => Promise<void> | void;
   onUpdateCharacterAppearance?: (
     characterId: string,
     description: string,
-  ) => void;
-  onUpdateCharacterName?: (characterId: string, name: string) => void;
-  onUpdateCharacterRole?: (characterId: string, role: string) => void;
+  ) => Promise<void> | void;
+  onUpdateCharacterName?: (
+    characterId: string,
+    name: string,
+  ) => Promise<void> | void;
+  onUpdateCharacterRole?: (
+    characterId: string,
+    role: string,
+  ) => Promise<void> | void;
   onUpdateCharacterWardrobe?: (
     characterId: string,
     wardrobe: {
@@ -190,7 +204,7 @@ export interface CharacterLibraryProps {
       generationPrompt?: string;
       action?: "add" | "update" | "delete";
     },
-  ) => void;
+  ) => Promise<void> | void;
   /** Callback to batch update wardrobes from script analysis */
   onBatchUpdateWardrobes?: (
     characterId: string,
@@ -202,7 +216,7 @@ export interface CharacterLibraryProps {
       appearanceNotes?: string;
       reason: string;
     }>,
-  ) => void;
+  ) => Promise<void> | void;
   /** Apply non-destructive wardrobe sync diffs from script */
   onApplyWardrobeSyncDiffs?: (
     diffs: Array<{
@@ -230,6 +244,11 @@ export interface CharacterLibraryProps {
   /** Duplicate speaking roles the Cast toolbar can merge. */
   duplicateCastCount?: number;
   onMergeDuplicateCast?: () => void;
+  /** Callback to edit a character's reference image */
+  onEditCharacterImage?: (
+    characterId: string,
+    imageUrl: string,
+  ) => Promise<void> | void;
   /** Apply enhanced reference directly (URL + vision description) without re-upload */
   onApplyEnhancedReference?: (
     characterId: string,
@@ -403,6 +422,10 @@ async function regenerateWardrobeImage(
 
   await onUpdateWardrobe?.(characterId, {
     wardrobeId: wardrobe.id,
+    wardrobeName: wardrobe.name,
+    defaultWardrobe: wardrobe.description,
+    wardrobeAccessories: wardrobe.accessories,
+    appearanceNotes: wardrobe.appearanceNotes,
     fullBodyUrl: resolvedUrl,
     ...(combinedCharacterRefUrl
       ? { combinedCharacterRefUrl }
@@ -476,16 +499,29 @@ interface CharacterCardProps {
     characterId: string,
     voiceConfig: any,
     options?: { quiet?: boolean },
-  ) => void;
+  ) => Promise<void> | void;
   onUpdateCharacterEdgeVoice?: (
     characterId: string,
     lang: string,
     edgeVoiceConfig: EdgeVoiceConfig | null,
-  ) => void;
-  onUpdateAppearance?: (characterId: string, description: string) => void;
-  onUpdateCharacterName?: (characterId: string, name: string) => void;
-  onUpdateCharacterRole?: (characterId: string, role: string) => void;
-  onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void;
+  ) => Promise<void> | void;
+  onUpdateAppearance?: (
+    characterId: string,
+    description: string,
+  ) => Promise<void> | void;
+  onUpdateCharacterName?: (
+    characterId: string,
+    name: string,
+  ) => Promise<void> | void;
+  onUpdateCharacterRole?: (
+    characterId: string,
+    role: string,
+  ) => Promise<void> | void;
+  onUpdateCharacterAttributes?: (
+    characterId: string,
+    attributes: any,
+    options?: { quiet?: boolean },
+  ) => Promise<void> | void;
   onUpdateWardrobe?: (
     characterId: string,
     wardrobe: {
@@ -495,6 +531,7 @@ interface CharacterCardProps {
       wardrobeName?: string;
       headshotUrl?: string;
       fullBodyUrl?: string;
+      combinedCharacterRefUrl?: string;
       previewImageUrl?: string;
       sceneNumbers?: number[];
       appearanceNotes?: string;
@@ -503,7 +540,7 @@ interface CharacterCardProps {
       generationPrompt?: string;
       action?: "add" | "update" | "delete";
     },
-  ) => void;
+  ) => Promise<void> | void;
   /** Batch update wardrobes from script analysis */
   onBatchUpdateWardrobes?: (
     characterId: string,
@@ -515,7 +552,7 @@ interface CharacterCardProps {
       appearanceNotes?: string;
       reason: string;
     }>,
-  ) => void;
+  ) => Promise<void> | void;
   onApplyWardrobeSyncDiffs?: CharacterLibraryProps["onApplyWardrobeSyncDiffs"];
   /** Script scenes for wardrobe analysis */
   scenes?: any[];
@@ -606,8 +643,10 @@ export function CharacterLibrary({
     [characters],
   );
 
-  const getCharacterId = (char: (typeof castCharacters)[number], idx: number) =>
-    char.id || idx.toString();
+  const getCharacterId = (char: (typeof castCharacters)[number], idx: number) => {
+    const origIdx = characters.indexOf(char);
+    return resolveCharacterId(char, origIdx >= 0 ? origIdx : idx);
+  };
 
   const [activeCharacterId, setActiveCharacterId] = useState<string | null>(
     null,
@@ -831,7 +870,7 @@ export function CharacterLibrary({
         const processData = await processRes.json();
         if (processData.success) {
           // Call parent handler to update character
-          onUploadCharacter(characterId, file);
+          await onUploadCharacter(characterId, file);
           toast.success("Reference image uploaded successfully!");
         } else {
           throw new Error(processData.error || "Processing failed");
@@ -1024,9 +1063,11 @@ export function CharacterLibrary({
         const patchById = new Map<string, Record<string, any>>();
         for (const u of updates) {
           patchById.set(u.characterId, u.patch as Record<string, any>);
-          onUpdateCharacterAttributes?.(u.characterId, u.patch);
+          await onUpdateCharacterAttributes?.(u.characterId, u.patch, {
+            quiet: true,
+          });
           if (typeof u.patch.appearanceDescription === "string" && u.patch.appearanceDescription.trim()) {
-            onUpdateCharacterAppearance?.(u.characterId, u.patch.appearanceDescription);
+            await onUpdateCharacterAppearance?.(u.characterId, u.patch.appearanceDescription);
           }
         }
         finishAgentRun(runId, {
@@ -1361,11 +1402,9 @@ export function CharacterLibrary({
               open={!!promptBuilderOpenFor}
               onClose={() => setPromptBuilderOpenFor(null)}
               defaultArtStyle={defaultArtStyle}
-              character={characters
-                .filter((c) => c.type !== "narrator")
-                .find(
-                  (c, idx) => (c.id || idx.toString()) === promptBuilderOpenFor,
-                )}
+              character={castCharacters.find(
+                (c, idx) => getCharacterId(c, idx) === promptBuilderOpenFor,
+              )}
               isGenerating={Array.from(generatingChars).includes(
                 promptBuilderOpenFor,
               )}
@@ -1423,11 +1462,9 @@ export function CharacterLibrary({
               open={!!promptBuilderOpenFor}
               onClose={() => setPromptBuilderOpenFor(null)}
               defaultArtStyle={defaultArtStyle}
-              character={characters
-                .filter((c) => c.type !== "narrator")
-                .find(
-                  (c, idx) => (c.id || idx.toString()) === promptBuilderOpenFor,
-                )}
+              character={castCharacters.find(
+                (c, idx) => getCharacterId(c, idx) === promptBuilderOpenFor,
+              )}
               isGenerating={Array.from(generatingChars).includes(
                 promptBuilderOpenFor,
               )}
@@ -1934,7 +1971,7 @@ const CharacterCard = ({
       : character.defaultWardrobe?.trim()
         ? [
             {
-              id: "legacy-wardrobe",
+              id: defaultCharacterWardrobeId(characterId),
               name: "Default Outfit",
               description: character.defaultWardrobe,
               accessories: character.wardrobeAccessories,
@@ -2241,7 +2278,7 @@ const CharacterCard = ({
           attrs.gender = visionAnalysis.gender;
           attrs.genderSource = "ai";
         }
-        onUpdateCharacterAttributes(characterId, attrs);
+        await onUpdateCharacterAttributes(characterId, attrs, { quiet: true });
         toast.success(
           visionAnalysis.confidence === "narrative"
             ? "Matched voice profile from character narrative."
@@ -2332,12 +2369,14 @@ const CharacterCard = ({
       }
 
       if (matchingBrief && onUpdateCharacterAttributes) {
-        onUpdateCharacterAttributes(characterId, {
-          voiceDescription: matchingBrief,
-        });
+        await onUpdateCharacterAttributes(
+          characterId,
+          { voiceDescription: matchingBrief },
+          { quiet: true },
+        );
       }
 
-      onUpdateCharacterVoice(characterId, assignment);
+      await onUpdateCharacterVoice(characterId, assignment);
       toast.success("Voice profile ready.");
 
       try {
@@ -2441,7 +2480,11 @@ const CharacterCard = ({
 
       await onUpdateAppearance(characterId, nextDescription);
       if (typeof body.height === "string" && body.height.trim() && onUpdateCharacterAttributes) {
-        onUpdateCharacterAttributes(characterId, { height: body.height.trim() });
+        await onUpdateCharacterAttributes(
+          characterId,
+          { height: body.height.trim() },
+          { quiet: true },
+        );
       }
       setBodyDirectorText("");
       setEditingBodyDescription(false);
@@ -2461,15 +2504,17 @@ const CharacterCard = ({
     }
   };
 
-  const persistCastingBrief = (brief: string, quietRematch: boolean) => {
+  const persistCastingBrief = async (brief: string, quietRematch: boolean) => {
     const applied = applyCastingBriefUpdate(character, brief, {
       screenplayContext: screenplayContext as ScreenplayContext,
     });
-    onUpdateCharacterAttributes?.(characterId, {
-      voiceDescription: applied.voiceDescription,
-    });
+    await onUpdateCharacterAttributes?.(
+      characterId,
+      { voiceDescription: applied.voiceDescription },
+      { quiet: quietRematch },
+    );
     if (applied.voiceConfig) {
-      onUpdateCharacterVoice?.(characterId, applied.voiceConfig, {
+      await onUpdateCharacterVoice?.(characterId, applied.voiceConfig, {
         quiet: quietRematch,
       });
     }
@@ -2485,7 +2530,7 @@ const CharacterCard = ({
         hasPortrait: hasCharacterReferenceForVoice,
       });
       if (!applied) return;
-      persistCastingBrief(applied.voiceDescription, true);
+      await persistCastingBrief(applied.voiceDescription, true);
       toast.success("Casting brief updated to match the body.");
     } catch (error) {
       console.warn("[Casting Brief] Appearance sync failed:", error);
@@ -2522,7 +2567,7 @@ const CharacterCard = ({
         recommendMode,
         hasPortrait: hasCharacterReferenceForVoice,
       });
-      persistCastingBrief(voiceDescription, false);
+      await persistCastingBrief(voiceDescription, false);
       setCastingDirectorText("");
       setEditingCastingBrief(false);
       toast.success(
@@ -2781,7 +2826,7 @@ const CharacterCard = ({
       }
 
       if (editingWardrobeId) {
-        onUpdateWardrobe?.(characterId, {
+        await onUpdateWardrobe?.(characterId, {
           defaultWardrobe: wardrobe.defaultWardrobe.trim(),
           wardrobeAccessories: wardrobe.wardrobeAccessories?.trim() || undefined,
           appearanceNotes: wardrobe.appearanceNotes?.trim() || undefined,
@@ -2794,7 +2839,7 @@ const CharacterCard = ({
           wardrobeName.trim() ||
           wardrobe.wardrobeName?.trim() ||
           `Outfit ${wardrobes.length + 1}`;
-        onUpdateWardrobe?.(characterId, {
+        await onUpdateWardrobe?.(characterId, {
           defaultWardrobe: wardrobe.defaultWardrobe.trim(),
           wardrobeAccessories: wardrobe.wardrobeAccessories?.trim() || undefined,
           appearanceNotes: wardrobe.appearanceNotes?.trim() || undefined,
@@ -3024,7 +3069,7 @@ const CharacterCard = ({
       };
 
       // Save the enhanced description directly
-      onUpdateWardrobe?.(characterId, {
+      await onUpdateWardrobe?.(characterId, {
         defaultWardrobe: enhanced.description,
         wardrobeAccessories: enhanced.accessories || wardrobe.accessories,
         wardrobeId: wardrobeId,
@@ -3088,7 +3133,7 @@ const CharacterCard = ({
       throw new Error("Softened wardrobe description was empty");
     }
 
-    onUpdateWardrobe?.(characterId, {
+    await onUpdateWardrobe?.(characterId, {
       defaultWardrobe: description,
       wardrobeAccessories: accessories || wardrobe.accessories,
       wardrobeId,
@@ -3210,8 +3255,12 @@ const CharacterCard = ({
         throw new Error("No image URL returned");
       }
 
-      onUpdateWardrobe?.(characterId, {
+      await onUpdateWardrobe?.(characterId, {
         wardrobeId: wardrobe.id,
+        wardrobeName: wardrobe.name,
+        defaultWardrobe: wardrobe.description,
+        wardrobeAccessories: wardrobe.accessories,
+        appearanceNotes: wardrobe.appearanceNotes,
         fullBodyUrl: resolvedUrl,
         ...(combinedCharacterRefUrl ? { combinedCharacterRefUrl } : {}),
         ...(wardrobe.generationPrompt?.trim()
@@ -5547,7 +5596,7 @@ const CharacterCard = ({
               directorTarget.kind === "cast"
                 ? character.name || "Character"
                 : `${character.name} — ${
-                    (character.wardrobes || []).find(
+                    wardrobes.find(
                       (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
                     )?.name || "Wardrobe"
                   }`
@@ -5556,20 +5605,20 @@ const CharacterCard = ({
               directorTarget.kind === "cast"
                 ? seedCastDirectorPrompt(character, defaultArtStyle)
                 : seedWardrobeDirectorPrompt({
-                    storedPrompt: (character.wardrobes || []).find(
+                    storedPrompt: wardrobes.find(
                       (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
                     )?.generationPrompt,
                     characterName: character.name || "Character",
                     appearanceDescription: character.appearanceDescription,
                     hairStyle: character.hairStyle,
                     hairColor: character.hairColor,
-                    wardrobeDescription: (character.wardrobes || []).find(
+                    wardrobeDescription: wardrobes.find(
                       (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
                     )?.description,
-                    wardrobeAccessories: (character.wardrobes || []).find(
+                    wardrobeAccessories: wardrobes.find(
                       (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
                     )?.accessories,
-                    appearanceNotes: (character.wardrobes || []).find(
+                    appearanceNotes: wardrobes.find(
                       (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
                     )?.appearanceNotes,
                     artStyle: defaultArtStyle,
@@ -5584,13 +5633,13 @@ const CharacterCard = ({
                 : {
                     name: character.name,
                     appearance: character.appearanceDescription,
-                    outfit: (character.wardrobes || []).find(
+                    outfit: wardrobes.find(
                       (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
                     )?.description,
-                    accessories: (character.wardrobes || []).find(
+                    accessories: wardrobes.find(
                       (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
                     )?.accessories,
-                    appearanceNotes: (character.wardrobes || []).find(
+                    appearanceNotes: wardrobes.find(
                       (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
                     )?.appearanceNotes,
                   }
@@ -5602,15 +5651,17 @@ const CharacterCard = ({
             }
             onSave={async ({ prompt, generate }) => {
               if (directorTarget.kind === "wardrobe") {
-                const wardrobe = (character.wardrobes || []).find(
+                const wardrobe = wardrobes.find(
                   (row: CharacterWardrobe) => row.id === directorTarget.wardrobeId,
                 );
-                onUpdateWardrobe?.(characterId, {
+                await onUpdateWardrobe?.(characterId, {
                   wardrobeId: directorTarget.wardrobeId,
+                  wardrobeName: wardrobe?.name,
                   action: "update",
                   generationPrompt: prompt,
                   defaultWardrobe: wardrobe?.description,
                   wardrobeAccessories: wardrobe?.accessories,
+                  appearanceNotes: wardrobe?.appearanceNotes,
                 });
                 if (generate && wardrobe) {
                   await handleGenerateWardrobeImage({

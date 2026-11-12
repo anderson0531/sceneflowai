@@ -106,7 +106,7 @@ export interface VisionReferencesSidebarProps extends Omit<
   /** Characters for Silent Portrait mode */
   backdropCharacters?: CharacterForBackdrop[]
   /** Callback when a backdrop is generated */
-  onBackdropGenerated?: (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode: BackdropMode }) => void
+  onBackdropGenerated?: (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode: BackdropMode }) => void | Promise<void>
   /** Callback to insert a backdrop segment at the beginning of a scene */
   onInsertBackdropSegment?: (sceneId: string, referenceId: string, imageUrl: string, name: string) => void
   /** Callback when an object is generated (for ObjectSuggestionPanel) */
@@ -118,7 +118,7 @@ export interface VisionReferencesSidebarProps extends Omit<
     importance: 'critical' | 'important' | 'background'
     generationPrompt: string
     aiGenerated: boolean
-  }) => void
+  }) => void | Promise<void>
   /** Callback when objects recurring across beats are added to the library un-imaged */
   onObjectsAutoAdded?: (objects: AutoAddedObject[]) => void | Promise<void>
   /** Confirm-to-merge synonym object rows already in the library */
@@ -131,7 +131,7 @@ export interface VisionReferencesSidebarProps extends Omit<
   onIgnoreObjectDuplicates?: (pairs: string[]) => void | Promise<void>
   objectDuplicateIgnores?: string[]
   /** Callback to update a reference image after editing */
-  onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
+  onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void | Promise<void>
   /** Persist a directed object generation prompt without generating. */
   onSaveObjectPrompt?: (referenceId: string, prompt: string) => void | Promise<void>
   /** Update object metadata (description, dimensions, name, etc.) */
@@ -140,7 +140,7 @@ export interface VisionReferencesSidebarProps extends Omit<
     patch: Partial<VisualReference>
   ) => void | Promise<void>
   /** Callback to edit a character's reference image */
-  onEditCharacterImage?: (characterId: string, imageUrl: string) => void
+  onEditCharacterImage?: (characterId: string, imageUrl: string) => void | Promise<void>
   /** Show production readiness progress section */
   showProductionReadiness?: boolean
   /** All scenes data for readiness calculation (now with full sceneDirection) */
@@ -173,15 +173,15 @@ export interface VisionReferencesSidebarProps extends Omit<
   /** Callback to update all location references */
   onUpdateLocationReferences?: (locations: LocationReference[]) => void | Promise<void>
   /** Callback to remove a location reference */
-  onRemoveLocationReference?: (locationId: string) => void
+  onRemoveLocationReference?: (locationId: string) => void | Promise<void>
   /** Callback to generate a location reference image */
-  onGenerateLocationImage?: (location: LocationReference) => void
+  onGenerateLocationImage?: (location: LocationReference) => void | Promise<void>
   /** Callback to generate a location image with prompt builder payload */
-  onGenerateLocationImageWithPrompt?: (payload: LocationPromptPayload) => void
+  onGenerateLocationImageWithPrompt?: (payload: LocationPromptPayload) => void | Promise<void>
   /** Callback to upload a location reference image */
-  onUploadLocationImage?: (locationId: string, file: File) => void
-  onGenerateLocationVersion?: (location: LocationReference, version: LocationVersion) => void
-  onUploadLocationVersionImage?: (locationId: string, versionId: string, file: File) => void
+  onUploadLocationImage?: (locationId: string, file: File) => void | Promise<void>
+  onGenerateLocationVersion?: (location: LocationReference, version: LocationVersion) => void | Promise<void>
+  onUploadLocationVersionImage?: (locationId: string, versionId: string, file: File) => void | Promise<void>
   /** ID of location currently generating an image */
   generatingLocationId?: string | null
   /** Optional callback to generate scene direction + shot optimization for a 0-based scene index */
@@ -250,7 +250,7 @@ interface DraggableReferenceCardProps {
   /** Global Art Style for object reference generation */
   artStyle?: string
   /** Callback when an image is uploaded */
-  onImageUploaded?: (referenceId: string, referenceType: 'scene' | 'object', imageUrl: string) => void
+  onImageUploaded?: (referenceId: string, referenceType: 'scene' | 'object', imageUrl: string) => void | Promise<void>
   /** Open prompt dialog for object reference regeneration (Objects tab) */
   onOpenObjectPromptDialog?: (reference: VisualReference) => void
   onOpenObjectDirector?: (reference: VisualReference) => void
@@ -323,12 +323,11 @@ function DraggableReferenceCard({
       }
 
       const result = await response.json()
-      toast.success(`${referenceType === 'scene' ? 'Scene' : 'Prop'} image uploaded`)
-      
       // Notify parent component of the update
       if (onImageUploaded) {
-        onImageUploaded(reference.id, referenceType, result.imageUrl)
+        await onImageUploaded(reference.id, referenceType, result.imageUrl)
       }
+      toast.success(`${referenceType === 'scene' ? 'Scene' : 'Prop'} image uploaded`)
     } catch (error) {
       console.error('Upload error:', error)
       toast.error('Failed to upload image')
@@ -359,7 +358,7 @@ function DraggableReferenceCard({
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate image')
       }
-      onImageUploaded(reference.id, 'object', data.imageUrl)
+      await onImageUploaded(reference.id, 'object', data.imageUrl)
       toast.success('Prop reference image updated')
     } catch (error) {
       console.error('[DraggableReferenceCard] Quick generate:', error)
@@ -1224,7 +1223,7 @@ function ObjectReferencePromptDialog({
   projectId?: string
   artStyle?: string
   onClose: () => void
-  onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
+  onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void | Promise<void>
 }) {
   const [prompt, setPrompt] = useState('')
   const [loading, setLoading] = useState(false)
@@ -1255,7 +1254,7 @@ function ObjectReferencePromptDialog({
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate image')
       }
-      onUpdateReferenceImage('object', reference.id, data.imageUrl)
+      await onUpdateReferenceImage('object', reference.id, data.imageUrl)
       toast.success('Prop reference image updated')
       onClose()
     } catch (error) {
@@ -1483,9 +1482,10 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     if (!editingImageData) return
 
     if (editingImageData.type === 'character' && editingImageData.characterId && onEditCharacterImage) {
-      onEditCharacterImage(editingImageData.characterId, newImageUrl)
+      await onEditCharacterImage(editingImageData.characterId, newImageUrl)
     } else if (editingImageData.type === 'location' && editingImageData.locationId && onUpdateLocationReferences) {
-      const updatedLocations = (locationReferences || []).map((loc) => {
+      const sourceLocations = getLatestLocations?.() ?? locationReferences ?? []
+      const updatedLocations = sourceLocations.map((loc) => {
         if (loc.id !== editingImageData.locationId) return loc
         if (editingImageData.versionId) {
           return patchLocationVersion(loc, editingImageData.versionId, {
@@ -1495,9 +1495,9 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         }
         return { ...loc, imageUrl: newImageUrl }
       })
-      onUpdateLocationReferences(updatedLocations)
+      await onUpdateLocationReferences(updatedLocations)
     } else if ((editingImageData.type === 'scene' || editingImageData.type === 'object') && onUpdateReferenceImage) {
-      onUpdateReferenceImage(editingImageData.type, editingImageData.referenceId, newImageUrl)
+      await onUpdateReferenceImage(editingImageData.type, editingImageData.referenceId, newImageUrl)
     }
 
     setImageEditModalOpen(false)
@@ -1565,7 +1565,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
 
       // Add to references via onObjectGenerated
       if (onObjectGenerated) {
-        onObjectGenerated({
+        await onObjectGenerated({
           name: payload.name,
           description: payload.description,
           imageUrl: data.imageUrl,
@@ -2259,7 +2259,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               toast.error(data.error || 'Failed to generate image')
               return
             }
-            onUpdateReferenceImage('object', objectDirectorTarget.id, data.imageUrl)
+            await onUpdateReferenceImage('object', objectDirectorTarget.id, data.imageUrl)
             toast.success('Prop reference image updated')
           }}
         />

@@ -1,7 +1,12 @@
 import '@/models'
 import { Project } from '@/models/Project'
 import { sequelize } from '@/config/database'
-import { resolveCharacterId } from '@/lib/vision/updateCharacterReference'
+import {
+  defaultCharacterWardrobeId,
+  isSyntheticDefaultWardrobeId,
+  LEGACY_WARDROBE_ID,
+  resolveCharacterId,
+} from '@/lib/vision/updateCharacterReference'
 import {
   castFingerprint,
   locationFingerprint,
@@ -40,8 +45,24 @@ export async function persistReferenceImage(input: {
   versionId?: string
   /** Cast wardrobe still — patch that nested look, not identity. */
   wardrobeId?: string
+  /** Optional fallback fields if a first-time wardrobe look must be materialized in DB. */
+  wardrobeSeed?: {
+    name?: string
+    description?: string
+    accessories?: string
+    appearanceNotes?: string
+  }
 }): Promise<{ saved: boolean; staleSource: boolean }> {
-  const { projectId, kind, targetId, expectedFingerprint, patch, versionId, wardrobeId } = input
+  const {
+    projectId,
+    kind,
+    targetId,
+    expectedFingerprint,
+    patch,
+    versionId,
+    wardrobeId,
+    wardrobeSeed,
+  } = input
 
   return sequelize.transaction(async (transaction) => {
     const project = await Project.findByPk(projectId, {
@@ -65,13 +86,11 @@ export async function persistReferenceImage(input: {
 
         if (wardrobeId) {
           const wardrobes = Array.isArray(character.wardrobes) ? character.wardrobes : []
-          let wardrobeFound = false
-          const nextWardrobes = wardrobes.map((wardrobe) => {
-            if (wardrobe.id !== wardrobeId) return wardrobe
-            wardrobeFound = true
+          const patchWardrobe = (wardrobe: NonNullable<CastSource['wardrobes']>[number], nextId?: string) => {
             staleSource = wardrobeFingerprint(wardrobe) !== expectedFingerprint
             return {
               ...wardrobe,
+              ...(nextId ? { id: nextId } : {}),
               ...(typeof patch.fullBodyUrl === 'string' &&
               patch.fullBodyUrl &&
               patch.combinedCharacterRefUrl === undefined
@@ -80,10 +99,83 @@ export async function persistReferenceImage(input: {
               ...patch,
               needsImageRegen: false,
             }
+          }
+
+          let wardrobeFound = false
+          let nextWardrobes = wardrobes.map((wardrobe) => {
+            if (wardrobe.id !== wardrobeId) return wardrobe
+            wardrobeFound = true
+            const upgradedId =
+              wardrobe.id === LEGACY_WARDROBE_ID
+                ? defaultCharacterWardrobeId(targetId)
+                : undefined
+            return patchWardrobe(wardrobe, upgradedId)
           })
-          if (!wardrobeFound) return character
+
+          if (
+            !wardrobeFound &&
+            isSyntheticDefaultWardrobeId(wardrobeId, targetId) &&
+            wardrobes.length > 0
+          ) {
+            const defaultIdx = wardrobes.findIndex((w) => w?.isDefault)
+            const targetIdx = defaultIdx >= 0 ? defaultIdx : 0
+            wardrobeFound = true
+            nextWardrobes = wardrobes.map((wardrobe, idx) => {
+              if (idx !== targetIdx) return wardrobe
+              const upgradedId =
+                wardrobe.id === LEGACY_WARDROBE_ID
+                  ? defaultCharacterWardrobeId(targetId)
+                  : undefined
+              return patchWardrobe(wardrobe, upgradedId)
+            })
+          }
+
+          if (!wardrobeFound) {
+            const hasMediaPatch =
+              (typeof patch.fullBodyUrl === 'string' && Boolean(patch.fullBodyUrl.trim())) ||
+              (typeof patch.combinedCharacterRefUrl === 'string' &&
+                Boolean(patch.combinedCharacterRefUrl.trim())) ||
+              (typeof patch.headshotUrl === 'string' && Boolean(patch.headshotUrl.trim()))
+            if (!hasMediaPatch && !character.defaultWardrobe) return character
+
+            const materializedId =
+              wardrobeId === LEGACY_WARDROBE_ID
+                ? defaultCharacterWardrobeId(targetId)
+                : wardrobeId
+            const seedEntry = {
+              id: materializedId,
+              name:
+                wardrobeSeed?.name?.trim() ||
+                (wardrobes.length === 0 ? 'Default Outfit' : 'Outfit'),
+              description:
+                wardrobeSeed?.description?.trim() ||
+                (typeof character.defaultWardrobe === 'string'
+                  ? character.defaultWardrobe.trim()
+                  : ''),
+              ...(wardrobeSeed?.accessories?.trim() || character.wardrobeAccessories
+                ? {
+                    accessories:
+                      wardrobeSeed?.accessories?.trim() || character.wardrobeAccessories,
+                  }
+                : {}),
+              ...(wardrobeSeed?.appearanceNotes !== undefined
+                ? { appearanceNotes: wardrobeSeed.appearanceNotes }
+                : {}),
+              isDefault: wardrobes.length === 0,
+              createdAt: new Date().toISOString(),
+            }
+            wardrobeFound = true
+            nextWardrobes = [...wardrobes, patchWardrobe(seedEntry, materializedId)]
+          }
+
           saved = true
-          return { ...character, wardrobes: nextWardrobes }
+          return {
+            ...character,
+            wardrobes: nextWardrobes,
+            defaultWardrobe: character.defaultWardrobe || nextWardrobes[0]?.description,
+            wardrobeAccessories:
+              character.wardrobeAccessories || nextWardrobes[0]?.accessories,
+          }
         }
 
         saved = true

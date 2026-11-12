@@ -51,6 +51,8 @@ async function maybePersistCombinedRef(args: {
     wardrobeUrl,
     expectedFingerprint: wardrobeExpectedFingerprint(args.wardrobe || {}),
     label: args.characterName,
+    persistFullBodyUrl: true,
+    wardrobeSeed: args.wardrobe,
   })
   return url ?? undefined
 }

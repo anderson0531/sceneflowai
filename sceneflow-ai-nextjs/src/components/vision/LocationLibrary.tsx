@@ -193,19 +193,19 @@ interface LocationLibraryProps {
   /** Callback to update location references */
   onUpdateLocations: (locations: LocationReference[]) => void | Promise<void>
   /** Callback to remove a location reference */
-  onRemoveLocation: (locationId: string) => void
+  onRemoveLocation: (locationId: string) => void | Promise<void>
   /** Callback to generate location reference image (legacy — simple) */
-  onGenerateLocationImage?: (location: LocationReference) => void
+  onGenerateLocationImage?: (location: LocationReference) => void | Promise<void>
   /** Callback to generate location reference image with prompt builder payload */
-  onGenerateLocationImageWithPrompt?: (payload: LocationPromptPayload) => void
+  onGenerateLocationImageWithPrompt?: (payload: LocationPromptPayload) => void | Promise<void>
   /** Callback to open edit modal for existing location image (optional nested version). */
   onEditLocationImage?: (locationId: string, imageUrl: string, versionId?: string) => void
   /** Callback to upload location reference image */
-  onUploadLocationImage?: (locationId: string, file: File) => void
+  onUploadLocationImage?: (locationId: string, file: File) => void | Promise<void>
   /** Generate a set-state version still from the base location image */
-  onGenerateLocationVersion?: (location: LocationReference, version: LocationVersion) => void
+  onGenerateLocationVersion?: (location: LocationReference, version: LocationVersion) => void | Promise<void>
   /** Upload an image onto a nested location version */
-  onUploadLocationVersionImage?: (locationId: string, versionId: string, file: File) => void
+  onUploadLocationVersionImage?: (locationId: string, versionId: string, file: File) => void | Promise<void>
   /** Whether a location image is currently generating */
   generatingLocationId?: string | null
   /** Screenplay context for prompt builder enrichment */
@@ -1831,18 +1831,18 @@ export function LocationLibrary({
               const patched = next.find((ref) => ref.id === location.id)
               if (!patched) return
               if (onGenerateLocationImageWithPrompt) {
-                onGenerateLocationImageWithPrompt({
+                await onGenerateLocationImageWithPrompt({
                   location: patched,
                   locationPrompt: prompt,
                   versionId: version?.id,
                 })
               } else if (version) {
-                onGenerateLocationVersion?.(patched, {
+                await onGenerateLocationVersion?.(patched, {
                   ...version,
                   generationPrompt: prompt,
                 })
               } else {
-                onGenerateLocationImage?.(patched)
+                await onGenerateLocationImage?.(patched)
               }
             }}
           />

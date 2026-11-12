@@ -1,4 +1,5 @@
 import Project from '../../models/Project'
+import { sequelize } from '@/config/database'
 
 export type CharacterGender = 'male' | 'female' | 'non-binary' | 'unspecified'
 export type GenderSource = 'ai' | 'user'
@@ -41,69 +42,79 @@ export interface EnhancedCharacter {
 }
 
 /**
- * Save character attributes to project metadata
+ * Save character attributes to project metadata under a row lock so concurrent
+ * saves never clobber `referenceImage`, `wardrobes`, `voiceConfig`, or `script`.
  */
 export async function saveCharacterAttributes(
   projectId: string,
   characterName: string,
   attributes: Partial<EnhancedCharacter>
 ): Promise<void> {
-  const project = await Project.findByPk(projectId)
-  if (!project) {
-    throw new Error('Project not found')
+  const cleanAttributes: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(attributes || {})) {
+    if (value !== undefined) {
+      cleanAttributes[key] = value
+    }
   }
 
-  const metadata = project.metadata || {}
-  const visionPhase = metadata.visionPhase || {}
-  const characters = visionPhase.characters || []
-  
-  // Find existing character or add new one
-  const existingIndex = characters.findIndex(
-    (c: any) => c.name?.toLowerCase() === characterName.toLowerCase()
-  )
-  
-  if (existingIndex >= 0) {
-    // Update existing character
-    characters[existingIndex] = {
-      ...characters[existingIndex],
-      ...attributes,
-      lastModified: new Date().toISOString(),
-      version: (characters[existingIndex].version || 1) + 1,
-    }
-  } else {
-    // Add new character
-    characters.push({
-      ...attributes,
-      name: characterName,
-      version: 1,
-      lastModified: new Date().toISOString(),
+  await sequelize.transaction(async (transaction) => {
+    const project = await Project.findByPk(projectId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
     })
-  }
-  
-  // Save to database - use set() and changed() to ensure Sequelize detects JSONB changes
-  const newMetadata = {
-    ...metadata,
-    visionPhase: {
-      ...visionPhase,
-      characters,
-    },
-  }
-  
-  // Explicitly mark metadata as changed to ensure JSONB update is detected
-  project.set('metadata', newMetadata)
-  project.changed('metadata', true)
-  
-  await project.save()
-  
-  // Verify the save by reloading
-  await project.reload()
-  const savedCharacters = (project.metadata as any)?.visionPhase?.characters || []
-  const savedChar = savedCharacters.find((c: any) => c.name?.toLowerCase() === characterName.toLowerCase())
-  
-  console.log(`[Character Persistence] Saved character: ${characterName}`, {
-    totalCharactersNow: savedCharacters.length,
-    characterFound: !!savedChar,
-    allCharacterNames: savedCharacters.map((c: any) => c.name)
+    if (!project) {
+      throw new Error('Project not found')
+    }
+
+    const metadata = { ...(project.metadata || {}) }
+    const visionPhase = { ...(metadata.visionPhase || {}) }
+    const characters = Array.isArray(visionPhase.characters)
+      ? [...visionPhase.characters]
+      : []
+
+    const existingIndex = characters.findIndex(
+      (c: any) => c.name?.toLowerCase() === characterName.toLowerCase()
+    )
+
+    if (existingIndex >= 0) {
+      const existing = characters[existingIndex] || {}
+      characters[existingIndex] = {
+        ...existing,
+        ...cleanAttributes,
+        name: existing.name || characterName,
+        referenceImage: cleanAttributes.referenceImage ?? existing.referenceImage,
+        wardrobes: cleanAttributes.wardrobes ?? existing.wardrobes,
+        voiceConfig: cleanAttributes.voiceConfig ?? existing.voiceConfig,
+        imageApproved: cleanAttributes.imageApproved ?? existing.imageApproved,
+        lastModified: new Date().toISOString(),
+        version: (existing.version || 1) + 1,
+      }
+    } else {
+      characters.push({
+        ...cleanAttributes,
+        name: characterName,
+        version: 1,
+        lastModified: new Date().toISOString(),
+      })
+    }
+
+    const newMetadata = {
+      ...metadata,
+      visionPhase: {
+        ...visionPhase,
+        characters,
+      },
+    }
+
+    project.set('metadata', newMetadata)
+    project.changed('metadata', true)
+    await project.save({ transaction })
+
+    console.log(`[Character Persistence] Saved character: ${characterName}`, {
+      totalCharactersNow: characters.length,
+      characterFound: true,
+      allCharacterNames: characters.map((c: any) => c.name),
+    })
   })
 }
 

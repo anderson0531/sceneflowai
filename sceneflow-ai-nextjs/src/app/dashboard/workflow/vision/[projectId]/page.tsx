@@ -205,7 +205,10 @@ import {
   openSupportErrorReport,
 } from '@/components/vision/ReportGenerationErrorDialog'
 import {
+  applyBatchWardrobeSuggestions,
+  applyCharacterWardrobeMutation,
   resolveCharacterId,
+  updateCharacterAttributesInList,
   updateCharacterInList,
 } from '@/lib/vision/updateCharacterReference'
 import { castAppearanceAfterImage } from '@/lib/character/castAppearanceAfterImage'
@@ -2205,27 +2208,45 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }, [searchParams])
 
+  const visionReferencesSlice = (project?.metadata?.visionPhase as any)?.references as
+    | VisionReferencesPayload
+    | undefined
   useEffect(() => {
-    const references = project?.metadata?.visionPhase?.references as VisionReferencesPayload | undefined
+    const references = visionReferencesSlice
     if (references) {
-      setSceneReferences(references.sceneReferences ?? [])
-      setObjectReferences(references.objectReferences ?? [])
-      setObjectDuplicateIgnores(references.objectDuplicateIgnores ?? [])
-      setLocationReferences(references.locationReferences ?? [])
+      const nextSceneRefs = references.sceneReferences ?? []
+      const nextObjectRefs = references.objectReferences ?? []
+      const nextDuplicateIgnores = references.objectDuplicateIgnores ?? []
+      const nextLocationRefs = references.locationReferences ?? []
+      sceneReferencesRef.current = nextSceneRefs
+      objectReferencesRef.current = nextObjectRefs
+      objectDuplicateIgnoresRef.current = nextDuplicateIgnores
+      locationReferencesRef.current = nextLocationRefs
+      setSceneReferences(nextSceneRefs)
+      setObjectReferences(nextObjectRefs)
+      setObjectDuplicateIgnores(nextDuplicateIgnores)
+      setLocationReferences(nextLocationRefs)
       objectTombstoneIdsRef.current = mergeDroppedObjectReferenceIds(
         objectTombstoneIdsRef.current,
         references.droppedObjectReferenceIds
       )
-    } else if (project) {
+    } else if (project?.id) {
+      sceneReferencesRef.current = []
+      objectReferencesRef.current = []
+      objectDuplicateIgnoresRef.current = []
+      locationReferencesRef.current = []
       setSceneReferences([])
       setObjectReferences([])
       setObjectDuplicateIgnores([])
       setLocationReferences([])
     }
-  }, [project])
+  }, [project?.id, visionReferencesSlice])
 
+  const visionBookmarkSlice = (project?.metadata?.visionPhase as any)?.bookmark as
+    | SceneBookmark
+    | undefined
   useEffect(() => {
-    const bookmark = project?.metadata?.visionPhase?.bookmark as SceneBookmark | undefined
+    const bookmark = visionBookmarkSlice
     if (bookmark && (bookmark.sceneId || bookmark.sceneNumber)) {
       setSceneBookmark({
         sceneId: bookmark.sceneId || `scene-${bookmark.sceneNumber ?? 1}`,
@@ -2234,7 +2255,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } else {
       setSceneBookmark(null)
     }
-  }, [project])
+  }, [project?.id, visionBookmarkSlice])
 
   // Load existing script reviews from project metadata
   useEffect(() => {
@@ -3338,16 +3359,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         createdAt: new Date().toISOString(),
       }
 
-      // Update local state
-      let updatedSceneRefs = sceneReferences
-      let updatedObjectRefs = objectReferences
-      
+      // Update local state + refs synchronously so persistObjectLibrary sees the new entry immediately
       if (type === 'scene') {
-        updatedSceneRefs = [...sceneReferences, newReference]
+        const updatedSceneRefs = [...sceneReferencesRef.current, newReference]
         sceneReferencesRef.current = updatedSceneRefs
         setSceneReferences(updatedSceneRefs)
       } else {
-        updatedObjectRefs = [...objectReferences, newReference]
+        const updatedObjectRefs = [...objectReferencesRef.current, newReference]
         objectReferencesRef.current = updatedObjectRefs
         setObjectReferences(updatedObjectRefs)
       }
@@ -3365,7 +3383,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.error('[handleCreateReference] Error saving reference:', error)
       }
     },
-    [persistObjectLibrary, sceneReferences, objectReferences]
+    [persistObjectLibrary, project?.id]
   )
 
   const handleRemoveReference = useCallback(
@@ -3528,9 +3546,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   // Handler for when a backdrop is generated via AI
-  // Uses refs to avoid stale closure issues during batch generation
+  // Updates ref synchronously outside setState so React 18 deferred updaters cannot lag behind DB save
   const handleBackdropGenerated = useCallback(
     async (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode?: string }) => {
+      if (!reference.imageUrl) return
       const newReference: VisualReference = {
         id: crypto.randomUUID(),
         type: 'scene',
@@ -3540,15 +3559,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         createdAt: new Date().toISOString(),
       }
 
-      // Use functional update to get CURRENT state (not stale closure)
-      setSceneReferences(prev => {
-        const updatedSceneRefs = [...prev, newReference]
-        // Update ref immediately for database save
-        sceneReferencesRef.current = updatedSceneRefs
-        return updatedSceneRefs
-      })
+      const updatedSceneRefs = [...sceneReferencesRef.current, newReference]
+      sceneReferencesRef.current = updatedSceneRefs
+      setSceneReferences(updatedSceneRefs)
 
-      // Save to database using refs for current state
       try {
         const response = await persistObjectLibrary(objectReferencesRef.current, {
           objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
@@ -3566,7 +3580,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   // Handler for when an object reference is generated via AI
-  // Uses refs to avoid stale closure issues during batch generation
+  // Updates ref synchronously outside setState so React 18 deferred updaters cannot lag behind DB save
   const handleObjectGenerated = useCallback(
     async (object: { 
       name: string; 
@@ -3577,13 +3591,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       generationPrompt: string;
       aiGenerated: boolean;
     }) => {
+      if (!object.imageUrl) return
+
       const existingMatch = objectReferencesRef.current.find((row) =>
         objectNamesMatch(row.name, object.name)
       )
+      let updatedObjectRefs: VisualReference[]
       if (existingMatch) {
-        if (existingMatch.imageUrl || !object.imageUrl) return
         const updatedAt = new Date().toISOString()
-        const updatedObjectRefs = updateObjectReferenceInList(
+        updatedObjectRefs = updateObjectReferenceInList(
           objectReferencesRef.current,
           existingMatch.id,
           {
@@ -3594,8 +3610,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             updatedAt,
           }
         )
-        objectReferencesRef.current = updatedObjectRefs
-        setObjectReferences(updatedObjectRefs)
       } else {
         const newReference: VisualReference = {
           id: crypto.randomUUID(),
@@ -3609,23 +3623,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           generationPrompt: object.generationPrompt,
           aiGenerated: object.aiGenerated,
         }
-
-        // Use functional update to get CURRENT state (not stale closure)
-        // This fixes the batch generation issue where images were being overwritten
-        setObjectReferences(prev => {
-          if (prev.some((row) => objectNamesMatch(row.name, object.name))) {
-            objectReferencesRef.current = prev
-            return prev
-          }
-          const updatedObjectRefs = [...prev, newReference]
-          objectReferencesRef.current = updatedObjectRefs
-          return updatedObjectRefs
-        })
+        updatedObjectRefs = [...objectReferencesRef.current, newReference]
       }
 
-      // Save to database using refs for current state
+      objectReferencesRef.current = updatedObjectRefs
+      setObjectReferences(updatedObjectRefs)
+
       try {
-        const response = await persistObjectLibrary(objectReferencesRef.current, {
+        const response = await persistObjectLibrary(updatedObjectRefs, {
           objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
           debugLabel: 'handleObjectGenerated',
         })
@@ -8244,32 +8249,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle quality setting change
   const handleQualityChange = async (quality: 'max' | 'auto') => {
     setImageQuality(quality)
-    
-    // Update project metadata
-    if (project) {
+
+    const currentProject = projectRef.current || project
+    if (currentProject) {
       const updatedProject = {
-        ...project,
+        ...currentProject,
         metadata: {
-          ...(projectRef.current || project).metadata,
+          ...currentProject.metadata,
           imageQuality: quality,
-          visionPhase: {
-            ...(projectRef.current || project)?.metadata?.visionPhase,
-            script: scriptRef.current || script,
-            characters: characters,
-            scenes: scenes,
-            narrationVoice: narrationVoice,
-            descriptionVoice: descriptionVoice
-          }
-        }
+        },
       }
+      projectRef.current = updatedProject
       setProject(updatedProject)
-      
-      // Save to database
+
       try {
-        console.log('[REVERSION-DEBUG][Quality] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-        await serializedProjectSave({
-            metadata: updatedProject.metadata
-          }, 'handleQualityChange')
+        await serializedProjectSave(
+          { metadata: { imageQuality: quality } },
+          'handleQualityChange'
+        )
         console.log(`[Quality] Updated to ${quality} quality`)
       } catch (error) {
         console.error('[Quality] Failed to save quality setting:', error)
@@ -8281,41 +8278,43 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleNarrationVoiceChange = async (voiceConfig: VoiceConfig) => {
     console.log('[Narration Voice] Setting narration voice:', voiceConfig)
     setNarrationVoice(voiceConfig)
-    
-    // Sync to narrator character (single source of truth)
-    const narratorIndex = characters.findIndex(c => c.type === 'narrator')
-    let updatedCharacters = characters
+
+    const sourceCharacters = charactersRef.current
+    const narratorIndex = sourceCharacters.findIndex(c => c.type === 'narrator')
+    let updatedCharacters = sourceCharacters
     if (narratorIndex >= 0) {
-      updatedCharacters = characters.map((c, i) => 
+      updatedCharacters = sourceCharacters.map((c, i) =>
         i === narratorIndex ? { ...c, voiceConfig } : c
       )
+      charactersRef.current = updatedCharacters
       setCharacters(updatedCharacters)
       console.log('[Narration Voice] Synced to narrator character')
     }
-    
-    if (project) {
+
+    const currentProject = projectRef.current || project
+    if (currentProject) {
       const updatedProject = {
-        ...project,
+        ...currentProject,
         metadata: {
-          ...(projectRef.current || project).metadata,
+          ...currentProject.metadata,
           visionPhase: {
-            ...(projectRef.current || project)?.metadata?.visionPhase,
+            ...currentProject.metadata?.visionPhase,
             narrationVoice: voiceConfig,
             characters: updatedCharacters,
-            script: scriptRef.current || script,
-            scenes: scenes,
-            descriptionVoice: descriptionVoice
-          }
-        }
+          },
+        },
       }
+      projectRef.current = updatedProject
       setProject(updatedProject)
-      
-      // Save to database
+
       try {
-        console.log('[REVERSION-DEBUG][NarrationVoice] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-        await serializedProjectSave({
-            metadata: updatedProject.metadata
-          }, 'handleNarrationVoiceChange')
+        await serializedProjectSave(
+          visionPhasePut({
+            narrationVoice: voiceConfig,
+            ...(narratorIndex >= 0 ? { characters: updatedCharacters } : {}),
+          }),
+          'handleNarrationVoiceChange'
+        )
         console.log('[Narration Voice] Updated narration voice:', voiceConfig)
       } catch (error) {
         console.error('[Narration Voice] Failed to save narration voice:', error)
@@ -8370,41 +8369,51 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setDescriptionVoice(voiceConfig)
     }
     
-    if (project) {
+    const currentProject = projectRef.current || project
+    if (currentProject) {
       const updatedProject = {
-        ...project,
+        ...currentProject,
         metadata: {
-          ...(projectRef.current || project).metadata,
+          ...currentProject.metadata,
           visionPhase: {
-            ...(projectRef.current || project)?.metadata?.visionPhase,
+            ...currentProject.metadata?.visionPhase,
             characters: updatedCharacters,
-            script: scriptRef.current || script,
-            scenes: scenes,
-            narrationVoice: updatedCharacter.type === 'narrator' ? voiceConfig : narrationVoice,
-            descriptionVoice: updatedCharacter.type === 'description' ? voiceConfig : descriptionVoice
-          }
-        }
+            narrationVoice:
+              updatedCharacter.type === 'narrator' ? voiceConfig : narrationVoice,
+            descriptionVoice:
+              updatedCharacter.type === 'description' ? voiceConfig : descriptionVoice,
+          },
+        },
       }
+      projectRef.current = updatedProject
       setProject(updatedProject)
-      
-      // Save to database
+
+      // Save to database via delta PUT so unrelated slices are untouched
       try {
-        console.log('[REVERSION-DEBUG][CharacterVoice] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-        await serializedProjectSave({
-            metadata: updatedProject.metadata
-          }, 'handleUpdateCharacterVoice')
+        const response = await serializedProjectSave(
+          visionPhasePut({
+            characters: updatedCharacters,
+            ...(updatedCharacter.type === 'narrator'
+              ? { narrationVoice: voiceConfig }
+              : {}),
+            ...(updatedCharacter.type === 'description'
+              ? { descriptionVoice: voiceConfig }
+              : {}),
+          }),
+          'handleUpdateCharacterVoice'
+        )
+        if (!response.ok) throw new Error(`Save failed: ${response.status}`)
         console.log('[Character Voice] Updated character voice:', characterId, voiceConfig)
         
         if (!options?.quiet) {
           try { 
             const { toast } = require('sonner')
-            const char = updatedCharacters.find(c => c.id === characterId)
+            const char = updatedCharacters[characterIndex]
             toast.success(`Voice assigned to ${char?.name || 'character'}: ${voiceConfig.voiceName}`)
           } catch {}
         }
       } catch (error) {
         console.error('[Character Voice] Failed to save character voice:', error)
-        // Add error toast
         try { 
           const { toast } = require('sonner')
           toast.error('Failed to save voice assignment')
@@ -8418,7 +8427,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     lang: string,
     edgeVoiceConfig: { voiceId: string; voiceName: string } | null
   ) => {
-    const characterIndex = characters.findIndex((c) => c.id === characterId)
+    const sourceCharacters = charactersRef.current
+    const characterIndex = sourceCharacters.findIndex(
+      (c, idx) => resolveCharacterId(c, idx) === characterId
+    )
     if (characterIndex === -1) {
       try {
         const { toast } = require('sonner')
@@ -8429,7 +8441,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     const normalizedLang = (lang || 'en').trim().toLowerCase().split('-')[0] || 'en'
 
-    const updatedCharacters = characters.map((char, idx) => {
+    const updatedCharacters = sourceCharacters.map((char, idx) => {
       if (idx !== characterIndex) return char
 
       const existingByLang = { ...(char.edgeVoiceConfigByLang || {}) }
@@ -8452,30 +8464,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return next
     })
 
-    setCharacters(updatedCharacters)
-
-    if (project) {
-      const updatedProject = {
-        ...project,
-        metadata: {
-          ...(projectRef.current || project).metadata,
-          visionPhase: {
-            ...(projectRef.current || project)?.metadata?.visionPhase,
-            characters: updatedCharacters,
-            script: scriptRef.current || script,
-            scenes: scenes,
-            narrationVoice,
-            descriptionVoice,
-          },
-        },
-      }
-      setProject(updatedProject)
-
+    if (projectRef.current || project) {
       try {
-        await serializedProjectSave(
-          { metadata: updatedProject.metadata },
+        const response = await persistVisionCharacters(
+          updatedCharacters,
           'handleUpdateCharacterEdgeVoice'
         )
+        if (!response.ok) throw new Error(`Save failed: ${response.status}`)
       } catch (error) {
         console.error('[Character Edge Voice] Failed to save:', error)
         try {
@@ -8483,46 +8478,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           toast.error('Failed to save Edge fallback voice')
         } catch {}
       }
+    } else {
+      charactersRef.current = updatedCharacters
+      setCharacters(updatedCharacters)
     }
   }
   
   // Handle character appearance description update
   const handleUpdateCharacterAppearance = async (characterId: string, newDescription: string) => {
     try {
-      // Update local state first
-      const updatedCharacters = characters.map(char => {
-        const charId = char.id || characters.indexOf(char).toString()
-        return charId === characterId 
-          ? { ...char, appearanceDescription: newDescription, imagePrompt: null }
-          : char
-      })
+      const updatedCharacters = updateCharacterInList(
+        charactersRef.current,
+        characterId,
+        (char) => ({ ...char, appearanceDescription: newDescription, imagePrompt: null })
+      )
 
-      charactersRef.current = updatedCharacters
-      setCharacters(updatedCharacters)
-      
-      // Save to database using existing projects API
-      if (project) {
-        console.log('[REVERSION-DEBUG][Appearance] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-        const response = await serializedProjectSave({
-            metadata: {
-              ...(projectRef.current || project).metadata,
-              visionPhase: {
-                ...(projectRef.current || project)?.metadata?.visionPhase,
-                characters: updatedCharacters,
-                script: scriptRef.current || script,
-                scenes: scenes,
-                narrationVoice: narrationVoice,
-                descriptionVoice: descriptionVoice
-              }
-            }
-          }, 'handleUpdateCharacterAppearance')
-        
+      if (projectRef.current || project) {
+        const response = await persistVisionCharacters(
+          updatedCharacters,
+          'handleUpdateCharacterAppearance'
+        )
         if (!response.ok) throw new Error('Failed to update appearance')
-        
-        try { 
+
+        try {
           const { toast } = require('sonner')
           toast.success('Appearance description updated')
         } catch {}
+      } else {
+        charactersRef.current = updatedCharacters
+        setCharacters(updatedCharacters)
       }
     } catch (error) {
       console.error('[Update Appearance] Error:', error)
@@ -8536,39 +8520,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle character name update
   const handleUpdateCharacterName = async (characterId: string, newName: string) => {
     try {
-      // Update local state first
-      const updatedCharacters = characters.map(char => {
-        const charId = char.id || characters.indexOf(char).toString()
-        return charId === characterId 
-          ? { ...char, name: newName }
-          : char
-      })
-      
-      setCharacters(updatedCharacters)
-      
-      // Save to database using existing projects API
-      if (project) {
-        console.log('[REVERSION-DEBUG][CharName] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-        const response = await serializedProjectSave({
-            metadata: {
-              ...(projectRef.current || project).metadata,
-              visionPhase: {
-                ...(projectRef.current || project)?.metadata?.visionPhase,
-                characters: updatedCharacters,
-                script: scriptRef.current || script,
-                scenes: scenes,
-                narrationVoice: narrationVoice,
-                descriptionVoice: descriptionVoice
-              }
-            }
-          }, 'handleUpdateCharacterName')
-        
+      const updatedCharacters = updateCharacterInList(
+        charactersRef.current,
+        characterId,
+        { name: newName }
+      )
+
+      if (projectRef.current || project) {
+        const response = await persistVisionCharacters(
+          updatedCharacters,
+          'handleUpdateCharacterName'
+        )
         if (!response.ok) throw new Error('Failed to update name')
-        
-        try { 
+
+        try {
           const { toast } = require('sonner')
           toast.success('Character name updated')
         } catch {}
+      } else {
+        charactersRef.current = updatedCharacters
+        setCharacters(updatedCharacters)
       }
     } catch (error) {
       console.error('[Update Name] Error:', error)
@@ -8582,39 +8553,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle character role update
   const handleUpdateCharacterRole = async (characterId: string, newRole: string) => {
     try {
-      // Update local state first
-      const updatedCharacters = characters.map(char => {
-        const charId = char.id || characters.indexOf(char).toString()
-        return charId === characterId 
-          ? { ...char, role: newRole }
-          : char
-      })
-      
-      setCharacters(updatedCharacters)
-      
-      // Save to database using existing projects API
-      if (project) {
-        console.log('[REVERSION-DEBUG][CharRole] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-        const response = await serializedProjectSave({
-            metadata: {
-              ...(projectRef.current || project).metadata,
-              visionPhase: {
-                ...(projectRef.current || project)?.metadata?.visionPhase,
-                characters: updatedCharacters,
-                script: scriptRef.current || script,
-                scenes: scenes,
-                narrationVoice: narrationVoice,
-                descriptionVoice: descriptionVoice
-              }
-            }
-          }, 'handleUpdateCharacterRole')
-        
+      const updatedCharacters = updateCharacterInList(
+        charactersRef.current,
+        characterId,
+        { role: newRole as Character['role'] }
+      )
+
+      if (projectRef.current || project) {
+        const response = await persistVisionCharacters(
+          updatedCharacters,
+          'handleUpdateCharacterRole'
+        )
         if (!response.ok) throw new Error('Failed to update role')
-        
-        try { 
+
+        try {
           const { toast } = require('sonner')
           toast.success('Character role updated')
         } catch {}
+      } else {
+        charactersRef.current = updatedCharacters
+        setCharacters(updatedCharacters)
       }
     } catch (error) {
       console.error('[Update Role] Error:', error)
@@ -8645,106 +8603,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }) => {
     const runUpdate = async () => {
       try {
-        const sourceCharacters = charactersRef.current
-        const updatedCharacters = sourceCharacters.map((char, index) => {
-          const charId = char.id || index.toString()
-          if (charId !== characterId) return char
-          
-          // Get or initialize wardrobes collection
-          let wardrobes: CharacterWardrobe[] = char.wardrobes || []
-          
-          // Migrate legacy wardrobe to collection if exists and collection is empty
-          // SKIP migration when adding a new wardrobe (action === 'add') to prevent
-          // creating a duplicate "Default Outfit" alongside the wardrobe being added
-          if (wardrobes.length === 0 && wardrobe.action !== 'add' && (char.defaultWardrobe || wardrobe.defaultWardrobe)) {
-            const legacyDescription = char.defaultWardrobe || wardrobe.defaultWardrobe || ''
-            const legacyAccessories = char.wardrobeAccessories || wardrobe.wardrobeAccessories || ''
-            if (legacyDescription) {
-              wardrobes = [{
-                id: `wardrobe-${Date.now()}`,
-                name: 'Default Outfit',
-                description: legacyDescription,
-                accessories: legacyAccessories,
-                isDefault: true,
-                createdAt: new Date().toISOString()
-              }]
-            }
-          }
-          
-          // Handle collection operations
-          if (wardrobe.action === 'add' && wardrobe.wardrobeName && wardrobe.defaultWardrobe) {
-            const newWardrobe: CharacterWardrobe = {
-              id: `wardrobe-${Date.now()}`,
-              name: wardrobe.wardrobeName,
-              description: wardrobe.defaultWardrobe,
-              accessories: wardrobe.wardrobeAccessories,
-              sceneNumbers: wardrobe.sceneNumbers,
-              appearanceNotes: wardrobe.appearanceNotes,
-              reason: wardrobe.reason,
-              isDefault: wardrobes.length === 0,
-              createdAt: new Date().toISOString()
-            }
-            wardrobes = [...wardrobes, newWardrobe]
-          } else if (wardrobe.action === 'update' && wardrobe.wardrobeId) {
-            wardrobes = wardrobes.map(w => 
-              w.id === wardrobe.wardrobeId 
-                ? { 
-                    ...w, 
-                    description: wardrobe.defaultWardrobe || w.description, 
-                    accessories: wardrobe.wardrobeAccessories || w.accessories,
-                    ...(wardrobe.previewImageUrl ? { previewImageUrl: wardrobe.previewImageUrl } : {}),
-                    ...(wardrobe.headshotUrl ? { headshotUrl: wardrobe.headshotUrl } : {}),
-                    ...(wardrobe.fullBodyUrl ? { fullBodyUrl: wardrobe.fullBodyUrl, needsImageRegen: false } : {}),
-                    ...(wardrobe.combinedCharacterRefUrl
-                      ? { combinedCharacterRefUrl: wardrobe.combinedCharacterRefUrl }
-                      : wardrobe.fullBodyUrl || wardrobe.needsImageRegen === true
-                        ? { combinedCharacterRefUrl: undefined }
-                        : {}),
-                    ...(wardrobe.sceneNumbers ? { sceneNumbers: wardrobe.sceneNumbers } : {}),
-                    ...(wardrobe.appearanceNotes !== undefined ? { appearanceNotes: wardrobe.appearanceNotes } : {}),
-                    ...(wardrobe.reason ? { reason: wardrobe.reason } : {}),
-                    ...(wardrobe.needsImageRegen !== undefined
-                      ? { needsImageRegen: wardrobe.needsImageRegen }
-                      : {}),
-                    ...(wardrobe.generationPrompt !== undefined
-                      ? { generationPrompt: wardrobe.generationPrompt }
-                      : {}),
-                  }
-                : w
-            )
-          } else if (wardrobe.action === 'delete' && wardrobe.wardrobeId) {
-            wardrobes = wardrobes.filter(w => w.id !== wardrobe.wardrobeId)
-          } else if (!wardrobe.action) {
-            const firstWardrobe = wardrobes[0]
-            if (firstWardrobe) {
-              wardrobes = wardrobes.map((w, idx) =>
-                idx === 0
-                  ? { ...w, description: wardrobe.defaultWardrobe || w.description, accessories: wardrobe.wardrobeAccessories || w.accessories }
-                  : w
-              )
-            } else if (wardrobe.defaultWardrobe) {
-              wardrobes = [{
-                id: `wardrobe-${Date.now()}`,
-                name: 'Default Outfit',
-                description: wardrobe.defaultWardrobe,
-                accessories: wardrobe.wardrobeAccessories,
-                isDefault: true,
-                createdAt: new Date().toISOString()
-              }]
-            }
-          }
-          
-          const firstWardrobe = wardrobes[0]
-          
-          return { 
-            ...char, 
-            wardrobes,
-            defaultWardrobe: firstWardrobe?.description,
-            wardrobeAccessories: firstWardrobe?.accessories
-          }
-        })
-        
-        if (project) {
+        const updatedCharacters = applyCharacterWardrobeMutation(
+          charactersRef.current,
+          characterId,
+          wardrobe
+        )
+
+        if (projectRef.current || project) {
           const response = await persistVisionCharacters(
             updatedCharacters,
             'handleUpdateCharacterWardrobe'
@@ -8767,8 +8632,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     const queues = wardrobePersistQueuesRef.current
     const prev = queues.get(characterId) || Promise.resolve()
-    const next = prev.then(runUpdate).catch(() => {})
-    queues.set(characterId, next)
+    const next = prev.catch(() => {}).then(runUpdate)
+    queues.set(characterId, next.catch(() => {}))
     return next
   }
   
@@ -8782,70 +8647,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     reason: string;
   }>) => {
     try {
-      const updatedCharacters = characters.map(char => {
-        const charId = char.id || characters.indexOf(char).toString()
-        if (charId !== characterId) return char
-        
-        // Create wardrobe collection from AI suggestions
-        const newWardrobes: CharacterWardrobe[] = wardrobes.map((w, idx) => ({
-          id: `wardrobe-${Date.now()}-${idx}`,
-          name: w.name,
-          description: w.description,
-          accessories: w.accessories,
-          sceneNumbers: w.sceneNumbers,
-          appearanceNotes: w.appearanceNotes,
-          reason: w.reason,
-          isDefault: idx === 0, // First wardrobe is default
-          createdAt: new Date().toISOString()
-        }))
-        
-        // Get default wardrobe for legacy fields
-        const firstWardrobe = newWardrobes[0]
-        
-        return { 
-          ...char, 
-          wardrobes: newWardrobes,
-          // Keep legacy fields in sync for backwards compatibility
-          defaultWardrobe: firstWardrobe?.description,
-          wardrobeAccessories: firstWardrobe?.accessories
-        }
-      })
-      
-      setCharacters(updatedCharacters)
-      
-      // Save to database
-      if (project) {
-        const updatedVisionPhase = {
-          ...(projectRef.current || project)?.metadata?.visionPhase,
-          characters: updatedCharacters,
-          script: scriptRef.current || script,
-          scenes: scenes,
-          narrationVoice: narrationVoice,
-          descriptionVoice: descriptionVoice
-        }
-        
-        const updatedMetadata = {
-          ...(projectRef.current || project).metadata,
-          visionPhase: updatedVisionPhase
-        }
-        
-        console.log('[REVERSION-DEBUG][BatchWardrobe] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
-        const response = await serializedProjectSave({
-            metadata: updatedMetadata
-          }, 'handleBatchUpdateWardrobes')
-        
+      const updatedCharacters = applyBatchWardrobeSuggestions(
+        charactersRef.current,
+        characterId,
+        wardrobes
+      )
+
+      if (projectRef.current || project) {
+        const response = await persistVisionCharacters(
+          updatedCharacters,
+          'handleBatchUpdateWardrobes'
+        )
         if (!response.ok) throw new Error('Failed to batch update wardrobes')
-        
-        setProject({
-          ...project,
-          metadata: updatedMetadata
-        })
-        
-        const charName = updatedCharacters.find(c => (c.id || characters.indexOf(c).toString()) === characterId)?.name || characterId
+
+        const charName =
+          updatedCharacters.find(
+            (c, idx) => resolveCharacterId(c, idx) === characterId
+          )?.name || characterId
         console.log('[Vision] Character wardrobes batch updated:', charName, wardrobes.length, 'outfits')
         toast.success(`Updated ${charName}'s wardrobes`, {
           description: `${wardrobes.length} outfit${wardrobes.length > 1 ? 's' : ''} assigned to scenes`
         })
+      } else {
+        charactersRef.current = updatedCharacters
+        setCharacters(updatedCharacters)
       }
     } catch (error) {
       console.error('[Batch Update Wardrobes] Error:', error)
@@ -9011,14 +8836,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           locationReferences: locationReferencesRef.current,
         })
 
+        charactersRef.current = hydrated.characters
         setCharacters(hydrated.characters)
         if (hydrated.script) {
-          setScript(sanitizeScriptDialogueLines(hydrated.script))
+          const sanitizedHydratedScript = sanitizeScriptDialogueLines(hydrated.script)
+          scriptRef.current = sanitizedHydratedScript
+          setScript(sanitizedHydratedScript)
         }
         setScenes(hydrated.scenes)
+        sceneReferencesRef.current = hydrated.sceneReferences
+        objectReferencesRef.current = hydrated.objectReferences
+        locationReferencesRef.current = hydrated.locationReferences
         setSceneReferences(hydrated.sceneReferences)
         setObjectReferences(hydrated.objectReferences)
         setLocationReferences(hydrated.locationReferences)
+
+        // Update server baseline from the full server snapshot so Phase 2 & subsequent
+        // delta PUTs compare against real URLs rather than Phase 1 'deferred' sentinels.
+        saveBaselineRef.current = captureSaveBaselineFromMetadata(fullProj.metadata)
 
         const hydratedProject = { ...fullProj, metadata: hydrated.projectMetadata }
         setProject(hydratedProject)
@@ -9137,10 +8972,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (Array.isArray(nextCharacters)) {
         charactersRef.current = nextCharacters
         setCharacters(nextCharacters)
+        saveBaselineRef.current.visionKeyDigests.set(
+          'characters',
+          fastJsonFingerprint(nextCharacters)
+        )
       }
 
       const references = visionPhase.references
       if (references) {
+        if (Array.isArray(references.sceneReferences)) {
+          sceneReferencesRef.current = references.sceneReferences
+          setSceneReferences(references.sceneReferences)
+        }
         if (Array.isArray(references.locationReferences)) {
           locationReferencesRef.current = references.locationReferences
           setLocationReferences(references.locationReferences)
@@ -9156,6 +8999,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         objectTombstoneIdsRef.current = mergeDroppedObjectReferenceIds(
           objectTombstoneIdsRef.current,
           references.droppedObjectReferenceIds
+        )
+        saveBaselineRef.current.visionKeyDigests.set(
+          'references',
+          fastJsonFingerprint(references)
         )
       }
 
@@ -11756,11 +11603,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             throw new Error(`Failed to save: ${saveResponse.status}`)
           }
           
-          console.log('[Character Upload] Save successful, reloading project...')
-        
-        // Reload project to ensure fresh character data is available for scene generation
-        await loadProject()
-        console.log('[Character Upload] Project reloaded successfully')
+          console.log('[Character Upload] Save successful')
         } catch (saveError) {
           console.error('Failed to save uploaded character to project:', saveError)
           try { const { toast } = require('sonner'); toast.error('Failed to save character image') } catch {}
@@ -12024,47 +11867,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Handler for saving edited scene images from ImageEditModal
   const handleSaveEditedScene = async (sceneIndex: number, newImageUrl: string) => {
-    if (!script?.script?.scenes) return
-    
-    console.log('[handleSaveEditedScene] Saving edited scene:', { sceneIndex, newImageUrl: newImageUrl.substring(0, 80) })
-    
-    const updatedScenes = script.script.scenes.map((s: any, idx: number) => 
-      idx === sceneIndex 
-        ? applyEstablishingImageToScene(s, newImageUrl)
-        : s
+    const sourceScenes = scriptRef.current?.script?.scenes ?? script?.script?.scenes
+    if (!Array.isArray(sourceScenes)) return
+
+    console.log('[handleSaveEditedScene] Saving edited scene:', {
+      sceneIndex,
+      newImageUrl: newImageUrl.substring(0, 80),
+    })
+
+    const updatedScenes = sourceScenes.map((s: any, idx: number) =>
+      idx === sceneIndex ? applyEstablishingImageToScene(s, newImageUrl) : s
     )
-    
-    // Update script state
-    setScript((prev: any) => ({
-      ...prev,
-      script: {
-        ...prev?.script,
-        scenes: updatedScenes
-      }
-    }))
-    
-    // Persist to database
+
     try {
-      const currentMetadata = (projectRef.current || project)?.metadata || {}
-      const currentVisionPhase = currentMetadata.visionPhase || {}
-      const currentScript = scriptRef.current || script
-      
-      await serializedProjectSave({
-        metadata: {
-          ...currentMetadata,
-          visionPhase: {
-            ...currentVisionPhase,
-            script: {
-              ...currentScript,
-              script: {
-                ...currentScript.script,
-                scenes: updatedScenes
-              }
-            },
-            characters: characters
-          }
-        }
-      }, 'handleSaveEditedScene')
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleSaveEditedScene')
+      if (!saved) throw new Error('Failed to persist edited scene')
       console.log('[handleSaveEditedScene] Successfully saved to database')
       try { const { toast } = require('sonner'); toast.success('Scene image updated') } catch {}
     } catch (saveError) {
@@ -12074,7 +11891,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleAddToReferenceLibrary = async (imageUrl: string, name: string, sceneNumber: number) => {
-    // Add the scene frame to the scene references library
     const newReference: VisualReference = {
       id: crypto.randomUUID(),
       type: 'scene',
@@ -12083,92 +11899,72 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       imageUrl,
       createdAt: new Date().toISOString(),
     }
-    const updatedSceneRefs = [...sceneReferences, newReference]
+    const updatedSceneRefs = [...sceneReferencesRef.current, newReference]
+    sceneReferencesRef.current = updatedSceneRefs
     setSceneReferences(updatedSceneRefs)
-    
-    // Save to database (delta PUT — references slice only)
+
     try {
-      await serializedProjectSave(
-        visionPhasePut({
-          references: {
-            sceneReferences: updatedSceneRefs,
-            objectReferences,
-          },
-        }),
-        'handleAddToReferenceLibrary'
-      )
+      const response = await persistObjectLibrary(objectReferencesRef.current, {
+        objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+        debugLabel: 'handleAddToReferenceLibrary',
+      })
+      if (!response.ok) throw new Error(`Save failed: ${response.status}`)
+      try { const { toast } = require('sonner'); toast.success(`Added "${name}" to Reference Library`) } catch {}
     } catch (error) {
       console.error('[handleAddToReferenceLibrary] Error saving:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to add reference to library') } catch {}
     }
-    
-    // Show success toast
-    try { const { toast } = require('sonner'); toast.success(`Added "${name}" to Reference Library`) } catch {}
   }
 
-  const handleUpdateCharacterAttributes = async (characterId: string, attributes: any) => {
+  const handleUpdateCharacterAttributes = async (
+    characterId: string,
+    attributes: any,
+    options?: { quiet?: boolean }
+  ) => {
     try {
       console.log('[Vision] Updating character attributes:', characterId, attributes)
-      
-      // Find character name from characterId
-      const char = characters.find((c, i) => (c.id || i.toString()) === characterId)
-      const characterName = char?.name || attributes.name
-      
-      if (!characterName) {
-        throw new Error('Character name not found')
-      }
-      
-      // Update local state
-      setCharacters(prevChars => 
-        prevChars.map(char => {
-          const id = char.id || characters.indexOf(char).toString()
-          if (id === characterId) {
-            return {
-              ...char,
-              ...attributes,
-              // Preserve existing fields
-              name: char.name,
-              role: char.role || attributes.role,
-              description: char.description,
-              referenceImage: char.referenceImage
-            }
-          }
-          return char
-        })
+
+      const sourceCharacters = charactersRef.current
+      const updatedCharacters = updateCharacterAttributesInList(
+        sourceCharacters,
+        characterId,
+        attributes || {}
       )
-      
-      // Save to database with correct format
-      const res = await fetch('/api/character/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          characterName,  // ← Separate parameter
-          attributes: {
-            ...attributes,
-            // Remove name from attributes (it's a separate param)
-            name: undefined
-          }
-        })
-      })
-      
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Failed to save character attributes')
+
+      if (updatedCharacters === sourceCharacters) {
+        throw new Error(`Character not found: ${characterId}`)
       }
-      
+
+      if (projectRef.current || project) {
+        const res = await persistVisionCharacters(
+          updatedCharacters,
+          'handleUpdateCharacterAttributes'
+        )
+        if (!res.ok) {
+          const error = await res.json().catch(() => ({}))
+          throw new Error(error.error || 'Failed to save character attributes')
+        }
+      } else {
+        charactersRef.current = updatedCharacters
+        setCharacters(updatedCharacters)
+      }
+
       console.log('[Vision] Character attributes saved successfully')
-      
-      // Show success toast
-      try {
-        const { toast } = require('sonner')
-        toast.success('Character attributes saved!')
-      } catch {}
+
+      if (!options?.quiet) {
+        try {
+          const { toast } = require('sonner')
+          toast.success('Character attributes saved!')
+        } catch {}
+      }
     } catch (error) {
       console.error('[Vision] Error updating character:', error)
-      try {
-        const { toast } = require('sonner')
-        toast.error('Failed to save character attributes')
-      } catch {}
+      if (!options?.quiet) {
+        try {
+          const { toast } = require('sonner')
+          toast.error('Failed to save character attributes')
+        } catch {}
+      }
     }
   }
 
@@ -12493,7 +12289,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
    * Uses intelligent prompt builder based on scene direction data
    */
   const handleGenerateSceneReferenceImage = async (sceneIdx: number) => {
-    const scene = script?.script?.scenes?.[sceneIdx]
+    const initialScript = scriptRef.current ?? script
+    const scene = initialScript?.script?.scenes?.[sceneIdx]
     if (!scene) {
       try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
       return
@@ -12521,7 +12318,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     try {
       // Build intelligent prompt using scene direction
-      const promptResult = buildSceneReferencePrompt(scene, objectReferences)
+      const promptResult = buildSceneReferencePrompt(
+        scene,
+        objectReferencesRef.current || objectReferences
+      )
       console.log('[handleGenerateSceneReferenceImage] Built prompt:', promptResult)
       
       // Make API call with the intelligent prompt
@@ -12551,20 +12351,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // NOTE: Only set sceneReferenceImageUrl - NOT imageUrl (storyboard image)
       // Scene references are environment-only shots without actors
       if (data.imageUrl) {
-        const updatedScenes = [...(script?.script?.scenes || [])]
+        const latestScript = scriptRef.current ?? script
+        const updatedScenes = [...(latestScript?.script?.scenes || [])]
         updatedScenes[sceneIdx] = {
           ...updatedScenes[sceneIdx],
           sceneReferenceImageUrl: data.imageUrl
         }
         
         const updatedScript = {
-          ...script,
+          ...latestScript,
           script: {
-            ...script?.script,
+            ...latestScript?.script,
             scenes: updatedScenes
           }
         }
         
+        scriptRef.current = updatedScript
         setScript(updatedScript)
         
         // Persist changed scene via delta save queue so scene references survive refresh
@@ -12615,9 +12417,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
-   * Upload a scene reference image
-   */
-  /**
    * Upload a scene reference image (environment-only, no actors)
    * NOTE: Only updates sceneReferenceImageUrl - NOT imageUrl (storyboard image)
    */
@@ -12625,20 +12424,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       const uploadedUrl = await uploadAssetViaAPI(file, projectId)
       
-      const updatedScenes = [...(script?.script?.scenes || [])]
+      const latestScript = scriptRef.current ?? script
+      const updatedScenes = [...(latestScript?.script?.scenes || [])]
       updatedScenes[sceneIdx] = {
         ...updatedScenes[sceneIdx],
         sceneReferenceImageUrl: uploadedUrl
       }
       
       const updatedScript = {
-        ...script,
+        ...latestScript,
         script: {
-          ...script?.script,
+          ...latestScript?.script,
           scenes: updatedScenes
         }
       }
       
+      scriptRef.current = updatedScript
       setScript(updatedScript)
       
       // Persist changed scene via delta save queue so uploaded references survive refresh
@@ -12734,6 +12535,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const upsertLocationInList = (
+    list: LocationReference[],
+    nextLoc: LocationReference
+  ): LocationReference[] =>
+    list.some((ref) => ref.id === nextLoc.id)
+      ? list.map((ref) => (ref.id === nextLoc.id ? nextLoc : ref))
+      : [...list, nextLoc]
+
   /**
    * Pin a storyboard image as a location reference for visual consistency
    * across scenes at the same location.
@@ -12745,8 +12554,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
     
+    const currentLocations = locationReferencesRef.current
     // Check if this location is already pinned
-    const existingRef = locationReferences.find(ref => ref.location === location)
+    const existingRef = currentLocations.find(ref => ref.location === location)
     if (existingRef) {
       try { const { toast } = require('sonner'); toast.info(`${location} already has a location reference`) } catch {}
       return
@@ -12762,9 +12572,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       pinnedAt: new Date().toISOString()
     }
     
-    const updatedLocationRefs = [...locationReferences, newLocationRef]
-    setLocationReferences(updatedLocationRefs)
+    const updatedLocationRefs = [...currentLocations, newLocationRef]
     locationReferencesRef.current = updatedLocationRefs
+    setLocationReferences(updatedLocationRefs)
     
     // Persist to project metadata
     try {
@@ -12773,7 +12583,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (error) {
       console.error('[handlePinAsLocationReference] Failed to save:', error)
       // Revert on error
-      setLocationReferences(locationReferences)
+      locationReferencesRef.current = currentLocations
+      setLocationReferences(currentLocations)
       try { const { toast } = require('sonner'); toast.error('Failed to save location reference') } catch {}
     }
   }
@@ -12782,10 +12593,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
    * Remove a location reference
    */
   const handleRemoveLocationReference = async (locationId: string) => {
-    const refToRemove = locationReferences.find(ref => ref.id === locationId)
-    const updatedLocationRefs = locationReferences.filter(ref => ref.id !== locationId)
-    setLocationReferences(updatedLocationRefs)
+    const currentLocations = locationReferencesRef.current
+    const refToRemove = currentLocations.find(ref => ref.id === locationId)
+    const updatedLocationRefs = currentLocations.filter(ref => ref.id !== locationId)
     locationReferencesRef.current = updatedLocationRefs
+    setLocationReferences(updatedLocationRefs)
     
     // Persist to project metadata
     try {
@@ -12794,7 +12606,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (error) {
       console.error('[handleRemoveLocationReference] Failed to save:', error)
       // Revert on error
-      setLocationReferences(locationReferences)
+      locationReferencesRef.current = currentLocations
+      setLocationReferences(currentLocations)
       try { const { toast } = require('sonner'); toast.error('Failed to remove location reference') } catch {}
     }
   }
@@ -12803,16 +12616,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
    * Batch update all location references (used by LocationLibrary for auto-extraction)
    */
   const handleUpdateLocationReferences = async (updatedLocations: LocationReference[]) => {
-    const prevLocations = locationReferences
-    setLocationReferences(updatedLocations)
+    const prevLocations = locationReferencesRef.current
     locationReferencesRef.current = updatedLocations
+    setLocationReferences(updatedLocations)
     
     try {
       await persistLocationReferences(updatedLocations)
     } catch (error) {
       console.error('[handleUpdateLocationReferences] Failed to save:', error)
-      setLocationReferences(prevLocations)
       locationReferencesRef.current = prevLocations
+      setLocationReferences(prevLocations)
       try { const { toast } = require('sonner'); toast.error('Failed to save location references') } catch {}
     }
   }
@@ -12880,12 +12693,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         generationPrompt: verResult.prompt,
         needsImageRegen: false,
       })
-      const currentList = locationReferencesRef.current || locationReferences
-      const nextList = currentList.map((ref) =>
-        ref.id === workingLocation.id ? workingLocation : ref
+      const nextList = upsertLocationInList(
+        locationReferencesRef.current || locationReferences,
+        workingLocation
       )
-      setLocationReferences(nextList)
       locationReferencesRef.current = nextList
+      setLocationReferences(nextList)
     }
 
     return workingLocation
@@ -12960,18 +12773,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       const result = await response.json()
+      const latestBase =
+        (locationReferencesRef.current || []).find((ref) => ref.id === location.id) || location
       
       let nextLoc = withStaleVersionsAfterBaseChange({
-        ...location,
+        ...latestBase,
         imageUrl: result.imageUrl,
         generationPrompt: result.prompt,
         description,
       })
-      let updatedLocations = (locationReferencesRef.current || locationReferences).map(ref =>
-        ref.id === location.id ? nextLoc : ref
+      let updatedLocations = upsertLocationInList(
+        locationReferencesRef.current || locationReferences,
+        nextLoc
       )
-      setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations
+      setLocationReferences(updatedLocations)
 
       // Sequentially cascade any connected set versions on top of the new Base image
       nextLoc = await cascadeLocationVersionsSequentially(nextLoc, {
@@ -12979,11 +12795,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         catalogPropNames,
         startChronologicalIndex: 0,
       })
-      updatedLocations = (locationReferencesRef.current || locationReferences).map(ref =>
-        ref.id === location.id ? nextLoc : ref
+      updatedLocations = upsertLocationInList(
+        locationReferencesRef.current || locationReferences,
+        nextLoc
       )
-      setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations
+      setLocationReferences(updatedLocations)
       
       patchAgentRun(runId, { subtitle: 'Saving location reference...', progressPct: 95 })
       // Persist
@@ -13118,12 +12935,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const result = await response.json()
+      const latestInRef = (locationReferencesRef.current || []).find(
+        (ref) => ref.id === location.id
+      )
+      const baseForPatch =
+        version && !latestInRef?.versions?.some((entry) => entry.id === version.id)
+          ? location
+          : latestInRef || location
 
       let nextLoc: LocationReference
       let startCascadeIdx = 0
       if (version) {
         nextLoc = withStaleDownstreamVersionsAfterVersionChange(
-          patchLocationVersion(location, version.id, {
+          patchLocationVersion(baseForPatch, version.id, {
             imageUrl: result.imageUrl,
             generationPrompt: result.prompt,
             needsImageRegen: false,
@@ -13133,7 +12957,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         startCascadeIdx = (versionAnchor?.chronologicalIndex ?? 0) + 1
       } else {
         nextLoc = withStaleVersionsAfterBaseChange({
-          ...location,
+          ...baseForPatch,
           imageUrl: result.imageUrl,
           generationPrompt: result.prompt,
           description,
@@ -13141,11 +12965,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         startCascadeIdx = 0
       }
 
-      let updatedLocations = (locationReferencesRef.current || locationReferences).map((ref) =>
-        ref.id === location.id ? nextLoc : ref
+      let updatedLocations = upsertLocationInList(
+        locationReferencesRef.current || locationReferences,
+        nextLoc
       )
-      setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations
+      setLocationReferences(updatedLocations)
 
       // Cascade any downstream connected set versions sequentially
       nextLoc = await cascadeLocationVersionsSequentially(nextLoc, {
@@ -13153,11 +12978,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         catalogPropNames,
         startChronologicalIndex: startCascadeIdx,
       })
-      updatedLocations = (locationReferencesRef.current || locationReferences).map((ref) =>
-        ref.id === location.id ? nextLoc : ref
+      updatedLocations = upsertLocationInList(
+        locationReferencesRef.current || locationReferences,
+        nextLoc
       )
-      setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations
+      setLocationReferences(updatedLocations)
 
       patchAgentRun(runId, { subtitle: 'Saving location reference...', progressPct: 95 })
       await persistLocationReferences(updatedLocations)
@@ -13177,7 +13003,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
    * Upload a location reference image
    */
   const handleUploadLocationImage = async (locationId: string, file: File) => {
-    const location = locationReferences.find(ref => ref.id === locationId)
+    const location =
+      (locationReferencesRef.current || locationReferences).find(ref => ref.id === locationId)
     if (!location) return
     
     try {
@@ -13185,14 +13012,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const imageUrl = await uploadAssetViaAPI(file, projectId)
       if (!imageUrl) throw new Error('Upload failed')
       
-      // Update location with the uploaded image
-      const updatedLocations = locationReferences.map(ref =>
-        ref.id === locationId
-          ? withStaleVersionsAfterBaseChange({ ...ref, imageUrl })
-          : ref
-      )
-      setLocationReferences(updatedLocations)
+      // Update location with the uploaded image using latest ref state
+      const latestLocations = locationReferencesRef.current || locationReferences
+      const updatedLocations = latestLocations.some(ref => ref.id === locationId)
+        ? latestLocations.map(ref =>
+            ref.id === locationId
+              ? withStaleVersionsAfterBaseChange({ ...ref, imageUrl })
+              : ref
+          )
+        : [...latestLocations, withStaleVersionsAfterBaseChange({ ...location, imageUrl })]
       locationReferencesRef.current = updatedLocations
+      setLocationReferences(updatedLocations)
       
       // Persist
       await persistLocationReferences(updatedLocations)
@@ -13276,8 +13106,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const result = await response.json()
+      const latestInRef = (locationReferencesRef.current || []).find(
+        (ref) => ref.id === location.id
+      )
+      const baseForPatch = latestInRef?.versions?.some((entry) => entry.id === startVersion.id)
+        ? latestInRef
+        : location
       let nextLoc = withStaleDownstreamVersionsAfterVersionChange(
-        patchLocationVersion(location, startVersion.id, {
+        patchLocationVersion(baseForPatch, startVersion.id, {
           imageUrl: result.imageUrl,
           generationPrompt: result.prompt,
           needsImageRegen: false,
@@ -13288,11 +13124,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (requestedIdx > startIdx) {
         nextLoc = patchLocationVersion(nextLoc, version.id, { needsImageRegen: true })
       }
-      let updatedLocations = (locationReferencesRef.current || locationReferences).map((ref) =>
-        ref.id === location.id ? nextLoc : ref
+      let updatedLocations = upsertLocationInList(
+        locationReferencesRef.current || locationReferences,
+        nextLoc
       )
-      setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations
+      setLocationReferences(updatedLocations)
 
       // Sequentially cascade all subsequent connected set versions in chronological order
       nextLoc = await cascadeLocationVersionsSequentially(nextLoc, {
@@ -13300,11 +13137,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         catalogPropNames,
         startChronologicalIndex: startIdx + 1,
       })
-      updatedLocations = (locationReferencesRef.current || locationReferences).map((ref) =>
-        ref.id === location.id ? nextLoc : ref
+      updatedLocations = upsertLocationInList(
+        locationReferencesRef.current || locationReferences,
+        nextLoc
       )
-      setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations
+      setLocationReferences(updatedLocations)
 
       patchAgentRun(runId, { subtitle: 'Saving location version...', progressPct: 95 })
       await persistLocationReferences(updatedLocations)
@@ -13336,6 +13174,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     const { location: nextLoc, version } = appendDirectedLocationVersion(loc, payload)
     const updatedLocations = latest.map((ref) => (ref.id === loc.id ? nextLoc : ref))
+    locationReferencesRef.current = updatedLocations
     setLocationReferences(updatedLocations)
     try {
       await persistLocationReferences(updatedLocations)
@@ -13437,23 +13276,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     versionId: string,
     file: File
   ) => {
-    const location = locationReferences.find((ref) => ref.id === locationId)
+    const location = (locationReferencesRef.current || locationReferences).find(
+      (ref) => ref.id === locationId
+    )
     if (!location) return
 
     try {
       const imageUrl = await uploadAssetViaAPI(file, projectId)
       if (!imageUrl) throw new Error('Upload failed')
 
-      const updatedLocations = locationReferences.map((ref) =>
-        ref.id === locationId
-          ? patchLocationVersion(ref, versionId, {
+      const latestLocations = locationReferencesRef.current || locationReferences
+      const updatedLocations = latestLocations.some((ref) => ref.id === locationId)
+        ? latestLocations.map((ref) =>
+            ref.id === locationId
+              ? patchLocationVersion(ref, versionId, {
+                  imageUrl,
+                  needsImageRegen: false,
+                })
+              : ref
+          )
+        : [
+            ...latestLocations,
+            patchLocationVersion(location, versionId, {
               imageUrl,
               needsImageRegen: false,
-            })
-          : ref
-      )
-      setLocationReferences(updatedLocations)
+            }),
+          ]
       locationReferencesRef.current = updatedLocations
+      setLocationReferences(updatedLocations)
       await persistLocationReferences(updatedLocations)
       try { const { toast } = require('sonner'); toast.success(`Uploaded version image for ${location.location}`) } catch {}
     } catch (error: any) {
@@ -13465,23 +13315,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   /**
    * Add scene reference to the Reference Library
    */
-  const handleAddSceneReferenceToLibrary = (sceneIdx: number, imageUrl: string, name: string) => {
-    handleCreateReference('scene', {
+  const handleAddSceneReferenceToLibrary = async (
+    sceneIdx: number,
+    imageUrl: string,
+    name: string
+  ) => {
+    const newRef: VisualReference = {
+      id: uuidv4(),
+      type: 'scene',
       name: `Scene ${sceneIdx + 1}: ${name}`,
       description: `Scene reference from Scene ${sceneIdx + 1}`,
-      file: null
-    }).then(() => {
-      // After creating the reference entry, update it with the imageUrl
-      const newRef: VisualReference = {
-        id: uuidv4(),
-        type: 'scene',
-        name: `Scene ${sceneIdx + 1}: ${name}`,
-        description: `Scene reference from Scene ${sceneIdx + 1}`,
-        imageUrl: imageUrl
+      imageUrl,
+      createdAt: new Date().toISOString(),
+    }
+    const updatedSceneRefs = [...sceneReferencesRef.current, newRef]
+    sceneReferencesRef.current = updatedSceneRefs
+    setSceneReferences(updatedSceneRefs)
+    try {
+      const response = await persistObjectLibrary(objectReferencesRef.current, {
+        objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+        debugLabel: 'handleAddSceneReferenceToLibrary',
+      })
+      if (!response.ok) {
+        throw new Error('Failed to save scene reference')
       }
-      setSceneReferences(prev => [...prev, newRef])
       try { const { toast } = require('sonner'); toast.success('Added to Reference Library') } catch {}
-    })
+    } catch (error) {
+      console.error('[handleAddSceneReferenceToLibrary] Failed to persist:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to save scene reference') } catch {}
+    }
   }
 
   /**

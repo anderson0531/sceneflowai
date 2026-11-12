@@ -43,12 +43,21 @@ export async function uploadCombinedCharacterRef(args: {
   }
 }
 
+export interface WardrobePersistenceSeed {
+  name?: string
+  description?: string
+  accessories?: string
+  appearanceNotes?: string
+}
+
 export async function persistCombinedCharacterRefUrl(args: {
   projectId: string
   characterId: string
   wardrobeId: string
   combinedCharacterRefUrl: string
   expectedFingerprint: string
+  fullBodyUrl?: string
+  wardrobeSeed?: WardrobePersistenceSeed
 }): Promise<boolean> {
   const { saved } = await persistReferenceImage({
     projectId: args.projectId,
@@ -56,7 +65,11 @@ export async function persistCombinedCharacterRefUrl(args: {
     targetId: args.characterId,
     wardrobeId: args.wardrobeId,
     expectedFingerprint: args.expectedFingerprint,
-    patch: { combinedCharacterRefUrl: args.combinedCharacterRefUrl },
+    wardrobeSeed: args.wardrobeSeed,
+    patch: {
+      ...(args.fullBodyUrl ? { fullBodyUrl: args.fullBodyUrl } : {}),
+      combinedCharacterRefUrl: args.combinedCharacterRefUrl,
+    },
   })
   return saved
 }
@@ -69,14 +82,35 @@ export async function composeUploadAndPersistCombinedCharacterRef(args: {
   wardrobeUrl: string
   expectedFingerprint: string
   label?: string
+  persistFullBodyUrl?: boolean
+  wardrobeSeed?: WardrobePersistenceSeed
 }): Promise<string | null> {
   const composite = await composeIdentityWardrobeDiptych({
     identityUrl: args.identityUrl,
     wardrobeUrl: args.wardrobeUrl,
     label: args.label,
   })
-  if (!composite) return null
-  return persistComposite(args, composite)
+  if (!composite) {
+    if (args.persistFullBodyUrl && args.wardrobeUrl) {
+      await persistReferenceImage({
+        projectId: args.projectId,
+        kind: 'cast',
+        targetId: args.characterId,
+        wardrobeId: args.wardrobeId,
+        expectedFingerprint: args.expectedFingerprint,
+        wardrobeSeed: args.wardrobeSeed,
+        patch: { fullBodyUrl: args.wardrobeUrl },
+      })
+    }
+    return null
+  }
+  return persistComposite(
+    {
+      ...args,
+      fullBodyUrl: args.persistFullBodyUrl ? args.wardrobeUrl : undefined,
+    },
+    composite
+  )
 }
 
 export async function composeUploadAndPersistCombinedCharacterRefFromDiptych(args: {
@@ -86,6 +120,7 @@ export async function composeUploadAndPersistCombinedCharacterRefFromDiptych(arg
   diptychUrl: string
   expectedFingerprint: string
   label?: string
+  wardrobeSeed?: WardrobePersistenceSeed
 }): Promise<string | null> {
   const composite = await composeIdentityWardrobePipFromDiptychUrl({
     diptychUrl: args.diptychUrl,
@@ -101,6 +136,8 @@ async function persistComposite(
     characterId: string
     wardrobeId: string
     expectedFingerprint: string
+    fullBodyUrl?: string
+    wardrobeSeed?: WardrobePersistenceSeed
   },
   composite: IdentityWardrobeDiptych
 ): Promise<string | null> {
@@ -110,7 +147,20 @@ async function persistComposite(
     characterId: args.characterId,
     wardrobeId: args.wardrobeId,
   })
-  if (!url) return null
+  if (!url) {
+    if (args.fullBodyUrl) {
+      await persistReferenceImage({
+        projectId: args.projectId,
+        kind: 'cast',
+        targetId: args.characterId,
+        wardrobeId: args.wardrobeId,
+        expectedFingerprint: args.expectedFingerprint,
+        wardrobeSeed: args.wardrobeSeed,
+        patch: { fullBodyUrl: args.fullBodyUrl },
+      })
+    }
+    return null
+  }
   const saved = await persistCombinedCharacterRefUrl({
     ...args,
     combinedCharacterRefUrl: url,
