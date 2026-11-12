@@ -1,3 +1,4 @@
+import type { PreserveElementInput } from '@/lib/audio/cleanupAudio'
 import {
   recommendationIsHighImpact,
   recommendationId,
@@ -5,15 +6,49 @@ import {
 } from '@/lib/script/audienceResonance/highImpact'
 import {
   isAbortError,
-  requestSceneShotDirection,
 } from '@/lib/vision/scriptInceptionFollowups'
+
+/**
+ * Default concurrent `/api/vision/revise-scene` requests for the Scene Director Agent.
+ * Balances ~3x wall-clock speedup on multi-scene scripts while staying within
+ * Vertex AI Gemini Pro per-minute quota.
+ */
+export const DEFAULT_SCENE_DIRECTOR_CONCURRENCY = 3
+export const MAX_SCENE_DIRECTOR_CONCURRENCY = 4
+
+export type SceneDirectorRevisionDepth = 'light' | 'moderate' | 'deep'
+
+async function sleepWithAbort(ms: number, signal?: AbortSignal): Promise<void> {
+  if (ms <= 0) return
+  if (signal?.aborted) {
+    throw new DOMException('Aborted', 'AbortError')
+  }
+  await new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    const onAbort = () => {
+      clearTimeout(timer)
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
+function isTransientRevisionStatus(status: number): boolean {
+  return status === 429 || status === 502 || status === 503 || status === 504
+}
 
 async function runWithConcurrencyLimit<T>(
   items: readonly T[],
   limit: number,
   worker: (item: T, index: number) => Promise<void>
 ): Promise<void> {
-  const concurrency = Math.max(1, Math.floor(limit) || 1)
+  const concurrency = Math.max(
+    1,
+    Math.min(MAX_SCENE_DIRECTOR_CONCURRENCY, Math.floor(limit) || 1)
+  )
   let nextIndex = 0
   const runners = Array.from(
     { length: Math.min(concurrency, items.length) },
@@ -66,6 +101,7 @@ export interface BatchSceneRevisionItem {
   revisedScene: any
   continuationScenes?: any[]
   appliedRecommendationIds: string[]
+  preserveElements?: PreserveElementInput[]
 }
 
 export type PreVisPrepPhase =
@@ -80,6 +116,8 @@ export interface PreVisPrepProgress {
   done: number
   total: number
   currentSceneNumber?: number
+  activeSceneNumbers?: number[]
+  progressPct?: number
   label: string
 }
 
@@ -88,8 +126,18 @@ export interface PreVisPrepResult {
   appliedRecommendationCount: number
   directedSceneCount: number
   totalShotsDirected: number
-  failedRevisions: Array<{ sceneNumber: number; error: string }>
+  failedRevisions: Array<{ sceneNumber: number; sceneIndex?: number; error: string }>
+  failedSceneIndices?: number[]
   failedDirections: Array<{ sceneNumber: number; error: string }>
+}
+
+export interface SelectedRecommendationsSummary {
+  selectedRecCount: number
+  selectedSceneCount: number
+  totalUnappliedCount: number
+  totalScenesWithUnappliedCount: number
+  selectedPointsDeducted: number
+  highImpactSelectedCount: number
 }
 
 /**
@@ -132,24 +180,38 @@ export function isRecommendationApplied(
 
 /**
  * Collect recommendation selection keys across all scenes in sceneAnalysis.
- * Defaults to selecting all unapplied recommendations (or high-impact only when requested).
+ * Defaults to selecting all unapplied recommendations (or filtered subset when requested).
  */
 export function collectInitialSelectedRecKeys(
   sceneAnalysis: SceneAnalysisForPreVis[],
   scriptScenes?: any[],
   options?: {
     highImpactOnly?: boolean
+    maxSceneScoreExclusive?: number
+    sceneIndicesFilter?: ReadonlySet<number>
     localAppliedKeys?: Set<string>
   }
 ): Set<string> {
   const selected = new Set<string>()
   const highImpactOnly = options?.highImpactOnly === true
+  const maxSceneScoreExclusive = options?.maxSceneScoreExclusive
+  const sceneIndicesFilter = options?.sceneIndicesFilter
   const localAppliedKeys = options?.localAppliedKeys
 
   if (!Array.isArray(sceneAnalysis)) return selected
 
   sceneAnalysis.forEach((scene, arrayIdx) => {
     const sceneIndex = resolveSceneAnalysisIndex(scene, arrayIdx)
+    if (sceneIndicesFilter && !sceneIndicesFilter.has(sceneIndex)) {
+      return
+    }
+    if (
+      typeof maxSceneScoreExclusive === 'number' &&
+      typeof scene?.score === 'number' &&
+      scene.score >= maxSceneScoreExclusive
+    ) {
+      return
+    }
     const recs = Array.isArray(scene?.recommendations) ? scene.recommendations : []
     recs.forEach((rec, recIdx) => {
       const text = recommendationText(rec)
@@ -166,6 +228,62 @@ export function collectInitialSelectedRecKeys(
   })
 
   return selected
+}
+
+/**
+ * Summarize currently selected vs total unapplied recommendations across scenes,
+ * including estimated recoverable score deduction points.
+ */
+export function summarizeSelectedRecommendations(
+  sceneAnalysis: SceneAnalysisForPreVis[],
+  selectedKeys: Set<string>,
+  scriptScenes?: any[],
+  localAppliedKeys?: Set<string>
+): SelectedRecommendationsSummary {
+  let selectedRecCount = 0
+  let totalUnappliedCount = 0
+  let selectedPointsDeducted = 0
+  let highImpactSelectedCount = 0
+  const selectedSceneIndices = new Set<number>()
+  const unappliedSceneIndices = new Set<number>()
+
+  if (Array.isArray(sceneAnalysis)) {
+    sceneAnalysis.forEach((scene, arrayIdx) => {
+      const sceneIndex = resolveSceneAnalysisIndex(scene, arrayIdx)
+      const recs = Array.isArray(scene?.recommendations) ? scene.recommendations : []
+      recs.forEach((rec, recIdx) => {
+        const text = recommendationText(rec)
+        if (!text) return
+        const recId = recommendationId(rec, recIdx)
+        if (isRecommendationApplied(sceneIndex, recId, scriptScenes, localAppliedKeys)) {
+          return
+        }
+        totalUnappliedCount += 1
+        unappliedSceneIndices.add(sceneIndex)
+
+        const key = buildSceneRecSelectionKey(sceneIndex, recId)
+        if (!selectedKeys.has(key)) return
+
+        selectedRecCount += 1
+        selectedSceneIndices.add(sceneIndex)
+        if (recommendationIsHighImpact(rec)) {
+          highImpactSelectedCount += 1
+        }
+        if (typeof rec === 'object' && rec && typeof rec.pointsDeducted === 'number') {
+          selectedPointsDeducted += Math.max(0, rec.pointsDeducted)
+        }
+      })
+    })
+  }
+
+  return {
+    selectedRecCount,
+    selectedSceneCount: selectedSceneIndices.size,
+    totalUnappliedCount,
+    totalScenesWithUnappliedCount: unappliedSceneIndices.size,
+    selectedPointsDeducted: Math.round(selectedPointsDeducted * 10) / 10,
+    highImpactSelectedCount,
+  }
 }
 
 /**
@@ -284,6 +402,31 @@ export function subscribeArRecommendationsBackgroundState(
   }
 }
 
+function formatActiveSceneProgressLabel(
+  activeSceneNumbers: Iterable<number>,
+  done: number,
+  total: number
+): string {
+  const sortedActive = Array.from(activeSceneNumbers).sort((a, b) => a - b)
+  if (sortedActive.length > 1) {
+    return `Directing Scenes ${sortedActive.join(', ')} (${done}/${total} complete)…`
+  }
+  if (sortedActive.length === 1) {
+    return `Running Scene Director on Scene ${sortedActive[0]} (${done}/${total} scenes)…`
+  }
+  return `Scene Director revised ${done}/${total} scene${total === 1 ? '' : 's'}…`
+}
+
+function computeInFlightProgressPct(
+  done: number,
+  activeCount: number,
+  total: number
+): number {
+  if (total <= 0) return 0
+  const weighted = done + activeCount * 0.35
+  return Math.max(8, Math.min(95, Math.round((weighted / total) * 95)))
+}
+
 export interface RunPreVisScenePreparationParams {
   projectId: string
   sceneAnalysis: SceneAnalysisForPreVis[]
@@ -294,8 +437,20 @@ export interface RunPreVisScenePreparationParams {
   scriptTitle?: string
   logline?: string
   localAppliedKeys?: Set<string>
-  /** Concurrency for scene revisions (defaults to 2 to avoid Vertex AI 429s) */
+  /** Concurrency for scene revisions (defaults to 3, clamped 1..4) */
   revisionConcurrency?: number
+  /** Scene Director depth: 'light' (polish), 'moderate' (substantive rewrite), 'deep' (restructure) */
+  revisionDepth?: SceneDirectorRevisionDepth
+  /** Optional global director guidance applied alongside selected recommendations */
+  directorNote?: string
+  /** Optional per-scene custom guidance indexed by 0-based sceneIndex */
+  perSceneNotes?: Record<number, string>
+  /** Elements to preserve across revised scenes (e.g. ['music']) */
+  preserveElements?: PreserveElementInput[]
+  /** Max retries per scene on transient 429/5xx errors (defaults to 1) */
+  maxTransientRetries?: number
+  /** Base backoff delay in ms for transient retries (defaults to 1200) */
+  retryBaseDelayMs?: number
   signal?: AbortSignal
   onProgress?: (progress: PreVisPrepProgress) => void
   onSceneStatusChange?: (event: PreVisSceneStatusEvent) => void
@@ -307,8 +462,9 @@ export interface RunPreVisScenePreparationParams {
 }
 
 /**
- * Orchestrates applying selected Audience Resonance scene recommendations in batch:
- * 1. Revises all scenes that have >= 1 selected recommendation via `/api/vision/revise-scene` (concurrency 2).
+ * Orchestrates applying selected Audience Resonance scene recommendations via the Scene Director Agent:
+ * 1. Revises all scenes that have >= 1 selected recommendation via `/api/vision/revise-scene`
+ *    with bounded concurrency (default 3) and automatic transient 429/5xx backoff retry.
  * 2. Persists all revised scenes to the database in a single batch save and marks revised scenes
  *    as needing Shot Direction refresh (`shotDirectionNeedsRefresh: true`).
  *
@@ -329,7 +485,13 @@ export async function runPreVisScenePreparation(
     scriptTitle,
     logline,
     localAppliedKeys,
-    revisionConcurrency = 2,
+    revisionConcurrency = DEFAULT_SCENE_DIRECTOR_CONCURRENCY,
+    revisionDepth = 'moderate',
+    directorNote = '',
+    perSceneNotes,
+    preserveElements = [],
+    maxTransientRetries = 1,
+    retryBaseDelayMs = 1200,
     signal,
     onProgress,
     onSceneStatusChange,
@@ -345,7 +507,7 @@ export async function runPreVisScenePreparation(
     localAppliedKeys
   )
 
-  const failedRevisions: Array<{ sceneNumber: number; error: string }> = []
+  const failedRevisions: Array<{ sceneNumber: number; sceneIndex?: number; error: string }> = []
   const failedDirections: Array<{ sceneNumber: number; error: string }> = []
   const successfulRevisions: BatchSceneRevisionItem[] = []
   let appliedRecommendationCount = 0
@@ -353,12 +515,16 @@ export async function runPreVisScenePreparation(
   try {
     if (groups.length > 0) {
       let completedRevisions = 0
+      const activeSceneNumbers = new Set<number>()
+
       onProgress?.({
         phase: 'revise-scenes',
         done: 0,
         total: groups.length,
         currentSceneNumber: groups[0]?.sceneNumber,
-        label: `Running Scene Director on Scene ${groups[0]?.sceneNumber} (0/${groups.length} scenes)…`,
+        activeSceneNumbers: [],
+        progressPct: 8,
+        label: `Preparing Scene Director for ${groups.length} scene${groups.length === 1 ? '' : 's'}…`,
       })
 
       await runWithConcurrencyLimit(
@@ -373,17 +539,37 @@ export async function runPreVisScenePreparation(
             const errMsg = `Scene ${group.sceneNumber} not found in script`
             failedRevisions.push({
               sceneNumber: group.sceneNumber,
+              sceneIndex: group.sceneIndex,
               error: errMsg,
             })
+            completedRevisions += 1
             onSceneStatusChange?.({
               sceneIndex: group.sceneIndex,
               sceneNumber: group.sceneNumber,
               status: 'error',
               error: errMsg,
             })
+            onProgress?.({
+              phase: 'revise-scenes',
+              done: completedRevisions,
+              total: groups.length,
+              currentSceneNumber: group.sceneNumber,
+              activeSceneNumbers: Array.from(activeSceneNumbers).sort((a, b) => a - b),
+              progressPct: computeInFlightProgressPct(
+                completedRevisions,
+                activeSceneNumbers.size,
+                groups.length
+              ),
+              label: formatActiveSceneProgressLabel(
+                activeSceneNumbers,
+                completedRevisions,
+                groups.length
+              ),
+            })
             return
           }
 
+          activeSceneNumbers.add(group.sceneNumber)
           onSceneStatusChange?.({
             sceneIndex: group.sceneIndex,
             sceneNumber: group.sceneNumber,
@@ -395,7 +581,17 @@ export async function runPreVisScenePreparation(
             done: completedRevisions,
             total: groups.length,
             currentSceneNumber: group.sceneNumber,
-            label: `Running Scene Director on Scene ${group.sceneNumber} (${completedRevisions}/${groups.length} scenes)…`,
+            activeSceneNumbers: Array.from(activeSceneNumbers).sort((a, b) => a - b),
+            progressPct: computeInFlightProgressPct(
+              completedRevisions,
+              activeSceneNumbers.size,
+              groups.length
+            ),
+            label: formatActiveSceneProgressLabel(
+              activeSceneNumbers,
+              completedRevisions,
+              groups.length
+            ),
           })
 
           const previousScene = group.sceneIndex > 0 ? scriptScenes[group.sceneIndex - 1] : null
@@ -403,48 +599,76 @@ export async function runPreVisScenePreparation(
             group.sceneIndex < scriptScenes.length - 1 ? scriptScenes[group.sceneIndex + 1] : null
 
           const recItems = group.selectedRecommendations.map((r) => r.raw)
-          const formattedInstruction = group.selectedRecommendations
+          const formattedRecList = group.selectedRecommendations
             .map((r, idx) => `${idx + 1}. ${r.text}`)
             .join('\n\n')
           const recIds = group.selectedRecommendations.map((r) => r.recId)
 
-          try {
-            const response = await fetchImpl('/api/vision/revise-scene', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                projectId,
-                sceneIndex: group.sceneIndex,
-                currentScene,
-                revisionMode: 'recommendations',
-                selectedRecommendations: recItems,
-                customInstruction: formattedInstruction,
-                targetDemographic,
-                preserveElements: [],
-                revisionDepth: 'moderate',
-                context: {
-                  characters,
-                  previousScene,
-                  nextScene,
-                  scriptTitle,
-                  logline,
-                },
-              }),
-              signal,
-            })
+          const globalNote = directorNote.trim()
+          const sceneSpecificNote = perSceneNotes?.[group.sceneIndex]?.trim() || ''
+          const combinedGuidance = [globalNote, sceneSpecificNote].filter(Boolean).join('\n')
+          const useHybridMode = combinedGuidance.length > 0
 
-            const data = await response.json().catch(() => ({}))
-            if (!response.ok || !data?.revisedScene) {
+          try {
+            let revisedSceneData: any = null
+            let continuationScenesData: any[] | undefined
+
+            for (let attempt = 0; attempt <= Math.max(0, maxTransientRetries); attempt += 1) {
+              if (signal?.aborted) {
+                throw new DOMException('Aborted', 'AbortError')
+              }
+              const response = await fetchImpl('/api/vision/revise-scene', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  projectId,
+                  sceneIndex: group.sceneIndex,
+                  currentScene,
+                  revisionMode: useHybridMode ? 'hybrid' : 'recommendations',
+                  selectedRecommendations: recItems,
+                  customInstruction: useHybridMode ? combinedGuidance : formattedRecList,
+                  targetDemographic,
+                  preserveElements,
+                  revisionDepth,
+                  context: {
+                    characters,
+                    previousScene,
+                    nextScene,
+                    scriptTitle,
+                    logline,
+                  },
+                }),
+                signal,
+              })
+
+              const data = await response.json().catch(() => ({}))
+              if (response.ok && data?.revisedScene) {
+                revisedSceneData = data.revisedScene
+                continuationScenesData = Array.isArray(data.continuationScenes)
+                  ? data.continuationScenes
+                  : undefined
+                break
+              }
+
+              const shouldRetry =
+                attempt < Math.max(0, maxTransientRetries) &&
+                isTransientRevisionStatus(response.status)
+
+              if (shouldRetry) {
+                const delayMs = retryBaseDelayMs * (attempt + 1)
+                await sleepWithAbort(delayMs, signal)
+                continue
+              }
+
               throw new Error(data?.error || `Failed to revise Scene ${group.sceneNumber}`)
             }
 
             const revisionItem: BatchSceneRevisionItem = {
               sceneIndex: group.sceneIndex,
-              revisedScene: data.revisedScene,
-              continuationScenes: Array.isArray(data.continuationScenes)
-                ? data.continuationScenes
-                : undefined,
+              revisedScene: revisedSceneData,
+              continuationScenes: continuationScenesData,
               appliedRecommendationIds: recIds,
+              preserveElements: preserveElements.length > 0 ? [...preserveElements] : undefined,
             }
             successfulRevisions.push(revisionItem)
             appliedRecommendationCount += recIds.length
@@ -461,6 +685,7 @@ export async function runPreVisScenePreparation(
             const errMsg = err instanceof Error ? err.message : String(err)
             failedRevisions.push({
               sceneNumber: group.sceneNumber,
+              sceneIndex: group.sceneIndex,
               error: errMsg,
             })
             onSceneStatusChange?.({
@@ -470,13 +695,24 @@ export async function runPreVisScenePreparation(
               error: errMsg,
             })
           } finally {
+            activeSceneNumbers.delete(group.sceneNumber)
             completedRevisions += 1
             onProgress?.({
               phase: 'revise-scenes',
               done: completedRevisions,
               total: groups.length,
               currentSceneNumber: group.sceneNumber,
-              label: `Scene Director revised ${completedRevisions}/${groups.length} scene${groups.length === 1 ? '' : 's'}…`,
+              activeSceneNumbers: Array.from(activeSceneNumbers).sort((a, b) => a - b),
+              progressPct: computeInFlightProgressPct(
+                completedRevisions,
+                activeSceneNumbers.size,
+                groups.length
+              ),
+              label: formatActiveSceneProgressLabel(
+                activeSceneNumbers,
+                completedRevisions,
+                groups.length
+              ),
             })
           }
         }
@@ -506,7 +742,8 @@ export async function runPreVisScenePreparation(
     onProgress?.({
       phase: 'persist-scenes',
       done: successfulRevisions.length,
-      total: successfulRevisions.length,
+      total: groups.length,
+      progressPct: 97,
       label: `Saving ${successfulRevisions.length} revised scene${successfulRevisions.length === 1 ? '' : 's'}…`,
     })
     await onPersistRevisedScenes(successfulRevisions)
@@ -517,6 +754,7 @@ export async function runPreVisScenePreparation(
     phase: 'done',
     done: groups.length,
     total: groups.length,
+    progressPct: 100,
     label: 'Scene recommendations applied',
   })
 
@@ -526,6 +764,9 @@ export async function runPreVisScenePreparation(
     directedSceneCount: 0,
     totalShotsDirected: 0,
     failedRevisions,
+    failedSceneIndices: failedRevisions
+      .map((f) => f.sceneIndex)
+      .filter((idx): idx is number => typeof idx === 'number'),
     failedDirections,
   }
 }

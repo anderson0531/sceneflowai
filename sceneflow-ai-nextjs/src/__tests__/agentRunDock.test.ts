@@ -242,7 +242,7 @@ describe('nested Production Studio agents report into the dock, not a freeze ove
     expect(source).not.toContain('useProcessWithOverlay')
     expect(source).not.toContain('overlayStore')
     expect(source).toContain('runWithAgentDock')
-    expect(source).toContain("title: 'Script Agent'")
+    expect(source).toContain("title: 'Scene Director Agent'")
   })
 
   it('reports cinematic keyframes into the Frame Agent dock', () => {

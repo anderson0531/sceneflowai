@@ -1,10 +1,13 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { recommendationId } from '@/lib/script/audienceResonance/highImpact'
+import { patchArRecommendationsBackgroundState } from '@/lib/vision/prepareScenesForPreVis'
 import { pendingPolishRecommendations } from '@/lib/script/scenePolish/formatPolishBeats'
 import { POLISH_CATEGORIES, type PolishCategory, type ScenePolishAnalysis } from '@/lib/script/scenePolish/types'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import { Button } from '@/components/ui/Button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -14,6 +17,8 @@ import {
 } from '@/components/ui/dialog'
 import {
   AlertTriangle,
+  Check,
+  Clapperboard,
   Lightbulb,
   Loader2,
   Pencil,
@@ -88,9 +93,39 @@ export function SceneRecommendationsDialog({
   const t = useTranslations('production.studio')
   const pendingPolish = polishAnalysis ? pendingPolishRecommendations(polishAnalysis) : []
   const audienceRecs = audienceAnalysis?.recommendations || []
-  const pendingAudience = audienceRecs.filter(
-    (rec, index) => !(audienceAnalysis?.appliedRecommendationIds || []).includes(recommendationId(rec, index))
-  )
+  const pendingAudience = audienceRecs
+    .map((rec, index) => ({ rec, index, recId: recommendationId(rec, index) }))
+    .filter(({ recId }) => !(audienceAnalysis?.appliedRecommendationIds || []).includes(recId))
+
+  const [selectedAudienceIds, setSelectedAudienceIds] = useState<Set<string>>(() => new Set())
+  const pendingAudienceKey = pendingAudience.map((item) => item.recId).join('|')
+
+  useEffect(() => {
+    if (!open) return
+    setSelectedAudienceIds(new Set(pendingAudience.map((item) => item.recId)))
+  }, [open, sceneIndex, pendingAudienceKey])
+
+  const selectedAudienceRecs = pendingAudience.filter((item) => selectedAudienceIds.has(item.recId))
+  const toggleSelectedAudience = (recId: string) => {
+    setSelectedAudienceIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(recId)) {
+        next.delete(recId)
+      } else {
+        next.add(recId)
+      }
+      return next
+    })
+  }
+
+  const openMultiSceneDirectorAgent = () => {
+    patchArRecommendationsBackgroundState(undefined, { pendingOpenTab: 'recommendations' })
+    onOpenChange(false)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('production:review-analysis'))
+    }
+  }
+
   const scoreOptimized =
     !!audienceAnalysis?.optimizedAt &&
     !!audienceAnalysis?.analyzedAt &&
@@ -115,14 +150,25 @@ export function SceneRecommendationsDialog({
 
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto pr-1">
           <section className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-cyan-300" />
-              <h3 className="text-sm font-semibold text-cyan-200">{t('audienceResonance')}</h3>
-              {audienceAnalysis?.score !== undefined && (
-                <span className="text-xs font-semibold tabular-nums text-white">
-                  {audienceAnalysis.score}/100
-                </span>
-              )}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-cyan-300" />
+                <h3 className="text-sm font-semibold text-cyan-200">{t('audienceResonance')}</h3>
+                {audienceAnalysis?.score !== undefined && (
+                  <span className="text-xs font-semibold tabular-nums text-white">
+                    {audienceAnalysis.score}/100
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={openMultiSceneDirectorAgent}
+                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-cyan-300 hover:text-cyan-200 transition-colors"
+                title="Open Audience Resonance Scene Director Agent to batch-apply recommendations across all scenes"
+              >
+                <Clapperboard className="w-3.5 h-3.5" />
+                Multi-Scene Director Agent →
+              </button>
             </div>
 
             {audienceAnalysis ? (
@@ -172,28 +218,29 @@ export function SceneRecommendationsDialog({
 
                 {pendingAudience.length > 0 && (
                   <ul className="space-y-2">
-                    {pendingAudience.map((rec, rIdx) => {
+                    {pendingAudience.map(({ rec, recId }) => {
                       const recText = audienceRecommendationText(rec)
                       const recCategory = typeof rec === 'object' && rec?.category ? rec.category : null
                       const recImpact = typeof rec === 'object' && rec?.impact ? rec.impact : null
                       const recPriority = typeof rec === 'object' && rec?.priority ? rec.priority : null
                       const recPointsDeducted =
                         typeof rec === 'object' && rec?.pointsDeducted ? rec.pointsDeducted : null
-                      const recId = recommendationId(rec, rIdx)
+                      const isSelected = selectedAudienceIds.has(recId)
                       return (
                         <li
                           key={recId}
-                          className="text-xs text-gray-300 flex gap-3 p-2.5 rounded-lg border transition-colors bg-gray-800/40 border-gray-700/30"
+                          className={`text-xs flex gap-3 p-2.5 rounded-lg border transition-colors ${
+                            isSelected
+                              ? 'text-gray-200 bg-violet-950/25 border-violet-500/30'
+                              : 'text-gray-400 bg-gray-800/30 border-gray-700/30 opacity-75'
+                          }`}
                         >
-                          <button
-                            type="button"
-                            onClick={() => onToggleAudienceRecommendation?.(sceneIndex, recId, true)}
-                            className="flex-shrink-0 mt-0.5 text-gray-400 hover:text-white"
-                            aria-label="Mark fix applied"
-                            aria-pressed={false}
-                          >
-                            <Square className="w-4 h-4" />
-                          </button>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelectedAudience(recId)}
+                            className="mt-0.5 flex-shrink-0"
+                            aria-label="Select recommendation for Scene Director"
+                          />
                           <div className="flex-1 min-w-0">
                             <span className="leading-relaxed">
                               {recText}
@@ -231,26 +278,38 @@ export function SceneRecommendationsDialog({
                               </div>
                             )}
                           </div>
+                          {onToggleAudienceRecommendation && (
+                            <button
+                              type="button"
+                              onClick={() => onToggleAudienceRecommendation(sceneIndex, recId, true)}
+                              className="flex-shrink-0 self-start rounded p-1 text-gray-500 hover:bg-gray-700/60 hover:text-emerald-300"
+                              title="Mark fix manually resolved"
+                              aria-label="Mark fix applied"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </li>
                       )
                     })}
                   </ul>
                 )}
 
-                <div className="flex items-center gap-3 pt-1">
+                <div className="flex items-center gap-3 pt-1 flex-wrap">
                   {onEditWithAudienceRecommendations && pendingAudience.length > 0 && (
                     <Button
                       size="sm"
+                      disabled={selectedAudienceRecs.length === 0}
                       onClick={() =>
                         onEditWithAudienceRecommendations(
                           sceneIndex,
-                          pendingAudience.map((rec) => audienceRecommendationText(rec))
+                          selectedAudienceRecs.map(({ rec }) => audienceRecommendationText(rec))
                         )
                       }
                       className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-lg"
                     >
                       <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      Scene Director &amp; Apply
+                      Scene Director &amp; Apply ({selectedAudienceRecs.length}/{pendingAudience.length})
                     </Button>
                   )}
                   {onEditScene && pendingAudience.length === 0 && (

@@ -56,6 +56,7 @@ import {
   removeStaleAudioUrlFromScene,
   type AudioSlotSavedPayload,
   type PreserveElement,
+  type PreserveElementInput,
 } from '@/lib/audio/cleanupAudio'
 import { audioSourceFingerprintForSpoken } from '@/lib/audio/beatAudioStale'
 import { resolveLineVoiceDirection } from '@/lib/tts/dialogueDirectorNotes'
@@ -9987,7 +9988,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       characterDevelopment: 'minimal' | 'moderate' | 'strong'
       visualPotential: 'low' | 'medium' | 'high'
       notes: string
-      recommendations: string[]
+      recommendations: Array<string | Record<string, any>>
+      appliedRecommendationIds?: string[]
       analyzedAt: string
     }
   }>) => {
@@ -17710,6 +17712,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       revisedScene: any
       continuationScenes?: any[]
       appliedRecommendationIds: string[]
+      preserveElements?: PreserveElementInput[]
     }>
   ): Promise<{ sceneCount: number } | void> => {
     const activeScript = scriptRef.current || script
@@ -17722,14 +17725,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const sortedRevisions = [...revisions].sort((a, b) => b.sceneIndex - a.sceneIndex)
 
     for (const rev of sortedRevisions) {
-      const { sceneIndex, revisedScene, appliedRecommendationIds: recIds = [] } = rev
+      const {
+        sceneIndex,
+        revisedScene,
+        appliedRecommendationIds: recIds = [],
+        preserveElements: revPreserveElements = [],
+      } = rev
       const originalScene = updatedScenes[sceneIndex]
       if (!originalScene || !revisedScene) continue
 
-      const editResult = applySceneEditAudioPolicy(originalScene, revisedScene, [])
+      const editResult = applySceneEditAudioPolicy(
+        originalScene,
+        revisedScene,
+        revPreserveElements
+      )
       allDeletedUrls.push(...editResult.deletedUrls)
 
-      let cleanedScene = applyScenePreservation(originalScene, editResult.cleanedScene, [])
+      let cleanedScene = applyScenePreservation(
+        originalScene,
+        editResult.cleanedScene,
+        revPreserveElements
+      )
 
       const fallbackReviewScene = audienceReview?.sceneAnalysis?.find(
         (sa: { sceneNumber?: number }) => sa.sceneNumber === sceneIndex + 1

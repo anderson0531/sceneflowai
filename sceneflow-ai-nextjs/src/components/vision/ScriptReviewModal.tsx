@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Users, RefreshCw, Loader, Volume2, VolumeX, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Square, BarChart3, ListChecks, Film, Sparkles, CheckCircle2, Lightbulb, Play, Share2, Bot, Clapperboard } from 'lucide-react'
+import { X, Users, RefreshCw, Loader, Volume2, VolumeX, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Square, BarChart3, ListChecks, Film, Sparkles, CheckCircle2, Lightbulb, Play, Share2, Bot, Clapperboard, SlidersHorizontal, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -29,6 +29,7 @@ import {
   sceneHasHighImpactIssue,
 } from '@/lib/script/audienceResonance/highImpact'
 import {
+  DEFAULT_SCENE_DIRECTOR_CONCURRENCY,
   buildSceneRecSelectionKey,
   collectInitialSelectedRecKeys,
   getArRecommendationsBackgroundState,
@@ -38,9 +39,11 @@ import {
   resolveSceneAnalysisIndex,
   runPreVisScenePreparation,
   subscribeArRecommendationsBackgroundState,
+  summarizeSelectedRecommendations,
   type BatchSceneRevisionItem,
   type PreVisPrepProgress,
   type PreVisPrepResult,
+  type SceneDirectorRevisionDepth,
 } from '@/lib/vision/prepareScenesForPreVis'
 import { dismissAgentRun, runWithAgentDock } from '@/store/useAgentRunStore'
 import { useStore } from '@/store/useStore'
@@ -1009,8 +1012,14 @@ export default function ScriptReviewModal({
       ? script.script.scenes
       : []
 
-  // Scene Breakdown Recommendation Selection & Background Agent State
+  // Scene Director Agent Recommendation Selection & Background Agent State
   const [selectedRecKeys, setSelectedRecKeys] = useState<Set<string>>(() => new Set())
+  const [revisionDepth, setRevisionDepth] = useState<SceneDirectorRevisionDepth>('moderate')
+  const [preserveMusic, setPreserveMusic] = useState<boolean>(true)
+  const [autoReanalyzeAfterApply, setAutoReanalyzeAfterApply] = useState<boolean>(false)
+  const [showDirectorOptions, setShowDirectorOptions] = useState<boolean>(false)
+  const [directorNote, setDirectorNote] = useState<string>('')
+  const [sceneFilter, setSceneFilter] = useState<'all' | 'with-recs' | 'selected'>('all')
   const [, setBgStateVersion] = useState(0)
   const bgState = getArRecommendationsBackgroundState(projectId)
   const localAppliedRecKeys = bgState.appliedRecKeys
@@ -1020,11 +1029,13 @@ export default function ScriptReviewModal({
   const lastSelectionInitSignatureRef = useRef<string | null>(null)
   const onBatchApplySceneRevisionsRef = useRef(onBatchApplySceneRevisions)
   const onRefreshProjectRef = useRef(onRefreshProject)
+  const onRegenerateRef = useRef(onRegenerate)
 
   useEffect(() => {
     onBatchApplySceneRevisionsRef.current = onBatchApplySceneRevisions
     onRefreshProjectRef.current = onRefreshProject
-  }, [onBatchApplySceneRevisions, onRefreshProject])
+    onRegenerateRef.current = onRegenerate
+  }, [onBatchApplySceneRevisions, onRefreshProject, onRegenerate])
 
   useEffect(() => {
     return subscribeArRecommendationsBackgroundState(() => {
@@ -1035,15 +1046,25 @@ export default function ScriptReviewModal({
   useEffect(() => {
     if (!isOpen) return
     const currentBg = getArRecommendationsBackgroundState(projectId)
-    if (currentBg.pendingOpenTab === 'recommendations') {
+    const defaultBg = getArRecommendationsBackgroundState(undefined)
+    if (
+      currentBg.pendingOpenTab === 'recommendations' ||
+      defaultBg.pendingOpenTab === 'recommendations'
+    ) {
       setActiveTab('recommendations')
       patchArRecommendationsBackgroundState(projectId, { pendingOpenTab: null })
+      patchArRecommendationsBackgroundState(undefined, { pendingOpenTab: null })
     }
   }, [isOpen, projectId])
 
-  const sceneAnalysisSignature = sceneAnalysis
-    .map((s, idx) => `${s?.sceneNumber ?? idx + 1}:${Array.isArray(s?.recommendations) ? s.recommendations.length : 0}`)
-    .join('|')
+  const sceneAnalysisSignature = `${review?.generatedAt || 'local'}::${sceneAnalysis
+    .map((s, idx) => {
+      const recIds = Array.isArray(s?.recommendations)
+        ? s.recommendations.map((r, rIdx) => recommendationId(r, rIdx)).join(',')
+        : ''
+      return `${s?.sceneNumber ?? idx + 1}:${recIds}`
+    })
+    .join('|')}`
 
   useEffect(() => {
     if (!isOpen || sceneAnalysis.length === 0) return
@@ -1069,10 +1090,14 @@ export default function ScriptReviewModal({
     })
   }
 
-  const handleSelectAllRecommendations = (highImpactOnly = false) => {
+  const handleSelectAllRecommendations = (options?: {
+    highImpactOnly?: boolean
+    maxSceneScoreExclusive?: number
+  }) => {
     setSelectedRecKeys(
       collectInitialSelectedRecKeys(sceneAnalysis, scriptScenes, {
-        highImpactOnly,
+        highImpactOnly: options?.highImpactOnly,
+        maxSceneScoreExclusive: options?.maxSceneScoreExclusive,
         localAppliedKeys: localAppliedRecKeys,
       })
     )
@@ -1101,16 +1126,17 @@ export default function ScriptReviewModal({
     getArRecommendationsBackgroundState(projectId).abortController?.abort()
   }
 
-  const handleRunPreVisPrepAgent = () => {
+  const handleRunPreVisPrepAgent = (overrideSelectedKeys?: Set<string>) => {
     if (!projectId) {
       toast.error('Save the project before applying scene recommendations')
       return
     }
     if (isRunningPreVisPrep) return
 
+    const activeSelection = overrideSelectedKeys ?? selectedRecKeys
     const initialGroups = groupSelectedRecommendationsByScene(
       sceneAnalysis,
-      selectedRecKeys,
+      activeSelection,
       scriptScenes,
       localAppliedRecKeys
     )
@@ -1123,7 +1149,7 @@ export default function ScriptReviewModal({
       (sum, g) => sum + g.selectedRecommendations.length,
       0
     )
-    const selectedSnapshot = new Set(selectedRecKeys)
+    const selectedSnapshot = new Set(activeSelection)
     const appliedSnapshot = new Set(localAppliedRecKeys)
     const targetDemographicSnapshot =
       formatAudienceDefinitionForPrompt(audienceDef) || review?.targetDemographic || ''
@@ -1132,7 +1158,12 @@ export default function ScriptReviewModal({
     const charactersSnapshot = characters || []
     const sceneAnalysisSnapshot = [...sceneAnalysis]
     const scriptScenesSnapshot = [...scriptScenes]
+    const revisionDepthSnapshot = revisionDepth
+    const directorNoteSnapshot = directorNote
+    const preserveElementsSnapshot = preserveMusic ? (['music'] as const) : ([] as const)
+    const autoReanalyzeSnapshot = autoReanalyzeAfterApply
 
+    let completedBeforeAbortCount = 0
     const controller = new AbortController()
     patchArRecommendationsBackgroundState(projectId, {
       isRunning: true,
@@ -1141,7 +1172,8 @@ export default function ScriptReviewModal({
         done: 0,
         total: initialGroups.length,
         currentSceneNumber: initialGroups[0]?.sceneNumber,
-        label: `Running Scene Director on Scene ${initialGroups[0]?.sceneNumber} (0/${initialGroups.length} scenes)…`,
+        progressPct: 8,
+        label: `Preparing Scene Director for ${initialGroups.length} scene${initialGroups.length === 1 ? '' : 's'}…`,
       },
       result: null,
       abortController: controller,
@@ -1152,9 +1184,10 @@ export default function ScriptReviewModal({
     onClose()
 
     toast.info(
-      `Applying ${selectedRecCount} recommendation${selectedRecCount === 1 ? '' : 's'} across ${initialGroups.length} scene${initialGroups.length === 1 ? '' : 's'} in the background`,
+      `Scene Director Agent started: ${selectedRecCount} recommendation${selectedRecCount === 1 ? '' : 's'} across ${initialGroups.length} scene${initialGroups.length === 1 ? '' : 's'}`,
       {
-        description: 'Watch the Script Agent card in the bottom-right corner for live scene progress.',
+        description:
+          'Watch the Scene Director Agent toast in the bottom-right corner for live concurrent progress.',
         duration: 6000,
       }
     )
@@ -1174,19 +1207,25 @@ export default function ScriptReviewModal({
         await runWithAgentDock(
           {
             id: dockRunId,
-            title: 'Script Agent',
+            title: 'Scene Director Agent',
             subtitle: `Applying ${selectedRecCount} AR recommendation${selectedRecCount === 1 ? '' : 's'} across ${initialGroups.length} scene${initialGroups.length === 1 ? '' : 's'}`,
-            meta: `0/${initialGroups.length}`,
+            meta: `0/${initialGroups.length} scenes`,
             keepTabOpen: true,
-            items: initialGroups.map((g) => ({
-              key: `scene-${g.sceneIndex}`,
-              label: `Scene ${g.sceneNumber} (${g.selectedRecommendations.length} rec${g.selectedRecommendations.length === 1 ? '' : 's'})`,
-              status: 'pending' as const,
-            })),
+            items: initialGroups.map((g) => {
+              const shortHeading =
+                g.sceneHeading && g.sceneHeading !== `Scene ${g.sceneNumber}`
+                  ? ` · ${g.sceneHeading.slice(0, 32)}${g.sceneHeading.length > 32 ? '…' : ''}`
+                  : ''
+              return {
+                key: `scene-${g.sceneIndex}`,
+                label: `Scene ${g.sceneNumber}${shortHeading} (${g.selectedRecommendations.length} rec${g.selectedRecommendations.length === 1 ? '' : 's'})`,
+                status: 'pending' as const,
+              }
+            }),
             onCancel: () => controller.abort(),
             cancelLabel: 'Cancel',
           },
-          async ({ setSubtitle, setMeta, setItem, setFinishPatch }) => {
+          async ({ setProgress, setSubtitle, setMeta, setItem, setFinishPatch }) => {
             const result = await runPreVisScenePreparation({
               projectId,
               sceneAnalysis: sceneAnalysisSnapshot,
@@ -1197,11 +1236,23 @@ export default function ScriptReviewModal({
               scriptTitle: scriptTitleSnapshot,
               logline: loglineSnapshot,
               localAppliedKeys: appliedSnapshot,
+              revisionConcurrency: DEFAULT_SCENE_DIRECTOR_CONCURRENCY,
+              revisionDepth: revisionDepthSnapshot,
+              directorNote: directorNoteSnapshot,
+              preserveElements: [...preserveElementsSnapshot],
               signal: controller.signal,
               onProgress: (progress) => {
                 patchArRecommendationsBackgroundState(projectId, { progress })
                 setSubtitle(progress.label)
-                setMeta(`${progress.done}/${progress.total}`)
+                const activeCount = progress.activeSceneNumbers?.length ?? 0
+                setMeta(
+                  activeCount > 1
+                    ? `${progress.done}/${progress.total} · ${activeCount} active`
+                    : `${progress.done}/${progress.total} scenes`
+                )
+                if (typeof progress.progressPct === 'number') {
+                  setProgress(progress.progressPct)
+                }
               },
               onSceneStatusChange: (event) => {
                 setItem(`scene-${event.sceneIndex}`, {
@@ -1209,6 +1260,7 @@ export default function ScriptReviewModal({
                   error: event.error,
                 })
                 if (event.status === 'done' && event.revision) {
+                  completedBeforeAbortCount += 1
                   const currentBg = getArRecommendationsBackgroundState(projectId)
                   const nextApplied = new Set(currentBg.appliedRecKeys)
                   for (const recId of event.revision.appliedRecommendationIds) {
@@ -1284,14 +1336,18 @@ export default function ScriptReviewModal({
             })
 
             const hasFailures = result.failedRevisions.length > 0
-            const summaryText = `Applied ${result.appliedRecommendationCount} recommendation${result.appliedRecommendationCount === 1 ? '' : 's'} across ${result.revisedSceneCount} scene${result.revisedSceneCount === 1 ? '' : 's'} — re-run AR Analysis to update your score`
+            const shouldAutoReanalyze =
+              autoReanalyzeSnapshot && result.revisedSceneCount > 0
+            const summaryText = shouldAutoReanalyze
+              ? `Applied ${result.appliedRecommendationCount} recommendation${result.appliedRecommendationCount === 1 ? '' : 's'} across ${result.revisedSceneCount} scene${result.revisedSceneCount === 1 ? '' : 's'} — refreshing Audience Resonance score…`
+              : `Applied ${result.appliedRecommendationCount} recommendation${result.appliedRecommendationCount === 1 ? '' : 's'} across ${result.revisedSceneCount} scene${result.revisedSceneCount === 1 ? '' : 's'} — re-run AR Analysis to update your score`
 
             setFinishPatch({
               subtitle:
                 result.revisedSceneCount === 0 && hasFailures
                   ? result.failedRevisions[0]?.error || 'Scene Director revision failed'
                   : summaryText,
-              meta: `${result.revisedSceneCount}/${initialGroups.length}`,
+              meta: `${result.revisedSceneCount}/${initialGroups.length} scenes`,
               tone:
                 result.revisedSceneCount === 0 && hasFailures
                   ? 'error'
@@ -1326,6 +1382,10 @@ export default function ScriptReviewModal({
               })
             }
 
+            if (shouldAutoReanalyze) {
+              void onRegenerateRef.current?.(targetDemographicSnapshot)
+            }
+
             return result
           }
         )
@@ -1335,7 +1395,13 @@ export default function ScriptReviewModal({
           (err instanceof DOMException && err.name === 'AbortError')
         ) {
           dismissAgentRun(dockRunId)
-          toast.info('Scene recommendation update cancelled')
+          if (completedBeforeAbortCount > 0) {
+            toast.info(
+              `Scene Director Agent cancelled — saved ${completedBeforeAbortCount} completed scene${completedBeforeAbortCount === 1 ? '' : 's'}`
+            )
+          } else {
+            toast.info('Scene Director Agent cancelled')
+          }
         } else {
           toast.error(
             err instanceof Error ? err.message : 'Failed to apply scene recommendations'
@@ -1349,6 +1415,37 @@ export default function ScriptReviewModal({
         })
       }
     })()
+  }
+
+  const handleRunSingleSceneDirector = (sceneIndex: number, unappliedRecIds: string[]) => {
+    const keysForScene = new Set<string>()
+    for (const recId of unappliedRecIds) {
+      const k = buildSceneRecSelectionKey(sceneIndex, recId)
+      if (selectedRecKeys.has(k)) {
+        keysForScene.add(k)
+      }
+    }
+    if (keysForScene.size === 0) {
+      unappliedRecIds.forEach((recId) => {
+        keysForScene.add(buildSceneRecSelectionKey(sceneIndex, recId))
+      })
+    }
+    handleRunPreVisPrepAgent(keysForScene)
+  }
+
+  const handleRetryFailedScenes = () => {
+    const failedIndices = preVisPrepResult?.failedSceneIndices
+    if (!failedIndices || failedIndices.length === 0) return
+    const retryKeys = collectInitialSelectedRecKeys(sceneAnalysis, scriptScenes, {
+      sceneIndicesFilter: new Set(failedIndices),
+      localAppliedKeys: localAppliedRecKeys,
+    })
+    if (retryKeys.size === 0) {
+      toast.info('No unapplied recommendations remaining on failed scenes')
+      return
+    }
+    setSelectedRecKeys(retryKeys)
+    handleRunPreVisPrepAgent(retryKeys)
   }
 
   if (!isOpen) return null
@@ -1395,6 +1492,12 @@ export default function ScriptReviewModal({
   }
   const showVsTellRatio = review?.showVsTellRatio ?? 0
   const totalDeductions = deductions.reduce((sum, d) => sum + d.points, 0)
+  const selectedSummary = summarizeSelectedRecommendations(
+    sceneAnalysis,
+    selectedRecKeys,
+    scriptScenes,
+    localAppliedRecKeys
+  )
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -1492,7 +1595,7 @@ export default function ScriptReviewModal({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <AssistantPickerButton
                 selectedVoiceId={selectedVoiceId}
                 onSelect={(voiceId, voiceName) => {
@@ -1582,6 +1685,49 @@ export default function ScriptReviewModal({
                   Analyze
                 </Button>
               </div>
+              {/* Scene Director Agent quick-launch button */}
+              {review && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={activeTab === 'recommendations' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setActiveTab('recommendations')}
+                        className={cn(
+                          'flex items-center gap-1.5 h-8 text-xs ml-1',
+                          activeTab === 'recommendations'
+                            ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white border-0'
+                            : 'border-cyan-500/50 text-cyan-600 dark:text-cyan-300 hover:bg-cyan-500/10'
+                        )}
+                      >
+                        {isRunningPreVisPrep ? (
+                          <Loader className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Clapperboard className="w-3.5 h-3.5" />
+                        )}
+                        <span>Scene Director</span>
+                        {selectedSummary.totalUnappliedCount > 0 && (
+                          <span className="rounded-full bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
+                            {selectedSummary.selectedRecCount}/{selectedSummary.totalUnappliedCount}
+                          </span>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs bg-gray-900 text-white p-3">
+                      <div className="space-y-1.5">
+                        <p className="font-medium flex items-center gap-1.5">
+                          <Clapperboard className="w-3.5 h-3.5 text-cyan-400" />
+                          Scene Director Agent
+                        </p>
+                        <p className="text-xs text-gray-300">
+                          Review, select/unselect, and automatically apply scene-by-scene recommendations across multiple scenes in parallel.
+                        </p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               {/* Go to Scenes with tooltip showing scene stats */}
               <TooltipProvider>
                 <Tooltip>
@@ -1590,7 +1736,7 @@ export default function ScriptReviewModal({
                       variant="outline"
                       size="sm"
                       onClick={jumpToScenes}
-                      className="flex items-center gap-2 h-8 text-xs border-purple-500/50 text-purple-400 hover:bg-purple-500/10 ml-2"
+                      className="flex items-center gap-2 h-8 text-xs border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
                     >
                       <Film className="w-3.5 h-3.5" />
                       Go to Scenes
@@ -1668,15 +1814,20 @@ export default function ScriptReviewModal({
                   <TabsTrigger 
                     value="recommendations" 
                     className="flex items-center gap-1.5 text-xs sm:text-sm"
-                    title="Scene-by-scene analysis and optimization"
+                    title="Scene-by-scene breakdown and Scene Director Agent"
                   >
-                    <ListChecks className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Scene Breakdown</span>
-                    {sceneAnalysis.length > 0 && (
+                    <Clapperboard className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Scene Breakdown &amp; Director</span>
+                    <span className="sm:hidden">Director</span>
+                    {selectedSummary.totalUnappliedCount > 0 ? (
+                      <Badge variant="secondary" className="ml-1 text-[11px] h-5 px-1.5 hidden sm:flex bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-0 tabular-nums">
+                        {selectedSummary.selectedRecCount}/{selectedSummary.totalUnappliedCount}
+                      </Badge>
+                    ) : sceneAnalysis.length > 0 ? (
                       <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5 hidden sm:flex">
                         {sceneAnalysis.length}
                       </Badge>
-                    )}
+                    ) : null}
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -1766,6 +1917,9 @@ export default function ScriptReviewModal({
                             <div className="flex items-center gap-2">
                               <TrendingDown className="w-4 h-4 text-red-500" />
                               <span className="text-sm font-medium">Top Impact Issues</span>
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-rose-400/40 text-rose-600 dark:text-rose-400">
+                                {topIssues.length}
+                              </Badge>
                             </div>
                             {showDeductions ? (
                               <ChevronUp className="w-4 h-4" />
@@ -1775,51 +1929,90 @@ export default function ScriptReviewModal({
                           </button>
                           
                           {showDeductions && (
-                            <div className="mt-3 max-h-60 overflow-y-auto space-y-3 pl-2 pr-2">
-                              {topIssues.map((issue) => (
-                                <button
-                                  key={`${issue.sceneIndex}-${issue.recId}`}
-                                  type="button"
-                                  onClick={() => {
-                                    if (typeof issue.sceneNum === 'number' && issue.sceneNum > 0) {
-                                      jumpToScene(issue.sceneNum - 1)
-                                    }
-                                  }}
-                                  className="flex flex-col gap-1 text-sm text-left w-full bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-100 dark:border-gray-700 hover:border-rose-400/60 hover:bg-rose-50/60 dark:hover:bg-rose-950/20 transition-colors"
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <span className="font-semibold text-gray-900 dark:text-gray-100">
-                                      Scene {issue.sceneNum}: {issue.heading}
-                                    </span>
-                                    <div className="flex gap-2">
-                                      {issue.rec.priority && (
-                                        <Badge 
-                                          variant="outline" 
-                                          className={`text-xs uppercase tracking-wider ${
-                                            issue.rec.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                            issue.rec.priority === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                            'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                          }`}
-                                        >
-                                          {issue.rec.priority}
-                                        </Badge>
+                            <div className="mt-3 space-y-2.5 pl-1 pr-1">
+                              <div className="max-h-60 overflow-y-auto space-y-2.5 pr-1">
+                                {topIssues.map((issue) => {
+                                  const issueSelectionKey = buildSceneRecSelectionKey(
+                                    issue.sceneIndex,
+                                    issue.recId
+                                  )
+                                  const isIssueSelected = selectedRecKeys.has(issueSelectionKey)
+                                  return (
+                                    <div
+                                      key={`${issue.sceneIndex}-${issue.recId}`}
+                                      className={cn(
+                                        'flex items-start gap-2.5 text-sm text-left w-full p-3 rounded-md border transition-colors',
+                                        isIssueSelected
+                                          ? 'bg-purple-50/60 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800/60'
+                                          : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700'
                                       )}
-                                      <Badge variant="destructive" className="text-xs shrink-0">
-                                        -{issue.rec.pointsDeducted} pts
-                                      </Badge>
+                                    >
+                                      <Checkbox
+                                        checked={isIssueSelected}
+                                        onCheckedChange={() =>
+                                          handleToggleRecSelection(issue.sceneIndex, issue.recId)
+                                        }
+                                        disabled={isRunningPreVisPrep}
+                                        className="mt-0.5"
+                                        aria-label={`Select Scene ${issue.sceneNum} recommendation for Scene Director Agent`}
+                                      />
+                                      <div className="flex flex-col gap-1 flex-1 min-w-0">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <span className="font-semibold text-gray-900 dark:text-gray-100">
+                                            Scene {issue.sceneNum}: {issue.heading}
+                                          </span>
+                                          <div className="flex gap-1.5 shrink-0">
+                                            {issue.rec.priority && (
+                                              <Badge 
+                                                variant="outline" 
+                                                className={`text-[10px] uppercase tracking-wider ${
+                                                  issue.rec.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                  issue.rec.priority === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                }`}
+                                              >
+                                                {issue.rec.priority}
+                                              </Badge>
+                                            )}
+                                            <Badge variant="destructive" className="text-[10px] shrink-0">
+                                              -{issue.rec.pointsDeducted} pts
+                                            </Badge>
+                                          </div>
+                                        </div>
+                                        <span className="text-gray-600 dark:text-gray-400">{issue.rec.text}</span>
+                                        <div className="flex items-center justify-between gap-2 mt-1">
+                                          {issue.rec.category ? (
+                                            <span className="text-xs text-gray-400">{issue.rec.category}</span>
+                                          ) : <span />}
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              if (typeof issue.sceneNum === 'number' && issue.sceneNum > 0) {
+                                                jumpToScene(issue.sceneNum - 1)
+                                              }
+                                            }}
+                                            className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:underline"
+                                          >
+                                            Go to scene →
+                                          </button>
+                                        </div>
+                                      </div>
                                     </div>
-                                  </div>
-                                  <span className="text-gray-600 dark:text-gray-400">{issue.rec.text}</span>
-                                  {issue.rec.category && (
-                                    <div className="flex gap-2 mt-1">
-                                      <span className="text-xs text-gray-400">{issue.rec.category}</span>
-                                    </div>
-                                  )}
-                                  <span className="text-xs font-medium text-purple-600 dark:text-purple-400 mt-1">
-                                    Go to scene →
-                                  </span>
+                                  )
+                                })}
+                              </div>
+                              <div className="pt-1 flex items-center justify-between gap-2 text-xs">
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  Checked items are queued for Scene Director Agent
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveTab('recommendations')}
+                                  className="font-semibold text-cyan-600 dark:text-cyan-400 hover:underline"
+                                >
+                                  Review all {selectedSummary.totalUnappliedCount} recommendations →
                                 </button>
-                              ))}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -1889,54 +2082,147 @@ export default function ScriptReviewModal({
                   </div>
                 )}
 
-                {/* Go to Scenes Prompt — shown when score >= 80, dismissible */}
-                {review.overallScore >= 80 && !scenePromptDismissed && (
-                  <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800">
+                {/* Scene Director Agent Overview Callout — Automated Scene-by-Scene Recommendations */}
+                {!scenePromptDismissed && (
+                  <Card className="border-cyan-500/30 bg-gradient-to-r from-slate-900 via-indigo-950/90 to-cyan-950/90 text-white shadow-md">
                     <CardContent className="pt-4 pb-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-3 flex-1">
-                          <div className="mt-0.5 p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/40">
-                            <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          <div className="mt-0.5 p-2 rounded-lg bg-cyan-500/20 border border-cyan-400/30 shrink-0">
+                            <Clapperboard className="w-4 h-4 text-cyan-300" />
                           </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-semibold text-blue-800 dark:text-blue-200">
-                              Ready for scene-level optimization
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-semibold text-white">
+                                Scene Director Agent
+                              </span>
+                              <Badge variant="outline" className="border-cyan-400/40 bg-cyan-500/15 text-cyan-200 text-[10px]">
+                                Automated Multi-Scene Revision
+                              </Badge>
+                              {selectedSummary.selectedPointsDeducted > 0 && (
+                                <Badge variant="outline" className="border-emerald-400/40 bg-emerald-500/15 text-emerald-200 text-[10px] tabular-nums">
+                                  Up to +{selectedSummary.selectedPointsDeducted} pts at stake
+                                </Badge>
+                              )}
                             </div>
-                            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                              Your script scored <strong>{review.overallScore}</strong> overall. For further refinement, use <strong>Go to Scenes</strong> to analyze and optimize individual scenes with targeted resonance feedback.
-                            </p>
-                            {sceneAnalysis.length > 0 && (
-                              <div className="flex items-center gap-3 mt-2 text-xs">
-                                <span className="text-gray-600 dark:text-gray-400">{sceneAnalysis.length} scenes</span>
-                                <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  {sceneAnalysis.filter(s => s.score >= 80).length} ready
-                                </span>
-                                {sceneAnalysis.filter(s => s.score < 80).length > 0 && (
-                                  <span className="text-amber-600 dark:text-amber-400">
-                                    {sceneAnalysis.filter(s => s.score < 80).length} to optimize
+
+                            {sceneAnalysis.length === 0 ? (
+                              <>
+                                <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                                  Generate a scene-by-scene breakdown to let the <strong>Scene Director Agent</strong> apply targeted recommendations across your script automatically—without manually cycling through each scene.
+                                </p>
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => void handleGenerateSceneAnalysis()}
+                                    disabled={isGeneratingSceneAnalysis || !projectId || scriptScenes.length === 0}
+                                    className="bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white border-0 h-8 text-xs font-semibold"
+                                  >
+                                    {isGeneratingSceneAnalysis ? (
+                                      <>
+                                        <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                        Analyzing Scenes…
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                                        Generate Scene Breakdown
+                                      </>
+                                    )}
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={jumpToScenes}
+                                    className="border-white/20 bg-white/5 hover:bg-white/10 text-slate-200 h-8 text-xs"
+                                  >
+                                    <Film className="w-3.5 h-3.5 mr-1.5" />
+                                    Go to Scenes
+                                  </Button>
+                                </div>
+                              </>
+                            ) : selectedSummary.totalUnappliedCount > 0 ? (
+                              <>
+                                <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                                  <strong>{selectedSummary.selectedRecCount} of {selectedSummary.totalUnappliedCount}</strong> scene recommendations are selected by default across <strong>{selectedSummary.selectedSceneCount} scene{selectedSummary.selectedSceneCount === 1 ? '' : 's'}</strong>. Review &amp; uncheck any items you want to skip, or run the Scene Director Agent in the background now.
+                                </p>
+                                <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-300">
+                                  <span>{sceneAnalysis.length} scenes analyzed</span>
+                                  <span className="text-emerald-300 flex items-center gap-1">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    {sceneAnalysis.filter(s => s.score >= 80).length} scoring 80+
                                   </span>
-                                )}
-                              </div>
+                                  {sceneAnalysis.filter(s => s.score < 80).length > 0 && (
+                                    <span className="text-amber-300">
+                                      {sceneAnalysis.filter(s => s.score < 80).length} below 80
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => setActiveTab('recommendations')}
+                                    className="bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white border-0 h-8 text-xs font-semibold"
+                                  >
+                                    <ListChecks className="w-3.5 h-3.5 mr-1.5" />
+                                    Review &amp; Select ({selectedSummary.selectedRecCount}/{selectedSummary.totalUnappliedCount})
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isRunningPreVisPrep || !projectId || selectedSummary.selectedRecCount === 0}
+                                    onClick={() => handleRunPreVisPrepAgent()}
+                                    className="border-cyan-400/40 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-100 h-8 text-xs font-medium"
+                                  >
+                                    {isRunningPreVisPrep ? (
+                                      <>
+                                        <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                        Scene Director Running…
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
+                                        Run Scene Director ({selectedSummary.selectedSceneCount} Scene{selectedSummary.selectedSceneCount === 1 ? '' : 's'})
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <p className="text-xs text-emerald-200 mt-1.5 leading-relaxed">
+                                  All scene recommendations from this analysis have been applied! Re-run Audience Analysis to measure your updated score, or jump to scenes to continue production.
+                                </p>
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    disabled={isGenerating}
+                                    onClick={() => void handleRegenerate()}
+                                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold h-8 text-xs"
+                                  >
+                                    <RefreshCw className={cn('w-3.5 h-3.5 mr-1.5', isGenerating && 'animate-spin')} />
+                                    Re-run AR Analysis
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={jumpToScenes}
+                                    className="border-white/20 bg-white/5 hover:bg-white/10 text-slate-200 h-8 text-xs"
+                                  >
+                                    <Film className="w-3.5 h-3.5 mr-1.5" />
+                                    Go to Scenes
+                                  </Button>
+                                </div>
+                              </>
                             )}
-                            <div className="mt-3">
-                              <Button
-                                size="sm"
-                                onClick={jumpToScenes}
-                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                              >
-                                <Film className="w-4 h-4 mr-1.5" />
-                                Go to Scenes
-                              </Button>
-                            </div>
                           </div>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setScenePromptDismissed(true)}
-                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0 h-7 w-7 p-0"
-                          aria-label="Dismiss scene optimization prompt"
+                          className="text-slate-400 hover:text-white shrink-0 h-7 w-7 p-0"
+                          aria-label="Dismiss Scene Director prompt"
                         >
                           <X className="w-3.5 h-3.5" />
                         </Button>
@@ -2016,17 +2302,24 @@ export default function ScriptReviewModal({
                     scriptScenes,
                     { highImpactOnly: true, localAppliedKeys: localAppliedRecKeys }
                   )
+                  const lowScoreUnappliedKeys = collectInitialSelectedRecKeys(
+                    sceneAnalysis,
+                    scriptScenes,
+                    { maxSceneScoreExclusive: 80, localAppliedKeys: localAppliedRecKeys }
+                  )
                   const selectedGroups = groupSelectedRecommendationsByScene(
                     sceneAnalysis,
                     selectedRecKeys,
                     scriptScenes,
                     localAppliedRecKeys
                   )
+                  const selectedSceneIndexSet = new Set(
+                    selectedGroups.map((g) => g.sceneIndex)
+                  )
                   const selectedRecCount = selectedGroups.reduce(
                     (sum, g) => sum + g.selectedRecommendations.length,
                     0
                   )
-                  const totalScenesCount = scriptScenes.length || sceneAnalysis.length
 
                   return (
                   <div className="space-y-6">
@@ -2036,34 +2329,52 @@ export default function ScriptReviewModal({
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="inline-flex items-center gap-1.5 rounded-md bg-cyan-500/20 border border-cyan-400/30 px-2 py-0.5 text-xs font-semibold text-cyan-200">
-                                <Bot className="w-3.5 h-3.5 text-cyan-300" />
-                                Scene Recommendations Agent
+                                <Clapperboard className="w-3.5 h-3.5 text-cyan-300" />
+                                Scene Director Agent
                               </span>
                               <Badge variant="outline" className="border-purple-400/40 bg-purple-500/15 text-purple-200 text-[10px]">
-                                Fast AR Script Iteration
+                                Concurrent Scene Revision ({DEFAULT_SCENE_DIRECTOR_CONCURRENCY}x)
                               </Badge>
+                              {selectedSummary.selectedPointsDeducted > 0 && (
+                                <Badge variant="outline" className="border-emerald-400/40 bg-emerald-500/15 text-emerald-200 text-[10px] tabular-nums">
+                                  Up to +{selectedSummary.selectedPointsDeducted} pts targeted
+                                </Badge>
+                              )}
                             </div>
                             <p className="text-xs text-slate-300 leading-relaxed m-0">
-                              Select or unselect the scene recommendations below and apply them in one batch. Once applied, re-run Audience Analysis to verify your updated score. Revised scenes will flag their scene card Direction tab so you (or the Production Agent) can run Shot Direction when you are ready for Pre-Vis.
+                              All unapplied recommendations are selected by default. Uncheck any recommendations you do not want to apply, then run the Scene Director Agent to revise scenes concurrently in the background.
                             </p>
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2 shrink-0">
                             <Button
+                              variant="outline"
                               size="sm"
-                              onClick={handleRunPreVisPrepAgent}
+                              onClick={() => setShowDirectorOptions((prev) => !prev)}
+                              className={cn(
+                                'h-9 px-3 text-xs border-white/20 bg-white/5 hover:bg-white/15 text-slate-200',
+                                (showDirectorOptions || directorNote.trim().length > 0 || revisionDepth !== 'moderate' || autoReanalyzeAfterApply) &&
+                                  'border-cyan-400/50 bg-cyan-500/15 text-cyan-100'
+                              )}
+                            >
+                              <SlidersHorizontal className="w-3.5 h-3.5 mr-1.5" />
+                              Options
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleRunPreVisPrepAgent()}
                               disabled={isRunningPreVisPrep || !projectId || selectedRecCount === 0}
                               className="bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white border-0 shadow-sm h-9 px-3.5 text-xs font-semibold"
                             >
                               {isRunningPreVisPrep ? (
                                 <>
                                   <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                                  Applying Recommendations…
+                                  Running Scene Director…
                                 </>
                               ) : (
                                 <>
-                                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                                  Apply Selected ({selectedRecCount} in {selectedGroups.length} Scene{selectedGroups.length === 1 ? '' : 's'})
+                                  <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
+                                  Run Scene Director ({selectedRecCount} in {selectedGroups.length} Scene{selectedGroups.length === 1 ? '' : 's'})
                                 </>
                               )}
                             </Button>
@@ -2072,22 +2383,22 @@ export default function ScriptReviewModal({
 
                         {/* Bulk selection bar */}
                         <div className="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
-                          <div className="flex items-center gap-2 text-slate-300">
+                          <div className="flex items-center gap-2 text-slate-300 flex-wrap">
                             <span className="font-medium text-white">
                               {selectedRecCount} of {allUnappliedKeys.size}
                             </span>
                             <span>unapplied recommendation{allUnappliedKeys.size === 1 ? '' : 's'} selected</span>
                             {selectedGroups.length > 0 && (
                               <span className="text-cyan-300">
-                                ({selectedGroups.length} scene{selectedGroups.length === 1 ? '' : 's'} to revise)
+                                ({selectedGroups.length} scene{selectedGroups.length === 1 ? '' : 's'} queued)
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <button
                               type="button"
                               disabled={isRunningPreVisPrep || allUnappliedKeys.size === 0}
-                              onClick={() => handleSelectAllRecommendations(false)}
+                              onClick={() => handleSelectAllRecommendations({ highImpactOnly: false })}
                               className="rounded px-2 py-1 text-[11px] font-medium bg-white/10 hover:bg-white/20 text-slate-100 disabled:opacity-40 transition-colors"
                             >
                               Select All ({allUnappliedKeys.size})
@@ -2096,10 +2407,22 @@ export default function ScriptReviewModal({
                               <button
                                 type="button"
                                 disabled={isRunningPreVisPrep}
-                                onClick={() => handleSelectAllRecommendations(true)}
+                                onClick={() => handleSelectAllRecommendations({ highImpactOnly: true })}
                                 className="rounded px-2 py-1 text-[11px] font-medium bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 text-rose-200 disabled:opacity-40 transition-colors"
                               >
                                 High-Impact Only ({highImpactUnappliedKeys.size})
+                              </button>
+                            )}
+                            {lowScoreUnappliedKeys.size > 0 && lowScoreUnappliedKeys.size < allUnappliedKeys.size && (
+                              <button
+                                type="button"
+                                disabled={isRunningPreVisPrep}
+                                onClick={() =>
+                                  handleSelectAllRecommendations({ maxSceneScoreExclusive: 80 })
+                                }
+                                className="rounded px-2 py-1 text-[11px] font-medium bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 text-amber-200 disabled:opacity-40 transition-colors"
+                              >
+                                Scenes &lt; 80 ({lowScoreUnappliedKeys.size})
                               </button>
                             )}
                             <button
@@ -2112,6 +2435,73 @@ export default function ScriptReviewModal({
                             </button>
                           </div>
                         </div>
+
+                        {/* Collapsible Scene Director Optimization Options */}
+                        {showDirectorOptions && (
+                          <div className="mt-3 pt-3 border-t border-white/10 space-y-3 text-xs">
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-slate-300 font-medium">Revision Depth:</span>
+                                {(
+                                  [
+                                    { id: 'light', label: 'Polish', hint: 'Tighten wording, keep beat count' },
+                                    { id: 'moderate', label: 'Rewrite (Default)', hint: 'Substantive dialogue & beat fixes' },
+                                    { id: 'deep', label: 'Restructure', hint: 'Reimagine scene staging & flow' },
+                                  ] as const
+                                ).map((opt) => (
+                                  <button
+                                    key={opt.id}
+                                    type="button"
+                                    title={opt.hint}
+                                    disabled={isRunningPreVisPrep}
+                                    onClick={() => setRevisionDepth(opt.id)}
+                                    className={cn(
+                                      'rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors border',
+                                      revisionDepth === opt.id
+                                        ? 'bg-cyan-500/25 border-cyan-400 text-white'
+                                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                                    )}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+
+                              <div className="flex items-center gap-4 flex-wrap">
+                                <label className="inline-flex items-center gap-2 cursor-pointer text-slate-200">
+                                  <Checkbox
+                                    checked={preserveMusic}
+                                    onCheckedChange={(v) => setPreserveMusic(Boolean(v))}
+                                    disabled={isRunningPreVisPrep}
+                                  />
+                                  <span>Preserve scene music cues</span>
+                                </label>
+                                <label className="inline-flex items-center gap-2 cursor-pointer text-slate-200">
+                                  <Checkbox
+                                    checked={autoReanalyzeAfterApply}
+                                    onCheckedChange={(v) => setAutoReanalyzeAfterApply(Boolean(v))}
+                                    disabled={isRunningPreVisPrep}
+                                  />
+                                  <span>Auto re-score AR when done</span>
+                                </label>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                                Global Director Note (optional — applied across all selected scenes)
+                              </label>
+                              <Textarea
+                                value={directorNote}
+                                onChange={(e) => setDirectorNote(e.target.value)}
+                                disabled={isRunningPreVisPrep}
+                                rows={2}
+                                placeholder="e.g. Keep dialogue sharp and naturalistic; convert exposition into visual action without adding voiceover…"
+                                className="min-h-[52px] text-xs bg-slate-950/70 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                              />
+                            </div>
+                          </div>
+                        )}
 
                         {/* Live progress bar */}
                         {isRunningPreVisPrep && preVisPrepProgress && (
@@ -2142,14 +2532,16 @@ export default function ScriptReviewModal({
                                 className="h-full bg-gradient-to-r from-cyan-400 to-indigo-500 transition-all duration-300"
                                 style={{
                                   width: `${
-                                    preVisPrepProgress.total > 0
-                                      ? Math.min(
-                                          100,
-                                          Math.round(
-                                            (preVisPrepProgress.done / preVisPrepProgress.total) * 100
+                                    typeof preVisPrepProgress.progressPct === 'number'
+                                      ? preVisPrepProgress.progressPct
+                                      : preVisPrepProgress.total > 0
+                                        ? Math.min(
+                                            100,
+                                            Math.round(
+                                              (preVisPrepProgress.done / preVisPrepProgress.total) * 100
+                                            )
                                           )
-                                        )
-                                      : 15
+                                        : 15
                                   }%`,
                                 }}
                               />
@@ -2202,7 +2594,7 @@ export default function ScriptReviewModal({
                           </div>
                         )}
                         {!isRunningPreVisPrep && preVisPrepResult && preVisPrepResult.failedRevisions.length > 0 && (
-                          <div className="mt-3 rounded-lg border border-rose-400/40 bg-rose-950/40 p-3 text-xs text-rose-100">
+                          <div className="mt-3 rounded-lg border border-rose-400/40 bg-rose-950/40 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 text-xs text-rose-100">
                             <div className="flex items-start gap-2">
                               <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                               <div>
@@ -2216,22 +2608,90 @@ export default function ScriptReviewModal({
                                 </p>
                               </div>
                             </div>
+                            {preVisPrepResult.failedSceneIndices && preVisPrepResult.failedSceneIndices.length > 0 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleRetryFailedScenes}
+                                className="h-8 px-3 text-xs border-rose-400/50 bg-rose-950/60 hover:bg-rose-900/60 text-rose-100 shrink-0"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                                Retry Failed ({preVisPrepResult.failedSceneIndices.length})
+                              </Button>
+                            )}
                           </div>
                         )}
                       </div>
                     )}
 
                     <Card>
-                      <CardHeader className="flex flex-row items-center justify-between">
+                      <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
                         <CardTitle className="text-lg flex items-center gap-2">
                           <ListChecks className="w-5 h-5 text-purple-600" />
                           Scene Breakdown
                         </CardTitle>
+                        {sceneAnalysis.length > 0 && (
+                          <div className="flex items-center gap-1.5 text-xs">
+                            {(
+                              [
+                                { id: 'all', label: `All Scenes (${sceneAnalysis.length})` },
+                                {
+                                  id: 'with-recs',
+                                  label: `With Recommendations (${selectedSummary.totalScenesWithUnappliedCount})`,
+                                },
+                                {
+                                  id: 'selected',
+                                  label: `Selected (${selectedGroups.length})`,
+                                },
+                              ] as const
+                            ).map((tab) => (
+                              <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setSceneFilter(tab.id)}
+                                className={cn(
+                                  'rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors border',
+                                  sceneFilter === tab.id
+                                    ? 'bg-purple-600 text-white border-purple-600'
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                )}
+                              >
+                                {tab.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </CardHeader>
                       <CardContent>
                         {sceneAnalysis.length === 0 ? (
-                          <div className="text-center py-8 text-gray-500">
-                            No scene analysis available.
+                          <div className="text-center py-10 space-y-3">
+                            <Clapperboard className="w-10 h-10 mx-auto text-purple-500/60" />
+                            <div className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                              No scene-by-scene breakdown generated yet
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                              Generate per-scene resonance scores and targeted recommendations so the Scene Director Agent can revise multiple scenes automatically.
+                            </p>
+                            {projectId && scriptScenes.length > 0 && (
+                              <Button
+                                size="sm"
+                                onClick={() => void handleGenerateSceneAnalysis()}
+                                disabled={isGeneratingSceneAnalysis}
+                                className="bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white"
+                              >
+                                {isGeneratingSceneAnalysis ? (
+                                  <>
+                                    <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                    Generating Scene Breakdown…
+                                  </>
+                                ) : (
+                                  <>
+                                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                                    Generate Scene-by-Scene Recommendations
+                                  </>
+                                )}
+                              </Button>
+                            )}
                           </div>
                         ) : (
                           <div className="space-y-4">
@@ -2255,6 +2715,12 @@ export default function ScriptReviewModal({
                                       localAppliedRecKeys
                                     )
                                 )
+                              if (sceneFilter === 'with-recs' && unappliedRecsInScene.length === 0) {
+                                return null
+                              }
+                              if (sceneFilter === 'selected' && !selectedSceneIndexSet.has(resolvedSceneIdx)) {
+                                return null
+                              }
                               const unappliedRecIdsInScene = unappliedRecsInScene.map(({ recId }) => recId)
                               const hasUnappliedHighImpact = unappliedRecsInScene.some(({ rec }) =>
                                 recommendationIsHighImpact(rec)
@@ -2285,6 +2751,11 @@ export default function ScriptReviewModal({
                                       {hasUnappliedHighImpact && (
                                         <Badge variant="destructive" className="text-[10px] uppercase tracking-wider">
                                           High impact
+                                        </Badge>
+                                      )}
+                                      {sceneRecs.length > 0 && unappliedRecsInScene.length === 0 && (
+                                        <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
+                                          All fixes applied
                                         </Badge>
                                       )}
                                     </div>
@@ -2343,28 +2814,49 @@ export default function ScriptReviewModal({
                                 {/* Specific Recommendations (only unapplied recommendations are shown) */}
                                 {unappliedRecsInScene.length > 0 && (
                                   <div className="bg-white dark:bg-gray-900 rounded-md p-3 border border-purple-100 dark:border-purple-900/30">
-                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                    <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                                       <div className="text-[10px] font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider">
                                         Recommendations ({selectedInSceneCount}/{unappliedRecIdsInScene.length} selected)
                                       </div>
-                                      <button
-                                        type="button"
-                                        disabled={isRunningPreVisPrep}
-                                        onClick={() =>
-                                          handleToggleSceneRecommendations(
-                                            resolvedSceneIdx,
-                                            unappliedRecIdsInScene
-                                          )
-                                        }
-                                        className="text-[11px] font-medium text-purple-600 dark:text-purple-400 hover:underline disabled:opacity-40"
-                                      >
-                                        {allInSceneSelected ? 'Unselect scene' : 'Select scene'}
-                                      </button>
+                                      <div className="flex items-center gap-3">
+                                        <button
+                                          type="button"
+                                          disabled={isRunningPreVisPrep}
+                                          onClick={() =>
+                                            handleToggleSceneRecommendations(
+                                              resolvedSceneIdx,
+                                              unappliedRecIdsInScene
+                                            )
+                                          }
+                                          className="text-[11px] font-medium text-purple-600 dark:text-purple-400 hover:underline disabled:opacity-40"
+                                        >
+                                          {allInSceneSelected ? 'Unselect scene' : 'Select scene'}
+                                        </button>
+                                        {projectId && (
+                                          <button
+                                            type="button"
+                                            disabled={isRunningPreVisPrep}
+                                            onClick={() =>
+                                              handleRunSingleSceneDirector(
+                                                resolvedSceneIdx,
+                                                unappliedRecIdsInScene
+                                              )
+                                            }
+                                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-cyan-600 dark:text-cyan-400 hover:underline disabled:opacity-40"
+                                            title="Run Scene Director Agent on just this scene in the background"
+                                          >
+                                            <Clapperboard className="w-3 h-3" />
+                                            Direct Scene {scene.sceneNumber}
+                                          </button>
+                                        )}
+                                      </div>
                                     </div>
                                     <ul className="space-y-1.5 mb-0">
                                       {unappliedRecsInScene.map(({ rec, rIdx, recId }) => {
                                         const recText = typeof rec === 'string' ? rec : rec?.text || String(rec)
                                         const recPriority = typeof rec === 'object' && rec?.priority ? rec.priority : null
+                                        const recCategory = typeof rec === 'object' && rec?.category ? rec.category : null
+                                        const recTargetElement = typeof rec === 'object' && rec?.targetElement ? rec.targetElement : null
                                         const recPointsDeducted = typeof rec === 'object' && rec?.pointsDeducted ? rec.pointsDeducted : null
                                         const selectionKey = buildSceneRecSelectionKey(resolvedSceneIdx, recId)
                                         const isSelected = selectedRecKeys.has(selectionKey)
@@ -2376,7 +2868,7 @@ export default function ScriptReviewModal({
                                               'text-sm rounded-md px-2 py-1.5 transition-colors mb-0',
                                               isSelected
                                                 ? 'bg-purple-50/70 dark:bg-purple-950/25 text-gray-800 dark:text-gray-200'
-                                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40'
+                                                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/40 opacity-75'
                                             )}
                                           >
                                             <label
@@ -2407,6 +2899,16 @@ export default function ScriptReviewModal({
                                                 {recPointsDeducted && (
                                                   <Badge variant="destructive" className="ml-2 text-[10px] px-1 py-0 h-4 border-none uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                                                     -{recPointsDeducted} pts
+                                                  </Badge>
+                                                )}
+                                                {recCategory && (
+                                                  <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0 h-4 border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400">
+                                                    {recCategory}
+                                                  </Badge>
+                                                )}
+                                                {recTargetElement && (
+                                                  <Badge variant="outline" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 border-indigo-300/60 dark:border-indigo-700/60 text-indigo-600 dark:text-indigo-400 capitalize">
+                                                    {recTargetElement}
                                                   </Badge>
                                                 )}
                                               </span>

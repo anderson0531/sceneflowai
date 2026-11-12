@@ -3,6 +3,7 @@ import path from 'path'
 import { describe, expect, it, vi } from 'vitest'
 import { recommendationId } from '@/lib/script/audienceResonance/highImpact'
 import {
+  DEFAULT_SCENE_DIRECTOR_CONCURRENCY,
   buildSceneRecSelectionKey,
   collectInitialSelectedRecKeys,
   getArRecommendationsBackgroundState,
@@ -10,6 +11,8 @@ import {
   patchArRecommendationsBackgroundState,
   runPreVisScenePreparation,
   subscribeArRecommendationsBackgroundState,
+  summarizeSelectedRecommendations,
+  type PreVisPrepProgress,
   type PreVisSceneStatusEvent,
   type SceneAnalysisForPreVis,
 } from '@/lib/vision/prepareScenesForPreVis'
@@ -209,5 +212,121 @@ describe('prepareScenesForPreVis', () => {
     expect(modalSource).toContain('{unappliedRecsInScene.length > 0 && (')
     expect(modalSource).toContain('{unappliedRecsInScene.map(({ rec, rIdx, recId }) => {')
     expect(modalSource).not.toContain('line-through opacity-80')
+    expect(modalSource).toContain('Scene Director Agent')
+    expect(modalSource).toContain('Review &amp; Select')
+  })
+
+  it('summarizes selected recommendations and supports Scenes < 80 filtering', () => {
+    const allSelected = collectInitialSelectedRecKeys(sampleSceneAnalysis)
+    const fullSummary = summarizeSelectedRecommendations(sampleSceneAnalysis, allSelected)
+    expect(fullSummary).toEqual({
+      selectedRecCount: 3,
+      selectedSceneCount: 2,
+      totalUnappliedCount: 3,
+      totalScenesWithUnappliedCount: 2,
+      selectedPointsDeducted: 5,
+      highImpactSelectedCount: 1,
+    })
+
+    // Filter to scenes scoring below 80 (only Scene 1 has score 72; Scene 2 has 88)
+    const lowScoreKeys = collectInitialSelectedRecKeys(sampleSceneAnalysis, undefined, {
+      maxSceneScoreExclusive: 80,
+    })
+    expect(lowScoreKeys.size).toBe(2)
+    const lowScoreSummary = summarizeSelectedRecommendations(sampleSceneAnalysis, lowScoreKeys)
+    expect(lowScoreSummary.selectedRecCount).toBe(2)
+    expect(lowScoreSummary.selectedSceneCount).toBe(1)
+    expect(lowScoreSummary.totalUnappliedCount).toBe(3)
+  })
+
+  it('runs concurrent Scene Director requests up to DEFAULT_SCENE_DIRECTOR_CONCURRENCY and retries transient 429s', async () => {
+    const fiveScenesAnalysis: SceneAnalysisForPreVis[] = Array.from({ length: 5 }, (_, idx) => ({
+      sceneNumber: idx + 1,
+      sceneHeading: `INT. ROOM ${idx + 1} - NIGHT`,
+      score: 70,
+      recommendations: [{ text: `Fix pacing in scene ${idx + 1}`, priority: 'high', pointsDeducted: 3 }],
+    }))
+    const fiveScriptScenes = Array.from({ length: 5 }, (_, idx) => ({
+      heading: `INT. ROOM ${idx + 1} - NIGHT`,
+      action: `Original action ${idx + 1}`,
+      beats: [{ beatId: `b-${idx}`, beat_title: 'Beat 1' }],
+    }))
+
+    const selectedKeys = collectInitialSelectedRecKeys(fiveScenesAnalysis, fiveScriptScenes)
+    expect(selectedKeys.size).toBe(5)
+
+    let inFlight = 0
+    let peakInFlight = 0
+    let scene2Attempts = 0
+    const progressEvents: PreVisPrepProgress[] = []
+    const requestBodies: any[] = []
+
+    const mockFetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = init?.body ? JSON.parse(String(init.body)) : {}
+      requestBodies.push(body)
+      inFlight += 1
+      peakInFlight = Math.max(peakInFlight, inFlight)
+
+      await new Promise((resolve) => setTimeout(resolve, 15))
+      inFlight -= 1
+
+      if (body.sceneIndex === 1 && scene2Attempts === 0) {
+        scene2Attempts += 1
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          revisedScene: {
+            ...fiveScriptScenes[body.sceneIndex],
+            action: `Revised action ${body.sceneIndex + 1}`,
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    })
+
+    const onPersistRevisedScenes = vi.fn(async () => ({ sceneCount: 5 }))
+
+    const result = await runPreVisScenePreparation({
+      projectId: 'proj-concurrent',
+      sceneAnalysis: fiveScenesAnalysis,
+      selectedKeys,
+      scriptScenes: fiveScriptScenes,
+      revisionDepth: 'deep',
+      directorNote: 'Keep dialogue taut and grounded.',
+      preserveElements: ['music'],
+      retryBaseDelayMs: 5,
+      onProgress: (p) => progressEvents.push(p),
+      onPersistRevisedScenes,
+      fetchImpl: mockFetch as unknown as typeof fetch,
+    })
+
+    expect(DEFAULT_SCENE_DIRECTOR_CONCURRENCY).toBe(3)
+    expect(peakInFlight).toBeGreaterThan(1)
+    expect(peakInFlight).toBeLessThanOrEqual(DEFAULT_SCENE_DIRECTOR_CONCURRENCY)
+    expect(scene2Attempts).toBe(1)
+    expect(mockFetch).toHaveBeenCalledTimes(6) // 5 scenes + 1 transient retry on Scene 2
+    expect(result.revisedSceneCount).toBe(5)
+    expect(result.appliedRecommendationCount).toBe(5)
+    expect(result.failedRevisions).toEqual([])
+
+    // Verify hybrid mode, depth, and preserveElements propagated to Scene Director API
+    expect(requestBodies[0].revisionMode).toBe('hybrid')
+    expect(requestBodies[0].customInstruction).toBe('Keep dialogue taut and grounded.')
+    expect(requestBodies[0].revisionDepth).toBe('deep')
+    expect(requestBodies[0].preserveElements).toEqual(['music'])
+
+    // Verify preserveElements propagated to batch persistence
+    expect(onPersistRevisedScenes).toHaveBeenCalledTimes(1)
+    expect(onPersistRevisedScenes.mock.calls[0][0][0].preserveElements).toEqual(['music'])
+
+    // Verify progress events reported concurrent active scenes and smooth percentage
+    expect(progressEvents.some((p) => (p.activeSceneNumbers?.length ?? 0) > 1)).toBe(true)
+    expect(progressEvents[progressEvents.length - 1]?.progressPct).toBe(100)
   })
 })
