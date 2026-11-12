@@ -2826,11 +2826,18 @@ const CharacterCard = ({
       }
 
       if (editingWardrobeId) {
+        const hadDrawnImage = Boolean(
+          editingLook?.fullBodyUrl ||
+            editingLook?.headshotUrl ||
+            editingLook?.previewImageUrl,
+        );
         await onUpdateWardrobe?.(characterId, {
           defaultWardrobe: wardrobe.defaultWardrobe.trim(),
-          wardrobeAccessories: wardrobe.wardrobeAccessories?.trim() || undefined,
-          appearanceNotes: wardrobe.appearanceNotes?.trim() || undefined,
+          wardrobeAccessories: wardrobe.wardrobeAccessories?.trim() || "",
+          appearanceNotes: wardrobe.appearanceNotes?.trim() || "",
           wardrobeId: editingWardrobeId,
+          generationPrompt: "",
+          ...(hadDrawnImage ? { needsImageRegen: true } : {}),
           action: "update",
         });
         toast.success("Wardrobe updated.");
@@ -3003,11 +3010,19 @@ const CharacterCard = ({
       toast.success(`Added "${name}" to wardrobe collection`);
     } else if (editingWardrobeId) {
       // Updating existing wardrobe
+      const existingLook = wardrobes.find((w) => w.id === editingWardrobeId);
+      const hadDrawnImage = Boolean(
+        existingLook?.fullBodyUrl ||
+          existingLook?.headshotUrl ||
+          existingLook?.previewImageUrl,
+      );
       onUpdateWardrobe?.(characterId, {
         defaultWardrobe: wardrobeText.trim(),
-        wardrobeAccessories: accessoriesText.trim() || undefined,
-        appearanceNotes: appearanceNotesText.trim() || undefined,
+        wardrobeAccessories: accessoriesText.trim(),
+        appearanceNotes: appearanceNotesText.trim(),
         wardrobeId: editingWardrobeId,
+        generationPrompt: "",
+        ...(hadDrawnImage ? { needsImageRegen: true } : {}),
         action: "update",
       });
     } else {
@@ -3069,10 +3084,15 @@ const CharacterCard = ({
       };
 
       // Save the enhanced description directly
+      const hadDrawnImage = Boolean(
+        wardrobe.fullBodyUrl || wardrobe.headshotUrl || wardrobe.previewImageUrl,
+      );
       await onUpdateWardrobe?.(characterId, {
         defaultWardrobe: enhanced.description,
         wardrobeAccessories: enhanced.accessories || wardrobe.accessories,
         wardrobeId: wardrobeId,
+        generationPrompt: "",
+        ...(hadDrawnImage ? { needsImageRegen: true } : {}),
         action: "update",
       });
 
@@ -3137,6 +3157,7 @@ const CharacterCard = ({
       defaultWardrobe: description,
       wardrobeAccessories: accessories || wardrobe.accessories,
       wardrobeId,
+      generationPrompt: "",
       action: "update",
     });
 
@@ -3145,6 +3166,7 @@ const CharacterCard = ({
         ...expandedWardrobe,
         description,
         accessories: accessories || expandedWardrobe.accessories,
+        generationPrompt: undefined,
       });
     }
 
@@ -3307,6 +3329,7 @@ const CharacterCard = ({
                       ...wardrobe,
                       description: softened.description,
                       accessories: softened.accessories,
+                      generationPrompt: undefined,
                     },
                     { allowSoftenRetry: false },
                   );

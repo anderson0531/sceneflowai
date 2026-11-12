@@ -37,6 +37,7 @@ export interface ExistingWardrobeLike {
   reason?: string
   /** When true, wardrobe image should be regenerated after sync */
   needsImageRegen?: boolean
+  generationPrompt?: string
 }
 
 export interface WardrobeSyncUpdate {
@@ -374,6 +375,7 @@ export function mergeWardrobeSyncDiff(
     if (update.imageStale) {
       next.needsImageRegen = true
       next.combinedCharacterRefUrl = undefined
+      next.generationPrompt = undefined
       staleWardrobeIds.push(current.id)
     }
     byId.set(update.wardrobeId, next)

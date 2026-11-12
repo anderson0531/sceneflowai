@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
+import { resolveUserId } from '@/lib/userHelper'
 import {
   buildSceneCharacterHeadshotPrompt,
   generateAndUploadFullBodyWardrobe,
@@ -72,10 +73,17 @@ interface GenerateSceneHeadshotRequest extends SceneCharacterHeadshotInput, Full
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    const userId = session?.user?.id || session?.user?.email
+    const rawUserId = session?.user?.id || session?.user?.email
 
-    if (!userId) {
+    if (!rawUserId) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    let userId = rawUserId
+    try {
+      userId = await resolveUserId(rawUserId)
+    } catch {
+      // Fall back to raw session identifier when DB lookup is unavailable (e.g. unit tests)
     }
 
     const hasEnoughCredits = await CreditService.ensureCredits(userId, CREDIT_COST)
@@ -182,7 +190,11 @@ export async function POST(req: NextRequest) {
         uploadPath?.trim() ||
         `characters/${projectId || 'default'}/${safeName}/wardrobes/full-body-${Date.now()}.png`
 
-      const result = await generateAndUploadFullBodyWardrobe(fullBodyInput, blobPath)
+      const result = await generateAndUploadFullBodyWardrobe(
+        fullBodyInput,
+        blobPath,
+        projectId || 'default'
+      )
 
       try {
         await quoteAndCharge({

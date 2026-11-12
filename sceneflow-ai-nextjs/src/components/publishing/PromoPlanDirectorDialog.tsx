@@ -7,7 +7,10 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { promoRecommendationNotes, type PromoPlanFinding } from '@/lib/publish/promoPlanFindings'
 import { legacyOwnerIdFromStorage } from '@/lib/blueprint/createBlueprintShare'
-import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
+import {
+  parsePromoSceneResponse,
+  slimPromoProductionStateForRequest,
+} from '@/lib/publish/promoSceneApi'
 import type { AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
@@ -18,7 +21,7 @@ export interface PromoPlanDirectorDialogProps {
   projectId: string
   targetDurationSec: number
   audienceDefinition?: AudienceDefinition
-  scenes: unknown[]
+  scenes?: unknown[]
   sceneProductionState?: Record<string, SceneProductionData>
   sceneScores?: Record<number, number>
   currentPlan: PromoTrailerBeatPlan[]
@@ -39,7 +42,6 @@ export function PromoPlanDirectorDialog({
   projectId,
   targetDurationSec,
   audienceDefinition,
-  scenes,
   sceneProductionState,
   sceneScores,
   currentPlan,
@@ -74,13 +76,11 @@ export function PromoPlanDirectorDialog({
           directorNotes: direction,
           audienceDefinition: audienceDefinition?.description?.trim() ? audienceDefinition : undefined,
           sceneScores,
-          scenes,
           beatPlan: shown,
-          sceneProductionState: slimPromoProductionState(sceneProductionState),
+          sceneProductionState: slimPromoProductionStateForRequest(sceneProductionState),
         }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Plan direction failed')
+      const data = parsePromoSceneResponse(res.status, await res.text(), 'Plan direction failed')
       const next = Array.isArray(data.beatPlan) ? (data.beatPlan as PromoTrailerBeatPlan[]) : []
       if (next.length === 0) throw new Error('The director returned an empty plan')
       const analysis = Array.isArray(data.analysis) ? (data.analysis as PromoPlanFinding[]) : null

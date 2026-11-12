@@ -455,7 +455,8 @@ export async function generateFullBodyWardrobeImage(
 
 export async function generateAndUploadFullBodyWardrobe(
   input: FullBodyWardrobeInput,
-  uploadPath: string
+  uploadPath: string,
+  projectId: string = 'default'
 ): Promise<{ imageUrl: string; prompt: string; generated: boolean }> {
   const cached = pickFullBodyWardrobeUrl(input)
   if (cached) {
@@ -464,7 +465,7 @@ export async function generateAndUploadFullBodyWardrobe(
 
   const { imageUrl, prompt } = await (async () => {
     const { imageBase64, prompt } = await generateFullBodyWardrobeImage(input)
-    const imageUrl = await uploadImageToBlob(imageBase64, uploadPath)
+    const imageUrl = await uploadImageToBlob(imageBase64, uploadPath, projectId)
     return { imageUrl, prompt }
   })()
   return { imageUrl, prompt, generated: true }

@@ -4,6 +4,7 @@ import React from 'react'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -34,6 +35,9 @@ export function PublishingLibraryDialog({
           <DialogTitle className="text-lg font-semibold text-white">
             Publishing Library
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Configure and publish project streams and deliverables across channels.
+          </DialogDescription>
         </DialogHeader>
         <div className="flex-1 min-h-0 overflow-hidden px-6 pb-6 flex flex-col gap-3">
           {topContent}

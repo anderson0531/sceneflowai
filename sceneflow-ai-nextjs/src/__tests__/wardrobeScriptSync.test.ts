@@ -276,11 +276,12 @@ describe('wardrobeScriptSync', () => {
     expect(wardrobes.filter((w) => w.name === 'Raincoat Escape')[0]?.isDefault).toBe(false)
   })
 
-  it('clears combinedCharacterRefUrl when merging a stale content update so the stale PiP composite is not reused', () => {
+  it('clears combinedCharacterRefUrl and stale generationPrompt when merging a stale content update', () => {
     const existingWithComposite = [
       {
         ...existing[0],
         combinedCharacterRefUrl: 'https://blob.example/office-pip.png',
+        generationPrompt: 'Photorealistic full-body wardrobe reference: navy blazer',
       },
     ]
     const diff = buildWardrobeSyncDiff('char-1', 'Piper', existingWithComposite, [
@@ -296,6 +297,7 @@ describe('wardrobeScriptSync', () => {
     const { wardrobes } = mergeWardrobeSyncDiff(existingWithComposite, diff)
     expect(wardrobes[0].needsImageRegen).toBe(true)
     expect(wardrobes[0].combinedCharacterRefUrl).toBeUndefined()
+    expect(wardrobes[0].generationPrompt).toBeUndefined()
   })
 
   it('isWardrobeStaleForSceneScript detects when scene/shot prose introduces uncovered outfit or appearance changes', () => {

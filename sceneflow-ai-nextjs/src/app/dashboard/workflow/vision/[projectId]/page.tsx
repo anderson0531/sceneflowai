@@ -34,6 +34,7 @@ import {
   diffProjectPutAgainstBaseline,
   fastJsonFingerprint,
   persistPublishingMetadataPatch,
+  syncSaveBaselineAfterPromoMutation,
   type ProjectSaveBaselineSnapshot,
 } from '@/lib/projects/deltaProjectSave'
 import { mergeDroppedObjectReferenceIds, visionReferencesPutPayload } from '@/lib/projects/mergeVisionPhaseReferences'
@@ -479,9 +480,16 @@ import {
   findPromoSceneIndex,
   hydratePromoSceneWithSharedShots,
   isPromoCinematicScene,
+  removePromoSceneFromScenes,
   syncPromoSharedBeatsToSourceScenes,
+  upsertPromoSceneInScenes,
   type PromoSceneBeat,
 } from '@/lib/publish/buildPromoScene'
+import {
+  parsePromoSceneResponse,
+  slimPromoProductionStateForRequest,
+  type PromoServerPersistedDelta,
+} from '@/lib/publish/promoSceneApi'
 import {
   promoAgentShotNeedsGeneration,
   promoOnScreenEnglish,
@@ -490,7 +498,6 @@ import {
   type PromoAgentRunRequest,
   type PromoBeatClipRequest,
 } from '@/lib/publish/promoLanguage'
-import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
 import { runPromoAgent } from '@/lib/publish/runPromoAgent'
 import { isOptimizedShotDirection } from '@/lib/publish/promoShotCatalog'
 import {
@@ -2500,6 +2507,118 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     },
     [projectId]
   )
+
+  const handlePromoServerPersisted = useCallback((delta: PromoServerPersistedDelta) => {
+    const liveScenes: unknown[] =
+      scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+    let resolvedScenes: unknown[] | undefined
+    if (delta.promoScene && typeof delta.promoScene === 'object') {
+      resolvedScenes = upsertPromoSceneInScenes(liveScenes, delta.promoScene, {
+        promoId: String(delta.promoScene.id || ''),
+        createNew: Boolean(delta.createNew),
+      })
+    } else if (delta.deletedPromoId) {
+      resolvedScenes = removePromoSceneFromScenes(liveScenes, delta.deletedPromoId)
+    } else if (Array.isArray(delta.scenes)) {
+      resolvedScenes = delta.scenes
+    }
+
+    if (resolvedScenes) {
+      const nextScenes = resolvedScenes
+      setScript((prev: any) => {
+        if (!prev) return prev
+        const updatedScript = prev.script?.scenes
+          ? { ...prev, script: { ...prev.script, scenes: nextScenes } }
+          : { ...prev, scenes: nextScenes }
+        scriptRef.current = updatedScript
+        return updatedScript
+      })
+    }
+
+    const promoId =
+      delta.promoScene && typeof delta.promoScene.id === 'string'
+        ? delta.promoScene.id
+        : undefined
+    if ((promoId && delta.promoProductionSeed) || delta.deletedPromoId) {
+      setSceneProductionState((prev) => {
+        const next = { ...prev }
+        if (delta.deletedPromoId) {
+          delete next[delta.deletedPromoId]
+        }
+        if (promoId && delta.promoProductionSeed) {
+          next[promoId] = {
+            ...(next[promoId] || {}),
+            ...(delta.promoProductionSeed as unknown as SceneProductionData),
+          }
+        }
+        sceneProductionStateRef.current = next
+        return next
+      })
+    }
+
+    setProject((prev: any) => {
+      if (!prev) return prev
+      const prevMeta = (prev.metadata || {}) as Record<string, any>
+      const prevVision = (prevMeta.visionPhase || {}) as Record<string, any>
+      const prevProd = (prevVision.production || {}) as Record<string, any>
+      const nextProdScenes = { ...(prevProd.scenes || {}) }
+      if (delta.deletedPromoId) {
+        delete nextProdScenes[delta.deletedPromoId]
+      }
+      if (promoId && delta.promoProductionSeed) {
+        nextProdScenes[promoId] = {
+          ...(nextProdScenes[promoId] || {}),
+          ...delta.promoProductionSeed,
+        }
+      }
+      const next = {
+        ...prev,
+        metadata: {
+          ...prevMeta,
+          visionPhase: {
+            ...prevVision,
+            ...(resolvedScenes
+              ? {
+                  scenes: resolvedScenes,
+                  script: prevVision.script?.script
+                    ? {
+                        ...prevVision.script,
+                        script: {
+                          ...prevVision.script.script,
+                          scenes: resolvedScenes,
+                        },
+                      }
+                    : {
+                        ...(prevVision.script || {}),
+                        scenes: resolvedScenes,
+                      },
+                }
+              : {}),
+            ...(delta.publishing !== undefined ? { publishing: delta.publishing } : {}),
+            ...(delta.scriptUpdatedAt ? { scriptUpdatedAt: delta.scriptUpdatedAt } : {}),
+            ...((promoId && delta.promoProductionSeed) || delta.deletedPromoId
+              ? {
+                  production: {
+                    ...prevProd,
+                    scenes: nextProdScenes,
+                  },
+                }
+              : {}),
+          },
+        },
+      }
+      projectRef.current = next
+      return next
+    })
+
+    syncSaveBaselineAfterPromoMutation(saveBaselineRef.current, {
+      fullScenesAfterSave: resolvedScenes,
+      promoScene: delta.promoScene,
+      promoProductionSeed: delta.promoProductionSeed,
+      deletedPromoId: delta.deletedPromoId,
+      publishing: delta.publishing,
+    })
+  }, [])
 
   const reloadSceneProduction = useCallback(async () => {
     const response = await fetch(`/api/projects/${projectId}/production`)
@@ -6725,21 +6844,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       })
 
-      const applyPromoScenes = (scenes: unknown[]) => {
-        setScript((prev: any) => {
-          if (!prev) return prev
-          const next = prev.script?.scenes
-            ? { ...prev, script: { ...prev.script, scenes } }
-            : { ...prev, scenes }
-          scriptRef.current = next
-          return next
-        })
-      }
-
-      const postPromo = async (
-        action: 'upsert' | 'narration' | 'music',
-        scenes?: unknown[]
-      ) => {
+      const postPromo = async (action: 'upsert' | 'narration' | 'music') => {
         const res = await fetch('/api/publish/promo/scene', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -6751,13 +6856,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             aspect: frame,
             ...(audienceDefinition?.description?.trim() ? { audienceDefinition } : {}),
             ...(action === 'upsert' ? { beatPlan } : {}),
-            ...(action === 'music' ? {} : { sceneProductionState: slimPromoProductionState(sceneProductionStateRef.current) }),
-            ...(scenes ? { scenes } : {}),
+            ...(action === 'music'
+              ? {}
+              : {
+                  sceneProductionState: slimPromoProductionStateForRequest(
+                    sceneProductionStateRef.current
+                  ),
+                }),
           }),
         })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || `Promo ${action} failed`)
-        if (Array.isArray(data.scenes)) applyPromoScenes(data.scenes)
+        const data = parsePromoSceneResponse(
+          res.status,
+          await res.text(),
+          `Promo ${action} failed`
+        )
+        handlePromoServerPersisted({
+          scenes: data.scenes,
+          promoScene: data.promoScene,
+          promoProductionSeed: data.promoProductionSeed,
+          createNew: Boolean(data.createNew),
+          publishing: data.publishing,
+          scriptUpdatedAt: data.scriptUpdatedAt,
+        })
       }
 
       startAgentRun({
@@ -6778,11 +6898,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try {
         const { failed } = await runPromoAgent(shots, {
-          upsertScene: () =>
-            postPromo(
-              'upsert',
-              scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes
-            ),
+          upsertScene: () => postPromo('upsert'),
           ensureSegment: (shot) =>
             ensurePromoShotSegment(shot.sceneId, shot.beatId, shot.durationSec),
           optimizeDirection: (shot) =>
@@ -6830,7 +6946,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw error
       }
     },
-    [project?.id, ensurePromoShotSegment, generatePromoClip, optimizePromoSourceShot]
+    [
+      project?.id,
+      ensurePromoShotSegment,
+      generatePromoClip,
+      optimizePromoSourceShot,
+      handlePromoServerPersisted,
+    ]
   )
 
   const handleSegmentUpload = useCallback(
@@ -8732,7 +8854,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
 
-      if (project) {
+      if (projectRef.current || project) {
         const response = await persistVisionCharacters(
           updatedCharacters,
           'handleApplyWardrobeSyncDiffs'
@@ -20819,8 +20941,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 aspect: '16:9',
               }),
             })
+            const rawPlanText = await planRes.text()
             if (!planRes.ok) return undefined
-            const planData = await planRes.json().catch(() => null)
+            let planData: ReturnType<typeof parsePromoSceneResponse> | null = null
+            try {
+              planData = parsePromoSceneResponse(planRes.status, rawPlanText, 'Promo plan failed')
+            } catch {
+              return undefined
+            }
+            if (planData?.publishing) {
+              handlePromoServerPersisted({ publishing: planData.publishing })
+            }
             const beatPlan = Array.isArray(planData?.beatPlan)
               ? planData.beatPlan
               : []
@@ -21608,6 +21739,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         streams={projectStreams}
         sceneProductionState={sceneProductionState}
         onSaveMetadata={handleSavePublishingMetadata}
+        onPromoServerPersisted={handlePromoServerPersisted}
         onPreviewPromo={(language) => {
           setPromoStudioOpen(false)
           setScreeningPlaybackHint({ mode: 'promo', language: language || 'en' })

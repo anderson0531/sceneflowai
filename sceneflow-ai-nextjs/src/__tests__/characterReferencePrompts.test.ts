@@ -10,6 +10,7 @@ import {
   IDENTITY_APPEARANCE_LOCK,
   IDENTITY_PHOTO_REALISM_DIRECTIVES,
   identityAppearanceFromPrompt,
+  resolveAnchorWardrobeForTransition,
   resolveDefaultWardrobeDescription,
 } from '@/lib/character/characterReferencePrompts'
 
@@ -160,5 +161,73 @@ describe('buildEnhanceIdentityReferencePrompt', () => {
     expect(prompt).toContain(appearance)
     expect(prompt).not.toContain('Preserve the exact person')
     expect(prompt).not.toContain('same face shape, bone structure, skin tone')
+  })
+})
+
+describe('resolveAnchorWardrobeForTransition', () => {
+  it('does NOT attach an unrelated default wardrobe as Reference Image 2 for a distinct costume', () => {
+    const wardrobes = [
+      {
+        id: 'w-default',
+        name: 'Default Dock Look',
+        description: 'navy canvas dock coat, dark work trousers, heavy boots',
+        fullBodyUrl: 'https://cdn/default-dock.png',
+        isDefault: true,
+        sceneNumbers: [1, 2],
+      },
+      {
+        id: 'wardrobe-sync-1791523195859-0',
+        name: 'Evening Gala',
+        description: 'emerald silk floor-length evening gown, silver strappy heels',
+        accessories: 'pearl drop earrings',
+        isDefault: false,
+        sceneNumbers: [6],
+        needsImageRegen: true,
+      },
+    ]
+
+    expect(resolveAnchorWardrobeForTransition(wardrobes, wardrobes[1])).toBeUndefined()
+  })
+
+  it('does NOT self-anchor to stale fullBodyUrl when needsImageRegen is true', () => {
+    const wardrobes = [
+      {
+        id: 'w-1',
+        name: 'Scene 4 Outfit',
+        description: 'white hospital gown, bare feet',
+        appearanceNotes: 'bandaged forearm',
+        fullBodyUrl: 'https://cdn/old-business-suit.png',
+        needsImageRegen: true,
+      },
+    ]
+
+    expect(resolveAnchorWardrobeForTransition(wardrobes, wardrobes[0])).toBeUndefined()
+  })
+
+  it('anchors when target look is a genuine garment continuity transition', () => {
+    const wardrobes = [
+      {
+        id: 'w-default',
+        name: 'Default Dock Look',
+        description: 'navy canvas dock coat, dark work trousers, heavy boots',
+        fullBodyUrl: 'https://cdn/default-dock.png',
+        isDefault: true,
+        sceneNumbers: [1],
+      },
+      {
+        id: 'w-rain',
+        name: 'Stormy Pier',
+        description: 'rain-soaked navy canvas dock coat, muddy dark work trousers',
+        appearanceNotes: 'wet hair, shivering',
+        isDefault: false,
+        sceneNumbers: [2],
+      },
+    ]
+
+    expect(resolveAnchorWardrobeForTransition(wardrobes, wardrobes[1])).toEqual({
+      baseWardrobeUrl: 'https://cdn/default-dock.png',
+      baseWardrobeName: 'Default Dock Look',
+      baseWardrobeDescription: 'navy canvas dock coat, dark work trousers, heavy boots',
+    })
   })
 })

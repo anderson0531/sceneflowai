@@ -126,7 +126,10 @@ function applyPatchToWardrobeEntry(
     ...(resolvedId ? { id: resolvedId } : {}),
     ...(mutation.wardrobeName ? { name: mutation.wardrobeName } : {}),
     description: mutation.defaultWardrobe || existing.description,
-    accessories: mutation.wardrobeAccessories || existing.accessories,
+    accessories:
+      mutation.wardrobeAccessories !== undefined
+        ? mutation.wardrobeAccessories || undefined
+        : existing.accessories,
     ...(mutation.previewImageUrl ? { previewImageUrl: mutation.previewImageUrl } : {}),
     ...(mutation.headshotUrl ? { headshotUrl: mutation.headshotUrl } : {}),
     ...(mutation.fullBodyUrl
@@ -139,14 +142,14 @@ function applyPatchToWardrobeEntry(
         : {}),
     ...(mutation.sceneNumbers ? { sceneNumbers: mutation.sceneNumbers } : {}),
     ...(mutation.appearanceNotes !== undefined
-      ? { appearanceNotes: mutation.appearanceNotes }
+      ? { appearanceNotes: mutation.appearanceNotes || undefined }
       : {}),
     ...(mutation.reason ? { reason: mutation.reason } : {}),
     ...(mutation.needsImageRegen !== undefined
       ? { needsImageRegen: mutation.needsImageRegen }
       : {}),
     ...(mutation.generationPrompt !== undefined
-      ? { generationPrompt: mutation.generationPrompt }
+      ? { generationPrompt: mutation.generationPrompt.trim() || undefined }
       : {}),
   }
 }

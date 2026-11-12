@@ -65,6 +65,9 @@ function buildBlobPath(filename: string, projectId = 'default'): string {
   }
 
   if (projectId && projectId !== 'default') {
+    if (actualFilename.startsWith(`${projectId}/`)) {
+      actualFilename = actualFilename.slice(projectId.length + 1)
+    }
     return `projects/${projectId}/images/${subcategory}/${actualFilename}`
   }
   return `images/${subcategory}/${actualFilename}`

@@ -131,6 +131,8 @@ export interface WardrobeTransitionCandidate {
   fullBodyUrl?: string
   headshotUrl?: string
   previewImageUrl?: string
+  needsImageRegen?: boolean
+  generationPrompt?: string
 }
 
 export interface ResolvedAnchorWardrobe {
@@ -152,18 +154,114 @@ function formatAnchorWardrobeText(w: WardrobeTransitionCandidate): string | unde
   return parts.length > 0 ? parts.join('. ') : undefined
 }
 
+const WARDROBE_TRANSITION_STOP_WORDS = new Set([
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'to',
+  'of',
+  'in',
+  'on',
+  'at',
+  'with',
+  'for',
+  'by',
+  'from',
+  'as',
+  'his',
+  'her',
+  'their',
+  'wearing',
+  'outfit',
+  'look',
+  // Transient wear/damage/weather modifiers should not dilute core garment overlap
+  'rain',
+  'soaked',
+  'wet',
+  'damp',
+  'stained',
+  'bloodstained',
+  'muddy',
+  'dirty',
+  'dusty',
+  'chalk',
+  'torn',
+  'ripped',
+  'disheveled',
+  'rumpled',
+  'wrinkled',
+  'unbuttoned',
+  'loosened',
+  'clean',
+  'fresh',
+  'crisp',
+])
+
+function extractCoreGarmentTokens(w: WardrobeTransitionCandidate): Set<string> {
+  const raw = `${w.description || ''} ${w.accessories || ''}`
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+  return new Set(
+    raw
+      .split(/\s+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length > 2 && !WARDROBE_TRANSITION_STOP_WORDS.has(t))
+  )
+}
+
+/**
+ * Determine whether `target` is genuinely a continuity/state transition of `anchor`
+ * (e.g. rain-soaked or chalk-stained version of the same coat/trousers) rather than
+ * an unrelated new costume. Attaching an unrelated outfit as Reference Image 2 with
+ * `WARDROBE CONTINUITY & TRANSITION LOCK` causes Gemini Image to clone the old outfit.
+ */
+export function isWardrobeContinuityTransition(
+  anchor: WardrobeTransitionCandidate,
+  target: WardrobeTransitionCandidate
+): boolean {
+  const targetText = `${target.description || ''} ${target.accessories || ''}`.trim()
+  if (
+    /\b(same\s+(?:outfit|clothes|garments|suit|coat|jacket|shirt|dress|uniform)|over\s+(?:his|her|their)\s+(?:default|earlier|previous|baseline))\b/i.test(
+      targetText
+    )
+  ) {
+    return true
+  }
+
+  const anchorTokens = extractCoreGarmentTokens(anchor)
+  const targetTokens = extractCoreGarmentTokens(target)
+  if (anchorTokens.size === 0 || targetTokens.size === 0) return false
+
+  let shared = 0
+  for (const token of targetTokens) {
+    if (anchorTokens.has(token)) shared++
+  }
+
+  const minSize = Math.min(anchorTokens.size, targetTokens.size)
+  const overlapRatio = shared / minSize
+  return shared >= 2 && overlapRatio >= 0.4
+}
+
 /**
  * Resolve the best drawn baseline or preceding wardrobe reference for a wardrobe transition.
- * - For a scene-specific or non-default wardrobe, prefers the closest preceding drawn wardrobe
- *   in scene order, falling back to the character's default/first drawn wardrobe.
- * - When regenerating a single existing wardrobe with newly added scene appearance notes,
- *   anchors to its own existing fullBodyUrl so the underlying garment stays consistent.
+ * - Only attaches a preceding/default wardrobe when `targetWardrobe` is an actual garment
+ *   continuity transition of that outfit (shared core garments), so distinct new costumes
+ *   are generated cleanly from the identity portrait alone (`refs=1`).
+ * - When regenerating a single existing wardrobe solely to apply `appearanceNotes` (and not
+ *   marked `needsImageRegen` or overridden via `generationPrompt`), anchors to its own
+ *   `fullBodyUrl` so the underlying garment stays consistent.
  */
 export function resolveAnchorWardrobeForTransition(
   wardrobes: ReadonlyArray<WardrobeTransitionCandidate> | null | undefined,
   targetWardrobe: WardrobeTransitionCandidate | null | undefined
 ): ResolvedAnchorWardrobe | undefined {
   if (!Array.isArray(wardrobes) || wardrobes.length === 0 || !targetWardrobe) {
+    return undefined
+  }
+
+  if (targetWardrobe.generationPrompt?.trim()) {
     return undefined
   }
 
@@ -176,7 +274,9 @@ export function resolveAnchorWardrobeForTransition(
 
   const otherDrawn = wardrobes.filter(
     (w, idx) =>
-      (targetId ? w.id !== targetId : idx !== targetIndex) && Boolean(getDrawnWardrobeFullBodyUrl(w))
+      (targetId ? w.id !== targetId : idx !== targetIndex) &&
+      Boolean(getDrawnWardrobeFullBodyUrl(w)) &&
+      isWardrobeContinuityTransition(w, targetWardrobe)
   )
 
   if (otherDrawn.length > 0) {
@@ -207,12 +307,12 @@ export function resolveAnchorWardrobeForTransition(
     }
 
     // 2. If target appears after an earlier drawn wardrobe in list order (and target is not the explicit default),
-    // pick the immediately preceding drawn wardrobe
+    // pick the immediately preceding compatible drawn wardrobe
     if (!targetWardrobe.isDefault && targetIndex > 0) {
       for (let i = targetIndex - 1; i >= 0; i--) {
         const candidate = wardrobes[i]
         const url = getDrawnWardrobeFullBodyUrl(candidate)
-        if (url) {
+        if (url && isWardrobeContinuityTransition(candidate, targetWardrobe)) {
           return {
             baseWardrobeUrl: url,
             baseWardrobeName: candidate.name?.trim() || undefined,
@@ -222,7 +322,7 @@ export function resolveAnchorWardrobeForTransition(
       }
     }
 
-    // 3. Fall back to the default or first drawn wardrobe (when target itself is not default)
+    // 3. Fall back to the default or first compatible drawn wardrobe (when target itself is not default)
     if (!targetWardrobe.isDefault) {
       const defaultDrawn = otherDrawn.find((w) => w.isDefault) || otherDrawn[0]
       if (defaultDrawn) {
@@ -236,9 +336,10 @@ export function resolveAnchorWardrobeForTransition(
     }
   }
 
-  // 4. Same wardrobe being updated with scene continuity / appearance notes: anchor to its own drawn fullBodyUrl
+  // 4. Same wardrobe being updated solely with scene continuity / appearance notes (not a stale outfit change):
+  // anchor to its own drawn fullBodyUrl
   const selfUrl = getDrawnWardrobeFullBodyUrl(targetWardrobe)
-  if (selfUrl && targetWardrobe.appearanceNotes?.trim()) {
+  if (selfUrl && !targetWardrobe.needsImageRegen && targetWardrobe.appearanceNotes?.trim()) {
     return {
       baseWardrobeUrl: selfUrl,
       baseWardrobeName: targetWardrobe.name?.trim() || undefined,

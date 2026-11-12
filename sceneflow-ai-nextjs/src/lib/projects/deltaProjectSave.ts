@@ -191,6 +191,59 @@ export function updateBaselineProductionScenes(
 }
 
 /**
+ * Synchronize client delta-save baseline digests after `/api/publish/promo/scene`
+ * has persisted a promo scene upsert, delete, or publishing state change on the server.
+ */
+export function syncSaveBaselineAfterPromoMutation(
+  baseline: ProjectSaveBaselineSnapshot,
+  opts: {
+    fullScenesAfterSave?: unknown[]
+    promoScene?: Record<string, unknown> | null
+    promoProductionSeed?: Record<string, unknown> | null
+    deletedPromoId?: string
+    publishing?: ProjectPublishingState
+  }
+): void {
+  if (!baseline.initialized) return
+
+  if (opts.deletedPromoId) {
+    baseline.sceneDigestsById.delete(opts.deletedPromoId)
+    baseline.productionSceneDigests.delete(opts.deletedPromoId)
+  }
+
+  if (opts.promoScene && typeof opts.promoScene === 'object') {
+    const promoId = resolveStableSceneId(opts.promoScene)
+    if (promoId) {
+      baseline.sceneDigestsById.set(
+        promoId,
+        fastJsonFingerprint(ensureSceneHasId(opts.promoScene))
+      )
+      if (opts.promoProductionSeed && typeof opts.promoProductionSeed === 'object') {
+        baseline.productionSceneDigests.set(
+          promoId,
+          fastJsonFingerprint(opts.promoProductionSeed)
+        )
+      }
+    }
+  }
+
+  if (Array.isArray(opts.fullScenesAfterSave) && opts.fullScenesAfterSave.length > 0) {
+    const nextOrder: string[] = []
+    for (let i = 0; i < opts.fullScenesAfterSave.length; i++) {
+      const id = resolveStableSceneId(opts.fullScenesAfterSave[i], i)
+      if (id) nextOrder.push(id)
+    }
+    if (nextOrder.length === opts.fullScenesAfterSave.length) {
+      baseline.sceneOrderIds = nextOrder
+    }
+  }
+
+  if (opts.publishing !== undefined) {
+    baseline.visionKeyDigests.set('publishing', fastJsonFingerprint(opts.publishing))
+  }
+}
+
+/**
  * Advance baseline digests after a PUT (or batch of PUTs) has succeeded on the server.
  */
 export function advanceSaveBaselineAfterPut(

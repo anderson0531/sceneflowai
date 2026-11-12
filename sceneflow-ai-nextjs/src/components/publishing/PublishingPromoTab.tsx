@@ -28,7 +28,13 @@ import { legacyOwnerIdFromStorage } from '@/lib/blueprint/createBlueprintShare'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { getLanguageDisplayName } from '@/lib/publish/buildLanguageAudioTrack'
 import { collectPromoPlanFindings, type PromoPlanFinding } from '@/lib/publish/promoPlanFindings'
-import { buildPromoShotCatalog, isOptimizedShotDirection, slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
+import { buildPromoShotCatalog, isOptimizedShotDirection } from '@/lib/publish/promoShotCatalog'
+import {
+  parsePromoSceneResponse,
+  slimClientPromoSceneForRequest,
+  slimPromoProductionStateForRequest,
+  type PromoServerPersistedDelta,
+} from '@/lib/publish/promoSceneApi'
 import {
   movePromoShot,
   placePromoShot,
@@ -65,6 +71,8 @@ import {
   findPromoScenes,
   getPromoCampaignPreset,
   isPromoCinematicScene,
+  removePromoSceneFromScenes,
+  upsertPromoSceneInScenes,
 } from '@/lib/publish/buildPromoScene'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { treatmentBeatsFromMetadata } from '@/lib/script/sceneDecomposition'
@@ -109,6 +117,8 @@ export interface PublishingPromoTabProps {
   onSaveMetadata: (metadata: Record<string, unknown>) => Promise<void>
   /** Apply updated script scenes after promo upsert / audio. */
   onScriptScenesUpdated?: (scenes: unknown[]) => void
+  /** Synchronize local project/script/production/baseline after `/api/publish/promo/scene` persists on the server. */
+  onPromoServerPersisted?: (delta: PromoServerPersistedDelta) => void
   /** Jump to Screening Room Promo mode after render. */
   onPreviewPromo?: (language?: string) => void
   /** Focus the promo scene in Studio / Director Console. */
@@ -267,6 +277,7 @@ export function PublishingPromoTab({
   sceneProductionState,
   onSaveMetadata,
   onScriptScenesUpdated,
+  onPromoServerPersisted,
   onPreviewPromo,
   onOpenPromoInStudio,
   onGenerateBeatClip,
@@ -804,15 +815,33 @@ export function PublishingPromoTab({
     return review?.sceneScores
   }, [metadata])
 
-  const applyScenes = useCallback(
-    (nextScenes: unknown[], nextMetadata?: Record<string, unknown>) => {
-      onScriptScenesUpdated?.(nextScenes)
-      if (nextMetadata) {
-        metadataRef.current = nextMetadata
-        void onSaveMetadata(nextMetadata)
+  const syncServerPersistedPromo = useCallback(
+    (delta: PromoServerPersistedDelta) => {
+      if (delta.publishing) {
+        const baseMeta =
+          metadataRef.current && typeof metadataRef.current === 'object'
+            ? (metadataRef.current as Record<string, unknown>)
+            : {}
+        const baseVision =
+          baseMeta.visionPhase && typeof baseMeta.visionPhase === 'object'
+            ? (baseMeta.visionPhase as Record<string, unknown>)
+            : {}
+        metadataRef.current = {
+          ...baseMeta,
+          visionPhase: {
+            ...baseVision,
+            publishing: delta.publishing,
+            ...(delta.scriptUpdatedAt ? { scriptUpdatedAt: delta.scriptUpdatedAt } : {}),
+          },
+        }
+      }
+      if (onPromoServerPersisted) {
+        onPromoServerPersisted(delta)
+      } else if (Array.isArray(delta.scenes)) {
+        onScriptScenesUpdated?.(delta.scenes)
       }
     },
-    [onScriptScenesUpdated, onSaveMetadata]
+    [onPromoServerPersisted, onScriptScenesUpdated]
   )
 
   const audiencePayload = audience.description.trim() ? audience : undefined
@@ -824,6 +853,9 @@ export function PublishingPromoTab({
       extraOpts?: { targetLanguages?: string[]; createNew?: boolean }
     ) => {
       const shouldCreateNew = extraOpts?.createNew ?? (creatingNewPromo && action === 'upsert')
+      const slimClientPromo = shouldCreateNew
+        ? undefined
+        : slimClientPromoSceneForRequest(promoScene)
       const res = await fetch('/api/publish/promo/scene', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -842,27 +874,50 @@ export function PublishingPromoTab({
           aspect,
           audienceDefinition: audiencePayload,
           sceneScores,
-          scenes,
-          sceneProductionState: slimPromoProductionState(sceneProductionState),
+          ...(slimClientPromo ? { clientPromoScene: slimClientPromo } : {}),
+          sceneProductionState: slimPromoProductionStateForRequest(sceneProductionState),
           ...(beatPlanBody?.length &&
           (action === 'plan' || action === 'upsert' || action === 'timeline')
             ? { beatPlan: beatPlanBody }
             : {}),
         }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Promo request failed')
+      const data = parsePromoSceneResponse(
+        res.status,
+        await res.text(),
+        'Promo request failed'
+      )
       if (data.promoScene && typeof data.promoScene.id === 'string') {
         setActivePromoId(data.promoScene.id)
         setCreatingNewPromo(false)
       }
       if (Array.isArray(data.beatPlan)) setBeatPlan(data.beatPlan)
       if (Array.isArray(data.analysis)) setAnalysis(data.analysis as PromoPlanFinding[])
-      if (Array.isArray(data.scenes)) applyScenes(data.scenes, data.metadata)
-      else if (data.metadata) {
+
+      const createdNew = Boolean(data.createNew ?? shouldCreateNew)
+      const nextScenes = Array.isArray(data.scenes)
+        ? data.scenes
+        : data.promoScene && typeof data.promoScene === 'object'
+          ? upsertPromoSceneInScenes(scenes, data.promoScene, {
+              promoId: String(data.promoScene.id || activePromoId || ''),
+              createNew: createdNew,
+            })
+          : undefined
+
+      if (nextScenes || data.publishing || data.promoScene) {
+        syncServerPersistedPromo({
+          scenes: nextScenes,
+          promoScene: data.promoScene,
+          promoProductionSeed: data.promoProductionSeed,
+          createNew: createdNew,
+          publishing: data.publishing,
+          scriptUpdatedAt: data.scriptUpdatedAt,
+        })
+      } else if (data.metadata) {
         metadataRef.current = data.metadata
         await onSaveMetadata(data.metadata)
       }
+
       return data as {
         beatPlan?: PromoTrailerBeatPlan[]
         totalDurationSec?: number
@@ -876,6 +931,7 @@ export function PublishingPromoTab({
       projectId,
       activePromoId,
       creatingNewPromo,
+      promoScene,
       campaignName,
       campaignPreset,
       campaignObjective,
@@ -887,7 +943,7 @@ export function PublishingPromoTab({
       sceneScores,
       scenes,
       sceneProductionState,
-      applyScenes,
+      syncServerPersistedPromo,
       onSaveMetadata,
     ]
   )
@@ -905,20 +961,29 @@ export function PublishingPromoTab({
             legacyOwnerId: legacyOwnerIdFromStorage(),
             action: 'delete',
             promoId: promoIdToDelete,
-            scenes,
           }),
         })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed to delete promo')
-        if (Array.isArray(data.scenes)) {
-          applyScenes(data.scenes, data.metadata)
-          const remaining = findPromoScenes(data.scenes)
-          if (remaining.length > 0) {
-            handleSelectExistingPromo(remaining[0]!)
-          } else {
-            setActivePromoId('')
-            setBeatPlan([])
-          }
+        const data = parsePromoSceneResponse(
+          res.status,
+          await res.text(),
+          'Failed to delete promo'
+        )
+        const deletedId = data.deletedPromoId || promoIdToDelete
+        const nextScenes = Array.isArray(data.scenes)
+          ? data.scenes
+          : removePromoSceneFromScenes(scenes, deletedId)
+        syncServerPersistedPromo({
+          scenes: nextScenes,
+          deletedPromoId: deletedId,
+          publishing: data.publishing,
+          scriptUpdatedAt: data.scriptUpdatedAt,
+        })
+        const remaining = findPromoScenes(nextScenes)
+        if (remaining.length > 0) {
+          handleSelectExistingPromo(remaining[0]!)
+        } else {
+          setActivePromoId('')
+          setBeatPlan([])
         }
         toast.success('Promo campaign deleted')
       } catch (err) {
@@ -928,7 +993,7 @@ export function PublishingPromoTab({
         setConfirmDeletePromoId(null)
       }
     },
-    [projectId, scenes, applyScenes, handleSelectExistingPromo]
+    [projectId, scenes, syncServerPersistedPromo, handleSelectExistingPromo]
   )
 
   const handleGenerateMultilangNarration = useCallback(async () => {
