@@ -136,7 +136,7 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
   it('ships the markdown trailer script pack in scripts/use-case-scripts/imagine-the-possibilities-trailers.md', () => {
     const md = readSource('scripts/use-case-scripts/imagine-the-possibilities-trailers.md')
     expect(md).toContain('The White City Current')
-    expect(md).toContain('Hart House')
+    expect(md).toContain('The Silt Line')
     expect(md).toContain('The Long Thought')
     expect(md).toContain('Five Plates')
     expect(md).toContain('The Midnight Frequency')
@@ -324,5 +324,23 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
         firstClusterOffset
       )
     }
+  })
+
+  it('reloads video sources in-place on language change without detaching the IntersectionObserver target', () => {
+    const heroComponent = readSource('src/components/landing/ImaginePossibilitiesHero.tsx')
+    const trailerPlayer = readSource('src/components/landing/TrailerPlayer.tsx')
+    const theaterModal = readSource('src/components/landing/TwoModesTheaterModal.tsx')
+
+    // Hero observes stable sectionRef and reloads <video> in-place so switching languages never trips a detach pause
+    expect(heroComponent).toContain('const target = sectionRef.current')
+    expect(heroComponent).toContain('observer.observe(target)')
+    expect(heroComponent).not.toContain('key={`${activeScript.id}-${activeSources.webmSrc}`}')
+    expect(heroComponent).toContain('video.load()')
+    expect(heroComponent).toContain('userActivatedPlayback')
+
+    // TrailerPlayer and TheaterModal also reload in-place on locale change
+    expect(trailerPlayer).not.toContain('key={`${webm}-${mp4}`}')
+    expect(trailerPlayer).toContain('video.load()')
+    expect(theaterModal).toContain('video.load()')
   })
 })

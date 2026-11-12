@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import path from 'path'
 import { describe, it, expect } from 'vitest'
 import enMessages from '../../messages/en.json'
@@ -270,7 +270,7 @@ describe('Production Examples i18n contract', () => {
       expect(series.episode1Synopsis.synopsis.length).toBeGreaterThan(60)
       expect(series.episode1Synopsis.chapter1Title).toContain('Chapter 1')
       expect(series.episode1Synopsis.chapter1Synopsis.length).toBeGreaterThan(40)
-      expect(series.episodes.length).toBeGreaterThanOrEqual(5)
+      expect(series.episodes.length).toBeGreaterThanOrEqual(3)
       for (const ep of series.episodes) {
         expect(ep.duration.length).toBeGreaterThan(2)
       }
@@ -284,17 +284,28 @@ describe('Production Examples i18n contract', () => {
       expect(text).toContain('Chapter 1')
       expect(text).toContain('Storyline')
       expect(text).toContain('1. ')
-      expect(text).toContain('5. ')
+      expect(text).toContain('3. ')
     }
     expect(EXAMPLE_SERIES_INPUTS[0].episodes).toHaveLength(8)
+    expect(EXAMPLE_SERIES_INPUTS[1].episodes).toHaveLength(3)
     const drama = formatSeriesInput(EXAMPLE_SERIES_INPUTS[0])
     expect(drama).toContain('The White City Current')
     expect(drama).toContain('1893 atmospheric energy artifact')
     expect(drama).toContain('8. The Harmonic Grid Transmission and Vindication (6 min)')
     const animation = formatSeriesInput(EXAMPLE_SERIES_INPUTS[1])
-    expect(animation).toContain('Hart House')
-    expect(animation).toContain('Millwick')
-    expect(animation).not.toMatch(/Cosmic Roommates|Springfield|Homer|Bart Simpson|Marge|Lisa Simpson/)
+    expect(animation).toContain('The Silt Line')
+    expect(animation).toContain('Port Marrow')
+    expect(animation).toContain('Juniper Finch')
+    expect(animation).toContain('Tobias Wu')
+    expect(animation).toContain('Orville Crane')
+    expect(animation).toContain('John Anderson')
+    expect(animation).toContain('Inspector Bram Halloway')
+    expect(animation).not.toMatch(/Cosmic Roommates|Hart House|Springfield|Homer|Bart Simpson|Marge|Lisa Simpson/)
+    for (const member of EXAMPLE_SERIES_INPUTS[1].cast) {
+      expect(member.imageUrl).toMatch(/^\/images\/cast\/silt-line\/.+\.webp$/)
+      const absCastImg = path.join(ROOT, 'public', member.imageUrl!.replace(/^\//, ''))
+      expect(existsSync(absCastImg), `missing cast webp ${member.imageUrl}`).toBe(true)
+    }
     const documentary = formatSeriesInput(EXAMPLE_SERIES_INPUTS[2])
     expect(documentary).toContain('superintelligence')
     expect(documentary).toContain('The Long Thought')
@@ -311,7 +322,7 @@ describe('Production Examples i18n contract', () => {
     const pack = formatFrontPageCopyPack()
     expect(pack).toContain('SERIES INPUTS')
     expect(pack).toContain('HERO VIDEO SCRIPTS')
-    expect(pack).toContain('Hart House')
+    expect(pack).toContain('The Silt Line')
     expect(pack).toContain('The friction we remove')
     expect(pack).toContain('The control you keep')
     expect(pack).toContain('Production Agent • Autonomous Studio Builder')
@@ -470,6 +481,9 @@ describe('Production style CTAs', () => {
     expect(panel).toContain("id: 'cast'")
     expect(panel).toContain("id: 'episode1'")
     expect(panel).toContain("id: 'season'")
+    expect(panel).toContain('expandedCastIndex')
+    expect(panel).toContain('createPortal')
+    expect(panel).toContain('Maximize2')
     expect(stage).toContain('showcaseCard?.solutionPillars')
     expect(floatingCta).toContain("getSignupUrlForTier('explorer')")
     expect(heroBg).toContain('IntersectionObserver')
@@ -517,25 +531,21 @@ describe('Production showcase videos', () => {
     expect(hasProductionShowcaseVideo('drama')).toBe(true)
   })
 
-  it('offers English and Spanish for the Animated Comedy card with other dubs coming soon', () => {
+  it('offers all four showcase dub languages for the Animated Series card (The Silt Line)', () => {
     const locales = getProductionShowcaseVideoLocales('animation')
     const available = locales.filter((locale) => locale.available).map((locale) => locale.id)
     const placeholders = locales.filter((locale) => !locale.available).map((locale) => locale.id)
 
     expect(locales.map((locale) => locale.id)).toEqual(VIDEO_LOCALE_ORDER)
-    expect(available).toEqual(['en', 'es'])
-    expect(placeholders).toEqual(['zh', 'ar'])
+    expect(available).toEqual(['en', 'es', 'zh', 'ar'])
+    expect(placeholders).toEqual([])
 
     const english = locales.find((locale) => locale.id === 'en')
-    expect(english?.src).toContain('The%20Animated%20Comedy%20(English).mp4')
+    expect(english?.src).toContain('English-Video-v2.mp4')
     const spanish = locales.find((locale) => locale.id === 'es')
-    expect(spanish?.src).toContain('The%20Animated%20Comedy%20(Spanish).mp4')
+    expect(spanish?.src).toContain('Spanish-Video-v1%20(1).mp4')
     expect(getDefaultProductionShowcaseLocale('animation')).toBe('en')
     expect(hasProductionShowcaseVideo('animation')).toBe(true)
-
-    for (const locale of locales) {
-      if (!locale.available) expect(locale.src).toBe('')
-    }
   })
 
   it('opens the flagship card on a trailer and keeps the longform out of the grid', () => {
@@ -656,10 +666,10 @@ describe('Production showcase screening embeds', () => {
     expect(getProductionExampleMedia('drama').longformHref).toBeNull()
     expect(getProductionExampleMedia('animation').isFlagship).toBe(false)
     expect(getProductionExampleMedia('animation').trailerSrc).toBe(
-      '/videos/animated-series-trailer.webm?v=20261101'
+      '/videos/animated-series-trailer.webm?v=20261112'
     )
     expect(getProductionExampleMedia('animation').trailerMp4Src).toBe(
-      '/videos/animated-series-trailer.mp4?v=20261101'
+      '/videos/animated-series-trailer.mp4?v=20261112'
     )
     expect(getProductionExampleMedia('documentary').trailerSrc).toBe(
       '/videos/documentary-trailer.webm?v=20261101'

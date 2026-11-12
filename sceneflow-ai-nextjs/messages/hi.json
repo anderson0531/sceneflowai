@@ -2360,18 +2360,18 @@
       "प्रोमो"
     ],
     "seriesPanel": {
-      "headerLabel": "शृंखला बाइबिल और एपिसोड 1",
-      "bibleTab": "श्रृंखला बाइबिल",
-      "castTab": "लॉक्ड कास्ट",
-      "episode1Tab": "ईपी. 1 एवं चौ. 1",
-      "seasonTab": "ऋतु",
-      "formatLabel": "प्रारूप",
+      "headerLabel": "प्रोडक्शन डोज़ियर और स्टोरी बाइबल",
+      "bibleTab": "दुनिया और शैली",
+      "castTab": "कास्ट",
+      "episode1Tab": "सारांश",
+      "seasonTab": "स्टोरी बीट्स",
+      "formatLabel": "फ़ॉर्मेट",
       "durationLabel": "अवधि",
-      "artStyleLabel": "कला शैली",
-      "continuityLockLabel": "निरंतरता लॉक",
+      "artStyleLabel": "विज़ुअल स्टाइल",
+      "continuityLockLabel": "कंटिन्यूटी लॉक",
       "loglineLabel": "लॉगलाइन",
-      "synopsisLabel": "श्रृंखला सारांश और दृश्य बाइबिल",
-      "lockedCastHeading": "लॉक्ड कास्ट और प्रिंसिपल निरंतरता",
+      "synopsisLabel": "प्रोडक्शन सारांश",
+      "lockedCastHeading": "मुख्य कास्ट और कंटिन्यूटी शीट्स",
       "inputs": {
         "drama": {
           "showTitle": "व्हाइट सिटी करंट",
@@ -2468,83 +2468,78 @@
           ]
         },
         "animation": {
-          "showTitle": "हार्ट हाउस",
-          "format": "एनिमेटेड सिटकॉम · 5-एपिसोड सीज़न",
-          "genre": "बहु-पीढ़ीगत पारिवारिक कॉमेडी",
-          "artStyle": "2डी फ़्लैट-सेल एनिमेशन · बोल्ड इंक आउटलाइन और गर्म उपनगरीय पैलेट",
-          "duration": "110 मिनट सीज़न (5 × 22 मिनट) · एपिसोड 1: 22 मिनट",
-          "continuityLock": "5 लॉक्ड फैमिली कैरेक्टर शीट्स · मिलविक हाउस और साइड पोर्च · जीरो स्टाइल ड्रिफ्ट",
-          "unitLabel": "सीज़न 1 एपिसोड्स (5)",
-          "artLock": "पूरे सीज़न के लिए एक लॉक्ड फ्लैट-सीएल शैली: बोल्ड स्याही की रूपरेखा, गर्म उपनगरीय रंग, और हर एपिसोड में समान चरित्र डिजाइन। प्लेटफ़ॉर्म कई शैलियों को धारण कर सकता है। यह श्रृंखला स्विच नहीं करती.",
-          "logline": "मिलविक में, हर्ट्स एक घरेलू बहस को सप्ताह के मजाक में बदल देते हैं, और मजाक को इस कारण में बदल देते हैं कि वे अभी भी एक ही छत के नीचे रहते हैं।",
-          "seriesSynopsis": "मिलविक के नागरिक-अध्यादेश-जुनूनी शहर में स्थापित, हार्ट हाउस एक पांच-एपिसोड, 22 मिनट का 2 डी एनिमेटेड पारिवारिक सिटकॉम है जो पूरे प्रसारण सीज़न में शून्य ऑफ-मॉडल बहाव साबित करने के लिए बनाया गया है। नगरपालिका क्लर्क रूथ हार्ट और नाइट-शिफ्ट ट्रांजिट मैकेनिक एलिस हार्ट सोलह वर्षीय डिबेट कैप्टन जून, नौ वर्षीय तथ्य-संग्राहक मिलो और रूथ की मां नाना इनेज़ के साथ एक तंग शिल्पकार घर साझा करते हैं, जिसका \"अस्थायी\" संलग्न बरामदा चुपचाप घर का भावनात्मक केंद्र बन गया है। प्रत्येक एपिसोड एपिसोड 1 से लेकर एपिसोड 5 के घरेलू वोट तक समान लाइन वेट, वार्म सेल-शेडेड पैलेट्स और मल्टी-एंगल कैरेक्टर शीट को लॉक रखते हुए एक छोटे से नगरपालिका सिरदर्द को तेजी से बढ़ती कॉमेडी में बदल देता है।",
+          "showTitle": "The Silt Line",
+          "format": "Stylized 3D Animated Series · Episode 1 Pilot (3 Story Beats)",
+          "genre": "रेट्रो-फ्यूचरिस्टिक मैरीटाइम साइबर-थ्रिलर",
+          "artStyle": "Tactile Stylized 3D Animation · Industrial Dieselpunk Maritime Grit & Bioluminescent Cybernetic Accents",
+          "duration": "32 min Pilot (3 Story Beats: 10.5m · 11.5m · 10m)",
+          "continuityLock": "5 Locked 3D Character Sheets · Port Marrow North Quay Workshop & Pier 14 Auction Barge · Optical Monocle Telemetry VFX",
+          "unitLabel": "स्टोरी बीट्स (3)",
+          "artLock": "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
+          "setting": "पोर्ट मैरो: 1920 के दशक की पीतल की समुद्री वास्तुकला, रंगीन ओपन-सोर्स साइबरनेटिक तकनीक, स्वचालित ज्वार और नमक-जमे नियॉन डॉक्स का संगम करता एक तटीय रेट्रो-फ्यूचरिस्टिक बंदरगाह महानगर।",
+          "visualStyle": "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
+          "logline": "जब एक लालची नगर पार्षद रिकवरी बॉन्ड हड़पने और पोर्ट मैरो के श्रमिक-स्वामित्व वाले वाटरफ्रंट कलेक्टिव पर कब्ज़ा करने के लिए स्वचालित फ्लडगेट विफलता की साज़िश रचता है, तो 23 वर्षीय तकनीशियन जूनिपर फिंच और साउंड इंजीनियर टोबायस वू अपनी गायब माँ के ब्लैक-बॉक्स टेलीमेट्री को हासिल करने के लिए अपतटीय नीलामी में घुसपैठ करते हैं।",
+          "seriesSynopsis": "पोर्ट मैरो के तटीय शहर में 23 वर्षीय डायग्नोस्टिक तकनीशियन जूनिपर फिंच और साउंड इंजीनियर टोबायस वू (24) नॉर्थ क्वे वर्कशॉप को काउंसिलमैन ऑरविल क्रेन की कृत्रिम बाढ़ की साज़िश से बचाने के लिए पियर 14 के नीलामी बार्ज में घुसपैठ करते हैं। अपने ऑप्टिकल मोनोकल और टोबायस के एकॉस्टिक रेज़ोनेंस उपकरण की मदद से वे एलेनोर के ब्लैक-बॉक्स लेजर को सुरक्षित करते हैं, जबकि इंस्पेक्टर ब्रैम हैलोवे हाइड्रोलिक गेट लॉक करके उनके सुरक्षित निकलने का रास्ता बनाते हैं।",
           "cast": [
             {
-              "name": "रूथ हार्ट",
-              "role": "कुलमाता · लॉक की गई 2डी कैरेक्टर शीट",
-              "descriptor": "मिलविक म्यूनिसिपल क्लर्क (42)। टेराकोटा बुना हुआ कार्डिगन, कछुआ चश्मा, रंग-कोडित दीवार कैलेंडर; डेडपैन वोकल टाइमिंग और अभिव्यंजक आइब्रो आर्क्स।"
+              "name": "Juniper Finch",
+              "role": "Lead Diagnostic Technician · North Quay Collective",
+              "descriptor": "23-year-old lead diagnostic technician at the North Quay worker-owned workshop. Razor-sharp, hyper-focused, and hardened by years of municipal neglect, she navigates the world through an augmented optical monocle that visualizes mechanical telemetry and institutional deception, though over-extension triggers paralyzing sensory overload.",
+              "imageUrl": "/images/cast/silt-line/juniper-finch.webp"
             },
             {
-              "name": "एलिस हार्ट",
-              "role": "पितृसत्ता · लॉक्ड 2डी कैरेक्टर शीट",
-              "descriptor": "रात्रि-शिफ्ट नगरपालिका बस मैकेनिक (44)। नेवी शॉप कवरऑल, स्टील थर्मस, आशावादी गेराज आविष्कारक जो 40-पाउंड उपकरणों के साथ 5 मिनट के काम को हल करता है।"
+              "name": "Tobias Wu",
+              "role": "Acoustic Telemetry Specialist · Co-Op Sound Engineer",
+              "descriptor": "24-year-old acoustic telemetry specialist and co-op sound-technician facing housing displacement alongside his collective. Grounded, patient, and tactically decisive, he uses acoustic resonance instrumentation not only for mechanical diagnostics but as a vital neuro-acoustic anchor to pull Juniper out of cognitive feedback loops.",
+              "imageUrl": "/images/cast/silt-line/tobias-wu.webp"
             },
             {
-              "name": "जून हार्ट",
-              "role": "बेटी · लॉक की गई 2डी कैरेक्टर शीट",
-              "descriptor": "हाई स्कूल डिबेट कैप्टन (16)। प्लीटेड स्कर्ट के ऊपर मस्टर्ड हुडी, हाथ में एनोटेटेड टाउन चार्टर; प्रत्येक डिनर-टेबल नियम को सुप्रीम कोर्ट के मौखिक तर्क की तरह मानता है।"
+              "name": "Orville Crane",
+              "role": "Municipal Councilor & Infrastructure Developer",
+              "descriptor": "Civic industrialist, municipal council member, and private infrastructure developer who orchestrates 'natural' disasters to clear real estate and extract recovery capital. Smooth, pragmatically ruthless, and impeccably tailored, he views the working-class waterfront as fiscal deadweight that must be cleansed by the sea to build high-yield luxury enclaves.",
+              "imageUrl": "/images/cast/silt-line/orville-crane.webp"
             },
             {
-              "name": "मिलो हार्ट",
-              "role": "बेटा · लॉक्ड 2डी कैरेक्टर शीट",
-              "descriptor": "घरेलू पुरालेखपाल और लेबल-निर्माता उत्साही (9)। धारीदार रग्बी शर्ट, खुला हाई-टॉप, औद्योगिक लेबल बंदूक; कॉमेडी बीट पर विनाशकारी शाब्दिक सत्य प्रस्तुत करता है।"
+              "name": "John Anderson",
+              "role": "Chief Maritime Inspector",
+              "descriptor": "Weathered chief maritime inspector whose silence was purchased a decade ago during Eleanor Finch's disappearance. Bound by bureaucratic weariness, pensions, and survivalist cynicism, he maintains Crane's perimeter until commanded to participate in outright murder and cultural arson.",
+              "imageUrl": "/images/cast/silt-line/john-anderson.webp"
             },
             {
-              "name": "नाना इनेज़",
-              "role": "दादी · लॉक की गई 2डी कैरेक्टर शीट",
-              "descriptor": "साइड-पोर्च संप्रभु और सेवानिवृत्त सीमस्ट्रेस (71)। कढ़ाईदार इंडिगो शॉल, चांदी की शिग्नन, विकर सिंहासन; 1984 के बाद से ब्लॉक पर हर ज़ोनिंग भिन्नता को याद करता है।"
+              "name": "Inspector Bram Halloway",
+              "role": "Harbor District Investigator · Undercover Mentor",
+              "descriptor": "A seasoned, honest Harbor District investigator caught between rigid precinct bureaucracy and his obligation to protect the city's waterfront communities. Respecting Juniper's sharp mind and fond memories of her mother, he serves as an undercover mentor who feeds the kids discreet tips while running interference with municipal security.",
+              "imageUrl": "/images/cast/silt-line/inspector-bram-halloway.webp"
             }
           ],
           "episode1Synopsis": {
-            "episodeLabel": "एपिसोड 1 सारांश · सीज़न Premiere (4 अध्याय)",
-            "title": "एपिसोड 1: छँटाई नियम",
-            "duration": "22 मिनट (4 अध्याय · अध्याय 1 लाइव प्रमाण: 5.5 मिनट)",
-            "logline": "बारह-श्रेणी के शहर रीसाइक्लिंग जनादेश ने एलिस को एक मोटर चालित गेराज सॉर्टिंग कन्वेयर बनाने के लिए प्रेरित किया जो गलती से नाना इनेज़ के पोर्च सामान को नगरपालिका अधिशेष के रूप में वर्गीकृत करता है।",
-            "synopsis": "जब मिलविक अध्यादेश 412 लागू करता है - जिसमें गुरुवार की सुबह तक बारह रंग-कोडित कर्ब डिब्बे की आवश्यकता होती है - रूथ शांत अनुपालन चाहता है ताकि टाउन हॉल में उसके सहकर्मी गपशप न कर सकें, जून काउंसिल माइक के लिए एक संवैधानिक चुनौती का मसौदा तैयार करता है, और एलिस गैरेज में एक चरखी-चालित सॉर्टिंग मशीन का निर्माण करती है। मशीन परिवार के बिना लेबल वाले भंडारण बक्सों को निगलने से पहले कांच की बोतलों पर विजय प्राप्त करती है, जिसकी परिणति लिविंग-रूम गतिरोध में होती है जब मिलो \"नाना की अस्थायी पोर्च चीजें\" पढ़ते हुए एक टैग प्रिंट करता है और परिवार को यह स्वीकार करना होगा कि कोई नहीं जानता कि \"अस्थायी\" का क्या मतलब है।",
-            "chapter1Title": "अध्याय 1 (कोल्ड ओपन और एक्ट I): गुरुवार तक बारह डिब्बे",
-            "chapter1Duration": "5.5 मिनट · प्रारंभिक अध्याय प्रमाण",
-            "chapter1Synopsis": "सुबह 6:15 बजे, बंद हार्ट रसोई में, रूथ शहर के बारह-श्रेणी के सॉर्टिंग चार्ट का अनावरण करती है, जबकि एलिस रात की पाली से एक सुरक्षित बस-डोर मोटर के साथ लौटती है। फास्ट-कट फ्लैट-सेल रिएक्शन शॉट्स में, मिलो ने घरेलू फर्नीचर पर लेबल लगाना शुरू कर दिया और नाना इनेज़ ने साइड पोर्च को नगर निगम के अधिकार क्षेत्र से मुक्त घोषित कर दिया।"
+            "episodeLabel": "Production Synopsis · 3-Beat Animated Pilot (32 min)",
+            "title": "The Silt Line — North Quay & Pier 14",
+            "duration": "32 min (3 Story Beats: 10.5 min · 11.5 min · 10 min)",
+            "logline": "When a predatory municipal councilor stages an automated floodgate failure to collect recovery bonds and seize Port Marrow's worker-owned waterfront collective, a sensory-strained 23-year-old technician and her sound-engineer partner infiltrate an offshore auction to secure her missing mother's black-box telemetry before their district is submerged.",
+            "synopsis": "In the retro-futuristic coastal city of Port Marrow, 23-year-old diagnostic technician Juniper Finch and co-op sound engineer Tobias Wu (24) face the imminent destruction of the North Quay Municipal Workshop—a worker-owned collective supporting displaced maritime laborers. The threat comes via Councilman Orville Crane, who has engineered a deliberate failure of the automated tidal surge barriers, framing it as an 'unavoidable climate event' to default lower-quay parcels, collect billions in municipal recovery bonds, and rezone the submerged district under private 'green renewal' charters. Utilizing her augmented deductive monocle despite the blinding cognitive migraines it inflicts, Juniper decodes municipal telemetry embedded in the eviction writ, pinpointing Crane's offshore auction barge at Pier 14 where the decommissioned floodgate controls and her vanished mother Eleanor's encrypted black-box ledger are being sold off. Disguised in dockers' oilskins, Juniper and Tobias infiltrate the barge's iron catwalks. In the lower hold, Chief Inspector Bram Halloway reaches his breaking point when Crane hands him an incendiary flare and orders him to burn Eleanor's original flood baseline archives and quietly ensure the whistleblowing youths drown in the slipway. Horrified by the cost of his decade-long complicity, Halloway hesitates while Juniper taps the auction feed, suffering a sensory seizure as Eleanor's decrypted voice reveals the flood is a manufactured market play. Cornered in Crane's private gallery, Juniper rejects Crane's offer to buy her silence; Tobias sacrifices his custom acoustic hardware to blow out the panoramic windows with a sonic blast. As enforcers swarm the slipway, Halloway enacts his redemption by manually locking the hydraulic blast gates from the outside, trapping himself with Crane's guards to guarantee Juniper and Tobias escape into the storm with the ledger, ready to expose the engineered deluge.",
+            "chapter1Title": "Chapter 1 (Beat 1): Hook & Context: The Manufactured Surge",
+            "chapter1Duration": "10.5 min · Opening Story Beat",
+            "chapter1Synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability as she decodes the eviction writ telemetry."
           },
           "episodes": [
             {
               "number": "1",
-              "title": "छँटाई नियम",
-              "duration": "22 मिनट",
-              "synopsis": "मिलविक बारह श्रेणियों के साथ एक नया रीसाइक्लिंग आदेश जारी करता है। एलिस गैरेज में एक छँटाई मशीन बनाता है। यह बोतलों पर और फिर परिवार के बिना लेबल वाले बक्सों पर विनाशकारी रूप से काम करता है। जून शहर की बैठक में नियम को चुनौती देना चाहता है। रूथ चाहती है कि गुरुवार तक अंकुश लागू हो जाए। एपिसोड तब शुरू होता है जब मिलो एक बॉक्स को \"नाना के बरामदे की चीजें\" लेबल करता है और कोई भी इस बात से सहमत नहीं हो सकता है कि लेबल का क्या मतलब है।"
+              "title": "Hook & Context: The Manufactured Surge",
+              "duration": "10.5 min",
+              "synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability."
             },
             {
               "number": "2",
-              "title": "परेड का मौसम",
-              "duration": "22 मिनट",
-              "synopsis": "मिलविक डे के लिए बारिश का पूर्वानुमान है। जून अपना डिबेट-क्लब बैनर रद्द करना चाहती है। मिलो बिजली को लॉग करना चाहता है। नाना इनेज़ ने एक पड़ोसी की ओर हाथ हिलाने से इंकार कर दिया जिससे वह बाड़ विवाद के बाद से बचती रही है। रूथ को अभी भी ब्लॉक को तिरपाल के नीचे रखना पड़ता है। मज़ाक है तिरपाल. मुद्दा यह है कि यह निर्णय कौन करेगा कि जश्न मनाया गया।"
+              "title": "Infiltration & The Moral Crucible",
+              "duration": "11.5 min",
+              "synopsis": "Escalate procedural tension through forensic infiltration, introduce Halloway's moral crossroads when ordered to destroy Eleanor's legacy, and uncover Eleanor's black-box cipher."
             },
             {
               "number": "3",
-              "title": "रात्रि पाली का नाश्ता",
-              "duration": "22 मिनट",
-              "synopsis": "एलिस भोर में घर पहुंचती है और उन लोगों के लिए खाना बनाती है जो पहले ही जा रहे हैं। जून में एक टूर्नामेंट है. मिलो की एक फ़ील्ड यात्रा है। रूथ के पास एक काउंटर शिफ्ट है। एक घंटे के लिए रसोई में पूरा परिवार रहता है, और अंडे ही एकमात्र बातचीत है जो फिट बैठती है। एक जला हुआ पैनकेक इस बात पर बहस बन जाता है कि घर किसकी सुबह के आसपास बना है।"
-            },
-            {
-              "number": "4",
-              "title": "अतिरिक्त कुंजी",
-              "duration": "22 मिनट",
-              "synopsis": "जिस दिन सुबह एलिस सोती है, उस समय कोई बिल्ली का कटोरा भर रहा होता है। हर्ट्स जांच करते हैं और उस चाबी को ढूंढते हैं जो उन्होंने वर्षों पहले एक ईंट के नीचे छिपाई थी। जिस पड़ोसी को वे नासमझ कह रहे हैं, वह भोर के अंतराल को कवर कर रहा है। नाना इनेज़ को यह तय करना है कि चाबी वापस लेनी है या स्वीकार करना है कि ब्लॉक मदद कर रहा है।"
-            },
-            {
-              "number": "5",
-              "title": "पोर्च वोट",
-              "duration": "22 मिनट",
-              "synopsis": "नाना इनेज़ ने घोषणा की कि उनका \"अस्थायी\" बरामदा ख़त्म हो गया है और वह अपनी बहन के शहर में चली जाएंगी। हर्ट्स घरेलू वोट कहते हैं। पोर्च को उसके असली कमरों के रूप में फिर से बनाने का मतलब है कि एलिस का गेराज प्रोजेक्ट बंद हो जाएगा, जून का स्टडी कॉर्नर हट जाएगा और मिलविक को उस बदलाव की अनुमति देनी होगी जिसे वह अनदेखा कर रहा है। सीज़न यहाँ बदल जाता है: कॉमेडी अब एक गंदे सप्ताह के बारे में नहीं है। यह इस बारे में है कि किसे रहना है।"
+              "title": "Climax & Escape: The Silt Line Defiance",
+              "duration": "10 min",
+              "synopsis": "Deliver an emotionally grounded climax where Crane's extortion is shattered by sacrificial tech and Halloway achieves moral redemption by locking down the escape corridor."
             }
           ]
         },
@@ -2858,7 +2853,9 @@
             }
           ]
         }
-      }
+      },
+      "settingLabel": "सेटिंग",
+      "expandPortraitHint": "पूर्ण दृश्य के लिए पोर्ट्रेट पर क्लिक करें"
     },
     "explorerHandoff": "ये लिंक एक तैयार प्रॉडक्शन हैं। Explorer वह जगह है जहाँ आप अपना खुद का प्रॉडक्शन बना सकते हैं।",
     "languagesBanner": "7 भाषाओं (EN · ES · PT · HI · ZH · AR · TH) में इन-सीन लैंग्वेज सिंक — जिसमें 21+ मिनट का सिंक्रोनाइज़्ड सिनेमैटिक ड्रामा (7 × 3-मिनट संस्करण) शामिल है, जो पारंपरिक वॉइसओवर डबिंग से कहीं आगे है।",
@@ -2914,40 +2911,40 @@
       },
       {
         "id": "animation",
-        "title": "कई स्टाइल वाली पूरी सीज़न की एनिमेटेड सीरीज़। एक जैसा आर्ट स्टाइल।",
-        "subtitle": "पहले एपिसोड से लेकर आखिरी एपिसोड तक एक ही 'फ़्लैट-सेल' स्टाइल, हार्ट फ़ैमिली और मिलविक शहर को बनाए रखें। हर जोक को बारीकी से डायरेक्ट करें, और फिर Screening Room में एपिसोड को रिव्यू करें।",
-        "badge": "मल्टी-स्टाइल",
+        "title": "पूरे सीज़न की एनिमेटेड सीरीज़। एक समान कला शैली।",
+        "subtitle": "पोर्ट मैरो के नियॉन बंदरगाह, टैक्टाइल स्टाइलाइज्ड 3D डीज़लपंक-साइबरनेटिक सौंदर्य और पाँच मुख्य पात्रों को हर बीट में लॉक करें — 7 वैश्विक भाषाओं में इन-सीन संवाद सिंक के साथ।",
+        "badge": "स्टाइलाइज्ड 3D",
+        "screeningRoomPreview": "The Silt Line — स्क्रीनिंग रूम",
         "solutionPillars": [
           {
-            "title": "शैली में एकरूपता",
-            "frictionHeadline": "स्टाइल का बुरा हाल",
-            "friction": "कार्टून और एनीमे स्टाइल शॉट्स के बीच लगातार बदलते रहते हैं—लाइन आर्ट बदलता है, कलर पैलेट बिगड़ते हैं और कैरेक्टर ऐसे अजीब, फोटो-रियलिस्टिक रूप में बदल जाते हैं जो देखने में बहुत अजीब लगते हैं।",
-            "solutionHeadline": "लॉक किया गया आर्ट स्टाइल इंजन।",
-            "solution": "पहले फ़्रेम से ही अपने स्टाइल को फ़िक्स कर लें। SceneFlow पूरे एपिसोड में कैरेक्टर डिज़ाइन, लाइन वेट और शेडिंग मॉडल को लॉक कर देता है, ताकि आपके कैरेक्टर हमेशा आपके अपने और अनोखे बने रहें।"
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Stylized 3D and animated worlds constantly warp between shots, losing material textures, breaking lighting palettes, and drifting characters off-model.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze tactile dieselpunk brass, salt-corroded iron, and bioluminescent cybernetic shaders from frame one so every character and harbor set stays model-accurate."
           },
           {
-            "title": "बढ़ा-चढ़ाकर दिखाई गई एनिमेशन और फ़िज़िक्स",
-            "frictionHeadline": "अकड़ी हुई और अटकी-अटकी चाल।",
-            "friction": "जेनरेटिव मॉडल्स को तेज़ स्लैपस्टिक, डबल-टेक्स और कार्टून जैसी लचीली फ़िज़िक्स को दिखाने में मुश्किल होती है, जिससे ज़बरदस्त मज़ाकिया सीन पिघलती हुई अजीब आकृतियों में बदल जाते हैं।",
-            "solutionHeadline": "एक्शन और पोज़ एंकरिंग।",
-            "solution": "जियोमेट्री को खराब किए बिना कैरेक्टर की दमदार मूवमेंट और भावपूर्ण पोज़ तैयार करें। पूरे मोशन कंट्रोल के साथ ज़बरदस्त फ़िज़िकल कॉमेडी, अचानक कटअवे और ज़बरदस्त एक्सप्रेशन को डायरेक्ट करें।"
+            "title": "Complex VFX & Deductive Overlays",
+            "frictionHeadline": "Inconsistent Visual Motifs.",
+            "friction": "Recurring character-specific visual mechanics — like augmented optical telemetry or holographic stress lines — vanish or mutate across cuts.",
+            "solutionHeadline": "Reference-Anchored Direction.",
+            "solution": "Anchor Juniper's optical monocle telemetry, chromatic stress aberrations, and Tobias's acoustic resonance gear consistently across every dramatic beat."
           },
           {
-            "title": "कॉमेडी की टाइमिंग और लय",
-            "frictionHeadline": "खराब किए गए पंचलाइन।",
-            "friction": "ह्यूमर ठहराव और बीट-कट में होता है। स्टैंडर्ड 5-सेकंड के जेनरेटिव लूप की वजह से पेसिंग अजीब हो जाती है, जिससे जोक की डिलीवरी खराब हो जाती है।",
-            "solutionHeadline": "बीट-प्रिसिजन एडिटिंग",
-            "solution": "सीन की गति को फ़्रेम-दर-फ़्रेम कंट्रोल करें। फ़ाइनल रेंडर से पहले, 'बीट-फ़र्स्ट' टाइमलाइन में ही ड्रामैटिक पॉज़, सेटअप-से-पंचलाइन की टाइमिंग और क्विक रिएक्शन शॉट्स को एडजस्ट करें।"
+            "title": "Dramatic Tension & Beat Pacing",
+            "frictionHeadline": "Disconnected Action Clips.",
+            "friction": "High-stakes infiltration sequences fall apart when generated as isolated 5-second clips without continuous spatial geography or act structure.",
+            "solutionHeadline": "Beat-Precision Storyboarding.",
+            "solution": "Direct multi-minute story beats — from the North Quay workshop to Pier 14’s hydraulic blast gates — with intentional camera blocking before final render."
           },
           {
-            "title": "ज़बरदस्त ऊर्जा वाले डायलॉग और वोकल सिंक",
-            "frictionHeadline": "बेजान कठपुतलियों के मुँह।",
-            "friction": "AI के आम डायलॉग बेजान और मशीनी लगते हैं, जिससे सिटकॉम की तेज़-तर्रार और मज़ेदार बातचीत के लिए ज़रूरी जोश खत्म हो जाता है।",
-            "solutionHeadline": "डायनामिक आवाज़ और हाव-भाव का तालमेल।",
-            "solution": "आवाज़ की डिलीवरी को सीधे चेहरे के जोशीले हाव-भाव से जोड़ें। ज़्यादा से ज़्यादा कॉमेडी का असर दिखाने के लिए डायलॉग, चेहरे के भाव और कॉमेडी वाले वॉइस ट्रैक आपस में पूरी तरह मेल खाते हैं।"
+            "title": "Global In-Scene Vocal Sync",
+            "frictionHeadline": "Detached Dubbing & Lifeless Lip-Sync.",
+            "friction": "Translating stylized 3D animation into global languages usually breaks mouth shapes and flattens emotional vocal performance.",
+            "solutionHeadline": "7-Language In-Scene Sync.",
+            "solution": "Deliver synchronized character performances in English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai while preserving expressive 3D facial acting."
           }
-        ],
-        "screeningRoomPreview": "हार्ट हाउस — SFAI स्क्रीनिंग रूम"
+        ]
       },
       {
         "id": "documentary",

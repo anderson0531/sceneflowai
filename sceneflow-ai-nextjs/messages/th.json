@@ -2364,18 +2364,18 @@
       "โปรโมชั่น"
     ],
     "seriesPanel": {
-      "headerLabel": "ซีรีส์พระคัมภีร์และตอนที่ 1",
-      "bibleTab": "ซีรีส์พระคัมภีร์",
-      "castTab": "ล็อคแคสต์",
-      "episode1Tab": "Ep. 1 & ช. 1",
-      "seasonTab": "ฤดูกาล",
+      "headerLabel": "แฟ้มข้อมูลการผลิตและคัมภีร์เนื้อเรื่อง",
+      "bibleTab": "โลกและสไตล์ภาพ",
+      "castTab": "ตัวละคร",
+      "episode1Tab": "เรื่องย่อ",
+      "seasonTab": "จังหวะเรื่อง (Story Beats)",
       "formatLabel": "รูปแบบ",
-      "durationLabel": "ระยะเวลา",
-      "artStyleLabel": "สไตล์ศิลปะ",
-      "continuityLockLabel": "ล็อคความต่อเนื่อง",
+      "durationLabel": "ความยาว",
+      "artStyleLabel": "สไตล์ภาพ",
+      "continuityLockLabel": "การล็อกความต่อเนื่อง",
       "loglineLabel": "ล็อกไลน์",
-      "synopsisLabel": "เรื่องย่อซีรีส์และพระคัมภีร์ภาพ",
-      "lockedCastHeading": "ล็อค Cast & Principal Continuity",
+      "synopsisLabel": "เรื่องย่อการผลิต",
+      "lockedCastHeading": "ตัวละครหลักและแผ่นคุมความต่อเนื่อง",
       "inputs": {
         "drama": {
           "showTitle": "กระแสน้ำไวท์ซิตี้",
@@ -2472,83 +2472,78 @@
           ]
         },
         "animation": {
-          "showTitle": "ฮาร์ท เฮาส์",
-          "format": "แอนิเมชั่นซิทคอม · ซีซั่น 5 ตอน",
-          "genre": "ตลกครอบครัวหลายรุ่น",
-          "artStyle": "แอนิเมชั่นแฟลตเซล 2 มิติ · โครงร่างหมึกหนา และพาเล็ตชานเมืองอันอบอุ่น",
-          "duration": "ซีซั่น 110 นาที (5 × 22 นาที) · ตอนที่ 1: 22 นาที",
-          "continuityLock": "แผ่นอักขระครอบครัวที่ถูกล็อค 5 แผ่น · บ้าน Millwick และระเบียงด้านข้าง · Drift สไตล์ Zero",
-          "unitLabel": "ซีซั่น 1 ตอน (5)",
-          "artLock": "สไตล์แฟลตเซลที่ล็อคไว้หนึ่งสไตล์สำหรับทั้งซีซั่น: โครงร่างหมึกหนา สีสันชานเมืองที่อบอุ่น และการออกแบบตัวละครที่เหมือนกันในทุกตอน แพลตฟอร์มสามารถถือได้หลายสไตล์ ชุดนี้ไม่สลับครับ",
-          "logline": "ใน Millwick ครอบครัว Harts เปลี่ยนการทะเลาะกันในครอบครัวให้เป็นเรื่องตลกประจำสัปดาห์ และเรื่องตลกให้เป็นเหตุผลที่พวกเขายังคงอาศัยอยู่ใต้หลังคาเดียวกัน",
-          "seriesSynopsis": "Hart House ตั้งอยู่ในเมือง Millwick ซึ่งหมกมุ่นอยู่กับกฎหมายพลเมือง เป็นซิทคอมแอนิเมชั่นครอบครัว 2 มิติความยาว 22 นาทีความยาว 5 ตอน ที่สร้างขึ้นเพื่อพิสูจน์ว่าไม่มีการเปลี่ยนแปลงนอกโมเดลตลอดทั้งฤดูกาลที่ออกอากาศ เสมียนเทศบาลรูธ ฮาร์ตและช่างเปลี่ยนกะกลางคืน เอลลิส ฮาร์ต อยู่ร่วมกันในบ้านช่างฝีมือที่คับแคบร่วมกับกัปตันโต้วาทีวัย 16 ปี จูน, มิโล นักสะสมข้อเท็จจริงวัย 9 ขวบ และนานา อิเนซ แม่ของรูธ ซึ่งระเบียงด้านข้างแบบ \"ชั่วคราว\" ได้กลายมาเป็นศูนย์กลางทางอารมณ์ของบ้านอย่างเงียบๆ ทุกตอนเปลี่ยนเรื่องปวดหัวเล็กๆ น้อยๆ ของเทศบาลให้กลายเป็นละครตลกที่ดำเนินเรื่องอย่างรวดเร็ว ในขณะเดียวกันก็รักษาน้ำหนักบรรทัดที่เท่ากัน พาเลทเฉดสีเซลโทนอุ่น และแผ่นตัวละครหลายมุมที่ล็อคไว้ตั้งแต่ตอนที่ 1 จนถึงการโหวตครัวเรือนของตอนที่ 5",
+          "showTitle": "The Silt Line",
+          "format": "Stylized 3D Animated Series · Episode 1 Pilot (3 Story Beats)",
+          "genre": "ไซเบอร์ทริลเลอร์ท่าเรือเรโทรฟิวเจอริสติก",
+          "artStyle": "Tactile Stylized 3D Animation · Industrial Dieselpunk Maritime Grit & Bioluminescent Cybernetic Accents",
+          "duration": "32 min Pilot (3 Story Beats: 10.5m · 11.5m · 10m)",
+          "continuityLock": "5 Locked 3D Character Sheets · Port Marrow North Quay Workshop & Pier 14 Auction Barge · Optical Monocle Telemetry VFX",
+          "unitLabel": "จังหวะเรื่อง (3)",
+          "artLock": "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
+          "setting": "พอร์ตแมร์โรว์ (Port Marrow): มหานครท่าเรือชายฝั่งแนวเรโทรฟิวเจอริสติกที่ผสานสถาปัตยกรรมทองเหลืองยุค 1920 เข้ากับเทคโนโลยีไซเบอร์เนติกส์หลากสี ระบบน้ำขึ้นน้ำลงอัตโนมัติ และท่าเรือนีออนที่เกาะด้วยคราบเกลือทะเล",
+          "visualStyle": "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
+          "logline": "เมื่อสมาชิกสภาเทศบาลผู้ฉ้อฉลจัดฉากให้ประตูระบายน้ำอัตโนมัติพังเพื่อฮุบพันธบัตรฟื้นฟูและยึดสหกรณ์ริมน้ำของคนงานในพอร์ตแมร์โรว์ ช่างเทคนิคสาววัย 23 ปีและคู่หูวิศวกรเสียงจึงต้องลอบเข้าสู่เรือประมูลนอกชายฝั่งเพื่อชิงข้อมูลกล่องดำของแม่ที่หายสาบสูญไปก่อนที่ทั้งย่านจะจมใต้น้ำ",
+          "seriesSynopsis": "ในเมืองท่าพอร์ตแมร์โรว์ จูนิเพอร์ ฟินช์ (23) และโทไบอัส วู (24) ต้องปกป้องเวิร์กช็อปคนงานนอร์ทคีย์จากแผนน้ำท่วมเทียมของออร์วิลล์ เครน จูนิเพอร์ใช้เลนส์ตาเดียวเสริมการวิเคราะห์ถอดรหัสพิกัดเรือประมูลที่ท่าเรือ 14 เพื่อชิงบันทึกกล่องดำของเอเลนอร์ผู้เป็นแม่ และด้วยคลื่นเสียงกัมปนาทของโทไบอัสร่วมกับการเสียสละล็อกประตูน้ำของสารวัตรแบรม ฮัลโลเวย์ ทั้งคู่จึงฝ่าพายุหนีออกมาพร้อมหลักฐานเพื่อเปิดโปงแผนร้าย",
           "cast": [
             {
-              "name": "รูธ ฮาร์ต",
-              "role": "Matriarch · ล็อคแผ่นอักขระ 2D",
-              "descriptor": "เสมียนเทศบาลมิลวิค (42) เสื้อคาร์ดิแกนถักดินเผา แว่นตารูปกระดองเต่า ปฏิทินติดผนังรหัสสี จังหวะเสียงร้องที่ไร้อารมณ์และส่วนโค้งของคิ้วที่สื่ออารมณ์"
+              "name": "Juniper Finch",
+              "role": "Lead Diagnostic Technician · North Quay Collective",
+              "descriptor": "23-year-old lead diagnostic technician at the North Quay worker-owned workshop. Razor-sharp, hyper-focused, and hardened by years of municipal neglect, she navigates the world through an augmented optical monocle that visualizes mechanical telemetry and institutional deception, though over-extension triggers paralyzing sensory overload.",
+              "imageUrl": "/images/cast/silt-line/juniper-finch.webp"
             },
             {
-              "name": "เอลลิส ฮาร์ต",
-              "role": "พระสังฆราช · แผ่นอักขระ 2 มิติที่ถูกล็อค",
-              "descriptor": "ช่างรถโดยสารเทศบาลกะกลางคืน (44) ชุดคลุมของกองทัพเรือ กระติกน้ำร้อน นักประดิษฐ์โรงรถผู้มองโลกในแง่ดีที่แก้ปัญหางานบ้าน 5 นาทีด้วยอุปกรณ์หนัก 40 ปอนด์"
+              "name": "Tobias Wu",
+              "role": "Acoustic Telemetry Specialist · Co-Op Sound Engineer",
+              "descriptor": "24-year-old acoustic telemetry specialist and co-op sound-technician facing housing displacement alongside his collective. Grounded, patient, and tactically decisive, he uses acoustic resonance instrumentation not only for mechanical diagnostics but as a vital neuro-acoustic anchor to pull Juniper out of cognitive feedback loops.",
+              "imageUrl": "/images/cast/silt-line/tobias-wu.webp"
             },
             {
-              "name": "จูน ฮาร์ท",
-              "role": "ลูกสาว · ล็อคแผ่นอักขระ 2D",
-              "descriptor": "กัปตันโต้วาทีโรงเรียนมัธยมปลาย (16) เสื้อฮู้ดสีมัสตาร์ดทับกระโปรงจับจีบ มีป้ายเมืองอยู่ในมือ ปฏิบัติต่อกฎโต๊ะอาหารเย็นทุกข้อเหมือนเป็นข้อโต้แย้งด้วยวาจาของศาลฎีกา"
+              "name": "Orville Crane",
+              "role": "Municipal Councilor & Infrastructure Developer",
+              "descriptor": "Civic industrialist, municipal council member, and private infrastructure developer who orchestrates 'natural' disasters to clear real estate and extract recovery capital. Smooth, pragmatically ruthless, and impeccably tailored, he views the working-class waterfront as fiscal deadweight that must be cleansed by the sea to build high-yield luxury enclaves.",
+              "imageUrl": "/images/cast/silt-line/orville-crane.webp"
             },
             {
-              "name": "ไมโล ฮาร์ท",
-              "role": "ลูกชาย·ล็อคแผ่นอักขระ 2D",
-              "descriptor": "นักเอกสารประจำครัวเรือนและผู้ชื่นชอบการสร้างฉลาก (9) เสื้อรักบี้ลายทาง เสื้อผูกสูง ปืนป้ายอุตสาหกรรม นำเสนอความจริงอันแสนสาหัสในจังหวะตลกขบขัน"
+              "name": "John Anderson",
+              "role": "Chief Maritime Inspector",
+              "descriptor": "Weathered chief maritime inspector whose silence was purchased a decade ago during Eleanor Finch's disappearance. Bound by bureaucratic weariness, pensions, and survivalist cynicism, he maintains Crane's perimeter until commanded to participate in outright murder and cultural arson.",
+              "imageUrl": "/images/cast/silt-line/john-anderson.webp"
             },
             {
-              "name": "นาน่า อิเนซ",
-              "role": "คุณยาย · ล็อคแผ่นอักขระ 2D",
-              "descriptor": "อธิปไตยและช่างเย็บผ้าเกษียณอายุ (71) ผ้าคลุมไหล่สีครามปัก, มวยเงิน, บัลลังก์หวาย; จดจำทุกความแปรปรวนของการแบ่งเขตบนบล็อกตั้งแต่ปี 1984"
+              "name": "Inspector Bram Halloway",
+              "role": "Harbor District Investigator · Undercover Mentor",
+              "descriptor": "A seasoned, honest Harbor District investigator caught between rigid precinct bureaucracy and his obligation to protect the city's waterfront communities. Respecting Juniper's sharp mind and fond memories of her mother, he serves as an undercover mentor who feeds the kids discreet tips while running interference with municipal security.",
+              "imageUrl": "/images/cast/silt-line/inspector-bram-halloway.webp"
             }
           ],
           "episode1Synopsis": {
-            "episodeLabel": "ตอนที่ 1 เรื่องย่อ · ซีซั่น Premiere (4 บท)",
-            "title": "ตอนที่ 1: กฎการเรียงลำดับ",
-            "duration": "22 นาที (4 บท · บทที่ 1 บทพิสูจน์สด: 5.5 นาที)",
-            "logline": "อาณัติการรีไซเคิลในเมืองทั้ง 12 หมวดหมู่เป็นแรงบันดาลใจให้เอลลิสสร้างสายพานลำเลียงสำหรับคัดแยกในโรงรถแบบใช้มอเตอร์ ซึ่งบังเอิญจัดประเภทข้าวของที่ระเบียงของนานา อิเนซเป็นส่วนเกินของเทศบาล",
-            "synopsis": "เมื่อมิลวิคประกาศใช้กฎหมาย 412 ซึ่งกำหนดให้มีถังขยะริมขอบถนนรหัสสีสิบสองใบภายในเช้าวันพฤหัสบดี รูธต้องการให้ปฏิบัติตามอย่างเงียบๆ เพื่อที่เพื่อนร่วมงานของเธอที่ศาลาว่าการจะนินทาไม่ได้ จูนร่างข้อท้าทายตามรัฐธรรมนูญสำหรับไมโครโฟนของสภา และเอลลิสสร้างเครื่องคัดแยกแบบใช้รอกในโรงรถ เครื่องจักรเอาชนะขวดแก้วได้ก่อนที่จะกลืนกล่องเก็บของของครอบครัวที่ไม่มีฉลากไปจนหมด และถึงจุดสุดยอดในการเผชิญหน้าในห้องนั่งเล่นเมื่อไมโลพิมพ์แท็กที่เขียนว่า \"Nana's Temporary Porch Things\" และครอบครัวต้องยอมรับว่าไม่มีใครรู้ว่า \"ชั่วคราว\" หมายถึงอะไร",
-            "chapter1Title": "บทที่ 1 (Cold Open & Act I): สิบสองถังภายในวันพฤหัสบดี",
-            "chapter1Duration": "5.5 นาที · การพิสูจน์บทเริ่มต้น",
-            "chapter1Synopsis": "เวลา 6:15 น. ในห้องครัวฮาร์ตที่ถูกล็อก รูธเปิดเผยแผนภูมิการเรียงลำดับสิบสองหมวดหมู่ของเมือง ขณะที่เอลลิสกลับจากกะกลางคืนพร้อมกับมอเตอร์ประตูรถบัสที่ได้รับการกู้คืน ไมโลเริ่มติดป้ายกำกับเฟอร์นิเจอร์ในครัวเรือนและนานา อิเนซประกาศว่าระเบียงด้านข้างได้รับการยกเว้นจากเขตอำนาจศาลของเทศบาลในการถ่ายภาพปฏิกิริยาเซลล์แบนแบบตัดอย่างรวดเร็ว"
+            "episodeLabel": "Production Synopsis · 3-Beat Animated Pilot (32 min)",
+            "title": "The Silt Line — North Quay & Pier 14",
+            "duration": "32 min (3 Story Beats: 10.5 min · 11.5 min · 10 min)",
+            "logline": "When a predatory municipal councilor stages an automated floodgate failure to collect recovery bonds and seize Port Marrow's worker-owned waterfront collective, a sensory-strained 23-year-old technician and her sound-engineer partner infiltrate an offshore auction to secure her missing mother's black-box telemetry before their district is submerged.",
+            "synopsis": "In the retro-futuristic coastal city of Port Marrow, 23-year-old diagnostic technician Juniper Finch and co-op sound engineer Tobias Wu (24) face the imminent destruction of the North Quay Municipal Workshop—a worker-owned collective supporting displaced maritime laborers. The threat comes via Councilman Orville Crane, who has engineered a deliberate failure of the automated tidal surge barriers, framing it as an 'unavoidable climate event' to default lower-quay parcels, collect billions in municipal recovery bonds, and rezone the submerged district under private 'green renewal' charters. Utilizing her augmented deductive monocle despite the blinding cognitive migraines it inflicts, Juniper decodes municipal telemetry embedded in the eviction writ, pinpointing Crane's offshore auction barge at Pier 14 where the decommissioned floodgate controls and her vanished mother Eleanor's encrypted black-box ledger are being sold off. Disguised in dockers' oilskins, Juniper and Tobias infiltrate the barge's iron catwalks. In the lower hold, Chief Inspector Bram Halloway reaches his breaking point when Crane hands him an incendiary flare and orders him to burn Eleanor's original flood baseline archives and quietly ensure the whistleblowing youths drown in the slipway. Horrified by the cost of his decade-long complicity, Halloway hesitates while Juniper taps the auction feed, suffering a sensory seizure as Eleanor's decrypted voice reveals the flood is a manufactured market play. Cornered in Crane's private gallery, Juniper rejects Crane's offer to buy her silence; Tobias sacrifices his custom acoustic hardware to blow out the panoramic windows with a sonic blast. As enforcers swarm the slipway, Halloway enacts his redemption by manually locking the hydraulic blast gates from the outside, trapping himself with Crane's guards to guarantee Juniper and Tobias escape into the storm with the ledger, ready to expose the engineered deluge.",
+            "chapter1Title": "Chapter 1 (Beat 1): Hook & Context: The Manufactured Surge",
+            "chapter1Duration": "10.5 min · Opening Story Beat",
+            "chapter1Synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability as she decodes the eviction writ telemetry."
           },
           "episodes": [
             {
               "number": "1",
-              "title": "กฎการเรียงลำดับ",
-              "duration": "22 นาที",
-              "synopsis": "Millwick ออกคำสั่งรีไซเคิลใหม่โดยแบ่งออกเป็น 12 ประเภท เอลลิสสร้างเครื่องคัดแยกในโรงรถ มันใช้งานได้กับขวดแล้วก็หายนะบนกล่องที่ไม่มีป้ายกำกับของครอบครัว จูนต้องการท้าทายกฎในที่ประชุมของเมือง Ruth ต้องการให้ขอบถนนดูเป็นไปตามข้อกำหนดภายในวันพฤหัสบดี เรื่องราวดำเนินไปเมื่อไมโลติดป้ายกล่องหนึ่งว่า \"สิ่งของในระเบียงของนานา\" และไม่มีใครสามารถตกลงได้ว่าป้ายนั้นหมายถึงอะไร"
+              "title": "Hook & Context: The Manufactured Surge",
+              "duration": "10.5 min",
+              "synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability."
             },
             {
               "number": "2",
-              "title": "สภาพอากาศขบวนพาเหรด",
-              "duration": "22 นาที",
-              "synopsis": "พยากรณ์ฝนสำหรับวัน Millwick มิถุนายนต้องการยกเลิกป้ายชมรมโต้วาทีของเธอ ไมโลต้องการบันทึกสายฟ้า นานา อิเนซปฏิเสธที่จะโบกมือให้เพื่อนบ้านที่เธอหลีกเลี่ยงตั้งแต่เกิดข้อพิพาทเรื่องรั้ว รูธยังคงต้องวางบล็อกไว้ใต้ผ้าใบกันน้ำ เรื่องตลกคือผ้าใบกันน้ำ ประเด็นก็คือใครจะเป็นผู้ตัดสินใจว่าจะมีการเฉลิมฉลองเกิดขึ้น"
+              "title": "Infiltration & The Moral Crucible",
+              "duration": "11.5 min",
+              "synopsis": "Escalate procedural tension through forensic infiltration, introduce Halloway's moral crossroads when ordered to destroy Eleanor's legacy, and uncover Eleanor's black-box cipher."
             },
             {
               "number": "3",
-              "title": "อาหารเช้ากะกลางคืน",
-              "duration": "22 นาที",
-              "synopsis": "เอลลิสกลับถึงบ้านตอนรุ่งสางและทำอาหารให้กับคนที่กำลังจะจากไปแล้ว มิถุนายนมีการแข่งขัน ไมโลมีทัศนศึกษา รูธมีเคาน์เตอร์กะ ห้องครัวเป็นเวลาหนึ่งชั่วโมงสำหรับทั้งครอบครัว และไข่เป็นเพียงบทสนทนาเดียวที่เหมาะสม แพนเค้กที่ถูกเผากลายเป็นประเด็นถกเถียงเรื่องการสร้างบ้านในตอนเช้า"
-            },
-            {
-              "number": "4",
-              "title": "กุญแจสำรอง",
-              "duration": "22 นาที",
-              "synopsis": "มีคนเติมชามแมวในตอนเช้าที่เอลลิสหลับเกินเวลา ครอบครัวฮาร์ตสืบสวนและค้นหากุญแจที่พวกเขาซ่อนอยู่ใต้อิฐเมื่อหลายปีก่อน เพื่อนบ้านที่พวกเขาเรียกว่ามีจมูกยาวกำลังปกปิดช่องว่างยามรุ่งสาง นานา อิเนซ ต้องตัดสินใจว่าจะเอากุญแจคืนหรือยอมรับว่าการบล็อกช่วยได้"
-            },
-            {
-              "number": "5",
-              "title": "โหวตระเบียง",
-              "duration": "22 นาที",
-              "synopsis": "นานา อิเนซ ประกาศว่าเธอทำระเบียง “ชั่วคราว” เสร็จแล้ว และจะย้ายไปอยู่ที่เมืองของพี่สาวเธอ พวกฮาร์ตส์เรียกการลงคะแนนเสียงในครัวเรือน การสร้างระเบียงขึ้นใหม่ในขณะที่ห้องจริงของเธอหมายความว่าโปรเจ็กต์โรงรถของเอลลิสต้องหยุดลง การย้ายมุมอ่านหนังสือของเดือนมิถุนายน และมิลวิคต้องยอมรับการเปลี่ยนแปลงที่เพิกเฉย ซีซั่นนี้มาถึงแล้ว หนังตลกจะไม่เกี่ยวกับสัปดาห์ที่วุ่นวายอีกต่อไป อยู่ที่ว่าใครจะได้อยู่"
+              "title": "Climax & Escape: The Silt Line Defiance",
+              "duration": "10 min",
+              "synopsis": "Deliver an emotionally grounded climax where Crane's extortion is shattered by sacrificial tech and Halloway achieves moral redemption by locking down the escape corridor."
             }
           ]
         },
@@ -2862,7 +2857,9 @@
             }
           ]
         }
-      }
+      },
+      "settingLabel": "ฉากหลัง",
+      "expandPortraitHint": "คลิกที่ภาพตัวละครเพื่อดูขนาดเต็ม"
     },
     "explorerHandoff": "ลิงก์เหล่านี้คือผลงานที่เสร็จสมบูรณ์แล้ว ส่วน Explorer คือพื้นที่สำหรับให้คุณสร้างผลงานของตนเอง",
     "languagesBanner": "ซิงค์ภาษาในฉาก (In-Scene Language Sync) ครบ 7 ภาษา (EN · ES · PT · HI · ZH · AR · TH) — พบกับดราม่าภาพยนตร์ซิงค์เต็มรูปแบบกว่า 21 นาที (7 ภาษา × เวอร์ชันละ 3 นาที) ที่ก้าวข้ามการพากย์เสียงแบบเดิม",
@@ -2918,40 +2915,40 @@
       },
       {
         "id": "animation",
-        "title": "ซีรีส์แอนิเมชันเต็มซีซันที่ผสมผสานหลากหลายสไตล์ แต่ยังคงเอกลักษณ์ทางศิลปะที่สอดคล้องเป็นหนึ่งเดียวกัน",
-        "subtitle": "กำหนดรูปแบบภาพแบบ Flat-cel รวมถึงตัวละครครอบครัว Hart และเมือง Millwick ให้เป็นมาตรฐานเดียวกันตั้งแต่ตอนแรกจนถึงตอนสุดท้าย กำกับจังหวะมุกตลกอย่างละเอียดทีละจุด จากนั้นจึงตรวจสอบความเรียบร้อยของตอนดังกล่าวในห้องฉายงาน (Screening Room)",
-        "badge": "หลากหลายสไตล์",
+        "title": "แอนิเมชันซีรีส์เต็มซีซัน สไตล์ศิลปะเดียวที่แม่นยำทุกซีน",
+        "subtitle": "ล็อกงานภาพ 3D สไตล์ดีเซลพังก์ผสานไซเบอร์เนติกส์ ตัวละครหลักทั้ง 5 และท่าเรือนีออนคราบเกลือแห่งพอร์ตแมร์โรว์ในทุกจังหวะเรื่อง พร้อมซิงก์บทพูดในฉากครบ 7 ภาษาทั่วโลก",
+        "badge": "แอนิเมชัน 3D",
+        "screeningRoomPreview": "The Silt Line — ห้องฉายตัวอย่าง",
         "solutionPillars": [
           {
-            "title": "ความสม่ำเสมอของรูปแบบ",
-            "frictionHeadline": "สไตล์หลุดโลก",
-            "friction": "สไตล์การวาดแบบการ์ตูนและอนิเมะบิดเบี้ยวไปมาอยู่ตลอดระหว่างการเปลี่ยนช็อต ทั้งเส้นสายที่ขยับเขยื้อน โทนสีที่ผิดเพี้ยน และตัวละครที่แปรสภาพกลายเป็นภาพกึ่งสมจริงที่ดูประหลาดพิลึกจนน่าขนลุก",
-            "solutionHeadline": "ระบบกำหนดรูปแบบศิลปะแบบล็อกค่า",
-            "solution": "คงเอกลักษณ์ทางภาพของคุณไว้ตั้งแต่เฟรมแรก SceneFlow จะล็อกดีไซน์ตัวละคร ความหนาของเส้น และรูปแบบการลงเงาให้คงที่ตลอดทั้งตอน เพื่อให้ตัวละครของคุณยังคงความโดดเด่นในแบบฉบับของคุณเอง"
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Stylized 3D and animated worlds constantly warp between shots, losing material textures, breaking lighting palettes, and drifting characters off-model.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze tactile dieselpunk brass, salt-corroded iron, and bioluminescent cybernetic shaders from frame one so every character and harbor set stays model-accurate."
           },
           {
-            "title": "แอนิเมชันและระบบฟิสิกส์ที่เน้นความเกินจริง",
-            "frictionHeadline": "การเคลื่อนไหวที่แข็งทื่อและติดขัด",
-            "friction": "โมเดลแบบ Generative มักมีปัญหาในการจัดการกับมุกตลกแบบ Slapstick ที่รวดเร็ว จังหวะการชะงักเพื่อหันกลับมามองซ้ำ (double-takes) และฟิสิกส์แบบการ์ตูนที่ยืดหยุ่นนุ่มนิ่ม ส่งผลให้มุกตลกที่เต็มไปด้วยความเคลื่อนไหวและพลังงานกลายเป็นภาพที่บิดเบี้ยวละลายจนดูผิดเพี้ยนไปหมด",
-            "solutionHeadline": "การสร้างจุดยึดเหนี่ยวด้วยท่าทางและการเคลื่อนไหว",
-            "solution": "สร้างสรรค์การเคลื่อนไหวของตัวละครที่เปี่ยมด้วยพลังและท่าทางที่สื่ออารมณ์ได้อย่างชัดเจนโดยไม่ทำให้รูปทรงโมเดลผิดเพี้ยน พร้อมควบคุมการเคลื่อนไหวได้อย่างเต็มรูปแบบเพื่อถ่ายทอดมุกตลกท่าทางที่ฉับไว การตัดภาพสลับฉากอย่างรวดเร็ว และสีหน้าท่าทางที่หลุดโลก"
+            "title": "Complex VFX & Deductive Overlays",
+            "frictionHeadline": "Inconsistent Visual Motifs.",
+            "friction": "Recurring character-specific visual mechanics — like augmented optical telemetry or holographic stress lines — vanish or mutate across cuts.",
+            "solutionHeadline": "Reference-Anchored Direction.",
+            "solution": "Anchor Juniper's optical monocle telemetry, chromatic stress aberrations, and Tobias's acoustic resonance gear consistently across every dramatic beat."
           },
           {
-            "title": "จังหวะและลีลาในการสร้างเสียงหัวเราะ",
-            "frictionHeadline": "มุกตลกที่พังไม่เป็นท่า",
-            "friction": "เสน่ห์ของมุกตลกอยู่ที่จังหวะเว้นวรรคและการตัดสลับภาพ แต่การวนซ้ำแบบ Generative Loop มาตรฐานที่ยาว 5 วินาทีกลับบีบให้เกิดจังหวะที่ดูฝืนและทำลายอรรถรสในการเล่ามุกไปจนหมด",
-            "solutionHeadline": "การตัดต่อที่แม่นยำตรงจังหวะ",
-            "solution": "ควบคุมจังหวะของฉากได้ละเอียดถึงระดับเฟรม ปรับแต่งช่วงเว้นจังหวะเพื่อสร้างอารมณ์ จังหวะการส่งมุก (setup-to-punchline) และช็อตปฏิกิริยาตอบสนองที่รวดเร็วได้โดยตรงบนไทม์ไลน์ที่ยึดจังหวะเป็นหลัก ก่อนที่จะทำการเรนเดอร์ชิ้นงานขั้นสุดท้าย"
+            "title": "Dramatic Tension & Beat Pacing",
+            "frictionHeadline": "Disconnected Action Clips.",
+            "friction": "High-stakes infiltration sequences fall apart when generated as isolated 5-second clips without continuous spatial geography or act structure.",
+            "solutionHeadline": "Beat-Precision Storyboarding.",
+            "solution": "Direct multi-minute story beats — from the North Quay workshop to Pier 14’s hydraulic blast gates — with intentional camera blocking before final render."
           },
           {
-            "title": "บทสนทนาที่เปี่ยมด้วยพลังและการซิงค์เสียง",
-            "frictionHeadline": "ปากหุ่นเชิดที่ไร้ชีวิต",
-            "friction": "บทสนทนาจาก AI ทั่วไปมักดูจืดชืดและขาดความเป็นธรรมชาติราวกับหุ่นยนต์ ซึ่งทำลายพลังและความมีชีวิตชีวาที่จำเป็นสำหรับการโต้ตอบรับส่งมุกที่ฉับไวและคมคายในสไตล์ซิทคอม",
-            "solutionHeadline": "การประสานเสียงและการแสดงสีหน้าแบบไดนามิก",
-            "solution": "ผสานการถ่ายทอดน้ำเสียงเข้ากับการแสดงสีหน้าอันเปี่ยมด้วยพลังอย่างลงตัว ทั้งบทสนทนา รูปปากที่สื่ออารมณ์ และเสียงพากย์แนวตลกขบขันต่างสอดประสานกันอย่างไร้รอยต่อ เพื่อสร้างอรรถรสความตลกให้ถึงขีดสุด"
+            "title": "Global In-Scene Vocal Sync",
+            "frictionHeadline": "Detached Dubbing & Lifeless Lip-Sync.",
+            "friction": "Translating stylized 3D animation into global languages usually breaks mouth shapes and flattens emotional vocal performance.",
+            "solutionHeadline": "7-Language In-Scene Sync.",
+            "solution": "Deliver synchronized character performances in English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai while preserving expressive 3D facial acting."
           }
-        ],
-        "screeningRoomPreview": "Hart House — ห้องฉายภาพยนตร์ SFAI"
+        ]
       },
       {
         "id": "documentary",

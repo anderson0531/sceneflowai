@@ -29,18 +29,20 @@ export const PRODUCTION_SHOWCASE_COPY = {
   openPlayer: 'Open Player',
   featureModes: ['Pre-Vis', 'Clips', 'Scenes', 'Chapters', 'Master', 'Promo'],
   seriesPanel: {
-    headerLabel: 'Series Bible & Episode 1',
-    bibleTab: 'Series Bible',
-    castTab: 'Locked Cast',
-    episode1Tab: 'Ep. 1 & Ch. 1',
-    seasonTab: 'Season',
+    headerLabel: 'Production Dossier & Story Bible',
+    bibleTab: 'World & Style',
+    castTab: 'Cast',
+    episode1Tab: 'Synopsis',
+    seasonTab: 'Story Beats',
     formatLabel: 'Format',
     durationLabel: 'Duration',
-    artStyleLabel: 'Art Style',
+    artStyleLabel: 'Visual Style',
+    settingLabel: 'Setting',
     continuityLockLabel: 'Continuity Lock',
     loglineLabel: 'Logline',
-    synopsisLabel: 'Series Synopsis & Visual Bible',
-    lockedCastHeading: 'Locked Cast & Principal Continuity',
+    synopsisLabel: 'Production Synopsis',
+    lockedCastHeading: 'Principal Cast & Continuity Sheets',
+    expandPortraitHint: 'Click portrait for full view',
     inputs: Object.fromEntries(
       EXAMPLE_SERIES_INPUTS.map((series) => [
         series.cardId,
@@ -53,12 +55,15 @@ export const PRODUCTION_SHOWCASE_COPY = {
           continuityLock: series.continuityLock,
           unitLabel: series.unitLabel,
           artLock: series.artLock,
+          ...(series.setting ? { setting: series.setting } : {}),
+          ...(series.visualStyle ? { visualStyle: series.visualStyle } : {}),
           logline: series.logline,
           seriesSynopsis: series.seriesSynopsis,
           cast: series.cast.map((member) => ({
             name: member.name,
             role: member.role,
             descriptor: member.descriptor,
+            ...(member.imageUrl ? { imageUrl: member.imageUrl } : {}),
           })),
           episode1Synopsis: {
             episodeLabel: series.episode1Synopsis.episodeLabel,
@@ -148,47 +153,47 @@ export const PRODUCTION_SHOWCASE_COPY = {
       id: 'animation',
       title: 'Multi-Style Full-Season Animated Series. One Consistent Art Style.',
       subtitle:
-        'Lock one flat-cel style, the Hart family, and the town of Millwick from the first episode to the last. Direct the joke beat by beat, then review the episode in the Screening Room.',
-      badge: 'Multi-Style',
+        'Lock tactile stylized 3D dieselpunk-cybernetic aesthetics, five principal cast designs, and the neon salt-crusted docks of Port Marrow across every beat — with in-scene dialogue sync across 7 global languages.',
+      badge: 'Stylized 3D',
       solutionPillars: [
         {
           title: 'Stylistic Consistency',
           frictionHeadline: 'Style Meltdown.',
           friction:
-            'Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.',
+            'Stylized 3D and animated worlds constantly warp between shots, losing material textures, breaking lighting palettes, and drifting characters off-model.',
           solutionHeadline: 'Locked Art Style Engine.',
           solution:
-            'Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours.',
+            'Freeze tactile dieselpunk brass, salt-corroded iron, and bioluminescent cybernetic shaders from frame one so every character and harbor set stays model-accurate.',
         },
         {
-          title: 'Exaggerated Animation & Physics',
-          frictionHeadline: 'Stiff & Glitchy Motion.',
+          title: 'Complex VFX & Deductive Overlays',
+          frictionHeadline: 'Inconsistent Visual Motifs.',
           friction:
-            'Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.',
-          solutionHeadline: 'Action & Pose Anchoring.',
+            'Recurring character-specific visual mechanics — like augmented optical telemetry or holographic stress lines — vanish or mutate across cuts.',
+          solutionHeadline: 'Reference-Anchored Direction.',
           solution:
-            'Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control.',
+            "Anchor Juniper's optical monocle telemetry, chromatic stress aberrations, and Tobias's acoustic resonance gear consistently across every dramatic beat.",
         },
         {
-          title: 'Comedic Timing & Rhythm',
-          frictionHeadline: 'Ruined Punchlines.',
+          title: 'Dramatic Tension & Beat Pacing',
+          frictionHeadline: 'Disconnected Action Clips.',
           friction:
-            'Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.',
-          solutionHeadline: 'Beat-Precision Editing.',
+            'High-stakes infiltration sequences fall apart when generated as isolated 5-second clips without continuous spatial geography or act structure.',
+          solutionHeadline: 'Beat-Precision Storyboarding.',
           solution:
-            'Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render.',
+            'Direct multi-minute story beats — from the North Quay workshop to Pier 14’s hydraulic blast gates — with intentional camera blocking before final render.',
         },
         {
-          title: 'High-Energy Dialogue & Vocal Sync',
-          frictionHeadline: 'Lifeless Puppet Mouths.',
+          title: 'Global In-Scene Vocal Sync',
+          frictionHeadline: 'Detached Dubbing & Lifeless Lip-Sync.',
           friction:
-            'Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.',
-          solutionHeadline: 'Dynamic Voice & Expression Sync.',
+            'Translating stylized 3D animation into global languages usually breaks mouth shapes and flattens emotional vocal performance.',
+          solutionHeadline: '7-Language In-Scene Sync.',
           solution:
-            'Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact.',
+            'Deliver synchronized character performances in English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai while preserving expressive 3D facial acting.',
         },
       ],
-      screeningRoomPreview: 'Hart House — Screening Room',
+      screeningRoomPreview: 'The Silt Line — Screening Room',
     },
     {
       id: 'documentary',

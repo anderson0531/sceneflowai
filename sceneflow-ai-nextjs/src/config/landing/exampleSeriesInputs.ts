@@ -15,6 +15,7 @@ export type ExampleSeriesCastMember = {
   name: string
   role: string
   descriptor: string
+  imageUrl?: string
 }
 
 export type ExampleEpisodeOneHighlight = {
@@ -38,6 +39,8 @@ export type ExampleSeriesInput = {
   continuityLock: string
   unitLabel: string
   artLock: string
+  setting?: string
+  visualStyle?: string
   concept: string
   logline: string
   seriesSynopsis: string
@@ -168,104 +171,100 @@ export const EXAMPLE_SERIES_INPUTS: readonly ExampleSeriesInput[] = [
   },
   {
     cardId: 'animation',
-    showTitle: 'Hart House',
-    format: 'Animated Sitcom · 5-Episode Season',
-    genre: 'Multi-Generational Family Comedy',
-    artStyle: '2D Flat-Cel Animation · Bold Ink Outlines & Warm Suburban Palette',
-    duration: '110 min Season (5 × 22 min) · Ep 1: 22 min',
+    showTitle: 'The Silt Line',
+    format: 'Stylized 3D Animated Series · Episode 1 Pilot (3 Story Beats)',
+    genre: 'Retro-Futuristic Maritime Cyber-Thriller',
+    artStyle:
+      'Tactile Stylized 3D Animation · Industrial Dieselpunk Maritime Grit & Bioluminescent Cybernetic Accents',
+    duration: '32 min Pilot (3 Story Beats: 10.5m · 11.5m · 10m)',
     continuityLock:
-      '5 Locked Family Character Sheets · Millwick House & Side Porch · Zero Style Drift',
-    unitLabel: 'Season 1 Episodes (5)',
+      '5 Locked 3D Character Sheets · Port Marrow North Quay Workshop & Pier 14 Auction Barge · Optical Monocle Telemetry VFX',
+    unitLabel: 'Story Beats (3)',
+    setting:
+      'Port Marrow: A coastal retro-futuristic harbor metropolis combining 1920s maritime brass architecture with colorful open-source cybernetic tech, automated tides, and neon salt-crusted docks.',
+    visualStyle:
+      "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
     artLock:
-      'One locked flat-cel style for the whole season: bold ink outlines, warm suburban color, and the same character designs in every episode. The platform can hold many styles. This series does not switch.',
+      "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
     concept:
-      'Hart House is a weekly family comedy in the invented town of Millwick. Ruth Hart, a municipal clerk, and Ellis Hart, a night-shift bus mechanic, share a small house with their daughter June (16), their son Milo (9), and Ruth’s mother, Nana Inez, who has turned the side porch into her rooms. Each episode is one ordinary Millwick problem — a new town rule, a rained-out festival, a breakfast that is the only hour the family overlaps — told so the joke is also the point. Lock one flat-cel art style, these five faces, and this house from episode 1 to episode 5. Episode 5 turns: the family has to decide whether Nana Inez’s “temporary” porch is actually her home.',
+      "When a predatory municipal councilor stages an automated floodgate failure to collect recovery bonds and seize Port Marrow's worker-owned waterfront collective, a sensory-strained 23-year-old technician and her sound-engineer partner infiltrate an offshore auction to secure her missing mother's black-box telemetry before their district is submerged.",
     logline:
-      'In Millwick, the Harts turn a household argument into the week’s joke, and the joke into the reason they still live under one roof.',
+      "When a predatory municipal councilor stages an automated floodgate failure to collect recovery bonds and seize Port Marrow's worker-owned waterfront collective, a sensory-strained 23-year-old technician and her sound-engineer partner infiltrate an offshore auction to secure her missing mother's black-box telemetry before their district is submerged.",
     seriesSynopsis:
-      'Set in the civic-ordinance-obsessed town of Millwick, Hart House is a five-episode, 22-minute 2D animated family sitcom built to prove zero off-model drift across an entire broadcast season. Municipal clerk Ruth Hart and night-shift transit mechanic Ellis Hart share a cramped craftsman house with sixteen-year-old debate captain June, nine-year-old fact-collector Milo, and Ruth’s mother Nana Inez, whose “temporary” enclosed side porch has quietly become the emotional center of the home. Every episode turns a small municipal headache into rapid-fire ensemble comedy while keeping identical line weights, warm cel-shaded palettes, and multi-angle character sheets locked from Episode 1 through the Episode 5 household vote.',
+      "In the retro-futuristic coastal city of Port Marrow, 23-year-old diagnostic technician Juniper Finch and co-op sound engineer Tobias Wu (24) face the imminent destruction of the North Quay Municipal Workshop—a worker-owned collective supporting displaced maritime laborers. The threat comes via Councilman Orville Crane, who has engineered a deliberate failure of the automated tidal surge barriers, framing it as an 'unavoidable climate event' to default lower-quay parcels, collect billions in municipal recovery bonds, and rezone the submerged district under private 'green renewal' charters. Utilizing her augmented deductive monocle despite the blinding cognitive migraines it inflicts, Juniper decodes municipal telemetry embedded in the eviction writ, pinpointing Crane's offshore auction barge at Pier 14 where the decommissioned floodgate controls and her vanished mother Eleanor's encrypted black-box ledger are being sold off. Disguised in dockers' oilskins, Juniper and Tobias infiltrate the barge's iron catwalks. In the lower hold, Chief Inspector Bram Halloway reaches his breaking point when Crane hands him an incendiary flare and orders him to burn Eleanor's original flood baseline archives and quietly ensure the whistleblowing youths drown in the slipway. Horrified by the cost of his decade-long complicity, Halloway hesitates while Juniper taps the auction feed, suffering a sensory seizure as Eleanor's decrypted voice reveals the flood is a manufactured market play. Cornered in Crane's private gallery, Juniper rejects Crane's offer to buy her silence; Tobias sacrifices his custom acoustic hardware to blow out the panoramic windows with a sonic blast. As enforcers swarm the slipway, Halloway enacts his redemption by manually locking the hydraulic blast gates from the outside, trapping himself with Crane's guards to guarantee Juniper and Tobias escape into the storm with the ledger, ready to expose the engineered deluge.",
     storyline:
-      'Ruth keeps the calendar. Ellis fixes machines that almost work. June, sixteen, will debate the rule before she follows it. Milo, nine, collects facts nobody requested. Nana Inez remembers every slight the block ever offered and still sets an extra plate. The season is five weeks in one house. The art style never changes: the same ink line, the same warm palette, the same faces. What changes is how much of the house belongs to Nana Inez, and whether Millwick will treat a temporary arrangement as a real home.',
+      "In Port Marrow—a coastal retro-futuristic harbor metropolis combining 1920s maritime brass architecture with colorful open-source cybernetic tech, automated tides, and neon salt-crusted docks—Juniper Finch (23) and Tobias Wu (24) infiltrate Councilman Orville Crane's Pier 14 offshore auction barge to recover Eleanor Finch's encrypted black-box telemetry before an engineered floodgate failure submerges the North Quay worker-owned collective.",
     cast: [
       {
-        name: 'Ruth Hart',
-        role: 'Matriarch · Locked 2D Character Sheet',
+        name: 'Juniper Finch',
+        role: 'Lead Diagnostic Technician · North Quay Collective',
+        imageUrl: '/images/cast/silt-line/juniper-finch.webp',
         descriptor:
-          'Millwick Municipal Clerk (42). Terracotta knit cardigan, tortoiseshell glasses, color-coded wall calendar; deadpan vocal timing and expressive eyebrow arcs.',
+          '23-year-old lead diagnostic technician at the North Quay worker-owned workshop. Razor-sharp, hyper-focused, and hardened by years of municipal neglect, she navigates the world through an augmented optical monocle that visualizes mechanical telemetry and institutional deception, though over-extension triggers paralyzing sensory overload.',
       },
       {
-        name: 'Ellis Hart',
-        role: 'Patriarch · Locked 2D Character Sheet',
+        name: 'Tobias Wu',
+        role: 'Acoustic Telemetry Specialist · Co-Op Sound Engineer',
+        imageUrl: '/images/cast/silt-line/tobias-wu.webp',
         descriptor:
-          'Night-Shift Municipal Bus Mechanic (44). Navy shop coveralls, steel thermos, optimistic garage inventor who solves 5-minute chores with 40-pound contraptions.',
+          '24-year-old acoustic telemetry specialist and co-op sound-technician facing housing displacement alongside his collective. Grounded, patient, and tactically decisive, he uses acoustic resonance instrumentation not only for mechanical diagnostics but as a vital neuro-acoustic anchor to pull Juniper out of cognitive feedback loops.',
       },
       {
-        name: 'June Hart',
-        role: 'Daughter · Locked 2D Character Sheet',
+        name: 'Orville Crane',
+        role: 'Municipal Councilor & Infrastructure Developer',
+        imageUrl: '/images/cast/silt-line/orville-crane.webp',
         descriptor:
-          'High School Debate Captain (16). Mustard hoodie over pleated skirt, annotated town charter in hand; treats every dinner-table rule like a Supreme Court oral argument.',
+          "Civic industrialist, municipal council member, and private infrastructure developer who orchestrates 'natural' disasters to clear real estate and extract recovery capital. Smooth, pragmatically ruthless, and impeccably tailored, he views the working-class waterfront as fiscal deadweight that must be cleansed by the sea to build high-yield luxury enclaves.",
       },
       {
-        name: 'Milo Hart',
-        role: 'Son · Locked 2D Character Sheet',
+        name: 'John Anderson',
+        role: 'Chief Maritime Inspector',
+        imageUrl: '/images/cast/silt-line/john-anderson.webp',
         descriptor:
-          'Household Archivist & Label-Maker Enthusiast (9). Striped rugby shirt, untied high-tops, industrial label gun; delivers devastatingly literal truths on the comedic beat.',
+          "Weathered chief maritime inspector whose silence was purchased a decade ago during Eleanor Finch's disappearance. Bound by bureaucratic weariness, pensions, and survivalist cynicism, he maintains Crane's perimeter until commanded to participate in outright murder and cultural arson.",
       },
       {
-        name: 'Nana Inez',
-        role: 'Grandmother · Locked 2D Character Sheet',
+        name: 'Inspector Bram Halloway',
+        role: 'Harbor District Investigator · Undercover Mentor',
+        imageUrl: '/images/cast/silt-line/inspector-bram-halloway.webp',
         descriptor:
-          'Side-Porch Sovereign & Retired Seamstress (71). Embroidered indigo shawl, silver chignon, wicker throne; remembers every zoning variance on the block since 1984.',
+          "A seasoned, honest Harbor District investigator caught between rigid precinct bureaucracy and his obligation to protect the city's waterfront communities. Respecting Juniper's sharp mind and fond memories of her mother, he serves as an undercover mentor who feeds the kids discreet tips while running interference with municipal security.",
       },
     ],
     episode1Synopsis: {
-      episodeLabel: 'Episode 1 Synopsis · Season Premiere (4 Chapters)',
-      title: 'Episode 1: The Sorting Rule',
-      duration: '22 min (4 Chapters · Chapter 1 Live Proof: 5.5 min)',
+      episodeLabel: 'Production Synopsis · 3-Beat Animated Pilot (32 min)',
+      title: 'The Silt Line — North Quay & Pier 14',
+      duration: '32 min (3 Story Beats: 10.5 min · 11.5 min · 10 min)',
       logline:
-        'A twelve-category town recycling mandate inspires Ellis to build a motorized garage sorting conveyor that accidentally classifies Nana Inez’s porch belongings as municipal surplus.',
+        "When a predatory municipal councilor stages an automated floodgate failure to collect recovery bonds and seize Port Marrow's worker-owned waterfront collective, a sensory-strained 23-year-old technician and her sound-engineer partner infiltrate an offshore auction to secure her missing mother's black-box telemetry before their district is submerged.",
       synopsis:
-        'When Millwick enacts Ordinance 412—requiring twelve color-coded curb bins by Thursday morning—Ruth wants quiet compliance so her coworkers at Town Hall cannot gossip, June drafts a constitutional challenge for the council mic, and Ellis constructs a pulley-driven sorting machine in the garage. The machine triumphs on glass bottles before devouring the family’s unlabeled storage boxes, culminating in a living-room standoff when Milo prints a tag reading “Nana’s Temporary Porch Things” and the family must admit nobody knows what “temporary” means.',
-      chapter1Title: 'Chapter 1 (Cold Open & Act I): Twelve Bins by Thursday',
-      chapter1Duration: '5.5 min · Initial Chapter Proof',
+        "In the retro-futuristic coastal city of Port Marrow, 23-year-old diagnostic technician Juniper Finch and co-op sound engineer Tobias Wu (24) face the imminent destruction of the North Quay Municipal Workshop—a worker-owned collective supporting displaced maritime laborers. The threat comes via Councilman Orville Crane, who has engineered a deliberate failure of the automated tidal surge barriers, framing it as an 'unavoidable climate event' to default lower-quay parcels, collect billions in municipal recovery bonds, and rezone the submerged district under private 'green renewal' charters. Utilizing her augmented deductive monocle despite the blinding cognitive migraines it inflicts, Juniper decodes municipal telemetry embedded in the eviction writ, pinpointing Crane's offshore auction barge at Pier 14 where the decommissioned floodgate controls and her vanished mother Eleanor's encrypted black-box ledger are being sold off. Disguised in dockers' oilskins, Juniper and Tobias infiltrate the barge's iron catwalks. In the lower hold, Chief Inspector Bram Halloway reaches his breaking point when Crane hands him an incendiary flare and orders him to burn Eleanor's original flood baseline archives and quietly ensure the whistleblowing youths drown in the slipway. Horrified by the cost of his decade-long complicity, Halloway hesitates while Juniper taps the auction feed, suffering a sensory seizure as Eleanor's decrypted voice reveals the flood is a manufactured market play. Cornered in Crane's private gallery, Juniper rejects Crane's offer to buy her silence; Tobias sacrifices his custom acoustic hardware to blow out the panoramic windows with a sonic blast. As enforcers swarm the slipway, Halloway enacts his redemption by manually locking the hydraulic blast gates from the outside, trapping himself with Crane's guards to guarantee Juniper and Tobias escape into the storm with the ledger, ready to expose the engineered deluge.",
+      chapter1Title: 'Chapter 1 (Beat 1): Hook & Context: The Manufactured Surge',
+      chapter1Duration: '10.5 min · Opening Story Beat',
       chapter1Synopsis:
-        'At 6:15 a.m. in the locked Hart kitchen, Ruth unveils the town’s twelve-category sorting chart while Ellis returns from night shift with a salvaged bus-door motor. Across fast-cut flat-cel reaction shots, Milo begins labeling household furniture and Nana Inez declares the side porch exempt from municipal jurisdiction.',
+        "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability as she decodes the eviction writ telemetry.",
     },
     episodes: [
       {
         number: 1,
-        title: 'The Sorting Rule',
-        duration: '22 min',
+        title: 'Hook & Context: The Manufactured Surge',
+        duration: '10.5 min',
         synopsis:
-          'Millwick issues a new recycling order with twelve categories. Ellis builds a sorting machine in the garage. It works on bottles and then, disastrously, on the family’s unlabeled boxes. June wants to challenge the rule at the town meeting. Ruth wants the curb to look compliant by Thursday. The episode lands when Milo labels one box “Nana’s porch things” and nobody can agree what the label means.',
+          "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability.",
       },
       {
         number: 2,
-        title: 'Parade Weather',
-        duration: '22 min',
+        title: 'Infiltration & The Moral Crucible',
+        duration: '11.5 min',
         synopsis:
-          'Rain is forecast for Millwick Day. June wants to cancel her debate-club banner. Milo wants to log the lightning. Nana Inez refuses to wave at a neighbor she has avoided since a fence dispute. Ruth still has to host the block under a tarp. The joke is the tarp. The point is who gets to decide that a celebration happened.',
+          "Escalate procedural tension through forensic infiltration, introduce Halloway's moral crossroads when ordered to destroy Eleanor's legacy, and uncover Eleanor's black-box cipher.",
       },
       {
         number: 3,
-        title: 'Night Shift Breakfast',
-        duration: '22 min',
+        title: 'Climax & Escape: The Silt Line Defiance',
+        duration: '10 min',
         synopsis:
-          'Ellis gets home at dawn and cooks for people who are already leaving. June has a tournament. Milo has a field trip. Ruth has a counter shift. For one hour the kitchen is the whole family, and the eggs are the only conversation that fits. A burnt pancake becomes the running argument about whose morning the house is built around.',
-      },
-      {
-        number: 4,
-        title: 'The Spare Key',
-        duration: '22 min',
-        synopsis:
-          'Someone has been refilling the cat’s bowl on the mornings Ellis oversleeps. The Harts investigate and find the key they hid under a brick years ago. The neighbor they have been calling nosy has been covering the dawn gap. Nana Inez has to decide whether to take the key back or admit the block has been helping.',
-      },
-      {
-        number: 5,
-        title: 'The Porch Vote',
-        duration: '22 min',
-        synopsis:
-          'Nana Inez announces she is done with the “temporary” porch and will move to her sister’s town. The Harts call a household vote. Rebuilding the porch as her real rooms means Ellis’s garage project stops, June’s study corner moves, and Millwick has to permit a change it has been ignoring. The season turns here: the comedy is no longer about a messy week. It is about who gets to stay.',
+          "Deliver an emotionally grounded climax where Crane's extortion is shattered by sacrificial tech and Halloway achieves moral redemption by locking down the escape corridor.",
       },
     ],
   },

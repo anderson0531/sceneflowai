@@ -131,19 +131,19 @@ Target Assets: /videos/cinematic-drama-trailer.webm | /videos/cinematic-drama-tr
 
 ---
 
-# ANIMATED SERIES TRAILER — "Hart House" (1:15)
+# ANIMATED SERIES TRAILER — "The Silt Line" (1:30)
 
 Category: Animated Series
 
-Format: 5-Episode 2D Animated Sitcom · 75s Official Trailer
+Format: Stylized 3D Maritime Cyber-Thriller · 90s Official Trailer
 
 Tagline: Full-Season Animated Series. One Consistent Art Style.
 
-Logline: In ordinance-obsessed Millwick, the three-generation Hart family turns a twelve-bin recycling mandate and a garage sorting contraption into a season-long battle over whether Nana Inez’s "temporary" side porch is forever.
+Logline: When a predatory municipal councilor stages an automated floodgate failure to collect recovery bonds and seize Port Marrow's worker-owned waterfront collective, a sensory-strained 23-year-old technician and her sound-engineer partner infiltrate an offshore auction to secure her missing mother's black-box telemetry before their district is submerged.
 
-Art Style Lock: Locked 2D Flat-Cel Animation · Bold Hand-Inked Outlines · Warm Suburban Gouache Palette · Zero Off-Model Drift
+Art Style Lock: Tactile Stylized 3D Animation · Heavy Industrial Dieselpunk Maritime Grit · Bioluminescent Cybernetic Accents & Chromatic Monocle Telemetry
 
-Continuity Lock: 5 Locked 2D Character Sheets · Millwick Craftsman House & Side Porch · 5 Episodes
+Continuity Lock: 5 Locked 3D Character Sheets · Port Marrow North Quay Workshop & Pier 14 Auction Barge · 3 Story Beats (32m)
 
 Target Assets: /videos/animated-series-trailer.webm | /videos/animated-series-trailer.mp4
 
@@ -151,101 +151,109 @@ Target Assets: /videos/animated-series-trailer.webm | /videos/animated-series-tr
 
 ## BACKGROUND MUSIC SPECIFICATION (MIX AT 25% VOLUME / -12 dB)
 
-- Cue Title: Millwick Morning & Porchlight Heart (75s Warm Sitcom Dramedy Score)
+- Cue Title: North Quay Surge & Acoustic Anchor (90s Dieselpunk Cyber-Thriller Score)
 
-- Style & Mood: Playful, rhythmic acoustic dramedy that pivots from bouncy suburban mischief to tender, big-hearted family warmth.
+- Style & Mood: Propulsive maritime industrial pulse blending bowed brass resonances, sub-bass tidal pressure, and crystalline cybernetic synth arpeggios into an emotionally grounded heroic crescendo.
 
-- Tempo & Key: 112 BPM · G Major (dipping to E Minor at 0:49, resolving to G Major at 0:58)
+- Tempo & Key: 116 BPM · C Minor (shifting to F Dorian at 0:50, surging to Eb Major defiance at 1:10)
 
-- Instrumentation: Plucked upright bass, brushed jazz snare, lively clarinet/woodwinds, warm fingerpicked acoustic guitar, and Rhodes electric piano.
+- Instrumentation: Bowed iron percussion, deep sub-bass pulse, muted maritime French horns, warm analog vacuum-tube synth leads, and urgent chamber strings.
 
 - Mix Level: 25% volume (-12 dB) under dialogue and narration VO
 
-- Music Generation Prompt: Instrumental warm family dramedy animation trailer score, 75 seconds, 112 BPM, G major. 0:00-0:30 upbeat playful pizzicato upright bass, brushed snare groove, and bouncy clarinet melody with quirky comedic energy. 0:30-0:48 lively acoustic guitar strumming and light brass accents. 0:49-0:58 sudden gentle pause into a tender, emotional Rhodes electric piano and solo acoustic guitar chord progression. 0:58-1:15 warm, uplifting full-band family resolution with upright bass, acoustic guitar, and joyful horn harmony ending on a clean button chord. Instrumental only, no vocals.
+- Music Generation Prompt: Instrumental stylized 3D maritime cyber-thriller trailer score, 90 seconds, 116 BPM, C minor. 0:00-0:30 tense atmospheric bowed iron textures, deep tidal sub-bass pulse, and flickering analog vacuum-tube synth arpeggios. 0:30-0:60 escalating procedural infiltration rhythm with crisp industrial percussion and tense staccato strings. 0:60-1:10 emotional cello and warm acoustic resonance motif before building tension. 1:10-1:30 soaring heroic brass and kinetic synth crescendo ending on a resonant harbor horn and crisp cutoff. Instrumental only, no vocals.
 
 
 
 ## LOCKED CHARACTER, PROP & ENVIRONMENT REFERENCES
 
-- REF: CHAR_RUTH — Ruth Hart (42) (Matriarch · Millwick Municipal Clerk): 2D flat-cel character sheet: terracotta knit cardigan over cream blouse, tortoiseshell glasses, dark wavy bob, color-coded clipboard.
+- REF: CHAR_JUNIPER — Juniper Finch (23) (Lead Diagnostic Technician · North Quay Collective): Stylized 3D character sheet: grease-stained oilskin utility jacket, brass-and-cyan augmented optical monocle over right eye, salt-swept dark hair, calloused technician gloves.
 
-- REF: CHAR_ELLIS — Ellis Hart (44) (Patriarch · Night-Shift Bus Mechanic): 2D flat-cel character sheet: navy mechanic coveralls with rolled sleeves, warm brown skin, short beard, broad grin, holding a chrome socket wrench.
+- REF: CHAR_TOBIAS — Tobias Wu (24) (Acoustic Telemetry Specialist · Co-Op Sound Engineer): Stylized 3D character sheet: teal knit beanie, ochre weatherproof harbor jacket over hoodie, walnut-cup studio headphones around neck, canvas satchel packed with microphones and resonance rigs.
 
-- REF: CHAR_JUNE — June Hart (16) (Daughter · High School Debate Captain): 2D flat-cel character sheet: mustard-yellow hoodie over plaid skirt, high ponytail, thick blue binder with colored index tabs.
+- REF: CHAR_CRANE — Orville Crane (Municipal Councilor & Infrastructure Developer): Stylized 3D character sheet: swept silver-white hair, tinted blue rectangular spectacles, impeccably tailored slate three-piece suit, silver cane glowing with a bioluminescent cyan key emblem.
 
-- REF: CHAR_MILO — Milo Hart (9) (Son · Household Archivist): 2D flat-cel character sheet: teal-and-white striped rugby shirt, curly hair, holding a bright yellow handheld label-maker gun.
+- REF: CHAR_ANDERSON — John Anderson (Chief Maritime Inspector): Stylized 3D character sheet: weathered maritime authority coat with tarnished brass insignia, heavy-lidded cynical expression, gripping a rain-slicked harbor ledger.
 
-- REF: CHAR_INEZ — Nana Inez (71) (Grandmother · Side-Porch Sovereign): 2D flat-cel character sheet: embroidered indigo shawl over lavender dress, silver hair in a neat chignon, seated in a woven wicker peacock chair.
-
-
-
-## SHOT-BY-SHOT TRAILER SCRIPT (8 BLOCKS · 1:15)
+- REF: CHAR_HALLOWAY — Inspector Bram Halloway (Harbor District Investigator · Undercover Mentor): Stylized 3D character sheet: salt-crusted Harbor District trench coat, honest weathered features, brass precinct badge, carrying a waterproof signal lantern.
 
 
 
-### Block 01 — Ordinance 412 in the Hart Kitchen (0:00–0:10)
+## SHOT-BY-SHOT TRAILER SCRIPT (9 BLOCKS · 1:30)
+
+
+
+### Block 01 — Submerged Floodgates of Port Marrow (0:00–0:10)
 - Timing: Motion 0:00–0:07 · Settle 0:07–0:10
-- Narration VO: "In the town of Millwick, there is a municipal ordinance for everything—except how five Harts share one roof."
-- Video Prompt: Single continuous medium shot inside a sunny 2D flat-cel animated suburban kitchen with bold black ink outlines and warm gouache colors. At 0.0s, REF: CHAR_RUTH stands at center frame facing a corkboard on the yellow kitchen wall, holding a rolled white poster chart with both hands while REF: CHAR_JUNE sits at the foreground oak breakfast table on the left. From 0.0s to 3.5s, Ruth presses the top of the poster against the corkboard with a red thumbtack and releases the bottom roll so it drops straight down to reveal bold lettering reading "ORDINANCE 412: 12-BIN SORTING". From 3.5s to 7.0s, Ruth turns 90 degrees toward the camera, pushes her tortoiseshell glasses up the bridge of her nose with her right index finger, and taps the chart twice with a wooden pencil. From 7.0s to 10.0s, Ruth holds a proud municipal-clerk smile while June rests her chin on her palm with a skeptical eye-roll. Single continuous take, no camera cuts, locked 2D flat-cel proportions.
-- Camera & Lighting: Locked 2D stage medium shot with a slow 5% zoom-in; warm morning sunlight slanting through gingham kitchen curtains.
-- SFX & Music: Crisp paper unroll snap and pencil tap; upbeat upright bass and clarinet theme at 25% volume.
-- Settle On: Ruth standing proudly beside the unrolled Ordinance 412 wall chart while June rolls her eyes at the table.
+- Narration VO: "In Port Marrow, the tides are automated—and someone just priced the working waterfront to drown."
+- Video Prompt: Single continuous wide underwater-to-surface shot of Port Marrow’s salt-corroded cast-iron tidal surge gates in tactile stylized 3D animation. At 0.0s, massive riveted floodgates loom in bioluminescent cyan harbor water while swirling silt ribbons drift across the foreground. From 0.0s to 3.5s, amber warning beacons along the submerged iron crossbeams flicker twice and power down in sequence. From 3.5s to 7.0s, the camera cranes smoothly upward above the waterline to reveal neon salt-crusted docks and 1920s brass harbor towers under storm clouds. From 7.0s to 10.0s, heavy ocean swell surges against the North Quay seawall. Single continuous take, no camera cuts, locked stylized 3D dieselpunk textures.
+- Camera & Lighting: Smooth vertical crane from submerged bioluminescent cyan depths to neon amber-and-teal storm light across Port Marrow.
+- SFX & Music: Deep hydraulic groan and muffled underwater surge; bowed iron pulse and sub-bass score enter at 25% volume.
+- Settle On: Wide establishing view of Port Marrow’s neon salt-crusted North Quay docks braced against rising dark tidewater.
 
-### Block 02 — Ellis Enters with the Bus-Door Motor (0:10–0:20)
+### Block 02 — Decoding the Eviction Writ at North Quay (0:10–0:20)
 - Timing: Motion 0:10–0:17 · Settle 0:17–0:20
-- In-Scene Sync Dialogue: ELLIS HART: "Why use twelve plastic bins when a salvaged bus-door motor can sort breakfast at forty miles an hour?"
-- Video Prompt: Single continuous medium three-shot in the 2D flat-cel Hart kitchen. At 0.0s, REF: CHAR_RUTH stands on the left holding her clipboard and REF: CHAR_JUNE stands on the right holding her blue binder, both facing the closed back kitchen door at center frame. From 0.0s to 3.0s, the back door swings inward and REF: CHAR_ELLIS steps briskly into the center of the kitchen in his navy coveralls, cradling a heavy silver municipal bus-door motor in both arms. From 3.0s to 6.5s, Ellis sets the metal motor down solidly onto the center kitchen island and delivers his line with an enthusiastic grin while gesturing toward the motor with his right hand. From 6.5s to 10.0s, a small coiled metal spring pops vertically up on top of the motor with a gentle wobble as Ruth and June stare at the machine in synchronized deadpan silence. Single continuous take, no scene cuts.
-- Camera & Lighting: Static eye-level 2D sitcom three-shot centered on the kitchen island; bright, even morning daylight palette.
-- SFX & Music: Solid metallic thud on the wood island and a playful cartoon spring boing; pizzicato strings at 25% volume.
-- Settle On: Ellis grinning proudly over the bus-door motor flanked by Ruth and June’s deadpan stares.
+- In-Scene Sync Dialogue: JUNIPER FINCH: "This isn’t a storm warning—the surge gate failure is pre-scheduled inside the eviction code."
+- Video Prompt: Single continuous medium close-up inside the North Quay worker-owned workshop cluttered with water-stained blueprints and flickering amber vacuum tubes. At 0.0s, REF: CHAR_JUNIPER leans over a cast-iron drafting table with a municipal eviction writ pinned beneath brass calipers. From 0.0s to 3.5s, Juniper rotates the brass dial of her augmented optical monocle, projecting cyan holographic stress lines above the paper. From 3.5s to 7.0s, she looks up toward the camera and delivers her line with razor-sharp intensity as chromatic telemetry waveforms reflect across her lens. From 7.0s to 10.0s, she winces briefly from sensory strain and steadies her gloved hand on the table edge. Single continuous take, no cuts.
+- Camera & Lighting: Slow 50mm push-in on Juniper; warm 2800K vacuum-tube glow contrasted against crisp cyan holographic monocle light.
+- SFX & Music: Precision brass lens clicks and crystalline telemetry hum; pulsing analog synth arpeggio at 25% volume.
+- Settle On: Juniper’s determined gaze framed behind floating cyan floodgate telemetry projections.
 
-### Block 03 — The Garage Conveyor Test (0:20–0:30)
+### Block 03 — Tobias’s Neuro-Acoustic Anchor (0:20–0:30)
 - Timing: Motion 0:20–0:27 · Settle 0:27–0:30
-- Narration VO: "Direct punchy cartoon physics and comedic timing beat by beat—without a single frame drifting off-model."
-- Video Prompt: Single continuous wide shot inside the 2D flat-cel Hart family garage. At 0.0s, a homemade rubber conveyor belt runs horizontally across a wooden workbench in the center; REF: CHAR_ELLIS stands on the left with his right hand gripping a vertical red metal lever, while three labeled blue recycling bins sit on the right end of the bench. From 0.0s to 3.5s, Ellis pulls the red lever forward 45 degrees; the conveyor belt rolls smoothly to the right and drops two green glass bottles neatly into the first blue bin. From 3.5s to 7.0s, the motor indicator light turns bright orange, the belt spins twice as fast, and a cardboard cereal box and a pair of red roller skates launch off the right end of the belt in a clean arc over the bins. From 7.0s to 10.0s, Ellis winces with a sheepish grin while holding his wrench as the belt comes to a stop. Single continuous take, no internal cuts.
-- Camera & Lighting: Wide 2D stage framing locked on the garage workbench; warm overhead workbench lamp light against cool garage shadows.
-- SFX & Music: Rhythmic conveyor hum accelerating into a cartoon whoosh and clatter; lively woodwinds and snare groove at 25% volume.
-- Settle On: Ellis frozen in a sheepish grin beside the halted garage sorting machine.
+- In-Scene Sync Dialogue: TOBIAS WU: "Breathe on the low frequency, June—lock onto Pier Fourteen and drop the noise."
+- Video Prompt: Single continuous medium two-shot in the North Quay workshop. At 0.0s, REF: CHAR_JUNIPER presses two fingers to her temple beside the drafting table while REF: CHAR_TOBIAS stands at her left in his ochre jacket with his microphone satchel slung across his chest. From 0.0s to 3.5s, Tobias lifts a brass-and-walnut acoustic resonance tuner from his satchel and turns its knurled frequency dial, emitting a warm golden harmonic ring on his oscilloscope. From 3.5s to 7.0s, Tobias speaks calmly while resting a steadying hand on Juniper’s shoulder as the jagged chromatic distortion around the frame settles into crisp focus. From 7.0s to 10.0s, Juniper nods sharply and points to Pier 14 on the harbor blueprint. Single continuous take, no cuts.
+- Camera & Lighting: Eye-level stylized 3D two-shot; flickering chromatic edge glow smoothing into warm amber workshop key light.
+- SFX & Music: Warm low-frequency acoustic resonance tone clearing high-pitched static; steady percussion groove at 25% volume.
+- Settle On: Tobias holding the glowing resonance tuner while Juniper locks onto Pier 14 on the stained blueprint.
 
-### Block 04 — Nana Inez’s Sovereign Side Porch (0:30–0:40)
+### Block 04 — Councilman Crane’s Offshore Auction Gallery (0:30–0:40)
 - Timing: Motion 0:30–0:37 · Settle 0:37–0:40
-- In-Scene Sync Dialogue: NANA INEZ: "Point that label gun at my wicker chair, mijito, and this porch secedes from the township."
-- Video Prompt: Single continuous medium two-shot on the sun-drenched 2D flat-cel enclosed side porch lined with potted ferns. At 0.0s, REF: CHAR_INEZ sits regally on the right in her woven wicker peacock chair wearing her indigo shawl and holding a white ceramic teacup in her left hand, while REF: CHAR_MILO stands on the left in his teal-striped shirt raising his yellow label-maker gun toward the arm of her chair. From 0.0s to 3.5s, Milo takes one step closer and aims the yellow label gun two inches from the wicker armrest. From 3.5s to 7.0s, Nana Inez calmly lowers her teacup to the saucer, raises her left eyebrow, and speaks directly to Milo without moving from her chair. From 7.0s to 10.0s, Milo slowly lowers the yellow label gun to his hip with wide, respectful eyes. Single continuous take, no cuts.
-- Camera & Lighting: Slightly low-angle 2D medium two-shot favoring Nana Inez; warm golden afternoon sunlight streaming through porch louvered windows.
-- SFX & Music: Two quick plastic label-gun clicks followed by a gentle acoustic guitar chord at 25% volume.
-- Settle On: Milo lowering his label gun at hip level while Nana Inez sips her tea in calm triumph.
+- In-Scene Sync Dialogue: ORVILLE CRANE: "When the lower quay floods tonight, those parcels reopen tomorrow as sovereign luxury charters."
+- Video Prompt: Single continuous medium shot inside the opulent brass-and-glass observation gallery of the Pier 14 offshore auction barge. At 0.0s, REF: CHAR_CRANE stands poised at center frame in his tailored slate three-piece suit and tinted blue spectacles, resting both hands atop his silver cane with its glowing cyan key emblem. From 0.0s to 3.5s, Crane turns slightly toward a holographic harbor zoning map showing North Quay highlighted in red default zones. From 3.5s to 7.0s, Crane delivers his line smoothly with a cold, measured half-smile while tapping his cane tip once against the polished brass floor plate. From 7.0s to 10.0s, storm lightning outside the panoramic window silhouettes his silver hair. Single continuous take, no cuts.
+- Camera & Lighting: Slightly low-angle anamorphic 3D framing; cold cyan architectural uplighting against storm-lashed panoramic glass.
+- SFX & Music: Sharp metallic cane tap and distant thunder; ominous low brass chord swells at 25% volume.
+- Settle On: Orville Crane framed before the red-zoned Port Marrow hologram with his cyan key-cane gleaming.
 
-### Block 05 — The Rainstorm Tarp on the Lawn (0:40–0:49)
-- Timing: Motion 0:40–0:46 · Settle 0:46–0:49
-- Narration VO: "Five episodes, one locked flat-cel palette—through every neighborhood crisis."
-- Video Prompt: Single continuous medium-wide shot on the front lawn outside the 2D flat-cel Hart craftsman house during a breezy afternoon rain shower. At 0.0s, REF: CHAR_ELLIS on the left, REF: CHAR_RUTH in the center, and REF: CHAR_JUNE on the right stand huddled together under a bright blue canvas tarp, holding its corners up with both hands over a row of twelve color-coded recycling bins. From 0.0s to 4.0s, a gust of wind billows the blue tarp upward like a parachute; Ellis and Ruth lean inward and pull the brass grommet corners down tight to keep the bins dry as diagonal animated rain streaks fall around them. From 4.0s to 6.5s, REF: CHAR_MILO pops his head up from behind the center green bin holding an umbrella over the labels. From 6.5s to 9.0s, all four share a determined family nod beneath the taut tarp. Single continuous take, no cuts.
-- Camera & Lighting: Eye-level 2D medium-wide exterior shot; cool slate rain clouds contrasted with the warm yellow porch light glowing behind them.
-- SFX & Music: Pattering rain and canvas flap over upbeat rhythmic acoustic guitar and bass at 25% volume.
-- Settle On: The Hart family braced together under the blue tarp keeping the bins dry.
+### Block 05 — Oilskin Infiltration on Pier 14 (0:40–0:50)
+- Timing: Motion 0:40–0:47 · Settle 0:47–0:50
+- Narration VO: "Lock tactile 3D worlds, five principal characters, and signature visual mechanics across every storm-lashed beat."
+- Video Prompt: Single continuous tracking shot along the rain-swept iron catwalks of the Pier 14 offshore auction barge at night. At 0.0s, REF: CHAR_JUNIPER and REF: CHAR_TOBIAS crouch in dark dockers’ oilskins behind a salt-corroded steam winch as rain lashes the grated deck. From 0.0s to 4.0s, Inspector REF: CHAR_HALLOWAY steps briefly into the amber bulkhead doorway ahead, flashes two discreet lantern signals toward the upper gantry, and draws patrol guards down the opposite corridor. From 4.0s to 7.0s, Juniper and Tobias sprint silently across the wet iron catwalk toward the lower-hold hatch. From 7.0s to 10.0s, Tobias braces the heavy iron wheel while Juniper couples her monocle lead to the junction box. Single continuous take, no cuts.
+- Camera & Lighting: Dynamic lateral tracking shot following Juniper and Tobias; Volumetric rain streaks lit by neon harbor signage and amber bulkhead lamps.
+- SFX & Music: Driving rain on cast iron and muffled bootsteps; escalating industrial percussion and strings at 25% volume.
+- Settle On: Juniper splicing into the bulkhead junction box beside Tobias on the rain-slicked catwalk.
 
-### Block 06 — The Label That Stops the Room (0:49–0:58)
-- Timing: Motion 0:49–0:55 · Settle 0:55–0:58
-- In-Scene Sync Dialogue: MILO HART: "I didn’t make up the word! Everyone calls it Nana’s temporary porch!"
-- Video Prompt: Single continuous medium shot at the threshold of the 2D flat-cel side porch. At 0.0s, a vintage wooden keepsake trunk sits in the center foreground with a fresh yellow sticker on its lid reading "TEMPORARY PORCH"; REF: CHAR_MILO stands on the left holding his label gun, REF: CHAR_RUTH stands in the center background, and REF: CHAR_INEZ stands on the right beside her wicker chair. From 0.0s to 3.5s, Milo gestures defensively with both hands toward the trunk while delivering his line. From 3.5s to 6.5s, Nana Inez looks down at the yellow sticker on her trunk, draws her indigo shawl gently across her shoulders with her right hand, and offers a quiet, wistful half-smile. From 6.5s to 9.0s, Ruth places a comforting hand on Milo’s shoulder as the room falls still. Single continuous take, no cuts.
-- Camera & Lighting: Slow 2D push-in toward Nana Inez and the labeled cedar trunk; warm late-afternoon amber light softening the room.
-- SFX & Music: Comedic rhythm pauses completely; tender Rhodes electric piano chord progression at 25% volume.
-- Settle On: Nana Inez looking quietly at the "TEMPORARY PORCH" sticker while Ruth and Milo exchange a remorseful look.
+### Block 06 — The Moral Crucible in the Lower Hold (0:50–1:00)
+- Timing: Motion 0:50–0:57 · Settle 0:57–1:00
+- In-Scene Sync Dialogue: JOHN ANDERSON: "Ten years I kept your perimeter, Crane—I won’t torch Eleanor’s archives with kids in the slipway."
+- Video Prompt: Single continuous medium two-shot in the dim lower archive hold stacked with brass telemetry canisters and water-stained ledgers. At 0.0s, REF: CHAR_CRANE extends an unlit red incendiary flare toward REF: CHAR_ANDERSON beside an open vault of flood-baseline reels. From 0.0s to 3.5s, Anderson stares down at the flare in his weathered gloved hand, jaw tightening under decades of bureaucratic weariness. From 3.5s to 7.0s, Anderson looks up at Crane and speaks his line in a gravelly, defiant voice while lowering the flare away from the open archive shelf. From 7.0s to 10.0s, Crane’s expression hardens behind his tinted blue glasses as bilge water ripples across the iron floor. Single continuous take, no cuts.
+- Camera & Lighting: Tight dramatic two-shot with slow dolly-in; harsh overhead cage-lamp shadows and bioluminescent cyan bilge reflections.
+- SFX & Music: Metallic clink of archive canisters and rising bilge creak; tense Dorian cello line at 25% volume.
+- Settle On: Anderson holding the lowered flare in quiet defiance opposite Crane’s cold stare.
 
-### Block 07 — The Unanimous Household Vote (0:58–1:07)
-- Timing: Motion 0:58–1:04 · Settle 1:04–1:07
-- In-Scene Sync Dialogue: RUTH HART: "Forget Town Hall. All in favor of knocking out the wall and making the porch Nana’s real room?"
-- Video Prompt: Single continuous medium-wide shot around the 2D flat-cel Hart dining room table in warm evening lamp light. At 0.0s, all five family members sit around the oval wooden table: REF: CHAR_ELLIS on the far left, REF: CHAR_MILO center-left, REF: CHAR_RUTH in the center, REF: CHAR_JUNE center-right, and REF: CHAR_INEZ on the far right. From 0.0s to 3.5s, Ruth sets her clipboard flat on the table, speaks her line warmly, and raises her right hand high in the air. From 3.5s to 6.5s, June closes her blue binder and raises her right hand, followed immediately by Ellis and Milo raising their hands in unison. From 6.5s to 9.0s, Nana Inez reaches her left hand across the table to clasp Ruth’s hand with a bright, touched smile. Single continuous take, no cuts.
-- Camera & Lighting: Warm eye-level 2D ensemble framing across the dining table; cozy 3200K pendant lamp glow.
-- SFX & Music: Heartfelt acoustic guitar, upright bass, and warm horn swell building at 25% volume.
-- Settle On: Four raised hands around the dining table as Nana Inez clasps Ruth’s hand.
+### Block 07 — Eleanor’s Black-Box Telemetry Revealed (1:00–1:10)
+- Timing: Motion 1:00–1:07 · Settle 1:07–1:10
+- Narration VO: "Experience true in-scene dialogue sync across seven global languages—without losing an ounce of emotional performance."
+- Video Prompt: Single continuous close-to-medium shot on the upper iron catwalk overlooking the lower hold. At 0.0s, REF: CHAR_JUNIPER kneels beside an open brass telemetry terminal holding her vanished mother Eleanor’s black-box ledger module wired into her monocle. From 0.0s to 4.0s, Juniper slots the brass cipher key home; bioluminescent cyan waveforms blossom around her head as fractured holographic stress lines pulse across her monocle lens. From 4.0s to 7.0s, Juniper gasps in recognition as the decrypted floodgate override ledger illuminates her tear-streaked face while REF: CHAR_TOBIAS steadies her elbow from behind. From 7.0s to 10.0s, Juniper clutches the black-box ledger tightly to her chest. Single continuous take, no cuts.
+- Camera & Lighting: Intimate handheld-feel 3D close-up pulling back slightly; intense cyan holographic data spill with chromatic aberration highlights.
+- SFX & Music: Decryption chime and resonant vocal harmonic pulse; emotional chamber strings swell at 25% volume.
+- Settle On: Juniper clutching Eleanor’s glowing black-box ledger with Tobias braced beside her.
 
-### Block 08 — Permanent Home & SceneFlow Signature (1:07–1:15)
-- Timing: Motion 1:07–1:12 · Settle 1:12–1:15
-- Narration VO: "Hart House. An entire animated season with zero style drift—created in SceneFlow. Imagine the possibilities."
-- Video Prompt: Single continuous medium-wide shot on the newly finished 2D flat-cel front porch at golden twilight. At 0.0s, REF: CHAR_INEZ sits centered in her wicker chair surrounded by REF: CHAR_RUTH, REF: CHAR_ELLIS, and REF: CHAR_JUNE under glowing overhead string bulbs, while REF: CHAR_MILO stands at the wooden porch post on the left. From 0.0s to 4.0s, Milo presses a large yellow label onto the wooden beam reading "NANA’S ROOM (PERMANENT)" and steps back with a proud thumbs-up. From 4.0s to 6.5s, Ellis puts his arm around Ruth’s shoulders and all five family members laugh warmly together as the overhead string lights glow brighter. From 6.5s to 8.0s, the camera holds on the smiling five-character family portrait. Single continuous take, no cuts.
-- Camera & Lighting: Gentle 2D crane pullback from the porch beam to the full family group; warm golden string lights against a lilac evening sky.
-- SFX & Music: Satisfying label slap followed by a joyful full-band acoustic and brass finale chord at 25% volume.
-- Settle On: All five Harts smiling together under the warm porch string lights beside the "PERMANENT" label.
+### Block 08 — Sacrificial Sonic Blast in the Gallery (1:10–1:20)
+- Timing: Motion 1:10–1:17 · Settle 1:17–1:20
+- In-Scene Sync Dialogue: TOBIAS WU: "Keep your buyout, Councilman—let’s hear how this glass handles resonant frequency!"
+- Video Prompt: Single continuous wide action shot inside Crane’s panoramic auction gallery. At 0.0s, REF: CHAR_JUNIPER and REF: CHAR_TOBIAS stand cornered near the curved harbor windows while security enforcers advance from the left doorway behind REF: CHAR_CRANE. From 0.0s to 3.5s, Tobias plants his custom acoustic resonance rig onto the brass rail, cranks the gain dial into the red zone, and shouts his line. From 3.5s to 7.0s, a visible concentric shockwave ripples from the speaker horn and shatters the panoramic glass outward into glittering storm-lit shards as wind whips into the gallery. From 7.0s to 10.0s, Juniper and Tobias vault cleanly onto the exterior slipway deck with the black-box ledger. Single continuous take, no cuts.
+- Camera & Lighting: Dynamic wide 3D cinema framing; explosive cyan-and-amber lighting contrast as storm spray bursts through the shattered gallery.
+- SFX & Music: Sub-bass sonic boom and crystalline glass shatter; heroic brass and kinetic percussion surge at 25% volume.
+- Settle On: Juniper and Tobias landing on the storm-swept exterior slipway outside the shattered panoramic gallery.
+
+### Block 09 — Blast-Gate Redemption & Escape into the Storm (1:20–1:30)
+- Timing: Motion 1:20–1:26 · Settle 1:26–1:30
+- Narration VO: "The Silt Line. Tactile 3D animation, directed from story bible to global release in SceneFlow. Imagine the possibilities."
+- Video Prompt: Single continuous wide shot at the Pier 14 hydraulic slipway blast gates during the height of the harbor storm. At 0.0s, REF: CHAR_HALLOWAY stands on the inner iron platform gripping the manual hydraulic lock lever while REF: CHAR_JUNIPER and REF: CHAR_TOBIAS board a launch skiff in the foreground slipway channel. From 0.0s to 4.0s, Halloway hauls the heavy brass lever downward with both arms, driving twin cast-iron blast gates shut between himself and the pursuing security enforcers while offering Juniper one final nod through the narrowing gap. From 4.0s to 7.0s, Juniper gun-starts the skiff’s bioluminescent turbine and speeds out into Port Marrow harbor clutching the glowing ledger. From 7.0s to 10.0s, the camera holds on the skiff cutting toward the neon North Quay skyline. Single continuous take, no cuts.
+- Camera & Lighting: Sweeping 35mm crane pullback from the locking hydraulic gates to the harbor channel; neon cyan-and-amber dock lights piercing dark storm spray.
+- SFX & Music: Heavy hydraulic gate slam and turbine roar; triumphant brass finale chord at 25% volume resolving into a resonant harbor horn.
+- Settle On: Juniper and Tobias racing across the neon-lit harbor waters toward North Quay with the black-box ledger.
 
 ---
 

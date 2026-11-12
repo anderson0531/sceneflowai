@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Maximize, Minimize, Pause, Play, Volume2, VolumeX, X } from 'lucide-react'
+import { Loader2, Maximize, Minimize, Pause, Play, Volume2, VolumeX, X } from 'lucide-react'
 import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { VideoGlobeLanguageSelector } from '@/components/landing/VideoGlobeLanguageSelector'
 import type { TrailerDubLocaleId } from '@/config/landing/productionPipelineDemo'
@@ -42,6 +42,8 @@ export function TrailerPlayer({
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const theaterRef = useRef<HTMLVideoElement>(null)
+  const prevInlineSourceRef = useRef<string | null>(null)
+  const prevTheaterSourceRef = useRef<string | null>(null)
   const pendingSeekRef = useRef<{ time: number; duration: number } | null>(null)
   const prefersReducedMotion = useReducedMotion()
   const [theaterOpen, setTheaterOpen] = useState(false)
@@ -50,11 +52,28 @@ export function TrailerPlayer({
   const [nearViewport, setNearViewport] = useState(mode !== 'background')
   const [isMuted, setIsMuted] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [localeActivated, setLocaleActivated] = useState(false)
+  const [isBuffering, setIsBuffering] = useState(false)
   const webm = webmSrc?.trim() || ''
   const mp4 = mp4Src?.trim() || ''
   const poster = posterSrc?.trim() || ''
   const hasVideo = Boolean(webm || mp4)
   const background = mode === 'background'
+
+  const playWithAutoplayFallback = useCallback((video: HTMLVideoElement) => {
+    void video.play().catch((err: unknown) => {
+      const errName =
+        err && typeof err === 'object' && 'name' in err
+          ? String((err as { name?: unknown }).name)
+          : ''
+      const fallbackMuted = !video.muted && errName === 'NotAllowedError'
+      if (fallbackMuted) {
+        video.muted = fallbackMuted
+        setIsMuted(fallbackMuted)
+        void video.play().catch(() => {})
+      }
+    })
+  }, [])
 
   useEffect(() => {
     const video = videoRef.current
@@ -62,6 +81,7 @@ export function TrailerPlayer({
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
+          if (entry.target !== videoRef.current) continue
           if (entry.isIntersecting) {
             setNearViewport(true)
           }
@@ -72,7 +92,7 @@ export function TrailerPlayer({
     )
     observer.observe(video)
     return () => observer.disconnect()
-  }, [hasVideo, webm, mp4, mode])
+  }, [hasVideo, mode])
 
   useEffect(() => {
     const video = videoRef.current
@@ -89,23 +109,68 @@ export function TrailerPlayer({
       video.removeEventListener('webkitbeginfullscreen', syncFullscreen)
       video.removeEventListener('webkitendfullscreen', syncFullscreen)
     }
-  }, [hasVideo, webm, mp4, mode])
+  }, [hasVideo, mode])
 
   useEffect(() => {
     const video = videoRef.current
     if (!video || !hasVideo) return
-    if ((prefersReducedMotion && !isFullscreen) || theaterOpen || (!inViewport && !isFullscreen)) {
+    const sourceKey = `${webm}|${mp4}`
+    if (prevInlineSourceRef.current === null) {
+      prevInlineSourceRef.current = sourceKey
+      return
+    }
+    if (prevInlineSourceRef.current === sourceKey) return
+    prevInlineSourceRef.current = sourceKey
+
+    video.load()
+    if (!theaterOpen && (background || isFullscreen || localeActivated)) {
+      video.muted = isMuted
+      playWithAutoplayFallback(video)
+    }
+  }, [
+    background,
+    hasVideo,
+    isFullscreen,
+    isMuted,
+    localeActivated,
+    mp4,
+    playWithAutoplayFallback,
+    theaterOpen,
+    webm,
+  ])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !hasVideo) return
+    if (
+      (prefersReducedMotion && !isFullscreen && !localeActivated) ||
+      theaterOpen ||
+      (!inViewport && !isFullscreen && !localeActivated)
+    ) {
       video.pause()
       return
     }
-    if (background || isFullscreen) {
+    if (background || isFullscreen || localeActivated) {
       video.muted = isMuted
-      void video.play().catch(() => {})
+      playWithAutoplayFallback(video)
     }
-  }, [background, hasVideo, inViewport, isFullscreen, isMuted, prefersReducedMotion, theaterOpen, webm, mp4])
+  }, [
+    background,
+    hasVideo,
+    inViewport,
+    isFullscreen,
+    isMuted,
+    localeActivated,
+    playWithAutoplayFallback,
+    prefersReducedMotion,
+    theaterOpen,
+  ])
 
   useEffect(() => {
-    if (!theaterOpen) return
+    if (!theaterOpen) {
+      prevTheaterSourceRef.current = null
+      return
+    }
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setTheaterOpen(false)
     }
@@ -113,15 +178,32 @@ export function TrailerPlayer({
     document.body.style.overflow = 'hidden'
     const video = theaterRef.current
     if (video) {
+      prevTheaterSourceRef.current = `${webm}|${mp4}`
       video.muted = false
       setIsMuted(false)
-      void video.play().catch(() => {})
+      playWithAutoplayFallback(video)
     }
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
-  }, [theaterOpen])
+  }, [theaterOpen, playWithAutoplayFallback, webm, mp4])
+
+  useEffect(() => {
+    if (!theaterOpen) return
+    const video = theaterRef.current
+    if (!video) return
+    const sourceKey = `${webm}|${mp4}`
+    if (prevTheaterSourceRef.current === null) {
+      prevTheaterSourceRef.current = sourceKey
+      return
+    }
+    if (prevTheaterSourceRef.current === sourceKey) return
+    prevTheaterSourceRef.current = sourceKey
+    video.load()
+    video.muted = isMuted
+    playWithAutoplayFallback(video)
+  }, [isMuted, mp4, playWithAutoplayFallback, theaterOpen, webm])
 
   const toggleMute = () => {
     const video = videoRef.current
@@ -147,7 +229,17 @@ export function TrailerPlayer({
     } else {
       pendingSeekRef.current = null
     }
+    if (activeVideo) {
+      activeVideo.muted = false
+    }
+    setLocaleActivated(true)
+    setNearViewport(true)
     setIsMuted(false)
+    if (nextLocale !== activeLocale) {
+      setIsBuffering(true)
+    } else if (activeVideo && activeVideo.paused) {
+      playWithAutoplayFallback(activeVideo)
+    }
     onSelectLocale?.(nextLocale)
   }
 
@@ -204,7 +296,6 @@ export function TrailerPlayer({
         )}
       >
         <video
-          key={`${webm}|${mp4}|${mode}`}
           ref={videoRef}
           className={cn(
             'pointer-events-auto bg-black',
@@ -215,20 +306,47 @@ export function TrailerPlayer({
               : 'aspect-video w-full rounded-xl object-contain'
           )}
           poster={poster || undefined}
-          autoPlay={background && inViewport && !prefersReducedMotion}
+          autoPlay={(background || localeActivated) && inViewport && !prefersReducedMotion}
           loop={background}
           muted={isMuted}
           playsInline
-          preload={prefersReducedMotion || (background && !nearViewport) ? 'none' : 'metadata'}
+          preload={
+            localeActivated
+              ? 'auto'
+              : prefersReducedMotion || (background && !nearViewport)
+                ? 'none'
+                : 'metadata'
+          }
           controls={!background || isFullscreen}
           controlsList={background && !isFullscreen ? undefined : 'nodownload'}
           onLoadedMetadata={(event) => applyPendingSeek(event.currentTarget)}
+          onWaiting={() => {
+            if (localeActivated) setIsBuffering(true)
+          }}
+          onLoadedData={() => setIsBuffering(false)}
+          onCanPlay={(event) => {
+            setIsBuffering(false)
+            if (!theaterOpen && (background || isFullscreen || localeActivated) && inViewport) {
+              event.currentTarget.muted = isMuted
+              playWithAutoplayFallback(event.currentTarget)
+            }
+          }}
+          onPlaying={() => setIsBuffering(false)}
+          onError={() => setIsBuffering(false)}
           onContextMenu={(event) => event.preventDefault()}
           aria-label={label}
         >
           {webm ? <source src={webm} type="video/webm" /> : null}
           {mp4 ? <source src={mp4} type="video/mp4" /> : null}
         </video>
+        {isBuffering && localeActivated && !theaterOpen ? (
+          <div
+            className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/20"
+            aria-hidden
+          >
+            <Loader2 className="h-7 w-7 animate-spin text-cyan-400/85" />
+          </div>
+        ) : null}
         {background ? null : (
           <div className="pointer-events-auto absolute left-3 top-3 z-30 flex items-center gap-1.5">
             {activeLocale && onSelectLocale ? (
@@ -289,12 +407,12 @@ export function TrailerPlayer({
         ? createPortal(
         <div className="fixed inset-0 z-[80] bg-black" role="dialog" aria-modal="true" aria-label={label}>
           <video
-            key={`theater-${webm}|${mp4}`}
             ref={theaterRef}
             className="h-full w-full object-contain"
             autoPlay
             loop={background}
             playsInline
+            preload="auto"
             controlsList="nodownload"
             onLoadedMetadata={(event) => applyPendingSeek(event.currentTarget)}
             onContextMenu={(event) => event.preventDefault()}

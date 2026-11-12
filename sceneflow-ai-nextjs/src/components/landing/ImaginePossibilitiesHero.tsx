@@ -40,7 +40,10 @@ export function ImaginePossibilitiesHero() {
   const tHero = useTranslations('hero')
   const tCommon = useTranslations('common')
   const prefersReducedMotion = useReducedMotion()
+  const sectionRef = useRef<HTMLElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const prevSourceKeyRef = useRef<string | null>(null)
+  const isReloadingSourceRef = useRef(false)
 
   const headline = tPossibilities.has('headline')
     ? tPossibilities('headline')
@@ -69,6 +72,7 @@ export function ImaginePossibilitiesHero() {
   const [isBuffering, setIsBuffering] = useState(true)
   const [isTheaterOpen, setIsTheaterOpen] = useState(false)
   const [videoPreload, setVideoPreload] = useState<VideoPreloadValue>('auto')
+  const [userActivatedPlayback, setUserActivatedPlayback] = useState(false)
   const [prefetchedIds, setPrefetchedIds] = useState<ProductionWalkId[]>([])
   const pendingSeekRef = useRef<{ time: number; duration: number } | null>(null)
 
@@ -104,46 +108,103 @@ export function ImaginePossibilitiesHero() {
     setPrefetchedIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
   }, [])
 
+  const playHeroVideo = useCallback((video: HTMLVideoElement) => {
+    void video.play().catch((err: unknown) => {
+      const errName =
+        err && typeof err === 'object' && 'name' in err
+          ? String((err as { name?: unknown }).name)
+          : ''
+      if (!video.muted && errName === 'NotAllowedError') {
+        video.muted = true
+        setIsMuted(true)
+        void video.play().catch(() => {})
+      }
+    })
+  }, [])
+
   useEffect(() => {
-    const video = videoRef.current
-    if (!video || typeof IntersectionObserver === 'undefined') return
+    const target = sectionRef.current ?? videoRef.current
+    if (!target || typeof IntersectionObserver === 'undefined') return
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
+          if (entry.target !== target) continue
           setInViewport(entry.isIntersecting && entry.intersectionRatio >= 0.15)
         }
       },
       { threshold: [0, 0.15, 0.5] }
     )
-    observer.observe(video)
+    observer.observe(target)
     return () => observer.disconnect()
-  }, [activeScript.id])
+  }, [])
 
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
-    if (prefersReducedMotion || !inViewport || isTheaterOpen) {
+    const sourceKey = `${activeSources.webmSrc}|${activeSources.mp4Src}`
+    if (prevSourceKeyRef.current === null) {
+      prevSourceKeyRef.current = sourceKey
+      return
+    }
+    if (prevSourceKeyRef.current === sourceKey) return
+    prevSourceKeyRef.current = sourceKey
+
+    isReloadingSourceRef.current = true
+    video.load()
+    isReloadingSourceRef.current = false
+
+    if ((!prefersReducedMotion || userActivatedPlayback) && inViewport && !isTheaterOpen && isPlaying) {
+      video.muted = isMuted
+      playHeroVideo(video)
+    }
+  }, [
+    activeSources.webmSrc,
+    activeSources.mp4Src,
+    inViewport,
+    isMuted,
+    isPlaying,
+    isTheaterOpen,
+    playHeroVideo,
+    prefersReducedMotion,
+    userActivatedPlayback,
+  ])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    if ((prefersReducedMotion && !userActivatedPlayback) || !inViewport || isTheaterOpen) {
       video.pause()
       return
     }
     video.muted = isMuted
     if (isPlaying) {
-      void video.play().catch(() => {})
+      playHeroVideo(video)
     } else {
       video.pause()
     }
-  }, [activeScript.id, videoLocale, inViewport, isMuted, isPlaying, isTheaterOpen, prefersReducedMotion])
+  }, [
+    inViewport,
+    isMuted,
+    isPlaying,
+    isTheaterOpen,
+    playHeroVideo,
+    prefersReducedMotion,
+    userActivatedPlayback,
+  ])
 
   const selectCategory = useCallback(
     (id: ProductionWalkId) => {
       pendingSeekRef.current = null
-      setActiveId(id)
-      setIsBuffering(true)
-      if (!prefersReducedMotion) {
-        setIsPlaying(true)
-      }
+      setUserActivatedPlayback(true)
+      setActiveId((prev) => {
+        if (prev !== id) {
+          setIsBuffering(true)
+        }
+        return id
+      })
+      setIsPlaying(true)
     },
-    [prefersReducedMotion]
+    []
   )
 
   const handleSelectVideoLocale = useCallback(
@@ -159,14 +220,25 @@ export function ImaginePossibilitiesHero() {
       } else {
         pendingSeekRef.current = null
       }
-      setVideoLocale(nextLocale)
-      setIsBuffering(true)
-      setIsMuted(false)
-      if (!prefersReducedMotion) {
-        setIsPlaying(true)
+      if (video && !isTheaterOpen) {
+        video.muted = false
       }
+      setUserActivatedPlayback(true)
+      setIsMuted(false)
+      setIsPlaying(true)
+      setVideoLocale((prev) => {
+        if (prev === nextLocale) {
+          if (video && !isTheaterOpen && video.paused) {
+            playHeroVideo(video)
+          }
+          setIsBuffering(false)
+          return prev
+        }
+        setIsBuffering(true)
+        return nextLocale
+      })
     },
-    [prefersReducedMotion]
+    [isTheaterOpen, playHeroVideo]
   )
 
   const advanceToNextTrailer = useCallback(() => {
@@ -233,6 +305,7 @@ export function ImaginePossibilitiesHero() {
   return (
     <>
       <section
+        ref={sectionRef}
         id={IMAGINE_POSSIBILITIES_SECTION_ID}
         aria-label={headline}
         className="relative min-h-[100dvh] w-full overflow-hidden bg-gray-950 text-white"
@@ -240,14 +313,19 @@ export function ImaginePossibilitiesHero() {
         {/* Background Video Layer — mirrors HeroSection.tsx & HeroVideoBackground.tsx */}
         <div className="absolute inset-x-0 bottom-0 top-16 overflow-hidden lg:inset-0">
           <video
-            key={`${activeScript.id}-${activeSources.webmSrc}`}
             ref={videoRef}
             poster={activePoster}
             className="absolute inset-0 z-0 h-full w-full bg-black object-cover object-top lg:object-contain lg:object-center"
             autoPlay={!prefersReducedMotion}
             muted={isMuted || isTheaterOpen}
             playsInline
-            preload={prefersReducedMotion ? 'none' : videoPreload}
+            preload={
+              userActivatedPlayback
+                ? 'auto'
+                : prefersReducedMotion
+                  ? 'none'
+                  : videoPreload
+            }
             onLoadedMetadata={(event) => {
               const pending = pendingSeekRef.current
               if (!pending) return
@@ -264,20 +342,36 @@ export function ImaginePossibilitiesHero() {
             }}
             onEnded={advanceToNextTrailer}
             onPlay={() => setIsPlaying(true)}
-            onPause={() => {
-              if (!isTheaterOpen) setIsPlaying(false)
+            onPause={(event) => {
+              if (
+                !isTheaterOpen &&
+                !isReloadingSourceRef.current &&
+                !event.currentTarget.ended &&
+                event.currentTarget.readyState > 0
+              ) {
+                setIsPlaying(false)
+              }
             }}
             onWaiting={() => setIsBuffering(true)}
+            onLoadedData={() => setIsBuffering(false)}
             onCanPlay={() => {
               setIsBuffering(false)
-              if (isPlaying && !isTheaterOpen && !prefersReducedMotion) {
-                void videoRef.current?.play().catch(() => {})
+              if (
+                isPlaying &&
+                inViewport &&
+                !isTheaterOpen &&
+                (!prefersReducedMotion || userActivatedPlayback) &&
+                videoRef.current
+              ) {
+                videoRef.current.muted = isMuted
+                playHeroVideo(videoRef.current)
               }
             }}
             onPlaying={() => {
               setIsBuffering(false)
               warmNextTrailer()
             }}
+            onError={() => setIsBuffering(false)}
             onContextMenu={(event) => event.preventDefault()}
             aria-label={activeCategoryLabel}
           >

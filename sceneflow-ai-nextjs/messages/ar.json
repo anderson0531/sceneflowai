@@ -2360,18 +2360,18 @@
       "الترويجي"
     ],
     "seriesPanel": {
-      "headerLabel": "سلسلة الكتاب المقدس والحلقة 1",
-      "bibleTab": "سلسلة الكتاب المقدس",
-      "castTab": "طاقم الممثلين المقفل",
-      "episode1Tab": "الجيش الشعبي. 1 والفصل. 1",
-      "seasonTab": "الموسم",
-      "formatLabel": "التنسيق",
+      "headerLabel": "ملف الإنتاج ودليل القصة",
+      "bibleTab": "العالم والأسلوب",
+      "castTab": "طاقم الشخصيات",
+      "episode1Tab": "الملخص",
+      "seasonTab": "نبضات القصة",
+      "formatLabel": "الصيغة",
       "durationLabel": "المدة",
-      "artStyleLabel": "نمط الفن",
+      "artStyleLabel": "الأسلوب البصري",
       "continuityLockLabel": "قفل الاستمرارية",
-      "loglineLabel": "السجل",
-      "synopsisLabel": "ملخص السلسلة والكتاب المقدس المرئي",
-      "lockedCastHeading": "فريق الممثلين المقفل والاستمرارية الرئيسية",
+      "loglineLabel": "الفكرة المحورية",
+      "synopsisLabel": "ملخص الإنتاج",
+      "lockedCastHeading": "الشخصيات الرئيسية وبطاقات الاستمرارية",
       "inputs": {
         "drama": {
           "showTitle": "تيار المدينة البيضاء",
@@ -2468,83 +2468,78 @@
           ]
         },
         "animation": {
-          "showTitle": "هارت هاوس",
-          "format": "الرسوم المتحركة المسرحية الهزلية · الموسم 5 حلقات",
-          "genre": "كوميديا عائلية متعددة الأجيال",
-          "artStyle": "الرسوم المتحركة ذات الخلايا المسطحة ثنائية الأبعاد · الخطوط العريضة بالحبر الغامق ولوحة الضواحي الدافئة",
-          "duration": "110 دقيقة الموسم (5 × 22 دقيقة) · الحلقة 1: 22 دقيقة",
-          "continuityLock": "5 أوراق شخصيات عائلية مقفلة · Millwick House & Side Porch · Zero Style Drift",
-          "unitLabel": "حلقات الموسم الأول (5)",
-          "artLock": "نمط واحد مغلق للموسم بأكمله: خطوط حبر جريئة وألوان دافئة في الضواحي وتصميمات الشخصيات نفسها في كل حلقة. يمكن للمنصة استيعاب العديد من الأنماط. هذه السلسلة لا تتحول.",
-          "logline": "في ميلويك، تحول عائلة هارت جدالًا منزليًا إلى نكتة الأسبوع، والنكتة إلى سبب استمرارهم في العيش تحت سقف واحد.",
-          "seriesSynopsis": "تدور أحداث Hart House في مدينة ميلويك المهووسة بالقانون المدني، وهي عبارة عن مسلسل كوميدي عائلي متحرك ثنائي الأبعاد مدته 22 دقيقة تم تصميمه لإثبات عدم الانجراف خارج النموذج عبر موسم البث بأكمله. كاتبة البلدية روث هارت وميكانيكي النقل الليلي إليس هارت يتقاسمان منزلًا حرفيًا ضيقًا مع كابتن المناظرة جون البالغ من العمر ستة عشر عامًا، وميلو جامع الحقائق البالغ من العمر تسع سنوات، ووالدة روث نانا إينيز، التي أصبحت شرفتها الجانبية المغلقة \"المؤقتة\" بهدوء المركز العاطفي للمنزل. تحول كل حلقة صداعًا محليًا صغيرًا إلى كوميديا ​​جماعية سريعة النيران مع الحفاظ على أوزان الخطوط المتطابقة واللوحات المظللة الدافئة وأوراق الشخصيات متعددة الزوايا المقفلة من الحلقة 1 حتى تصويت الأسرة في الحلقة 5.",
+          "showTitle": "The Silt Line",
+          "format": "Stylized 3D Animated Series · Episode 1 Pilot (3 Story Beats)",
+          "genre": "إثارة بحرية سيبرانية بطابع مستقبلي كلاسيكي",
+          "artStyle": "Tactile Stylized 3D Animation · Industrial Dieselpunk Maritime Grit & Bioluminescent Cybernetic Accents",
+          "duration": "32 min Pilot (3 Story Beats: 10.5m · 11.5m · 10m)",
+          "continuityLock": "5 Locked 3D Character Sheets · Port Marrow North Quay Workshop & Pier 14 Auction Barge · Optical Monocle Telemetry VFX",
+          "unitLabel": "نبضات القصة (3)",
+          "artLock": "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
+          "setting": "بورت مارو (Port Marrow): حاضرة ساحلية ذات طابع مستقبلي كلاسيكي تمزج عمارة الموانئ النحاسية في عشرينيات القرن الماضي مع تقنيات سيبرانية ملونة ومدّ وجزر آلي وأرصفة نيون مكلسة بالملح.",
+          "visualStyle": "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
+          "logline": "عندما يدبّر عضو مجلس بلدي جشع عطلاً متعمداً في بوابات الفيضان الآلية للاستحواذ على سندات التعافي ومصادرة تعاونية عمال الواجهة البحرية في بورت مارو، تتسلل تقنية شابة مرهقة حسياً وشريكها مهندس الصوت إلى مزاد عائم لاستعادة الصندوق الأسود لوالدتها المفقودة قبل غرق الحي.",
+          "seriesSynopsis": "في مدينة بورت مارو الساحلية، تواجه فنية التشخيص جونيبر فينش (23 عاماً) ومهندس الصوت توبياس وو (24 عاماً) خطر تدمير ورشة الرصيف الشمالي التعاونية على يد عضو المجلس أورفيل كرين الذي صمم انهياراً متعمداً لحواجز المدّ الآلية. باستخدام عدستها الأحادية المعززة، تحدد جونيبر بارجة المزاد عند الرصيف 14 لاستعادة سجل والدتها إليانور المشفر، وبمساعدة تضحية المفتش برام هالواي وموجة توبياس الصوتية ينجحان في الفرار وسط العاصفة لكشف المؤامرة.",
           "cast": [
             {
-              "name": "روث هارت",
-              "role": "الأم الحاكمة · ورقة شخصية مقفلة ثنائية الأبعاد",
-              "descriptor": "كاتب بلدية ميلويك (42). سترة صوفية منسوجة من التراكوتا، ونظارات على شكل صدفة السلحفاة، وتقويم حائطي مرمز بالألوان؛ التوقيت الصوتي الجامد وأقواس الحاجب التعبيرية."
+              "name": "Juniper Finch",
+              "role": "Lead Diagnostic Technician · North Quay Collective",
+              "descriptor": "23-year-old lead diagnostic technician at the North Quay worker-owned workshop. Razor-sharp, hyper-focused, and hardened by years of municipal neglect, she navigates the world through an augmented optical monocle that visualizes mechanical telemetry and institutional deception, though over-extension triggers paralyzing sensory overload.",
+              "imageUrl": "/images/cast/silt-line/juniper-finch.webp"
             },
             {
-              "name": "إليس هارت",
-              "role": "البطريرك · ورقة شخصية مقفلة ثنائية الأبعاد",
-              "descriptor": "ميكانيكي حافلات بلدية نوبة ليلية (44). مآزر متجر البحرية، الترمس الفولاذي، مخترع المرآب المتفائل الذي يحل مهام مدتها 5 دقائق بأدوات غريبة تزن 40 رطلاً."
+              "name": "Tobias Wu",
+              "role": "Acoustic Telemetry Specialist · Co-Op Sound Engineer",
+              "descriptor": "24-year-old acoustic telemetry specialist and co-op sound-technician facing housing displacement alongside his collective. Grounded, patient, and tactically decisive, he uses acoustic resonance instrumentation not only for mechanical diagnostics but as a vital neuro-acoustic anchor to pull Juniper out of cognitive feedback loops.",
+              "imageUrl": "/images/cast/silt-line/tobias-wu.webp"
             },
             {
-              "name": "يونيو هارت",
-              "role": "الابنة · ورقة شخصية مقفلة ثنائية الأبعاد",
-              "descriptor": "نقيب مناظرات المدرسة الثانوية (16). سترة بغطاء للرأس بلون الخردل فوق تنورة مطوية، وميثاق المدينة المشروح في اليد؛ يتعامل مع كل قاعدة على مائدة العشاء وكأنها مرافعة شفهية للمحكمة العليا."
+              "name": "Orville Crane",
+              "role": "Municipal Councilor & Infrastructure Developer",
+              "descriptor": "Civic industrialist, municipal council member, and private infrastructure developer who orchestrates 'natural' disasters to clear real estate and extract recovery capital. Smooth, pragmatically ruthless, and impeccably tailored, he views the working-class waterfront as fiscal deadweight that must be cleansed by the sea to build high-yield luxury enclaves.",
+              "imageUrl": "/images/cast/silt-line/orville-crane.webp"
             },
             {
-              "name": "ميلو هارت",
-              "role": "الابن · ورقة شخصية مقفلة ثنائية الأبعاد",
-              "descriptor": "متحمس لأرشيف الأسرة وصانع الملصقات (9). قميص الرجبي المخطط، والقمصان العالية غير المقيدة، ومسدس الملصقات الصناعية؛ يقدم حقائق حرفية مدمرة على الإيقاع الكوميدي."
+              "name": "John Anderson",
+              "role": "Chief Maritime Inspector",
+              "descriptor": "Weathered chief maritime inspector whose silence was purchased a decade ago during Eleanor Finch's disappearance. Bound by bureaucratic weariness, pensions, and survivalist cynicism, he maintains Crane's perimeter until commanded to participate in outright murder and cultural arson.",
+              "imageUrl": "/images/cast/silt-line/john-anderson.webp"
             },
             {
-              "name": "نانا إينيز",
-              "role": "الجدة · ورقة شخصية مقفلة ثنائية الأبعاد",
-              "descriptor": "خياطة جانبية سيادية ومتقاعدة (71). شال نيلي مطرز، عقدة فضية، عرش من الخيزران؛ يتذكر كل اختلاف في تقسيم المناطق على الكتلة منذ عام 1984."
+              "name": "Inspector Bram Halloway",
+              "role": "Harbor District Investigator · Undercover Mentor",
+              "descriptor": "A seasoned, honest Harbor District investigator caught between rigid precinct bureaucracy and his obligation to protect the city's waterfront communities. Respecting Juniper's sharp mind and fond memories of her mother, he serves as an undercover mentor who feeds the kids discreet tips while running interference with municipal security.",
+              "imageUrl": "/images/cast/silt-line/inspector-bram-halloway.webp"
             }
           ],
           "episode1Synopsis": {
-            "episodeLabel": "ملخص الحلقة 1 · الموسم SFAIPREMIERETRM (4 فصول)",
-            "title": "الحلقة 1: قاعدة الفرز",
-            "duration": "22 دقيقة (4 فصول · الفصل 1 دليل حي: 5.5 دقيقة)",
-            "logline": "يُلهم تفويض إعادة التدوير في المدينة المكون من اثنتي عشرة فئة إليس ببناء ناقل فرز المرآب الآلي الذي يصنف عن طريق الخطأ ممتلكات شرفة نانا إينيز على أنها فائض بلدي.",
-            "synopsis": "عندما يسن ميلويك القانون 412 - الذي يتطلب اثني عشر صندوقًا مرمزًا بالألوان بحلول صباح يوم الخميس - تريد روث الامتثال الهادئ حتى لا يتمكن زملاؤها في العمل في Town Hall من الثرثرة، وتقوم يونيو بصياغة تحدي دستوري لميكروفون المجلس، ويقوم إليس ببناء آلة فرز تعمل ببكرة في المرآب. تنتصر الآلة على الزجاجات قبل أن تلتهم صناديق التخزين غير المُلصقة الخاصة بالعائلة، وبلغت ذروتها في مواجهة في غرفة المعيشة عندما طبع ميلو بطاقة كتب عليها \"أشياء الشرفة المؤقتة لـ نانا\" ويجب على العائلة الاعتراف بأنه لا أحد يعرف ما تعنيه كلمة \"مؤقتة\".",
-            "chapter1Title": "الفصل الأول (الفتح البارد والفصل الأول): اثنتا عشرة سلة بحلول يوم الخميس",
-            "chapter1Duration": "5.5 دقيقة · إثبات الفصل الأولي",
-            "chapter1Synopsis": "في الساعة 6:15 صباحًا في مطبخ هارت المغلق، تكشف روث عن مخطط فرز المدينة المكون من اثنتي عشرة فئة بينما يعود إليس من النوبة الليلية بمحرك باب الحافلة الذي تم إنقاذه. عبر لقطات رد فعل مسطحة سريعة القطع، يبدأ ميلو في وضع علامات على الأثاث المنزلي وتعلن نانا إينيز أن الشرفة الجانبية معفاة من الولاية القضائية البلدية."
+            "episodeLabel": "Production Synopsis · 3-Beat Animated Pilot (32 min)",
+            "title": "The Silt Line — North Quay & Pier 14",
+            "duration": "32 min (3 Story Beats: 10.5 min · 11.5 min · 10 min)",
+            "logline": "When a predatory municipal councilor stages an automated floodgate failure to collect recovery bonds and seize Port Marrow's worker-owned waterfront collective, a sensory-strained 23-year-old technician and her sound-engineer partner infiltrate an offshore auction to secure her missing mother's black-box telemetry before their district is submerged.",
+            "synopsis": "In the retro-futuristic coastal city of Port Marrow, 23-year-old diagnostic technician Juniper Finch and co-op sound engineer Tobias Wu (24) face the imminent destruction of the North Quay Municipal Workshop—a worker-owned collective supporting displaced maritime laborers. The threat comes via Councilman Orville Crane, who has engineered a deliberate failure of the automated tidal surge barriers, framing it as an 'unavoidable climate event' to default lower-quay parcels, collect billions in municipal recovery bonds, and rezone the submerged district under private 'green renewal' charters. Utilizing her augmented deductive monocle despite the blinding cognitive migraines it inflicts, Juniper decodes municipal telemetry embedded in the eviction writ, pinpointing Crane's offshore auction barge at Pier 14 where the decommissioned floodgate controls and her vanished mother Eleanor's encrypted black-box ledger are being sold off. Disguised in dockers' oilskins, Juniper and Tobias infiltrate the barge's iron catwalks. In the lower hold, Chief Inspector Bram Halloway reaches his breaking point when Crane hands him an incendiary flare and orders him to burn Eleanor's original flood baseline archives and quietly ensure the whistleblowing youths drown in the slipway. Horrified by the cost of his decade-long complicity, Halloway hesitates while Juniper taps the auction feed, suffering a sensory seizure as Eleanor's decrypted voice reveals the flood is a manufactured market play. Cornered in Crane's private gallery, Juniper rejects Crane's offer to buy her silence; Tobias sacrifices his custom acoustic hardware to blow out the panoramic windows with a sonic blast. As enforcers swarm the slipway, Halloway enacts his redemption by manually locking the hydraulic blast gates from the outside, trapping himself with Crane's guards to guarantee Juniper and Tobias escape into the storm with the ledger, ready to expose the engineered deluge.",
+            "chapter1Title": "Chapter 1 (Beat 1): Hook & Context: The Manufactured Surge",
+            "chapter1Duration": "10.5 min · Opening Story Beat",
+            "chapter1Synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability as she decodes the eviction writ telemetry."
           },
           "episodes": [
             {
               "number": "1",
-              "title": "قاعدة الفرز",
-              "duration": "22 دقيقة",
-              "synopsis": "يصدر ميلويك أمرًا جديدًا لإعادة التدوير يتضمن اثنتي عشرة فئة. يقوم إليس ببناء آلة فرز في المرآب. إنه يعمل على الزجاجات، ومن ثم، بشكل كارثي، على صناديق العائلة التي لا تحمل علامات. يريد يونيو تحدي القاعدة في اجتماع المدينة. تريد روث أن يبدو الرصيف متوافقًا بحلول يوم الخميس. تنتهي الحلقة عندما يقوم ميلو بتسمية أحد الصناديق \"أشياء شرفة نانا\" ولا يمكن لأحد أن يتفق على معنى التسمية."
+              "title": "Hook & Context: The Manufactured Surge",
+              "duration": "10.5 min",
+              "synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability."
             },
             {
               "number": "2",
-              "title": "موكب الطقس",
-              "duration": "22 دقيقة",
-              "synopsis": "من المتوقع هطول أمطار في يوم ميلويك. تريد \"جون\" إلغاء لافتة نادي المناظرة الخاصة بها. ميلو يريد تسجيل البرق. ترفض نانا إينيز التلويح لجارتها التي تجنبتها منذ نزاع على السياج. لا يزال يتعين على روث استضافة الكتلة تحت قماش القنب. النكتة هي قماش القنب. النقطة المهمة هي من الذي سيقرر حدوث الاحتفال."
+              "title": "Infiltration & The Moral Crucible",
+              "duration": "11.5 min",
+              "synopsis": "Escalate procedural tension through forensic infiltration, introduce Halloway's moral crossroads when ordered to destroy Eleanor's legacy, and uncover Eleanor's black-box cipher."
             },
             {
               "number": "3",
-              "title": "الإفطار الليلي",
-              "duration": "22 دقيقة",
-              "synopsis": "يعود إليس إلى المنزل عند الفجر ويطبخ للأشخاص الذين يغادرون بالفعل. يونيو لديه البطولة. ميلو لديه رحلة ميدانية. روث لديها تحول مضاد. لمدة ساعة واحدة، المطبخ هو العائلة بأكملها، والبيض هو المحادثة الوحيدة التي تناسبها. تصبح الفطيرة المحترقة هي الجدل الدائر حول من تم بناء المنزل حوله."
-            },
-            {
-              "number": "4",
-              "title": "المفتاح الاحتياطي",
-              "duration": "22 دقيقة",
-              "synopsis": "كان شخص ما يعيد ملء وعاء القطة في الصباح الذي ينام فيه إليس. يقوم آل هارتس بالتحقيق والعثور على المفتاح الذي أخفوه تحت الطوب منذ سنوات. كان الجار الذي كانوا يسمونه فضوليًا يغطي فجوة الفجر. يتعين على Nana Inez أن تقرر ما إذا كانت ستستعيد المفتاح أو تعترف بأن الكتلة كانت مفيدة."
-            },
-            {
-              "number": "5",
-              "title": "تصويت الشرفة",
-              "duration": "22 دقيقة",
-              "synopsis": "تعلن \"نانا إينيز\" أنها انتهت من الشرفة \"المؤقتة\" وستنتقل إلى بلدة أختها. يدعو آل هارتس إلى تصويت الأسرة. إعادة بناء الشرفة كغرفها الحقيقية يعني توقف مشروع مرآب إليس، وتحريك ركن الدراسة الخاص بشهر يونيو، ويتعين على ميلويك السماح بالتغيير الذي كان يتجاهله. هنا ينقلب الموسم: لم تعد الكوميديا ​​تدور حول أسبوع فوضوي. الأمر يتعلق بمن يمكنه البقاء."
+              "title": "Climax & Escape: The Silt Line Defiance",
+              "duration": "10 min",
+              "synopsis": "Deliver an emotionally grounded climax where Crane's extortion is shattered by sacrificial tech and Halloway achieves moral redemption by locking down the escape corridor."
             }
           ]
         },
@@ -2858,7 +2853,9 @@
             }
           ]
         }
-      }
+      },
+      "settingLabel": "البيئة والمكان",
+      "expandPortraitHint": "انقر على الصورة لعرضها بالحجم الكامل"
     },
     "explorerHandoff": "تُمثّل هذه الروابط عملاً مُنجزاً، بينما يُعدّ Explorer المكان الذي تبتكر فيه عملك الخاص.",
     "languagesBanner": "مزامنة اللغة داخل المشهد عبر 7 لغات (EN · ES · PT · HI · ZH · AR · TH) — تتضمن أكثر من 21 دقيقة من الدراما السينمائية المتزامنة (7 نسخ × 3 دقائق)، متجاوزةً الدبلجة الصوتية التقليدية بمراحل.",
@@ -2914,40 +2911,40 @@
       },
       {
         "id": "animation",
-        "title": "مسلسل رسوم متحركة بموسم كامل يجمع بين أساليب فنية متعددة، مع الحفاظ على أسلوب فني موحد ومتسق.",
-        "subtitle": "اعتمد أسلوب الرسم المسطح (flat-cel) وثبّت تصميم عائلة \"هارت\" وبلدة \"ميلويك\" من الحلقة الأولى وحتى الأخيرة. تولَّ إخراج النكات وتوقيتها بدقة متناهية (خطوة بخطوة)، ثم راجع الحلقة في غرفة العرض.",
-        "badge": "متعدد الأنماط",
+        "title": "مسلسلات رسوم متحركة لموسم كامل. أسلوب فني واحد متسق.",
+        "subtitle": "ثبّت جماليات الرسوم ثلاثية الأبعاد بأسلوب الديزلبانك السيبراني، وتصاميم الشخصيات الخمس الرئيسية، وأرصفة بورت مارو الملحية المضيئة بالنيون عبر كل مشهد — مع مزامنة الحوار داخل المشهد بسبع لغات عالمية.",
+        "badge": "ثلاثي الأبعاد فني",
+        "screeningRoomPreview": "The Silt Line — غرفة العرض",
         "solutionPillars": [
           {
-            "title": "الاتساق الأسلوبي",
-            "frictionHeadline": "انهيار الأسلوب",
-            "friction": "تتشوه أنماط الرسوم المتحركة والأنمي باستمرار بين اللقطات؛ إذ تتغير الخطوط وتختل لوحات الألوان، وتتحول الشخصيات إلى مزيج مشوه يجمع بين الواقعية الفوتوغرافية والمظهر المثير للريبة.",
-            "solutionHeadline": "محرك نمط فني ثابت",
-            "solution": "ثبّت طابعك البصري المميز بدءاً من الإطار الأول؛ إذ تعمل خاصية SceneFlow على تثبيت تصاميم الشخصيات، وسماكة الخطوط، وأنماط التظليل طوال الحلقة، لضمان احتفاظ شخصياتك بطابعها الفريد والخاص بك."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Stylized 3D and animated worlds constantly warp between shots, losing material textures, breaking lighting palettes, and drifting characters off-model.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze tactile dieselpunk brass, salt-corroded iron, and bioluminescent cybernetic shaders from frame one so every character and harbor set stays model-accurate."
           },
           {
-            "title": "تحريك وفيزياء مبالغ فيهما",
-            "frictionHeadline": "حركة متصلبة ومتقطعة",
-            "friction": "تواجه النماذج التوليدية صعوبة في التعامل مع الكوميديا الحركية السريعة، وردود الفعل المفاجئة (double-takes)، وخصائص الفيزياء الكرتونية المرنة؛ مما يحوّل النكات المفعمة بالحيوية إلى تشوهات بصرية تبدو وكأنها تذوب.",
-            "solutionHeadline": "تثبيت الحركة والوضعية",
-            "solution": "تحكّم في حركات الشخصيات الديناميكية ووضعياتها المعبرة دون تشويه البنية الهندسية (الجيومتري). قدِّم عروضاً كوميدية حركية خاطفة ومؤثرة، وانتقالات بصرية مفاجئة، وتعبيرات جامحة، مع تحكم كامل في الحركة."
+            "title": "Complex VFX & Deductive Overlays",
+            "frictionHeadline": "Inconsistent Visual Motifs.",
+            "friction": "Recurring character-specific visual mechanics — like augmented optical telemetry or holographic stress lines — vanish or mutate across cuts.",
+            "solutionHeadline": "Reference-Anchored Direction.",
+            "solution": "Anchor Juniper's optical monocle telemetry, chromatic stress aberrations, and Tobias's acoustic resonance gear consistently across every dramatic beat."
           },
           {
-            "title": "التوقيت والإيقاع الكوميدي",
-            "frictionHeadline": "خواتيم النكات المفسدة",
-            "friction": "تكمن الفكاهة في لحظات الصمت والوقفات الإيقاعية؛ إذ تفرض الحلقات التوليدية القياسية -التي تمتد لخمس ثوانٍ- إيقاعاً متكلفاً يفسد طريقة إلقاء النكتة.",
-            "solutionHeadline": "تحرير دقيق متزامن مع الإيقاع",
-            "solution": "تحكَّم في إيقاع المشهد بدقة متناهية تصل إلى مستوى الإطار الواحد؛ إذ يمكنك ضبط فترات التوقف الدرامي، وتوقيت الانتقال من التمهيد إلى ذروة النكتة أو المفارقة (punchline)، ولقطات رد الفعل السريعة، وذلك مباشرةً داخل المخطط الزمني القائم على الإيقاع (beat-first timeline) قبل مرحلة المعالجة النهائية."
+            "title": "Dramatic Tension & Beat Pacing",
+            "frictionHeadline": "Disconnected Action Clips.",
+            "friction": "High-stakes infiltration sequences fall apart when generated as isolated 5-second clips without continuous spatial geography or act structure.",
+            "solutionHeadline": "Beat-Precision Storyboarding.",
+            "solution": "Direct multi-minute story beats — from the North Quay workshop to Pier 14’s hydraulic blast gates — with intentional camera blocking before final render."
           },
           {
-            "title": "حوار عالي الطاقة ومزامنة صوتية",
-            "frictionHeadline": "أفواه دُمىً هامدة",
-            "friction": "تبدو حوارات الذكاء الاصطناعي النمطية باهتة وآلية، مما يقضي على الحيوية اللازمة لتبادل الدعابات السريع والمميز في المسلسلات الكوميدية.",
-            "solutionHeadline": "مزامنة ديناميكية للصوت وتعبيرات الوجه",
-            "solution": "يتم ربط الأداء الصوتي مباشرةً بتعبيرات الوجه الحيوية؛ حيث تتناغم الحوارات وحركات الفم المعبرة والمسارات الصوتية الكوميدية بسلاسة تامة لتحقيق أقصى درجات التأثير الكوميدي."
+            "title": "Global In-Scene Vocal Sync",
+            "frictionHeadline": "Detached Dubbing & Lifeless Lip-Sync.",
+            "friction": "Translating stylized 3D animation into global languages usually breaks mouth shapes and flattens emotional vocal performance.",
+            "solutionHeadline": "7-Language In-Scene Sync.",
+            "solution": "Deliver synchronized character performances in English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai while preserving expressive 3D facial acting."
           }
-        ],
-        "screeningRoomPreview": "هارت هاوس — قاعة العرض"
+        ]
       },
       {
         "id": "documentary",

@@ -2360,18 +2360,18 @@
       "promoción"
     ],
     "seriesPanel": {
-      "headerLabel": "Serie Biblia y Episodio 1",
-      "bibleTab": "Serie Biblia",
-      "castTab": "Elenco bloqueado",
-      "episode1Tab": "Ep. 1 y cap. 1",
-      "seasonTab": "Temporada",
+      "headerLabel": "Dossier de Producción y Biblia de Historia",
+      "bibleTab": "Mundo y Estilo",
+      "castTab": "Reparto",
+      "episode1Tab": "Sinopsis",
+      "seasonTab": "Beats de Historia",
       "formatLabel": "Formato",
       "durationLabel": "Duración",
-      "artStyleLabel": "Estilo de arte",
-      "continuityLockLabel": "Bloqueo de continuidad",
-      "loglineLabel": "Línea de registro",
-      "synopsisLabel": "Sinopsis de la serie y Biblia visual",
-      "lockedCastHeading": "Reparto bloqueado y continuidad principal",
+      "artStyleLabel": "Estilo Visual",
+      "continuityLockLabel": "Bloqueo de Continuidad",
+      "loglineLabel": "Logline",
+      "synopsisLabel": "Sinopsis de Producción",
+      "lockedCastHeading": "Reparto Principal y Hojas de Continuidad",
       "inputs": {
         "drama": {
           "showTitle": "La corriente de la ciudad blanca",
@@ -2468,83 +2468,78 @@
           ]
         },
         "animation": {
-          "showTitle": "Casa Hart",
-          "format": "Sitcom animada · Temporada de 5 episodios",
-          "genre": "Comedia familiar multigeneracional",
-          "artStyle": "Animación de celda plana 2D · Contornos de tinta atrevida y paleta cálida suburbana",
-          "duration": "Temporada 110 min (5×22 min) · Ep 1: 22 min",
-          "continuityLock": "5 hojas de personajes familiares bloqueados · Casa Millwick y porche lateral · Deriva de estilo cero",
-          "unitLabel": "Episodios de la temporada 1 (5)",
-          "artLock": "Un estilo de celda plana bloqueado para toda la temporada: contornos en tinta audaz, colores suburbanos cálidos y los mismos diseños de personajes en cada episodio. La plataforma puede contener muchos estilos. Esta serie no cambia.",
-          "logline": "En Millwick, los Hart convierten una discusión familiar en el chiste de la semana, y el chiste en la razón por la que todavía viven bajo el mismo techo.",
-          "seriesSynopsis": "Ambientada en la ciudad de Millwick, obsesionada con las ordenanzas cívicas, Hart House es una comedia familiar animada en 2D de cinco episodios y 22 minutos de duración creada para demostrar que no hay desviación del modelo durante toda una temporada de transmisión. La secretaria municipal Ruth Hart y el mecánico de tránsito del turno de noche Ellis Hart comparten una estrecha casa de artesanos con la capitana de debate June, de dieciséis años, el recopilador de datos Milo, de nueve años, y la madre de Ruth, Nana Inez, cuyo porche lateral cerrado \"temporal\" se ha convertido silenciosamente en el centro emocional de la casa. Cada episodio convierte un pequeño dolor de cabeza municipal en una comedia de conjunto vertiginoso, al tiempo que mantiene grosores de línea idénticos, paletas cálidas con sombreado de celdas y hojas de personajes de múltiples ángulos bloqueadas desde el Episodio 1 hasta la votación familiar del Episodio 5.",
+          "showTitle": "The Silt Line",
+          "format": "Serie Animada 3D Estilizada · Piloto Episodio 1 (3 Beats de Historia)",
+          "genre": "Ciber-Thriller Marítimo Retro-Futurista",
+          "artStyle": "Animación 3D Estilizada Táctil · Estética Marítima Dieselpunk Industrial y Acentos Cibernéticos Bioluminiscentes",
+          "duration": "Piloto de 32 min (3 Beats: 10.5m · 11.5m · 10m)",
+          "continuityLock": "5 Hojas de Personajes 3D Bloqueadas · Taller North Quay de Port Marrow y Barcaza del Muelle 14 · VFX de Telemetría Óptica",
+          "unitLabel": "Beats de Historia (3)",
+          "artLock": "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
+          "setting": "Port Marrow: Una metrópolis portuaria costera retro-futurista que combina arquitectura marítima de latón de los años 20 con tecnología cibernética abierta y colorida, mareas automatizadas y muelles de neón incrustados de sal.",
+          "visualStyle": "Animación 3D estilizada y táctil que fusiona la crudeza marítima industrial dieselpunk con acentos cibernéticos bioluminiscentes. Las texturas enfatizan hierro fundido corroído por la sal, planos arquitectónicos manchados de agua, lana deshilachada y tubos de vacío ámbar parpadeantes. Las secuencias deductivas se manifiestan como líneas de tensión holográficas fracturadas y diferenciales de presión que deforman la visión de Juniper en aberraciones cromáticas hipersaturadas.",
+          "logline": "Cuando un concejal municipal depredador provoca el fallo deliberado de una compuerta automática para cobrar bonos de recuperación y apoderarse de la colectiva portuaria obrera de Port Marrow, una técnica de 23 años al límite sensorial y su socio ingeniero de sonido se infiltran en una subasta mar adentro para recuperar la telemetría de caja negra de su madre desaparecida antes de que su distrito quede sumergido.",
+          "seriesSynopsis": "En la ciudad costera retro-futurista de Port Marrow, la técnica de diagnóstico Juniper Finch (23) y el ingeniero de sonido cooperativista Tobias Wu (24) enfrentan la destrucción inminente del Taller Municipal de North Quay. La amenaza proviene del concejal Orville Crane, quien ha diseñado un fallo deliberado de las barreras automáticas de marea para ejecutar parcelas portuarias, cobrar miles de millones en bonos de recuperación y rezonificar el distrito sumergido. Usando su monóculo deductivo aumentado pese a las migrañas cognitivas que le provoca, Juniper decodifica la telemetría municipal oculta en la orden de desalojo y localiza la barcaza de subastas de Crane en el Muelle 14. Disfrazados con impermeables portuarios, Juniper y Tobias se infiltran por las pasarelas de hierro mientras el inspector Bram Halloway enfrenta su encrucijada moral y sella manualmente las compuertas hidráulicas para garantizar que escapen a la tormenta con el registro encriptado de Eleanor.",
           "cast": [
             {
-              "name": "Ruth Hart",
-              "role": "Matriarca · Hoja de personaje 2D bloqueada",
-              "descriptor": "Secretario municipal de Millwick (42). Cárdigan de punto de terracota, gafas de carey, calendario de pared codificado por colores; sincronización vocal inexpresiva y arcos de cejas expresivos."
+              "name": "Juniper Finch",
+              "role": "Lead Diagnostic Technician · North Quay Collective",
+              "descriptor": "23-year-old lead diagnostic technician at the North Quay worker-owned workshop. Razor-sharp, hyper-focused, and hardened by years of municipal neglect, she navigates the world through an augmented optical monocle that visualizes mechanical telemetry and institutional deception, though over-extension triggers paralyzing sensory overload.",
+              "imageUrl": "/images/cast/silt-line/juniper-finch.webp"
             },
             {
-              "name": "Ellis Hart",
-              "role": "Patriarca · Hoja de personaje 2D bloqueada",
-              "descriptor": "Mecánico de autobuses municipales en turno de noche (44). Monos de taller azul marino, termos de acero, inventor de garaje optimista que resuelve tareas de cinco minutos con artilugios de 40 libras."
+              "name": "Tobias Wu",
+              "role": "Acoustic Telemetry Specialist · Co-Op Sound Engineer",
+              "descriptor": "24-year-old acoustic telemetry specialist and co-op sound-technician facing housing displacement alongside his collective. Grounded, patient, and tactically decisive, he uses acoustic resonance instrumentation not only for mechanical diagnostics but as a vital neuro-acoustic anchor to pull Juniper out of cognitive feedback loops.",
+              "imageUrl": "/images/cast/silt-line/tobias-wu.webp"
             },
             {
-              "name": "junio ciervo",
-              "role": "Hija · Hoja de personaje 2D bloqueada",
-              "descriptor": "Capitán de debate de secundaria (16). Sudadera con capucha color mostaza sobre falda plisada, carta municipal anotada en mano; trata cada regla de la mesa como un argumento oral de la Corte Suprema."
+              "name": "Orville Crane",
+              "role": "Municipal Councilor & Infrastructure Developer",
+              "descriptor": "Civic industrialist, municipal council member, and private infrastructure developer who orchestrates 'natural' disasters to clear real estate and extract recovery capital. Smooth, pragmatically ruthless, and impeccably tailored, he views the working-class waterfront as fiscal deadweight that must be cleansed by the sea to build high-yield luxury enclaves.",
+              "imageUrl": "/images/cast/silt-line/orville-crane.webp"
             },
             {
-              "name": "Milo Hart",
-              "role": "Hijo · Hoja de personaje 2D bloqueada",
-              "descriptor": "Archivista doméstico y entusiasta de las rotuladoras (9). Camisa de rugby a rayas, zapatillas altas desatadas, pistola de etiquetas industrial; ofrece verdades devastadoramente literales en el ritmo de la comedia."
+              "name": "John Anderson",
+              "role": "Chief Maritime Inspector",
+              "descriptor": "Weathered chief maritime inspector whose silence was purchased a decade ago during Eleanor Finch's disappearance. Bound by bureaucratic weariness, pensions, and survivalist cynicism, he maintains Crane's perimeter until commanded to participate in outright murder and cultural arson.",
+              "imageUrl": "/images/cast/silt-line/john-anderson.webp"
             },
             {
-              "name": "Nana Inés",
-              "role": "Abuela · Hoja de personaje 2D bloqueada",
-              "descriptor": "Soberana del porche lateral y costurera jubilada (71). Mantón añil bordado, moño plateado, trono de mimbre; Recuerda cada variación de zonificación en el bloque desde 1984."
+              "name": "Inspector Bram Halloway",
+              "role": "Harbor District Investigator · Undercover Mentor",
+              "descriptor": "A seasoned, honest Harbor District investigator caught between rigid precinct bureaucracy and his obligation to protect the city's waterfront communities. Respecting Juniper's sharp mind and fond memories of her mother, he serves as an undercover mentor who feeds the kids discreet tips while running interference with municipal security.",
+              "imageUrl": "/images/cast/silt-line/inspector-bram-halloway.webp"
             }
           ],
           "episode1Synopsis": {
-            "episodeLabel": "Sinopsis del Episodio 1 · Temporada Premiere (4 Capítulos)",
-            "title": "Episodio 1: La regla de clasificación",
-            "duration": "22 min (4 Capítulos · Capítulo 1 Prueba en Vivo: 5.5 min)",
-            "logline": "Un mandato de reciclaje municipal de doce categorías inspira a Ellis a construir un transportador de clasificación de garaje motorizado que clasifica accidentalmente las pertenencias del porche de Nana Inez como excedentes municipales.",
-            "synopsis": "Cuando Millwick promulga la Ordenanza 412, que exige doce contenedores codificados por colores para el jueves por la mañana, Ruth quiere un cumplimiento silencioso para que sus compañeros de trabajo en el Ayuntamiento no puedan cotillear, June redacta un desafío constitucional para el micrófono del consejo y Ellis construye una máquina clasificadora accionada por poleas en el garaje. La máquina triunfa sobre las botellas de vidrio antes de devorar las cajas de almacenamiento sin etiqueta de la familia, lo que culmina en un enfrentamiento en la sala de estar cuando Milo imprime una etiqueta que dice \"Cosas temporales del porche de Nana\" y la familia debe admitir que nadie sabe lo que significa \"temporal\".",
-            "chapter1Title": "Capítulo 1 (Apertura en frío y Acto I): Doce contenedores para el jueves",
-            "chapter1Duration": "5,5 min · Prueba del capítulo inicial",
-            "chapter1Synopsis": "A las 6:15 a. m., en la cocina cerrada de Hart, Ruth revela la tabla de clasificación de doce categorías de la ciudad mientras Ellis regresa del turno de noche con el motor de la puerta de un autobús rescatado. A través de tomas de reacción de células planas de corte rápido, Milo comienza a etiquetar los muebles del hogar y Nana Inez declara el porche lateral exento de jurisdicción municipal."
+            "episodeLabel": "Production Synopsis · 3-Beat Animated Pilot (32 min)",
+            "title": "The Silt Line — North Quay & Pier 14",
+            "duration": "32 min (3 Story Beats: 10.5 min · 11.5 min · 10 min)",
+            "logline": "When a predatory municipal councilor stages an automated floodgate failure to collect recovery bonds and seize Port Marrow's worker-owned waterfront collective, a sensory-strained 23-year-old technician and her sound-engineer partner infiltrate an offshore auction to secure her missing mother's black-box telemetry before their district is submerged.",
+            "synopsis": "In the retro-futuristic coastal city of Port Marrow, 23-year-old diagnostic technician Juniper Finch and co-op sound engineer Tobias Wu (24) face the imminent destruction of the North Quay Municipal Workshop—a worker-owned collective supporting displaced maritime laborers. The threat comes via Councilman Orville Crane, who has engineered a deliberate failure of the automated tidal surge barriers, framing it as an 'unavoidable climate event' to default lower-quay parcels, collect billions in municipal recovery bonds, and rezone the submerged district under private 'green renewal' charters. Utilizing her augmented deductive monocle despite the blinding cognitive migraines it inflicts, Juniper decodes municipal telemetry embedded in the eviction writ, pinpointing Crane's offshore auction barge at Pier 14 where the decommissioned floodgate controls and her vanished mother Eleanor's encrypted black-box ledger are being sold off. Disguised in dockers' oilskins, Juniper and Tobias infiltrate the barge's iron catwalks. In the lower hold, Chief Inspector Bram Halloway reaches his breaking point when Crane hands him an incendiary flare and orders him to burn Eleanor's original flood baseline archives and quietly ensure the whistleblowing youths drown in the slipway. Horrified by the cost of his decade-long complicity, Halloway hesitates while Juniper taps the auction feed, suffering a sensory seizure as Eleanor's decrypted voice reveals the flood is a manufactured market play. Cornered in Crane's private gallery, Juniper rejects Crane's offer to buy her silence; Tobias sacrifices his custom acoustic hardware to blow out the panoramic windows with a sonic blast. As enforcers swarm the slipway, Halloway enacts his redemption by manually locking the hydraulic blast gates from the outside, trapping himself with Crane's guards to guarantee Juniper and Tobias escape into the storm with the ledger, ready to expose the engineered deluge.",
+            "chapter1Title": "Chapter 1 (Beat 1): Hook & Context: The Manufactured Surge",
+            "chapter1Duration": "10.5 min · Opening Story Beat",
+            "chapter1Synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability as she decodes the eviction writ telemetry."
           },
           "episodes": [
             {
               "number": "1",
-              "title": "La regla de clasificación",
-              "duration": "22 minutos",
-              "synopsis": "Millwick emite una nueva orden de reciclaje con doce categorías. Ellis construye una máquina clasificadora en el garaje. Funciona con botellas y luego, desastrosamente, con las cajas sin etiquetar de la familia. June quiere desafiar la regla en la asamblea municipal. Ruth quiere que la acera parezca compatible para el jueves. El episodio comienza cuando Milo etiqueta una caja como \"cosas del porche de Nana\" y nadie puede ponerse de acuerdo sobre lo que significa la etiqueta."
+              "title": "Hook & Context: The Manufactured Surge",
+              "duration": "10.5 min",
+              "synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability."
             },
             {
               "number": "2",
-              "title": "Tiempo del desfile",
-              "duration": "22 minutos",
-              "synopsis": "Se pronostica lluvia para el día de Millwick. June quiere cancelar su cartel del club de debate. Milo quiere registrar el rayo. Nana Inez se niega a saludar a un vecino al que ha evitado desde una disputa por la cerca. Ruth todavía tiene que albergar el bloque bajo una lona. El chiste es la lona. La cuestión es quién decide si ocurrió una celebración."
+              "title": "Infiltration & The Moral Crucible",
+              "duration": "11.5 min",
+              "synopsis": "Escalate procedural tension through forensic infiltration, introduce Halloway's moral crossroads when ordered to destroy Eleanor's legacy, and uncover Eleanor's black-box cipher."
             },
             {
               "number": "3",
-              "title": "Desayuno turno de noche",
-              "duration": "22 minutos",
-              "synopsis": "Ellis llega a casa al amanecer y cocina para la gente que ya se va. Junio ​​tiene torneo. Milo tiene una excursión. Ruth tiene un turno de contador. Durante una hora la cocina es toda la familia, y los huevos son la única conversación que cabe. Un panqueque quemado se convierte en la discusión constante sobre en torno a qué mañana se construye la casa."
-            },
-            {
-              "number": "4",
-              "title": "La llave de repuesto",
-              "duration": "22 minutos",
-              "synopsis": "Alguien ha estado rellenando el plato del gato las mañanas que Ellis se queda dormida. Los Hart investigan y encuentran la llave que escondieron debajo de un ladrillo hace años. El vecino al que han estado llamando entrometido ha estado cubriendo el hueco del amanecer. Nana Inez tiene que decidir si recuperar la llave o admitir que el bloque ha estado ayudando."
-            },
-            {
-              "number": "5",
-              "title": "El voto del porche",
-              "duration": "22 minutos",
-              "synopsis": "Nana Inez anuncia que ha terminado con el porche \"temporal\" y que se mudará al pueblo de su hermana. Los Hart convocan una votación familiar. Reconstruir el porche como sus habitaciones reales significa que el proyecto del garaje de Ellis se detiene, el rincón de estudio de June se muda y Millwick tiene que permitir un cambio que ha estado ignorando. La temporada cambia aquí: la comedia ya no trata sobre una semana desordenada. Se trata de quién se queda."
+              "title": "Climax & Escape: The Silt Line Defiance",
+              "duration": "10 min",
+              "synopsis": "Deliver an emotionally grounded climax where Crane's extortion is shattered by sacrificial tech and Halloway achieves moral redemption by locking down the escape corridor."
             }
           ]
         },
@@ -2858,7 +2853,9 @@
             }
           ]
         }
-      }
+      },
+      "settingLabel": "Escenario",
+      "expandPortraitHint": "Haz clic en el retrato para vista completa"
     },
     "explorerHandoff": "Estos enlaces representan un producto terminado. Explorer es el lugar donde creas el tuyo propio.",
     "languagesBanner": "Sincronización de Idioma en Escena en 7 idiomas (EN · ES · PT · HI · ZH · AR · TH) — con más de 21 minutos de Drama Cinematográfico sincronizado (7 ediciones de 3 minutos), mucho más allá del doblaje tradicional.",
@@ -2914,40 +2911,40 @@
       },
       {
         "id": "animation",
-        "title": "Serie de animación de temporada completa con múltiples estilos. Un estilo artístico coherente.",
-        "subtitle": "Establece un estilo de animación plana (tipo cel), a la familia Hart y al pueblo de Millwick desde el primer episodio hasta el último. Dirige los chistes paso a paso y luego revisa el episodio en la sala de proyecciones.",
-        "badge": "Multiestilo",
+        "title": "Series Animadas de Temporada Completa. Un Estilo Artístico Consistente.",
+        "subtitle": "Fija la estética 3D estilizada dieselpunk-cibernética, cinco personajes principales y los muelles cubiertos de sal y neón de Port Marrow en cada beat — con sincronización de diálogo en escena en 7 idiomas globales.",
+        "badge": "3D Estilizado",
+        "screeningRoomPreview": "The Silt Line — Sala de Proyección",
         "solutionPillars": [
           {
-            "title": "Consistencia estilística",
-            "frictionHeadline": "Crisis de estilo.",
-            "friction": "Los estilos de dibujos animados y anime se deforman constantemente entre planos: el trazo varía, las paletas de colores se rompen y los personajes mutan en una masa fotorrealista y perturbadora.",
-            "solutionHeadline": "Motor de estilo artístico fijo.",
-            "solution": "Fija tu estética desde el primer fotograma. SceneFlow bloquea los diseños de personajes, los grosores de línea y los modelos de sombreado en todo el episodio, para que tus personajes conserven su identidad única."
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Stylized 3D and animated worlds constantly warp between shots, losing material textures, breaking lighting palettes, and drifting characters off-model.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze tactile dieselpunk brass, salt-corroded iron, and bioluminescent cybernetic shaders from frame one so every character and harbor set stays model-accurate."
           },
           {
-            "title": "Animación y físicas exageradas",
-            "frictionHeadline": "Movimiento rígido y con fallos.",
-            "friction": "Los modelos generativos tienen dificultades con la comedia física vertiginosa, las reacciones de sorpresa retardada y las leyes físicas elásticas propias de los dibujos animados, transformando los gags dinámicos en artefactos visuales que parecen derretirse.",
-            "solutionHeadline": "Anclaje de acción y pose.",
-            "solution": "Genera movimientos dinámicos de personajes y poses expresivas sin deformar la geometría. Dirige comedia física impactante, cortes abruptos y expresiones exageradas con un control total del movimiento."
+            "title": "Complex VFX & Deductive Overlays",
+            "frictionHeadline": "Inconsistent Visual Motifs.",
+            "friction": "Recurring character-specific visual mechanics — like augmented optical telemetry or holographic stress lines — vanish or mutate across cuts.",
+            "solutionHeadline": "Reference-Anchored Direction.",
+            "solution": "Anchor Juniper's optical monocle telemetry, chromatic stress aberrations, and Tobias's acoustic resonance gear consistently across every dramatic beat."
           },
           {
-            "title": "Timing y ritmo cómicos",
-            "frictionHeadline": "Remates arruinados.",
-            "friction": "El humor reside en las pausas y los cortes rítmicos. Los bucles generativos estándar de 5 segundos imponen un ritmo forzado que arruina la ejecución del chiste.",
-            "solutionHeadline": "Edición con precisión de tiempo.",
-            "solution": "Controla el ritmo de la escena fotograma a fotograma. Ajusta las pausas dramáticas, la sincronización entre el planteamiento y el remate, y los planos de reacción rápidos directamente en la línea de tiempo basada en los ritmos narrativos, antes del renderizado final."
+            "title": "Dramatic Tension & Beat Pacing",
+            "frictionHeadline": "Disconnected Action Clips.",
+            "friction": "High-stakes infiltration sequences fall apart when generated as isolated 5-second clips without continuous spatial geography or act structure.",
+            "solutionHeadline": "Beat-Precision Storyboarding.",
+            "solution": "Direct multi-minute story beats — from the North Quay workshop to Pier 14’s hydraulic blast gates — with intentional camera blocking before final render."
           },
           {
-            "title": "Diálogo de alta energía y sincronización vocal",
-            "frictionHeadline": "Bocas de marioneta sin vida.",
-            "friction": "Los diálogos genéricos de la IA resultan planos y mecánicos, lo que destruye la energía necesaria para el intercambio ágil y chispeante propio de las comedias de situación.",
-            "solutionHeadline": "Sincronización dinámica de voz y expresión.",
-            "solution": "Sincroniza la interpretación vocal directamente con una actuación facial llena de energía. El diálogo, los gestos expresivos de la boca y las pistas de voz cómicas se combinan a la perfección para lograr el máximo efecto cómico."
+            "title": "Global In-Scene Vocal Sync",
+            "frictionHeadline": "Detached Dubbing & Lifeless Lip-Sync.",
+            "friction": "Translating stylized 3D animation into global languages usually breaks mouth shapes and flattens emotional vocal performance.",
+            "solutionHeadline": "7-Language In-Scene Sync.",
+            "solution": "Deliver synchronized character performances in English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai while preserving expressive 3D facial acting."
           }
-        ],
-        "screeningRoomPreview": "Hart House — Sala de proyecciones"
+        ]
       },
       {
         "id": "documentary",

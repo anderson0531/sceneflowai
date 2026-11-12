@@ -24,8 +24,10 @@ const PRODUCED_VIDEOS: Record<string, Partial<Record<VideoLocaleId, ProducedVide
     ar: { src: videoUrl('Arabic-Video-v2.mp4') },
   },
   animation: {
-    en: { src: videoUrl('The Animated Comedy (English).mp4') },
-    es: { src: videoUrl('The Animated Comedy (Spanish).mp4') },
+    en: { src: videoUrl('English-Video-v2.mp4') },
+    es: { src: videoUrl('Spanish-Video-v1 (1).mp4') },
+    zh: { src: videoUrl('Chinese-Mandarin-Video-v1 (1).mp4') },
+    ar: { src: videoUrl('Arabic-Video-v1.mp4') },
   },
 }
 

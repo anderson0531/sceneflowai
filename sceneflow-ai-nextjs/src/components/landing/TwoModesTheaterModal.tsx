@@ -60,9 +60,24 @@ export function TwoModesTheaterModal({
   languageControl,
 }: TwoModesTheaterModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const prevSourceRef = useRef<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
   const [isBuffering, setIsBuffering] = useState(true)
+
+  const playModalVideo = useCallback((video: HTMLVideoElement) => {
+    void video.play().catch((err: unknown) => {
+      const errName =
+        err && typeof err === 'object' && 'name' in err
+          ? String((err as { name?: unknown }).name)
+          : ''
+      if (!video.muted && errName === 'NotAllowedError') {
+        video.muted = true
+        setIsMuted(true)
+        void video.play().catch(() => {})
+      }
+    })
+  }, [])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -75,6 +90,7 @@ export function TwoModesTheaterModal({
       setIsPlaying(true)
       setIsBuffering(true)
     } else {
+      prevSourceRef.current = null
       document.body.style.overflow = 'unset'
       const video = videoRef.current
       if (video) {
@@ -92,9 +108,15 @@ export function TwoModesTheaterModal({
     if (!open) return
     const video = videoRef.current
     if (!video) return
+    const sourceKey = `${activeLocaleId ?? ''}|${media.webmUrl ?? ''}|${media.mp4Url ?? ''}`
+    if (prevSourceRef.current !== null && prevSourceRef.current !== sourceKey) {
+      setIsBuffering(true)
+      video.load()
+    }
+    prevSourceRef.current = sourceKey
     video.muted = isMuted
-    void video.play().catch(() => {})
-  }, [open, isMuted, activeLocaleId, media.mp4Url, media.webmUrl])
+    playModalVideo(video)
+  }, [open, isMuted, activeLocaleId, media.mp4Url, media.webmUrl, playModalVideo])
 
   const toggleMute = useCallback(() => {
     const video = videoRef.current
@@ -133,12 +155,11 @@ export function TwoModesTheaterModal({
             exit={{ opacity: 0 }}
           >
             <video
-              key={activeLocaleId ?? `${media.webmUrl}|${media.mp4Url}`}
               ref={videoRef}
               poster={media.posterUrl || undefined}
               loop
               playsInline
-              preload={getModalVideoPreload(open)}
+              preload={open ? 'auto' : getModalVideoPreload(open)}
               muted={isMuted}
               autoPlay
               aria-label={caption}
@@ -147,8 +168,10 @@ export function TwoModesTheaterModal({
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onWaiting={() => setIsBuffering(true)}
+              onLoadedData={() => setIsBuffering(false)}
               onCanPlay={() => setIsBuffering(false)}
               onPlaying={() => setIsBuffering(false)}
+              onError={() => setIsBuffering(false)}
             >
               {media.webmUrl ? <source src={media.webmUrl} type="video/webm" /> : null}
               {media.mp4Url ? <source src={media.mp4Url} type="video/mp4" /> : null}

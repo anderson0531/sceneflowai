@@ -2360,18 +2360,18 @@
       "促销"
     ],
     "seriesPanel": {
-      "headerLabel": "系列圣经和第 1 集",
-      "bibleTab": "系列圣经",
-      "castTab": "锁定演员阵容",
-      "episode1Tab": "ep。 1 & 第 1 章1",
-      "seasonTab": "季节",
-      "formatLabel": "格式",
-      "durationLabel": "持续时间",
-      "artStyleLabel": "艺术风格",
+      "headerLabel": "制作档案与故事圣经",
+      "bibleTab": "世界观与风格",
+      "castTab": "角色阵容",
+      "episode1Tab": "剧情梗概",
+      "seasonTab": "故事节拍",
+      "formatLabel": "规格",
+      "durationLabel": "时长",
+      "artStyleLabel": "视觉风格",
       "continuityLockLabel": "连续性锁定",
-      "loglineLabel": "故事梗概",
-      "synopsisLabel": "系列概要和视觉圣经",
-      "lockedCastHeading": "锁定演员表和主体连续性",
+      "loglineLabel": "故事一句话梗概",
+      "synopsisLabel": "制作剧情梗概",
+      "lockedCastHeading": "核心角色与连续性设定图",
       "inputs": {
         "drama": {
           "showTitle": "白城潮流",
@@ -2468,83 +2468,78 @@
           ]
         },
         "animation": {
-          "showTitle": "哈特之家",
-          "format": "动画情景喜剧 · 5 集季",
-          "genre": "多代家庭喜剧",
-          "artStyle": "2D Flat-Cel 动画 · 大胆的墨水轮廓和温暖的郊区调色板",
-          "duration": "110 分钟季（5 × 22 分钟）· 第 1 集：22 分钟",
-          "continuityLock": "5 张锁定的家庭角色表 · 米尔威克住宅和侧门廊 · 零风格漂移",
-          "unitLabel": "第 1 季集数 (5)",
-          "artLock": "整个季节锁定的平面风格：大胆的墨水轮廓、温暖的郊区色彩以及每集相同的角色设计。该平台可以容纳多种款式。这个系列不换。",
-          "logline": "在米尔威克，哈特一家把一场家庭争吵变成了一周的笑话，而这个笑话又变成了他们仍然住在同一屋檐下的原因。",
-          "seriesSynopsis": "《哈特之家》以对公民法规痴迷的米尔威克小镇为背景，是一部 5 集、22 分钟的 2D 动画家庭情景喜剧，旨在证明整个播出季的零脱模漂移。市政职员露丝·哈特 (Ruth Hart) 和夜班交通机械师埃利斯·哈特 (Ellis Hart) 与 16 岁的辩论队长琼 (June)、9 岁的事实收集员米洛 (Milo) 以及露丝的母亲娜娜·伊内兹 (Nana Inez) 共用一间狭窄的工匠屋，她的“临时”封闭侧门廊已悄然成为家中的情感中心。每一集都将一个令人头疼的市政小问题变成连珠炮般的集体喜剧，同时保持从第一集到第五集家庭投票锁定的相同的线宽、温暖的卡通阴影调色板和多角度角色表。",
+          "showTitle": "The Silt Line（淤泥线）",
+          "format": "Stylized 3D Animated Series · Episode 1 Pilot (3 Story Beats)",
+          "genre": "复古未来海事赛博惊悚",
+          "artStyle": "Tactile Stylized 3D Animation · Industrial Dieselpunk Maritime Grit & Bioluminescent Cybernetic Accents",
+          "duration": "32 min Pilot (3 Story Beats: 10.5m · 11.5m · 10m)",
+          "continuityLock": "5 Locked 3D Character Sheets · Port Marrow North Quay Workshop & Pier 14 Auction Barge · Optical Monocle Telemetry VFX",
+          "unitLabel": "故事节拍 (3)",
+          "artLock": "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
+          "setting": "马罗港（Port Marrow）：一座融合 1920 年代黄铜海事建筑、多彩开源赛博技术、自动化潮汐与霓虹盐蚀码头的沿海复古未来港口大都会。",
+          "visualStyle": "富有触感的风格化 3D 动画，将厚重的工业柴油朋克海事质感与生物发光赛博元素相融合，突出盐蚀铸铁、水渍蓝图与闪烁琥珀色真空管纹理。",
+          "logline": "当贪婪的市政议员人为制造自动防洪闸故障以攫取重建债券并吞并马罗港工人共有的海滨合作社时，感官过载的 23 岁技术员与她的音响工程师搭档潜入离岸拍卖船，在街区被淹没前夺回失踪母亲的黑匣子遥测账本。",
+          "seriesSynopsis": "在复古未来海滨城市马罗港，23 岁的诊断技术员朱妮珀·芬奇（Juniper Finch）与 24 岁的合作社音响工程师托拜厄斯·吴（Tobias Wu）面临北区市政工坊被吞并的危机。市议员奥维尔·克레인（Orville Crane）蓄意制造自动防潮屏障故障以骗取巨额债券并强征工人码头。朱妮珀透过增强光学单镜片破译驱逐令中的遥测数据，锁定 14 号码头的离岸拍卖驳船；在哈洛威督察的自我救赎掩护与托拜厄斯声波爆破的配合下，两人携母亲埃莉诺的黑匣子账本突围入风暴之中，准备揭露这场人为洪灾。",
           "cast": [
             {
-              "name": "露丝·哈特",
-              "role": "女族长 · 锁定的 2D 角色表",
-              "descriptor": "米尔威克市政职员 (42)。赤土色针织开衫、玳瑁眼镜、彩色挂历；面无表情的声音节奏和富有表现力的眉毛弧线。"
+              "name": "Juniper Finch",
+              "role": "Lead Diagnostic Technician · North Quay Collective",
+              "descriptor": "23-year-old lead diagnostic technician at the North Quay worker-owned workshop. Razor-sharp, hyper-focused, and hardened by years of municipal neglect, she navigates the world through an augmented optical monocle that visualizes mechanical telemetry and institutional deception, though over-extension triggers paralyzing sensory overload.",
+              "imageUrl": "/images/cast/silt-line/juniper-finch.webp"
             },
             {
-              "name": "埃利斯·哈特",
-              "role": "族长 · 锁定的 2D 角色表",
-              "descriptor": "夜班市政巴士机械师 (44)。海军蓝工作服、钢制保温瓶、乐观的车库发明家，用 40 磅重的装置解决了 5 分钟的家务事。"
+              "name": "Tobias Wu",
+              "role": "Acoustic Telemetry Specialist · Co-Op Sound Engineer",
+              "descriptor": "24-year-old acoustic telemetry specialist and co-op sound-technician facing housing displacement alongside his collective. Grounded, patient, and tactically decisive, he uses acoustic resonance instrumentation not only for mechanical diagnostics but as a vital neuro-acoustic anchor to pull Juniper out of cognitive feedback loops.",
+              "imageUrl": "/images/cast/silt-line/tobias-wu.webp"
             },
             {
-              "name": "琼·哈特",
-              "role": "女儿 · 锁定的 2D 角色表",
-              "descriptor": "高中辩论队长 (16)。芥末色连帽衫搭配百褶裙，手里拿着带有注释的城镇章程；将每一条餐桌规则都视为最高法院的口头辩论。"
+              "name": "Orville Crane",
+              "role": "Municipal Councilor & Infrastructure Developer",
+              "descriptor": "Civic industrialist, municipal council member, and private infrastructure developer who orchestrates 'natural' disasters to clear real estate and extract recovery capital. Smooth, pragmatically ruthless, and impeccably tailored, he views the working-class waterfront as fiscal deadweight that must be cleansed by the sea to build high-yield luxury enclaves.",
+              "imageUrl": "/images/cast/silt-line/orville-crane.webp"
             },
             {
-              "name": "米洛·哈特",
-              "role": "儿子 · 锁定的 2D 角色表",
-              "descriptor": "家庭档案管理员和标签制作爱好者 (9)。条纹橄榄球衫、解开的高帮鞋、工业标签枪；以喜剧的节奏传递出毁灭性的真实真相。"
+              "name": "John Anderson",
+              "role": "Chief Maritime Inspector",
+              "descriptor": "Weathered chief maritime inspector whose silence was purchased a decade ago during Eleanor Finch's disappearance. Bound by bureaucratic weariness, pensions, and survivalist cynicism, he maintains Crane's perimeter until commanded to participate in outright murder and cultural arson.",
+              "imageUrl": "/images/cast/silt-line/john-anderson.webp"
             },
             {
-              "name": "娜娜·伊内兹",
-              "role": "祖母 · 锁定的 2D 角色表",
-              "descriptor": "侧门廊君主和退休裁缝 (71)。绣花靛蓝披肩、银发髻、柳条宝座；记住自 1984 年以来该街区的每一个分区差异。"
+              "name": "Inspector Bram Halloway",
+              "role": "Harbor District Investigator · Undercover Mentor",
+              "descriptor": "A seasoned, honest Harbor District investigator caught between rigid precinct bureaucracy and his obligation to protect the city's waterfront communities. Respecting Juniper's sharp mind and fond memories of her mother, he serves as an undercover mentor who feeds the kids discreet tips while running interference with municipal security.",
+              "imageUrl": "/images/cast/silt-line/inspector-bram-halloway.webp"
             }
           ],
           "episode1Synopsis": {
-            "episodeLabel": "第 1 集剧情简介·季 Premiere（4 章）",
-            "title": "第一集：排序规则",
-            "duration": "22 分钟（4 章·第 1 章现场校样：5.5 分钟）",
-            "logline": "一项十二类城镇回收任务激励埃利斯建造了一个机动车库分类输送机，它意外地将娜娜伊内兹的门廊物品分类为市政剩余物品。",
-            "synopsis": "当米尔威克颁布第 412 号条例时——要求在周四早上之前设置 12 个颜色编码的路边垃圾桶——露丝希望安静地遵守规定，这样她在市政厅的同事就不能闲聊，琼为议会麦克风起草了一份宪法挑战书，埃利斯在车库里建造了一台滑轮驱动的分拣机。这台机器在玻璃瓶上取得了胜利，然后吞噬了家里没有标签的储物盒，当米洛打印了一个标签，上面写着“娜娜的临时门廊物品”时，最终在客厅对峙，而一家人必须承认没有人知道“临时”意味着什么。",
-            "chapter1Title": "第一章（冷开和第一幕）：周四之前十二个垃圾箱",
-            "chapter1Duration": "5.5 分钟 · 初始章节校样",
-            "chapter1Synopsis": "早上 6 点 15 分，在上锁的哈特厨房里，露丝公布了该镇的十二类分类表，而埃利斯则带着一辆报废的公交车门电机从夜班回来。在快速剪辑的平板反应镜头中，米洛开始给家具贴上标签，娜娜·伊内兹宣布侧门廊不受市政管辖。"
+            "episodeLabel": "Production Synopsis · 3-Beat Animated Pilot (32 min)",
+            "title": "The Silt Line — North Quay & Pier 14",
+            "duration": "32 min (3 Story Beats: 10.5 min · 11.5 min · 10 min)",
+            "logline": "When a predatory municipal councilor stages an automated floodgate failure to collect recovery bonds and seize Port Marrow's worker-owned waterfront collective, a sensory-strained 23-year-old technician and her sound-engineer partner infiltrate an offshore auction to secure her missing mother's black-box telemetry before their district is submerged.",
+            "synopsis": "In the retro-futuristic coastal city of Port Marrow, 23-year-old diagnostic technician Juniper Finch and co-op sound engineer Tobias Wu (24) face the imminent destruction of the North Quay Municipal Workshop—a worker-owned collective supporting displaced maritime laborers. The threat comes via Councilman Orville Crane, who has engineered a deliberate failure of the automated tidal surge barriers, framing it as an 'unavoidable climate event' to default lower-quay parcels, collect billions in municipal recovery bonds, and rezone the submerged district under private 'green renewal' charters. Utilizing her augmented deductive monocle despite the blinding cognitive migraines it inflicts, Juniper decodes municipal telemetry embedded in the eviction writ, pinpointing Crane's offshore auction barge at Pier 14 where the decommissioned floodgate controls and her vanished mother Eleanor's encrypted black-box ledger are being sold off. Disguised in dockers' oilskins, Juniper and Tobias infiltrate the barge's iron catwalks. In the lower hold, Chief Inspector Bram Halloway reaches his breaking point when Crane hands him an incendiary flare and orders him to burn Eleanor's original flood baseline archives and quietly ensure the whistleblowing youths drown in the slipway. Horrified by the cost of his decade-long complicity, Halloway hesitates while Juniper taps the auction feed, suffering a sensory seizure as Eleanor's decrypted voice reveals the flood is a manufactured market play. Cornered in Crane's private gallery, Juniper rejects Crane's offer to buy her silence; Tobias sacrifices his custom acoustic hardware to blow out the panoramic windows with a sonic blast. As enforcers swarm the slipway, Halloway enacts his redemption by manually locking the hydraulic blast gates from the outside, trapping himself with Crane's guards to guarantee Juniper and Tobias escape into the storm with the ledger, ready to expose the engineered deluge.",
+            "chapter1Title": "Chapter 1 (Beat 1): Hook & Context: The Manufactured Surge",
+            "chapter1Duration": "10.5 min · Opening Story Beat",
+            "chapter1Synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability as she decodes the eviction writ telemetry."
           },
           "episodes": [
             {
               "number": "1",
-              "title": "排序规则",
-              "duration": "22分钟",
-              "synopsis": "米尔威克发布了一项新的回收命令，涉及十二类。埃利斯在车库里建造了一台分拣机。它适用于瓶子，然后灾难性地适用于家里没有标签的盒子。琼想在镇会议上挑战这一规则。露丝希望周四之前路边看起来会合规。当米洛给一个盒子贴上“娜娜门廊的东西”的标签时，这一集播出了，但没有人能同意这个标签的含义。"
+              "title": "Hook & Context: The Manufactured Surge",
+              "duration": "10.5 min",
+              "synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability."
             },
             {
               "number": "2",
-              "title": "游行天气",
-              "duration": "22分钟",
-              "synopsis": "米尔威克日预计有雨。琼想取消她辩论俱乐部的横幅。米洛想要记录闪电。娜娜·伊内兹 (Nana Inez) 拒绝向邻居挥手，因为她因围栏纠纷而一直回避。露丝仍然必须在防水布下主持该街区。笑话是防水布。关键是谁来决定庆祝活动的发生。"
+              "title": "Infiltration & The Moral Crucible",
+              "duration": "11.5 min",
+              "synopsis": "Escalate procedural tension through forensic infiltration, introduce Halloway's moral crossroads when ordered to destroy Eleanor's legacy, and uncover Eleanor's black-box cipher."
             },
             {
               "number": "3",
-              "title": "夜班早餐",
-              "duration": "22分钟",
-              "synopsis": "埃利斯黎明时分回到家，为已经离开的人做饭。六月有一场锦标赛。米洛有一次实地考察。露丝有一个逆班。一小时里，厨房就是全家人的聚会，鸡蛋是唯一合适的谈话。一块烧焦的煎饼成为人们争论房子是围绕谁的早晨建造的。"
-            },
-            {
-              "number": "4",
-              "title": "备用钥匙",
-              "duration": "22分钟",
-              "synopsis": "在埃利斯睡过头的早晨，有人一直在给猫的碗里加水。哈特夫妇调查并找到了多年前他们藏在砖下的钥匙。他们一直称其为爱管闲事的邻居一直在黎明时分。娜娜·伊内兹必须决定是收回钥匙还是承认封锁起到了帮助作用。"
-            },
-            {
-              "number": "5",
-              "title": "门廊投票",
-              "duration": "22分钟",
-              "synopsis": "娜娜伊内兹宣布她已经完成了“临时”门廊的工作，并将搬到她姐姐的小镇。哈特夫妇召集家庭投票。将门廊重建为她真正的房间意味着埃利斯的车库项目停止，琼的学习角移动，而米尔威克必须允许它一直忽视的改变。季节就此转变：喜剧不再讲述混乱的一周。这是关于谁能留下来的问题。"
+              "title": "Climax & Escape: The Silt Line Defiance",
+              "duration": "10 min",
+              "synopsis": "Deliver an emotionally grounded climax where Crane's extortion is shattered by sacrificial tech and Halloway achieves moral redemption by locking down the escape corridor."
             }
           ]
         },
@@ -2858,7 +2853,9 @@
             }
           ]
         }
-      }
+      },
+      "settingLabel": "故事背景",
+      "expandPortraitHint": "点击角色肖像查看大图"
     },
     "explorerHandoff": "这些链接展示的是成品；Explorer 则是让你亲手制作的地方。",
     "languagesBanner": "支持 7 大语言（EN · ES · PT · HI · ZH · AR · TH）画面级语言同步（In-Scene Language Sync）——呈现超过 21 分钟的同步电影级剧情片（7 个语种 × 3 分钟成片版本），远超传统配音。",
@@ -2914,40 +2911,40 @@
       },
       {
         "id": "animation",
-        "title": "融合多种风格的完整季动画剧集，保持统一的艺术风格。",
-        "subtitle": "从第一集到最后一集，统一采用扁平赛璐珞（flat-cel）风格，并固定哈特（Hart）一家和米尔威克（Millwick）小镇的设定。逐个节奏点把控笑料的呈现，随后在放映室审阅成片。",
-        "badge": "多风格",
+        "title": "多风格全季动画剧集。始终如一的艺术风格。",
+        "subtitle": "在每一个故事节拍中锁定触感化风格化 3D 柴油朋克与赛博格美学、五位核心角色设定以及马罗港霓虹盐蚀码头——并支持 7 种全球语言的场景内对白同步。",
+        "badge": "风格化 3D",
+        "screeningRoomPreview": "《淤泥线》(The Silt Line) — 放映室",
         "solutionPillars": [
           {
-            "title": "风格一致性",
-            "frictionHeadline": "风格崩塌",
-            "friction": "卡通与动漫风格在镜头切换间不断扭曲变幻：线条走样，配色崩坏，角色更是异变为一种既具照片级写实感又令人感到诡异不适的混沌团块。",
-            "solutionHeadline": "固定美术风格引擎",
-            "solution": "从第一帧起就定格您的视觉风格。SceneFlow 能够锁定整集内容中的角色设计、线条粗细及着色模型，确保您的角色始终保持独有的风格。"
+            "title": "Stylistic Consistency",
+            "frictionHeadline": "Style Meltdown.",
+            "friction": "Stylized 3D and animated worlds constantly warp between shots, losing material textures, breaking lighting palettes, and drifting characters off-model.",
+            "solutionHeadline": "Locked Art Style Engine.",
+            "solution": "Freeze tactile dieselpunk brass, salt-corroded iron, and bioluminescent cybernetic shaders from frame one so every character and harbor set stays model-accurate."
           },
           {
-            "title": "夸张的动画与物理效果",
-            "frictionHeadline": "僵硬且卡顿的动作",
-            "friction": "生成式模型难以处理快节奏的闹剧式动作、突发性的二次反应以及卡通特有的那种富有弹性的物理效果，往往会将充满活力的搞笑桥段变成画面崩坏、仿佛融化般的伪影。",
-            "solutionHeadline": "动作与姿势锚定",
-            "solution": "在不破坏模型结构的前提下，驱动角色进行动态运动与极具表现力的姿态变化。凭借全面的动作控制能力，打造极具冲击力的肢体喜剧效果、突发式镜头切换以及夸张丰富的面部表情。"
+            "title": "Complex VFX & Deductive Overlays",
+            "frictionHeadline": "Inconsistent Visual Motifs.",
+            "friction": "Recurring character-specific visual mechanics — like augmented optical telemetry or holographic stress lines — vanish or mutate across cuts.",
+            "solutionHeadline": "Reference-Anchored Direction.",
+            "solution": "Anchor Juniper's optical monocle telemetry, chromatic stress aberrations, and Tobias's acoustic resonance gear consistently across every dramatic beat."
           },
           {
-            "title": "喜剧时机与节奏",
-            "frictionHeadline": "被毁掉的笑话包袱",
-            "friction": "幽默往往蕴含于停顿与节奏切分之中。标准的5秒生成式循环会导致节奏生硬，从而破坏笑话的呈现效果。",
-            "solutionHeadline": "节拍级精准剪辑",
-            "solution": "精确把控场景节奏，细化至每一帧。在最终渲染前，直接在以节奏为核心的时间轴上调整戏剧性停顿、铺垫与笑点（或关键转折）之间的时机，以及快速反应镜头。"
+            "title": "Dramatic Tension & Beat Pacing",
+            "frictionHeadline": "Disconnected Action Clips.",
+            "friction": "High-stakes infiltration sequences fall apart when generated as isolated 5-second clips without continuous spatial geography or act structure.",
+            "solutionHeadline": "Beat-Precision Storyboarding.",
+            "solution": "Direct multi-minute story beats — from the North Quay workshop to Pier 14’s hydraulic blast gates — with intentional camera blocking before final render."
           },
           {
-            "title": "高能对话与人声同步",
-            "frictionHeadline": "毫无生气的木偶嘴巴。",
-            "friction": "千篇一律的AI对话显得平淡而机械，破坏了情景喜剧中那种机智诙谐、节奏明快的互动活力。",
-            "solutionHeadline": "语音与表情动态同步",
-            "solution": "将语音演绎与充满活力的面部表演直接对应。对白、生动的口型与喜剧风格的配音无缝契合，从而实现最佳的喜剧效果。"
+            "title": "Global In-Scene Vocal Sync",
+            "frictionHeadline": "Detached Dubbing & Lifeless Lip-Sync.",
+            "friction": "Translating stylized 3D animation into global languages usually breaks mouth shapes and flattens emotional vocal performance.",
+            "solutionHeadline": "7-Language In-Scene Sync.",
+            "solution": "Deliver synchronized character performances in English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai while preserving expressive 3D facial acting."
           }
-        ],
-        "screeningRoomPreview": "哈特之家 — SFAI 放映室"
+        ]
       },
       {
         "id": "documentary",

@@ -107,7 +107,7 @@ export function getCinematicDramaTrailerSources(locale?: string): {
   return CINEMATIC_DRAMA_DUB_TRAILERS[resolved]
 }
 
-export const ANIMATED_SERIES_TRAILER_VERSION = '20261101'
+export const ANIMATED_SERIES_TRAILER_VERSION = '20261112'
 
 export const ANIMATED_SERIES_TRAILER_WEBM = `/videos/animated-series-trailer.webm?v=${ANIMATED_SERIES_TRAILER_VERSION}`
 export const ANIMATED_SERIES_TRAILER_MP4 = `/videos/animated-series-trailer.mp4?v=${ANIMATED_SERIES_TRAILER_VERSION}`
@@ -123,6 +123,16 @@ export const ANIMATED_SERIES_DUB_LOCALE_IDS = [
 ] as const
 
 export type AnimatedSeriesDubLocaleId = (typeof ANIMATED_SERIES_DUB_LOCALE_IDS)[number]
+
+export const ANIMATED_SERIES_SOURCE_BLOB_URLS: Record<AnimatedSeriesDubLocaleId, string> = {
+  en: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/English-Video-v2.mp4',
+  es: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Spanish-Video-v1%20%281%29.mp4',
+  pt: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Portuguese-Video-v2.mp4',
+  hi: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Hindi-Video-v1%20%281%29.mp4',
+  zh: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Chinese-Mandarin-Video-v1%20%281%29.mp4',
+  ar: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Arabic-Video-v1.mp4',
+  th: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Thai-Video-v1.mp4',
+}
 
 export const ANIMATED_SERIES_DUB_TRAILERS: Record<
   AnimatedSeriesDubLocaleId,
