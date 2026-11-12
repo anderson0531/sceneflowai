@@ -13,6 +13,7 @@
  * or a move, so the model is not asked to dolly and establish at once.
  */
 
+import { isPhotorealisticArtStyle } from '@/lib/artStyle/globalArtStyle'
 import { getArtStyleNegativeTerms, getArtStyleVideoPromptSuffix } from '@/lib/vision/artStyle'
 import { affirmativeStartFrameState } from '@/lib/vision/locationStateAnalysis'
 
@@ -656,23 +657,43 @@ function leadForBeat(beat: SceneBeat, options?: CompileBeatVideoPromptOptions): 
       return baseVisual
     }
     if (hasCustomSpeaker && rawSpeaker) {
-      const speakerAlias = toCharacterPromptAlias(rawSpeaker)
-      return `${baseVisual}. ${speakerAlias} speaks: "${cleanLine}".${delivery}${performance}`
+      const cleanSpeaker = rawSpeaker
+        .replace(/\s*\((?:V\.?O\.?|O\.?S\.?|O\.?C\.?|OFF[- ]?SCREEN|VOICEOVER)\)\s*/gi, '')
+        .trim()
+      const speakerAlias = toCharacterPromptAlias(cleanSpeaker || rawSpeaker)
+      return `${baseVisual}. Off-screen voiceover narration by ${speakerAlias} (mouths closed on camera, no lip-sync): "${cleanLine}".${delivery}${performance}`
     }
     return `${baseVisual}. Voiceover narration: "${cleanLine}".${delivery}${performance}`
   }
 
-  const character = beat.character ?? 'Character'
-  const speakerAlias = toCharacterPromptAlias(character)
+  const rawCharacter = beat.character ?? 'Character'
+  const isExplicitOffScreenSpeaker =
+    /\((?:V\.?O\.?|O\.?S\.?|O\.?C\.?|OFF[- ]?SCREEN|VOICEOVER)\)/i.test(rawCharacter)
+  const cleanCharacter = rawCharacter
+    .replace(/\s*\((?:V\.?O\.?|O\.?S\.?|O\.?C\.?|OFF[- ]?SCREEN|VOICEOVER)\)\s*/gi, '')
+    .trim() || 'Character'
+  const statedCast = beat.beatDirection?.castInFrame
+  const speakerOmittedFromStatedCast =
+    Array.isArray(statedCast) &&
+    statedCast.length > 0 &&
+    !statedCast.some((inFrame) => {
+      const a = inFrame.trim().toLowerCase()
+      const b = cleanCharacter.toLowerCase()
+      return a === b || a.includes(b) || b.includes(a)
+    })
+  const speakerAlias = toCharacterPromptAlias(cleanCharacter)
   const parsed = parsePerformanceCue(options?.excerpt ?? beat.line ?? '')
   let cleanLine = parsed.spokenText.replace(/"/g, "'")
   if (options?.characterGender) {
     cleanLine = correctPronounsToGender(cleanLine, options.characterGender, {
-      characterName: options.characterName ?? character,
+      characterName: options.characterName ?? cleanCharacter,
     })
   }
   const delivery = parsed.deliveryProse ? ` Delivery: ${parsed.deliveryProse}` : ''
   const performance = formatPerformanceClause(beat.voiceDirection)
+  if (isExplicitOffScreenSpeaker || speakerOmittedFromStatedCast) {
+    return `Off-screen voice of ${speakerAlias} (audio from off-camera; visible characters listen and react without lip-sync): "${cleanLine}".${delivery}${performance}`
+  }
   return `${speakerAlias} speaks naturally: "${cleanLine}".${delivery}${performance}`
 }
 
@@ -1126,7 +1147,11 @@ export function compileBeatVideoPromptFromDirection(
     if (performance && !/performance:/i.test(prompt)) {
       prompt = normalizePromptJoin(prompt, performance)
     }
-    if (styleSuffix && !tokenAlreadyInPrompt(styleSuffix.slice(0, 40), prompt)) {
+    if (
+      !isPhotorealisticArtStyle(artStyleId) &&
+      styleSuffix &&
+      !tokenAlreadyInPrompt(styleSuffix.slice(0, 40), prompt)
+    ) {
       prompt = normalizePromptJoin(prompt, styleSuffix)
     }
     return {

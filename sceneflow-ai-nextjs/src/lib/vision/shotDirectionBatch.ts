@@ -75,10 +75,20 @@ export function chunkShotDirectionTargets<T>(
 }
 
 export function shotDirectionCatalogFromPhase(visionPhase: {
-  characters?: Array<{ name?: string }>
+  characters?: Array<{
+    name?: string
+    referenceImage?: string
+    imageUrl?: string
+    wardrobes?: Array<{ fullBodyUrl?: string; combinedCharacterRefUrl?: string }>
+  }>
   references?: {
-    objectReferences?: Array<{ name?: string }>
-    locationReferences?: Array<{ location?: string; name?: string }>
+    objectReferences?: Array<{ name?: string; imageUrl?: string }>
+    locationReferences?: Array<{
+      location?: string
+      name?: string
+      imageUrl?: string
+      versions?: Array<{ imageUrl?: string }>
+    }>
   }
 } | null | undefined): BeatSequenceReferenceCatalog {
   const characters = Array.isArray(visionPhase?.characters) ? visionPhase.characters : []
@@ -88,14 +98,30 @@ export function shotDirectionCatalogFromPhase(visionPhase: {
   const locationReferences = Array.isArray(visionPhase?.references?.locationReferences)
     ? visionPhase.references.locationReferences
     : []
+  const hasImage = (url?: string): boolean => Boolean(typeof url === 'string' && url.trim())
   return {
     characterNames: characters
+      .filter(
+        (character) =>
+          hasImage(character?.referenceImage) ||
+          hasImage(character?.imageUrl) ||
+          (Array.isArray(character?.wardrobes) &&
+            character.wardrobes.some(
+              (w) => hasImage(w?.fullBodyUrl) || hasImage(w?.combinedCharacterRefUrl)
+            ))
+      )
       .map((character) => String(character?.name ?? '').trim())
       .filter(Boolean),
     propNames: objectReferences
+      .filter((object) => hasImage(object?.imageUrl))
       .map((object) => String(object?.name ?? '').trim())
       .filter(Boolean),
     locationNames: locationReferences
+      .filter(
+        (location) =>
+          hasImage(location?.imageUrl) ||
+          (Array.isArray(location?.versions) && location.versions.some((v) => hasImage(v?.imageUrl)))
+      )
       .map((location) => String(location?.location || location?.name || '').trim())
       .filter(Boolean),
   }

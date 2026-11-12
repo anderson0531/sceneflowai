@@ -62,13 +62,27 @@ const INLINE_FACIAL_TRAIT_PATTERNS: RegExp[] = [
 ]
 
 /**
+ * Mask quoted spoken dialogue spans so reference-conflict regexes never mutate
+ * spoken words (e.g. "Elara's" -> "the subject's" or "trembling" -> "slightly unsteady").
+ */
+const SPOKEN_QUOTE_SPAN_RE =
+  /"(?:[^"\\\n]|\\.)+"|(?<=[:,\s])'(?:[^'\n]|'(?=[a-zA-Z])){2,}'/g
+
+/**
  * Neutralize scene prompt text before Omni REF assembly.
  * Idempotent-friendly; safe to run on already-softened text.
  */
 export function neutralizeReferenceConflictPrompt(scenePrompt: string): string {
   if (!scenePrompt?.trim()) return scenePrompt
 
-  let text = sanitizeFacialFeatureConflicts(scenePrompt)
+  const preservedQuotes: string[] = []
+  const maskedInput = scenePrompt.replace(SPOKEN_QUOTE_SPAN_RE, (match) => {
+    const idx = preservedQuotes.length
+    preservedQuotes.push(match)
+    return `__SF_SPOKEN_QUOTE_${idx}__`
+  })
+
+  let text = sanitizeFacialFeatureConflicts(maskedInput)
 
   for (const [phrase, replacement] of Object.entries(REF_CONFLICT_PHRASES)) {
     const regex = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
@@ -91,6 +105,13 @@ export function neutralizeReferenceConflictPrompt(scenePrompt: string): string {
     const part = typeof bodyPart === 'string' ? bodyPart.toLowerCase() : 'body'
     return `The subject's ${part}`
   })
+
+  if (preservedQuotes.length > 0) {
+    text = text.replace(/__SF_SPOKEN_QUOTE_(\d+)__/g, (_m, rawIdx) => {
+      const idx = Number(rawIdx)
+      return preservedQuotes[idx] ?? _m
+    })
+  }
 
   return text
     .replace(/\s+,/g, ',')

@@ -484,7 +484,9 @@ export async function generateSegmentVideoCore(
 
   let referenceFallbackPrompt: string | undefined
 
-  if (method !== 'FTV' && referenceImages && referenceImages.length > 0) {
+  const usesFrameConditioningOnly = method === 'FTV' || method === 'I2V'
+
+  if (!usesFrameConditioningOnly && referenceImages && referenceImages.length > 0) {
     const prioritized = veoRefsToPrioritized(referenceImages)
     const bindings = bindingsFromReferenceRecords(prioritized)
 
@@ -510,7 +512,7 @@ export async function generateSegmentVideoCore(
     prompt,
     guidePrompt,
     method,
-    referenceImages: method === 'FTV' ? undefined : referenceImages,
+    referenceImages: usesFrameConditioningOnly ? undefined : referenceImages,
     segmentIndex,
     hasEndFrame: Boolean(method === 'FTV' && endFrameUrl),
     audioContext,

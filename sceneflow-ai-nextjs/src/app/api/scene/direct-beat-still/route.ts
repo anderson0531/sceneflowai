@@ -16,7 +16,10 @@ import {
 import { directBeatStills } from '@/lib/intelligence/beat-still-director'
 import { scoreBeatDirectionFidelity } from '@/lib/intelligence/beatDirectionFidelity'
 import { getSceneBeats } from '@/lib/script/beatMigration'
-import { buildBeatBoundContinuity } from '@/lib/vision/shotDirectionBatch'
+import {
+  buildBeatBoundContinuity,
+  shotDirectionCatalogFromPhase,
+} from '@/lib/vision/shotDirectionBatch'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { getUiSandboxProject, isDemoProjectId } from '@/lib/demo/uiSandboxProject'
 
@@ -123,19 +126,7 @@ export async function POST(req: NextRequest) {
     const locationReferences = Array.isArray(visionPhase.references?.locationReferences)
       ? visionPhase.references.locationReferences
       : []
-    const catalog = {
-      characterNames: characters
-        .map((c: { name?: string }) => String(c?.name ?? '').trim())
-        .filter(Boolean),
-      propNames: objectReferences
-        .map((o: { name?: string }) => String(o?.name ?? '').trim())
-        .filter(Boolean),
-      locationNames: locationReferences
-        .map((l: { location?: string; name?: string }) =>
-          String(l?.location || l?.name || '').trim()
-        )
-        .filter(Boolean),
-    }
+    const catalog = shotDirectionCatalogFromPhase(visionPhase)
 
     const boundContinuity = buildBeatBoundContinuity({
       scene: scene as Record<string, unknown>,

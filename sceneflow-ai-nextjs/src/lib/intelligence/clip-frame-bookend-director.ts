@@ -35,7 +35,11 @@ const BOOKEND_CACHE_TTL_MS = 10 * 60 * 1000
 const inFlightBookendRequests = new Map<string, Promise<DirectClipFrameBookendsResult>>()
 
 function getCacheKey(request: ClipBookendDirectorRequest): string {
-  return `${request.clipPrompt.trim()}|${(request.shotStillPrompt || '').trim()}`
+  const beatId = request.beat?.beatId || ''
+  const duration = request.durationSeconds ?? ''
+  const cast = (request.beat?.beatDirection?.castInFrame ?? []).join(',')
+  const props = (request.beat?.beatDirection?.keyProps ?? []).join(',')
+  return `${beatId}|${duration}|${cast}|${props}|${request.clipPrompt.trim()}|${(request.shotStillPrompt || '').trim()}`
 }
 
 export async function directClipFrameBookends(

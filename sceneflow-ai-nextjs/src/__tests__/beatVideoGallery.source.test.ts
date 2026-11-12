@@ -110,7 +110,8 @@ describe('Video tab inline clip preview', () => {
     expect(gallery).not.toContain('Use previous end frame')
     expect(gallery).toContain('use Shot Director to change this clip\'s video prompt')
     expect(gallery).toContain('Regenerate clip')
-    expect(gallery).toContain('Retake')
+    expect(gallery).toContain('onChangeDuration')
+    expect(gallery).not.toContain('Take (')
   })
 
   it('provides Copy prompt buttons for shot stills and shot clips across production views', () => {

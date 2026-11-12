@@ -25,18 +25,21 @@ describe('clip and still controls stay on separate paths', () => {
     expect(handler).not.toContain('handleGenerateBeatFrameImage')
   })
 
-  it('wires the video overlay to clip generate, the video dialog, and video edit', () => {
+  it('wires the video overlay to clip generate and unified Shot Director without legacy Direct Clip / Edit triggers', () => {
     const consoleSrc = readSource(CONSOLE)
     const gallery = readSource(GALLERY)
     const panel = readSource(PANEL)
-    expect(consoleSrc).toContain('onDirectVideo={(segment) => handleRequestTake(segment, false)}')
     expect(consoleSrc).toContain('onDirectBeat={onDirectBeat}')
+    expect(consoleSrc).toContain('sourceMethod={effectiveVideoSourceMethod}')
+    expect(consoleSrc).toContain('onChangeDuration={handleChangeClipDuration}')
     expect(consoleSrc).not.toContain('BeatVideoDirectorDialog')
-    expect(consoleSrc).toContain('onEditClip={(segment) => setEditingVideoSegment(segment)}')
+    expect(consoleSrc).not.toContain('onDirectVideo=')
+    expect(consoleSrc).not.toContain('onEditClip=')
+    expect(consoleSrc).not.toContain('onTake={handleRequestTake}')
     expect(consoleSrc).not.toContain('onRegenerateBeatStill')
     expect(consoleSrc).not.toContain('onDirectBeatStill')
-    expect(gallery).toContain('directTitle="Direct Clip"')
     expect(gallery).toContain('directorTitle="Shot Director"')
+    expect(gallery).not.toContain('directTitle="Direct Clip"')
     expect(gallery).toContain('uploadAccept="video/*"')
     expect(gallery).toContain('onGenerateClip?.(previewSegment)')
     expect(gallery).not.toContain('onRegenerateStill')
@@ -54,13 +57,13 @@ describe('clip and still controls stay on separate paths', () => {
     expect(consoleSrc).toContain('buildConsolidatedTakeConfig')
   })
 
-  it('labels the video card clip and start frame as different actions', () => {
+  it('labels the video card clip and conditioning frames distinctly through Shot Director', () => {
     const gallery = readSource(GALLERY)
     expect(gallery).toContain('Generate clip')
     expect(gallery).toContain('Regenerate clip')
     expect(gallery).toContain('Start frame')
-    expect(gallery).toContain('Direct Clip')
     expect(gallery).toContain('Shot Director')
+    expect(gallery).not.toContain('Direct Clip')
     expect(gallery).not.toContain('Generate start frame')
     expect(gallery).not.toContain('Regenerate start frame')
   })

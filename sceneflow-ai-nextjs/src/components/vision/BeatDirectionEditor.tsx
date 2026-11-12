@@ -3,7 +3,10 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Check, ChevronDown, ChevronRight, Clapperboard, Copy } from 'lucide-react'
 import { toast } from 'sonner'
-import { BeatDirectorDialog } from '@/components/vision/BeatDirectorDialog'
+import {
+  BeatDirectorDialog,
+  type ShotDirectorTargetSurface,
+} from '@/components/vision/BeatDirectorDialog'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
 import { composeBeatAudioDirection } from '@/lib/audio/syncBeatAudioDirection'
 import {
@@ -45,6 +48,12 @@ import {
   selectionFromBeat,
   stripPromptOverrides,
 } from '@/lib/vision/saveBeatDirection'
+import {
+  frameEditReferenceKeys,
+  listAllFrameEditCharacterReferences,
+  listFrameEditLocationStills,
+  resolveFrameEditCharacterReferences,
+} from '@/lib/vision/resolveFrameEditCharacterReferences'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 
@@ -83,6 +92,22 @@ export interface BeatDirectionEditorProps {
   initialInstruction?: string
   /** Pre-load Direct Shot patch preview (e.g. from Scene Video Reviewer). */
   initialPatch?: StillDirectorPatch | null
+  /** Which stage surface opened Shot Director ('still' | 'action-start' | 'end' | 'clip'). */
+  targetSurface?: ShotDirectorTargetSurface
+  /** Current rendered frame image URL when opened on a Still / Start Frame / End Frame. */
+  currentFrameImageUrl?: string | null
+  /** Persist a surgically refined frame image as a new version without slot-machine regeneration. */
+  onSaveEditedFrame?: (newImageUrl: string) => void | Promise<void>
+  /** Save direction and immediately shoot the frame or render the clip. */
+  onSaveAndGenerate?: () => void | Promise<void>
+  /** Active video conditioning target ('reference' | 'frame') for clip prompt preview. */
+  clipTargetMethod?: 'reference' | 'frame'
+  /** Optional per-shot clip duration control when opened from Clips. */
+  clipDurationSeconds?: number
+  clipDurationOptions?: number[]
+  onChangeClipDuration?: (seconds: number) => void
+  /** Aspect ratio for surgical frame refinement. */
+  aspectRatio?: '16:9' | '9:16' | '1:1' | '4:3' | '3:4'
 }
 
 export interface DirectionCharacter {
@@ -240,6 +265,15 @@ export function BeatDirectionEditor({
   initialSafety = false,
   initialInstruction,
   initialPatch,
+  targetSurface,
+  currentFrameImageUrl,
+  onSaveEditedFrame,
+  onSaveAndGenerate,
+  clipTargetMethod,
+  clipDurationSeconds,
+  clipDurationOptions,
+  onChangeClipDuration,
+  aspectRatio = '16:9',
 }: BeatDirectionEditorProps) {
   const [expanded, setExpanded] = useState(layout === 'board')
   const [directorOpenInternal, setDirectorOpenInternal] = useState(false)
@@ -302,9 +336,17 @@ export function BeatDirectionEditor({
     return compileBeatVideoPromptFromDirection(beat, sceneDirection, {
       previousBeat,
       artStyleId: promptComposition?.artStyleAnchor,
+      ...(clipTargetMethod ? { targetMethod: clipTargetMethod } : {}),
       ...(beatMusicCue ? { musicCue: beatMusicCue } : {}),
     }).prompt
-  }, [beat, previousBeat, sceneDirection, promptComposition?.artStyleAnchor, beatMusicCue])
+  }, [
+    beat,
+    previousBeat,
+    sceneDirection,
+    promptComposition?.artStyleAnchor,
+    clipTargetMethod,
+    beatMusicCue,
+  ])
 
   const resolvedSelection = useMemo(
     () =>
@@ -520,6 +562,50 @@ export function BeatDirectionEditor({
     </button>
   )
 
+  const frameEditCharacterReferences = useMemo(() => {
+    if (!currentFrameImageUrl) return undefined
+    const allRefs = listAllFrameEditCharacterReferences({
+      scene: sceneRecord ?? {},
+      sceneIndex: sceneIdx,
+      characters: characters as unknown as Record<string, unknown>[],
+    })
+    return allRefs
+  }, [currentFrameImageUrl, sceneRecord, sceneIdx, characters])
+
+  const defaultSelectedCharRefKeys = useMemo(() => {
+    if (!currentFrameImageUrl) return undefined
+    const beatRefs = resolveFrameEditCharacterReferences({
+      editingFrame: {
+        kind: 'beat',
+        sceneIndex: sceneIdx,
+        beatId: beat.beatId,
+        imageUrl: currentFrameImageUrl,
+      },
+      scene: sceneRecord ?? {},
+      sceneIndex: sceneIdx,
+      characters: characters as unknown as Record<string, unknown>[],
+      locationReferences: locationReferences as LocationReference[],
+      objectReferences: objectReferences as never,
+    })
+    return frameEditReferenceKeys(beatRefs)
+  }, [
+    currentFrameImageUrl,
+    sceneIdx,
+    beat.beatId,
+    sceneRecord,
+    characters,
+    locationReferences,
+    objectReferences,
+  ])
+
+  const frameEditLocationStills = useMemo(
+    () =>
+      currentFrameImageUrl
+        ? listFrameEditLocationStills(locationReferences as LocationReference[])
+        : undefined,
+    [currentFrameImageUrl, locationReferences]
+  )
+
   const directorDialog = (
     <BeatDirectorDialog
       open={directorOpen}
@@ -535,6 +621,23 @@ export function BeatDirectionEditor({
       objectReferences={objectReferences}
       referenceSelection={referenceSelection}
       onSaveDirection={saveDirectionPreview}
+      onSaveAndGenerate={onSaveAndGenerate}
+      targetSurface={targetSurface}
+      currentFrameImageUrl={currentFrameImageUrl}
+      onSaveEditedFrame={onSaveEditedFrame}
+      aspectRatio={aspectRatio}
+      frameEditCharacterReferences={frameEditCharacterReferences}
+      defaultSelectedCharRefKeys={defaultSelectedCharRefKeys}
+      frameEditLocationStills={frameEditLocationStills}
+      defaultSelectedLocationIds={
+        referenceSelection.locationRefId ? [referenceSelection.locationRefId] : undefined
+      }
+      defaultSelectedPropIds={referenceSelection.objectRefIds}
+      compiledStillPrompt={framePreview}
+      compiledClipPrompt={videoPreview}
+      clipDurationSeconds={clipDurationSeconds}
+      clipDurationOptions={clipDurationOptions}
+      onChangeClipDuration={onChangeClipDuration}
       onToggleCharacter={toggleCharacter}
       onToggleObject={toggleObject}
       onSelectLocation={selectLocation}

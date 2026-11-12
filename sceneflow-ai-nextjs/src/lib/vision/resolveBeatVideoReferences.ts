@@ -317,6 +317,9 @@ export function resolveBeatVideoReferences(
       : beatContext.characterWardrobes
 
   const tightUpperBodyShot = isBeatTightUpperBodyShot(beat)
+  const strictFaceCloseUp = /^(?:extreme\s+close[- ]?up|macro\s+close[- ]?up|ecu|close[- ]?up|cu)\b/i.test(
+    String(beat.beatDirection?.shotType || '').trim()
+  )
   const explicitDualOnly =
     args.includeWardrobeReferenceImages === true && args.includeWardrobeDiptych === undefined
   const explicitIdentityOnly =
@@ -357,7 +360,11 @@ export function resolveBeatVideoReferences(
       includeWardrobeDiptych,
     })
 
-    const sentDiptych = Boolean(refPair.hasWardrobeDiptych && refPair.wardrobeDiptychUrl)
+    const preferDiscreteIdentityOnStrictCloseUp =
+      strictFaceCloseUp && Boolean(refPair.identityUrl && refPair.identityUrl.trim())
+    const sentDiptych =
+      !preferDiscreteIdentityOnStrictCloseUp &&
+      Boolean(refPair.hasWardrobeDiptych && refPair.wardrobeDiptychUrl)
     const heightPhrase = tightUpperBodyShot
       ? undefined
       : extractCharacterHeightPhrase({
@@ -403,9 +410,9 @@ export function resolveBeatVideoReferences(
     }
 
     if (refPair.identityUrl) {
-      const hasSeparateWardrobe = Boolean(
-        refPair.wardrobeUrl && refPair.wardrobeUrl !== refPair.identityUrl
-      )
+      const hasSeparateWardrobe =
+        !strictFaceCloseUp &&
+        Boolean(refPair.wardrobeUrl && refPair.wardrobeUrl !== refPair.identityUrl)
       imageReferences.push({
         imageUrl: refPair.identityUrl,
         refRole: 'identity',

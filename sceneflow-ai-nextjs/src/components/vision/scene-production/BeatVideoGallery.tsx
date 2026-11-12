@@ -1,12 +1,30 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, Camera, Check, Clapperboard, Copy, Download, Film, Loader2, Maximize2, Minimize2, Pause, PlayCircle, Settings2, Subtitles, Upload, Wand2 } from 'lucide-react'
+import {
+  AlertTriangle,
+  Camera,
+  Check,
+  Clapperboard,
+  Copy,
+  Download,
+  Film,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Pause,
+  PlayCircle,
+  RefreshCw,
+  Sparkles,
+  Subtitles,
+  Upload,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { saveVideoFile } from '@/lib/download/saveFile'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { Button } from '@/components/ui/Button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { SceneImageFrame } from '@/components/vision/SceneImageFrame'
 import { GenerationErrorCard } from '@/components/vision/GenerationErrorCard'
@@ -16,8 +34,7 @@ import {
   shotKindMarker,
   type SceneBeatStageMarker,
 } from '@/components/vision/scene-production/SceneBeatStage'
-import type { SceneSegment } from './types'
-import type { DirectorQueueItem } from '@/hooks/useVideoQueue'
+import type { DirectorQueueItem, SceneSegment } from './types'
 import {
   clipFailureTooltip,
   isContentPolicyFailureMessage,
@@ -70,7 +87,7 @@ const videoQualityLabels: Record<VideoQualityFilter, string> = {
 const videoQualityTooltips: Record<VideoQualityFilter, string> = {
   all: 'All clips in this scene.',
   final: 'Clips rendered in Final quality (1080p / 4K), on a Final frame, or via Standard Reference-to-Video.',
-  draft: 'Clips rendered in Draft quality (720p) or whose source frame is a draft.',
+  draft: 'Clips whose pre-vis frame is a draft.',
 }
 
 function clipStatus(item?: DirectorQueueItem): { label: string; className: string } | null {
@@ -162,6 +179,12 @@ interface BeatVideoGalleryProps {
   onToggleClipCaptions?: (segmentId: string, nextIncludeCaptions: boolean) => void
   /** Whether shot/clip prompts are currently being updated or saved. */
   isUpdatingPrompts?: boolean
+  /** Active clip source conditioning mode ('reference' | 'frame'). */
+  sourceMethod?: 'reference' | 'frame'
+  /** Active clip engine mode ('standard' | 'creative'). */
+  generationMode?: 'standard' | 'creative'
+  /** Update per-shot clip duration directly without opening a legacy dialog. */
+  onChangeDuration?: (segment: SceneSegment, seconds: number) => void
 }
 
 export function BeatVideoGallery({
@@ -177,14 +200,11 @@ export function BeatVideoGallery({
   readOnlyPrompts = false,
   renderedCount,
   totalCount,
-  onTake,
   onUpload,
-  onRetake,
   onGenerateClip,
-  onDirectVideo,
   onDirectBeat,
-  onEditClip,
   onRestoreTake,
+  onOpenPreVis,
   generatingClipId,
   selectedBeatId = null,
   onSelectBeat,
@@ -198,6 +218,9 @@ export function BeatVideoGallery({
   generatingLanguageClipId = null,
   onToggleClipCaptions,
   isUpdatingPrompts = false,
+  sourceMethod = 'reference',
+  generationMode = 'standard',
+  onChangeDuration,
 }: BeatVideoGalleryProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(clips[0]?.key ?? null)
   const [attention, setAttention] = useState<VideoAttentionFilter>('all')
@@ -595,38 +618,242 @@ export function BeatVideoGallery({
                 No {languageName} clip yet. This preview is the English master.
               </p>
             )}
+            {preview &&
+              (sourceMethod === 'frame' ||
+                generationMode === 'creative' ||
+                Boolean(preview.f2vStartUrl || preview.f2vEndUrl)) && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-700/50 bg-slate-900/60 px-2.5 py-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="rounded bg-indigo-500/20 px-2 py-0.5 text-[10px] font-semibold text-indigo-200 border border-indigo-500/30">
+                      {(preview.f2vStartUrl || preview.thumbnailUrl) && preview.f2vEndUrl
+                        ? 'Frame-to-Video (Start + End)'
+                        : preview.f2vStartUrl || preview.thumbnailUrl
+                          ? 'Start Frame Conditioned'
+                          : 'Needs Start Frame'}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded border border-slate-700/70 bg-slate-800/80 px-2 py-0.5 text-[11px] text-slate-200">
+                      <span
+                        className={cn(
+                          'h-1.5 w-1.5 rounded-full',
+                          preview.f2vStartUrl || preview.thumbnailUrl
+                            ? 'bg-emerald-400'
+                            : 'bg-amber-400'
+                        )}
+                      />
+                      {(preview.f2vStartUrl || preview.thumbnailUrl) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={preview.f2vStartUrl || preview.thumbnailUrl || ''}
+                          alt=""
+                          className="h-4 w-6 rounded-sm object-cover bg-slate-900"
+                        />
+                      )}
+                      Start Frame
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded border border-slate-700/70 bg-slate-800/80 px-2 py-0.5 text-[11px] text-slate-200">
+                      <span
+                        className={cn(
+                          'h-1.5 w-1.5 rounded-full',
+                          preview.f2vEndUrl ? 'bg-emerald-400' : 'bg-slate-500'
+                        )}
+                      />
+                      {preview.f2vEndUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={preview.f2vEndUrl}
+                          alt=""
+                          className="h-4 w-6 rounded-sm object-cover bg-slate-900"
+                        />
+                      )}
+                      End Frame
+                    </span>
+                  </div>
+                  {onOpenPreVis && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={onOpenPreVis}
+                      className="h-6 border-slate-600/60 px-2 text-[10px] text-slate-300 hover:bg-slate-800"
+                    >
+                      <Camera className="mr-1 h-3 w-3" />
+                      Open Stills
+                    </Button>
+                  )}
+                </div>
+              )}
             <p className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
               {previewVideoUrl ? 'Clip preview' : preview?.thumbnailUrl ? 'Start frame' : 'Clip preview'}
             </p>
+            {onUpload && previewSegment && !languageStream && (
+              <input
+                type="file"
+                accept="video/*"
+                className="hidden"
+                id={`upload-video-${previewSegment.segmentId}`}
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  if (file) onUpload(previewSegment.segmentId, file)
+                  event.target.value = ''
+                }}
+              />
+            )}
             <div
               ref={previewStageRef}
               className={cn(
-                'relative w-full overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50',
+                'group relative w-full overflow-hidden rounded-lg border border-slate-700/40 bg-gray-800/50',
                 isPreviewFullscreen && 'flex h-screen max-w-none items-center justify-center bg-black'
               )}
             >
-              {previewVideoUrl && (
-                <button
-                  type="button"
-                  className="absolute bottom-2 right-10 z-30 rounded-md bg-black/60 p-1.5 text-white hover:bg-black/80"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    void saveVideoFile({
-                      url: previewVideoUrl,
-                      beatNumber: preview?.beatNumber,
-                      label: preview?.label || 'clip',
-                    })
-                      .then((saved) => {
-                        if (saved) toast.success('Video clip saved')
-                      })
-                      .catch(() => toast.error('Failed to download video clip'))
-                  }}
-                  title="Download clip video"
-                  aria-label="Download clip video"
-                >
-                  <Download className="h-4 w-4" />
-                </button>
+              {/* Floating top-right status pills on rendered clips — matching Stills */}
+              {previewVideoUrl && !isPreviewFullscreen && (
+                <div className="pointer-events-none absolute right-2 top-2 z-20 flex flex-wrap items-center gap-1.5">
+                  {preview?.promptChanged && (
+                    <span className="flex items-center gap-0.5 rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-medium text-slate-950 shadow">
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      Prompt changed
+                    </span>
+                  )}
+                  {(preview?.imageTier === 'final' || (previewHasClip && !preview?.imageTier)) && (
+                    <span className="rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] font-medium text-white shadow">
+                      Final
+                    </span>
+                  )}
+                  {preview?.imageTier === 'draft' && (
+                    <span className="rounded-full bg-slate-700/90 px-2 py-0.5 text-[10px] font-medium text-slate-200 shadow">
+                      Draft
+                    </span>
+                  )}
+                  {(liveTake?.resolution || previewSegment?.resolution) && (
+                    <span className="rounded-full bg-black/75 px-2 py-0.5 text-[10px] font-medium text-slate-200 shadow">
+                      {String(liveTake?.resolution || previewSegment?.resolution).toUpperCase() === '4K'
+                        ? '4K'
+                        : String(liveTake?.resolution || previewSegment?.resolution).toLowerCase()}
+                    </span>
+                  )}
+                </div>
               )}
+
+              {/* Unified hover-revealed circular action bar on rendered clips — matching SceneImageFrame */}
+              {previewVideoUrl && previewSegment && (
+                <div
+                  className="absolute left-2 top-2 z-30 flex items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  {(languageStream ? !!onGenerateLanguageVersion : !!onGenerateClip) && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          disabled={
+                            isUpdatingPrompts ||
+                            generatingLanguageClip ||
+                            generatingClipId === previewSegment.segmentId
+                          }
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            if (languageStream) {
+                              onGenerateLanguageVersion?.(previewSegment)
+                            } else {
+                              onGenerateClip?.(previewSegment)
+                            }
+                          }}
+                          aria-label={
+                            languageStream
+                              ? `Generate ${languageName} version`
+                              : 'Regenerate clip'
+                          }
+                          className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600/90 text-white shadow transition-colors hover:bg-indigo-500 disabled:opacity-50"
+                        >
+                          {generatingLanguageClip || generatingClipId === previewSegment.segmentId ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4" />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">
+                        {isUpdatingPrompts
+                          ? 'Updating shot prompts — please wait…'
+                          : languageStream
+                            ? languageOptions.length > 0
+                              ? `New ${languageName} version`
+                              : `Generate ${languageName} version`
+                            : 'Regenerate clip'}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {onDirectBeat && preview?.beatId && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          disabled={isUpdatingPrompts}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onDirectBeat(preview.beatId!)
+                          }}
+                          aria-label="Shot Director"
+                          className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-600/90 text-white shadow transition-colors hover:bg-teal-500 disabled:opacity-50"
+                        >
+                          <Clapperboard className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">
+                        Shot Director
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {onUpload && !languageStream && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            document.getElementById(`upload-video-${previewSegment.segmentId}`)?.click()
+                          }}
+                          aria-label="Upload clip video"
+                          className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600/90 text-white shadow transition-colors hover:bg-emerald-500"
+                        >
+                          <Upload className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">
+                        Upload video
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void saveVideoFile({
+                            url: previewVideoUrl,
+                            beatNumber: preview?.beatNumber,
+                            label: preview?.label || 'clip',
+                          })
+                            .then((saved) => {
+                              if (saved) toast.success('Video clip saved')
+                            })
+                            .catch(() => toast.error('Failed to download video clip'))
+                        }}
+                        title="Download clip video"
+                        aria-label="Download clip video"
+                        className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-600/90 text-white shadow transition-colors hover:bg-sky-500"
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      Download clip video
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              )}
+
               <button
                 type="button"
                 className="absolute bottom-2 right-2 z-30 rounded-md bg-black/60 p-1.5 text-white hover:bg-black/80"
@@ -669,7 +896,7 @@ export function BeatVideoGallery({
                     aria-label={isPreviewPlaying ? 'Pause clip preview' : 'Play clip preview'}
                   >
                     {!isPreviewPlaying && (
-                      <span className="rounded-full bg-black/60 p-3 text-white shadow-lg">
+                      <span className="rounded-full bg-black/60 p-3 text-white shadow-lg transition-transform group-hover:scale-105">
                         <PlayCircle className="h-12 w-12" />
                       </span>
                     )}
@@ -686,12 +913,11 @@ export function BeatVideoGallery({
                         ? `New ${languageName} version`
                         : `Generate ${languageName} version`
                       : previewHasClip
-                        ? 'Regenerate'
+                        ? 'Regenerate clip'
                         : 'Generate clip'
                   }
-                  directTitle="Direct Clip"
                   directorTitle="Shot Director"
-                  uploadTitle="Upload"
+                  uploadTitle="Upload video"
                   uploadAccept="video/*"
                   className="w-full"
                   imageUrl={preview.thumbnailUrl}
@@ -701,7 +927,7 @@ export function BeatVideoGallery({
                   }
                   showControls
                   controlsVariant="comfortable"
-                  alwaysShowControls
+                  alwaysShowControls={false}
                   showBorder={false}
                   containMedia
                   isGenerating={
@@ -712,22 +938,18 @@ export function BeatVideoGallery({
                       ? onGenerateLanguageVersion?.(previewSegment)
                       : onGenerateClip?.(previewSegment)
                   }
-                  onDirect={onDirectVideo ? () => onDirectVideo(previewSegment) : undefined}
+                  onDirect={undefined}
                   onDirector={
                     onDirectBeat && preview.beatId
-                      ? () => onDirectBeat(preview.beatId)
+                      ? () => onDirectBeat(preview.beatId!)
                       : undefined
                   }
                   onUpload={
                     languageStream
-                      ? undefined
+                      ? () => {}
                       : (file) => onUpload?.(previewSegment.segmentId, file)
                   }
-                  onEdit={
-                    onEditClip && previewHasClip
-                      ? () => onEditClip(previewSegment)
-                      : undefined
-                  }
+                  onEdit={undefined}
                 />
               ) : (
                 <div
@@ -741,12 +963,86 @@ export function BeatVideoGallery({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={preview.thumbnailUrl} alt="" className="h-full w-full object-contain" />
                   ) : (
-                    <div className="flex h-full min-h-[140px] flex-col items-center justify-center px-4 text-center">
+                    <div className="flex h-full min-h-[160px] flex-col items-center justify-center px-4 text-center">
                       <Film className="mb-2 h-8 w-8 text-gray-600" />
                       <span className="text-xs text-gray-400">No clip rendered yet</span>
                       <span className="mt-1 text-[11px] text-gray-500">
-                        Still frames are optional for Standard clips (only required for Creative / Kling AI)
+                        Hover to Generate Clip, open Shot Director, or Upload video
                       </span>
+                    </div>
+                  )}
+                  {previewSegment && (
+                    <div
+                      className="absolute inset-0 z-20 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {(languageStream ? !!onGenerateLanguageVersion : !!onGenerateClip) && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              disabled={
+                                isUpdatingPrompts ||
+                                generatingLanguageClip ||
+                                generatingClipId === previewSegment.segmentId
+                              }
+                              onClick={() =>
+                                languageStream
+                                  ? onGenerateLanguageVersion?.(previewSegment)
+                                  : onGenerateClip?.(previewSegment)
+                              }
+                              aria-label="Generate clip"
+                              className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600/90 text-white shadow transition-colors hover:bg-indigo-500 disabled:opacity-50"
+                            >
+                              {generatingLanguageClip || generatingClipId === previewSegment.segmentId ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                              ) : (
+                                <Sparkles className="h-5 w-5" />
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="text-xs">
+                            {isUpdatingPrompts ? 'Updating shot prompts — please wait…' : 'Generate clip'}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {onDirectBeat && preview?.beatId && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              disabled={isUpdatingPrompts}
+                              onClick={() => onDirectBeat(preview.beatId!)}
+                              aria-label="Shot Director"
+                              className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-600/90 text-white shadow transition-colors hover:bg-teal-500 disabled:opacity-50"
+                            >
+                              <Clapperboard className="h-5 w-5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="text-xs">
+                            Shot Director
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {onUpload && !languageStream && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                document.getElementById(`upload-video-${previewSegment.segmentId}`)?.click()
+                              }
+                              aria-label="Upload clip video"
+                              className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600/90 text-white shadow transition-colors hover:bg-emerald-500"
+                            >
+                              <Upload className="h-5 w-5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="text-xs">
+                            Upload video
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                   )}
                 </div>
@@ -791,197 +1087,8 @@ export function BeatVideoGallery({
 
             {preview && (
               <div className="px-1 pb-1">
-                {previewSegment && (
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    {previewVideoUrl && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-[10px]"
-                        onClick={togglePreviewPlayback}
-                      >
-                        {isPreviewPlaying ? (
-                          <Pause className="mr-1 h-3 w-3" />
-                        ) : (
-                          <PlayCircle className="mr-1 h-3 w-3" />
-                        )}
-                        {isPreviewPlaying ? 'Pause' : 'Play'}
-                      </Button>
-                    )}
-                    {previewVideoUrl && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-[10px]"
-                        title="Download clip video"
-                        onClick={() => {
-                          void saveVideoFile({
-                            url: previewVideoUrl,
-                            beatNumber: preview?.beatNumber,
-                            label: preview?.label || 'clip',
-                          })
-                            .then((saved) => {
-                              if (saved) toast.success('Video clip saved')
-                            })
-                            .catch(() => toast.error('Failed to download video clip'))
-                        }}
-                      >
-                        <Download className="mr-1 h-3 w-3" />
-                        Download
-                      </Button>
-                    )}
-                    {isUpdatingPrompts && (
-                      <span
-                        data-testid="updating-shot-prompts-badge"
-                        className="inline-flex h-7 items-center gap-1.5 rounded border border-cyan-500/40 bg-cyan-500/10 px-2 text-[10px] font-medium text-cyan-200"
-                      >
-                        <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
-                        Updating prompts…
-                      </span>
-                    )}
-                    {onGenerateClip && !languageStream && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 border-indigo-500/40 text-[10px] text-indigo-200"
-                        disabled={isUpdatingPrompts || generatingClipId === previewSegment.segmentId}
-                        title={
-                          isUpdatingPrompts ? 'Updating shot prompts — please wait…' : undefined
-                        }
-                        onClick={() => onGenerateClip(previewSegment)}
-                      >
-                        {isUpdatingPrompts ? (
-                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                        ) : (
-                          <Wand2 className="mr-1 h-3 w-3" />
-                        )}
-                        {isUpdatingPrompts
-                          ? 'Updating prompts…'
-                          : previewHasClip
-                            ? 'Regenerate clip'
-                            : 'Generate clip'}
-                      </Button>
-                    )}
-                    {languageStream && onGenerateLanguageVersion && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 border-indigo-500/40 text-[10px] text-indigo-200"
-                        disabled={generatingLanguageClip || isUpdatingPrompts}
-                        title={
-                          isUpdatingPrompts ? 'Updating shot prompts — please wait…' : undefined
-                        }
-                        onClick={() => onGenerateLanguageVersion(previewSegment)}
-                      >
-                        {generatingLanguageClip || isUpdatingPrompts ? (
-                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                        ) : (
-                          <Wand2 className="mr-1 h-3 w-3" />
-                        )}
-                        {generatingLanguageClip
-                          ? `Generating ${languageName} version…`
-                          : isUpdatingPrompts
-                            ? 'Updating prompts…'
-                            : languageOptions.length > 0
-                              ? `New ${languageName} version`
-                              : `Generate ${languageName} version`}
-                      </Button>
-                    )}
-                    {onToggleClipCaptions && preview.kind !== 'title' && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className={cn(
-                          'h-7 text-[10px]',
-                          preview.includeCaptions
-                            ? 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
-                            : 'border-slate-600/60 text-slate-300 hover:bg-slate-800/70'
-                        )}
-                        title={
-                          preview.includeCaptions
-                            ? 'Captions are included in this clip prompt. Click to default to no captions.'
-                            : 'Default: no burned-in captions in clip prompt. Click to intentionally include captions.'
-                        }
-                        aria-pressed={Boolean(preview.includeCaptions)}
-                        onClick={() =>
-                          onToggleClipCaptions(previewSegment.segmentId, !preview.includeCaptions)
-                        }
-                      >
-                        <Subtitles className="mr-1 h-3 w-3" />
-                        {preview.includeCaptions ? 'Captions: On' : 'Captions: Off'}
-                      </Button>
-                    )}
-                    {onDirectBeat && preview.beatId && (
-                      <button
-                        type="button"
-                        className="inline-flex h-7 items-center gap-1 rounded border border-teal-800/80 px-2 text-[11px] text-teal-200 hover:bg-teal-950/40"
-                        onClick={() => onDirectBeat(preview.beatId!)}
-                      >
-                        <Clapperboard className="h-3.5 w-3.5" />
-                        Shot Director
-                      </button>
-                    )}
-                    {onTake && !languageStream && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-[10px]"
-                        disabled={isUpdatingPrompts}
-                        onClick={() => onTake(previewSegment)}
-                      >
-                        <Settings2 className="mr-1 h-3 w-3" />
-                        Take ({previewSegment.takes?.length || 1})
-                      </Button>
-                    )}
-                    {onUpload && !languageStream && (
-                      <>
-                        <input
-                          type="file"
-                          accept="video/*"
-                          className="hidden"
-                          id={`upload-video-${previewSegment.segmentId}`}
-                          onChange={(event) => {
-                            const file = event.target.files?.[0]
-                            if (file) onUpload(previewSegment.segmentId, file)
-                            event.target.value = ''
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-[10px]"
-                          onClick={() =>
-                            document.getElementById(`upload-video-${previewSegment.segmentId}`)?.click()
-                          }
-                        >
-                          <Upload className="mr-1 h-3 w-3" />
-                          Upload
-                        </Button>
-                      </>
-                    )}
-                    {onRetake && !languageStream && previewHasClip && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 border-indigo-500/40 text-[10px] text-indigo-200"
-                        disabled={isUpdatingPrompts}
-                        onClick={() => onRetake(previewSegment)}
-                      >
-                        Retake
-                      </Button>
-                    )}
-                  </div>
-                )}
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="shrink-0 rounded-full border border-slate-600/40 bg-slate-700/50 px-1.5 py-0.5 text-[10px] font-medium text-slate-300">
+                  <span className="shrink-0 rounded-full border border-slate-600/40 bg-slate-700/50 px-1.5 py-0.5 text-[10px] font-medium text-slate-300 tabular-nums">
                     Shot {preview.beatNumber}
                   </span>
                   {(preview.sourceSceneLongLabel || preview.sourceSceneLabel) && (
@@ -1000,31 +1107,138 @@ export function BeatVideoGallery({
                       {previewStatus.label}
                     </span>
                   )}
-                  {preview.promptChanged && (
+                  {isUpdatingPrompts && (
                     <span
-                      className="flex items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-300"
-                      title="Action needed: Shot prompt or direction changed after this clip was rendered — run Video Agent or click Regenerate Clip to update it."
+                      data-testid="updating-shot-prompts-badge"
+                      className="inline-flex h-7 items-center gap-1.5 rounded border border-cyan-500/40 bg-cyan-500/10 px-2 text-[10px] font-medium text-cyan-200"
                     >
-                      <AlertTriangle className="h-2.5 w-2.5" />
-                      Prompt changed
+                      <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
+                      Updating prompts…
                     </span>
                   )}
-                  {(preview.imageTier === 'final' || (previewHasClip && !preview.imageTier)) && (
-                    <span className="rounded-full bg-emerald-500/25 px-1.5 py-0.5 text-[10px] text-emerald-300">
-                      Final
-                    </span>
+                  {previewSegment && onChangeDuration && !languageStream && (() => {
+                    const durationOptions =
+                      generationMode === 'creative' ? [5, 10] : [4, 6, 8, 10]
+                    const rawDur =
+                      preview.queueItem?.config?.duration ??
+                      (typeof previewSegment.endTime === 'number' &&
+                      typeof previewSegment.startTime === 'number' &&
+                      previewSegment.endTime > previewSegment.startTime
+                        ? Math.round(previewSegment.endTime - previewSegment.startTime)
+                        : 8)
+                    const activeDur = durationOptions.includes(rawDur)
+                      ? rawDur
+                      : durationOptions[durationOptions.length - 1]
+                    return (
+                      <div
+                        className="inline-flex h-7 items-center gap-0.5 rounded border border-slate-700 bg-slate-900/80 p-0.5"
+                        title="Clip duration"
+                      >
+                        {durationOptions.map((sec) => (
+                          <button
+                            key={sec}
+                            type="button"
+                            disabled={isUpdatingPrompts || generatingClipId === previewSegment.segmentId}
+                            onClick={() => onChangeDuration(previewSegment, sec)}
+                            className={cn(
+                              'rounded px-1.5 py-0.5 text-[10px] font-medium tabular-nums transition-colors',
+                              activeDur === sec
+                                ? 'bg-indigo-600/90 text-white'
+                                : 'text-slate-400 hover:text-slate-200'
+                            )}
+                          >
+                            {sec}s
+                          </button>
+                        ))}
+                      </div>
+                    )
+                  })()}
+                  {previewSegment && onToggleClipCaptions && preview.kind !== 'title' && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className={cn(
+                        'h-7 text-[10px]',
+                        preview.includeCaptions
+                          ? 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
+                          : 'border-slate-600/60 text-slate-300 hover:bg-slate-800/70'
+                      )}
+                      title={
+                        preview.includeCaptions
+                          ? 'Captions are included in this clip prompt. Click to default to no captions.'
+                          : 'Default: no burned-in captions in clip prompt. Click to intentionally include captions.'
+                      }
+                      aria-pressed={Boolean(preview.includeCaptions)}
+                      onClick={() =>
+                        onToggleClipCaptions(previewSegment.segmentId, !preview.includeCaptions)
+                      }
+                    >
+                      <Subtitles className="mr-1 h-3 w-3" />
+                      {preview.includeCaptions ? 'Captions: On' : 'Captions: Off'}
+                    </Button>
                   )}
-                  {preview.imageTier === 'draft' && (
-                    <span className="rounded-full bg-gray-500/25 px-1.5 py-0.5 text-[10px] text-gray-300">
-                      Draft
-                    </span>
+                  {onDirectBeat && preview.beatId && (
+                    <button
+                      type="button"
+                      className="inline-flex h-7 shrink-0 items-center gap-1 rounded border border-teal-800/80 px-2 text-[11px] text-teal-200 hover:bg-teal-950/40"
+                      onClick={() => onDirectBeat(preview.beatId!)}
+                    >
+                      <Clapperboard className="h-3.5 w-3.5" />
+                      Shot Director
+                    </button>
                   )}
-                  {previewHasClip && (liveTake?.resolution || previewSegment?.resolution) && (
-                    <span className="rounded-full border border-slate-600/40 bg-slate-800/70 px-1.5 py-0.5 text-[10px] font-medium text-slate-300">
-                      {String(liveTake?.resolution || previewSegment?.resolution).toUpperCase() === '4K'
-                        ? '4K'
-                        : String(liveTake?.resolution || previewSegment?.resolution).toLowerCase()}
-                    </span>
+                  {previewSegment && onGenerateClip && !languageStream && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 shrink-0 border-indigo-500/40 text-[10px] text-indigo-200 hover:bg-indigo-500/15"
+                      disabled={isUpdatingPrompts || generatingClipId === previewSegment.segmentId}
+                      title={
+                        isUpdatingPrompts ? 'Updating shot prompts — please wait…' : undefined
+                      }
+                      onClick={() => onGenerateClip(previewSegment)}
+                    >
+                      {isUpdatingPrompts || generatingClipId === previewSegment.segmentId ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      ) : previewHasClip ? (
+                        <RefreshCw className="mr-1 h-3 w-3" />
+                      ) : (
+                        <Sparkles className="mr-1 h-3 w-3" />
+                      )}
+                      {isUpdatingPrompts
+                        ? 'Updating prompts…'
+                        : previewHasClip
+                          ? 'Regenerate clip'
+                          : 'Generate clip'}
+                    </Button>
+                  )}
+                  {previewSegment && languageStream && onGenerateLanguageVersion && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 shrink-0 border-indigo-500/40 text-[10px] text-indigo-200 hover:bg-indigo-500/15"
+                      disabled={generatingLanguageClip || isUpdatingPrompts}
+                      title={
+                        isUpdatingPrompts ? 'Updating shot prompts — please wait…' : undefined
+                      }
+                      onClick={() => onGenerateLanguageVersion(previewSegment)}
+                    >
+                      {generatingLanguageClip || isUpdatingPrompts ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      ) : (
+                        <Sparkles className="mr-1 h-3 w-3" />
+                      )}
+                      {generatingLanguageClip
+                        ? `Generating ${languageName} version…`
+                        : isUpdatingPrompts
+                          ? 'Updating prompts…'
+                          : languageOptions.length > 0
+                            ? `New ${languageName} version`
+                            : `Generate ${languageName} version`}
+                    </Button>
                   )}
                   {preview.prompt?.trim() && (
                     <Button
@@ -1060,7 +1274,7 @@ export function BeatVideoGallery({
                       isFTVRelated={previewSegment?.lastContentPolicyFailure?.isFTVRelated}
                       generationMethod={
                         previewSegment?.lastContentPolicyFailure?.method ||
-                        preview?.queueItem?.config?.generationMethod
+                        preview?.queueItem?.config?.mode
                       }
                       provider={previewSegment?.generationProvider}
                       hasStartFrame={Boolean(

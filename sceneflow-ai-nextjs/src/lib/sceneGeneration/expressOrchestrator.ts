@@ -116,8 +116,10 @@ import {
 } from '../intelligence/shotDirectionPreflight'
 import {
   applyStillDirectorPatch,
+  buildStillDirectorSceneContext,
   shouldRunStillDirectorAuto,
 } from '../intelligence/beat-still-director-fallback'
+import { buildBeatBoundContinuity } from '../vision/shotDirectionBatch'
 import {
   resolveStoryboardGeneration,
   beatFrameNeedsGeneration,
@@ -2144,6 +2146,7 @@ async function runStillDirectorPhase(
     }
 
     const catalog = buildExpressReferenceCatalog(project)
+    const sceneContext = buildStillDirectorSceneContext(scene, beats)
     const patches: Array<{ beatIndex: number; patch: Parameters<typeof applyStillDirectorPatch>[1] }> = []
     let fallbackReason: string | undefined
     for (let offset = 0; offset < eligible.length; offset += STILL_DIRECTOR_BEAT_CHUNK) {
@@ -2155,17 +2158,29 @@ async function runStillDirectorPhase(
           () =>
             directBeatStills({
               mode: 'optimize',
-              beats: chunk.map(({ beat, beatIndex }) => ({
-                beatIndex,
-                beat,
-                previousMoment:
-                  beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
-                nextMoment:
-                  beatIndex + 1 < beats.length
-                    ? composeBeatActionFraming(beats[beatIndex + 1])
-                    : undefined,
-              })),
+              beats: chunk.map(({ beat, beatIndex }) => {
+                const boundContinuity = buildBeatBoundContinuity({
+                  scene,
+                  beat,
+                  sceneIdx: sceneIndex,
+                  characters: projectCharacters,
+                  locationReferences: references.locationReferences || [],
+                  objectReferences: references.objectReferences || [],
+                })
+                return {
+                  beatIndex,
+                  beat,
+                  ...(boundContinuity ? { boundContinuity } : {}),
+                  previousMoment:
+                    beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
+                  nextMoment:
+                    beatIndex + 1 < beats.length
+                      ? composeBeatActionFraming(beats[beatIndex + 1])
+                      : undefined,
+                }
+              }),
               catalog,
+              ...(sceneContext ? { sceneContext } : {}),
             }),
           ctx.signal
         )

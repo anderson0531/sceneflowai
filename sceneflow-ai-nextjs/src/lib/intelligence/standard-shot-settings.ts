@@ -55,14 +55,16 @@ function isActionHeavy(action?: string, cameraMovement?: string): boolean {
 
 function suggestsMultiShot(
   sceneType: ReturnType<typeof detectSceneType>,
-  action?: string
+  action?: string,
+  sceneHeading?: string
 ): boolean {
   const a = (action || '').toLowerCase()
+  const h = (sceneHeading || '').toLowerCase()
   return (
-    sceneType === 'montage' ||
+    (sceneType === 'montage' && (h.includes('montage') || a.includes('montage') || a.includes('series of shots'))) ||
     a.includes('series of shots') ||
     a.includes('montage') ||
-    /\b(cut to|then we see|meanwhile)\b/.test(a)
+    /\b(cut to|quick cuts)\b/.test(a)
   )
 }
 
@@ -76,7 +78,11 @@ export function optimizeStandardOmniSettings(
     input.totalScenes
   )
 
-  const multiShot = suggestsMultiShot(sceneType, input.segment.action || input.segment.actionPrompt)
+  const multiShot = suggestsMultiShot(
+    sceneType,
+    input.segment.action || input.segment.actionPrompt,
+    input.sceneHeading
+  )
   const closeUp = isCloseUp(input.segment.shotType)
   const hasDialogue = (input.segment.dialogueLines?.length ?? 0) > 0
   const actionHeavy = isActionHeavy(

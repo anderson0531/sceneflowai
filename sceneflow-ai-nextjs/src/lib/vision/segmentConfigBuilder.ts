@@ -36,6 +36,7 @@ import {
   narrowPromptForFtvFrameLock,
   buildMinimalFtvPerformPrompt,
   FTV_SILENT_MOTION_HINT,
+  buildFtvSilentMotionHint,
 } from '@/lib/vision/ftvPromptNormalize'
 import { resolvePreferredStoryboardUrl } from '@/lib/storyboard/mergeSceneMedia'
 import {
@@ -211,7 +212,8 @@ export function generateFTVMotionPrompt(segment: SceneSegment, skipAnchoringPhra
     return basePrompt
   }
 
-  const finalPrompt = `${FTV_SILENT_MOTION_HINT}\n\n${basePrompt}`
+  const motionHint = buildFtvSilentMotionHint(segment.cameraMovement, basePrompt)
+  const finalPrompt = `${motionHint}\n\n${basePrompt}`
   console.log('[FTV Prompt] Silent beat with motion hint:', finalPrompt.substring(0, 120) + '...')
   return finalPrompt
 }
@@ -277,10 +279,7 @@ export function generateMotionPrompt(segment: SceneSegment, sceneImageUrl?: stri
   
   // Character/subject action
   if (action) {
-    // Transform action description to motion instruction
-    const motionAction = action
-      .replace(/^(The )?character /, '')
-      .replace(/stands|sits|holds/, 'moves to')
+    const motionAction = action.replace(/^(The )?character /, '')
     parts.push(motionAction)
   }
   
@@ -1318,14 +1317,24 @@ export function buildConsolidatedTakeConfig(
     segment.references?.startFrameUrl?.trim() ||
     null
 
-  if (preferFrameMode && !effectiveStartFrameUrl && allSegments.length > 1) {
+  const allBeats = getSceneBeats(fullScene)
+  const beatIndex = segment.beatId
+    ? allBeats.findIndex((entry) => entry.beatId === segment.beatId)
+    : -1
+  const beat = beatIndex >= 0 ? allBeats[beatIndex] : undefined
+  const isContinuousCut =
+    isContinuation ||
+    segment.transitionType === 'CONTINUE' ||
+    segment.veoTimelineContinuation === true ||
+    beat?.beatDirection?.transition === 'CONTINUE'
+
+  if (preferFrameMode && !effectiveStartFrameUrl && isContinuousCut && allSegments.length > 1) {
     const segIdx = allSegments.findIndex((s) => s.segmentId === segment.segmentId)
     if (segIdx > 0) {
       const prevSeg = allSegments[segIdx - 1]
-      const beats = getSceneBeats(fullScene)
       const prevBeat = prevSeg?.beatId
-        ? beats.find((b) => b.beatId === prevSeg.beatId)
-        : beats[segIdx - 1]
+        ? allBeats.find((b) => b.beatId === prevSeg.beatId)
+        : allBeats[segIdx - 1]
       effectiveStartFrameUrl =
         prevBeat?.storyboardEndImageUrl?.trim() ||
         prevSeg?.endFrameUrl?.trim() ||
@@ -1358,12 +1367,12 @@ export function buildConsolidatedTakeConfig(
   let effectiveMethod: VideoGenerationMethod
   if (isContinuation) {
     effectiveMethod = 'EXT'
-  } else if (preferFrameMode) {
-    effectiveMethod = effectiveStartFrameUrl && effectiveEndFrameUrl ? 'FTV' : 'I2V'
+  } else if (preferFrameMode && effectiveStartFrameUrl) {
+    effectiveMethod = effectiveEndFrameUrl ? 'FTV' : 'I2V'
   } else if (refCount > 0) {
     effectiveMethod = 'REF'
-  } else if (useBeatFrameAsStart) {
-    effectiveMethod = effectiveStartFrameUrl && effectiveEndFrameUrl ? 'FTV' : 'I2V'
+  } else if (useBeatFrameAsStart && effectiveStartFrameUrl) {
+    effectiveMethod = effectiveEndFrameUrl ? 'FTV' : 'I2V'
   } else {
     effectiveMethod = 'T2V'
   }
@@ -1371,11 +1380,6 @@ export function buildConsolidatedTakeConfig(
   const isFrameMode = effectiveMethod === 'FTV' || effectiveMethod === 'I2V'
   const targetMethod: 'reference' | 'frame' = isFrameMode ? 'frame' : 'reference'
 
-  const allBeats = getSceneBeats(fullScene)
-  const beatIndex = segment.beatId
-    ? allBeats.findIndex((entry) => entry.beatId === segment.beatId)
-    : -1
-  const beat = beatIndex >= 0 ? allBeats[beatIndex] : undefined
   const activeBeats = allBeats.filter((entry) => !isBeatExcluded(entry))
   const activeBeatIndex = beat
     ? activeBeats.findIndex((entry) => entry.beatId === beat.beatId)

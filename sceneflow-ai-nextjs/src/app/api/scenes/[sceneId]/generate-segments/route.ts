@@ -140,14 +140,14 @@ function targetSegmentDurationForResponse(config: SegmentDurationConfig): number
 function segmentDurationPromptSection(config: SegmentDurationConfig): string {
   if (config.mode === 'auto') {
     return `
-**DURATION (AUTO — PER SEGMENT):** Veo 3.1 supports **4, 6, 8, 10, or 12 seconds** per generated clip. For **each** segment, set \`estimated_duration\` to one of these values based on dialogue timing, breath pauses, and action cut points — **different segments may use different values**. A soft planning average from total audio ÷ minimum clip count is ~${config.hintSeconds}s; use that as a guide, not a hard target. **Dialogue lip-sync clips: never exceed 10s.** Action-only or voiceover backdrop clips: **never exceed 12s**. **Minimum 4s** per segment when possible.
+**DURATION (AUTO — PER SEGMENT):** Veo 3.1 / Omni supports **4, 6, 8, or 10 seconds** per generated clip. For **each** segment, set \`estimated_duration\` to one of these values based on dialogue timing, breath pauses, and action cut points — **different segments may use different values**. A soft planning average from total audio ÷ minimum clip count is ~${config.hintSeconds}s; use that as a guide, not a hard target. **Never exceed 10s** per segment. **Minimum 4s** per segment when possible.
 **WHEN TO SPLIT:** Keep exactly one dialogue/narration line per segment. If one spoken line would need **more than 10s**, split that SAME line across continuation segments (\`veoTimelineContinuation: true\`) with matching keyframe continuity.
 **ACTION-ONLY BEATS:** Scenes may need visual action **without** dialogue (fights, reveals, inserts). For timeline gaps or pure action beats, assign **no** dialogue index but write a specific \`talent_action\` / keyframe action describing visible motion.
 `
   }
   const t = config.fixedSeconds ?? 6
   return `
-**DURATION (FIXED TARGET):** Prefer **${t}s** per segment (\`estimated_duration\` must still be **exactly 4, 6, 8, 10, or 12** — use **${t}s** as the default choice). **Never exceed 12s.** Keep one dialogue/narration line per segment; split only when a single line exceeds 12s.
+**DURATION (FIXED TARGET):** Prefer **${t}s** per segment (\`estimated_duration\` must still be **exactly 4, 6, 8, or 10** — use **${t}s** as the default choice). **Never exceed 10s.** Keep one dialogue/narration line per segment; split only when a single line exceeds 10s.
 `
 }
 

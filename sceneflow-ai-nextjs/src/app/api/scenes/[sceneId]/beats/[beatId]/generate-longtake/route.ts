@@ -198,7 +198,11 @@ export async function POST(
 
     const artStyleId = resolveProjectArtStyle(metadata)
     const visionMeta = (metadata.visionPhase || {}) as Record<string, unknown>
-    const sceneDirection = (matchedScene as { direction?: unknown }).direction
+    const sceneDirection =
+      (matchedScene as { sceneDirection?: unknown; detailedDirection?: unknown }).sceneDirection ??
+      (matchedScene as { detailedDirection?: unknown }).detailedDirection ??
+      (matchedScene as { direction?: unknown }).direction ??
+      null
     const compiled = compileBeatVideoPromptFromDirection(beat, sceneDirection as never, {
       artStyleId,
     })

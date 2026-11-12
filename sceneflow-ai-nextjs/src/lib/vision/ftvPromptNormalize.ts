@@ -118,6 +118,21 @@ export const FTV_MINIMAL_NATIVE_AUDIO_HINT =
 export const FTV_SILENT_MOTION_HINT =
   'Subtle motion between keyframes to match the end pose; static camera.'
 
+export function buildFtvSilentMotionHint(
+  cameraMovement?: string | null,
+  promptText?: string | null
+): string {
+  const combined = `${cameraMovement || ''} ${promptText || ''}`.toLowerCase()
+  const hasDynamicCamera =
+    /\b(dolly|push[- ]?in|pull[- ]?back|pull[- ]?out|pan|tilt|track|tracking|crane|orbit|arc|boom|zoom|handheld|drift|sweep|glide)\b/.test(
+      combined
+    ) && !/^\s*(?:static|locked[- ]?off|fixed)\s*$/i.test(cameraMovement || '')
+  if (hasDynamicCamera) {
+    return 'Subtle motion between keyframes to match the end pose with smooth camera movement.'
+  }
+  return FTV_SILENT_MOTION_HINT
+}
+
 function escapeDialogueForDoubleQuotes(line: string): string {
   return line.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 }

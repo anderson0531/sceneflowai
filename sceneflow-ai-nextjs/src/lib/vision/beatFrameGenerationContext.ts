@@ -119,12 +119,20 @@ function sceneHeadingText(scene: Record<string, unknown>): string {
  * which it resolves by inventing the prop into the frame.
  */
 function buildBeatPropMatchText(beat: SceneBeat): string {
+  const hasVisualStaging = Boolean(
+    beat.actionDescription?.trim() ||
+      beat.beatDirection?.frozenMoment?.trim() ||
+      beat.beatDirection?.propInteraction?.trim() ||
+      (Array.isArray(beat.beatDirection?.keyProps) && beat.beatDirection.keyProps.length > 0)
+  )
   return [
     beat.actionDescription || '',
-    beat.line || '',
-    beat.character || '',
+    beat.beatDirection?.frozenMoment || '',
     ...(beat.beatDirection?.keyProps ?? []),
     beat.beatDirection?.propInteraction || '',
+    // Only fall back to spoken dialogue when the beat has no visual staging or direction at all;
+    // otherwise mentioning an off-camera prop in dialogue attaches an undirected prop plate.
+    ...(!hasVisualStaging ? [beat.line || ''] : []),
   ]
     .filter(Boolean)
     .join(' ')
@@ -162,10 +170,14 @@ function buildBeatCastMatchText(beat: SceneBeat): string {
  * portrait by putting that face in the frame — which is how an insert of a
  * pneumatic hatch collar came back with two characters standing in it.
  */
+const INANIMATE_BODY_PART_IDIOMS_RE =
+  /\b(?:clock|watch|rock|cliff|mountain|stone|dial|card|coin|type|north|south|east|west)\s+faces?\b|\b(?:head|foot|feet|back|mouth|eye|eyes|leg|legs|arm|arms|neck|shoulder|shoulders|body|bodies)\s+of\s+(?:the\s+|a\s+|an\s+)?(?:room|hall|hallway|corridor|stairs|staircase|stairwell|table|desk|bed|chair|bench|couch|sofa|door|doorway|vault|tunnel|cave|pipe|river|storm|hurricane|needle|camera|lens|frame|shot|car|truck|van|bus|train|ship|boat|house|building|wall|hill|mountain|bottle|jar|glass|page|line|queue|water|work|evidence)\b/gi
+
 function beatTextImpliesPerson(text: string): boolean {
   if (!text.trim()) return false
+  const scrubbed = text.replace(INANIMATE_BODY_PART_IDIOMS_RE, ' ')
   return /\b(he|him|his|she|her|hers|they|them|their|theirs|i|me|my|we|us|our|you|your|himself|herself|themselves|someone|somebody|anyone|man|men|woman|women|boy|girl|kid|child|children|person|people|figure|figures|silhouette|crowd|guard|guards|officer|worker|workers|soldier|passenger|bystander|body|face|faces|head|hand|hands|finger|fingers|fist|palm|wrist|arm|arms|shoulder|shoulders|eye|eyes|gaze|mouth|jaw|knee|knees|leg|legs|foot|feet|back|chest|profile|portrait)\b/i.test(
-    text
+    scrubbed
   )
 }
 

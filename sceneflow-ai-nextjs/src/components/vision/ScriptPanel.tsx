@@ -7717,6 +7717,7 @@ function SceneCard({
                       isUpdatingPrompts={isUpdatingPrompts}
                     >
                     {(slots) => (
+                    <>
                     <Tabs
                       value={activeSceneTab}
                       onValueChange={(v) => {
@@ -8185,9 +8186,6 @@ function SceneCard({
                         ? (beatId) => onDeleteBeatEndFrame(sceneIdx, beatId)
                         : undefined
                     }
-                    onDirectFrame={
-                      onDirectFrame ? (slot) => onDirectFrame(sceneIdx, slot) : undefined
-                    }
                     onDirectorFrame={
                       onDirectorFrame ? (slot) => onDirectorFrame(sceneIdx, slot) : undefined
                     }
@@ -8654,35 +8652,81 @@ function SceneCard({
                       </div>
 
                     </Tabs>
+                    {directBeatId && sceneBeatsForTabs.some((beat) => beat.beatId === directBeatId) && (() => {
+                      const directedBeat = sceneBeatsForTabs.find((beat) => beat.beatId === directBeatId)!
+                      const isClipSurface = activeSceneTab === 'video'
+                      const startFrameUrl = directedBeat.storyboardImageUrl?.trim() || undefined
+                      return (
+                        <BeatDirectionEditor
+                          layout="dialog"
+                          directorOpen
+                          initialSafety={directBeatSafety}
+                          initialInstruction={directBeatInstruction}
+                          initialPatch={directBeatPatch}
+                          onDirectorOpenChange={(open) => {
+                            if (!open) {
+                              setDirectBeatId(null)
+                              setDirectBeatSafety(false)
+                              setDirectBeatInstruction('')
+                              setDirectBeatPatch(null)
+                            }
+                          }}
+                          beat={directedBeat}
+                          sceneIdx={sceneIdx}
+                          scenes={scenes ?? []}
+                          script={script}
+                          onScriptChange={onScriptChange}
+                          promptComposition={promptComposition}
+                          characters={characters}
+                          locationReferences={locationReferences}
+                          objectReferences={objectReferences}
+                          projectId={projectId}
+                          targetSurface={isClipSurface ? 'clip' : 'still'}
+                          clipTargetMethod={
+                            videoGenerationMode === 'creative'
+                              ? 'frame'
+                              : (videoSourceMethod ?? 'reference')
+                          }
+                          aspectRatio={projectAspectRatio}
+                          currentFrameImageUrl={startFrameUrl}
+                          onSaveEditedFrame={
+                            onSaveEditedBeatFrame
+                              ? (newImageUrl) =>
+                                  onSaveEditedBeatFrame(sceneIdx, directBeatId, newImageUrl, 'start')
+                              : undefined
+                          }
+                          clipDurationSeconds={
+                            isClipSurface ? slots.getClipDurationForBeat?.(directBeatId) : undefined
+                          }
+                          clipDurationOptions={
+                            isClipSurface
+                              ? videoGenerationMode === 'creative'
+                                ? [5, 10]
+                                : [4, 6, 8, 10]
+                              : undefined
+                          }
+                          onChangeClipDuration={
+                            isClipSurface && slots.changeClipDurationForBeat
+                              ? (seconds) => slots.changeClipDurationForBeat?.(directBeatId, seconds)
+                              : undefined
+                          }
+                          onSaveAndGenerate={
+                            isClipSurface
+                              ? slots.generateClipForBeat
+                                ? () => slots.generateClipForBeat?.(directBeatId)
+                                : undefined
+                              : onGenerateBeatFrame
+                                ? async () => {
+                                    await onGenerateBeatFrame(sceneIdx, directBeatId)
+                                  }
+                                : undefined
+                          }
+                        />
+                      )
+                    })()}
+                    </>
                     )}
                     </DirectorWorkflow>
-                    {directBeatId && sceneBeatsForTabs.some((beat) => beat.beatId === directBeatId) && (
-                      <BeatDirectionEditor
-                        layout="dialog"
-                        directorOpen
-                        initialSafety={directBeatSafety}
-                        initialInstruction={directBeatInstruction}
-                        initialPatch={directBeatPatch}
-                        onDirectorOpenChange={(open) => {
-                          if (!open) {
-                            setDirectBeatId(null)
-                            setDirectBeatSafety(false)
-                            setDirectBeatInstruction('')
-                            setDirectBeatPatch(null)
-                          }
-                        }}
-                        beat={sceneBeatsForTabs.find((beat) => beat.beatId === directBeatId)!}
-                        sceneIdx={sceneIdx}
-                        scenes={scenes ?? []}
-                        script={script}
-                        onScriptChange={onScriptChange}
-                        promptComposition={promptComposition}
-                        characters={characters}
-                        locationReferences={locationReferences}
-                        objectReferences={objectReferences}
-                        projectId={projectId}
-                      />
-                    )}
                     </>
                     )
                   })()}

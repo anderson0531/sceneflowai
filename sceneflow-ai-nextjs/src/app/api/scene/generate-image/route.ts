@@ -176,7 +176,24 @@ import {
   buildLocationReferencePromptLine,
   isObjectInsertLocationShot,
 } from '@/lib/vision/locationReferencePrompts'
-import { resolveEffectiveStillShotType, resolveStillShotClass } from '@/lib/imagen/stillFramingNormalize'
+import {
+  isFaceCloseUpShot,
+  resolveEffectiveStillShotType,
+  resolveStillShotClass,
+} from '@/lib/imagen/stillFramingNormalize'
+import { resolveBeatVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
+import {
+  expectsUnstatedCast,
+  hasCompleteAuthoredBeatDirection,
+  plateNamesFromSelection,
+  rewriteThinStillBeat,
+} from '@/lib/intelligence/shotDirectionPreflight'
+import {
+  buildBeatBoundContinuity,
+  shotDirectionCatalogFromPhase,
+} from '@/lib/vision/shotDirectionBatch'
+import { buildStillDirectorSceneContext } from '@/lib/intelligence/beat-still-director-fallback'
+import { applyBeatsToScene } from '@/lib/script/beatMigration'
 import {
   buildSubjectCountGuardrail,
   getMaxReferenceImagesForTier,
@@ -963,11 +980,31 @@ async function postGenerateImage(req: NextRequest) {
               ? `${baseStartInstruction}\n\nGLOBAL ART STYLE LOCK: Preserve the exact rendering medium (${getArtStylePromptSuffix(artStyle)}) of the source frame. Do NOT introduce live-action photorealism.`
               : baseStartInstruction
 
+            const bookendRefs = resolveBeatVideoReferences({
+              scene: resolvedScene as Record<string, unknown>,
+              beat,
+              sceneIndex,
+              projectCharacters: allCharacters,
+              locationReferences: projectLocationRefsForDetect,
+              objectReferences: projectObjectRefsForDetect,
+              includeWardrobeDiptych: false,
+              includeWardrobeReferenceImages: true,
+              filmTitle: filmTitleForDetection,
+            })
+            const bookendReferenceImages = bookendRefs.labeledRefs
+              .filter((r) => Boolean(r.url && r.url.trim() && r.url !== resolvedStillUrl))
+              .slice(0, 5)
+              .map((r) => ({ imageUrl: r.url, name: r.name }))
+            const bookendImageSize: '1K' | '2K' =
+              String(effectiveImageSize) === '2K' || String(effectiveImageSize) === '4K' ? '2K' : '1K'
+
             const editResult = await editImageWithGeminiStudio({
               sourceImage: resolvedStillUrl,
               instruction,
+              referenceImages: bookendReferenceImages.length > 0 ? bookendReferenceImages : undefined,
               aspectRatio: '16:9',
-              imageSize: '1K',
+              imageSize: bookendImageSize,
+              modelTier: resolvedModelTier,
               editIntent: 'keyframeStart',
               segmentDurationSeconds: durationSeconds,
               negativePrompt: mergeBeatFrameNegativePrompt(
@@ -1081,11 +1118,31 @@ async function postGenerateImage(req: NextRequest) {
             ? `${baseEndInstruction}\n\nGLOBAL ART STYLE LOCK: Preserve the exact rendering medium (${getArtStylePromptSuffix(artStyle)}) of the source frame. Do NOT introduce live-action photorealism.`
             : baseEndInstruction
 
+          const bookendRefs = resolveBeatVideoReferences({
+            scene: resolvedScene as Record<string, unknown>,
+            beat,
+            sceneIndex,
+            projectCharacters: allCharacters,
+            locationReferences: projectLocationRefsForDetect,
+            objectReferences: projectObjectRefsForDetect,
+            includeWardrobeDiptych: false,
+            includeWardrobeReferenceImages: true,
+            filmTitle: filmTitleForDetection,
+          })
+          const bookendReferenceImages = bookendRefs.labeledRefs
+            .filter((r) => Boolean(r.url && r.url.trim() && r.url !== resolvedStartUrl))
+            .slice(0, 5)
+            .map((r) => ({ imageUrl: r.url, name: r.name }))
+          const bookendImageSize: '1K' | '2K' =
+            String(effectiveImageSize) === '2K' || String(effectiveImageSize) === '4K' ? '2K' : '1K'
+
           const editResult = await editImageWithGeminiStudio({
             sourceImage: resolvedStartUrl,
             instruction,
+            referenceImages: bookendReferenceImages.length > 0 ? bookendReferenceImages : undefined,
             aspectRatio: '16:9',
-            imageSize: '1K',
+            imageSize: bookendImageSize,
+            modelTier: resolvedModelTier,
             editIntent: 'keyframeEnd',
             segmentDurationSeconds: durationSeconds,
             negativePrompt: mergeBeatFrameNegativePrompt(
@@ -1221,7 +1278,78 @@ async function postGenerateImage(req: NextRequest) {
             characterSelectionExplicit = true
           }
           const beats = getSceneBeats(resolvedScene as Record<string, unknown>)
-          const beat = beats[effectiveBeatIndex]
+          let beat = beats[effectiveBeatIndex]
+          if (
+            beat &&
+            !skipLikenessValidation &&
+            !shouldUseCustomPromptOverride(generationMode, customPrompt) &&
+            !hasCompleteAuthoredBeatDirection(beat)
+          ) {
+            try {
+              const autoPreCtx = resolveBeatFrameGenerationContext({
+                scene: resolvedScene as Record<string, unknown>,
+                beat,
+                sceneIndex,
+                projectCharacters: allCharacters,
+                locationReferences: projectLocationRefsForDetect,
+                objectReferences: projectObjectRefsForDetect,
+                filmTitle: filmTitleForDetection,
+              })
+              const rewrittenBeat = await rewriteThinStillBeat({
+                beat,
+                beats,
+                beatIndex: effectiveBeatIndex,
+                catalog: shotDirectionCatalogFromPhase(project?.metadata?.visionPhase),
+                boundContinuity: buildBeatBoundContinuity({
+                  scene: resolvedScene as Record<string, unknown>,
+                  beat,
+                  sceneIdx: sceneIndex,
+                  characters: allCharacters,
+                  locationReferences: projectLocationRefsForDetect,
+                  objectReferences: projectObjectRefsForDetect,
+                }),
+                sceneContext: buildStillDirectorSceneContext(
+                  resolvedScene as Record<string, unknown>,
+                  beats
+                ),
+                check: {
+                  composedText: composeBeatActionFraming(beat),
+                  plateNames: plateNamesFromSelection({
+                    selectedCharacters: autoPreCtx.characterIds,
+                    objectReferences: projectObjectRefsForDetect.filter((o: { id?: string }) =>
+                      autoPreCtx.objectRefIds.includes(String(o?.id || ''))
+                    ),
+                    projectCharacters: allCharacters,
+                  }),
+                  expectsCast: expectsUnstatedCast({
+                    scene: resolvedScene as Record<string, unknown>,
+                    beat,
+                    sceneNumber:
+                      typeof resolvedScene?.sceneNumber === 'number'
+                        ? resolvedScene.sceneNumber
+                        : sceneIndex + 1,
+                    projectCharacters: allCharacters,
+                    filmTitle: filmTitleForDetection,
+                    objectReferences: projectObjectRefsForDetect,
+                    locationReferences: projectLocationRefsForDetect,
+                    promptText: composeBeatActionFraming(beat),
+                  }),
+                },
+              })
+              if (rewrittenBeat !== beat) {
+                beat = rewrittenBeat
+                const updatedBeats = beats.map((b, idx) =>
+                  idx === effectiveBeatIndex ? rewrittenBeat : b
+                )
+                resolvedScene = applyBeatsToScene(
+                  resolvedScene as Record<string, unknown>,
+                  updatedBeats
+                )
+              }
+            } catch (preflightErr) {
+              console.warn('[Scene Image] First-take beat preflight rewrite skipped:', preflightErr)
+            }
+          }
           if (beat) {
             beatKindForIntelligence = beat.kind
             effectiveShotType = resolveEffectiveStillShotType({
@@ -1277,22 +1405,18 @@ async function postGenerateImage(req: NextRequest) {
               effectiveShotType = effectiveShotType || 'medium shot'
             } else if (isNarratorBeat(beat)) {
               if (!clientVerifiedBeatRefs) characterObjects = []
-              const lineText = beat.line?.trim() || ''
               dialogueFrameContext =
-                `Storyboard voiceover backdrop frame. NO narrator on screen, NO talking head, NO lip-sync. ` +
-                `Illustrate the visual scene and mood implied by this voiceover` +
-                (lineText ? `: "${lineText}"` : '') +
-                `. Show environment, subjects, and atmosphere only. `
+                `Storyboard voiceover backdrop frame. NO narrator on screen, NO talking head, NO lip-sync, NO text or subtitles. ` +
+                `Illustrate the silent visual environment, staging, and atmosphere only. `
               effectiveShotType = effectiveShotType || 'wide shot'
             } else if (beat.characterId || beat.character) {
               if (!clientVerifiedBeatRefs) {
                 const speakerChar = resolveBeatSpeaker(beat, allCharacters)
                 if (speakerChar) characterObjects = [speakerChar]
               }
-              const lineText = beat.line?.trim() || ''
               const speakerName = (beat.character || '').trim()
               dialogueFrameContext =
-                `Storyboard dialogue frame. Focus on ${speakerName || 'the speaker'} delivering this line: "${lineText}". ` +
+                `Storyboard dialogue frame. Focus on ${speakerName || 'the speaker'} mid-conversation with natural expression and no text or speech bubbles. ` +
                 'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
               effectiveShotType = effectiveShotType || 'medium close-up'
             }
@@ -1333,10 +1457,11 @@ async function postGenerateImage(req: NextRequest) {
               }
             }
             console.log(`[Scene Image] Beat frame ${effectiveBeatIndex}: kind=${beat.kind}`)
+            // Spoken dialogue (`beat.line`) is deliberately excluded: naming an off-screen
+            // character in dialogue ("Where is Marcus?") must not attach their face plate.
             const promptUnionText = [
               typeof customPrompt === 'string' ? customPrompt : '',
               beat.actionDescription,
-              beat.line,
               beat.character,
             ]
               .filter(Boolean)
@@ -2114,8 +2239,18 @@ async function postGenerateImage(req: NextRequest) {
       }
     })
 
+    const isBeatCloseUpFraming =
+      isBeatFrame &&
+      isFaceCloseUpShot(
+        resolveStillShotClass(
+          effectiveShotType,
+          beatForEmotion ? composeBeatActionFraming(beatForEmotion) : undefined
+        ).shotHint || effectiveShotType
+      )
+
     if (
       includeWardrobeDiptych &&
+      !isBeatCloseUpFraming &&
       characterReferences.some(
         (ref: any) => ref.hasDualReferences || ref.hasWardrobeDiptych || ref.isStoredPip
       )
@@ -2986,7 +3121,7 @@ async function postGenerateImage(req: NextRequest) {
 
           const useInterleavedProRefs = effectiveImageTier !== 'eco'
           const { kept: refsForCap, dropped: cuWardrobeDropped } =
-            useInterleavedProRefs && !isCreativeStillGeneration(stillGenerationMode)
+            !isCreativeStillGeneration(stillGenerationMode)
               ? omitWardrobePlatesForFaceCloseUp(
                   allPrioritizedRefs,
                   effectiveShotType,
@@ -3471,7 +3606,7 @@ async function postGenerateImage(req: NextRequest) {
             }
           }
 
-          if (allReferenceImages.length > 0) {
+          if (allReferenceImages.length > 0 || isBeatFrame) {
             geminiPrompt = joinPromptBlocks(subjectCountGuardrail, structuredStill)
           }
 

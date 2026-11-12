@@ -92,6 +92,8 @@ export interface PrioritizedReferenceImage {
   sendIndex?: number
   characterName?: string
   refRole?: CharacterRefRole
+  /** Discrete headshot portrait URL when `refRole === 'wardrobe-diptych'` can be downgraded on close-ups. */
+  fallbackIdentityUrl?: string
   propName?: string
   locationName?: string
   originalOrder?: number
@@ -252,7 +254,13 @@ function propRole(importance?: string): ReferencePriorityRole {
  * props). Outfit stays in TASK / identity-caption text.
  */
 export function omitWardrobePlatesForFaceCloseUp<
-  T extends { refRole?: CharacterRefRole; characterName?: string }
+  T extends {
+    imageUrl?: string
+    role?: ReferencePriorityRole
+    refRole?: CharacterRefRole
+    characterName?: string
+    fallbackIdentityUrl?: string
+  }
 >(
   refs: T[],
   shotType?: string | null,
@@ -283,6 +291,24 @@ export function omitWardrobePlatesForFaceCloseUp<
       charactersWithIdentity.has(ref.characterName)
     ) {
       dropped.push(ref)
+      continue
+    }
+    // A 16:9 PiP character sheet is mostly a standing full-body figure with a small
+    // corner headshot inset; on Face CU/MCU/ECU it biases pose/framing toward full
+    // body and starves facial detail. Swap to the discrete portrait when available.
+    if (
+      ref.refRole === 'wardrobe-diptych' &&
+      typeof ref.fallbackIdentityUrl === 'string' &&
+      ref.fallbackIdentityUrl.trim().length > 0 &&
+      ref.fallbackIdentityUrl.trim() !== ref.imageUrl
+    ) {
+      dropped.push(ref)
+      kept.push({
+        ...ref,
+        imageUrl: ref.fallbackIdentityUrl.trim(),
+        role: 'identity',
+        refRole: 'identity',
+      })
       continue
     }
     kept.push(ref)
@@ -510,6 +536,7 @@ export function buildCharacterReferenceEntries(
   }>,
   characterReferences: Array<{
     name: string
+    identityImageUrl?: string
     hasDualReferences?: boolean
     hasWardrobeDiptych?: boolean
     subjectOrdinal?: number
@@ -557,6 +584,9 @@ export function buildCharacterReferenceEntries(
       provisionalIndex: refImageIndex,
       characterName: ref.characterName,
       refRole: ref.refRole,
+      ...(ref.refRole === 'wardrobe-diptych' && matchingCharRef?.identityImageUrl
+        ? { fallbackIdentityUrl: matchingCharRef.identityImageUrl }
+        : {}),
       subjectOrdinal,
       ...(wardrobeDescription ? { wardrobeDescription } : {}),
       ...(identityTraits ? { identityTraits } : {}),

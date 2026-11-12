@@ -66,7 +66,11 @@ function isOfficialV2ApiModel(apiModelName: string): boolean {
 }
 
 function supportsOfficialNativeAudio(apiModelName: string): boolean {
-  return apiModelName === 'kling-v2-6'
+  return (
+    apiModelName === 'kling-v2-6' ||
+    apiModelName === 'kling-v3' ||
+    apiModelName === 'kling-v3-omni'
+  )
 }
 
 function mapOfficialKlingMode(

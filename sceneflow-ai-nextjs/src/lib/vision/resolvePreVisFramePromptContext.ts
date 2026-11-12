@@ -227,6 +227,30 @@ export function resolvePreVisFramePromptContext(args: {
               beat.actionDescription ||
               beat.line ||
               ''
+      const resolvedLocationRefId = saved?.locationRefId ?? auto.locationRefId ?? null
+      const matchedLoc = resolvedLocationRefId
+        ? locationReferences.find((loc) => loc.id === resolvedLocationRefId)
+        : undefined
+      const rawCandidateVersionId = saved?.locationRefId
+        ? saved.locationVersionId ?? null
+        : auto.locationVersionId ?? null
+      const matchedVer = rawCandidateVersionId
+        ? matchedLoc?.versions?.find((ver) => ver.id === rawCandidateVersionId)
+        : undefined
+      const fallbackDefaultVer =
+        !matchedVer && matchedLoc?.defaultVersionId
+          ? matchedLoc.versions?.find((ver) => ver.id === matchedLoc.defaultVersionId)
+          : undefined
+      const effectiveVer = matchedVer ?? fallbackDefaultVer
+      const resolvedLocationVersionId = effectiveVer?.id ?? null
+      if (effectiveVer) {
+        const verNotes = effectiveVer.stateNotes?.trim() || effectiveVer.description?.trim()
+        if (verNotes && !beatVisualSetup.location.includes(verNotes)) {
+          beatVisualSetup.location = [beatVisualSetup.location, verNotes]
+            .filter(Boolean)
+            .join(' — ')
+        }
+      }
       return {
         frameLabel: slot.label,
         seedPrompt,
@@ -241,11 +265,8 @@ export function resolvePreVisFramePromptContext(args: {
           projectCharacters,
           filledWardrobes
         ),
-        locationRefId: saved?.locationRefId ?? auto.locationRefId ?? null,
-        locationVersionId:
-          saved?.source === 'user'
-            ? saved.locationVersionId ?? null
-            : auto.locationVersionId ?? null,
+        locationRefId: resolvedLocationRefId,
+        locationVersionId: resolvedLocationVersionId,
         objectRefIds: saved?.objectRefIds?.length ? saved.objectRefIds : auto.objectRefIds,
         warnings: auto.warnings,
         beat,

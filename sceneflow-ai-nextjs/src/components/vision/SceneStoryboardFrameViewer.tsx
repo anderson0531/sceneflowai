@@ -314,7 +314,7 @@ function buildStoryboardSlotFrameProps(
       imagePrompt: slot.storyboardImagePrompt,
       generateBlockedReason,
       onGenerate: () => void onGenerateCustomFrame?.(slot.customFrameId!),
-      onDirect: onDirectFrame ? () => onDirectFrame(slot) : undefined,
+      onDirect: undefined,
       onDirector: undefined,
       onUpload: (file) => onUploadCustomFrame?.(slot.customFrameId!, file),
       onEdit:
@@ -423,7 +423,7 @@ function buildStoryboardSlotFrameProps(
         void onGenerateDialogueFrame?.(dialogueIdx)
       }
     },
-    onDirect: onDirectFrame ? () => onDirectFrame(slot) : undefined,
+    onDirect: undefined,
     onDirector:
       onDirectorFrame && useBeatFrame ? () => onDirectorFrame(slot) : undefined,
     onUpload: (file) => {
@@ -436,7 +436,7 @@ function buildStoryboardSlotFrameProps(
       }
     },
     onEdit:
-      slot.displayImageUrl && !slot.isMissing
+      slot.displayImageUrl && !slot.isMissing && !(useBeatFrame && onDirectorFrame)
         ? (url) => {
             if (useBeatFrame && onEditFrame && beatId) {
               onEditFrame({
@@ -1913,6 +1913,16 @@ export function SceneStoryboardFrameViewer({
                         <p className="text-sm font-semibold text-slate-200 truncate flex-1 min-w-0" title={activeDisplaySlot.label}>
                           {activeDisplaySlot.label}
                         </p>
+                        {onDirectorFrame && activeDisplaySlot.beatId && (
+                          <button
+                            type="button"
+                            className="inline-flex h-7 shrink-0 items-center gap-1 rounded border border-teal-800/80 px-2 text-[11px] text-teal-200 hover:bg-teal-950/40"
+                            onClick={() => onDirectorFrame(activeDisplaySlot)}
+                          >
+                            <Clapperboard className="w-3.5 h-3.5" />
+                            Shot Director
+                          </button>
+                        )}
                         {previewStillPrompt && (
                           <Button
                             type="button"

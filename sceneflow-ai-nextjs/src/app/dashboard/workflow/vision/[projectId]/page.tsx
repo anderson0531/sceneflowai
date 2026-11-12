@@ -21462,7 +21462,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSaveEditedDialogueFrame={handleSaveEditedDialogueFrame}
                 onSaveEditedCustomFrame={handleSaveEditedCustomFrame}
                 onSaveEditedStoryboardScene={handleSaveEditedScene}
-                onDirectFrame={handleOpenDirectFrame}
                 onDirectorFrame={handleOpenDirectorFrame}
                 generatingDirectSlotKey={
                   directFrameRun && !directFrameRun.finished
@@ -21995,6 +21994,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             (entry) => entry.beatId === preVisDirectorDialog.slot.beatId
           ) ?? null
         if (!beat) return null
+        const dialogSlot = preVisDirectorDialog.slot
+        const slotFrameRole: 'start' | 'action-start' | 'end' =
+          dialogSlot.frameRole === 'action-start'
+            ? 'action-start'
+            : dialogSlot.frameRole === 'end'
+              ? 'end'
+              : 'start'
+        const targetSurface =
+          slotFrameRole === 'action-start'
+            ? 'action-start'
+            : slotFrameRole === 'end'
+              ? 'end'
+              : 'still'
+        const currentFrameImageUrl =
+          slotFrameRole === 'action-start'
+            ? beat.storyboardStartImageUrl?.trim() || dialogSlot.ownImageUrl || undefined
+            : slotFrameRole === 'end'
+              ? beat.storyboardEndImageUrl?.trim() || dialogSlot.ownImageUrl || undefined
+              : beat.storyboardImageUrl?.trim() ||
+                dialogSlot.ownImageUrl ||
+                (!dialogSlot.isPlaceholder ? dialogSlot.displayImageUrl : undefined)
+        const targetSceneIdx = preVisDirectorDialog.sceneIdx
         return (
           <BeatDirectionEditor
             layout="dialog"
@@ -22003,7 +22024,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               if (!open) setPreVisDirectorDialog(null)
             }}
             beat={beat}
-            sceneIdx={preVisDirectorDialog.sceneIdx}
+            sceneIdx={targetSceneIdx}
             scenes={script?.script?.scenes ?? []}
             script={script}
             onScriptChange={handleScriptChange}
@@ -22015,6 +22036,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             locationReferences={locationReferences}
             objectReferences={objectReferences}
             projectId={projectId}
+            targetSurface={targetSurface}
+            currentFrameImageUrl={currentFrameImageUrl}
+            aspectRatio={lockedAspectRatio}
+            onSaveEditedFrame={(newImageUrl) =>
+              handleSaveEditedBeatFrame(targetSceneIdx, beat.beatId, newImageUrl, slotFrameRole)
+            }
+            onSaveAndGenerate={async () => {
+              if (slotFrameRole === 'action-start') {
+                await handleRequestGenerateBeatStartFrame(targetSceneIdx, beat.beatId)
+              } else if (slotFrameRole === 'end') {
+                await handleRequestGenerateBeatEndFrame(targetSceneIdx, beat.beatId)
+              } else {
+                await handleRequestGenerateBeatFrame(targetSceneIdx, beat.beatId)
+              }
+            }}
           />
         )
       })()}

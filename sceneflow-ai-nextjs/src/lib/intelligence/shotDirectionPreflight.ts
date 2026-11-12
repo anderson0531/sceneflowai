@@ -7,7 +7,11 @@
 import 'server-only'
 
 import { directBeatStills } from '@/lib/intelligence/beat-still-director'
-import { applyStillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
+import {
+  applyStillDirectorPatch,
+  type StillDirectorBoundContinuity,
+  type StillDirectorSceneContext,
+} from '@/lib/intelligence/beat-still-director-fallback'
 import { directBeatVideo } from '@/lib/intelligence/beat-video-director'
 import {
   composeBeatActionFraming,
@@ -105,17 +109,27 @@ export async function rewriteThinStillBeat(args: {
   beat: SceneBeat
   beats: SceneBeat[]
   beatIndex: number
-  catalog?: { characterNames: string[]; propNames: string[]; locationNames: string[] }
+  catalog?: { characterNames?: string[]; propNames?: string[]; locationNames?: string[] }
+  boundContinuity?: StillDirectorBoundContinuity
+  sceneContext?: StillDirectorSceneContext
   check: ShotDirectionRewriteCheck
 }): Promise<SceneBeat> {
   if (!stillCheck(args.beat, args.check)) return args.beat
   const { beat, beats, beatIndex } = args
+  const normalizedCatalog = args.catalog
+    ? {
+        characterNames: args.catalog.characterNames ?? [],
+        propNames: args.catalog.propNames ?? [],
+        locationNames: args.catalog.locationNames ?? [],
+      }
+    : undefined
   const result = await directBeatStills({
     mode: 'optimize',
     beats: [
       {
         beatIndex,
         beat,
+        ...(args.boundContinuity ? { boundContinuity: args.boundContinuity } : {}),
         previousMoment:
           beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
         nextMoment:
@@ -124,7 +138,8 @@ export async function rewriteThinStillBeat(args: {
             : undefined,
       },
     ],
-    catalog: args.catalog,
+    catalog: normalizedCatalog,
+    ...(args.sceneContext ? { sceneContext: args.sceneContext } : {}),
   })
   const directed = result.patches[0]
   if (!directed) return beat
@@ -147,7 +162,9 @@ export async function rewriteThinClipPrompt(args: {
   previousBeat?: SceneBeat
   sceneState?: CumulativeSceneStateAtBeat | null
   musicCue?: SceneMusicCue
-  catalog?: { characterNames: string[]; propNames: string[]; locationNames: string[] }
+  catalog?: { characterNames?: string[]; propNames?: string[]; locationNames?: string[] }
+  boundContinuity?: StillDirectorBoundContinuity
+  sceneContext?: StillDirectorSceneContext
 }): Promise<{ beat: SceneBeat; prompt: string }> {
   if (hasCompleteAuthoredBeatDirection(args.beat)) {
     return { beat: args.beat, prompt: args.prompt }
@@ -157,6 +174,8 @@ export async function rewriteThinClipPrompt(args: {
     beats: args.beats,
     beatIndex: args.beatIndex,
     catalog: args.catalog,
+    boundContinuity: args.boundContinuity,
+    sceneContext: args.sceneContext,
     check: {
       composedText: composeBeatActionFraming(args.beat),
       plateNames: args.plateNames,
@@ -199,7 +218,7 @@ export async function rewriteThinClipPrompt(args: {
       beatDirection: {
         ...(beat.beatDirection ?? {}),
         videoPrompt,
-        generatedBy: beat.beatDirection?.generatedBy === 'user' ? 'user' : 'director',
+        generatedBy: 'director',
         updatedAt: new Date().toISOString(),
       },
     },

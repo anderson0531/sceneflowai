@@ -417,6 +417,9 @@ export type DirectorWorkflowSlots = {
   setMixerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
   streamsCollapsed: boolean
   setStreamsCollapsed: React.Dispatch<React.SetStateAction<boolean>>
+  generateClipForBeat?: (beatId: string) => void
+  changeClipDurationForBeat?: (beatId: string, seconds: number) => void
+  getClipDurationForBeat?: (beatId: string) => number | undefined
 }
 
 export type DirectorWorkflowProps = DirectorConsoleProps & {
@@ -1438,6 +1441,32 @@ export function DirectorConsoleRoot({
     [onProductionDataChange, productionData, productionTarget.language]
   )
 
+  const handleChangeClipDuration = useCallback(
+    (segment: SceneSegment, nextSeconds: number) => {
+      const existingItem = queue.find((entry) => entry.segmentId === segment.segmentId)
+      if (existingItem) {
+        updateConfig(segment.segmentId, {
+          ...existingItem.config,
+          duration: nextSeconds,
+          approvalStatus: 'user-approved',
+        })
+      }
+      if (!onProductionDataChange || !productionData) return
+      onProductionDataChange({
+        ...productionData,
+        segments: productionData.segments.map((seg) =>
+          seg.segmentId === segment.segmentId
+            ? {
+                ...seg,
+                endTime: (typeof seg.startTime === 'number' ? seg.startTime : 0) + nextSeconds,
+              }
+            : seg
+        ),
+      })
+    },
+    [queue, updateConfig, onProductionDataChange, productionData]
+  )
+
   // Handle generate from dialog - saves config and triggers single segment generation
   // Pass config via overrideConfigs to bypass React state async timing issues
   const handleGenerateFromDialog = useCallback(
@@ -1793,20 +1822,28 @@ export function DirectorConsoleRoot({
         segment.references?.startFrameUrl?.trim() ||
         ''
 
-      // Continuity fallback: if this shot has no start frame of its own, allow Shot N-1's end frame
+      // Continuity fallback: only inherit Shot N-1's end frame across explicit CONTINUE cuts
       if (!resolvedStart && segments.length > 1) {
         const segIdx = segments.findIndex((s) => s.segmentId === segment.segmentId)
         if (segIdx > 0) {
           const prevSeg = segments[segIdx - 1]
           const beats = getSceneBeats(sceneRecord ?? null)
-          const prevBeat = prevSeg?.beatId
-            ? beats.find((b) => b.beatId === prevSeg.beatId)
-            : beats[segIdx - 1]
-          resolvedStart =
-            prevBeat?.storyboardEndImageUrl?.trim() ||
-            prevSeg?.endFrameUrl?.trim() ||
-            prevSeg?.references?.endFrameUrl?.trim() ||
-            ''
+          const curBeat = segment.beatId
+            ? beats.find((b) => b.beatId === segment.beatId)
+            : beats[segIdx]
+          const isContinuousCut =
+            segment.transitionType === 'CONTINUE' ||
+            (curBeat as { transitionType?: string } | undefined)?.transitionType === 'CONTINUE'
+          if (isContinuousCut) {
+            const prevBeat = prevSeg?.beatId
+              ? beats.find((b) => b.beatId === prevSeg.beatId)
+              : beats[segIdx - 1]
+            resolvedStart =
+              prevBeat?.storyboardEndImageUrl?.trim() ||
+              prevSeg?.endFrameUrl?.trim() ||
+              prevSeg?.references?.endFrameUrl?.trim() ||
+              ''
+          }
         }
       }
 
@@ -3116,6 +3153,93 @@ export function DirectorConsoleRoot({
       />
     ) : null
 
+  const triggerClipGeneration = useCallback(
+    (segment: SceneSegment) => {
+      const item = queue.find((entry) => entry.segmentId === segment.segmentId)
+      if (!item) {
+        void import('sonner').then(({ toast }) => {
+          toast.error('This clip is not in the video queue.')
+        })
+        return
+      }
+      const inputs = segmentHasVideoAgentInputs(item, segment)
+      const requiresFrames =
+        videoGenerationMode === 'creative' || effectiveVideoSourceMethod === 'frame'
+      if (requiresFrames && !inputs.hasStartFrame) {
+        void import('sonner').then(({ toast }) => {
+          toast.error(
+            'Start/End frames are required for Creative (Kling AI) / Frame-to-Video clips — generate frames in Stills first, or switch to Standard mode.'
+          )
+        })
+        return
+      }
+      const nextConfig = applyVideoAgentPolicyToItem(item, {
+        scope: 'selected',
+        selectedSegmentIds: [segment.segmentId],
+        quality: videoGenerationQuality,
+        generationMode: videoGenerationMode,
+        sourceMethod: effectiveVideoSourceMethod,
+      })
+      void handleGenerateFromDialog(segment.segmentId, nextConfig)
+    },
+    [
+      queue,
+      segmentHasVideoAgentInputs,
+      videoGenerationMode,
+      effectiveVideoSourceMethod,
+      applyVideoAgentPolicyToItem,
+      videoGenerationQuality,
+      handleGenerateFromDialog,
+    ]
+  )
+
+  const latestClipActionsRef = useRef({
+    segments,
+    triggerClipGeneration,
+    handleChangeClipDuration,
+  })
+  latestClipActionsRef.current = {
+    segments,
+    triggerClipGeneration,
+    handleChangeClipDuration,
+  }
+
+  const generateClipForBeat = useCallback((beatId: string) => {
+    window.setTimeout(() => {
+      const current = latestClipActionsRef.current
+      const seg = current.segments.find((entry) => entry.beatId === beatId)
+      if (seg) {
+        current.triggerClipGeneration(seg)
+      }
+    }, 80)
+  }, [])
+
+  const changeClipDurationForBeat = useCallback((beatId: string, seconds: number) => {
+    const current = latestClipActionsRef.current
+    const seg = current.segments.find((entry) => entry.beatId === beatId)
+    if (seg) {
+      current.handleChangeClipDuration(seg, seconds)
+    }
+  }, [])
+
+  const getClipDurationForBeat = useCallback(
+    (beatId: string): number | undefined => {
+      const seg = segments.find((entry) => entry.beatId === beatId)
+      if (!seg) return undefined
+      const qItem = queue.find((entry) => entry.segmentId === seg.segmentId)
+      const raw =
+        qItem?.config?.duration ??
+        (typeof seg.endTime === 'number' &&
+        typeof seg.startTime === 'number' &&
+        seg.endTime > seg.startTime
+          ? Math.round(seg.endTime - seg.startTime)
+          : 8)
+      const opts = videoGenerationMode === 'creative' ? [5, 10] : [4, 6, 8, 10]
+      return opts.includes(raw) ? raw : opts[opts.length - 1]
+    },
+    [segments, queue, videoGenerationMode]
+  )
+
   const generateControls = (
     <div className="flex flex-wrap gap-2 justify-end items-center">
       <div className="flex items-center gap-1.5">
@@ -3264,9 +3388,7 @@ export function DirectorConsoleRoot({
         renderedCount={statusCounts.rendered}
         totalCount={videoClips.length || statusCounts.total}
         onOpenPreVis={onOpenPreVis}
-        onTake={handleRequestTake}
         onUpload={onSegmentUpload}
-        onRetake={(segment) => setRetakeSegment(segment)}
         streamLanguage={productionTarget.language}
         streamLanguages={onLanguageChange ? [] : streamLanguages}
         onStreamLanguageChange={onLanguageChange ? undefined : handleStreamLanguageChange}
@@ -3278,6 +3400,9 @@ export function DirectorConsoleRoot({
         onRestoreLanguageVersion={handleRestoreLanguageVersion}
         generatingLanguageClipId={languageClipBusyId}
         onToggleClipCaptions={handleToggleClipCaptions}
+        sourceMethod={effectiveVideoSourceMethod}
+        generationMode={videoGenerationMode}
+        onChangeDuration={handleChangeClipDuration}
         onGenerateClip={(segment) => {
           const item = queue.find((entry) => entry.segmentId === segment.segmentId)
           if (!item) {
@@ -3307,9 +3432,7 @@ export function DirectorConsoleRoot({
           handleGenerateFromDialog(segment.segmentId, nextConfig)
         }}
         generatingClipId={isRendering ? currentSegmentId : null}
-        onDirectVideo={(segment) => handleRequestTake(segment, false)}
         onDirectBeat={onDirectBeat}
-        onEditClip={(segment) => setEditingVideoSegment(segment)}
         onRestoreTake={handleRestoreVideoTake}
         selectedBeatId={selectedBeatId}
         onSelectBeat={onSelectBeat}
@@ -3385,6 +3508,9 @@ export function DirectorConsoleRoot({
           setMixerCollapsed,
           streamsCollapsed,
           setStreamsCollapsed,
+          generateClipForBeat,
+          changeClipDurationForBeat,
+          getClipDurationForBeat,
         })
       ) : (
         defaultWorkflowLayout

@@ -311,23 +311,21 @@ function buildContentDelta(
   
   const parts: string[] = []
   
-  // Dialogue-driven changes
+  // Dialogue-driven visual state (never inject quoted dialogue lines into image prompts)
   if (content.dialogueLines?.length) {
     const lastLine = content.dialogueLines[content.dialogueLines.length - 1]
+    const emotionSuffix = lastLine.emotion ? ` with ${lastLine.emotion} expression` : ''
     if (content.dialogueLines.length === 1) {
-      parts.push(`After ${lastLine.character} says: "${lastLine.text.substring(0, 70)}"${lastLine.emotion ? ` (${lastLine.emotion})` : ''}`)
+      parts.push(`After ${lastLine.character} finishes speaking${emotionSuffix}`)
     } else {
       const speakers = [...new Set(content.dialogueLines.map(d => d.character))]
-      parts.push(`After exchange between ${speakers.join(' and ')}, ending with ${lastLine.character}: "${lastLine.text.substring(0, 50)}"`)
+      parts.push(`After spoken exchange between ${speakers.join(' and ')}, settling on ${lastLine.character}${emotionSuffix}`)
     }
   }
   
-  // Narration context
+  // Narration pacing context without raw voiceover text
   if (content.narrationText) {
-    const hint = content.narrationText.length > 80 
-      ? content.narrationText.substring(0, 80) + '...' 
-      : content.narrationText
-    parts.push(`Narration context: "${hint}"`)
+    parts.push(`Settled visual atmosphere after ${duration}s voiceover beat`)
   }
   
   // Talent action

@@ -589,6 +589,12 @@ export async function POST(
       return composed.prompt || compiledPrompt
     }
 
+    const rawBodyRecord = body as unknown as Record<string, unknown>
+    const hasExplicitUserPromptOverride = Boolean(
+      rawBodyRecord.isUserEditedPrompt === true ||
+        (typeof rawBodyRecord.userEditedPrompt === 'string' &&
+          rawBodyRecord.userEditedPrompt.trim().length > 0)
+    )
     let englishCompiledPrompt = ''
     if (isBeatFirstPipelineEnabled()) {
       await sequelize.authenticate()
@@ -608,7 +614,7 @@ export async function POST(
         const activeBeats = beats.filter((b) => !isBeatExcluded(b))
         const beatIndex = beats.findIndex((b) => b.beatId === beatId)
         const activeBeatIndex = activeBeats.findIndex((b) => b.beatId === beatId)
-        const beat = beatIndex >= 0 ? beats[beatIndex] : undefined
+        let beat = beatIndex >= 0 ? beats[beatIndex] : undefined
         cachedBeat = beat
         if (beat) {
           const artStyleId = resolveProjectArtStyle(project?.metadata)
@@ -648,8 +654,104 @@ export async function POST(
             }
           )
           englishCompiledPrompt = compiled.prompt
-          prompt = await localizeCompiledBeatPrompt(beat, compiled.prompt)
+          if (!hasExplicitUserPromptOverride) {
+            prompt = await localizeCompiledBeatPrompt(beat, compiled.prompt)
+          }
           negativePrompt = negativePrompt || compiled.negativePrompt
+
+          // Run thin-clip preflight BEFORE resolving reference images so first-take
+          // undirected beats bind character/location/prop plates to the newly authored beatDirection.
+          if (!hasExplicitUserPromptOverride && cachedProject) {
+            try {
+              const visionPhase = (cachedProject.metadata?.visionPhase || {}) as Record<
+                string,
+                unknown
+              >
+              const references = ((visionPhase.references || {}) as {
+                objectReferences?: Array<{ name?: string; imageUrl?: string }>
+                locationReferences?: Array<{ location?: string; name?: string; imageUrl?: string }>
+              })
+              const projectCharacters =
+                (visionPhase.characters as Array<{ id?: string; name?: string }>) || []
+              const basePromptForPreflight = englishCompiledPrompt || prompt
+              const prepared = await rewriteThinClipPrompt({
+                beat,
+                beats,
+                beatIndex: Math.max(beatIndex, 0),
+                prompt: basePromptForPreflight,
+                plateNames: plateNamesFromVideoRefs(referenceImages || []),
+                expectsCast: expectsUnstatedCast({
+                  scene: sceneRecord as Record<string, unknown>,
+                  beat,
+                  projectCharacters,
+                  filmTitle: cachedProject.metadata?.title || cachedProject.title,
+                  objectReferences: references.objectReferences,
+                  locationReferences: references.locationReferences,
+                  promptText: basePromptForPreflight,
+                }),
+                sceneDirection: sceneDirection as DetailedSceneDirection | null,
+                artStyleId,
+                previousBeat:
+                  activeBeatIndex > 0
+                    ? activeBeats[activeBeatIndex - 1]
+                    : beatIndex > 0
+                      ? beats[beatIndex - 1]
+                      : undefined,
+                sceneState: activeBeatIndex >= 0 ? stateLedger[activeBeatIndex] : undefined,
+                ...(musicCue ? { musicCue } : {}),
+                catalog: buildExpressReferenceCatalog(cachedProject),
+              })
+              if (
+                prepared.beat !== beat ||
+                !englishCompiledPrompt ||
+                prepared.prompt !== englishCompiledPrompt
+              ) {
+                const isFrameMethod =
+                  resolvedGenerationMethod === 'FTV' || resolvedGenerationMethod === 'I2V'
+                const recompiledPrompt = isFrameMethod
+                  ? compileBeatVideoPromptFromDirection(
+                      prepared.beat,
+                      sceneDirection as DetailedSceneDirection | null,
+                      {
+                        artStyleId,
+                        targetMethod: 'frame',
+                        previousBeat:
+                          activeBeatIndex > 0
+                            ? activeBeats[activeBeatIndex - 1]
+                            : beatIndex > 0
+                              ? beats[beatIndex - 1]
+                              : undefined,
+                        sceneState: activeBeatIndex >= 0 ? stateLedger[activeBeatIndex] : undefined,
+                        ...(musicCue ? { musicCue } : {}),
+                      }
+                    ).prompt
+                  : prepared.prompt
+                prompt = await localizeCompiledBeatPrompt(prepared.beat, recompiledPrompt)
+              }
+              if (prepared.beat !== beat && beatIndex >= 0) {
+                beat = prepared.beat
+                cachedBeat = prepared.beat
+                const nextBeats = [...beats]
+                nextBeats[beatIndex] = prepared.beat
+                cachedScene = applyBeatsToScene(
+                  sceneRecord as Record<string, unknown>,
+                  nextBeats
+                )
+                const scenes = getVisionScriptScenes(visionPhase)
+                const found = findSceneById(scenes, sceneId)
+                if (found.scene && found.index >= 0) {
+                  scenes[found.index] = cachedScene
+                  cachedProject.changed('metadata', true)
+                  await cachedProject.save()
+                }
+              }
+            } catch (preflightError) {
+              console.warn(
+                '[Segment Asset Generation] Preflight clip rewrite failed; using the compiled prompt:',
+                preflightError
+              )
+            }
+          }
 
           const trimmedStart = startFrameUrl?.trim()
           const hasDedicatedActionStart =
@@ -764,111 +866,6 @@ export async function POST(
         console.warn(
           '[Segment Asset Generation] Beat reference relabel failed; using client refs:',
           relabelError
-        )
-      }
-    }
-
-    if (
-      isBeatFirstPipelineEnabled() &&
-      beatId &&
-      cachedBeat &&
-      cachedScene &&
-      cachedProject &&
-      (genType === 'T2V' || genType === 'I2V' || generationMethod === 'REF')
-    ) {
-      try {
-        const visionPhase = (cachedProject.metadata?.visionPhase || {}) as Record<string, unknown>
-        const beats = getSceneBeats(cachedScene)
-        const activeBeats = beats.filter((b) => !isBeatExcluded(b))
-        const beatIndex = beats.findIndex((candidate) => candidate.beatId === beatId)
-        const activeBeatIndex = activeBeats.findIndex((candidate) => candidate.beatId === beatId)
-        const beat = beatIndex >= 0 ? beats[beatIndex] : cachedBeat
-        const stateLedger = buildSceneStateLedger(activeBeats)
-        const references = ((visionPhase.references || {}) as {
-          objectReferences?: Array<{ name?: string; imageUrl?: string }>
-          locationReferences?: Array<{ location?: string; name?: string; imageUrl?: string }>
-        })
-        const projectCharacters =
-          (visionPhase.characters as Array<{ id?: string; name?: string }>) || []
-        const sceneDirection =
-          (cachedScene as { sceneDirection?: unknown; detailedDirection?: unknown }).sceneDirection ??
-          (cachedScene as { detailedDirection?: unknown }).detailedDirection ??
-          null
-        const artStyleId = resolveProjectArtStyle(cachedProject.metadata)
-        const musicCue = resolveBeatMusicCue(
-          parsePersistedMusicCues(cachedScene.sceneMusicCues, activeBeats),
-          Math.max(activeBeatIndex, 0)
-        )
-        const basePromptForPreflight = englishCompiledPrompt || prompt
-        const prepared = await rewriteThinClipPrompt({
-          beat,
-          beats,
-          beatIndex: Math.max(beatIndex, 0),
-          prompt: basePromptForPreflight,
-          plateNames: plateNamesFromVideoRefs(referenceImages || []),
-          expectsCast: expectsUnstatedCast({
-            scene: cachedScene,
-            beat,
-            projectCharacters,
-            filmTitle: cachedProject.metadata?.title || cachedProject.title,
-            objectReferences: references.objectReferences,
-            locationReferences: references.locationReferences,
-            promptText: basePromptForPreflight,
-          }),
-          sceneDirection: sceneDirection as DetailedSceneDirection | null,
-          artStyleId,
-          previousBeat:
-            activeBeatIndex > 0
-              ? activeBeats[activeBeatIndex - 1]
-              : beatIndex > 0
-                ? beats[beatIndex - 1]
-                : undefined,
-          sceneState: activeBeatIndex >= 0 ? stateLedger[activeBeatIndex] : undefined,
-          ...(musicCue ? { musicCue } : {}),
-          catalog: buildExpressReferenceCatalog(cachedProject),
-        })
-        if (
-          prepared.beat !== beat ||
-          !englishCompiledPrompt ||
-          prepared.prompt !== englishCompiledPrompt
-        ) {
-          const isFrameMethod =
-            resolvedGenerationMethod === 'FTV' || resolvedGenerationMethod === 'I2V'
-          const recompiledPrompt = isFrameMethod
-            ? compileBeatVideoPromptFromDirection(
-                prepared.beat,
-                sceneDirection as DetailedSceneDirection | null,
-                {
-                  artStyleId,
-                  targetMethod: 'frame',
-                  previousBeat:
-                    activeBeatIndex > 0
-                      ? activeBeats[activeBeatIndex - 1]
-                      : beatIndex > 0
-                        ? beats[beatIndex - 1]
-                        : undefined,
-                  sceneState: activeBeatIndex >= 0 ? stateLedger[activeBeatIndex] : undefined,
-                  ...(musicCue ? { musicCue } : {}),
-                }
-              ).prompt
-            : prepared.prompt
-          prompt = await localizeCompiledBeatPrompt(prepared.beat, recompiledPrompt)
-        }
-        if (prepared.beat !== beat && beatIndex >= 0) {
-          const nextBeats = [...beats]
-          nextBeats[beatIndex] = prepared.beat
-          const scenes = getVisionScriptScenes(visionPhase)
-          const found = findSceneById(scenes, sceneId)
-          if (found.scene && found.index >= 0) {
-            scenes[found.index] = applyBeatsToScene(found.scene, nextBeats)
-            cachedProject.changed('metadata', true)
-            await cachedProject.save()
-          }
-        }
-      } catch (preflightError) {
-        console.warn(
-          '[Segment Asset Generation] Preflight clip rewrite failed; using the compiled prompt:',
-          preflightError
         )
       }
     }
