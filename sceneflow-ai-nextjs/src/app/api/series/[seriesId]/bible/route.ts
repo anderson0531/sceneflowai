@@ -7,6 +7,7 @@ import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { visionPhaseToScriptData } from '@/lib/script/scriptExporter'
 import type { KeyEvent, StoryThread, EpisodeSummary, SeriesProductionBible, SeriesBibleEvent } from '@/types/series'
+import { getUiSandboxSeries, isDemoSeriesId } from '@/lib/demo/uiSandboxSeries'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,6 +24,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
   
   try {
+    if (isDemoSeriesId(seriesId)) {
+      const demo = getUiSandboxSeries(seriesId)
+      return NextResponse.json({
+        success: true,
+        bible: demo.productionBible,
+        seriesTitle: demo.title,
+        version: demo.productionBible.version || '1.4.0',
+        demoMode: true,
+      })
+    }
+
     await sequelize.authenticate()
     
     const series = await Series.findByPk(seriesId)
@@ -62,6 +74,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
   
   try {
+    if (isDemoSeriesId(seriesId)) {
+      const demo = getUiSandboxSeries(seriesId)
+      return NextResponse.json({
+        success: true,
+        bible: demo.productionBible,
+        seriesTitle: demo.title,
+        version: demo.productionBible.version || '1.4.0',
+        demoMode: true,
+      })
+    }
+
     await sequelize.authenticate()
     
     const series = await Series.findByPk(seriesId)
@@ -254,6 +277,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
   
   try {
+    if (isDemoSeriesId(seriesId)) {
+      const demo = getUiSandboxSeries(seriesId)
+      return NextResponse.json({
+        success: true,
+        bible: demo.productionBible,
+        seriesTitle: demo.title,
+        version: demo.productionBible.version || '1.4.0',
+        demoMode: true,
+      })
+    }
+
     await sequelize.authenticate()
     
     const series = await Series.findByPk(seriesId)

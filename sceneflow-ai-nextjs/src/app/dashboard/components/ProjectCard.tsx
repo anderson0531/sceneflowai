@@ -498,8 +498,11 @@ export function ProjectCard({
   const renderStatusControl = () => {
     if (isDemo) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-          UI Sandbox Demo
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-800/60 rounded-lg border border-gray-700/50 text-xs">
+          <span className={`w-2 h-2 rounded-full ${getStatusDotClass(project.status)}`} />
+          <span className="text-gray-200 font-medium capitalize">
+            {getStatusLabel(project.status)}
+          </span>
         </span>
       )
     }
@@ -1105,7 +1108,7 @@ export function ProjectCard({
           href={getResumeRoute()}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-500/15 rounded-lg text-sm font-semibold transition-all"
         >
-          {isDemo ? 'Explore UI Sandbox' : `Resume ${currentStepInfo.name}`}
+          {`Resume ${currentStepInfo.name}`}
           <ChevronRight className="w-4 h-4" />
         </Link>
       </div>

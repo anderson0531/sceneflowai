@@ -12,6 +12,10 @@ import {
   type DisplayReference,
   type ReferenceGroups,
 } from '@/lib/series/referenceTransfer'
+import {
+  getUiSandboxSeriesProductionReferences,
+  isDemoSeriesId,
+} from '@/lib/demo/uiSandboxSeries'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +57,13 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
 
   try {
+    if (isDemoSeriesId(seriesId)) {
+      return NextResponse.json({
+        success: true,
+        ...getUiSandboxSeriesProductionReferences(seriesId),
+      })
+    }
+
     await sequelize.authenticate()
     const series = await Series.findByPk(seriesId)
     if (!series) {

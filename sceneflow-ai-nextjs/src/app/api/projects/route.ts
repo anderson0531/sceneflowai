@@ -13,8 +13,8 @@ import { resolveUserId } from '@/lib/userHelper'
 import { normalizeWorkflowStep } from '@/constants/workflowSteps'
 import { slimProjectResponseMetadata } from '@/lib/projects/slimProjectPutPayload'
 import {
+  getAllUiSandboxProjectSummaries,
   getUiSandboxProject,
-  getUiSandboxProjectSummary,
   isDemoProjectId,
 } from '@/lib/demo/uiSandboxProject'
 
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       if (isDemoProjectId(id)) {
         const response = NextResponse.json({
           success: true,
-          project: getUiSandboxProject(),
+          project: getUiSandboxProject(id),
           demoMode: true,
         })
         response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
@@ -104,24 +104,26 @@ export async function GET(request: NextRequest) {
       console.log(`[${timestamp}] [GET /api/projects] Resolved userId: ${userIdParam} -> ${resolvedUserId}`)
     } catch (err) {
       console.error(`[${timestamp}] [GET /api/projects] Failed to resolve user (serving UI Sandbox fallback):`, err)
+      const demoSummaries = getAllUiSandboxProjectSummaries()
       return NextResponse.json({
         success: true,
-        projects: [getUiSandboxProjectSummary()],
+        projects: demoSummaries,
         page: 1,
         pageSize: 20,
-        total: 1,
+        total: demoSummaries.length,
         demoFallback: true,
       })
     }
 
     if (!resolvedUserId) {
       console.error(`[${timestamp}] [GET /api/projects] resolveUserId returned empty id for: ${userIdParam}`)
+      const demoSummaries = getAllUiSandboxProjectSummaries()
       return NextResponse.json({
         success: true,
-        projects: [getUiSandboxProjectSummary()],
+        projects: demoSummaries,
         page: 1,
         pageSize: 20,
-        total: 1,
+        total: demoSummaries.length,
         demoFallback: true,
       })
     }
@@ -215,7 +217,7 @@ export async function GET(request: NextRequest) {
     const includeSandbox = searchParams.get('includeSandbox') === '1'
     const projectsWithDemo =
       includeSandbox && page === 1 && !projects.some((p: any) => isDemoProjectId(p.id))
-        ? [getUiSandboxProjectSummary(), ...projects]
+        ? [...getAllUiSandboxProjectSummaries(), ...projects]
         : projects
 
     console.log(`[${timestamp}] [GET /api/projects] Sending response with ${projectsWithDemo.length} projects`)
@@ -243,17 +245,18 @@ export async function GET(request: NextRequest) {
     if (requestedId && isDemoProjectId(requestedId)) {
       return NextResponse.json({
         success: true,
-        project: getUiSandboxProject(),
+        project: getUiSandboxProject(requestedId),
         demoMode: true,
       })
     }
     if (!requestedId) {
+      const demoSummaries = getAllUiSandboxProjectSummaries()
       return NextResponse.json({
         success: true,
-        projects: [getUiSandboxProjectSummary()],
+        projects: demoSummaries,
         page: 1,
         pageSize: 20,
-        total: 1,
+        total: demoSummaries.length,
         demoFallback: true,
         databaseWarning: error instanceof Error ? error.message : 'Database temporarily unavailable',
       })

@@ -75,7 +75,7 @@ export async function GET(
     }
 
     if (isDemoProjectId(id)) {
-      const demoProject = getUiSandboxProject()
+      const demoProject = getUiSandboxProject(id)
       const response = NextResponse.json({
         success: true,
         project: demoProject,

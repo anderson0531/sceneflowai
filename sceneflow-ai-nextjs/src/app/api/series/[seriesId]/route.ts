@@ -11,6 +11,7 @@ import {
   resolveSeriesArtStyleSpec,
   serializeArtStyleValue,
 } from '@/lib/artStyle/globalArtStyle'
+import { getUiSandboxSeries, isDemoSeriesId } from '@/lib/demo/uiSandboxSeries'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -29,6 +30,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
   
   try {
+    if (isDemoSeriesId(seriesId)) {
+      const response = NextResponse.json({
+        success: true,
+        series: getUiSandboxSeries(seriesId),
+        demoMode: true,
+      })
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+      return response
+    }
+
     const series = await Series.findByPk(seriesId)
     if (!series) {
       return NextResponse.json({ success: false, error: 'Series not found' }, { status: 404 })
@@ -107,6 +118,33 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
   
   try {
+    if (isDemoSeriesId(seriesId)) {
+      const body = await request.json().catch(() => ({}))
+      const base = getUiSandboxSeries(seriesId)
+      const merged = {
+        ...base,
+        ...(body.title !== undefined ? { title: body.title } : {}),
+        ...(body.logline !== undefined ? { logline: body.logline } : {}),
+        ...(body.genre !== undefined ? { genre: body.genre } : {}),
+        ...(body.targetAudience !== undefined ? { targetAudience: body.targetAudience } : {}),
+        ...(body.status !== undefined ? { status: body.status } : {}),
+        ...(body.maxEpisodes !== undefined ? { maxEpisodes: Number(body.maxEpisodes) } : {}),
+        ...(body.productionBible !== undefined
+          ? { productionBible: { ...base.productionBible, ...body.productionBible } }
+          : {}),
+        ...(body.episodeBlueprints !== undefined ? { episodeBlueprints: body.episodeBlueprints } : {}),
+        ...(body.metadata !== undefined ? { metadata: { ...base.metadata, ...body.metadata } } : {}),
+        updatedAt: new Date().toISOString(),
+      }
+      const response = NextResponse.json({
+        success: true,
+        series: merged,
+        demoMode: true,
+      })
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+      return response
+    }
+
     const series = await Series.findByPk(seriesId)
     if (!series) {
       return NextResponse.json({ success: false, error: 'Series not found' }, { status: 404 })
@@ -302,6 +340,16 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
   
   try {
+    if (isDemoSeriesId(seriesId)) {
+      const response = NextResponse.json({
+        success: true,
+        series: getUiSandboxSeries(seriesId),
+        demoMode: true,
+      })
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+      return response
+    }
+
     const series = await Series.findByPk(seriesId)
     if (!series) {
       return NextResponse.json({ success: false, error: 'Series not found' }, { status: 404 })

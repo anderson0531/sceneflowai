@@ -129,8 +129,37 @@ export function isCloudSqlInstanceSuspendedError(error: unknown): boolean {
   return false
 }
 
+/**
+ * GCP project / IAM / OAuth / Cloud SQL Admin API access revoked, suspended, or disabled.
+ */
+export function isGcpAuthOrProjectAccessError(error: unknown): boolean {
+  const { message, code } = extractConnectionErrorCodes(error)
+  const normalized = message.toLowerCase()
+  if (normalized.includes('database circuit breaker open')) return true
+  if (normalized.includes('invalid_grant')) return true
+  if (normalized.includes('permission_denied')) return true
+  if (normalized.includes('caller does not have permission')) return true
+  if (normalized.includes('accessnotconfigured')) return true
+  if (normalized.includes('could not load the default credentials')) return true
+  if (normalized.includes('account disabled') || normalized.includes('billing account')) return true
+  if (normalized.includes('project has been scheduled for deletion')) return true
+  if (normalized.includes('service disabled') || normalized.includes('api has not been used')) return true
+  if (
+    (code === '401' || code === '403' || code === '404') &&
+    (normalized.includes('sqladmin') ||
+      normalized.includes('cloudsql') ||
+      normalized.includes('instance') ||
+      normalized.includes('google') ||
+      normalized.includes('permission'))
+  ) {
+    return true
+  }
+  return false
+}
+
 export function isDatabaseUnavailableError(error: unknown): boolean {
   if (isCloudSqlInstanceSuspendedError(error)) return true
+  if (isGcpAuthOrProjectAccessError(error)) return true
   if (isTransientConnectionCapacityError(error)) return true
   if (isSslOrCertConnectionError(error)) return true
   const err = error as { name?: string; code?: string; message?: string }
@@ -139,8 +168,12 @@ export function isDatabaseUnavailableError(error: unknown): boolean {
     return true
   }
   const { code, message } = extractConnectionErrorCodes(error)
-  if (code === 'ECONNREFUSED' || code === 'ETIMEDOUT' || code === 'ENOTFOUND') return true
-  if (/connection terminated|connect ECONNREFUSED|database.*does not exist/i.test(message)) return true
+  if (code === 'ECONNREFUSED' || code === 'ETIMEDOUT' || code === 'ENOTFOUND' || code === 'EAI_AGAIN') {
+    return true
+  }
+  if (/connection terminated|connect ECONNREFUSED|database.*does not exist|Connection terminated unexpectedly/i.test(message)) {
+    return true
+  }
   return false
 }
 

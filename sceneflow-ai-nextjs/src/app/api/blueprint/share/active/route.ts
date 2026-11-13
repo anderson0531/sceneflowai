@@ -3,6 +3,7 @@ import { sequelize } from '@/config/database'
 import CollabSession from '@/models/CollabSession'
 import { getAuthenticatedUserId } from '@/lib/projectAccess'
 import { getPayload } from '@/lib/blueprint/shareSession'
+import { isDemoProjectId } from '@/lib/demo/uiSandboxProject'
 
 export const runtime = 'nodejs'
 
@@ -16,6 +17,10 @@ export async function GET(req: NextRequest) {
     const projectId = new URL(req.url).searchParams.get('projectId') || ''
     if (!projectId) {
       return NextResponse.json({ success: false, error: 'projectId required' }, { status: 400 })
+    }
+
+    if (isDemoProjectId(projectId)) {
+      return NextResponse.json({ success: true, active: false })
     }
 
     await sequelize.authenticate()
@@ -62,8 +67,7 @@ export async function GET(req: NextRequest) {
       expiresAt: expiresAt?.toISOString?.() ?? null,
     })
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed'
-    console.error('[blueprint/share/active]', e)
-    return NextResponse.json({ success: false, error: message }, { status: 500 })
+    console.warn('[blueprint/share/active] Returning inactive fallback:', e)
+    return NextResponse.json({ success: true, active: false, demoFallback: true })
   }
 }

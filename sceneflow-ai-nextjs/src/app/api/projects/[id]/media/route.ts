@@ -6,6 +6,7 @@ import {
   calculateBase64Size,
   isBase64DataUri 
 } from '@/lib/storage/mediaStorage'
+import { getUiSandboxProject, isDemoProjectId } from '@/lib/demo/uiSandboxProject'
 
 // UUID v4 regex pattern for validation
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -50,15 +51,20 @@ export async function GET(
     const type = searchParams.get('type') || 'all'
     const idsFilter = searchParams.get('ids')?.split(',').filter(Boolean) || null
     
-    await sequelize.authenticate()
-    
-    const project = await Project.findByPk(id)
-    
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    let metadata: Record<string, any> = {}
+    if (isDemoProjectId(id)) {
+      metadata = getUiSandboxProject(id).metadata || {}
+    } else {
+      await sequelize.authenticate()
+      
+      const project = await Project.findByPk(id)
+      
+      if (!project) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+      }
+      
+      metadata = project.metadata || {}
     }
-    
-    const metadata = project.metadata || {}
     const visionPhase = metadata.visionPhase || {}
     
     const items: MediaItem[] = []
@@ -200,6 +206,20 @@ export async function POST(
         { error: 'Invalid project ID format' },
         { status: 400 }
       )
+    }
+
+    if (isDemoProjectId(id)) {
+      return NextResponse.json({
+        success: true,
+        message: 'No base64 images to migrate',
+        stats: {
+          totalFound: 0,
+          migrated: 0,
+          alreadyUrls: 0,
+          failed: 0,
+          bytesFreed: 0,
+        },
+      })
     }
     
     await sequelize.authenticate()

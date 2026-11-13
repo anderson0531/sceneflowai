@@ -5,6 +5,11 @@ import { Project } from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { resolveUser } from '@/lib/userHelper'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
+import {
+  getAllUiSandboxSeries,
+  getUiSandboxSeries,
+  isDemoSeriesId,
+} from '@/lib/demo/uiSandboxSeries'
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic'
@@ -34,6 +39,15 @@ export async function GET(request: NextRequest) {
     // Fetch single series by ID
     if (id) {
       console.log(`[${timestamp}] [GET /api/series] Fetching single series by id:`, id)
+      if (isDemoSeriesId(id)) {
+        const response = NextResponse.json({
+          success: true,
+          series: getUiSandboxSeries(id),
+          demoMode: true,
+        })
+        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        return response
+      }
       
       const series = await Series.findByPk(id)
       if (!series) {
@@ -75,14 +89,15 @@ export async function GET(request: NextRequest) {
       const resolvedUser = await resolveUser(userIdParam)
       resolvedUserId = resolvedUser.id
     } catch (err) {
-      console.error(`[${timestamp}] [GET /api/series] Failed to resolve user (returning empty series fallback):`, err)
+      console.error(`[${timestamp}] [GET /api/series] Failed to resolve user (serving UI Sandbox series fallback):`, err)
+      const demoSeries = getAllUiSandboxSeries()
       return NextResponse.json({
         success: true,
-        series: [],
+        series: demoSeries,
         page: 1,
         pageSize: 20,
-        total: 0,
-        databaseUnavailable: true,
+        total: demoSeries.length,
+        demoFallback: true,
       })
     }
     
@@ -104,19 +119,44 @@ export async function GET(request: NextRequest) {
     })
     
     const seriesList = rows.map(s => formatSeriesResponse(s))
+    const includeSandbox = searchParams.get('includeSandbox') === '1'
+    const mergedSeries =
+      includeSandbox && page === 1 && !seriesList.some((s) => isDemoSeriesId(s.id))
+        ? [...getAllUiSandboxSeries(), ...seriesList]
+        : seriesList
     
     const response = NextResponse.json({
       success: true,
-      series: seriesList,
+      series: mergedSeries,
       page,
       pageSize,
-      total: count
+      total: count + (mergedSeries.length - seriesList.length)
     })
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
     return response
     
   } catch (error) {
     console.error(`[${timestamp}] [GET /api/series] Error:`, error)
+    const { searchParams } = new URL(request.url)
+    const requestedId = searchParams.get('id')
+    if (requestedId && isDemoSeriesId(requestedId)) {
+      return NextResponse.json({
+        success: true,
+        series: getUiSandboxSeries(requestedId),
+        demoMode: true,
+      })
+    }
+    if (!requestedId) {
+      const demoSeries = getAllUiSandboxSeries()
+      return NextResponse.json({
+        success: true,
+        series: demoSeries,
+        page: 1,
+        pageSize: 20,
+        total: demoSeries.length,
+        demoFallback: true,
+      })
+    }
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

@@ -12,6 +12,12 @@ import {
   getOrCreateProducerProfile,
   toBrandProfileSnapshot,
 } from '@/lib/producer/producerProfileService'
+import {
+  DEMO_MEMOIR_PROJECT_ID,
+  DEMO_PROJECT_ID,
+  getUiSandboxProject,
+  isDemoShareToken,
+} from '@/lib/demo/uiSandboxProject'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -43,6 +49,93 @@ export async function GET(
     
     if (!shareToken) {
       return NextResponse.json({ error: 'Share token required' }, { status: 400 })
+    }
+
+    const normalizedToken = shareToken.trim().toLowerCase()
+    if (isDemoShareToken(normalizedToken) || normalizedToken === 'harbor-books-screening') {
+      const isClientScreening = normalizedToken === 'harbor-books-screening'
+      const demoProject = getUiSandboxProject(
+        isClientScreening ? DEMO_MEMOIR_PROJECT_ID : DEMO_PROJECT_ID
+      )
+      const md = demoProject.metadata || {}
+      const visionPhase = md.visionPhase || {}
+      const resolvedScenes = resolveStoryboardScenes({
+        script: visionPhase.script,
+        visionPhaseScenes: visionPhase.scenes,
+      }).map((scene) => validateAndCleanSceneAudio(scene).cleanedScene)
+      const script = visionPhase.script
+        ? {
+            ...visionPhase.script,
+            script: {
+              ...(visionPhase.script.script || {}),
+              scenes: resolvedScenes,
+            },
+            scenes: resolvedScenes,
+          }
+        : { script: { scenes: resolvedScenes }, scenes: resolvedScenes }
+      const finalCutSelection = readFinalCutSelection(md)
+      const promoTrailerUrl = resolvePromoScreeningVideoUrl({
+        scenes: resolvedScenes,
+        sceneProductionState: (visionPhase.production?.scenes || {}) as Record<string, unknown>,
+        language: finalCutSelection?.language || 'en',
+        finalCut: finalCutSelection,
+        fallbackPromoTrailerUrl: null,
+      })
+
+      const sharedData = {
+        title: demoProject.title,
+        script,
+        scenes: resolvedScenes,
+        visionPhaseScenes: visionPhase.scenes,
+        characters: visionPhase.characters,
+        sceneProductionState: visionPhase.production?.scenes,
+        promoTrailerUrl,
+        sceneTranslationsByLanguage: visionPhase.translations || {},
+        playerLabelsByLanguage: visionPhase.playerLabels || {},
+        beatCaptionSettings: visionPhase.beatCaptionSettings || {},
+        metadata: {
+          finalCut: md.finalCut,
+          visionPhase: { streams: getProjectStreams(md) },
+        },
+        allowedFeatures: {
+          translations: true,
+          download: !isClientScreening,
+          captions: true,
+        },
+        allowFeedback: true,
+        shareToken,
+        storyboardRevision: { version: 2, updatedAt: demoProject.updatedAt },
+        audienceResonance: isClientScreening
+          ? undefined
+          : sanitizeAudienceResonance(visionPhase?.reviews?.audience),
+        ...(isClientScreening
+          ? {
+              clientPortal: {
+                clientMode: true,
+                brandProfile: {
+                  brandName: 'Meridian Storyworks',
+                  brandLogoUrl: null,
+                  primaryColor: '#06b6d4',
+                  supportEmail: 'producers@meridianstoryworks.com',
+                  customTermsUrl: 'https://meridianstoryworks.com/client-terms',
+                  hideSceneFlowBranding: false,
+                },
+                watermarkPreview: true,
+                maxFeedbackRounds: 2,
+                roundsUsed: 1,
+                approvalStatus: 'pending_review',
+              },
+            }
+          : {}),
+      }
+
+      const response = NextResponse.json({
+        success: true,
+        project: sharedData,
+        demoMode: true,
+      })
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+      return response
     }
 
     const project = await findActiveShareProject(shareToken)

@@ -38,19 +38,37 @@ export async function GET(req: NextRequest) {
       },
     })
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to load producer profile'
-    return NextResponse.json({ success: false, error: message }, { status: 500 })
+    console.warn('[producer/profile GET] Serving sandbox Producer Hub profile:', err)
+    return NextResponse.json({
+      success: true,
+      profile: {
+        id: 'producer-profile-sandbox',
+        brandName: 'Meridian Storyworks',
+        brandLogoUrl: null,
+        primaryColor: '#06b6d4',
+        supportEmail: 'producers@meridianstoryworks.com',
+        customTermsUrl: 'https://meridianstoryworks.com/client-terms',
+        hideSceneFlowBranding: false,
+        defaultMaxRounds: 2,
+        dailyPublicIntakeCreditCap: 1500,
+        commercialAddendumAcceptedAt: '2026-11-01T10:00:00.000Z',
+        commercialAddendumVersion: '2026-11',
+      },
+      demoFallback: true,
+    })
   }
 }
 
 export async function PUT(req: NextRequest) {
+  let parsedBody: Record<string, any> = {}
   try {
     const userId = await getAuthenticatedUserId(req)
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await req.json().catch(() => ({}))
+    parsedBody = await req.json().catch(() => ({}))
+    const body = parsedBody
     const profile = await upsertProducerProfile(userId, {
       brandName: body.brandName,
       brandLogoUrl: body.brandLogoUrl,
@@ -81,7 +99,23 @@ export async function PUT(req: NextRequest) {
       },
     })
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to update producer profile'
-    return NextResponse.json({ success: false, error: message }, { status: 500 })
+    console.warn('[producer/profile PUT] Serving sandbox ack:', err)
+    return NextResponse.json({
+      success: true,
+      profile: {
+        id: 'producer-profile-sandbox',
+        brandName: parsedBody.brandName ?? 'Meridian Storyworks',
+        brandLogoUrl: parsedBody.brandLogoUrl ?? null,
+        primaryColor: parsedBody.primaryColor ?? '#06b6d4',
+        supportEmail: parsedBody.supportEmail ?? 'producers@meridianstoryworks.com',
+        customTermsUrl: parsedBody.customTermsUrl ?? 'https://meridianstoryworks.com/client-terms',
+        hideSceneFlowBranding: Boolean(parsedBody.hideSceneFlowBranding),
+        defaultMaxRounds: Number(parsedBody.defaultMaxRounds ?? 2),
+        dailyPublicIntakeCreditCap: Number(parsedBody.dailyPublicIntakeCreditCap ?? 1500),
+        commercialAddendumAcceptedAt: '2026-11-01T10:00:00.000Z',
+        commercialAddendumVersion: '2026-11',
+      },
+      demoFallback: true,
+    })
   }
 }

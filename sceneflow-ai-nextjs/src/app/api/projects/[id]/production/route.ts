@@ -35,7 +35,7 @@ export async function GET(
     }
 
     if (isDemoProjectId(id)) {
-      const demoProduction = getUiSandboxProject().metadata?.visionPhase?.production || { scenes: {} }
+      const demoProduction = getUiSandboxProject(id).metadata?.visionPhase?.production || { scenes: {} }
       const response = NextResponse.json({
         success: true,
         projectId: id,

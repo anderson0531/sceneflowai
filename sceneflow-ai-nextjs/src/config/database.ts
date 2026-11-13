@@ -7,6 +7,8 @@ import { tmpdir } from 'os'
 import { getCloudSqlDriverOptions, resetCloudSqlConnector } from '@/lib/database/cloudSqlDriverOptions'
 import {
   logDatabaseConnectionFailure,
+  isCloudSqlInstanceSuspendedError,
+  isGcpAuthOrProjectAccessError,
   isSslOrCertConnectionError,
   isTransientConnectionCapacityError,
 } from '@/lib/database/connectionDiagnostics'
@@ -452,6 +454,52 @@ async function resetDatabaseConnectionCoalesced(): Promise<void> {
  * all ~72 routes that call `sequelize.authenticate()` or models directly, without
  * threading `ensureDatabaseConnection` through each call site.
  */
+const DB_CIRCUIT_COOLDOWN_MS = 30_000
+const DB_CONNECT_TIMEOUT_MS = 8_000
+let dbCircuitOpenUntil = 0
+let dbCircuitReason = ''
+
+export function isDatabaseCircuitOpen(): boolean {
+  return Date.now() < dbCircuitOpenUntil
+}
+
+function shouldTripDatabaseCircuit(error: unknown): boolean {
+  if (isTransientConnectionCapacityError(error)) return false
+  if (isCloudSqlInstanceSuspendedError(error)) return true
+  if (isGcpAuthOrProjectAccessError(error)) return true
+  const err = error as { name?: string; code?: string; message?: string }
+  const code = err?.code ?? ''
+  const msg = String(err?.message ?? '')
+  if (code === 'ECONNREFUSED' || code === 'ETIMEDOUT' || code === 'ENOTFOUND' || code === 'EAI_AGAIN') {
+    return true
+  }
+  if (/connect timeout|connection refused|network is unreachable|socket hang up/i.test(msg)) {
+    return true
+  }
+  return false
+}
+
+function withConnectionTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const err = new Error(`Database connect timeout after ${timeoutMs}ms`)
+      err.name = 'SequelizeConnectionError'
+      ;(err as Error & { code?: string }).code = 'ETIMEDOUT'
+      reject(err)
+    }, timeoutMs)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (error) => {
+        clearTimeout(timer)
+        reject(error)
+      }
+    )
+  })
+}
+
 function installGlobalSslSelfHeal(instance: Sequelize): void {
   const manager = instance.connectionManager as {
     getConnection: (options?: unknown) => Promise<unknown>
@@ -459,9 +507,30 @@ function installGlobalSslSelfHeal(instance: Sequelize): void {
   const originalGetConnection = manager.getConnection.bind(manager)
 
   manager.getConnection = async (options?: unknown) => {
+    if (Date.now() < dbCircuitOpenUntil) {
+      const fastFail = new Error(`Database circuit breaker open: ${dbCircuitReason}`)
+      fastFail.name = 'SequelizeConnectionRefusedError'
+      throw fastFail
+    }
+
     try {
-      return await originalGetConnection(options)
+      const conn = await withConnectionTimeout(
+        originalGetConnection(options),
+        DB_CONNECT_TIMEOUT_MS
+      )
+      dbCircuitOpenUntil = 0
+      return conn
     } catch (error) {
+      if (shouldTripDatabaseCircuit(error)) {
+        dbCircuitReason = error instanceof Error ? error.message : String(error)
+        dbCircuitOpenUntil = Date.now() + DB_CIRCUIT_COOLDOWN_MS
+        cloudSqlOptsPromise = null
+        console.warn(
+          `[database] Circuit breaker opened for ${DB_CIRCUIT_COOLDOWN_MS / 1000}s (${dbCircuitReason})`
+        )
+        throw error
+      }
+
       if (!isSslOrCertConnectionError(error)) throw error
 
       // #region agent log
@@ -476,7 +545,21 @@ function installGlobalSslSelfHeal(instance: Sequelize): void {
         getDatabaseConnectionInfo
       )
       await resetDatabaseConnectionCoalesced()
-      return await originalGetConnection(options)
+      try {
+        const retried = await withConnectionTimeout(
+          originalGetConnection(options),
+          DB_CONNECT_TIMEOUT_MS
+        )
+        dbCircuitOpenUntil = 0
+        return retried
+      } catch (retryError) {
+        if (shouldTripDatabaseCircuit(retryError) || isSslOrCertConnectionError(retryError)) {
+          dbCircuitReason = retryError instanceof Error ? retryError.message : String(retryError)
+          dbCircuitOpenUntil = Date.now() + DB_CIRCUIT_COOLDOWN_MS
+          cloudSqlOptsPromise = null
+        }
+        throw retryError
+      }
     }
   }
 }

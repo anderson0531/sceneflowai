@@ -162,6 +162,25 @@ export class AuthService {
       }
     } catch (error) {
       console.error('Login error:', error)
+      const { isDatabaseUnavailableError } = await import('@/lib/database/connectionDiagnostics')
+      const { allowDemoFallback } = await import('@/lib/env')
+      if (isDatabaseUnavailableError(error) && allowDemoFallback()) {
+        const normalizedEmail = (data.email || 'producer@sceneflowai.studio').trim().toLowerCase()
+        const localName = normalizedEmail.split('@')[0] || 'producer'
+        const displayFirst = localName.charAt(0).toUpperCase() + localName.slice(1)
+        const demoUserId = '00000000-0000-4000-8000-000000000099'
+        return {
+          success: true,
+          user: {
+            id: demoUserId,
+            email: normalizedEmail,
+            username: localName,
+            first_name: displayFirst,
+            last_name: 'Studio',
+          },
+          token: this.generateToken(demoUserId),
+        }
+      }
       return {
         success: false,
         error: 'Login failed'
