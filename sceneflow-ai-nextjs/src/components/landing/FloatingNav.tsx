@@ -2,7 +2,17 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { DollarSign, Sparkles, Clapperboard, Shield, Layers, Bot, Share2, GraduationCap, Sliders } from 'lucide-react'
+import {
+  Briefcase,
+  Clapperboard,
+  Compass,
+  DollarSign,
+  GraduationCap,
+  Layers,
+  Shield,
+  Sparkles,
+  Users,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useExpandLandingSection } from '@/components/landing/LandingSectionCollapse'
 
@@ -10,15 +20,51 @@ export function FloatingNav() {
   const t = useTranslations('floatingNav')
   const sections = useMemo(
     () => [
-      { id: 'two-modes', label: t('twoModes'), icon: Layers },
-      { id: 'direct-control', label: t('directControl'), icon: Sliders },
-      { id: 'production-agent', label: t.has('productionAgent') ? t('productionAgent') : 'Build', icon: Bot },
-      { id: 'publish-cut', label: t('publishCut'), icon: Share2 },
-      { id: 'studio-academy', label: t.has('studioAcademy') ? t('studioAcademy') : 'Academy', icon: GraduationCap },
-      { id: 'production-examples', label: t('productionExamples'), icon: Clapperboard },
-      { id: 'key-features', label: t('keyFeatures'), icon: Sparkles },
-      { id: 'pricing', label: t('pricing'), icon: DollarSign },
-      { id: 'trust-safety', label: t('trustSafety'), icon: Shield },
+      {
+        id: 'who-its-for',
+        label: t.has('whoItsFor') ? t('whoItsFor') : 'Paths',
+        icon: Users,
+      },
+      {
+        id: 'five-superpowers',
+        label: t.has('superpowers') ? t('superpowers') : t('twoModes'),
+        icon: Sparkles,
+      },
+      {
+        id: 'video-services',
+        label: t.has('videoServices') ? t('videoServices') : 'Business',
+        icon: Briefcase,
+      },
+      {
+        id: 'production-examples',
+        label: t('productionExamples'),
+        icon: Clapperboard,
+      },
+      {
+        id: 'studio-tour',
+        label: t.has('studioTour') ? t('studioTour') : 'Tour',
+        icon: Compass,
+      },
+      {
+        id: 'key-features',
+        label: t('keyFeatures'),
+        icon: Layers,
+      },
+      {
+        id: 'studio-academy',
+        label: t.has('studioAcademy') ? t('studioAcademy') : 'Academy',
+        icon: GraduationCap,
+      },
+      {
+        id: 'pricing',
+        label: t('pricing'),
+        icon: DollarSign,
+      },
+      {
+        id: 'trust-safety',
+        label: t('trustSafety'),
+        icon: Shield,
+      },
     ],
     [t]
   )
@@ -37,7 +83,7 @@ export function FloatingNav() {
         const el = document.getElementById(section.id)
         if (el) {
           const rect = el.getBoundingClientRect()
-          if (rect.top <= 200 && rect.bottom >= 200) {
+          if (rect.top <= 220 && rect.bottom >= 180) {
             setActiveSection(section.id)
             break
           }
@@ -52,7 +98,9 @@ export function FloatingNav() {
 
   const scrollToSection = (sectionId: string) => {
     expandSection(sectionId)
-    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
+    requestAnimationFrame(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
+    })
   }
 
   return (
@@ -85,7 +133,7 @@ export function FloatingNav() {
 
                 <span
                   className={`text-xs font-medium whitespace-nowrap overflow-hidden transition-all duration-200 ${
-                    isActive ? 'w-14 opacity-100' : 'w-0 opacity-0 group-hover:w-14 group-hover:opacity-100'
+                    isActive ? 'w-16 opacity-100' : 'w-0 opacity-0 group-hover:w-16 group-hover:opacity-100'
                   }`}
                 >
                   {label}

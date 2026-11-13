@@ -3,7 +3,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useLocale, useTranslations } from 'next-intl'
-import { Loader2, Maximize2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
+import { ArrowRight, Briefcase, Compass, Loader2, Maximize2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
+import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
+import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import {
   openTwoModesOnPhoneOrTheater,
   TwoModesTheaterModal,
@@ -36,6 +38,7 @@ export const IMAGINE_POSSIBILITIES_SECTION_ID = 'imagine-possibilities'
 
 export function ImaginePossibilitiesHero() {
   const locale = useLocale()
+  const studioCopy = useStudioLandingCopy()
   const tPossibilities = useTranslations('imaginePossibilities')
   const tHero = useTranslations('hero')
   const tCommon = useTranslations('common')
@@ -505,6 +508,53 @@ export function ImaginePossibilitiesHero() {
                   </button>
                 )
               })}
+            </motion.div>
+
+            <motion.p
+              className="mx-auto mt-5 max-w-2xl text-xs leading-relaxed text-gray-200/95 drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)] sm:text-sm"
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.7, delay: prefersReducedMotion ? 0 : 0.34 }}
+            >
+              {studioCopy.heroDock.tagline}
+            </motion.p>
+
+            <motion.div
+              className="mt-4 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3"
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.7, delay: prefersReducedMotion ? 0 : 0.4 }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = getSignupUrlForTier('explorer')
+                }}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:brightness-110 sm:text-sm"
+              >
+                <span>{studioCopy.heroDock.primaryCta}</span>
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById('video-services')?.scrollIntoView({ behavior: 'smooth' })
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/45 bg-emerald-950/60 px-4 py-2 text-xs font-semibold text-emerald-200 backdrop-blur-md transition-colors hover:border-emerald-300/70 hover:bg-emerald-900/70 hover:text-white sm:text-sm"
+              >
+                <Briefcase className="h-3.5 w-3.5 text-emerald-300" aria-hidden />
+                <span>{studioCopy.heroDock.businessCta}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById('five-superpowers')?.scrollIntoView({ behavior: 'smooth' })
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-black/55 px-4 py-2 text-xs font-medium text-gray-200 backdrop-blur-md transition-colors hover:border-white/45 hover:bg-black/75 hover:text-white sm:text-sm"
+              >
+                <Compass className="h-3.5 w-3.5 text-cyan-300" aria-hidden />
+                <span>{studioCopy.heroDock.howItWorksCta}</span>
+              </button>
             </motion.div>
           </div>
         </div>

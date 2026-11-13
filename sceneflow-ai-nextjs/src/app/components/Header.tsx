@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
-import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass, CreditCard } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass, CreditCard, Briefcase } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import {
@@ -74,10 +74,16 @@ export function Header() {
   }
 
   const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `#${sectionId}`)
+      window.dispatchEvent(new HashChangeEvent('hashchange'))
     }
+    requestAnimationFrame(() => {
+      const element = document.getElementById(sectionId)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' })
+      }
+    })
     setIsMobileMenuOpen(false)
   }
 
@@ -141,18 +147,26 @@ export function Header() {
             />
             
             {/* Navigation Links - Center */}
-            <nav className="flex items-center space-x-2">
+            <nav className="flex items-center space-x-1.5">
               <button
                 onClick={scrollToTop}
-                className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <Compass className="w-4 h-4 text-sf-primary" />
                 {t('overview')}
               </button>
 
               <button
+                onClick={() => scrollToSection('video-services')}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-emerald-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-emerald-500/10"
+              >
+                <Briefcase className="w-4 h-4 text-emerald-400" />
+                {t.has('videoServices') ? t('videoServices') : 'Video Business'}
+              </button>
+
+              <button
                 onClick={() => scrollToSection('production-examples')}
-                className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <Clapperboard className="w-4 h-4 text-sf-primary" />
                 {t('productionExamples')}
@@ -160,7 +174,7 @@ export function Header() {
 
               <button
                 onClick={() => scrollToSection('key-features')}
-                className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <Sparkles className="w-4 h-4 text-sf-primary" />
                 {t('keyFeatures')}
@@ -168,7 +182,7 @@ export function Header() {
 
               <button
                 onClick={() => scrollToSection('pricing')}
-                className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <CreditCard className="w-4 h-4 text-sf-primary" />
                 {t('plansPricing')}
@@ -176,7 +190,7 @@ export function Header() {
 
               <button
                 onClick={() => scrollToSection('trust-safety')}
-                className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <Shield className="w-4 h-4 text-sf-primary" />
                 {t('trustSafety')}
@@ -280,6 +294,10 @@ export function Header() {
                   <button onClick={scrollToTop} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Compass className="w-4 h-4 text-sf-primary" />
                     {t('overview')}
+                  </button>
+                  <button onClick={() => scrollToSection('video-services')} className="flex items-center gap-2 text-emerald-300 hover:text-white hover:bg-emerald-500/10 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Briefcase className="w-4 h-4 text-emerald-400" />
+                    {t.has('videoServices') ? t('videoServices') : 'Video Business'}
                   </button>
                   <button onClick={() => scrollToSection('production-examples')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Clapperboard className="w-4 h-4 text-sf-primary" />

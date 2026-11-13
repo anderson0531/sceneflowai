@@ -44,13 +44,13 @@ function readSource(relativePath: string): string {
 }
 
 describe('Imagine the Possibilities top cinematic video header & 60s–90s trailer scripts', () => {
-  it('mounts ImaginePossibilitiesHero before HeroSection on the landing page', () => {
+  it('mounts ImaginePossibilitiesHero first before CreatorAndBusinessGatewaySection on the landing page', () => {
     const landing = readSource('src/app/LandingPageClient.tsx')
     const possibilitiesIdx = landing.indexOf('<ImaginePossibilitiesHero />')
-    const heroIdx = landing.indexOf('<HeroSection />')
+    const gatewayIdx = landing.indexOf('<CreatorAndBusinessGatewaySection />')
 
     expect(possibilitiesIdx).toBeGreaterThan(-1)
-    expect(heroIdx).toBeGreaterThan(possibilitiesIdx)
+    expect(gatewayIdx).toBeGreaterThan(possibilitiesIdx)
   })
 
   it('headlines with "Imagine the Possibilities, with SceneFlow Studio" over a background video and omits example card clutter', () => {

@@ -58,6 +58,7 @@ import { PRE_VIS_ENGINE_COPY } from '@/config/landing/preVisEngineCopy'
 import { FOR_FILMMAKERS_COPY } from '@/config/landing/forFilmmakersCopy'
 import { IMAGINE_POSSIBILITIES_COPY } from '@/config/landing/exampleTrailerScripts'
 import { LANDING_SECTION_COLLAPSE_COPY } from '@/config/landing/landingSectionCollapseCopy'
+import { WORLD_CLASS_LANDING_COPY } from '@/config/landing/worldClassLandingCopy'
 import {
   SIMPLE_WALKTHROUGH_HEADER,
   SIMPLE_WALKTHROUGH_STEPS,
@@ -77,6 +78,7 @@ export function buildEnMessages() {
     },
     nav: {
       overview: 'Overview',
+      videoServices: 'Video Business',
       plansPricing: 'Plans & Pricing',
       productionExamples: 'Examples',
       keyFeatures: 'Features',
@@ -92,7 +94,11 @@ export function buildEnMessages() {
       noLanguagesFound: 'No languages found',
     },
     floatingNav: {
+      whoItsFor: 'Paths',
+      superpowers: 'Superpowers',
+      videoServices: 'Business',
       productionExamples: 'Examples',
+      studioTour: 'Tour',
       twoModes: 'One Pipeline',
       directControl: 'Direct',
       productionAgent: 'Build',
@@ -104,6 +110,7 @@ export function buildEnMessages() {
       trustSafety: 'Trust & Safety',
       pricing: 'Pricing',
     },
+    studioLanding: WORLD_CLASS_LANDING_COPY,
     imaginePossibilities: {
       headline: IMAGINE_POSSIBILITIES_COPY.headline,
       subheadline: IMAGINE_POSSIBILITIES_COPY.subheadline,

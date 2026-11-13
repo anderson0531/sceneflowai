@@ -166,15 +166,23 @@ describe('one-pipeline landing section', () => {
 
   it('renders the comparison, hash aliases, and a single Explorer CTA', () => {
     const landing = readFileSync(join(ROOT, 'src/app/LandingPageClient.tsx'), 'utf8')
+    const directorOs = readFileSync(
+      join(ROOT, 'src/components/landing/DirectorOperatingSystemSection.tsx'),
+      'utf8'
+    )
     const twoModes = readFileSync(join(ROOT, 'src/components/landing/TwoModesSection.tsx'), 'utf8')
     const nav = readFileSync(join(ROOT, 'src/components/landing/FloatingNav.tsx'), 'utf8')
     const hero = readFileSync(join(ROOT, 'src/app/components/HeroSection.tsx'), 'utf8')
 
-    expect(landing).toContain('TwoModesSection')
+    expect(landing).toContain('DirectorOperatingSystemSection')
     expect(landing).toContain('InfrastructureSection')
     expect(landing).toContain('TrustSafeguardSection')
     expect(landing).not.toContain('CoreCapabilitiesSection')
     expect(landing).not.toContain('PreVisEngineSection')
+    expect(directorOs).toContain("'two-modes'")
+    expect(directorOs).toContain("'core-capabilities'")
+    expect(directorOs).toContain("'audience-resonance'")
+    expect(directorOs).toContain("'pre-vis-engine'")
     expect(twoModes).toContain('sectionId={TWO_MODES_SECTION_ID}')
     expect(twoModes).toContain("'two-modes'")
     expect(twoModes).toContain("'core-capabilities'")
@@ -200,7 +208,7 @@ describe('one-pipeline landing section', () => {
     expect(twoModes).not.toContain("t('speed.name')")
     expect(twoModes).not.toContain("t('go.cta')")
     expect(twoModes).not.toContain("t('director.cta')")
-    expect(nav).toContain("'two-modes'")
+    expect(nav).toContain("'five-superpowers'")
     expect(nav).toContain("t('twoModes')")
     expect(nav).not.toContain("'core-capabilities'")
     expect(nav).not.toContain("'pre-vis-engine'")
@@ -213,10 +221,15 @@ describe('one-pipeline landing section', () => {
     expect(FINAL_CTA_COPY.ctaSecondaryHref).toBe('#two-modes')
   })
 
-  it('drops retired pipeline sections from collapse config', () => {
-    expect([...COLLAPSIBLE_LANDING_SECTION_IDS]).toEqual(['pricing', 'trust-safety'])
-    expect([...DEFAULT_EXPANDED_LANDING_SECTION_IDS]).toEqual(['trust-safety'])
+  it('drops retired pipeline sections from collapse config and collapses 30-item key-features reference by default', () => {
+    expect([...COLLAPSIBLE_LANDING_SECTION_IDS]).toEqual(['key-features', 'pricing', 'trust-safety'])
+    expect([...DEFAULT_EXPANDED_LANDING_SECTION_IDS]).toEqual(['pricing', 'trust-safety'])
     expect(LANDING_HASH_TO_SECTION).toEqual({
+      'key-features': 'key-features',
+      'series-desk': 'key-features',
+      'blueprint-board': 'key-features',
+      'production-stage': 'key-features',
+      'screening-room': 'key-features',
       pricing: 'pricing',
       'trust-safety': 'trust-safety',
     })
