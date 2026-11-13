@@ -114,17 +114,51 @@ export function stripPromptOverrides(direction: BeatDirection | undefined): Beat
   return next
 }
 
+function characterWardrobeMatchesIds(
+  wardrobeCharId: string,
+  allowedCharacterIds: string[],
+  characters?: Array<{ id?: string; name: string }>
+): boolean {
+  const needle = wardrobeCharId.trim().toLowerCase()
+  if (!needle) return false
+  if (allowedCharacterIds.some((id) => id.trim().toLowerCase() === needle)) {
+    return true
+  }
+  if (!characters || characters.length === 0) return false
+  const matchedChar = characters.find(
+    (c) =>
+      c.id?.trim().toLowerCase() === needle || c.name.trim().toLowerCase() === needle
+  )
+  if (!matchedChar) return false
+  const charIdLower = matchedChar.id?.trim().toLowerCase()
+  const charNameLower = matchedChar.name.trim().toLowerCase()
+  return allowedCharacterIds.some((id) => {
+    const k = id.trim().toLowerCase()
+    return (Boolean(charIdLower) && k === charIdLower) || k === charNameLower
+  })
+}
+
 export function selectionFromBeat(
   beat: SceneBeat,
-  resolved: ReturnType<typeof resolveBeatElementSelection>
+  resolved: ReturnType<typeof resolveBeatElementSelection>,
+  characters?: Array<{ id?: string; name: string }>
 ): BeatReferenceSelection {
   if (shouldUseExplicitBeatReferences(beat)) {
+    const explicitWardrobes = Array.isArray(beat.referenceSelection.characterWardrobes)
+      ? resolved.characterIds.length > 0
+        ? beat.referenceSelection.characterWardrobes.filter((entry) =>
+            characterWardrobeMatchesIds(entry.characterId, resolved.characterIds, characters)
+          )
+        : []
+      : undefined
     return {
       ...beat.referenceSelection,
       characterIds: resolved.characterIds,
-      ...(resolved.characterWardrobes && resolved.characterWardrobes.length > 0
-        ? { characterWardrobes: resolved.characterWardrobes }
-        : {}),
+      ...(explicitWardrobes !== undefined
+        ? { characterWardrobes: explicitWardrobes }
+        : resolved.characterWardrobes && resolved.characterWardrobes.length > 0
+          ? { characterWardrobes: resolved.characterWardrobes }
+          : {}),
     }
   }
   return {
@@ -153,7 +187,7 @@ export function resolveBeatReferenceSelection(args: {
     locationReferences: args.locationReferences as LocationReference[],
     objectReferences: args.objectReferences as VisualReference[],
   })
-  return selectionFromBeat(args.beat, resolved)
+  return selectionFromBeat(args.beat, resolved, args.characters)
 }
 
 /**
@@ -237,7 +271,7 @@ export function boundBeatReferenceSelection(args: {
           : baseSelection.characterIds
     const nextCharacterWardrobes = Array.isArray(baseSelection.characterWardrobes)
       ? baseSelection.characterWardrobes.filter((entry) =>
-          nextCharacterIds.includes(entry.characterId)
+          characterWardrobeMatchesIds(entry.characterId, nextCharacterIds, args.characters)
         )
       : undefined
     return {
@@ -1134,7 +1168,7 @@ export function saveDirectorPatchToScenes(args: {
     }
     const nextCharacterWardrobes = Array.isArray(nextReferenceSelection.characterWardrobes)
       ? nextReferenceSelection.characterWardrobes.filter((entry) =>
-          resolvedCharacterIds.includes(entry.characterId)
+          characterWardrobeMatchesIds(entry.characterId, resolvedCharacterIds, args.characters)
         )
       : undefined
     nextReferenceSelection = {

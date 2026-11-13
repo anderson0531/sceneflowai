@@ -45,11 +45,26 @@ import { MAX_REFERENCE_IMAGES_ECO } from '@/lib/vision/referenceLimits'
 
 export type ShotDirectorTargetSurface = 'still' | 'action-start' | 'end' | 'clip'
 
+export interface DirectorCharacterWardrobe {
+  id: string
+  name: string
+  description?: string
+  accessories?: string
+  previewImageUrl?: string
+  fullBodyUrl?: string
+  headshotUrl?: string
+  combinedCharacterRefUrl?: string
+  sceneNumbers?: number[]
+  isDefault?: boolean
+}
+
 export interface DirectorCharacter {
   id?: string
   name: string
   referenceImage?: string
   type?: string
+  defaultWardrobe?: string
+  wardrobes?: DirectorCharacterWardrobe[]
 }
 
 export interface DirectorLocation {
@@ -115,6 +130,10 @@ export interface BeatDirectorDialogProps {
   clipDurationOptions?: number[]
   onChangeClipDuration?: (seconds: number) => void
   onToggleCharacter?: (character: DirectorCharacter, connect: boolean) => void
+  onSelectCharacterWardrobe?: (
+    character: DirectorCharacter,
+    wardrobeId: string | null
+  ) => void
   onToggleObject: (object: DirectorObject, connect: boolean) => void
   onSelectLocation: (locationRefId: string | null, locationVersionId: string | null) => void
 }
@@ -206,6 +225,7 @@ export function BeatDirectorDialog({
   clipDurationOptions,
   onChangeClipDuration,
   onToggleCharacter,
+  onSelectCharacterWardrobe,
   onToggleObject,
   onSelectLocation,
   initialSafety = false,
@@ -273,7 +293,7 @@ export function BeatDirectorDialog({
   ])
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState<LibrarySceneFilter>(sceneNumber)
-  const [tab, setTab] = useState<ReferenceTab>('locations')
+  const [tab, setTab] = useState<ReferenceTab>('cast')
 
   const sceneOptions = useMemo(() => librarySceneOptions(scenes), [scenes])
   const visibleCharacters = useMemo(() => {
@@ -281,7 +301,13 @@ export function BeatDirectorDialog({
     return characters.filter(
       (character) =>
         character.type !== 'narrator' &&
-        (!q || character.name.toLowerCase().includes(q))
+        (!q ||
+          character.name.toLowerCase().includes(q) ||
+          character.wardrobes?.some(
+            (w) =>
+              w.name.toLowerCase().includes(q) ||
+              (w.description?.toLowerCase().includes(q) ?? false)
+          ))
     )
   }, [characters, query])
   const visibleLocations = useMemo(
@@ -299,6 +325,60 @@ export function BeatDirectorDialog({
   const isCharacterConnected = (character: DirectorCharacter): boolean =>
     referenceSelection.characterIds.includes(character.id || '') ||
     referenceSelection.characterIds.includes(character.name)
+  const resolveExplicitWardrobeId = (character: DirectorCharacter): string => {
+    if (referenceSelection.source !== 'user') return ''
+    const charIdLower = (character.id || '').trim().toLowerCase()
+    const charNameLower = character.name.trim().toLowerCase()
+    const entry = referenceSelection.characterWardrobes?.find((cw) => {
+      const k = cw.characterId.trim().toLowerCase()
+      return (Boolean(charIdLower) && k === charIdLower) || k === charNameLower
+    })
+    return entry?.wardrobeId ?? ''
+  }
+  const resolveSceneDefaultWardrobe = (
+    character: DirectorCharacter
+  ): DirectorCharacterWardrobe | undefined => {
+    const wardrobes = character.wardrobes ?? []
+    if (wardrobes.length === 0) return undefined
+    const sceneRecord = scenes[sceneIndex] as
+      | { characterWardrobes?: Array<{ characterId?: string; wardrobeId?: string }> }
+      | undefined
+    const bySceneNumber = wardrobes.find(
+      (w) => Array.isArray(w.sceneNumbers) && w.sceneNumbers.includes(sceneNumber)
+    )
+    if (bySceneNumber) return bySceneNumber
+    const charIdLower = (character.id || '').trim().toLowerCase()
+    const charNameLower = character.name.trim().toLowerCase()
+    const sceneOverrideId = sceneRecord?.characterWardrobes?.find((cw) => {
+      const k = (cw.characterId || '').trim().toLowerCase()
+      return (Boolean(charIdLower) && k === charIdLower) || k === charNameLower
+    })?.wardrobeId
+    if (sceneOverrideId) {
+      const bySceneOverride = wardrobes.find((w) => w.id === sceneOverrideId)
+      if (bySceneOverride) return bySceneOverride
+    }
+    return wardrobes.find((w) => w.isDefault) ?? wardrobes[0]
+  }
+  const resolveEffectiveWardrobe = (
+    character: DirectorCharacter
+  ): DirectorCharacterWardrobe | undefined => {
+    const explicitId = resolveExplicitWardrobeId(character)
+    if (explicitId) {
+      const explicitMatch = character.wardrobes?.find((w) => w.id === explicitId)
+      if (explicitMatch) return explicitMatch
+    }
+    return resolveSceneDefaultWardrobe(character)
+  }
+  const resolveCharacterThumbUrl = (character: DirectorCharacter): string | undefined => {
+    const activeWardrobe = resolveEffectiveWardrobe(character)
+    return (
+      activeWardrobe?.previewImageUrl ||
+      activeWardrobe?.fullBodyUrl ||
+      activeWardrobe?.headshotUrl ||
+      activeWardrobe?.combinedCharacterRefUrl ||
+      character.referenceImage
+    )
+  }
   const cast = characters.filter(
     (character) => character.type !== 'narrator' && isCharacterConnected(character)
   )
@@ -330,6 +410,15 @@ export function BeatDirectorDialog({
           ? 'Save & Shoot End Frame'
           : 'Save & Shoot Still'
 
+  const directGenerateLabel =
+    targetSurface === 'clip'
+      ? 'Render Clip'
+      : targetSurface === 'action-start'
+        ? 'Shoot Start Frame'
+        : targetSurface === 'end'
+          ? 'Shoot End Frame'
+          : 'Shoot Still'
+
   const previewDirection = async () => {
     const note = instruction.trim()
     if (!note && !safety) {
@@ -353,6 +442,7 @@ export function BeatDirectorDialog({
           userDirection: note || undefined,
           policyCompliance: safety || undefined,
           allowUnboundReferences: allowUnboundReferences || undefined,
+          referenceSelection,
         }),
       })
       const data = await response.json()
@@ -383,6 +473,7 @@ export function BeatDirectorDialog({
           mode: 'optimize',
           policyCompliance: safety || undefined,
           allowUnboundReferences: allowUnboundReferences || undefined,
+          referenceSelection,
         }),
       })
       const data = await response.json()
@@ -823,6 +914,21 @@ export function BeatDirectorDialog({
                 )}
                 Optimize
               </button>
+              {onSaveAndGenerate && lines.length === 0 && (
+                <button
+                  type="button"
+                  className="inline-flex w-fit items-center gap-1.5 rounded border border-indigo-500/60 bg-indigo-950/40 px-3 py-1.5 text-xs font-medium text-indigo-100 hover:bg-indigo-900/50 disabled:opacity-50"
+                  disabled={readOnly || busy}
+                  title="Generate using the currently connected cast, wardrobe, location, and prop references"
+                  onClick={async () => {
+                    onOpenChange(false)
+                    await onSaveAndGenerate()
+                  }}
+                >
+                  <Play className="h-3 w-3 fill-current" />
+                  {directGenerateLabel}
+                </button>
+              )}
             </div>
 
             {lines.length > 0 && (
@@ -944,15 +1050,53 @@ export function BeatDirectorDialog({
         <div className="min-w-0 space-y-2">
           <p className="text-[10px] uppercase tracking-wide text-slate-500">Connected references</p>
           <div className="flex min-w-0 flex-wrap gap-2">
-            {cast.map((character) => (
-              <span
-                key={character.id || character.name}
-                className="flex max-w-full items-center gap-2 rounded-md border border-slate-700 bg-slate-800/60 px-2 py-1 text-xs"
-              >
-                <StillMark imageUrl={character.referenceImage} />
-                <span className="truncate">{character.name}</span>
-              </span>
-            ))}
+            {cast.map((character) => {
+              const wardrobes = character.wardrobes ?? []
+              const explicitWardrobeId = resolveExplicitWardrobeId(character)
+              const sceneDefaultWardrobe = resolveSceneDefaultWardrobe(character)
+              const activeWardrobe = resolveEffectiveWardrobe(character)
+              const thumbUrl = resolveCharacterThumbUrl(character)
+              return (
+                <span
+                  key={character.id || character.name}
+                  className="flex max-w-full flex-wrap items-center gap-2 rounded-md border border-slate-700 bg-slate-800/60 px-2 py-1 text-xs"
+                >
+                  <StillMark imageUrl={thumbUrl} />
+                  <span className="truncate font-medium text-slate-100">{character.name}</span>
+                  {wardrobes.length > 0 && onSelectCharacterWardrobe && !readOnly ? (
+                    <select
+                      aria-label={`Wardrobe for ${character.name}`}
+                      title={
+                        activeWardrobe?.description
+                          ? `${activeWardrobe.name}: ${activeWardrobe.description}`
+                          : activeWardrobe?.name || `Select wardrobe for ${character.name}`
+                      }
+                      className="max-w-[200px] rounded border border-violet-500/40 bg-slate-950 px-1.5 py-0.5 text-[11px] text-violet-100 focus:border-violet-400 focus:outline-none"
+                      value={explicitWardrobeId}
+                      onChange={(event) => {
+                        const nextWardrobeId = event.target.value || null
+                        onSelectCharacterWardrobe(character, nextWardrobeId)
+                      }}
+                    >
+                      <option value="">
+                        {sceneDefaultWardrobe
+                          ? `Scene default (${sceneDefaultWardrobe.name})`
+                          : 'Scene default'}
+                      </option>
+                      {wardrobes.map((wardrobe) => (
+                        <option key={wardrobe.id} value={wardrobe.id}>
+                          {wardrobe.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : activeWardrobe?.name ? (
+                    <span className="truncate rounded bg-violet-950/60 px-1.5 py-0.5 text-[10px] text-violet-200">
+                      {activeWardrobe.name}
+                    </span>
+                  ) : null}
+                </span>
+              )
+            })}
             {selectedLocation && (
               <span className="flex max-w-full items-center gap-2 rounded-md border border-slate-700 bg-slate-800/60 px-2 py-1 text-xs">
                 <StillMark imageUrl={selectedLocation.imageUrl} />
@@ -981,7 +1125,7 @@ export function BeatDirectorDialog({
               className="min-w-0 flex-1 rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search locations and props"
+              placeholder="Search cast, wardrobes, locations, and props"
               disabled={readOnly}
             />
             <select
@@ -1031,8 +1175,13 @@ export function BeatDirectorDialog({
               ) : (
                 visibleCharacters.map((character) => {
                   const checked = isCharacterConnected(character)
+                  const wardrobes = character.wardrobes ?? []
+                  const explicitWardrobeId = resolveExplicitWardrobeId(character)
+                  const sceneDefaultWardrobe = resolveSceneDefaultWardrobe(character)
+                  const activeWardrobe = resolveEffectiveWardrobe(character)
+                  const thumbUrl = resolveCharacterThumbUrl(character)
                   return (
-                    <label
+                    <div
                       key={character.id || character.name}
                       className="flex min-w-0 items-center gap-2 text-xs"
                     >
@@ -1050,20 +1199,77 @@ export function BeatDirectorDialog({
                               : cast.map((entry) => entry.name)
                             const nextCast = nextChecked
                               ? baseCast.some(
-                                  (name) => name.trim().toLowerCase() === character.name.trim().toLowerCase()
+                                  (name) =>
+                                    name.trim().toLowerCase() ===
+                                    character.name.trim().toLowerCase()
                                 )
                                 ? baseCast
                                 : [...baseCast, character.name]
                               : baseCast.filter(
-                                  (name) => name.trim().toLowerCase() !== character.name.trim().toLowerCase()
+                                  (name) =>
+                                    name.trim().toLowerCase() !==
+                                    character.name.trim().toLowerCase()
                                 )
                             return { ...prev, castInFrame: nextCast }
                           })
                         }}
                       />
-                      <StillMark imageUrl={character.referenceImage} />
-                      <span className="min-w-0 truncate">{character.name}</span>
-                    </label>
+                      <StillMark imageUrl={thumbUrl} />
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-slate-100">{character.name}</span>
+                        {(activeWardrobe?.description || character.defaultWardrobe) && (
+                          <span className="block truncate text-[10px] text-slate-400">
+                            {activeWardrobe?.description || character.defaultWardrobe}
+                          </span>
+                        )}
+                      </div>
+                      {wardrobes.length > 0 && (
+                        <select
+                          aria-label={`Select wardrobe for ${character.name}`}
+                          title={
+                            activeWardrobe?.description
+                              ? `${activeWardrobe.name}: ${activeWardrobe.description}`
+                              : `Select wardrobe for ${character.name}`
+                          }
+                          className="ml-auto max-w-[44%] shrink-0 rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-xs text-slate-200"
+                          value={checked ? explicitWardrobeId : ''}
+                          disabled={readOnly || !onSelectCharacterWardrobe}
+                          onChange={(event) => {
+                            const nextWardrobeId = event.target.value || null
+                            onSelectCharacterWardrobe?.(character, nextWardrobeId)
+                            if (nextWardrobeId && !checked) {
+                              setPreview((prev) => {
+                                if (!prev) return prev
+                                const baseCast = Array.isArray(prev.castInFrame)
+                                  ? prev.castInFrame
+                                  : cast.map((entry) => entry.name)
+                                if (
+                                  baseCast.some(
+                                    (name) =>
+                                      name.trim().toLowerCase() ===
+                                      character.name.trim().toLowerCase()
+                                  )
+                                ) {
+                                  return prev
+                                }
+                                return { ...prev, castInFrame: [...baseCast, character.name] }
+                              })
+                            }
+                          }}
+                        >
+                          <option value="">
+                            {sceneDefaultWardrobe
+                              ? `Default (${sceneDefaultWardrobe.name})`
+                              : 'Scene default'}
+                          </option>
+                          {wardrobes.map((wardrobe) => (
+                            <option key={wardrobe.id} value={wardrobe.id}>
+                              {wardrobe.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
                   )
                 })
               ))}

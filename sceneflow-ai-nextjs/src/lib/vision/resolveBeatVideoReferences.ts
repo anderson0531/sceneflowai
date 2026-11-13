@@ -181,6 +181,66 @@ function videoDiptychLabel(
   return `${base} Extract exact facial identity from the face close-up and outfit${outfitClause} from the full-body standing figure${scaleSuffix}; do not render the character-card layout or headshot overlay.${traitsSuffix}`
 }
 
+function canonicalCharacterKeys(
+  rawId: string,
+  projectCharacters?: Array<{ id?: string; name?: string }>
+): string[] {
+  const trimmed = rawId.trim().toLowerCase()
+  if (!trimmed) return []
+  const keys = new Set<string>([trimmed])
+  if (projectCharacters) {
+    const matched = projectCharacters.find(
+      (c) =>
+        c.id?.trim().toLowerCase() === trimmed || c.name?.trim().toLowerCase() === trimmed
+    )
+    if (matched?.id?.trim()) keys.add(matched.id.trim().toLowerCase())
+    if (matched?.name?.trim()) keys.add(matched.name.trim().toLowerCase())
+  }
+  return [...keys]
+}
+
+/**
+ * Merges explicit per-beat `characterWardrobes` overrides on top of scene/auto
+ * fallback wardrobes per character so overriding one cast member's wardrobe in
+ * Shot Director never drops another connected cast member's scene wardrobe.
+ */
+export function mergeCharacterWardrobeSelections(
+  explicitWardrobes: Array<{ characterId: string; wardrobeId: string }> | undefined,
+  fallbackWardrobes: Array<{ characterId: string; wardrobeId: string }> | undefined,
+  allowedCharacterIds?: string[],
+  projectCharacters?: Array<{ id?: string; name?: string }>
+): Array<{ characterId: string; wardrobeId: string }> {
+  const allowedSet =
+    allowedCharacterIds && allowedCharacterIds.length > 0
+      ? new Set(
+          allowedCharacterIds.flatMap((id) => canonicalCharacterKeys(id, projectCharacters))
+        )
+      : null
+
+  const coveredKeys = new Set<string>()
+  const merged: Array<{ characterId: string; wardrobeId: string }> = []
+
+  const tryPush = (entry: { characterId: string; wardrobeId: string }) => {
+    const charId = entry?.characterId?.trim()
+    const wardrobeId = entry?.wardrobeId?.trim()
+    if (!charId || !wardrobeId) return
+    const keys = canonicalCharacterKeys(charId, projectCharacters)
+    if (keys.some((k) => coveredKeys.has(k))) return
+    if (allowedSet && !keys.some((k) => allowedSet.has(k))) return
+    keys.forEach((k) => coveredKeys.add(k))
+    merged.push({ characterId: charId, wardrobeId })
+  }
+
+  for (const entry of explicitWardrobes ?? []) {
+    tryPush(entry)
+  }
+  for (const entry of fallbackWardrobes ?? []) {
+    tryPush(entry)
+  }
+
+  return merged
+}
+
 /** Cast, location, and key props used for both Omni REF and Kling elements. */
 export function resolveBeatElementSelection(args: ResolveBeatVideoReferencesArgs): {
   characterIds: string[]
@@ -230,15 +290,12 @@ export function resolveBeatElementSelection(args: ResolveBeatVideoReferencesArgs
     characterIds = [...beatContext.characterIds]
   }
 
-  const allowedCharSet = new Set(characterIds.map((id) => id.trim().toLowerCase()))
-  const baseWardrobes =
-    selection.characterWardrobes && selection.characterWardrobes.length > 0
-      ? selection.characterWardrobes
-      : beatContext.characterWardrobes ?? []
-  const characterWardrobes =
-    allowedCharSet.size > 0
-      ? baseWardrobes.filter((w) => allowedCharSet.has(w.characterId.trim().toLowerCase()))
-      : baseWardrobes
+  const characterWardrobes = mergeCharacterWardrobeSelections(
+    selection.characterWardrobes,
+    beatContext.characterWardrobes,
+    characterIds.length > 0 ? characterIds : undefined,
+    projectCharacters
+  )
 
   return {
     characterIds,
@@ -311,10 +368,12 @@ export function resolveBeatVideoReferences(
     characterIds: resolvedCharIds,
   }
 
-  const characterWardrobes =
-    selection.characterWardrobes && selection.characterWardrobes.length > 0
-      ? selection.characterWardrobes
-      : beatContext.characterWardrobes
+  const characterWardrobes = mergeCharacterWardrobeSelections(
+    selection.characterWardrobes,
+    beatContext.characterWardrobes,
+    selection.characterIds?.length ? selection.characterIds : undefined,
+    projectCharacters
+  )
 
   const tightUpperBodyShot = isBeatTightUpperBodyShot(beat)
   const strictFaceCloseUp = /^(?:extreme\s+close[- ]?up|macro\s+close[- ]?up|ecu|close[- ]?up|cu)\b/i.test(

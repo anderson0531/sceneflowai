@@ -14245,19 +14245,43 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
+    const auto = resolveBeatFrameGenerationContext({
+      scene,
+      beat,
+      sceneIndex: sceneIdx,
+      projectCharacters: characters,
+      locationReferences,
+      objectReferences,
+      filmTitle: project?.title,
+    })
+
     let referenceSelection: BeatReferenceSelection
     if (shouldUseExplicitBeatReferences(beat)) {
-      referenceSelection = explicitBeatReferenceSelection({ beat, objectReferences })
+      const explicit = explicitBeatReferenceSelection({ beat, objectReferences })
+      const explicitWardrobes = explicit.characterWardrobes ?? []
+      const coveredLower = new Set(
+        explicitWardrobes.flatMap((cw) => {
+          const key = cw.characterId.trim().toLowerCase()
+          const matched = characters.find(
+            (c) => c.id?.toLowerCase() === key || c.name?.toLowerCase() === key
+          )
+          return [
+            key,
+            ...(matched?.id ? [String(matched.id).toLowerCase()] : []),
+            ...(matched?.name ? [String(matched.name).toLowerCase()] : []),
+          ]
+        })
+      )
+      referenceSelection = {
+        ...explicit,
+        characterWardrobes: [
+          ...explicitWardrobes,
+          ...(auto.characterWardrobes ?? []).filter(
+            (cw) => !coveredLower.has(cw.characterId.trim().toLowerCase())
+          ),
+        ],
+      }
     } else {
-      const auto = resolveBeatFrameGenerationContext({
-        scene,
-        beat,
-        sceneIndex: sceneIdx,
-        projectCharacters: characters,
-        locationReferences,
-        objectReferences,
-        filmTitle: project?.title,
-      })
       referenceSelection = toBeatReferenceSelection(auto)
     }
 

@@ -868,6 +868,36 @@ export function resolveVerifiedBeatRefsForApi(args: {
       }
     }
   }
+  if (shouldUseExplicitBeatReferences(args.beat) && selection.characterIds.length > 0) {
+    const autoWardrobes = buildCharacterWardrobes(
+      args.scene,
+      selection.characterIds,
+      args.projectCharacters,
+      args.sceneIndex
+    )
+    const explicitWardrobes = selection.characterWardrobes ?? []
+    const coveredLower = new Set(
+      explicitWardrobes.flatMap((cw) => {
+        const key = cw.characterId.trim().toLowerCase()
+        const char = args.projectCharacters.find(
+          (c) => c.id?.toLowerCase() === key || c.name?.toLowerCase() === key
+        )
+        return [
+          key,
+          ...(char?.id ? [String(char.id).toLowerCase()] : []),
+          ...(char?.name ? [String(char.name).toLowerCase()] : []),
+        ]
+      })
+    )
+    const mergedWardrobes = [
+      ...explicitWardrobes,
+      ...autoWardrobes.filter((cw) => !coveredLower.has(cw.characterId.trim().toLowerCase())),
+    ]
+    selection = {
+      ...selection,
+      characterWardrobes: mergedWardrobes,
+    }
+  }
   return mapBeatReferenceSelectionForApi(
     selection,
     args.projectCharacters,

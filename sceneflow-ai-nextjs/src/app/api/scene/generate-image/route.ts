@@ -925,6 +925,38 @@ async function postGenerateImage(req: NextRequest) {
           )
         }
 
+        const targetBeatForWardrobes = getSceneBeats(resolvedScene as Record<string, unknown>)[
+          effectiveBeatIndex
+        ]
+        if (
+          Array.isArray(targetBeatForWardrobes?.referenceSelection?.characterWardrobes) &&
+          targetBeatForWardrobes.referenceSelection.characterWardrobes.length > 0
+        ) {
+          const explicitClientKeys = new Set(
+            (Array.isArray(characterWardrobes) ? characterWardrobes : []).map((cw: any) =>
+              String(cw?.characterId || '').trim().toLowerCase()
+            )
+          )
+          const beatWardrobeEntries =
+            targetBeatForWardrobes.referenceSelection.characterWardrobes.filter(
+              (cw) => !explicitClientKeys.has(String(cw?.characterId || '').trim().toLowerCase())
+            )
+          if (beatWardrobeEntries.length > 0) {
+            const beatKeys = new Set(
+              beatWardrobeEntries.map((cw) => String(cw.characterId || '').trim().toLowerCase())
+            )
+            effectiveCharacterWardrobes = [
+              ...(Array.isArray(characterWardrobes) ? characterWardrobes : []),
+              ...beatWardrobeEntries,
+              ...effectiveCharacterWardrobes.filter(
+                (cw: any) =>
+                  !explicitClientKeys.has(String(cw?.characterId || '').trim().toLowerCase()) &&
+                  !beatKeys.has(String(cw?.characterId || '').trim().toLowerCase())
+              ),
+            ]
+          }
+        }
+
         if (frameRole === 'action-start') {
           const beats = getSceneBeats(resolvedScene as Record<string, unknown>)
           const beat = beats[effectiveBeatIndex]

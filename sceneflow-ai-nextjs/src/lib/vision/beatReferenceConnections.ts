@@ -244,6 +244,11 @@ export interface CharacterConnectionResult {
   selection: BeatReferenceSelection
 }
 
+export interface CharacterWardrobeSelectionInput extends CharacterConnectionInput {
+  /** Specific wardrobe ID to lock onto this shot, or null/empty to revert to scene default. */
+  wardrobeId: string | null
+}
+
 function castNamesMatch(left: string, right: string): boolean {
   const a = left.trim().toLowerCase()
   const b = right.trim().toLowerCase()
@@ -273,6 +278,43 @@ export function connectCharacterReference(input: CharacterConnectionInput): Char
       characterIds: hasId
         ? [...input.selection.characterIds]
         : [...input.selection.characterIds, id],
+      source: 'user',
+      resolvedAt: input.resolvedAt,
+    },
+  }
+}
+
+export function selectCharacterWardrobe(
+  input: CharacterWardrobeSelectionInput
+): CharacterConnectionResult {
+  const name = input.characterName.trim()
+  const id = (input.characterId || name).trim()
+  const normalizedWardrobeId = input.wardrobeId?.trim() || null
+
+  const alreadyConnected = input.selection.characterIds.some(
+    (entry) => castNamesMatch(entry, id) || castNamesMatch(entry, name)
+  )
+  const baseConnection =
+    alreadyConnected && !normalizedWardrobeId
+      ? {
+          direction: { ...(input.direction ?? {}) },
+          selection: { ...input.selection },
+        }
+      : connectCharacterReference(input)
+
+  const filteredWardrobes = (baseConnection.selection.characterWardrobes ?? []).filter(
+    (entry) =>
+      !castNamesMatch(entry.characterId, id) && !castNamesMatch(entry.characterId, name)
+  )
+  const nextWardrobes = normalizedWardrobeId
+    ? [...filteredWardrobes, { characterId: id, wardrobeId: normalizedWardrobeId }]
+    : filteredWardrobes
+
+  return {
+    direction: baseConnection.direction,
+    selection: {
+      ...baseConnection.selection,
+      characterWardrobes: nextWardrobes,
       source: 'user',
       resolvedAt: input.resolvedAt,
     },

@@ -41,6 +41,7 @@ import {
   connectObjectReference,
   disconnectCharacterReference,
   disconnectObjectReference,
+  selectCharacterWardrobe as selectCharacterWardrobeConnection,
 } from '@/lib/vision/beatReferenceConnections'
 import { applyBeatDirectionSelections } from '@/lib/vision/applyBeatDirectionSelection'
 import {
@@ -115,12 +116,17 @@ export interface DirectionCharacter {
   name: string
   referenceImage?: string
   type?: string
+  defaultWardrobe?: string
   wardrobes?: Array<{
     id: string
     name: string
+    description?: string
+    accessories?: string
+    previewImageUrl?: string
     fullBodyUrl?: string
     headshotUrl?: string
     combinedCharacterRefUrl?: string
+    sceneNumbers?: number[]
     isDefault?: boolean
   }>
 }
@@ -361,8 +367,8 @@ export function BeatDirectionEditor({
     [sceneRecord, beat, sceneIdx, characters, locationReferences, objectReferences]
   )
   const referenceSelection = useMemo(
-    () => selectionFromBeat(beat, resolvedSelection),
-    [beat, resolvedSelection]
+    () => selectionFromBeat(beat, resolvedSelection, characters),
+    [beat, resolvedSelection, characters]
   )
 
   const sceneNumber =
@@ -456,6 +462,34 @@ export function BeatDirectionEditor({
           connectedCharacterNames,
           resolvedAt,
         })
+    writeConnection(
+      [
+        {
+          sceneIndex: sceneIdx,
+          beatId: beat.beatId,
+          direction: directionAlignedToSelection(next.direction, next.selection),
+          referenceSelection: next.selection,
+        },
+      ],
+      { rebuildPrompts: true }
+    )
+  }
+
+  const selectCharacterWardrobe = (
+    character: DirectionCharacter,
+    wardrobeId: string | null
+  ) => {
+    const resolvedAt = new Date().toISOString()
+    const connectedCharacterNames = connectedCast.map((entry) => entry.name)
+    const next = selectCharacterWardrobeConnection({
+      direction,
+      selection: referenceSelection,
+      characterId: character.id || character.name,
+      characterName: character.name,
+      wardrobeId,
+      connectedCharacterNames,
+      resolvedAt,
+    })
     writeConnection(
       [
         {
@@ -568,9 +602,10 @@ export function BeatDirectionEditor({
       scene: sceneRecord ?? {},
       sceneIndex: sceneIdx,
       characters: characters as unknown as Record<string, unknown>[],
+      characterWardrobes: resolvedSelection.characterWardrobes,
     })
     return allRefs
-  }, [currentFrameImageUrl, sceneRecord, sceneIdx, characters])
+  }, [currentFrameImageUrl, sceneRecord, sceneIdx, characters, resolvedSelection.characterWardrobes])
 
   const defaultSelectedCharRefKeys = useMemo(() => {
     if (!currentFrameImageUrl) return undefined
@@ -639,6 +674,7 @@ export function BeatDirectionEditor({
       clipDurationOptions={clipDurationOptions}
       onChangeClipDuration={onChangeClipDuration}
       onToggleCharacter={toggleCharacter}
+      onSelectCharacterWardrobe={selectCharacterWardrobe}
       onToggleObject={toggleObject}
       onSelectLocation={selectLocation}
       initialSafety={initialSafety}
@@ -774,13 +810,34 @@ export function BeatDirectionEditor({
             <div className="space-y-1.5 rounded-md border border-zinc-500/50 bg-slate-900/50 px-2.5 py-2">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-300">References</p>
               <div className="flex flex-wrap gap-2">
-                {connectedCast.map((character) => (
-                  <ReferenceChip
-                    key={character.id || character.name}
-                    name={character.name}
-                    imageUrl={character.referenceImage}
-                  />
-                ))}
+                {connectedCast.map((character) => {
+                  const charIdLower = (character.id || '').trim().toLowerCase()
+                  const charNameLower = character.name.trim().toLowerCase()
+                  const resolvedWardrobeId = resolvedSelection.characterWardrobes.find((cw) => {
+                    const k = cw.characterId.trim().toLowerCase()
+                    return (Boolean(charIdLower) && k === charIdLower) || k === charNameLower
+                  })?.wardrobeId
+                  const activeWardrobe = resolvedWardrobeId
+                    ? character.wardrobes?.find((w) => w.id === resolvedWardrobeId)
+                    : undefined
+                  const chipImageUrl =
+                    activeWardrobe?.previewImageUrl ||
+                    activeWardrobe?.fullBodyUrl ||
+                    activeWardrobe?.headshotUrl ||
+                    activeWardrobe?.combinedCharacterRefUrl ||
+                    character.referenceImage
+                  return (
+                    <ReferenceChip
+                      key={character.id || character.name}
+                      name={
+                        activeWardrobe?.name
+                          ? `${character.name} · ${activeWardrobe.name}`
+                          : character.name
+                      }
+                      imageUrl={chipImageUrl}
+                    />
+                  )
+                })}
                 {connectedLocation && (
                   <ReferenceChip
                     name={connectedLocation.location || connectedLocation.name || 'Location'}

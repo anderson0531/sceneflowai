@@ -128,9 +128,26 @@ export async function POST(req: NextRequest) {
       : []
     const catalog = shotDirectionCatalogFromPhase(visionPhase)
 
+    const clientReferenceSelection =
+      body.referenceSelection &&
+      typeof body.referenceSelection === 'object' &&
+      Array.isArray((body.referenceSelection as Record<string, unknown>).characterIds)
+        ? (body.referenceSelection as typeof beat.referenceSelection)
+        : undefined
+    const effectiveBeat = clientReferenceSelection
+      ? {
+          ...beat,
+          referenceSelection: {
+            ...clientReferenceSelection,
+            source: clientReferenceSelection.source ?? 'user',
+            resolvedAt: clientReferenceSelection.resolvedAt ?? new Date().toISOString(),
+          },
+        }
+      : beat
+
     const boundContinuity = buildBeatBoundContinuity({
       scene: scene as Record<string, unknown>,
-      beat,
+      beat: effectiveBeat,
       sceneIdx: sceneIndex,
       characters,
       locationReferences,
@@ -148,7 +165,7 @@ export async function POST(req: NextRequest) {
         beats: [
           {
             beatIndex,
-            beat,
+            beat: effectiveBeat,
             ...(boundContinuity ? { boundContinuity } : {}),
             previousMoment: previous ? composeBeatActionFraming(previous) : undefined,
             nextMoment: next ? composeBeatActionFraming(next) : undefined,

@@ -148,12 +148,23 @@ function resolveCharacterNamesForBeat(
     : auto.characterNames
 
   const selectedWardrobes: Record<string, string> = {}
-  const wardrobeSource = saved?.characterWardrobes?.length
-    ? saved.characterWardrobes
-    : auto.characterWardrobes
-  for (const cw of wardrobeSource || []) {
-    const char = projectCharacters.find((c) => c.id === cw.characterId)
-    if (char?.name) selectedWardrobes[String(char.name)] = cw.wardrobeId
+  for (const cw of auto.characterWardrobes || []) {
+    const key = cw.characterId.trim().toLowerCase()
+    const char = projectCharacters.find(
+      (c) =>
+        String(c.id || '').trim().toLowerCase() === key ||
+        String(c.name || '').trim().toLowerCase() === key
+    )
+    if (char?.name && cw.wardrobeId) selectedWardrobes[String(char.name)] = cw.wardrobeId
+  }
+  for (const cw of saved?.characterWardrobes || []) {
+    const key = cw.characterId.trim().toLowerCase()
+    const char = projectCharacters.find(
+      (c) =>
+        String(c.id || '').trim().toLowerCase() === key ||
+        String(c.name || '').trim().toLowerCase() === key
+    )
+    if (char?.name && cw.wardrobeId) selectedWardrobes[String(char.name)] = cw.wardrobeId
   }
   const filledWardrobes = fillSelectedWardrobesForCharacters(
     characterNames,
@@ -466,14 +477,26 @@ export function listAllFrameEditCharacterReferences(args: {
   scene: Record<string, unknown> | null
   sceneIndex: number
   characters: Array<Record<string, unknown>>
+  characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
 }): FrameEditCharacterReference[] {
-  const { scene, sceneIndex, characters } = args
+  const { scene, sceneIndex, characters, characterWardrobes: beatWardrobes } = args
   const characterNames = allProjectCharactersWithUsableReferences(characters)
+  const preselected: Record<string, string> = {}
+  for (const cw of beatWardrobes || []) {
+    const key = cw.characterId.trim().toLowerCase()
+    const char = characters.find(
+      (c) =>
+        String(c.id || '').trim().toLowerCase() === key ||
+        String(c.name || '').trim().toLowerCase() === key
+    )
+    if (char?.name && cw.wardrobeId) preselected[String(char.name)] = cw.wardrobeId
+  }
   const selectedWardrobes = fillSelectedWardrobesForCharacters(
     characterNames,
     characters,
     scene || {},
-    sceneIndex
+    sceneIndex,
+    preselected
   )
   const characterWardrobes = characterWardrobesFromNames(
     characterNames,

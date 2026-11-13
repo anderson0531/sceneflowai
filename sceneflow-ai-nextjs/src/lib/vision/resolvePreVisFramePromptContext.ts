@@ -198,12 +198,23 @@ export function resolvePreVisFramePromptContext(args: {
       const selectedCharacterNames =
         savedCharacterNames.length > 0 ? savedCharacterNames : auto.characterNames
       const selectedWardrobes: Record<string, string> = {}
-      const wardrobeSource = saved?.characterWardrobes?.length
-        ? saved.characterWardrobes
-        : auto.characterWardrobes
-      for (const cw of wardrobeSource || []) {
-        const char = projectCharacters.find((c) => c.id === cw.characterId)
-        if (char?.name) selectedWardrobes[String(char.name)] = cw.wardrobeId
+      for (const cw of auto.characterWardrobes || []) {
+        const key = cw.characterId.trim().toLowerCase()
+        const char = projectCharacters.find(
+          (c) =>
+            String(c.id || '').trim().toLowerCase() === key ||
+            String(c.name || '').trim().toLowerCase() === key
+        )
+        if (char?.name && cw.wardrobeId) selectedWardrobes[String(char.name)] = cw.wardrobeId
+      }
+      for (const cw of saved?.characterWardrobes || []) {
+        const key = cw.characterId.trim().toLowerCase()
+        const char = projectCharacters.find(
+          (c) =>
+            String(c.id || '').trim().toLowerCase() === key ||
+            String(c.name || '').trim().toLowerCase() === key
+        )
+        if (char?.name && cw.wardrobeId) selectedWardrobes[String(char.name)] = cw.wardrobeId
       }
       const filledWardrobes = fillSelectedWardrobesForCharacters(
         selectedCharacterNames,
