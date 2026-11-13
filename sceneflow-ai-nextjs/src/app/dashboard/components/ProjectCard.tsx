@@ -558,6 +558,41 @@ export function ProjectCard({
     )
   }
 
+  const renderClientOrderBadge = () => {
+    const co = project.metadata?.clientOrder
+    if (!co?.isClientProject) return null
+    const actionState = co.actionState as string | undefined
+    const customerLabel = co.customerName || co.customerLabel
+    if (actionState === 'action_required') {
+      return (
+        <span
+          title={customerLabel ? `Client: ${customerLabel}` : 'Client project requires producer action'}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/40"
+        >
+          Action Required
+        </span>
+      )
+    }
+    if (actionState === 'client_approved') {
+      return (
+        <span
+          title={customerLabel ? `Client: ${customerLabel}` : 'Approved by client'}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+        >
+          Client Approved
+        </span>
+      )
+    }
+    return (
+      <span
+        title={customerLabel ? `Client: ${customerLabel}` : 'Waiting on client'}
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-sky-500/20 text-sky-300 border border-sky-500/40"
+      >
+        Waiting on Client
+      </span>
+    )
+  }
+
   const renderDialogs = () => (
     <>
       <ThumbnailPromptDrawer
@@ -707,6 +742,7 @@ export function ProjectCard({
                   </Link>
                 )}
                 {renderStatusControl()}
+                {renderClientOrderBadge()}
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 mt-1">
                 <span className="inline-flex items-center gap-1">
@@ -878,6 +914,7 @@ export function ProjectCard({
                 {episodeNumber ? `Episode ${episodeNumber}` : 'Series Episode'}
               </Link>
             )}
+            {renderClientOrderBadge()}
           </div>
         </div>
 

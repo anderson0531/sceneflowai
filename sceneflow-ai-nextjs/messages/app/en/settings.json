@@ -23,7 +23,9 @@
     "byok": "BYOK Settings",
     "storage": "Storage",
     "admin": "Admin",
-    "adminDescription": "Admin functions and controls"
+    "adminDescription": "Admin functions and controls",
+    "producer": "Producer & Team",
+    "producerDescription": "Client intake links, white-label branding, and team access"
   },
   "profile": {
     "title": "Profile Information",

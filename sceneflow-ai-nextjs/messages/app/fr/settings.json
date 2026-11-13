@@ -23,7 +23,9 @@
     "byok": "Paramètres BYOK",
     "storage": "Stockage",
     "admin": "Admin",
-    "adminDescription": "Fonctions et contrôles d'administration"
+    "adminDescription": "Fonctions et contrôles d'administration",
+    "producer": "Producteur & Équipe",
+    "producerDescription": "Liens d'accueil client, marque blanche et accès d'équipe"
   },
   "profile": {
     "title": "Informations du profil",

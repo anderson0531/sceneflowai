@@ -3,6 +3,7 @@ import { sequelize } from '@/config/database'
 import CollabSession from '@/models/CollabSession'
 import { recoverStaleSectionAudioIfNeeded } from '@/lib/blueprint/generateShareSectionAudio'
 import { getPayload, resolveSessionByToken } from '@/lib/blueprint/shareSession'
+import { shouldHideBlueprintAudienceResonance } from '@/lib/blueprint/shareSettings'
 import {
   getSectionAudioForLanguage,
   getSectionTranslationsForLanguage,
@@ -68,9 +69,15 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
         sectionAudioDirectorNotes: payload.sectionAudioDirectorNotes,
         sectionAudioStartedAt: payload.sectionAudioStartedAt,
         sectionAudioGeneratedAt: payload.sectionAudioGeneratedAt,
-        blueprintAudienceResonance: payload.blueprintAudienceResonance ?? null,
-        resonanceAudioByLanguage: payload.resonanceAudioByLanguage || {},
-        resonanceTranslations: payload.resonanceTranslations || {},
+        blueprintAudienceResonance: shouldHideBlueprintAudienceResonance(payload.shareSettings)
+          ? null
+          : payload.blueprintAudienceResonance ?? null,
+        resonanceAudioByLanguage: shouldHideBlueprintAudienceResonance(payload.shareSettings)
+          ? {}
+          : payload.resonanceAudioByLanguage || {},
+        resonanceTranslations: shouldHideBlueprintAudienceResonance(payload.shareSettings)
+          ? {}
+          : payload.resonanceTranslations || {},
       },
     })
   } catch (e: unknown) {

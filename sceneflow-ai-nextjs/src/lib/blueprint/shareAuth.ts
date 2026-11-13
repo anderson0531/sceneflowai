@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import CollabParticipant from '@/models/CollabParticipant'
 import { getAuthenticatedUserId } from '@/lib/projectAccess'
+import { checkWorkspaceProjectAccess } from '@/lib/producer/workspaceAccess'
 import { resolveUserId } from '@/lib/userHelper'
 import { resolveSessionByToken, getPayload } from './shareSession'
 
@@ -31,7 +32,15 @@ export async function requireOwnerForSession(
       /* keep raw */
     }
     if (sessionOwnerResolved !== ownerUserId) {
-      return { ok: false, status: 403, error: 'Forbidden' }
+      const teamGrant = await checkWorkspaceProjectAccess(
+        sessionOwnerResolved,
+        ownerUserId,
+        payload.projectId
+      )
+      if (!teamGrant.allowed) {
+        return { ok: false, status: 403, error: 'Forbidden' }
+      }
+      return { ok: true, session, ownerUserId: sessionOwnerResolved }
     }
   }
 

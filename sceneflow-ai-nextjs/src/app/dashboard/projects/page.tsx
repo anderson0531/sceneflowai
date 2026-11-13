@@ -22,6 +22,10 @@ import {
   Film,
   Sparkles,
   Layers,
+  Briefcase,
+  AlertCircle,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -69,6 +73,9 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStage, setFilterStage] = useState<'all' | 'blueprint' | 'production'>('all')
+  const [clientFilter, setClientFilter] = useState<
+    'all' | 'action_required' | 'waiting_on_client' | 'client_approved'
+  >('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [sortBy, setSortBy] = useState('recent')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -366,6 +373,16 @@ export default function ProjectsPage() {
     ).length
     const completedCount = nonArchived.filter((p) => isProjectCompleted(p)).length
     const archivedCount = projects.filter((p) => p.status === 'archived').length
+    const clientProjects = nonArchived.filter((p) => Boolean(p.metadata?.clientOrder?.isClientProject))
+    const actionRequiredCount = clientProjects.filter(
+      (p) => p.metadata?.clientOrder?.actionState === 'action_required'
+    ).length
+    const waitingOnClientCount = clientProjects.filter(
+      (p) => p.metadata?.clientOrder?.actionState === 'waiting_on_client'
+    ).length
+    const clientApprovedCount = clientProjects.filter(
+      (p) => p.metadata?.clientOrder?.actionState === 'client_approved'
+    ).length
 
     return {
       totalNonArchived: nonArchived.length,
@@ -374,6 +391,10 @@ export default function ProjectsPage() {
       activeCount,
       completedCount,
       archivedCount,
+      clientTotal: clientProjects.length,
+      actionRequiredCount,
+      waitingOnClientCount,
+      clientApprovedCount,
     }
   }, [projects])
 
@@ -384,10 +405,14 @@ export default function ProjectsPage() {
         // Search filter
         if (searchQuery) {
           const query = searchQuery.toLowerCase()
+          const customerName = String(
+            p.metadata?.clientOrder?.customerName || p.metadata?.clientOrder?.customerLabel || ''
+          ).toLowerCase()
           return (
             p.title?.toLowerCase().includes(query) ||
             p.description?.toLowerCase().includes(query) ||
-            p.genre?.toLowerCase().includes(query)
+            p.genre?.toLowerCase().includes(query) ||
+            customerName.includes(query)
           )
         }
         return true
@@ -417,6 +442,12 @@ export default function ProjectsPage() {
         if (filterStage === 'production') return step !== 'blueprint'
         return true
       })
+      .filter((p) => {
+        if (clientFilter === 'all') return true
+        const co = p.metadata?.clientOrder
+        if (!co?.isClientProject) return false
+        return co.actionState === clientFilter
+      })
       .sort((a, b) => {
         if (sortBy === 'recent') {
           return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
@@ -432,7 +463,7 @@ export default function ProjectsPage() {
         }
         return 0
       })
-  }, [projects, searchQuery, filterStatus, filterStage, sortBy])
+  }, [projects, searchQuery, filterStatus, filterStage, clientFilter, sortBy])
 
   const pinnedProject = useMemo(
     () => projects.find((p) => p.id === selectedProjectId) || null,
@@ -440,12 +471,16 @@ export default function ProjectsPage() {
   )
 
   const hasActiveFilters =
-    Boolean(searchQuery) || filterStatus !== 'all' || filterStage !== 'all'
+    Boolean(searchQuery) ||
+    filterStatus !== 'all' ||
+    filterStage !== 'all' ||
+    clientFilter !== 'all'
 
   const resetFilters = () => {
     setSearchQuery('')
     setFilterStatus('all')
     setFilterStage('all')
+    setClientFilter('all')
   }
 
   return (
@@ -456,14 +491,96 @@ export default function ProjectsPage() {
         subtitle={`Standalone films and series episodes across ${STUDIO_DISPLAY_NAMES.blueprint} and ${STUDIO_DISPLAY_NAMES.production}.`}
         accent="product"
         primaryAction={
-          <Link href="/dashboard/studio/new-project">
-            <Button variant="primary" className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              New Project
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/dashboard/settings/producer">
+              <Button variant="secondary" className="flex items-center gap-2 border border-gray-700">
+                <Briefcase className="w-4 h-4 text-cyan-400" />
+                Producer Hub
+              </Button>
+            </Link>
+            <Link href="/dashboard/studio/new-project">
+              <Button variant="primary" className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                New Project
+              </Button>
+            </Link>
+          </div>
         }
       />
+
+      {/* Producer Client Action Triage Bar (shown when Client Orders exist or filtered) */}
+      {(stats.clientTotal > 0 || clientFilter !== 'all') && (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-800/80 bg-gray-900/60 px-3 py-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-medium text-gray-400">
+              <Briefcase className="w-3.5 h-3.5 text-cyan-400" />
+              Client Triage:
+            </span>
+            <button
+              type="button"
+              onClick={() => setClientFilter('all')}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                clientFilter === 'all'
+                  ? 'bg-gray-800 text-white border border-gray-700'
+                  : 'text-gray-400 hover:text-gray-200 border border-transparent'
+              }`}
+            >
+              All Projects
+            </button>
+            <button
+              type="button"
+              onClick={() => setClientFilter('action_required')}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                clientFilter === 'action_required'
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  : 'text-gray-400 hover:text-amber-200 border border-transparent'
+              }`}
+            >
+              <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+              Action Required
+              <span className="rounded-full bg-amber-950/80 px-1.5 py-0.5 text-[10px] text-amber-200">
+                {stats.actionRequiredCount}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setClientFilter('waiting_on_client')}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                clientFilter === 'waiting_on_client'
+                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
+                  : 'text-gray-400 hover:text-sky-200 border border-transparent'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5 text-sky-400" />
+              Waiting on Client
+              <span className="rounded-full bg-sky-950/80 px-1.5 py-0.5 text-[10px] text-sky-200">
+                {stats.waitingOnClientCount}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setClientFilter('client_approved')}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                clientFilter === 'client_approved'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  : 'text-gray-400 hover:text-emerald-200 border border-transparent'
+              }`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              Client Approved
+              <span className="rounded-full bg-emerald-950/80 px-1.5 py-0.5 text-[10px] text-emerald-200">
+                {stats.clientApprovedCount}
+              </span>
+            </button>
+          </div>
+          <Link
+            href="/dashboard/settings/producer"
+            className="text-xs text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
+          >
+            Manage Intake & Continuity Links →
+          </Link>
+        </div>
+      )}
 
       {/* Studio Stage Filter Bar + Pinned Project Indicator */}
       <div className="mb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">

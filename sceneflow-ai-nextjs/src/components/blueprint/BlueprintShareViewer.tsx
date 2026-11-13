@@ -16,6 +16,7 @@ import type {
   BlueprintSectionAudioMap,
   BlueprintSectionAudioStatus,
   BlueprintSectionTranslationsByLanguage,
+  BlueprintShareSettings,
 } from '@/lib/blueprint/shareTypes'
 import { countSectionsWithUrl } from '@/lib/blueprint/shareAudioPayload'
 import { BLUEPRINT_REVIEW_SECTION_THEME } from '@/lib/blueprint/blueprintReviewTheme'
@@ -37,7 +38,14 @@ import {
 } from '@/i18n/content/buildBlueprintDisplayFields'
 import { EMPTY_ENTITY_I18N, readContentEntityI18n } from '@/i18n/content/entityI18n'
 import { fromTtsLanguageCode } from '@/i18n/languageCodeBridge'
-import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
+import {
+  isBlueprintFeedbackAllowed,
+  isBlueprintRoundLimitReached,
+} from '@/lib/blueprint/shareSettings'
+import {
+  formatPortalCopy,
+  resolveClientPortalLocale,
+} from '@/lib/intake/clientPortalCopy'
 import type { SharedBlueprintARSnapshot } from '@/lib/blueprint/sanitizeShareAR'
 import { BlueprintShareResonancePanel } from './BlueprintShareResonancePanel'
 import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
@@ -120,6 +128,8 @@ export function BlueprintShareViewer({ token }: Props) {
   const [draft, setDraft] = useState<ShareFeedbackDraft>({ sections: {} })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [shareSettings, setShareSettings] = useState<BlueprintShareSettings | null>(null)
+  const [approvingBlueprint, setApprovingBlueprint] = useState(false)
   const [audioPollStale, setAudioPollStale] = useState(false)
   const audioPollCountRef = useRef(0)
 
@@ -138,6 +148,7 @@ export function BlueprintShareViewer({ token }: Props) {
         )
     )
     setOwnerName(data.payload?.ownerDisplayName || 'Owner')
+    setShareSettings(data.payload?.shareSettings || null)
     setAllowTts(data.payload?.shareSettings?.allowTts !== false)
     setAllowFeedback(isBlueprintFeedbackAllowed(data.payload?.shareSettings))
     setArSnapshot(data.payload?.blueprintAudienceResonance ?? null)
@@ -438,21 +449,112 @@ export function BlueprintShareViewer({ token }: Props) {
     )
   }
 
-  const canFeedback = allowFeedback && !!participantId && !submitted
+  const roundLimitReached = isBlueprintRoundLimitReached(shareSettings)
+  const isApproved = shareSettings?.approvalStatus === 'approved'
+  const brandSnapshot = shareSettings?.brandProfileSnapshot
+  const portalLocale = resolveClientPortalLocale(reviewLanguage)
+  const canFeedback = allowFeedback && !!participantId && !submitted && !roundLimitReached
+
+  const handleApproveBlueprint = async () => {
+    setApprovingBlueprint(true)
+    try {
+      const res = await fetch(`/api/blueprint/share/${encodeURIComponent(token)}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerName: reviewerName || regName || 'Client' }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setShareSettings((prev) => ({
+          ...(prev || {}),
+          approvalStatus: 'approved',
+        }))
+        toast.success(formatPortalCopy(portalLocale, 'blueprintApproved'))
+      } else {
+        toast.error(data.error || 'Could not approve blueprint')
+      }
+    } catch {
+      toast.error('Could not approve blueprint')
+    } finally {
+      setApprovingBlueprint(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 text-gray-100">
       <header className="border-b border-gray-800/60 bg-gray-900/80 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4 py-3 space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <SceneFlowStudioBrand href="/" nameClassName="text-white" />
-            <Link
-              href="/"
-              className="text-sm text-purple-300/90 hover:text-purple-200 underline-offset-2 hover:underline shrink-0"
-            >
-              Learn more about SceneFlow
-            </Link>
+            {brandSnapshot?.brandName ? (
+              <div className="flex items-center gap-2.5">
+                {brandSnapshot.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={brandSnapshot.logoUrl}
+                    alt={brandSnapshot.brandName}
+                    className="h-8 w-8 rounded-lg object-cover border border-gray-700"
+                  />
+                ) : (
+                  <div
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                    style={{ backgroundColor: brandSnapshot.primaryColor || '#7c3aed' }}
+                  >
+                    {brandSnapshot.brandName.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <span className="font-semibold text-white">
+                  {formatPortalCopy(portalLocale, 'producedBy', {
+                    brand: brandSnapshot.brandName,
+                  })}
+                </span>
+              </div>
+            ) : (
+              <SceneFlowStudioBrand href="/" nameClassName="text-white" />
+            )}
+
+            <div className="flex items-center gap-3">
+              {typeof shareSettings?.maxFeedbackRounds === 'number' && (
+                <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-200">
+                  {formatPortalCopy(portalLocale, 'roundBadge', {
+                    used: shareSettings.roundsUsed ?? 0,
+                    max: shareSettings.maxFeedbackRounds,
+                  })}
+                </span>
+              )}
+              {shareSettings?.clientMode && (
+                <button
+                  type="button"
+                  disabled={isApproved || approvingBlueprint}
+                  onClick={handleApproveBlueprint}
+                  className={cn(
+                    'rounded-lg px-3.5 py-1.5 text-xs font-semibold transition',
+                    isApproved
+                      ? 'bg-emerald-600/20 border border-emerald-500/40 text-emerald-300'
+                      : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  )}
+                >
+                  {isApproved
+                    ? formatPortalCopy(portalLocale, 'blueprintApproved')
+                    : formatPortalCopy(portalLocale, 'approveBlueprint')}
+                </button>
+              )}
+              {!brandSnapshot?.hideSceneFlowBranding && (
+                <Link
+                  href="/"
+                  className="text-sm text-purple-300/90 hover:text-purple-200 underline-offset-2 hover:underline shrink-0"
+                >
+                  Learn more about SceneFlow
+                </Link>
+              )}
+            </div>
           </div>
+          {roundLimitReached && !isApproved && (
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              {formatPortalCopy(portalLocale, 'roundLimitReached', {
+                brand: brandSnapshot?.brandName || ownerName,
+              })}
+            </div>
+          )}
           <p className="sf-review-eyebrow">
             {allowFeedback ? 'Blueprint Review' : 'Blueprint · Listen only'}
           </p>
@@ -676,7 +778,7 @@ export function BlueprintShareViewer({ token }: Props) {
 
       </main>
 
-      {allowFeedback && participantId && !submitted && activeTab === 'review' && (
+      {allowFeedback && participantId && !submitted && !roundLimitReached && activeTab === 'review' && (
         <div className="fixed bottom-0 inset-x-0 z-30 border-t border-gray-800 bg-gray-950/95 backdrop-blur px-4 py-3">
           <div className="max-w-4xl mx-auto flex items-center gap-3">
             <p className="text-xs text-gray-500 flex-1 hidden sm:block">

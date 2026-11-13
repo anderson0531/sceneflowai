@@ -7,6 +7,10 @@ export type NotificationType =
   | 'job_progress'
   | 'info'
   | 'feedback'
+  | 'client_intake_submitted'
+  | 'client_feedback_received'
+  | 'client_assets_uploaded'
+  | 'client_stage_approved'
 
 export interface NotificationAttributes {
   id: string

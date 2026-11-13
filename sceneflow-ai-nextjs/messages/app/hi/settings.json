@@ -23,7 +23,9 @@
     "byok": "BYOK सेटिंग",
     "storage": "स्टोरेज",
     "admin": "एडमिन",
-    "adminDescription": "एडमिन फ़ंक्शंस और कंट्रोल"
+    "adminDescription": "एडमिन फ़ंक्शंस और कंट्रोल",
+    "producer": "प्रोड्यूसर और टीम",
+    "producerDescription": "क्लाइंट इनटेक लिंक, व्हाइट-लेबल ब्रांडिंग और टीम एक्सेस"
   },
   "profile": {
     "title": "Comment",

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-03T09:37:55.856Z",
+  "generatedAt": "2026-11-13T01:39:42.555Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -224,6 +224,8 @@
       "nav.storage": "a69c4dece144a46e",
       "nav.admin": "c1c224b03cd9bc7b",
       "nav.adminDescription": "458762e3d7bfa847",
+      "nav.producer": "b0e22f80d3d22849",
+      "nav.producerDescription": "dc362972ce757430",
       "profile.title": "64ceb89543b7fe25",
       "profile.description": "0498b8a749575b73",
       "profile.username": "e3b89e9d33f88e52",

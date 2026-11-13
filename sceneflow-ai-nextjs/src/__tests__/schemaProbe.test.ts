@@ -97,4 +97,14 @@ describe('the lazy migrations probe before issuing DDL', () => {
     const body = source.slice(probeAt, createAt)
     expect(body).toContain('notificationsSchemaCompleted = true')
   })
+
+  it('producer platform tables short-circuit when all exist', () => {
+    const source = readSource('src/lib/database/migrateProducerPlatform.ts')
+    const probeAt = source.indexOf('hasTables([...PRODUCER_TABLES])')
+    const createAt = source.indexOf('CREATE TABLE IF NOT EXISTS producer_profiles')
+    expect(probeAt).toBeGreaterThan(-1)
+    expect(probeAt).toBeLessThan(createAt)
+    const body = source.slice(probeAt, createAt)
+    expect(body).toContain('schemaCompleted = true')
+  })
 })

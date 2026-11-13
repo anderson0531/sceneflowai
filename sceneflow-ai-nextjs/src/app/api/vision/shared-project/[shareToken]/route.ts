@@ -8,6 +8,10 @@ import { getPublishingState } from '@/lib/publish/publishingState'
 import { resolvePromoScreeningVideoUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
 import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import { sequelize } from '../../../../../config/database'
+import {
+  getOrCreateProducerProfile,
+  toBrandProfileSnapshot,
+} from '@/lib/producer/producerProfileService'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -102,7 +106,15 @@ export async function GET(
         }
       : { script: { scenes: resolvedScenes }, scenes: resolvedScenes }
 
-    const audienceResonance = sanitizeAudienceResonance(visionPhase?.reviews?.audience)
+    const isClientMode = Boolean(
+      shareLink.clientMode || md.clientOrder?.isClientProject
+    )
+    const hideAR = Boolean(
+      shareLink.hideAudienceResonance ?? isClientMode
+    )
+    const audienceResonance = hideAR
+      ? undefined
+      : sanitizeAudienceResonance(visionPhase?.reviews?.audience)
     const publishingState = getPublishingState(md)
     const finalCutSelection = readFinalCutSelection(md)
     const promoTrailerUrl = resolvePromoScreeningVideoUrl({
@@ -113,6 +125,28 @@ export async function GET(
       activePromoId: publishingState.promo?.activePromoId,
       fallbackPromoTrailerUrl: publishingState.promo?.trailer?.mp4Url || null,
     })
+
+    let clientPortalMeta: Record<string, unknown> | undefined
+    if (isClientMode) {
+      const ownerId = String((project as { user_id?: string }).user_id || '')
+      const profile = ownerId
+        ? await getOrCreateProducerProfile(ownerId).catch(() => null)
+        : null
+      const brandProfile = toBrandProfileSnapshot(profile, 'Studio Producer')
+      clientPortalMeta = {
+        clientMode: true,
+        brandProfile,
+        watermarkPreview: Boolean(
+          shareLink.watermarkPreview ?? md.clientOrder?.watermarkUntilPaid
+        ),
+        maxFeedbackRounds: Number(
+          shareLink.maxFeedbackRounds ?? md.clientOrder?.maxFeedbackRounds ?? profile?.default_max_rounds ?? 2
+        ),
+        roundsUsed: Number(shareLink.roundsUsed ?? md.clientOrder?.screeningRoundsUsed ?? 0),
+        approvalStatus:
+          shareLink.approvalStatus || md.clientOrder?.screeningApprovalStatus || 'pending_review',
+      }
+    }
 
     // Return only necessary data (no sensitive info)
     const sharedData = {
@@ -135,6 +169,7 @@ export async function GET(
       shareToken: actualShareToken, // Pass this back so the feedback API can find it
       storyboardRevision,
       audienceResonance,
+      ...(clientPortalMeta ? { clientPortal: clientPortalMeta } : {}),
     }
 
     console.log(`[Get Shared Project] Serving shared project: ${project.title} (views: ${shareLink.viewCount})`)

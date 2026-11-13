@@ -4,6 +4,10 @@ import { authOptions } from '@/lib/auth'
 import { AuthService } from '@/services/AuthService'
 import { resolveUser, resolveUserId } from '@/lib/userHelper'
 import Project from '@/models/Project'
+import {
+  checkWorkspaceProjectAccess,
+  type EffectiveProjectRole,
+} from '@/lib/producer/workspaceAccess'
 
 /**
  * Synthetic placeholder email created when a project was saved with a browser
@@ -54,7 +58,13 @@ export async function getAuthenticatedUserId(req?: NextRequest): Promise<string 
 }
 
 export type ProjectAccessResult =
-  | { ok: true; project: Project; migrated?: boolean }
+  | {
+      ok: true
+      project: Project
+      migrated?: boolean
+      accessRole?: EffectiveProjectRole
+      billingOwnerUserId?: string
+    }
   | { ok: false; status: number; error: string }
 
 /**
@@ -74,7 +84,12 @@ export async function assertProjectAccess(
   const projectOwnerId = String((project as { user_id?: string }).user_id || '')
 
   if (!projectOwnerId || projectOwnerId === ownerUserId) {
-    return { ok: true, project }
+    return {
+      ok: true,
+      project,
+      accessRole: 'owner',
+      billingOwnerUserId: projectOwnerId || ownerUserId,
+    }
   }
 
   // Legacy: project created before login sync (localStorage authUserId)
@@ -111,7 +126,20 @@ export async function assertProjectAccess(
     const sourceOwnerId = String((sourceProject as { user_id?: string } | null)?.user_id || '')
     if (sourceOwnerId && sourceOwnerId === ownerUserId) {
       await project.update({ user_id: ownerUserId })
-      return { ok: true, project, migrated: true }
+      return { ok: true, project, migrated: true, accessRole: 'owner', billingOwnerUserId: ownerUserId }
+    }
+  }
+
+  // Universal Team Access: Workspace Admin or assigned Customer Project Manager
+  if (projectOwnerId) {
+    const teamGrant = await checkWorkspaceProjectAccess(projectOwnerId, ownerUserId, projectId)
+    if (teamGrant.allowed) {
+      return {
+        ok: true,
+        project,
+        accessRole: teamGrant.role,
+        billingOwnerUserId: teamGrant.billingOwnerUserId || projectOwnerId,
+      }
     }
   }
 

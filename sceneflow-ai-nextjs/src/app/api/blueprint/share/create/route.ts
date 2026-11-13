@@ -25,6 +25,11 @@ import {
   resolveShareHeroImageUrl,
 } from '@/lib/blueprint/shareHeroImage'
 import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollabBlueprintSchema'
+import {
+  getOrCreateProducerProfile,
+  toBrandProfileSnapshot,
+  type BrandProfileSnapshot,
+} from '@/lib/producer/producerProfileService'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -39,9 +44,15 @@ function buildSharePayload(
   body: BlueprintShareCreateBody,
   ownerName: string,
   expiresAt: Date | null,
-  arSnapshot: BlueprintSessionPayload['blueprintAudienceResonance']
+  arSnapshot: BlueprintSessionPayload['blueprintAudienceResonance'],
+  brandSnapshot?: BrandProfileSnapshot | null
 ): BlueprintSessionPayload {
   const neverExpires = expiresAt == null
+  const clientMode = body.clientMode === true
+  const hideAudienceResonance =
+    typeof body.hideAudienceResonance === 'boolean'
+      ? body.hideAudienceResonance
+      : clientMode
   return {
     type: 'blueprint',
     projectId: body.projectId,
@@ -55,13 +66,26 @@ function buildSharePayload(
       collectEmail: false,
       allowFeedback: body.allowFeedback !== false,
       neverExpires,
+      ...(clientMode || hideAudienceResonance || typeof body.maxFeedbackRounds === 'number'
+        ? {
+            clientMode,
+            hideAudienceResonance,
+            maxFeedbackRounds:
+              typeof body.maxFeedbackRounds === 'number'
+                ? Math.max(0, Math.min(10, Math.round(body.maxFeedbackRounds)))
+                : undefined,
+            roundsUsed: 0,
+            approvalStatus: 'pending_review',
+            brandProfileSnapshot: brandSnapshot || null,
+          }
+        : {}),
     },
     ownerDisplayName: ownerName,
     sectionAudioStatus: isGeminiTtsConfigured() ? 'idle' : 'skipped',
     sectionAudioLanguage: DEFAULT_SHARE_AUDIO_LANGUAGE,
     sectionAudioVoiceId: DEFAULT_BLUEPRINT_GEMINI_VOICE,
     sectionAudioByLanguage: {},
-    blueprintAudienceResonance: arSnapshot ?? null,
+    blueprintAudienceResonance: hideAudienceResonance ? null : arSnapshot ?? null,
   }
 }
 
@@ -107,10 +131,12 @@ async function findActiveBlueprintSession(projectId: string, ownerUserId: string
 
 export async function POST(req: NextRequest) {
   try {
-    const authSession = await getServerSession(authOptions as any).catch(() => null)
+    const authSession = (await getServerSession(authOptions as any).catch(() => null)) as {
+      user?: { name?: string; email?: string }
+    } | null
     const ownerUserId = await getAuthenticatedUserId(req)
-    const ownerName = (authSession?.user as { name?: string })?.name || 'Owner'
-    const ownerEmail = (authSession?.user as { email?: string })?.email || null
+    const ownerName = authSession?.user?.name || 'Owner'
+    const ownerEmail = authSession?.user?.email || null
     if (!ownerUserId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
@@ -127,6 +153,9 @@ export async function POST(req: NextRequest) {
       forceNew = false,
       allowFeedback,
       neverExpires,
+      clientMode: reqClientMode,
+      hideAudienceResonance,
+      maxFeedbackRounds: reqMaxFeedbackRounds,
     } = body
 
     if (!projectId || !variantId || !treatment) {
@@ -141,6 +170,20 @@ export async function POST(req: NextRequest) {
     const access = await assertProjectAccess(projectId, ownerUserId, legacyOwnerId)
     if (!access.ok) {
       return NextResponse.json({ success: false, error: access.error }, { status: access.status })
+    }
+    const effectiveOwnerId = access.billingOwnerUserId || ownerUserId
+    const projectClientOrder = ((access.project.metadata || {}) as {
+      clientOrder?: { isClientProject?: boolean; maxFeedbackRounds?: number }
+    }).clientOrder
+    const clientMode = Boolean(reqClientMode ?? projectClientOrder?.isClientProject)
+    let brandSnapshot: BrandProfileSnapshot | null = null
+    let effectiveMaxRounds = reqMaxFeedbackRounds ?? projectClientOrder?.maxFeedbackRounds
+    if (clientMode) {
+      const profile = await getOrCreateProducerProfile(effectiveOwnerId).catch(() => null)
+      brandSnapshot = toBrandProfileSnapshot(profile, ownerName)
+      if (effectiveMaxRounds === undefined && profile) {
+        effectiveMaxRounds = profile.default_max_rounds
+      }
     }
 
     const { persisted: persistedAR } = loadBlueprintARFromMetadata(
@@ -255,10 +298,14 @@ export async function POST(req: NextRequest) {
         expiresInDays,
         allowFeedback,
         neverExpires,
+        clientMode,
+        hideAudienceResonance,
+        maxFeedbackRounds: effectiveMaxRounds,
       },
       ownerName,
       expiresAt,
-      arSnapshot
+      arSnapshot,
+      brandSnapshot
     )
 
     const t = await sequelize.transaction()
@@ -266,7 +313,7 @@ export async function POST(req: NextRequest) {
       const collabSession = await CollabSession.create(
         {
           project_id: projectId,
-          owner_user_id: ownerUserId,
+          owner_user_id: effectiveOwnerId,
           token: tokenStr,
           status: 'active',
           expires_at: expiresAt,

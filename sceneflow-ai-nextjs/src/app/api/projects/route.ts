@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Op } from 'sequelize'
 import '@/models'
 import Project from '@/models/Project'
 import User from '@/models/User'
+import WorkspaceMember from '@/models/WorkspaceMember'
+import ProjectAssignment from '@/models/ProjectAssignment'
 import { sequelize } from '@/config/database'
+import { ensureProducerPlatformSchema } from '@/lib/database/migrateProducerPlatform'
 import { SubscriptionService } from '../../../services/SubscriptionService'
 import { getAuthenticatedUserId } from '@/lib/projectAccess'
 import { resolveUserId } from '@/lib/userHelper'
@@ -35,7 +39,8 @@ const SUMMARY_METADATA_SQL = `jsonb_strip_nulls(jsonb_build_object(
   'episodeNumber', metadata->'episodeNumber',
   'billboardUrl', COALESCE(metadata->'billboardUrl', metadata->'visionPhase'->'billboardUrl'),
   'thumbnailUrl', COALESCE(metadata->'thumbnailUrl', metadata->'visionPhase'->'thumbnailUrl', metadata->'thumbnail'),
-  'posterUrl', metadata->'posterUrl'
+  'posterUrl', metadata->'posterUrl',
+  'clientOrder', metadata->'clientOrder'
 ))`
 
 const LITE_LIST_METADATA_SQL = `metadata #- '{visionPhase,production}' #- '{visionPhase,scenes}'`
@@ -123,7 +128,42 @@ export async function GET(request: NextRequest) {
 
     console.log(`[${timestamp}] [GET /api/projects] Fetching projects for userId:`, resolvedUserId)
     
-    const where: any = { user_id: resolvedUserId }
+    let where: any = { user_id: resolvedUserId }
+    try {
+      await ensureProducerPlatformSchema()
+      const memberships = await WorkspaceMember.findAll({
+        where: { member_user_id: resolvedUserId, status: 'active' },
+      })
+      if (memberships.length > 0) {
+        const orClauses: any[] = [{ user_id: resolvedUserId }]
+        const pmOwnerIds: string[] = []
+        for (const m of memberships) {
+          if (m.role === 'admin' || m.access_all_projects) {
+            orClauses.push({ user_id: m.owner_user_id })
+          } else {
+            pmOwnerIds.push(m.owner_user_id)
+          }
+        }
+        if (pmOwnerIds.length > 0) {
+          const assignments = await ProjectAssignment.findAll({
+            where: {
+              member_user_id: resolvedUserId,
+              owner_user_id: { [Op.in]: pmOwnerIds },
+            },
+          })
+          const assignedIds = Array.from(new Set(assignments.map((a) => a.project_id)))
+          if (assignedIds.length > 0) {
+            orClauses.push({ id: { [Op.in]: assignedIds } })
+          }
+        }
+        if (orClauses.length > 1) {
+          where = { [Op.or]: orClauses }
+        }
+      }
+    } catch (teamErr) {
+      console.warn(`[${timestamp}] [GET /api/projects] Workspace team lookup skipped:`, teamErr)
+    }
+
     const page = Math.max(1, Number(searchParams.get('page') || '1'))
     const pageSize = Math.min(50, Math.max(1, Number(searchParams.get('pageSize') || '20')))
     const offset = (page - 1) * pageSize

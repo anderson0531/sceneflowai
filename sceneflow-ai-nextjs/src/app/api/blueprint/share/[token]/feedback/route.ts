@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sequelize } from '@/config/database'
 import CollabBlueprintFeedback from '@/models/CollabBlueprintFeedback'
+import CollabSession from '@/models/CollabSession'
+import Project from '@/models/Project'
 import { resolveSessionByToken, getPayload } from '@/lib/blueprint/shareSession'
-import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
+import {
+  isBlueprintFeedbackAllowed,
+  isBlueprintRoundLimitReached,
+} from '@/lib/blueprint/shareSettings'
+import { evaluateCustomerTextQuarantine } from '@/lib/producer/quarantineCheck'
 import { requireOwnerForSession, validateParticipant, sessionDbId } from '@/lib/blueprint/shareAuth'
 import type { BlueprintStructuredFeedbackInput } from '@/lib/blueprint/shareTypes'
 import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollabBlueprintSchema'
@@ -71,10 +77,33 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         { status: 403 }
       )
     }
+    if (isBlueprintRoundLimitReached(payload.shareSettings)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'ROUND_LIMIT_REACHED: Included revision rounds are complete for this Blueprint.',
+        },
+        { status: 409 }
+      )
+    }
 
     const body = (await req.json()) as BlueprintStructuredFeedbackInput
     if (!body.reviewerName?.trim()) {
       return NextResponse.json({ success: false, error: 'reviewerName required' }, { status: 400 })
+    }
+
+    const combinedNotes = [
+      body.freeformNotes || '',
+      ...Object.values(body.sections || {}).map(
+        (s) => `${s?.strengths || ''} ${s?.concerns || ''} ${s?.suggestions || ''}`
+      ),
+    ].join(' ')
+    const quarantine = evaluateCustomerTextQuarantine(combinedNotes)
+    if (quarantine.status === 'flagged') {
+      return NextResponse.json(
+        { success: false, error: quarantine.reason || 'Feedback flagged by safety filter' },
+        { status: 422 }
+      )
     }
 
     const sessionId = sessionDbId(session)
@@ -101,6 +130,44 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
 
     const ownerId = (session as { owner_user_id?: string }).owner_user_id
     const projectId = (session as { project_id?: string }).project_id
+
+    if (
+      payload.shareSettings?.clientMode ||
+      typeof payload.shareSettings?.maxFeedbackRounds === 'number'
+    ) {
+      const nextRoundsUsed = Number(payload.shareSettings?.roundsUsed ?? 0) + 1
+      const updatedPayload = {
+        ...payload,
+        shareSettings: {
+          ...payload.shareSettings,
+          roundsUsed: nextRoundsUsed,
+          approvalStatus: 'changes_requested' as const,
+        },
+      }
+      await CollabSession.update(
+        { payload: updatedPayload },
+        { where: { id: sessionId } }
+      )
+      if (projectId) {
+        const proj = await Project.findByPk(projectId).catch(() => null)
+        if (proj) {
+          const md = ((proj.metadata || {}) as Record<string, unknown>)
+          const co = ((md.clientOrder || {}) as Record<string, unknown>)
+          await proj.update({
+            metadata: {
+              ...md,
+              clientOrder: {
+                ...co,
+                isClientProject: true,
+                stage: 'blueprint_feedback_received',
+                actionState: 'action_required',
+                roundsUsed: nextRoundsUsed,
+              },
+            },
+          })
+        }
+      }
+    }
     if (ownerId && projectId) {
       try {
         await notifyUser(

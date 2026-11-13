@@ -64,6 +64,11 @@ export interface VideoParameters {
   segmentDuration?: number;
   /** Total minutes of final output expected */
   totalMinutes: number;
+  /**
+   * Fraction of segments rendered as AI video vs archival/Ken Burns stills (0..1, default 1).
+   * Enables Hybrid Documentary Memoirs (e.g. 0.30 = 30% AI re-enactment clips + 70% family photos).
+   */
+  hybridVideoShare?: number;
 }
 
 export interface ImageParameters {
@@ -285,8 +290,14 @@ export function calculateDetailedProjectCost(
     },
     video: normalizeVideoParameters(params.video),
     images: {
-      keyFrames: Math.max(0, Number(params.images?.keyFrames) || 30),
-      retakesPerFrame: Math.max(0, Number(params.images?.retakesPerFrame) || 1),
+      keyFrames:
+        params.images?.keyFrames !== undefined
+          ? Math.max(0, Number(params.images.keyFrames))
+          : 30,
+      retakesPerFrame:
+        params.images?.retakesPerFrame !== undefined
+          ? Math.max(0, Number(params.images.retakesPerFrame))
+          : 1,
       finalImages: Math.max(
         0,
         Number(
@@ -378,7 +389,14 @@ export function calculateDetailedProjectCost(
   // Video costs — engine-aware (Kling per-second, Veo per-clip, aggregator per-model)
   const clipEstimate = estimateVideoClipCredits(safeParams.video);
   const totalSegments = safeParams.scenes.count * safeParams.scenes.segmentsPerScene;
-  const totalTakes = totalSegments * safeParams.scenes.takesPerSegment;
+  const rawHybridShare = params.video?.hybridVideoShare;
+  const hybridVideoShare =
+    typeof rawHybridShare === 'number' && Number.isFinite(rawHybridShare)
+      ? Math.max(0, Math.min(1, rawHybridShare))
+      : 1;
+  const activeVideoSegments =
+    hybridVideoShare >= 1 ? totalSegments : Math.round(totalSegments * hybridVideoShare);
+  const totalTakes = activeVideoSegments * safeParams.scenes.takesPerSegment;
   const videoCreditsRaw = totalTakes * clipEstimate.creditsEach;
 
   const billedVideoCredits = byokExcludeMedia ? byokMediaCredits(videoCreditsRaw) : videoCreditsRaw
@@ -1061,5 +1079,318 @@ export function mergeProjectParameters(
       ...DEFAULT_PROJECT_PARAMS.upscale,
       ...(initial?.upscale || {}),
     },
+  };
+}
+
+// =============================================================================
+// B2B2C SERVICE PROVIDER PRESETS & CLIENT MARGIN CALCULATOR
+// =============================================================================
+
+export type ServiceVerticalPresetId =
+  | 'hybrid_memoir_15m'
+  | 'hybrid_memoir_10m'
+  | 'real_estate_tour_90s'
+  | 'education_module_5m'
+  | 'brand_story_2m';
+
+export interface ServiceVerticalPresetSpec {
+  id: ServiceVerticalPresetId;
+  suggestedRetailUsd: number;
+  defaultRevisionRounds: number;
+  hybridVideoShare: number;
+  params: FullProjectParameters;
+}
+
+export const SERVICE_PROVIDER_PRESETS: Record<
+  ServiceVerticalPresetId,
+  ServiceVerticalPresetSpec
+> = {
+  hybrid_memoir_15m: {
+    id: 'hybrid_memoir_15m',
+    suggestedRetailUsd: 300,
+    defaultRevisionRounds: 2,
+    hybridVideoShare: 0.25,
+    params: {
+      scenes: { count: 10, segmentsPerScene: 6, takesPerSegment: 1 },
+      video: {
+        engine: 'lowest-cost',
+        segmentDuration: 5,
+        totalMinutes: 15,
+        hybridVideoShare: 0.25,
+      },
+      images: {
+        keyFrames: 18,
+        retakesPerFrame: 0,
+        finalImages: 6,
+        characterHeadshots: 3,
+        model: 'imagen4',
+      },
+      intelligence: {
+        audienceResonanceAnalyses: 1,
+        blueprintOptimizations: 1,
+        blueprintRefines: 2,
+      },
+      audio: {
+        totalMinutes: 14,
+        dialogueLines: 0,
+        soundEffects: 6,
+        musicTracks: 2,
+      },
+      voice: {
+        voiceClones: 0,
+        voiceMinutes: 0,
+      },
+      storage: {
+        expectedStorageGB: 8,
+        activeMonths: 1,
+      },
+      upscale: {
+        upscaleMinutes: 0,
+        useInstant: false,
+      },
+    },
+  },
+  hybrid_memoir_10m: {
+    id: 'hybrid_memoir_10m',
+    suggestedRetailUsd: 249,
+    defaultRevisionRounds: 2,
+    hybridVideoShare: 0.25,
+    params: {
+      scenes: { count: 8, segmentsPerScene: 5, takesPerSegment: 1 },
+      video: {
+        engine: 'lowest-cost',
+        segmentDuration: 5,
+        totalMinutes: 10,
+        hybridVideoShare: 0.25,
+      },
+      images: {
+        keyFrames: 12,
+        retakesPerFrame: 0,
+        finalImages: 4,
+        characterHeadshots: 2,
+        model: 'imagen4',
+      },
+      intelligence: {
+        audienceResonanceAnalyses: 1,
+        blueprintOptimizations: 1,
+        blueprintRefines: 2,
+      },
+      audio: {
+        totalMinutes: 10,
+        dialogueLines: 0,
+        soundEffects: 4,
+        musicTracks: 2,
+      },
+      voice: {
+        voiceClones: 0,
+        voiceMinutes: 0,
+      },
+      storage: {
+        expectedStorageGB: 6,
+        activeMonths: 1,
+      },
+      upscale: {
+        upscaleMinutes: 0,
+        useInstant: false,
+      },
+    },
+  },
+  real_estate_tour_90s: {
+    id: 'real_estate_tour_90s',
+    suggestedRetailUsd: 199,
+    defaultRevisionRounds: 1,
+    hybridVideoShare: 0.5,
+    params: {
+      scenes: { count: 6, segmentsPerScene: 2, takesPerSegment: 1 },
+      video: {
+        engine: SCENEFLOW_ENGINE_ID,
+        qualityTier: 'standard',
+        segmentDuration: 8,
+        totalMinutes: 1.5,
+        hybridVideoShare: 0.5,
+      },
+      images: {
+        keyFrames: 12,
+        retakesPerFrame: 0,
+        finalImages: 6,
+        characterHeadshots: 1,
+        model: 'imagen4',
+      },
+      intelligence: {
+        audienceResonanceAnalyses: 1,
+        blueprintOptimizations: 1,
+        blueprintRefines: 1,
+      },
+      audio: {
+        totalMinutes: 1.5,
+        dialogueLines: 10,
+        soundEffects: 4,
+        musicTracks: 1,
+      },
+      voice: {
+        voiceClones: 0,
+        voiceMinutes: 1.5,
+      },
+      storage: {
+        expectedStorageGB: 5,
+        activeMonths: 1,
+      },
+      upscale: {
+        upscaleMinutes: 0,
+        useInstant: false,
+      },
+    },
+  },
+  education_module_5m: {
+    id: 'education_module_5m',
+    suggestedRetailUsd: 399,
+    defaultRevisionRounds: 2,
+    hybridVideoShare: 0.35,
+    params: {
+      scenes: { count: 8, segmentsPerScene: 5, takesPerSegment: 1 },
+      video: {
+        engine: 'fast-economical',
+        segmentDuration: 8,
+        totalMinutes: 5,
+        hybridVideoShare: 0.35,
+      },
+      images: {
+        keyFrames: 24,
+        retakesPerFrame: 0,
+        finalImages: 8,
+        characterHeadshots: 2,
+        model: 'imagen4',
+      },
+      intelligence: {
+        audienceResonanceAnalyses: 1,
+        blueprintOptimizations: 1,
+        blueprintRefines: 2,
+      },
+      audio: {
+        totalMinutes: 5,
+        dialogueLines: 30,
+        soundEffects: 6,
+        musicTracks: 1,
+      },
+      voice: {
+        voiceClones: 0,
+        voiceMinutes: 5,
+      },
+      storage: {
+        expectedStorageGB: 5,
+        activeMonths: 1,
+      },
+      upscale: {
+        upscaleMinutes: 0,
+        useInstant: false,
+      },
+    },
+  },
+  brand_story_2m: {
+    id: 'brand_story_2m',
+    suggestedRetailUsd: 450,
+    defaultRevisionRounds: 2,
+    hybridVideoShare: 0.6,
+    params: {
+      scenes: { count: 5, segmentsPerScene: 3, takesPerSegment: 1 },
+      video: {
+        engine: SCENEFLOW_ENGINE_ID,
+        qualityTier: 'cinematic',
+        segmentDuration: 8,
+        totalMinutes: 2,
+        hybridVideoShare: 0.6,
+      },
+      images: {
+        keyFrames: 15,
+        retakesPerFrame: 1,
+        finalImages: 5,
+        characterHeadshots: 2,
+        model: 'imagen4',
+      },
+      intelligence: {
+        audienceResonanceAnalyses: 1,
+        blueprintOptimizations: 1,
+        blueprintRefines: 2,
+      },
+      audio: {
+        totalMinutes: 2,
+        dialogueLines: 16,
+        soundEffects: 8,
+        musicTracks: 1,
+      },
+      voice: {
+        voiceClones: 0,
+        voiceMinutes: 2,
+      },
+      storage: {
+        expectedStorageGB: 5,
+        activeMonths: 1,
+      },
+      upscale: {
+        upscaleMinutes: 0,
+        useInstant: false,
+      },
+    },
+  },
+};
+
+export interface ClientQuoteMarginAnalysis {
+  baseProjectCredits: number;
+  intakeAndFeedbackCredits: number;
+  revisionBufferCredits: number;
+  recommendedCreditCeiling: number;
+  sceneFlowCogsUsd: number;
+  clientPriceUsd: number;
+  providerGrossProfitUsd: number;
+  providerGrossMarginPercent: number;
+  suggestedRetailFloorUsd: number;
+  healthyMargin: boolean;
+}
+
+/**
+ * Calculates Provider unit economics, recommended per-project credit ceiling,
+ * and net profit margin for a Customer order.
+ */
+export function calculateClientQuoteMargin(input: {
+  baseProjectCredits: number;
+  clientPriceUsd: number;
+  includedRevisionRounds?: number;
+  perExtraRoundBufferRatio?: number;
+}): ClientQuoteMarginAnalysis {
+  const baseProjectCredits = Math.max(0, Math.round(Number(input.baseProjectCredits) || 0));
+  const clientPriceUsd = Math.max(0, Number(input.clientPriceUsd) || 0);
+  const rounds = Math.max(0, Math.min(10, Math.round(input.includedRevisionRounds ?? 2)));
+  const ratio =
+    typeof input.perExtraRoundBufferRatio === 'number'
+      ? Math.max(0, Math.min(0.5, input.perExtraRoundBufferRatio))
+      : 0.08;
+
+  // Onboarding AI interview (~20 cr) + synthesis passes (~15 cr/round)
+  const intakeAndFeedbackCredits = 20 + rounds * 15;
+  const revisionBufferCredits = Math.round(baseProjectCredits * (rounds * ratio));
+  const recommendedCreditCeiling =
+    baseProjectCredits + intakeAndFeedbackCredits + revisionBufferCredits;
+  const sceneFlowCogsUsd = Number(
+    (recommendedCreditCeiling / CREDIT_EXCHANGE_RATE).toFixed(2)
+  );
+  const providerGrossProfitUsd = Number((clientPriceUsd - sceneFlowCogsUsd).toFixed(2));
+  const providerGrossMarginPercent =
+    clientPriceUsd > 0
+      ? Number(((providerGrossProfitUsd / clientPriceUsd) * 100).toFixed(1))
+      : 0;
+  // Price required to achieve a 65% gross margin
+  const suggestedRetailFloorUsd = Math.ceil(sceneFlowCogsUsd / 0.35);
+
+  return {
+    baseProjectCredits,
+    intakeAndFeedbackCredits,
+    revisionBufferCredits,
+    recommendedCreditCeiling,
+    sceneFlowCogsUsd,
+    clientPriceUsd,
+    providerGrossProfitUsd,
+    providerGrossMarginPercent,
+    suggestedRetailFloorUsd,
+    healthyMargin: providerGrossMarginPercent >= 50 && providerGrossProfitUsd > 0,
   };
 }

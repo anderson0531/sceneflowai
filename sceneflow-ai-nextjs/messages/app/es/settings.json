@@ -15,7 +15,9 @@
     "billingDescription": "Gestiona tu suscripción y facturación",
     "notificationsDescription": "Preferencias de notificación por correo electrónico",
     "dataDescription": "Exportación de datos y controles de privacidad",
-    "adminDescription": "Funciones y controles del administrador"
+    "adminDescription": "Funciones y controles del administrador",
+    "producer": "Productor y Equipo",
+    "producerDescription": "Enlaces de admisión de clientes, marca blanca y acceso de equipo"
   },
   "profile": {
     "title": "Información del perfil",

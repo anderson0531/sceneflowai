@@ -23,7 +23,9 @@
     "byok": "Definições BYOK",
     "storage": "Armazenamento",
     "admin": "Admin",
-    "adminDescription": "Funções e controlos administrativos"
+    "adminDescription": "Funções e controlos administrativos",
+    "producer": "Produtor e Equipa",
+    "producerDescription": "Links de admissão de clientes, marca branca e acesso de equipa"
   },
   "profile": {
     "title": "Informações do perfil",

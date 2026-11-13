@@ -23,7 +23,9 @@
     "byok": "BYOK设置",
     "storage": "收纳",
     "admin": "管理员",
-    "adminDescription": "管理功能和控制"
+    "adminDescription": "管理功能和控制",
+    "producer": "制片人与团队",
+    "producerDescription": "客户访谈链接、白标品牌设置与团队权限"
   },
   "profile": {
     "title": "个人资料",

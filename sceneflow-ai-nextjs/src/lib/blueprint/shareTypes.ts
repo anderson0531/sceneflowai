@@ -1,6 +1,7 @@
 import type { AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import type { SharedBlueprintARSnapshot } from './sanitizeShareAR'
+import type { BrandProfileSnapshot } from '@/lib/producer/producerProfileService'
 
 export type BlueprintSectionAudioEntry = {
   url: string
@@ -44,6 +45,11 @@ export type BlueprintFeedbackSections = Partial<
   Record<BlueprintFixSection, BlueprintFeedbackSection>
 >
 
+export type BlueprintApprovalStatus =
+  | 'pending_review'
+  | 'changes_requested'
+  | 'approved'
+
 export type BlueprintShareSettings = {
   expiresAt?: string
   allowTts?: boolean
@@ -52,6 +58,18 @@ export type BlueprintShareSettings = {
   allowFeedback?: boolean
   /** When true, CollabSession.expires_at stays null. */
   neverExpires?: boolean
+  /** Service Provider client-mode review settings. */
+  clientMode?: boolean
+  /** Strips Audience Resonance from client share view (Producer-only control). */
+  hideAudienceResonance?: boolean
+  /** Maximum customer revision rounds allowed on this link. */
+  maxFeedbackRounds?: number
+  /** Customer revision rounds consumed so far. */
+  roundsUsed?: number
+  approvalStatus?: BlueprintApprovalStatus
+  approvedByName?: string
+  approvedAt?: string
+  brandProfileSnapshot?: BrandProfileSnapshot | null
 }
 
 export type BlueprintSessionPayload = {
@@ -98,6 +116,9 @@ export type BlueprintShareCreateBody = {
   legacyOwnerId?: string
   allowFeedback?: boolean
   neverExpires?: boolean
+  clientMode?: boolean
+  hideAudienceResonance?: boolean
+  maxFeedbackRounds?: number
 }
 
 export type BlueprintStructuredFeedbackInput = {

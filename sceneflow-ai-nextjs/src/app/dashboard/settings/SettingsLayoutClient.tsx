@@ -13,6 +13,7 @@ import {
   Bell,
   Database,
   Zap,
+  Briefcase,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { isAdminEmail } from '@/lib/adminUtils'
@@ -21,6 +22,7 @@ import { ProductPageShell, ProductPageHeader } from '@/components/product'
 /** Labels come from the catalog; only structure lives here. */
 const baseSettingsNavItems = [
   { key: 'profile', href: '/dashboard/settings/profile', icon: Users },
+  { key: 'producer', href: '/dashboard/settings/producer', icon: Briefcase },
   { key: 'integrations', href: '/dashboard/settings/integrations', icon: Zap },
   { key: 'security', href: '/dashboard/settings/security', icon: Shield },
   { key: 'billing', href: '/dashboard/settings/billing', icon: CreditCard },

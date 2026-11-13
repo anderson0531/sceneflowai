@@ -34,6 +34,11 @@ import Notification from './Notification'
 import PushSubscription from './PushSubscription'
 import ReferenceAsset from './ReferenceAsset'
 import ReferenceAssetLink from './ReferenceAssetLink'
+import ProducerProfile from './ProducerProfile'
+import CustomerConsent from './CustomerConsent'
+import ClientAssetSubmission from './ClientAssetSubmission'
+import WorkspaceMember from './WorkspaceMember'
+import ProjectAssignment from './ProjectAssignment'
 
 // Define model associations
 User.hasMany(Project, {
@@ -231,6 +236,11 @@ export {
   PushSubscription,
   ReferenceAsset,
   ReferenceAssetLink,
+  ProducerProfile,
+  CustomerConsent,
+  ClientAssetSubmission,
+  WorkspaceMember,
+  ProjectAssignment,
 }
 
 // Export default for convenience
@@ -271,4 +281,9 @@ export default {
   PushSubscription,
   ReferenceAsset,
   ReferenceAssetLink,
+  ProducerProfile,
+  CustomerConsent,
+  ClientAssetSubmission,
+  WorkspaceMember,
+  ProjectAssignment,
 }

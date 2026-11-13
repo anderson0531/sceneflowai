@@ -40,7 +40,13 @@ export function isAppSurfacePath(pathname: string | null | undefined): boolean {
  * The marketing locale cookie must not rewrite `<html lang>` here, or Google
  * Translate treats the page as already translated.
  */
-export const ENGLISH_UNTIL_TRANSLATE_PREFIXES = ['/share', '/blueprint/share', '/s/series'] as const
+export const ENGLISH_UNTIL_TRANSLATE_PREFIXES = [
+  '/share',
+  '/blueprint/share',
+  '/s/series',
+  '/intake',
+  '/embed/intake',
+] as const
 
 export function keepsEnglishUntilTranslate(pathname: string | null | undefined): boolean {
   if (!pathname) return false

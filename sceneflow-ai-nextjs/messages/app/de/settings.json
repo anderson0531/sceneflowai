@@ -23,7 +23,9 @@
     "byok": "BYOK-Einstellungen",
     "storage": "Storage",
     "admin": "Admin",
-    "adminDescription": "Admin-Funktionen und Steuerelemente"
+    "adminDescription": "Admin-Funktionen und Steuerelemente",
+    "producer": "Produzent & Team",
+    "producerDescription": "Kunden-Onboarding-Links, White-Label-Branding und Teamzugriff"
   },
   "profile": {
     "title": "Stammdaten",

@@ -74,7 +74,16 @@ export default function TermsOfServicePage() {
               <li>Create spam, phishing content, or malware</li>
               <li>Circumvent usage limits or abuse the credit system</li>
               <li>Reverse engineer or attempt to extract AI models or source code</li>
-              <li>Resell or redistribute the Service without authorization</li>
+              <li>Resell or redistribute raw access to the Service, user accounts, or API endpoints without authorization (authorized commercial production services are governed by Section 5.1 below)</li>
+            </ul>
+            <h3 className="text-xl font-medium text-white mb-3 mt-6">5.1 Commercial Production Services &amp; Zero End-Customer Privity</h3>
+            <p className="text-gray-300 leading-relaxed mb-4">
+              Paid subscribers who accept the SceneFlow Commercial Producer Addendum (&quot;Commercial Producers&quot;) are authorized to use the Service to create, iterate, and deliver custom audio-visual works (including video memoirs, real estate tours, educational modules, and brand videos) for their own paying clients (&quot;End Customers&quot;). If you act as a Commercial Producer, you acknowledge and agree that:
+            </p>
+            <ul className="list-disc pl-6 text-gray-300 space-y-2">
+              <li><strong>No Contractual Privity with End Customers:</strong> {LEGAL_COMPANY_NAME} provides underlying software infrastructure exclusively to you. {LEGAL_COMPANY_NAME} is not a party to any agreement between you and your End Customers and assumes no responsibility for your pricing, delivery deadlines, service-level commitments, refunds, or customer support.</li>
+              <li><strong>End-Customer Rights, Estates &amp; Consents:</strong> Before uploading or inviting End Customers to submit photographs, biographical facts, minors&apos; family images, property imagery, or voice recordings through any client intake or collaboration link, you must obtain (and ensure your End Customers hold) all required copyright permissions, privacy consents, right-of-publicity releases, and—for memorial or biographical works—authorized family or estate permissions.</li>
+              <li><strong>Voice Consent Compliance:</strong> All custom voice clones remain strictly subject to live Voice Captcha verification under Section 9. Unverified voice cloning of deceased or non-consenting individuals is strictly prohibited.</li>
             </ul>
           </section>
 
@@ -186,7 +195,7 @@ export default function TermsOfServicePage() {
             </p>
             <h3 className="text-xl font-medium text-white mb-3">12.2 User Responsibility, Representations &amp; Indemnification</h3>
             <p className="text-gray-300 leading-relaxed">
-              YOU ARE SOLELY RESPONSIBLE FOR ALL CONTENT YOU GENERATE, EXPORT, PUBLISH, OR DISTRIBUTE USING THE SERVICE, <strong>INCLUDING ANY SUBSEQUENT MODIFICATIONS, EDITS, OR ALTERATIONS YOU OR THIRD PARTIES MAKE AFTER EXPORT.</strong> You agree to indemnify, defend, and hold harmless {LEGAL_COMPANY_NAME}, its officers, directors, employees, and {WHOP_MOR_NAME}, our Merchant of Record, from any claims, damages, losses, or legal actions arising from your content or its use, including defamation, copyright infringement, privacy violations, fraud, impersonation, and misrepresentation of the synthetic nature of media. <strong>You represent that you will not represent edited or composite content as unaltered Service output without clear disclosure to recipients.</strong> Provenance records and audit logs, where available, reflect Service-delivered state only. This indemnification is a material condition of your use of the Service.
+              YOU ARE SOLELY RESPONSIBLE FOR ALL CONTENT YOU GENERATE, EXPORT, PUBLISH, SELL, OR DISTRIBUTE USING THE SERVICE, <strong>INCLUDING CONTENT PRODUCED FOR END CUSTOMERS AND ANY SUBSEQUENT MODIFICATIONS, EDITS, OR ALTERATIONS YOU OR THIRD PARTIES MAKE AFTER EXPORT.</strong> You agree to indemnify, defend, and hold harmless {LEGAL_COMPANY_NAME}, its officers, directors, employees, and {WHOP_MOR_NAME}, our Merchant of Record, from any claims, damages, losses, regulatory penalties, or legal actions arising from (a) your content or its use, including defamation, copyright or trademark infringement, privacy violations, biometric or voice-cloning claims, post-mortem or estate right-of-publicity claims, fraud, impersonation, and misrepresentation of the synthetic nature of media, or (b) any commercial production services, client intake portals, billing disputes, or deliverables provided by you or your team members to End Customers. <strong>You represent that you will not represent edited or composite content as unaltered Service output without clear disclosure to recipients.</strong> Provenance records and audit logs, where available, reflect Service-delivered state only. This indemnification is a material condition of your use of the Service.
             </p>
           </section>
 

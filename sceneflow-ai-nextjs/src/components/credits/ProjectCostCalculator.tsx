@@ -65,6 +65,7 @@ import {
   type VideoEngineId,
   type SceneFlowQualityTierId,
 } from '@/lib/credits/videoEnginePricing'
+import { ClientQuoteMarginPanel } from './ClientQuoteMarginPanel'
 
 // =============================================================================
 // TYPES
@@ -1182,6 +1183,26 @@ export function ProjectCostCalculator({
               </div>
             )}
           </div>
+
+          <ClientQuoteMarginPanel
+            baseProjectCredits={breakdown.total.credits}
+            hybridVideoShare={params.video.hybridVideoShare ?? 1}
+            onApplyPresetParams={(nextParams, presetId) => {
+              setProductionType('full_video')
+              setParams(nextParams)
+              setActivePreset(presetId)
+            }}
+            onChangeHybridVideoShare={(share) => updateParam('video', 'hybridVideoShare', share)}
+            onApplyCreditCeiling={
+              onSetBudget
+                ? (ceilingCredits, clientOrderMeta) =>
+                    onSetBudget(ceilingCredits, {
+                      ...buildCreditsBudgetParams(normalizedVideo, { byokExcludeMedia }),
+                      ...clientOrderMeta,
+                    })
+                : undefined
+            }
+          />
 
           {/* Cost Breakdown - Collapsible */}
           <details className="group">
