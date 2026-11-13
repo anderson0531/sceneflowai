@@ -146,7 +146,7 @@ export function VideoServicesSpotlightSection() {
                 <div className="mt-5 grid grid-cols-1 gap-3 border-t border-slate-800 pt-4 sm:grid-cols-2">
                   <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3.5">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                      Who Buys Repeatedly
+                      {copy.whoBuysLabel}
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-gray-200">
                       {activeVertical.clientBuyer}
@@ -154,7 +154,7 @@ export function VideoServicesSpotlightSection() {
                   </div>
                   <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/25 p-3.5">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
-                      SceneFlow Margin Advantage
+                      {copy.marginAdvantageLabel}
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-emerald-100/90">
                       {activeVertical.keyAdvantage}
@@ -233,13 +233,17 @@ export function VideoServicesSpotlightSection() {
               <div className="mt-5 rounded-2xl border border-emerald-400/35 bg-emerald-950/40 p-4 sm:p-5">
                 <div className="flex items-baseline justify-between gap-2 text-xs text-gray-300">
                   <span>{copy.monthlyGrossLabel}</span>
-                  <span className="font-semibold text-white">{formatUsd(monthlyGross)} / mo</span>
+                  <span className="font-semibold text-white">
+                    {formatUsd(monthlyGross)} {copy.perMonthSuffix}
+                  </span>
                 </div>
                 <div className="mt-3 border-t border-emerald-500/20 pt-3">
                   <p className="text-xs font-medium text-emerald-200">{copy.monthlyNetLabel}</p>
                   <p className="mt-1 text-3xl font-extrabold tracking-tight text-emerald-300 sm:text-4xl">
                     {formatUsd(monthlyNet)}
-                    <span className="ms-1.5 text-sm font-semibold text-emerald-200/80">/ mo</span>
+                    <span className="ms-1.5 text-sm font-semibold text-emerald-200/80">
+                      {copy.perMonthSuffix}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -273,7 +277,7 @@ export function VideoServicesSpotlightSection() {
                 className="rounded-xl border border-slate-800/90 bg-slate-950/70 p-4"
               >
                 <span className="inline-block rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-300">
-                  Step {ws.step}
+                  {copy.stepPrefix} {ws.step}
                 </span>
                 <p className="mt-2 text-sm font-bold text-white">{ws.title}</p>
                 <p className="mt-1 text-xs leading-relaxed text-gray-300">{ws.detail}</p>

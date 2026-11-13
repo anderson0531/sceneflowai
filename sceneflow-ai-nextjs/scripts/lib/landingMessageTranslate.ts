@@ -168,6 +168,10 @@ const STRUCTURAL_LEAVES = new Set([
   'number',
   'ratio',
   'flag',
+  'targetAnchor',
+  'videoClipKey',
+  'stepNumber',
+  'step',
 ])
 
 export function shouldSkipTranslation(path: string, value: string): boolean {
@@ -565,6 +569,7 @@ export async function translateFlatMessages(
 export const LANDING_NAMESPACES = [
   'nav',
   'imaginePossibilities',
+  'studioLanding',
   'hero',
   'twoModes',
   'directControl',
@@ -591,6 +596,7 @@ export const LANDING_NAMESPACES = [
 export const PRIORITY_LANDING_NAMESPACES = [
   'nav',
   'imaginePossibilities',
+  'studioLanding',
   'hero',
   'twoModes',
   'directControl',

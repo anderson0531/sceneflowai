@@ -2474,77 +2474,77 @@
         },
         "animation": {
           "showTitle": "The Silt Line",
-          "format": "Stylized 3D Animated Series · Episode 1 Pilot (3 Story Beats)",
+          "format": "مسلسل رسوم متحركة ثلاثي الأبعاد منمّق · الحلقة التجريبية 1 (3 نبضات قصصية)",
           "genre": "إثارة بحرية سيبرانية بطابع مستقبلي كلاسيكي",
-          "artStyle": "Tactile Stylized 3D Animation · Industrial Dieselpunk Maritime Grit & Bioluminescent Cybernetic Accents",
-          "duration": "32 min Pilot (3 Story Beats: 10.5m · 11.5m · 10m)",
-          "continuityLock": "5 Locked 3D Character Sheets · Port Marrow North Quay Workshop & Pier 14 Auction Barge · Optical Monocle Telemetry VFX",
+          "artStyle": "تحريك ثلاثي الأبعاد تفاعلي الملمس · طابع بحري صناعي ديزل-بانك ولمسات سيبرانية مضيئة حيوياً",
+          "duration": "حلقة تجريبية 32 دقيقة (3 نبضات قصصية: 10.5 د · 11.5 د · 10 د)",
+          "continuityLock": "5 بطاقات شخصيات ثلاثية الأبعاد مقفلة · ورشة نورث كواي وصندل مزاد الرصيف 14 · مؤثرات عدسة القياس البصري",
           "unitLabel": "نبضات القصة (3)",
-          "artLock": "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
+          "artLock": "تحريك ثلاثي الأبعاد غني الملمس يمزج خشونة الموانئ الصناعية بطابع الديزل-بانك مع لمسات سيبرانية مضيئة حيوياً. تُبرز الخامات البصرية الحديد الزهر المتآكل بالملح والمخططات المعمارية المبللة والصوف المشبع بالشحم والصمامات الكهرمانية المتوهجة، بينما تتجلى لحظات الاستنتاج في خطوط ضغط هولوغرافية متكسرة تشوّه رؤية Juniper بانحرافات لونية مشبعة.",
           "setting": "بورت مارو (Port Marrow): حاضرة ساحلية ذات طابع مستقبلي كلاسيكي تمزج عمارة الموانئ النحاسية في عشرينيات القرن الماضي مع تقنيات سيبرانية ملونة ومدّ وجزر آلي وأرصفة نيون مكلسة بالملح.",
-          "visualStyle": "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
+          "visualStyle": "تحريك ثلاثي الأبعاد غني الملمس يمزج خشونة الموانئ الصناعية بطابع الديزل-بانك مع لمسات سيبرانية مضيئة حيوياً. تُبرز الخامات البصرية الحديد الزهر المتآكل بالملح والمخططات المعمارية المبللة والصوف المشبع بالشحم والصمامات الكهرمانية المتوهجة، بينما تتجلى لحظات الاستنتاج في خطوط ضغط هولوغرافية متكسرة تشوّه رؤية Juniper بانحرافات لونية مشبعة.",
           "logline": "عندما يدبّر عضو مجلس بلدي جشع عطلاً متعمداً في بوابات الفيضان الآلية للاستحواذ على سندات التعافي ومصادرة تعاونية عمال الواجهة البحرية في بورت مارو، تتسلل تقنية شابة مرهقة حسياً وشريكها مهندس الصوت إلى مزاد عائم لاستعادة الصندوق الأسود لوالدتها المفقودة قبل غرق الحي.",
           "seriesSynopsis": "في مدينة بورت مارو الساحلية، تواجه فنية التشخيص جونيبر فينش (23 عاماً) ومهندس الصوت توبياس وو (24 عاماً) خطر تدمير ورشة الرصيف الشمالي التعاونية على يد عضو المجلس أورفيل كرين الذي صمم انهياراً متعمداً لحواجز المدّ الآلية. باستخدام عدستها الأحادية المعززة، تحدد جونيبر بارجة المزاد عند الرصيف 14 لاستعادة سجل والدتها إليانور المشفر، وبمساعدة تضحية المفتش برام هالواي وموجة توبياس الصوتية ينجحان في الفرار وسط العاصفة لكشف المؤامرة.",
           "cast": [
             {
               "name": "Juniper Finch",
-              "role": "Lead Diagnostic Technician · North Quay Collective",
-              "descriptor": "23-year-old lead diagnostic technician at the North Quay worker-owned workshop. Razor-sharp, hyper-focused, and hardened by years of municipal neglect, she navigates the world through an augmented optical monocle that visualizes mechanical telemetry and institutional deception, though over-extension triggers paralyzing sensory overload.",
+              "role": "كبيرة فنيي التشخيص · تعاونية نورث كواي",
+              "descriptor": "كبيرة فنيي التشخيص البالغة 23 عاماً في ورشة عمال نورث كواي التعاونية. حادة الذكاء شديدة التركيز وصلبة بفعل سنوات الإهمال البلدي، تقرأ العالم عبر عدسة أحادية معززة تكشف القياسات الميكانيكية والخداع المؤسسي رغم ما تسببه من إرهاق حسي شالّ.",
               "imageUrl": "/images/cast/silt-line/juniper-finch.webp"
             },
             {
               "name": "Tobias Wu",
-              "role": "Acoustic Telemetry Specialist · Co-Op Sound Engineer",
-              "descriptor": "24-year-old acoustic telemetry specialist and co-op sound-technician facing housing displacement alongside his collective. Grounded, patient, and tactically decisive, he uses acoustic resonance instrumentation not only for mechanical diagnostics but as a vital neuro-acoustic anchor to pull Juniper out of cognitive feedback loops.",
+              "role": "أخصائي القياس الصوتي · مهندس صوت التعاونيّة",
+              "descriptor": "أخصائي قياس صوتي ومهندس صوت يبلغ 24 عاماً يواجه خطر التهجير مع تعاونيته. هادئ، صبور وحاسم تكتيكياً، يستخدم أجهزة الرنين الصوتي للتشخيص الميكانيكي وكمرتكز عصبي-صوتي حيوي لإخراج Juniper من دوامات الإجهاد الإدراكي.",
               "imageUrl": "/images/cast/silt-line/tobias-wu.webp"
             },
             {
               "name": "Orville Crane",
-              "role": "Municipal Councilor & Infrastructure Developer",
-              "descriptor": "Civic industrialist, municipal council member, and private infrastructure developer who orchestrates 'natural' disasters to clear real estate and extract recovery capital. Smooth, pragmatically ruthless, and impeccably tailored, he views the working-class waterfront as fiscal deadweight that must be cleansed by the sea to build high-yield luxury enclaves.",
+              "role": "عضو المجلس البلدي ومطوّر البنية التحتية",
+              "descriptor": "صناعي وعضو مجلس بلدي ومطوّر عقاري خاص يدبّر كوارث «طبيعية» لإخلاء الواجهة البحرية والاستحواذ على سندات الإعمار. أنيق، براغماتي بلا رحمة، يرى حي العمال عبئاً مالياً يجب أن يغسله البحر لبناء مجمعات فاخرة.",
               "imageUrl": "/images/cast/silt-line/orville-crane.webp"
             },
             {
               "name": "John Anderson",
-              "role": "Chief Maritime Inspector",
-              "descriptor": "Weathered chief maritime inspector whose silence was purchased a decade ago during Eleanor Finch's disappearance. Bound by bureaucratic weariness, pensions, and survivalist cynicism, he maintains Crane's perimeter until commanded to participate in outright murder and cultural arson.",
+              "role": "كبير مفتشي الملاحة البحرية",
+              "descriptor": "كبير مفتشين بحريين مخضرم اشترى الصمت قبل عقد من الزمن إبان اختفاء Eleanor Finch. مكبّل بالإرهاق البيروقراطي ومعاش التقاعد، يحرس محيط Crane إلى أن يُؤمر بالمشاركة في القتل المباشر وإحراق الأرشيف.",
               "imageUrl": "/images/cast/silt-line/john-anderson.webp"
             },
             {
               "name": "Inspector Bram Halloway",
-              "role": "Harbor District Investigator · Undercover Mentor",
-              "descriptor": "A seasoned, honest Harbor District investigator caught between rigid precinct bureaucracy and his obligation to protect the city's waterfront communities. Respecting Juniper's sharp mind and fond memories of her mother, he serves as an undercover mentor who feeds the kids discreet tips while running interference with municipal security.",
+              "role": "محقق منطقة الميناء · مرشد متخفٍّ",
+              "descriptor": "محقق مخضرم ونزيه في منطقة الميناء عالق بين بيروقراطية الشرطة الصارمة وواجبه في حماية مجتمعات الواجهة البحرية. يحترم ذكاء Juniper وذكرى والدتها، فيزود الشابين بمعلومات سرية ويعرقل تحركات أمن البلدية.",
               "imageUrl": "/images/cast/silt-line/inspector-bram-halloway.webp"
             }
           ],
           "episode1Synopsis": {
-            "episodeLabel": "Production Synopsis · 3-Beat Animated Pilot (32 min)",
-            "title": "The Silt Line — North Quay & Pier 14",
-            "duration": "32 min (3 Story Beats: 10.5 min · 11.5 min · 10 min)",
-            "logline": "When a predatory municipal councilor stages an automated floodgate failure to collect recovery bonds and seize Port Marrow's worker-owned waterfront collective, a sensory-strained 23-year-old technician and her sound-engineer partner infiltrate an offshore auction to secure her missing mother's black-box telemetry before their district is submerged.",
-            "synopsis": "In the retro-futuristic coastal city of Port Marrow, 23-year-old diagnostic technician Juniper Finch and co-op sound engineer Tobias Wu (24) face the imminent destruction of the North Quay Municipal Workshop—a worker-owned collective supporting displaced maritime laborers. The threat comes via Councilman Orville Crane, who has engineered a deliberate failure of the automated tidal surge barriers, framing it as an 'unavoidable climate event' to default lower-quay parcels, collect billions in municipal recovery bonds, and rezone the submerged district under private 'green renewal' charters. Utilizing her augmented deductive monocle despite the blinding cognitive migraines it inflicts, Juniper decodes municipal telemetry embedded in the eviction writ, pinpointing Crane's offshore auction barge at Pier 14 where the decommissioned floodgate controls and her vanished mother Eleanor's encrypted black-box ledger are being sold off. Disguised in dockers' oilskins, Juniper and Tobias infiltrate the barge's iron catwalks. In the lower hold, Chief Inspector Bram Halloway reaches his breaking point when Crane hands him an incendiary flare and orders him to burn Eleanor's original flood baseline archives and quietly ensure the whistleblowing youths drown in the slipway. Horrified by the cost of his decade-long complicity, Halloway hesitates while Juniper taps the auction feed, suffering a sensory seizure as Eleanor's decrypted voice reveals the flood is a manufactured market play. Cornered in Crane's private gallery, Juniper rejects Crane's offer to buy her silence; Tobias sacrifices his custom acoustic hardware to blow out the panoramic windows with a sonic blast. As enforcers swarm the slipway, Halloway enacts his redemption by manually locking the hydraulic blast gates from the outside, trapping himself with Crane's guards to guarantee Juniper and Tobias escape into the storm with the ledger, ready to expose the engineered deluge.",
-            "chapter1Title": "Chapter 1 (Beat 1): Hook & Context: The Manufactured Surge",
-            "chapter1Duration": "10.5 min · Opening Story Beat",
-            "chapter1Synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability as she decodes the eviction writ telemetry."
+            "episodeLabel": "ملخص الإنتاج · حلقة تجريبية متحركة من 3 نبضات (32 دقيقة)",
+            "title": "The Silt Line — نورث كواي والرصيف 14",
+            "duration": "32 دقيقة (3 نبضات قصصية: 10.5 د · 11.5 د · 10 د)",
+            "logline": "عندما يدبّر عضو مجلس بلدي جشع عطلاً متعمداً في بوابات الفيضان الآلية لتحصيل سندات الإعمار والاستيلاء على تعاونية عمال الميناء في بورت مارو، تتسلل فنية في الثالثة والعشرين ومهندس الصوت شريكها إلى مزاد بحري لاستعادة الصندوق الأسود لوالدتها المفقودة قبل غرق حيّهما.",
+            "synopsis": "في مدينة بورت مارو الساحلية ذات الطابع المستقبلي الكلاسيكي، تواجه فنية التشخيص Juniper Finch (23 عاماً) ومهندس الصوت التعاوني Tobias Wu (24 عاماً) خطر تدمير ورشة نورث كواي العمالية. ينبع التهديد من المستشار البلدي Orville Crane الذي هندس عطلاً متعمداً في حواجز المدّ الآلية مصوّراً إياه كحدث مناخي حتمي لمصادرة أراضي الرصيف السفلي وجني المليارات من سندات الإعمار. تفكك Juniper بيانات القياس المخبأة في أمر الإخلاء عبر عدستها الاستنتاجية المعززة رغم الصداع الحاد، لتحدد موقع صندل المزاد التابع لـ Crane عند الرصيف 14 حيث يُباع الصندوق الأسود المشفّر لوالدتها المختفية Eleanor. يتسلل الشابان متنكرين بملابس عمال الميناء، ويضحي Tobias بمعداته الصوتية لتفجير النوافذ البانورامية بموجة صوتية بينما يغلق المفتش Halloway البوابات الهيدروليكية يدوياً من الخارج تكفيراً عن ذنبه ليضمن نجاتهما بالسجل المشفّر وسط العاصفة.",
+            "chapter1Title": "الفصل 1 (النبضة 1): المدخل والسياق: الفيضان المُفتعل",
+            "chapter1Duration": "10.5 دقيقة · النبضة الافتتاحية للقصة",
+            "chapter1Synopsis": "تأسيس الرهانات الاجتماعية والاقتصادية لورشة نورث كواي التعاونية، وكشف مخطط رأسمالية الكوارث الذي يقوده Crane، وإبراز هشاشة Juniper الحسية أثناء فك تشفير بيانات الإخلاء."
           },
           "episodes": [
             {
               "number": "1",
-              "title": "Hook & Context: The Manufactured Surge",
-              "duration": "10.5 min",
-              "synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability."
+              "title": "المدخل والسياق: الفيضان المُفتعل",
+              "duration": "10.5 دقيقة",
+              "synopsis": "تأسيس الرهانات الاقتصادية لورشة نورث كواي العمالية، وكشف مؤامرة Crane، وإظهار الكلفة الحسية التي تدفعها Juniper."
             },
             {
               "number": "2",
-              "title": "Infiltration & The Moral Crucible",
-              "duration": "11.5 min",
-              "synopsis": "Escalate procedural tension through forensic infiltration, introduce Halloway's moral crossroads when ordered to destroy Eleanor's legacy, and uncover Eleanor's black-box cipher."
+              "title": "التسلل والمحكّ الأخلاقي",
+              "duration": "11.5 دقيقة",
+              "synopsis": "تصعيد التوتر عبر التسلل الجنائي، وتقديم مفترق الطرق الأخلاقي أمام Halloway حين يُؤمر بتدمير إرث Eleanor، وفك شفرة الصندوق الأسود."
             },
             {
               "number": "3",
-              "title": "Climax & Escape: The Silt Line Defiance",
-              "duration": "10 min",
-              "synopsis": "Deliver an emotionally grounded climax where Crane's extortion is shattered by sacrificial tech and Halloway achieves moral redemption by locking down the escape corridor."
+              "title": "الذروة والهروب: تحدّي خط الطمي",
+              "duration": "10 دقائق",
+              "synopsis": "ذروة مشحونة عاطفياً تتحطم فيها مساومة Crane بتضحية تقنية، ويحقق Halloway خلاصه الأخلاقي بإغلاق ممر الهروب."
             }
           ]
         },
@@ -2922,32 +2922,32 @@
         "screeningRoomPreview": "The Silt Line — غرفة العرض",
         "solutionPillars": [
           {
-            "title": "Stylistic Consistency",
-            "frictionHeadline": "Style Meltdown.",
-            "friction": "Stylized 3D and animated worlds constantly warp between shots, losing material textures, breaking lighting palettes, and drifting characters off-model.",
-            "solutionHeadline": "Locked Art Style Engine.",
-            "solution": "Freeze tactile dieselpunk brass, salt-corroded iron, and bioluminescent cybernetic shaders from frame one so every character and harbor set stays model-accurate."
+            "title": "ثبات الأسلوب البصري",
+            "frictionHeadline": "انهيار الهوية الفنية بين اللقطات.",
+            "friction": "العوالم المتحركة وثلاثية الأبعاد المنمقة تتشوه باستمرار بين اللقطات، فتفقد ملمس الخامات وتكسر لوحات الإضاءة وتنحرف ملامح الشخصيات عن التصميم الأصلي.",
+            "solutionHeadline": "محرك أسلوب فني مقفل.",
+            "solution": "ثبّت ملمس النحاس الديزل-بانك والحديد المتآكل بالملح والمظللات السيبرانية المضيئة منذ الإطار الأول ليبقى كل بطل ورصيف ميناء مطابقاً للنموذج."
           },
           {
-            "title": "Complex VFX & Deductive Overlays",
-            "frictionHeadline": "Inconsistent Visual Motifs.",
-            "friction": "Recurring character-specific visual mechanics — like augmented optical telemetry or holographic stress lines — vanish or mutate across cuts.",
-            "solutionHeadline": "Reference-Anchored Direction.",
-            "solution": "Anchor Juniper's optical monocle telemetry, chromatic stress aberrations, and Tobias's acoustic resonance gear consistently across every dramatic beat."
+            "title": "مؤثرات بصرية وطبقات استنتاجية معقدة",
+            "frictionHeadline": "عناصر بصرية غير متسقة.",
+            "friction": "الآليات البصرية المتكررة الخاصة بكل شخصية — مثل القياس البصري المعزز أو خطوط الضغط الهولوغرافية — تختفي أو تتغير بين القطعات.",
+            "solutionHeadline": "إخراج مرتكز على المراجع.",
+            "solution": "اربط عدسة القياس البصري الخاصة بـ Juniper وتشوهات الضغط اللونية ومعدات الرنين الصوتي الخاصة بـ Tobias بثبات تام عبر كل نبضة درامية."
           },
           {
-            "title": "Dramatic Tension & Beat Pacing",
-            "frictionHeadline": "Disconnected Action Clips.",
-            "friction": "High-stakes infiltration sequences fall apart when generated as isolated 5-second clips without continuous spatial geography or act structure.",
-            "solutionHeadline": "Beat-Precision Storyboarding.",
-            "solution": "Direct multi-minute story beats — from the North Quay workshop to Pier 14’s hydraulic blast gates — with intentional camera blocking before final render."
+            "title": "التوتر الدرامي وإيقاع النبضات",
+            "frictionHeadline": "مقاطع حركة مفككة.",
+            "friction": "مشاهد التسلل عالية المخاطر تنهار عندما تُولَّد كمقاطع معزولة مدتها 5 ثوانٍ دون جغرافيا مكانية متصلة أو بناء فصول واضح.",
+            "solutionHeadline": "لوحات قصصية بدقة النبضات.",
+            "solution": "أخرج مشاهد متعددة الدقائق — من ورشة نورث كواي إلى بوابات الرصيف 14 الهيدروليكية — مع تخطيط مقصود لحركة الكاميرا قبل التصيير النهائي."
           },
           {
-            "title": "Global In-Scene Vocal Sync",
-            "frictionHeadline": "Detached Dubbing & Lifeless Lip-Sync.",
-            "friction": "Translating stylized 3D animation into global languages usually breaks mouth shapes and flattens emotional vocal performance.",
-            "solutionHeadline": "7-Language In-Scene Sync.",
-            "solution": "Deliver synchronized character performances in English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai while preserving expressive 3D facial acting."
+            "title": "مزامنة صوتية عالمية داخل المشهد",
+            "frictionHeadline": "دبلجة منفصلة وحركة شفاه جامدة.",
+            "friction": "ترجمة الرسوم المتحركة ثلاثية الأبعاد إلى لغات عالمية غالباً ما تكسر أشكال الفم وتُفقد الأداء الصوتي حرارته العاطفية.",
+            "solutionHeadline": "مزامنة داخل المشهد بـ 7 لغات.",
+            "solution": "قدّم أداءً متزامناً للشخصيات بالإنجليزية والإسبانية والبرتغالية والهندية والصينية والعربية والتايلاندية مع الحفاظ على تعبيرات الوجه ثلاثية الأبعاد."
           }
         ]
       },
@@ -3042,7 +3042,7 @@
             "title": "المضيفون المشاركون في المكتب المتكررون وضبط الاستمرارية",
             "frictionHeadline": "الحديث-تعب الرأس.",
             "friction": "تفقد ملفات البودكاست الثابتة ذات الكاميرا الواحدة نسبة الاحتفاظ بالمشاهدين أثناء التفسيرات المعقدة بدون الكيمياء المرئية أو التدريج المكتبي الديناميكي.",
-            "solutionHeadline": "Locked Sidekick & Studio Blueprints.",
+            "solutionHeadline": "مخططات ثابتة للشريك المقدم والاستوديو.",
             "solution": "قم بتثبيت رفيق مكتبي متحرك أو صور حقيقية متكرر - مثل The Why Files - جنبًا إلى جنب مع بث الاستوديو المباشر الخاص بك من خلال الإضاءة المتسقة والمزاح وإيقاعات التفاعل."
           },
           {
@@ -3637,7 +3637,7 @@
       "mostPopular": "الأكثر رواجاً",
       "creditsPerMonth": "الرصيد/شهر",
       "storage": "قبو الاستمرارية",
-      "perMonth": "/month"
+      "perMonth": "/شهرياً"
     },
     "trust": {
       "cancelAnytime": "يمكنك الإلغاء في أي وقت",
@@ -3827,54 +3827,54 @@
   },
   "studioLanding": {
     "heroDock": {
-      "tagline": "أخرج أفلاماً ومسلسلات أصلية — أو أطلق مشروعاً مربحاً لخدمات إنتاج الفيديو للعملاء دون الحاجة لخبرة سينمائية أو هندسة أوامر.",
+      "tagline": "أخرج أفلاماً ومسلسلات أصلية — أو ابنِ مشروعاً مربحاً لإنتاج الفيديو للعملاء. دون الحاجة لدراسة السينما أو هندسة الأوامر.",
       "primaryCta": "ابدأ الاستوديو ($9)",
-      "businessCta": "اكتشف فرصة أعمال الفيديو",
+      "businessCta": "استكشف أعمال خدمات الفيديو",
       "howItWorksCta": "كيف يعمل الاستوديو"
     },
     "audienceGateway": {
       "eyebrow": "استوديو واحد · ثلاثة مسارات للنجاح",
       "title": "اصنع عوالمك السينمائية الأصلية.",
-      "titleAccent": "أو ابنِ مشروعاً مربحاً لخدمات الفيديو.",
-      "subtitle": "يجمع SceneFlow بين طاقم إنتاج ذكي وتوجيه حواري بالصوت أو النص لتمكين مقدمي خدمات الفيديو، ورواة القصص، وصنّاع المحتوى المحترفين.",
+      "titleAccent": "أو أطلق مشروعاً مربحاً لخدمات الفيديو.",
+      "subtitle": "يجمع SceneFlow بين طاقم إنتاج ذكي بالذكاء الاصطناعي وتوجيه حواري طبيعي — ليمكّن رواة القصص، وصنّاع المسلسلات، ومقدمي خدمات الفيديو للعملاء على حد سواء.",
       "cards": [
         {
           "id": "services",
-          "badge": "Income Opportunity · 65–85% Typical Margin",
-          "title": "Video Delivery Businesses",
-          "description": "Deliver bespoke Life Memoirs, Real Estate Walkthroughs, Corporate Training, and Brand Films for paying clients in hours instead of weeks—with full commercial ownership.",
+          "badge": "فرصة دخل متميزة · هامش ربح نموذجي 65–85%",
+          "title": "مشاريع خدمات إنتاج الفيديو",
+          "description": "قدّم أفلام السيرة الذاتية، وجولات العقارات، والتدريب المؤسسي، وأفلام العلامات التجارية لعملائك في ساعات بدلاً من أسابيع — مع ملكية تجارية كاملة.",
           "highlights": [
-            "Guided story-first client intake & multi-age cast continuity",
-            "Shared links for Blueprint, Continuity & Screening sign-off",
-            "Hybrid client photos + 4K AI re-enactments keep margins high"
+            "مقابلة قصصية موجهة للعميل واتساق للشخصيات عبر مراحل العمر المختلفة",
+            "روابط مشاركة لاعتماد Blueprint والاتساق البصري وScreening Room",
+            "دمج صور العميل الحقيقية مع مشاهد ذكاء اصطناعي بدقة 4K لهامش ربح مرتفع"
           ],
-          "ctaLabel": "Explore Business Models & Margins",
+          "ctaLabel": "استكشف نماذج الأعمال وهوامش الربح",
           "targetAnchor": "video-services"
         },
         {
           "id": "aspiring",
-          "badge": "No Film School or Prompting Needed",
-          "title": "Aspiring Storytellers & Authors",
-          "description": "Have a memoir, novel, or channel idea in your head? Describe your story in everyday spoken or typed words and let SceneFlow generate your expert baseline script and world.",
+          "badge": "دون دراسة سينما أو أوامر تقنية معقدة",
+          "title": "رواة القصص والمؤلفون الطموحون",
+          "description": "هل لديك مذكرات أو رواية أو فكرة قناة؟ صف قصتك بكلماتك اليومية صوتاً أو كتابة، وسيبني SceneFlow تلقائياً أساساً احترافياً للمسلسل والسيناريو.",
           "highlights": [
-            "Instant expert baseline for Series, Blueprint & Script",
-            "Speak or type changes in plain language—zero prompt syntax",
-            "Watch your voiced animatic before spending credits on motion"
+            "توليد فوري لأساس احترافي للمسلسل وBlueprint وسيناريو الإنتاج",
+            "اطلب التعديلات بالصوت أو النص بلغة طبيعية تماماً",
+            "شاهد Animatic الناطق بالكامل قبل إنفاق الرصيد على تحريك الفيديو"
           ],
-          "ctaLabel": "Take the 4-Step Studio Tour",
+          "ctaLabel": "خُذ جولة الاستوديو من 4 خطوات",
           "targetAnchor": "studio-tour"
         },
         {
           "id": "experienced",
-          "badge": "Series Channels · Podcasts · Investor Pre-Vis",
-          "title": "Experienced Creators & Filmmakers",
-          "description": "End slot-machine regenerations. Lock recurring cast faces, per-shot wardrobes, custom voices, and sets in your Continuity Vault—then scale production 10x with autonomous agents.",
+          "badge": "قنوات المسلسلات · البودكاست · عروض المستثمرين Pre-vis",
+          "title": "المبدعون والمخرجون المحترفون",
+          "description": "تخلّص من المحاولات العشوائية المتكررة. ثبّت وجوه الممثلين، وأزياء كل لقطة، والأصوات، والمواقع في خزنة الاتساق — ثم ضاعف إنتاجك 10 مرات بالوكلاء الذاتيين.",
           "highlights": [
-            "Multi-episode Continuity Vault & per-shot wardrobe control",
-            "Audience Resonance & FlowDirector greenlight review",
-            "Autonomous agents build 27+ scenes & 70+ language dubs"
+            "اتساق متعدد الحلقات واختيار الزي الدقيق لكل لقطة",
+            "مراجعة احترافية عبر Audience Resonance وFlowDirector",
+            "وكلاء ذاتيون ينتجون أكثر من 27 مشهداً ودبلجة بأكثر من 70 لغة"
           ],
-          "ctaLabel": "See the 5 Studio Superpowers",
+          "ctaLabel": "تعرّف على القدرات الخمس للاستوديو",
           "targetAnchor": "five-superpowers"
         }
       ]
@@ -3882,286 +3882,385 @@
     "superpowers": {
       "eyebrow": "فلسفة تصميم SceneFlow",
       "title": "خمس قدرات إخراجية فائقة.",
-      "titleAccent": "دون تعقيد الأدلة التقنية.",
-      "subtitle": "توليد تلقائي لأساس احترافي، تحكم كامل بالحوار الصوتي أو النصي، تقييم Audience Resonance، ووكلاء إنتاج ذاتيون.",
+      "titleAccent": "دون أي دليل تقني معقد.",
+      "subtitle": "أدوات الفيديو التقليدية تجبرك على التنقل بين برامج متفرقة وكتابة مئات الأوامر الهشة. يمنحك SceneFlow أساساً احترافياً تلقائياً، وتوجيهاً بالصوت أو النص، ومراجعة تنفيذية، ووكلاء إنتاج ذاتيين.",
       "watchClipLabel": "شاهد ملخص 30 ثانية",
       "pillars": [
         {
           "id": "baseline",
           "number": "01",
-          "badge": "Never Face a Blank Page",
-          "title": "Auto Expert Baseline Generation",
-          "description": "Start with a simple concept or story-first interview. SceneFlow automatically writes a structured Series Bible, Film Blueprint, and Production Script—complete with individual character arcs, era-accurate locations, and dramatic beats.",
-          "outcomeTag": "Series · Blueprint · Production Script",
+          "badge": "لا تواجه صفحة بيضاء أبداً",
+          "title": "توليد تلقائي لأساس إبداعي احترافي",
+          "description": "ابدأ بفكرة بسيطة أو مقابلة قصصية موجهة. يكتب SceneFlow تلقائياً ملف المسلسل، وBlueprint الفيلم، وسيناريو الإنتاج الكامل مع مسارات الشخصيات الفردية والمواقع الدقيقة.",
+          "outcomeTag": "المسلسل · Blueprint · سيناريو الإنتاج",
           "videoClipKey": "comparison"
         },
         {
           "id": "dialog",
           "number": "02",
-          "badge": "Voice or Typed Direction",
-          "title": "Full Director Control via Intelligent Dialog",
-          "description": "Direct like a filmmaker, not a prompt engineer. Speak or type to reshape story beats, split characters across life stages (Age 17, 32, 62), pick exact per-shot wardrobes, or surgically refine any frame.",
-          "outcomeTag": "Zero Prompt Engineering",
+          "badge": "توجيه صوتي أو نصي",
+          "title": "تحكم كامل للمخرج عبر الحوار الذكي",
+          "description": "أخرج كصانع أفلام لا كمهندس أوامر. تحدث أو اكتب لتعديل إيقاع القصة، أو فصل الشخصية عبر مراحل العمر (17، 32، 62 عاماً)، أو اختيار زي محدد لكل لقطة.",
+          "outcomeTag": "صفر هندسة أوامر",
           "videoClipKey": "direction"
         },
         {
           "id": "review",
           "number": "03",
-          "badge": "Greenlight Before You Spend",
-          "title": "Audience Resonance & FlowDirector Review",
-          "description": "Built-in Audience Resonance scores your Series, Blueprint, and Script against your target audience, while FlowDirector highlights pacing gaps and applies one-click creative upgrades before rendering video.",
-          "outcomeTag": "Series · Blueprint · Script Scoring"
+          "badge": "تقييم واعتماد قبل الإنفاق",
+          "title": "مراجعة Audience Resonance وFlowDirector",
+          "description": "يقيس Audience Resonance مدى تأثير المسلسل وBlueprint والسيناريو لدى جمهورك المستهدف، بينما يكشف FlowDirector ثغرات الإيقاع ويطبق تحسينات بنقرة واحدة.",
+          "outcomeTag": "تقييم المسلسل · Blueprint · السيناريو"
         },
         {
           "id": "agents",
           "number": "04",
-          "badge": "Hands-Free Scale",
-          "title": "Autonomous Fast-Track Production Agents",
-          "description": "Once your script and Pre-Vis animatic feel right, launch Audio, Stills, Clips, or the full Production Agent to build dozens of scenes, self-heal failed takes, and notify you when your cut is ready.",
-          "outcomeTag": "300+ Manual Prompts Replaced",
+          "badge": "إنتاج واسع دون عناء",
+          "title": "وكلاء إنتاج ذاتيون فائقو السرعة",
+          "description": "بمجرد اعتماد السيناريو وPre-vis Animatic، أطلق Audio Agent وStills Agent وClips Agent أو Production Agents لبناء عشرات المشاهد ومعالجة اللقطات تلقائياً.",
+          "outcomeTag": "يستبدل أكثر من 300 أمر يدوي",
           "videoClipKey": "agent"
         },
         {
           "id": "collaboration",
           "number": "05",
-          "badge": "Client Sign-Off & Global Reach",
-          "title": "Shared Review Links, Screening Room & 70+ Languages",
-          "description": "Share clean browser links for Blueprint, Script, and frame-accurate Screening Room sign-off—then deliver localized streams in 70+ languages while directing in 7 native Studio UI languages.",
-          "outcomeTag": "Share Links · Screening Room · 70+ Dubs",
+          "badge": "اعتماد العملاء وانتشار عالمي",
+          "title": "روابط مراجعة مشتركة، Screening Room و70+ لغة",
+          "description": "شارك روابط متصفح مباشرة لاعتماد Blueprint والسيناريو والمراجعة الدقيقة داخل Screening Room — ثم سلّم أعمالك بأكثر من 70 لغة مع واجهة استوديو بـ 7 لغات.",
+          "outcomeTag": "روابط مشاركة · Screening Room · 70+ دبلجة",
           "videoClipKey": "publish"
         }
-      ]
+      ],
+      "microVisuals": {
+        "baseline": {
+          "intakePrompt": "مقابلة القصة: «احكِ لي قصتك...»",
+          "autoBadge": "يُولَّد تلقائياً في ثوانٍ",
+          "steps": [
+            {
+              "step": "1 · ملف المسلسل",
+              "detail": "مسار 6 حلقات + خزنة مشتركة"
+            },
+            {
+              "step": "2 · Blueprint الفيلم",
+              "detail": "محطات مؤثرة + طاقم متعدد الأعمار"
+            },
+            {
+              "step": "3 · سيناريو الإنتاج",
+              "detail": "حوارات وأزياء وحركة كاميرا"
+            }
+          ]
+        },
+        "dialog": {
+          "quote": "«قسّم شخصية جون إلى عمر 17 و32 و62 عاماً — واجعل إلارا ترتدي معطف الحرير المسائي في اللقطة 2.»",
+          "chipCast": "✓ تثبيت 3 بطاقات عمرية للشخصية",
+          "chipWardrobe": "✓ زي اللقطة 2: معطف الحرير المسائي"
+        },
+        "review": {
+          "arLabel": "Audience Resonance",
+          "arStatus": "جاهز للإنتاج · 3 بوابات تقييم",
+          "gateSeries": "المسلسل 90",
+          "gateBlueprint": "Blueprint 92",
+          "gateScript": "السيناريو 94",
+          "flowDirectorNote": "FlowDirector: تعزيز الذروة العاطفية بنقرة واحدة (+6 نقاط)"
+        },
+        "agents": {
+          "rows": [
+            {
+              "label": "Audio Agent · الأصوات والمؤثرات والموسيقى",
+              "status": "27 / 27 جاهز"
+            },
+            {
+              "label": "Stills Agent · إطارات متسقة بصرياً",
+              "status": "مثبّت 100%"
+            },
+            {
+              "label": "Clips Agent · تحريك ذاتي التصحيح",
+              "status": "تم التحقق تلقائياً"
+            }
+          ]
+        },
+        "collaboration": {
+          "approvedBadge": "معتمد ✓",
+          "dubsChip": "+70 لغة دبلجة"
+        }
+      }
     },
     "videoServices": {
-      "eyebrow": "حوّل إبداعك إلى دخل مستمر · خدمات الفيديو للعملاء",
+      "eyebrow": "حوّل إبداعك إلى دخل مستمر · خدمات الشركات والعملاء",
       "title": "حوّل SceneFlow إلى",
       "titleAccent": "مشروع إنتاج فيديو عالي الربحية",
-      "subtitle": "تدفع العائلات وشركات العقارات والمؤسسات من 200$ إلى 2,500$+ مقابل فيديوهات قصصية مخصصة. أنجز أعمالاً احترافية في ساعات مع ملكية تجارية كاملة 100%.",
-      "commercialRightsBadge": "ملكية تجارية 100% · سلّم النسخ النهائية لعملائك بحرية",
-      "verticalsHeading": "1. Choose a High-Demand Client Service",
-      "calculatorBadge": "Interactive Unit Economics Preview",
-      "calculatorTitle": "2. Estimate Your Monthly Service Income",
-      "volumeLabel": "Client deliveries / month:",
-      "projectsPerMonthSuffix": "projects/mo",
-      "typicalFeeLabel": "Typical client price",
-      "estComputeLabel": "Est. SceneFlow compute",
-      "activeHandsOnLabel": "Hands-on direction",
-      "monthlyGrossLabel": "Est. Monthly Client Billing",
-      "monthlyNetLabel": "Est. Net Creator Income (before base plan)",
-      "marginBadgeSuffix": "gross margin",
-      "disclaimer": "Illustrative estimates using SceneFlow’s hybrid Pre-Vis animatic + selective 4K AI clip workflow ($0.01/credit add-on rate). You set your own client pricing and terms.",
-      "launchBusinessCta": "أطلق مشروع خدمات الفيديو ($9)",
-      "workflowHeading": "How a Client Project Flows in 4 Effortless Steps",
+      "subtitle": "تدفع العائلات وشركات العقارات والمدارس والشركات المحلية من $200 إلى $2,500+ مقابل فيديوهات قصصية مخصصة — بينما تكلف فرق التصوير التقليدية الآلاف. أنجز أعمالاً خالدة في ساعات واحتفظ بـ 100% من عوائدك.",
+      "commercialRightsBadge": "ملكية تجارية 100% · سلّم النسخ النهائية لعملائك في أي مكان",
+      "verticalsHeading": "1. اختر خدمة عملاء عالية الطلب",
+      "whoBuysLabel": "العملاء الأكثر تكراراً للشراء",
+      "marginAdvantageLabel": "ميزة هامش الربح مع SceneFlow",
+      "calculatorBadge": "معاينة تفاعلية لاقتصاديات المشروع",
+      "calculatorTitle": "2. قدّر دخلك الشهري من خدمات الفيديو",
+      "volumeLabel": "عدد المشاريع المسلمة شهرياً:",
+      "projectsPerMonthSuffix": "مشاريع/شهر",
+      "typicalFeeLabel": "سعر البيع النموذجي",
+      "estComputeLabel": "تكلفة الحوسبة التقديرية",
+      "activeHandsOnLabel": "وقت الإشراف الفعلي",
+      "monthlyGrossLabel": "إجمالي فوترة العملاء الشهرية",
+      "monthlyNetLabel": "صافي دخل المبدع التقديري (قبل الاشتراك الأساسي)",
+      "perMonthSuffix": "/ شهر",
+      "marginBadgeSuffix": "هامش إجمالي",
+      "disclaimer": "تقديرات توضيحية باستخدام سير عمل Pre-vis Animatic الهجين مع لقطات ذكاء اصطناعي مختارة بدقة 4K ($0.01 لكل رصيد إضافي). أنت تحدد أسعارك وشروطك الخاصة مع عملائك.",
+      "launchBusinessCta": "أطلق خدمة الفيديو الخاصة بك ($9)",
+      "workflowHeading": "كيف يسير مشروع العميل في 4 خطوات سلسة",
+      "stepPrefix": "الخطوة",
       "workflowSteps": [
         {
           "step": "01",
-          "title": "Story-First Client Intake",
-          "detail": "Interview your client (\"Tell me your story\") to capture resonating life or brand beats and key individuals."
+          "title": "مقابلة قصصية مع العميل",
+          "detail": "حاور عميلك («احكِ لي قصتك») لالتقاط المحطات المؤثرة والأشخاص الرئيسيين في كل فصل."
         },
         {
           "step": "02",
-          "title": "Shared Blueprint Sign-Off",
-          "detail": "Refine with Audience Resonance internally, then send a clean Blueprint link for client approval before production."
+          "title": "اعتماد Blueprint عبر رابط مشاركة",
+          "detail": "راجع القصة عبر Audience Resonance ثم أرسل رابط Blueprint أنيقاً لاعتماد العميل قبل بدء الإنتاج."
         },
         {
           "step": "03",
-          "title": "Hybrid Photo + AI Build",
-          "detail": "Combine real client photos with multi-age cast continuity, custom wardrobes, and autonomous Audio/Clips Agents."
+          "title": "بناء هجين من الصور + الذكاء الاصطناعي",
+          "detail": "ادمج صور العميل الحقيقية مع اتساق الأعمار والأزياء المخصصة ووكلاء Audio Agent وClips Agent."
         },
         {
           "step": "04",
-          "title": "Screening Room Delivery",
-          "detail": "Share a private Screening Room link for frame-accurate review, export the 4K master, and collect payment."
+          "title": "التسليم عبر Screening Room",
+          "detail": "شارك رابط Screening Room خاصاً للمراجعة الدقيقة إطاراً بإطار، ثم صدّر نسخة 4K النهائية واستلم مستحقاتك."
         }
       ],
       "verticals": [
         {
           "id": "memoir",
-          "tabLabel": "Video Memoirs",
-          "badge": "$350–$799 / film · High Emotional Value",
-          "title": "Life Stories, Milestone Tributes & Family Biographies",
-          "description": "Blend treasured family photographs with cinematic AI era re-enactments and accurate multi-age character continuity (e.g., Age 17 → Age 32 → Age 62) narrated in warm, lifelike voices.",
-          "clientBuyer": "Families, milestone birthdays, estate planners, senior communities & funeral homes",
+          "tabLabel": "أفلام السيرة الذاتية",
+          "badge": "$350–$799 / فيلم · قيمة عاطفية عالية",
+          "title": "قصص الحياة، وتكريم المناسبات، والسير العائلية المصورة",
+          "description": "امزج الصور العائلية الثمينة مع مشاهد سينمائية تعيد إحياء الحقب الزمنية واتساق دقيق للشخصيات عبر العمر (17 ← 32 ← 62 عاماً) بصوت سردي دافئ وطبيعي.",
+          "clientBuyer": "العائلات، احتفالات اليوبيل وأعياد الميلاد الكبرى، مستشارو التركات، ومجتمعات كبار السن",
           "typicalRetailUsd": 450,
           "retailRangeLabel": "$350–$799",
           "estComputeUsd": 75,
-          "activeMinutesLabel": "~45 min",
-          "keyAdvantage": "Hybrid Documentary mode mixes real archival photos with selective hero AI clips for 80%+ margins."
+          "activeMinutesLabel": "~45 دقيقة",
+          "keyAdvantage": "الوضع الوثائقي الهجين يجمع الصور الأرشيفية الحقيقية مع لقطات ذكاء اصطناعي مختارة لتحقيق هامش ربح يتجاوز 80%."
         },
         {
           "id": "realestate",
-          "tabLabel": "Real Estate Tours",
-          "badge": "$199–$399 / listing · Repeat Brokerage Volume",
-          "title": "Narrated Luxury Property & Boutique Hospitality Tours",
-          "description": "Turn listing photographs and neighborhood highlights into scored, narrated cinema walkthroughs—plus instant Mandarin, Spanish, Arabic, or Portuguese versions for international buyers.",
-          "clientBuyer": "Residential realtors, luxury brokerages, vacation rentals & boutique hotels",
+          "tabLabel": "جولات العقارات",
+          "badge": "$199–$399 / عقار · طلب شهري متكرر",
+          "title": "جولات سينمائية مروية للعقارات الفاخرة والفنادق البوتيكية",
+          "description": "حوّل صور العقار ومزايا الحي إلى جولة سينمائية بالموسيقى والتعليق الصوتي — مع نسخ فورية بالإنجليزية أو الصينية أو الإسبانية أو العربية للمشترين الدوليين.",
+          "clientBuyer": "وسطاء العقارات السكنية، شركات الوساطة الفاخرة، بيوت العطلات والفنادق البوتيكية",
           "typicalRetailUsd": 275,
           "retailRangeLabel": "$199–$399",
           "estComputeUsd": 22,
-          "activeMinutesLabel": "~20 min",
-          "keyAdvantage": "One realtor listing 4 homes a month becomes a recurring monthly retainer account."
+          "activeMinutesLabel": "~20 دقيقة",
+          "keyAdvantage": "وسيط عقاري واحد يعرض 4 عقارات شهرياً يتحول إلى عقد شهري ثابت ومستمر."
         },
         {
           "id": "training",
-          "tabLabel": "Training & SOPs",
-          "badge": "$600–$2,500 / course · 70+ Languages",
-          "title": "Corporate Onboarding, Safety & Multilingual Courses",
-          "description": "Lock a consistent instructor avatar, uniforms, and workplace sets in your Continuity Vault—then ship crystal-clear training episodes localized across every employee’s native language.",
-          "clientBuyer": "HR & L&D teams, manufacturers, healthcare clinics, restaurants & franchises",
+          "tabLabel": "التدريب وإجراءات العمل",
+          "badge": "$600–$2,500 / دورة · أكثر من 70 لغة",
+          "title": "تأهيل الموظفين، والسلامة المهنية، والدورات متعددة اللغات",
+          "description": "ثبّت شخصية المدرب والزي الرسمي وبيئة العمل في خزنة الاتساق — ثم قدّم حلقات تدريبية واضحة بلغة كل موظف الأم.",
+          "clientBuyer": "إدارات الموارد البشرية والتدريب، المصانع، العيادات الطبية، المطاعم وسلاسل الامتياز التجاري",
           "typicalRetailUsd": 950,
           "retailRangeLabel": "$600–$2,500",
           "estComputeUsd": 80,
-          "activeMinutesLabel": "~60 min",
-          "keyAdvantage": "Update one changed compliance beat in minutes without hiring actors or reshooting."
+          "activeMinutesLabel": "~60 دقيقة",
+          "keyAdvantage": "حدّث أي بند تدريبي متغير خلال دقائق دون إعادة التعاقد مع ممثلين أو إعادة التصوير."
         },
         {
           "id": "brand",
-          "tabLabel": "Brand Stories",
-          "badge": "$400–$1,200 / package · Web + Social",
-          "title": "Founder Origin Films, Clinic Explainers & Social Ads",
-          "description": "Craft high-converting homepage brand stories paired with automatic 9:16 vertical trailers for Instagram, TikTok, and YouTube Shorts—vetted with clients in the Screening Room.",
-          "clientBuyer": "Medical/dental practices, law firms, local SMBs, agencies & e-commerce founders",
+          "tabLabel": "قصص العلامات التجارية",
+          "badge": "$400–$1,200 / باقة · موقع + تواصل اجتماعي",
+          "title": "أفلام المؤسسين، وفيديوهات العيادات، وإعلانات المنصات",
+          "description": "اصنع أفلام علامة تجارية عالية التحويل للمواقع الإلكترونية مع مقاطع ترويجية عمودية 9:16 تلقائية لـ Instagram وTikTok وYouTube Shorts — معتمدة في Screening Room.",
+          "clientBuyer": "العيادات الطبية وعيادات الأسنان، مكاتب المحاماة، الشركات المحلية، الوكالات ومتاجر التجارة الإلكترونية",
           "typicalRetailUsd": 600,
           "retailRangeLabel": "$400–$1,200",
           "estComputeUsd": 40,
-          "activeMinutesLabel": "~35 min",
-          "keyAdvantage": "Upsell seasonal promo cutdowns from the client’s saved Continuity Vault."
+          "activeMinutesLabel": "~35 دقيقة",
+          "keyAdvantage": "بع حملات موسمية إضافية بسهولة اعتماداً على خزنة الاتساق المحفوظة الخاصة بالعميل."
         }
       ]
     },
     "guidedTour": {
-      "eyebrow": "جولة مرئية مبسطة داخل الاستوديو",
+      "eyebrow": "جولة مرئية في الاستوديو · بلا مصطلحات معقدة",
       "title": "أربع غرف مترابطة.",
-      "titleAccent": "تدفق إبداعي سلس.",
-      "subtitle": "استكشف كيف تتحول الفكرة من مقابلة قصصية إلى عمل نهائي معتمد عبر أمثلة حقيقية من بيئة Sandbox.",
-      "lensLabel": "عدسة العرض:",
-      "lensCreator": "مسلسل أصلي (\"The Glass Ledger\")",
-      "lensService": "خدمة عملاء (\"فيلم سيرة حياة\")",
-      "watchRoomVideoLabel": "شاهد جولة 30 ثانية",
-      "inspectFullScreenLabel": "عرض شاشة الاستوديو الكاملة",
-      "openLiveScreeningLabel": "افتح غرفة العرض التجريبية",
+      "titleAccent": "تدفق واحد سلس.",
+      "subtitle": "اكتشف كيف تنتقل الفكرة من المقابلة القصصية الأولى إلى النسخة النهائية المعتمدة — عبر أمثلة حقيقية من بيئة Sandbox بدلاً من الكتيبات التقنية المرهقة.",
+      "stepPrefix": "الخطوة",
+      "lensLabel": "عدسة المعاينة:",
+      "lensCreator": "مسلسل أصلي («The Glass Ledger»)",
+      "lensService": "خدمة عملاء («فيلم سيرة حياة»)",
+      "watchRoomVideoLabel": "شاهد جولة الغرفة (30 ث)",
+      "inspectFullScreenLabel": "استعرض شاشة الاستوديو الكاملة",
+      "openLiveScreeningLabel": "افتح Screening Room التجريبية مباشرة",
+      "screeningModalTitle": "The Glass Ledger — عرض Screening Room التجريبي",
       "rooms": [
         {
           "id": "series-desk",
           "stepNumber": "01",
-          "tabLabel": "Series Studio",
-          "badge": "Multi-Episode World & Continuity Bible",
-          "title": "Build a Reusable Universe Once—Not Just a Single Clip",
-          "promise": "Describe a series channel, training curriculum, or multi-chapter biography once. SceneFlow builds your Story Bible, Episode Slate, and Shared Continuity Vault so every episode stays on-model.",
-          "creatorExampleTitle": "The Glass Ledger · 6-Episode Neo-Noir Thriller",
-          "creatorExampleNote": "Shared Cast (Elara Vance, Marcus Thorne, Dr. Aris Kael), Archive Vault set, and Quartz Codex prop lock across all 6 episodes with a 91/100 Audience Resonance baseline.",
-          "serviceExampleTitle": "Multi-Chapter Family Legacy or Corporate Curriculum",
-          "serviceExampleNote": "Save a client’s approved hosts, family eras, or workplace locations once—then spin up Episode 2 through Episode 10 in one click with zero visual drift.",
+          "tabLabel": "Series Room",
+          "badge": "عالم متعدد الحلقات وملف اتساق شامل",
+          "title": "ابنِ عالماً قابلاً لإعادة الاستخدام مرة واحدة — لا مجرد مقطع منفرد",
+          "promise": "صف قناة مسلسلات أو منهجاً تدريبياً أو سيرة متعددة الفصول مرة واحدة. ينشئ SceneFlow ملف القصة، وخطة الحلقات، وReference Library المشتركة لتبقى كل حلقة متسقة تماماً.",
+          "creatorExampleTitle": "The Glass Ledger · مسلسل تشويق نيو-نوار من 6 حلقات",
+          "creatorExampleNote": "طاقم مشترك (إلارا فانس، ماركوس ثورن، د. أريس كايل)، وموقع قبو الأرشيف، ومخطوطة الكوارتز مثبتة عبر الحلقات الست بتقييم 91/100 في Audience Resonance.",
+          "serviceExampleTitle": "إرث عائلي متعدد الفصول أو منهج تدريبي للشركات",
+          "serviceExampleNote": "احفظ مقدمي العميل المعتمدين أو الحقب العائلية أو مواقع العمل مرة واحدة — ثم أنشئ الحلقات من 2 إلى 10 بنقرة واحدة دون أي انحراف بصري.",
           "callouts": [
             {
-              "label": "Instant Series Baseline & Resonance Score",
-              "detail": "Auto-generates synopsis, episode arcs, and Audience Resonance scoring before production."
+              "label": "أساس فوري للمسلسل وتقييم Audience Resonance",
+              "detail": "يولّد الملخص ومسارات الحلقات وتقييم تفاعل الجمهور تلقائياً قبل بدء الإنتاج."
             },
             {
-              "label": "Shared Continuity Vault",
-              "detail": "Characters, voices, wardrobes, sets, and props transfer automatically into every episode."
+              "label": "Reference Library مشتركة عبر الحلقات",
+              "detail": "تنتقل الشخصيات والأصوات والأزياء والمواقع والدعائم تلقائياً إلى كل حلقة جديدة."
             },
             {
-              "label": "Voice or Text Series Director",
-              "detail": "Speak or type adjustments to reshape season arcs or individual episodes effortlessly."
+              "label": "توجيه المسلسل بالصوت أو النص",
+              "detail": "تحدث أو اكتب التعديلات لإعادة تشكيل مسار الموسم أو أي حلقة بسهولة تامة."
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "تقييم المسلسل: 91 / 100 · 6 حلقات متزامنة",
+            "bottomBadge": "Reference Library المشتركة مثبتة عبر جميع الحلقات",
+            "thumbLabels": [
+              "إلارا فانس · البطلة",
+              "ماركوس ثورن · الطاقم",
+              "قبو الأرشيف · الموقع",
+              "مخطوطة الكوارتز · أداة"
+            ]
+          }
         },
         {
           "id": "blueprint-board",
           "stepNumber": "02",
-          "tabLabel": "Blueprint Studio",
-          "badge": "Story-First Intake, Multi-Age Cast & Greenlight",
-          "title": "Lock a Resonating Story & Cast Before Spending on Video",
-          "promise": "Start from a natural story interview or concept. Blueprint Studio structures your beats, highlights individual characters per beat, locks multi-age identity, and lets clients or collaborators sign off via shared link.",
-          "creatorExampleTitle": "Beat-by-Beat Treatment & Visual Style Lock",
-          "creatorExampleNote": "Each beat pairs dramatic intent with participating characters, anamorphic lighting rules, and narrated Audience Resonance feedback.",
-          "serviceExampleTitle": "Intelligent Memoir Interview & Multi-Age Continuity",
-          "serviceExampleNote": "Starts with \"Tell me your story,\" clarifies resonating life beats, and creates distinct age-stage characters (e.g., Age 17, Age 32, Age 62) with locked ancestral heritage.",
+          "tabLabel": "Blueprint Room",
+          "badge": "مقابلة قصصية، طاقم متعدد الأعمار واعتماد مبكر",
+          "title": "ثبّت قصة مؤثرة وطاقماً متقناً قبل الإنفاق على الفيديو",
+          "promise": "ابدأ بمقابلة قصصية طبيعية أو فكرة مختصرة. تنظم Blueprint Room محطات القصة، وتبرز الشخصيات الفردية في كل مشهد، وتضبط المراحل العمرية، وتتيح اعتماد العميل عبر رابط مشاركة.",
+          "creatorExampleTitle": "معالجة درامية مشهدية وتثبيت الهوية البصرية",
+          "creatorExampleNote": "تربط كل محطة بين الهدف الدرامي والشخصيات المشاركة وقواعد الإضاءة السينمائية مع ملاحظات Audience Resonance المروية.",
+          "serviceExampleTitle": "مقابلة سيرة ذاتية ذكية واتساق عبر مراحل العمر",
+          "serviceExampleNote": "تبدأ بسؤال «احكِ لي قصتك»، وتبلور اللحظات المؤثرة، وتنشئ شخصيات مستقلة لكل مرحلة عمرية (17، 32، 62 عاماً) مع الحفاظ على الملامح والهوية.",
           "callouts": [
             {
-              "label": "Story-First Guided Interview",
-              "detail": "Draws out rich personal or brand stories and highlights specific individuals in every beat."
+              "label": "مقابلة موجهة تركز على جوهر القصة",
+              "detail": "تستخلص القصص الشخصية أو المؤسسية بعمق وتحدد الأفراد الرئيسيين في كل محطة درامية."
             },
             {
-              "label": "Multi-Age Character Continuity",
-              "detail": "Creates separate age-specific character references so a 1970s youth and modern elder never blur together."
+              "label": "اتساق الشخصيات عبر المراحل العمرية",
+              "detail": "ينشئ مراجع عمرية منفصلة بحيث لا تختلط ملامح الشباب في السبعينيات بملامح الكبر اليوم."
             },
             {
-              "label": "Audience Resonance + Shared Blueprint Link",
-              "detail": "Verify story impact with AI audience scoring and collect client approval from a clean browser link."
+              "label": "Audience Resonance + رابط Blueprint للمشاركة",
+              "detail": "تحقق من قوة القصة بالذكاء الاصطناعي واجمع موافقة العميل من رابط متصفح مباشر."
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "Blueprint AR: 92 / 100 · إبراز الشخصيات لكل محطة",
+            "bottomBadge": "اتساق متعدد الأعمار + رابط اعتماد مباشر للعميل",
+            "thumbLabels": [
+              "مسار البطلة",
+              "د. أريس كايل · المحطة 2",
+              "شرفة الميناء · الفصل الثاني",
+              "مفتاح الكرونو · عنصر محوري"
+            ]
+          }
         },
         {
           "id": "production-stage",
           "stepNumber": "03",
           "tabLabel": "Production Stage",
-          "badge": "Shot Director, Wardrobe Control & Autonomous Agents",
-          "title": "Preview the Voiced Animatic—Then Let Agents Build Your Shots",
-          "promise": "Review your baseline Production Script, lock Continuity references, watch the full voiced Pre-Vis animatic, select exact per-shot wardrobes in Shot Director, and run autonomous agents across all scenes.",
-          "creatorExampleTitle": "Scene 1: Subterranean Archive Vault · Anamorphic 4K",
-          "creatorExampleNote": "Switch Elara’s wardrobe per shot, direct camera framing by voice or text, blend multi-track dialogue/SFX/score in the Mixer, and dispatch the Production Agent.",
-          "serviceExampleTitle": "Hybrid Client Photos + Cinematic Era Re-Enactments",
-          "serviceExampleNote": "Place real client photographs on Ken Burns beats alongside 4K AI re-enactments for unphotographed memories—keeping a 15-minute memoir under ~$75 in compute.",
+          "badge": "Shot Director، التحكم بالأزياء والوكلاء الذاتيون",
+          "title": "عاين Animatic الناطق — ثم دع الوكلاء ينفذون اللقطات",
+          "promise": "راجع سيناريو الإنتاج الأساسي، وثبّت مراجع الاتساق، وشاهد Pre-vis Animatic الكامل بالأصوات، واختر الزي المحدد لكل لقطة في Shot Director، ثم شغّل الوكلاء الذاتيين عبر المشاهد.",
+          "creatorExampleTitle": "المشهد 1: قبو الأرشيف تحت الأرض · أنامورفيك 4K",
+          "creatorExampleNote": "بدّل أزياء إلارا لكل لقطة، ووجّه زوايا الكاميرا بالصوت أو النص، وامزج الحوار والمؤثرات والموسيقى في Production Mixer وأطلق Production Agents.",
+          "serviceExampleTitle": "دمج صور العميل الحقيقية + مشاهد سينمائية معاد تمثيلها",
+          "serviceExampleNote": "ضع صور العائلة الحقيقية بحركة Ken Burns إلى جانب مشاهد ذكاء اصطناعي بدقة 4K للذكريات غير المصورة — مع إبقاء تكلفة فيلم مدته 15 دقيقة تحت ~$75.",
           "callouts": [
             {
-              "label": "Per-Shot Wardrobe & Voice/Typed Shot Director",
-              "detail": "Pick exact outfits per shot and refine framing or expressions conversationally—no slot-machine re-rolls."
+              "label": "اختيار الزي لكل لقطة وShot Director بالصوت أو النص",
+              "detail": "اختر الملابس الدقيقة لكل لقطة وعدّل التكوين أو التعبيرات بحوار طبيعي دون إعادة عشوائية."
             },
             {
-              "label": "Voiced Pre-Vis Animatic Firewall",
-              "detail": "Hear dialogue, narration, SFX, and music over storyboard stills before spending motion credits."
+              "label": "حماية الميزانية عبر Pre-vis Animatic الناطق",
+              "detail": "استمع إلى الحوار والسرد والمؤثرات والموسيقى فوق اللوحات المصورة قبل إنفاق رصيد التحريك."
             },
             {
-              "label": "Autonomous Audio, Stills & Clips Agents",
-              "detail": "Generate scene-by-scene or launch the full Production Agent to build and stitch automatically."
+              "label": "وكلاء Audio Agent وStills Agent وClips Agent الذاتيون",
+              "detail": "نفّذ مشهداً تلو الآخر أو أطلق وكيل الإنتاج الكامل للبناء والتجميع تلقائياً."
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "Shot Director · تم اختيار الزي · Pre-vis Animatic جاهز",
+            "bottomBadge": "Audio Agent وStills Agent وClips Agent يديرون جميع المشاهد تلقائياً",
+            "thumbLabels": [
+              "اللقطة 1 · لقطة واسعة للقبو",
+              "اللقطة 3 · لقطة قريبة للمفصل",
+              "المشهد 2 · تسليم المفتاح",
+              "المشهد 3 · تتبع عبر الممر"
+            ]
+          }
         },
         {
           "id": "screening-room",
           "stepNumber": "04",
           "tabLabel": "Screening Room",
-          "badge": "Frame-Accurate Review, 70+ Languages & Publishing",
-          "title": "Collaborate via Private Link & Ship Globally in Any Language",
-          "promise": "Screen animatics, rough cuts, and final 4K masters in one unified player. Collect timestamped client or team notes, spin up 70+ in-scene dubbed streams, and export or publish anywhere.",
-          "creatorExampleTitle": "Premiere-Ready Master, Promo Trailers & Global Dubs",
-          "creatorExampleNote": "Cut vertical 9:16 trailers automatically, regenerate localized dialogue streams across 70+ markets, and publish to YouTube or apply to SceneFlow Originals.",
-          "serviceExampleTitle": "Frictionless Client Review & Multilingual Delivery",
-          "serviceExampleNote": "Clients watch on phone or desktop with zero login required, leave timestamped notes, and receive pristine MP4 deliverables in their family’s or workforce’s language.",
+          "badge": "مراجعة دقيقة بالإطار، أكثر من 70 لغة ونشر فوري",
+          "title": "تعاون عبر رابط خاص وسلّم أعمالك عالمياً بأي لغة",
+          "promise": "اعرض مقاطع Animatic والنسخ الأولية ونسخ 4K النهائية في مشغل موحد. اجمع ملاحظات العملاء الموقوتة بالثانية، وأنشئ مسارات مدبلجة بأكثر من 70 لغة، وصدّر أعمالك أينما شئت.",
+          "creatorExampleTitle": "نسخة عرض أول 4K، ومقاطع ترويجية، ودبلجة عالمية",
+          "creatorExampleNote": "اقطع مقاطع عمودية 9:16 تلقائياً، وأنتج حوارات محلية لأكثر من 70 سوقاً، وانشر على YouTube أو قدّم في برنامج SceneFlow Originals.",
+          "serviceExampleTitle": "مراجعة سلسة للعملاء وتسليم متعدد اللغات",
+          "serviceExampleNote": "يشاهد العملاء العمل عبر الهاتف أو الحاسوب دون تسجيل دخول، ويتركون ملاحظات دقيقة، ويستلمون ملفات MP4 جاهزة بلغة العائلة أو فريق العمل.",
           "callouts": [
             {
-              "label": "Zero-Login Shared Review Links",
-              "detail": "Send private `/share/screening-room/` links for effortless client, executive, or family sign-off."
+              "label": "روابط مراجعة مشتركة دون تسجيل دخول",
+              "detail": "أرسل روابط `/share/screening-room/` خاصة لاعتماد سلس من العملاء أو الإدارة أو العائلة."
             },
             {
-              "label": "70+ Language In-Scene Sync Streams",
-              "detail": "Preserves ambient SFX and score while aligning localized voices and dialogue across global markets."
+              "label": "مسارات دبلجة متزامنة بأكثر من 70 لغة",
+              "detail": "يحافظ على المؤثرات الصوتية والموسيقى التصويرية مع مواءمة الأصوات والحوارات المحلية."
             },
             {
-              "label": "4K Master Export & Promo Cutdowns",
-              "detail": "Download clean commercial masters with full IP ownership or ship trailers directly to social channels."
+              "label": "تصدير 4K النهائي ومقاطع الترويج الاجتماعي",
+              "detail": "حمّل نسخاً تجارية نظيفة بملكية فكرية كاملة أو انشر المقاطع الترويجية مباشرة على المنصات."
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "ملاحظات دقيقة بالإطار · رابط عميل دون تسجيل دخول",
+            "bottomBadge": "7 لغات لواجهة الاستوديو · أكثر من 70 مسار لغة متزامن",
+            "thumbLabels": [
+              "EN · النسخة الأصلية",
+              "ES / PT · دبلجة متزامنة",
+              "ZH / TH / HI · مسارات لغوية",
+              "9:16 مقطع ترويجي عمودي"
+            ]
+          }
         }
       ]
     },
     "directoryDrawer": {
-      "badge": "المواصفات الكاملة للاستوديو · أكثر من 30 ميزة",
-      "title": "هل ترغب في كل التفاصيل التقنية؟ استكشف الدليل الكامل للاستوديو",
-      "subtitle": "افتح الدليل التفاعلي لاستعراض لقطات شاشة بدقة 5K لجميع غرف الاستوديو وأدوات الإنتاج.",
-      "expandCta": "افتح دليل 30+ ميزة كاملة",
-      "collapseCta": "إخفاء الدليل الكامل"
+      "badge": "المواصفات الكاملة للاستوديو · أكثر من 30 قدرة احترافية",
+      "title": "هل تريد كل التفاصيل التقنية؟ استكشف الدليل الكامل للاستوديو",
+      "subtitle": "افتح الدليل التفاعلي المقسم حسب الغرف لفحص لقطات شاشة حقيقية بدقة 5K لكل من Series Room وBlueprint Room وProduction Stage وProduction Mixer وScreening Room.",
+      "expandCta": "افتح دليل 30+ ميزة الكامل",
+      "collapseCta": "إخفاء دليل 30+ ميزة الكامل"
     },
     "academyStrip": {
-      "badge": "ضمان سهولة التعلم · أكاديمية الاستوديو",
-      "title": "إرشاد فوري في كل خطوة: اضغط ? في أي شاشة لفتح خريطة مرئية خلال 60 ثانية.",
-      "subtitle": "تتضمن كل غرفة خرائط شاشة تفاعلية، وإجراءات بنقرة واحدة، وحماية للرصيد، ومحاكي \"فيلمك الأول في 10 دقائق\".",
+      "badge": "ضمان سهولة التعلم من اليوم الأول · Studio Academy",
+      "title": "لا تشعر بالارتباك أبداً. اضغط ? في أي شاشة لفتح دليل مرئي خلال 60 ثانية.",
+      "subtitle": "تتضمن كل غرفة خريطة شاشة فورية (JIT) بشروحات مرقمة، وإجراءات بنقرة واحدة، وحماية لرصيد Pre-vis، ومحاكي «فيلمك الأول في 10 دقائق».",
       "pills": [
-        "خرائط شاشة فورية بزر ?",
-        "محاكي \"فيلمك الأول في 10 دقائق\"",
-        "حماية الرصيد قبل توليد الفيديو"
+        "خرائط شاشة سياقية بزر ?",
+        "محاكي «فيلمك الأول في 10 دقائق»",
+        "حماية رصيد Pre-vis مدمجة"
       ],
       "watchAcademyCta": "شاهد جولة الأكاديمية (30 ث)",
       "startExplorerCta": "ابدأ بباقة Explorer — $9"

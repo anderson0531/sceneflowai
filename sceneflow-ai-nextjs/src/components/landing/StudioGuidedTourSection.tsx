@@ -47,63 +47,48 @@ const ROOM_FULL_SCREENSHOTS: Record<RoomId, string> = {
   'screening-room': SCREENING_COLLAB_SCREENSHOT_WEBP,
 }
 
-const ROOM_SANDBOX_VISUALS: Record<
+const ROOM_SANDBOX_ASSETS: Record<
   RoomId,
   {
     heroSrc: string
-    heroAlt: string
-    thumbs: readonly { src: string; label: string }[]
-    topBadge: string
-    bottomBadge: string
+    thumbSrcs: readonly [string, string, string, string]
   }
 > = {
   'series-desk': {
     heroSrc: '/images/sandbox/glass-ledger/hero-billboard.jpg',
-    heroAlt: 'Series Studio — The Glass Ledger shared world and continuity library',
-    thumbs: [
-      { src: '/images/sandbox/glass-ledger/char-elara.jpg', label: 'Elara Vance · Lead' },
-      { src: '/images/sandbox/glass-ledger/char-marcus.jpg', label: 'Marcus Thorne · Cast' },
-      { src: '/images/sandbox/glass-ledger/loc-archive-vault.jpg', label: 'Archive Vault · Set' },
-      { src: '/images/sandbox/glass-ledger/prop-glass-ledger.jpg', label: 'Quartz Codex · Prop' },
+    thumbSrcs: [
+      '/images/sandbox/glass-ledger/char-elara.jpg',
+      '/images/sandbox/glass-ledger/char-marcus.jpg',
+      '/images/sandbox/glass-ledger/loc-archive-vault.jpg',
+      '/images/sandbox/glass-ledger/prop-glass-ledger.jpg',
     ],
-    topBadge: 'Series AR: 91 / 100 · 6 Episodes Synced',
-    bottomBadge: 'Shared Continuity Vault Locked Across All Episodes',
   },
   'blueprint-board': {
     heroSrc: '/images/sandbox/glass-ledger/s1-b2-twoshot-table.jpg',
-    heroAlt: 'Blueprint Studio — Resonating story beats and multi-age character continuity',
-    thumbs: [
-      { src: '/images/sandbox/glass-ledger/char-elara.jpg', label: 'Protagonist Arc' },
-      { src: '/images/sandbox/glass-ledger/char-aris.jpg', label: 'Dr. Aris Kael · Beat 2' },
-      { src: '/images/sandbox/glass-ledger/loc-observation-deck.jpg', label: 'Harbor Deck · Act II' },
-      { src: '/images/sandbox/glass-ledger/prop-chrono-key.jpg', label: 'Chrono-Key · Plot Lock' },
+    thumbSrcs: [
+      '/images/sandbox/glass-ledger/char-elara.jpg',
+      '/images/sandbox/glass-ledger/char-aris.jpg',
+      '/images/sandbox/glass-ledger/loc-observation-deck.jpg',
+      '/images/sandbox/glass-ledger/prop-chrono-key.jpg',
     ],
-    topBadge: 'Blueprint AR: 92 / 100 · Beat-by-Beat Cast Highlights',
-    bottomBadge: 'Multi-Age Character Continuity + Shared Client Sign-Off Link',
   },
   'production-stage': {
     heroSrc: '/images/sandbox/glass-ledger/s1-b4-closeup-elara.jpg',
-    heroAlt: 'Production Stage — Shot Director wardrobe control and autonomous agents',
-    thumbs: [
-      { src: '/images/sandbox/glass-ledger/s1-b1-wide-vault.jpg', label: 'Shot 1 · Wide Vault' },
-      { src: '/images/sandbox/glass-ledger/s1-b3-macro-hinge.jpg', label: 'Shot 3 · Macro Prop' },
-      { src: '/images/sandbox/glass-ledger/s2-b3-key-handoff.jpg', label: 'Scene 2 · Handoff' },
-      { src: '/images/sandbox/glass-ledger/s3-b1-corridor-sprint.jpg', label: 'Scene 3 · Tracking' },
+    thumbSrcs: [
+      '/images/sandbox/glass-ledger/s1-b1-wide-vault.jpg',
+      '/images/sandbox/glass-ledger/s1-b3-macro-hinge.jpg',
+      '/images/sandbox/glass-ledger/s2-b3-key-handoff.jpg',
+      '/images/sandbox/glass-ledger/s3-b1-corridor-sprint.jpg',
     ],
-    topBadge: 'Shot Director · Wardrobe Selected · Pre-Vis Animatic Ready',
-    bottomBadge: 'Audio, Stills & Clips Agents Orchestrate All Scenes Automatically',
   },
   'screening-room': {
     heroSrc: '/images/sandbox/glass-ledger/s2-b2-deck-twoshot.jpg',
-    heroAlt: 'Screening Room — Frame-accurate client review and 70+ language dubbing streams',
-    thumbs: [
-      { src: '/images/sandbox/glass-ledger/s1-b1-wide-vault.jpg', label: 'EN · Original Master' },
-      { src: '/images/sandbox/glass-ledger/s2-b1-deck-ots.jpg', label: 'ES / PT · Synced Dub' },
-      { src: '/images/sandbox/glass-ledger/s2-b2-alt-v1.jpg', label: 'ZH / TH / HI · Streams' },
-      { src: '/images/sandbox/glass-ledger/s3-b2-lift-unlock.jpg', label: '9:16 Promo Cutdown' },
+    thumbSrcs: [
+      '/images/sandbox/glass-ledger/s1-b1-wide-vault.jpg',
+      '/images/sandbox/glass-ledger/s2-b1-deck-ots.jpg',
+      '/images/sandbox/glass-ledger/s2-b2-alt-v1.jpg',
+      '/images/sandbox/glass-ledger/s3-b2-lift-unlock.jpg',
     ],
-    topBadge: 'Frame-Accurate Notes · Zero-Login Client Link',
-    bottomBadge: '7 Studio UI Locales · 70+ In-Scene Language Streams',
   },
 }
 
@@ -125,7 +110,8 @@ export function StudioGuidedTourSection() {
   const [liveScreeningOpen, setLiveScreeningOpen] = useState(false)
 
   const activeRoom = copy.rooms.find((r) => r.id === activeRoomId) ?? copy.rooms[0]
-  const visuals = ROOM_SANDBOX_VISUALS[activeRoom.id]
+  const assets = ROOM_SANDBOX_ASSETS[activeRoom.id]
+  const visuals = activeRoom.visuals
   const roomMedia = getFeatureRoomMedia(activeRoom.id, locale)
   const hasRoomVideo = featureRoomHasVideo(roomMedia)
 
@@ -135,7 +121,7 @@ export function StudioGuidedTourSection() {
       title: `${activeRoom.stepNumber} · ${activeRoom.tabLabel}`,
       media: {
         imageUrl: '',
-        posterUrl: visuals.heroSrc,
+        posterUrl: assets.heroSrc,
         webmUrl: roomMedia.webmUrl,
         mp4Url: roomMedia.mp4Url,
       },
@@ -236,7 +222,7 @@ export function StudioGuidedTourSection() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-cyan-400">
-                    Step {room.stepNumber}
+                    {copy.stepPrefix} {room.stepNumber}
                   </p>
                   <p className="truncate text-sm font-bold text-white sm:text-base">
                     {room.tabLabel}
@@ -340,7 +326,7 @@ export function StudioGuidedTourSection() {
                     onClick={() =>
                       setExpandedScreenshot({
                         src: ROOM_FULL_SCREENSHOTS[activeRoom.id],
-                        alt: `${activeRoom.tabLabel} full workspace screenshot`,
+                        alt: `${activeRoom.tabLabel} — ${copy.inspectFullScreenLabel}`,
                       })
                     }
                     className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-medium text-gray-200 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white"
@@ -354,8 +340,8 @@ export function StudioGuidedTourSection() {
               {/* Hero Sandbox Frame */}
               <div className="relative aspect-video w-full overflow-hidden bg-black">
                 <img
-                  src={visuals.heroSrc}
-                  alt={visuals.heroAlt}
+                  src={assets.heroSrc}
+                  alt={`${activeRoom.tabLabel} — ${activeRoom.title}`}
                   className="h-full w-full object-cover"
                   loading="lazy"
                 />
@@ -394,24 +380,27 @@ export function StudioGuidedTourSection() {
 
               {/* 4 Connected Continuity / Shot Cards Strip */}
               <div className="grid grid-cols-2 gap-2.5 border-t border-slate-800 bg-slate-950 p-3.5 sm:grid-cols-4">
-                {visuals.thumbs.map((thumb) => (
-                  <div
-                    key={thumb.label}
-                    className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/90"
-                  >
-                    <div className="aspect-[16/10] w-full overflow-hidden bg-black">
-                      <img
-                        src={thumb.src}
-                        alt={thumb.label}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
+                {assets.thumbSrcs.map((thumbSrc, idx) => {
+                  const thumbLabel = visuals.thumbLabels[idx] ?? ''
+                  return (
+                    <div
+                      key={`${activeRoom.id}-${idx}`}
+                      className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/90"
+                    >
+                      <div className="aspect-[16/10] w-full overflow-hidden bg-black">
+                        <img
+                          src={thumbSrc}
+                          alt={thumbLabel}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                      <p className="truncate px-2.5 py-1.5 text-[11px] font-medium text-gray-200">
+                        {thumbLabel}
+                      </p>
                     </div>
-                    <p className="truncate px-2.5 py-1.5 text-[11px] font-medium text-gray-200">
-                      {thumb.label}
-                    </p>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -444,7 +433,7 @@ export function StudioGuidedTourSection() {
         open={liveScreeningOpen}
         onClose={() => setLiveScreeningOpen(false)}
         closeLabel={tCommon.has('close') ? tCommon('close') : 'Close'}
-        title="The Glass Ledger — Sandbox Screening Room"
+        title={copy.screeningModalTitle}
         href="/share/screening-room/glass-ledger-screening"
       />
     </section>

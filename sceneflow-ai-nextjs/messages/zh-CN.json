@@ -2474,77 +2474,77 @@
         },
         "animation": {
           "showTitle": "The Silt Line（淤泥线）",
-          "format": "Stylized 3D Animated Series · Episode 1 Pilot (3 Story Beats)",
+          "format": "风格化 3D 动画剧集 · 第 1 集试播集（3 个故事节拍）",
           "genre": "复古未来海事赛博惊悚",
-          "artStyle": "Tactile Stylized 3D Animation · Industrial Dieselpunk Maritime Grit & Bioluminescent Cybernetic Accents",
-          "duration": "32 min Pilot (3 Story Beats: 10.5m · 11.5m · 10m)",
-          "continuityLock": "5 Locked 3D Character Sheets · Port Marrow North Quay Workshop & Pier 14 Auction Barge · Optical Monocle Telemetry VFX",
+          "artStyle": "触感风格化 3D 动画 · 工业柴油朋克海港质感与生物发光赛博点缀",
+          "duration": "32 分钟试播集（3 个故事节拍：10.5 分钟 · 11.5 分钟 · 10 分钟）",
+          "continuityLock": "5 张锁定 3D 角色设定图 · 髓港北码头工坊与 14 号码头拍卖驳船 · 光学单镜片遥测视效",
           "unitLabel": "故事节拍 (3)",
-          "artLock": "Tactile stylized 3D animation blending heavy industrial dieselpunk maritime grit with bioluminescent cybernetic accents. Visual textures emphasize salt-corroded cast iron, water-stained architectural blueprints, frayed grease-soaked wool, and flickering amber vacuum tubes. Deductive sequences manifest as fractured holographic stress lines and pressure differentials that warp Juniper's vision into disorienting, over-saturated chromatic aberrations.",
+          "artLock": "触感风格化 3D 动画将厚重的工业柴油朋克海港粗粝质感与生物发光赛博点缀融为一体。视觉材质强调盐蚀铸铁、水渍建筑蓝图、沾满油污的磨损粗呢与闪烁的琥珀色真空管；推演片段则化作碎裂的全息应力线与气压差，将 Juniper 的视野扭曲为高饱和色差幻象。",
           "setting": "马罗港（Port Marrow）：一座融合 1920 年代黄铜海事建筑、多彩开源赛博技术、自动化潮汐与霓虹盐蚀码头的沿海复古未来港口大都会。",
-          "visualStyle": "富有触感的风格化 3D 动画，将厚重的工业柴油朋克海事质感与生物发光赛博元素相融合，突出盐蚀铸铁、水渍蓝图与闪烁琥珀色真空管纹理。",
+          "visualStyle": "触感风格化 3D 动画将厚重的工业柴油朋克海港粗粝质感与生物发光赛博点缀融为一体。视觉材质强调盐蚀铸铁、水渍建筑蓝图、沾满油污的磨损粗呢与闪烁的琥珀色真空管；推演片段则化作碎裂的全息应力线与气压差，将 Juniper 的视野扭曲为高饱和色差幻象。",
           "logline": "当贪婪的市政议员人为制造自动防洪闸故障以攫取重建债券并吞并马罗港工人共有的海滨合作社时，感官过载的 23 岁技术员与她的音响工程师搭档潜入离岸拍卖船，在街区被淹没前夺回失踪母亲的黑匣子遥测账本。",
           "seriesSynopsis": "在复古未来海滨城市马罗港，23 岁的诊断技术员朱妮珀·芬奇（Juniper Finch）与 24 岁的合作社音响工程师托拜厄斯·吴（Tobias Wu）面临北区市政工坊被吞并的危机。市议员奥维尔·克레인（Orville Crane）蓄意制造自动防潮屏障故障以骗取巨额债券并强征工人码头。朱妮珀透过增强光学单镜片破译驱逐令中的遥测数据，锁定 14 号码头的离岸拍卖驳船；在哈洛威督察的自我救赎掩护与托拜厄斯声波爆破的配合下，两人携母亲埃莉诺的黑匣子账本突围入风暴之中，准备揭露这场人为洪灾。",
           "cast": [
             {
               "name": "Juniper Finch",
-              "role": "Lead Diagnostic Technician · North Quay Collective",
-              "descriptor": "23-year-old lead diagnostic technician at the North Quay worker-owned workshop. Razor-sharp, hyper-focused, and hardened by years of municipal neglect, she navigates the world through an augmented optical monocle that visualizes mechanical telemetry and institutional deception, though over-extension triggers paralyzing sensory overload.",
+              "role": "首席诊断技师 · 北码头工人合作社",
+              "descriptor": "北码头工人自治工坊 23 岁的首席诊断技师。敏锐、极度专注，在多年市政忽视中磨砺成长；她借助增强光学单镜片洞察机械遥测与体制黑幕，但过度运转会引发令她瘫痪的感官过载。",
               "imageUrl": "/images/cast/silt-line/juniper-finch.webp"
             },
             {
               "name": "Tobias Wu",
-              "role": "Acoustic Telemetry Specialist · Co-Op Sound Engineer",
-              "descriptor": "24-year-old acoustic telemetry specialist and co-op sound-technician facing housing displacement alongside his collective. Grounded, patient, and tactically decisive, he uses acoustic resonance instrumentation not only for mechanical diagnostics but as a vital neuro-acoustic anchor to pull Juniper out of cognitive feedback loops.",
+              "role": "声学遥测专家 · 合作社音响工程师",
+              "descriptor": "24 岁的声学遥测专家兼合作社音响师，与工友共同面临迫迁危机。沉稳、耐心、战术果断，他不仅用声学共振仪器做机械诊断，更以此作为神经声学锚点，将 Juniper 从认知过载循环中拉回现实。",
               "imageUrl": "/images/cast/silt-line/tobias-wu.webp"
             },
             {
               "name": "Orville Crane",
-              "role": "Municipal Councilor & Infrastructure Developer",
-              "descriptor": "Civic industrialist, municipal council member, and private infrastructure developer who orchestrates 'natural' disasters to clear real estate and extract recovery capital. Smooth, pragmatically ruthless, and impeccably tailored, he views the working-class waterfront as fiscal deadweight that must be cleansed by the sea to build high-yield luxury enclaves.",
+              "role": "市政议员兼基础设施开发商",
+              "descriptor": "市政实业家、市议员兼私营基建开发商，蓄意制造“自然”灾害以清空地皮并套取重建资金。衣冠楚楚、冷酷务实，把工人聚居的滨水区视为必须被海水冲刷殆尽的财政累赘，以改建高收益豪华飞地。",
               "imageUrl": "/images/cast/silt-line/orville-crane.webp"
             },
             {
               "name": "John Anderson",
-              "role": "Chief Maritime Inspector",
-              "descriptor": "Weathered chief maritime inspector whose silence was purchased a decade ago during Eleanor Finch's disappearance. Bound by bureaucratic weariness, pensions, and survivalist cynicism, he maintains Crane's perimeter until commanded to participate in outright murder and cultural arson.",
+              "role": "首席海事督察",
+              "descriptor": "饱经风霜的首席海事督察，十年前 Eleanor Finch 失踪时被收买而保持沉默。受困于官僚倦怠、退休金与生存犬儒主义，他一直替 Crane 维持封锁线，直到被命令亲自参与灭口与焚毁档案。",
               "imageUrl": "/images/cast/silt-line/john-anderson.webp"
             },
             {
               "name": "Inspector Bram Halloway",
-              "role": "Harbor District Investigator · Undercover Mentor",
-              "descriptor": "A seasoned, honest Harbor District investigator caught between rigid precinct bureaucracy and his obligation to protect the city's waterfront communities. Respecting Juniper's sharp mind and fond memories of her mother, he serves as an undercover mentor who feeds the kids discreet tips while running interference with municipal security.",
+              "role": "港区调查官 · 卧底导师",
+              "descriptor": "经验丰富且正直的港区调查官，夹在僵化的警局官僚体制与守护滨水社区的职责之间。他欣赏 Juniper 的锋利才智并怀念她的母亲，暗中向年轻人们传递情报并周旋于市政保安之间。",
               "imageUrl": "/images/cast/silt-line/inspector-bram-halloway.webp"
             }
           ],
           "episode1Synopsis": {
-            "episodeLabel": "Production Synopsis · 3-Beat Animated Pilot (32 min)",
-            "title": "The Silt Line — North Quay & Pier 14",
-            "duration": "32 min (3 Story Beats: 10.5 min · 11.5 min · 10 min)",
-            "logline": "When a predatory municipal councilor stages an automated floodgate failure to collect recovery bonds and seize Port Marrow's worker-owned waterfront collective, a sensory-strained 23-year-old technician and her sound-engineer partner infiltrate an offshore auction to secure her missing mother's black-box telemetry before their district is submerged.",
-            "synopsis": "In the retro-futuristic coastal city of Port Marrow, 23-year-old diagnostic technician Juniper Finch and co-op sound engineer Tobias Wu (24) face the imminent destruction of the North Quay Municipal Workshop—a worker-owned collective supporting displaced maritime laborers. The threat comes via Councilman Orville Crane, who has engineered a deliberate failure of the automated tidal surge barriers, framing it as an 'unavoidable climate event' to default lower-quay parcels, collect billions in municipal recovery bonds, and rezone the submerged district under private 'green renewal' charters. Utilizing her augmented deductive monocle despite the blinding cognitive migraines it inflicts, Juniper decodes municipal telemetry embedded in the eviction writ, pinpointing Crane's offshore auction barge at Pier 14 where the decommissioned floodgate controls and her vanished mother Eleanor's encrypted black-box ledger are being sold off. Disguised in dockers' oilskins, Juniper and Tobias infiltrate the barge's iron catwalks. In the lower hold, Chief Inspector Bram Halloway reaches his breaking point when Crane hands him an incendiary flare and orders him to burn Eleanor's original flood baseline archives and quietly ensure the whistleblowing youths drown in the slipway. Horrified by the cost of his decade-long complicity, Halloway hesitates while Juniper taps the auction feed, suffering a sensory seizure as Eleanor's decrypted voice reveals the flood is a manufactured market play. Cornered in Crane's private gallery, Juniper rejects Crane's offer to buy her silence; Tobias sacrifices his custom acoustic hardware to blow out the panoramic windows with a sonic blast. As enforcers swarm the slipway, Halloway enacts his redemption by manually locking the hydraulic blast gates from the outside, trapping himself with Crane's guards to guarantee Juniper and Tobias escape into the storm with the ledger, ready to expose the engineered deluge.",
-            "chapter1Title": "Chapter 1 (Beat 1): Hook & Context: The Manufactured Surge",
-            "chapter1Duration": "10.5 min · Opening Story Beat",
-            "chapter1Synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability as she decodes the eviction writ telemetry."
+            "episodeLabel": "制片梗概 · 3 节拍动画试播集（32 分钟）",
+            "title": "The Silt Line — 北码头与 14 号码头",
+            "duration": "32 分钟（3 个故事节拍：10.5 分钟 · 11.5 分钟 · 10 分钟）",
+            "logline": "当掠夺成性的市政议员蓄意制造自动防洪闸故障以套取灾后债券并吞并髓港工人合作社时，感官超负荷的 23 岁女技师与音响师搭档潜入近海拍卖驳船，赶在街区被淹没前夺回失踪母亲的黑匣子遥测账本。",
+            "synopsis": "在复古未来主义海滨城市髓港，23 岁的诊断技师 Juniper Finch 与合作社音响工程师 Tobias Wu（24 岁）面临北码头市政工坊被强拆吞并的灭顶之灾。市议员 Orville Crane 蓄意破坏自动防潮闸门，将其伪装成“不可避免的气候灾害”，企图借低洼码头违约套取数十亿灾后重建债券并私相授受土地。Juniper 顶着剧烈的认知偏头痛，用增强推演单镜片破译驱逐令中的市政遥测数据，锁定停泊在 14 号码头的近海拍卖驳船——退役防洪闸控制器与她失踪母亲 Eleanor 的加密黑匣子账本正在船上秘密拍卖。两人伪装成码头工人潜入铁制猫道；危急关头，Tobias 牺牲自制声学设备以声波轰碎全景玻璃窗，而良知觉醒的督察 Halloway 从外部手动锁死液压防爆门完成自我救赎，护送两人携账本冲入暴风雨揭穿这场人造洪灾。",
+            "chapter1Title": "第 1 章（节拍 1）：悬念开场与背景：人造风暴潮",
+            "chapter1Duration": "10.5 分钟 · 开篇故事节拍",
+            "chapter1Synopsis": "确立北码头工人合作社严峻的生存危机，揭示 Crane 借灾难牟利的资本阴谋，并展现 Juniper 破译驱逐令遥测时的感官脆弱性。"
           },
           "episodes": [
             {
               "number": "1",
-              "title": "Hook & Context: The Manufactured Surge",
-              "duration": "10.5 min",
-              "synopsis": "Establish the adult socioeconomic stakes of the North Quay worker-owned workshop, ground Crane's scheme in disaster capitalism, and demonstrate Juniper's sensory vulnerability."
+              "title": "悬念开场与背景：人造风暴潮",
+              "duration": "10.5 分钟",
+              "synopsis": "确立北码头工人合作社的现实危机，揭示 Crane 的灾难资本阴谋，并展现 Juniper 的感官过载代价。"
             },
             {
               "number": "2",
-              "title": "Infiltration & The Moral Crucible",
-              "duration": "11.5 min",
-              "synopsis": "Escalate procedural tension through forensic infiltration, introduce Halloway's moral crossroads when ordered to destroy Eleanor's legacy, and uncover Eleanor's black-box cipher."
+              "title": "潜入驳船与良知拷问",
+              "duration": "11.5 分钟",
+              "synopsis": "通过取证潜入层层推高悬念，刻画 Halloway 被迫销毁 Eleanor 遗留档案时的道德抉择，并解开黑匣子密码。"
             },
             {
               "number": "3",
-              "title": "Climax & Escape: The Silt Line Defiance",
-              "duration": "10 min",
-              "synopsis": "Deliver an emotionally grounded climax where Crane's extortion is shattered by sacrificial tech and Halloway achieves moral redemption by locking down the escape corridor."
+              "title": "高潮与突围：淤泥线的反击",
+              "duration": "10 分钟",
+              "synopsis": "在情感充沛的高潮戏中以声波装备粉碎 Crane 的勒索，Halloway 锁死逃生通道完成道德救赎。"
             }
           ]
         },
@@ -2922,32 +2922,32 @@
         "screeningRoomPreview": "《淤泥线》(The Silt Line) — 放映室",
         "solutionPillars": [
           {
-            "title": "Stylistic Consistency",
-            "frictionHeadline": "Style Meltdown.",
-            "friction": "Stylized 3D and animated worlds constantly warp between shots, losing material textures, breaking lighting palettes, and drifting characters off-model.",
-            "solutionHeadline": "Locked Art Style Engine.",
-            "solution": "Freeze tactile dieselpunk brass, salt-corroded iron, and bioluminescent cybernetic shaders from frame one so every character and harbor set stays model-accurate."
+            "title": "艺术风格高度一致",
+            "frictionHeadline": "跨镜头画风崩塌。",
+            "friction": "风格化 3D 与动画世界在镜头切换间极易变形——材质纹理丢失、光影色盘断裂、角色频频走形脱模。",
+            "solutionHeadline": "锁定式艺术风格引擎。",
+            "solution": "从第一帧起锁定触感柴油朋克黄铜、盐蚀铸铁与生物发光赛博着色器，确保每位角色与港口布景全程精准贴合设定。"
           },
           {
-            "title": "Complex VFX & Deductive Overlays",
-            "frictionHeadline": "Inconsistent Visual Motifs.",
-            "friction": "Recurring character-specific visual mechanics — like augmented optical telemetry or holographic stress lines — vanish or mutate across cuts.",
-            "solutionHeadline": "Reference-Anchored Direction.",
-            "solution": "Anchor Juniper's optical monocle telemetry, chromatic stress aberrations, and Tobias's acoustic resonance gear consistently across every dramatic beat."
+            "title": "复杂视效与推演图层",
+            "frictionHeadline": "视觉母题前后不一。",
+            "friction": "角色专属的常驻视觉机制——如增强光学遥测或全息应力线条——在剪辑切换间常常消失或突变。",
+            "solutionHeadline": "参考锚定式导演控制。",
+            "solution": "在每一个戏剧节拍中稳定锚定 Juniper 的光学单镜片遥测、色差应力视效以及 Tobias 的声学共振装备。"
           },
           {
-            "title": "Dramatic Tension & Beat Pacing",
-            "frictionHeadline": "Disconnected Action Clips.",
-            "friction": "High-stakes infiltration sequences fall apart when generated as isolated 5-second clips without continuous spatial geography or act structure.",
-            "solutionHeadline": "Beat-Precision Storyboarding.",
-            "solution": "Direct multi-minute story beats — from the North Quay workshop to Pier 14’s hydraulic blast gates — with intentional camera blocking before final render."
+            "title": "戏剧张力与节拍掌控",
+            "frictionHeadline": "割裂的五秒动作碎片。",
+            "friction": "高风险潜入戏若仅靠孤立的 5 秒短片拼凑，缺乏连续空间方位与幕结构，叙事张力便会瞬间瓦解。",
+            "solutionHeadline": "节拍级精准故事板。",
+            "solution": "在最终渲染前，从北码头工坊到 14 号码头液压防爆闸门，按多分钟叙事节拍精准调度机位与场面走位。"
           },
           {
-            "title": "Global In-Scene Vocal Sync",
-            "frictionHeadline": "Detached Dubbing & Lifeless Lip-Sync.",
-            "friction": "Translating stylized 3D animation into global languages usually breaks mouth shapes and flattens emotional vocal performance.",
-            "solutionHeadline": "7-Language In-Scene Sync.",
-            "solution": "Deliver synchronized character performances in English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai while preserving expressive 3D facial acting."
+            "title": "全球多语种戏内口型同步",
+            "frictionHeadline": "配音脱节与僵硬口型。",
+            "friction": "将风格化 3D 动画译制为多国语言时，往往会破坏口型贴合度并削弱角色原本充沛的情绪演绎。",
+            "solutionHeadline": "7 国语言戏内原生同步。",
+            "solution": "同步输出英语、西班牙语、葡萄牙语、印地语、中文、阿拉伯语与泰语对白演绎，完整保留富有表现力的 3D 面部表演。"
           }
         ]
       },
@@ -3637,7 +3637,7 @@
       "mostPopular": "最受欢迎",
       "creditsPerMonth": "每月点数",
       "storage": "连续性保险库",
-      "perMonth": "/month"
+      "perMonth": "/月"
     },
     "trust": {
       "cancelAnytime": "随时取消",
@@ -3827,54 +3827,54 @@
   },
   "studioLanding": {
     "heroDock": {
-      "tagline": "执导原创影视剧集 — 或打造高利润的视频交付服务业务。无需电影学院背景，告别繁琐提示词工程。",
+      "tagline": "执导原创影视剧集 — 或打造高毛利的视频定制服务业务。无需电影学院背景，告别繁琐提示词工程。",
       "primaryCta": "启动工作室 ($9)",
-      "businessCta": "了解视频服务商机",
+      "businessCta": "探索视频服务商机",
       "howItWorksCta": "了解工作流程"
     },
     "audienceGateway": {
-      "eyebrow": "一体化制片厂 · 三大成功路径",
+      "eyebrow": "一体化制片厂 · 三大赢利与创作路径",
       "title": "创作原创影视世界，",
-      "titleAccent": "或开启高利润视频定制业务。",
-      "subtitle": "SceneFlow 将专业级 AI 制片团队与自然语音/文字导演对话融为一体，赋能商业视频服务商、故事创作者与资深影视人。",
+      "titleAccent": "或打造高利润的视频服务事业。",
+      "subtitle": "SceneFlow 将专家级 AI 制片团队与自然语音/文字导演对话融为一体 — 全面赋能商业视频服务商、故事新人与资深影视创作者。",
       "cards": [
         {
           "id": "services",
-          "badge": "Income Opportunity · 65–85% Typical Margin",
-          "title": "Video Delivery Businesses",
-          "description": "Deliver bespoke Life Memoirs, Real Estate Walkthroughs, Corporate Training, and Brand Films for paying clients in hours instead of weeks—with full commercial ownership.",
+          "badge": "高收益商机 · 65–85% 典型毛利率",
+          "title": "商业视频交付服务商",
+          "description": "在数小时而非数周内，为付费客户交付人生传记电影、房产导览、企业培训与品牌短片 — 享有 100% 商业版权归属。",
           "highlights": [
-            "Guided story-first client intake & multi-age cast continuity",
-            "Shared links for Blueprint, Continuity & Screening sign-off",
-            "Hybrid client photos + 4K AI re-enactments keep margins high"
+            "故事优先的引导式客户访谈与分年龄段角色连续性锁定",
+            "通过分享链接轻松完成 Blueprint、角色连续性与 Screening Room 客户签收",
+            "客户真实照片 + 4K AI 电影重现混合模式，兼顾质感与高利润"
           ],
-          "ctaLabel": "Explore Business Models & Margins",
+          "ctaLabel": "查看商业模式与收益测算",
           "targetAnchor": "video-services"
         },
         {
           "id": "aspiring",
-          "badge": "No Film School or Prompting Needed",
-          "title": "Aspiring Storytellers & Authors",
-          "description": "Have a memoir, novel, or channel idea in your head? Describe your story in everyday spoken or typed words and let SceneFlow generate your expert baseline script and world.",
+          "badge": "无需电影科班或提示词技巧",
+          "title": "新锐故事创作者与作者",
+          "description": "脑海中有回忆录、小说或频道创意？只需用日常语言说出或输入故事，SceneFlow 即可自动生成专业级剧集、蓝图与拍摄剧本初稿。",
           "highlights": [
-            "Instant expert baseline for Series, Blueprint & Script",
-            "Speak or type changes in plain language—zero prompt syntax",
-            "Watch your voiced animatic before spending credits on motion"
+            "一键生成剧集圣经、Blueprint 与分镜制作剧本初稿",
+            "用自然语音或文字直接下达修改指令 — 零提示词语法门槛",
+            "在消耗视频积分前先试看全配音 Pre-vis 动态分镜预演"
           ],
-          "ctaLabel": "Take the 4-Step Studio Tour",
+          "ctaLabel": "体验 4 步制片空间导览",
           "targetAnchor": "studio-tour"
         },
         {
           "id": "experienced",
-          "badge": "Series Channels · Podcasts · Investor Pre-Vis",
-          "title": "Experienced Creators & Filmmakers",
-          "description": "End slot-machine regenerations. Lock recurring cast faces, per-shot wardrobes, custom voices, and sets in your Continuity Vault—then scale production 10x with autonomous agents.",
+          "badge": "长剧频道 · 视频播客 · 投融资预演",
+          "title": "资深创作者与专业影视人",
+          "description": "彻底终结盲盒式抽卡重绘。在连续性资产库中锁定常驻演员面孔、逐镜头服装、专属声线与实景 — 再由全自动代理实现 10 倍产能跃升。",
           "highlights": [
-            "Multi-episode Continuity Vault & per-shot wardrobe control",
-            "Audience Resonance & FlowDirector greenlight review",
-            "Autonomous agents build 27+ scenes & 70+ language dubs"
+            "跨剧集连续性资产库与逐镜头专属服装选择",
+            "内置 Audience Resonance 评分与 FlowDirector 专家级审片指导",
+            "自主代理自动生成 27+ 场戏并输出 70+ 种语言译制流"
           ],
-          "ctaLabel": "See the 5 Studio Superpowers",
+          "ctaLabel": "了解 5 大制片超能力",
           "targetAnchor": "five-superpowers"
         }
       ]
@@ -3883,288 +3883,387 @@
       "eyebrow": "SceneFlow 核心设计哲学",
       "title": "五大制片超能力，",
       "titleAccent": "告别晦涩技术手册。",
-      "subtitle": "自动生成专家级初稿、语音或文字自然执导、Audience Resonance 专业审片，以及全自动多场景生产代理。",
-      "watchClipLabel": "观看 30 秒导览",
+      "subtitle": "传统 AI 视频工具迫使您在碎片化软件间反复横跳、手写上百条脆弱提示词。SceneFlow 提供自动专家初稿、语音/文字对话执导、受众共鸣审片与全自动生产代理。",
+      "watchClipLabel": "观看 30 秒概览",
       "pillars": [
         {
           "id": "baseline",
           "number": "01",
-          "badge": "Never Face a Blank Page",
-          "title": "Auto Expert Baseline Generation",
-          "description": "Start with a simple concept or story-first interview. SceneFlow automatically writes a structured Series Bible, Film Blueprint, and Production Script—complete with individual character arcs, era-accurate locations, and dramatic beats.",
-          "outcomeTag": "Series · Blueprint · Production Script",
+          "badge": "告别空白页焦虑",
+          "title": "自动生成专家级初稿基线",
+          "description": "从一句话创意或引导式故事访谈起步，SceneFlow 自动撰写结构完整的剧集圣经、电影 Blueprint 与拍摄剧本 — 涵盖独立人物弧光、时代场景与戏剧节拍。",
+          "outcomeTag": "剧集 · Blueprint · 制作剧本",
           "videoClipKey": "comparison"
         },
         {
           "id": "dialog",
           "number": "02",
-          "badge": "Voice or Typed Direction",
-          "title": "Full Director Control via Intelligent Dialog",
-          "description": "Direct like a filmmaker, not a prompt engineer. Speak or type to reshape story beats, split characters across life stages (Age 17, 32, 62), pick exact per-shot wardrobes, or surgically refine any frame.",
-          "outcomeTag": "Zero Prompt Engineering",
+          "badge": "语音或文字自然执导",
+          "title": "智能对话驱动的完整导演控制权",
+          "description": "像真正的导演一样创作，而非提示词工程师。通过语音或打字调整剧情节拍、拆分不同人生阶段角色（17 岁、32 岁、62 岁）、指定每个镜头的服装或精修画面。",
+          "outcomeTag": "零提示词工程",
           "videoClipKey": "direction"
         },
         {
           "id": "review",
           "number": "03",
-          "badge": "Greenlight Before You Spend",
-          "title": "Audience Resonance & FlowDirector Review",
-          "description": "Built-in Audience Resonance scores your Series, Blueprint, and Script against your target audience, while FlowDirector highlights pacing gaps and applies one-click creative upgrades before rendering video.",
-          "outcomeTag": "Series · Blueprint · Script Scoring"
+          "badge": "投入积分前先获绿灯评估",
+          "title": "Audience Resonance 与 FlowDirector 专家审片",
+          "description": "内置 Audience Resonance 针对目标受众为剧集、Blueprint 与剧本打分，FlowDirector 自动指出节奏短板并提供一键优化建议，先打磨剧本再渲染视频。",
+          "outcomeTag": "剧集 · Blueprint · 剧本三阶评分"
         },
         {
           "id": "agents",
           "number": "04",
-          "badge": "Hands-Free Scale",
-          "title": "Autonomous Fast-Track Production Agents",
-          "description": "Once your script and Pre-Vis animatic feel right, launch Audio, Stills, Clips, or the full Production Agent to build dozens of scenes, self-heal failed takes, and notify you when your cut is ready.",
-          "outcomeTag": "300+ Manual Prompts Replaced",
+          "badge": "解放双手的规模化产能",
+          "title": "全自动快速通道制片代理",
+          "description": "确认剧本与 Pre-vis 动态分镜后，即可启动 Audio Agent、Stills Agent、Clips Agent 或完整 Production Agents，自动批量生成数十场戏并自我修复瑕疵镜头。",
+          "outcomeTag": "替代 300+ 次手动提示词输入",
           "videoClipKey": "agent"
         },
         {
           "id": "collaboration",
           "number": "05",
-          "badge": "Client Sign-Off & Global Reach",
-          "title": "Shared Review Links, Screening Room & 70+ Languages",
-          "description": "Share clean browser links for Blueprint, Script, and frame-accurate Screening Room sign-off—then deliver localized streams in 70+ languages while directing in 7 native Studio UI languages.",
-          "outcomeTag": "Share Links · Screening Room · 70+ Dubs",
+          "badge": "客户签收与全球多语种发行",
+          "title": "分享审阅链接、Screening Room 与 70+ 语言译制",
+          "description": "发送免登录网页链接完成 Blueprint、剧本及 Screening Room 逐帧审片确认 — 支持 7 种原生工作台语言与 70+ 种语言场景化配音交付。",
+          "outcomeTag": "审阅链接 · Screening Room · 70+ 译制",
           "videoClipKey": "publish"
         }
-      ]
+      ],
+      "microVisuals": {
+        "baseline": {
+          "intakePrompt": "故事访谈：“请讲讲您的故事……”",
+          "autoBadge": "数秒内自动生成",
+          "steps": [
+            {
+              "step": "1 · 剧集圣经",
+              "detail": "6 集故事弧 + 共享资产库"
+            },
+            {
+              "step": "2 · 电影 Blueprint",
+              "detail": "共鸣节拍 + 分龄角色卡"
+            },
+            {
+              "step": "3 · 制作剧本",
+              "detail": "对白、服装与镜头调度"
+            }
+          ]
+        },
+        "dialog": {
+          "quote": "“将约翰拆分为 17 岁、32 岁和 62 岁三个独立角色 — 并在镜头 2 给艾拉拉换上晚宴丝绸大衣。”",
+          "chipCast": "✓ 已锁定 3 张分龄角色卡",
+          "chipWardrobe": "✓ 镜头 2 服装：晚宴丝绸大衣"
+        },
+        "review": {
+          "arLabel": "Audience Resonance",
+          "arStatus": "绿灯通过 · 3 大关卡",
+          "gateSeries": "剧集 90",
+          "gateBlueprint": "Blueprint 92",
+          "gateScript": "剧本 94",
+          "flowDirectorNote": "FlowDirector：一键强化中段情感高潮（+6 分）"
+        },
+        "agents": {
+          "rows": [
+            {
+              "label": "Audio Agent · 配音、音效与配乐",
+              "status": "27 / 27 就绪"
+            },
+            {
+              "label": "Stills Agent · 连续性关键帧",
+              "status": "100% 锁定"
+            },
+            {
+              "label": "Clips Agent · 自愈式动态镜头",
+              "status": "自动校验通过"
+            }
+          ]
+        },
+        "collaboration": {
+          "approvedBadge": "已签收 ✓",
+          "dubsChip": "+70 种配音"
+        }
+      }
     },
     "videoServices": {
-      "eyebrow": "商业变现引擎 · B2B 与客户视频交付服务",
+      "eyebrow": "商业变现引擎 · B2B 与客户定制视频服务",
       "title": "用 SceneFlow 打造您的",
-      "titleAccent": "高毛利视频制作生意",
-      "subtitle": "家庭人生传记、房产导览、企业多语种培训与品牌故事客单价达 $200–$2,500+。数小时交付院线级成片，享有 100% 商业版权收益。",
-      "commercialRightsBadge": "100% 商业版权归属 · 自由向客户交付母带",
-      "verticalsHeading": "1. Choose a High-Demand Client Service",
-      "calculatorBadge": "Interactive Unit Economics Preview",
-      "calculatorTitle": "2. Estimate Your Monthly Service Income",
-      "volumeLabel": "Client deliveries / month:",
-      "projectsPerMonthSuffix": "projects/mo",
-      "typicalFeeLabel": "Typical client price",
-      "estComputeLabel": "Est. SceneFlow compute",
-      "activeHandsOnLabel": "Hands-on direction",
-      "monthlyGrossLabel": "Est. Monthly Client Billing",
-      "monthlyNetLabel": "Est. Net Creator Income (before base plan)",
-      "marginBadgeSuffix": "gross margin",
-      "disclaimer": "Illustrative estimates using SceneFlow’s hybrid Pre-Vis animatic + selective 4K AI clip workflow ($0.01/credit add-on rate). You set your own client pricing and terms.",
-      "launchBusinessCta": "开启视频服务业务 ($9)",
-      "workflowHeading": "How a Client Project Flows in 4 Effortless Steps",
+      "titleAccent": "高毛利视频制作事业",
+      "subtitle": "家庭传记、房产导览、学校及企业定制故事视频市场客单价高达 $200 至 $2,500+，而传统实拍团队成本动辄数千美元。数小时交付惊艳成片，100% 客户营收归您所有。",
+      "commercialRightsBadge": "100% 商业版权归属 · 自由向客户交付高清母带",
+      "verticalsHeading": "1. 选择高需求客户服务赛道",
+      "whoBuysLabel": "高频复购客户群体",
+      "marginAdvantageLabel": "SceneFlow 利润率优势",
+      "calculatorBadge": "交互式单项目经济模型预览",
+      "calculatorTitle": "2. 测算您的月度服务净收入",
+      "volumeLabel": "每月交付客户项目数：",
+      "projectsPerMonthSuffix": "单/月",
+      "typicalFeeLabel": "典型客户报价",
+      "estComputeLabel": "预估 SceneFlow 算力成本",
+      "activeHandsOnLabel": "人工执导耗时",
+      "monthlyGrossLabel": "预估月度客户营收总额",
+      "monthlyNetLabel": "预估创作者月净收入（扣除算力后）",
+      "perMonthSuffix": "/ 月",
+      "marginBadgeSuffix": "毛利率",
+      "disclaimer": "以上为采用 SceneFlow 混合 Pre-vis 动态分镜 + 精选 4K AI 镜头工作流的测算示例（按 $0.01/积分加购包折算），实际向客户的报价与条款由您自主决定。",
+      "launchBusinessCta": "开启您的视频服务业务 ($9)",
+      "workflowHeading": "客户定制项目如何通过 4 个轻松步骤高效交付",
+      "stepPrefix": "步骤",
       "workflowSteps": [
         {
           "step": "01",
-          "title": "Story-First Client Intake",
-          "detail": "Interview your client (\"Tell me your story\") to capture resonating life or brand beats and key individuals."
+          "title": "故事优先的客户访谈",
+          "detail": "通过自然访谈（“请讲讲您的故事”）提炼打动人心的人生或品牌节拍与关键人物。"
         },
         {
           "step": "02",
-          "title": "Shared Blueprint Sign-Off",
-          "detail": "Refine with Audience Resonance internally, then send a clean Blueprint link for client approval before production."
+          "title": "分享 Blueprint 链接确认",
+          "detail": "内部通过 Audience Resonance 评估打磨后，发送免登录 Blueprint 链接供客户签字立项。"
         },
         {
           "step": "03",
-          "title": "Hybrid Photo + AI Build",
-          "detail": "Combine real client photos with multi-age cast continuity, custom wardrobes, and autonomous Audio/Clips Agents."
+          "title": "真实照片 + AI 混合制片",
+          "detail": "将客户珍藏照片与分龄角色连续性、专属服装及 Audio Agent / Clips Agent 自动合成完美结合。"
         },
         {
           "step": "04",
-          "title": "Screening Room Delivery",
-          "detail": "Share a private Screening Room link for frame-accurate review, export the 4K master, and collect payment."
+          "title": "Screening Room 审片交付",
+          "detail": "发送私密 Screening Room 链接收集逐帧修改意见，导出 4K 商业母带并完成收款。"
         }
       ],
       "verticals": [
         {
           "id": "memoir",
-          "tabLabel": "Video Memoirs",
-          "badge": "$350–$799 / film · High Emotional Value",
-          "title": "Life Stories, Milestone Tributes & Family Biographies",
-          "description": "Blend treasured family photographs with cinematic AI era re-enactments and accurate multi-age character continuity (e.g., Age 17 → Age 32 → Age 62) narrated in warm, lifelike voices.",
-          "clientBuyer": "Families, milestone birthdays, estate planners, senior communities & funeral homes",
+          "tabLabel": "人生传记电影",
+          "badge": "$350–$799 / 部 · 极高情感溢价",
+          "title": "人生回忆录、金婚寿辰致敬与家族传记大片",
+          "description": "将珍贵的家庭老照片与电影级 AI 时代重现、精准分龄人物连续性（如 17 岁 → 32 岁 → 62 岁）无缝融合，搭配温暖自然的旁白配音。",
+          "clientBuyer": "家庭客户、重要寿辰/纪念日庆典、财富传承顾问、高端康养社区与纪念礼仪机构",
           "typicalRetailUsd": 450,
           "retailRangeLabel": "$350–$799",
           "estComputeUsd": 75,
-          "activeMinutesLabel": "~45 min",
-          "keyAdvantage": "Hybrid Documentary mode mixes real archival photos with selective hero AI clips for 80%+ margins."
+          "activeMinutesLabel": "~45 分钟",
+          "keyAdvantage": "混合纪录片模式结合真实档案照片与关键 AI 电影镜头，轻松实现 80% 以上毛利率。"
         },
         {
           "id": "realestate",
-          "tabLabel": "Real Estate Tours",
-          "badge": "$199–$399 / listing · Repeat Brokerage Volume",
-          "title": "Narrated Luxury Property & Boutique Hospitality Tours",
-          "description": "Turn listing photographs and neighborhood highlights into scored, narrated cinema walkthroughs—plus instant Mandarin, Spanish, Arabic, or Portuguese versions for international buyers.",
-          "clientBuyer": "Residential realtors, luxury brokerages, vacation rentals & boutique hotels",
+          "tabLabel": "房产与酒店导览",
+          "badge": "$199–$399 / 套 · 经纪行高频复购",
+          "title": "豪宅房源配音漫游与精品酒店沉浸导览",
+          "description": "将房源实拍照片与周边配套亮点转化为配乐配音俱全的电影感导览大片 — 并可即时生成英语、西语、阿语或葡语版本吸引海外买家。",
+          "clientBuyer": "住宅房产经纪人、豪宅代理机构、度假民宿主理人与精品酒店",
           "typicalRetailUsd": 275,
           "retailRangeLabel": "$199–$399",
           "estComputeUsd": 22,
-          "activeMinutesLabel": "~20 min",
-          "keyAdvantage": "One realtor listing 4 homes a month becomes a recurring monthly retainer account."
+          "activeMinutesLabel": "~20 分钟",
+          "keyAdvantage": "一位每月上架 4 套房源的房产经纪人即可转化为稳定的包月合作客户。"
         },
         {
           "id": "training",
-          "tabLabel": "Training & SOPs",
-          "badge": "$600–$2,500 / course · 70+ Languages",
-          "title": "Corporate Onboarding, Safety & Multilingual Courses",
-          "description": "Lock a consistent instructor avatar, uniforms, and workplace sets in your Continuity Vault—then ship crystal-clear training episodes localized across every employee’s native language.",
-          "clientBuyer": "HR & L&D teams, manufacturers, healthcare clinics, restaurants & franchises",
+          "tabLabel": "企业培训与 SOP",
+          "badge": "$600–$2,500 / 门课 · 70+ 种语言",
+          "title": "企业入职培训、安全规范与多语种标准课程",
+          "description": "在连续性资产库中锁定讲师形象、工装制服与作业场景 — 一键向全球不同母语员工交付清晰统一的标准培训剧集。",
+          "clientBuyer": "企业 HR 与培训部门、制造工厂、医疗诊所、连锁餐饮与特许加盟品牌",
           "typicalRetailUsd": 950,
           "retailRangeLabel": "$600–$2,500",
           "estComputeUsd": 80,
-          "activeMinutesLabel": "~60 min",
-          "keyAdvantage": "Update one changed compliance beat in minutes without hiring actors or reshooting."
+          "activeMinutesLabel": "~60 分钟",
+          "keyAdvantage": "合规条款更新时仅需几分钟重制对应片段，无需重聘演员或重新实拍。"
         },
         {
           "id": "brand",
-          "tabLabel": "Brand Stories",
-          "badge": "$400–$1,200 / package · Web + Social",
-          "title": "Founder Origin Films, Clinic Explainers & Social Ads",
-          "description": "Craft high-converting homepage brand stories paired with automatic 9:16 vertical trailers for Instagram, TikTok, and YouTube Shorts—vetted with clients in the Screening Room.",
-          "clientBuyer": "Medical/dental practices, law firms, local SMBs, agencies & e-commerce founders",
+          "tabLabel": "品牌故事与广告",
+          "badge": "$400–$1,200 / 套 · 官网 + 社媒矩阵",
+          "title": "创始人品牌故事片、诊所科普与竖屏社媒广告",
+          "description": "打造高转化官网品牌故事主片，并自动裁剪适配抖音、TikTok、Instagram 与 YouTube Shorts 的 9:16 竖屏预告片 — 通过 Screening Room 高效审片。",
+          "clientBuyer": "医疗/牙科诊所、律师事务所、本地中小企业、营销机构与跨境电商品牌主理人",
           "typicalRetailUsd": 600,
           "retailRangeLabel": "$400–$1,200",
           "estComputeUsd": 40,
-          "activeMinutesLabel": "~35 min",
-          "keyAdvantage": "Upsell seasonal promo cutdowns from the client’s saved Continuity Vault."
+          "activeMinutesLabel": "~35 分钟",
+          "keyAdvantage": "复用客户已保存的品牌连续性资产库，轻松增售节日促销与季度新片。"
         }
       ]
     },
     "guidedTour": {
-      "eyebrow": "可视化制片导览 · 直观易懂",
+      "eyebrow": "可视化制片导览 · 告别专业术语",
       "title": "四大协同创作空间，",
-      "titleAccent": "一站式顺畅成片。",
-      "subtitle": "通过真实沙盒项目演示，直观体验从故事访谈、分龄角色锁定到客户审片交付的完整流程。",
-      "lensLabel": "切换演示视角：",
+      "titleAccent": "一套行云流水的流程。",
+      "subtitle": "无需阅读厚重说明书 — 通过工作室沙盒的真实项目案例，直观了解一个创意如何从故事访谈一路演进为客户签收的 4K 母带。",
+      "stepPrefix": "步骤",
+      "lensLabel": "预览演示视角：",
       "lensCreator": "原创剧集（《琉璃账本》）",
-      "lensService": "客户定制服务（“人生传记电影”）",
+      "lensService": "客户服务（“人生传记电影”）",
       "watchRoomVideoLabel": "观看 30 秒空间导览",
       "inspectFullScreenLabel": "查看高清完整工作台",
-      "openLiveScreeningLabel": "打开沙盒审片室预览",
+      "openLiveScreeningLabel": "打开沙盒 Screening Room 预览",
+      "screeningModalTitle": "《琉璃账本》— 沙盒 Screening Room 实景演示",
       "rooms": [
         {
           "id": "series-desk",
           "stepNumber": "01",
-          "tabLabel": "Series Studio",
-          "badge": "Multi-Episode World & Continuity Bible",
-          "title": "Build a Reusable Universe Once—Not Just a Single Clip",
-          "promise": "Describe a series channel, training curriculum, or multi-chapter biography once. SceneFlow builds your Story Bible, Episode Slate, and Shared Continuity Vault so every episode stays on-model.",
-          "creatorExampleTitle": "The Glass Ledger · 6-Episode Neo-Noir Thriller",
-          "creatorExampleNote": "Shared Cast (Elara Vance, Marcus Thorne, Dr. Aris Kael), Archive Vault set, and Quartz Codex prop lock across all 6 episodes with a 91/100 Audience Resonance baseline.",
-          "serviceExampleTitle": "Multi-Chapter Family Legacy or Corporate Curriculum",
-          "serviceExampleNote": "Save a client’s approved hosts, family eras, or workplace locations once—then spin up Episode 2 through Episode 10 in one click with zero visual drift.",
+          "tabLabel": "Series Room",
+          "badge": "多集世界观与连续性圣经",
+          "title": "一次构建可复用的故事宇宙 — 而非孤立短片",
+          "promise": "只需描述一次剧集频道、培训课程体系或多章节传记，SceneFlow 自动建立故事圣经、分集大纲与共享 Reference Library，确保每一集风格高度统一。",
+          "creatorExampleTitle": "《琉璃账本》· 6 集新黑色悬疑剧集",
+          "creatorExampleNote": "共享主演阵容（艾拉拉·万斯、马库斯·索恩、阿里斯·凯尔博士）、地下档案金库场景与石英法典道具跨 6 集全程锁定，Audience Resonance 达 91/100。",
+          "serviceExampleTitle": "多章节家族传承录或企业系列课程",
+          "serviceExampleNote": "一次保存客户确认的主讲人、年代场景或企业环境 — 一键扩展第 2 至第 10 集，视觉零偏差。",
           "callouts": [
             {
-              "label": "Instant Series Baseline & Resonance Score",
-              "detail": "Auto-generates synopsis, episode arcs, and Audience Resonance scoring before production."
+              "label": "即时剧集初稿与 Audience Resonance 评分",
+              "detail": "在正式制作前自动生成全季梗概、分集故事弧与受众共鸣评分。"
             },
             {
-              "label": "Shared Continuity Vault",
-              "detail": "Characters, voices, wardrobes, sets, and props transfer automatically into every episode."
+              "label": "跨集共享 Reference Library",
+              "detail": "人物面孔、专属声线、服装、场地与核心道具自动继承至每一集。"
             },
             {
-              "label": "Voice or Text Series Director",
-              "detail": "Speak or type adjustments to reshape season arcs or individual episodes effortlessly."
+              "label": "语音或文字剧集总导演",
+              "detail": "直接口述或输入修改意见，轻松重塑整季脉络或单集剧情走向。"
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "剧集 AR：91 / 100 · 已同步 6 集大纲",
+            "bottomBadge": "共享 Reference Library 已跨全季锁定",
+            "thumbLabels": [
+              "艾拉拉·万斯 · 女主",
+              "马库斯·索恩 · 主演",
+              "地下档案库 · 实景",
+              "石英琉璃法典 · 道具"
+            ]
+          }
         },
         {
           "id": "blueprint-board",
           "stepNumber": "02",
-          "tabLabel": "Blueprint Studio",
-          "badge": "Story-First Intake, Multi-Age Cast & Greenlight",
-          "title": "Lock a Resonating Story & Cast Before Spending on Video",
-          "promise": "Start from a natural story interview or concept. Blueprint Studio structures your beats, highlights individual characters per beat, locks multi-age identity, and lets clients or collaborators sign off via shared link.",
-          "creatorExampleTitle": "Beat-by-Beat Treatment & Visual Style Lock",
-          "creatorExampleNote": "Each beat pairs dramatic intent with participating characters, anamorphic lighting rules, and narrated Audience Resonance feedback.",
-          "serviceExampleTitle": "Intelligent Memoir Interview & Multi-Age Continuity",
-          "serviceExampleNote": "Starts with \"Tell me your story,\" clarifies resonating life beats, and creates distinct age-stage characters (e.g., Age 17, Age 32, Age 62) with locked ancestral heritage.",
+          "tabLabel": "Blueprint Room",
+          "badge": "故事优先访谈、分龄角色与立项绿灯",
+          "title": "在消耗视频算力前，先锁定打动人心的故事与演员阵容",
+          "promise": "从自然的口述访谈或概念出发，Blueprint Room 自动梳理戏剧节拍、标注每场戏的具体角色、锁定跨年龄段人物特征，并支持客户通过网页链接远程签收。",
+          "creatorExampleTitle": "逐节拍电影阐述与视觉美学锁定",
+          "creatorExampleNote": "每个叙事节拍均绑定戏剧张力、出场人物、变形宽银幕布光规范以及带配音的 Audience Resonance 评估建议。",
+          "serviceExampleTitle": "智能传记访谈与跨年龄角色连续性",
+          "serviceExampleNote": "以“请讲讲您的故事”开启访谈，提炼高共鸣人生节点，自动创建 17 岁、32 岁、62 岁等独立分龄角色卡并保持血统骨相一致。",
           "callouts": [
             {
-              "label": "Story-First Guided Interview",
-              "detail": "Draws out rich personal or brand stories and highlights specific individuals in every beat."
+              "label": "故事优先的引导式深度访谈",
+              "detail": "挖掘真挚的个人经历或品牌故事，明确每一幕登场的独立人物而非笼统群体。"
             },
             {
-              "label": "Multi-Age Character Continuity",
-              "detail": "Creates separate age-specific character references so a 1970s youth and modern elder never blur together."
+              "label": "跨年龄段角色连续性构建",
+              "detail": "为青年、中年、晚年分别建立独立角色参考，彻底避免不同年代造型混淆。"
             },
             {
-              "label": "Audience Resonance + Shared Blueprint Link",
-              "detail": "Verify story impact with AI audience scoring and collect client approval from a clean browser link."
+              "label": "Audience Resonance + Blueprint 分享签收链接",
+              "detail": "用 AI 量化评估故事感染力，并通过清爽的网页链接收集客户立项确认。"
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "Blueprint AR：92 / 100 · 逐节拍角色高亮",
+            "bottomBadge": "分龄人物连续性锁定 + 客户在线签收链接",
+            "thumbLabels": [
+              "女主角人物弧光",
+              "阿里斯·凯尔博士 · 节拍 2",
+              "雨夜港口观景台 · 第二幕",
+              "黄铜时序钥匙 · 核心道具"
+            ]
+          }
         },
         {
           "id": "production-stage",
           "stepNumber": "03",
           "tabLabel": "Production Stage",
-          "badge": "Shot Director, Wardrobe Control & Autonomous Agents",
-          "title": "Preview the Voiced Animatic—Then Let Agents Build Your Shots",
-          "promise": "Review your baseline Production Script, lock Continuity references, watch the full voiced Pre-Vis animatic, select exact per-shot wardrobes in Shot Director, and run autonomous agents across all scenes.",
-          "creatorExampleTitle": "Scene 1: Subterranean Archive Vault · Anamorphic 4K",
-          "creatorExampleNote": "Switch Elara’s wardrobe per shot, direct camera framing by voice or text, blend multi-track dialogue/SFX/score in the Mixer, and dispatch the Production Agent.",
-          "serviceExampleTitle": "Hybrid Client Photos + Cinematic Era Re-Enactments",
-          "serviceExampleNote": "Place real client photographs on Ken Burns beats alongside 4K AI re-enactments for unphotographed memories—keeping a 15-minute memoir under ~$75 in compute.",
+          "badge": "Shot Director、逐镜头服装选择与全自动代理",
+          "title": "先审看全配音动态分镜 — 再交由代理批量生成成片镜头",
+          "promise": "审阅制作剧本初稿，锁定连续性参考图，试看完整配音的 Pre-vis Animatic，在 Shot Director 中为每个镜头挑选专属服装，随后启动自主代理完成全片制作。",
+          "creatorExampleTitle": "第 1 场：地下档案金库 · 4K 变形宽银幕",
+          "creatorExampleNote": "按镜头切换艾拉拉的服装，用语音或文字微调景别构图，在 Production Mixer 混音并派发 Production Agents。",
+          "serviceExampleTitle": "客户真实老照片 + 4K 电影级时代重现",
+          "serviceExampleNote": "为珍贵照片匹配 Ken Burns 运镜，为未留影像的记忆生成 4K AI 电影重现 — 将 15 分钟传记大片算力控制在约 $75 以内。",
           "callouts": [
             {
-              "label": "Per-Shot Wardrobe & Voice/Typed Shot Director",
-              "detail": "Pick exact outfits per shot and refine framing or expressions conversationally—no slot-machine re-rolls."
+              "label": "逐镜头服装选择与语音/文字 Shot Director",
+              "detail": "精准指定每个镜头的服装造型，对话式精修构图与神态，告别盲盒式重抽。"
             },
             {
-              "label": "Voiced Pre-Vis Animatic Firewall",
-              "detail": "Hear dialogue, narration, SFX, and music over storyboard stills before spending motion credits."
+              "label": "有声 Pre-vis Animatic 预算防火墙",
+              "detail": "在消耗动态视频积分前，先在分镜画面上完整试听对白、旁白、音效与配乐节奏。"
             },
             {
-              "label": "Autonomous Audio, Stills & Clips Agents",
-              "detail": "Generate scene-by-scene or launch the full Production Agent to build and stitch automatically."
+              "label": "Audio Agent、Stills Agent 与 Clips Agent 协同",
+              "detail": "既可逐场精雕细琢，也可一键启动全自动代理完成生成与合成。"
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "Shot Director · 已选定专属服装 · Pre-vis Animatic 就绪",
+            "bottomBadge": "Audio Agent、Stills Agent 与 Clips Agent 自动编排全片场景",
+            "thumbLabels": [
+              "镜头 1 · 金库全景",
+              "镜头 3 · 铰链微距特写",
+              "第 2 场 · 钥匙交接",
+              "第 3 场 · 走廊跟拍冲刺"
+            ]
+          }
         },
         {
           "id": "screening-room",
           "stepNumber": "04",
           "tabLabel": "Screening Room",
-          "badge": "Frame-Accurate Review, 70+ Languages & Publishing",
-          "title": "Collaborate via Private Link & Ship Globally in Any Language",
-          "promise": "Screen animatics, rough cuts, and final 4K masters in one unified player. Collect timestamped client or team notes, spin up 70+ in-scene dubbed streams, and export or publish anywhere.",
-          "creatorExampleTitle": "Premiere-Ready Master, Promo Trailers & Global Dubs",
-          "creatorExampleNote": "Cut vertical 9:16 trailers automatically, regenerate localized dialogue streams across 70+ markets, and publish to YouTube or apply to SceneFlow Originals.",
-          "serviceExampleTitle": "Frictionless Client Review & Multilingual Delivery",
-          "serviceExampleNote": "Clients watch on phone or desktop with zero login required, leave timestamped notes, and receive pristine MP4 deliverables in their family’s or workforce’s language.",
+          "badge": "逐帧精准审片、70+ 语言译制与全渠道发布",
+          "title": "通过私密链接高效协作，用任意语言向全球交付",
+          "promise": "在统一播放器中放映动态分镜、粗剪与 4K 终剪母带。收集带时间戳的客户或团队批注，生成 70+ 种语言场景同步译制流，一键导出或全网发布。",
+          "creatorExampleTitle": "首映级 4K 母带、竖屏预告与全球多语种发行",
+          "creatorExampleNote": "自动生成 9:16 竖屏宣传片，译制 70+ 个语种对白流，直发 YouTube、Bilibili 或申报 SceneFlow Originals。",
+          "serviceExampleTitle": "零门槛客户审片与多语种成片交付",
+          "serviceExampleNote": "客户在手机或电脑上免登录直接观看、打点留言，并获取匹配家族母语或跨国团队语言的高清 MP4 成片。",
           "callouts": [
             {
-              "label": "Zero-Login Shared Review Links",
-              "detail": "Send private `/share/screening-room/` links for effortless client, executive, or family sign-off."
+              "label": "免登录私密审片分享链接",
+              "detail": "发送 `/share/screening-room/` 专属链接，方便客户、高管或家人随时签收确认。"
             },
             {
-              "label": "70+ Language In-Scene Sync Streams",
-              "detail": "Preserves ambient SFX and score while aligning localized voices and dialogue across global markets."
+              "label": "70+ 种语言场景化音画同步流",
+              "detail": "完整保留环境音效与背景配乐，精准对齐全球各语种配音与角色表达。"
             },
             {
-              "label": "4K Master Export & Promo Cutdowns",
-              "detail": "Download clean commercial masters with full IP ownership or ship trailers directly to social channels."
+              "label": "4K 商业母带导出与社媒预告裁切",
+              "detail": "下载拥有完整商业版权的高清母带，或直接分发多比例社媒宣传短片。"
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "逐帧时间戳批注 · 免登录客户审片链接",
+            "bottomBadge": "7 种工作台原生语言 · 70+ 种场景同步译制流",
+            "thumbLabels": [
+              "EN · 原版 4K 母带",
+              "ES / PT · 同步译制版",
+              "ZH / TH / HI · 多语种流",
+              "9:16 竖屏宣传短片"
+            ]
+          }
         }
       ]
     },
     "directoryDrawer": {
-      "badge": "完整制片厂规格 · 30+ 项核心能力",
-      "title": "想深入了解每一项细节？展开 30+ 功能完整目录",
-      "subtitle": "按空间浏览剧集室、蓝图室、制片舞台、混音台与放映室的 5K 全分辨率界面截图与详细说明。",
+      "badge": "完整制片厂技术规格 · 30+ 项核心能力",
+      "title": "想深入了解每一项技术细节？展开完整工作室功能目录",
+      "subtitle": "打开按空间组织的交互式功能名录，高清浏览 Series Room、Blueprint Room、Production Stage、Production Mixer 与 Screening Room 的 5K 全尺寸真实界面截图。",
       "expandCta": "展开全部 30+ 项功能目录",
-      "collapseCta": "收起完整功能目录"
+      "collapseCta": "收起全部 30+ 项功能目录"
     },
     "academyStrip": {
       "badge": "零学习门槛保障 · Studio Academy",
-      "title": "随时掌控全局：在任意界面按下 ? 即可打开 60 秒可视化指引。",
-      "subtitle": "内置即时界面导览图、一键快捷操作、预演积分护栏，以及“10 分钟完成第一部短片”互动教学。",
+      "title": "绝不迷茫：在任意画面按下 ? 键，即刻打开 60 秒可视化导览图。",
+      "subtitle": "每个制片空间均内置带编号标注的即时界面地图（JIT Screen Map）、一键快捷操作、Pre-vis 积分护栏，以及“10 分钟完成您的第一部短片”互动教学模拟器。",
       "pills": [
-        "即时上下文 ? 导览图",
-        "“10 分钟首部短片”模拟器",
-        "先审动态分镜再耗视频积分"
+        "上下文感知 ? 界面导览图",
+        "“10 分钟首部短片”互动模拟器",
+        "内置 Pre-vis 视频积分护栏"
       ],
-      "watchAcademyCta": "观看 30 秒学院介绍",
-      "startExplorerCta": "以 Explorer 起步 — $9"
+      "watchAcademyCta": "观看 30 秒学院导览",
+      "startExplorerCta": "以 Explorer 方案起步 — $9"
     }
   }
 }

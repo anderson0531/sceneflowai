@@ -177,19 +177,125 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
       expect(WORLD_CLASS_LANDING_TRANSLATIONS[locale]).toBeDefined()
       const localized = resolveLocalizedStudioLandingCopy(locale)
 
+      // Top dock & Dual-Audience Gateway
       expect(localized.heroDock.tagline).not.toBe(WORLD_CLASS_LANDING_COPY.heroDock.tagline)
       expect(localized.audienceGateway.title).not.toBe(
         WORLD_CLASS_LANDING_COPY.audienceGateway.title
       )
-      expect(localized.superpowers.pillars).toHaveLength(5)
-      expect(localized.videoServices.verticals).toHaveLength(4)
-      expect(localized.guidedTour.rooms).toHaveLength(4)
+      localized.audienceGateway.cards.forEach((card, idx) => {
+        const enCard = WORLD_CLASS_LANDING_COPY.audienceGateway.cards[idx]
+        expect(card.badge, `${locale} gateway card ${idx} badge`).not.toBe(enCard.badge)
+        expect(card.title, `${locale} gateway card ${idx} title`).not.toBe(enCard.title)
+        expect(card.description, `${locale} gateway card ${idx} desc`).not.toBe(enCard.description)
+        expect(card.ctaLabel, `${locale} gateway card ${idx} cta`).not.toBe(enCard.ctaLabel)
+        expect(card.highlights[0], `${locale} gateway card ${idx} highlight`).not.toBe(
+          enCard.highlights[0]
+        )
+      })
 
+      // 5 Studio Superpowers + Bento Micro-Visuals
+      expect(localized.superpowers.pillars).toHaveLength(5)
+      localized.superpowers.pillars.forEach((pillar, idx) => {
+        const enPillar = WORLD_CLASS_LANDING_COPY.superpowers.pillars[idx]
+        expect(pillar.badge, `${locale} pillar ${pillar.id} badge`).not.toBe(enPillar.badge)
+        expect(pillar.title, `${locale} pillar ${pillar.id} title`).not.toBe(enPillar.title)
+        expect(pillar.description, `${locale} pillar ${pillar.id} desc`).not.toBe(
+          enPillar.description
+        )
+        expect(pillar.outcomeTag, `${locale} pillar ${pillar.id} outcome`).not.toBe(
+          enPillar.outcomeTag
+        )
+      })
+      expect(localized.superpowers.microVisuals.baseline.intakePrompt).not.toBe(
+        WORLD_CLASS_LANDING_COPY.superpowers.microVisuals.baseline.intakePrompt
+      )
+      expect(localized.superpowers.microVisuals.dialog.quote).not.toBe(
+        WORLD_CLASS_LANDING_COPY.superpowers.microVisuals.dialog.quote
+      )
+      expect(localized.superpowers.microVisuals.review.flowDirectorNote).not.toBe(
+        WORLD_CLASS_LANDING_COPY.superpowers.microVisuals.review.flowDirectorNote
+      )
+      expect(localized.superpowers.microVisuals.agents.rows[0].status).not.toBe(
+        WORLD_CLASS_LANDING_COPY.superpowers.microVisuals.agents.rows[0].status
+      )
+      expect(localized.superpowers.microVisuals.collaboration.approvedBadge).not.toBe(
+        WORLD_CLASS_LANDING_COPY.superpowers.microVisuals.collaboration.approvedBadge
+      )
+
+      // Video Services Business Engine + Calculator + Workflow Steps
+      expect(localized.videoServices.verticals).toHaveLength(4)
+      expect(localized.videoServices.whoBuysLabel).not.toBe(
+        WORLD_CLASS_LANDING_COPY.videoServices.whoBuysLabel
+      )
+      expect(localized.videoServices.marginAdvantageLabel).not.toBe(
+        WORLD_CLASS_LANDING_COPY.videoServices.marginAdvantageLabel
+      )
+      expect(localized.videoServices.calculatorTitle).not.toBe(
+        WORLD_CLASS_LANDING_COPY.videoServices.calculatorTitle
+      )
+      expect(localized.videoServices.monthlyNetLabel).not.toBe(
+        WORLD_CLASS_LANDING_COPY.videoServices.monthlyNetLabel
+      )
+      localized.videoServices.verticals.forEach((vert, idx) => {
+        const enVert = WORLD_CLASS_LANDING_COPY.videoServices.verticals[idx]
+        expect(vert.tabLabel, `${locale} vertical ${vert.id} tab`).not.toBe(enVert.tabLabel)
+        expect(vert.title, `${locale} vertical ${vert.id} title`).not.toBe(enVert.title)
+        expect(vert.clientBuyer, `${locale} vertical ${vert.id} buyer`).not.toBe(enVert.clientBuyer)
+        expect(vert.keyAdvantage, `${locale} vertical ${vert.id} adv`).not.toBe(enVert.keyAdvantage)
+      })
+      localized.videoServices.workflowSteps.forEach((step, idx) => {
+        const enStep = WORLD_CLASS_LANDING_COPY.videoServices.workflowSteps[idx]
+        expect(step.title, `${locale} workflowStep ${idx} title`).not.toBe(enStep.title)
+        expect(step.detail, `${locale} workflowStep ${idx} detail`).not.toBe(enStep.detail)
+      })
+
+      // 4-Room Sandbox Tour + Visual Captions + Directory Drawer + Academy Strip
+      expect(localized.guidedTour.rooms).toHaveLength(4)
+      expect(localized.guidedTour.screeningModalTitle).not.toBe(
+        WORLD_CLASS_LANDING_COPY.guidedTour.screeningModalTitle
+      )
+      localized.guidedTour.rooms.forEach((room, idx) => {
+        const enRoom = WORLD_CLASS_LANDING_COPY.guidedTour.rooms[idx]
+        expect(room.title, `${locale} room ${room.id} title`).not.toBe(enRoom.title)
+        expect(room.promise, `${locale} room ${room.id} promise`).not.toBe(enRoom.promise)
+        expect(room.creatorExampleNote, `${locale} room ${room.id} creatorNote`).not.toBe(
+          enRoom.creatorExampleNote
+        )
+        expect(room.serviceExampleNote, `${locale} room ${room.id} serviceNote`).not.toBe(
+          enRoom.serviceExampleNote
+        )
+        expect(room.callouts[0].label, `${locale} room ${room.id} callout`).not.toBe(
+          enRoom.callouts[0].label
+        )
+        expect(room.visuals.topBadge, `${locale} room ${room.id} topBadge`).not.toBe(
+          enRoom.visuals.topBadge
+        )
+        expect(room.visuals.bottomBadge, `${locale} room ${room.id} bottomBadge`).not.toBe(
+          enRoom.visuals.bottomBadge
+        )
+      })
+      expect(localized.directoryDrawer.expandCta).not.toBe(
+        WORLD_CLASS_LANDING_COPY.directoryDrawer.expandCta
+      )
+      expect(localized.academyStrip.title).not.toBe(WORLD_CLASS_LANDING_COPY.academyStrip.title)
+
+      // Message catalog parity (including Animated Series productionShowcase gap fix)
       const catalog = JSON.parse(readSource(`messages/${locale}.json`)) as Record<string, any>
-      expect(catalog.studioLanding?.audienceGateway?.title).toBe(localized.audienceGateway.title)
+      expect(catalog.studioLanding).toEqual(localized)
       expect(catalog.nav?.videoServices?.length).toBeGreaterThan(1)
+      expect(catalog.nav?.videoServices).not.toBe('Video Business')
       expect(catalog.floatingNav?.videoServices?.length).toBeGreaterThan(1)
       expect(catalog.floatingNav?.studioTour?.length).toBeGreaterThan(1)
+      expect(catalog.floatingNav?.studioTour).not.toBe('Tour')
+      expect(catalog.productionShowcase?.cards?.[1]?.solutionPillars?.[0]?.solution).not.toBe(
+        (enMessages as Record<string, any>).productionShowcase.cards[1].solutionPillars[0].solution
+      )
+      expect(
+        catalog.productionShowcase?.seriesPanel?.inputs?.animation?.episode1Synopsis?.synopsis
+      ).not.toBe(
+        (enMessages as Record<string, any>).productionShowcase.seriesPanel.inputs.animation
+          .episode1Synopsis.synopsis
+      )
     }
   })
 })

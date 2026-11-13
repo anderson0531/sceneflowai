@@ -3598,7 +3598,7 @@
           "description": "Deliver bespoke Life Memoirs, Real Estate Walkthroughs, Corporate Training, and Brand Films for paying clients in hours instead of weeks—with full commercial ownership.",
           "highlights": [
             "Guided story-first client intake & multi-age cast continuity",
-            "Shared links for Blueprint, Continuity & Screening sign-off",
+            "Shared links for Blueprint, Continuity & Screening Room sign-off",
             "Hybrid client photos + 4K AI re-enactments keep margins high"
           ],
           "ctaLabel": "Explore Business Models & Margins",
@@ -3612,14 +3612,14 @@
           "highlights": [
             "Instant expert baseline for Series, Blueprint & Script",
             "Speak or type changes in plain language—zero prompt syntax",
-            "Watch your voiced animatic before spending credits on motion"
+            "Watch your voiced Animatic before spending credits on motion"
           ],
           "ctaLabel": "Take the 4-Step Studio Tour",
           "targetAnchor": "studio-tour"
         },
         {
           "id": "experienced",
-          "badge": "Series Channels · Podcasts · Investor Pre-Vis",
+          "badge": "Series Channels · Podcasts · Investor Pre-vis",
           "title": "Experienced Creators & Filmmakers",
           "description": "End slot-machine regenerations. Lock recurring cast faces, per-shot wardrobes, custom voices, and sets in your Continuity Vault—then scale production 10x with autonomous agents.",
           "highlights": [
@@ -3670,7 +3670,7 @@
           "number": "04",
           "badge": "Hands-Free Scale",
           "title": "Autonomous Fast-Track Production Agents",
-          "description": "Once your script and Pre-Vis animatic feel right, launch Audio, Stills, Clips, or the full Production Agent to build dozens of scenes, self-heal failed takes, and notify you when your cut is ready.",
+          "description": "Once your script and Pre-vis Animatic feel right, launch Audio Agent, Stills Agent, Clips Agent, or full Production Agents to build dozens of scenes, self-heal failed takes, and notify you when your cut is ready.",
           "outcomeTag": "300+ Manual Prompts Replaced",
           "videoClipKey": "agent"
         },
@@ -3683,7 +3683,60 @@
           "outcomeTag": "Share Links · Screening Room · 70+ Dubs",
           "videoClipKey": "publish"
         }
-      ]
+      ],
+      "microVisuals": {
+        "baseline": {
+          "intakePrompt": "Story Intake: “Tell me your story...”",
+          "autoBadge": "Auto-Generated in Seconds",
+          "steps": [
+            {
+              "step": "1 · Series Bible",
+              "detail": "6-Ep Arc + Shared Vault"
+            },
+            {
+              "step": "2 · Film Blueprint",
+              "detail": "Resonating Beats + Multi-Age Cast"
+            },
+            {
+              "step": "3 · Production Script",
+              "detail": "Dialogue, Wardrobes & Camera"
+            }
+          ]
+        },
+        "dialog": {
+          "quote": "“Split John into Age 17, Age 32 & Age 62—and put Elara in her Evening Gala Silk Coat for Shot 2.”",
+          "chipCast": "✓ 3 Age-Stage Cast Cards Locked",
+          "chipWardrobe": "✓ Shot 2 Wardrobe: Gala Silk Coat"
+        },
+        "review": {
+          "arLabel": "Audience Resonance",
+          "arStatus": "Greenlight Ready · 3 Gates",
+          "gateSeries": "Series 90",
+          "gateBlueprint": "Blueprint 92",
+          "gateScript": "Script 94",
+          "flowDirectorNote": "FlowDirector: 1-click emotional midpoint boost (+6 pts)"
+        },
+        "agents": {
+          "rows": [
+            {
+              "label": "Audio Agent · Voices, SFX & Score",
+              "status": "27 / 27 Ready"
+            },
+            {
+              "label": "Stills Agent · Continuity Keyframes",
+              "status": "100% Locked"
+            },
+            {
+              "label": "Clips Agent · Self-Healing Motion",
+              "status": "Auto-Verified"
+            }
+          ]
+        },
+        "collaboration": {
+          "approvedBadge": "Approved ✓",
+          "dubsChip": "+70 Dubs"
+        }
+      }
     },
     "videoServices": {
       "eyebrow": "Monetize Your Creativity · B2B & Client Services",
@@ -3692,6 +3745,8 @@
       "subtitle": "Families, realtors, schools, and local businesses pay $200 to $2,500+ for custom storytelling videos—yet traditional crews cost thousands. Deliver unforgettable productions in hours and keep 100% of your client revenue.",
       "commercialRightsBadge": "100% Commercial Ownership · Deliver Client Masters Anywhere",
       "verticalsHeading": "1. Choose a High-Demand Client Service",
+      "whoBuysLabel": "Who Buys Repeatedly",
+      "marginAdvantageLabel": "SceneFlow Margin Advantage",
       "calculatorBadge": "Interactive Unit Economics Preview",
       "calculatorTitle": "2. Estimate Your Monthly Service Income",
       "volumeLabel": "Client deliveries / month:",
@@ -3701,10 +3756,12 @@
       "activeHandsOnLabel": "Hands-on direction",
       "monthlyGrossLabel": "Est. Monthly Client Billing",
       "monthlyNetLabel": "Est. Net Creator Income (before base plan)",
+      "perMonthSuffix": "/ mo",
       "marginBadgeSuffix": "gross margin",
-      "disclaimer": "Illustrative estimates using SceneFlow’s hybrid Pre-Vis animatic + selective 4K AI clip workflow ($0.01/credit add-on rate). You set your own client pricing and terms.",
+      "disclaimer": "Illustrative estimates using SceneFlow’s hybrid Pre-vis Animatic + selective 4K AI clip workflow ($0.01/credit add-on rate). You set your own client pricing and terms.",
       "launchBusinessCta": "Launch Your Video Service ($9)",
       "workflowHeading": "How a Client Project Flows in 4 Effortless Steps",
+      "stepPrefix": "Step",
       "workflowSteps": [
         {
           "step": "01",
@@ -3719,7 +3776,7 @@
         {
           "step": "03",
           "title": "Hybrid Photo + AI Build",
-          "detail": "Combine real client photos with multi-age cast continuity, custom wardrobes, and autonomous Audio/Clips Agents."
+          "detail": "Combine real client photos with multi-age cast continuity, custom wardrobes, and autonomous Audio Agent / Clips Agent."
         },
         {
           "step": "04",
@@ -3787,46 +3844,58 @@
       "title": "Four Connected Rooms.",
       "titleAccent": "One Effortless Flow.",
       "subtitle": "Explore how an idea moves from story concept to approved client or audience master—using live showcases from our Studio Sandbox instead of a dense technical manual.",
+      "stepPrefix": "Step",
       "lensLabel": "Preview lens:",
       "lensCreator": "Original Series (\"The Glass Ledger\")",
       "lensService": "Client Service (\"Life Story Memoir\")",
       "watchRoomVideoLabel": "Watch 30s Room Tour",
       "inspectFullScreenLabel": "Inspect Full Studio Screen",
       "openLiveScreeningLabel": "Open Live Sandbox Screening Room",
+      "screeningModalTitle": "The Glass Ledger — Sandbox Screening Room",
       "rooms": [
         {
           "id": "series-desk",
           "stepNumber": "01",
-          "tabLabel": "Series Studio",
+          "tabLabel": "Series Room",
           "badge": "Multi-Episode World & Continuity Bible",
           "title": "Build a Reusable Universe Once—Not Just a Single Clip",
-          "promise": "Describe a series channel, training curriculum, or multi-chapter biography once. SceneFlow builds your Story Bible, Episode Slate, and Shared Continuity Vault so every episode stays on-model.",
+          "promise": "Describe a series channel, training curriculum, or multi-chapter biography once. SceneFlow builds your Story Bible, Episode Slate, and Shared Reference Library so every episode stays on-model.",
           "creatorExampleTitle": "The Glass Ledger · 6-Episode Neo-Noir Thriller",
           "creatorExampleNote": "Shared Cast (Elara Vance, Marcus Thorne, Dr. Aris Kael), Archive Vault set, and Quartz Codex prop lock across all 6 episodes with a 91/100 Audience Resonance baseline.",
           "serviceExampleTitle": "Multi-Chapter Family Legacy or Corporate Curriculum",
           "serviceExampleNote": "Save a client’s approved hosts, family eras, or workplace locations once—then spin up Episode 2 through Episode 10 in one click with zero visual drift.",
           "callouts": [
             {
-              "label": "Instant Series Baseline & Resonance Score",
+              "label": "Instant Series Baseline & Audience Resonance Score",
               "detail": "Auto-generates synopsis, episode arcs, and Audience Resonance scoring before production."
             },
             {
-              "label": "Shared Continuity Vault",
+              "label": "Shared Reference Library",
               "detail": "Characters, voices, wardrobes, sets, and props transfer automatically into every episode."
             },
             {
               "label": "Voice or Text Series Director",
               "detail": "Speak or type adjustments to reshape season arcs or individual episodes effortlessly."
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "Series AR: 91 / 100 · 6 Episodes Synced",
+            "bottomBadge": "Shared Reference Library Locked Across All Episodes",
+            "thumbLabels": [
+              "Elara Vance · Lead",
+              "Marcus Thorne · Cast",
+              "Archive Vault · Set",
+              "Quartz Codex · Prop"
+            ]
+          }
         },
         {
           "id": "blueprint-board",
           "stepNumber": "02",
-          "tabLabel": "Blueprint Studio",
+          "tabLabel": "Blueprint Room",
           "badge": "Story-First Intake, Multi-Age Cast & Greenlight",
           "title": "Lock a Resonating Story & Cast Before Spending on Video",
-          "promise": "Start from a natural story interview or concept. Blueprint Studio structures your beats, highlights individual characters per beat, locks multi-age identity, and lets clients or collaborators sign off via shared link.",
+          "promise": "Start from a natural story interview or concept. Blueprint Room structures your beats, highlights individual characters per beat, locks multi-age identity, and lets clients or collaborators sign off via shared link.",
           "creatorExampleTitle": "Beat-by-Beat Treatment & Visual Style Lock",
           "creatorExampleNote": "Each beat pairs dramatic intent with participating characters, anamorphic lighting rules, and narrated Audience Resonance feedback.",
           "serviceExampleTitle": "Intelligent Memoir Interview & Multi-Age Continuity",
@@ -3844,7 +3913,17 @@
               "label": "Audience Resonance + Shared Blueprint Link",
               "detail": "Verify story impact with AI audience scoring and collect client approval from a clean browser link."
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "Blueprint AR: 92 / 100 · Beat-by-Beat Cast Highlights",
+            "bottomBadge": "Multi-Age Character Continuity + Shared Client Sign-Off Link",
+            "thumbLabels": [
+              "Protagonist Arc",
+              "Dr. Aris Kael · Beat 2",
+              "Harbor Deck · Act II",
+              "Chrono-Key · Plot Lock"
+            ]
+          }
         },
         {
           "id": "production-stage",
@@ -3852,9 +3931,9 @@
           "tabLabel": "Production Stage",
           "badge": "Shot Director, Wardrobe Control & Autonomous Agents",
           "title": "Preview the Voiced Animatic—Then Let Agents Build Your Shots",
-          "promise": "Review your baseline Production Script, lock Continuity references, watch the full voiced Pre-Vis animatic, select exact per-shot wardrobes in Shot Director, and run autonomous agents across all scenes.",
+          "promise": "Review your baseline Production Script, lock Continuity references, watch the full voiced Pre-vis Animatic, select exact per-shot wardrobes in Shot Director, and run autonomous agents across all scenes.",
           "creatorExampleTitle": "Scene 1: Subterranean Archive Vault · Anamorphic 4K",
-          "creatorExampleNote": "Switch Elara’s wardrobe per shot, direct camera framing by voice or text, blend multi-track dialogue/SFX/score in the Mixer, and dispatch the Production Agent.",
+          "creatorExampleNote": "Switch Elara’s wardrobe per shot, direct camera framing by voice or text, blend multi-track dialogue/SFX/score in Production Mixer, and dispatch Production Agents.",
           "serviceExampleTitle": "Hybrid Client Photos + Cinematic Era Re-Enactments",
           "serviceExampleNote": "Place real client photographs on Ken Burns beats alongside 4K AI re-enactments for unphotographed memories—keeping a 15-minute memoir under ~$75 in compute.",
           "callouts": [
@@ -3863,14 +3942,24 @@
               "detail": "Pick exact outfits per shot and refine framing or expressions conversationally—no slot-machine re-rolls."
             },
             {
-              "label": "Voiced Pre-Vis Animatic Firewall",
+              "label": "Voiced Pre-vis Animatic Firewall",
               "detail": "Hear dialogue, narration, SFX, and music over storyboard stills before spending motion credits."
             },
             {
-              "label": "Autonomous Audio, Stills & Clips Agents",
-              "detail": "Generate scene-by-scene or launch the full Production Agent to build and stitch automatically."
+              "label": "Autonomous Audio Agent, Stills Agent & Clips Agent",
+              "detail": "Generate scene-by-scene or launch full Production Agents to build and stitch automatically."
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "Shot Director · Wardrobe Selected · Pre-vis Animatic Ready",
+            "bottomBadge": "Audio Agent, Stills Agent & Clips Agent Orchestrate All Scenes Automatically",
+            "thumbLabels": [
+              "Shot 1 · Wide Vault",
+              "Shot 3 · Macro Prop",
+              "Scene 2 · Handoff",
+              "Scene 3 · Tracking"
+            ]
+          }
         },
         {
           "id": "screening-room",
@@ -3896,25 +3985,35 @@
               "label": "4K Master Export & Promo Cutdowns",
               "detail": "Download clean commercial masters with full IP ownership or ship trailers directly to social channels."
             }
-          ]
+          ],
+          "visuals": {
+            "topBadge": "Frame-Accurate Notes · Zero-Login Client Link",
+            "bottomBadge": "7 Studio UI Locales · 70+ In-Scene Language Streams",
+            "thumbLabels": [
+              "EN · Original Master",
+              "ES / PT · Synced Dub",
+              "ZH / TH / HI · Streams",
+              "9:16 Promo Cutdown"
+            ]
+          }
         }
       ]
     },
     "directoryDrawer": {
       "badge": "Complete Studio Specification · 30+ Capabilities",
       "title": "Want Every Technical Detail? Explore the Full Studio Directory",
-      "subtitle": "Open the interactive room-by-room reference catalog to inspect full-resolution 5K workspace screenshots across Series, Blueprint, Production Stage, Mixer, and Screening Room.",
+      "subtitle": "Open the interactive room-by-room reference catalog to inspect full-resolution 5K workspace screenshots across Series Room, Blueprint Room, Production Stage, Production Mixer, and Screening Room.",
       "expandCta": "Open Full 30-Feature Directory",
       "collapseCta": "Hide Full 30-Feature Directory"
     },
     "academyStrip": {
       "badge": "Zero Learning Curve Guarantee · Studio Academy",
       "title": "Never Feel Overwhelmed. Press ? Anywhere for a 60-Second Visual Guide.",
-      "subtitle": "Every Studio room includes a Just-In-Time (JIT) Screen Map with numbered callouts, one-click actions, credit guardrails, and our interactive “Your First Film in 10 Minutes” simulator.",
+      "subtitle": "Every Studio room includes a Just-In-Time (JIT) Screen Map with numbered callouts, one-click actions, Pre-vis credit guardrails, and our interactive “Your First Film in 10 Minutes” simulator.",
       "pills": [
         "Context-Aware ? Screen Maps",
         "“First Film in 10 Minutes” Simulator",
-        "Pre-Vis Credit Guardrails Built In"
+        "Pre-vis Credit Guardrails Built In"
       ],
       "watchAcademyCta": "Watch 30s Academy Tour",
       "startExplorerCta": "Start with Explorer — $9"
