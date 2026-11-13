@@ -1,4 +1,5 @@
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
+import { extractSamePersonAgeStage } from '@/lib/character/ageStageContinuity'
 import {
   BLUEPRINT_FIELD_LABELS,
   type FieldDiff,
@@ -136,7 +137,8 @@ export function buildFieldDiffs(
 
 function mergeContinuityArray(
   originalArr: unknown,
-  patchedArr: unknown
+  patchedArr: unknown,
+  kind?: 'character_descriptions' | 'scene_descriptions' | 'prop_descriptions'
 ): Array<Record<string, unknown>> | undefined {
   if (!Array.isArray(patchedArr)) return undefined
   const origList = Array.isArray(originalArr)
@@ -146,7 +148,10 @@ function mergeContinuityArray(
     return patchedArr as Array<Record<string, unknown>>
   }
 
-  return (patchedArr as Array<Record<string, unknown>>).map((item, index) => {
+  const nextList = patchedArr as Array<Record<string, unknown>>
+  const sameLengthAsOriginal = origList.length === nextList.length
+
+  return nextList.map((item, index) => {
     if (!item || typeof item !== 'object') return item
     const name = typeof item.name === 'string' ? item.name.trim().toLowerCase() : ''
     const byName = name
@@ -158,9 +163,68 @@ function mergeContinuityArray(
             o.name.trim().toLowerCase() === name
         )
       : undefined
-    const match = byName ?? origList[index]
-    if (!match || typeof match !== 'object') return item
-    return { ...match, ...item }
+
+    if (byName) {
+      return { ...byName, ...item }
+    }
+
+    // For character_descriptions: when a character is split into `(Age NN)` variants
+    // (e.g. "Brian Eric Anderson Sr." -> "Brian Eric Anderson Sr. (Age 17)"), inherit ONLY
+    // immutable person genetics from the matching base person — NEVER fall back to `origList[index]`
+    // of a different character (which previously cross-contaminated ethnicities across cast indices!).
+    if (kind === 'character_descriptions' && name) {
+      const targetStage = extractSamePersonAgeStage(String(item.name || ''))
+      const targetBase = targetStage.baseName.trim().toLowerCase()
+      const bySamePersonBase = targetBase
+        ? origList.find((o) => {
+            if (!o || typeof o !== 'object' || typeof o.name !== 'string') return false
+            return (
+              extractSamePersonAgeStage(o.name).baseName.trim().toLowerCase() === targetBase
+            )
+          })
+        : undefined
+
+      if (bySamePersonBase) {
+        const inheritedGenetics: Record<string, unknown> = {}
+        for (const geneticKey of [
+          'ethnicity',
+          'gender',
+          'eyeColor',
+          'samePersonGroupId',
+          'familyRelationships',
+        ] as const) {
+          if (bySamePersonBase[geneticKey] !== undefined && !item[geneticKey]) {
+            inheritedGenetics[geneticKey] = bySamePersonBase[geneticKey]
+          }
+        }
+        return { ...inheritedGenetics, ...item }
+      }
+    }
+
+    // Only use positional index fallback when list length is unchanged (in-place single rename)
+    // AND the original item at `index` is not already matched by name elsewhere in `nextList`.
+    if (sameLengthAsOriginal) {
+      const candidate = origList[index]
+      if (candidate && typeof candidate === 'object') {
+        const candName =
+          typeof candidate.name === 'string' ? candidate.name.trim().toLowerCase() : ''
+        const claimedElsewhere =
+          candName &&
+          nextList.some(
+            (other, otherIdx) =>
+              otherIdx !== index &&
+              other &&
+              typeof other === 'object' &&
+              typeof other.name === 'string' &&
+              other.name.trim().toLowerCase() === candName
+          )
+        if (!claimedElsewhere) {
+          return { ...candidate, ...item }
+        }
+      }
+    }
+
+    return item
   })
 }
 
@@ -171,7 +235,7 @@ export function mergeRevisionIntoVariant(
   const merged: Record<string, unknown> = { ...original, ...patch, updatedAt: Date.now() }
   for (const key of ['character_descriptions', 'scene_descriptions', 'prop_descriptions'] as const) {
     if (Array.isArray(patch[key])) {
-      const mergedArr = mergeContinuityArray(original[key], patch[key])
+      const mergedArr = mergeContinuityArray(original[key], patch[key], key)
       if (mergedArr) merged[key] = mergedArr
     }
   }

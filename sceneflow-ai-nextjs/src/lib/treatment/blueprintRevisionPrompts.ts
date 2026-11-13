@@ -87,7 +87,9 @@ export function trimVariantForPrompt(variant: Record<string, unknown>): Record<s
           name: c.name,
           role: c.role,
           ...(c.age !== undefined ? { age: c.age } : {}),
+          ...(c.gender ? { gender: c.gender } : {}),
           ...(c.ethnicity ? { ethnicity: c.ethnicity } : {}),
+          ...(c.appearance ? { appearance: truncateStr(c.appearance, 180) } : {}),
           description: truncateStr(c.description, MAX_CHAR_DESC),
           externalGoal: truncateStr(c.externalGoal, 80),
           internalNeed: truncateStr(c.internalNeed, 80),
@@ -439,7 +441,7 @@ CRITICAL RULES:
   existing beat count when the runtime changes.
 - Every beat you return MUST include title, intent, minutes, a 1-3 sentence synopsis, "characters" (exact individual character names featured in that beat — NEVER plural/group names), and "eraOrAge" when beats span distinct eras or life stages.
 - When returning "beats", return the COMPLETE ordered array, not just changed entries.
-- character_descriptions, scene_descriptions, prop_descriptions: preserve existing participant, location, and prop NAMES unless the creator explicitly requests a rename or replacement. Every character MUST be a single individual (NEVER a group like "Friends" or "Neighbors"). When a person appears across multiple distinct ages/decades (>= 10 years apart), model them as separate "Full Name (Age NN)" entries (e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)") rather than outfits on one character.
+- character_descriptions, scene_descriptions, prop_descriptions: preserve existing participant, location, and prop NAMES unless the creator explicitly requests a rename or replacement. Every character MUST be a single individual (NEVER a group like "Friends" or "Neighbors") and MUST preserve each individual's accurate "ethnicity", "gender", and "appearance" matching their biographical description (NEVER copy another character's ethnicity across unrelated individuals). When a person appears across multiple distinct ages/decades (>= 10 years apart), model them as separate "Full Name (Age NN)" entries (e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)") rather than outfits on one character.
 - Return ONLY fields you modify — do not echo unchanged fields.
 ${CREATOR_DIRECTION_IS_INTENT}
 ${intentGuard}

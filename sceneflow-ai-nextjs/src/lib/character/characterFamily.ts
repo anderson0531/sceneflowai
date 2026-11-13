@@ -14,7 +14,10 @@ import { normalizeCharacterName } from '@/lib/character/detection'
 import {
   extractSamePersonAgeStage,
   enforceSamePersonAgeStageConsistency,
+  inferExplicitCharacterEthnicityFromProse,
 } from '@/lib/character/ageStageContinuity'
+
+export { inferExplicitCharacterEthnicityFromProse }
 
 export type KinshipRelationType =
   | 'parent_of'
@@ -649,6 +652,54 @@ export function enforceEnsembleFamilyConsistency<T extends FamilyAwareCharacter>
     const norm = normalizeCharacterName(rel.relatedCharacterName)
     const byName = norm ? byNormName.get(norm) : undefined
     return byName !== undefined ? byName : null
+  }
+
+  // Pass 0: Ground character ethnicity in explicit biographical prose (`description` / `subject` / `appearance`)
+  // BEFORE any story-wide locale fallback runs, and self-heal polluted badges that contradict explicit bio prose.
+  for (const char of next) {
+    if (char.type === 'narrator' || char.role === 'narrator' || char.type === 'description') continue
+    const rawDesc = cleanText(char.description)
+    const bioEth =
+      inferExplicitCharacterEthnicityFromProse(rawDesc) ||
+      inferExplicitCharacterEthnicityFromProse(cleanText(char.subject))
+    const lookEth = inferExplicitCharacterEthnicityFromProse(
+      `${cleanText(char.appearanceDescription)} ${cleanText(char.appearance)}`
+    )
+    const currentEth = cleanText(char.ethnicity)
+
+    if (!currentEth) {
+      const resolvedFromProse = bioEth || lookEth
+      if (resolvedFromProse) {
+        char.ethnicity = resolvedFromProse
+      }
+    } else if (
+      bioEth &&
+      !isMixedEthnicityLabel(currentEth) &&
+      !areEthnicitiesCompatibleSameHeritage(bioEth, currentEth)
+    ) {
+      // Check if the character's own narrative bio mentions any distinctive token of `currentEth`.
+      // If NOT (e.g. bio says "African American ... in late-1970s Pittsburgh" while badge says "Southeast Asian (Thai)"),
+      // self-heal the polluted badge and scrub any stale auto-generated longitudinal lock!
+      const ethTokens = canonicalEthnicityTokens(currentEth)
+        .split(/[\s/-]+/)
+        .filter((t) => t.length >= 4 && !['asian', 'east', 'south', 'west', 'north', 'white', 'black'].includes(t))
+      const descLower = rawDesc.toLowerCase()
+      const bioMentionsCurrentEth =
+        ethTokens.length > 0 && ethTokens.some((tok) => descLower.includes(tok))
+      if (!bioMentionsCurrentEth) {
+        char.ethnicity = bioEth
+        if (typeof char.appearance === 'string' && /longitudinal identity lock:/i.test(char.appearance)) {
+          const stage = extractSamePersonAgeStage(cleanText(char.name))
+          const stripped = char.appearance.replace(/\s*Longitudinal identity lock:[\s\S]*$/i, '').trim()
+          const rebuiltLock = `Longitudinal identity lock: exact same individual human being as ${stage.baseName || cleanText(char.name)} across life stages — identical ${bioEth} heritage${cleanText(char.eyeColor) ? `, ${cleanText(char.eyeColor)} eyes,` : ''} and underlying facial bone structure, depicted strictly at ${stage.numericAge ? `biological age ${stage.numericAge}` : stage.ageStageLabel || cleanText(char.age) || 'this life stage'}.`
+          const healed = stripped ? `${stripped.replace(/\.*\s*$/, '.')} ${rebuiltLock}` : rebuiltLock
+          char.appearance = healed
+          if ('appearanceDescription' in char) {
+            char.appearanceDescription = healed
+          }
+        }
+      }
+    }
   }
 
   // Pass 1: Propagate default locale ethnicity ONLY to root characters with empty ethnicity when provided

@@ -297,37 +297,56 @@ const GEOGRAPHIC_ETHNICITY_HINTS: Array<{ pattern: RegExp; ethnicity: string; re
   { pattern: /\b(scandinavia|sweden|stockholm|norway|oslo|denmark|copenhagen)\b/i, ethnicity: 'White (Scandinavian)', regionLabel: 'Scandinavia' },
 ]
 
+const MULTICULTURAL_OR_WESTERN_SETTING_RE =
+  /\b(united\s+states|u\.s\.a?\.|america|american|pittsburgh|pennsylvania|new\s+york|manhattan|brooklyn|chicago|illinois|seattle|washington|los\s+angeles|san\s+francisco|silicon\s+valley|california|texas|houston|dallas|austin|atlanta|georgia|detroit|michigan|boston|massachusetts|ohio|cleveland|lorain|philadelphia|miami|florida|virginia|maryland|carolina|colorado|denver|arizona|oregon|portland|minnesota|vermont|new\s+jersey|connecticut|canada|toronto|vancouver|montreal|united\s+kingdom|u\.k\.|england|london|manchester|scotland|australia|sydney|melbourne|new\s+zealand|auckland|france|paris|germany|berlin|netherlands|amsterdam|switzerland|zurich|geneva|international|global|multi[-\s]?continent|diaspora)\b/i
+
 /**
- * Infer a culturally grounded default ethnicity hint when the story's setting,
- * locations, or audience cultural signals point to a specific region/culture.
+ * Infer a culturally grounded default ethnicity hint ONLY when the story's physical setting
+ * and locations are exclusively grounded in a single mono-regional culture.
+ *
+ * Never uses `targetAudience` / `audienceDefinition` / UI `locales` to stamp cast ethnicity
+ * (e.g. screening a 1970s Pittsburgh memoir for family in Thailand must NEVER turn Pittsburgh
+ * characters Thai!), and returns `undefined` whenever a story spans multiple countries/regions
+ * or multicultural Western settings so each character's own ethnicity/bio stands on its own.
  */
 export function inferLocaleDefaultEthnicityHint(
   localization?: CharacterLocalizationContext
 ): string | undefined {
   if (!localization) return undefined
 
-  const signals = localization.culturalSignals ?? localization.audienceDefinition?.culturalSignals
-  if (signals?.cultures?.length === 1) {
-    const singleCulture = signals.cultures[0]!.trim()
-    for (const entry of GEOGRAPHIC_ETHNICITY_HINTS) {
-      if (entry.pattern.test(singleCulture)) return entry.ethnicity
-    }
-    if (singleCulture.length >= 3) return singleCulture
-  }
-
-  const combinedSetting = [
+  const worldGeography = [
     clean(localization.setting),
-    clean(localization.targetAudience),
-    clean(localization.audienceDefinition?.description),
-    ...(signals?.locales || []),
-    ...(localization.locations || []).slice(0, 6).map((l) => `${clean(l.name)} ${clean(l.location)}`),
+    ...(localization.locations || [])
+      .slice(0, 8)
+      .map((l) => `${clean(l.name)} ${clean(l.location)}`),
   ]
     .filter(Boolean)
     .join(' | ')
 
-  for (const entry of GEOGRAPHIC_ETHNICITY_HINTS) {
-    if (entry.pattern.test(combinedSetting)) {
-      return entry.ethnicity
+  if (worldGeography) {
+    // Multicultural / Western settings (or stories spanning e.g. Pittsburgh + Bangkok)
+    // do NOT have a single blanket ethnicity for the entire cast.
+    if (MULTICULTURAL_OR_WESTERN_SETTING_RE.test(worldGeography)) {
+      return undefined
+    }
+
+    const matchedHints = GEOGRAPHIC_ETHNICITY_HINTS.filter((entry) =>
+      entry.pattern.test(worldGeography)
+    )
+    if (matchedHints.length === 1) {
+      return matchedHints[0]!.ethnicity
+    }
+    // 0 matches or >= 2 distinct countries/regions (e.g. "Bangkok and Dublin") -> no blanket default
+    return undefined
+  }
+
+  // Fallback ONLY when no setting/locations exist yet and culturalSignals names a single specific culture
+  const signals = localization.culturalSignals ?? localization.audienceDefinition?.culturalSignals
+  if (signals?.cultures?.length === 1) {
+    const singleCulture = signals.cultures[0]!.trim()
+    if (MULTICULTURAL_OR_WESTERN_SETTING_RE.test(singleCulture)) return undefined
+    for (const entry of GEOGRAPHIC_ETHNICITY_HINTS) {
+      if (entry.pattern.test(singleCulture)) return entry.ethnicity
     }
   }
 

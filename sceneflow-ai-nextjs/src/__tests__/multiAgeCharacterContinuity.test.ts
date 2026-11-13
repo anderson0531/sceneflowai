@@ -16,6 +16,9 @@ import {
   extractCharactersFromScenes,
 } from '@/lib/character/detection'
 import { enforceEnsembleFamilyConsistency } from '@/lib/character/characterFamily'
+import { inferLocaleDefaultEthnicityHint } from '@/lib/character/characterIntelligence'
+import { resolveBlueprintContinuity } from '@/lib/blueprint/blueprintContinuity'
+import { mergeRevisionIntoVariant } from '@/lib/treatment/blueprintRevisionDiff'
 import { sceneIncludesCharacter } from '@/lib/character/wardrobeAnalysis'
 
 describe('Multi-Age Character Continuity & Individual-Only Cast Enforcement', () => {
@@ -263,5 +266,113 @@ describe('Multi-Age Character Continuity & Individual-Only Cast Enforcement', ()
 
     expect(sceneIncludesCharacter(presentDayScene, 'John Miller (Age 62)')).toBe(true)
     expect(sceneIncludesCharacter(presentDayScene, 'John Miller (Age 16)')).toBe(false)
+  })
+
+  it('never stamps Southeast Asian (Thai) onto an African American Pittsburgh character in multi-country memoirs and self-heals polluted badges', () => {
+    // Multi-country setting (Pittsburgh + Bangkok) or Thai target audience must NOT return a blanket cast ethnicity
+    expect(
+      inferLocaleDefaultEthnicityHint({
+        setting: 'Late-1970s Pittsburgh, Pennsylvania to 2020s Bangkok, Thailand',
+        targetAudience: 'Family and viewers in Thailand and the United States',
+      })
+    ).toBeUndefined()
+
+    expect(
+      inferLocaleDefaultEthnicityHint({
+        setting: 'Late-1970s Pittsburgh, Pennsylvania',
+        targetAudience: 'Thai & international family audience',
+        culturalSignals: { cultures: ['Thai'], locales: ['th'] },
+      })
+    ).toBeUndefined()
+
+    // Even when a saved Blueprint variant already had polluted "Southeast Asian (Thai)" badge + longitudinal lock,
+    // resolveBlueprintContinuity self-heals from the character's explicit biographical prose ("African American")!
+    const pollutedVariant = {
+      setting: 'Late-1970s Pittsburgh, Pennsylvania to Contemporary Bangkok, Thailand',
+      target_audience: 'Multi-generational family in Thailand and the US',
+      character_descriptions: [
+        {
+          name: 'Brian Eric Anderson Sr. (Age 17)',
+          role: 'protagonist',
+          age: '17',
+          ethnicity: 'Southeast Asian (Thai)',
+          eyeColor: 'Deep-brown',
+          description:
+            'A lean, hyper-vigilant African American high school math prodigy and point guard in late-1970s Pittsburgh, driven by an acute terror of industrial and racial obsolescence.',
+          appearance:
+            'Longitudinal identity lock: exact same individual human being as Brian Eric Anderson Sr. across life stages — identical Southeast Asian (Thai) heritage, Deep-brown eyes, and underlying facial bone structure, depicted strictly at biological age 17.',
+        },
+        {
+          name: 'Brian Eric Anderson Sr. (Age 55)',
+          role: 'protagonist',
+          age: '55',
+          ethnicity: '',
+          eyeColor: 'Deep-brown',
+          description: 'Executive chapter of Brian Eric Anderson Sr. in Bangkok.',
+        },
+      ],
+    }
+
+    const continuity = resolveBlueprintContinuity(pollutedVariant, null)
+    const brian17 = continuity.cast.find((c) => c.name === 'Brian Eric Anderson Sr. (Age 17)')!
+    const brian55 = continuity.cast.find((c) => c.name === 'Brian Eric Anderson Sr. (Age 55)')!
+
+    expect(brian17.ethnicity).toBe('African American')
+    expect(brian55.ethnicity).toBe('African American')
+    expect(brian17.appearance).toContain('identical African American heritage')
+    expect(brian17.appearance).not.toContain('Southeast Asian (Thai)')
+  })
+
+  it('prevents positional index ethnicity cross-contamination when Guided Revise splits a character into (Age NN) variants', () => {
+    const originalVariant = {
+      character_descriptions: [
+        {
+          name: 'Brian Eric Anderson Sr.',
+          role: 'protagonist',
+          ethnicity: 'African American',
+          eyeColor: 'Deep-brown',
+          description: 'African American protagonist.',
+        },
+        {
+          name: 'Maliwan Srisai',
+          role: 'supporting',
+          ethnicity: 'Southeast Asian (Thai)',
+          eyeColor: 'Dark brown',
+          description: 'Thai architect in Bangkok.',
+        },
+      ],
+    }
+
+    const patchFromRewriter = {
+      character_descriptions: [
+        {
+          name: 'Brian Eric Anderson Sr. (Age 17)',
+          role: 'protagonist',
+          age: '17',
+          description: 'African American high school point guard in 1970s Pittsburgh.',
+        },
+        {
+          name: 'Brian Eric Anderson Sr. (Age 35)',
+          role: 'protagonist',
+          age: '35',
+          description: 'Rising technology leader.',
+        },
+        {
+          name: 'Maliwan Srisai',
+          role: 'supporting',
+          age: '34',
+          description: 'Thai architect in Bangkok.',
+        },
+      ],
+    }
+
+    const merged = mergeRevisionIntoVariant(originalVariant, patchFromRewriter)
+    const chars = merged.character_descriptions as Array<Record<string, unknown>>
+
+    // Index 1 ("Brian Eric Anderson Sr. (Age 35)") MUST inherit "African American" from Brian,
+    // NOT "Southeast Asian (Thai)" from originalVariant.character_descriptions[1]!
+    expect(chars[0]!.ethnicity).toBe('African American')
+    expect(chars[1]!.ethnicity).toBe('African American')
+    expect(chars[2]!.ethnicity).toBe('Southeast Asian (Thai)')
   })
 })

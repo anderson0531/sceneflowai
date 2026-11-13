@@ -30,6 +30,9 @@ import {
   capPatchSize,
   mergeRevisionIntoVariant,
 } from './blueprintRevisionDiff'
+import { sanitizeBlueprintCharactersAndBeats } from '@/lib/character/ageStageContinuity'
+import { enforceEnsembleFamilyConsistency } from '@/lib/character/characterFamily'
+import { inferLocaleDefaultEthnicityHint } from '@/lib/character/characterIntelligence'
 
 export const MAX_GEMINI_JSON_CHARS = 150_000
 
@@ -421,10 +424,46 @@ export function finalizeGuidedRevise(
     mergeRevisionIntoVariant(payload.rawVariant, fieldPatch),
     payload.preservedCharacterAssets
   )
+
+  if (
+    Array.isArray(fieldPatch.character_descriptions) ||
+    Array.isArray(fieldPatch.beats)
+  ) {
+    const sanitized = sanitizeBlueprintCharactersAndBeats({
+      characters: Array.isArray(mergedWithAssets.character_descriptions)
+        ? (mergedWithAssets.character_descriptions as Array<Record<string, any>>)
+        : [],
+      beats: Array.isArray(mergedWithAssets.beats)
+        ? (mergedWithAssets.beats as Array<Record<string, any>>)
+        : [],
+    })
+    const defaultEth = inferLocaleDefaultEthnicityHint({
+      setting: String(mergedWithAssets.setting || ''),
+      locations: Array.isArray(mergedWithAssets.scene_descriptions)
+        ? (mergedWithAssets.scene_descriptions as Array<Record<string, any>>)
+        : undefined,
+    })
+    const reconciledChars =
+      sanitized.characters.length > 0
+        ? enforceEnsembleFamilyConsistency(sanitized.characters, {
+            defaultLocaleEthnicity: defaultEth,
+          })
+        : sanitized.characters
+    if (Array.isArray(mergedWithAssets.character_descriptions)) {
+      mergedWithAssets.character_descriptions = reconciledChars
+    }
+    if (Array.isArray(mergedWithAssets.beats)) {
+      mergedWithAssets.beats = sanitized.beats
+    }
+  }
+
   for (const key of ['character_descriptions', 'scene_descriptions', 'prop_descriptions'] as const) {
     if (Array.isArray(fieldPatch[key]) && Array.isArray(mergedWithAssets[key])) {
       fieldPatch[key] = mergedWithAssets[key]
     }
+  }
+  if (Array.isArray(fieldPatch.beats) && Array.isArray(mergedWithAssets.beats)) {
+    fieldPatch.beats = mergedWithAssets.beats
   }
   const diff = buildFieldDiffs(
     payload.variant,

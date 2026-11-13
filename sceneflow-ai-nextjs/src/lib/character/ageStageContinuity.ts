@@ -604,6 +604,142 @@ export function buildAgeVariantCharacter<T extends Record<string, any>>(
   return cloned as T
 }
 
+const EXPLICIT_HYPHENATED_ETHNICITY_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
+  {
+    pattern: /\bmixed\s+([a-z][a-z\s()/&-]{2,40}?)\s+and\s+([a-z][a-z\s()/&-]{2,40}?)\s+(?:heritage|descent|ancestry|background)\b/i,
+    label: '__MATCH_MIXED__',
+  },
+  {
+    pattern: /\bAfrican[-\s]American\b(?!\s+(?:history|studies|literature|art|music|church|community|neighborhood|museum))/i,
+    label: 'African American',
+  },
+  { pattern: /\bBlack[-\s]American\b/i, label: 'African American' },
+  { pattern: /\bTaiwanese[-\s]American\b/i, label: 'East Asian (Taiwanese-American)' },
+  { pattern: /\bChinese[-\s]American\b/i, label: 'East Asian (Chinese-American)' },
+  { pattern: /\bJapanese[-\s]American\b/i, label: 'East Asian (Japanese-American)' },
+  { pattern: /\bKorean[-\s]American\b/i, label: 'East Asian (Korean-American)' },
+  { pattern: /\bVietnamese[-\s]American\b/i, label: 'Southeast Asian (Vietnamese-American)' },
+  { pattern: /\bThai[-\s]American\b/i, label: 'Mixed Southeast Asian (Thai) and American heritage' },
+  { pattern: /\bFilipino[-\s]American\b/i, label: 'Southeast Asian (Filipino-American)' },
+  { pattern: /\bIndian[-\s]American\b/i, label: 'South Asian (Indian-American)' },
+  { pattern: /\bMexican[-\s]American\b/i, label: 'Latino (Mexican-American)' },
+  { pattern: /\bCuban[-\s]American\b/i, label: 'Latino (Cuban-American)' },
+  { pattern: /\bIrish[-\s]American\b/i, label: 'White (Irish-American)' },
+  { pattern: /\bItalian[-\s]American\b/i, label: 'White (Italian-American)' },
+  { pattern: /\bPolish[-\s]American\b/i, label: 'White (Polish-American)' },
+  { pattern: /\bJewish[-\s]American\b/i, label: 'Jewish-American' },
+  { pattern: /\bLebanese[-\s]American\b/i, label: 'Middle Eastern (Lebanese-American)' },
+  { pattern: /\bNigerian[-\s]American\b/i, label: 'Black (Nigerian-American)' },
+]
+
+const PERSON_NOUN_FOLLOW_RE =
+  '(?:man|woman|boy|girl|teen|teenager|adolescent|youth|child|kid|son|daughter|father|mother|dad|mom|brother|sister|husband|wife|spouse|partner|grandmother|grandfather|granddaughter|grandson|matriarch|patriarch|widow|widower|elder|prodigy|high\\s+school|college|student|athlete|point\\s+guard|player|coach|mentor|teacher|professor|principal|pastor|minister|priest|monk|doctor|nurse|surgeon|architect|engineer|scientist|executive|founder|co-founder|entrepreneur|bookseller|curator|artist|musician|writer|poet|journalist|detective|officer|soldier|veteran|worker|machinist|steelworker|welder|craftsman|artisan|chef|merchant|villager|neighbor)'
+
+const EXPLICIT_PERSON_DEMOGRAPHIC_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
+  {
+    pattern: new RegExp(`\\bBlack\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'Black / African American',
+  },
+  {
+    pattern: new RegExp(`\\bThai\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'Southeast Asian (Thai)',
+  },
+  {
+    pattern: new RegExp(`\\bJapanese\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'East Asian (Japanese)',
+  },
+  {
+    pattern: new RegExp(`\\bKorean\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'East Asian (Korean)',
+  },
+  {
+    pattern: new RegExp(`\\bChinese\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'East Asian (Chinese)',
+  },
+  {
+    pattern: new RegExp(`\\bTaiwanese\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'East Asian (Taiwanese)',
+  },
+  {
+    pattern: new RegExp(`\\bVietnamese\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'Southeast Asian (Vietnamese)',
+  },
+  {
+    pattern: new RegExp(`\\bFilipino\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'Southeast Asian (Filipino)',
+  },
+  {
+    pattern: new RegExp(`\\b(?:South\\s+Asian|Indian)\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'South Asian (Indian)',
+  },
+  {
+    pattern: new RegExp(`\\b(?:East\\s+Asian)\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'East Asian',
+  },
+  {
+    pattern: new RegExp(`\\b(?:Southeast\\s+Asian)\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'Southeast Asian',
+  },
+  {
+    pattern: new RegExp(`\\b(?:Latino|Latina|Hispanic|Mexican)\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'Latino / Hispanic',
+  },
+  {
+    pattern: new RegExp(`\\b(?:White|Caucasian)\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'White / European',
+  },
+  {
+    pattern: new RegExp(`\\bIrish\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'White (Irish)',
+  },
+  {
+    pattern: new RegExp(`\\bNigerian\\s+(?:[a-z-]+\\s+){0,2}?${PERSON_NOUN_FOLLOW_RE}\\b`, 'i'),
+    label: 'Black (West African / Nigerian)',
+  },
+]
+
+/**
+ * Extract an explicit individual demographic/ethnicity identity stated directly in a character's
+ * opening biographical prose (e.g. `"A lean, hyper-vigilant African American high school math prodigy..."`
+ * -> `"African American"`), ignoring auto-generated `Longitudinal identity lock:` clauses.
+ */
+export function inferExplicitCharacterEthnicityFromProse(rawProse?: string | null): string | undefined {
+  if (!rawProse) return undefined
+  const withoutAutoLocks = rawProse
+    .replace(/Longitudinal identity lock:[\s\S]*$/i, '')
+    .replace(/Familial lineage:[\s\S]*$/i, '')
+    .trim()
+  if (!withoutAutoLocks) return undefined
+
+  // Normalize common honorific/generational periods ("Sr.", "Jr.", "Dr.", "Mr.", "Mrs.", "Ms.", "St.")
+  // before extracting the opening biographical sentence so "Brian Eric Anderson Sr." never truncates early!
+  const honorificSafe = withoutAutoLocks.replace(
+    /\b(Sr|Jr|Dr|Mr|Mrs|Ms|Prof|Rev|St|Capt|Lt|Sgt|Col|Gen)\.\s+/gi,
+    '$1 '
+  )
+  const openingSentence =
+    honorificSafe.split(/[.!?]\s+/)[0]?.slice(0, 360) ||
+    honorificSafe.slice(0, 360)
+
+  for (const item of EXPLICIT_HYPHENATED_ETHNICITY_PATTERNS) {
+    const m = openingSentence.match(item.pattern)
+    if (m) {
+      if (item.label === '__MATCH_MIXED__') {
+        return `Mixed ${m[1]!.trim()} and ${m[2]!.trim()} heritage`
+      }
+      return item.label
+    }
+  }
+
+  for (const item of EXPLICIT_PERSON_DEMOGRAPHIC_PATTERNS) {
+    if (item.pattern.test(openingSentence)) {
+      return item.label
+    }
+  }
+
+  return undefined
+}
+
 /**
  * Synchronize core genetic traits (`ethnicity`, `gender`, `eyeColor`, `samePersonGroupId`, longitudinal
  * appearance lock) across multiple `(Age NN)` character entries representing the same person.
@@ -631,11 +767,39 @@ export function enforceSamePersonAgeStageConsistency<T extends Record<string, an
     if (indices.length < 2) continue
     const groupId = `person-${baseKey.replace(/[^a-z0-9]+/g, '-')}`
 
-    // Pick shared immutable genetic anchors from whichever age entry defines them best
-    const sharedEthnicity =
-      indices
-        .map((i) => String(out[i]?.ethnicity || '').trim())
-        .sort((a, b) => b.length - a.length)[0] || ''
+    // 1. Prefer explicit ethnicity stated in the person's biographical prose (`description` / `subject`)
+    const proseEthnicities = indices
+      .map(
+        (i) =>
+          inferExplicitCharacterEthnicityFromProse(String(out[i]?.description || '')) ||
+          inferExplicitCharacterEthnicityFromProse(String(out[i]?.subject || ''))
+      )
+      .filter((v): v is string => Boolean(v))
+
+    // 2. Otherwise pick by majority frequency across age variants (NEVER by longest string length,
+    //    which previously let one polluted variant like "Southeast Asian (Thai)" win over "African American"!)
+    const explicitFieldEthnicities = indices
+      .map((i) => String(out[i]?.ethnicity || '').trim())
+      .filter(Boolean)
+
+    let sharedEthnicity = proseEthnicities[0] || ''
+    if (!sharedEthnicity && explicitFieldEthnicities.length > 0) {
+      const mixed = explicitFieldEthnicities.find((e) => /\bmixed\b/i.test(e))
+      if (mixed) {
+        sharedEthnicity = mixed
+      } else {
+        const counts = new Map<string, { display: string; count: number }>()
+        for (const eth of explicitFieldEthnicities) {
+          const norm = eth.toLowerCase()
+          const prev = counts.get(norm)
+          counts.set(norm, { display: prev?.display || eth, count: (prev?.count || 0) + 1 })
+        }
+        sharedEthnicity =
+          [...counts.values()].sort((a, b) => b.count - a.count)[0]?.display ||
+          explicitFieldEthnicities[0]!
+      }
+    }
+
     const sharedGender =
       indices.map((i) => String(out[i]?.gender || '').trim()).find(Boolean) || ''
     const sharedEyeColor =
@@ -647,7 +811,8 @@ export function enforceSamePersonAgeStageConsistency<T extends Record<string, an
       const c = out[idx]! as Record<string, any>
       const stage = extractSamePersonAgeStage(String(c.name || ''))
       c.samePersonGroupId = c.samePersonGroupId || groupId
-      if (sharedEthnicity && !String(c.ethnicity || '').trim()) {
+      if (sharedEthnicity) {
+        // Same individual across life stages MUST share the exact same ancestral ethnicity
         c.ethnicity = sharedEthnicity
       }
       if (sharedGender && !String(c.gender || '').trim()) {
@@ -667,14 +832,15 @@ export function enforceSamePersonAgeStageConsistency<T extends Record<string, an
       const lockClause = `Longitudinal identity lock: exact same individual human being as ${canonicalBaseDisplay} across life stages — identical ${c.ethnicity || 'ancestral'} heritage${c.eyeColor ? `, ${c.eyeColor} eyes,` : ''} and underlying facial bone structure, depicted strictly at ${ageLabel}.`
 
       const existingApp = String(c.appearance || c.appearanceDescription || '').trim()
-      if (!existingApp.toLowerCase().includes('longitudinal identity lock:')) {
-        const mergedApp = existingApp
-          ? `${existingApp.replace(/\.*\s*$/, '.')} ${lockClause}`
-          : lockClause
-        c.appearance = mergedApp
-        if ('appearanceDescription' in c || !c.appearance) {
-          c.appearanceDescription = mergedApp
-        }
+      const baseLookWithoutOldLock = existingApp
+        .replace(/\s*Longitudinal identity lock:[\s\S]*$/i, '')
+        .trim()
+      const mergedApp = baseLookWithoutOldLock
+        ? `${baseLookWithoutOldLock.replace(/\.*\s*$/, '.')} ${lockClause}`
+        : lockClause
+      c.appearance = mergedApp
+      if ('appearanceDescription' in c || !c.appearance) {
+        c.appearanceDescription = mergedApp
       }
     }
   }
