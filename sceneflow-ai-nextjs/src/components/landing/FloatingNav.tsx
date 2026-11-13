@@ -133,7 +133,9 @@ export function FloatingNav() {
 
                 <span
                   className={`text-xs font-medium whitespace-nowrap overflow-hidden transition-all duration-200 ${
-                    isActive ? 'w-16 opacity-100' : 'w-0 opacity-0 group-hover:w-16 group-hover:opacity-100'
+                    isActive
+                      ? 'max-w-[11rem] pr-1 opacity-100'
+                      : 'max-w-0 opacity-0 group-hover:max-w-[11rem] group-hover:pr-1 group-hover:opacity-100'
                   }`}
                 >
                   {label}

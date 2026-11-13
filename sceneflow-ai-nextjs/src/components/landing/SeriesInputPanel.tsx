@@ -198,11 +198,12 @@ export function SeriesInputPanel({ cardId }: { cardId: string }) {
             </span>
             <span className="text-[10px] text-cyan-300/80">{expandHint}</span>
           </div>
-          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-3 gap-1.5 min-[440px]:grid-cols-5 sm:gap-2">
             {castWithPortraits.map(({ member, index }) => (
               <button
                 key={member.name}
                 type="button"
+                title={member.role ? `${member.name} — ${member.role}` : member.name}
                 onClick={() => setExpandedCastIndex(index)}
                 aria-label={`Expand full view for ${member.name}`}
                 className="group/thumb relative flex flex-col overflow-hidden rounded-lg border border-white/10 bg-slate-900/90 text-left transition hover:border-cyan-400/50 hover:ring-1 hover:ring-cyan-400/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
@@ -219,7 +220,7 @@ export function SeriesInputPanel({ cardId }: { cardId: string }) {
                     <Maximize2 className="h-2.5 w-2.5" aria-hidden />
                   </span>
                 </div>
-                <span className="truncate px-1.5 py-1 text-[10px] font-medium text-slate-200 group-hover/thumb:text-cyan-200">
+                <span className="line-clamp-1 px-1.5 py-1 text-[10px] font-medium text-slate-200 group-hover/thumb:text-cyan-200">
                   {member.name}
                 </span>
               </button>

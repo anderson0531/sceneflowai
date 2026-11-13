@@ -488,23 +488,25 @@ export function ImaginePossibilitiesHero() {
             >
               {EXAMPLE_TRAILER_SCRIPTS.map((script) => {
                 const isSelected = script.id === activeScript.id
+                const categoryLabel = getCategoryLabel(script)
                 return (
                   <button
                     key={script.id}
                     type="button"
                     role="tab"
+                    title={categoryLabel}
                     aria-selected={isSelected}
                     data-category-id={script.id}
                     onMouseEnter={() => prefetchCategory(script.id)}
                     onFocus={() => prefetchCategory(script.id)}
                     onClick={() => selectCategory(script.id)}
-                    className={`rounded-full border px-4 py-1.5 text-xs font-semibold backdrop-blur-md transition-all sm:text-sm ${
+                    className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold backdrop-blur-md transition-all sm:px-4 sm:text-sm ${
                       isSelected
                         ? 'border-cyan-400/70 bg-cyan-500/25 text-white shadow-lg shadow-cyan-500/20'
                         : 'border-white/20 bg-black/50 text-gray-200 hover:border-white/40 hover:bg-black/70 hover:text-white'
                     }`}
                   >
-                    {getCategoryLabel(script)}
+                    {categoryLabel}
                   </button>
                 )
               })}
@@ -520,41 +522,46 @@ export function ImaginePossibilitiesHero() {
             </motion.p>
 
             <motion.div
-              className="mt-4 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3"
+              className="mx-auto mt-4 flex w-full max-w-md flex-col items-stretch justify-center gap-2 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.7, delay: prefersReducedMotion ? 0 : 0.4 }}
             >
               <button
                 type="button"
+                title={studioCopy.heroDock.primaryCta}
                 onClick={() => {
                   window.location.href = getSignupUrlForTier('explorer')
                 }}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:brightness-110 sm:text-sm"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:brightness-110 sm:w-auto sm:text-sm"
               >
-                <span>{studioCopy.heroDock.primaryCta}</span>
-                <ArrowRight className="h-4 w-4" aria-hidden />
+                <span className="whitespace-normal leading-tight">{studioCopy.heroDock.primaryCta}</span>
+                <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  document.getElementById('video-services')?.scrollIntoView({ behavior: 'smooth' })
-                }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/45 bg-emerald-950/60 px-4 py-2 text-xs font-semibold text-emerald-200 backdrop-blur-md transition-colors hover:border-emerald-300/70 hover:bg-emerald-900/70 hover:text-white sm:text-sm"
-              >
-                <Briefcase className="h-3.5 w-3.5 text-emerald-300" aria-hidden />
-                <span>{studioCopy.heroDock.businessCta}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  document.getElementById('five-superpowers')?.scrollIntoView({ behavior: 'smooth' })
-                }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-black/55 px-4 py-2 text-xs font-medium text-gray-200 backdrop-blur-md transition-colors hover:border-white/45 hover:bg-black/75 hover:text-white sm:text-sm"
-              >
-                <Compass className="h-3.5 w-3.5 text-cyan-300" aria-hidden />
-                <span>{studioCopy.heroDock.howItWorksCta}</span>
-              </button>
+              <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2 sm:contents">
+                <button
+                  type="button"
+                  title={studioCopy.heroDock.businessCta}
+                  onClick={() => {
+                    document.getElementById('video-services')?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full border border-emerald-400/45 bg-emerald-950/60 px-4 py-2 text-xs font-semibold text-emerald-200 backdrop-blur-md transition-colors hover:border-emerald-300/70 hover:bg-emerald-900/70 hover:text-white sm:text-sm"
+                >
+                  <Briefcase className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
+                  <span className="whitespace-normal leading-tight">{studioCopy.heroDock.businessCta}</span>
+                </button>
+                <button
+                  type="button"
+                  title={studioCopy.heroDock.howItWorksCta}
+                  onClick={() => {
+                    document.getElementById('five-superpowers')?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/25 bg-black/55 px-4 py-2 text-xs font-medium text-gray-200 backdrop-blur-md transition-colors hover:border-white/45 hover:bg-black/75 hover:text-white sm:text-sm"
+                >
+                  <Compass className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
+                  <span className="whitespace-normal leading-tight">{studioCopy.heroDock.howItWorksCta}</span>
+                </button>
+              </div>
             </motion.div>
           </div>
         </div>

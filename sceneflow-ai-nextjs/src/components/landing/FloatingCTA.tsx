@@ -47,19 +47,26 @@ export default function FloatingCTA() {
           >
             <div className="flex items-center gap-2 max-w-md mx-auto">
               <button
+                type="button"
+                title={t('seePricing')}
                 onClick={() => {
                   document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="flex-1 min-w-0 flex items-center justify-center gap-2 px-2 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 font-semibold rounded-xl transition-all"
+                className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2.5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 font-semibold rounded-xl transition-all"
               >
                 <DollarSign className="w-4 h-4 shrink-0" />
-                <span className="text-sm truncate">{t('seePricing')}</span>
+                <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
+                  {t('seePricing')}
+                </span>
               </button>
               <Link
                 href={SIGNUP_URL}
-                className="flex-1 min-w-0 flex items-center justify-center gap-2 px-2 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all"
+                title={t('tryNine')}
+                className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2.5 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all"
               >
-                <span className="text-sm truncate">{t('tryNine')}</span>
+                <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
+                  {t('tryNine')}
+                </span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
               </Link>
             </div>

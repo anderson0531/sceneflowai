@@ -9,6 +9,7 @@ import {
   Clapperboard,
   ExternalLink,
   Film,
+  Images,
   Layers,
   Maximize2,
   Play,
@@ -18,9 +19,16 @@ import {
 import { useLocale, useTranslations } from 'next-intl'
 import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal'
 import { useExpandLandingSection } from '@/components/landing/LandingSectionCollapse'
-import { PipelineReviewDialog } from '@/components/landing/PipelineReviewDialog'
-import { TwoModesTheaterModal } from '@/components/landing/TwoModesTheaterModal'
+import {
+  StudioDoorWalkthroughModal,
+  type WalkthroughDisplayMode,
+} from '@/components/landing/StudioDoorWalkthroughModal'
+import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
+import {
+  DOOR_WALKTHROUGH_COPY,
+  normalizeWalkthroughDubLocale,
+} from '@/config/landing/doorWalkthroughCopy'
 import { featureRoomHasVideo, getFeatureRoomMedia } from '@/config/landing/featureRoomMedia'
 import {
   BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP,
@@ -28,7 +36,6 @@ import {
   SCREENING_COLLAB_SCREENSHOT_WEBP,
   SERIES_REVIEW_SCREENSHOT_WEBP,
 } from '@/config/landing/keyFeatureScreenshots'
-import type { TwoModesMediaEntry } from '@/config/landing/twoModesMedia'
 import { cn } from '@/lib/utils'
 
 export const STUDIO_GUIDED_TOUR_SECTION_ID = 'studio-tour'
@@ -113,29 +120,23 @@ export function StudioGuidedTourSection() {
     src: string
     alt: string
   } | null>(null)
-  const [roomVideoModal, setRoomVideoModal] = useState<{
-    title: string
-    media: TwoModesMediaEntry
+  const [walkthroughModal, setWalkthroughModal] = useState<{
+    roomId: RoomId
+    mode: WalkthroughDisplayMode
   } | null>(null)
-  const [liveScreeningOpen, setLiveScreeningOpen] = useState(false)
 
   const activeRoom = copy.rooms.find((r) => r.id === activeRoomId) ?? copy.rooms[0]
   const assets = ROOM_SANDBOX_ASSETS[activeRoom.id]
   const visuals = activeRoom.visuals
   const roomMedia = getFeatureRoomMedia(activeRoom.id, locale)
   const hasRoomVideo = featureRoomHasVideo(roomMedia)
+  const walkthroughCopy =
+    DOOR_WALKTHROUGH_COPY[normalizeWalkthroughDubLocale(locale)] ??
+    DOOR_WALKTHROUGH_COPY.en
 
-  const openRoomVideo = () => {
+  const openRoomWalkthrough = (mode: WalkthroughDisplayMode = 'video', roomId: RoomId = activeRoom.id) => {
     if (!hasRoomVideo) return
-    setRoomVideoModal({
-      title: `${activeRoom.stepNumber} · ${activeRoom.tabLabel}`,
-      media: {
-        imageUrl: '',
-        posterUrl: assets.heroSrc,
-        webmUrl: roomMedia.webmUrl,
-        mp4Url: roomMedia.mp4Url,
-      },
-    })
+    setWalkthroughModal({ roomId, mode })
   }
 
   return (
@@ -166,38 +167,42 @@ export function StudioGuidedTourSection() {
           </p>
 
           {/* Creator vs Client Service Lens Switcher */}
-          <div className="mt-6 inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-white/10 bg-slate-900/90 p-1.5">
-            <span className="px-2.5 text-xs font-medium text-gray-400">{copy.lensLabel}</span>
+          <div className="mt-6 flex w-full flex-col items-stretch justify-center gap-2 rounded-2xl border border-white/10 bg-slate-900/90 p-2 sm:inline-flex sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:p-1.5">
+            <span className="px-2.5 text-center text-xs font-medium text-gray-400">
+              {copy.lensLabel}
+            </span>
             <button
               type="button"
+              title={copy.lensCreator}
               onClick={() => setLens('creator')}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all',
+                'inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all sm:w-auto sm:py-1.5 cursor-pointer',
                 lens === 'creator'
                   ? 'bg-violet-600 text-white shadow'
                   : 'text-gray-300 hover:text-white'
               )}
             >
-              <Clapperboard className="h-3.5 w-3.5" aria-hidden />
-              <span>{copy.lensCreator}</span>
+              <Clapperboard className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="whitespace-normal leading-tight">{copy.lensCreator}</span>
             </button>
             <button
               type="button"
+              title={copy.lensService}
               onClick={() => setLens('service')}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all',
+                'inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all sm:w-auto sm:py-1.5 cursor-pointer',
                 lens === 'service'
                   ? 'bg-emerald-600 text-white shadow'
                   : 'text-gray-300 hover:text-white'
               )}
             >
-              <Briefcase className="h-3.5 w-3.5" aria-hidden />
-              <span>{copy.lensService}</span>
+              <Briefcase className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="whitespace-normal leading-tight">{copy.lensService}</span>
             </button>
           </div>
         </motion.div>
 
-        {/* 4-Room Stepper Tabs */}
+        {/* 4-Room Stepper Tabs — full readable labels + tooltips on mobile S23 & desktop */}
         <div
           role="tablist"
           aria-label={copy.title}
@@ -206,39 +211,47 @@ export function StudioGuidedTourSection() {
           {copy.rooms.map((room) => {
             const Icon = ROOM_ICONS[room.id]
             const isSelected = room.id === activeRoom.id
+            const fullRoomTitle = `${copy.stepPrefix} ${room.stepNumber}: ${room.tabLabel} — ${room.badge}`
             return (
-              <button
-                key={room.id}
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                onClick={() => setActiveRoomId(room.id)}
-                className={cn(
-                  'flex items-center gap-3 rounded-2xl border p-4 text-start transition-all',
-                  isSelected
-                    ? 'border-cyan-400/60 bg-slate-900 text-white shadow-lg shadow-cyan-500/10'
-                    : 'border-slate-800 bg-slate-950/60 text-gray-400 hover:border-slate-700 hover:text-gray-200'
-                )}
-              >
-                <div
+              <VideoControlTooltip key={room.id} label={fullRoomTitle} side="top">
+                <button
+                  type="button"
+                  role="tab"
+                  title={fullRoomTitle}
+                  aria-selected={isSelected}
+                  onClick={() => setActiveRoomId(room.id)}
                   className={cn(
-                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-xs font-bold',
+                    'flex flex-col items-start gap-2 rounded-2xl border p-3 text-start transition-all sm:flex-row sm:items-center sm:gap-3 sm:p-4 cursor-pointer',
                     isSelected
-                      ? 'border-cyan-400/50 bg-cyan-500/15 text-cyan-300'
-                      : 'border-slate-700 bg-slate-900 text-gray-400'
+                      ? 'border-cyan-400/60 bg-slate-900 text-white shadow-lg shadow-cyan-500/10'
+                      : 'border-slate-800 bg-slate-950/60 text-gray-400 hover:border-slate-700 hover:text-gray-200'
                   )}
                 >
-                  <Icon className="h-5 w-5" aria-hidden />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-cyan-400">
-                    {copy.stepPrefix} {room.stepNumber}
-                  </p>
-                  <p className="truncate text-sm font-bold text-white sm:text-base">
-                    {room.tabLabel}
-                  </p>
-                </div>
-              </button>
+                  <div className="flex w-full items-center justify-between gap-2 sm:w-auto">
+                    <div
+                      className={cn(
+                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border text-xs font-bold sm:h-10 sm:w-10',
+                        isSelected
+                          ? 'border-cyan-400/50 bg-cyan-500/15 text-cyan-300'
+                          : 'border-slate-700 bg-slate-900 text-gray-400'
+                      )}
+                    >
+                      <Icon className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-400 sm:hidden">
+                      {copy.stepPrefix} {room.stepNumber}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="hidden text-[11px] font-bold uppercase tracking-wider text-cyan-400 sm:block">
+                      {copy.stepPrefix} {room.stepNumber}
+                    </p>
+                    <p className="whitespace-normal break-words text-sm font-bold leading-snug text-white sm:text-base">
+                      {room.tabLabel}
+                    </p>
+                  </div>
+                </button>
+              </VideoControlTooltip>
             )
           })}
         </div>
@@ -321,28 +334,46 @@ export function StudioGuidedTourSection() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   {hasRoomVideo ? (
-                    <button
-                      type="button"
-                      onClick={openRoomVideo}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-500/15 px-2.5 py-1 text-xs font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/25 hover:text-white"
-                    >
-                      <Play className="h-3 w-3 fill-current" aria-hidden />
-                      <span>{copy.watchRoomVideoLabel}</span>
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        title={`${copy.watchRoomVideoLabel} (${walkthroughCopy.interimBadge})`}
+                        onClick={() => openRoomWalkthrough('video')}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-500/15 px-2.5 py-1.5 text-xs font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/25 hover:text-white cursor-pointer"
+                      >
+                        <Play className="h-3 w-3 shrink-0 fill-current" aria-hidden />
+                        <span className="whitespace-normal leading-tight">{copy.watchRoomVideoLabel}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        title={`${walkthroughCopy.modePannedScreens} · ${walkthroughCopy.doorButtonHint}`}
+                        onClick={() => openRoomWalkthrough('panned')}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-purple-400/35 bg-purple-500/15 px-2.5 py-1.5 text-xs font-semibold text-purple-200 transition-colors hover:bg-purple-500/25 hover:text-white cursor-pointer"
+                      >
+                        <Images className="h-3 w-3 shrink-0" aria-hidden />
+                        <span className="whitespace-normal leading-tight">
+                          {walkthroughCopy.modePannedScreens}
+                        </span>
+                      </button>
+                    </>
                   ) : null}
 
                   <button
                     type="button"
+                    title={copy.inspectFullScreenLabel}
                     onClick={() =>
                       setExpandedScreenshot({
                         src: ROOM_FULL_SCREENSHOTS[activeRoom.id],
                         alt: `${activeRoom.tabLabel} — ${copy.inspectFullScreenLabel}`,
                       })
                     }
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-medium text-gray-200 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-gray-200 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white cursor-pointer"
                   >
-                    <Maximize2 className="h-3 w-3" aria-hidden />
-                    <span>{copy.inspectFullScreenLabel}</span>
+                    <Maximize2 className="h-3 w-3 shrink-0" aria-hidden />
+                    <span className="whitespace-normal leading-tight">
+                      {copy.inspectFullScreenLabel}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -377,12 +408,15 @@ export function StudioGuidedTourSection() {
                   {activeRoom.id === 'screening-room' ? (
                     <button
                       type="button"
-                      onClick={() => setLiveScreeningOpen(true)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/50 bg-amber-500/20 px-3 py-1.5 text-xs font-bold text-amber-100 backdrop-blur-md transition-colors hover:bg-amber-500/35 hover:text-white"
+                      title={`${copy.openLiveScreeningLabel} (${walkthroughCopy.interimBadge})`}
+                      onClick={() => openRoomWalkthrough('video', 'screening-room')}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/50 bg-amber-500/20 px-3 py-1.5 text-xs font-bold text-amber-100 backdrop-blur-md transition-colors hover:bg-amber-500/35 hover:text-white cursor-pointer"
                     >
-                      <Share2 className="h-3.5 w-3.5" aria-hidden />
-                      <span>{copy.openLiveScreeningLabel}</span>
-                      <ExternalLink className="h-3 w-3" aria-hidden />
+                      <Share2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      <span className="whitespace-normal leading-tight">
+                        {copy.openLiveScreeningLabel}
+                      </span>
+                      <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
                     </button>
                   ) : null}
                 </div>
@@ -395,6 +429,7 @@ export function StudioGuidedTourSection() {
                   return (
                     <div
                       key={`${activeRoom.id}-${idx}`}
+                      title={thumbLabel}
                       className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/90"
                     >
                       <div className="aspect-[16/10] w-full overflow-hidden bg-black">
@@ -405,7 +440,10 @@ export function StudioGuidedTourSection() {
                           loading="lazy"
                         />
                       </div>
-                      <p className="truncate px-2.5 py-1.5 text-[11px] font-medium text-gray-200">
+                      <p
+                        title={thumbLabel}
+                        className="line-clamp-2 px-2.5 py-1.5 text-[11px] font-medium leading-tight text-gray-200"
+                      >
                         {thumbLabel}
                       </p>
                     </div>
@@ -423,12 +461,13 @@ export function StudioGuidedTourSection() {
           </p>
           <button
             type="button"
+            title={copy.examplesBridgeCta}
             onClick={scrollToExamples}
-            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-cyan-400/50 bg-cyan-500/15 px-4 py-2 text-xs font-bold text-cyan-200 transition-all hover:bg-cyan-500/25 hover:text-white sm:text-sm"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-cyan-400/50 bg-cyan-500/15 px-4 py-2 text-xs font-bold text-cyan-200 transition-all hover:bg-cyan-500/25 hover:text-white sm:text-sm cursor-pointer"
           >
-            <Clapperboard className="h-4 w-4 text-cyan-300" aria-hidden />
-            <span>{copy.examplesBridgeCta}</span>
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+            <Clapperboard className="h-4 w-4 shrink-0 text-cyan-300" aria-hidden />
+            <span className="whitespace-normal leading-tight">{copy.examplesBridgeCta}</span>
+            <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
           </button>
         </div>
       </div>
@@ -442,25 +481,12 @@ export function StudioGuidedTourSection() {
         />
       ) : null}
 
-      {roomVideoModal ? (
-        <TwoModesTheaterModal
-          open={Boolean(roomVideoModal)}
-          onClose={() => setRoomVideoModal(null)}
-          media={roomVideoModal.media}
-          caption={roomVideoModal.title}
-          pauseLabel={tCommon('pause')}
-          playLabel={tCommon('play')}
-          muteLabel={tCommon('mute')}
-          unmuteLabel={tCommon('unmute')}
-        />
-      ) : null}
-
-      <PipelineReviewDialog
-        open={liveScreeningOpen}
-        onClose={() => setLiveScreeningOpen(false)}
-        closeLabel={tCommon.has('close') ? tCommon('close') : 'Close'}
-        title={copy.screeningModalTitle}
-        href="/share/screening-room/glass-ledger-screening"
+      <StudioDoorWalkthroughModal
+        open={Boolean(walkthroughModal)}
+        onClose={() => setWalkthroughModal(null)}
+        initialRoomId={walkthroughModal?.roomId ?? activeRoom.id}
+        initialLocale={locale}
+        initialMode={walkthroughModal?.mode ?? 'video'}
       />
     </section>
   )

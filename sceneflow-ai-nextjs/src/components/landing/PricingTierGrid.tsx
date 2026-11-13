@@ -128,19 +128,29 @@ export function PricingTierGrid({
               </div>
 
               <div className="grid grid-cols-2 gap-2.5 mb-5">
-                <div className="p-2.5 rounded-lg bg-gray-800/50 border border-gray-700/50">
+                <div
+                  title={`${t('creditsPerMonth')}: ${plan.includedCredits.toLocaleString()}`}
+                  className="p-2.5 rounded-lg bg-gray-800/50 border border-gray-700/50"
+                >
                   <div className="flex items-center gap-1.5 mb-1">
                     <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span className="text-[11px] text-gray-400 truncate">{t('creditsPerMonth')}</span>
+                    <span className="text-[11px] leading-tight text-gray-400 whitespace-normal break-words">
+                      {t('creditsPerMonth')}
+                    </span>
                   </div>
                   <div className="text-base font-bold text-white">
                     {plan.includedCredits.toLocaleString()}
                   </div>
                 </div>
-                <div className="p-2.5 rounded-lg bg-gray-800/50 border border-gray-700/50">
+                <div
+                  title={`${t('storage')}: ${plan.storage}`}
+                  className="p-2.5 rounded-lg bg-gray-800/50 border border-gray-700/50"
+                >
                   <div className="flex items-center gap-1.5 mb-1">
                     <HardDrive className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                    <span className="text-[11px] text-gray-400 truncate">{t('storage')}</span>
+                    <span className="text-[11px] leading-tight text-gray-400 whitespace-normal break-words">
+                      {t('storage')}
+                    </span>
                   </div>
                   <div className="text-base font-bold text-white">{plan.storage}</div>
                 </div>

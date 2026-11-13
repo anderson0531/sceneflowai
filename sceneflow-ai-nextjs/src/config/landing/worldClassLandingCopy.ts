@@ -188,6 +188,8 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     priceTierNames: ['Accessible', 'Standard', 'Boutique'],
     volumeLabel: 'Client deliveries / month:',
     projectsPerMonthSuffix: 'projects/mo',
+    projectsUnitLabel: 'projects',
+    perProjectProfitLabel: 'Net profit / project',
     traditionalMarketLabel: 'Typical market rate',
     typicalFeeLabel: 'Your client price',
     fullyLoadedCostLabel: 'Fully-loaded cost',
@@ -197,7 +199,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     monthlyGrossLabel: 'Est. Monthly Client Billing',
     monthlyNetLabel: 'Est. Monthly Net Profit (after credits & PM time)',
     perMonthSuffix: '/ mo',
-    marginBadgeSuffix: 'true margin',
+    marginBadgeSuffix: 'net margin',
     disclaimer:
       'Fully-loaded delivery cost includes SceneFlow compute credits ($0.01/credit add-on rate) plus estimated operator/PM time for client intake, direction, and Screening Room review. You set your own client pricing.',
     launchBusinessCta: 'Launch Your Video Service ($9)',

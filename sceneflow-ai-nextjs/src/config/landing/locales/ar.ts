@@ -171,6 +171,8 @@ export const STUDIO_LANDING_COPY_AR = {
     priceTierNames: ['ميسّر', 'قياسي', 'بوتيك'],
     volumeLabel: 'عدد المشاريع المسلمة شهرياً:',
     projectsPerMonthSuffix: 'مشاريع/شهر',
+    projectsUnitLabel: 'مشاريع',
+    perProjectProfitLabel: 'صافي الربح / مشروع',
     traditionalMarketLabel: 'سعر السوق التقليدي',
     typicalFeeLabel: 'سعرك للعميل',
     fullyLoadedCostLabel: 'التكلفة الكاملة للتسليم',
@@ -180,7 +182,7 @@ export const STUDIO_LANDING_COPY_AR = {
     monthlyGrossLabel: 'إجمالي فوترة العملاء الشهرية',
     monthlyNetLabel: 'صافي الربح الشهري التقديري (بعد الرصيد ووقت الإدارة)',
     perMonthSuffix: '/ شهر',
-    marginBadgeSuffix: 'هامش ربح حقيقي',
+    marginBadgeSuffix: 'هامش صافي',
     disclaimer:
       'تشمل التكلفة الكاملة للتسليم رصيد الحوسبة في SceneFlow ($0.01 لكل رصيد إضافي) بالإضافة إلى الوقت التقديري للمشغل/مدير المشروع في المقابلة والإخراج ومراجعة Screening Room. أنت تحدد أسعارك.',
     launchBusinessCta: 'أطلق خدمة الفيديو الخاصة بك ($9)',

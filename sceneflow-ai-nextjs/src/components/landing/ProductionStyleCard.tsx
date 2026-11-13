@@ -30,7 +30,13 @@ import {
 import { TrailerPlayer } from '@/components/landing/TrailerPlayer'
 import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { PipelineReviewDialog } from '@/components/landing/PipelineReviewDialog'
+import { StudioDoorWalkthroughModal } from '@/components/landing/StudioDoorWalkthroughModal'
 import { SeriesInputPanel } from '@/components/landing/SeriesInputPanel'
+import {
+  DOOR_WALKTHROUGH_COPY,
+  milestoneToFeatureRoomId,
+  normalizeWalkthroughDubLocale,
+} from '@/config/landing/doorWalkthroughCopy'
 
 export type SolutionPillar = {
   title: string
@@ -186,10 +192,14 @@ export function ProductionStyleCard({
     screening: screeningDoorLabel,
   }
   const [reviewOpen, setReviewOpen] = useState(false)
+  const [walkthroughOpen, setWalkthroughOpen] = useState(false)
   const [showDetail, setShowDetail] = useState(false)
   const [activeMilestone, setActiveMilestone] = useState<ReviewerMilestoneId>('screening')
   const screeningMilestone = media.milestones.find((milestone) => milestone.id === 'screening')
   const supportingMilestones = media.milestones.filter((milestone) => milestone.id !== 'screening')
+  const walkthroughCopy =
+    DOOR_WALKTHROUGH_COPY[normalizeWalkthroughDubLocale(videoLocale)] ??
+    DOOR_WALKTHROUGH_COPY.en
 
   const startProduction = () => {
     window.location.href = getLoginUrl({
@@ -199,9 +209,9 @@ export function ProductionStyleCard({
     })
   }
 
-  const openReview = (id: ReviewerMilestoneId) => {
+  const openDoorWalkthrough = (id: ReviewerMilestoneId) => {
     setActiveMilestone(id)
-    setReviewOpen(true)
+    setWalkthroughOpen(true)
   }
 
   return (
@@ -235,48 +245,50 @@ export function ProductionStyleCard({
       </div>
 
       <div className="pointer-events-none relative z-10 flex flex-1 flex-col bg-gradient-to-b from-slate-950/95 via-slate-950 to-slate-950 p-4 sm:p-6">
-        {/* Clean Screening Room button with smaller Series Room, Blueprint Room & Production Stage buttons below (disabled pre-credit build) */}
+        {/* Interactive 7-language narrated Studio Door walkthroughs (interim placeholder for live shared links) */}
         <nav
           aria-label="Production review"
           title={screeningRoomInstruction}
           className="pointer-events-auto mb-4 space-y-2"
         >
           {screeningMilestone ? (
-            <VideoControlTooltip label={`${milestoneLabels[screeningMilestone.id]} (Interactive preview coming soon)`}>
-              <span className="block w-full">
-                <button
-                  key={screeningMilestone.id}
-                  type="button"
-                  disabled
-                  aria-disabled="true"
-                  className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-white/15 bg-slate-900/60 px-4 py-2.5 text-sm font-semibold text-slate-400 opacity-75"
-                >
-                  <Play className={`h-3.5 w-3.5 shrink-0 ${style.accent} opacity-70`} />
-                  <span>{milestoneLabels[screeningMilestone.id]}</span>
-                </button>
-              </span>
+            <VideoControlTooltip
+              label={`${milestoneLabels[screeningMilestone.id]} · ${walkthroughCopy.doorButtonHint}`}
+            >
+              <button
+                key={screeningMilestone.id}
+                type="button"
+                title={`${milestoneLabels[screeningMilestone.id]} · ${walkthroughCopy.doorButtonHint}`}
+                onClick={() => openDoorWalkthrough(screeningMilestone.id)}
+                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-cyan-400/35 bg-slate-900/85 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:border-cyan-400/70 hover:bg-slate-900 shadow-sm"
+              >
+                <Play className={`h-3.5 w-3.5 shrink-0 ${style.accent} fill-current`} />
+                <span className="whitespace-normal break-words leading-snug">
+                  {milestoneLabels[screeningMilestone.id]}
+                </span>
+              </button>
             </VideoControlTooltip>
           ) : null}
 
           {supportingMilestones.length > 0 ? (
-            <div className="grid grid-cols-3 gap-1.5">
-              {supportingMilestones.map((milestone) => (
-                <VideoControlTooltip
-                  key={milestone.id}
-                  label={`${milestoneLabels[milestone.id]} (Interactive preview coming soon)`}
-                >
-                  <span className="block min-w-0">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-1.5">
+              {supportingMilestones.map((milestone) => {
+                const doorTitle = `${milestoneLabels[milestone.id]} · ${walkthroughCopy.doorButtonHint}`
+                return (
+                  <VideoControlTooltip key={milestone.id} label={doorTitle}>
                     <button
                       type="button"
-                      disabled
-                      aria-disabled="true"
-                      className="flex h-full w-full cursor-not-allowed items-center justify-center rounded-md border border-white/10 bg-slate-950/60 px-1.5 py-1.5 text-center text-[11px] font-medium leading-tight text-slate-500 opacity-75 sm:px-2 sm:text-xs"
+                      title={doorTitle}
+                      onClick={() => openDoorWalkthrough(milestone.id)}
+                      className="flex h-full w-full cursor-pointer items-center justify-center rounded-md border border-white/15 bg-slate-900/70 px-2.5 py-2 text-center text-xs font-medium leading-tight text-slate-200 transition-colors hover:border-cyan-400/50 hover:bg-slate-900 hover:text-white min-[420px]:px-2 min-[420px]:py-1.5"
                     >
-                      <span className="whitespace-normal break-words">{milestoneLabels[milestone.id]}</span>
+                      <span className="whitespace-normal break-words">
+                        {milestoneLabels[milestone.id]}
+                      </span>
                     </button>
-                  </span>
-                </VideoControlTooltip>
-              ))}
+                  </VideoControlTooltip>
+                )
+              })}
             </div>
           ) : null}
         </nav>
@@ -348,6 +360,14 @@ export function ProductionStyleCard({
           </div>
         )}
       </div>
+
+      <StudioDoorWalkthroughModal
+        open={walkthroughOpen}
+        onClose={() => setWalkthroughOpen(false)}
+        initialRoomId={milestoneToFeatureRoomId(activeMilestone)}
+        initialLocale={videoLocale}
+        productionTitle={card.title}
+      />
 
       <PipelineReviewDialog
         open={reviewOpen}

@@ -138,82 +138,102 @@ export function Header() {
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Desktop Header */}
-          <div className="hidden lg:flex justify-between items-center h-20">
-            <SceneFlowStudioBrand
-              href={homeHref}
-              variant="landing"
-              nameClassName="text-white"
-            />
+          {/* Desktop Header (xl+ so 7 nav links + auth CTAs never wrap across 2 rows on 1024-1279px laptops/tablets) */}
+          <div className="hidden xl:flex justify-between items-center gap-3 h-20">
+            <div className="shrink-0">
+              <SceneFlowStudioBrand
+                href={homeHref}
+                variant="landing"
+                nameClassName="text-white"
+              />
+            </div>
             
             {/* Navigation Links - Center */}
-            <nav className="flex items-center space-x-1.5">
+            <nav className="flex items-center gap-0.5 2xl:gap-1.5 min-w-0">
               <button
+                type="button"
+                title={t('overview')}
                 onClick={scrollToTop}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2 2xl:px-3 py-2 text-xs 2xl:text-sm text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
-                <Compass className="w-4 h-4 text-sf-primary" />
-                {t('overview')}
+                <Compass className="hidden 2xl:inline-block w-4 h-4 shrink-0 text-sf-primary" />
+                <span>{t('overview')}</span>
               </button>
 
               <button
+                type="button"
+                title={t.has('videoServices') ? t('videoServices') : 'Video Business'}
                 onClick={() => scrollToSection('video-services')}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-emerald-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-emerald-500/10"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2 2xl:px-3 py-2 text-xs 2xl:text-sm text-emerald-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-emerald-500/10"
               >
-                <Briefcase className="w-4 h-4 text-emerald-400" />
-                {t.has('videoServices') ? t('videoServices') : 'Video Business'}
+                <Briefcase className="hidden 2xl:inline-block w-4 h-4 shrink-0 text-emerald-400" />
+                <span>{t.has('videoServices') ? t('videoServices') : 'Video Business'}</span>
               </button>
 
               <button
+                type="button"
+                title={t.has('studioTour') ? t('studioTour') : 'Studio Tour'}
                 onClick={() => scrollToSection('studio-tour')}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2 2xl:px-3 py-2 text-xs 2xl:text-sm text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
-                <Layers className="w-4 h-4 text-sf-primary" />
-                {t.has('studioTour') ? t('studioTour') : 'Studio Tour'}
+                <Layers className="hidden 2xl:inline-block w-4 h-4 shrink-0 text-sf-primary" />
+                <span>{t.has('studioTour') ? t('studioTour') : 'Studio Tour'}</span>
               </button>
 
               <button
+                type="button"
+                title={t('productionExamples')}
                 onClick={() => scrollToSection('production-examples')}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2 2xl:px-3 py-2 text-xs 2xl:text-sm text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
-                <Clapperboard className="w-4 h-4 text-sf-primary" />
-                {t('productionExamples')}
+                <Clapperboard className="hidden 2xl:inline-block w-4 h-4 shrink-0 text-sf-primary" />
+                <span>{t('productionExamples')}</span>
               </button>
 
               <button
+                type="button"
+                title={t('keyFeatures')}
                 onClick={() => scrollToSection('key-features')}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2 2xl:px-3 py-2 text-xs 2xl:text-sm text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
-                <Sparkles className="w-4 h-4 text-sf-primary" />
-                {t('keyFeatures')}
+                <Sparkles className="hidden 2xl:inline-block w-4 h-4 shrink-0 text-sf-primary" />
+                <span>{t('keyFeatures')}</span>
               </button>
 
               <button
+                type="button"
+                title={t('plansPricing')}
                 onClick={() => scrollToSection('pricing')}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2 2xl:px-3 py-2 text-xs 2xl:text-sm text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
-                <CreditCard className="w-4 h-4 text-sf-primary" />
-                {t('plansPricing')}
+                <CreditCard className="hidden 2xl:inline-block w-4 h-4 shrink-0 text-sf-primary" />
+                <span>{t('plansPricing')}</span>
               </button>
 
               <button
+                type="button"
+                title={t('trustSafety')}
                 onClick={() => scrollToSection('trust-safety')}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2 2xl:px-3 py-2 text-xs 2xl:text-sm text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
-                <Shield className="w-4 h-4 text-sf-primary" />
-                {t('trustSafety')}
+                <Shield className="hidden 2xl:inline-block w-4 h-4 shrink-0 text-sf-primary" />
+                <span>{t('trustSafety')}</span>
               </button>
             </nav>
             
             {/* CTA Buttons - Right */}
-            <div className="flex items-center space-x-3">
-              <LanguageSelector />
+            <div className="flex shrink-0 items-center gap-2">
+              <LanguageSelector variant="icon" />
               {isAuthenticated ? (
                 <>
                   {/* User Dropdown - Consolidates all auth controls */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800/50 transition-colors">
+                      <button
+                        type="button"
+                        title={user?.name || t('userFallback')}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800/50 transition-colors"
+                      >
                         <div className="w-8 h-8 bg-sf-primary rounded-full flex items-center justify-center">
                           <User className="w-4 h-4 text-sf-background" />
                         </div>
@@ -246,8 +266,9 @@ export function Header() {
                   
                   {/* Primary CTA */}
                   <Button 
+                    title={t('goToDashboard')}
                     onClick={() => navigateToDashboard()}
-                    className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-2 text-sm font-medium"
+                    className="whitespace-nowrap bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 px-3.5 py-2 text-sm font-medium"
                   >
                     {t('goToDashboard')}
                   </Button>
@@ -255,15 +276,17 @@ export function Header() {
               ) : (
                 <>
                   <Button 
+                    title={t('signIn')}
                     onClick={goToLogin}
                     variant="outline"
-                    className="border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background transition-all duration-200"
+                    className="whitespace-nowrap border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background transition-all duration-200 px-3 text-sm"
                   >
                     {t('signIn')}
                   </Button>
                   <Button 
+                    title={t('startProject')}
                     onClick={goToSignup}
-                    className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-2 text-sm font-medium"
+                    className="whitespace-nowrap bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 px-3.5 py-2 text-sm font-medium"
                   >
                     {t('startProject')}
                   </Button>
@@ -272,8 +295,8 @@ export function Header() {
             </div>
           </div>
 
-          {/* Mobile Header - Consistent with App */}
-          <div className="lg:hidden">
+          {/* Mobile & Tablet Header (< xl) */}
+          <div className="xl:hidden">
             {/* Top Line - Logo, language globe, and menu button */}
             <div className="flex justify-between items-center h-16">
               <SceneFlowStudioBrand
@@ -297,7 +320,7 @@ export function Header() {
             
             {/* Mobile Menu Dropdown */}
             {isMobileMenuOpen && (
-              <div className="lg:hidden pb-4 border-t border-gray-800/50">
+              <div className="xl:hidden pb-4 border-t border-gray-800/50">
                 <nav className="flex flex-col space-y-1 pt-4">
                   <button onClick={scrollToTop} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Compass className="w-4 h-4 text-sf-primary" />

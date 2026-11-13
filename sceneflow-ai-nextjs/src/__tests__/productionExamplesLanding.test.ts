@@ -589,7 +589,7 @@ describe('Production showcase videos', () => {
     expect(card).not.toContain('Open Player')
     expect(card).toContain('screeningMilestone')
     expect(card).toContain('supportingMilestones')
-    expect(card).toContain('aria-disabled="true"')
+    expect(card).toContain('StudioDoorWalkthroughModal')
     expect(card).toContain('grid-cols-3')
     expect(card.indexOf('aria-label="Production review"')).toBeLessThan(
       card.indexOf('{showDetail && (')

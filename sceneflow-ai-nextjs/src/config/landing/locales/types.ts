@@ -162,6 +162,8 @@ export type StudioLandingCopy = {
     priceTierNames: readonly [string, string, string]
     volumeLabel: string
     projectsPerMonthSuffix: string
+    projectsUnitLabel: string
+    perProjectProfitLabel: string
     traditionalMarketLabel: string
     typicalFeeLabel: string
     fullyLoadedCostLabel: string

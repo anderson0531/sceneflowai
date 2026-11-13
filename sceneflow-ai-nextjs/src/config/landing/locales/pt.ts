@@ -171,6 +171,8 @@ export const STUDIO_LANDING_COPY_PT = {
     priceTierNames: ['Acessível', 'Padrão', 'Boutique'],
     volumeLabel: 'Entregas a clientes / mês:',
     projectsPerMonthSuffix: 'projetos/mês',
+    projectsUnitLabel: 'projetos',
+    perProjectProfitLabel: 'Lucro líquido / projeto',
     traditionalMarketLabel: 'Preço tradicional de mercado',
     typicalFeeLabel: 'Seu preço ao cliente',
     fullyLoadedCostLabel: 'Custo total de entrega',
@@ -180,7 +182,7 @@ export const STUDIO_LANDING_COPY_PT = {
     monthlyGrossLabel: 'Faturamento Mensal Estimado',
     monthlyNetLabel: 'Lucro Líquido Mensal Est. (após créditos e tempo PM)',
     perMonthSuffix: '/ mês',
-    marginBadgeSuffix: 'margem líquida real',
+    marginBadgeSuffix: 'margem líquida',
     disclaimer:
       'O custo total de entrega inclui créditos de processamento no SceneFlow ($0.01/crédito adicional) mais o tempo estimado do operador/PM na entrevista, direção e revisão na Screening Room. Você define seus preços.',
     launchBusinessCta: 'Comece seu Serviço de Vídeo ($9)',

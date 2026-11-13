@@ -529,51 +529,53 @@ export default function KeyFeaturesSection() {
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">{t('subtitle')}</p>
 
           {/* Browse Mode Switcher: By Use Case (Default) vs By Studio Room */}
-          <div className="mt-6 inline-flex flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-slate-700/70 bg-slate-900/90 p-1.5">
+          <div className="mt-6 flex w-full flex-col items-stretch justify-center gap-1.5 rounded-2xl border border-slate-700/70 bg-slate-900/90 p-1.5 sm:inline-flex sm:w-auto sm:flex-row sm:items-center">
             <button
               type="button"
+              title={useCaseCopy.viewByUseCaseLabel}
               onClick={() => {
                 setBrowseMode('use-case')
                 setSelectedIcon(null)
                 setExpandedFeature(null)
               }}
               className={cn(
-                'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:text-sm',
+                'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:w-auto sm:text-sm',
                 browseMode === 'use-case'
                   ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 shadow'
                   : 'text-gray-300 hover:bg-slate-800 hover:text-white'
               )}
             >
-              <Briefcase className="h-4 w-4" aria-hidden />
-              <span>{useCaseCopy.viewByUseCaseLabel}</span>
+              <Briefcase className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="whitespace-normal leading-tight">{useCaseCopy.viewByUseCaseLabel}</span>
             </button>
             <button
               type="button"
+              title={useCaseCopy.viewByRoomLabel}
               onClick={() => {
                 setBrowseMode('room')
                 setSelectedIcon(null)
                 setExpandedFeature(null)
               }}
               className={cn(
-                'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:text-sm',
+                'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:w-auto sm:text-sm',
                 browseMode === 'room'
                   ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow'
                   : 'text-gray-300 hover:bg-slate-800 hover:text-white'
               )}
             >
-              <Layers className="h-4 w-4" aria-hidden />
-              <span>{useCaseCopy.viewByRoomLabel}</span>
+              <Layers className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="whitespace-normal leading-tight">{useCaseCopy.viewByRoomLabel}</span>
             </button>
           </div>
         </motion.div>
 
         {browseMode === 'use-case' ? (
           <div>
-            {/* 5 Curated Use-Case Track Tabs */}
+            {/* 5 Curated Use-Case Track Tabs — wraps cleanly on S23 & desktop with full tooltips */}
             <div
               role="tablist"
               aria-label={useCaseCopy.viewByUseCaseLabel}
-              className="mb-6 flex gap-1.5 overflow-x-auto rounded-2xl border border-slate-700/60 bg-slate-900/75 p-1.5"
+              className="mb-6 grid grid-cols-1 gap-1.5 rounded-2xl border border-slate-700/60 bg-slate-900/75 p-1.5 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-center"
             >
               {useCaseCopy.tracks.map((track) => {
                 const isActive = track.id === activeTrack.id
@@ -582,16 +584,17 @@ export default function KeyFeaturesSection() {
                     key={track.id}
                     type="button"
                     role="tab"
+                    title={`${track.tabLabel} — ${track.headline}`}
                     aria-selected={isActive}
                     onClick={() => selectTrack(track.id)}
                     className={cn(
-                      'shrink-0 whitespace-nowrap rounded-xl px-4 py-2.5 text-xs font-semibold transition-all sm:text-sm',
+                      'rounded-xl px-3.5 py-2.5 text-left text-xs font-semibold leading-snug transition-all sm:text-sm lg:text-center',
                       isActive
                         ? 'bg-gradient-to-r from-emerald-500/25 via-cyan-500/20 to-indigo-500/25 border border-emerald-400/50 text-white shadow-md'
                         : 'border border-transparent text-gray-400 hover:bg-slate-800/70 hover:text-white'
                     )}
                   >
-                    {track.tabLabel}
+                    <span className="whitespace-normal break-words">{track.tabLabel}</span>
                   </button>
                 )
               })}
@@ -622,6 +625,7 @@ export default function KeyFeaturesSection() {
                   <button
                     key={feature.icon}
                     type="button"
+                    title={feature.title}
                     aria-pressed={isSelected}
                     onClick={() => {
                       setSelectedIcon(feature.icon)
@@ -645,9 +649,11 @@ export default function KeyFeaturesSection() {
                       <Icon className="h-4 w-4 text-white" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-medium">{feature.title}</span>
+                      <span className="block whitespace-normal break-words font-medium leading-snug">
+                        {feature.title}
+                      </span>
                       {itemRoomMeta?.roomLabel ? (
-                        <span className="block truncate text-[11px] text-gray-400">
+                        <span className="block whitespace-normal break-words text-[11px] text-gray-400">
                           {itemRoomMeta.roomLabel}
                         </span>
                       ) : null}
@@ -695,6 +701,7 @@ export default function KeyFeaturesSection() {
                     id={room.id}
                     type="button"
                     role="tab"
+                    title={room.label}
                     aria-selected={isActive}
                     aria-controls="key-features-panel"
                     onClick={() => selectRoom(room.id)}
@@ -806,6 +813,7 @@ export default function KeyFeaturesSection() {
                         <button
                           key={feature.icon}
                           type="button"
+                          title={feature.title}
                           aria-pressed={isSelected}
                           onClick={() => {
                             setSelectedIcon(feature.icon)
@@ -828,7 +836,9 @@ export default function KeyFeaturesSection() {
                           >
                             <Icon className="h-4 w-4 text-white" />
                           </span>
-                          <span className="font-medium">{feature.title}</span>
+                          <span className="min-w-0 whitespace-normal break-words font-medium leading-snug">
+                            {feature.title}
+                          </span>
                         </button>
                       )
                     })}

@@ -171,6 +171,8 @@ export const STUDIO_LANDING_COPY_HI = {
     priceTierNames: ['सुलभ', 'स्टैंडर्ड', 'बुटीक'],
     volumeLabel: 'प्रति माह क्लाइंट प्रोजेक्ट:',
     projectsPerMonthSuffix: 'प्रोजेक्ट/माह',
+    projectsUnitLabel: 'प्रोजेक्ट',
+    perProjectProfitLabel: 'प्रति प्रोजेक्ट शुद्ध लाभ',
     traditionalMarketLabel: 'सामान्य बाज़ार दर',
     typicalFeeLabel: 'आपकी क्लाइंट कीमत',
     fullyLoadedCostLabel: 'कुल डिलीवरी लागत',
@@ -180,7 +182,7 @@ export const STUDIO_LANDING_COPY_HI = {
     monthlyGrossLabel: 'अनुमानित मासिक क्लाइंट बिलिंग',
     monthlyNetLabel: 'अनुमानित मासिक शुद्ध लाभ (क्रेडिट और PM समय के बाद)',
     perMonthSuffix: '/ माह',
-    marginBadgeSuffix: 'वास्तविक मार्जिन',
+    marginBadgeSuffix: 'शुद्ध मार्जिन',
     disclaimer:
       'कुल डिलीवरी लागत में SceneFlow कंप्यूट क्रेडिट ($0.01/क्रेडिट दर) तथा क्लाइंट इंटरव्यू, निर्देशन और Screening Room रिव्यू का अनुमानित ऑपरेटर/PM समय शामिल है। क्लाइंट कीमतें आप स्वयं तय करते हैं।',
     launchBusinessCta: 'अपनी वीडियो सेवा शुरू करें ($9)',
