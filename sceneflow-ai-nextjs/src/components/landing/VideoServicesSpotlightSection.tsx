@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
+  ArrowDownRight,
   ArrowRight,
   Building2,
   GraduationCap,
@@ -27,6 +28,7 @@ const VERTICAL_ICONS = {
 } as const
 
 const MONTHLY_VOLUME_OPTIONS = [4, 8, 15] as const
+const TIER_INDICES = [0, 1, 2] as const
 
 function formatUsd(amount: number): string {
   return `$${amount.toLocaleString('en-US')}`
@@ -37,19 +39,19 @@ export function VideoServicesSpotlightSection() {
   const [selectedVerticalId, setSelectedVerticalId] = useState<
     'memoir' | 'realestate' | 'training' | 'brand'
   >('memoir')
+  const [selectedTierIdx, setSelectedTierIdx] = useState<0 | 1 | 2>(1)
   const [projectsPerMonth, setProjectsPerMonth] = useState<number>(8)
 
   const activeVertical =
     copy.verticals.find((v) => v.id === selectedVerticalId) ?? copy.verticals[0]
 
-  const monthlyGross = activeVertical.typicalRetailUsd * projectsPerMonth
-  const monthlyCompute = activeVertical.estComputeUsd * projectsPerMonth
-  const monthlyNet = Math.max(0, monthlyGross - monthlyCompute)
-  const grossMarginPct = Math.round(
-    ((activeVertical.typicalRetailUsd - activeVertical.estComputeUsd) /
-      activeVertical.typicalRetailUsd) *
-      100
-  )
+  const clientPrice =
+    activeVertical.priceTiersUsd[selectedTierIdx] ?? activeVertical.typicalRetailUsd
+  const fullyLoadedCost = activeVertical.estComputeUsd + activeVertical.estOperatorUsd
+  const profitPerProject = Math.max(0, clientPrice - fullyLoadedCost)
+  const monthlyGross = clientPrice * projectsPerMonth
+  const monthlyNet = profitPerProject * projectsPerMonth
+  const trueMarginPct = Math.round((profitPerProject / clientPrice) * 100)
 
   return (
     <section
@@ -88,9 +90,15 @@ export function VideoServicesSpotlightSection() {
             {copy.subtitle}
           </p>
 
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold text-amber-200">
-            <ShieldCheck className="h-4 w-4 text-amber-300" aria-hidden />
-            <span>{copy.commercialRightsBadge}</span>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-4 py-1.5 text-xs font-semibold text-emerald-200">
+              <ArrowDownRight className="h-4 w-4 text-emerald-300" aria-hidden />
+              <span>{copy.costSavingsPillLabel}</span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold text-amber-200">
+              <ShieldCheck className="h-4 w-4 text-amber-300" aria-hidden />
+              <span>{copy.commercialRightsBadge}</span>
+            </div>
           </div>
         </motion.div>
 
@@ -174,7 +182,7 @@ export function VideoServicesSpotlightSection() {
                   {copy.calculatorBadge}
                 </span>
                 <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-300">
-                  ~{grossMarginPct}% {copy.marginBadgeSuffix}
+                  ~{trueMarginPct}% {copy.marginBadgeSuffix}
                 </span>
               </div>
 
@@ -182,8 +190,39 @@ export function VideoServicesSpotlightSection() {
                 {copy.calculatorTitle}
               </h3>
 
+              {/* Client Pricing Tier Selector */}
+              <div className="mt-4">
+                <p className="text-xs font-medium text-gray-300">{copy.priceTierLabel}</p>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {TIER_INDICES.map((tierIdx) => {
+                    const tierUsd = activeVertical.priceTiersUsd[tierIdx]
+                    const selected = selectedTierIdx === tierIdx
+                    return (
+                      <button
+                        key={tierIdx}
+                        type="button"
+                        onClick={() => setSelectedTierIdx(tierIdx)}
+                        className={cn(
+                          'flex flex-col items-center justify-center rounded-xl border px-2 py-2 transition-all',
+                          selected
+                            ? 'border-emerald-400/70 bg-emerald-500/20 text-white shadow-sm'
+                            : 'border-slate-700 bg-slate-950/70 text-gray-300 hover:border-slate-600 hover:text-white'
+                        )}
+                      >
+                        <span className="text-[11px] font-medium text-gray-300">
+                          {copy.priceTierNames[tierIdx]}
+                        </span>
+                        <span className="mt-0.5 text-xs font-bold text-emerald-300 sm:text-sm">
+                          {formatUsd(tierUsd)}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
               {/* Monthly Volume Selector */}
-              <div className="mt-5">
+              <div className="mt-4">
                 <p className="text-xs font-medium text-gray-300">{copy.volumeLabel}</p>
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   {MONTHLY_VOLUME_OPTIONS.map((count) => {
@@ -207,30 +246,42 @@ export function VideoServicesSpotlightSection() {
                 </div>
               </div>
 
-              {/* Per-Project Breakdown */}
-              <div className="mt-5 grid grid-cols-3 gap-2.5 rounded-xl border border-white/10 bg-slate-950/75 p-3.5 text-center">
-                <div>
-                  <p className="text-[11px] text-gray-400">{copy.typicalFeeLabel}</p>
+              {/* Transparent Per-Project Cost vs Market Rate Breakdown */}
+              <div className="mt-4 grid grid-cols-2 gap-2.5 rounded-xl border border-white/10 bg-slate-950/75 p-3.5">
+                <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
+                  <p className="text-[11px] text-gray-400">{copy.traditionalMarketLabel}</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-400 line-through decoration-rose-400/60 sm:text-base">
+                    {activeVertical.traditionalMarketRangeLabel}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/25 p-2.5">
+                  <p className="text-[11px] text-emerald-200">{copy.typicalFeeLabel}</p>
                   <p className="mt-1 text-sm font-bold text-white sm:text-base">
-                    {formatUsd(activeVertical.typicalRetailUsd)}
+                    {formatUsd(clientPrice)}
                   </p>
                 </div>
-                <div className="border-x border-slate-800">
-                  <p className="text-[11px] text-gray-400">{copy.estComputeLabel}</p>
-                  <p className="mt-1 text-sm font-bold text-cyan-300 sm:text-base">
-                    ~{formatUsd(activeVertical.estComputeUsd)}
+                <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
+                  <p className="text-[11px] text-gray-400">{copy.fullyLoadedCostLabel}</p>
+                  <p className="mt-0.5 text-sm font-bold text-cyan-300 sm:text-base">
+                    ~{formatUsd(fullyLoadedCost)}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-gray-400">
+                    ~{formatUsd(activeVertical.estComputeUsd)} + ~{formatUsd(activeVertical.estOperatorUsd)} ({copy.costBreakdownSubLabel})
                   </p>
                 </div>
-                <div>
+                <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
                   <p className="text-[11px] text-gray-400">{copy.activeHandsOnLabel}</p>
-                  <p className="mt-1 text-sm font-bold text-amber-200 sm:text-base">
+                  <p className="mt-0.5 text-sm font-bold text-amber-200 sm:text-base">
                     {activeVertical.activeMinutesLabel}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-gray-400">
+                    {copy.estComputeLabel}: ~{formatUsd(activeVertical.estComputeUsd)}
                   </p>
                 </div>
               </div>
 
               {/* Monthly Income Highlight */}
-              <div className="mt-5 rounded-2xl border border-emerald-400/35 bg-emerald-950/40 p-4 sm:p-5">
+              <div className="mt-4 rounded-2xl border border-emerald-400/35 bg-emerald-950/40 p-4 sm:p-5">
                 <div className="flex items-baseline justify-between gap-2 text-xs text-gray-300">
                   <span>{copy.monthlyGrossLabel}</span>
                   <span className="font-semibold text-white">

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
+  ArrowRight,
   Briefcase,
   CheckCircle2,
   Clapperboard,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal'
+import { useExpandLandingSection } from '@/components/landing/LandingSectionCollapse'
 import { PipelineReviewDialog } from '@/components/landing/PipelineReviewDialog'
 import { TwoModesTheaterModal } from '@/components/landing/TwoModesTheaterModal'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
@@ -96,6 +98,14 @@ export function StudioGuidedTourSection() {
   const locale = useLocale()
   const tCommon = useTranslations('common')
   const copy = useStudioLandingCopy().guidedTour
+  const expandSection = useExpandLandingSection()
+
+  const scrollToExamples = () => {
+    expandSection('production-examples')
+    requestAnimationFrame(() => {
+      document.getElementById('production-examples')?.scrollIntoView({ behavior: 'smooth' })
+    })
+  }
 
   const [activeRoomId, setActiveRoomId] = useState<RoomId>('series-desk')
   const [lens, setLens] = useState<'creator' | 'service'>('creator')
@@ -404,6 +414,22 @@ export function StudioGuidedTourSection() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Intuitive Bridge into Live Production Examples Doors */}
+        <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border border-cyan-500/25 bg-gradient-to-r from-slate-900/90 via-cyan-950/25 to-slate-900/90 px-5 py-4 sm:flex-row sm:px-7">
+          <p className="text-center text-xs font-medium text-gray-200 sm:text-start sm:text-sm">
+            {copy.examplesBridgeText}
+          </p>
+          <button
+            type="button"
+            onClick={scrollToExamples}
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-cyan-400/50 bg-cyan-500/15 px-4 py-2 text-xs font-bold text-cyan-200 transition-all hover:bg-cyan-500/25 hover:text-white sm:text-sm"
+          >
+            <Clapperboard className="h-4 w-4 text-cyan-300" aria-hidden />
+            <span>{copy.examplesBridgeCta}</span>
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+          </button>
         </div>
       </div>
 

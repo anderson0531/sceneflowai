@@ -36,14 +36,14 @@ export function FloatingNav() {
         icon: Briefcase,
       },
       {
-        id: 'production-examples',
-        label: t('productionExamples'),
-        icon: Clapperboard,
-      },
-      {
         id: 'studio-tour',
         label: t.has('studioTour') ? t('studioTour') : 'Tour',
         icon: Compass,
+      },
+      {
+        id: 'production-examples',
+        label: t('productionExamples'),
+        icon: Clapperboard,
       },
       {
         id: 'key-features',

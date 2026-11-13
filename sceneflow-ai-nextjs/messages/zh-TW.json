@@ -1153,7 +1153,8 @@
     "userFallback": "使用者",
     "searchLanguages": "搜尋語言",
     "noLanguagesFound": "未找到語言",
-    "videoServices": "影片服務商機"
+    "videoServices": "影片服務商機",
+    "studioTour": "製片導覽"
   },
   "floatingNav": {
     "productionExamples": "範例",
@@ -3739,26 +3740,36 @@
       }
     },
     "videoServices": {
-      "eyebrow": "商业变现引擎 · B2B 与客户定制视频服务",
-      "title": "用 SceneFlow 打造您的",
-      "titleAccent": "高毛利视频制作事业",
-      "subtitle": "家庭传记、房产导览、学校及企业定制故事视频市场客单价高达 $200 至 $2,500+，而传统实拍团队成本动辄数千美元。数小时交付惊艳成片，100% 客户营收归您所有。",
+      "eyebrow": "视频交付服务引擎 · 独立主理人与代理机构",
+      "title": "以价值 $1,500+ 的制作水准，实现",
+      "titleAccent": "50%–80% 更低交付总成本",
+      "subtitle": "传统实拍剧组与动辄 30 小时的手工剪辑，把 90% 的家庭、房产经纪人与本地商户拒之门外。SceneFlow 将您的综合交付成本（算力积分 + 人工统筹时间）直降 50% 至 80%，让您以亲民客单价轻松获客，同时稳享 65%–85% 真实净利率。",
       "commercialRightsBadge": "100% 商业版权归属 · 自由向客户交付高清母带",
+      "costSavingsPillLabel": "综合交付成本直降 50%–80% · 赢取被高价拒之门外的客户",
       "verticalsHeading": "1. 选择高需求客户服务赛道",
       "whoBuysLabel": "高频复购客户群体",
-      "marginAdvantageLabel": "SceneFlow 利润率优势",
-      "calculatorBadge": "交互式单项目经济模型预览",
-      "calculatorTitle": "2. 测算您的月度服务净收入",
+      "marginAdvantageLabel": "交付成本核心优势",
+      "calculatorBadge": "透明成本与净利润测算器",
+      "calculatorTitle": "2. 对比交付成本与月度净利润",
+      "priceTierLabel": "客户报价档位：",
+      "priceTierNames": [
+        "亲民档",
+        "标准档",
+        "精品档"
+      ],
       "volumeLabel": "每月交付客户项目数：",
       "projectsPerMonthSuffix": "单/月",
-      "typicalFeeLabel": "典型客户报价",
-      "estComputeLabel": "预估 SceneFlow 算力成本",
-      "activeHandsOnLabel": "人工执导耗时",
+      "traditionalMarketLabel": "传统市场均价",
+      "typicalFeeLabel": "您的客户报价",
+      "fullyLoadedCostLabel": "综合交付成本",
+      "costBreakdownSubLabel": "积分 + 统筹工时",
+      "estComputeLabel": "SceneFlow 积分",
+      "activeHandsOnLabel": "人工统筹工时",
       "monthlyGrossLabel": "预估月度客户营收总额",
-      "monthlyNetLabel": "预估创作者月净收入（扣除算力后）",
+      "monthlyNetLabel": "预估月度净利润（已扣除积分与人工时间）",
       "perMonthSuffix": "/ 月",
-      "marginBadgeSuffix": "毛利率",
-      "disclaimer": "以上为采用 SceneFlow 混合 Pre-vis 动态分镜 + 精选 4K AI 镜头工作流的测算示例（按 $0.01/积分加购包折算），实际向客户的报价与条款由您自主决定。",
+      "marginBadgeSuffix": "真实净利率",
+      "disclaimer": "综合交付成本包含 SceneFlow 算力积分（按 $0.01/积分加购包折算）以及客户访谈、执导与 Screening Room 审片所需的预估人工统筹工时。实际对客报价由您自主设定。",
       "launchBusinessCta": "开启您的视频服务业务 ($9)",
       "workflowHeading": "客户定制项目如何通过 4 个轻松步骤高效交付",
       "stepPrefix": "步骤",
@@ -3788,54 +3799,82 @@
         {
           "id": "memoir",
           "tabLabel": "人生传记电影",
-          "badge": "$350–$799 / 部 · 极高情感溢价",
+          "badge": "$300–$950 / 部 · 市场价：$800–$3,500+",
           "title": "人生回忆录、金婚寿辰致敬与家族传记大片",
           "description": "将珍贵的家庭老照片与电影级 AI 时代重现、精准分龄人物连续性（如 17 岁 → 32 岁 → 62 岁）无缝融合，搭配温暖自然的旁白配音。",
           "clientBuyer": "家庭客户、重要寿辰/纪念日庆典、财富传承顾问、高端康养社区与纪念礼仪机构",
-          "typicalRetailUsd": 450,
-          "retailRangeLabel": "$350–$799",
-          "estComputeUsd": 75,
-          "activeMinutesLabel": "~45 分钟",
-          "keyAdvantage": "混合纪录片模式结合真实档案照片与关键 AI 电影镜头，轻松实现 80% 以上毛利率。"
+          "traditionalMarketRangeLabel": "$800–$3,500+",
+          "typicalRetailUsd": 499,
+          "priceTiersUsd": [
+            300,
+            499,
+            950
+          ],
+          "retailRangeLabel": "$300–$950",
+          "estComputeUsd": 22,
+          "estOperatorUsd": 78,
+          "activeMinutesLabel": "~1.5–2 小时",
+          "keyAdvantage": "仅需 ~$100 综合成本（~$22 积分 + ~$78 统筹工时）即可交付 $1,500 级传记大片 — 定价 $300–$500 即可轻松打动嫌传统拍摄太贵的家庭。"
         },
         {
           "id": "realestate",
           "tabLabel": "房产与酒店导览",
-          "badge": "$199–$399 / 套 · 经纪行高频复购",
+          "badge": "$199–$549 / 套 · 市场价：$450–$1,500+",
           "title": "豪宅房源配音漫游与精品酒店沉浸导览",
           "description": "将房源实拍照片与周边配套亮点转化为配乐配音俱全的电影感导览大片 — 并可即时生成英语、西语、阿语或葡语版本吸引海外买家。",
           "clientBuyer": "住宅房产经纪人、豪宅代理机构、度假民宿主理人与精品酒店",
-          "typicalRetailUsd": 275,
-          "retailRangeLabel": "$199–$399",
-          "estComputeUsd": 22,
-          "activeMinutesLabel": "~20 分钟",
-          "keyAdvantage": "一位每月上架 4 套房源的房产经纪人即可转化为稳定的包月合作客户。"
+          "traditionalMarketRangeLabel": "$450–$1,500+",
+          "typicalRetailUsd": 299,
+          "priceTiersUsd": [
+            199,
+            299,
+            549
+          ],
+          "retailRangeLabel": "$199–$549",
+          "estComputeUsd": 12,
+          "estOperatorUsd": 48,
+          "activeMinutesLabel": "~45–60 分钟",
+          "keyAdvantage": "无需外景奔波或受天气耽搁：将房源照片转化为多语种配音豪宅导览，成本比现场实拍降低 60% 以上。"
         },
         {
           "id": "training",
           "tabLabel": "企业培训与 SOP",
-          "badge": "$600–$2,500 / 门课 · 70+ 种语言",
+          "badge": "$599–$1,800 / 门课 · 市场价：$1,500–$5,000+",
           "title": "企业入职培训、安全规范与多语种标准课程",
           "description": "在连续性资产库中锁定讲师形象、工装制服与作业场景 — 一键向全球不同母语员工交付清晰统一的标准培训剧集。",
           "clientBuyer": "企业 HR 与培训部门、制造工厂、医疗诊所、连锁餐饮与特许加盟品牌",
+          "traditionalMarketRangeLabel": "$1,500–$5,000+",
           "typicalRetailUsd": 950,
-          "retailRangeLabel": "$600–$2,500",
-          "estComputeUsd": 80,
-          "activeMinutesLabel": "~60 分钟",
-          "keyAdvantage": "合规条款更新时仅需几分钟重制对应片段，无需重聘演员或重新实拍。"
+          "priceTiersUsd": [
+            599,
+            950,
+            1800
+          ],
+          "retailRangeLabel": "$599–$1,800",
+          "estComputeUsd": 35,
+          "estOperatorUsd": 115,
+          "activeMinutesLabel": "~2–2.5 小时",
+          "keyAdvantage": "交付成本比实拍团队低 70% — 合规制度更新时只需几分钟微调单个片段，无需重拍。"
         },
         {
           "id": "brand",
           "tabLabel": "品牌故事与广告",
-          "badge": "$400–$1,200 / 套 · 官网 + 社媒矩阵",
+          "badge": "$399–$1,200 / 套 · 市场价：$3,000–$8,000+",
           "title": "创始人品牌故事片、诊所科普与竖屏社媒广告",
           "description": "打造高转化官网品牌故事主片，并自动裁剪适配抖音、TikTok、Instagram 与 YouTube Shorts 的 9:16 竖屏预告片 — 通过 Screening Room 高效审片。",
           "clientBuyer": "医疗/牙科诊所、律师事务所、本地中小企业、营销机构与跨境电商品牌主理人",
-          "typicalRetailUsd": 600,
-          "retailRangeLabel": "$400–$1,200",
-          "estComputeUsd": 40,
-          "activeMinutesLabel": "~35 分钟",
-          "keyAdvantage": "复用客户已保存的品牌连续性资产库，轻松增售节日促销与季度新片。"
+          "traditionalMarketRangeLabel": "$3,000–$8,000+",
+          "typicalRetailUsd": 650,
+          "priceTiersUsd": [
+            399,
+            650,
+            1200
+          ],
+          "retailRangeLabel": "$399–$1,200",
+          "estComputeUsd": 22,
+          "estOperatorUsd": 88,
+          "activeMinutesLabel": "~1.5–2 小时",
+          "keyAdvantage": "激活无力承担 $5,000 广告实拍的本地诊所、餐厅与律所客群 — 同步交付 9:16 竖屏社媒短片。"
         }
       ]
     },
@@ -3843,7 +3882,7 @@
       "eyebrow": "可视化制片导览 · 告别专业术语",
       "title": "四大协同创作空间，",
       "titleAccent": "一套行云流水的流程。",
-      "subtitle": "无需阅读厚重说明书 — 通过工作室沙盒的真实项目案例，直观了解一个创意如何从故事访谈一路演进为客户签收的 4K 母带。",
+      "subtitle": "花 60 秒认识工作室的 4 扇核心入口 — Series Room、Blueprint Room、Production Stage 与 Screening Room — 随后即可在下方的 6 部完整剧目示例中直接点击体验同款实景入口。",
       "stepPrefix": "步骤",
       "lensLabel": "预览演示视角：",
       "lensCreator": "原创剧集（《琉璃账本》）",
@@ -3852,6 +3891,8 @@
       "inspectFullScreenLabel": "查看高清完整工作台",
       "openLiveScreeningLabel": "打开沙盒 Screening Room 预览",
       "screeningModalTitle": "《琉璃账本》— 沙盒 Screening Room 实景演示",
+      "examplesBridgeText": "既然您已熟悉工作室的 4 大空间，立即在下方 6 大完整题材中亲自点击体验：",
+      "examplesBridgeCta": "在成片示例中体验 4 大实景入口",
       "rooms": [
         {
           "id": "series-desk",
@@ -3999,12 +4040,97 @@
         }
       ]
     },
+    "useCaseDirectory": {
+      "viewByUseCaseLabel": "按应用场景浏览",
+      "viewByRoomLabel": "按制片空间浏览",
+      "tracks": [
+        {
+          "id": "memoir-services",
+          "tabLabel": "人生传记电影与家族传承",
+          "badge": "高利润定制服务 · $300–$950/部",
+          "headline": "将家庭深度访谈与珍藏老照片转化为传世电影",
+          "description": "通过智能故事访谈采集人生历程，锁定从 70 年代青年时期到晚年的分龄人物肖像，以低成本动态分镜预演，并通过免登录私密 Screening Room 链接交付审片。",
+          "featureIcons": [
+            "startBlueprint",
+            "treatment",
+            "continuity",
+            "directShot",
+            "animatic",
+            "screeningCollab",
+            "languageStreams"
+          ]
+        },
+        {
+          "id": "commercial-training",
+          "tabLabel": "广告代理机构与企业培训视频",
+          "badge": "B2B 包月客户 · 房产导览 · 多语种 SOP",
+          "headline": "以直降 50%–80% 的综合成本稳定交付品牌宣传与企业内训大片",
+          "description": "渲染前精准预测 Pre-vis 积分消耗，锁定品牌主播与房源实景底板，调度全自动批量智能体，并一键发布覆盖 70+ 种语言的培训配音流。",
+          "featureIcons": [
+            "budget",
+            "castLocations",
+            "audioAgent",
+            "stillsAgent",
+            "productionAgent",
+            "multilanguageUi",
+            "screeningPlayer"
+          ]
+        },
+        {
+          "id": "series-animation",
+          "tabLabel": "多集剧集与风格化 3D 动画",
+          "badge": "多集原创 IP · 锁定美术与角色连续性",
+          "headline": "从第 1 集试播集到季终集全程统御剧集主创圣经",
+          "description": "搭建多集整季故事弧线，跨集冻结写实电影感或风格化 3D 美术设定，精准执导故事板节拍与关键帧，并渲染院线级视频镜头。",
+          "featureIcons": [
+            "newSeries",
+            "seriesReview",
+            "seriesDirector",
+            "directEpisode",
+            "startEpisode",
+            "stillsWorkbench",
+            "videoAgent",
+            "clipsWorkbench"
+          ]
+        },
+        {
+          "id": "creator-podcast",
+          "tabLabel": "YouTube 频道与叙事播客节目",
+          "badge": "高完播率频道 · 多主持人对谈节目",
+          "headline": "配备录音棚级多角色人声、原创配乐与精修混音，每周稳定更新",
+          "description": "渲染前测试观众完播率钩子，执导多主持人互动张力与专属情绪配乐，在 Production Mixer 中精细打磨节奏，并打包导出 16:9 + 9:16 社媒矩阵成片。",
+          "featureIcons": [
+            "sceneWorkflow",
+            "seriesResonance",
+            "musicScore",
+            "scriptSupervisor",
+            "mixer",
+            "shipPackage"
+          ]
+        },
+        {
+          "id": "filmmaker-pitch",
+          "tabLabel": "导演前视预演与路演概念预告片",
+          "badge": "立项路演案卷 · 概念验证院线短片",
+          "headline": "全面压测剧本结构，带着成片级概念预告片自信走进投资路演会",
+          "description": "与 FlowDirector 协同打磨剧本，在 Blueprint 与剧本双重关卡用 Audience Resonance 评估结构节奏，生成好莱坞工业标准剧本，并剪辑震撼路演预告片。",
+          "featureIcons": [
+            "blueprintDirector",
+            "blueprintResonance",
+            "goToProduction",
+            "productionScript",
+            "scriptResonance",
+            "promoTrailers"
+          ]
+        }
+      ]
+    },
     "directoryDrawer": {
-      "badge": "完整制片厂技术规格 · 30+ 项核心能力",
-      "title": "想深入了解每一项技术细节？展开完整工作室功能目录",
-      "subtitle": "打开按空间组织的交互式功能名录，高清浏览 Series Room、Blueprint Room、Production Stage、Production Mixer 与 Screening Room 的 5K 全尺寸真实界面截图。",
-      "expandCta": "展开全部 30+ 项功能目录",
-      "collapseCta": "收起全部 30+ 项功能目录"
+      "badge": "完整制片厂能力名录 · 支持按应用场景或制片空间检索",
+      "title": "按应用场景或工作空间，探索全部 30+ 项核心制片能力",
+      "subtitle": "既可按您想打造的业务筛选（人生传记、广告代理、多集剧集、自媒体频道或导演路演），也可按五大制片空间高清查看 5K 全尺寸真实工作台截图。",
+      "expandCta": "按应用场景浏览全部功能 (30+)",
+      "collapseCta": "收起工作室核心能力名录"
     },
     "academyStrip": {
       "badge": "零学习门槛保障 · Studio Academy",

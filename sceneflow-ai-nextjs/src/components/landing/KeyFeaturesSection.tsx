@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
-import { Sparkles, ChevronDown, ChevronUp, ImageIcon } from 'lucide-react'
+import { Sparkles, ChevronDown, ChevronUp, ImageIcon, Briefcase, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FEATURE_ICONS } from './keyFeatureIcons'
 import { FeatureRoomOverview } from '@/components/landing/FeatureRoomOverview'
 import { FeatureScreenshotFrame } from '@/components/landing/FeatureScreenshotFrame'
+import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import {
   getKeyFeatureScreenshot,
@@ -391,7 +392,10 @@ function FeatureDetail({
 
 export default function KeyFeaturesSection() {
   const t = useTranslations('keyFeatures')
+  const useCaseCopy = useStudioLandingCopy().useCaseDirectory
   const rooms = useMemo(() => t.raw('rooms') as RoomData[], [t])
+  const [browseMode, setBrowseMode] = useState<'use-case' | 'room'>('use-case')
+  const [activeTrackId, setActiveTrackId] = useState<string>('memoir-services')
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null)
   const [activeGroupId, setActiveGroupId] = useState('spend')
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null)
@@ -402,6 +406,7 @@ export default function KeyFeaturesSection() {
     const syncRoomFromHash = () => {
       const hash = window.location.hash.replace(/^#/, '')
       if (!rooms.some((room) => room.id === hash)) return
+      setBrowseMode('room')
       setActiveRoomId(hash)
       setActiveGroupId('spend')
       setSelectedIcon(null)
@@ -412,17 +417,60 @@ export default function KeyFeaturesSection() {
     return () => window.removeEventListener('hashchange', syncRoomFromHash)
   }, [rooms])
 
+  const featureCatalogByIcon = useMemo(() => {
+    const map = new Map<string, { feature: FeatureData; roomId: string; roomLabel: string }>()
+    for (const room of rooms) {
+      const roomPanes = panesForRoom(room)
+      const allRoomFeatures =
+        roomPanes.length > 0 ? roomPanes.flatMap((pane) => pane.features) : (room.features ?? [])
+      for (const feature of allRoomFeatures) {
+        if (!map.has(feature.icon)) {
+          map.set(feature.icon, {
+            feature,
+            roomId: room.id,
+            roomLabel: room.label,
+          })
+        }
+      }
+    }
+    return map
+  }, [rooms])
+
+  const activeTrack =
+    useCaseCopy.tracks.find((track) => track.id === activeTrackId) ?? useCaseCopy.tracks[0]
+  const useCaseFeatures = useMemo(
+    () =>
+      activeTrack.featureIcons
+        .map((icon) => featureCatalogByIcon.get(icon)?.feature)
+        .filter((f): f is FeatureData => Boolean(f)),
+    [activeTrack, featureCatalogByIcon]
+  )
+
   const activeRoom = rooms.find((room) => room.id === activeRoomId) ?? rooms[0]
   const panes = activeRoom ? panesForRoom(activeRoom) : []
   const activePane = panes.find((pane) => pane.id === activeGroupId) ?? panes[0]
-  const visibleFeatures = activeRoom
+  const roomVisibleFeatures = activeRoom
     ? featuresForRoom(activeRoom, activePane?.id ?? 'spend')
     : []
+
+  const visibleFeatures = browseMode === 'use-case' ? useCaseFeatures : roomVisibleFeatures
   const selected =
     visibleFeatures.find((feature) => feature.icon === selectedIcon) ?? visibleFeatures[0]
-  const gradient = ROOM_GRADIENTS[activeRoom?.id ?? 'series-desk']
+  const selectedRoomMeta = selected ? featureCatalogByIcon.get(selected.icon) : undefined
+  const gradient =
+    browseMode === 'use-case'
+      ? (ROOM_GRADIENTS[selectedRoomMeta?.roomId ?? 'series-desk'] ??
+        ROOM_GRADIENTS['series-desk'])
+      : ROOM_GRADIENTS[activeRoom?.id ?? 'series-desk']
+
+  const selectTrack = (trackId: string) => {
+    setActiveTrackId(trackId)
+    setSelectedIcon(null)
+    setExpandedFeature(null)
+  }
 
   const selectRoom = (id: string) => {
+    setBrowseMode('room')
     setActiveRoomId(id)
     setActiveGroupId('spend')
     setSelectedIcon(null)
@@ -465,7 +513,7 @@ export default function KeyFeaturesSection() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="text-center mb-10"
+          className="text-center mb-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -479,178 +527,337 @@ export default function KeyFeaturesSection() {
             {t('title')}
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">{t('subtitle')}</p>
-        </motion.div>
 
-        <div
-          role="tablist"
-          aria-label={t('title')}
-          className="mb-6 flex gap-1 overflow-x-auto rounded-2xl border border-slate-700/50 bg-slate-800/50 p-1.5"
-        >
-          {rooms.map((room) => {
-            const isActive = room.id === activeRoom.id
-            return (
-              <button
-                key={room.id}
-                id={room.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                aria-controls="key-features-panel"
-                onClick={() => selectRoom(room.id)}
-                className={cn(
-                  'shrink-0 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300',
-                  isActive
-                    ? `bg-gradient-to-r ${ROOM_GRADIENTS[room.id] ?? gradient} text-white shadow-lg`
-                    : 'text-gray-400 hover:bg-slate-700/50 hover:text-white'
-                )}
-              >
-                {room.label}
-              </button>
-            )
-          })}
-        </div>
-
-        <div id="key-features-panel" role="tabpanel" aria-labelledby={activeRoom.id}>
-          <FeatureRoomOverview
-            roomId={activeRoom.id}
-            title={activeRoom.label}
-            headline={activeRoom.headline}
-            promise={activeRoom.promise}
-            comingSoonLabel={t('overviewComingSoon')}
-            pauseLabel={t('pauseOverview')}
-            playLabel={t('playOverview')}
-            muteLabel={t('muteOverview')}
-            unmuteLabel={t('unmuteOverview')}
-            enterFullscreenLabel={t('enterFullscreenOverview')}
-            exitFullscreenLabel={t('exitFullscreenOverview')}
-            watchLongformHref={
-              activeRoom.id === 'screening-room' ? '#production-examples' : undefined
-            }
-            watchLongformLabel={
-              activeRoom.id === 'screening-room' ? t('watchLongformLabel') : undefined
-            }
-          />
-
-          <div className="mb-5 flex items-center justify-center sm:justify-start">
+          {/* Browse Mode Switcher: By Use Case (Default) vs By Studio Room */}
+          <div className="mt-6 inline-flex flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-slate-700/70 bg-slate-900/90 p-1.5">
             <button
               type="button"
-              onClick={() => setShowFeaturesList((prev) => !prev)}
-              aria-expanded={showFeaturesList}
-              aria-controls="key-features-detail-list"
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-900/80 px-4 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400/40 hover:bg-slate-800 hover:text-white sm:text-sm"
-            >
-              <span>{t.has('featuresListLabel') ? t('featuresListLabel') : 'Features List'}</span>
-              {showFeaturesList ? (
-                <ChevronUp className="h-4 w-4 text-cyan-300" aria-hidden />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-cyan-300" aria-hidden />
+              onClick={() => {
+                setBrowseMode('use-case')
+                setSelectedIcon(null)
+                setExpandedFeature(null)
+              }}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:text-sm',
+                browseMode === 'use-case'
+                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 shadow'
+                  : 'text-gray-300 hover:bg-slate-800 hover:text-white'
               )}
+            >
+              <Briefcase className="h-4 w-4" aria-hidden />
+              <span>{useCaseCopy.viewByUseCaseLabel}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBrowseMode('room')
+                setSelectedIcon(null)
+                setExpandedFeature(null)
+              }}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:text-sm',
+                browseMode === 'room'
+                  ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow'
+                  : 'text-gray-300 hover:bg-slate-800 hover:text-white'
+              )}
+            >
+              <Layers className="h-4 w-4" aria-hidden />
+              <span>{useCaseCopy.viewByRoomLabel}</span>
             </button>
           </div>
+        </motion.div>
 
-          {showFeaturesList ? (
-            <div id="key-features-detail-list">
-              {panes.length > 0 ? (
-                <div
-                  role="tablist"
-                  aria-label={activeRoom.label}
-                  className="mb-5 flex gap-1 overflow-x-auto"
-                >
-                  {panes.map((pane) => {
-                    const isActive = pane.id === (activePane?.id ?? panes[0].id)
-                    return (
-                      <button
-                        key={pane.id}
-                        id={`key-feature-group-${pane.id}`}
-                        type="button"
-                        role="tab"
-                        aria-selected={isActive}
-                        onClick={() => selectGroup(pane.id)}
-                        className={cn(
-                          'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition-colors',
-                          isActive
-                            ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-200'
-                            : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
-                        )}
-                      >
-                        {pane.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              ) : null}
+        {browseMode === 'use-case' ? (
+          <div>
+            {/* 5 Curated Use-Case Track Tabs */}
+            <div
+              role="tablist"
+              aria-label={useCaseCopy.viewByUseCaseLabel}
+              className="mb-6 flex gap-1.5 overflow-x-auto rounded-2xl border border-slate-700/60 bg-slate-900/75 p-1.5"
+            >
+              {useCaseCopy.tracks.map((track) => {
+                const isActive = track.id === activeTrack.id
+                return (
+                  <button
+                    key={track.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => selectTrack(track.id)}
+                    className={cn(
+                      'shrink-0 whitespace-nowrap rounded-xl px-4 py-2.5 text-xs font-semibold transition-all sm:text-sm',
+                      isActive
+                        ? 'bg-gradient-to-r from-emerald-500/25 via-cyan-500/20 to-indigo-500/25 border border-emerald-400/50 text-white shadow-md'
+                        : 'border border-transparent text-gray-400 hover:bg-slate-800/70 hover:text-white'
+                    )}
+                  >
+                    {track.tabLabel}
+                  </button>
+                )
+              })}
+            </div>
 
-              {activePane && (activePane.headline || activePane.description) ? (
-                <div className="mb-5 rounded-2xl border border-slate-800/80 bg-slate-900/30 px-4 py-3.5 sm:px-5">
-                  {activePane.headline ? (
-                    <p className="text-sm font-semibold text-white sm:text-base">
-                      {activePane.headline}
-                    </p>
-                  ) : null}
-                  {activePane.description ? (
-                    <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-400 sm:text-sm">
-                      {activePane.description}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
+            {/* Active Use-Case Banner */}
+            <div className="mb-6 rounded-2xl border border-emerald-500/25 bg-slate-900/65 p-5 sm:p-6">
+              <span className="inline-block rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                {activeTrack.badge}
+              </span>
+              <h3 className="mt-2.5 text-xl font-bold text-white sm:text-2xl">
+                {activeTrack.headline}
+              </h3>
+              <p className="mt-1.5 max-w-4xl text-sm leading-relaxed text-gray-300 sm:text-base">
+                {activeTrack.description}
+              </p>
+            </div>
 
-              <div className="flex flex-col gap-1 lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6 lg:gap-y-1">
-                {visibleFeatures.map((feature, index) => {
-                  const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
-                  const isSelected = feature.icon === selected.icon
-                  return (
-                    <button
-                      key={feature.icon}
-                      type="button"
-                      aria-pressed={isSelected}
-                      onClick={() => {
-                        setSelectedIcon(feature.icon)
-                        setExpandedFeature(null)
-                      }}
+            {/* Curated Features List + Full 5K Detail Panel */}
+            <div className="flex flex-col gap-1 lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6 lg:gap-y-1">
+              {visibleFeatures.map((feature, index) => {
+                const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
+                const isSelected = feature.icon === selected.icon
+                const itemRoomMeta = featureCatalogByIcon.get(feature.icon)
+                const itemGradient =
+                  ROOM_GRADIENTS[itemRoomMeta?.roomId ?? 'series-desk'] ?? gradient
+                return (
+                  <button
+                    key={feature.icon}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => {
+                      setSelectedIcon(feature.icon)
+                      setExpandedFeature(null)
+                    }}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors lg:col-start-1 lg:order-none',
+                      FEATURE_ROW_ORDER[index],
+                      FEATURE_ROW_START[index],
+                      isSelected
+                        ? 'bg-slate-800 text-white shadow-sm'
+                        : 'text-gray-400 hover:bg-slate-800/60 hover:text-white'
+                    )}
+                  >
+                    <span
                       className={cn(
-                        'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors lg:col-start-1 lg:order-none',
-                        FEATURE_ROW_ORDER[index],
-                        FEATURE_ROW_START[index],
-                        isSelected
-                          ? 'bg-slate-800 text-white'
-                          : 'text-gray-400 hover:bg-slate-800/60 hover:text-white'
+                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
+                        itemGradient
                       )}
                     >
-                      <span
-                        className={cn(
-                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
-                          gradient
-                        )}
-                      >
-                        <Icon className="h-4 w-4 text-white" />
-                      </span>
-                      <span className="font-medium">{feature.title}</span>
-                    </button>
-                  )
-                })}
-                <div
-                  className={cn(
-                    'lg:col-start-2 lg:row-span-10 lg:row-start-1 lg:order-none',
-                    FEATURE_DETAIL_ORDER[visibleFeatures.findIndex((feature) => feature.icon === selected.icon)]
-                  )}
-                >
-                  <FeatureDetail
-                    feature={selected}
-                    gradient={gradient}
-                    expanded={expandedFeature === selected.icon}
-                    onToggle={toggleSelectedLearnMore}
-                    screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
-                    screenshotVariants={screenshot?.variants}
-                    enterFullscreenLabel={t('enterFullscreenOverview')}
-                    exitFullscreenLabel={t('exitFullscreenOverview')}
-                    {...detailLabels}
-                  />
-                </div>
+                      <Icon className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">{feature.title}</span>
+                      {itemRoomMeta?.roomLabel ? (
+                        <span className="block truncate text-[11px] text-gray-400">
+                          {itemRoomMeta.roomLabel}
+                        </span>
+                      ) : null}
+                    </span>
+                  </button>
+                )
+              })}
+              <div
+                className={cn(
+                  'lg:col-start-2 lg:row-span-10 lg:row-start-1 lg:order-none',
+                  FEATURE_DETAIL_ORDER[
+                    Math.max(
+                      0,
+                      visibleFeatures.findIndex((feature) => feature.icon === selected.icon)
+                    )
+                  ]
+                )}
+              >
+                <FeatureDetail
+                  feature={selected}
+                  gradient={gradient}
+                  expanded={expandedFeature === selected.icon}
+                  onToggle={toggleSelectedLearnMore}
+                  screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
+                  screenshotVariants={screenshot?.variants}
+                  enterFullscreenLabel={t('enterFullscreenOverview')}
+                  exitFullscreenLabel={t('exitFullscreenOverview')}
+                  {...detailLabels}
+                />
               </div>
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : (
+          <>
+            <div
+              role="tablist"
+              aria-label={t('title')}
+              className="mb-6 flex gap-1 overflow-x-auto rounded-2xl border border-slate-700/50 bg-slate-800/50 p-1.5"
+            >
+              {rooms.map((room) => {
+                const isActive = room.id === activeRoom.id
+                return (
+                  <button
+                    key={room.id}
+                    id={room.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-controls="key-features-panel"
+                    onClick={() => selectRoom(room.id)}
+                    className={cn(
+                      'shrink-0 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300',
+                      isActive
+                        ? `bg-gradient-to-r ${ROOM_GRADIENTS[room.id] ?? gradient} text-white shadow-lg`
+                        : 'text-gray-400 hover:bg-slate-700/50 hover:text-white'
+                    )}
+                  >
+                    {room.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div id="key-features-panel" role="tabpanel" aria-labelledby={activeRoom.id}>
+              <FeatureRoomOverview
+                roomId={activeRoom.id}
+                title={activeRoom.label}
+                headline={activeRoom.headline}
+                promise={activeRoom.promise}
+                comingSoonLabel={t('overviewComingSoon')}
+                pauseLabel={t('pauseOverview')}
+                playLabel={t('playOverview')}
+                muteLabel={t('muteOverview')}
+                unmuteLabel={t('unmuteOverview')}
+                enterFullscreenLabel={t('enterFullscreenOverview')}
+                exitFullscreenLabel={t('exitFullscreenOverview')}
+                watchLongformHref={
+                  activeRoom.id === 'screening-room' ? '#production-examples' : undefined
+                }
+                watchLongformLabel={
+                  activeRoom.id === 'screening-room' ? t('watchLongformLabel') : undefined
+                }
+              />
+
+              <div className="mb-5 flex items-center justify-center sm:justify-start">
+                <button
+                  type="button"
+                  onClick={() => setShowFeaturesList((prev) => !prev)}
+                  aria-expanded={showFeaturesList}
+                  aria-controls="key-features-detail-list"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-900/80 px-4 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400/40 hover:bg-slate-800 hover:text-white sm:text-sm"
+                >
+                  <span>
+                    {t.has('featuresListLabel') ? t('featuresListLabel') : 'Features List'}
+                  </span>
+                  {showFeaturesList ? (
+                    <ChevronUp className="h-4 w-4 text-cyan-300" aria-hidden />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-cyan-300" aria-hidden />
+                  )}
+                </button>
+              </div>
+
+              {showFeaturesList ? (
+                <div id="key-features-detail-list">
+                  {panes.length > 0 ? (
+                    <div
+                      role="tablist"
+                      aria-label={activeRoom.label}
+                      className="mb-5 flex gap-1 overflow-x-auto"
+                    >
+                      {panes.map((pane) => {
+                        const isActive = pane.id === (activePane?.id ?? panes[0].id)
+                        return (
+                          <button
+                            key={pane.id}
+                            id={`key-feature-group-${pane.id}`}
+                            type="button"
+                            role="tab"
+                            aria-selected={isActive}
+                            onClick={() => selectGroup(pane.id)}
+                            className={cn(
+                              'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition-colors',
+                              isActive
+                                ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-200'
+                                : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
+                            )}
+                          >
+                            {pane.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : null}
+
+                  {activePane && (activePane.headline || activePane.description) ? (
+                    <div className="mb-5 rounded-2xl border border-slate-800/80 bg-slate-900/30 px-4 py-3.5 sm:px-5">
+                      {activePane.headline ? (
+                        <p className="text-sm font-semibold text-white sm:text-base">
+                          {activePane.headline}
+                        </p>
+                      ) : null}
+                      {activePane.description ? (
+                        <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-400 sm:text-sm">
+                          {activePane.description}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  <div className="flex flex-col gap-1 lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6 lg:gap-y-1">
+                    {visibleFeatures.map((feature, index) => {
+                      const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
+                      const isSelected = feature.icon === selected.icon
+                      return (
+                        <button
+                          key={feature.icon}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => {
+                            setSelectedIcon(feature.icon)
+                            setExpandedFeature(null)
+                          }}
+                          className={cn(
+                            'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors lg:col-start-1 lg:order-none',
+                            FEATURE_ROW_ORDER[index],
+                            FEATURE_ROW_START[index],
+                            isSelected
+                              ? 'bg-slate-800 text-white'
+                              : 'text-gray-400 hover:bg-slate-800/60 hover:text-white'
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
+                              gradient
+                            )}
+                          >
+                            <Icon className="h-4 w-4 text-white" />
+                          </span>
+                          <span className="font-medium">{feature.title}</span>
+                        </button>
+                      )
+                    })}
+                    <div
+                      className={cn(
+                        'lg:col-start-2 lg:row-span-10 lg:row-start-1 lg:order-none',
+                        FEATURE_DETAIL_ORDER[
+                          visibleFeatures.findIndex((feature) => feature.icon === selected.icon)
+                        ]
+                      )}
+                    >
+                      <FeatureDetail
+                        feature={selected}
+                        gradient={gradient}
+                        expanded={expandedFeature === selected.icon}
+                        onToggle={toggleSelectedLearnMore}
+                        screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
+                        screenshotVariants={screenshot?.variants}
+                        enterFullscreenLabel={t('enterFullscreenOverview')}
+                        exitFullscreenLabel={t('exitFullscreenOverview')}
+                        {...detailLabels}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </>
+        )}
       </div>
     </section>
   )

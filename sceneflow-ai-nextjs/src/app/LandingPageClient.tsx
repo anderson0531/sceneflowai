@@ -68,11 +68,13 @@ export default function LandingPageClient() {
       <LandingSectionCollapseProvider>
         <FloatingNav />
 
-        {/* 5. Playable Production Examples Across 6 Genres */}
+        {/* 5. Guided 4-Room Sandbox Visual Tour (teaches the 4 live Studio doors before examples) */}
+        <StudioGuidedTourSection />
+
+        {/* 6. Playable Production Examples Across 6 Genres (with the 4 live Studio doors) */}
         <ProductionExamplesSection />
 
-        {/* 6. Guided 4-Room Sandbox Visual Tour + Progressive 30-Feature Directory */}
-        <StudioGuidedTourSection />
+        {/* 7. Progressive 30-Feature Directory (Organized by Use Case or Studio Room) */}
         <FullStudioDirectoryDrawer>
           <KeyFeaturesSection />
         </FullStudioDirectoryDrawer>

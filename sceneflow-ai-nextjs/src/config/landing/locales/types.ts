@@ -61,11 +61,28 @@ export type ServiceVerticalCopy = {
   title: string
   description: string
   clientBuyer: string
+  traditionalMarketRangeLabel: string
   typicalRetailUsd: number
+  priceTiersUsd: readonly [number, number, number]
   retailRangeLabel: string
   estComputeUsd: number
+  estOperatorUsd: number
   activeMinutesLabel: string
   keyAdvantage: string
+}
+
+export type UseCaseTrackCopy = {
+  id:
+    | 'memoir-services'
+    | 'commercial-training'
+    | 'series-animation'
+    | 'creator-podcast'
+    | 'filmmaker-pitch'
+  tabLabel: string
+  badge: string
+  headline: string
+  description: string
+  featureIcons: readonly string[]
 }
 
 export type ClientStepCopy = {
@@ -135,14 +152,20 @@ export type StudioLandingCopy = {
     titleAccent: string
     subtitle: string
     commercialRightsBadge: string
+    costSavingsPillLabel: string
     verticalsHeading: string
     whoBuysLabel: string
     marginAdvantageLabel: string
     calculatorBadge: string
     calculatorTitle: string
+    priceTierLabel: string
+    priceTierNames: readonly [string, string, string]
     volumeLabel: string
     projectsPerMonthSuffix: string
+    traditionalMarketLabel: string
     typicalFeeLabel: string
+    fullyLoadedCostLabel: string
+    costBreakdownSubLabel: string
     estComputeLabel: string
     activeHandsOnLabel: string
     monthlyGrossLabel: string
@@ -174,7 +197,20 @@ export type StudioLandingCopy = {
     inspectFullScreenLabel: string
     openLiveScreeningLabel: string
     screeningModalTitle: string
+    examplesBridgeText: string
+    examplesBridgeCta: string
     rooms: readonly [GuidedRoomCopy, GuidedRoomCopy, GuidedRoomCopy, GuidedRoomCopy]
+  }
+  useCaseDirectory: {
+    viewByUseCaseLabel: string
+    viewByRoomLabel: string
+    tracks: readonly [
+      UseCaseTrackCopy,
+      UseCaseTrackCopy,
+      UseCaseTrackCopy,
+      UseCaseTrackCopy,
+      UseCaseTrackCopy,
+    ]
   }
   directoryDrawer: {
     badge: string

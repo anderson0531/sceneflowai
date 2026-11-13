@@ -7,6 +7,7 @@ import {
   WORLD_CLASS_LANDING_TRANSLATIONS,
   resolveLocalizedStudioLandingCopy,
 } from '@/config/landing/worldClassLandingCopy'
+import { SANDBOX_VIDEO_CAPTURE_SCRIPTS } from '@/config/landing/sandboxVideoCaptureScripts'
 
 const ROOT = join(process.cwd())
 
@@ -15,7 +16,7 @@ function readSource(relPath: string): string {
 }
 
 describe('World-Class Creator + Video Services Landing Architecture', () => {
-  it('mounts the streamlined 8-section landing journey in LandingPageClient without stacked redundant banners', () => {
+  it('mounts the streamlined landing journey with StudioGuidedTourSection ahead of ProductionExamplesSection', () => {
     const landing = readSource('src/app/LandingPageClient.tsx')
 
     const orderedMarkers = [
@@ -23,8 +24,8 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
       '<CreatorAndBusinessGatewaySection />',
       '<DirectorOperatingSystemSection />',
       '<VideoServicesSpotlightSection />',
-      '<ProductionExamplesSection />',
       '<StudioGuidedTourSection />',
+      '<ProductionExamplesSection />',
       '<FullStudioDirectoryDrawer>',
       '<KeyFeaturesSection />',
       '<StudioAcademyGuaranteeStrip />',
@@ -51,17 +52,23 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
     expect(landing).not.toContain('<StudioAcademySection />')
   })
 
-  it('surfaces Video Business (#video-services) in Header, FloatingNav, and ImaginePossibilitiesHero dock', () => {
+  it('orders Video Business -> Studio Tour -> Examples -> Features in Header, FloatingNav, and Hero dock', () => {
     const header = readSource('src/app/components/Header.tsx')
     const floatingNav = readSource('src/components/landing/FloatingNav.tsx')
     const topHero = readSource('src/components/landing/ImaginePossibilitiesHero.tsx')
 
     expect(header).toContain("'video-services'")
-    expect(header.indexOf("'video-services'")).toBeLessThan(header.indexOf("'production-examples'"))
+    expect(header).toContain("'studio-tour'")
+    expect(header.indexOf("'video-services'")).toBeLessThan(header.indexOf("'studio-tour'"))
+    expect(header.indexOf("'studio-tour'")).toBeLessThan(header.indexOf("'production-examples'"))
     expect(header.indexOf("'production-examples'")).toBeLessThan(header.indexOf("'key-features'"))
 
     expect(floatingNav).toContain("'video-services'")
+    expect(floatingNav).toContain("'studio-tour'")
     expect(floatingNav.indexOf("'video-services'")).toBeLessThan(
+      floatingNav.indexOf("'studio-tour'")
+    )
+    expect(floatingNav.indexOf("'studio-tour'")).toBeLessThan(
       floatingNav.indexOf("'production-examples'")
     )
     expect(floatingNav.indexOf("'production-examples'")).toBeLessThan(
@@ -113,7 +120,7 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
     expect(superpowers).toContain('TwoModesTheaterModal')
   })
 
-  it('powers the Video Services Business Engine with 4 verticals, transparent unit economics, and positive net margins', () => {
+  it('powers the Video Services Business Engine with 50%–80% lower fully-loaded cost (credits + PM time) and 65%–92% true net margins', () => {
     const services = WORLD_CLASS_LANDING_COPY.videoServices
     expect(services.verticals.map((v) => v.id)).toEqual([
       'memoir',
@@ -123,18 +130,72 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
     ])
     expect(services.launchBusinessCta).toContain('$9')
     expect(services.workflowSteps).toHaveLength(4)
+    expect(services.priceTierNames).toHaveLength(3)
 
     for (const vertical of services.verticals) {
-      expect(vertical.typicalRetailUsd).toBeGreaterThan(200)
+      expect(vertical.traditionalMarketRangeLabel.startsWith('$')).toBe(true)
+      expect(vertical.priceTiersUsd).toHaveLength(3)
+      expect(vertical.priceTiersUsd[1]).toBe(vertical.typicalRetailUsd)
       expect(vertical.estComputeUsd).toBeGreaterThan(0)
-      expect(vertical.typicalRetailUsd).toBeGreaterThanOrEqual(vertical.estComputeUsd * 6)
+      expect(vertical.estOperatorUsd).toBeGreaterThan(vertical.estComputeUsd)
 
-      for (const monthlyVolume of [4, 8, 15]) {
-        const gross = vertical.typicalRetailUsd * monthlyVolume
-        const net = gross - vertical.estComputeUsd * monthlyVolume
-        const marginPct = Math.round((net / gross) * 100)
-        expect(net).toBeGreaterThan(0)
-        expect(marginPct).toBeGreaterThanOrEqual(80)
+      const fullyLoadedCost = vertical.estComputeUsd + vertical.estOperatorUsd
+      for (const tierPrice of vertical.priceTiersUsd) {
+        expect(tierPrice).toBeGreaterThan(fullyLoadedCost)
+        for (const monthlyVolume of [4, 8, 15]) {
+          const gross = tierPrice * monthlyVolume
+          const net = (tierPrice - fullyLoadedCost) * monthlyVolume
+          const trueMarginPct = Math.round((net / gross) * 100)
+          expect(net).toBeGreaterThan(0)
+          expect(trueMarginPct).toBeGreaterThanOrEqual(65)
+          expect(trueMarginPct).toBeLessThanOrEqual(92)
+        }
+      }
+    }
+  })
+
+  it('organizes all 34 KeyFeatures icons across 5 curated Use-Case Tracks and stages 6 Sandbox video capture scripts', () => {
+    const rooms = (enMessages as Record<string, any>).keyFeatures.rooms as Array<Record<string, any>>
+    const allCatalogIcons = new Set<string>()
+    for (const room of rooms) {
+      for (const f of room.spend?.features ?? []) allCatalogIcons.add(f.icon)
+      for (const g of room.groups ?? []) {
+        for (const f of g.features ?? []) allCatalogIcons.add(f.icon)
+      }
+      for (const f of room.features ?? []) allCatalogIcons.add(f.icon)
+    }
+    expect(allCatalogIcons.size).toBe(34)
+
+    const tracks = WORLD_CLASS_LANDING_COPY.useCaseDirectory.tracks
+    expect(tracks).toHaveLength(5)
+    const coveredByTracks = new Set<string>()
+    for (const track of tracks) {
+      expect(track.featureIcons.length).toBeGreaterThanOrEqual(6)
+      expect(track.featureIcons.length).toBeLessThanOrEqual(10)
+      for (const icon of track.featureIcons) {
+        expect(allCatalogIcons.has(icon), `unknown feature icon ${icon} in track ${track.id}`).toBe(
+          true
+        )
+        coveredByTracks.add(icon)
+      }
+    }
+    expect(coveredByTracks.size).toBe(allCatalogIcons.size)
+
+    expect(SANDBOX_VIDEO_CAPTURE_SCRIPTS.map((s) => s.id)).toEqual([
+      'baseline',
+      'direction',
+      'review',
+      'agents',
+      'collaboration',
+      'four-room-tour',
+    ])
+    for (const script of SANDBOX_VIDEO_CAPTURE_SCRIPTS) {
+      expect(script.targetDurationSeconds).toBeGreaterThanOrEqual(35)
+      expect(script.targetDurationSeconds).toBeLessThanOrEqual(40)
+      expect(script.beats.length).toBeGreaterThanOrEqual(4)
+      for (const beat of script.beats) {
+        expect(beat.sandboxRoute.startsWith('/')).toBe(true)
+        expect(beat.voiceoverEn.length).toBeGreaterThan(30)
       }
     }
   })
@@ -274,6 +335,19 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
           enRoom.visuals.bottomBadge
         )
       })
+      expect(localized.guidedTour.examplesBridgeCta).not.toBe(
+        WORLD_CLASS_LANDING_COPY.guidedTour.examplesBridgeCta
+      )
+      expect(localized.useCaseDirectory.viewByUseCaseLabel).not.toBe(
+        WORLD_CLASS_LANDING_COPY.useCaseDirectory.viewByUseCaseLabel
+      )
+      expect(localized.useCaseDirectory.tracks).toHaveLength(5)
+      localized.useCaseDirectory.tracks.forEach((track, idx) => {
+        const enTrack = WORLD_CLASS_LANDING_COPY.useCaseDirectory.tracks[idx]
+        expect(track.tabLabel, `${locale} track ${track.id} tab`).not.toBe(enTrack.tabLabel)
+        expect(track.headline, `${locale} track ${track.id} headline`).not.toBe(enTrack.headline)
+        expect(track.featureIcons).toEqual(enTrack.featureIcons)
+      })
       expect(localized.directoryDrawer.expandCta).not.toBe(
         WORLD_CLASS_LANDING_COPY.directoryDrawer.expandCta
       )
@@ -284,6 +358,8 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
       expect(catalog.studioLanding).toEqual(localized)
       expect(catalog.nav?.videoServices?.length).toBeGreaterThan(1)
       expect(catalog.nav?.videoServices).not.toBe('Video Business')
+      expect(catalog.nav?.studioTour?.length).toBeGreaterThan(1)
+      expect(catalog.nav?.studioTour).not.toBe('Studio Tour')
       expect(catalog.floatingNav?.videoServices?.length).toBeGreaterThan(1)
       expect(catalog.floatingNav?.studioTour?.length).toBeGreaterThan(1)
       expect(catalog.floatingNav?.studioTour).not.toBe('Tour')

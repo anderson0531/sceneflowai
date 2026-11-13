@@ -143,6 +143,26 @@ describe('uiSandboxProject & uiSandboxSeries', () => {
       'scene-demo-2',
       'scene-demo-3',
     ])
+
+    // Verify Video Memoir Sandbox project includes multi-age characters with selectable wardrobes + continuity references
+    const memoir = getUiSandboxProject(DEMO_MEMOIR_PROJECT_ID)
+    const memoirPhase = memoir.metadata.visionPhase
+    expect(memoirPhase.characters.length).toBeGreaterThanOrEqual(5)
+    for (const ch of memoirPhase.characters) {
+      expect(ch.wardrobes?.length, `expected wardrobes on ${ch.name}`).toBeGreaterThanOrEqual(2)
+      for (const w of ch.wardrobes ?? []) {
+        if (w.fullBodyUrl) assertPublicAssetExists(w.fullBodyUrl)
+        if (w.headshotUrl) assertPublicAssetExists(w.headshotUrl)
+      }
+    }
+    expect(memoirPhase.references.locationReferences.length).toBeGreaterThanOrEqual(2)
+    expect(memoirPhase.references.objectReferences.length).toBeGreaterThanOrEqual(2)
+    for (const loc of memoirPhase.references.locationReferences) {
+      assertPublicAssetExists(loc.imageUrl)
+    }
+    for (const obj of memoirPhase.references.objectReferences) {
+      assertPublicAssetExists(obj.imageUrl)
+    }
   })
 
   it('populates both flagship Sandbox Series with on-disk Continuity Reference assets', () => {

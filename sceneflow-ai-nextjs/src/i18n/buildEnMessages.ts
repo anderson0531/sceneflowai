@@ -79,6 +79,7 @@ export function buildEnMessages() {
     nav: {
       overview: 'Overview',
       videoServices: 'Video Business',
+      studioTour: 'Studio Tour',
       plansPricing: 'Plans & Pricing',
       productionExamples: 'Examples',
       keyFeatures: 'Features',

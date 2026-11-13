@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
-import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass, CreditCard, Briefcase } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass, CreditCard, Briefcase, Layers } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import {
@@ -165,6 +165,14 @@ export function Header() {
               </button>
 
               <button
+                onClick={() => scrollToSection('studio-tour')}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+              >
+                <Layers className="w-4 h-4 text-sf-primary" />
+                {t.has('studioTour') ? t('studioTour') : 'Studio Tour'}
+              </button>
+
+              <button
                 onClick={() => scrollToSection('production-examples')}
                 className="flex items-center gap-1.5 px-3.5 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
@@ -298,6 +306,10 @@ export function Header() {
                   <button onClick={() => scrollToSection('video-services')} className="flex items-center gap-2 text-emerald-300 hover:text-white hover:bg-emerald-500/10 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Briefcase className="w-4 h-4 text-emerald-400" />
                     {t.has('videoServices') ? t('videoServices') : 'Video Business'}
+                  </button>
+                  <button onClick={() => scrollToSection('studio-tour')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Layers className="w-4 h-4 text-sf-primary" />
+                    {t.has('studioTour') ? t('studioTour') : 'Studio Tour'}
                   </button>
                   <button onClick={() => scrollToSection('production-examples')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Clapperboard className="w-4 h-4 text-sf-primary" />

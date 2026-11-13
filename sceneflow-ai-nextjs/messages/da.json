@@ -1153,7 +1153,8 @@
     "userFallback": "Bruger",
     "searchLanguages": "Søg sprog...",
     "noLanguagesFound": "Ingen sprog fundet",
-    "videoServices": "Video Business"
+    "videoServices": "Video Business",
+    "studioTour": "Studio Tour"
   },
   "floatingNav": {
     "productionExamples": "Eksempler",
@@ -3739,26 +3740,36 @@
       }
     },
     "videoServices": {
-      "eyebrow": "Monetize Your Creativity · B2B & Client Services",
-      "title": "Turn SceneFlow Into a",
-      "titleAccent": "High-Margin Video Business",
-      "subtitle": "Families, realtors, schools, and local businesses pay $200 to $2,500+ for custom storytelling videos—yet traditional crews cost thousands. Deliver unforgettable productions in hours and keep 100% of your client revenue.",
+      "eyebrow": "Video Delivery Services · Solo Operators & Agencies",
+      "title": "Deliver $1,500+ Production Value at",
+      "titleAccent": "50%–80% Lower Cost to Produce",
+      "subtitle": "Traditional crews and 30-hour manual edits price out 90% of families, realtors, and local businesses. SceneFlow cuts your fully-loaded delivery cost—compute credits plus operator time—by 50% to 80%, so you can win clients at accessible prices and still keep 65%–85% net profit.",
       "commercialRightsBadge": "100% Commercial Ownership · Deliver Client Masters Anywhere",
+      "costSavingsPillLabel": "50%–80% Lower Cost to Deliver · Win Priced-Out Clients",
       "verticalsHeading": "1. Choose a High-Demand Client Service",
       "whoBuysLabel": "Who Buys Repeatedly",
-      "marginAdvantageLabel": "SceneFlow Margin Advantage",
-      "calculatorBadge": "Interactive Unit Economics Preview",
-      "calculatorTitle": "2. Estimate Your Monthly Service Income",
+      "marginAdvantageLabel": "Cost-to-Deliver Advantage",
+      "calculatorBadge": "Transparent Cost & Profit Estimator",
+      "calculatorTitle": "2. Compare Delivery Cost & Monthly Profit",
+      "priceTierLabel": "Client pricing tier:",
+      "priceTierNames": [
+        "Accessible",
+        "Standard",
+        "Boutique"
+      ],
       "volumeLabel": "Client deliveries / month:",
       "projectsPerMonthSuffix": "projects/mo",
-      "typicalFeeLabel": "Typical client price",
-      "estComputeLabel": "Est. SceneFlow compute",
-      "activeHandsOnLabel": "Hands-on direction",
+      "traditionalMarketLabel": "Typical market rate",
+      "typicalFeeLabel": "Your client price",
+      "fullyLoadedCostLabel": "Fully-loaded cost",
+      "costBreakdownSubLabel": "Credits + PM time",
+      "estComputeLabel": "SceneFlow credits",
+      "activeHandsOnLabel": "Operator / PM time",
       "monthlyGrossLabel": "Est. Monthly Client Billing",
-      "monthlyNetLabel": "Est. Net Creator Income (before base plan)",
+      "monthlyNetLabel": "Est. Monthly Net Profit (after credits & PM time)",
       "perMonthSuffix": "/ mo",
-      "marginBadgeSuffix": "gross margin",
-      "disclaimer": "Illustrative estimates using SceneFlow’s hybrid Pre-vis Animatic + selective 4K AI clip workflow ($0.01/credit add-on rate). You set your own client pricing and terms.",
+      "marginBadgeSuffix": "true margin",
+      "disclaimer": "Fully-loaded delivery cost includes SceneFlow compute credits ($0.01/credit add-on rate) plus estimated operator/PM time for client intake, direction, and Screening Room review. You set your own client pricing.",
       "launchBusinessCta": "Launch Your Video Service ($9)",
       "workflowHeading": "How a Client Project Flows in 4 Effortless Steps",
       "stepPrefix": "Step",
@@ -3788,54 +3799,82 @@
         {
           "id": "memoir",
           "tabLabel": "Video Memoirs",
-          "badge": "$350–$799 / film · High Emotional Value",
+          "badge": "$300–$950 / film · Market Rate: $800–$3,500+",
           "title": "Life Stories, Milestone Tributes & Family Biographies",
           "description": "Blend treasured family photographs with cinematic AI era re-enactments and accurate multi-age character continuity (e.g., Age 17 → Age 32 → Age 62) narrated in warm, lifelike voices.",
           "clientBuyer": "Families, milestone birthdays, estate planners, senior communities & funeral homes",
-          "typicalRetailUsd": 450,
-          "retailRangeLabel": "$350–$799",
-          "estComputeUsd": 75,
-          "activeMinutesLabel": "~45 min",
-          "keyAdvantage": "Hybrid Documentary mode mixes real archival photos with selective hero AI clips for 80%+ margins."
+          "traditionalMarketRangeLabel": "$800–$3,500+",
+          "typicalRetailUsd": 499,
+          "priceTiersUsd": [
+            300,
+            499,
+            950
+          ],
+          "retailRangeLabel": "$300–$950",
+          "estComputeUsd": 22,
+          "estOperatorUsd": 78,
+          "activeMinutesLabel": "~1.5–2 hrs",
+          "keyAdvantage": "Deliver a $1,500-caliber memoir for ~$100 fully loaded (~$22 credits + ~$78 PM time)—pricing at $300–$500 wins families priced out of traditional crews."
         },
         {
           "id": "realestate",
           "tabLabel": "Real Estate Tours",
-          "badge": "$199–$399 / listing · Repeat Brokerage Volume",
+          "badge": "$199–$549 / listing · Market Rate: $450–$1,500+",
           "title": "Narrated Luxury Property & Boutique Hospitality Tours",
           "description": "Turn listing photographs and neighborhood highlights into scored, narrated cinema walkthroughs—plus instant Mandarin, Spanish, Arabic, or Portuguese versions for international buyers.",
           "clientBuyer": "Residential realtors, luxury brokerages, vacation rentals & boutique hotels",
-          "typicalRetailUsd": 275,
-          "retailRangeLabel": "$199–$399",
-          "estComputeUsd": 22,
-          "activeMinutesLabel": "~20 min",
-          "keyAdvantage": "One realtor listing 4 homes a month becomes a recurring monthly retainer account."
+          "traditionalMarketRangeLabel": "$450–$1,500+",
+          "typicalRetailUsd": 299,
+          "priceTiersUsd": [
+            199,
+            299,
+            549
+          ],
+          "retailRangeLabel": "$199–$549",
+          "estComputeUsd": 12,
+          "estOperatorUsd": 48,
+          "activeMinutesLabel": "~45–60 min",
+          "keyAdvantage": "No travel or weather delays: turn MLS photos into narrated, multilingual luxury tours at 60%+ lower cost than on-site shoots."
         },
         {
           "id": "training",
           "tabLabel": "Training & SOPs",
-          "badge": "$600–$2,500 / course · 70+ Languages",
+          "badge": "$599–$1,800 / module · Market Rate: $1,500–$5,000+",
           "title": "Corporate Onboarding, Safety & Multilingual Courses",
           "description": "Lock a consistent instructor avatar, uniforms, and workplace sets in your Continuity Vault—then ship crystal-clear training episodes localized across every employee’s native language.",
           "clientBuyer": "HR & L&D teams, manufacturers, healthcare clinics, restaurants & franchises",
+          "traditionalMarketRangeLabel": "$1,500–$5,000+",
           "typicalRetailUsd": 950,
-          "retailRangeLabel": "$600–$2,500",
-          "estComputeUsd": 80,
-          "activeMinutesLabel": "~60 min",
-          "keyAdvantage": "Update one changed compliance beat in minutes without hiring actors or reshooting."
+          "priceTiersUsd": [
+            599,
+            950,
+            1800
+          ],
+          "retailRangeLabel": "$599–$1,800",
+          "estComputeUsd": 35,
+          "estOperatorUsd": 115,
+          "activeMinutesLabel": "~2–2.5 hrs",
+          "keyAdvantage": "70% lower delivery cost than live crews—and when compliance rules change, update one beat in minutes without reshooting."
         },
         {
           "id": "brand",
           "tabLabel": "Brand Stories",
-          "badge": "$400–$1,200 / package · Web + Social",
+          "badge": "$399–$1,200 / pack · Market Rate: $3,000–$8,000+",
           "title": "Founder Origin Films, Clinic Explainers & Social Ads",
           "description": "Craft high-converting homepage brand stories paired with automatic 9:16 vertical trailers for Instagram, TikTok, and YouTube Shorts—vetted with clients in the Screening Room.",
           "clientBuyer": "Medical/dental practices, law firms, local SMBs, agencies & e-commerce founders",
-          "typicalRetailUsd": 600,
-          "retailRangeLabel": "$400–$1,200",
-          "estComputeUsd": 40,
-          "activeMinutesLabel": "~35 min",
-          "keyAdvantage": "Upsell seasonal promo cutdowns from the client’s saved Continuity Vault."
+          "traditionalMarketRangeLabel": "$3,000–$8,000+",
+          "typicalRetailUsd": 650,
+          "priceTiersUsd": [
+            399,
+            650,
+            1200
+          ],
+          "retailRangeLabel": "$399–$1,200",
+          "estComputeUsd": 22,
+          "estOperatorUsd": 88,
+          "activeMinutesLabel": "~1.5–2 hrs",
+          "keyAdvantage": "Unlocks local clinics, restaurants, and law firms priced out of $5,000 ad shoots—complete with 9:16 social cutdowns."
         }
       ]
     },
@@ -3843,7 +3882,7 @@
       "eyebrow": "Visual Studio Tour · No Jargon",
       "title": "Four Connected Rooms.",
       "titleAccent": "One Effortless Flow.",
-      "subtitle": "Explore how an idea moves from story concept to approved client or audience master—using live showcases from our Studio Sandbox instead of a dense technical manual.",
+      "subtitle": "Learn the 4 Studio doors in 60 seconds—Series Room, Blueprint Room, Production Stage, and Screening Room—before clicking those exact live doors across the 6 full-length Production Examples below.",
       "stepPrefix": "Step",
       "lensLabel": "Preview lens:",
       "lensCreator": "Original Series (\"The Glass Ledger\")",
@@ -3852,6 +3891,8 @@
       "inspectFullScreenLabel": "Inspect Full Studio Screen",
       "openLiveScreeningLabel": "Open Live Sandbox Screening Room",
       "screeningModalTitle": "The Glass Ledger — Sandbox Screening Room",
+      "examplesBridgeText": "Now that you know the 4 Studio doors, test-drive them live across 6 full-length genres:",
+      "examplesBridgeCta": "Try the 4 Live Doors in Production Examples",
       "rooms": [
         {
           "id": "series-desk",
@@ -3999,12 +4040,97 @@
         }
       ]
     },
+    "useCaseDirectory": {
+      "viewByUseCaseLabel": "Browse by Use Case",
+      "viewByRoomLabel": "Browse by Studio Room",
+      "tracks": [
+        {
+          "id": "memoir-services",
+          "tabLabel": "Video Memoirs & Family Legacy",
+          "badge": "High-Margin Client Service · $300–$950/Film",
+          "headline": "Turn Family Interviews & Keepsake Photos into Heirloom Cinema",
+          "description": "Capture a life story through intelligent intake, lock multi-age character portraits across 1970s youth to modern day, preview with low-cost animatics, and deliver via a private zero-login Screening Room link.",
+          "featureIcons": [
+            "startBlueprint",
+            "treatment",
+            "continuity",
+            "directShot",
+            "animatic",
+            "screeningCollab",
+            "languageStreams"
+          ]
+        },
+        {
+          "id": "commercial-training",
+          "tabLabel": "Client Agencies & Training Video",
+          "badge": "B2B Retainers · Real Estate · Multilingual SOPs",
+          "headline": "Deliver Predictable, On-Brand Client & Corporate Video at 50%–80% Lower Cost",
+          "description": "Forecast Pre-vis credit spend before rendering, lock brand presenters and property plates, dispatch autonomous batch agents, and publish localized training streams across 70+ languages.",
+          "featureIcons": [
+            "budget",
+            "castLocations",
+            "audioAgent",
+            "stillsAgent",
+            "productionAgent",
+            "multilanguageUi",
+            "screeningPlayer"
+          ]
+        },
+        {
+          "id": "series-animation",
+          "tabLabel": "Episodic Series & Stylized Animation",
+          "badge": "Multi-Episode IP · Locked Art & Cast Continuity",
+          "headline": "Run an Entire Showrunner Bible from Episode 1 to Season Finale",
+          "description": "Build a multi-episode season arc, freeze photorealistic or stylized 3D art direction across every episode, direct storyboard beats and keyframes, and render cinema-grade video clips.",
+          "featureIcons": [
+            "newSeries",
+            "seriesReview",
+            "seriesDirector",
+            "directEpisode",
+            "startEpisode",
+            "stillsWorkbench",
+            "videoAgent",
+            "clipsWorkbench"
+          ]
+        },
+        {
+          "id": "creator-podcast",
+          "tabLabel": "YouTube Channels & Narrative Podcasts",
+          "badge": "High-Retention Faceless Channels · Multi-Host Shows",
+          "headline": "Publish Weekly Story-Driven Episodes with Studio Voice, Music & Polish",
+          "description": "Test audience retention hooks before rendering, direct multi-voice host chemistry and custom musical underscore, polish timing in the Production Mixer, and ship 16:9 + 9:16 social packages.",
+          "featureIcons": [
+            "sceneWorkflow",
+            "seriesResonance",
+            "musicScore",
+            "scriptSupervisor",
+            "mixer",
+            "shipPackage"
+          ]
+        },
+        {
+          "id": "filmmaker-pitch",
+          "tabLabel": "Filmmaker Pre-Vis & Pitch Trailers",
+          "badge": "Greenlight Decks · Proof-of-Concept Cinema",
+          "headline": "Stress-Test Your Screenplay and Walk Into Pitch Meetings with a Finished Trailer",
+          "description": "Co-write with FlowDirector, score structural pacing with Audience Resonance at Blueprint and Script gates, format industry-standard scene scripts, and cut theatrical proof-of-concept trailers.",
+          "featureIcons": [
+            "blueprintDirector",
+            "blueprintResonance",
+            "goToProduction",
+            "productionScript",
+            "scriptResonance",
+            "promoTrailers"
+          ]
+        }
+      ]
+    },
     "directoryDrawer": {
-      "badge": "Complete Studio Specification · 30+ Capabilities",
-      "title": "Want Every Technical Detail? Explore the Full Studio Directory",
-      "subtitle": "Open the interactive room-by-room reference catalog to inspect full-resolution 5K workspace screenshots across Series Room, Blueprint Room, Production Stage, Production Mixer, and Screening Room.",
-      "expandCta": "Open Full 30-Feature Directory",
-      "collapseCta": "Hide Full 30-Feature Directory"
+      "badge": "Complete Studio Capabilities · Organized by Use Case or Room",
+      "title": "Explore All 30+ Studio Capabilities by Use Case or Workspace",
+      "subtitle": "Filter capabilities by what you want to build—Video Memoirs, Client Agencies, Episodic Series, Creator Channels, or Filmmaker Pitch Decks—or inspect every Studio room with full-resolution 5K screenshots.",
+      "expandCta": "Explore Capabilities by Use Case (30+)",
+      "collapseCta": "Hide Studio Capabilities Directory"
     },
     "academyStrip": {
       "badge": "Zero Learning Curve Guarantee · Studio Academy",

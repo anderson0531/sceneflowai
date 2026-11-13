@@ -176,6 +176,7 @@ const STRUCTURAL_LEAVES = new Set([
 
 export function shouldSkipTranslation(path: string, value: string): boolean {
   if (path === 'keyFeatures.subtitle') return true
+  if (path.includes('.featureIcons.')) return true
   const leaf = path.split('.').pop() ?? ''
   if (STRUCTURAL_LEAVES.has(leaf)) return true
   if (leaf.endsWith('Href') || leaf === 'href') return true
