@@ -32,6 +32,7 @@ import {
   ImagePlus,
   Shield,
   Clapperboard,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
@@ -70,6 +71,11 @@ import {
   AddCharacterModal,
   useOrphanCharacters,
 } from "@/components/vision/AddCharacterModal";
+import {
+  buildAgeVariantCharacter,
+  extractSamePersonAgeStage,
+  formatAgeVariantCharacterName,
+} from "@/lib/character/ageStageContinuity";
 import { failAgentRun, finishAgentRun, patchAgentRun, startAgentRun } from "@/store/useAgentRunStore";
 import type {
   CharacterContext,
@@ -557,6 +563,8 @@ interface CharacterCardProps {
   /** Script scenes for wardrobe analysis */
   scenes?: any[];
   onRemove?: () => void;
+  /** Open modal to split/create separate character card(s) for different ages/eras */
+  onCreateAgeVariant?: () => void;
   /** Callback to edit the character's reference image */
   onEditImage?: () => void;
   onApplyEnhancedReference?: (
@@ -672,6 +680,12 @@ export function CharacterLibrary({
     string | null
   >(null);
   const [addCharacterModalOpen, setAddCharacterModalOpen] = useState(false);
+  const [ageVariantModalCharId, setAgeVariantModalCharId] = useState<string | null>(null);
+  const [ageVariantTargetAgesInput, setAgeVariantTargetAgesInput] = useState("");
+  const [ageVariantCurrentCardAge, setAgeVariantCurrentCardAge] = useState("");
+  const [ageVariantEraLabel, setAgeVariantEraLabel] = useState("");
+  const [ageVariantWardrobe, setAgeVariantWardrobe] = useState("");
+  const [isCreatingAgeVariants, setIsCreatingAgeVariants] = useState(false);
   const [isSyncingAllWardrobes, setIsSyncingAllWardrobes] = useState(false);
   const [isCastAgentRunning, setIsCastAgentRunning] = useState(false);
 
@@ -893,6 +907,116 @@ export function CharacterLibrary({
     img.src = objectUrl;
   };
 
+  const openAgeVariantDialog = (char: any, charId: string) => {
+    const stageInfo = extractSamePersonAgeStage(String(char?.name || ""));
+    const numericCurrent =
+      stageInfo.numericAge ??
+      (/^\d{1,3}$/.test(String(char?.age || "").trim())
+        ? Number(String(char.age).trim())
+        : undefined);
+    setAgeVariantModalCharId(charId);
+    setAgeVariantTargetAgesInput("");
+    setAgeVariantCurrentCardAge(
+      !stageInfo.isAgeVariant && numericCurrent ? String(numericCurrent) : "",
+    );
+    setAgeVariantEraLabel("");
+    setAgeVariantWardrobe("");
+  };
+
+  const handleConfirmCreateAgeVariants = async () => {
+    if (!ageVariantModalCharId || !onAddCharacter) return;
+    const sourceIdx = castCharacters.findIndex(
+      (c, idx) => getCharacterId(c, idx) === ageVariantModalCharId,
+    );
+    const sourceChar = sourceIdx >= 0 ? castCharacters[sourceIdx] : null;
+    if (!sourceChar) return;
+
+    const rawAges = ageVariantTargetAgesInput
+      .split(/[,;/\s]+/)
+      .map((token) => Number(token.replace(/[^0-9]/g, "")))
+      .filter((n) => Number.isFinite(n) && n >= 1 && n <= 115);
+    const uniqueAges = Array.from(new Set(rawAges)).sort((a, b) => a - b);
+
+    if (uniqueAges.length === 0) {
+      toast.error("Enter at least one target age (e.g. 16, 32, 62)");
+      return;
+    }
+
+    setIsCreatingAgeVariants(true);
+    try {
+      const stageInfo = extractSamePersonAgeStage(String(sourceChar.name || ""));
+      const baseName = stageInfo.baseName || String(sourceChar.name || "Character").trim();
+      const groupKey =
+        sourceChar.samePersonGroupId ||
+        `person-${baseName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
+      // Optionally stamp the current card's own age if user entered one and card is not yet age-stamped
+      const currentAgeTrimmed = ageVariantCurrentCardAge.trim();
+      const currentAgeNum = /^\d{1,3}$/.test(currentAgeTrimmed)
+        ? Number(currentAgeTrimmed)
+        : null;
+      let stampedCurrentName: string | null = null;
+      if (!stageInfo.isAgeVariant && currentAgeNum && currentAgeNum >= 1 && currentAgeNum <= 115) {
+        stampedCurrentName = formatAgeVariantCharacterName(baseName, currentAgeNum);
+        await onUpdateCharacterName?.(ageVariantModalCharId, stampedCurrentName);
+        await onUpdateCharacterAttributes?.(
+          ageVariantModalCharId,
+          {
+            age: String(currentAgeNum),
+            samePersonGroupId: groupKey,
+          },
+          { quiet: true },
+        );
+      } else if (!sourceChar.samePersonGroupId) {
+        await onUpdateCharacterAttributes?.(
+          ageVariantModalCharId,
+          { samePersonGroupId: groupKey },
+          { quiet: true },
+        );
+      }
+
+      const existingLowerNames = new Set(
+        characters.map((c) => String(c?.name || "").trim().toLowerCase()),
+      );
+      if (stampedCurrentName) {
+        existingLowerNames.add(stampedCurrentName.toLowerCase());
+      }
+
+      const createdNames: string[] = [];
+      for (const targetAge of uniqueAges) {
+        const candidateName = formatAgeVariantCharacterName(baseName, targetAge);
+        if (existingLowerNames.has(candidateName.toLowerCase())) {
+          continue;
+        }
+        const variantChar = buildAgeVariantCharacter(sourceChar, {
+          targetAge,
+          eraLabel: ageVariantEraLabel.trim() || undefined,
+          defaultWardrobeOverride: ageVariantWardrobe.trim() || undefined,
+          samePersonGroupId: groupKey,
+        });
+        await onAddCharacter(variantChar);
+        existingLowerNames.add(candidateName.toLowerCase());
+        createdNames.push(candidateName);
+      }
+
+      if (createdNames.length > 0) {
+        toast.success(
+          `Created ${createdNames.length} age-stage character${createdNames.length > 1 ? "s" : ""}: ${createdNames.join(", ")}`,
+        );
+      } else if (stampedCurrentName) {
+        toast.success(`Updated character to ${stampedCurrentName}`);
+      } else {
+        toast.info("Those age-stage characters already exist in Cast.");
+      }
+      setAgeVariantModalCharId(null);
+    } catch (err) {
+      console.error("[Age Variant] Failed to create age variant:", err);
+      toast.error("Failed to create age variant character");
+    } finally {
+      setIsCreatingAgeVariants(false);
+    }
+  };
+
   const renderCharacterCard = (
     char: (typeof castCharacters)[number],
     idx: number,
@@ -950,6 +1074,9 @@ export function CharacterLibrary({
         onApplyWardrobeSyncDiffs={onApplyWardrobeSyncDiffs}
         scenes={scenes}
         onRemove={() => onRemoveCharacter?.(char.name)}
+        onCreateAgeVariant={
+          onAddCharacter ? () => openAgeVariantDialog(char, charId) : undefined
+        }
         onEditImage={
           char.referenceImage && onEditCharacterImage
             ? () => onEditCharacterImage(charId, char.referenceImage)
@@ -1566,6 +1693,132 @@ export function CharacterLibrary({
         </div>
       )}
 
+      {/* Multi-Age / Life-Stage Character Variant Modal */}
+      {ageVariantModalCharId && (() => {
+        const sourceIdx = castCharacters.findIndex(
+          (c, idx) => getCharacterId(c, idx) === ageVariantModalCharId,
+        );
+        const sourceChar = sourceIdx >= 0 ? castCharacters[sourceIdx] : null;
+        if (!sourceChar) return null;
+        const parsedStage = extractSamePersonAgeStage(String(sourceChar.name || ""));
+        const baseName = parsedStage.baseName || String(sourceChar.name || "Character");
+        return (
+          <Dialog
+            open={Boolean(ageVariantModalCharId)}
+            onOpenChange={(open) => {
+              if (!open && !isCreatingAgeVariants) {
+                setAgeVariantModalCharId(null);
+              }
+            }}
+          >
+            <DialogContent className="sm:max-w-md bg-gray-900 border-gray-700 text-gray-100">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-base">
+                  <Clock className="w-4 h-4 text-cyan-400" />
+                  Create Age-Stage Characters — {baseName}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-gray-400 leading-relaxed">
+                  Production Stage locks one base face per character card and uses Wardrobes only for outfits at that age. Create separate{" "}
+                  <span className="text-cyan-300 font-medium">{baseName} (Age NN)</span>{" "}
+                  cards so each life stage gets its own age-accurate reference portrait while sharing core genetics ({sourceChar.ethnicity || "shared heritage"}
+                  {sourceChar.eyeColor ? `, ${sourceChar.eyeColor} eyes` : ""}).
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-3 py-1">
+                <div>
+                  <label className="block text-xs font-medium text-gray-200 mb-1">
+                    New age stage(s) to create <span className="text-gray-400">(comma-separated)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={ageVariantTargetAgesInput}
+                    onChange={(e) => setAgeVariantTargetAgesInput(e.target.value)}
+                    placeholder="e.g. 16, 32, 62"
+                    className="w-full px-3 py-1.5 text-sm rounded-md border border-gray-700 bg-gray-800 text-gray-100 focus:border-cyan-500 focus:outline-none"
+                    autoFocus
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Creates {baseName} (Age 16), {baseName} (Age 32), etc. with dedicated reference slots.
+                  </p>
+                </div>
+
+                {!parsedStage.isAgeVariant && onUpdateCharacterName && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-200 mb-1">
+                      Stamp current &ldquo;{sourceChar.name}&rdquo; card&apos;s age <span className="text-gray-400">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={ageVariantCurrentCardAge}
+                      onChange={(e) => setAgeVariantCurrentCardAge(e.target.value)}
+                      placeholder="e.g. 62 (renames current card to Name (Age 62))"
+                      className="w-full px-3 py-1.5 text-xs rounded-md border border-gray-700 bg-gray-800 text-gray-100 focus:border-cyan-500 focus:outline-none"
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                      Era / Period note <span className="text-gray-500">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={ageVariantEraLabel}
+                      onChange={(e) => setAgeVariantEraLabel(e.target.value)}
+                      placeholder="e.g. 1968 High School"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-md border border-gray-700 bg-gray-800 text-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                      Period Wardrobe <span className="text-gray-500">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={ageVariantWardrobe}
+                      onChange={(e) => setAgeVariantWardrobe(e.target.value)}
+                      placeholder="e.g. Vintage varsity jacket"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-md border border-gray-700 bg-gray-800 text-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAgeVariantModalCharId(null)}
+                  disabled={isCreatingAgeVariants}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => void handleConfirmCreateAgeVariants()}
+                  disabled={isCreatingAgeVariants || !ageVariantTargetAgesInput.trim()}
+                  className="bg-cyan-600 hover:bg-cyan-500 text-white"
+                >
+                  {isCreatingAgeVariants ? (
+                    <>
+                      <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3.5 h-3.5 mr-1" />
+                      Create Age Variant(s)
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
+
     </div>
   );
 }
@@ -1667,6 +1920,7 @@ const CharacterCard = ({
   onApplyWardrobeSyncDiffs,
   scenes = [],
   onRemove,
+  onCreateAgeVariant,
   onEditImage,
   onApplyEnhancedReference,
   ttsProvider: _ttsProvider,
@@ -3865,7 +4119,7 @@ const CharacterCard = ({
                 ) : (
                   <>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span
                           className="font-bold text-base tracking-tight text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
                           onClick={(e) => {
@@ -3881,6 +4135,15 @@ const CharacterCard = ({
                         >
                           {character.name || "Unnamed"}
                         </span>
+                        {extractSamePersonAgeStage(character.name || "").isAgeVariant && (
+                          <span
+                            className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 border border-cyan-500/30 rounded-full font-medium"
+                            title="Dedicated life-stage character card — locks base portrait for this specific age/era"
+                          >
+                            <Clock className="w-2.5 h-2.5" />
+                            Life Stage
+                          </span>
+                        )}
                         {/* Orphan badge - character not in script */}
                         {isOrphan && (
                           <span
@@ -3899,20 +4162,36 @@ const CharacterCard = ({
                         </span>
                       )}
                     </div>
-                    {onRemove && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm(`Remove ${character.name}?`)) {
-                            onRemove();
-                          }
-                        }}
-                        className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
-                        title="Remove character"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {onCreateAgeVariant && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCreateAgeVariant();
+                          }}
+                          className="inline-flex items-center gap-1 px-1.5 py-1 rounded text-[11px] font-medium bg-cyan-50 dark:bg-cyan-950/50 border border-cyan-300 dark:border-cyan-800 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-900/60 transition-colors"
+                          title="Create separate character cards for different ages/eras (e.g. Age 16, Age 32, Age 62) instead of wardrobes"
+                        >
+                          <Clock className="w-3 h-3" />
+                          <span>+ Age</span>
+                        </button>
+                      )}
+                      {onRemove && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Remove ${character.name}?`)) {
+                              onRemove();
+                            }
+                          }}
+                          className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
+                          title="Remove character"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </>
                 )}
               </div>
@@ -4524,6 +4803,24 @@ const CharacterCard = ({
                   references work best with neutral upright pose, flat even lighting, and a plain
                   gray or white background.
                 </p>
+                <div className="rounded-md border border-cyan-500/25 bg-cyan-500/5 px-2.5 py-2 flex items-start justify-between gap-2">
+                  <p className="text-[10px] text-cyan-700 dark:text-cyan-300/90 leading-relaxed">
+                    <span className="font-semibold">Multi-age continuity:</span> Wardrobes keep this same base face &amp; age. For different decades/ages (e.g. Age 16, 32, 62), create separate Age Variant characters.
+                  </p>
+                  {onCreateAgeVariant && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCreateAgeVariant();
+                      }}
+                      className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-700 dark:text-cyan-200"
+                    >
+                      <Clock className="w-2.5 h-2.5" />
+                      + Age Variant
+                    </button>
+                  )}
+                </div>
                 {/* Primary CTA: Update wardrobes from script */}
                 {scenes &&
                   scenes.length > 0 &&

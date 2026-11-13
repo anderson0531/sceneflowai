@@ -51,6 +51,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       customerTurnsUsed: payload.customerTurnsUsed,
       maxCustomerTurns: payload.maxCustomerTurns,
       turns: localizedTurns,
+      resonatingBeats: Array.isArray(payload.resonatingBeats) ? payload.resonatingBeats : [],
       completed: Boolean(payload.completedAt || session.status === 'closed'),
     })
   } catch (err: unknown) {

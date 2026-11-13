@@ -6,6 +6,7 @@
  */
 
 import { ValidationResult } from './scriptValidator'
+import { stripScreenplayDeliveryAnnotations } from '@/lib/character/ageStageContinuity'
 
 export interface ParsedScript {
   title: string
@@ -371,10 +372,10 @@ function isLikelyCharacterCue(line: string, lines: string[], index: number): boo
 }
 
 /**
- * Normalize character name (remove extensions, trim)
+ * Normalize character name (remove delivery extensions like V.O./O.S., preserve Age qualifiers)
  */
 function normalizeCharacterName(name: string): string {
-  return name.replace(/\s*\([^)]+\)\s*$/, '').trim()
+  return stripScreenplayDeliveryAnnotations(name)
 }
 
 /**

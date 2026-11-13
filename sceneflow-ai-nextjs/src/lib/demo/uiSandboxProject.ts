@@ -1551,6 +1551,8 @@ function buildGlassLedgerProject() {
       {
         title: '1. The Excised Quartz Plate',
         intent: 'Inciting Discovery',
+        eraOrAge: 'Night • 02:40 AM (Curfew)',
+        characters: ['Elara Vance', 'Marcus Thorne'],
         minutes: 2.5,
         synopsis:
           'Elara discovers Plate XIV has been cleanly sheared from The Glass Ledger with a horological rotary blade; THEREFORE she refuses to sign off on the audit, BUT Chief Curator Marcus Thorne emerges from the vault shadows.',
@@ -1559,6 +1561,8 @@ function buildGlassLedgerProject() {
         title: '2. Standoff Across the Ledger',
         intent: 'Rising Tension',
         intent_emotion: 'Defiant suspense',
+        eraOrAge: 'Night • 02:45 AM',
+        characters: ['Elara Vance', 'Marcus Thorne'],
         minutes: 2.0,
         synopsis:
           'Marcus orders Elara out past curfew and demands the cipher; THEREFORE Elara tests him by naming the rotary cut while discreetly pocketing the Brass Chrono-Key.',
@@ -1566,6 +1570,8 @@ function buildGlassLedgerProject() {
       {
         title: '3. Pact on the Harbor Deck',
         intent: 'Midpoint Turn',
+        eraOrAge: 'Night • 03:05 AM (Before Purge)',
+        characters: ['Elara Vance', 'Dr. Aris Kael'],
         minutes: 2.0,
         synopsis:
           'Elara confronts restorer Dr. Aris Kael on the rain-lashed observation deck; THEREFORE Aris confesses Thorne’s midnight purge protocol and joins her, BUT vault lockdown sirens ignite below.',
@@ -1573,6 +1579,8 @@ function buildGlassLedgerProject() {
       {
         title: '4. Third Notch Counterclockwise',
         intent: 'Climax Escape',
+        eraOrAge: 'Night • 03:18 AM (Lockdown)',
+        characters: ['Elara Vance', 'Dr. Aris Kael'],
         minutes: 1.5,
         synopsis:
           'Iron shutters slam down sequentially across the subterranean corridor; THEREFORE Elara sprints to the brass service lift and uses the Chrono-Key to escape with The Glass Ledger.',
@@ -2021,7 +2029,7 @@ function buildHarborBooksMemoirProject() {
       visualDescription:
         'Golden morning sunlight streams through arched bookshop windows onto cedar shelves, brass library ladders, and a worn walnut counter.',
       action:
-        'Arthur Lin (78) unlocks the brass front latch for the final Saturday opening while Elena Lin arranges handwritten staff picks.',
+        'Arthur Lin (Age 78) unlocks the brass front latch for the final Saturday opening while Elena Lin (Age 76) arranges handwritten staff picks.',
       narration:
         'In the autumn of 1976, two suitcases of maritime poetry and a borrowed espresso machine became Harbor Books.',
       narrationAudioUrl: '/audio/use-case-story/knowledge/video-memoirs.mp3',
@@ -2030,26 +2038,29 @@ function buildHarborBooksMemoirProject() {
       },
       dialogue: [
         {
-          character: 'ARTHUR',
-          characterId: 'char-arthur',
+          character: 'ARTHUR LIN (AGE 78)',
+          characterId: 'char-arthur-78',
           line: 'Fifty years of rainy mornings, Elena, and the third floorboard by Poetry still sings in F-sharp.',
           emotion: 'Warm nostalgia',
         },
       ],
-      dialogueAudio: { en: [{ dialogueIndex: 0, character: 'ARTHUR', audioUrl: AUDIO_4_2S, duration: 4.2, startTime: 8.5 }] },
+      dialogueAudio: {
+        en: [{ dialogueIndex: 0, character: 'ARTHUR LIN (AGE 78)', audioUrl: AUDIO_4_2S, duration: 4.2, startTime: 8.5 }],
+      },
       sfx: [],
       sfxAudio: [],
       musicAudio: AUDIO_5_0S,
       musicDuration: 14.0,
       musicTitle: 'Cedar & Morning Sun (Solo Acoustic Guitar & Strings)',
-      characters: ['Arthur Lin', 'Elena Lin'],
+      characters: ['Arthur Lin (Age 78)', 'Elena Lin (Age 76)'],
       beats: [
         {
           beatId: 'bt_m1_1',
           sequenceIndex: 0,
           kind: 'action',
           durationSeconds: 7.0,
-          actionDescription: 'Sunlight sweeps across cedar bookshelves as Arthur unlocks the front door of Harbor Books.',
+          actionDescription:
+            'Sunlight sweeps across cedar bookshelves as Arthur Lin (Age 78) unlocks the front door of Harbor Books.',
           ...buildStillVersions({
             beatId: 'bt_m1_1',
             v1Url: altPoster,
@@ -2058,7 +2069,7 @@ function buildHarborBooksMemoirProject() {
           }),
           endFrameImageUrl: poster,
           storyboardImagePrompt: 'Warm sunlit independent bookstore interior with cedar bookshelves and brass ladder, documentary cinema.',
-          videoPrompt: 'Gentle gimbal push-in across sunlit cedar bookshelves as Arthur unlocks the brass front door.',
+          videoPrompt: 'Gentle gimbal push-in across sunlit cedar bookshelves as Arthur Lin (Age 78) unlocks the brass front door.',
           beatDirection: {
             shotType: 'Wide Shot',
             cameraAngle: 'Eye-level',
@@ -2071,18 +2082,18 @@ function buildHarborBooksMemoirProject() {
           beatId: 'bt_m1_2',
           sequenceIndex: 1,
           kind: 'dialogue',
-          character: 'ARTHUR',
-          characterId: 'char-arthur',
+          character: 'ARTHUR LIN (AGE 78)',
+          characterId: 'char-arthur-78',
           line: 'Fifty years of rainy mornings, Elena, and the third floorboard by Poetry still sings in F-sharp.',
           durationSeconds: 7.0,
           ...buildStillVersions({
             beatId: 'bt_m1_2',
             v1Url: poster,
-            prompt: 'Warm medium portrait of Arthur and Elena behind the walnut bookshop counter.',
+            prompt: 'Warm medium portrait of Arthur Lin (Age 78) and Elena Lin (Age 76) behind the walnut bookshop counter.',
           }),
           endFrameImageUrl: poster,
-          storyboardImagePrompt: 'Warm medium portrait of Arthur and Elena behind the walnut bookshop counter.',
-          videoPrompt: 'Warm medium shot of Arthur smiling toward Elena across stacks of hardcover memoirs.',
+          storyboardImagePrompt: 'Warm medium portrait of Arthur Lin (Age 78) and Elena Lin (Age 76) behind the walnut bookshop counter.',
+          videoPrompt: 'Warm medium shot of Arthur Lin (Age 78) smiling toward Elena Lin (Age 76) across stacks of hardcover memoirs.',
           beatDirection: {
             shotType: 'Medium Two-Shot',
             cameraAngle: 'Eye-level',
@@ -2103,9 +2114,12 @@ function buildHarborBooksMemoirProject() {
       duration: 12.0,
       estimatedDuration: 12.0,
       imageUrl: altPoster,
-      visualDescription: '16mm archival warmth: young Arthur and Elena sheltering canvas book crates beneath an awning during a Seattle cloudburst.',
-      action: 'Neighborhood regulars pass hot tea mugs down the sidewalk chain to save the poetry crates from the storm.',
-      narration: 'When the winter flood of seventy-eight threatened the basement press, forty neighbors formed a human chain up Pike Street.',
+      visualDescription:
+        '16mm archival warmth: Arthur Lin (Age 28) and Elena Lin (Age 26) sheltering canvas book crates beneath an awning during a 1970s Seattle cloudburst.',
+      action:
+        'Arthur Lin (Age 28) and Elena Lin (Age 26) pass wooden poetry crates up the rain-slicked Pike Street steps from the flooded basement press.',
+      narration:
+        'When the winter flood of seventy-eight threatened the basement press, Arthur and Elena rallied Pike Street hand-to-hand.',
       narrationAudioUrl: AUDIO_4_2S,
       dialogue: [],
       dialogueAudio: { en: [] },
@@ -2114,22 +2128,23 @@ function buildHarborBooksMemoirProject() {
       musicAudio: AUDIO_5_0S,
       musicDuration: 12.0,
       musicTitle: 'Human Chain in the Rain (Warm Chamber Strings)',
-      characters: ['Arthur Lin', 'Elena Lin'],
+      characters: ['Arthur Lin (Age 28)', 'Elena Lin (Age 26)'],
       beats: [
         {
           beatId: 'bt_m2_1',
           sequenceIndex: 0,
           kind: 'action',
           durationSeconds: 12.0,
-          actionDescription: 'Neighbors pass wooden crates of books hand-to-hand beneath warm awning lamps in the rain.',
+          actionDescription:
+            'Arthur Lin (Age 28) and Elena Lin (Age 26) pass wooden crates of books hand-to-hand beneath warm awning lamps in the 1978 rain.',
           ...buildStillVersions({
             beatId: 'bt_m2_1',
             v1Url: altPoster,
-            prompt: '1970s Pacific Northwest street scene in warm rain, neighbors passing wooden crates of books into a cozy storefront.',
+            prompt: '1970s Pacific Northwest street scene in warm rain, young booksellers passing wooden crates of books into a cozy storefront.',
           }),
           endFrameImageUrl: altPoster,
-          storyboardImagePrompt: '1970s Pacific Northwest street scene in warm rain, neighbors passing wooden crates of books into a cozy storefront.',
-          videoPrompt: 'Slow panning shot of neighbors passing book crates hand-to-hand under warm storefront lights.',
+          storyboardImagePrompt: '1970s Pacific Northwest street scene in warm rain, young booksellers passing wooden crates of books into a cozy storefront.',
+          videoPrompt: 'Slow panning shot of Arthur Lin (Age 28) and Elena Lin (Age 26) passing book crates under warm storefront lights.',
           beatDirection: {
             shotType: 'Wide Tracking Shot',
             cameraAngle: 'Eye-level',
@@ -2150,8 +2165,9 @@ function buildHarborBooksMemoirProject() {
       duration: 12.0,
       estimatedDuration: 12.0,
       imageUrl: poster,
-      visualDescription: 'Three generations of the Lin family and neighborhood readers raise warm amber glasses under string lights.',
-      action: 'Arthur hands the brass shop keys to their granddaughter Maya as applause fills the mezzanine.',
+      visualDescription:
+        'Warm tungsten string lights illuminate Arthur Lin (Age 78), Elena Lin (Age 76), and granddaughter Maya Lin (Age 24) raising amber glasses on the mezzanine.',
+      action: 'Arthur Lin (Age 78) hands the brass shop keys to granddaughter Maya Lin (Age 24) as Elena Lin (Age 76) beams beside them.',
       narration: 'A bookstore is never really bricks and timber—it is the sum of every conversation sheltered inside its walls.',
       narrationAudioUrl: AUDIO_4_2S,
       dialogue: [],
@@ -2161,14 +2177,15 @@ function buildHarborBooksMemoirProject() {
       musicAudio: AUDIO_5_0S,
       musicDuration: 12.0,
       musicTitle: 'Next Chapter Coda (Piano & Warm Cello)',
-      characters: ['Arthur Lin', 'Elena Lin'],
+      characters: ['Arthur Lin (Age 78)', 'Elena Lin (Age 76)', 'Maya Lin (Age 24)'],
       beats: [
         {
           beatId: 'bt_m3_1',
           sequenceIndex: 0,
           kind: 'action',
           durationSeconds: 12.0,
-          actionDescription: 'Arthur places the brass shop keys into Maya’s hand surrounded by three generations of readers.',
+          actionDescription:
+            'Arthur Lin (Age 78) places the brass shop keys into Maya Lin (Age 24)’s hand while Elena Lin (Age 76) applauds.',
           ...buildStillVersions({
             beatId: 'bt_m3_1',
             v1Url: poster,
@@ -2214,36 +2231,84 @@ function buildHarborBooksMemoirProject() {
     },
     character_descriptions: [
       {
-        name: 'Arthur Lin',
+        name: 'Arthur Lin (Age 28)',
         role: 'protagonist',
-        description: 'Co-founder of Harbor Books (78). Gentle wit, encyclopedic memory for every reader’s favorite poet.',
-        appearance: 'Silver hair, warm smile lines, oatmeal cable-knit cardigan over chambray shirt.',
+        age: '28',
+        ethnicity: 'East Asian (Taiwanese-American)',
+        samePersonGroupId: 'person-arthur-lin',
+        description:
+          'Arthur Lin in the 1976–1978 founding era: idealistic maritime poet and young bookseller hauling wooden poetry crates up Pike Street.',
+        appearance:
+          '28-year-old Taiwanese-American man with thick natural dark brown-black hair, warm dark brown eyes, 1970s tan corduroy jacket over rolled chambray work shirt. Longitudinal identity lock: exact same individual human being as Arthur Lin across life stages.',
       },
       {
-        name: 'Elena Lin',
+        name: 'Arthur Lin (Age 78)',
         role: 'protagonist',
-        description: 'Co-founder and curator (76). The architectural and financial backbone who kept Harbor Books independent.',
-        appearance: 'Graceful posture, silver chignon, terracotta silk scarf and reading glasses.',
+        age: '78',
+        ethnicity: 'East Asian (Taiwanese-American)',
+        samePersonGroupId: 'person-arthur-lin',
+        description:
+          'Co-founder of Harbor Books at age 78 (2026 golden anniversary). Gentle wit and encyclopedic memory for every reader’s favorite poet.',
+        appearance:
+          '78-year-old Taiwanese-American man with full silver hair, warm dark brown eyes with deep smile lines, oatmeal cable-knit cardigan over chambray shirt. Longitudinal identity lock: exact same individual human being as Arthur Lin across life stages.',
+      },
+      {
+        name: 'Elena Lin (Age 26)',
+        role: 'protagonist',
+        age: '26',
+        ethnicity: 'East Asian (Taiwanese-American)',
+        samePersonGroupId: 'person-elena-lin',
+        description:
+          'Elena Lin in the 1976–1978 founding era: resourceful architectural drafter and co-founder who hand-built the cedar mezzanine shelves.',
+        appearance:
+          '26-year-old Taiwanese-American woman with shoulder-length dark espresso waves, warm expressive brown eyes, 1970s olive wool peacoat and rust knit turtleneck. Longitudinal identity lock: exact same individual human being as Elena Lin across life stages.',
+      },
+      {
+        name: 'Elena Lin (Age 76)',
+        role: 'protagonist',
+        age: '76',
+        ethnicity: 'East Asian (Taiwanese-American)',
+        samePersonGroupId: 'person-elena-lin',
+        description:
+          'Co-founder and curator at age 76 (2026 golden anniversary). The architectural and financial backbone who kept Harbor Books independent.',
+        appearance:
+          '76-year-old Taiwanese-American woman with graceful posture, silver chignon, warm brown eyes behind thin tortoiseshell reading glasses, terracotta silk scarf. Longitudinal identity lock: exact same individual human being as Elena Lin across life stages.',
+      },
+      {
+        name: 'Maya Lin (Age 24)',
+        role: 'supporting',
+        age: '24',
+        ethnicity: 'East Asian (Taiwanese-American)',
+        description:
+          'Arthur and Elena’s granddaughter (24), raised beneath the cash wrap and stepping forward to steward Harbor Books’ next half-century.',
+        appearance:
+          '24-year-old Taiwanese-American woman sharing Elena’s cheekbone structure and Arthur’s warm dark eyes, collarbone-length dark hair, forest-green linen blazer.',
       },
     ],
     beats: [
       {
         title: '1. Two Suitcases on Pike Street (1976)',
         intent: 'Origin Story',
+        eraOrAge: '1976 • Ages 28 & 26',
+        characters: ['Arthur Lin (Age 28)', 'Elena Lin (Age 26)'],
         minutes: 4,
         synopsis: 'Arthur and Elena open Harbor Books with two suitcases of poetry and a borrowed espresso machine.',
       },
       {
         title: '2. The Bucket Brigade of ’78',
         intent: 'Community Crucible',
+        eraOrAge: 'Winter 1978 • Founding Era',
+        characters: ['Arthur Lin (Age 28)', 'Elena Lin (Age 26)'],
         minutes: 4,
-        synopsis: 'Forty neighbors form a human chain through winter rain to save the basement press.',
+        synopsis: 'Young Arthur and Elena rally Pike Street through winter rain to save the basement poetry press.',
       },
       {
         title: '3. Passing the Brass Keys',
         intent: 'Generational Legacy',
+        eraOrAge: '2026 • 50th Anniversary (Ages 78, 76 & 24)',
+        characters: ['Arthur Lin (Age 78)', 'Elena Lin (Age 76)', 'Maya Lin (Age 24)'],
         minutes: 4,
-        synopsis: 'Three generations gather under mezzanine string lights as granddaughter Maya takes the helm.',
+        synopsis: 'Under mezzanine string lights, elder Arthur and Elena pass the brass shop keys to granddaughter Maya.',
       },
     ],
   }
@@ -2338,23 +2403,77 @@ function buildHarborBooksMemoirProject() {
         scenes,
         characters: [
           {
-            id: 'char-arthur',
-            name: 'Arthur Lin',
+            id: 'char-arthur-28',
+            name: 'Arthur Lin (Age 28)',
             role: 'protagonist',
             type: 'character',
             gender: 'male',
-            description: 'Co-founder of Harbor Books (78). Warm storyteller and poetry archivist.',
-            appearanceDescription: '78-year-old East Asian man with silver hair, warm smile, oatmeal cardigan.',
+            age: '28',
+            ethnicity: 'East Asian (Taiwanese-American)',
+            samePersonGroupId: 'person-arthur-lin',
+            description: 'Arthur Lin in the 1976–1978 founding era: idealistic maritime poet and young bookseller.',
+            appearanceDescription:
+              '28-year-old Taiwanese-American man with thick natural dark brown-black hair, warm dark eyes, 1970s tan corduroy jacket over chambray work shirt. Longitudinal identity lock: exact same individual human being as Arthur Lin across life stages.',
+            defaultWardrobe: '1970s tan corduroy jacket over rolled-sleeve chambray shirt',
+            referenceImage: altPoster,
+          },
+          {
+            id: 'char-arthur-78',
+            name: 'Arthur Lin (Age 78)',
+            role: 'protagonist',
+            type: 'character',
+            gender: 'male',
+            age: '78',
+            ethnicity: 'East Asian (Taiwanese-American)',
+            samePersonGroupId: 'person-arthur-lin',
+            description: 'Co-founder of Harbor Books at age 78 (2026 golden anniversary). Warm storyteller and poetry archivist.',
+            appearanceDescription:
+              '78-year-old Taiwanese-American man with silver hair, warm smile lines, oatmeal cable-knit cardigan over chambray shirt. Longitudinal identity lock: exact same individual human being as Arthur Lin across life stages.',
+            defaultWardrobe: 'Oatmeal cable-knit cardigan over soft blue chambray shirt',
             referenceImage: poster,
           },
           {
-            id: 'char-elena',
-            name: 'Elena Lin',
+            id: 'char-elena-26',
+            name: 'Elena Lin (Age 26)',
             role: 'protagonist',
             type: 'character',
             gender: 'female',
-            description: 'Co-founder of Harbor Books (76). Poised curator and community matriarch.',
-            appearanceDescription: '76-year-old East Asian woman with silver chignon and terracotta silk scarf.',
+            age: '26',
+            ethnicity: 'East Asian (Taiwanese-American)',
+            samePersonGroupId: 'person-elena-lin',
+            description: 'Elena Lin in the 1976–1978 founding era: co-founder who hand-built the cedar mezzanine shelves.',
+            appearanceDescription:
+              '26-year-old Taiwanese-American woman with shoulder-length dark espresso waves, warm brown eyes, vintage olive wool peacoat over rust knit turtleneck. Longitudinal identity lock: exact same individual human being as Elena Lin across life stages.',
+            defaultWardrobe: '1970s olive wool peacoat over rust turtleneck sweater',
+            referenceImage: altPoster,
+          },
+          {
+            id: 'char-elena-76',
+            name: 'Elena Lin (Age 76)',
+            role: 'protagonist',
+            type: 'character',
+            gender: 'female',
+            age: '76',
+            ethnicity: 'East Asian (Taiwanese-American)',
+            samePersonGroupId: 'person-elena-lin',
+            description: 'Co-founder of Harbor Books at age 76 (2026 golden anniversary). Poised curator and community matriarch.',
+            appearanceDescription:
+              '76-year-old Taiwanese-American woman with silver chignon, tortoiseshell reading glasses, and terracotta silk scarf. Longitudinal identity lock: exact same individual human being as Elena Lin across life stages.',
+            defaultWardrobe: 'Charcoal wool cardigan with terracotta silk scarf',
+            referenceImage: poster,
+          },
+          {
+            id: 'char-maya-24',
+            name: 'Maya Lin (Age 24)',
+            role: 'supporting',
+            type: 'character',
+            gender: 'female',
+            age: '24',
+            ethnicity: 'East Asian (Taiwanese-American)',
+            description: 'Granddaughter (24) receiving the brass keys to Harbor Books.',
+            appearanceDescription:
+              '24-year-old Taiwanese-American woman with collarbone-length dark hair, warm dark eyes, forest-green linen blazer.',
+            defaultWardrobe: 'Forest-green linen blazer over cream knit top',
             referenceImage: poster,
           },
         ],
@@ -2429,6 +2548,8 @@ function buildWhiteCityBlueprintProject() {
       {
         title: '1. Anomaly on Feeder Nine',
         intent: 'Inciting Discovery',
+        eraOrAge: 'T-Minus 40 Min • Pre-Storm Drill',
+        characters: ['Nadia Koury'],
         minutes: 2.5,
         synopsis:
           'During pre-storm load tests, Nadia spots 140 megawatts vanishing into an unlisted subterranean loop; THEREFORE she halts automated dispatch.',
@@ -2436,6 +2557,8 @@ function buildWhiteCityBlueprintProject() {
       {
         title: '2. The Private Tier Override',
         intent: 'Escalating Conflict',
+        eraOrAge: 'T-Minus 28 Min • Control Balcony',
+        characters: ['Nadia Koury', 'Julian Vane'],
         minutes: 2.5,
         synopsis:
           'VP Julian Vane arrives on the glass balcony and locks Nadia’s console under emergency SLA authority, leaving Mercy General Hospital on the shed list.',
@@ -2443,6 +2566,8 @@ function buildWhiteCityBlueprintProject() {
       {
         title: '3. Into the 1908 Copper Yard',
         intent: 'Midpoint Gamble',
+        eraOrAge: 'T-Minus 15 Min • 1908 Converter Hall',
+        characters: ['Nadia Koury', 'Mateo Silva'],
         minutes: 2.5,
         synopsis:
           'Nadia and apprentice Mateo descend into the decommissioned 1908 rotary converter hall to manually bridge the hospital feeder before aurora currents spike.',
@@ -2450,6 +2575,8 @@ function buildWhiteCityBlueprintProject() {
       {
         title: '4. Pulling the Manual Knife Switch',
         intent: 'Climax Resolution',
+        eraOrAge: 'Impact • Geomagnetic Peak',
+        characters: ['Nadia Koury', 'Mateo Silva', 'Julian Vane'],
         minutes: 2.5,
         synopsis:
           'As violet corona arcs dance across the snow-covered yard, Nadia throws the manual brass knife switch—saving the hospital ward while exposing the Faraday ledger.',

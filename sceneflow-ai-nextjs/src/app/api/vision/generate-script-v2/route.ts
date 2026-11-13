@@ -1748,6 +1748,8 @@ ${characterNames.map(name => `• "${name}"`).join('\n')}
 - Do NOT abbreviate (wrong: "Ben" when full name is "Dr. Ben Anderson")
 - Do NOT expand titles (wrong: "Doctor" when name uses "Dr.")
 - Do NOT use first name only unless that IS the full character name
+- MULTI-AGE / MULTI-ERA VARIANTS: When the whitelist includes age-stamped entries for the same person across eras (e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)"), you MUST use the EXACT "(Age NN)" entry matching that scene's era/Blueprint beat in scene.characters, dialogue[].character, and beats[].characters — NEVER strip "(Age NN)" into a bare name! In spoken dialogue text ("line"), characters still address each other naturally ("John", "Dad").
+- INDIVIDUALS ONLY: Every character in scenes, beats, and newAssets[] MUST be a single named individual — NEVER create plural/group characters ("Friends", "Neighbors", "The Brothers", "Workers").
 
 CHARACTER DETAILS:\n${characters.map((c: any) => {
         const meta: string[] = []

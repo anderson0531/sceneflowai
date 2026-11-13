@@ -25,8 +25,14 @@ import {
   INTAKE_PLAYBOOKS,
   type ExtractedBlueprintFromIntake,
   type IntakeMessageTurn,
+  type IntakeResonatingBeat,
   type IntakeVerticalId,
 } from './intakePlaybooks'
+import {
+  isCollectiveOrGroupCharacterName,
+  sanitizeBlueprintCharactersAndBeats,
+  splitCompoundIndividualNames,
+} from '@/lib/character/ageStageContinuity'
 
 export type IntakeAccessMode = 'single_project' | 'public_lead'
 
@@ -43,10 +49,100 @@ export interface IntakeSessionPayload {
   customerLabel?: string
   brandProfileSnapshot: BrandProfileSnapshot
   turns: IntakeMessageTurn[]
+  resonatingBeats?: IntakeResonatingBeat[]
   completedAt?: string
   resultProjectId?: string
   publicCreditsSpentToday?: number
   publicCreditsDayKey?: string
+}
+
+function sanitizeIndividualCharacterList(rawList: unknown): string[] {
+  if (!Array.isArray(rawList)) return []
+  const out: string[] = []
+  for (const item of rawList) {
+    const rawStr = typeof item === 'string' ? item.trim() : String((item as any)?.name || '').trim()
+    if (!rawStr) continue
+    const split = splitCompoundIndividualNames(rawStr)
+    for (const single of split) {
+      if (!single || isCollectiveOrGroupCharacterName(single)) continue
+      if (!out.some((prev) => prev.toLowerCase() === single.toLowerCase())) {
+        out.push(single)
+      }
+    }
+  }
+  return out
+}
+
+function sanitizeResonatingBeats(rawBeats: unknown): IntakeResonatingBeat[] {
+  if (!Array.isArray(rawBeats)) return []
+  const cleaned: IntakeResonatingBeat[] = []
+  rawBeats.forEach((b, idx) => {
+    if (!b || typeof b !== 'object') return
+    const obj = b as Record<string, unknown>
+    const title = String(obj.title || '').trim()
+    const summary = String(obj.summary || obj.synopsis || '').trim()
+    if (!title && !summary) return
+    const eraOrAge = String(obj.eraOrAge || '').trim()
+    const keyCharacters = sanitizeIndividualCharacterList(
+      obj.keyCharacters ?? obj.characters
+    )
+    cleaned.push({
+      id: String(obj.id || `beat-${idx + 1}`),
+      title: title || `Beat ${idx + 1}`,
+      ...(eraOrAge ? { eraOrAge: eraOrAge.slice(0, 80) } : {}),
+      summary: summary.slice(0, 360),
+      keyCharacters,
+    })
+  })
+  return cleaned.slice(0, 8)
+}
+
+function deriveFallbackResonatingBeats(
+  turns: IntakeMessageTurn[],
+  fallbackProtagonist?: string
+): IntakeResonatingBeat[] {
+  const customerMessages = turns
+    .filter((t) => t.role === 'customer' && t.content.trim().length > 0)
+    .map((t) => t.content.trim())
+  if (customerMessages.length === 0) return []
+
+  const chunks: string[] = []
+  for (const msg of customerMessages) {
+    const paragraphs = msg
+      .split(/\n{2,}|(?<=[.!?])\s+(?=[A-Z0-9])/)
+      .map((p) => p.trim())
+      .filter((p) => p.length >= 20)
+    if (paragraphs.length >= 2 && customerMessages.length === 1) {
+      chunks.push(...paragraphs.slice(0, 5))
+    } else {
+      chunks.push(msg)
+    }
+  }
+
+  const fallbackLead =
+    fallbackProtagonist && !isCollectiveOrGroupCharacterName(fallbackProtagonist)
+      ? fallbackProtagonist.trim()
+      : ''
+
+  return chunks.slice(0, 6).map((chunk, idx) => {
+    const ageMatch = chunk.match(/\b(?:age[d]?\s*(\d{1,2})|(\d{1,2})[-\s]*years?[-\s]*old)\b/i)
+    const yearMatch = chunk.match(/\b((?:19|20)\d{2}s?)\b/)
+    const ageVal = ageMatch ? Number(ageMatch[1] || ageMatch[2]) : null
+    const eraParts = [
+      yearMatch ? yearMatch[1] : '',
+      ageVal ? `Age ${ageVal}` : '',
+    ].filter(Boolean)
+    const leadWithAge =
+      fallbackLead && ageVal ? `${fallbackLead} (Age ${ageVal})` : fallbackLead
+
+    return {
+      id: `beat-${idx + 1}`,
+      title: `Story Beat ${idx + 1}`,
+      ...(eraParts.length > 0 ? { eraOrAge: eraParts.join(' — ') } : {}),
+      summary: chunk.slice(0, 240),
+      keyCharacters: leadWithAge ? [leadWithAge] : [],
+    }
+  })
 }
 
 export function isIntakePayload(
@@ -214,6 +310,7 @@ export async function submitCustomerIntakeTurn(input: {
       ok: true
       reply: string
       turns: IntakeMessageTurn[]
+      resonatingBeats: IntakeResonatingBeat[]
       customerTurnsUsed: number
       maxCustomerTurns: number
       readyToComplete: boolean
@@ -302,7 +399,7 @@ export async function submitCustomerIntakeTurn(input: {
 
   const customerTurn: IntakeMessageTurn = {
     role: 'customer',
-    content: trimmed.slice(0, 4000),
+    content: trimmed.slice(0, 12000),
     createdAt: new Date().toISOString(),
   }
 
@@ -311,6 +408,9 @@ export async function submitCustomerIntakeTurn(input: {
   const playbook = INTAKE_PLAYBOOKS[payload.vertical]
 
   let assistantReply = ''
+  let resonatingBeats: IntakeResonatingBeat[] = Array.isArray(payload.resonatingBeats)
+    ? payload.resonatingBeats
+    : []
   let readyToComplete = nextCount >= payload.maxCustomerTurns
 
   try {
@@ -321,30 +421,43 @@ export async function submitCustomerIntakeTurn(input: {
       turns: nextTurns,
       customerTurnNumber: nextCount,
       maxCustomerTurns: payload.maxCustomerTurns,
+      existingBeats: resonatingBeats,
     })
 
     const llmRes = await generateText(prompt, {
       model: getGeminiProductModel('blueprint'),
       temperature: 0.4,
-      maxOutputTokens: 600,
+      maxOutputTokens: 1800,
       thinkingLevel: 'low',
       responseMimeType: 'application/json',
-      timeoutMs: 25_000,
+      timeoutMs: 30_000,
       maxRetries: 1,
     })
 
     const parsed = safeParseJsonFromText(llmRes.text || '{}') as {
       reply?: string
+      resonatingBeats?: unknown
       readyToComplete?: boolean
     }
     if (typeof parsed.reply === 'string' && parsed.reply.trim()) {
       assistantReply = parsed.reply.trim()
+    }
+    const sanitizedBeats = sanitizeResonatingBeats(parsed.resonatingBeats)
+    if (sanitizedBeats.length > 0) {
+      resonatingBeats = sanitizedBeats
     }
     if (typeof parsed.readyToComplete === 'boolean') {
       readyToComplete = readyToComplete || parsed.readyToComplete
     }
   } catch (err) {
     console.warn('[intakeService] Falling back to milestone question:', err)
+  }
+
+  if (resonatingBeats.length === 0) {
+    resonatingBeats = deriveFallbackResonatingBeats(
+      nextTurns,
+      payload.customerLabel || consent.customer_name
+    )
   }
 
   if (!assistantReply) {
@@ -368,6 +481,7 @@ export async function submitCustomerIntakeTurn(input: {
     locale: activeLocale,
     customerTurnsUsed: nextCount,
     turns: finalTurns,
+    resonatingBeats,
     ...(payload.mode === 'public_lead'
       ? {
           publicCreditsDayKey: today,
@@ -399,6 +513,7 @@ export async function submitCustomerIntakeTurn(input: {
     ok: true,
     reply: assistantReply,
     turns: finalTurns,
+    resonatingBeats,
     customerTurnsUsed: nextCount,
     maxCustomerTurns: payload.maxCustomerTurns,
     readyToComplete,
@@ -408,13 +523,44 @@ export async function submitCustomerIntakeTurn(input: {
 function buildFallbackBlueprint(
   vertical: IntakeVerticalId,
   customerName: string,
-  turns: IntakeMessageTurn[]
+  turns: IntakeMessageTurn[],
+  resonatingBeats?: IntakeResonatingBeat[]
 ): ExtractedBlueprintFromIntake {
   const playbook = INTAKE_PLAYBOOKS[vertical]
   const customerAnswers = turns
     .filter((t) => t.role === 'customer')
     .map((t) => t.content)
   const combined = customerAnswers.join(' ')
+  const fallbackBeats =
+    Array.isArray(resonatingBeats) && resonatingBeats.length > 0
+      ? resonatingBeats.map((rb, idx) => ({
+          title: rb.title || `Chapter ${idx + 1}`,
+          ...(rb.eraOrAge ? { eraOrAge: rb.eraOrAge } : {}),
+          ...(rb.keyCharacters?.length ? { characters: rb.keyCharacters } : {}),
+          intent: 'Resonating life chapter',
+          synopsis: rb.summary || customerAnswers[idx]?.slice(0, 400) || '',
+          minutes: Number(
+            (playbook.defaultDurationMinutes / Math.max(1, resonatingBeats.length)).toFixed(1)
+          ),
+          deliveryFormat: (idx % 3 === 0 ? 'ai_reenactment' : 'archival_photo') as
+            | 'archival_photo'
+            | 'ai_reenactment',
+        }))
+      : customerAnswers.slice(0, 6).map((ans, idx) => ({
+          title: `Chapter ${idx + 1}`,
+          characters: [customerName],
+          intent: 'Capture client milestone',
+          synopsis: ans.slice(0, 400),
+          minutes: Number(
+            (
+              playbook.defaultDurationMinutes /
+              Math.max(1, Math.min(6, customerAnswers.length))
+            ).toFixed(1)
+          ),
+          deliveryFormat: (idx % 3 === 0 ? 'ai_reenactment' : 'archival_photo') as
+            | 'archival_photo'
+            | 'ai_reenactment',
+        }))
 
   return {
     title: `${playbook.defaultTitlePrefix}: ${customerName}`,
@@ -424,18 +570,12 @@ function buildFallbackBlueprint(
     tone_description: playbook.tone,
     visual_style: 'Warm documentary realism with archival photography and cinematic B-roll',
     target_audience: 'Family, clients, and invited viewers',
-    beats: customerAnswers.slice(0, 6).map((ans, idx) => ({
-      title: `Chapter ${idx + 1}`,
-      intent: 'Capture client milestone',
-      synopsis: ans.slice(0, 400),
-      minutes: Number((playbook.defaultDurationMinutes / Math.max(1, Math.min(6, customerAnswers.length))).toFixed(1)),
-      deliveryFormat: idx % 3 === 0 ? 'ai_reenactment' : 'archival_photo',
-    })),
+    beats: fallbackBeats,
     character_descriptions: [
       {
         name: customerName,
         role: 'protagonist',
-        description: 'Primary subject described during client onboarding interview',
+        description: combined.slice(0, 400) || 'Primary subject described during client onboarding interview',
         needsClientPhoto: true,
       },
     ],
@@ -511,12 +651,13 @@ export async function completeClientIntakeToBlueprint(input: {
       locale: payload.locale,
       customerName: consent.customer_name,
       turns: payload.turns,
+      resonatingBeats: payload.resonatingBeats,
     })
 
     const llmRes = await generateText(prompt, {
       model: getGeminiProductModel('blueprint'),
       temperature: 0.3,
-      maxOutputTokens: 3000,
+      maxOutputTokens: 4096,
       thinkingLevel: 'low',
       responseMimeType: 'application/json',
       timeoutMs: 45_000,
@@ -548,7 +689,27 @@ export async function completeClientIntakeToBlueprint(input: {
   }
 
   if (!extracted) {
-    extracted = buildFallbackBlueprint(payload.vertical, consent.customer_name, payload.turns)
+    extracted = buildFallbackBlueprint(
+      payload.vertical,
+      consent.customer_name,
+      payload.turns,
+      payload.resonatingBeats
+    )
+  }
+
+  // Enforce individual-only cast, split multi-decade age spans into separate `(Age NN)` characters,
+  // and highlight era-matched individual characters on every beat!
+  const sanitizedIntake = sanitizeBlueprintCharactersAndBeats({
+    characters: extracted.character_descriptions,
+    beats: extracted.beats,
+  })
+  extracted = {
+    ...extracted,
+    character_descriptions: sanitizedIntake.characters.map((c) => ({
+      ...c,
+      needsClientPhoto: c.needsClientPhoto !== false,
+    })),
+    beats: sanitizedIntake.beats,
   }
 
   // In single_project mode, update the anchored Project; in public_lead mode, spawn a dedicated Project per lead!
@@ -572,6 +733,10 @@ export async function completeClientIntakeToBlueprint(input: {
     character_descriptions: extracted.character_descriptions.map((c) => ({
       name: c.name,
       role: c.role,
+      ...(c.age ? { age: String(c.age) } : {}),
+      ...(c.ethnicity ? { ethnicity: String(c.ethnicity) } : {}),
+      ...(c.appearance ? { appearance: String(c.appearance) } : {}),
+      ...(c.samePersonGroupId ? { samePersonGroupId: String(c.samePersonGroupId) } : {}),
       description: c.description,
     })),
   }
@@ -637,6 +802,12 @@ export async function completeClientIntakeToBlueprint(input: {
         id: `char-${i + 1}`,
         name: c.name,
         role: c.role,
+        ...(c.age ? { age: String(c.age), ageRange: String(c.age) } : {}),
+        ...(c.ethnicity ? { ethnicity: String(c.ethnicity) } : {}),
+        ...(c.appearance
+          ? { appearance: String(c.appearance), appearanceDescription: String(c.appearance) }
+          : {}),
+        ...(c.samePersonGroupId ? { samePersonGroupId: String(c.samePersonGroupId) } : {}),
         description: c.description,
       })),
       references: {

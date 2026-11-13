@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Clock, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -22,13 +22,17 @@ import { BLUEPRINT_REVIEW_SECTION_THEME } from '@/lib/blueprint/blueprintReviewT
 import { BlueprintCoreContent } from '@/components/blueprint/BlueprintCoreContent'
 import { BlueprintFieldCard } from '@/components/blueprint/BlueprintFieldCard'
 
-function normalizeBeats(variant: Record<string, unknown>) {
-  const beats = variant.beats as Array<{
-    title?: string
-    synopsis?: string
-    intent?: string
-    minutes?: number | string
-  }>
+interface NormalizedReviewBeat {
+  title?: string
+  eraOrAge?: string
+  characters?: string[]
+  synopsis?: string
+  intent?: string
+  minutes?: number | string
+}
+
+function normalizeBeats(variant: Record<string, unknown>): NormalizedReviewBeat[] {
+  const beats = variant.beats as NormalizedReviewBeat[]
   if (Array.isArray(beats) && beats.length > 0) return beats
   const outline = variant.beat_outline as Array<{ beat_title?: string; beat_description?: string }>
   if (Array.isArray(outline)) {
@@ -235,21 +239,49 @@ function SectionContent({
       }
       return (
         <div className="space-y-3">
-          {beats.map((b, i) => (
-            <div
-              key={i}
-              className="rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-3"
-            >
-              <div className="text-base font-semibold text-white flex items-center gap-2">
-                {b.title || `Beat ${i + 1}`}
-                {b.minutes != null && b.minutes !== '' ? (
-                  <span className="sf-review-body-muted font-normal">{b.minutes} min</span>
+          {beats.map((b, i) => {
+            const beatEra = typeof b.eraOrAge === 'string' ? b.eraOrAge.trim() : ''
+            const beatChars = Array.isArray(b.characters)
+              ? b.characters.map((ch) => String(ch || '').trim()).filter(Boolean)
+              : []
+            return (
+              <div
+                key={i}
+                className="rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-3"
+              >
+                <div className="text-base font-semibold text-white flex flex-wrap items-center gap-2">
+                  <span>{b.title || `Beat ${i + 1}`}</span>
+                  {beatEra ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-300">
+                      <Clock className="h-3 w-3" />
+                      {beatEra}
+                    </span>
+                  ) : null}
+                  {b.minutes != null && b.minutes !== '' ? (
+                    <span className="sf-review-body-muted font-normal">{b.minutes} min</span>
+                  ) : null}
+                </div>
+                {b.intent ? <p className="sf-review-body-muted mt-1">{b.intent}</p> : null}
+                {b.synopsis ? <p className="sf-review-body mt-1">{b.synopsis}</p> : null}
+                {beatChars.length > 0 ? (
+                  <div className="mt-2.5 pt-2 border-t border-emerald-500/15 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-cyan-300/90 mr-1">
+                      Key Characters:
+                    </span>
+                    {beatChars.map((charName, cIdx) => (
+                      <span
+                        key={`${charName}-${cIdx}`}
+                        className="inline-flex items-center gap-1 rounded-md border border-cyan-500/25 bg-cyan-500/10 px-2 py-0.5 text-xs font-medium text-cyan-200"
+                      >
+                        <User className="h-3 w-3 text-cyan-400" />
+                        {charName}
+                      </span>
+                    ))}
+                  </div>
                 ) : null}
               </div>
-              {b.intent ? <p className="sf-review-body-muted mt-1">{b.intent}</p> : null}
-              {b.synopsis ? <p className="sf-review-body mt-1">{b.synopsis}</p> : null}
-            </div>
-          ))}
+            )
+          })}
         </div>
       )
     }

@@ -13,6 +13,15 @@ export interface IntakeMessageTurn {
   createdAt: string
 }
 
+export interface IntakeResonatingBeat {
+  id: string
+  title: string
+  eraOrAge?: string
+  summary: string
+  /** Single named individuals featured in this beat — NEVER plural/collective groups */
+  keyCharacters: string[]
+}
+
 export interface IntakePlaybook {
   id: IntakeVerticalId
   defaultTitlePrefix: string
@@ -37,25 +46,25 @@ export const INTAKE_PLAYBOOKS: Record<IntakeVerticalId, IntakePlaybook> = {
     hybridVideoShare: 0.25,
     suggestedMaxTurns: 10,
     interviewerPersona:
-      'You are a warm, patient, empathetic family biographer helping memorialize a life story or celebration-of-life film. Ask ONE gentle, specific question at a time. Keep questions short and easy for seniors or grieving family members to answer aloud.',
+      'You are an intelligent, warm, deeply empathetic family biographer and story dramaturg helping memorialize a life story or celebration-of-life film. Begin by inviting a rich, open-ended narrative ("tell me your story"), then iterate through focused, gentle clarifications that shape a resonating set of story beats, pinpoint ages/time periods across life stages, and identify specific INDIVIDUAL people (never collective groups) in each beat.',
     welcomeByLocale: {
-      en: "Hello, and welcome. I'm here to help capture the stories, places, and cherished moments that matter most. To begin, whose life story are we celebrating today, and how would you describe their spirit in a few words?",
-      es: 'Hola y bienvenido. Estoy aquí para ayudarle a preservar los recuerdos, lugares y momentos más valiosos. Para comenzar, ¿la historia de vida de quién celebramos hoy y cómo describiría su esencia en pocas palabras?',
-      pt: 'Olá e seja bem-vindo. Estou aqui para ajudar a eternizar as memórias, lugares e momentos mais especiais. Para começar, a história de vida de quem estamos celebrando hoje e como você descreveria o jeito dessa pessoa?',
-      hi: 'नमस्ते और स्वागत है। मैं उन अनमोल यादों, स्थानों और जीवन के पलों को संजोने में आपकी मदद करने के लिए यहाँ हूँ। शुरुआत करने के लिए, आज हम किनके जीवन की कहानी को समर्पित कर रहे हैं, और आप उनके व्यक्तित्व का वर्णन कैसे करेंगे?',
+      en: "Hello, and welcome. Please take your time and tell me your story — share a detailed description of the life we are celebrating, from early roots and defining turning points to the chapters, places, and individual people who mattered most. Share as much as you'd like in your own words, and then we'll shape the most resonating story beats together.",
+      es: 'Hola y bienvenido. Tómese su tiempo y cuénteme su historia: comparta una descripción detallada de la vida que celebramos, desde sus raíces e inicios hasta los momentos decisivos, lugares y personas individuales más importantes. Cuente todo lo que desee con sus propias palabras y luego daremos forma juntos a los capítulos más emotivos.',
+      pt: 'Olá e seja bem-vindo. Fique à vontade para me contar a sua história em detalhes — compartilhe a trajetória da vida que estamos celebrando, desde as origens e momentos decisivos até os lugares e pessoas individuais mais marcantes. Conte tudo com suas próprias palavras e, em seguida, vamos lapidar juntos os capítulos mais emocionantes.',
+      hi: 'नमस्ते और स्वागत है। कृपया इत्मीनान से मुझे अपनी पूरी कहानी सुनाएँ — हम जिस जीवन का उत्सव मना रहे हैं उसका विस्तृत विवरण साझा करें, शुरुआती जड़ों और अहम मोड़ों से लेकर उन स्थानों और खास व्यक्तियों तक जो सबसे महत्वपूर्ण रहे। अपने शब्दों में विस्तार से बताएँ, फिर हम मिलकर सबसे प्रभावशाली अध्यायों को संवारेंगे।',
       'zh-CN':
-        '您好，欢迎来到专属回忆访谈。我将协助您记录最珍贵的人生故事、重要地点与温暖瞬间。首先，今天我们要纪念或讲述哪位主人公的人生？如果用几个词形容他/她的品格与神采，您会怎么说？',
-      ar: 'أهلاً ومرحباً بك. أنا هنا لمساعدتك في توثيق القصص والأماكن واللحظات الثمينة التي تعني لك الكثير. في البداية، قصة حياة من نحتفي بها اليوم، وكيف تصف روحه وشخصيته في بضع كلمات؟',
-      th: 'สวัสดีและยินดีต้อนรับครับ ผมพร้อมช่วยบันทึกเรื่องราว สถานที่ และความทรงจำอันล้ำค่า เพื่อเริ่มต้น วันนี้เรากำลังถ่ายทอดเรื่องราวชีวิตของท่านใด และหากให้คำจำกัดความถึงตัวตนของท่านสั้นๆ คุณอยากเล่าว่าอย่างไรครับ?',
+        '您好，欢迎来到专属人生故事访谈。请放慢脚步，向我娓娓道来您（或主人公）的人生故事——从早年成长背景、重要人生转折，到最难忘的地方与生命中关键的具体人物，请尽情详细讲述。随后我将陪伴您一步步梳理出最打动人心的故事篇章与人物脉络。',
+      ar: 'أهلاً ومرحباً بك. خذ وقتك الكامل واحكِ لي قصتك بالتفصيل — شاركني وصفاً وافياً لمسيرة الحياة التي نحتفي بها، منذ الجذور الأولى والمحطات الفارقة وصولاً إلى الأماكن والأشخاص المحددين الذين تركوا الأثر الأعمق. تحدث بحرية وبكلماتك الخاصة، ثم سنصوغ معاً أجمل الفصول والمشاهد المؤثرة.',
+      th: 'สวัสดีและยินดีต้อนรับครับ เชิญเล่าเรื่องราวชีวิตของคุณให้ผมฟังได้อย่างเต็มที่เลยครับ — เล่ารายละเอียดตั้งแต่จุดเริ่มต้น วัยเยาว์ จุดเปลี่ยนสำคัญ สถานที่ ไปจนถึงบุคคลสำคัญแต่ละท่านที่มีความหมายในแต่ละช่วงชีวิต เล่าตามธรรมชาติได้ยาวเท่าที่ต้องการ แล้วเราจะค่อยๆ ขัดเกลาฉากสำคัญที่กินใจที่สุดร่วมกันครับ',
     },
     milestoneQuestions: [
-      'Where and when did their journey begin, and what is a vivid memory from their childhood home or hometown?',
-      'What was a defining turning point in their youth—such as a first job, service, journey, or dream they pursued?',
-      'Tell me about the people they loved most—how did they meet their partner, or what moments with family brought them the greatest joy?',
-      'What accomplishment, quiet kindness, or passion were they proudest of in life?',
-      'Are there any favorite family sayings, songs, hobbies, or cherished keepsakes (like a watch, recipe, garden, or car) we should feature?',
-      'Which family photographs do you already have on hand, and which special unphotographed memories would you love recreated cinematically?',
-      'Finally, what lasting message, blessing, or feeling should family and friends carry in their hearts as the closing scene fades?',
+      'Thank you for sharing that foundation. Looking at your early chapters, approximately how old was the protagonist during those childhood/youth moments, and who are the specific individual people (by name, rather than groups) beside them in that beat?',
+      'In the pivotal turning-point beat of young adulthood—such as a first career leap, service, migration, or pursuit of a dream—what specific moment on screen captures that shift, and how old were the key individuals involved?',
+      'For the heart of the family/love story beat, tell me about the specific individual partner, child, or mentor at the center of that memory—what were their names and ages during that era?',
+      'Which moment of quiet triumph, resilience, or proudest life accomplishment resonates most deeply, and which specific individuals share the frame in that scene?',
+      'Are there signature keepsakes, heirlooms, recipes, songs, or recurring places that link their younger years to their later years?',
+      'Since we create dedicated visual portraits for each distinct life stage (for example Age 16, Age 32, Age 62), which ages/eras do you have real photographs for, and which unphotographed chapters should we recreate cinematically?',
+      'Finally, for our closing legacy beat today, who is present individually and what lasting blessing or feeling should stay in viewers’ hearts as the film concludes?',
     ],
   },
   real_estate_tour: {
@@ -157,6 +166,7 @@ export function buildNextIntakeQuestionPrompt(input: {
   turns: IntakeMessageTurn[]
   customerTurnNumber: number
   maxCustomerTurns: number
+  existingBeats?: IntakeResonatingBeat[]
 }): string {
   const playbook = INTAKE_PLAYBOOKS[input.vertical]
   const languageName = getLocaleEnglishName(input.locale)
@@ -170,20 +180,48 @@ export function buildNextIntakeQuestionPrompt(input: {
     .map((t) => `${t.role === 'assistant' ? 'INTERVIEWER' : 'CLIENT'}: ${t.content}`)
     .join('\n')
 
+  const priorBeatsBlock =
+    Array.isArray(input.existingBeats) && input.existingBeats.length > 0
+      ? `\nCurrent Resonating Beats Draft (refine, expand, or sharpen based on the latest answer):\n${JSON.stringify(input.existingBeats, null, 2)}\n`
+      : ''
+
   return `${playbook.interviewerPersona}
 Production Studio Brand: ${input.brandName}
-Output Language: ${languageName} (${input.locale}) — write strictly in ${languageName}.
+Output Language: ${languageName} (${input.locale}) — write "reply", beat "title", "eraOrAge", and "summary" strictly in ${languageName}.
 Client turns completed: ${input.customerTurnNumber} of ${input.maxCustomerTurns} (${remaining} remaining).
 
-Next narrative milestone to explore (if not already answered):
+Suggested topic if not already covered by the client's story:
 "${nextMilestone}"
-
+${priorBeatsBlock}
 Conversation so far:
 ${transcriptText}
 
+INTELLIGENT DRAMATURG & CONTINUITY INTERVIEW RULES (MANDATORY):
+1. DISTILL RESONATING BEATS: Extract and refine 3 to 7 emotionally resonating story beats ("resonatingBeats") from everything the client has shared so far. Do NOT ask repetitive questions about facts the client already shared in their opening story!
+2. HIGHLIGHT KEY INDIVIDUAL CHARACTERS PER BEAT (NEVER GROUPS):
+   - Every beat MUST list its "keyCharacters" as SINGLE NAMED INDIVIDUALS (e.g., "John Miller (Age 16)", "Margaret Miller (Age 42)", "David Chen (Age 17)").
+   - NEVER output plural or collective groups ("John's Friends", "His Brothers", "Neighbors", "Parents", "Classmates", "Coworkers", "The Family") in "keyCharacters"!
+   - If the client mentioned a group (e.g. "my army buddies" or "her sisters") in an important moment without naming a specific individual, ask a warm clarifying question to identify the ONE or TWO specific individuals by name who should appear on screen in that beat.
+3. PINPOINT AGES & TIME PERIODS FOR MULTI-ERA CONTINUITY:
+   - Production Stage creates separate character cards for distinct life stages (e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)") rather than trying to age one portrait with outfits.
+   - Whenever a character appears across different decades/eras, stamp their approximate age on the beat's "eraOrAge" (e.g. "1968 — Age 16") AND on their name in "keyCharacters" ("John Miller (Age 16)").
+   - If an important beat is missing when it happened or how old the key person was, ask for that age/time period naturally in your clarification!
+4. ASK ONE FOCUSED CLARIFICATION AT A TIME:
+   - In "reply", warmly acknowledge a specific detail or emerging beat from what the client just shared (1-2 sentences), briefly note how the story beats are taking shape, and ask ONE high-value clarifying question that deepens emotional resonance, clarifies an individual character, or anchors an age/era.
+   - If ${remaining} <= 1 (or if we already have 4+ rich resonating beats with clear individual characters, ages/eras, and closing resonance), invite any final detail and let them know they can click Submit Story & Build Blueprint whenever ready.
+
 Return JSON ONLY matching:
 {
-  "reply": "Warm 1-sentence acknowledgment of what the client just shared + ONE clear next question (or if ${remaining} <= 1, invite any final detail and let them know they can click Submit Story & Build Blueprint whenever ready).",
+  "reply": "Warm acknowledgment + ONE intelligent beat/character/era clarification question in ${languageName}",
+  "resonatingBeats": [
+    {
+      "id": "beat-1",
+      "title": "Short evocative beat title",
+      "eraOrAge": "Year/era & protagonist age if applicable (e.g. '1968 — Age 16')",
+      "summary": "1-2 sentence summary of the resonating moment",
+      "keyCharacters": ["Single Individual Name (Age NN)", "Second Individual Name"]
+    }
+  ],
   "readyToComplete": ${remaining <= 1 ? 'true' : 'false'}
 }`
 }
@@ -198,6 +236,8 @@ export interface ExtractedBlueprintFromIntake {
   target_audience: string
   beats: Array<{
     title: string
+    eraOrAge?: string
+    characters?: string[]
     intent: string
     synopsis: string
     minutes: number
@@ -206,6 +246,10 @@ export interface ExtractedBlueprintFromIntake {
   character_descriptions: Array<{
     name: string
     role: string
+    age?: string
+    ethnicity?: string
+    appearance?: string
+    samePersonGroupId?: string
     description: string
     needsClientPhoto: boolean
   }>
@@ -226,21 +270,37 @@ export function buildIntakeBlueprintSynthesisPrompt(input: {
   locale: ClientPortalLocale
   customerName: string
   turns: IntakeMessageTurn[]
+  resonatingBeats?: IntakeResonatingBeat[]
 }): string {
   const playbook = INTAKE_PLAYBOOKS[input.vertical]
   const languageName = getLocaleEnglishName(input.locale)
   const transcriptText = input.turns
     .map((t) => `${t.role === 'assistant' ? 'INTERVIEWER' : 'CLIENT'}: ${t.content}`)
     .join('\n\n')
+  const beatsContext =
+    Array.isArray(input.resonatingBeats) && input.resonatingBeats.length > 0
+      ? `\nRefined Resonating Beats & Key Individuals from Interview:\n${JSON.stringify(input.resonatingBeats, null, 2)}\n`
+      : ''
 
   return `You are an award-winning executive producer transforming a client onboarding interview into a structured SceneFlow Studio Blueprint and Continuity Asset Checklist.
 Vertical: ${playbook.id} (${playbook.genre})
-Target Output Language: ${languageName} (${input.locale}) — author all creative fields in ${languageName}.
+Target Output Language: ${languageName} (${input.locale}) — author creative prose fields in ${languageName} (keep "age", "ethnicity", and physical "appearance" concise and clear).
 Client Name: ${input.customerName}
 Target Runtime: ${playbook.defaultDurationMinutes} minutes
-
+${beatsContext}
 Client Interview Transcript:
 ${transcriptText}
+
+CRITICAL CHARACTER & BEAT CONTINUITY RULES (MANDATORY):
+1. INDIVIDUALS ONLY — NEVER GROUPS:
+   - Every entry in "character_descriptions" and every beat's "characters" array MUST be a SINGLE NAMED INDIVIDUAL person.
+   - NEVER output plural or collective groups ("John's Friends", "Neighbors", "The Brothers", "Parents", "Factory Workers", "Guests"). Split any couple ("Arthur & Elena Lin") into two separate individual character entries.
+2. SEPARATE CHARACTER CARDS FOR DIFFERENT AGES / ERAS (CRITICAL FOR VIDEO MEMOIRS):
+   - Production Stage locks ONE base facial reference portrait per character card and uses Wardrobes ONLY for outfit changes at that same biological age.
+   - Therefore, whenever the same person appears at meaningfully different ages or decades (>= 10 years apart, e.g. childhood/teen, young adult, senior), you MUST create SEPARATE entries in "character_descriptions" named "Full Name (Age NN)" — e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)"!
+   - Give each "(Age NN)" entry its exact single biological "age" (NEVER a range like "16-62"), shared "ethnicity" and bone structure, age-appropriate hair/skin in "appearance", and set "needsClientPhoto": true so the client can upload a real photo for each life stage in the Continuity Portal!
+3. HIGHLIGHT KEY INDIVIDUAL CHARACTERS ON EVERY BEAT:
+   - Each beat in "beats" MUST include "eraOrAge" (e.g. "1968 — Age 16") and "characters": ["Exact Individual Character Name from character_descriptions"] using the era-matched "(Age NN)" entry for that beat.
 
 Return valid JSON ONLY matching this exact schema:
 {
@@ -254,6 +314,8 @@ Return valid JSON ONLY matching this exact schema:
   "beats": [
     {
       "title": "Chapter / Scene Beat Title",
+      "eraOrAge": "Year/era & protagonist age (e.g. '1968 — Age 16')",
+      "characters": ["Exact Individual Character Name from character_descriptions"],
       "intent": "Emotional or informational purpose",
       "synopsis": "Concrete visual and narrative action",
       "minutes": 2.5,
@@ -262,9 +324,12 @@ Return valid JSON ONLY matching this exact schema:
   ],
   "character_descriptions": [
     {
-      "name": "Person or Character Name",
+      "name": "Single Individual Name — use 'Full Name (Age NN)' when person spans multiple eras (e.g. 'John Miller (Age 16)')",
       "role": "protagonist | supporting | narrator",
-      "description": "Age era, relationship, warm visual traits",
+      "age": "Exact biological age for this card, e.g. '16' or '32' or '62'",
+      "ethnicity": "Specific heritage shared across all age stages of this person",
+      "appearance": "2-3 sentences of standing physical appearance at this exact age",
+      "description": "Life stage, relationship, emotional role, and period attire context",
       "needsClientPhoto": true
     }
   ],

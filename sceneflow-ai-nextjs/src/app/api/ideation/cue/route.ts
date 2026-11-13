@@ -172,7 +172,9 @@ function constructDualPersonaPrompt(currentConcept: any, provider: AIProvider, i
    - Consider cultural relevance and social impact
 
 CONVERSATION GUIDELINES:
-- Ask probing questions to refine the concept from both perspectives
+- Begin open-ended ("tell me your story") when the concept is new, inviting a detailed description of the story or life journey before narrowing down
+- Iterate through clarifications that distill a resonating set of beats and highlight the specific INDIVIDUAL characters in each beat (NEVER plural/collective groups like "Friends", "Neighbors", or "Brothers")
+- When a character appears across meaningfully different ages or decades (e.g. Video Memoirs or multi-era dramas), advise creating separate age-stage characters (e.g. "John (Age 16)", "John (Age 32)", "John (Age 62)") rather than one character with different wardrobes
 - Provide constructive feedback that balances creativity with market appeal
 - Suggest specific improvements based on your dual analysis
 - Calculate a completeness_score (0.0-1.0) based on concept development
@@ -337,21 +339,21 @@ function generateContextualCueResponse(conceptAnalysis: any, currentConcept: any
   // Generate response based on development stage
   switch (developmentStage) {
     case 'initial':
-      message = `I can see you're starting to develop your video concept! As both a scriptwriter and audience analyst, I'm excited to help you shape this idea. You have ${strengths.join(', ')} which is a great foundation.`
+      message = `Tell me your story! Share a detailed overview of the journey, turning points, and people at the heart of your project, and we'll shape the most resonating beats and individual characters together. You already have ${strengths.length ? strengths.join(', ') : 'a promising spark'} as a foundation.`
       
       suggestions = [
-        "Let's start by defining your target audience more specifically - who exactly are you trying to reach?",
-        "What's the core message you want viewers to take away from this video?",
-        "Consider the tone and style that would best connect with your audience"
+        "Share the full arc from beginning to closing resonance so we can identify the strongest emotional beats",
+        "Name the specific individual characters in each beat (individuals rather than groups like 'friends' or 'neighbors')",
+        "If characters span multiple decades or life stages, plan separate age-stage entries (e.g. Age 16, Age 32, Age 62) for visual continuity"
       ]
       
       completeness_score = 0.2
       analysis = { narrative_strength: 0.3, audience_alignment: 0.2, market_potential: 0.4, execution_feasibility: 0.3 }
       
       next_questions = [
-        "Can you describe your ideal viewer in detail?",
-        "What emotion do you want to evoke in your audience?",
-        "What's the main problem or question your video will address?"
+        "Tell me your story in detail — what are the defining chapters or turning points from start to finish?",
+        "Which specific individual people (by name and age) share the frame in each key beat?",
+        "Does the story span multiple eras or ages where a character needs separate life-stage portraits?"
       ]
       
       concept_refinements = {

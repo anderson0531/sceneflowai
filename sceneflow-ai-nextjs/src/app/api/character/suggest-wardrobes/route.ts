@@ -130,6 +130,7 @@ IMPORTANT RULES — APPEARANCE CHANGES (makeup, hair, injuries):
 6. When ONLY appearance changes (same outfit), create a SEPARATE wardrobe variant with the SAME description and accessories but distinct appearanceNotes and sceneNumbers (e.g., "Interrogation — Distressed")
 7. Put ALL makeup, hair state, and injury details in appearanceNotes — NOT only in reason. appearanceNotes is used for reference image generation.
 8. Read beat-level lines carefully — close-ups often describe bruises, bloodshot eyes, and makeup that scene summaries omit.
+9. **NO MULTI-DECADE AGING IN WARDROBES (CRITICAL)**: Production Stage locks ONE base facial age/portrait per character card. NEVER use wardrobes or appearanceNotes to make a character younger or older across different life stages/decades (e.g. childhood, teen, midlife, senior — those MUST be separate "(Age NN)" character cards). Only describe outfits, grooming, and transient state at ${character.name}'s fixed biological age.
 
 EXAMPLE — beat close-up with injury (must capture in appearanceNotes):
 Beat text: "CLOSE UP: the subject's hands trembling on the table. Bloodshot eyes, a faint bruise forming on the temple."

@@ -12,6 +12,7 @@ import 'server-only'
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { normalizeCharacterName } from '@/lib/character/detection'
+import { extractSamePersonAgeStage } from '@/lib/character/ageStageContinuity'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 import {
   buildFamilialVisualContinuityClause,
@@ -309,10 +310,14 @@ Return ONLY valid JSON matching this exact schema:
         }
       }
 
-      const resolvedAge = pickVisualField(
-        existing.age ?? existing.ageRange,
-        suggestion.age ?? suggestion.ageRange
-      )
+      const parsedAgeStage = extractSamePersonAgeStage(clean(existing.name))
+      const lockedStageAge = parsedAgeStage.numericAge ? String(parsedAgeStage.numericAge) : ''
+      const resolvedAge =
+        lockedStageAge ||
+        pickVisualField(
+          existing.age ?? existing.ageRange,
+          suggestion.age ?? suggestion.ageRange
+        )
       const next: Record<string, any> = {
         ...existing,
         id: existing.id || `char-${idx}`,

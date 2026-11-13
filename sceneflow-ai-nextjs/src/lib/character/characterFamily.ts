@@ -11,6 +11,10 @@
  */
 
 import { normalizeCharacterName } from '@/lib/character/detection'
+import {
+  extractSamePersonAgeStage,
+  enforceSamePersonAgeStageConsistency,
+} from '@/lib/character/ageStageContinuity'
 
 export type KinshipRelationType =
   | 'parent_of'
@@ -54,6 +58,7 @@ export interface FamilyAwareCharacter {
   appearanceDescription?: string
   description?: string
   backstory?: string
+  samePersonGroupId?: string
   familyRelationships?: CharacterFamilyRelationship[]
 }
 
@@ -757,23 +762,32 @@ export function enforceEnsembleFamilyConsistency<T extends FamilyAwareCharacter>
         const otherIdx = findIndexForRel(rel)
         if (otherIdx === null) continue
 
+        const charAgeStage = extractSamePersonAgeStage(cleanText(char.name))
+        const otherAgeStage = extractSamePersonAgeStage(cleanText(next[otherIdx]!.name))
+        const hasExplicitEraAgeLock = charAgeStage.isAgeVariant || otherAgeStage.isAgeVariant
+
         if (rel.relation === 'parent_of') {
           const pAge = approxAges[idx]
           const cAge = approxAges[otherIdx]
-          if (pAge !== null && cAge === null) {
+          if (pAge !== null && cAge === null && !otherAgeStage.isAgeVariant) {
             const inferredChildAge = Math.max(6, pAge - NATURAL_PARENT_GAP)
             approxAges[otherIdx] = inferredChildAge
             const band = formatAgeBandFromNumber(inferredChildAge)
             next[otherIdx]!.age = band
             if ('ageRange' in next[otherIdx]!) next[otherIdx]!.ageRange = band
-          } else if (pAge === null && cAge !== null) {
+          } else if (pAge === null && cAge !== null && !charAgeStage.isAgeVariant) {
             const inferredParentAge = Math.min(88, cAge + NATURAL_PARENT_GAP)
             approxAges[idx] = inferredParentAge
             const band = formatAgeBandFromNumber(inferredParentAge)
             char.age = band
             if ('ageRange' in char) char.ageRange = band
-          } else if (pAge !== null && cAge !== null && pAge - cAge < MIN_PARENT_GAP) {
-            // Generational collision! Adjust parent upward if protagonist is the child, otherwise adjust child downward if possible, else bump parent.
+          } else if (
+            !hasExplicitEraAgeLock &&
+            pAge !== null &&
+            cAge !== null &&
+            pAge - cAge < MIN_PARENT_GAP
+          ) {
+            // Generational collision in same-era cast! (Skipped when characters carry explicit `(Age NN)` flashback/present locks)
             const childIsProtagonist = cleanText(next[otherIdx]!.role).toLowerCase() === 'protagonist'
             if (childIsProtagonist || cAge <= 26) {
               const adjustedParent = Math.min(90, cAge + NATURAL_PARENT_GAP)
@@ -794,19 +808,24 @@ export function enforceEnsembleFamilyConsistency<T extends FamilyAwareCharacter>
         if (rel.relation === 'grandparent_of') {
           const gAge = approxAges[idx]
           const cAge = approxAges[otherIdx]
-          if (gAge === null && cAge !== null) {
+          if (gAge === null && cAge !== null && !charAgeStage.isAgeVariant) {
             const inferredGrand = Math.min(92, cAge + NATURAL_GRANDPARENT_GAP)
             approxAges[idx] = inferredGrand
             const band = formatAgeBandFromNumber(inferredGrand)
             char.age = band
             if ('ageRange' in char) char.ageRange = band
-          } else if (gAge !== null && cAge === null) {
+          } else if (gAge !== null && cAge === null && !otherAgeStage.isAgeVariant) {
             const inferredGrandchild = Math.max(6, gAge - NATURAL_GRANDPARENT_GAP)
             approxAges[otherIdx] = inferredGrandchild
             const band = formatAgeBandFromNumber(inferredGrandchild)
             next[otherIdx]!.age = band
             if ('ageRange' in next[otherIdx]!) next[otherIdx]!.ageRange = band
-          } else if (gAge !== null && cAge !== null && gAge - cAge < MIN_GRANDPARENT_GAP) {
+          } else if (
+            !hasExplicitEraAgeLock &&
+            gAge !== null &&
+            cAge !== null &&
+            gAge - cAge < MIN_GRANDPARENT_GAP
+          ) {
             const adjustedGrand = Math.min(94, cAge + NATURAL_GRANDPARENT_GAP)
             approxAges[idx] = adjustedGrand
             const band = formatAgeBandFromNumber(adjustedGrand)
@@ -818,7 +837,7 @@ export function enforceEnsembleFamilyConsistency<T extends FamilyAwareCharacter>
     }
   }
 
-  return next
+  return enforceSamePersonAgeStageConsistency(next)
 }
 
 /**

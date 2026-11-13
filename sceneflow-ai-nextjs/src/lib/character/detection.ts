@@ -1,4 +1,8 @@
 import { resolveWardrobeForCharacter } from '@/lib/character/characterReferenceAssembly'
+import {
+  isCollectiveOrGroupCharacterName,
+  stripScreenplayDeliveryAnnotations,
+} from '@/lib/character/ageStageContinuity'
 import { extractSceneWardrobeAndAppearanceNotes } from '@/lib/character/wardrobeAnalysis'
 import { isWardrobeStaleForSceneScript } from '@/lib/character/wardrobeScriptSync'
 
@@ -28,8 +32,8 @@ export interface AutoSyncCharactersResult {
 export function normalizeCharacterName(name: string): string {
   if (!name) return ''
   
-  // Remove voice-over indicators: (V.O.), (O.S.), (O.C.), (CONT'D)
-  let normalized = name.replace(/\s*\([^)]*\)\s*/g, '').trim()
+  // Remove voice-over/delivery indicators: (V.O.), (O.S.), (O.C.), (CONT'D) while keeping (Age 16), (1978), etc.
+  let normalized = stripScreenplayDeliveryAnnotations(name)
   
   // Convert to uppercase for case-insensitive comparison
   normalized = normalized.toUpperCase()
@@ -49,15 +53,29 @@ function registerExtractedCharacter(
   if (typeof rawName !== 'string' || !rawName.trim()) return
   const normalizedName = normalizeCharacterName(rawName)
   if (!normalizedName) return
-  if (charMap.has(normalizedName)) return
-
-  const cleanName = rawName.replace(/\s*\([^)]*\)\s*/g, '').trim()
+  const cleanName = stripScreenplayDeliveryAnnotations(rawName)
   if (!cleanName) return
+
+  if (charMap.has(normalizedName)) {
+    const existing = charMap.get(normalizedName)!
+    if (
+      existing.role !== 'narrator' &&
+      existing.name === existing.name.toUpperCase() &&
+      cleanName !== cleanName.toUpperCase()
+    ) {
+      existing.name = cleanName
+    }
+    return
+  }
 
   const isNarrator =
     forceRole === 'narrator' ||
     cleanName.toUpperCase().includes('NARRATOR') ||
     rawName.trim().toUpperCase() === 'NARRATOR'
+
+  if (!isNarrator && isCollectiveOrGroupCharacterName(cleanName)) {
+    return
+  }
   const dialogueSample = dialogueLine
     ? dialogueLine.substring(0, 100) + (dialogueLine.length > 100 ? '...' : '')
     : ''

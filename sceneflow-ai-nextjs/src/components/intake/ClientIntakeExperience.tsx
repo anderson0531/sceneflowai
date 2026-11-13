@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { CheckCircle2, Globe, Loader2, Mic, MicOff, Send, ShieldCheck, Sparkles } from 'lucide-react'
+import { CheckCircle2, Clock, Film, Globe, Loader2, Mic, MicOff, Send, ShieldCheck, Sparkles, User } from 'lucide-react'
 import {
   formatPortalCopy,
   getSpeechLangForPortalLocale,
@@ -12,7 +12,7 @@ import {
 } from '@/lib/intake/clientPortalCopy'
 import { getLocaleDirection } from '@/i18n/locale'
 import type { BrandProfileSnapshot } from '@/lib/producer/producerProfileService'
-import type { IntakeMessageTurn } from '@/lib/intake/intakePlaybooks'
+import type { IntakeMessageTurn, IntakeResonatingBeat } from '@/lib/intake/intakePlaybooks'
 
 interface ClientIntakeExperienceProps {
   token: string
@@ -44,6 +44,7 @@ export function ClientIntakeExperience({
   const [consentSubmitting, setConsentSubmitting] = useState(false)
 
   const [turns, setTurns] = useState<IntakeMessageTurn[]>([])
+  const [resonatingBeats, setResonatingBeats] = useState<IntakeResonatingBeat[]>([])
   const [turnsUsed, setTurnsUsed] = useState(0)
   const [maxTurns, setMaxTurns] = useState(10)
   const [draftMessage, setDraftMessage] = useState('')
@@ -92,6 +93,7 @@ export function ClientIntakeExperience({
         setConsentAccepted(Boolean(data.consentAccepted))
         if (data.customerName) setCustomerName(data.customerName)
         setTurns(Array.isArray(data.turns) ? data.turns : [])
+        setResonatingBeats(Array.isArray(data.resonatingBeats) ? data.resonatingBeats : [])
         setTurnsUsed(Number(data.customerTurnsUsed || 0))
         setMaxTurns(Number(data.maxCustomerTurns || 10))
         setCompleted(Boolean(data.completed))
@@ -239,6 +241,9 @@ export function ClientIntakeExperience({
         return
       }
       setTurns(data.turns)
+      if (Array.isArray(data.resonatingBeats)) {
+        setResonatingBeats(data.resonatingBeats)
+      }
       setTurnsUsed(data.customerTurnsUsed)
       setMaxTurns(data.maxCustomerTurns)
     } catch (err) {
@@ -503,16 +508,77 @@ export function ClientIntakeExperience({
               <div ref={chatEndRef} />
             </div>
 
+            {/* Live Resonating Story Beats & Highlighted Individual Characters */}
+            {resonatingBeats.length > 0 && (
+              <section className="mb-4 rounded-2xl border border-cyan-500/25 bg-slate-900/80 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Film className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <h2 className="text-sm font-semibold text-white">
+                      {formatPortalCopy(locale, 'resonatingBeatsTitle')}
+                    </h2>
+                  </div>
+                  <span className="text-xs text-slate-400">
+                    {formatPortalCopy(locale, 'resonatingBeatsSubtitle')}
+                  </span>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1">
+                  {resonatingBeats.map((beat, bIdx) => (
+                    <div
+                      key={beat.id || `rb-${bIdx}`}
+                      className="rounded-xl border border-slate-800 bg-slate-950/75 p-3 space-y-1.5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <span className="text-xs font-semibold text-slate-100">
+                          {bIdx + 1}. {beat.title}
+                        </span>
+                        {beat.eraOrAge && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-300">
+                            <Clock className="w-2.5 h-2.5" />
+                            {beat.eraOrAge}
+                          </span>
+                        )}
+                      </div>
+                      {beat.summary && (
+                        <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">
+                          {beat.summary}
+                        </p>
+                      )}
+                      {Array.isArray(beat.keyCharacters) && beat.keyCharacters.length > 0 && (
+                        <div className="pt-1 flex flex-wrap items-center gap-1">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-cyan-400/90 mr-0.5">
+                            {formatPortalCopy(locale, 'beatKeyPeopleLabel')}
+                          </span>
+                          {beat.keyCharacters.map((person, pIdx) => (
+                            <span
+                              key={`${person}-${pIdx}`}
+                              className="inline-flex items-center gap-1 rounded-md border border-cyan-500/25 bg-cyan-500/10 px-1.5 py-0.5 text-[11px] font-medium text-cyan-200"
+                            >
+                              <User className="w-2.5 h-2.5 text-cyan-400" />
+                              {person}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {turnsUsed < maxTurns ? (
               <form
                 onSubmit={handleSendTurn}
                 className="pt-3 border-t border-slate-800 space-y-3"
               >
                 <textarea
-                  rows={3}
+                  rows={turnsUsed === 0 ? 5 : 3}
                   value={draftMessage}
                   onChange={(e) => setDraftMessage(e.target.value)}
-                  placeholder={formatPortalCopy(locale, 'typeOrSpeakPlaceholder')}
+                  placeholder={formatPortalCopy(
+                    locale,
+                    turnsUsed === 0 ? 'tellYourStoryPlaceholder' : 'typeOrSpeakPlaceholder'
+                  )}
                   className="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3 text-base sm:text-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
                 />
                 <div className="flex flex-wrap items-center justify-between gap-3">

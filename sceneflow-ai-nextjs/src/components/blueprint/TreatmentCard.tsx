@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl'
 import { useShallow } from 'zustand/react/shallow'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ChevronDown, MessageSquare, Loader2, Wand2, X, Users, MapPin, Package, Film, ExternalLink, Lightbulb, SparklesIcon, Award, RotateCcw, FileText, ArrowRight, Volume2 } from 'lucide-react'
+import { ChevronDown, MessageSquare, Loader2, Wand2, X, User, Users, Clock, MapPin, Package, Film, ExternalLink, Lightbulb, SparklesIcon, Award, RotateCcw, FileText, ArrowRight, Volume2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -983,16 +983,44 @@ export function TreatmentCard({
                               `${prefix}.beats[${idx}].synopsis`,
                               b.synopsis || ''
                             )
+                            const beatEra = typeof b.eraOrAge === 'string' ? b.eraOrAge.trim() : ''
+                            const beatCharacters: string[] = Array.isArray(b.characters)
+                              ? b.characters.map((ch: unknown) => String(ch || '').trim()).filter(Boolean)
+                              : []
                             return (
                             <div key={idx} className={`p-3 rounded-lg border border-slate-700/60 bg-slate-800/50 ${v.id===activeVariant.id ? flashIf('beats') : ''}`}>
                               <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <div className="text-sm text-gray-100 font-medium">{beatTitle || t('fields.beat', { number: idx + 1 })}</div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-sm text-gray-100 font-medium">{beatTitle || t('fields.beat', { number: idx + 1 })}</span>
+                                    {beatEra && (
+                                      <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-300">
+                                        <Clock className="w-3 h-3" />
+                                        {beatEra}
+                                      </span>
+                                    )}
+                                  </div>
                                   {beatIntent && <div className="text-xs text-gray-400 mt-0.5">{beatIntent}</div>}
                                 </div>
                                 <div className="shrink-0 text-xs px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 font-medium">{t('fields.minutesSuffix', { value: Number(b.minutes||0).toFixed(2) })}</div>
                               </div>
                               {beatSynopsis && <div className="text-sm text-gray-300 mt-2 whitespace-pre-wrap leading-relaxed">{beatSynopsis}</div>}
+                              {beatCharacters.length > 0 && (
+                                <div className="mt-2.5 pt-2 border-t border-slate-700/50 flex flex-wrap items-center gap-1.5">
+                                  <span className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400/90 mr-1">
+                                    Key Characters:
+                                  </span>
+                                  {beatCharacters.map((charName, cIdx) => (
+                                    <span
+                                      key={`${charName}-${cIdx}`}
+                                      className="inline-flex items-center gap-1 rounded-md border border-cyan-500/25 bg-cyan-500/10 px-2 py-0.5 text-[11px] font-medium text-cyan-200"
+                                    >
+                                      <User className="w-2.5 h-2.5 text-cyan-400" />
+                                      {charName}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           )})}
                         </div>

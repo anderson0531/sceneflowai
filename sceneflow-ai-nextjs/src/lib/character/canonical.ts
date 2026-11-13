@@ -5,6 +5,11 @@
  * to prevent downstream matching issues with voice, image, and video generation.
  */
 
+import {
+  extractSamePersonAgeStage,
+  stripScreenplayDeliveryAnnotations,
+} from './ageStageContinuity'
+
 export interface CanonicalCharacter {
   id: string  // UUID - primary identifier
   name: string  // Canonical name in Title Case
@@ -17,16 +22,16 @@ export interface CanonicalCharacter {
  * Convert any character name variation to canonical format
  * 
  * Rules:
- * - Title Case (e.g., "Brian Anderson Sr")
+ * - Title Case (e.g., "Brian Anderson Sr", "John Miller (Age 16)")
  * - No ALL CAPS
- * - Removes screenplay annotations like (V.O.), (O.S.), (CONT'D)
+ * - Removes screenplay annotations like (V.O.), (O.S.), (CONT'D) while preserving age/era qualifiers like (Age 16)
  * - Removes quoted nicknames/aliases like 'ben' or "Ben"
  */
 export function toCanonicalName(input: string): string {
   if (!input) return ''
   
-  // Remove screenplay annotations: (V.O.), (O.S.), (O.C.), (CONT'D)
-  let clean = input.replace(/\s*\([^)]*\)\s*/g, '').trim()
+  // Remove screenplay delivery annotations: (V.O.), (O.S.), (O.C.), (CONT'D) — preserve (Age 16), (1978), etc.
+  let clean = stripScreenplayDeliveryAnnotations(input)
   
   // Remove quoted nicknames/aliases: 'ben', "Ben", 'Ben', etc.
   // This ensures "Dr. Benjamin 'ben' Anderson" matches "Dr. Benjamin Anderson"
@@ -35,11 +40,16 @@ export function toCanonicalName(input: string): string {
   // Remove ALL extra whitespace (consolidate multiple spaces into one)
   clean = clean.replace(/\s+/g, ' ').trim()
   
-  // Convert to Title Case
+  // Title-case words while preserving parenthetical formatting like `(Age 16)`
   clean = clean
     .toLowerCase()
     .split(' ')
     .map(word => {
+      if (!word) return word
+      if (word.startsWith('(')) {
+        const inner = word.slice(1)
+        return '(' + (inner ? inner.charAt(0).toUpperCase() + inner.slice(1) : '')
+      }
       // Handle special cases
       if (word === 'sr' || word === 'jr' || word === 'ii' || word === 'iii') {
         return word.charAt(0).toUpperCase() + word.slice(1)
@@ -70,6 +80,42 @@ export function generateAliases(canonicalName: string, originalName?: string): s
   // Add canonical name and ALL CAPS variant
   aliases.add(canonicalName)
   aliases.add(canonicalName.toUpperCase())
+
+  // Age/era-stage characters (e.g. "John Miller (Age 16)", "John Miller (Age 62)") MUST NOT
+  // generate bare first-name or bare full-name aliases ("John", "Miller", "John Miller"),
+  // otherwise age variants of the same person collide during speaker/reference matching!
+  const ageStage = extractSamePersonAgeStage(canonicalName)
+  if (ageStage.isAgeVariant && ageStage.baseName) {
+    const baseParts = ageStage.baseName.split(' ').filter(Boolean)
+    const first = baseParts[0] || ageStage.baseName
+    if (ageStage.numericAge) {
+      const n = ageStage.numericAge
+      const ageVariants = [
+        `${ageStage.baseName} (Age ${n})`,
+        `${ageStage.baseName} Age ${n}`,
+        `${ageStage.baseName} (${n})`,
+        `${first} (Age ${n})`,
+        `${first} Age ${n}`,
+      ]
+      for (const v of ageVariants) {
+        aliases.add(v)
+        aliases.add(v.toUpperCase())
+      }
+    } else if (ageStage.ageStageLabel) {
+      const lbl = ageStage.ageStageLabel
+      const eraVariants = [
+        `${ageStage.baseName} (${lbl})`,
+        `${first} (${lbl})`,
+        `${lbl} ${ageStage.baseName}`,
+        `${lbl} ${first}`,
+      ]
+      for (const v of eraVariants) {
+        aliases.add(v)
+        aliases.add(v.toUpperCase())
+      }
+    }
+    return [...aliases]
+  }
   
   const parts = canonicalName.split(' ')
   

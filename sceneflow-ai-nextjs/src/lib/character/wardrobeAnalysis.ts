@@ -140,8 +140,15 @@ export function sceneIncludesCharacter(
 
   if (characterMentionedInText(sceneText, characterName)) return true
 
-  const beatLines = formatBeatLines(scene, characterName)
-  if (beatLines.length > 0) return true
+  if (Array.isArray(scene.beats)) {
+    const targetLower = characterName.trim().toLowerCase()
+    const inBeats = scene.beats.some(
+      (beat) =>
+        (beat.character && beat.character.trim().toLowerCase() === targetLower) ||
+        characterMentionedInText(resolveBeatActionText(beat), characterName)
+    )
+    if (inBeats) return true
+  }
 
   const segmentLines = formatSegmentLines(scene, characterName)
   return segmentLines.length > 0

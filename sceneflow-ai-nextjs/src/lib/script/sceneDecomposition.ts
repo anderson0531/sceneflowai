@@ -23,6 +23,8 @@ export const TARGET_SCENE_MINUTES_LABEL = Number.isInteger(TARGET_SCENE_SECONDS 
 
 export interface BlueprintBeatInput {
   title?: string
+  eraOrAge?: string
+  characters?: string[]
   intent?: string
   minutes?: number
   synopsis?: string
@@ -120,7 +122,7 @@ function formatBlueprintBeatSynopsis(beat: BlueprintBeatInput): string | undefin
   return synopsis || undefined
 }
 
-/** Rich beat list for the prompt (title, minutes, synopsis). */
+/** Rich beat list for the prompt (title, eraOrAge, key characters, minutes, synopsis). */
 export function formatBlueprintBeatsForPrompt(blueprintBeats: BlueprintBeatInput[]): string {
   if (blueprintBeats.length === 0) return ''
 
@@ -130,9 +132,17 @@ export function formatBlueprintBeatsForPrompt(blueprintBeats: BlueprintBeatInput
       (typeof beat.title === 'string' && beat.title.trim()) ||
       (typeof beat.intent === 'string' && beat.intent.trim()) ||
       `Beat ${idx + 1}`
+    const era =
+      typeof beat.eraOrAge === 'string' && beat.eraOrAge.trim() ? ` [${beat.eraOrAge.trim()}]` : ''
     const minutes =
       typeof beat.minutes === 'number' && beat.minutes > 0 ? ` (~${beat.minutes} min)` : ''
-    lines.push(`${idx + 1}. ${title}${minutes}`)
+    lines.push(`${idx + 1}. ${title}${era}${minutes}`)
+    if (Array.isArray(beat.characters) && beat.characters.length > 0) {
+      const cleanChars = beat.characters.map((c) => String(c || '').trim()).filter(Boolean)
+      if (cleanChars.length > 0) {
+        lines.push(`   Key Individual Characters in Beat: ${cleanChars.join(', ')}`)
+      }
+    }
     const synopsis = formatBlueprintBeatSynopsis(beat)
     if (synopsis) {
       lines.push(`   ${synopsis.slice(0, 500)}${synopsis.length > 500 ? '…' : ''}`)

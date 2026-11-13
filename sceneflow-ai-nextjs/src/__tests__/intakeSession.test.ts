@@ -69,6 +69,7 @@ import {
   submitCustomerIntakeTurn,
   completeClientIntakeToBlueprint,
 } from '@/lib/intake/intakeService'
+import { INTAKE_PLAYBOOKS } from '@/lib/intake/intakePlaybooks'
 
 describe('Embeddable Client Intake Interview, Consent Shield & Blueprint Synthesis', () => {
   beforeEach(() => {
@@ -279,5 +280,218 @@ describe('Embeddable Client Intake Interview, Consent Shield & Blueprint Synthes
         type: 'client_intake_submitted',
       })
     )
+  })
+
+  it('opens video_memoir intake with a story-first ("tell me your story") invitation across all 7 locales', () => {
+    const locales = ['en', 'es', 'pt', 'hi', 'zh-CN', 'ar', 'th'] as const
+    for (const locale of locales) {
+      const greeting = INTAKE_PLAYBOOKS.video_memoir.welcomeByLocale[locale]
+      expect(typeof greeting).toBe('string')
+      expect(greeting.trim().length).toBeGreaterThan(40)
+    }
+    expect(INTAKE_PLAYBOOKS.video_memoir.welcomeByLocale.en.toLowerCase()).toContain(
+      'tell me your story'
+    )
+  })
+
+  it('extracts resonatingBeats during customer turns while filtering group names into individual keyCharacters', async () => {
+    const updateSessionMock = vi.fn().mockResolvedValue(undefined)
+    findOneSessionMock.mockResolvedValue({
+      id: 'sess-beats-1',
+      owner_user_id: 'producer-1',
+      project_id: 'proj-beats-1',
+      status: 'active',
+      expires_at: null,
+      update: updateSessionMock,
+      payload: {
+        type: 'intake',
+        mode: 'single_project',
+        vertical: 'video_memoir',
+        locale: 'en',
+        maxCustomerTurns: 6,
+        customerTurnsUsed: 0,
+        maxFeedbackRounds: 2,
+        brandProfileSnapshot: { brandName: 'Legacy Films Co' },
+        turns: [
+          {
+            role: 'assistant',
+            content: INTAKE_PLAYBOOKS.video_memoir.welcomeByLocale.en,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      },
+    })
+    getConsentMock.mockResolvedValue({ id: 'consent-beats', customer_name: 'John Miller' })
+    ensureCreditsMock.mockResolvedValue(true)
+    chargeCreditsMock.mockResolvedValue(undefined)
+    generateTextMock.mockResolvedValue({
+      text: JSON.stringify({
+        reply:
+          'What a vivid arc from the 1978 Ohio shipyard to opening your workshop at 32. Who was the single mentor beside you on that first shift at age 16?',
+        readyToComplete: false,
+        resonatingBeats: [
+          {
+            title: '1. First Spark at the Lorain Shipyard',
+            eraOrAge: '1978 • Age 16',
+            summary: 'Sixteen-year-old John learns welding beside his uncle Frank.',
+            keyCharacters: ['John Miller (Age 16)', 'Frank Miller', "John's Friends", 'Factory Workers'],
+          },
+          {
+            title: '2. Opening the Foundry Doors',
+            eraOrAge: '1994 • Age 32',
+            summary: 'John and Claire mortgage their starter home to open Miller Ironworks.',
+            keyCharacters: ['John & Claire Miller', 'The Neighbors'],
+          },
+        ],
+      }),
+    })
+
+    // Also verify long life-story descriptions (> 4,000 chars) are accepted cleanly
+    const detailedLifeStory = `${'In 1978 when I was 16 in Lorain, Ohio, Uncle Frank taught me to weld. '.repeat(70)}`
+    expect(detailedLifeStory.length).toBeGreaterThan(4500)
+
+    const turnResult = await submitCustomerIntakeTurn({
+      token: 'tok-beats-1',
+      message: detailedLifeStory,
+    })
+
+    expect(turnResult.ok).toBe(true)
+    if (turnResult.ok) {
+      expect(turnResult.resonatingBeats).toHaveLength(2)
+      expect(turnResult.resonatingBeats[0].eraOrAge).toBe('1978 • Age 16')
+      expect(turnResult.resonatingBeats[0].keyCharacters).toEqual([
+        'John Miller (Age 16)',
+        'Frank Miller',
+      ])
+      expect(turnResult.resonatingBeats[1].keyCharacters).toEqual([
+        'John Miller',
+        'Claire Miller',
+      ])
+    }
+  })
+
+  it('splits multi-age memoir characters into separate (Age NN) continuity cards and strips group entries on Blueprint completion', async () => {
+    const updateProjectMock = vi.fn().mockResolvedValue(undefined)
+    const updateSessionMock = vi.fn().mockResolvedValue(undefined)
+
+    findOneSessionMock.mockResolvedValue({
+      id: 'sess-multi-age',
+      owner_user_id: 'producer-1',
+      project_id: 'proj-multi-age',
+      status: 'active',
+      expires_at: null,
+      update: updateSessionMock,
+      payload: {
+        type: 'intake',
+        mode: 'single_project',
+        vertical: 'video_memoir',
+        locale: 'en',
+        maxCustomerTurns: 6,
+        customerTurnsUsed: 3,
+        maxFeedbackRounds: 2,
+        brandProfileSnapshot: { brandName: 'Legacy Films Co' },
+        turns: [
+          { role: 'assistant', content: 'Tell me your story.', createdAt: new Date().toISOString() },
+          {
+            role: 'customer',
+            content:
+              'John Miller started working at 16, opened his studio at 32, and retired at 62 handing the keys to his daughter Sarah.',
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      },
+    })
+    getConsentMock.mockResolvedValue({
+      id: 'consent-ma',
+      customer_name: 'Sarah Miller',
+      customer_email: 'sarah@example.com',
+    })
+    ensureCreditsMock.mockResolvedValue(true)
+    chargeCreditsMock.mockResolvedValue(undefined)
+    findByPkProjectMock.mockResolvedValue({
+      id: 'proj-multi-age',
+      user_id: 'producer-1',
+      title: 'Draft Memoir',
+      description: '',
+      metadata: { clientOrder: { isClientProject: true } },
+      update: updateProjectMock,
+    })
+    generateTextMock.mockResolvedValue({
+      text: JSON.stringify({
+        title: 'The Iron & Cedar Years',
+        logline: 'Three chapters of John Miller’s craft from apprentice to patriarch.',
+        synopsis: 'Spanning 1978, 1994, and 2024, John Miller builds a family workshop.',
+        genre: 'Documentary / Memoir',
+        tone: 'Warm, grounded, reflective',
+        visualStyle: 'Kodak 16mm archival warmth transitioning to crisp contemporary cinema',
+        characters: [
+          {
+            name: 'John Miller',
+            role: 'protagonist',
+            age: '16, 32, 62',
+            ethnicity: 'Irish-American',
+            description: 'Master metalworker seen at age 16, age 32, and age 62.',
+            appearance: 'Hazel eyes, silver hair, weathered workshop apron.',
+          },
+          {
+            name: 'Sarah Miller (Age 28)',
+            role: 'supporting',
+            age: '28',
+            ethnicity: 'Irish-American',
+            description: 'John’s daughter taking over the studio.',
+          },
+          {
+            name: "John's Friends",
+            role: 'supporting',
+            description: 'A group of childhood friends from Lorain.',
+          },
+        ],
+        locations: [{ name: 'Miller Ironworks', description: 'Brick riverside foundry' }],
+        props: [{ name: 'Brass Calipers', description: '1978 apprentice calipers' }],
+        beats: [
+          {
+            title: '1. Apprentice Sparks',
+            eraOrAge: '1978 • Age 16',
+            summary: 'John at age 16 learns his first weld.',
+            characters: ['John Miller', "John's Friends"],
+            durationSeconds: 180,
+          },
+          {
+            title: '2. Raising the Sign',
+            eraOrAge: '1994 • Age 32',
+            summary: 'At age 32, John opens Miller Ironworks.',
+            characters: ['John Miller'],
+            durationSeconds: 180,
+          },
+          {
+            title: '3. Passing the Torch',
+            eraOrAge: '2024 • Age 62',
+            summary: 'John at age 62 hands the brass calipers to Sarah.',
+            characters: ['John Miller', 'Sarah Miller (Age 28)'],
+            durationSeconds: 180,
+          },
+        ],
+      }),
+    })
+
+    const completed = await completeClientIntakeToBlueprint({ token: 'tok-multi-age' })
+    expect(completed.ok).toBe(true)
+
+    const savedArgs = updateProjectMock.mock.calls[0][0]
+    const checklistChars = savedArgs.metadata.clientOrder.continuityChecklist.characters
+    const charNames = checklistChars.map((c: { name: string }) => c.name)
+
+    // Separate character entries per life stage, zero group characters!
+    expect(charNames).toEqual([
+      'John Miller (Age 16)',
+      'John Miller (Age 32)',
+      'John Miller (Age 62)',
+      'Sarah Miller (Age 28)',
+    ])
+
+    const savedBeats = savedArgs.metadata.filmTreatmentVariant.beats
+    expect(savedBeats[0].characters).toEqual(['John Miller (Age 16)'])
+    expect(savedBeats[1].characters).toEqual(['John Miller (Age 32)'])
+    expect(savedBeats[2].characters).toEqual(['John Miller (Age 62)', 'Sarah Miller (Age 28)'])
   })
 })

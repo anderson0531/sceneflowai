@@ -24,6 +24,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       success: true,
       reply: result.reply,
       turns: result.turns,
+      resonatingBeats: result.resonatingBeats,
       customerTurnsUsed: result.customerTurnsUsed,
       maxCustomerTurns: result.maxCustomerTurns,
       readyToComplete: result.readyToComplete,

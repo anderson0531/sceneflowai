@@ -37,6 +37,8 @@ export function coerceTreatmentCharacterField(value: unknown): string | undefine
 
 const BeatSchema = z.object({
   title: z.string().min(1).catch('Beat'),
+  eraOrAge: z.string().optional(),
+  characters: z.array(z.string()).optional(),
   intent: z.string().optional(),
   synopsis: z.string().optional(),
   minutes: z.coerce.number().min(0.25).catch(1),
@@ -110,6 +112,7 @@ const TreatmentSchema = z.object({
         appearance: z.string().optional(),
         description: z.string().optional(),
         voiceDescription: z.string().optional(),
+        samePersonGroupId: z.string().optional(),
         familyRelationships: z.array(z.any()).optional(),
         image_prompt: z.string().optional(),
         imagePrompt: z.string().optional(),

@@ -33,6 +33,7 @@ import { loadProjectReferenceCatalog } from '@/lib/referenceLibrary/catalogLoade
 import { formatReferenceCatalogForPrompt } from '@/lib/referenceLibrary/projection'
 import { loadBlueprintARFromMetadata, type AudienceDefinition } from '@/lib/types/audienceResonance'
 import { enforceEnsembleFamilyConsistency } from '@/lib/character/characterFamily'
+import { sanitizeBlueprintCharactersAndBeats } from '@/lib/character/ageStageContinuity'
 import {
   buildCharacterLocalizationPromptBlock,
   composeStandingAppearanceFromAttributes,
@@ -777,6 +778,7 @@ async function generateFilmTreatment(
             ...(c?.appearance ? { appearance: String(c.appearance) } : {}),
             description: String(c?.description || ''),
             ...(c?.voiceDescription ? { voiceDescription: String(c.voiceDescription) } : {}),
+            ...(c?.samePersonGroupId ? { samePersonGroupId: String(c.samePersonGroupId) } : {}),
             ...(Array.isArray(c?.familyRelationships) ? { familyRelationships: c.familyRelationships } : {}),
             ...(c?.externalGoal ? { externalGoal: String(c.externalGoal) } : {}),
             ...(c?.internalNeed ? { internalNeed: String(c.internalNeed) } : {}),
@@ -838,6 +840,10 @@ async function generateFilmTreatment(
       // Embed summarized beats and estimate
       beats: normalizedBeats.map((b: any, i: number) => ({
         title: beats[i]?.title || b.title,
+        ...(beats[i]?.eraOrAge ? { eraOrAge: String(beats[i].eraOrAge) } : {}),
+        ...(Array.isArray(beats[i]?.characters) && beats[i].characters.length > 0
+          ? { characters: beats[i].characters.map((ch: any) => String(ch || '').trim()).filter(Boolean) }
+          : {}),
         intent: beats[i]?.intent,
         minutes: b.minutes,
         synopsis: beats[i]?.synopsis
@@ -863,8 +869,28 @@ async function generateFilmTreatment(
     const locked = context?.lockedLibrary as SeriesLibraryLock | undefined
     const bound = locked ? bindTreatmentToLibrary(result as any, locked) : result
 
+    // Enforce individual-only cast, split multi-decade age spans into separate `(Age NN)` characters,
+    // and highlight era-matched individual characters on every beat (critical for Video Memoirs & Fiction).
     if (
-      context?.contentIntent === 'fiction' &&
+      (Array.isArray((bound as any).character_descriptions) &&
+        (bound as any).character_descriptions.length > 0) ||
+      (Array.isArray((bound as any).beats) && (bound as any).beats.length > 0)
+    ) {
+      const sanitized = sanitizeBlueprintCharactersAndBeats({
+        characters: Array.isArray((bound as any).character_descriptions)
+          ? (bound as any).character_descriptions
+          : [],
+        beats: Array.isArray((bound as any).beats) ? (bound as any).beats : [],
+      })
+      if (Array.isArray((bound as any).character_descriptions)) {
+        ;(bound as any).character_descriptions = sanitized.characters
+      }
+      if (Array.isArray((bound as any).beats)) {
+        ;(bound as any).beats = sanitized.beats
+      }
+    }
+
+    if (
       Array.isArray((bound as any).character_descriptions) &&
       (bound as any).character_descriptions.length > 0
     ) {

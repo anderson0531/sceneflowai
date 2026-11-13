@@ -39,6 +39,7 @@ export interface BlueprintCastItem {
   appearance?: string
   description: string
   voiceDescription?: string
+  samePersonGroupId?: string
   familyRelationships?: CharacterFamilyRelationship[]
   externalGoal?: string
   internalNeed?: string
@@ -312,6 +313,7 @@ export function resolveBlueprintContinuity(
       appearance: asString(c.appearance || shared?.appearance || shared?.appearanceDescription),
       description: asString(c.description || shared?.description),
       voiceDescription: asString(c.voiceDescription || shared?.voiceDescription) || undefined,
+      samePersonGroupId: asString(c.samePersonGroupId || shared?.samePersonGroupId) || undefined,
       familyRelationships: Array.isArray(c.familyRelationships)
         ? c.familyRelationships
         : Array.isArray(shared?.familyRelationships)
@@ -619,6 +621,9 @@ export function buildVisionPhaseContinuityFromVariant(
       description: c.description || prev?.description || '',
       ...(c.voiceDescription || prev?.voiceDescription
         ? { voiceDescription: c.voiceDescription || prev?.voiceDescription }
+        : {}),
+      ...(c.samePersonGroupId || prev?.samePersonGroupId
+        ? { samePersonGroupId: c.samePersonGroupId || prev?.samePersonGroupId }
         : {}),
       ...(Array.isArray(c.familyRelationships) && c.familyRelationships.length > 0
         ? { familyRelationships: c.familyRelationships }

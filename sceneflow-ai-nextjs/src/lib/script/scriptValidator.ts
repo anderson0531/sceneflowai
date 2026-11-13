@@ -5,6 +5,8 @@
  * Provides detailed feedback and confidence scoring.
  */
 
+import { stripScreenplayDeliveryAnnotations } from '@/lib/character/ageStageContinuity'
+
 export interface ValidationResult {
   isValid: boolean
   confidence: number // 0-100
@@ -211,10 +213,10 @@ function findNextNonEmptyLine(lines: string[], startIndex: number): string | nul
 }
 
 /**
- * Normalize character name for comparison
+ * Normalize character name for comparison (strip V.O./O.S./CONT'D while keeping Age qualifiers)
  */
 function normalizeCharacterName(name: string): string {
-  return name.replace(/\s*\([^)]+\)\s*$/, '').trim()
+  return stripScreenplayDeliveryAnnotations(name)
 }
 
 /**

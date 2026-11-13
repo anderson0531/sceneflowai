@@ -354,6 +354,11 @@ export function buildCharacterLocalizationPromptBlock(
     '   - SAME-ETHNICITY PARENTS: Biological children and full siblings of parents sharing the same ethnicity MUST have that exact same ethnicity and compatible skin undertone, hair texture/color family, eye color genetics, and subtle familial bone structure.',
     '   - MIXED-ETHNICITY PARENTS: When biological parents have DIFFERENT ethnicities (e.g., Thai mother + Irish-American father), their biological children MUST be explicitly described as `"Mixed [Parent A] and [Parent B] heritage"` with blended physical features honoring both parents consistently across all biological siblings.',
     '   - GENERATIONAL AGE SPACING: Give every character a concrete `age` (e.g., `"46"` or `"mid-40s"`). Biological parents MUST be 20–38 years older than their children; grandparents MUST be 45–68 years older than grandchildren.',
+    '4. INDIVIDUALS ONLY — NEVER COLLECTIVE GROUPS:',
+    '   - Every character MUST be a single named individual human (or individual entity). NEVER profile plural or collective groups ("John\'s Friends", "Neighbors", "The Brothers", "Factory Workers", "Parents") as a character.',
+    '5. MULTI-AGE / MULTI-ERA LIFE STAGES (SEPARATE `(Age NN)` CHARACTERS):',
+    '   - Production Stage locks ONE base facial portrait per character card and uses Wardrobes ONLY for outfit changes at that same age.',
+    '   - When a person appears at multiple distinct ages/decades (e.g. `John Miller (Age 16)`, `John Miller (Age 32)`, `John Miller (Age 62)`), keep each `(Age NN)` entry locked strictly to that biological age while sharing identical `ethnicity`, `gender`, `eyeColor`, and underlying facial bone structure across all life stages of that person.',
   ]
 
   if (localization) {

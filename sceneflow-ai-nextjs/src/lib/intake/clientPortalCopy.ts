@@ -43,7 +43,11 @@ export interface ClientPortalStrings {
   acceptAndBegin: string
   tapMicToSpeak: string
   stopRecording: string
+  tellYourStoryPlaceholder: string
   typeOrSpeakPlaceholder: string
+  resonatingBeatsTitle: string
+  resonatingBeatsSubtitle: string
+  beatKeyPeopleLabel: string
   sendAnswer: string
   finishAndCreateBlueprint: string
   completingBlueprint: string
@@ -93,7 +97,13 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     acceptAndBegin: 'Agree & Start Interview',
     tapMicToSpeak: 'Tap Microphone to Speak',
     stopRecording: 'Stop Microphone',
+    tellYourStoryPlaceholder:
+      'Take your time and tell us your story in detail — early years, turning points, cherished places, and the specific individual people who shaped your life (or tap the microphone to speak)...',
     typeOrSpeakPlaceholder: 'Share your answer here, or tap the microphone to speak naturally...',
+    resonatingBeatsTitle: 'Emerging Story Beats & Key Individuals',
+    resonatingBeatsSubtitle:
+      'Refined live as we clarify ages, eras, and the individual people in each chapter',
+    beatKeyPeopleLabel: 'Key People:',
     sendAnswer: 'Send Answer',
     finishAndCreateBlueprint: 'Submit Story & Build Blueprint',
     completingBlueprint: 'Organizing your story into a production blueprint...',
@@ -145,7 +155,13 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     acceptAndBegin: 'Aceptar e Iniciar Entrevista',
     tapMicToSpeak: 'Tocar Micrófono para Hablar',
     stopRecording: 'Detener Micrófono',
+    tellYourStoryPlaceholder:
+      'Tómese su tiempo y cuéntenos su historia en detalle: infancia, momentos decisivos, lugares especiales y las personas individuales que marcaron su vida (o use el micrófono)...',
     typeOrSpeakPlaceholder: 'Escriba su respuesta o toque el micrófono para hablar con naturalidad...',
+    resonatingBeatsTitle: 'Capítulos Clave y Personas Destacadas',
+    resonatingBeatsSubtitle:
+      'Se actualiza en vivo mientras afinamos edades, épocas y personas individuales por escena',
+    beatKeyPeopleLabel: 'Personas clave:',
     sendAnswer: 'Enviar Respuesta',
     finishAndCreateBlueprint: 'Finalizar y Crear Guion Base',
     completingBlueprint: 'Organizando su historia en el plan de producción...',
@@ -197,7 +213,13 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     acceptAndBegin: 'Concordar e Iniciar Entrevista',
     tapMicToSpeak: 'Toque no Microfone para Falar',
     stopRecording: 'Parar Microfone',
+    tellYourStoryPlaceholder:
+      'Conte sua história com riqueza de detalhes — infância, momentos marcantes, lugares especiais e cada pessoa individual importante na sua trajetória (ou toque no microfone)...',
     typeOrSpeakPlaceholder: 'Escreva sua resposta ou toque no microfone para contar em voz alta...',
+    resonatingBeatsTitle: 'Momentos Marcantes e Pessoas-Chave',
+    resonatingBeatsSubtitle:
+      'Atualizado ao vivo conforme esclarecemos idades, épocas e cada pessoa em cena',
+    beatKeyPeopleLabel: 'Pessoas-chave:',
     sendAnswer: 'Enviar Resposta',
     finishAndCreateBlueprint: 'Concluir e Gerar Roteiro Base',
     completingBlueprint: 'Organizando sua história no plano de produção...',
@@ -249,7 +271,13 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     acceptAndBegin: 'सहमत हों और साक्षात्कार शुरू करें',
     tapMicToSpeak: 'बोलने के लिए माइक दबाएँ',
     stopRecording: 'माइक बंद करें',
+    tellYourStoryPlaceholder:
+      'इत्मीनान से अपनी पूरी कहानी विस्तार से साझा करें — बचपन, अहम मोड़, यादगार स्थान और जीवन के प्रत्येक विशेष व्यक्ति के नाम (या बोलने के लिए माइक दबाएँ)...',
     typeOrSpeakPlaceholder: 'अपना उत्तर यहाँ लिखें या बोलकर बताने के लिए माइक दबाएँ...',
+    resonatingBeatsTitle: 'प्रमुख कहानी अध्याय और मुख्य व्यक्ति',
+    resonatingBeatsSubtitle:
+      'आयु, समय-काल और प्रत्येक अध्याय के विशिष्ट व्यक्तियों के साथ लाइव अपडेट',
+    beatKeyPeopleLabel: 'मुख्य व्यक्ति:',
     sendAnswer: 'उत्तर भेजें',
     finishAndCreateBlueprint: 'कहानी जमा करें और ब्लूप्रिंट बनाएँ',
     completingBlueprint: 'आपकी कहानी को प्रोडक्शन ब्लूप्रिंट में पिरोया जा रहा है...',
@@ -301,7 +329,12 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     acceptAndBegin: '同意并开始访谈',
     tapMicToSpeak: '点击麦克风语音讲述',
     stopRecording: '停止录音',
+    tellYourStoryPlaceholder:
+      '请尽情详细讲述您（或主人公）的人生故事——早年经历、关键转折、难忘地点以及生命中每一位具体的重要人物（也可点击麦克风直接口述）...',
     typeOrSpeakPlaceholder: '在此输入您的回答，或点击麦克风直接口述回忆...',
+    resonatingBeatsTitle: '核心共鸣篇章与关键人物',
+    resonatingBeatsSubtitle: '随访谈实时提炼每个年代阶段与具体登场人物（精确到个人与年龄阶段）',
+    beatKeyPeopleLabel: '关键人物：',
     sendAnswer: '发送回答',
     finishAndCreateBlueprint: '提交故事并生成蓝图',
     completingBlueprint: '正在将您的故事整理为制作蓝图...',
@@ -351,7 +384,12 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     acceptAndBegin: 'ยอมรับและเริ่มการสัมภาษณ์',
     tapMicToSpeak: 'แตะไมโครโฟนเพื่อเล่าด้วยเสียง',
     stopRecording: 'หยุดไมโครโฟน',
+    tellYourStoryPlaceholder:
+      'เชิญเล่าเรื่องราวชีวิตของคุณอย่างละเอียด — วัยเยาว์ จุดเปลี่ยนสำคัญ สถานที่ทรงจำ และชื่อบุคคลสำคัญแต่ละท่านในชีวิต (หรือแตะไมโครโฟนเพื่อเล่าด้วยเสียง)...',
     typeOrSpeakPlaceholder: 'พิมพ์คำตอบของคุณ หรือแตะไมโครโฟนเพื่อเล่าเรื่องราวตามธรรมชาติ...',
+    resonatingBeatsTitle: 'ฉากสำคัญที่กินใจและบุคคลหลัก',
+    resonatingBeatsSubtitle: 'อัปเดตสดพร้อมระบุช่วงอายุ ยุคสมัย และบุคคลสำคัญรายคนในแต่ละฉาก',
+    beatKeyPeopleLabel: 'บุคคลหลัก:',
     sendAnswer: 'ส่งคำตอบ',
     finishAndCreateBlueprint: 'ส่งเรื่องราวและสร้างโครงเรื่อง',
     completingBlueprint: 'กำลังจัดระเบียบเรื่องราวของคุณเป็นแผนการผลิต...',
@@ -403,7 +441,13 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     acceptAndBegin: 'موافقة وبدء المقابلة',
     tapMicToSpeak: 'اضغط على الميكروفون للتحدث',
     stopRecording: 'إيقاف الميكروفون',
+    tellYourStoryPlaceholder:
+      'خذ وقتك واحكِ لنا قصتك بالتفصيل — البدايات، المحطات الفارقة، الأماكن العزيزة، والأشخاص المحددين بالاسم الذين شكّلوا مسيرة حياتك (أو اضغط على الميكروفون للتحدث)...',
     typeOrSpeakPlaceholder: 'اكتب إجابتك هنا أو اضغط على الميكروفون للتحدث بطبيعية...',
+    resonatingBeatsTitle: 'المحطات المؤثرة والشخصيات الرئيسية',
+    resonatingBeatsSubtitle:
+      'تتحدث مباشرة مع توضيح المراحل العمرية والأشخاص المحددين في كل فصل',
+    beatKeyPeopleLabel: 'الشخصيات الرئيسية:',
     sendAnswer: 'إرسال الإجابة',
     finishAndCreateBlueprint: 'إرسال القصة وإنشاء المخطط',
     completingBlueprint: 'جارٍ تنظيم قصتك في مخطط إنتاج سينمائي...',

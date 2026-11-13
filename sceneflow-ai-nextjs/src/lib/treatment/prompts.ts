@@ -83,10 +83,10 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
   
   "character_descriptions": [
     {
-      "name": "CULTURALLY AUTHENTIC NAME - Must match the character's ethnicity",
+      "name": "SINGLE INDIVIDUAL FULL NAME (NEVER a group). If person appears at multiple ages/eras (>=10 yrs apart), create separate entries named 'Full Name (Age NN)', e.g. 'John Miller (Age 16)', 'John Miller (Age 32)', 'John Miller (Age 62)'",
       "role": "protagonist | supporting | antagonist",
       "subject": "Full name with title/nickname reflecting cultural background",
-      "age": "Concrete age or narrow band in English (e.g. '42' or 'early 40s') — biologically spaced across parents/children",
+      "age": "Exact biological age for THIS entry in English (e.g. '16' or '32' or '62') — NEVER a multi-decade span like '16-62'",
       "gender": "male | female | non-binary",
       "ethnicity": "Specific heritage in English (or 'Mixed [Parent A] and [Parent B] heritage' when biological parents differ)",
       "keyFeature": "Defining natural facial/physical feature in English",
@@ -140,9 +140,9 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
   "cta": "__CTA_VALUE__",
   "learning_objectives": __LEARNING_VALUE__,
   "beats": [
-    { "title": "Beat title", "intent": "Narrative/dramatic purpose + value shift (fiction) OR clarifying/illustrative purpose (non-fiction)", "synopsis": "≤150 words: state the entering conflict/hook, the concrete visual action on screen, and the THEREFORE/BUT turn that propels into the next beat", "minutes": 3.5 },
-    { "title": "Next beat title", "intent": "Its own distinct purpose escalated by the prior beat", "synopsis": "≤150 words: causal consequence/complication, vivid on-screen action, and closing turn/hook", "minutes": 1.75 },
-    { "title": "…continue until the whole story is covered", "intent": "…", "synopsis": "…", "minutes": 4 }
+    { "title": "Beat title", "eraOrAge": "Year/era & protagonist age if multi-era (e.g. '1968 — Age 16')", "intent": "Narrative/dramatic purpose + value shift (fiction) OR clarifying/illustrative purpose (non-fiction)", "synopsis": "≤150 words: state the entering conflict/hook, the concrete visual action on screen, and the THEREFORE/BUT turn that propels into the next beat", "minutes": 3.5, "characters": ["Exact Individual Character Name from character_descriptions (use matching '(Age NN)' entry for this beat's era)"] },
+    { "title": "Next beat title", "eraOrAge": "e.g. '1984 — Age 32'", "intent": "Its own distinct purpose escalated by the prior beat", "synopsis": "≤150 words: causal consequence/complication, vivid on-screen action, and closing turn/hook", "minutes": 1.75, "characters": ["Exact Individual Character Name"] },
+    { "title": "…continue until the whole story is covered", "eraOrAge": "…", "intent": "…", "synopsis": "…", "minutes": 4, "characters": ["…"] }
   ],
   "visual_style": "string",
   "audio_direction": "string",
@@ -184,7 +184,11 @@ OUTPUT RULES - CRITICAL:
 
 8. Assign each beat the number of minutes the story/illustration genuinely needs. Beat "minutes" should reflect real pacing — do not invent uniform values.
 
-9. **BEAT SHEET CRAFT ("THEREFORE / BUT" RULE)**: Never write a flat, episodic "and then" list of events. Every beat in "beats" MUST be causally linked to the beat before and after it ("Because of X, THEREFORE Y happens; BUT complication Z forces a new choice"). Each beat's "synopsis" must establish: (a) entering friction/objective, (b) concrete visual action on screen, and (c) the dramatic turn or value shift at the end of the beat.`
+9. **BEAT SHEET CRAFT ("THEREFORE / BUT" RULE)**: Never write a flat, episodic "and then" list of events. Every beat in "beats" MUST be causally linked to the beat before and after it ("Because of X, THEREFORE Y happens; BUT complication Z forces a new choice"). Each beat's "synopsis" must establish: (a) entering friction/objective, (b) concrete visual action on screen, and (c) the dramatic turn or value shift at the end of the beat.
+
+10. **INDIVIDUAL CHARACTERS ONLY — NEVER GROUPS**: Every entry in "character_descriptions" and every beat's "characters" array MUST be a single named individual person — NEVER a collective/plural group ("John's Friends", "Neighbors", "The Brothers", "Parents", "Factory Workers"). If a couple or duo matters, create two separate individual characters.
+
+11. **MULTI-AGE / MULTI-ERA LIFE STAGES = SEPARATE "(Age NN)" CHARACTERS + PER-BEAT HIGHLIGHTS**: Production Stage locks ONE base face reference image per character card and uses Wardrobes ONLY for outfit changes at that same biological age. Whenever a character appears at meaningfully different ages or time periods (>= 10 years apart — especially in Video Memoirs, biographies, and flashback stories), you MUST create SEPARATE entries in "character_descriptions" named "Full Name (Age NN)" (e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)"), keeping core genetic traits (ethnicity, eyeColor, facial bone structure) identical while adapting biological age, hair/skin aging, and period defaultWardrobe. Populate every beat's "characters" array with the exact individual character names (including the era-matched "(Age NN)" variant) featured in that beat.`
 
 /**
  * Default length posture.

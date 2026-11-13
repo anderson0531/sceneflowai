@@ -70,6 +70,10 @@ export function trimVariantForPrompt(variant: Record<string, unknown>): Record<s
   const beats = Array.isArray(variant.beats)
     ? (variant.beats as Array<Record<string, unknown>>).slice(0, MAX_BEATS).map((b, i) => ({
         title: b.title || `Beat ${i + 1}`,
+        ...(b.eraOrAge ? { eraOrAge: truncateStr(b.eraOrAge, 60) } : {}),
+        ...(Array.isArray(b.characters) && b.characters.length > 0
+          ? { characters: (b.characters as unknown[]).map((c) => String(c || '').trim()).filter(Boolean).slice(0, 8) }
+          : {}),
         intent: truncateStr(b.intent, 80),
         minutes: b.minutes || 0,
         synopsis: truncateStr(b.synopsis, MAX_BEAT_SYNOPSIS),
@@ -78,10 +82,12 @@ export function trimVariantForPrompt(variant: Record<string, unknown>): Record<s
 
   const characters = Array.isArray(variant.character_descriptions)
     ? (variant.character_descriptions as Array<Record<string, unknown>>)
-        .slice(0, 6)
+        .slice(0, 12)
         .map((c) => ({
           name: c.name,
           role: c.role,
+          ...(c.age !== undefined ? { age: c.age } : {}),
+          ...(c.ethnicity ? { ethnicity: c.ethnicity } : {}),
           description: truncateStr(c.description, MAX_CHAR_DESC),
           externalGoal: truncateStr(c.externalGoal, 80),
           internalNeed: truncateStr(c.internalNeed, 80),
@@ -431,9 +437,9 @@ CRITICAL RULES:
 - Beat "minutes" MUST sum to the target runtime. Let the beat count follow from that
   target and the pacing the story needs (up to ${MAX_BEATS} beats) — do NOT keep the
   existing beat count when the runtime changes.
-- Every beat you return MUST include title, intent, minutes, and a 1-3 sentence synopsis.
+- Every beat you return MUST include title, intent, minutes, a 1-3 sentence synopsis, "characters" (exact individual character names featured in that beat — NEVER plural/group names), and "eraOrAge" when beats span distinct eras or life stages.
 - When returning "beats", return the COMPLETE ordered array, not just changed entries.
-- character_descriptions, scene_descriptions, prop_descriptions: preserve existing participant, location, and prop NAMES unless the creator explicitly requests a rename or replacement.
+- character_descriptions, scene_descriptions, prop_descriptions: preserve existing participant, location, and prop NAMES unless the creator explicitly requests a rename or replacement. Every character MUST be a single individual (NEVER a group like "Friends" or "Neighbors"). When a person appears across multiple distinct ages/decades (>= 10 years apart), model them as separate "Full Name (Age NN)" entries (e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)") rather than outfits on one character.
 - Return ONLY fields you modify — do not echo unchanged fields.
 ${CREATOR_DIRECTION_IS_INTENT}
 ${intentGuard}

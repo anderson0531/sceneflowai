@@ -5,6 +5,7 @@ import { Users, Plus, AlertTriangle, Search, UserPlus, Sparkles } from 'lucide-r
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { detectCharacterChanges, normalizeCharacterName } from '@/lib/character/detection'
+import { stripScreenplayDeliveryAnnotations, isCollectiveOrGroupCharacterName } from '@/lib/character/ageStageContinuity'
 import { failAgentRun, finishAgentRun, patchAgentRun, startAgentRun } from '@/store/useAgentRunStore'
 import { toast } from 'sonner'
 
@@ -54,7 +55,8 @@ function getMissingCharacters(scenes: any[], existingCharacters: any[]): Suggest
       // Skip narrator/voiceover indicators
       if (normalizedName === 'NARRATOR' || normalizedName === 'V.O.' || normalizedName === 'O.S.') return
       
-      const cleanName = d.character.replace(/\s*\([^)]*\)\s*/g, '').trim()
+      const cleanName = stripScreenplayDeliveryAnnotations(d.character)
+      if (!cleanName || isCollectiveOrGroupCharacterName(cleanName)) return
       
       if (charMap.has(normalizedName)) {
         const existing = charMap.get(normalizedName)!

@@ -35,7 +35,12 @@ CHARACTER NAMING, LOCALIZATION & FAMILY CONSISTENCY — MANDATORY:
 - FAMILY & KINSHIP GENETICS:
   * Biological relatives sharing the same parental lineage MUST share the exact same ethnicity, compatible skin undertone, hair/eye genetics, and subtle familial facial structure.
   * When biological parents have DIFFERENT ethnicities, their biological children MUST explicitly have "Mixed [Parent A] and [Parent B] heritage" with blended physical traits from both parents.
-  * Enforce biologically plausible generational age gaps (parents 20–38 years older than children; grandparents 45–68 years older than grandchildren).`
+  * Enforce biologically plausible generational age gaps (parents 20–38 years older than children; grandparents 45–68 years older than grandchildren).
+- INDIVIDUALS ONLY — NEVER GROUPS:
+  * Every character MUST be a single named individual — NEVER a plural or collective group ("John's Friends", "Neighbors", "The Brothers", "Factory Workers", "Parents").
+- MULTI-AGE / MULTI-ERA LIFE STAGES = SEPARATE CHARACTERS:
+  * Production Stage locks ONE base face reference per character card and uses Wardrobes ONLY for outfit changes at that same age.
+  * When a person appears at meaningfully different ages/decades (e.g. childhood, youth, midlife, senior — >= 10 years apart), create SEPARATE character entries named "Full Name (Age NN)" (e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)") sharing identical ethnicity, eyeColor, and bone structure.`
 
 /** Extended block for Blueprint / film treatment */
 export const BLUEPRINT_CHARACTER_IDENTITY_BLOCK = `
@@ -55,7 +60,13 @@ CHARACTER IDENTITY, LOCALIZATION & FAMILY CONSISTENCY — MANDATORY:
   * SAME-ETHNICITY PARENTS: Biological children and full siblings MUST share the exact same ethnicity and compatible eye/hair/facial genetics.
   * MIXED-ETHNICITY PARENTS: When biological parents have DIFFERENT ethnicities (e.g. Japanese mother + African-American father), their biological children MUST be set to "Mixed [Parent A] and [Parent B] heritage" with blended physical features from both parents.
   * AGE CONSISTENCY: Give every character a concrete "age" (e.g. "45" or "mid-40s"). Biological parents MUST be 20–38 years older than their children; grandparents 45–68 years older than grandchildren.
-- ENGAGING STORY BASELINE: Include every pivotal or speaking character from the beat sheet in character_descriptions with a distinct voice, playable contradiction, want/need/flaw, and vivid 2-3 sentence standing physical "appearance" aligned with the locations, props, and wardrobes.`
+- ENGAGING STORY BASELINE: Include every pivotal or speaking character from the beat sheet in character_descriptions with a distinct voice, playable contradiction, want/need/flaw, and vivid 2-3 sentence standing physical "appearance" aligned with the locations, props, and wardrobes.
+- INDIVIDUALS ONLY — NEVER COLLECTIVE GROUPS (CRITICAL):
+  * Every entry in character_descriptions and every beat's "characters" list MUST be a single named individual human — NEVER a plural or collective group ("John's Friends", "The Brothers", "Neighbors", "Classmates", "Parents", "Factory Workers"). Split couples ("Arthur & Elena Lin") into two individual character entries.
+- MULTI-AGE / MULTI-ERA LIFE STAGES = SEPARATE "(Age NN)" CHARACTERS (CRITICAL FOR VIDEO MEMOIRS & FLASHBACKS):
+  * Production Stage creates ONE base facial reference portrait per character card and uses Wardrobes ONLY to change outfits on that same base age/face.
+  * Therefore, NEVER model a character who spans multiple life stages/decades (e.g. childhood, teen, young adult, senior — >= 10 years apart) as one character with era wardrobes!
+  * Instead, create SEPARATE individual entries in character_descriptions named "Full Name (Age NN)" — e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)" — sharing identical ethnicity, gender, eyeColor, and facial bone structure while specifying each stage's exact biological "age", age-accurate hair/skin in "appearance", and period-authentic "defaultWardrobe".`
 
 /** For V2 BlueprintService and similar */
 export const BLUEPRINT_NAMING_REQUIREMENTS = `
@@ -68,7 +79,9 @@ CHARACTER NAMING REQUIREMENTS (CRITICAL):
 - Character names must be unique and clearly identify each person
 - Invent original names — NEVER reuse: ${BANNED_AI_CHARACTER_NAMES.join(', ')}
 - When inventing names, avoid well-known public-figure given names (e.g. Winston, Alexander)
-- If user input names characters, preserve those exact names`
+- If user input names characters, preserve those exact names
+- INDIVIDUALS ONLY: Every character must be a single individual, NEVER a plural/group ("Friends", "Neighbors", "Workers")
+- MULTI-AGE STAGES: If the same person appears across distinct decades/life stages, create separate characters named "Full Name (Age NN)" (e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)")`
 
 /**
  * Build dynamic dialogue examples from the character whitelist (avoids anchoring to stock names).

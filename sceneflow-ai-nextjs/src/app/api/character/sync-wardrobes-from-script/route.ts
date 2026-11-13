@@ -99,6 +99,7 @@ RESYNC RULES:
 5. Do NOT invent looks for scenes where the character does not appear.
 6. Hairstyle/hair-state and physical changes belong in appearanceNotes (or a new look variant) — do not rewrite base identity hair fields.
 7. Group consecutive scenes that share the same outfit AND look.
+8. NO MULTI-DECADE AGING IN WARDROBES: Production Stage locks ONE base face/age per character card. NEVER use wardrobes or appearanceNotes to age or de-age a character across decades/life stages (separate "(Age NN)" character cards handle distinct ages). Only suggest outfits and transient grooming/injuries at ${character.name}'s fixed biological age.
 
 For each DISTINCT wardrobe/look needed, provide:
 - name, description, accessories, appearanceNotes, sceneNumbers, reason, confidence
