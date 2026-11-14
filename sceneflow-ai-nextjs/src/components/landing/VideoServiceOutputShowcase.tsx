@@ -27,7 +27,6 @@ import {
   type VideoServiceVerticalId,
 } from '@/config/landing/videoServicesNarratedPan'
 import {
-  VIDEO_SERVICE_PROMO_SCRIPTS,
   getVideoServicePromoMp4Path,
   getVideoServicePromoPosterPath,
   getVideoServicePromoWebmPath,
@@ -41,13 +40,6 @@ type FullscreenCapableElement = HTMLElement & {
 
 let sessionPromoAudioUnmuted = false
 
-function formatTimecode(totalSeconds: number): string {
-  const safe = Number.isFinite(totalSeconds) && totalSeconds > 0 ? Math.floor(totalSeconds) : 0
-  const mins = Math.floor(safe / 60)
-  const secs = safe % 60
-  return `${mins}:${secs < 10 ? '0' : ''}${secs}`
-}
-
 export type VideoServiceOutputShowcaseProps = {
   verticalId: VideoServiceVerticalId
   verticalTitle: string
@@ -60,7 +52,6 @@ export function VideoServiceOutputShowcase({
   locale,
 }: VideoServiceOutputShowcaseProps) {
   const beats = VIDEO_SERVICES_NARRATED_PAN[verticalId]
-  const promoScript = VIDEO_SERVICE_PROMO_SCRIPTS[verticalId]
   const uniqueImages = useMemo(
     () => Array.from(new Set(beats.map((b) => b.imageSrc))),
     [beats]
@@ -71,8 +62,6 @@ export function VideoServiceOutputShowcase({
   )
   const [beatIndex, setBeatIndex] = useState(0)
   const [beatProgress, setBeatProgress] = useState(0)
-  const [currentTimeSec, setCurrentTimeSec] = useState(0)
-  const [durationSec, setDurationSec] = useState(0)
   const [isPlaying, setIsPlaying] = useState(true)
   const [inViewport, setInViewport] = useState(true)
   const [nearViewport, setNearViewport] = useState(true)
@@ -108,8 +97,6 @@ export function VideoServiceOutputShowcase({
     pendingSeekRatioRef.current = null
     setBeatIndex(0)
     setBeatProgress(0)
-    setCurrentTimeSec(0)
-    setDurationSec(0)
     setIsPlaying(true)
   }, [verticalId])
 
@@ -297,7 +284,6 @@ export function VideoServiceOutputShowcase({
   const handleRestartFromBeginning = () => {
     setBeatIndex(0)
     setBeatProgress(0)
-    setCurrentTimeSec(0)
     setIsPlaying(true)
     if (hasPromoVideo) {
       sessionPromoAudioUnmuted = true
@@ -320,7 +306,6 @@ export function VideoServiceOutputShowcase({
     const clamped = Math.max(0, Math.min(1, rawRatio))
     videoRef.current.currentTime = clamped * videoRef.current.duration
     setBeatProgress(clamped)
-    setCurrentTimeSec(videoRef.current.currentTime)
     const syncedBeat = Math.min(beats.length - 1, Math.floor(clamped * beats.length))
     setBeatIndex(syncedBeat)
     if (!isPlaying) {
@@ -335,7 +320,6 @@ export function VideoServiceOutputShowcase({
     if (hasPromoVideo && videoRef.current && videoRef.current.duration > 0) {
       const targetTime = (idx / beats.length) * videoRef.current.duration
       videoRef.current.currentTime = targetTime
-      setCurrentTimeSec(targetTime)
     }
   }
 
@@ -384,16 +368,11 @@ export function VideoServiceOutputShowcase({
     }
   }
 
-  const badgeLabel = hasPromoVideo ? uiCopy.promoVideoBadge : uiCopy.outputBadge
   const playToggleLabel = isPlaying ? uiCopy.pauseLabel : uiCopy.playLabel
   const audioToggleTooltip = promoAudioUnmuted ? uiCopy.muteLabel : uiCopy.hearPitchLabel
-  const audioTogglePillText = promoAudioUnmuted
-    ? uiCopy.voiceoverOnLabel
-    : uiCopy.hearPitchShortLabel
   const fsToggleLabel = isFullscreen
     ? uiCopy.exitFullscreenLabel
     : uiCopy.enterFullscreenLabel
-  const effectiveDurationSec = durationSec > 0 ? durationSec : promoScript.durationSeconds
   const segmentPrefix = hasPromoVideo ? uiCopy.actPrefix : uiCopy.scenePrefix
 
   return (
@@ -427,22 +406,17 @@ export function VideoServiceOutputShowcase({
             onContextMenu={(e) => e.preventDefault()}
             onLoadedMetadata={(e) => {
               const vid = e.currentTarget
-              if (vid.duration > 0) {
-                setDurationSec(vid.duration)
-                if (pendingSeekRatioRef.current !== null) {
-                  const ratio = pendingSeekRatioRef.current
-                  pendingSeekRatioRef.current = null
-                  if (ratio > 0 && ratio < 0.98) {
-                    vid.currentTime = ratio * vid.duration
-                  }
+              if (vid.duration > 0 && pendingSeekRatioRef.current !== null) {
+                const ratio = pendingSeekRatioRef.current
+                pendingSeekRatioRef.current = null
+                if (ratio > 0 && ratio < 0.98) {
+                  vid.currentTime = ratio * vid.duration
                 }
               }
             }}
             onTimeUpdate={(e) => {
               const vid = e.currentTarget
               if (vid.duration > 0) {
-                setDurationSec(vid.duration)
-                setCurrentTimeSec(vid.currentTime)
                 const overall = vid.currentTime / vid.duration
                 setBeatProgress(overall)
                 const syncedBeat = Math.min(
@@ -488,127 +462,149 @@ export function VideoServiceOutputShowcase({
           })
         )}
 
-        {/* Subtle top & bottom cinema vignettes so badges stay legible without covering the output */}
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-slate-950/75 via-slate-950/20 to-transparent sm:h-20"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/80 to-transparent sm:h-14"
-          aria-hidden
-        />
-
-        {/* Top Bar: Deliverable Badge + Studio Audio / Replay / Play / Fullscreen Controls */}
-        <div className="pointer-events-none absolute inset-x-2 top-2 z-10 flex flex-wrap items-center justify-between gap-1.5 sm:inset-x-3.5 sm:top-3 sm:gap-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-slate-950/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-200 backdrop-blur-md sm:px-2.5 sm:py-1 sm:text-[11px]">
-            <span
-              className={cn(
-                'h-2 w-2 shrink-0 rounded-full',
-                isPlaying ? 'animate-pulse bg-emerald-400' : 'bg-amber-300'
-              )}
+        {/* Subtle cinema vignettes only on 5K Stills so Promo Video stays completely unobstructed */}
+        {!hasPromoVideo ? (
+          <>
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-slate-950/75 via-slate-950/20 to-transparent sm:h-20"
               aria-hidden
             />
-            <span>{badgeLabel}</span>
-          </div>
-
-          <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5">
-            {hasPromoVideo ? (
-              <VideoControlTooltip label={audioToggleTooltip} side="bottom">
-                <button
-                  type="button"
-                  title={audioToggleTooltip}
-                  aria-label={audioToggleTooltip}
-                  aria-pressed={promoAudioUnmuted}
-                  onClick={handleTogglePromoAudio}
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/80 to-transparent sm:h-14"
+              aria-hidden
+            />
+            <div className="pointer-events-none absolute inset-x-2 top-2 z-10 flex items-center sm:inset-x-3 sm:top-2.5">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-slate-950/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-200 backdrop-blur-md sm:px-2.5 sm:py-1 sm:text-[11px]">
+                <span
                   className={cn(
-                    'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold backdrop-blur-md transition-all cursor-pointer sm:gap-1.5 sm:px-2.5 sm:text-[11px]',
-                    promoAudioUnmuted
-                      ? 'border-emerald-400/70 bg-emerald-500/25 text-emerald-100 shadow-sm shadow-emerald-500/20'
-                      : 'border-amber-400/70 bg-slate-950/90 text-amber-200 shadow-sm shadow-amber-500/15 hover:border-amber-300 hover:bg-amber-500/20 hover:text-white'
+                    'h-2 w-2 shrink-0 rounded-full',
+                    isPlaying ? 'animate-pulse bg-emerald-400' : 'bg-amber-300'
                   )}
-                >
-                  {promoAudioUnmuted ? (
-                    <Volume2 className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
-                  ) : (
-                    <VolumeX className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
-                  )}
-                  <span>{audioTogglePillText}</span>
-                </button>
-              </VideoControlTooltip>
-            ) : null}
+                  aria-hidden
+                />
+                <span>{uiCopy.outputBadge}</span>
+              </div>
+            </div>
+          </>
+        ) : null}
 
-            {hasPromoVideo ? (
-              <VideoControlTooltip label={uiCopy.restartLabel} side="bottom">
-                <button
-                  type="button"
-                  title={uiCopy.restartLabel}
-                  aria-label={uiCopy.restartLabel}
-                  onClick={handleRestartFromBeginning}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-slate-950/80 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 cursor-pointer"
-                >
-                  <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                </button>
-              </VideoControlTooltip>
-            ) : null}
-
-            <VideoControlTooltip label={playToggleLabel} side="bottom">
+        {/* Bottom-of-Player Controls: Compact icon-only transport on bottom-left (keeps top of frame & bottom-right SceneFlow Studio watermark 100% clear) */}
+        {hasPromoVideo ? (
+          <div
+            dir="ltr"
+            className="pointer-events-auto absolute bottom-2 left-2 z-10 flex items-center gap-1 sm:bottom-2.5 sm:left-3 sm:gap-1.5"
+          >
+            <VideoControlTooltip label={playToggleLabel} side="top">
               <button
                 type="button"
                 title={playToggleLabel}
                 aria-label={playToggleLabel}
                 aria-pressed={isPlaying}
                 onClick={handleTogglePlay}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-slate-950/80 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 cursor-pointer"
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
               >
                 {isPlaying ? (
-                  <Pause className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <Pause className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
                 ) : (
-                  <Play className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <Play className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
                 )}
               </button>
             </VideoControlTooltip>
 
-            <VideoControlTooltip label={fsToggleLabel} side="bottom">
+            <VideoControlTooltip label={audioToggleTooltip} side="top">
+              <button
+                type="button"
+                title={audioToggleTooltip}
+                aria-label={audioToggleTooltip}
+                aria-pressed={promoAudioUnmuted}
+                onClick={handleTogglePromoAudio}
+                className={cn(
+                  'inline-flex h-6 w-6 items-center justify-center rounded-full border backdrop-blur-md transition-all sm:h-7 sm:w-7 cursor-pointer',
+                  promoAudioUnmuted
+                    ? 'border-emerald-400/70 bg-emerald-500/25 text-emerald-200 shadow-sm shadow-emerald-500/20 hover:bg-emerald-500/35'
+                    : 'border-amber-400/70 bg-slate-950/75 text-amber-300 shadow-sm shadow-amber-500/15 hover:border-amber-300 hover:bg-slate-900 hover:text-amber-200'
+                )}
+              >
+                {promoAudioUnmuted ? (
+                  <Volume2 className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                ) : (
+                  <VolumeX className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                )}
+              </button>
+            </VideoControlTooltip>
+
+            <VideoControlTooltip label={uiCopy.restartLabel} side="top">
+              <button
+                type="button"
+                title={uiCopy.restartLabel}
+                aria-label={uiCopy.restartLabel}
+                onClick={handleRestartFromBeginning}
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
+              >
+                <RotateCcw className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+              </button>
+            </VideoControlTooltip>
+
+            <VideoControlTooltip label={fsToggleLabel} side="top">
               <button
                 type="button"
                 title={fsToggleLabel}
                 aria-label={fsToggleLabel}
                 onClick={() => void handleToggleFullscreen()}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-slate-950/80 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 cursor-pointer"
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
               >
                 {isFullscreen ? (
-                  <Minimize className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <Minimize className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
                 ) : (
-                  <Maximize className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <Maximize className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
                 )}
               </button>
             </VideoControlTooltip>
           </div>
-        </div>
-
-        {/* Bottom-of-Stage Pill: Timecode on Promo Video (keeps SceneFlow Studio watermark unobstructed) OR Scene Pill on 5K Stills */}
-        {hasPromoVideo ? (
-          <div className="pointer-events-none absolute bottom-2.5 left-2.5 z-10 flex items-center gap-1.5 sm:left-3.5">
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-gray-100 backdrop-blur-md sm:text-[11px]">
-              <span className="text-emerald-300">{formatTimecode(currentTimeSec)}</span>
-              <span className="text-slate-500">/</span>
-              <span className="text-gray-300">{formatTimecode(effectiveDurationSec)}</span>
-            </span>
-            {!hasNativeLocaleVideo ? (
-              <span className="inline-flex items-center rounded-md border border-amber-400/30 bg-slate-950/80 px-2 py-0.5 text-[10px] font-medium text-amber-200 backdrop-blur-md">
-                {uiCopy.englishAudioPreviewNote}
-              </span>
-            ) : null}
-          </div>
         ) : (
           <div className="pointer-events-none absolute inset-x-2.5 bottom-2.5 z-10 flex items-center justify-between gap-2 sm:inset-x-3.5">
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[11px] font-medium text-gray-100 backdrop-blur-md">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[10px] font-medium text-gray-100 backdrop-blur-md sm:text-[11px]">
               <span className="font-bold text-emerald-300">
                 {uiCopy.scenePrefix} 0{safeIdx + 1}
               </span>
               <span className="text-slate-500">·</span>
               <span>{currentBeat.sceneTag[panLocale]}</span>
             </span>
+
+            <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5">
+              <VideoControlTooltip label={playToggleLabel} side="top">
+                <button
+                  type="button"
+                  title={playToggleLabel}
+                  aria-label={playToggleLabel}
+                  aria-pressed={isPlaying}
+                  onClick={handleTogglePlay}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                  ) : (
+                    <Play className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                  )}
+                </button>
+              </VideoControlTooltip>
+
+              <VideoControlTooltip label={fsToggleLabel} side="top">
+                <button
+                  type="button"
+                  title={fsToggleLabel}
+                  aria-label={fsToggleLabel}
+                  onClick={() => void handleToggleFullscreen()}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
+                >
+                  {isFullscreen ? (
+                    <Minimize className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                  ) : (
+                    <Maximize className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                  )}
+                </button>
+              </VideoControlTooltip>
+            </div>
           </div>
         )}
 
@@ -617,7 +613,7 @@ export function VideoServiceOutputShowcase({
           onClick={hasPromoVideo ? handleSeekBarClick : undefined}
           className={cn(
             'absolute inset-x-0 bottom-0 z-10 bg-slate-900/90',
-            hasPromoVideo ? 'h-1.5 cursor-pointer hover:h-2 transition-all' : 'h-1'
+            hasPromoVideo ? 'h-1 cursor-pointer hover:h-1.5 transition-all' : 'h-1'
           )}
         >
           <div
@@ -637,7 +633,7 @@ export function VideoServiceOutputShowcase({
         </p>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/90 pt-2.5">
-          {/* 3-Act / 3-Beat Selector Pills (regular buttons with aria-pressed) */}
+          {/* 3-Act / 3-Beat Selector Pills */}
           <div className="flex flex-wrap items-center gap-1.5">
             {beats.map((beat, idx) => {
               const active = idx === safeIdx
@@ -660,6 +656,11 @@ export function VideoServiceOutputShowcase({
                 </button>
               )
             })}
+            {hasPromoVideo && !hasNativeLocaleVideo ? (
+              <span className="inline-flex items-center rounded-md border border-amber-400/25 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-200">
+                {uiCopy.englishAudioPreviewNote}
+              </span>
+            ) : null}
           </div>
 
           {/* 7-Language Switcher Pills */}

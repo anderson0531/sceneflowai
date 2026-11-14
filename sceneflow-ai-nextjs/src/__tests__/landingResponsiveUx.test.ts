@@ -722,8 +722,22 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
         '/landing/video-services/videos/memoir-en.mp4',
       ])
       expect(videoEl?.getAttribute('poster')).toBe('/landing/video-services/videos/memoir-poster.webp')
-      expect(stageEl?.textContent).toContain(VIDEO_SERVICE_PAN_UI_COPY[panLoc].promoVideoBadge)
+      // Keep mobile/desktop video view unobstructed: no top-left badge, icon-only audio button,
+      // bottom-left control bar, and zero numeric time-tracking text on the player
+      expect(stageEl?.textContent).not.toContain(VIDEO_SERVICE_PAN_UI_COPY[panLoc].promoVideoBadge)
       expect(stageEl?.textContent).not.toContain(VIDEO_SERVICE_PAN_UI_COPY[panLoc].outputBadge)
+      expect(stageEl?.textContent).not.toContain('0:00')
+      const audioBtn = Array.from(stageEl?.querySelectorAll('button') ?? []).find(
+        (btn) =>
+          btn.getAttribute('title') === VIDEO_SERVICE_PAN_UI_COPY[panLoc].hearPitchLabel ||
+          btn.getAttribute('title') === VIDEO_SERVICE_PAN_UI_COPY[panLoc].muteLabel
+      )
+      expect(audioBtn, `[${locale}] icon-only audio button`).toBeTruthy()
+      expect(audioBtn?.textContent?.trim()).toBe('')
+      const controlsOverlay = audioBtn?.closest('[dir="ltr"]')
+      expect(controlsOverlay?.className).toContain('bottom-2')
+      expect(controlsOverlay?.className).toContain('left-2')
+      expect(controlsOverlay?.textContent?.trim()).toBe('')
       if (panLoc !== 'en') {
         expect(stageEl?.textContent).toContain(
           VIDEO_SERVICE_PAN_UI_COPY[panLoc].englishAudioPreviewNote
