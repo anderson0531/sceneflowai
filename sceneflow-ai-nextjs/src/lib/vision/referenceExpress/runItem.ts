@@ -33,7 +33,10 @@ import {
 import { resolveParentLocationAnchor } from '@/lib/vision/locationFamily'
 import { resolveAnchorForLocationVersion } from '@/lib/vision/locationVersionResolve'
 import { generateAndUploadFullBodyWardrobe } from '@/lib/character/sceneCharacterHeadshot'
-import { resolveAnchorWardrobeForTransition } from '@/lib/character/characterReferencePrompts'
+import {
+  resolveAnchorWardrobeForTransition,
+  resolveCharacterLikenessInput,
+} from '@/lib/character/characterReferencePrompts'
 import {
   composeUploadAndPersistCombinedCharacterRef,
   recomposeCombinedCharacterRefsForCast,
@@ -132,6 +135,11 @@ export async function runReferenceExpressItem(input: {
     const resolvedPrompt = resolveCastIdentityGenerationPrompt(character, activeContext.artStyle)
     const prompt = resolvedPrompt.prompt
     const usedFingerprint = castFingerprint(character)
+    const likeness = resolveCharacterLikenessInput(
+      character as any,
+      activeContext.characters as any[],
+      item.targetId
+    )
 
     const generated = await generateCastReferenceImage({
       userId,
@@ -141,6 +149,13 @@ export async function runReferenceExpressItem(input: {
       characterName: character.name,
       rawMode: resolvedPrompt.rawMode,
       ...(activeContext.artStyle ? { artStyle: activeContext.artStyle } : {}),
+      ...(likeness.likenessReferenceImageUrl
+        ? {
+            likenessReferenceImageUrl: likeness.likenessReferenceImageUrl,
+            likenessTransformNote: likeness.likenessTransformNote,
+            targetAge: (character as { age?: string | number }).age,
+          }
+        : {}),
     })
 
     const appearance = castAppearanceAfterImage({

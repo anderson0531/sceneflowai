@@ -117,6 +117,12 @@ export function extractCharactersFromScenes(scenes: any[]): Character[] {
         if (beat.character && beat.kind !== 'narration') {
           registerExtractedCharacter(charMap, beat.character, beat.line)
         }
+        if (Array.isArray(beat.characters)) {
+          beat.characters.forEach((entry: any) => {
+            const raw = typeof entry === 'string' ? entry : entry?.name
+            registerExtractedCharacter(charMap, raw)
+          })
+        }
         const castInFrame = beat.beatDirection?.castInFrame
         if (Array.isArray(castInFrame)) {
           castInFrame.forEach((castName: any) => {

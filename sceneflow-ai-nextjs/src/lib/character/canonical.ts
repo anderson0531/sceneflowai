@@ -94,8 +94,10 @@ export function generateAliases(canonicalName: string, originalName?: string): s
         `${ageStage.baseName} (Age ${n})`,
         `${ageStage.baseName} Age ${n}`,
         `${ageStage.baseName} (${n})`,
+        `${ageStage.baseName} ${n}`,
         `${first} (Age ${n})`,
         `${first} Age ${n}`,
+        `${first} ${n}`,
       ]
       for (const v of ageVariants) {
         aliases.add(v)

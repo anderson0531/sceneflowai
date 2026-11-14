@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { saveCharacterAttributes } from '../../../../lib/character/persistence'
+import { normalizeCharacterName } from '@/lib/character/detection'
 import Project from '../../../../models/Project'
 
 export const maxDuration = 30
@@ -93,22 +94,23 @@ export async function PUT(req: NextRequest) {
 }
 
 /**
- * Delete a character from the project
+ * Delete a single character from the project (never cascades to base or sibling age characters)
  */
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const projectId = searchParams.get('projectId')
+    const characterId = searchParams.get('characterId')
     const characterName = searchParams.get('characterName')
     
-    if (!projectId || !characterName) {
+    if (!projectId || (!characterId && !characterName)) {
       return NextResponse.json(
-        { error: 'Missing required fields: projectId and characterName' },
+        { error: 'Missing required fields: projectId and (characterId or characterName)' },
         { status: 400 }
       )
     }
     
-    console.log('[Character API] Deleting character:', characterName)
+    console.log('[Character API] Deleting character:', { characterId, characterName })
     
     // Get project
     const project = await Project.findByPk(projectId)
@@ -121,12 +123,39 @@ export async function DELETE(req: NextRequest) {
     
     const metadata = project.metadata || {}
     const visionPhase = metadata.visionPhase || {}
-    const characters = visionPhase.characters || []
-    
-    // Remove character by name (case-insensitive)
-    const filteredCharacters = characters.filter(
-      (c: any) => normalizeCharacterName(c.name) !== normalizeCharacterName(characterName)
-    )
+    const characters: any[] = Array.isArray(visionPhase.characters) ? visionPhase.characters : []
+
+    const targetNormName = characterName ? normalizeCharacterName(characterName) : ''
+    const hasExactIdMatch =
+      Boolean(characterId) && characters.some((c: any) => String(c?.id || '') === characterId)
+
+    const removedIds = new Set<string>()
+    const filteredCharacters = characters.filter((c: any) => {
+      if (hasExactIdMatch) {
+        const keep = String(c?.id || '') !== characterId
+        if (!keep && c?.id) removedIds.add(String(c.id))
+        return keep
+      }
+      if (targetNormName) {
+        const keep = normalizeCharacterName(c?.name || '') !== targetNormName
+        if (!keep && c?.id) removedIds.add(String(c.id))
+        return keep
+      }
+      return true
+    })
+
+    // Detach any likeness reference pointing at the deleted character without deleting other characters
+    const cleanedCharacters = filteredCharacters.map((c: any) => {
+      if (c?.likenessCharacterId && removedIds.has(String(c.likenessCharacterId))) {
+        const next = { ...c }
+        delete next.likenessCharacterId
+        if (next.likenessSourceType === 'character') {
+          next.likenessSourceType = 'none'
+        }
+        return next
+      }
+      return c
+    })
     
     // Update project
     await project.update({
@@ -134,16 +163,16 @@ export async function DELETE(req: NextRequest) {
         ...metadata,
         visionPhase: {
           ...visionPhase,
-          characters: filteredCharacters,
+          characters: cleanedCharacters,
         },
       },
     })
     
-    console.log(`[Character API] Deleted character: ${characterName}`)
+    console.log(`[Character API] Deleted character:`, { characterId, characterName, remaining: cleanedCharacters.length })
     
     return NextResponse.json({
       success: true,
-      character: characterName,
+      character: characterName || characterId,
       generatedAt: new Date().toISOString()
     })
   } catch (error: any) {
@@ -153,23 +182,5 @@ export async function DELETE(req: NextRequest) {
       { status: 500 }
     )
   }
-}
-
-/**
- * Normalize character name for comparison
- */
-function normalizeCharacterName(name: string): string {
-  if (!name) return ''
-  
-  // Remove voice-over indicators: (V.O.), (O.S.), (O.C.), (CONT'D)
-  let normalized = name.replace(/\s*\([^)]*\)\s*/g, '').trim()
-  
-  // Convert to uppercase for case-insensitive comparison
-  normalized = normalized.toUpperCase()
-  
-  // Remove extra whitespace
-  normalized = normalized.replace(/\s+/g, ' ')
-  
-  return normalized
 }
 

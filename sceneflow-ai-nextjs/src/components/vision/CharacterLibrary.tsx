@@ -62,7 +62,10 @@ import {
   seedCastDirectorPrompt,
   seedWardrobeDirectorPrompt,
 } from "@/lib/intelligence/reference-still-director-fallback";
-import { resolveAnchorWardrobeForTransition } from "@/lib/character/characterReferencePrompts";
+import {
+  resolveAnchorWardrobeForTransition,
+  resolveCharacterLikenessInput,
+} from "@/lib/character/characterReferencePrompts";
 import {
   defaultCharacterWardrobeId,
   resolveCharacterId,
@@ -600,6 +603,12 @@ interface CharacterCardProps {
   focusWardrobeId?: string;
   focusNonce?: number;
   defaultArtStyle?: string;
+  /** Other cast members with portraits available as optional facial likeness anchors. */
+  castReferenceCandidates?: Array<{
+    id: string;
+    name: string;
+    imageUrl: string;
+  }>;
 }
 
 export function CharacterLibrary({
@@ -685,6 +694,7 @@ export function CharacterLibrary({
   const [ageVariantCurrentCardAge, setAgeVariantCurrentCardAge] = useState("");
   const [ageVariantEraLabel, setAgeVariantEraLabel] = useState("");
   const [ageVariantWardrobe, setAgeVariantWardrobe] = useState("");
+  const [ageVariantLookNote, setAgeVariantLookNote] = useState("");
   const [isCreatingAgeVariants, setIsCreatingAgeVariants] = useState(false);
   const [isSyncingAllWardrobes, setIsSyncingAllWardrobes] = useState(false);
   const [isCastAgentRunning, setIsCastAgentRunning] = useState(false);
@@ -921,6 +931,7 @@ export function CharacterLibrary({
     );
     setAgeVariantEraLabel("");
     setAgeVariantWardrobe("");
+    setAgeVariantLookNote("");
   };
 
   const handleConfirmCreateAgeVariants = async () => {
@@ -993,6 +1004,10 @@ export function CharacterLibrary({
           eraLabel: ageVariantEraLabel.trim() || undefined,
           defaultWardrobeOverride: ageVariantWardrobe.trim() || undefined,
           samePersonGroupId: groupKey,
+          lookTransformNote: ageVariantLookNote.trim() || undefined,
+          likenessCharacterId: isDisplayableImageUrl(sourceChar.referenceImage)
+            ? ageVariantModalCharId
+            : undefined,
         });
         await onAddCharacter(variantChar);
         existingLowerNames.add(candidateName.toLowerCase());
@@ -1027,6 +1042,19 @@ export function CharacterLibrary({
       char.appearanceDescription ||
       char.imagePrompt ||
       `${char.name || "Character"}`;
+    const castReferenceCandidates = castCharacters.flatMap((other, otherIdx) => {
+      const otherId = getCharacterId(other, otherIdx);
+      if (otherId === charId || !isDisplayableImageUrl(other.referenceImage)) {
+        return [];
+      }
+      return [
+        {
+          id: otherId,
+          name: String(other.name || "Character"),
+          imageUrl: String(other.referenceImage),
+        },
+      ];
+    });
 
     return (
       <CharacterCard
@@ -1042,13 +1070,32 @@ export function CharacterLibrary({
         onGenerate={async () => {
           setGeneratingChars((prev) => new Set(prev).add(charId));
           try {
-            const resolved = resolveCastIdentityGenerationPrompt(char, defaultArtStyle);
-            await onGenerateCharacter(
-              charId,
-              resolved.rawMode
-                ? { characterPrompt: resolved.prompt, rawMode: true, artStyle: defaultArtStyle }
-                : { characterPrompt: resolved.prompt, artStyle: defaultArtStyle },
+            const latestList = getLatestCharacters?.() ?? characters;
+            const latestChar =
+              latestList.find(
+                (c, i) => resolveCharacterId(c, i) === charId,
+              ) || char;
+            const resolved = resolveCastIdentityGenerationPrompt(
+              latestChar,
+              defaultArtStyle,
             );
+            const likeness = resolveCharacterLikenessInput(
+              latestChar,
+              latestList,
+              charId,
+            );
+            await onGenerateCharacter(charId, {
+              characterPrompt: resolved.prompt,
+              ...(resolved.rawMode ? { rawMode: true } : {}),
+              artStyle: defaultArtStyle,
+              ...(likeness.likenessReferenceImageUrl
+                ? {
+                    likenessReferenceImageUrl: likeness.likenessReferenceImageUrl,
+                    likenessTransformNote: likeness.likenessTransformNote,
+                  }
+                : {}),
+              ...(latestChar?.age ? { targetAge: latestChar.age } : {}),
+            });
           } finally {
             setGeneratingChars((prev) => {
               const newSet = new Set(prev);
@@ -1073,7 +1120,7 @@ export function CharacterLibrary({
         onBatchUpdateWardrobes={onBatchUpdateWardrobes}
         onApplyWardrobeSyncDiffs={onApplyWardrobeSyncDiffs}
         scenes={scenes}
-        onRemove={() => onRemoveCharacter?.(char.name)}
+        onRemove={() => onRemoveCharacter?.(char.id || char.name)}
         onCreateAgeVariant={
           onAddCharacter ? () => openAgeVariantDialog(char, charId) : undefined
         }
@@ -1094,10 +1141,25 @@ export function CharacterLibrary({
             setGeneratingChars((prev) => new Set(prev).add(charId));
           }
           try {
+            const latestList = getLatestCharacters?.() ?? characters;
+            const latestChar =
+              latestList.find(
+                (c, i) => resolveCharacterId(c, i) === charId,
+              ) || char;
+            const likeness = generate
+              ? resolveCharacterLikenessInput(latestChar, latestList, charId)
+              : null;
             await onGenerateCharacter(charId, {
               characterPrompt: prompt,
               rawMode: true,
               saveOnly: !generate,
+              ...(likeness?.likenessReferenceImageUrl
+                ? {
+                    likenessReferenceImageUrl: likeness.likenessReferenceImageUrl,
+                    likenessTransformNote: likeness.likenessTransformNote,
+                  }
+                : {}),
+              ...(generate && latestChar?.age ? { targetAge: latestChar.age } : {}),
             });
           } finally {
             if (generate) {
@@ -1126,6 +1188,7 @@ export function CharacterLibrary({
           if (otherId === charId || !isDesignedGeminiVoiceId(voiceId)) return [];
           return [voiceId as string];
         })}
+        castReferenceCandidates={castReferenceCandidates}
       />
     );
   };
@@ -1767,7 +1830,7 @@ export function CharacterLibrary({
                       type="text"
                       value={ageVariantEraLabel}
                       onChange={(e) => setAgeVariantEraLabel(e.target.value)}
-                      placeholder="e.g. 1968 High School"
+                      placeholder="e.g. 1976 High School"
                       className="w-full px-2.5 py-1.5 text-xs rounded-md border border-gray-700 bg-gray-800 text-gray-100"
                     />
                   </div>
@@ -1783,6 +1846,25 @@ export function CharacterLibrary({
                       className="w-full px-2.5 py-1.5 text-xs rounded-md border border-gray-700 bg-gray-800 text-gray-100"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-300 mb-1">
+                    Look / Hair / Facial Hair from Reference{" "}
+                    <span className="text-gray-500">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={ageVariantLookNote}
+                    onChange={(e) => setAgeVariantLookNote(e.target.value)}
+                    placeholder="e.g. medium afro and no facial hair"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-md border border-gray-700 bg-gray-800 text-gray-100"
+                  />
+                  {isDisplayableImageUrl(sourceChar.referenceImage) ? (
+                    <p className="text-[11px] text-cyan-400/90 mt-1">
+                      New character card(s) will automatically link &ldquo;{sourceChar.name}&rdquo; as a facial likeness reference without coupling deletion.
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -1938,8 +2020,18 @@ const CharacterCard = ({
   focusWardrobeId,
   focusNonce,
   defaultArtStyle,
+  castReferenceCandidates = [],
 }: CharacterCardProps) => {
   const [imageError, setImageError] = useState(false); // Track if image failed to load
+  const [likenessNoteDraft, setLikenessNoteDraft] = useState<string>(
+    character.likenessTransformNote || "",
+  );
+  const [isUploadingLikenessRef, setIsUploadingLikenessRef] = useState(false);
+  const likenessFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setLikenessNoteDraft(character.likenessTransformNote || "");
+  }, [character.likenessTransformNote]);
 
   // Reset imageError when referenceImage changes (new image uploaded)
   useEffect(() => {
@@ -4417,6 +4509,327 @@ const CharacterCard = ({
               className="mt-3 focus-visible:ring-0 space-y-3"
             >
                 {!splitLayout && identityImageSection}
+
+                {onUpdateCharacterAttributes && (
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                        <ImagePlus className="w-3.5 h-3.5 text-cyan-400" />
+                        Reference Likeness
+                      </span>
+                      <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium bg-gray-500/10 text-gray-400 border border-gray-500/20">
+                        Optional
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                      Generate this character&apos;s portrait using another cast character or an uploaded photo as a facial structure reference (e.g. younger/older version).
+                    </p>
+                    {(() => {
+                      const activeLikenessMode: "none" | "character" | "upload" =
+                        character.likenessSourceType === "character" ||
+                        character.likenessSourceType === "upload" ||
+                        character.likenessSourceType === "none"
+                          ? character.likenessSourceType
+                          : character.likenessCharacterId
+                            ? "character"
+                            : character.likenessImageUrl
+                              ? "upload"
+                              : "none";
+                      const selectedDonor = castReferenceCandidates.find(
+                        (c) => c.id === character.likenessCharacterId,
+                      );
+                      const hasUploadedLikeness = isDisplayableImageUrl(
+                        character.likenessImageUrl,
+                      );
+                      const canGenerateFromReference =
+                        (activeLikenessMode === "character" && Boolean(selectedDonor)) ||
+                        (activeLikenessMode === "upload" && hasUploadedLikeness);
+
+                      return (
+                        <div className="space-y-2.5">
+                          <div className="flex flex-wrap gap-1">
+                            {(
+                              [
+                                { key: "none", label: "None" },
+                                { key: "character", label: "Cast Character" },
+                                { key: "upload", label: "Upload Photo" },
+                              ] as const
+                            ).map((opt) => {
+                              const isActive = activeLikenessMode === opt.key;
+                              return (
+                                <button
+                                  key={opt.key}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const patch: Record<string, any> = {
+                                      likenessSourceType: opt.key,
+                                    };
+                                    if (
+                                      opt.key === "character" &&
+                                      !character.likenessCharacterId &&
+                                      castReferenceCandidates[0]?.id
+                                    ) {
+                                      patch.likenessCharacterId =
+                                        castReferenceCandidates[0].id;
+                                    }
+                                    void onUpdateCharacterAttributes(
+                                      characterId,
+                                      patch,
+                                      { quiet: true },
+                                    );
+                                  }}
+                                  className={`px-2 py-1 rounded text-[10px] font-medium transition-colors border ${
+                                    isActive
+                                      ? "bg-cyan-600/25 text-cyan-200 border-cyan-500/50"
+                                      : "bg-gray-100 dark:bg-gray-800/80 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-500"
+                                  }`}
+                                >
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {activeLikenessMode === "character" && (
+                            <div className="space-y-1.5 rounded-md border border-gray-200 dark:border-gray-700/80 bg-gray-50/60 dark:bg-gray-900/50 p-2">
+                              {castReferenceCandidates.length === 0 ? (
+                                <p className="text-[11px] text-amber-400">
+                                  No other cast characters have portraits yet. Generate or upload a portrait on the base character first, or switch to Upload Photo.
+                                </p>
+                              ) : (
+                                <>
+                                  <label className="block text-[10px] font-medium text-gray-400">
+                                    Base Character Reference
+                                  </label>
+                                  <select
+                                    value={character.likenessCharacterId || ""}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      void onUpdateCharacterAttributes(
+                                        characterId,
+                                        {
+                                          likenessSourceType: "character",
+                                          likenessCharacterId:
+                                            e.target.value || undefined,
+                                        },
+                                        { quiet: true },
+                                      );
+                                    }}
+                                    className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                  >
+                                    <option value="">Select cast character…</option>
+                                    {castReferenceCandidates.map((cand) => (
+                                      <option key={cand.id} value={cand.id}>
+                                        {cand.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  {selectedDonor ? (
+                                    <div className="flex items-center gap-2 pt-1">
+                                      <img
+                                        src={selectedDonor.imageUrl}
+                                        alt={selectedDonor.name}
+                                        className="w-9 h-9 rounded object-cover border border-cyan-500/30 flex-shrink-0"
+                                      />
+                                      <span className="text-[10px] text-gray-400 leading-tight">
+                                        Anchors facial structure to{" "}
+                                        <strong className="text-gray-200">
+                                          {selectedDonor.name}
+                                        </strong>{" "}
+                                        as an independent character slot.
+                                      </span>
+                                    </div>
+                                  ) : null}
+                                </>
+                              )}
+                            </div>
+                          )}
+
+                          {activeLikenessMode === "upload" && (
+                            <div className="space-y-1.5 rounded-md border border-gray-200 dark:border-gray-700/80 bg-gray-50/60 dark:bg-gray-900/50 p-2">
+                              <input
+                                ref={likenessFileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  e.target.value = "";
+                                  if (!file) return;
+                                  setIsUploadingLikenessRef(true);
+                                  try {
+                                    const ext =
+                                      file.name.split(".").pop()?.toLowerCase() ||
+                                      "jpg";
+                                    const blob = await upload(
+                                      `characters/likeness-${characterId}-${Date.now()}.${ext}`,
+                                      file,
+                                      {
+                                        access: "public",
+                                        handleUploadUrl:
+                                          "/api/character/upload-url",
+                                      },
+                                    );
+                                    await onUpdateCharacterAttributes(
+                                      characterId,
+                                      {
+                                        likenessSourceType: "upload",
+                                        likenessImageUrl: blob.url,
+                                      },
+                                      { quiet: true },
+                                    );
+                                    toast.success("Likeness reference photo uploaded");
+                                  } catch (err) {
+                                    console.error(
+                                      "[Likeness Upload] Failed:",
+                                      err,
+                                    );
+                                    toast.error(
+                                      "Failed to upload reference photo",
+                                    );
+                                  } finally {
+                                    setIsUploadingLikenessRef(false);
+                                  }
+                                }}
+                              />
+                              {hasUploadedLikeness ? (
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src={character.likenessImageUrl}
+                                    alt="Likeness reference"
+                                    className="w-10 h-10 rounded object-cover border border-cyan-500/30 flex-shrink-0"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[10px] text-gray-300 truncate">
+                                      Reference photo ready
+                                    </p>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                      <button
+                                        type="button"
+                                        disabled={isUploadingLikenessRef}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          likenessFileInputRef.current?.click();
+                                        }}
+                                        className="px-2 py-0.5 rounded text-[10px] bg-gray-800 border border-gray-600 text-gray-200 hover:bg-gray-700"
+                                      >
+                                        {isUploadingLikenessRef
+                                          ? "Uploading…"
+                                          : "Replace"}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          void onUpdateCharacterAttributes(
+                                            characterId,
+                                            {
+                                              likenessImageUrl: undefined,
+                                              likenessSourceType: "none",
+                                            },
+                                            { quiet: true },
+                                          );
+                                        }}
+                                        className="px-2 py-0.5 rounded text-[10px] text-gray-400 hover:text-red-400"
+                                      >
+                                        Clear
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={isUploadingLikenessRef}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    likenessFileInputRef.current?.click();
+                                  }}
+                                  className="w-full h-7 text-xs"
+                                >
+                                  {isUploadingLikenessRef ? (
+                                    <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                  ) : (
+                                    <Upload className="w-3.5 h-3.5 mr-1.5" />
+                                  )}
+                                  {isUploadingLikenessRef
+                                    ? "Uploading Reference Photo…"
+                                    : "Upload Reference Photo"}
+                                </Button>
+                              )}
+                            </div>
+                          )}
+
+                          {activeLikenessMode !== "none" && (
+                            <div className="space-y-1.5">
+                              <label className="block text-[10px] font-medium text-gray-400">
+                                Look / Age Transformation from Reference
+                              </label>
+                              <input
+                                type="text"
+                                value={likenessNoteDraft}
+                                onChange={(e) =>
+                                  setLikenessNoteDraft(e.target.value)
+                                }
+                                onBlur={() => {
+                                  const nextVal = likenessNoteDraft.trim();
+                                  if (
+                                    nextVal !==
+                                    (character.likenessTransformNote || "")
+                                  ) {
+                                    void onUpdateCharacterAttributes(
+                                      characterId,
+                                      { likenessTransformNote: nextVal },
+                                      { quiet: true },
+                                    );
+                                  }
+                                }}
+                                placeholder="e.g., 17-year-old version of the reference with medium afro and no facial hair"
+                                className="w-full px-2.5 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={
+                                  isGenerating || !canGenerateFromReference
+                                }
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  const trimmed = likenessNoteDraft.trim();
+                                  if (
+                                    trimmed !==
+                                    (character.likenessTransformNote || "")
+                                  ) {
+                                    await onUpdateCharacterAttributes(
+                                      characterId,
+                                      { likenessTransformNote: trimmed },
+                                      { quiet: true },
+                                    );
+                                  }
+                                  onGenerate();
+                                }}
+                                className="w-full h-7 text-xs border-cyan-500/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20"
+                              >
+                                {isGenerating ? (
+                                  <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                ) : (
+                                  <Wand2 className="w-3.5 h-3.5 mr-1.5" />
+                                )}
+                                {isGenerating
+                                  ? "Generating Portrait…"
+                                  : "Generate Portrait from Reference"}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
 
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-1.5">

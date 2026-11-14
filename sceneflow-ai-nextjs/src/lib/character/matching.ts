@@ -1,4 +1,5 @@
 import { maskPhrasesInText } from '@/lib/scene/characterDetection'
+import { extractSamePersonAgeStage } from '@/lib/character/ageStageContinuity'
 
 interface Character {
   name: string
@@ -44,6 +45,18 @@ export function findMatchingCharacter(
   
   // Combine matches, prioritizing fullNameMatches
   let matches = fullNameMatches.length > 0 ? fullNameMatches : firstNameMatches
+
+  // If the search query does NOT specify an age stage, prefer non-age-variant base characters
+  // so searching "John" or "Brian" never accidentally picks "John (Age 17)" simply because its string is longer.
+  const searchStage = extractSamePersonAgeStage(searchName)
+  if (!searchStage.isAgeVariant && matches.length > 1) {
+    const nonVariantMatches = matches.filter(
+      (c) => !extractSamePersonAgeStage(c.name).isAgeVariant
+    )
+    if (nonVariantMatches.length > 0) {
+      matches = nonVariantMatches
+    }
+  }
   
   if (matches.length === 0) {
     return null
@@ -136,16 +149,59 @@ export function findSceneCharacters(
   const foundCharacters = new Set<Character>()
   const normalized = sceneText.toLowerCase()
 
-  // Strategy 1: Match FULL character names only (highest confidence)
-  visualCharacters.forEach(char => {
-    const fullName = char.name.toLowerCase()
-    if (normalized.includes(fullName)) {
+  // Track base names that have multiple distinct cast entries (e.g. "John" + "John 17" or "Brian (Age 17)" + "Brian (Age 55)")
+  // so partial first-name matching never pulls the wrong life-stage character into a scene.
+  const baseNameCounts = new Map<string, number>()
+  visualCharacters.forEach((char) => {
+    const stage = extractSamePersonAgeStage(char.name || '')
+    const key = (stage.baseName || char.name || '').trim().toLowerCase()
+    if (key) {
+      baseNameCounts.set(key, (baseNameCounts.get(key) || 0) + 1)
+    }
+  })
+
+  const canFuzzyMatchCharacter = (char: Character): boolean => {
+    const stage = extractSamePersonAgeStage(char.name || '')
+    if (!stage.isAgeVariant) return true
+    const key = (stage.baseName || char.name || '').trim().toLowerCase()
+    if ((baseNameCounts.get(key) || 0) <= 1) return true
+    if (stage.numericAge !== undefined) {
+      const ageCueRe = new RegExp(
+        `\\b(?:age[d]?\\s*${stage.numericAge}|${stage.numericAge}[-\\s]*year[-\\s]*old|\\(${stage.numericAge}\\))\\b`,
+        'i'
+      )
+      if (ageCueRe.test(sceneText)) return true
+    }
+    if (stage.ageStageLabel) {
+      const labelCueRe = new RegExp(`\\b${stage.ageStageLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+      if (labelCueRe.test(sceneText)) return true
+    }
+    return false
+  }
+
+  // Strategy 1: Match FULL character names longest-first (highest confidence).
+  // Mask matched spans out of `remainingSceneText` so "John 17" or "Brian (Age 17)"
+  // does not falsely match bare "John" or "Brian" on the exact same text occurrence,
+  // while still matching both if both genuinely appear separately in the scene.
+  let remainingSceneText = sceneText
+  const sortedByNameLen = [...visualCharacters].sort(
+    (a, b) => (b.name?.length || 0) - (a.name?.length || 0)
+  )
+  sortedByNameLen.forEach((char) => {
+    const trimmedName = (char.name || '').trim()
+    if (!trimmedName) return
+    const escaped = trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const fullRe = new RegExp(`(?:^|[^A-Za-z0-9])(${escaped})(?=$|[^A-Za-z0-9])`, 'gi')
+    if (fullRe.test(remainingSceneText)) {
       foundCharacters.add(char)
+      remainingSceneText = remainingSceneText.replace(fullRe, (fullMatch, group1: string) =>
+        fullMatch.replace(group1, ' '.repeat(group1.length))
+      )
     }
   })
 
   // Strategy 2: Match dialogue attributions (e.g., "BRIAN:" or "Brian:")
-  const dialoguePattern = /^([A-Z][A-Za-z\s]+):/gm
+  const dialoguePattern = /^([A-Z][A-Za-z0-9()\s]+):/gm
   const dialogueMatches = sceneText.matchAll(dialoguePattern)
   
   for (const match of dialogueMatches) {
@@ -155,9 +211,10 @@ export function findSceneCharacters(
   }
 
   // Strategy 3: Match nicknames to full names (e.g., "Ben" matches "Dr. Benjamin Anderson")
-  // This runs regardless of whether we found matches, to catch nickname references
+  // Runs against `remainingSceneText` so already-consumed age-qualified names ("John 17")
+  // cannot leak their first-name token onto an adult character ("John").
   const wordPattern = /\b([A-Z][a-z]+)\b/g
-  const words = [...sceneText.matchAll(wordPattern)].map(m => m[1].toLowerCase())
+  const words = [...remainingSceneText.matchAll(wordPattern)].map(m => m[1].toLowerCase())
   const uniqueWords = [...new Set(words)]
   
   for (const word of uniqueWords) {
@@ -168,6 +225,7 @@ export function findSceneCharacters(
     if (possibleFullNames) {
       // Try to match against character names
       visualCharacters.forEach(char => {
+        if (!canFuzzyMatchCharacter(char)) return
         const charNameLower = char.name.toLowerCase()
         // Check if any possible full name appears in the character name
         for (const fullName of possibleFullNames) {
@@ -183,6 +241,7 @@ export function findSceneCharacters(
     // Only match if the word is a substantial prefix (at least 4 chars AND at least 60% of the full name part)
     // This prevents false positives like "Reed" matching in "agreed" or "Ben" matching in "benefit"
     visualCharacters.forEach(char => {
+      if (!canFuzzyMatchCharacter(char)) return
       const nameParts = char.name.toLowerCase().split(/\s+/)
       // Skip titles like "Dr.", "Mr.", etc.
       const meaningfulParts = nameParts.filter(p => !EXCLUDED_WORDS.has(p.replace('.', '')))
@@ -209,6 +268,7 @@ export function findSceneCharacters(
   // Requires at least 4-char first names to avoid false positives on short common words
   if (foundCharacters.size === 0) {
     visualCharacters.forEach(char => {
+      if (!canFuzzyMatchCharacter(char)) return
       // Skip titles like "Dr.", "Mr.", etc. to get the actual first name
       const nameParts = char.name.split(/\s+/)
       const meaningfulName = nameParts.find(p => !EXCLUDED_WORDS.has(p.replace('.', '').toLowerCase()) && p.length >= 4)
@@ -221,7 +281,7 @@ export function findSceneCharacters(
       
       // Only match if first name appears as standalone word with word boundaries
       const wordBoundaryRegex = new RegExp(`\\b${firstName}\\b`, 'i')
-      if (wordBoundaryRegex.test(sceneText)) {
+      if (wordBoundaryRegex.test(remainingSceneText)) {
         foundCharacters.add(char)
       }
     })

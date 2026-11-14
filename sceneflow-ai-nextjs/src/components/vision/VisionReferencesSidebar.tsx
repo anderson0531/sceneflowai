@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin, Zap, Settings2, Download, Share2, Clapperboard } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin, Zap, Settings2, Download, Share2, Clapperboard, RotateCcw } from 'lucide-react'
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
 import type { ReferenceTransferDirection } from '@/types/series'
 import { toast } from 'sonner'
@@ -197,6 +197,11 @@ export interface VisionReferencesSidebarProps extends Omit<
     options?: { waitUntilDone?: boolean }
   ) => Promise<unknown>
   isExpressGeneratingReferences?: boolean
+  /** Atomically wipe stale continuity items and rebuild Cast, Wardrobes, Locations, and Props from script */
+  onResetContinuityFromScript?: (options: {
+    preservePortraitsAndVoices: boolean
+  }) => Promise<void>
+  isResettingContinuity?: boolean
   getLatestCharacters?: () => any[]
   getLatestLocations?: () => LocationReference[]
   /** When true, hide the in-panel "Reference Library" heading (dialog provides its own) */
@@ -1385,6 +1390,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onGenerateSceneDirection,
     onExpressGenerateReferences,
     isExpressGeneratingReferences = false,
+    onResetContinuityFromScript,
+    isResettingContinuity = false,
     getLatestCharacters,
     getLatestLocations,
     hideTitle = false,
@@ -1398,6 +1405,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const tLibraryAgent = useTranslations('production.libraryAgent')
 
   const [transferOpen, setTransferOpen] = useState(false)
+  const [resetContinuityDialogOpen, setResetContinuityDialogOpen] = useState(false)
+  const [preservePortraitsOnReset, setPreservePortraitsOnReset] = useState(false)
   const [transferDirection, setTransferDirection] =
     useState<ReferenceTransferDirection>('series_to_project')
 
@@ -1849,6 +1858,29 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                 projectId={projectId}
                 onPromoted={onReferenceLibrarySynced}
               />
+              {onResetContinuityFromScript && allScenes.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setResetContinuityDialogOpen(true)}
+                      disabled={isResettingContinuity || isExpressGeneratingReferences}
+                      className="h-7 text-xs font-medium border-zinc-600 text-zinc-200 hover:bg-zinc-800"
+                    >
+                      {isResettingContinuity ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                      )}
+                      {isResettingContinuity ? 'Resetting…' : 'Reset from Script'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    Clear orphaned Continuity items and rebuild Cast, Wardrobes, Locations, and Props strictly from the current script.
+                  </TooltipContent>
+                </Tooltip>
+              )}
               {onExpressGenerateReferences && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -2338,6 +2370,88 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           onComplete={onReferenceLibrarySynced}
         />
       ) : null}
+
+      <Dialog
+        open={resetContinuityDialogOpen}
+        onOpenChange={(open) => {
+          if (!isResettingContinuity) {
+            setResetContinuityDialogOpen(open)
+          }
+        }}
+      >
+        <DialogContent className="max-w-md bg-gray-900 border-gray-700 text-gray-100">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <RotateCcw className="w-4 h-4 text-amber-400" />
+              Reset Continuity Library from Script
+            </DialogTitle>
+            <DialogDescription className="text-xs text-gray-300 leading-relaxed">
+              Rebuilds Cast, Wardrobes, Locations, and Props strictly from your current script ({allScenes.length}{' '}
+              {allScenes.length === 1 ? 'scene' : 'scenes'}), removing unused entries and repairing all scene and shot cross-references.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <ul className="text-xs text-gray-400 space-y-1.5 list-disc pl-4">
+              <li>Removes orphaned characters, duplicate age variants, unused locations, and stale props.</li>
+              <li>Extracts every character, location state, and recurring prop active in the script.</li>
+              <li>Re-binds all dialogue, storyboard beat, and clip reference links cleanly.</li>
+            </ul>
+
+            <label className="flex items-start gap-2.5 p-2.5 rounded-md border border-gray-700 bg-gray-800/70 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={preservePortraitsOnReset}
+                onChange={(e) => setPreservePortraitsOnReset(e.target.checked)}
+                disabled={isResettingContinuity}
+                className="mt-0.5 rounded border-gray-600 bg-gray-900 text-cyan-500 focus:ring-cyan-500"
+              />
+              <span className="text-xs text-gray-200 leading-snug">
+                Keep existing portraits &amp; assigned voices for characters, locations, and props whose names still match the script
+              </span>
+            </label>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setResetContinuityDialogOpen(false)}
+              disabled={isResettingContinuity}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={isResettingContinuity || !onResetContinuityFromScript}
+              onClick={async () => {
+                if (!onResetContinuityFromScript) return
+                try {
+                  await onResetContinuityFromScript({
+                    preservePortraitsAndVoices: preservePortraitsOnReset,
+                  })
+                  setResetContinuityDialogOpen(false)
+                } catch (err) {
+                  console.error('[ResetContinuity] Failed:', err)
+                }
+              }}
+              className="bg-amber-600 hover:bg-amber-500 text-white"
+            >
+              {isResettingContinuity ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Rebuilding from Script…
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                  Reset Continuity
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DndContext>
   )
 }

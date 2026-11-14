@@ -72,9 +72,11 @@ export async function saveCharacterAttributes(
       ? [...visionPhase.characters]
       : []
 
-    const existingIndex = characters.findIndex(
-      (c: any) => c.name?.toLowerCase() === characterName.toLowerCase()
-    )
+    const attrId = typeof (cleanAttributes as any).id === 'string' ? (cleanAttributes as any).id : ''
+    const existingIndex = characters.findIndex((c: any) => {
+      if (attrId && c?.id && String(c.id) === attrId) return true
+      return c.name?.trim().toLowerCase() === characterName.trim().toLowerCase()
+    })
 
     if (existingIndex >= 0) {
       const existing = characters[existingIndex] || {}

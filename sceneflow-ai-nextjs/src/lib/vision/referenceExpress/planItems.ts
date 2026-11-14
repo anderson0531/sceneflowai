@@ -68,6 +68,10 @@ export type CastSource = {
   voiceDescription?: string
   voiceConfig?: CastingBriefVoiceConfig
   familyRelationships?: CharacterFamilyRelationship[]
+  likenessSourceType?: string
+  likenessCharacterId?: string
+  likenessImageUrl?: string
+  likenessTransformNote?: string
   wardrobes?: Array<{
     id?: string
     name?: string
@@ -290,7 +294,31 @@ export function planReferenceExpressItems(
     ...character,
     __planOriginalIndex: originalIndex,
   }))
-  const orderedCharacters = sortCharactersFamilyAnchorsFirst(indexedCharacters)
+  const familyOrdered = sortCharactersFamilyAnchorsFirst(indexedCharacters)
+
+  // Ensure any likeness donor character (`likenessCharacterId`) is generated before dependents
+  const byResolvedId = new Map<string, (typeof familyOrdered)[number]>()
+  familyOrdered.forEach((c) => {
+    byResolvedId.set(resolveCharacterId(c as CastSource, c.__planOriginalIndex), c)
+  })
+  const orderedCharacters: typeof familyOrdered = []
+  const visitedIds = new Set<string>()
+  const visitChar = (c: (typeof familyOrdered)[number], depth = 0) => {
+    const id = resolveCharacterId(c as CastSource, c.__planOriginalIndex)
+    if (visitedIds.has(id)) return
+    const donorId =
+      depth < 6 &&
+      c.likenessSourceType === 'character' &&
+      typeof c.likenessCharacterId === 'string'
+        ? c.likenessCharacterId.trim()
+        : ''
+    if (donorId && donorId !== id && byResolvedId.has(donorId) && !visitedIds.has(donorId)) {
+      visitChar(byResolvedId.get(donorId)!, depth + 1)
+    }
+    visitedIds.add(id)
+    orderedCharacters.push(c)
+  }
+  familyOrdered.forEach((c) => visitChar(c))
 
   orderedCharacters.forEach((character) => {
     const index = character.__planOriginalIndex

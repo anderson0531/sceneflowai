@@ -26,6 +26,52 @@ interface AddCharacterModalProps {
   projectGenre?: string
 }
 
+function collectSceneCharacterNames(scene: any): Array<{ raw: string; sampleLine?: string; isDialogue: boolean }> {
+  const entries: Array<{ raw: string; sampleLine?: string; isDialogue: boolean }> = []
+  if (!scene || typeof scene !== 'object') return entries
+
+  scene.dialogue?.forEach((d: any) => {
+    if (typeof d?.character === 'string' && d.character.trim()) {
+      entries.push({ raw: d.character, sampleLine: d.line, isDialogue: true })
+    }
+  })
+
+  if (Array.isArray(scene.characters)) {
+    scene.characters.forEach((entry: any) => {
+      const raw = typeof entry === 'string' ? entry : entry?.name
+      if (typeof raw === 'string' && raw.trim()) {
+        entries.push({ raw, isDialogue: false })
+      }
+    })
+  }
+
+  if (Array.isArray(scene.beats)) {
+    scene.beats.forEach((beat: any) => {
+      if (!beat || typeof beat !== 'object' || beat.excluded === true) return
+      if (typeof beat.character === 'string' && beat.character.trim() && beat.kind !== 'narration') {
+        entries.push({ raw: beat.character, sampleLine: beat.line, isDialogue: beat.kind === 'dialogue' })
+      }
+      if (Array.isArray(beat.characters)) {
+        beat.characters.forEach((entry: any) => {
+          const raw = typeof entry === 'string' ? entry : entry?.name
+          if (typeof raw === 'string' && raw.trim()) {
+            entries.push({ raw, isDialogue: false })
+          }
+        })
+      }
+      if (Array.isArray(beat.beatDirection?.castInFrame)) {
+        beat.beatDirection.castInFrame.forEach((castName: any) => {
+          if (typeof castName === 'string' && castName.trim()) {
+            entries.push({ raw: castName, isDialogue: false })
+          }
+        })
+      }
+    })
+  }
+
+  return entries
+}
+
 /**
  * Get characters from script that are not in the cast yet
  */
@@ -44,46 +90,47 @@ function getMissingCharacters(scenes: any[], existingCharacters: any[]): Suggest
   const charMap = new Map<string, SuggestedCharacter>()
   
   scenes.forEach((scene, sceneIdx) => {
-    scene.dialogue?.forEach((d: any) => {
-      if (!d.character) return
-      
-      const normalizedName = normalizeCharacterName(d.character)
-      
-      // Skip if already in cast
-      if (existingNormalized.has(normalizedName)) return
-      
-      // Skip narrator/voiceover indicators
+    collectSceneCharacterNames(scene).forEach(({ raw, sampleLine, isDialogue }) => {
+      const normalizedName = normalizeCharacterName(raw)
+      if (!normalizedName || existingNormalized.has(normalizedName)) return
       if (normalizedName === 'NARRATOR' || normalizedName === 'V.O.' || normalizedName === 'O.S.') return
-      
-      const cleanName = stripScreenplayDeliveryAnnotations(d.character)
+
+      const cleanName = stripScreenplayDeliveryAnnotations(raw)
       if (!cleanName || isCollectiveOrGroupCharacterName(cleanName)) return
-      
+
+      const sceneNum = scene?.sceneNumber ?? sceneIdx + 1
       if (charMap.has(normalizedName)) {
         const existing = charMap.get(normalizedName)!
-        existing.dialogueCount++
-        if (!existing.scenes.includes(sceneIdx + 1)) {
-          existing.scenes.push(sceneIdx + 1)
+        if (isDialogue) existing.dialogueCount++
+        if (!existing.scenes.includes(sceneNum)) {
+          existing.scenes.push(sceneNum)
         }
-        // Keep first sample line
+        if (!existing.sampleLine && sampleLine) {
+          existing.sampleLine = sampleLine.substring(0, 80) + (sampleLine.length > 80 ? '...' : '')
+        }
       } else {
         charMap.set(normalizedName, {
           name: cleanName,
-          dialogueCount: 1,
-          scenes: [sceneIdx + 1],
-          sampleLine: d.line?.substring(0, 80) + (d.line?.length > 80 ? '...' : '')
+          dialogueCount: isDialogue ? 1 : 0,
+          scenes: [sceneNum],
+          ...(sampleLine
+            ? { sampleLine: sampleLine.substring(0, 80) + (sampleLine.length > 80 ? '...' : '') }
+            : {}),
         })
       }
     })
   })
   
-  // Sort by dialogue count (most lines first)
-  return Array.from(charMap.values()).sort((a, b) => b.dialogueCount - a.dialogueCount)
+  // Sort by dialogue count then scene count
+  return Array.from(charMap.values()).sort(
+    (a, b) => b.dialogueCount - a.dialogueCount || b.scenes.length - a.scenes.length
+  )
 }
 
 /**
- * Count dialogue lines for existing characters
+ * Count script appearances (dialogue + scene/beat cast references) for existing characters
  */
-function getCharacterDialogueCounts(scenes: any[], existingCharacters: any[]): Map<string, number> {
+export function getCharacterDialogueCounts(scenes: any[], existingCharacters: any[]): Map<string, number> {
   const counts = new Map<string, number>()
   
   existingCharacters.forEach(c => {
@@ -92,11 +139,16 @@ function getCharacterDialogueCounts(scenes: any[], existingCharacters: any[]): M
   })
   
   scenes.forEach(scene => {
-    scene.dialogue?.forEach((d: any) => {
-      if (!d.character) return
-      const normalized = normalizeCharacterName(d.character)
-      if (counts.has(normalized)) {
+    const seenInScene = new Set<string>()
+    collectSceneCharacterNames(scene).forEach(({ raw, isDialogue }) => {
+      const normalized = normalizeCharacterName(raw)
+      if (!counts.has(normalized)) return
+      if (isDialogue) {
         counts.set(normalized, (counts.get(normalized) || 0) + 1)
+        seenInScene.add(normalized)
+      } else if (!seenInScene.has(normalized)) {
+        counts.set(normalized, (counts.get(normalized) || 0) + 1)
+        seenInScene.add(normalized)
       }
     })
   })

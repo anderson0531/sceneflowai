@@ -218,6 +218,7 @@ import {
   updateCharacterInList,
 } from '@/lib/vision/updateCharacterReference'
 import { castAppearanceAfterImage } from '@/lib/character/castAppearanceAfterImage'
+import { resolveCharacterLikenessInput } from '@/lib/character/characterReferencePrompts'
 import { updateObjectReferenceInList } from '@/lib/vision/updateObjectReference'
 import {
   mergeObjectDuplicateIgnores,
@@ -1039,6 +1040,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [objectDuplicateIgnores, setObjectDuplicateIgnores] = useState<string[]>([])
   const [locationReferences, setLocationReferences] = useState<LocationReference[]>([])
   const [generatingLocationId, setGeneratingLocationId] = useState<string | null>(null)
+  const [isResettingContinuity, setIsResettingContinuity] = useState(false)
   const [sceneProductionState, setSceneProductionState] = useState<Record<string, SceneProductionData>>({})
   const [sceneBookmark, setSceneBookmark] = useState<SceneBookmark | null>(null)
   
@@ -11962,6 +11964,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const namedCharacter = charactersRef.current.find(
         (c, idx) => resolveCharacterId(c, idx) === characterId
       )
+      const fallbackLikeness = namedCharacter
+        ? resolveCharacterLikenessInput(namedCharacter, charactersRef.current, characterId)
+        : undefined
+      const likenessReferenceImageUrl =
+        (isObjectPayload ? promptOrPayload.likenessReferenceImageUrl : undefined) ||
+        fallbackLikeness?.likenessReferenceImageUrl
+      const likenessTransformNote =
+        (isObjectPayload ? promptOrPayload.likenessTransformNote : undefined) ??
+        fallbackLikeness?.likenessTransformNote
+      const targetAge =
+        (isObjectPayload ? promptOrPayload.targetAge : undefined) ?? namedCharacter?.age
       const res = await fetch('/api/character/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -11977,6 +11990,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           additionalDetails: isObjectPayload ? promptOrPayload.additionalDetails : undefined,
           quality: imageQuality,
           rawMode,
+          ...(likenessReferenceImageUrl ? { likenessReferenceImageUrl } : {}),
+          ...(likenessTransformNote ? { likenessTransformNote } : {}),
+          ...(targetAge != null && targetAge !== '' ? { targetAge } : {}),
         })
       })
       
@@ -12229,14 +12245,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-    const handleRemoveCharacter = async (characterName: string) => {
+    const handleRemoveCharacter = async (characterIdOrName: string) => {
     try {
-      console.log('[Vision] Removing character:', characterName)
+      console.log('[Vision] Removing character:', characterIdOrName)
       
-      // Find the character by name to get its ID
-      const characterToDelete = characters.find(c => 
-        toCanonicalName(c.name) === toCanonicalName(characterName) || c.name === characterName
-      )
+      // Match exact ID first so age variants never collide with base characters; fall back to exact canonical name
+      const characterToDelete =
+        characters.find((c, idx) => resolveCharacterId(c, idx) === characterIdOrName || c.id === characterIdOrName) ||
+        characters.find(c =>
+          toCanonicalName(c.name) === toCanonicalName(characterIdOrName) || c.name === characterIdOrName
+        )
       
       if (!characterToDelete) {
         try { 
@@ -12358,8 +12376,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }))
       }
       
-      // Now delete the character
-      const response = await fetch(`/api/vision/characters?projectId=${projectId}&characterName=${encodeURIComponent(characterToDelete.name)}`, {                        
+      // Now delete the character by exact characterId (with characterName fallback)
+      const deleteParams = new URLSearchParams({
+        projectId,
+        ...(characterToDelete.id ? { characterId: String(characterToDelete.id) } : {}),
+        characterName: String(characterToDelete.name || ''),
+      })
+      const response = await fetch(`/api/vision/characters?${deleteParams.toString()}`, {                        
         method: 'DELETE'
       })
       
@@ -12388,6 +12411,91 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const { toast } = require('sonner')
         toast.error('Failed to remove character')
       } catch {}
+    }
+  }
+
+  const handleResetContinuityFromScript = async (options: {
+    preservePortraitsAndVoices: boolean
+  }) => {
+    setIsResettingContinuity(true)
+    try {
+      await saveQueueRef.current.catch(() => null)
+      const res = await fetch('/api/vision/references/reset-from-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          preservePortraitsAndVoices: options.preservePortraitsAndVoices,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data?.error || `Reset failed (${res.status})`)
+      }
+
+      const nextCharacters = Array.isArray(data.characters) ? data.characters : []
+      const nextLocations = Array.isArray(data.locationReferences) ? data.locationReferences : []
+      const nextObjects = Array.isArray(data.objectReferences) ? data.objectReferences : []
+      const nextScenes = Array.isArray(data.scenes) ? data.scenes : []
+      const nextMetadata =
+        data.metadata && typeof data.metadata === 'object' ? data.metadata : undefined
+
+      // Clear tombstones BEFORE setProject so the references useEffect does not re-union old dropped IDs
+      objectTombstoneIdsRef.current = []
+      sceneReferencesRef.current = []
+      objectDuplicateIgnoresRef.current = []
+      objectReferencesRef.current = nextObjects
+      locationReferencesRef.current = nextLocations
+      charactersRef.current = nextCharacters
+
+      setSceneReferences([])
+      setObjectDuplicateIgnores([])
+      setObjectReferences(nextObjects)
+      setLocationReferences(nextLocations)
+      setCharacters(nextCharacters)
+      if (nextScenes.length > 0) {
+        setScenes(nextScenes)
+        setScript((prev: any) => {
+          if (!prev) return prev
+          const updatedScript = prev.script?.scenes
+            ? {
+                ...prev,
+                script: {
+                  ...prev.script,
+                  scenes: nextScenes,
+                },
+              }
+            : { ...prev, scenes: nextScenes }
+          scriptRef.current = updatedScript
+          return updatedScript
+        })
+      }
+
+      if (nextMetadata) {
+        const nextProdState = getSceneProductionStateFromMetadata(
+          nextMetadata
+        ) as Record<string, SceneProductionData>
+        sceneProductionStateRef.current = nextProdState
+        setSceneProductionState(nextProdState)
+        saveBaselineRef.current = captureSaveBaselineFromMetadata(nextMetadata)
+        setProject((prev: any) => {
+          if (!prev) return prev
+          const updated = { ...prev, metadata: nextMetadata }
+          projectRef.current = updated
+          return updated
+        })
+      }
+
+      const c = data.counts || {}
+      toast.success(
+        `Continuity reset from script: ${c.characters ?? nextCharacters.length} cast, ${c.locations ?? nextLocations.length} locations, ${c.props ?? nextObjects.length} props`
+      )
+    } catch (err: any) {
+      console.error('[ResetContinuity] Error:', err)
+      toast.error(err?.message || 'Failed to reset Continuity Library from script')
+      throw err
+    } finally {
+      setIsResettingContinuity(false)
     }
   }
   
@@ -21847,6 +21955,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }}
         onExpressGenerateReferences={handleExpressGenerateReferences}
         isExpressGeneratingReferences={isExpressGeneratingReferences}
+        onResetContinuityFromScript={handleResetContinuityFromScript}
+        isResettingContinuity={isResettingContinuity}
         getLatestCharacters={() => charactersRef.current}
         getLatestLocations={() => locationReferencesRef.current}
       />

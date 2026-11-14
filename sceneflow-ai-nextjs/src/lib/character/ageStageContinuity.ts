@@ -105,7 +105,26 @@ export function extractSamePersonAgeStage(rawName: string): ParsedAgeStageInfo {
     }
   }
 
-  // 4. Leading `"Young John Miller"`, `"Teenage John Miller"`, `"Elder John Miller"`
+  // 4. Bare trailing age number `"John 17"`, `"John Miller 17"` (4..105, excluding generic numbered roles like "Guard 4")
+  const bareTrailingNumMatch = cleaned.match(
+    /^([A-Za-z][A-Za-z'’.-]*(?:\s+[A-Za-z][A-Za-z'’.-]*)*)\s+(\d{1,3})\s*$/
+  )
+  if (bareTrailingNumMatch) {
+    const base = bareTrailingNumMatch[1]!.trim()
+    const num = Number(bareTrailingNumMatch[2])
+    const numberedRoleRe =
+      /\b(?:guard|soldier|officer|cop|police|detective|agent|worker|tech|technician|doctor|nurse|medic|pilot|driver|patron|guest|customer|waiter|waitress|bartender|clerk|henchman|thug|bystander|reporter|journalist|student|kid|boy|girl|man|woman|person|voice|speaker|prisoner|inmate|crew|member|villager|citizen|rebel|trooper|sentinel)\s*$/i
+    if (base && num >= 4 && num <= 105 && !numberedRoleRe.test(base)) {
+      return {
+        isAgeVariant: true,
+        baseName: base,
+        ageStageLabel: `Age ${num}`,
+        numericAge: num,
+      }
+    }
+  }
+
+  // 5. Leading `"Young John Miller"`, `"Teenage John Miller"`, `"Elder John Miller"`
   const leadingStageMatch = cleaned.match(
     /^(young|teen|teenage|child|little|elder|older|adult)\s+([A-Z][a-zA-Z'’-]+(?:\s+[A-Z][a-zA-Z'’-]+)*)$/i
   )
@@ -500,6 +519,8 @@ export interface BuildAgeVariantOptions {
   eraLabel?: string
   defaultWardrobeOverride?: string
   samePersonGroupId?: string
+  lookTransformNote?: string
+  likenessCharacterId?: string
 }
 
 /**
@@ -511,7 +532,14 @@ export function buildAgeVariantCharacter<T extends Record<string, any>>(
   sourceChar: T,
   options: BuildAgeVariantOptions
 ): T {
-  const { targetAge, eraLabel, defaultWardrobeOverride, samePersonGroupId } = options
+  const {
+    targetAge,
+    eraLabel,
+    defaultWardrobeOverride,
+    samePersonGroupId,
+    lookTransformNote,
+    likenessCharacterId,
+  } = options
   const parsed = extractSamePersonAgeStage(String(sourceChar?.name || 'Character'))
   const baseName = parsed.baseName || 'Character'
   const newName = formatAgeVariantCharacterName(baseName, targetAge)
@@ -556,9 +584,14 @@ export function buildAgeVariantCharacter<T extends Record<string, any>>(
 
   const longitudinalLock = `Longitudinal identity lock: exact same individual human being as ${baseName} depicted strictly at biological age ${targetAge}${eraLabel ? ` (${eraLabel})` : ''} (${stagePhrase})${ethnicity ? `, ${ethnicity}` : ''}${eyeColor ? `, same ${eyeColor} eyes` : ''}, preserving identical underlying facial bone structure while rendering authentic age-${targetAge} skin texture and ${adaptedHairColor || 'age-accurate'} hair.`
 
-  const nextAppearance = cleanedSourceLook
-    ? `${cleanedSourceLook.replace(/\.*\s*$/, '.')} ${longitudinalLock}`
-    : longitudinalLock
+  const trimmedLookNote = lookTransformNote?.trim() || ''
+  const nextAppearance = [
+    trimmedLookNote ? `${trimmedLookNote.replace(/\.*\s*$/, '.')}` : '',
+    cleanedSourceLook ? `${cleanedSourceLook.replace(/\.*\s*$/, '.')}` : '',
+    longitudinalLock,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   const rawDesc = scrubAgeContradictingAdjectives(
     String(sourceChar?.description || '').trim(),
@@ -593,12 +626,31 @@ export function buildAgeVariantCharacter<T extends Record<string, any>>(
     appearanceDescription: nextAppearance,
     description: nextDescription,
     ...(nextWardrobe ? { defaultWardrobe: nextWardrobe } : {}),
+    // Never inherit base character's bare-name aliases or adult voiceConfig onto an age variant!
+    aliases: undefined,
+    voiceConfig: undefined,
+    voiceDescription: undefined,
     // Dedicated age-variant MUST generate/upload its own age-accurate portrait & wardrobes!
     referenceImage: null,
     imageApproved: false,
     imagePrompt: undefined,
     visionDescription: undefined,
     wardrobes: [],
+    ...(likenessCharacterId
+      ? {
+          likenessSourceType: 'character',
+          likenessCharacterId,
+          likenessImageUrl: undefined,
+          likenessTransformNote:
+            trimmedLookNote ||
+            `${targetAge}-year-old version of the reference${eraLabel ? ` (${eraLabel})` : ''}`,
+        }
+      : {
+          likenessSourceType: 'none',
+          likenessCharacterId: undefined,
+          likenessImageUrl: undefined,
+          likenessTransformNote: trimmedLookNote || undefined,
+        }),
   }
 
   return cloned as T

@@ -57,6 +57,9 @@ export async function POST(req: NextRequest) {
       rawMode: body.rawMode,
       skipAutoEnhance: body.skipAutoEnhance,
       artStyle: body.artStyle,
+      likenessReferenceImageUrl: body.likenessReferenceImageUrl,
+      likenessTransformNote: body.likenessTransformNote,
+      targetAge: body.targetAge,
     })
 
     let newBalance: number | undefined

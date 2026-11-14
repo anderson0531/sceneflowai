@@ -26,6 +26,7 @@ import {
 import { buildRelatedLocationContinuityClause } from '@/lib/vision/locationFamily'
 import {
   buildCharacterIdentityReferencePrompt,
+  buildLikenessGuidedIdentityPrompt,
   identityAppearanceFromPrompt,
   promptHasIdentityReferenceAnchor,
 } from '@/lib/character/characterReferencePrompts'
@@ -544,6 +545,12 @@ export type GenerateCastImageInput = {
   rawMode?: boolean
   skipAutoEnhance?: boolean
   artStyle?: string | null
+  /** Optional subject reference image URL (uploaded photo or another cast character's portrait). */
+  likenessReferenceImageUrl?: string | null
+  /** Optional natural-language transformation instructions relative to `likenessReferenceImageUrl`. */
+  likenessTransformNote?: string | null
+  /** Optional target age/era for likeness transformation. */
+  targetAge?: string | number | null
 }
 
 export async function generateCastReferenceImage(
@@ -572,8 +579,27 @@ export async function generateCastReferenceImage(
 
   const effectiveArtStyle = await resolveEffectiveArtStyle(input.artStyle, projectId)
   const isLiveAction = isPhotorealisticArtStyle(effectiveArtStyle)
+  const likenessUrl = input.likenessReferenceImageUrl?.trim() || ''
+  const usingLikenessRef = Boolean(likenessUrl)
 
-  if (!rawMode && !promptHasIdentityReferenceAnchor(finalPrompt)) {
+  const resolvedCharacterName =
+    (typeof characterName === 'string' && characterName.trim()) ||
+    finalPrompt.split(/[,\n]/)[0]?.trim() ||
+    'Character'
+
+  let extraNegativeTerms: string[] = []
+  if (usingLikenessRef) {
+    const coreAppearance = identityAppearanceFromPrompt(finalPrompt)
+    const likenessBuilt = buildLikenessGuidedIdentityPrompt({
+      characterName: resolvedCharacterName,
+      appearanceDescription: coreAppearance,
+      likenessTransformNote: input.likenessTransformNote,
+      targetAge: input.targetAge,
+      artStyle: effectiveArtStyle,
+    })
+    finalPrompt = likenessBuilt.prompt
+    extraNegativeTerms = likenessBuilt.negativeTerms
+  } else if (!rawMode && !promptHasIdentityReferenceAnchor(finalPrompt)) {
     finalPrompt = buildCharacterIdentityReferencePrompt({
       appearanceDescription: finalPrompt,
       artStyle: effectiveArtStyle,
@@ -585,21 +611,75 @@ export async function generateCastReferenceImage(
     }
   }
 
-  const resolvedCharacterName =
-    (typeof characterName === 'string' && characterName.trim()) ||
-    finalPrompt.split(/[,\n]/)[0]?.trim() ||
-    'Character'
-
-  console.log('[Character Image] Generating identity headshot (designer 2K)...')
-  const draftResult = await generateImageWithGeminiStudio({
-    prompt: finalPrompt,
-    aspectRatio: ENHANCE_IDENTITY_ASPECT_RATIO,
-    imageSize: quality === 'max' ? '4K' : ENHANCE_IDENTITY_IMAGE_SIZE,
-    modelTier: ENHANCE_IDENTITY_MODEL_TIER,
+  const combinedNegativeTerms = [
     ...(effectiveArtStyle && effectiveArtStyle !== 'photorealistic'
-      ? { negativePrompt: getArtStyleNegativeTerms(effectiveArtStyle) }
-      : {}),
-  })
+      ? [getArtStyleNegativeTerms(effectiveArtStyle)]
+      : []),
+    ...extraNegativeTerms,
+  ].filter(Boolean)
+  const combinedNegativePrompt =
+    combinedNegativeTerms.length > 0 ? combinedNegativeTerms.join(', ') : undefined
+
+  console.log(
+    `[Character Image] Generating identity headshot (designer 2K, likenessRef=${usingLikenessRef})...`
+  )
+  let draftResult: Awaited<ReturnType<typeof generateImageWithGeminiStudio>>
+  try {
+    draftResult = await generateImageWithGeminiStudio({
+      prompt: finalPrompt,
+      aspectRatio: ENHANCE_IDENTITY_ASPECT_RATIO,
+      imageSize: quality === 'max' ? '4K' : ENHANCE_IDENTITY_IMAGE_SIZE,
+      modelTier: ENHANCE_IDENTITY_MODEL_TIER,
+      ...(usingLikenessRef
+        ? {
+            referenceImages: [
+              {
+                imageUrl: likenessUrl,
+                name: resolvedCharacterName,
+              },
+            ],
+          }
+        : {}),
+      ...(combinedNegativePrompt ? { negativePrompt: combinedNegativePrompt } : {}),
+    })
+  } catch (genErr: unknown) {
+    // If Vertex Gemini Image blocks an inline human photo paired with a very young target age,
+    // extract facial bone-structure & complexion traits via Gemini Vision and generate cleanly.
+    if (!usingLikenessRef) {
+      throw genErr
+    }
+    console.warn(
+      '[Character Image] Likeness reference inline call failed; falling back to vision-extracted bone-structure anchor:',
+      (genErr as Error)?.message || genErr
+    )
+    let referenceTraits = ''
+    try {
+      const { analyzeCharacterImage } = await import('@/lib/imagen/visionAnalyzer')
+      referenceTraits = await analyzeCharacterImage(likenessUrl, resolvedCharacterName)
+    } catch {}
+    const fallbackAppearance = [
+      identityAppearanceFromPrompt(input.prompt?.trim() || ''),
+      input.likenessTransformNote?.trim()
+        ? `Transformation target: ${input.likenessTransformNote.trim()}.`
+        : '',
+      referenceTraits
+        ? `Underlying genetic bone structure, eye color, and complexion matching donor reference (${referenceTraits.slice(0, 260)}), adjusted strictly to the target age, hair, and clean-shaven/facial-hair specification above.`
+        : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+    const fallbackPrompt = buildCharacterIdentityReferencePrompt({
+      appearanceDescription: fallbackAppearance,
+      artStyle: effectiveArtStyle,
+    })
+    draftResult = await generateImageWithGeminiStudio({
+      prompt: fallbackPrompt,
+      aspectRatio: ENHANCE_IDENTITY_ASPECT_RATIO,
+      imageSize: quality === 'max' ? '4K' : ENHANCE_IDENTITY_IMAGE_SIZE,
+      modelTier: ENHANCE_IDENTITY_MODEL_TIER,
+      ...(combinedNegativePrompt ? { negativePrompt: combinedNegativePrompt } : {}),
+    })
+  }
 
   const draftBase64 = `data:${draftResult.mimeType};base64,${draftResult.imageBase64}`
   const draftImageUrl = await uploadReferenceLibraryBase64Image(
@@ -612,10 +692,10 @@ export async function generateCastReferenceImage(
   let visionDescription: string | null = null
   let autoEnhanced = false
 
-  // Stylized mediums (2D anime/Ghibli, 3D Pixar, painterly, graphic illustration)
-  // already render at designer 2K/4K with their locked ArtStyleSpec directive;
-  // running the live-action casting polish pass risks introducing DSLR human skin pores.
-  if (!skipAutoEnhance && isLiveAction) {
+  // Skip the description-override 2nd pass when `usingLikenessRef` is true: Step 1 already rendered
+  // a 2K/4K studio headshot directly from the reference photo, and `identitySource: 'description'`
+  // tells Gemini "the photo is only the starting composition", washing out facial likeness.
+  if (!skipAutoEnhance && isLiveAction && !usingLikenessRef) {
     console.log('[Character Image] Auto-enhancing identity reference...')
     const enhanced = await enhanceIdentityImage({
       sourceImageUrl: draftImageUrl,

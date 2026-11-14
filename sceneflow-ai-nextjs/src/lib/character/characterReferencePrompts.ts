@@ -498,6 +498,241 @@ export function buildCharacterIdentityReferencePromptFromCharacter(
   })
 }
 
+export interface CharacterLikenessFields {
+  id?: string
+  name?: string
+  age?: string | number | null
+  referenceImage?: string | null
+  likenessSourceType?: 'none' | 'character' | 'upload' | string | null
+  likenessCharacterId?: string | null
+  likenessImageUrl?: string | null
+  likenessTransformNote?: string | null
+}
+
+export interface ResolvedCharacterLikeness {
+  likenessReferenceImageUrl?: string
+  likenessTransformNote?: string
+  donorCharacterId?: string
+  donorCharacterName?: string
+}
+
+/**
+ * Resolve optional reference likeness image (either uploaded reference photo or another
+ * cast character's portrait) without coupling character lifecycles or overwriting portraits.
+ */
+export function resolveCharacterLikenessInput(
+  character: CharacterLikenessFields | null | undefined,
+  allCharacters: CharacterLikenessFields[] = [],
+  selfId?: string
+): ResolvedCharacterLikeness {
+  if (!character) return {}
+  const mode = (character.likenessSourceType || '').trim().toLowerCase()
+  const note = character.likenessTransformNote?.trim() || undefined
+  const resolvedSelfId = selfId || character.id || ''
+
+  if (mode === 'upload') {
+    const uploadUrl = character.likenessImageUrl?.trim()
+    if (uploadUrl) {
+      return {
+        likenessReferenceImageUrl: uploadUrl,
+        likenessTransformNote: note,
+      }
+    }
+    return {}
+  }
+
+  if (mode === 'character') {
+    const targetDonorId = character.likenessCharacterId?.trim()
+    if (!targetDonorId || (resolvedSelfId && targetDonorId === resolvedSelfId)) {
+      return {}
+    }
+    const donor = allCharacters.find((c, idx) => {
+      const candidateId = c?.id || `char-${idx}`
+      return candidateId === targetDonorId
+    })
+    const donorImg = donor?.referenceImage?.trim()
+    if (donorImg) {
+      return {
+        likenessReferenceImageUrl: donorImg,
+        likenessTransformNote: note,
+        donorCharacterId: targetDonorId,
+        donorCharacterName: donor?.name?.trim() || undefined,
+      }
+    }
+  }
+
+  return {}
+}
+
+export interface LikenessGuidedIdentityPromptInput {
+  characterName?: string | null
+  appearanceDescription: string
+  likenessTransformNote?: string | null
+  targetAge?: string | number | null
+  wardrobeDescription?: string | null
+  artStyle?: string | null
+}
+
+export interface LikenessGuidedIdentityPromptResult {
+  prompt: string
+  negativeTerms: string[]
+}
+
+const CLEAN_SHAVEN_INTENT_RE =
+  /\b(?:no|not|without|zero|free\s+of|lack(?:ing)?)\s+(?:any\s+)?(?:facial\s+hair|beard|mustache|moustache|stubble|goatee)\b|\b(?:clean[- ]shaven|beardless|smooth[- ]shaven)\b/i
+
+function extractNumericTargetAge(...sources: Array<string | number | null | undefined>): number | null {
+  for (const src of sources) {
+    if (typeof src === 'number' && Number.isFinite(src) && src > 0 && src < 120) {
+      return src
+    }
+    if (typeof src !== 'string' || !src.trim()) continue
+    const explicit = src.match(
+      /\b(?:age[d]?\s*(\d{1,3})|(\d{1,3})\s*(?:-|\s)?\s*(?:year[s]?[-\s]*old|yo|yrs?))\b/i
+    )
+    if (explicit) {
+      const n = Number(explicit[1] || explicit[2])
+      if (n > 0 && n < 120) return n
+    }
+    if (/^\d{1,3}$/.test(src.trim())) {
+      const n = Number(src.trim())
+      if (n > 0 && n < 120) return n
+    }
+    const trailingNameAge = src.trim().match(/\s(\d{1,2})\s*$/)
+    if (trailingNameAge) {
+      const n = Number(trailingNameAge[1])
+      if (n >= 4 && n <= 99) return n
+    }
+  }
+  return null
+}
+
+function sanitizeReferenceTransformTextForRai(text: string, numericAge: number | null): string {
+  let out = text
+    // Fix common natural-language typo "not facial hair" -> "no facial hair"
+    .replace(/\bnot\s+facial\s+hair\b/gi, 'no facial hair')
+    .replace(/\bboys?\b/gi, 'young man')
+    .replace(/\bgirls?\b/gi, 'young woman')
+
+  if (numericAge !== null && numericAge >= 14 && numericAge < 20) {
+    out = out
+      .replace(
+        /\b(?:a\s+|an\s+)?(?:age[d]?\s*)?\d{1,2}\s*(?:-|\s)?\s*(?:year[s]?[-\s]*old|yo|yrs?)\b/gi,
+        'youthful collegiate young-adult'
+      )
+      .replace(/\b(?:teen|teenage|teenager|adolescent|minor|underage|high[\s-]*school\w*)\b/gi, 'youthful collegiate')
+  } else if (numericAge !== null && numericAge < 14) {
+    out = out
+      .replace(/\b(?:minor|underage)\b/gi, 'young')
+  }
+
+  return out.replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * Build a portrait generation prompt anchored to a Subject Likeness Reference Image
+ * (either an uploaded photo or another cast character's portrait) while explicitly
+ * overriding age, hairstyle, and facial hair where specified.
+ */
+export function buildLikenessGuidedIdentityPrompt(
+  input: LikenessGuidedIdentityPromptInput
+): LikenessGuidedIdentityPromptResult {
+  const rawStyle = input.artStyle?.trim()
+  const isDefaultPhotoreal = !rawStyle || rawStyle === 'photorealistic'
+  const isLiveAction = isDefaultPhotoreal || isPhotorealisticArtStyle(rawStyle)
+
+  let anchor = CHARACTER_IDENTITY_REFERENCE_ANCHOR
+  let styleDirectives = IDENTITY_PHOTO_REALISM_DIRECTIVES
+  if (!isLiveAction && rawStyle) {
+    const stylized = buildStylizedIdentityDirectives(rawStyle)
+    anchor = stylized.anchor
+    styleDirectives = stylized.directives
+  } else if (!isDefaultPhotoreal && rawStyle) {
+    const spec = buildArtStyleSpecFromValue(rawStyle)
+    styleDirectives = `${IDENTITY_PHOTO_REALISM_DIRECTIVES}\nGlobal Art Style grade: ${spec.stylePrompt}.`
+  }
+
+  const rawNote = input.likenessTransformNote?.trim() || ''
+  const rawAppearance = input.appearanceDescription?.trim() || ''
+  const numericAge = extractNumericTargetAge(
+    input.targetAge,
+    rawNote,
+    input.characterName,
+    rawAppearance
+  )
+
+  const wantsCleanShaven =
+    CLEAN_SHAVEN_INTENT_RE.test(rawNote) || CLEAN_SHAVEN_INTENT_RE.test(rawAppearance)
+
+  const safeNote = rawNote ? sanitizeReferenceTransformTextForRai(rawNote, numericAge) : ''
+  const safeAppearance = sanitizeReferenceTransformTextForRai(rawAppearance, numericAge)
+
+  const ageStageClause =
+    numericAge !== null && numericAge >= 15 && numericAge < 20
+      ? 'Depict at a fresh, youthful collegiate young-adult life stage with smooth unlined skin, lean youthful jawline, and zero middle-aged facial lines.'
+      : numericAge !== null && numericAge >= 20
+        ? `Depict strictly at biological age ${numericAge}.`
+        : ''
+
+  const cleanShavenClause = wantsCleanShaven
+    ? 'FACIAL HAIR OVERRIDE: Render with a completely clean-shaven, smooth jawline, chin, and upper lip — strictly zero beard, zero mustache, zero goatee, zero stubble, and zero five-o’clock shadow, completely removing any facial hair visible in Reference Image [1].'
+    : ''
+
+  const negativeTerms: string[] = []
+  if (wantsCleanShaven) {
+    negativeTerms.push(
+      'beard',
+      'mustache',
+      'goatee',
+      'stubble',
+      "five o'clock shadow",
+      'facial hair'
+    )
+  }
+  if (numericAge !== null && numericAge < 26) {
+    negativeTerms.push(
+      'deep wrinkles',
+      "crow's feet",
+      'receding hairline',
+      'gray hair',
+      'middle-aged'
+    )
+  }
+
+  const lines: string[] = [
+    anchor,
+    '',
+    'Subject Identity Anchor (Reference Image [1]): Preserve the exact underlying genetic facial identity of the person in Reference Image [1] — identical cranial and facial bone structure, eye shape, eye color, eye spacing, nose bridge and nostril contour, lip proportions, ear shape, skin tone, and heritage.',
+    '',
+    'Life-Stage & Styling Transformation (OVERRIDES Reference Image [1]): Reference Image [1] shows this individual at a different age or styling. Do NOT copy the age, skin wrinkles, hairline/hairstyle, or facial hair from Reference Image [1] wherever they differ from the target character specification below.',
+  ]
+
+  if (safeNote) {
+    lines.push('', `Requested Transformation from Reference [1]: ${safeNote}.`)
+  }
+  if (ageStageClause) {
+    lines.push(ageStageClause)
+  }
+  if (cleanShavenClause) {
+    lines.push(cleanShavenClause)
+  }
+  if (safeAppearance) {
+    lines.push('', `Target Character Appearance: ${safeAppearance}`)
+  }
+
+  const wardrobe = input.wardrobeDescription?.trim()
+  if (wardrobe) {
+    lines.push('', `Attire: ${wardrobe}`)
+  }
+
+  lines.push('', styleDirectives)
+
+  return {
+    prompt: lines.join('\n'),
+    negativeTerms,
+  }
+}
+
 /** Prompt for enhance-reference / auto-enhance pass (reference-anchored refinement). */
 export function buildEnhanceIdentityReferencePrompt(input: {
   characterName: string
