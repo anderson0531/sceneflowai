@@ -4,7 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { chunkNarrationText } from '@/lib/blueprint/sectionNarrationText'
 import { synthesizeGeminiFlashMp3, isGeminiTtsConfigured } from '@/lib/tts/geminiFlashTts'
 import { synthesizeDesignedGeminiVoiceWav } from '@/lib/tts/geminiDesignedVoiceTts'
-import { isDesignedGeminiVoiceId } from '@/lib/tts/geminiVoiceDesign'
+import { isDesignedGeminiVoiceId, prepareDesignedVoiceLine } from '@/lib/tts/geminiVoiceDesign'
+import { pickGeminiBaseVoice } from '@/lib/tts/pickGeminiBaseVoice'
 import { NARRATION_CHUNK_BYTES } from '@/lib/tts/blueprintTtsConstants'
 import type { GeminiTtsAudioType } from '@/lib/tts/geminiTtsPrompt'
 import { CreditService } from '@/services/CreditService'
@@ -47,9 +48,11 @@ export async function POST(request: NextRequest) {
           ? designPrompt.trim()
           : directorNotes
       try {
+        const prepared = prepareDesignedVoiceLine({ text: cleanText })
         const designed = await synthesizeDesignedGeminiVoiceWav({
-          text: cleanText,
+          text: prepared.text || cleanText,
           voiceId: voice,
+          style: prepared.style,
           designPrompt: resolvedDesignPrompt,
           displayName: 'SceneFlow character',
         })
@@ -76,11 +79,12 @@ export async function POST(request: NextRequest) {
           },
         })
       } catch (designedErr) {
+        const matchedFallback = pickGeminiBaseVoice(resolvedDesignPrompt || directorNotes || '')
         console.warn(
-          `[Google TTS] Designed voice ${voice} synthesis failed; falling back to gemini-Puck:`,
+          `[Google TTS] Designed voice ${voice} synthesis failed; falling back to ${matchedFallback.voiceId}:`,
           (designedErr as Error)?.message || designedErr
         )
-        voice = 'gemini-Puck'
+        voice = matchedFallback.voiceId
       }
     }
     const ttsAudioType: GeminiTtsAudioType =
@@ -137,7 +141,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return new Response(finalAudioBuffer, {
+    return new Response(new Uint8Array(finalAudioBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'audio/mpeg',

@@ -82,6 +82,66 @@ describe('composeVoiceDesignDescription', () => {
     )
     expect(shortenVoiceDesignDescription(shorter)).toBe(shorter)
   })
+
+  it('replaces structural cast-tier labels (supporting/protagonist) and drops neutral warmth filler', () => {
+    const description = composeVoiceDesignDescription({
+      role: 'supporting',
+      gender: 'male',
+      apparentAge: 'late 50s',
+      vocalWeight: 'heavy',
+      warmth: 'neutral',
+      texture: 'weathered gravelly',
+      timbre: 'bass-baritone',
+      diction: 'relaxed consonant elision',
+      accent: 'working-class Rust Belt American',
+      pace: 'unhurried',
+    })
+    expect(description).toContain('A late 50s man')
+    expect(description).not.toContain('supporting')
+    expect(description).not.toContain('neutral')
+    expect(description).toContain('chest-resonant')
+    expect(description).toContain('weathered gravelly')
+    expect(description).toContain('bass-baritone')
+    expect(description).toContain('working-class Rust Belt American accent')
+    expect(description).toContain('relaxed consonant elision')
+  })
+
+  it('uses portrait-grounded voiceDesignPrompt when aligned with gender and sanitizes cast-tier words', () => {
+    const aligned = composeVoiceDesignDescription({
+      gender: 'female',
+      apparentAge: 'early 60s',
+      voiceDesignPrompt:
+        'An early 60s woman with a smoky, chest-resonant contralto voice, dry weathered rasp, and a cultivated London British accent, speaking at an unhurried pace with crisp consonants.',
+    })
+    expect(aligned).toContain('smoky, chest-resonant contralto voice')
+    expect(aligned).toContain('London British accent')
+
+    // If user overrode gender to female, ignore a conflicting male portrait prompt
+    const overridden = composeVoiceDesignDescription({
+      gender: 'female',
+      apparentAge: 'mid 30s',
+      timbre: 'bright mezzo-soprano',
+      accent: 'Southern Piedmont American',
+      voiceDesignPrompt:
+        'A mid 30s man with a deep bass-baritone voice and a Boston accent, speaking at a brisk pace.',
+    })
+    expect(overridden).toContain('mid 30s woman')
+    expect(overridden).toContain('bright mezzo-soprano')
+    expect(overridden).not.toContain('bass-baritone')
+  })
+
+  it('uses multi-sentence Casting Brief when structured vocal traits are absent instead of emitting an empty subject', () => {
+    const description = composeVoiceDesignDescription({
+      role: 'protagonist',
+      gender: 'male',
+      apparentAge: 'early 60s',
+      voiceDescription:
+        'Early 60s weathered harbor captain with a broad chest. Deep, gravelly bass-baritone with a Scottish brogue and unhurried, clipped delivery. Vocal qualities: low register, heavy vocal weight.',
+    })
+    expect(description).toContain('gravelly bass-baritone')
+    expect(description).toContain('Scottish brogue')
+    expect(description).not.toContain('Vocal qualities')
+  })
 })
 
 describe('voice design payloads', () => {
@@ -273,13 +333,24 @@ describe('minor age & safety prompt sanitization', () => {
     expect(voice.prompted.input).toContain('young adult')
   })
 
-  it('builds a studio-safe neutral acoustic fallback from persona text', () => {
+  it('builds a studio-safe neutral acoustic fallback from persona text while preserving age, texture, and accent', () => {
     const fallback = buildNeutralVoiceDesignFallback(
       'A young adult male protagonist with an earnest baritone voice and a Pittsburgh American accent.'
     )
     expect(fallback).toContain('An adult male speaker')
     expect(fallback).toContain('baritone')
     expect(fallback).toContain('Pittsburgh American accent')
+
+    const richFallback = buildNeutralVoiceDesignFallback(
+      'An early 60s woman with a smoky, gravelly, chest-resonant contralto voice and a Scottish accent, speaking at an unhurried pace.'
+    )
+    expect(richFallback).toContain('An adult female speaker in her early 60s')
+    expect(richFallback).toContain('chest-resonant')
+    expect(richFallback).toContain('gravelly')
+    expect(richFallback).toContain('smoky')
+    expect(richFallback).toContain('contralto')
+    expect(richFallback).toContain('Scottish accent')
+    expect(richFallback).toContain('unhurried pace')
   })
 
   it('reads voice_ ids across snake_case and nested voice objects', () => {

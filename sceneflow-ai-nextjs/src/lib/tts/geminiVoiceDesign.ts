@@ -27,17 +27,33 @@ export interface VoiceDesignDescriptionInput {
   role?: string
   gender?: string
   apparentAge?: string
+  ethnicity?: string
   accent?: string
   timbre?: string
+  register?: string
+  vocalWeight?: string
+  texture?: string
+  diction?: string
   pace?: string
   warmth?: string
   authority?: string
   emotionalDefault?: string
+  /** Direct studio-acoustic Voice Design prompt from multimodal portrait analysis. */
+  voiceDesignPrompt?: string
   /** Fallback when the structured traits are too thin. */
   voiceDescription?: string
 }
 
-const VOICE_DESIGN_PROMPT_MAX = 220
+const VOICE_DESIGN_PROMPT_MAX = 300
+
+const FILLER_TRAIT_RE =
+  /^(neutral|medium|moderate|normal|standard|average|balanced|none|n\/a|unspecified|typical|default)$/i
+
+const STRUCTURAL_CAST_ROLE_RE =
+  /^(protagonists?|antagonists?|deuteragonists?|supporting(?:\s+(?:characters?|roles?|casts?))?|leads?(?:\s+(?:characters?|roles?))?|main(?:\s+(?:characters?|roles?))?|minor(?:\s+(?:characters?|roles?))?|background(?:\s+(?:characters?|roles?|extras?))?|featured(?:\s+extras?)?|extras?|characters?|cast(?:\s+members?)?|ensemble|speakers?)$/i
+
+const INLINE_STRUCTURAL_ROLE_RE =
+  /\b(protagonists?|antagonists?|deuteragonists?|supporting\s+characters?|lead\s+characters?|main\s+characters?|minor\s+characters?|background\s+characters?)\b/gi
 
 const MINOR_AGE_WORDS_RE =
   /\b(infants?|bab(?:y|ies)|toddlers?|child|children|kids?|preteens?|pre-teens?|tweens?|teens?|teenaged?|teenagers?|adolescents?|youths?|minors?|underage|juveniles?|boys?|girls?|schoolboys?|schoolgirls?|grandchild|grandchildren|granddaughters?|grandsons?|high[\s-]*school\w*|middle[\s-]*school\w*|elementary[\s-]*school\w*)\b/gi
@@ -123,7 +139,7 @@ export function sanitizeVoiceDesignDisplayName(displayName: string | undefined):
   return sanitized.slice(0, 80)
 }
 
-/** Words before a slash, without a leading article, capped so a story paragraph stays out. */
+/** Words before a slash, without a leading article or non-vocal structural cast slot labels. */
 function shortRole(role: string | undefined): string {
   const head = cleanPhrase(role).split('/')[0] ?? ''
   const safeHead = sanitizeVoiceDesignTrait(head)
@@ -131,12 +147,20 @@ function shortRole(role: string | undefined): string {
     .replace(/\bstudents?\b/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-  return safeHead
+  const stripped = safeHead
     .replace(/^(the|a|an)\s+/i, '')
     .split(' ')
     .filter(Boolean)
     .slice(0, 4)
     .join(' ')
+  if (!stripped || STRUCTURAL_CAST_ROLE_RE.test(stripped)) return ''
+  return stripped
+}
+
+function nonFillerTrait(value: string | undefined): string {
+  const trait = sanitizeVoiceDesignTrait(value)
+  if (!trait || FILLER_TRAIT_RE.test(trait)) return ''
+  return trait
 }
 
 function articleFor(subject: string): 'A' | 'An' {
@@ -153,45 +177,153 @@ function capSentence(text: string): string {
   return `${trimmed}.`
 }
 
-/** First vocal clause of a casting brief, without the attribute tail. */
+/** Extract vocal persona sentences from a casting brief, stripping any appended attribute tail. */
 function vocalLineFromBrief(brief: string | undefined): string {
-  const head = cleanPhrase(brief).split(/vocal qualities:/i)[0] ?? ''
-  const first = head.split(/[.!?]/)[0]?.trim() ?? ''
-  if (first.length < 12) return ''
-  const safeFirst = stripUnderTwentyTokens(
-    first.replace(/\bboys?\b/gi, 'male').replace(/\bgirls?\b/gi, 'female')
+  const head = cleanPhrase(brief).split(/vocal qualities:/i)[0]?.trim() ?? ''
+  if (head.length < 12) return ''
+  const safeHead = stripUnderTwentyTokens(
+    head.replace(/\bboys?\b/gi, 'male').replace(/\bgirls?\b/gi, 'female')
   )
     .replace(MINOR_AGE_WORDS_RE, 'young adult')
     .replace(SAFETY_REFUSAL_WORDS_RE, ' ')
+    .replace(INLINE_STRUCTURAL_ROLE_RE, 'speaker')
     .replace(/\s+/g, ' ')
     .trim()
-  if (safeFirst.length < 12) return ''
-  return capSentence(safeFirst)
+  if (safeHead.length < 12) return ''
+  return capSentence(safeHead)
+}
+
+function hasConflictingPromptGender(prompt: string, expectedGender: string): boolean {
+  const g = expectedGender.toLowerCase()
+  if (g === 'male') {
+    return /\b(woman|women|female|contralto|mezzo-soprano|mezzo|soprano|actress)\b/i.test(prompt)
+  }
+  if (g === 'female') {
+    return /\b(man|men|male|baritone|bass-baritone|tenor|bass|actor)\b/i.test(prompt)
+  }
+  return false
+}
+
+function sanitizeDirectVoiceDesignPrompt(
+  rawPrompt: string | undefined,
+  expectedGender: string,
+): string {
+  const cleaned = cleanPhrase(rawPrompt)
+  if (cleaned.length < 28) return ''
+  if (expectedGender && hasConflictingPromptGender(cleaned, expectedGender)) return ''
+
+  const sanitized = sanitizePromptedVoiceInput(cleaned)
+    .replace(SAFETY_REFUSAL_WORDS_RE, ' ')
+    .replace(INLINE_STRUCTURAL_ROLE_RE, (_m) => {
+      if (expectedGender === 'male') return 'man'
+      if (expectedGender === 'female') return 'woman'
+      return 'speaker'
+    })
+    .replace(/\b(?:male|female)\s+(man|woman)\b/gi, '$1')
+    .replace(/\s*,\s*,+/g, ', ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (sanitized.length < 28) return ''
+  return capSentence(sanitized)
+}
+
+function registerFallbackTimbre(register: string, gender: string): string {
+  const r = register.toLowerCase()
+  const isFemale = gender.toLowerCase() === 'female'
+  const isMale = gender.toLowerCase() === 'male'
+  if (r === 'low') return isFemale ? 'deep contralto' : isMale ? 'deep bass-baritone' : 'deep low-register'
+  if (r === 'low-mid') return isFemale ? 'low-mid alto' : isMale ? 'grounded baritone' : 'low-mid register'
+  if (r === 'mid') return isFemale ? 'mezzo-soprano' : isMale ? 'natural baritone-tenor' : 'mid-register'
+  if (r === 'mid-high') return isFemale ? 'bright mezzo-soprano' : isMale ? 'lyric tenor' : 'bright mid-high'
+  if (r === 'high') return isFemale ? 'bright soprano' : isMale ? 'high tenor' : 'high-register'
+  return ''
+}
+
+function buildVoiceDescriptorPhrase(args: {
+  timbre: string
+  register: string
+  vocalWeight: string
+  warmth: string
+  texture: string
+  gender: string
+}): string {
+  const baseTimbre = args.timbre || registerFallbackTimbre(args.register, args.gender)
+  const combinedLower = `${args.warmth} ${args.texture} ${baseTimbre}`.toLowerCase()
+
+  let weightCue = ''
+  if (args.vocalWeight === 'heavy' && !/\b(chest|heavy|full|deep|booming)\b/.test(combinedLower)) {
+    weightCue = 'chest-resonant'
+  } else if (args.vocalWeight === 'light' && !/\b(light|airy|delicate|thin)\b/.test(combinedLower)) {
+    weightCue = 'light'
+  }
+
+  const warmthCue =
+    args.warmth && !baseTimbre.toLowerCase().includes(args.warmth.toLowerCase())
+      ? args.warmth
+      : ''
+
+  const textureCue =
+    args.texture && !baseTimbre.toLowerCase().includes(args.texture.toLowerCase())
+      ? args.texture
+      : ''
+
+  const modifiers = [weightCue, warmthCue, textureCue].filter(Boolean)
+  if (!baseTimbre && modifiers.length === 0) return ''
+  if (!baseTimbre) return modifiers.join(', ')
+  if (modifiers.length === 0) return baseTimbre
+  return `${modifiers.join(', ')}, ${baseTimbre}`
 }
 
 /**
- * One spoken-persona sentence: age, gender, a short role, timbre, accent,
- * and how they speak. Built from the portrait analysis and the character's role.
+ * Spoken-persona description for Vertex Gemini Voice Design (`VOICE_TYPE_PROMPTED`).
+ * Anchors age, gender, vocal tract weight/resonance, timbre, vocal fold texture,
+ * specific accent, speaking pace, and diction to the character portrait and brief.
  */
 export function composeVoiceDesignDescription(input: VoiceDesignDescriptionInput): string {
   const gender = sanitizeVoiceDesignGender(input.gender)
+  const directPrompt = sanitizeDirectVoiceDesignPrompt(input.voiceDesignPrompt, gender)
+  if (directPrompt) return directPrompt
+
   const age = sanitizeVoiceDesignAge(input.apparentAge)
   const role = shortRole(input.role)
-  const timbre = sanitizeVoiceDesignTrait(input.timbre)
+  const timbre = nonFillerTrait(input.timbre)
+  const register = nonFillerTrait(input.register)
+  const vocalWeight = nonFillerTrait(input.vocalWeight).toLowerCase()
+  const texture = nonFillerTrait(input.texture)
+  const diction = nonFillerTrait(input.diction)
   const accent = sanitizeVoiceDesignTrait(input.accent)
-  const pace = sanitizeVoiceDesignTrait(input.pace)
-  const warmth = sanitizeVoiceDesignTrait(input.warmth)
-  const authority = sanitizeVoiceDesignTrait(input.authority)
-  const baseline = sanitizeVoiceDesignTrait(input.emotionalDefault)
+  const pace = nonFillerTrait(input.pace)
+  const warmth = nonFillerTrait(input.warmth)
+  const authority = nonFillerTrait(input.authority)
+  const baseline = nonFillerTrait(input.emotionalDefault)
 
-  const subject = [age, gender, role].filter(Boolean).join(' ') || 'speaker'
-  const voice = [warmth, timbre].filter(Boolean).join(', ')
+  let subject: string
+  if (role) {
+    subject = [age, gender, role].filter(Boolean).join(' ')
+  } else if (gender === 'male') {
+    subject = [age || 'adult', 'man'].join(' ')
+  } else if (gender === 'female') {
+    subject = [age || 'adult', 'woman'].join(' ')
+  } else {
+    subject = [age, gender, 'speaker'].filter(Boolean).join(' ') || 'speaker'
+  }
+
+  const voice = buildVoiceDescriptorPhrase({
+    timbre,
+    register,
+    vocalWeight,
+    warmth,
+    texture,
+    gender,
+  })
+
   let sentence = `${articleFor(subject)} ${subject}`
   if (voice && accent) sentence += ` with a ${voice} voice and a ${accent} accent`
   else if (voice) sentence += ` with a ${voice} voice`
   else if (accent) sentence += ` with a ${accent} accent`
 
-  const standing = [authority, baseline].filter(
+  const standing = [diction, authority, baseline].filter(
     (item, index, items) =>
       !!item && items.findIndex((entry) => entry.toLowerCase() === item.toLowerCase()) === index
   )
@@ -200,34 +332,100 @@ export function composeVoiceDesignDescription(input: VoiceDesignDescriptionInput
     const bare = pace.replace(/\s+pace$/i, '')
     speaking.push(`at a ${bare} pace`)
   }
-  if (standing.length > 0) speaking.push(`with ${standing.join(' and ')}`)
+  if (standing.length > 0) {
+    const joinedStanding =
+      standing.length === 1
+        ? standing[0]!
+        : `${standing.slice(0, -1).join(', ')} and ${standing[standing.length - 1]}`
+    speaking.push(`with ${joinedStanding}`)
+  }
   if (speaking.length > 0) sentence += `, speaking ${speaking.join(' ')}`
+
+  const hasAcousticTraits = Boolean(voice || accent || speaking.length > 0)
+  if (!hasAcousticTraits) {
+    const briefPersona = vocalLineFromBrief(input.voiceDescription)
+    if (briefPersona) return briefPersona
+  }
 
   const description = capSentence(sentence)
   if (description.length >= 24) return description
   return vocalLineFromBrief(input.voiceDescription)
 }
 
+const SAFE_ACOUSTIC_TEXTURES = [
+  'chest-resonant',
+  'full-bodied',
+  'gravelly',
+  'raspy',
+  'husky',
+  'smoky',
+  'breathy',
+  'airy',
+  'velvety',
+  'weathered',
+  'earthy',
+  'reedy',
+  'crisp',
+  'bright',
+  'deep',
+  'warm',
+  'dry',
+  'rich',
+  'smooth',
+  'earnest',
+] as const
+
 /**
  * Pure studio-acoustic fallback sentence stripped of story roles and edge traits,
- * used when Vertex rejects both the full and shortened persona prompts.
+ * used when Vertex rejects both the full and shortened persona prompts while still
+ * preserving the character's age decade, vocal texture, weight, register, accent, and pace.
  */
 export function buildNeutralVoiceDesignFallback(description: string): string {
-  const clean = cleanPhrase(description)
-  const isFemale = /\b(female|woman|mezzo|soprano|contralto|actress)\b/i.test(clean)
-  const isMale = !isFemale && /\b(male|man|baritone|tenor|bass|actor)\b/i.test(clean)
+  const clean = sanitizePromptedVoiceInput(cleanPhrase(description))
+  const isFemale = /\b(female|woman|women|mezzo-soprano|mezzo|soprano|contralto|actress)\b/i.test(clean)
+  const isMale = !isFemale && /\b(male|man|men|bass-baritone|baritone|tenor|bass|actor)\b/i.test(clean)
   const genderWord = isFemale ? 'female' : isMale ? 'male' : ''
-  const registerMatch = clean.match(/\b(baritone|tenor|bass|alto|mezzo-soprano|soprano|contralto)\b/i)
-  const register = registerMatch ? registerMatch[1]!.toLowerCase() : ''
-  const accentMatch = clean.match(
-    /\b(?:voice\s+and|with)\s+an?\s+([A-Za-z][A-Za-z\s-]{1,28}?)\s+accent\b/i
-  )
-  const safeAccent = accentMatch ? sanitizeVoiceDesignTrait(accentMatch[1]) : ''
 
-  const subject = ['adult', genderWord, 'speaker'].filter(Boolean).join(' ')
-  const timbre = register ? `clear, natural ${register}` : 'clear, warm, natural'
+  const ageBandMatch = clean.match(
+    /\b((?:early|mid|late)[-\s]+(?:20s|30s|40s|50s|60s|70s|80s)|(?:20s|30s|40s|50s|60s|70s|80s))\b/i
+  )
+  const ageDecade = ageBandMatch ? ageBandMatch[1]!.toLowerCase().replace(/-/g, ' ') : ''
+  const pronoun = isFemale ? 'her' : isMale ? 'his' : 'their'
+  const ageClause = ageDecade ? ` in ${pronoun} ${ageDecade}` : ''
+
+  const registerMatch = clean.match(
+    /\b(bass-baritone|baritone-tenor|mezzo-soprano|contralto|baritone|tenor|bass|alto|soprano)\b/i
+  )
+  const register = registerMatch ? registerMatch[1]!.toLowerCase() : ''
+
+  const extractedTextures: string[] = []
+  for (const tex of SAFE_ACOUSTIC_TEXTURES) {
+    const re = new RegExp(`\\b${tex.replace('-', '[-\\s]')}\\b`, 'i')
+    if (re.test(clean) && extractedTextures.length < 3) {
+      extractedTextures.push(tex)
+    }
+  }
+
+  const accentMatch =
+    clean.match(/\b(?:voice[^,.]*?\s+and|with)\s+an?\s+([A-Za-z][A-Za-z\s-]{1,34}?)\s+accent\b/i) ??
+    clean.match(/\ban?\s+([A-Za-z][A-Za-z\s-]{1,34}?)\s+accent\b/i)
+  const rawAccent = accentMatch ? sanitizeVoiceDesignTrait(accentMatch[1]) : ''
+  const safeAccent =
+    rawAccent && !/\b(voice|timbre|baritone|tenor|alto|soprano|contralto)\b/i.test(rawAccent)
+      ? rawAccent
+      : ''
+
+  const paceMatch = clean.match(
+    /\b(unhurried|deliberate|measured|brisk|lively|relaxed|clipped|conversational)\b/i
+  )
+  const paceWord = paceMatch ? paceMatch[1]!.toLowerCase() : 'steady conversational'
+  const pacePhrase = paceWord === 'conversational' ? 'natural conversational' : paceWord
+
+  const subject = ['adult', genderWord, 'speaker'].filter(Boolean).join(' ') + ageClause
+  const timbreDescriptors = extractedTextures.length > 0 ? extractedTextures.join(', ') : 'clear, natural'
+  const timbre = register ? `${timbreDescriptors} ${register}` : `${timbreDescriptors}, natural`
   const accentClause = safeAccent ? ` and a ${safeAccent} accent` : ''
-  return capSentence(`An ${subject} with a ${timbre} voice${accentClause}, speaking at a steady conversational pace`)
+  return capSentence(`An ${subject} with a ${timbre} voice${accentClause}, speaking at a ${pacePhrase} pace`)
 }
 
 /** Drop the speaking clause for a second attempt after Google asks for a rephrase. */

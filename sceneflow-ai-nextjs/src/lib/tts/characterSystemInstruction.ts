@@ -197,6 +197,8 @@ export function personaFromVocalAttributes(input: {
   ethnicity?: string
   vocalAttributes?: {
     timbre?: string
+    texture?: string
+    diction?: string
     pitch?: string
     pace?: string
     authority?: string
@@ -212,10 +214,15 @@ export function personaFromVocalAttributes(input: {
 }): CharacterPersona {
   const attrs = input.vocalAttributes ?? {}
 
-  const timbre = joinClause([
+  const timbreParts = [
     attrs.timbre?.trim(),
+    attrs.texture?.trim() &&
+    !attrs.timbre?.toLowerCase().includes(attrs.texture.trim().toLowerCase())
+      ? `with ${attrs.texture.trim()}`
+      : undefined,
     attrs.pitch?.trim() ? `pitched in the ${attrs.pitch.trim()} range` : undefined,
-  ])
+  ]
+  const timbre = joinClause(timbreParts)
 
   return {
     name: input.name,
@@ -224,6 +231,7 @@ export function personaFromVocalAttributes(input: {
     gender: input.gender,
     ethnicity: input.ethnicity,
     timbre: timbre || undefined,
+    diction: attrs.diction?.trim() || undefined,
     accent: attrs.accent,
     cadence: attrs.pace,
     wpm: attrs.wpm,

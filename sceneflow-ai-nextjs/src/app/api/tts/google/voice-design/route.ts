@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       voiceName: body.displayName?.trim() || 'Designed voice',
       prompt: description,
       designPrompt: description,
+      promptUsed: created.promptUsed || description,
       model: DESIGNED_VOICE_TTS_MODEL,
     })
   } catch (error) {

@@ -189,21 +189,28 @@ async function postVoice(
   return { ok: true, status: response.status, detail: '', payload: await response.json() }
 }
 
+function extractAttemptPrompt(body: Record<string, unknown>, fallback: string): string {
+  const voice = body.voice as { prompted?: { input?: string } } | undefined
+  return voice?.prompted?.input?.trim() || fallback
+}
+
 async function createFromAttempts(args: {
   description: string
   displayName: string
   languageCode?: string
   headers: Record<string, string>
-}): Promise<{ ok: boolean; status: number; detail: string; payload: unknown }> {
+}): Promise<{ ok: boolean; status: number; detail: string; payload: unknown; promptUsed: string }> {
   const attempts = voiceDesignCreateAttempts({
     description: args.description,
     displayName: args.displayName,
     languageCode: args.languageCode,
   })
+  let promptUsed = extractAttemptPrompt(attempts[0], args.description)
   let result = await postVoice(attempts[0], args.headers)
   const shorter = attempts[1]
   if (!result.ok && shorter && promptRejected(result.status, result.detail)) {
     console.warn('[Voice Design] prompt rejected, retrying shorter:', args.description.slice(0, 240))
+    promptUsed = extractAttemptPrompt(shorter, promptUsed)
     result = await postVoice(shorter, args.headers)
   }
   if (!result.ok && promptRejected(result.status, result.detail)) {
@@ -217,9 +224,10 @@ async function createFromAttempts(args: {
       displayName: 'Studio Character',
       languageCode: args.languageCode,
     })
+    promptUsed = extractAttemptPrompt(neutralBody, neutralDescription)
     result = await postVoice(neutralBody, args.headers)
   }
-  return result
+  return { ...result, promptUsed }
 }
 
 /**
@@ -282,7 +290,7 @@ export async function createDesignedGeminiVoice(args: {
   retainVoiceIds?: string[]
   /** Previous designed voice for this character. Overlaid/deleted so slots do not accumulate. */
   replaceVoiceId?: string
-}): Promise<{ voiceId: string }> {
+}): Promise<{ voiceId: string; promptUsed: string }> {
   const description = args.description.trim()
   if (description.length < 12) {
     throw new Error('Voice Design needs a description of the character’s voice')
@@ -374,7 +382,7 @@ export async function createDesignedGeminiVoice(args: {
       await deleteVoice(previous, headers)
     }
   }
-  return { voiceId }
+  return { voiceId, promptUsed: result.promptUsed }
 }
 
 function readInlineAudio(payload: unknown): Buffer | null {

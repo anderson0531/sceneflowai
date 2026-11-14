@@ -6,6 +6,10 @@ export type WardrobeVoiceGender = 'male' | 'female'
 
 export interface VocalAttributes {
   timbre?: string
+  /** Vocal fold phonation & surface grain (e.g. subtle gravel, smoky rasp, airy breathiness, velvety chest warmth). */
+  texture?: string
+  /** Consonant attack & articulatory precision (e.g. crisp clipped consonants, relaxed conversational elision). */
+  diction?: string
   pitch?: string
   pace?: string
   authority?: string
@@ -21,6 +25,8 @@ export interface VocalAttributes {
   inflection?: string
   /** Standing emotional state when no scene direction overrides it. */
   emotionalDefault?: string
+  /** Direct studio-acoustic Voice Design persona matched to the character portrait for Vertex VOICE_TYPE_PROMPTED. */
+  voiceDesignPrompt?: string
 }
 
 export interface WardrobeVoiceCharacterInput {
@@ -93,10 +99,19 @@ export function formatVocalAttributesForDescription(attrs: VocalAttributes): str
   if (attrs.register?.trim()) parts.push(`${attrs.register.trim()} register`)
   if (attrs.vocalWeight?.trim()) parts.push(`${attrs.vocalWeight.trim()} vocal weight`)
   if (attrs.timbre?.trim()) parts.push(`${attrs.timbre.trim()} timbre`)
+  if (
+    attrs.texture?.trim() &&
+    !attrs.timbre?.toLowerCase().includes(attrs.texture.trim().toLowerCase())
+  ) {
+    parts.push(`${attrs.texture.trim()} texture`)
+  }
+  if (attrs.diction?.trim()) parts.push(attrs.diction.trim())
   if (attrs.pitch?.trim()) parts.push(`${attrs.pitch.trim()} pitch`)
   if (attrs.pace?.trim()) parts.push(`${attrs.pace.trim()} pace`)
   if (attrs.authority?.trim()) parts.push(`${attrs.authority.trim()} authority`)
-  if (attrs.warmth?.trim()) parts.push(`${attrs.warmth.trim()} warmth`)
+  if (attrs.warmth?.trim() && !/^neutral$/i.test(attrs.warmth.trim())) {
+    parts.push(`${attrs.warmth.trim()} warmth`)
+  }
   if (attrs.accent?.trim()) parts.push(`${attrs.accent.trim()} accent`)
   return parts.join(', ')
 }
@@ -109,6 +124,7 @@ export function buildWardrobeVoiceAnalysisPrompt(
     characterRole?: string
     personality?: string
     appearanceDescription?: string
+    existingCastingBrief?: string
     hasPortrait?: boolean
   },
 ): string {
@@ -136,71 +152,85 @@ export function buildWardrobeVoiceAnalysisPrompt(
     ? `\nPHYSICAL IDENTITY (from Body Description — use this for age, ethnicity, build, face, and hair cues):\n${appearance}\n`
     : ''
 
-  const portraitBlock = hasPortrait
-    ? `PORTRAIT REFERENCE:
-An attached character portrait is provided. Use it to refine gender, apparent age, ethnicity, and how the person should sound. Reconcile portrait cues with role and the physical identity above; if they conflict on gender, favor the narrative unless the portrait clearly contradicts it. Do not describe clothing or wardrobe.`
-    : `NO PORTRAIT:
-No reference image is attached. Derive the voice profile from role, physical identity, and production context below.`
+  const existingBrief = options?.existingCastingBrief?.trim()
+  const existingBriefBlock = existingBrief
+    ? `\nEXISTING CASTING BRIEF (preserve explicit director vocal intent such as regional accent or specific vocal character, but replace any generic announcer stereotypes with physical specificity from the portrait and appearance):\n${existingBrief}\n`
+    : ''
 
-  return `You are an expert voice casting director for film, television, and documentary narration.
+  const portraitBlock = hasPortrait
+    ? `PORTRAIT REFERENCE (MULTIMODAL VOCAL PHYSIOLOGY ANCHOR — match the voice directly to this visible person like Veo / Gemini Omni):
+An attached character reference image is provided. Inspect the visible person closely so the voice unmistakably belongs to this exact human being on screen:
+1. Craniofacial & Vocal Tract Resonance: Read jaw width, cheekbone/nasal structure, neck thickness, and chest/shoulder frame to infer vocal tract length, deep chest vs. forward oral/mask placement, physical "vocalWeight", and "register".
+2. Exact Age & Vocal Fold Physiology: Read skin texture, eye lines, vitality, and posture to pinpoint half-decade age (e.g. "early 20s", "mid 30s", "late 50s", "early 70s") and age-authentic vocal fold texture (youthful taut clarity, settled midlife warmth, lived-in grain, weathered gravel, dry smoky rasp, subtle breathy air, or reediness).
+3. Resting Tension & Micro-Articulation: Read jaw tension, gaze, and demeanor to infer "texture" and "diction" (crisp clipped consonants vs. relaxed conversational elision, working-class directness vs. cultivated precision).
+4. Cultural, Regional & Sociolect Specificity: Combine visible heritage cues, character name, ethnicity, and production setting to infer an authentic regional, cultural, or class-grounded accent/cadence. Do NOT default everyone to "neutral American" when regional or international specificity fits.
+Reconcile portrait cues with narrative role; if narrative and portrait conflict on gender, favor explicit narrative gender unless the portrait clearly shows otherwise. If the image is a multi-panel reference sheet, read the portrait head and physical build while ignoring outfits. Do not describe clothing or wardrobe.`
+    : `NO PORTRAIT:
+No reference image is attached. Derive the physical voice profile from role, physical identity, name, ethnicity, and production context below.`
+
+  return `You are an expert multimodal film voice casting director and acoustic vocal physiologist for cinema, television, and documentary production.
 
 CHARACTER: ${characterName}
 
-${narrativeLines.length > 0 ? `CHARACTER NARRATIVE (PRIMARY — cast from this first):\n${narrativeLines.join('\n')}` : 'CHARACTER NARRATIVE: Limited — infer voice from name and production context.'}
-${appearanceBlock}
-${screenplayLines.length > 0 ? `\nPRODUCTION CONTEXT:\n${screenplayLines.join('\n')}` : ''}
+${narrativeLines.length > 0 ? `CHARACTER NARRATIVE (PRIMARY — role & persona context):\n${narrativeLines.join('\n')}` : 'CHARACTER NARRATIVE: Limited — infer voice from portrait, physical identity, name, and production context.'}
+${appearanceBlock}${existingBriefBlock}${screenplayLines.length > 0 ? `\nPRODUCTION CONTEXT:\n${screenplayLines.join('\n')}` : ''}
 
 ${portraitBlock}
 
-CASTING GUIDANCE:
-- Academic, intellectual, professor, historian, narrator, guide → measured pace, controlled resonance, articulate diction, quiet authority, conviction, lower-mid pitch
-- Corporate executive, attorney, judge, military → authoritative, crisp, confident, polished
-- Warm mentor, caregiver, empathetic lead → warm, gentle, reassuring timbre
-- Youthful protagonist, sidekick, comedic relief → brighter, energetic, approachable
-- Veteran, elder, grizzled investigator → gravelly, deep, seasoned, mature timbre
+ANTI-GENERIC CASTING RULES (CRITICAL):
+- Avoid smooth, interchangeable "AI radio announcer" or corporate narrator voices unless the character is literally a professional broadcaster or narrator.
+- NEVER default every man to "resonant baritone" + "measured pace" + "quiet authority" or every woman to "warm alto" + "measured pace".
+- Differentiate real human voices through physical anatomy and vocal fold texture: e.g. gritty bass-baritone, nasal-bright lyric tenor, reedy quick-talking baritone, booming chesty bass, smoky husky contralto, airy intimate mezzo-soprano, crisp bright soprano, dry weathered alto, subtle vocal fry, breathy trail, or gravelled edge.
+- Never set "warmth" to the bland word "neutral" when a real tonal color applies (use e.g. "warm and earthy", "dry and understated", "cool and flinty", "bright and open", "velvety").
 
 TASK:
-Synthesize how this character should sound in Gemini TTS. Return a single JSON object.
+Synthesize how this exact person sounds in Gemini Voice Design & TTS. Return a single JSON object.
 
 REQUIREMENTS:
 1. "gender" — exactly "male" or "female" from narrative and${hasPortrait ? ' portrait' : ''} cues.
-2. "apparentAge" — short phrase (e.g. "late 40s", "early 60s", "mid 20s").
-3. "ethnicity" — optional, brief accent/cultural hint if inferable.
-4. "vocalAttributes" — the acoustic parameters. These select the base voice, so be literal, not evocative:
-   - "register" — EXACTLY one of: low, low-mid, mid, mid-high, high. Perceived pitch band within this character's own gender range.
-   - "vocalWeight" — EXACTLY one of: light, medium, heavy. Heft and body, independent of pitch.
-   - "timbre" (e.g. resonant baritone, bright tenor, warm alto)
-   - "pitch" (e.g. low, mid, high)
-   - "pace" (e.g. measured, brisk, deliberate)
+2. "apparentAge" — exact half-decade or age band (e.g. "early 20s", "mid 30s", "late 40s", "early 60s", "mid 70s").
+3. "ethnicity" — brief heritage / regional cultural cue if inferable.
+4. "vocalAttributes" — concrete physical acoustic parameters matched to this individual:
+   - "register" — EXACTLY one of: low, low-mid, mid, mid-high, high (within this character's gender range).
+   - "vocalWeight" — EXACTLY one of: light, medium, heavy (physical chest/vocal-tract heft, independent of pitch).
+   - "timbre" — specific voice body & placement (e.g. "chest-heavy bass-baritone", "bright forward lyric tenor", "smoky contralto", "clear agile mezzo-soprano", "dry reedy baritone").
+   - "texture" — vocal fold surface grain & phonation (e.g. "subtle weathered gravel", "velvety chest resonance", "light breathy edge", "dry smoky rasp", "crisp clean ring").
+   - "diction" — consonant & phrasing articulation (e.g. "crisp clipped consonants", "relaxed conversational elision", "unpolished working-class cadence", "deliberate articulate phrasing").
+   - "pitch" — short pitch placement phrase (e.g. "deep low", "grounded low-mid", "conversational mid", "bright mid-high").
+   - "pace" — natural speaking rhythm (e.g. "unhurried and deliberate", "natural conversational", "brisk and agile", "clipped and economical").
    - "wpm" — integer words per minute, 95–190. Deliberate ≈ 110, measured ≈ 130, conversational ≈ 150, brisk ≈ 170.
-   - "inflection" — pitch-contour rule, e.g. "flat and declarative; resolve sentences downward, no up-speak".
-   - "emotionalDefault" — standing affect when no scene direction applies, e.g. "clinical detachment".
-   - "authority" (e.g. quiet authority, commanding, approachable)
-   - "warmth" (e.g. warm, neutral, cool)
-   - "accent" (e.g. neutral American, British RP) — optional
-5. "voiceDescription" — 200–600 characters CASTING BRIEF. Combine standing physical identity (age, ethnicity, build, face, hair) with role, demeanor, cadence, and accent. This is the matching brief and the Gemini voice profile. No clothing, wardrobe, plot, or dialogue.
-6. "audioProfile" — 4–5 sentences, Director's Note for Gemini TTS. Vocal style only: timbre, pitch, cadence, accent, texture, emotional delivery. Do NOT write dialogue. Do NOT mention clothing, wardrobe, or plot.
+   - "inflection" — pitch-contour rule, e.g. "grounded declarative contour resolving downward" or "lively conversational melody with quick emphasis".
+   - "emotionalDefault" — standing baseline demeanor when speaking normally (no extreme safety-trigger emotions).
+   - "authority" — social vocal presence (e.g. "grounded working-class directness", "easy approachable candor", "weathered command", "guarded restraint").
+   - "warmth" — tonal color (e.g. "warm and earthy", "dry and understated", "cool and flinty", "bright and open").
+   - "accent" — specific regional, sociolect, or international accent (e.g. "working-class Rust Belt American", "soft Southern Piedmont American", "cultivated London British", "East Coast urban American", "General American").
+   - "voiceDesignPrompt" — 1–2 concise studio-acoustic sentences (120–260 characters) written directly for Vertex Gemini Voice Design (VOICE_TYPE_PROMPTED). Start with age decade + "man" or "woman" (NEVER include character names or story labels like "protagonist", "supporting", "antagonist"), then specify physical vocal weight/resonance, timbre, vocal fold texture, specific accent, speaking pace, and diction so the synthesized voice matches the face in the portrait.
+5. "voiceDescription" — 200–600 characters CASTING BRIEF. Combine standing physical identity (age, ethnicity, build, face, hair) with role, demeanor, vocal texture, cadence, and accent. This is the matching brief and the Gemini voice profile. Do NOT mention clothing, wardrobe, plot, or dialogue.
+6. "audioProfile" — 4–5 sentences, Director's Note for Gemini TTS. Vocal style only: timbre, vocal tract resonance, texture, pitch, cadence, diction, accent, and baseline delivery. Do NOT write dialogue. Do NOT mention clothing, wardrobe, or plot.
 
 OUTPUT: Return ONLY valid JSON, no markdown:
 {
-  "gender": "male",
-  "apparentAge": "late 50s",
-  "ethnicity": "optional string",
+  "gender": "male | female",
+  "apparentAge": "<exact age band, e.g. mid 20s | early 40s | late 60s>",
+  "ethnicity": "<optional cultural/regional cue>",
   "vocalAttributes": {
-    "register": "low-mid",
-    "vocalWeight": "heavy",
-    "timbre": "resonant baritone",
-    "pitch": "low-mid",
-    "pace": "deliberate and controlled",
-    "wpm": 115,
-    "inflection": "flat and declarative; resolve sentences downward, no up-speak",
-    "emotionalDefault": "calm, composed detachment",
-    "authority": "quiet authority",
-    "warmth": "cool",
-    "accent": "neutral American"
+    "register": "<low | low-mid | mid | mid-high | high>",
+    "vocalWeight": "<light | medium | heavy>",
+    "timbre": "<specific non-generic timbre matched to face & build>",
+    "texture": "<specific vocal fold phonation texture>",
+    "diction": "<specific consonant & phrasing articulation>",
+    "pitch": "<pitch placement>",
+    "pace": "<speaking rhythm>",
+    "wpm": 145,
+    "inflection": "<pitch-contour rule>",
+    "emotionalDefault": "<standing baseline affect>",
+    "authority": "<social vocal presence>",
+    "warmth": "<specific tonal color>",
+    "accent": "<specific regional, cultural, or General accent>",
+    "voiceDesignPrompt": "<1-2 sentence pure studio-acoustic Voice Design prompt with age, man/woman, resonance, timbre, texture, accent, pace, and diction — no names or story-role nouns>"
   },
-  "voiceDescription": "casting brief paragraph",
-  "audioProfile": "Director's Note paragraph"
+  "voiceDescription": "<200-600 char casting brief combining physical identity + vocal profile>",
+  "audioProfile": "<4-5 sentence vocal-only Director's Note>"
 }`
 }
 
@@ -223,6 +253,8 @@ function parseVocalAttributes(raw: unknown): VocalAttributes | undefined {
 
   const textKeys = [
     'timbre',
+    'texture',
+    'diction',
     'pitch',
     'pace',
     'authority',
@@ -234,6 +266,11 @@ function parseVocalAttributes(raw: unknown): VocalAttributes | undefined {
   for (const key of textKeys) {
     const val = String(obj[key] ?? '').trim()
     if (val) attrs[key] = val.slice(0, 160)
+  }
+
+  const voiceDesignPrompt = String(obj.voiceDesignPrompt ?? '').trim()
+  if (voiceDesignPrompt.length >= 20) {
+    attrs.voiceDesignPrompt = voiceDesignPrompt.slice(0, 320)
   }
 
   const register = parseEnum(obj.register, REGISTER_VALUES)

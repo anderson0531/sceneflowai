@@ -104,6 +104,7 @@ import {
   vocalCharacterContext,
 } from "@/lib/tts/buildCharacterVoiceProfile";
 import {
+  getWardrobeVoiceImageForCharacter,
   type WardrobeVoiceAnalysisResult,
 } from "@/lib/character/wardrobeVoiceAnalysis";
 import type { EdgeVoiceConfig } from "@/types/vision";
@@ -2489,13 +2490,32 @@ const CharacterCard = ({
     });
   }, [focusedWardrobeId, isCollapsed, activeTab]);
 
-  const hasCharacterReferenceForVoice =
+  const primaryPortraitUrl =
     typeof character.referenceImage === "string" &&
-    character.referenceImage.trim().startsWith("http");
+    character.referenceImage.trim().startsWith("http")
+      ? character.referenceImage.trim()
+      : undefined;
+
+  const fallbackLookUrl =
+    wardrobes
+      .map(
+        (w) =>
+          w.headshotUrl?.trim() ||
+          w.fullBodyUrl?.trim() ||
+          w.previewImageUrl?.trim(),
+      )
+      .find((url) => typeof url === "string" && url.startsWith("http")) ??
+    getWardrobeVoiceImageForCharacter({ wardrobes })?.imageUrl ??
+    undefined;
+
+  const voiceReferenceImageUrl = primaryPortraitUrl || fallbackLookUrl;
+
+  const hasCharacterReferenceForVoice = Boolean(voiceReferenceImageUrl);
 
   const hasNarrativeForVoice =
     Boolean(character.description?.trim()) ||
     Boolean(character.appearanceDescription?.trim()) ||
+    Boolean(character.voiceDescription?.trim()) ||
     Boolean(character.role?.trim()) ||
     Boolean(character.keyFeature?.trim());
 
@@ -2528,9 +2548,7 @@ const CharacterCard = ({
   ): Promise<boolean> => {
     const text =
       sampleText ||
-      (characterContext?.name
-        ? `${characterContext.name}: This is how I sound in this production.`
-        : "This is how I sound in this production.");
+      "Every story leaves a mark if you listen closely enough. Tell me where you want to begin.";
 
     if (voicePreviewAudioRef.current) {
       voicePreviewAudioRef.current.pause();
@@ -2610,10 +2628,11 @@ const CharacterCard = ({
   };
 
   const fetchWardrobeVoiceAnalysis = async (): Promise<WardrobeVoiceAnalysisResult | null> => {
-    const imageUrl = character.referenceImage?.trim()
+    const imageUrl = voiceReferenceImageUrl;
     const hasNarrative =
       Boolean(character.description?.trim()) ||
       Boolean(character.appearanceDescription?.trim()) ||
+      Boolean(character.voiceDescription?.trim()) ||
       Boolean(character.role?.trim()) ||
       Boolean(character.keyFeature?.trim())
 
@@ -2629,9 +2648,11 @@ const CharacterCard = ({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         characterName: characterContext.name,
-        ...(imageUrl?.startsWith("http")
-          ? { characterImageUrl: imageUrl }
-          : {}),
+        ...(primaryPortraitUrl
+          ? { characterImageUrl: primaryPortraitUrl }
+          : fallbackLookUrl
+            ? { wardrobeImageUrl: fallbackLookUrl }
+            : {}),
         characterContext: {
           ...characterContext,
           ...vocalCharacterContext({
@@ -2797,12 +2818,18 @@ const CharacterCard = ({
           role: character.role,
           gender: scoringContext.gender,
           apparentAge: visionAnalysis?.apparentAge || String(scoringContext.age ?? ""),
+          ethnicity: scoringContext.ethnicity,
           accent: analysisProfile?.vocalAttributes?.accent,
           timbre: analysisProfile?.vocalAttributes?.timbre,
+          register: analysisProfile?.vocalAttributes?.register,
+          vocalWeight: analysisProfile?.vocalAttributes?.vocalWeight,
+          texture: analysisProfile?.vocalAttributes?.texture,
+          diction: analysisProfile?.vocalAttributes?.diction,
           pace: analysisProfile?.vocalAttributes?.pace,
           warmth: analysisProfile?.vocalAttributes?.warmth,
           authority: analysisProfile?.vocalAttributes?.authority,
           emotionalDefault: analysisProfile?.vocalAttributes?.emotionalDefault,
+          voiceDesignPrompt: analysisProfile?.vocalAttributes?.voiceDesignPrompt,
           voiceDescription: matchingBrief,
         });
         const currentVoiceId = character.voiceConfig?.voiceId;
@@ -2852,9 +2879,8 @@ const CharacterCard = ({
       toast.success("Voice profile ready.");
 
       try {
-        const sampleText = characterContext?.name
-          ? `${characterContext.name}: This is my automatically recommended voice profile test.`
-          : "This is my automatically recommended voice profile test.";
+        const sampleText =
+          "Let's take a quiet moment and get this right. Every detail tells part of the story.";
 
         testAudioPlayed = await playGeminiVoicePreview(
           assignment.voiceId,
@@ -2988,8 +3014,54 @@ const CharacterCard = ({
       { voiceDescription: applied.voiceDescription },
       { quiet: quietRematch },
     );
-    if (applied.voiceConfig) {
-      await onUpdateCharacterVoice?.(characterId, applied.voiceConfig, {
+    let nextVoiceConfig = applied.voiceConfig;
+    const currentVoiceId = character.voiceConfig?.voiceId?.trim();
+    if (
+      !quietRematch &&
+      isNarratorCharacter === false &&
+      currentVoiceId &&
+      isDesignedGeminiVoiceId(currentVoiceId)
+    ) {
+      try {
+        const updatedDesignDescription = composeVoiceDesignDescription({
+          role: character.role,
+          gender: resolvedGender.gender || character.gender,
+          apparentAge: String(character.age ?? ""),
+          ethnicity: character.ethnicity,
+          voiceDescription: applied.voiceDescription,
+        });
+        if (updatedDesignDescription.length >= 12) {
+          const designRes = await fetch("/api/tts/google/voice-design", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              description: updatedDesignDescription,
+              displayName: character.name || "Character",
+              retainVoiceIds,
+              replaceVoiceId: currentVoiceId,
+            }),
+          });
+          const designed = await designRes.json().catch(() => ({}));
+          if (designRes.ok && designed?.voiceId) {
+            nextVoiceConfig = {
+              provider: "google",
+              voiceId: designed.voiceId,
+              voiceName:
+                designed.voiceName ||
+                character.voiceConfig?.voiceName ||
+                character.name ||
+                "Designed voice",
+              prompt: updatedDesignDescription,
+              designPrompt: updatedDesignDescription,
+            };
+          }
+        }
+      } catch (redesignErr) {
+        console.warn("[Casting Brief] Voice redesign after brief edit failed:", redesignErr);
+      }
+    }
+    if (nextVoiceConfig) {
+      await onUpdateCharacterVoice?.(characterId, nextVoiceConfig, {
         quiet: quietRematch,
       });
     }

@@ -27,7 +27,7 @@ const RESPONSE_SCHEMA = `{
 const SHARED_RULES = `INCLUDE:
 - Standing physical identity that affects the voice: age band, ethnicity, build, face, standing hair
 - Casting role: function in the story, demeanor, cadence, register, texture, accent
-- Specific acoustic cues (baritone/alto, gravel, measured, unhurried) when the look or role implies them
+- Specific acoustic cues (chest resonance vs forward placement, lived-in rasp/gravel/breathiness/velvet, consonant diction, exact speaking pace, and authentic regional or cultural accent) matched to the physical build and age
 
 EXCLUDE:
 - Clothing, wardrobe, jewelry, glasses, bags, hats
@@ -36,6 +36,7 @@ EXCLUDE:
 
 GUARDRAILS:
 - The brief must be a combination of detailed physical appearance and casting role — not role-only adjectives
+- Avoid generic "resonant baritone / warm alto / neutral American" radio-announcer clichés; ground vocal weight, texture, and regionality in this specific person's physiology and background
 - If current brief is provided and the director gave a change, rewrite the whole brief to match the new direction
 - Never copy wardrobe or costume language into voiceDescription
 

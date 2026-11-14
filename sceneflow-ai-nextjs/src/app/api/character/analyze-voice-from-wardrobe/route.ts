@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { generateText, generateWithVision } from '@/lib/vertexai/gemini'
 import type { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
 import {
@@ -13,9 +14,9 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 const VOICE_ANALYSIS_GEN_OPTIONS = {
-  temperature: 0.5,
+  temperature: 0.45,
   maxOutputTokens: 2048,
-  thinkingLevel: 'minimal' as const,
+  thinkingLevel: 'low' as const,
 }
 
 interface AnalyzeVoiceFromWardrobeRequest {
@@ -27,6 +28,11 @@ interface AnalyzeVoiceFromWardrobeRequest {
   wardrobeId?: string
   characterContext?: CharacterContext
   screenplayContext?: ScreenplayContext
+}
+
+function stripAppendedAttributeTail(brief: string | undefined): string | undefined {
+  const cleaned = brief?.split(/\s*vocal qualities:/i)[0]?.trim()
+  return cleaned && cleaned.length >= 12 ? cleaned : undefined
 }
 
 function buildAnalysisPrompt(
@@ -44,10 +50,11 @@ function buildAnalysisPrompt(
   })
   return buildWardrobeVoiceAnalysisPrompt(characterName, {
     screenplayContext,
-    characterDescription: narrative.narrative || narrative.matchingBrief,
+    characterDescription: narrative.narrative,
     characterRole: narrative.role,
     personality: narrative.personality,
     appearanceDescription: characterContext?.appearanceDescription,
+    existingCastingBrief: stripAppendedAttributeTail(narrative.matchingBrief),
     hasPortrait,
   })
 }
@@ -126,6 +133,7 @@ export async function POST(req: NextRequest) {
 
       console.log(`[Character Voice Analysis] Vision + narrative for "${characterName}"...`)
 
+      const analysisModel = getGeminiTextModel('flash')
       const result = await generateWithVision(
         [
           {
@@ -137,7 +145,7 @@ export async function POST(req: NextRequest) {
           { text: prompt },
         ],
         {
-          model: 'gemini-2.5-flash',
+          model: analysisModel,
           responseMimeType: 'application/json',
           ...VOICE_ANALYSIS_GEN_OPTIONS,
         },
@@ -148,7 +156,7 @@ export async function POST(req: NextRequest) {
       console.log(`[Character Voice Analysis] Narrative-only for "${characterName}"...`)
 
       const result = await generateText(prompt, {
-        model: 'gemini-2.5-flash',
+        model: getGeminiTextModel('flash'),
         responseMimeType: 'application/json',
         ...VOICE_ANALYSIS_GEN_OPTIONS,
       })

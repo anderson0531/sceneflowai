@@ -170,11 +170,17 @@ describe('parseWardrobeVoiceAnalysisJson', () => {
       gender: 'male',
       apparentAge: 'late 50s',
       vocalAttributes: {
-        timbre: 'resonant baritone',
+        register: 'low',
+        vocalWeight: 'heavy',
+        timbre: 'chest-heavy bass-baritone',
+        texture: 'subtle weathered gravel',
+        diction: 'relaxed conversational elision',
         pitch: 'low-mid',
         pace: 'measured',
         authority: 'quiet authority',
         warmth: 'neutral',
+        voiceDesignPrompt:
+          'A late 50s man with a chest-heavy bass-baritone voice, subtle weathered gravel, and a Rust Belt American accent, speaking at a measured pace with relaxed conversational elision.',
       },
       voiceDescription:
         'An intelligent male voice with articulate academic delivery and deep conviction for a documentary guide.',
@@ -184,8 +190,13 @@ describe('parseWardrobeVoiceAnalysisJson', () => {
     const parsed = parseWardrobeVoiceAnalysisJson(raw, { confidence: 'narrative' })
     expect(parsed?.confidence).toBe('narrative')
     expect(parsed?.vocalAttributes?.authority).toBe('quiet authority')
+    expect(parsed?.vocalAttributes?.texture).toBe('subtle weathered gravel')
+    expect(parsed?.vocalAttributes?.diction).toBe('relaxed conversational elision')
+    expect(parsed?.vocalAttributes?.voiceDesignPrompt).toContain('chest-heavy bass-baritone')
     expect(parsed?.voiceDescription).toContain('Vocal qualities:')
     expect(parsed?.voiceDescription).toContain('quiet authority')
+    expect(parsed?.voiceDescription).toContain('subtle weathered gravel')
+    expect(parsed?.voiceDescription).not.toContain('neutral warmth')
   })
 })
 

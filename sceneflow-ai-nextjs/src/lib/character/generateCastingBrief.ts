@@ -1,3 +1,4 @@
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { generateText } from '@/lib/vertexai/gemini'
 import {
   buildCastingBriefDirectorPrompt,
@@ -32,10 +33,11 @@ export async function generateCastingBrief(
   )
 
   const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
-    temperature: 0.7,
+    model: getGeminiTextModel('flash'),
+    temperature: 0.6,
     topP: 0.95,
     maxOutputTokens: 1024,
+    thinkingLevel: 'low',
     responseMimeType: 'application/json',
   })
 
