@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useLocale } from 'next-intl'
 import {
   ArrowDownRight,
   ArrowRight,
   Building2,
+  Globe2,
   GraduationCap,
   HeartHandshake,
   Info,
@@ -17,6 +19,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
+import { VideoServiceOutputShowcase } from '@/components/landing/VideoServiceOutputShowcase'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { cn } from '@/lib/utils'
@@ -38,6 +41,7 @@ function formatUsd(amount: number): string {
 }
 
 export function VideoServicesSpotlightSection() {
+  const locale = useLocale()
   const studioCopy = useStudioLandingCopy()
   const copy = studioCopy.videoServices
   const mobileCopy = studioCopy.mobileCompanion
@@ -185,10 +189,16 @@ export function VideoServicesSpotlightSection() {
 
         {/* Main 2-Column Split: Left = Active Vertical Detail, Right = Live Cost & Monthly Profit Estimator */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-stretch lg:gap-8">
-          {/* Left Column: Selected Service Vertical Playbook */}
+          {/* Left Column: Selected Service Vertical Playbook + 5K Narrated Output Showcase */}
           <div className="flex flex-col justify-between rounded-2xl border border-white/10 bg-slate-900/75 p-4 backdrop-blur-sm sm:p-6 lg:col-span-7 lg:p-8">
             <div className="flex h-full flex-col justify-between rounded-2xl border border-emerald-500/20 bg-slate-950/75 p-4 sm:p-6">
               <div>
+                <VideoServiceOutputShowcase
+                  verticalId={activeVertical.id}
+                  verticalTitle={activeVertical.title}
+                  locale={locale}
+                />
+
                 <span className="inline-block rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
                   {activeVertical.badge}
                 </span>
@@ -201,6 +211,15 @@ export function VideoServicesSpotlightSection() {
               </div>
 
               <div className="mt-6 grid grid-cols-1 gap-3 border-t border-slate-800 pt-5 sm:grid-cols-2">
+                <div className="rounded-xl border border-amber-400/25 bg-gradient-to-r from-amber-950/30 via-slate-900/85 to-emerald-950/25 p-3.5 sm:col-span-2 sm:p-4">
+                  <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-300">
+                    <Globe2 className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
+                    <span>{copy.globalDemandLabel}</span>
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-amber-50/95 sm:text-sm">
+                    {activeVertical.globalMarketNeed}
+                  </p>
+                </div>
                 <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3.5 sm:p-4">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                     {copy.whoBuysLabel}

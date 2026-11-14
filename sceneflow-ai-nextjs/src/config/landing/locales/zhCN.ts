@@ -163,10 +163,11 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
     subtitle:
       '传统实拍剧组与动辄 30 小时的手工剪辑，把 90% 的家庭、房产经纪人与本地商户拒之门外。SceneFlow 将您的综合交付成本（算力积分 + 人工统筹时间）直降 50% 至 80%，让您以亲民客单价轻松获客，同时稳享 65%–85% 真实净利率。',
     commercialRightsBadge: '100% 商业版权归属 · 自由向客户交付高清母带',
-    costSavingsPillLabel: '综合交付成本直降 50%–80% · 赢取被高价拒之门外的客户',
-    verticalsHeading: '1. 选择高需求客户服务赛道',
+    costSavingsPillLabel: '综合交付成本直降 50%–80% · 把握庞大全球刚需市场',
+    verticalsHeading: '1. 选择全球高需求客户服务赛道',
+    globalDemandLabel: '庞大的全球市场商机',
     whoBuysLabel: '高频复购客户群体',
-    marginAdvantageLabel: '交付成本核心优势',
+    marginAdvantageLabel: 'SceneFlow 低成本交付优势',
     calculatorBadge: '透明成本与净利润测算器',
     calculatorTitle: '2. 对比交付成本与月度净利润',
     priceTierLabel: '客户报价档位：',
@@ -224,6 +225,8 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         title: '人生回忆录、金婚寿辰致敬与家族传记大片',
         description:
           '将珍贵的家庭老照片与电影级 AI 时代重现、精准分龄人物连续性（如 17 岁 → 32 岁 → 62 岁）无缝融合，搭配温暖自然的旁白配音。',
+        globalMarketNeed:
+          '全球每年有数以亿计的长辈寿辰、金婚庆典与家族纪念需求，但因传统团队动辄 $2,000+ 的高昂费用，超过 90% 的家庭故事从未被影像记录。',
         clientBuyer:
           '家庭客户、重要寿辰/纪念日庆典、财富传承顾问、高端康养社区与纪念礼仪机构',
         traditionalMarketRangeLabel: '$800–$3,500+',
@@ -243,6 +246,8 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         title: '豪宅房源配音漫游与精品酒店沉浸导览',
         description:
           '将房源实拍照片与周边配套亮点转化为配乐配音俱全的电影感导览大片 — 并可即时生成英语、西语、阿语或葡语版本吸引海外买家。',
+        globalMarketNeed:
+          '全球每月有数以千万计的住宅房源、度假民宿与精品酒店急需吸引本地及跨国买家，但绝大多数仍停留在缺乏感染力的静态房源照片。',
         clientBuyer:
           '住宅房产经纪人、豪宅代理机构、度假民宿主理人与精品酒店',
         traditionalMarketRangeLabel: '$450–$1,500+',
@@ -253,7 +258,7 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         estOperatorUsd: 48,
         activeMinutesLabel: '~45–60 分钟',
         keyAdvantage:
-          '无需外景奔波或受天气耽搁：将房源照片转化为多语种配音豪宅导览，成本比现场实拍降低 60% 以上。',
+          '无需外景奔波或受天气耽搁：仅约 ~$60 综合成本即可将房源照片转化为多语种配音豪宅导览，比现场实拍省 60% 以上。',
       },
       {
         id: 'training',
@@ -262,6 +267,8 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         title: '企业入职培训、安全规范与多语种标准课程',
         description:
           '在连续性资产库中锁定讲师形象、工装制服与作业场景 — 一键向全球不同母语员工交付清晰统一的标准培训剧集。',
+        globalMarketNeed:
+          '全球每一家制造工厂、连锁医疗、餐饮集团与加盟品牌都面临高频人员流动、安全合规与多语种员工考核，亟需标准化视频 SOP 课程。',
         clientBuyer:
           '企业 HR 与培训部门、制造工厂、医疗诊所、连锁餐饮与特许加盟品牌',
         traditionalMarketRangeLabel: '$1,500–$5,000+',
@@ -272,7 +279,7 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         estOperatorUsd: 115,
         activeMinutesLabel: '~2–2.5 小时',
         keyAdvantage:
-          '交付成本比实拍团队低 70% — 合规制度更新时只需几分钟微调单个片段，无需重拍。',
+          '交付成本比实拍团队低 70%（~$150 对比 $3,000+）— 合规制度更新时只需几分钟微调单个片段，无需重拍。',
       },
       {
         id: 'brand',
@@ -281,6 +288,8 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         title: '创始人品牌故事片、诊所科普与竖屏社媒广告',
         description:
           '打造高转化官网品牌故事主片，并自动裁剪适配抖音、TikTok、Instagram 与 YouTube Shorts 的 9:16 竖屏预告片 — 通过 Screening Room 高效审片。',
+        globalMarketNeed:
+          '全球超过 3,000 万家本地诊所、律师事务所、特色餐厅与创业品牌急需官网信任背书大片与 9:16 社媒广告，却无力承担 $5,000+ 传统广告制作费。',
         clientBuyer:
           '医疗/牙科诊所、律师事务所、本地中小企业、营销机构与跨境电商品牌主理人',
         traditionalMarketRangeLabel: '$3,000–$8,000+',
@@ -291,7 +300,7 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         estOperatorUsd: 88,
         activeMinutesLabel: '~1.5–2 小时',
         keyAdvantage:
-          '激活无力承担 $5,000 广告实拍的本地诊所、餐厅与律所客群 — 同步交付 9:16 竖屏社媒短片。',
+          '仅约 ~$110 综合交付成本即可激活本地诊所、餐厅与律所客群 — 同步自动输出 9:16 竖屏社媒短片。',
       },
     ],
   },

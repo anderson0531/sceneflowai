@@ -3994,10 +3994,11 @@
       "titleAccent": "50%–80% Menos Custo para Produzir",
       "subtitle": "Equipes tradicionais e 30 horas de edição manual deixam de fora 90% das famílias, corretores e comércios locais pelo preço. O SceneFlow reduz de 50% a 80% seu custo total de entrega — créditos de processamento mais tempo de gestão — para conquistar clientes com preços acessíveis mantendo 65% a 85% de lucro líquido real.",
       "commercialRightsBadge": "100% Propriedade Comercial · Entregue Masters aos Clientes",
-      "costSavingsPillLabel": "50%–80% Menor Custo de Entrega · Conquiste Clientes Desassistidos",
-      "verticalsHeading": "1. Escolha um Serviço de Alta Demanda",
+      "costSavingsPillLabel": "50%–80% Menor Custo de Entrega · Demanda Global Gigante",
+      "verticalsHeading": "1. Escolha um Serviço Global de Alta Demanda",
+      "globalDemandLabel": "Oportunidade de Mercado Global",
       "whoBuysLabel": "Quem Compra com Recorrência",
-      "marginAdvantageLabel": "Vantagem no Custo de Entrega",
+      "marginAdvantageLabel": "Vantagem de Baixo Custo no SceneFlow",
       "calculatorBadge": "Simulador Transparente de Custo e Lucro",
       "calculatorTitle": "2. Compare Custo de Entrega e Lucro Mensal",
       "priceTierLabel": "Faixa de preço ao cliente:",
@@ -4053,6 +4054,7 @@
           "badge": "$300–$950 / filme · Mercado: $800–$3,500+",
           "title": "Histórias de Vida, Homenagens e Biografias Familiares",
           "description": "Combine fotografias de família com reconstituições cinematográficas de época em IA e continuidade precisa por idade (17 → 32 → 62 anos) narradas com vozes acolhedoras e naturais.",
+          "globalMarketNeed": "Centenas de milhões de pais idosos, bodas de ouro e aniversários marcantes acontecem todo ano no mundo, mas mais de 90% não é filmado porque equipes de $2,000+ são caras demais.",
           "clientBuyer": "Famílias, aniversários marcantes, planejadores sucessórios, residenciais sênior e memoriais",
           "traditionalMarketRangeLabel": "$800–$3,500+",
           "typicalRetailUsd": 499,
@@ -4073,6 +4075,7 @@
           "badge": "$199–$549 / imóvel · Mercado: $450–$1,500+",
           "title": "Tours Narrados de Imóveis de Alto Padrão e Hotéis Boutique",
           "description": "Transforme fotos de anúncios e destaques do bairro em visitas cinematográficas narradas e musicadas — com versões imediatas em inglês, mandarim, espanhol ou árabe para compradores internacionais.",
+          "globalMarketNeed": "Dezenas de milhões de imóveis residenciais, casas de temporada e hotéis boutique disputam compradores locais e estrangeiros todo mês ainda presos apenas a fotos estáticas.",
           "clientBuyer": "Corretores residenciais, imobiliárias de luxo, aluguéis de temporada e hotéis boutique",
           "traditionalMarketRangeLabel": "$450–$1,500+",
           "typicalRetailUsd": 299,
@@ -4085,7 +4088,7 @@
           "estComputeUsd": 12,
           "estOperatorUsd": 48,
           "activeMinutesLabel": "~45–60 min",
-          "keyAdvantage": "Sem deslocamento nem atrasos de clima: transforme fotos do imóvel em tours narrados multilíngues com mais de 60% menos custo que gravações presenciais."
+          "keyAdvantage": "Sem deslocamento nem atrasos de clima: transforme fotos do imóvel em tours narrados multilíngues por ~$60 de custo total — mais de 60% abaixo de gravações presenciais."
         },
         {
           "id": "training",
@@ -4093,6 +4096,7 @@
           "badge": "$599–$1,800 / módulo · Mercado: $1,500–$5,000+",
           "title": "Integração Corporativa, Segurança e Cursos Multilíngues",
           "description": "Trave um instrutor consistente, uniformes e ambientes de trabalho no Cofre de Continuidade — e entregue episódios claros localizados no idioma nativo de cada colaborador.",
+          "globalMarketNeed": "Toda indústria, rede clínica, grupo de restaurantes e franquia no mundo enfrenta rotatividade constante, normas de segurança e equipes multilíngues precisando de vídeos POP claros.",
           "clientBuyer": "Equipes de RH e T&D, indústrias, clínicas de saúde, redes de restaurantes e franquias",
           "traditionalMarketRangeLabel": "$1,500–$5,000+",
           "typicalRetailUsd": 950,
@@ -4105,7 +4109,7 @@
           "estComputeUsd": 35,
           "estOperatorUsd": 115,
           "activeMinutesLabel": "~2–2.5 h",
-          "keyAdvantage": "70% menos custo de entrega que equipes presenciais — e quando uma norma muda, você atualiza uma cena em minutos sem regravar."
+          "keyAdvantage": "70% menos custo de entrega (~$150 vs $3,000+ presenciais) — e quando uma norma muda, você atualiza uma cena em minutos sem regravar."
         },
         {
           "id": "brand",
@@ -4113,6 +4117,7 @@
           "badge": "$399–$1,200 / pacote · Mercado: $3,000–$8,000+",
           "title": "Filmes de Fundadores, Vídeos para Clínicas e Anúncios Sociais",
           "description": "Crie histórias de marca de alta conversão para sites acompanhadas de trailers verticais 9:16 automáticos para Instagram, TikTok e YouTube Shorts — aprovados na Screening Room.",
+          "globalMarketNeed": "Mais de 30 milhões de clínicas, escritórios, restaurantes e marcas artesanais no mundo precisam de vídeos institucionais e anúncios 9:16, mas não pagam $5,000+ por comercial.",
           "clientBuyer": "Clínicas médicas e odontológicas, escritórios de advocacia, PMEs locais, agências e e-commerces",
           "traditionalMarketRangeLabel": "$3,000–$8,000+",
           "typicalRetailUsd": 650,
@@ -4125,7 +4130,7 @@
           "estComputeUsd": 22,
           "estOperatorUsd": 88,
           "activeMinutesLabel": "~1.5–2 h",
-          "keyAdvantage": "Destrava clínicas, restaurantes e escritórios locais que não pagam $5,000 em comerciais — já com cortes verticais 9:16."
+          "keyAdvantage": "Destrava clínicas, restaurantes e escritórios locais por ~$110 de custo total — já com cortes verticais 9:16 automáticos."
         }
       ]
     },

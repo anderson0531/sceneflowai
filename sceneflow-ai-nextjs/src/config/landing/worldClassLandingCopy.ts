@@ -180,10 +180,11 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     subtitle:
       'Traditional crews and 30-hour manual edits price out 90% of families, realtors, and local businesses. SceneFlow cuts your fully-loaded delivery cost—compute credits plus operator time—by 50% to 80%, so you can win clients at accessible prices and still keep 65%–85% net profit.',
     commercialRightsBadge: '100% Commercial Ownership · Deliver Client Masters Anywhere',
-    costSavingsPillLabel: '50%–80% Lower Cost to Deliver · Win Priced-Out Clients',
-    verticalsHeading: '1. Choose a High-Demand Client Service',
+    costSavingsPillLabel: '50%–80% Lower Cost to Deliver · Massive Global Market Demand',
+    verticalsHeading: '1. Choose a High-Demand Global Client Service',
+    globalDemandLabel: 'Massive Global Market Opportunity',
     whoBuysLabel: 'Who Buys Repeatedly',
-    marginAdvantageLabel: 'Cost-to-Deliver Advantage',
+    marginAdvantageLabel: 'SceneFlow Low-Cost Delivery Advantage',
     calculatorBadge: 'Transparent Cost & Profit Estimator',
     calculatorTitle: '2. Compare Delivery Cost & Monthly Profit',
     priceTierLabel: 'Client pricing tier:',
@@ -241,6 +242,8 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         title: 'Life Stories, Milestone Tributes & Family Biographies',
         description:
           'Blend treasured family photographs with cinematic AI era re-enactments and accurate multi-age character continuity (e.g., Age 17 → Age 32 → Age 62) narrated in warm, lifelike voices.',
+        globalMarketNeed:
+          'Hundreds of millions of aging parents, 50th anniversaries, and milestone birthdays happen globally every year—yet 90%+ go unfilmed because $2,000+ crews are unaffordable.',
         clientBuyer:
           'Families, milestone birthdays, estate planners, senior communities & funeral homes',
         traditionalMarketRangeLabel: '$800–$3,500+',
@@ -260,6 +263,8 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         title: 'Narrated Luxury Property & Boutique Hospitality Tours',
         description:
           'Turn listing photographs and neighborhood highlights into scored, narrated cinema walkthroughs—plus instant Mandarin, Spanish, Arabic, or Portuguese versions for international buyers.',
+        globalMarketNeed:
+          'Tens of millions of home listings, short-term rentals, and boutique hotels compete for domestic and cross-border buyers worldwide every month—most still stuck with static photos.',
         clientBuyer:
           'Residential realtors, luxury brokerages, vacation rentals & boutique hotels',
         traditionalMarketRangeLabel: '$450–$1,500+',
@@ -270,7 +275,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         estOperatorUsd: 48,
         activeMinutesLabel: '~45–60 min',
         keyAdvantage:
-          'No travel or weather delays: turn MLS photos into narrated, multilingual luxury tours at 60%+ lower cost than on-site shoots.',
+          'No travel or weather delays: turn MLS photos into narrated, multilingual luxury tours for ~$60 total cost—over 60% lower than on-site shoots.',
       },
       {
         id: 'training',
@@ -279,6 +284,8 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         title: 'Corporate Onboarding, Safety & Multilingual Courses',
         description:
           'Lock a consistent instructor avatar, uniforms, and workplace sets in your Continuity Vault—then ship crystal-clear training episodes localized across every employee’s native language.',
+        globalMarketNeed:
+          'Every manufacturer, clinic network, hospitality group, and franchise globally battles frontline turnover, safety compliance, and multilingual workforces needing standardized video SOPs.',
         clientBuyer:
           'HR & L&D teams, manufacturers, healthcare clinics, restaurants & franchises',
         traditionalMarketRangeLabel: '$1,500–$5,000+',
@@ -289,7 +296,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         estOperatorUsd: 115,
         activeMinutesLabel: '~2–2.5 hrs',
         keyAdvantage:
-          '70% lower delivery cost than live crews—and when compliance rules change, update one beat in minutes without reshooting.',
+          '70% lower delivery cost (~$150 vs $3,000+ live crews)—and when compliance rules change, update one beat in minutes without reshooting.',
       },
       {
         id: 'brand',
@@ -298,6 +305,8 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         title: 'Founder Origin Films, Clinic Explainers & Social Ads',
         description:
           'Craft high-converting homepage brand stories paired with automatic 9:16 vertical trailers for Instagram, TikTok, and YouTube Shorts—vetted with clients in the Screening Room.',
+        globalMarketNeed:
+          '30M+ local clinics, law firms, restaurants, and craft founders worldwide urgently need homepage trust videos and fresh 9:16 social ads—but are locked out by $5,000+ agency shoots.',
         clientBuyer:
           'Medical/dental practices, law firms, local SMBs, agencies & e-commerce founders',
         traditionalMarketRangeLabel: '$3,000–$8,000+',
@@ -308,7 +317,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         estOperatorUsd: 88,
         activeMinutesLabel: '~1.5–2 hrs',
         keyAdvantage:
-          'Unlocks local clinics, restaurants, and law firms priced out of $5,000 ad shoots—complete with 9:16 social cutdowns.',
+          'Unlocks local clinics, restaurants, and law firms for ~$110 total delivery cost—complete with automatic 9:16 social cutdowns.',
       },
     ],
   },

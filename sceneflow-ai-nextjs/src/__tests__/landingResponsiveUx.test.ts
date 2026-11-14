@@ -35,6 +35,11 @@ import {
   getKeyFeatureNarratedPan,
   normalizeFeaturePanLocale,
 } from '@/config/landing/keyFeatureNarratedPan'
+import {
+  VIDEO_SERVICES_NARRATED_PAN,
+  VIDEO_SERVICE_PAN_UI_COPY,
+  type VideoServiceVerticalId,
+} from '@/config/landing/videoServicesNarratedPan'
 import { resolveLocalizedStudioLandingCopy } from '@/config/landing/worldClassLandingCopy'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -325,11 +330,16 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     }
   })
 
-  it('keeps Desktop Header (1280px / 1440px) single-row with tooltips across all 7 languages and falls back cleanly below xl', () => {
+  it('keeps Desktop Header (1280px xl & 1536px 2xl) single-row with zero CTA overlap across all 7 languages and falls back cleanly below xl', () => {
     const headerSrc = readSource('src/app/components/Header.tsx')
     expect(headerSrc).toContain('hidden xl:flex')
     expect(headerSrc).toContain('xl:hidden')
     expect(headerSrc).toContain('whitespace-nowrap')
+    expect(headerSrc).toContain('xl:max-w-[90rem]')
+    expect(headerSrc).toContain('2xl:max-w-[96rem]')
+    expect(headerSrc).toContain('overflow-x-auto')
+    expect(headerSrc).toContain('relative z-10 flex shrink-0')
+    expect(headerSrc).not.toContain('hidden 2xl:inline-block')
 
     for (const locale of PRIORITY_LOCALES) {
       const nav = loadMessages(locale).nav
@@ -342,15 +352,42 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
         nav.plansPricing,
         nav.trustSafety,
       ]
-      // At 1280px (`xl`), nav uses compact `text-xs` (12px), `px-2` (16px total horizontal pad), and hides decorative icons until `2xl` (1536px+)
-      const estimatedNavWidthAt1280 = labels.reduce((sum, label) => {
-        const charWidth = locale.startsWith('zh') ? 12 : 6.4
-        return sum + Math.ceil(countSpacingGlyphs(String(label)) * charWidth) + 18
-      }, 0)
+      const signInLabel = String(nav.signIn)
+      const startProjectLabel = String(nav.startProject)
+
+      // 1440px laptop (`xl:max-w-[90rem]` = 1392px inner container after `xl:px-6`)
+      const charWidthXl = locale.startsWith('zh') ? 12 : 6.2
+      const ctaWidthXl =
+        36 +
+        (Math.ceil(countSpacingGlyphs(signInLabel) * charWidthXl) + 22) +
+        (Math.ceil(countSpacingGlyphs(startProjectLabel) * charWidthXl) + 26) +
+        14
+      const availableNavAt1440 = 1392 - 178 - ctaWidthXl - 20
+      const estimatedNavAtXl = labels.reduce(
+        (sum, label) => sum + Math.ceil(countSpacingGlyphs(String(label)) * charWidthXl) + 12,
+        12
+      )
       expect(
-        estimatedNavWidthAt1280,
-        `[${locale}] desktop nav width (${estimatedNavWidthAt1280}px) fits 1280px header`
-      ).toBeLessThanOrEqual(840)
+        estimatedNavAtXl,
+        `[${locale}] xl nav (${estimatedNavAtXl}px) fits inside 1440px laptop header (${availableNavAt1440}px)`
+      ).toBeLessThanOrEqual(availableNavAt1440)
+
+      // 1536px (`2xl:max-w-[96rem]` = 1472px inner container after `2xl:px-8`)
+      const charWidth2xl = locale.startsWith('zh') ? 13 : 6.8
+      const ctaWidth2xl =
+        36 +
+        (Math.ceil(countSpacingGlyphs(signInLabel) * charWidth2xl) + 26) +
+        (Math.ceil(countSpacingGlyphs(startProjectLabel) * charWidth2xl) + 30) +
+        20
+      const availableNavAt1536 = 1472 - 178 - ctaWidth2xl - 32
+      const estimatedNavAt1536 = labels.reduce(
+        (sum, label) => sum + Math.ceil(countSpacingGlyphs(String(label)) * charWidth2xl) + 20,
+        24
+      )
+      expect(
+        estimatedNavAt1536,
+        `[${locale}] 2xl nav (${estimatedNavAt1536}px) fits inside ${availableNavAt1536}px without touching Sign In / Start a Project`
+      ).toBeLessThanOrEqual(availableNavAt1536)
     }
   })
 
@@ -533,5 +570,133 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     expect(normalizeFeaturePanLocale('zh-CN')).toBe('zh')
     expect(normalizeFeaturePanLocale('pt-BR')).toBe('pt')
     expect(normalizeFeaturePanLocale('th')).toBe('th')
+  })
+
+  it('ships realistic 5120x2880 5K WebP output images, 7-language business narration, and Global Market Opportunity copy across all 4 Video Business verticals', () => {
+    const verticalIds: VideoServiceVerticalId[] = ['memoir', 'realestate', 'training', 'brand']
+    const expectedImages = [
+      'memoir-1.webp',
+      'memoir-2.webp',
+      'realestate-1.webp',
+      'realestate-2.webp',
+      'training-1.webp',
+      'training-2.webp',
+      'brand-1.webp',
+      'brand-2.webp',
+    ]
+
+    for (const imgName of expectedImages) {
+      const diskPath = path.join(ROOT, 'public/landing/video-services', imgName)
+      expect(existsSync(diskPath), `missing ${imgName}`).toBe(true)
+      expect(statSync(diskPath).size, `${imgName} size`).toBeGreaterThan(300_000)
+      const buf = readFileSync(diskPath)
+      expect(buf.subarray(0, 4).toString('ascii')).toBe('RIFF')
+      expect(buf.subarray(8, 12).toString('ascii')).toBe('WEBP')
+    }
+
+    const showcaseSrc = readSource('src/components/landing/VideoServiceOutputShowcase.tsx')
+    const sectionSrc = readSource('src/components/landing/VideoServicesSpotlightSection.tsx')
+    expect(showcaseSrc).not.toContain('truncate')
+    expect(showcaseSrc).not.toContain('role="tab"')
+    expect(sectionSrc).not.toContain('truncate')
+
+    for (const vid of verticalIds) {
+      const beats = VIDEO_SERVICES_NARRATED_PAN[vid]
+      expect(beats).toHaveLength(3)
+      for (const beat of beats) {
+        expect(beat.width).toBe(5120)
+        expect(beat.height).toBe(2880)
+        expect(beat.fromScale).toBeGreaterThan(1)
+        expect(beat.toScale).toBeGreaterThan(1)
+        for (const loc of DUB_LOCALES) {
+          expect(beat.sceneTag[loc].trim().length).toBeGreaterThan(6)
+          expect(beat.narration[loc].trim().length).toBeGreaterThan(40)
+        }
+        expect(beat.narration.es).not.toBe(beat.narration.en)
+        expect(beat.narration.zh).not.toBe(beat.narration.en)
+        expect(beat.narration.ar).not.toBe(beat.narration.en)
+      }
+    }
+
+    // Render VideoServicesSpotlightSection across all 7 languages and verify 5K stage + Global Market Demand + tooltips
+    for (const locale of PRIORITY_LOCALES) {
+      const messages = loadMessages(locale)
+      const copy = resolveLocalizedStudioLandingCopy(locale).videoServices
+      const panLoc = normalizeFeaturePanLocale(locale)
+
+      renderElement(
+        React.createElement(
+          NextIntlClientProvider,
+          { key: `vs-${locale}`, locale, messages },
+          React.createElement(VideoServicesSpotlightSection)
+        )
+      )
+
+      const stageEl = container?.querySelector('[data-testid="video-service-pan-stage"]')
+      const captionEl = container?.querySelector('[data-testid="video-service-pan-caption"]')
+      expect(stageEl, `[${locale}] 5K pan stage`).toBeTruthy()
+      expect(stageEl?.getAttribute('dir')).toBe(panLoc === 'ar' ? 'rtl' : 'ltr')
+      expect(captionEl?.textContent).toContain(VIDEO_SERVICES_NARRATED_PAN.memoir[0].narration[panLoc])
+      expect(container?.textContent).toContain(copy.globalDemandLabel)
+      expect(container?.textContent).toContain(copy.verticals[0].globalMarketNeed)
+
+      // Every button inside VideoServicesSpotlightSection has a title tooltip and zero truncate
+      const allBtns = Array.from(container?.querySelectorAll('button') ?? [])
+      for (const btn of allBtns) {
+        expect(
+          (btn.getAttribute('title') ?? '').trim().length,
+          `[${locale}] button missing title: "${btn.textContent}"`
+        ).toBeGreaterThan(1)
+        expect(btn.innerHTML).not.toContain('truncate')
+      }
+    }
+
+    // Interactive check in English: switch vertical -> beat -> language (Arabic RTL)
+    const enMessages = loadMessages('en')
+    renderElement(
+      React.createElement(
+        NextIntlClientProvider,
+        { key: 'vs-interactive', locale: 'en', messages: enMessages },
+        React.createElement(VideoServicesSpotlightSection)
+      )
+    )
+
+    const tabs = Array.from(container?.querySelectorAll('[role="tab"]') ?? [])
+    expect(tabs).toHaveLength(4)
+
+    // Switch to Real Estate Tours (tab index 1)
+    clickElement(tabs[1])
+    const stageAfterVertical = container?.querySelector('[data-testid="video-service-pan-stage"]')
+    const captionAfterVertical = container?.querySelector('[data-testid="video-service-pan-caption"]')
+    expect(captionAfterVertical?.textContent).toContain(
+      VIDEO_SERVICES_NARRATED_PAN.realestate[0].narration.en
+    )
+    const imgs = Array.from(stageAfterVertical?.querySelectorAll('img') ?? [])
+    expect(imgs.map((img) => img.getAttribute('src'))).toEqual([
+      '/landing/video-services/realestate-1.webp',
+      '/landing/video-services/realestate-2.webp',
+    ])
+
+    // Step to Beat 02 (realestate-2.webp)
+    const beat2Btn = Array.from(stageAfterVertical?.querySelectorAll('button') ?? []).find(
+      (btn) => btn.textContent?.trim() === '02'
+    )
+    expect(beat2Btn).toBeTruthy()
+    clickElement(beat2Btn!)
+    expect(captionAfterVertical?.textContent).toContain(
+      VIDEO_SERVICES_NARRATED_PAN.realestate[1].narration.en
+    )
+
+    // Switch narration language to Arabic ('AR') and verify RTL + Arabic pitch
+    const arLangBtn = Array.from(stageAfterVertical?.querySelectorAll('button') ?? []).find(
+      (btn) => btn.textContent?.trim() === 'AR'
+    )
+    expect(arLangBtn).toBeTruthy()
+    clickElement(arLangBtn!)
+    expect(stageAfterVertical?.getAttribute('dir')).toBe('rtl')
+    expect(stageAfterVertical?.textContent).toContain(VIDEO_SERVICE_PAN_UI_COPY.ar.outputBadge)
+    expect(captionAfterVertical?.textContent).toContain(
+      VIDEO_SERVICES_NARRATED_PAN.realestate[1].narration.ar
+    )
   })
 })

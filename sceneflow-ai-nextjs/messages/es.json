@@ -3994,10 +3994,11 @@
       "titleAccent": "50%–80% Menos Costo de Entrega",
       "subtitle": "Los equipos de rodaje tradicionales y 30 horas de edición manual dejan fuera por precio al 90% de las familias, agentes inmobiliarios y comercios locales. SceneFlow reduce entre un 50% y un 80% tu costo total de entrega —créditos de cómputo más tiempo de gestión—, permitiéndote captar clientes con precios accesibles y conservar entre un 65% y un 85% de ganancia neta real.",
       "commercialRightsBadge": "100% Propiedad Comercial · Entrega Masters a tus Clientes",
-      "costSavingsPillLabel": "50%–80% Menor Costo de Entrega · Capta Clientes Desatendidos",
-      "verticalsHeading": "1. Elige un Servicio de Alta Demanda",
+      "costSavingsPillLabel": "50%–80% Menor Costo de Entrega · Enorme Demanda Global",
+      "verticalsHeading": "1. Elige un Servicio Global de Alta Demanda",
+      "globalDemandLabel": "Oportunidad de Mercado Global",
       "whoBuysLabel": "Quiénes Compran Recurrentemente",
-      "marginAdvantageLabel": "Ventaja en Costo de Entrega",
+      "marginAdvantageLabel": "Ventaja de Bajo Costo en SceneFlow",
       "calculatorBadge": "Calculadora Transparente de Costo y Ganancia",
       "calculatorTitle": "2. Compara Costo de Entrega y Ganancia Mensual",
       "priceTierLabel": "Nivel de precio al cliente:",
@@ -4053,6 +4054,7 @@
           "badge": "$300–$950 / filme · Mercado: $800–$3,500+",
           "title": "Historias de Vida, Homenajes y Biografías Familiares",
           "description": "Combina fotografías familiares reales con recreaciones cinematográficas de época con IA y continuidad precisa por edades (17 → 32 → 62 años) narradas con voces cálidas y naturales.",
+          "globalMarketNeed": "Cientos de millones de padres mayores, bodas de oro y cumpleaños clave ocurren cada año en el mundo, pero más del 90% nunca se filma porque un equipo de $2,000+ es inaccesible.",
           "clientBuyer": "Familias, aniversarios y cumpleaños clave, planificadores patrimoniales, residencias de mayores y casas conmemorativas",
           "traditionalMarketRangeLabel": "$800–$3,500+",
           "typicalRetailUsd": 499,
@@ -4073,6 +4075,7 @@
           "badge": "$199–$549 / propiedad · Mercado: $450–$1,500+",
           "title": "Recorridos Narrados de Propiedades y Hoteles Boutique",
           "description": "Transforma fotos de propiedades y atractivos del vecindario en recorridos cinematográficos con música y locución — más versiones al instante en inglés, chino, árabe o portugués para compradores internacionales.",
+          "globalMarketNeed": "Decenas de millones de propiedades residenciales, alquileres vacacionales y hoteles boutique compiten cada mes por compradores locales y extranjeros usando solo fotos fijas.",
           "clientBuyer": "Agentes inmobiliarios residenciales, agencias de lujo, alquileres vacacionales y hoteles boutique",
           "traditionalMarketRangeLabel": "$450–$1,500+",
           "typicalRetailUsd": 299,
@@ -4085,7 +4088,7 @@
           "estComputeUsd": 12,
           "estOperatorUsd": 48,
           "activeMinutesLabel": "~45–60 min",
-          "keyAdvantage": "Sin desplazamientos ni demoras por clima: convierte fotos inmobiliarias en recorridos narrados multilingües con más de 60% menos costo que un rodaje presencial."
+          "keyAdvantage": "Sin desplazamientos ni demoras por clima: convierte fotos inmobiliarias en recorridos narrados multilingües por ~$60 de costo total — más de 60% menos que un rodaje presencial."
         },
         {
           "id": "training",
@@ -4093,6 +4096,7 @@
           "badge": "$599–$1,800 / módulo · Mercado: $1,500–$5,000+",
           "title": "Inducción Corporativa, Seguridad y Cursos Multilingües",
           "description": "Bloquea un instructor consistente, uniformes y entornos de trabajo en tu Bóveda de Continuidad — y entrega módulos claros localizados al idioma nativo de cada empleado.",
+          "globalMarketNeed": "Cada planta industrial, red de clínicas, restaurante y franquicia en el mundo enfrenta rotación de personal, normas de seguridad y equipos multilingües que requieren video SOP.",
           "clientBuyer": "Equipos de RR. HH. y formación, plantas industriales, clínicas médicas, restaurantes y franquicias",
           "traditionalMarketRangeLabel": "$1,500–$5,000+",
           "typicalRetailUsd": 950,
@@ -4105,7 +4109,7 @@
           "estComputeUsd": 35,
           "estOperatorUsd": 115,
           "activeMinutesLabel": "~2–2.5 h",
-          "keyAdvantage": "70% menos costo de entrega que un equipo en vivo — y cuando cambia una norma, actualizas una escena en minutos sin volver a grabar."
+          "keyAdvantage": "70% menos costo de entrega (~$150 vs $3,000+ en vivo) — y cuando cambia una norma, actualizas una escena en minutos sin volver a grabar."
         },
         {
           "id": "brand",
@@ -4113,6 +4117,7 @@
           "badge": "$399–$1,200 / paquete · Mercado: $3,000–$8,000+",
           "title": "Historias de Fundadores, Videos para Clínicas y Anuncios",
           "description": "Produce historias de marca de alta conversión para sitios web junto con tráilers verticales 9:16 automáticos para Instagram, TikTok y YouTube Shorts — revisados con el cliente en Screening Room.",
+          "globalMarketNeed": "Más de 30 millones de clínicas, despachos legales, restaurantes y comercios locales en el mundo necesitan videos web de confianza y anuncios 9:16, pero no pueden pagar $5,000+.",
           "clientBuyer": "Consultorios médicos y dentales, despachos legales, PyMEs locales, agencias y marcas de comercio electrónico",
           "traditionalMarketRangeLabel": "$3,000–$8,000+",
           "typicalRetailUsd": 650,
@@ -4125,7 +4130,7 @@
           "estComputeUsd": 22,
           "estOperatorUsd": 88,
           "activeMinutesLabel": "~1.5–2 h",
-          "keyAdvantage": "Abre el mercado de clínicas, restaurantes y despachos que no pagan anuncios de $5,000 — incluyendo cortes verticales 9:16."
+          "keyAdvantage": "Abre el mercado de clínicas, restaurantes y despachos por ~$110 de costo total — incluyendo cortes verticales 9:16 automáticos."
         }
       ]
     },

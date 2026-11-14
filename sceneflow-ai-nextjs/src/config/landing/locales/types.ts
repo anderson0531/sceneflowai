@@ -60,6 +60,7 @@ export type ServiceVerticalCopy = {
   badge: string
   title: string
   description: string
+  globalMarketNeed: string
   clientBuyer: string
   traditionalMarketRangeLabel: string
   typicalRetailUsd: number
@@ -211,6 +212,7 @@ export type StudioLandingCopy = {
     commercialRightsBadge: string
     costSavingsPillLabel: string
     verticalsHeading: string
+    globalDemandLabel: string
     whoBuysLabel: string
     marginAdvantageLabel: string
     calculatorBadge: string
