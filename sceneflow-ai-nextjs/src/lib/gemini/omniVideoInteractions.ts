@@ -67,7 +67,7 @@ export type OmniInteractionInput =
   | Array<{ type: string; text?: string; data?: string; mime_type?: string; uri?: string }>
 
 /** Format clip duration for Omni response_format.duration */
-export function formatOmniDuration(seconds: VeoClipDuration): string {
+export function formatOmniDuration(seconds: VeoClipDuration | number): string {
   return `${seconds}s`
 }
 
@@ -197,7 +197,7 @@ export function formatOmniInteractionErrorMessage(
 
 /**
  * Normalize build options for Omni Interactions API:
- * - Omni 1.1 Flash natively supports first+last frame interpolation (FTV) up to 1080p/4k
+ * - Omni 1.2 Flash natively supports first+last frame interpolation (FTV) up to 1080p/4k
  * - End frame without a start frame is invalid — omit lastFrame if startFrame is missing
  * - EXT without a valid previous_interaction_id is unsupported — omit continuation
  */

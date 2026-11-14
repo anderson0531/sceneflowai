@@ -23,11 +23,11 @@ describe('modelConfig Veo tiers', () => {
     expect(VEO_MODELS.lite).toBe('veo-3.1-lite-generate-001')
   })
 
-  it('routes fast and premium tiers to Veo 3.1 production models', () => {
+  it('routes fast and premium tiers to Veo 3.1 production models and Omni to Gemini Omni 1.2 Flash', () => {
     expect(getVeoModel('fast')).toBe('veo-3.1-fast-generate-001')
     expect(getVeoModel('premium')).toBe('veo-3.1-generate-001')
     expect(getVeoModel('standard')).toBe('veo-3.1-generate-001')
-    expect(VEO_MODELS.omni).toBe('gemini-omni-1.1-flash-preview')
+    expect(VEO_MODELS.omni).toBe('gemini-omni-1.2-flash')
   })
 
   it('defaults segment clip duration to 8 seconds (Veo predictLongRunning max)', () => {
@@ -36,15 +36,16 @@ describe('modelConfig Veo tiers', () => {
     expect(VEO_CLIP_DURATION_OPTIONS).toEqual([4, 6, 8, 10])
   })
 
-  it('resolveVideoModel routes Omni only for explicit 10s or EXT interaction refs', () => {
+  it('resolveVideoModel routes Omni for explicit 10s+ or EXT interaction refs', () => {
     expect(resolveVideoModel('fast', { durationSeconds: 10 })).toBe(VEO_MODELS.omni)
+    expect(resolveVideoModel('fast', { durationSeconds: 15 })).toBe(VEO_MODELS.omni)
     expect(resolveVideoModel('fast', { sourceVideo: 'interaction:v1_abc123' })).toBe(VEO_MODELS.omni)
     expect(resolveVideoModel('fast', { sourceVideo: 'v1_abc123' })).toBe(VEO_MODELS.omni)
     expect(resolveVideoModel('fast', { durationSeconds: 8 })).toBe(VEO_MODELS.fast)
     expect(resolveVideoModel('premium', { durationSeconds: 8 })).toBe(VEO_MODELS.premium)
   })
 
-  it('resolveVideoModel preferOmni always returns Omni 1.1', () => {
+  it('resolveVideoModel preferOmni always returns Omni 1.2 Flash', () => {
     expect(resolveVideoModel('fast', { preferOmni: true, durationSeconds: 8 })).toBe(VEO_MODELS.omni)
     expect(resolveVideoModel('fast', { preferOmni: true, hasReferenceImages: true })).toBe(
       VEO_MODELS.omni
@@ -78,6 +79,7 @@ describe('modelConfig Veo tiers', () => {
   })
 
   it('detects Omni video models', () => {
+    expect(isOmniVideoModel('gemini-omni-1.2-flash')).toBe(true)
     expect(isOmniVideoModel('gemini-omni-1.1-flash-preview')).toBe(true)
     expect(isOmniVideoModel('veo-3.1-fast-generate-001')).toBe(false)
   })
@@ -95,6 +97,7 @@ describe('modelConfig Veo tiers', () => {
   })
 
   it('routes Omni models to global Vertex location', () => {
+    expect(getVertexLocation('gemini-omni-1.2-flash')).toBe('global')
     expect(getVertexLocation('gemini-omni-1.1-flash-preview')).toBe('global')
     expect(getVertexLocation('veo-3.1-fast-generate-001')).toBe('us-central1')
   })

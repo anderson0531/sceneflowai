@@ -580,6 +580,9 @@ async function generateWithGemini(
     aspectRatio: options.aspectRatio,
     resolution: options.resolution,
     durationSeconds: options.durationSeconds as VeoClipDuration,
+    frameRate: options.frameRate,
+    thinkingLevel: options.thinkingLevel,
+    omniMultiShot: options.omniMultiShot,
     negativePrompt: options.negativePrompt,
     personGeneration: options.startFrame ? 'allow_adult' : 'allow_all',
     startFrame: options.startFrame,
@@ -588,6 +591,7 @@ async function generateWithGemini(
     // Video Extension (EXT mode) - pass the Gemini Files API reference for video continuation
     // VideoGenerationOptions uses sourceVideo, maps to Gemini's sourceVideo parameter
     sourceVideo: options.sourceVideo,
+    preferOmni: options.preferOmni,
   }
   
   if (options.sourceVideo) {

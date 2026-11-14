@@ -19,6 +19,7 @@ import { formatVeoRaiDetailsFromPayload } from '@/lib/vertexai/safety'
 
 describe('omniVideoInteractions helpers', () => {
   it('formats duration as Omni response_format string', () => {
+    expect(formatOmniDuration(15)).toBe('15s')
     expect(formatOmniDuration(10)).toBe('10s')
     expect(formatOmniDuration(8)).toBe('8s')
   })
@@ -90,7 +91,7 @@ describe('omniVideoInteractions helpers', () => {
         },
       ],
       object: 'interaction',
-      model: 'gemini-omni-1.1-flash-preview',
+      model: 'gemini-omni-1.2-flash',
     }
     const msg = formatOmniInteractionErrorMessage(
       payload,
@@ -103,7 +104,7 @@ describe('omniVideoInteractions helpers', () => {
     expect(msg).not.toContain('"steps"')
   })
 
-  it('preserves FTV lastFrame for Omni 1.1 Flash interpolation and strips EXT without valid previous id', () => {
+  it('preserves FTV lastFrame for Omni 1.2 Flash interpolation and strips EXT without valid previous id', () => {
     const normalized = normalizeOmniInteractionBuildOptions(
       {
         startFrame: 'https://example.com/start.png',
@@ -119,7 +120,7 @@ describe('omniVideoInteractions helpers', () => {
 
   it('builds FTV (start + end frame interpolation) body at 1080p with opening and closing frame captions', async () => {
     const body = await buildOmniInteractionRequestBody(
-      'gemini-omni-1.1-flash-preview',
+      'gemini-omni-1.2-flash',
       'Smooth camera dolly from start keyframe to end keyframe.',
       {
         aspectRatio: '16:9',
@@ -149,7 +150,7 @@ describe('omniVideoInteractions helpers', () => {
 
   it('builds Interactions API body with duration and resolution', async () => {
     const body = await buildOmniInteractionRequestBody(
-      'gemini-omni-1.1-flash-preview',
+      'gemini-omni-1.2-flash',
       'A cinematic sunset over the ocean.',
       {
         aspectRatio: '16:9',
@@ -161,7 +162,7 @@ describe('omniVideoInteractions helpers', () => {
       }
     )
 
-    expect(body.model).toBe('gemini-omni-1.1-flash-preview')
+    expect(body.model).toBe('gemini-omni-1.2-flash')
     expect(body.background).toBe(true)
     expect(body.input).toContain('A cinematic sunset over the ocean.')
     expect(body.input).toContain('Cinematic multi-shot sequence')
@@ -182,7 +183,7 @@ describe('omniVideoInteractions helpers', () => {
 
   it('omits delivery when omitDelivery is set', async () => {
     const body = await buildOmniInteractionRequestBody(
-      'gemini-omni-1.1-flash-preview',
+      'gemini-omni-1.2-flash',
       'A cinematic sunset over the ocean.',
       { omitDelivery: true }
     )

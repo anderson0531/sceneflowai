@@ -4,6 +4,7 @@ import { MODEL_REGISTRY, type ModelRegistryEntry } from '@/lib/models/modelRegis
 import {
   analyzeModelReleases,
   newestGaFlash,
+  newestGaOmniFlash,
   parseCatalogModelIds,
   type ModelCatalogSnapshot,
 } from '@/lib/models/modelReleaseAnalyzer'
@@ -32,17 +33,17 @@ describe('catalog parsing', () => {
     expect(parseCatalogModelIds({ data: [{ id: 'google/gemini-3.9-flash' }] })).toEqual([
       'gemini-3.9-flash',
     ])
-    expect(parseCatalogModelIds({ models: [{ name: 'models/gemini-omni-1.1-flash' }] })).toEqual([
-      'gemini-omni-1.1-flash',
+    expect(parseCatalogModelIds({ models: [{ name: 'models/gemini-omni-1.2-flash' }] })).toEqual([
+      'gemini-omni-1.2-flash',
     ])
     expect(
       parseCatalogModelIds({
-        publisherModels: [{ name: 'publishers/google/models/gemini-omni-1.1-flash-preview' }],
+        publisherModels: [{ name: 'publishers/google/models/gemini-omni-1.2-flash' }],
       })
-    ).toEqual(['gemini-omni-1.1-flash-preview'])
+    ).toEqual(['gemini-omni-1.2-flash'])
   })
 
-  it('picks the highest GA Flash and ignores lite, preview, and image ids', () => {
+  it('picks the highest GA Flash and GA Omni Flash while ignoring preview ids', () => {
     expect(
       newestGaFlash([
         'gemini-3.8-flash',
@@ -53,6 +54,14 @@ describe('catalog parsing', () => {
         'gemini-3.9-flash',
       ])
     ).toBe('gemini-3.10-flash')
+
+    expect(
+      newestGaOmniFlash([
+        'gemini-omni-1.1-flash',
+        'gemini-omni-1.2-flash',
+        'gemini-omni-1.3-flash-preview',
+      ])
+    ).toBe('gemini-omni-1.2-flash')
   })
 })
 
@@ -72,11 +81,39 @@ describe('analyzeModelReleases', () => {
     expect(result?.cursorPrompt).toContain('src/lib/config/modelConfig.ts')
   })
 
-  it('holds Omni when only the Gemini Developer API lists the GA id', () => {
-    const result = actionFor(
+  it('marks GA Omni 1.2 Flash current on Vertex and proposes rename when Vertex ships a newer GA Omni Flash', () => {
+    const current = actionFor(
       'video-omni',
       catalogs({
         vertex: [VEO_MODELS.omni, VEO_MODELS.fast],
+        gemini_developer: ['gemini-omni-1.2-flash'],
+        gateway: ['gemini-omni-1.2-flash', GEMINI_PRODUCT_MODELS.workhorse],
+      })
+    )
+    expect(current?.action).toBe('current')
+    expect(current?.currentModelId).toBe('gemini-omni-1.2-flash')
+
+    const upgraded = actionFor(
+      'video-omni',
+      catalogs({
+        vertex: [VEO_MODELS.omni, 'gemini-omni-1.3-flash'],
+        gemini_developer: ['gemini-omni-1.3-flash'],
+        gateway: ['gemini-omni-1.3-flash', GEMINI_PRODUCT_MODELS.workhorse],
+      })
+    )
+    expect(upgraded?.action).toBe('rename')
+    expect(upgraded?.proposedModelId).toBe('gemini-omni-1.3-flash')
+  })
+
+  it('holds a preview Omni pin when only the Gemini Developer API lists the GA id', () => {
+    const previewOmniEntry: ModelRegistryEntry = {
+      ...entry('video-omni'),
+      modelId: 'gemini-omni-1.1-flash-preview',
+    }
+    const [result] = analyzeModelReleases(
+      [previewOmniEntry],
+      catalogs({
+        vertex: ['gemini-omni-1.1-flash-preview', VEO_MODELS.fast],
         gemini_developer: ['gemini-omni-1.1-flash'],
         gateway: ['gemini-omni-flash-preview', GEMINI_PRODUCT_MODELS.workhorse],
       })

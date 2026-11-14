@@ -20,7 +20,7 @@
  * @see https://ai.google.dev/gemini-api/docs/video
  */
 
-import { getVeoModel, DEFAULT_VIDEO_QUALITY, DEFAULT_VEO_CLIP_DURATION, isOmniVideoModel, type VeoClipDuration } from '@/lib/config/modelConfig'
+import { getVeoModel, resolveVideoModel, DEFAULT_VIDEO_QUALITY, DEFAULT_VEO_CLIP_DURATION, isOmniVideoModel, type VeoClipDuration } from '@/lib/config/modelConfig'
 import {
   getVeoSafetySetting,
   getVeoIncludeRaiReason,
@@ -73,6 +73,8 @@ export interface GeminiVideoOptions {
   // Pass the veoVideoRef from a previous generation still in Gemini's 2-day cache
   sourceVideo?: string // Gemini Files API reference (e.g., "files/xxx") for video extension
   quality?: 'fast' | 'standard' // Video quality tier: fast (Veo 3.0 Fast) or standard (Veo 3.1)
+  /** Standard take: always use Gemini Omni Flash Interactions API. */
+  preferOmni?: boolean
 }
 
 export interface GeminiVideoResult {
@@ -441,9 +443,14 @@ export async function generateVideoWithGeminiStudio(
     }
   }
   
-  // Select model based on quality tier (default: fast for cost efficiency)
+  // Select model based on quality tier and Omni routing (Standard / 10s+ / EXT interaction ref)
   const quality = options.quality || DEFAULT_VIDEO_QUALITY
-  const model = getVeoModel(quality)
+  const model = resolveVideoModel(quality, {
+    durationSeconds: options.durationSeconds,
+    sourceVideo: options.sourceVideo,
+    hasReferenceImages: !options.startFrame && (options.referenceImages?.length ?? 0) > 0,
+    preferOmni: options.preferOmni,
+  })
   const usingOmni = isOmniVideoModel(model)
   const stabilityDuration: VeoClipDuration = usingOmni ? 10 : 8
 

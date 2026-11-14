@@ -77,6 +77,6 @@ describe('model registry', () => {
     expect(retired.some((entry) => entry.symbol === 'IMAGEN_MODELS.fast')).toBe(true)
     expect(retired.some((entry) => entry.symbol === 'IMAGEN_4_MODELS.ultra')).toBe(true)
     expect(row('VEO_MODELS.omni')[0]?.notes).toContain('OMNI_MODEL_ID')
-    expect(row('VEO_MODELS.omni')[0]?.modelId).toBe('gemini-omni-1.1-flash-preview')
+    expect(row('VEO_MODELS.omni')[0]?.modelId).toBe('gemini-omni-1.2-flash')
   })
 })

@@ -16,7 +16,7 @@ export const CREDIT_FACE_USD = 0.01
 export const STUDIO_CASH_PER_CREDIT_USD = 0.008
 export const REFERENCE_IMAGE_ADDON_CREDITS = 5
 
-export const OMNI_MODEL_ID = 'gemini-omni-1.1-flash-preview'
+export const OMNI_MODEL_ID = 'gemini-omni-1.2-flash'
 export const VEO_FAST_MODEL_ID = 'veo-3.1-fast-generate-001'
 export const VEO_PREMIUM_MODEL_ID = 'veo-3.1-generate-001'
 export const KLING_OMNI_MODEL_ID = 'kling-v3-omni'

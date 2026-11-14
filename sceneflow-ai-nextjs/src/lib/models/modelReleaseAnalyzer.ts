@@ -93,6 +93,12 @@ function gaFlashVersion(modelId: string): number[] | null {
   return match[1].split('.').map((part) => Number(part))
 }
 
+function gaOmniFlashVersion(modelId: string): number[] | null {
+  const match = modelId.match(/^gemini-omni-(\d+(?:\.\d+)?)-flash$/)
+  if (!match) return null
+  return match[1].split('.').map((part) => Number(part))
+}
+
 function compareVersions(left: number[], right: number[]): number {
   const length = Math.max(left.length, right.length)
   for (let index = 0; index < length; index += 1) {
@@ -108,6 +114,17 @@ export function newestGaFlash(modelIds: Iterable<string>): string | null {
     const version = gaFlashVersion(normalizeCatalogModelId(id))
     if (!version) continue
     if (!best || compareVersions(version, best.version) > 0) best = { id: normalizeCatalogModelId(id), version }
+  }
+  return best?.id ?? null
+}
+
+export function newestGaOmniFlash(modelIds: Iterable<string>): string | null {
+  let best: { id: string; version: number[] } | null = null
+  for (const id of modelIds) {
+    const normalized = normalizeCatalogModelId(id)
+    const version = gaOmniFlashVersion(normalized)
+    if (!version) continue
+    if (!best || compareVersions(version, best.version) > 0) best = { id: normalized, version }
   }
   return best?.id ?? null
 }
@@ -285,6 +302,24 @@ export function analyzeModelReleases(
       )
     }
 
+    const omniVersion = entry.id === 'video-omni' ? gaOmniFlashVersion(entry.modelId) : null
+    if (omniVersion) {
+      const newerOmni = newestGaOmniFlash(ownIds)
+      if (
+        newerOmni &&
+        gaOmniFlashVersion(newerOmni) &&
+        compareVersions(gaOmniFlashVersion(newerOmni)!, omniVersion) > 0
+      ) {
+        return recommendation(
+          entry,
+          'rename',
+          `${sourceLabel(source)} lists a higher GA Omni Flash (${newerOmni}) than ${entry.symbol}.`,
+          newerOmni,
+          'Update VEO_MODELS.omni and synced credit model pins (OMNI_MODEL_ID, CreditPricing, costTracking) together.'
+        )
+      }
+    }
+
     if (!ownIds.has(entry.modelId)) {
       const currentFlash = gaFlashVersion(entry.modelId)
       if (currentFlash) {
@@ -294,6 +329,19 @@ export function analyzeModelReleases(
             entry,
             'rename',
             `${entry.modelId} is absent from ${sourceLabel(source)}. That list includes the newer GA Flash ${successor}.`,
+            successor,
+            `Change ${entry.symbol} to the successor on the same API.`
+          )
+        }
+      }
+      const currentOmniFlash = gaOmniFlashVersion(entry.modelId)
+      if (currentOmniFlash) {
+        const successor = newestGaOmniFlash(ownIds)
+        if (successor && compareVersions(gaOmniFlashVersion(successor)!, currentOmniFlash) > 0) {
+          return recommendation(
+            entry,
+            'rename',
+            `${entry.modelId} is absent from ${sourceLabel(source)}. That list includes the newer GA Omni Flash ${successor}.`,
             successor,
             `Change ${entry.symbol} to the successor on the same API.`
           )

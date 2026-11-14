@@ -93,10 +93,10 @@ async function fetchVertex(): Promise<ModelCatalogSnapshot> {
     const token = await getVertexAIAuthToken()
     const init: RequestInit = { headers: { Authorization: `Bearer ${token}` } }
     const ids = await collectPages(
-      `https://aiplatform.googleapis.com/v1/projects/${encodeURIComponent(project)}/locations/global/publishers/google/models`,
+      'https://aiplatform.googleapis.com/v1beta1/publishers/google/models?pageSize=200',
       init,
       (pageToken) =>
-        `https://aiplatform.googleapis.com/v1/projects/${encodeURIComponent(project)}/locations/global/publishers/google/models?pageToken=${encodeURIComponent(pageToken)}`
+        `https://aiplatform.googleapis.com/v1beta1/publishers/google/models?pageSize=200&pageToken=${encodeURIComponent(pageToken)}`
     )
     return ok('vertex', ids)
   } catch (error) {
