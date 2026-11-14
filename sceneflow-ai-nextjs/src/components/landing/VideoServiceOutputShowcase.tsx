@@ -20,51 +20,17 @@ import {
   type FeaturePanLocaleId,
   type VideoServiceVerticalId,
 } from '@/config/landing/videoServicesNarratedPan'
+import {
+  getVideoServicePromoMp4Path,
+  getVideoServicePromoWebmPath,
+  resolveAvailablePromoVideoLocale,
+} from '@/config/landing/videoServicePromoScripts'
 
 type FullscreenCapableElement = HTMLElement & {
   webkitRequestFullscreen?: () => Promise<void> | void
 }
 
-const showcaseTtsBlobCache = new Map<string, string>()
-const showcaseTtsInflight = new Map<string, Promise<string | null>>()
-let sessionShowcaseVoiceoverUnlocked = false
-
-function fetchShowcaseBeatAudioUrl(
-  locale: FeaturePanLocaleId,
-  text: string
-): Promise<string | null> {
-  if (typeof window === 'undefined' || typeof fetch !== 'function') {
-    return Promise.resolve(null)
-  }
-  const cacheKey = `${locale}::${text}`
-  const cached = showcaseTtsBlobCache.get(cacheKey)
-  if (cached) return Promise.resolve(cached)
-  const inflight = showcaseTtsInflight.get(cacheKey)
-  if (inflight) return inflight
-
-  const req = fetch('/api/tts/edge', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ language: locale, text }),
-  })
-    .then(async (res) => {
-      if (!res.ok) return null
-      const blob = await res.blob()
-      if (!blob || blob.size < 256 || typeof URL.createObjectURL !== 'function') {
-        return null
-      }
-      const url = URL.createObjectURL(blob)
-      showcaseTtsBlobCache.set(cacheKey, url)
-      return url
-    })
-    .catch(() => null)
-    .finally(() => {
-      showcaseTtsInflight.delete(cacheKey)
-    })
-
-  showcaseTtsInflight.set(cacheKey, req)
-  return req
-}
+let sessionPromoAudioUnmuted = false
 
 export type VideoServiceOutputShowcaseProps = {
   verticalId: VideoServiceVerticalId
@@ -89,15 +55,24 @@ export function VideoServiceOutputShowcase({
   const [beatIndex, setBeatIndex] = useState(0)
   const [beatProgress, setBeatProgress] = useState(0)
   const [isPlaying, setIsPlaying] = useState(true)
-  const [voiceoverEnabled, setVoiceoverEnabled] = useState(
-    () => sessionShowcaseVoiceoverUnlocked
+  const [promoAudioUnmuted, setPromoAudioUnmuted] = useState(
+    () => sessionPromoAudioUnmuted
   )
+  const [promoVideoError, setPromoVideoError] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   const stageRef = useRef<HTMLDivElement | null>(null)
   const imageRefs = useRef<Record<string, HTMLImageElement | null>>({})
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const speechFinishedRef = useRef(true)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+
+  const availablePromoLocale = resolveAvailablePromoVideoLocale(verticalId, panLocale)
+  const hasPromoVideo = Boolean(availablePromoLocale) && !promoVideoError
+  const promoWebmSrc = availablePromoLocale
+    ? getVideoServicePromoWebmPath(verticalId, availablePromoLocale)
+    : null
+  const promoMp4Src = availablePromoLocale
+    ? getVideoServicePromoMp4Path(verticalId, availablePromoLocale)
+    : null
 
   // Sync language when page locale changes
   useEffect(() => {
@@ -111,6 +86,11 @@ export function VideoServiceOutputShowcase({
     setIsPlaying(true)
   }, [verticalId])
 
+  // Clear any transient video error when vertical or language changes
+  useEffect(() => {
+    setPromoVideoError(false)
+  }, [verticalId, panLocale])
+
   // Track native Fullscreen API changes
   useEffect(() => {
     if (typeof document === 'undefined') return
@@ -120,32 +100,6 @@ export function VideoServiceOutputShowcase({
     document.addEventListener('fullscreenchange', onFsChange)
     return () => document.removeEventListener('fullscreenchange', onFsChange)
   }, [])
-
-  const stopNarrationAudio = useCallback(() => {
-    speechFinishedRef.current = true
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause()
-        audioRef.current.removeAttribute('src')
-      } catch {
-        // Ignore audio cleanup errors in headless/test environments
-      }
-      audioRef.current = null
-    }
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel()
-      } catch {
-        // Ignore speechSynthesis cleanup errors
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      stopNarrationAudio()
-    }
-  }, [stopNarrationAudio])
 
   const safeIdx = beatIndex < beats.length ? beatIndex : 0
   const currentBeat = beats[safeIdx]
@@ -176,12 +130,13 @@ export function VideoServiceOutputShowcase({
 
   // Ensure initial transform is applied immediately on beat/vertical change
   useEffect(() => {
+    if (hasPromoVideo) return
     applyCameraTransform(0)
-  }, [applyCameraTransform])
+  }, [applyCameraTransform, hasPromoVideo])
 
-  // 60fps requestAnimationFrame 5K pan choreography
+  // 60fps requestAnimationFrame 5K pan choreography when in 5K Stills Showcase mode
   useEffect(() => {
-    if (!isPlaying) return
+    if (hasPromoVideo || !isPlaying) return
     if (typeof window === 'undefined') return
 
     const durationMs = Math.max(4000, currentBeat.durationSec * 1000)
@@ -196,8 +151,7 @@ export function VideoServiceOutputShowcase({
       applyCameraTransform(rawProgress)
       setBeatProgress(rawProgress)
 
-      const waitingOnVoiceover = voiceoverEnabled && !speechFinishedRef.current
-      if (rawProgress >= 1 && !waitingOnVoiceover) {
+      if (rawProgress >= 1) {
         setBeatIndex((prev) => (prev + 1) % beats.length)
         return
       }
@@ -209,107 +163,48 @@ export function VideoServiceOutputShowcase({
       cancelled = true
       window.cancelAnimationFrame(rafId)
     }
-  }, [applyCameraTransform, beats.length, currentBeat.durationSec, isPlaying, safeIdx, verticalId, voiceoverEnabled])
-
-  // Neural 7-language Edge TTS playback + next-beat prefetch + speechSynthesis fallback
-  useEffect(() => {
-    stopNarrationAudio()
-    if (!voiceoverEnabled || !isPlaying) return
-    if (typeof window === 'undefined') return
-
-    const text = currentBeat.narration[panLocale] ?? currentBeat.narration.en
-    if (!text) return
-
-    // Prefetch next beat MP3 for zero-gap transitions
-    const nextBeat = beats[(safeIdx + 1) % beats.length]
-    const nextText = nextBeat?.narration[panLocale] ?? nextBeat?.narration.en
-    if (nextText) {
-      void fetchShowcaseBeatAudioUrl(panLocale, nextText)
-    }
-
-    let cancelled = false
-    speechFinishedRef.current = false
-
-    const playBrowserSpeechFallback = () => {
-      if (cancelled || !('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
-        speechFinishedRef.current = true
-        return
-      }
-      try {
-        const utterance = new SpeechSynthesisUtterance(text)
-        const opt = FEATURE_PAN_LOCALE_OPTIONS.find((item) => item.id === panLocale)
-        utterance.lang = opt?.speechLang ?? 'en-US'
-        utterance.rate = 1.0
-        utterance.onend = () => {
-          speechFinishedRef.current = true
-        }
-        utterance.onerror = () => {
-          speechFinishedRef.current = true
-        }
-        window.speechSynthesis.speak(utterance)
-      } catch {
-        speechFinishedRef.current = true
-      }
-    }
-
-    void fetchShowcaseBeatAudioUrl(panLocale, text).then((blobUrl) => {
-      if (cancelled) return
-      if (!blobUrl || typeof Audio === 'undefined') {
-        playBrowserSpeechFallback()
-        return
-      }
-      try {
-        const audio = new Audio(blobUrl)
-        audioRef.current = audio
-        audio.onended = () => {
-          speechFinishedRef.current = true
-        }
-        audio.onerror = () => {
-          audioRef.current = null
-          playBrowserSpeechFallback()
-        }
-        const playPromise = audio.play()
-        if (playPromise && typeof playPromise.catch === 'function') {
-          playPromise.catch(() => {
-            audioRef.current = null
-            playBrowserSpeechFallback()
-          })
-        }
-      } catch {
-        playBrowserSpeechFallback()
-      }
-    })
-
-    return () => {
-      cancelled = true
-      stopNarrationAudio()
-    }
   }, [
-    beats,
-    currentBeat,
+    applyCameraTransform,
+    beats.length,
+    currentBeat.durationSec,
+    hasPromoVideo,
     isPlaying,
-    panLocale,
     safeIdx,
-    stopNarrationAudio,
     verticalId,
-    voiceoverEnabled,
   ])
 
+  // Sync HTML5 `.webm` / `.mp4` promo video playback & studio audio state
+  useEffect(() => {
+    if (!hasPromoVideo) return
+    const vid = videoRef.current
+    if (!vid) return
+    vid.muted = !promoAudioUnmuted
+    if (isPlaying) {
+      const p = vid.play()
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {
+          // If browser blocks unmuted autoplay, gracefully mute and play
+          if (promoAudioUnmuted) {
+            vid.muted = true
+            setPromoAudioUnmuted(false)
+            void vid.play().catch(() => undefined)
+          }
+        })
+      }
+    } else {
+      vid.pause()
+    }
+  }, [hasPromoVideo, isPlaying, promoAudioUnmuted, promoWebmSrc])
+
   const handleTogglePlay = () => {
-    setIsPlaying((prev) => {
-      const next = !prev
-      if (!next) stopNarrationAudio()
-      return next
-    })
+    setIsPlaying((prev) => !prev)
   }
 
-  const handleToggleVoiceover = () => {
-    setVoiceoverEnabled((prev) => {
+  const handleTogglePromoAudio = () => {
+    setPromoAudioUnmuted((prev) => {
       const next = !prev
-      sessionShowcaseVoiceoverUnlocked = next
-      if (!next) {
-        stopNarrationAudio()
-      } else if (!isPlaying) {
+      sessionPromoAudioUnmuted = next
+      if (next && !isPlaying) {
         setIsPlaying(true)
       }
       return next
@@ -320,13 +215,18 @@ export function VideoServiceOutputShowcase({
     setBeatIndex(idx)
     setBeatProgress(0)
     setIsPlaying(true)
+    if (hasPromoVideo && videoRef.current && videoRef.current.duration > 0) {
+      videoRef.current.currentTime = (idx / beats.length) * videoRef.current.duration
+    }
   }
 
   const handleSelectLanguage = (nextLocale: FeaturePanLocaleId) => {
     setPanLocale(nextLocale)
-    sessionShowcaseVoiceoverUnlocked = true
-    setVoiceoverEnabled(true)
     setIsPlaying(true)
+    if (resolveAvailablePromoVideoLocale(verticalId, nextLocale)) {
+      sessionPromoAudioUnmuted = true
+      setPromoAudioUnmuted(true)
+    }
   }
 
   const handleToggleFullscreen = async () => {
@@ -345,8 +245,9 @@ export function VideoServiceOutputShowcase({
     }
   }
 
+  const badgeLabel = hasPromoVideo ? uiCopy.promoVideoBadge : uiCopy.outputBadge
   const playToggleLabel = isPlaying ? uiCopy.pauseLabel : uiCopy.playLabel
-  const voiceToggleLabel = voiceoverEnabled ? uiCopy.muteLabel : uiCopy.hearPitchLabel
+  const audioToggleLabel = promoAudioUnmuted ? uiCopy.muteLabel : uiCopy.hearPitchLabel
   const fsToggleLabel = isFullscreen
     ? uiCopy.exitFullscreenLabel
     : uiCopy.enterFullscreenLabel
@@ -361,37 +262,70 @@ export function VideoServiceOutputShowcase({
         isFullscreen && 'flex h-full w-full flex-col justify-center bg-black p-4 sm:p-8'
       )}
     >
-      {/* 16:9 5K Pan Cinema Output Stage */}
+      {/* 16:9 Promo Video (.webm / .mp4) OR 5K Pan Cinema Output Stage */}
       <div
         className={cn(
           'relative aspect-video w-full overflow-hidden bg-slate-950',
           isFullscreen && 'mx-auto max-h-[76vh] max-w-7xl rounded-xl border border-white/15'
         )}
       >
-        {uniqueImages.map((src) => {
-          const active = src === currentBeat.imageSrc
-          return (
-            <img
-              key={src}
-              ref={(node) => {
-                imageRefs.current[src] = node
-              }}
-              src={src}
-              width={5120}
-              height={2880}
-              alt={`${verticalTitle} — ${currentBeat.sceneTag[panLocale]}`}
-              loading="eager"
-              decoding="async"
-              draggable={false}
-              className={cn(
-                'pointer-events-none absolute inset-0 h-full w-full select-none object-cover transition-opacity duration-700 ease-out will-change-transform',
-                active ? 'opacity-100' : 'opacity-0'
-              )}
-            />
-          )
-        })}
+        {hasPromoVideo && promoWebmSrc && promoMp4Src ? (
+          <video
+            key={`${verticalId}-${availablePromoLocale}`}
+            ref={videoRef}
+            poster={beats[0].imageSrc}
+            autoPlay
+            loop
+            muted={!promoAudioUnmuted}
+            playsInline
+            preload="metadata"
+            aria-label={`${verticalTitle} — ${uiCopy.promoVideoBadge}`}
+            onTimeUpdate={(e) => {
+              const vid = e.currentTarget
+              if (vid.duration > 0) {
+                const overall = vid.currentTime / vid.duration
+                setBeatProgress(overall)
+                const syncedBeat = Math.min(
+                  beats.length - 1,
+                  Math.floor(overall * beats.length)
+                )
+                if (syncedBeat !== safeIdx) {
+                  setBeatIndex(syncedBeat)
+                }
+              }
+            }}
+            onError={() => setPromoVideoError(true)}
+            className="h-full w-full object-cover"
+          >
+            <source src={promoWebmSrc} type="video/webm" />
+            <source src={promoMp4Src} type="video/mp4" />
+          </video>
+        ) : (
+          uniqueImages.map((src) => {
+            const active = src === currentBeat.imageSrc
+            return (
+              <img
+                key={src}
+                ref={(node) => {
+                  imageRefs.current[src] = node
+                }}
+                src={src}
+                width={5120}
+                height={2880}
+                alt={`${verticalTitle} — ${currentBeat.sceneTag[panLocale]}`}
+                loading="eager"
+                decoding="async"
+                draggable={false}
+                className={cn(
+                  'pointer-events-none absolute inset-0 h-full w-full select-none object-cover transition-opacity duration-700 ease-out will-change-transform',
+                  active ? 'opacity-100' : 'opacity-0'
+                )}
+              />
+            )
+          })
+        )}
 
-        {/* Subtle top cinema vignette so badges stay legible without covering the output */}
+        {/* Subtle top & bottom cinema vignettes so badges stay legible without covering the output */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-slate-950/80 via-slate-950/25 to-transparent"
           aria-hidden
@@ -401,7 +335,7 @@ export function VideoServiceOutputShowcase({
           aria-hidden
         />
 
-        {/* Top Bar: 5K Deliverable Badge + Play / Voiceover / Fullscreen Controls */}
+        {/* Top Bar: Deliverable Badge + Studio Audio (when .webm active) / Play / Fullscreen Controls */}
         <div className="absolute inset-x-2.5 top-2.5 z-10 flex flex-wrap items-center justify-between gap-2 sm:inset-x-3.5 sm:top-3">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-slate-950/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-200 backdrop-blur-md">
             <span
@@ -411,34 +345,36 @@ export function VideoServiceOutputShowcase({
               )}
               aria-hidden
             />
-            <span>{uiCopy.outputBadge}</span>
+            <span>{badgeLabel}</span>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <VideoControlTooltip label={voiceToggleLabel} side="bottom">
-              <button
-                type="button"
-                title={voiceToggleLabel}
-                aria-label={voiceToggleLabel}
-                aria-pressed={voiceoverEnabled}
-                onClick={handleToggleVoiceover}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold backdrop-blur-md transition-all cursor-pointer',
-                  voiceoverEnabled
-                    ? 'border-emerald-400/70 bg-emerald-500/25 text-emerald-100 shadow-sm shadow-emerald-500/20'
-                    : 'border-amber-400/60 bg-slate-950/85 text-amber-200 hover:border-amber-300 hover:bg-amber-500/20 hover:text-white'
-                )}
-              >
-                {voiceoverEnabled ? (
-                  <Volume2 className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
-                ) : (
-                  <VolumeX className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
-                )}
-                <span className="hidden min-[440px]:inline">
-                  {voiceoverEnabled ? uiCopy.voiceoverOnLabel : uiCopy.hearPitchLabel}
-                </span>
-              </button>
-            </VideoControlTooltip>
+            {hasPromoVideo ? (
+              <VideoControlTooltip label={audioToggleLabel} side="bottom">
+                <button
+                  type="button"
+                  title={audioToggleLabel}
+                  aria-label={audioToggleLabel}
+                  aria-pressed={promoAudioUnmuted}
+                  onClick={handleTogglePromoAudio}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold backdrop-blur-md transition-all cursor-pointer',
+                    promoAudioUnmuted
+                      ? 'border-emerald-400/70 bg-emerald-500/25 text-emerald-100 shadow-sm shadow-emerald-500/20'
+                      : 'border-amber-400/60 bg-slate-950/85 text-amber-200 hover:border-amber-300 hover:bg-amber-500/20 hover:text-white'
+                  )}
+                >
+                  {promoAudioUnmuted ? (
+                    <Volume2 className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
+                  ) : (
+                    <VolumeX className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
+                  )}
+                  <span className="hidden min-[440px]:inline">
+                    {promoAudioUnmuted ? uiCopy.voiceoverOnLabel : uiCopy.hearPitchLabel}
+                  </span>
+                </button>
+              </VideoControlTooltip>
+            ) : null}
 
             <VideoControlTooltip label={playToggleLabel} side="bottom">
               <button
@@ -494,7 +430,7 @@ export function VideoServiceOutputShowcase({
         </div>
       </div>
 
-      {/* Dedicated Narrated Business Pitch Caption + Beat & 7-Language Switcher Bar */}
+      {/* Business Opportunity Pitch Caption + Beat & 7-Language Switcher Bar */}
       <div className="border-t border-white/10 bg-slate-950/95 p-3 sm:p-4">
         <p
           data-testid="video-service-pan-caption"
@@ -537,7 +473,7 @@ export function VideoServiceOutputShowcase({
             <Globe2 className="me-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300/80" aria-hidden />
             {FEATURE_PAN_LOCALE_OPTIONS.map((opt) => {
               const selected = opt.id === panLocale
-              const langTooltip = `${opt.nativeName} (${opt.shortLabel}) — ${uiCopy.hearPitchLabel}`
+              const langTooltip = `${opt.nativeName} (${opt.shortLabel}) — ${uiCopy.languagePickerTitle}`
               return (
                 <button
                   key={opt.id}

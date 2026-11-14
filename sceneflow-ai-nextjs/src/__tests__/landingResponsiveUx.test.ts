@@ -40,6 +40,11 @@ import {
   VIDEO_SERVICE_PAN_UI_COPY,
   type VideoServiceVerticalId,
 } from '@/config/landing/videoServicesNarratedPan'
+import {
+  VIDEO_SERVICE_PROMO_SCRIPTS,
+  getVideoServicePromoMp4Path,
+  getVideoServicePromoWebmPath,
+} from '@/config/landing/videoServicePromoScripts'
 import { resolveLocalizedStudioLandingCopy } from '@/config/landing/worldClassLandingCopy'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -598,7 +603,42 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     const sectionSrc = readSource('src/components/landing/VideoServicesSpotlightSection.tsx')
     expect(showcaseSrc).not.toContain('truncate')
     expect(showcaseSrc).not.toContain('role="tab"')
+    // Never fall back to robotic computer speechSynthesis or consumer Edge TTS on Client Services
+    expect(showcaseSrc).not.toContain('speechSynthesis')
+    expect(showcaseSrc).not.toContain('SpeechSynthesisUtterance')
+    expect(showcaseSrc).not.toContain('/api/tts/edge')
+    expect(showcaseSrc).toContain('video/webm')
     expect(sectionSrc).not.toContain('truncate')
+
+    // Verify 48s (6 × 8s) Promo Demonstration Trailer Scripts + .webm encoder script readiness
+    expect(existsSync(path.join(ROOT, 'scripts/encode-video-services-webm.mjs'))).toBe(true)
+    for (const vid of verticalIds) {
+      const promo = VIDEO_SERVICE_PROMO_SCRIPTS[vid]
+      expect(promo.durationSeconds).toBe(48)
+      expect(promo.blocks).toHaveLength(6)
+      expect(promo.referenceLocks.length).toBeGreaterThanOrEqual(5)
+      expect(promo.backgroundMusic.mixLevel).toContain('25%')
+      expect(getVideoServicePromoWebmPath(vid, 'en')).toBe(
+        `/landing/video-services/videos/${vid}-en.webm`
+      )
+      expect(getVideoServicePromoMp4Path(vid, 'ar')).toBe(
+        `/landing/video-services/videos/${vid}-ar.mp4`
+      )
+      for (const block of promo.blocks) {
+        expect(block.durationSeconds).toBe(8)
+        expect(block.videoPrompt).toContain('Single continuous take, no cuts.')
+        expect(block.videoPrompt).toContain('REF:')
+        for (const loc of DUB_LOCALES) {
+          expect(block.localizedCues[loc].narrationVo.trim().length).toBeGreaterThan(30)
+        }
+        expect(block.localizedCues.es.narrationVo).not.toBe(
+          block.localizedCues.en.narrationVo
+        )
+        expect(block.localizedCues.zh.narrationVo).not.toBe(
+          block.localizedCues.en.narrationVo
+        )
+      }
+    }
 
     for (const vid of verticalIds) {
       const beats = VIDEO_SERVICES_NARRATED_PAN[vid]
