@@ -1,8 +1,8 @@
 import crypto from 'crypto'
+import { sequelize } from '@/config/database'
 import CollabSession from '@/models/CollabSession'
 import ClientAssetSubmission, { type ContinuitySlotType } from '@/models/ClientAssetSubmission'
 import Project from '@/models/Project'
-import ReferenceAsset from '@/models/ReferenceAsset'
 import { ensureProducerPlatformSchema } from '@/lib/database/migrateProducerPlatform'
 import {
   getLatestCustomerConsent,
@@ -12,12 +12,15 @@ import {
 } from '@/lib/producer/producerProfileService'
 import { evaluateCustomerTextQuarantine } from '@/lib/producer/quarantineCheck'
 import { resolveClientPortalLocale, type ClientPortalLocale } from '@/lib/intake/clientPortalCopy'
+import { createReferenceAsset } from '@/lib/referenceLibrary/assetRepository'
 import { notifyUser } from '@/lib/jobs/jobService'
 
 export interface ContinuityPortalSlot {
   slotId: string
   slotType: ContinuitySlotType
   name: string
+  parentId?: string
+  parentName?: string
   role?: string
   description: string
   referenceImageUrl?: string | null
@@ -29,10 +32,16 @@ export interface ContinuityPortalSlot {
 export interface ContinuitySessionPayload {
   type: 'continuity'
   projectId: string
+  projectTitle?: string
+  clientMode?: boolean
+  allowUploads?: boolean
   locale: ClientPortalLocale
   maxRounds: number
   roundsUsed: number
   approvalStatus: 'pending_review' | 'changes_requested' | 'approved'
+  lastReviewerName?: string
+  lastReviewedAt?: string
+  generalNotes?: string
   clientGroupSlug?: string
   brandProfileSnapshot: BrandProfileSnapshot
   slots: ContinuityPortalSlot[]
@@ -57,10 +66,10 @@ export async function resolveActiveContinuitySession(token: string) {
 }
 
 /**
- * Extracts Character, Location, and Prop slots from an existing Project's
- * Blueprint (`filmTreatmentVariant`) and Production (`visionPhase`) metadata.
+ * Extracts Character, Wardrobe, Location (including `locationReferences` + `sceneReferences`),
+ * Location Version, and Prop slots from a Project's Blueprint and Production metadata.
  */
-export function extractContinuitySlotsFromProject(project: Project): ContinuityPortalSlot[] {
+export function extractContinuitySlotsFromProject(project: Pick<Project, 'metadata'>): ContinuityPortalSlot[] {
   const md = ((project.metadata || {}) as Record<string, unknown>)
   const visionPhase = ((md.visionPhase || {}) as Record<string, any>)
   const variant = ((md.filmTreatmentVariant || {}) as Record<string, any>)
@@ -73,30 +82,78 @@ export function extractContinuitySlotsFromProject(project: Project): ContinuityP
   const charSource = vpChars.length > 0 ? vpChars : bpChars
 
   charSource.forEach((c: any, idx: number) => {
-    const slotId = String(c.id || `char-${idx + 1}`)
+    const charSlotId = String(c.id || `char-${idx + 1}`)
+    const charName = String(c.name || `Character ${idx + 1}`)
     slots.push({
-      slotId,
+      slotId: charSlotId,
       slotType: 'character',
-      name: String(c.name || `Character ${idx + 1}`),
+      name: charName,
       role: c.role ? String(c.role) : undefined,
-      description: String(c.description || c.appearanceDescription || ''),
+      description: String(c.description || c.appearanceDescription || c.appearance || ''),
       referenceImageUrl: c.referenceImage || c.imageUrl || null,
-      needsClientPhoto: true,
+      needsClientPhoto: !(c.referenceImage || c.imageUrl),
       clientDecision: 'pending',
+    })
+
+    const wardrobes = Array.isArray(c.wardrobes) ? c.wardrobes : []
+    wardrobes.forEach((w: any, wIdx: number) => {
+      const wId = String(w.id || `w-${wIdx + 1}`)
+      slots.push({
+        slotId: `wardrobe:${charSlotId}:${wId}`,
+        slotType: 'wardrobe',
+        parentId: charSlotId,
+        parentName: charName,
+        name: `${charName} — ${String(w.name || `Wardrobe ${wIdx + 1}`)}`,
+        description: String(w.description || w.outfitDescription || ''),
+        referenceImageUrl: w.fullBodyUrl || w.previewImageUrl || w.imageUrl || null,
+        needsClientPhoto: !(w.fullBodyUrl || w.previewImageUrl || w.imageUrl),
+        clientDecision: 'pending',
+      })
     })
   })
 
   const refs = (visionPhase.references || {}) as Record<string, any>
+  // Canonical Production Stage location store is `locationReferences`; also merge legacy `sceneReferences`
+  const locRefs = Array.isArray(refs.locationReferences) ? refs.locationReferences : []
   const sceneRefs = Array.isArray(refs.sceneReferences) ? refs.sceneReferences : []
-  sceneRefs.forEach((loc: any, idx: number) => {
+  const seenLocKeys = new Set<string>()
+  const mergedLocations: any[] = []
+
+  for (const loc of [...locRefs, ...sceneRefs]) {
+    if (!loc) continue
+    const dedupeKey = `${String(loc.id || '').toLowerCase()}::${String(loc.name || '').trim().toLowerCase()}`
+    if (seenLocKeys.has(dedupeKey)) continue
+    seenLocKeys.add(dedupeKey)
+    mergedLocations.push(loc)
+  }
+
+  mergedLocations.forEach((loc: any, idx: number) => {
+    const locSlotId = String(loc.id || `loc-${idx + 1}`)
+    const locName = String(loc.name || `Location ${idx + 1}`)
     slots.push({
-      slotId: String(loc.id || `loc-${idx + 1}`),
+      slotId: locSlotId,
       slotType: 'location',
-      name: String(loc.name || `Location ${idx + 1}`),
+      name: locName,
       description: String(loc.description || ''),
       referenceImageUrl: loc.imageUrl || loc.referenceImage || null,
-      needsClientPhoto: true,
+      needsClientPhoto: !(loc.imageUrl || loc.referenceImage),
       clientDecision: 'pending',
+    })
+
+    const versions = Array.isArray(loc.versions) ? loc.versions : []
+    versions.forEach((ver: any, vIdx: number) => {
+      const verId = String(ver.id || `ver-${vIdx + 1}`)
+      slots.push({
+        slotId: `locver:${locSlotId}:${verId}`,
+        slotType: 'location_version',
+        parentId: locSlotId,
+        parentName: locName,
+        name: `${locName} — ${String(ver.label || ver.name || `State ${vIdx + 1}`)}`,
+        description: String(ver.description || ''),
+        referenceImageUrl: ver.imageUrl || ver.referenceImage || null,
+        needsClientPhoto: !(ver.imageUrl || ver.referenceImage),
+        clientDecision: 'pending',
+      })
     })
   })
 
@@ -108,7 +165,7 @@ export function extractContinuitySlotsFromProject(project: Project): ContinuityP
       name: String(prop.name || `Prop ${idx + 1}`),
       description: String(prop.description || ''),
       referenceImageUrl: prop.imageUrl || prop.referenceImage || null,
-      needsClientPhoto: true,
+      needsClientPhoto: !(prop.imageUrl || prop.referenceImage),
       clientDecision: 'pending',
     })
   })
@@ -118,7 +175,7 @@ export function extractContinuitySlotsFromProject(project: Project): ContinuityP
       {
         slotId: 'char-1',
         slotType: 'character',
-        name: 'Primary Subject / Host',
+        name: 'Primary Subject / Cast',
         description: 'Upload portrait or family photos across key eras.',
         referenceImageUrl: null,
         needsClientPhoto: true,
@@ -137,7 +194,7 @@ export function extractContinuitySlotsFromProject(project: Project): ContinuityP
         slotId: 'prop-1',
         slotType: 'prop',
         name: 'Featured Keepsake / Product',
-        description: 'Upload close-up photos of meaningful objects or materials.',
+        description: 'Upload close-up photos of meaningful objects or brand assets.',
         referenceImageUrl: null,
         needsClientPhoto: true,
         clientDecision: 'pending',
@@ -148,10 +205,44 @@ export function extractContinuitySlotsFromProject(project: Project): ContinuityP
   return slots
 }
 
+export async function getActiveContinuitySessionForProject(
+  projectId: string,
+  origin: string
+): Promise<{
+  session: CollabSession
+  payload: ContinuitySessionPayload
+  shareUrl: string
+} | null> {
+  await ensureProducerPlatformSchema()
+  const rows = await CollabSession.findAll({
+    where: {
+      project_id: projectId,
+      status: 'active',
+    },
+    order: [['created_at', 'DESC']],
+    limit: 15,
+  })
+  const now = new Date()
+  for (const row of rows) {
+    const expiresAt = (row as { expires_at?: Date | null }).expires_at
+    if (expiresAt && new Date(expiresAt) < now) continue
+    const p = row.payload as Record<string, unknown> | null
+    if (isContinuityPayload(p)) {
+      const shareUrl = `${origin}/share/continuity/${row.token}?lang=${encodeURIComponent(
+        p.locale || 'en'
+      )}`
+      return { session: row, payload: p, shareUrl }
+    }
+  }
+  return null
+}
+
 export async function createOrUpdateContinuityPortalLink(input: {
   project: Project
   ownerUserId: string
   ownerDisplayName?: string
+  clientMode?: boolean
+  allowUploads?: boolean
   locale?: string
   maxRounds?: number
   clientGroupSlug?: string
@@ -161,65 +252,77 @@ export async function createOrUpdateContinuityPortalLink(input: {
   token: string
   sessionId: string
   url: string
+  clientMode: boolean
+  allowUploads: boolean
+  approvalStatus: ContinuitySessionPayload['approvalStatus']
   slots: ContinuityPortalSlot[]
 }> {
   await ensureProducerPlatformSchema()
+  const clientMode = input.clientMode === true
   const profile = await getOrCreateProducerProfile(input.ownerUserId)
-  if (!profile.commercial_addendum_accepted_at) {
+
+  if (clientMode && !profile.commercial_addendum_accepted_at) {
     throw new Error(
-      'COMMERCIAL_ADDENDUM_REQUIRED: Accept the Commercial Producer Addendum in Producer Settings before creating client continuity links.'
+      'COMMERCIAL_ADDENDUM_REQUIRED: Accept the Commercial Producer Addendum in Producer Settings before creating white-label B2B2C client continuity links.'
     )
   }
 
   const locale = resolveClientPortalLocale(input.locale)
-  const brandSnapshot = toBrandProfileSnapshot(profile, input.ownerDisplayName || 'Studio Producer')
+  const brandSnapshot: BrandProfileSnapshot = clientMode
+    ? toBrandProfileSnapshot(profile, input.ownerDisplayName || 'Studio Producer')
+    : {
+        brandName: profile.brand_name?.trim() || input.ownerDisplayName || 'SceneFlow Studio',
+        logoUrl: profile.brand_logo_url || undefined,
+        primaryColor: profile.primary_color || '#06b6d4',
+        hideSceneFlowBranding: false,
+      }
   const maxRounds = Math.min(
     10,
-    Math.max(1, Math.round(input.maxRounds ?? profile.default_max_rounds ?? 2))
+    Math.max(1, Math.round(input.maxRounds ?? profile.default_max_rounds ?? 3))
   )
+  const allowUploads = input.allowUploads !== false
   const freshSlots = extractContinuitySlotsFromProject(input.project)
 
-  // Check if an active continuity session already exists for this project
-  const existingRows = await CollabSession.findAll({
-    where: {
-      project_id: input.project.id,
-      owner_user_id: input.ownerUserId,
-      status: 'active',
-    },
-    order: [['created_at', 'DESC']],
-    limit: 10,
-  })
+  const existing = await getActiveContinuitySessionForProject(input.project.id, input.origin)
+  if (existing) {
+    const p = existing.payload
+    const prevBySlot = new Map(p.slots.map((s) => [s.slotId, s]))
+    const mergedSlots = freshSlots.map((slot) => {
+      const prev = prevBySlot.get(slot.slotId)
+      return prev
+        ? {
+            ...slot,
+            clientDecision: prev.clientDecision,
+            clientNote: prev.clientNote,
+          }
+        : slot
+    })
+    const effectiveClientMode = input.clientMode !== undefined ? clientMode : Boolean(p.clientMode)
+    const effectiveAllowUploads =
+      input.allowUploads !== undefined ? allowUploads : p.allowUploads !== false
 
-  for (const row of existingRows) {
-    const p = row.payload as Record<string, unknown> | null
-    if (isContinuityPayload(p)) {
-      // Merge updated referenceImageUrls from Studio while preserving client decisions
-      const prevBySlot = new Map(p.slots.map((s) => [s.slotId, s]))
-      const mergedSlots = freshSlots.map((slot) => {
-        const prev = prevBySlot.get(slot.slotId)
-        return prev
-          ? {
-              ...slot,
-              clientDecision: prev.clientDecision,
-              clientNote: prev.clientNote,
-            }
-          : slot
-      })
-      const nextPayload: ContinuitySessionPayload = {
-        ...p,
-        locale,
-        maxRounds,
-        brandProfileSnapshot: brandSnapshot,
-        clientGroupSlug: input.clientGroupSlug || p.clientGroupSlug,
-        slots: mergedSlots,
-      }
-      await row.update({ payload: nextPayload as unknown as Record<string, unknown> })
-      return {
-        token: row.token,
-        sessionId: row.id,
-        url: `${input.origin}/share/continuity/${row.token}?lang=${encodeURIComponent(locale)}`,
-        slots: mergedSlots,
-      }
+    const nextPayload: ContinuitySessionPayload = {
+      ...p,
+      projectTitle: input.project.title || p.projectTitle,
+      clientMode: effectiveClientMode,
+      allowUploads: effectiveAllowUploads,
+      locale,
+      maxRounds,
+      brandProfileSnapshot: brandSnapshot,
+      clientGroupSlug: input.clientGroupSlug || p.clientGroupSlug,
+      slots: mergedSlots,
+    }
+    await existing.session.update({
+      payload: nextPayload as unknown as Record<string, unknown>,
+    })
+    return {
+      token: existing.session.token,
+      sessionId: existing.session.id,
+      url: `${input.origin}/share/continuity/${existing.session.token}?lang=${encodeURIComponent(locale)}`,
+      clientMode: effectiveClientMode,
+      allowUploads: effectiveAllowUploads,
+      approvalStatus: nextPayload.approvalStatus,
+      slots: mergedSlots,
     }
   }
 
@@ -230,6 +333,9 @@ export async function createOrUpdateContinuityPortalLink(input: {
   const payload: ContinuitySessionPayload = {
     type: 'continuity',
     projectId: input.project.id,
+    projectTitle: input.project.title || 'Project',
+    clientMode,
+    allowUploads,
     locale,
     maxRounds,
     roundsUsed: 0,
@@ -252,6 +358,9 @@ export async function createOrUpdateContinuityPortalLink(input: {
     token,
     sessionId: created.id,
     url: `${input.origin}/share/continuity/${token}?lang=${encodeURIComponent(locale)}`,
+    clientMode,
+    allowUploads,
+    approvalStatus: payload.approvalStatus,
     slots: freshSlots,
   }
 }
@@ -285,7 +394,7 @@ export async function submitContinuityClientReview(input: {
   const { session, payload } = resolved
 
   const consent = await getLatestCustomerConsent(session.id)
-  if (!consent) {
+  if (payload.clientMode && !consent) {
     return {
       ok: false,
       status: 403,
@@ -293,11 +402,14 @@ export async function submitContinuityClientReview(input: {
     }
   }
 
+  const reviewerLabel =
+    input.reviewerName.trim() || consent?.customer_name || 'Reviewer'
+
   const hasRevisionRequest = input.slotDecisions.some(
     (d) => d.decision === 'revision_requested'
   )
 
-  if (hasRevisionRequest && payload.roundsUsed >= payload.maxRounds) {
+  if (payload.clientMode && hasRevisionRequest && payload.roundsUsed >= payload.maxRounds) {
     return {
       ok: false,
       status: 409,
@@ -336,6 +448,9 @@ export async function submitContinuityClientReview(input: {
     ...payload,
     roundsUsed: nextRoundsUsed,
     approvalStatus: nextApprovalStatus,
+    lastReviewerName: reviewerLabel,
+    lastReviewedAt: new Date().toISOString(),
+    generalNotes: input.generalNotes ? input.generalNotes.slice(0, 1500) : payload.generalNotes,
     slots: updatedSlots,
   }
 
@@ -347,23 +462,31 @@ export async function submitContinuityClientReview(input: {
   if (project) {
     const md = ((project.metadata || {}) as Record<string, unknown>)
     const co = ((md.clientOrder || {}) as Record<string, unknown>)
-    await project.update({
-      metadata: {
-        ...md,
-        clientOrder: {
-          ...co,
-          isClientProject: true,
-          stage:
-            nextApprovalStatus === 'approved'
-              ? 'continuity_approved'
-              : 'continuity_changes_requested',
-          actionState: 'action_required',
+    if (co.isClientProject || payload.clientMode || co.pmSupportRequested) {
+      await project.update({
+        metadata: {
+          ...md,
+          clientOrder: {
+            ...co,
+            isClientProject: Boolean(co.isClientProject || payload.clientMode),
+            stage:
+              nextApprovalStatus === 'approved'
+                ? 'continuity_approved'
+                : 'continuity_changes_requested',
+            actionState: 'action_required',
+          },
         },
-      },
-    })
+      })
+    }
   }
 
   try {
+    const noteSummary = updatedSlots
+      .filter((s) => s.clientDecision === 'revision_requested' && s.clientNote)
+      .map((s) => `${s.name}: ${s.clientNote}`)
+      .slice(0, 2)
+      .join(' · ')
+
     await notifyUser({
       userId: session.owner_user_id,
       projectId: session.project_id,
@@ -373,18 +496,18 @@ export async function submitContinuityClientReview(input: {
           : 'client_feedback_received',
       title:
         nextApprovalStatus === 'approved'
-          ? 'Continuity Library Approved by Client'
+          ? 'Continuity Approved'
           : 'Continuity Revision Notes Submitted',
-      message: `${input.reviewerName || consent.customer_name} ${
+      message:
         nextApprovalStatus === 'approved'
-          ? 'approved all Continuity references. Ready for Pre-Vis & Video Production!'
-          : 'submitted Continuity notes.'
-      }`,
+          ? `${reviewerLabel} approved all Continuity references. Ready for Pre-Vis & Video Production!`
+          : `${reviewerLabel} requested Continuity updates${noteSummary ? ` (${noteSummary})` : ''}.`,
       sendEmail: true,
       metadata: {
         projectId: session.project_id,
+        source: 'continuity',
         stage: 'continuity',
-        openPath: `/dashboard/workflow/vision/${session.project_id}`,
+        openPath: `/dashboard/workflow/vision/${session.project_id}?openLibrary=1`,
       },
     })
   } catch (err) {
@@ -400,9 +523,152 @@ export async function submitContinuityClientReview(input: {
 }
 
 /**
+ * Pure helper applying a promoted Continuity submission into `project.metadata`.
+ * Exported so unit tests can verify exact mutation semantics across all 5 slot types.
+ */
+export function applyPromotedSubmissionToProjectMetadata(
+  rawMetadata: Record<string, any> | null | undefined,
+  submission: {
+    slot_id: string
+    slot_type: ContinuitySlotType
+    slot_name: string
+    blob_url: string
+    caption?: string | null
+  }
+): Record<string, any> {
+  const md = { ...(rawMetadata || {}) }
+  const vp = { ...(md.visionPhase || {}) }
+
+  if (submission.slot_type === 'character') {
+    const chars = Array.isArray(vp.characters) ? vp.characters.map((c: any) => ({ ...c })) : []
+    const idx = chars.findIndex((c: any) => String(c.id || '') === submission.slot_id)
+    if (idx >= 0) {
+      chars[idx].referenceImage = submission.blob_url
+      chars[idx].imageUrl = submission.blob_url
+    } else {
+      chars.push({
+        id: submission.slot_id,
+        name: submission.slot_name,
+        description: submission.caption || '',
+        referenceImage: submission.blob_url,
+        imageUrl: submission.blob_url,
+      })
+    }
+    vp.characters = chars
+  } else if (submission.slot_type === 'wardrobe') {
+    // slot_id format: `wardrobe:<charId>:<wardrobeId>`
+    const parts = submission.slot_id.split(':')
+    const charId = parts[1] || ''
+    const wardrobeId = parts.slice(2).join(':') || submission.slot_id
+    const chars = Array.isArray(vp.characters) ? vp.characters.map((c: any) => ({ ...c })) : []
+    const cIdx = chars.findIndex((c: any) => String(c.id || '') === charId)
+    if (cIdx >= 0) {
+      const wardrobes = Array.isArray(chars[cIdx].wardrobes)
+        ? chars[cIdx].wardrobes.map((w: any) => ({ ...w }))
+        : []
+      const wIdx = wardrobes.findIndex((w: any) => String(w.id || '') === wardrobeId)
+      if (wIdx >= 0) {
+        wardrobes[wIdx].previewImageUrl = submission.blob_url
+        wardrobes[wIdx].fullBodyUrl = submission.blob_url
+        wardrobes[wIdx].combinedCharacterRefUrl = undefined
+      } else {
+        wardrobes.push({
+          id: wardrobeId,
+          name: submission.slot_name,
+          description: submission.caption || '',
+          previewImageUrl: submission.blob_url,
+          fullBodyUrl: submission.blob_url,
+        })
+      }
+      chars[cIdx].wardrobes = wardrobes
+      vp.characters = chars
+    }
+  } else if (submission.slot_type === 'location' || submission.slot_type === 'location_version') {
+    const refs = { ...(vp.references || {}) }
+    const locRefs = Array.isArray(refs.locationReferences)
+      ? refs.locationReferences.map((r: any) => ({ ...r }))
+      : []
+
+    if (submission.slot_type === 'location') {
+      const idx = locRefs.findIndex((r: any) => String(r.id || '') === submission.slot_id)
+      if (idx >= 0) {
+        locRefs[idx].imageUrl = submission.blob_url
+        locRefs[idx].referenceImage = submission.blob_url
+      } else {
+        locRefs.push({
+          id: submission.slot_id,
+          name: submission.slot_name,
+          description: submission.caption || '',
+          imageUrl: submission.blob_url,
+          referenceImage: submission.blob_url,
+        })
+      }
+      // Keep legacy `sceneReferences` synced if a matching entry exists
+      if (Array.isArray(refs.sceneReferences)) {
+        refs.sceneReferences = refs.sceneReferences.map((sr: any) =>
+          String(sr?.id || '') === submission.slot_id
+            ? { ...sr, imageUrl: submission.blob_url, referenceImage: submission.blob_url }
+            : sr
+        )
+      }
+    } else {
+      // `locver:<locId>:<verId>`
+      const parts = submission.slot_id.split(':')
+      const locId = parts[1] || ''
+      const verId = parts.slice(2).join(':') || submission.slot_id
+      const lIdx = locRefs.findIndex((r: any) => String(r.id || '') === locId)
+      if (lIdx >= 0) {
+        const versions = Array.isArray(locRefs[lIdx].versions)
+          ? locRefs[lIdx].versions.map((v: any) => ({ ...v }))
+          : []
+        const vIdx = versions.findIndex((v: any) => String(v.id || '') === verId)
+        if (vIdx >= 0) {
+          versions[vIdx].imageUrl = submission.blob_url
+          versions[vIdx].referenceImage = submission.blob_url
+        } else {
+          versions.push({
+            id: verId,
+            label: submission.slot_name,
+            description: submission.caption || '',
+            imageUrl: submission.blob_url,
+          })
+        }
+        locRefs[lIdx].versions = versions
+      }
+    }
+
+    refs.locationReferences = locRefs
+    vp.references = refs
+  } else {
+    const refs = { ...(vp.references || {}) }
+    const objRefs = Array.isArray(refs.objectReferences)
+      ? refs.objectReferences.map((r: any) => ({ ...r }))
+      : []
+    const idx = objRefs.findIndex((r: any) => String(r.id || '') === submission.slot_id)
+    if (idx >= 0) {
+      objRefs[idx].imageUrl = submission.blob_url
+      objRefs[idx].referenceImage = submission.blob_url
+    } else {
+      objRefs.push({
+        id: submission.slot_id,
+        name: submission.slot_name,
+        description: submission.caption || '',
+        imageUrl: submission.blob_url,
+        referenceImage: submission.blob_url,
+      })
+    }
+    refs.objectReferences = objRefs
+    vp.references = refs
+  }
+
+  md.visionPhase = vp
+  return md
+}
+
+/**
  * Promotes a clean Customer-uploaded continuity photo into the Project's
- * Continuity Library (`visionPhase`) and optionally saves it to the Producer's
- * reusable `ReferenceAsset` vault tagged `client:<slug>` for multi-episode Series reuse!
+ * Continuity Library (`visionPhase`) using a row-locked transaction and optionally
+ * saves it to the Producer's reusable `ReferenceAsset` vault.
  */
 export async function promoteCustomerSubmissionToContinuity(input: {
   submissionId: string
@@ -426,53 +692,47 @@ export async function promoteCustomerSubmissionToContinuity(input: {
     }
   }
 
-  const project = await Project.findByPk(submission.project_id)
-  if (!project) {
+  const updatedOk = await sequelize.transaction(async (transaction) => {
+    const project = await Project.findByPk(submission.project_id, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    })
+    if (!project) return false
+    const nextMetadata = applyPromotedSubmissionToProjectMetadata(
+      (project.metadata || {}) as Record<string, any>,
+      {
+        slot_id: submission.slot_id,
+        slot_type: submission.slot_type,
+        slot_name: submission.slot_name,
+        blob_url: submission.blob_url,
+        caption: submission.caption,
+      }
+    )
+    await project.update({ metadata: nextMetadata }, { transaction })
+    return true
+  })
+
+  if (!updatedOk) {
     return { ok: false, status: 404, error: 'Project not found' }
   }
 
-  const md = { ...((project.metadata || {}) as Record<string, any>) }
-  const vp = { ...(md.visionPhase || {}) }
-
-  if (submission.slot_type === 'character') {
-    const chars = Array.isArray(vp.characters) ? vp.characters.map((c: any) => ({ ...c })) : []
-    const idx = chars.findIndex((c: any) => String(c.id || '') === submission.slot_id)
-    if (idx >= 0) {
-      chars[idx].referenceImage = submission.blob_url
-      chars[idx].imageUrl = submission.blob_url
-    } else {
-      chars.push({
-        id: submission.slot_id,
-        name: submission.slot_name,
-        description: submission.caption || '',
-        referenceImage: submission.blob_url,
-        imageUrl: submission.blob_url,
+  // Also refresh active Continuity session slot preview image if present
+  try {
+    const active = await CollabSession.findByPk(submission.collab_session_id)
+    if (active && isContinuityPayload(active.payload as Record<string, unknown>)) {
+      const p = active.payload as unknown as ContinuitySessionPayload
+      const nextSlots = p.slots.map((s) =>
+        s.slotId === submission.slot_id
+          ? { ...s, referenceImageUrl: submission.blob_url, needsClientPhoto: false }
+          : s
+      )
+      await active.update({
+        payload: { ...p, slots: nextSlots } as unknown as Record<string, unknown>,
       })
     }
-    vp.characters = chars
-  } else {
-    const refs = { ...(vp.references || {}) }
-    const key = submission.slot_type === 'location' ? 'sceneReferences' : 'objectReferences'
-    const list = Array.isArray(refs[key]) ? refs[key].map((r: any) => ({ ...r })) : []
-    const idx = list.findIndex((r: any) => String(r.id || '') === submission.slot_id)
-    if (idx >= 0) {
-      list[idx].imageUrl = submission.blob_url
-      list[idx].referenceImage = submission.blob_url
-    } else {
-      list.push({
-        id: submission.slot_id,
-        name: submission.slot_name,
-        description: submission.caption || '',
-        imageUrl: submission.blob_url,
-        referenceImage: submission.blob_url,
-      })
-    }
-    refs[key] = list
-    vp.references = refs
+  } catch {
+    // Non-fatal preview sync
   }
-
-  md.visionPhase = vp
-  await project.update({ metadata: md })
 
   let referenceAssetId: string | undefined
   if (input.saveToReusableVault !== false) {
@@ -485,22 +745,24 @@ export async function promoteCustomerSubmissionToContinuity(input: {
       const assetKind =
         submission.slot_type === 'character'
           ? 'character'
-          : submission.slot_type === 'location'
-            ? 'location'
-            : 'prop'
-      const createdAsset = await ReferenceAsset.create({
-        user_id: input.ownerUserId,
-        kind: assetKind as any,
+          : submission.slot_type === 'wardrobe'
+            ? 'wardrobe'
+            : submission.slot_type === 'location' || submission.slot_type === 'location_version'
+              ? 'location'
+              : 'prop'
+      const createdAsset = await createReferenceAsset({
+        userId: input.ownerUserId,
+        kind: assetKind,
         name: submission.slot_name,
         description: submission.caption || `Uploaded by ${submission.customer_name}`,
-        image_url: submission.blob_url,
-        tags: [`client:${slug}`, 'client-upload'],
-        metadata: {
+        referenceImageUrl: submission.blob_url,
+        tags: [`client:${slug || 'client'}`, 'client-upload'],
+        originProjectId: submission.project_id,
+        attributes: {
           sourceSubmissionId: submission.id,
-          projectId: submission.project_id,
           customerName: submission.customer_name,
-        },
-      } as any)
+        } as any,
+      })
       referenceAssetId = createdAsset.id
     } catch (vaultErr) {
       console.warn('[continuityPortalService] ReferenceAsset vault save skipped:', vaultErr)

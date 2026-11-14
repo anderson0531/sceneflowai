@@ -1422,7 +1422,8 @@
     "workflow": "El flujo de trabajo",
     "platformWalkthrough": "Recorrido de la plataforma",
     "videoServices": "Negocio de Video",
-    "studioTour": "Recorrido"
+    "studioTour": "Recorrido",
+    "mobileApp": "App Móvil"
   },
   "floatingNav": {
     "productionExamples": "Ejemplos",
@@ -1439,7 +1440,8 @@
     "whoItsFor": "Caminos",
     "superpowers": "Superpoderes",
     "videoServices": "Negocio",
-    "studioTour": "Recorrido"
+    "studioTour": "Recorrido",
+    "mobileApp": "App Móvil"
   },
   "imaginePossibilities": {
     "headline": "Imagina las posibilidades",
@@ -4392,6 +4394,106 @@
       ],
       "watchAcademyCta": "Ver Tour de Academy (30s)",
       "startExplorerCta": "Comenzar con Explorer — $9"
+    },
+    "mobileCompanion": {
+      "eyebrow": "App Móvil Complementaria (PWA) · iOS y Android",
+      "title": "Potencia de Estudio en Escritorio.",
+      "titleAccent": "Control Móvil para Equipos y Clientes.",
+      "subtitle": "Como la producción 4K multipista requiere pantalla de escritorio, SceneFlow combina tu Estudio con una PWA móvil de instalación instantánea—conectando equipos, Project Managers (PM) y clientes suscritos con alertas, estado de hitos, presupuesto de créditos y enlaces de revisión.",
+      "whyPwaBadge": "PWA Instantánea · Sin Fricción de App Store",
+      "whyPwaNote": "Instálala en un toque desde Safari o Chrome con alertas Web Push nativas—sin descargas pesadas ni esperas.",
+      "modeCustomerTab": "Ciclo Cliente y PM",
+      "modeTeamTab": "Equipo y Presupuesto",
+      "customerHeading": "Proyectos Iniciados por el Cliente con Soporte de PM",
+      "customerSubheading": "Los clientes suscritos inician su proyecto y Blueprint base desde el móvil, solicitan un PM e iteran mediante cuatro enlaces compartidos.",
+      "customerSteps": [
+        {
+          "step": "01",
+          "badge": "Inicio Móvil",
+          "title": "Suscribirse, Iniciar Proyecto y Solicitar PM",
+          "detail": "El cliente suscrito dicta o escribe su idea desde el teléfono para generar el Blueprint inicial y activa el soporte de Project Manager (PM).",
+          "linkLabel": "App Móvil · + Nuevo Proyecto",
+          "phoneHeadline": "Memoria Familiar del Puerto",
+          "phoneStatus": "PM Asignado · Blueprint Listo",
+          "phoneMeta": "Iniciado en PWA Móvil · Límite: 2,500 cr"
+        },
+        {
+          "step": "02",
+          "badge": "Blueprint y Resonancia",
+          "title": "Iterar en Blueprint y Audience Resonance",
+          "detail": "El PM revisa la base, optimiza Audience Resonance en escritorio y comparte enlaces vivos de Blueprint y Resonancia para aprobación móvil.",
+          "linkLabel": "/blueprint/share · /share/script-resonance",
+          "phoneHeadline": "Revisión de Blueprint y Resonancia",
+          "phoneStatus": "94 / 100 Audience Resonance · Aprobado",
+          "phoneMeta": "2 notas resueltas con el PM · Listo para Continuidad"
+        },
+        {
+          "step": "03",
+          "badge": "Enlace de Continuidad",
+          "title": "Subir Fotos desde el Móvil y Aprobar Continuidad",
+          "detail": "El PM comparte un enlace de Continuidad para que el cliente suba fotos reales desde su galería o cámara y apruebe Elenco, Vestuario, Locaciones y Utilería.",
+          "linkLabel": "/share/continuity · Galería y Cámara",
+          "phoneHeadline": "Continuidad y Carga de Fotos",
+          "phoneStatus": "6 Fotos Subidas · Elenco y Sets Fijados",
+          "phoneMeta": "Optimización automática sin EXIF · Promoción en 1 clic"
+        },
+        {
+          "step": "04",
+          "badge": "Screening Room Compartido",
+          "title": "Revisión en Screening Room y Aprobación Final",
+          "detail": "Reproduce animatics con voz y cortes 4K en cualquier teléfono, deja notas con marca de tiempo y aprueba el máster final.",
+          "linkLabel": "/share/screening-room · Aprobación Final",
+          "phoneHeadline": "Screening Room de Estreno",
+          "phoneStatus": "Máster 4K Final Aprobado ✓",
+          "phoneMeta": "Streams multilingües listos para publicar"
+        }
+      ],
+      "teamHeading": "Centro de Mando de Bolsillo para Productores, Directores y PMs",
+      "teamSubheading": "Mantén cada producción en marcha lejos del escritorio con visibilidad completa para administradores y Project Managers asignados.",
+      "teamPillars": [
+        {
+          "id": "alerts",
+          "title": "Notificaciones Web Push al Instante",
+          "detail": "Recibe alertas cuando termina un render autónomo, un cliente inicia un proyecto o llegan nuevas fotos de Continuidad.",
+          "metric": "Push + Bandeja Viva"
+        },
+        {
+          "id": "status",
+          "title": "Seguimiento de 5 Etapas y Ritmo",
+          "detail": "Supervisa Blueprint, Resonancia, Continuidad, Producción y Screening Room junto al ritmo diario de escenas.",
+          "metric": "Visibilidad en Ritmo"
+        },
+        {
+          "id": "budget",
+          "title": "Saldo de Créditos y Topes de Presupuesto",
+          "detail": "Controla créditos disponibles, topes por proyecto de cliente y límites mensuales por PM en tiempo real.",
+          "metric": "Protección de Margen"
+        },
+        {
+          "id": "links",
+          "title": "Envío de Enlaces en 1 Toque",
+          "detail": "Comparte enlaces de Blueprint, Resonancia, Continuidad y Screening Room por WhatsApp, SMS, Slack o correo.",
+          "metric": "4 Portales Compartidos"
+        }
+      ],
+      "phoneHeaderBrand": "SceneFlow Companion",
+      "phoneCreditsPill": "14,250 cr",
+      "phonePmBadge": "PM Conectado",
+      "phoneStageBarLabels": [
+        "Blueprint",
+        "Resonancia",
+        "Continuidad",
+        "Rodaje",
+        "Screening"
+      ],
+      "phoneTeamAlertTitle": "Nueva Foto de Continuidad del Cliente",
+      "phoneTeamAlertBody": "Elena subió 6 fotos familiares · Toca para revisar y promover",
+      "phoneTeamBudgetLabel": "Presupuesto de Créditos",
+      "phoneTeamBudgetValue": "1,180 / 2,500 cr",
+      "phoneTeamPaceBadge": "En Ritmo · Bajo Presupuesto",
+      "installIosBadge": "iOS Safari: Compartir → Añadir a inicio",
+      "installAndroidBadge": "Android / Chrome: Instalar App en 1 toque",
+      "ctaPrimary": "Empezar con Estudio + PWA Móvil ($9)"
     }
   }
 }

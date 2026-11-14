@@ -18,6 +18,26 @@ import {
 import { getProjectCreditsBudget, getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
 import { byokMediaCredits } from '@/lib/credits/creditCosts'
 
+export type CompanionMilestoneStage =
+  | 'blueprint'
+  | 'resonance'
+  | 'continuity'
+  | 'production'
+  | 'screening'
+
+export interface CompanionShareLinks {
+  blueprintUrl?: string | null
+  resonanceUrl?: string | null
+  continuityUrl?: string | null
+  screeningUrl?: string | null
+}
+
+export interface CompanionContinuitySummary {
+  totalSlots: number
+  approvedSlots: number
+  pendingUploads: number
+}
+
 export interface CompanionPlanDate {
   date: string
   label: string
@@ -42,6 +62,16 @@ export interface CompanionPlanCard {
   plannedThroughToday: number | null
   upcoming: CompanionPlanDate[]
   chapterEnds: ScheduleChapterEnd[]
+  /** Live workflow & client-PM collaboration status */
+  milestoneStage: CompanionMilestoneStage
+  pmSupportRequested: boolean
+  isClientProject: boolean
+  clientStage: string | null
+  actionState: 'waiting_on_client' | 'action_required' | 'client_approved' | null
+  creditBudgetCap: number | null
+  resonanceScore: number | null
+  shareLinks: CompanionShareLinks
+  continuitySummary: CompanionContinuitySummary | null
 }
 
 function todayIso(now = new Date()): string {
@@ -50,14 +80,77 @@ function todayIso(now = new Date()): string {
   return `${now.getFullYear()}-${month}-${day}`
 }
 
+function extractResonanceScore(metadata: Record<string, any> | null): number | null {
+  if (!metadata) return null
+  const direct =
+    metadata.audienceResonanceScore ??
+    metadata.filmTreatmentVariant?.audienceResonance?.overallScore ??
+    metadata.filmTreatmentVariant?.resonanceScore ??
+    metadata.visionPhase?.scriptReview?.overallScore ??
+    metadata.visionPhase?.audienceResonance?.overallScore
+  return typeof direct === 'number' && Number.isFinite(direct) ? Math.round(direct) : null
+}
+
+function deriveScreeningShareUrl(metadata: Record<string, any> | null): string | null {
+  if (!metadata) return null
+  const sr = metadata.screeningRoomShareLink as Record<string, any> | undefined
+  if (!sr || sr.isActive === false) return null
+  const slugOrToken = sr.slug || sr.shareToken
+  if (typeof slugOrToken === 'string' && slugOrToken.trim()) {
+    return `/share/screening-room/${encodeURIComponent(slugOrToken.trim())}`
+  }
+  return null
+}
+
+export function resolveCompanionMilestoneStage(args: {
+  metadata: Record<string, any> | null
+  framesDone: number
+  videosDone: number
+  resonanceScore: number | null
+  shareLinks?: CompanionShareLinks
+}): CompanionMilestoneStage {
+  const md = args.metadata || {}
+  const clientStage = String(md.clientOrder?.stage || '')
+  const screeningUrl = args.shareLinks?.screeningUrl || deriveScreeningShareUrl(md)
+
+  if (
+    screeningUrl ||
+    clientStage === 'final_approved' ||
+    clientStage === 'screening_changes_requested'
+  ) {
+    return 'screening'
+  }
+  if (args.videosDone > 0 || args.framesDone > 0) {
+    return 'production'
+  }
+  const refs = md.visionPhase?.references || {}
+  const hasContinuityRefs =
+    Boolean(args.shareLinks?.continuityUrl) ||
+    clientStage.startsWith('continuity_') ||
+    (Array.isArray(md.visionPhase?.characters) &&
+      md.visionPhase.characters.some((c: any) => c?.referenceImage || c?.imageUrl)) ||
+    (Array.isArray(refs.locationReferences) && refs.locationReferences.length > 0) ||
+    (Array.isArray(refs.objectReferences) && refs.objectReferences.length > 0)
+
+  if (hasContinuityRefs) {
+    return 'continuity'
+  }
+  if (args.resonanceScore != null || args.shareLinks?.resonanceUrl) {
+    return 'resonance'
+  }
+  return 'blueprint'
+}
+
 export function buildCompanionPlanCard(args: {
   projectId: string
   title: string
   updatedAt: string
   metadata?: Record<string, unknown> | null
   today?: string
+  shareLinks?: CompanionShareLinks
+  continuitySummary?: CompanionContinuitySummary | null
 }): CompanionPlanCard {
-  const metadata = args.metadata ?? null
+  const metadata = (args.metadata ?? null) as Record<string, any> | null
   const today = args.today ?? todayIso()
   const saved = parseCreditsBudgetParamsV2(metadata?.creditsBudgetParams)
   const method = (saved?.method ?? DEFAULT_PRODUCTION_METHOD) as ProductionMethodId
@@ -140,8 +233,43 @@ export function buildCompanionPlanCard(args: {
   })
   const finishDate = latestScheduleDate(saved?.schedule)
   const savedBudget = getProjectCreditsBudget(metadata)
+  const clientOrder = (metadata?.clientOrder || {}) as Record<string, any>
+  const creditBudgetCap =
+    typeof clientOrder.creditBudgetCap === 'number' && clientOrder.creditBudgetCap > 0
+      ? clientOrder.creditBudgetCap
+      : null
   const hasParams = Boolean(saved && (saved.method || saved.schedule || saved.frameIterations != null))
-  const plannedCredits = savedBudget > 0 ? savedBudget : hasParams ? rollup.masterCredits : null
+  const plannedCredits =
+    savedBudget > 0
+      ? savedBudget
+      : creditBudgetCap != null
+        ? creditBudgetCap
+        : hasParams
+          ? rollup.masterCredits
+          : null
+
+  const resonanceScore = extractResonanceScore(metadata)
+  const screeningUrl = args.shareLinks?.screeningUrl ?? deriveScreeningShareUrl(metadata)
+  const mergedLinks: CompanionShareLinks = {
+    blueprintUrl: args.shareLinks?.blueprintUrl ?? null,
+    resonanceUrl: args.shareLinks?.resonanceUrl ?? null,
+    continuityUrl: args.shareLinks?.continuityUrl ?? null,
+    screeningUrl,
+  }
+  const milestoneStage = resolveCompanionMilestoneStage({
+    metadata,
+    framesDone: scope.framesDone,
+    videosDone: scope.videosDone,
+    resonanceScore,
+    shareLinks: mergedLinks,
+  })
+  const rawActionState = clientOrder.actionState
+  const actionState =
+    rawActionState === 'waiting_on_client' ||
+    rawActionState === 'action_required' ||
+    rawActionState === 'client_approved'
+      ? rawActionState
+      : null
 
   return {
     projectId: args.projectId,
@@ -165,5 +293,14 @@ export function buildCompanionPlanCard(args: {
       ...chapter,
       date: formatPlanDate(chapter.date),
     })),
+    milestoneStage,
+    pmSupportRequested: Boolean(clientOrder.pmSupportRequested),
+    isClientProject: Boolean(clientOrder.isClientProject || clientOrder.pmSupportRequested),
+    clientStage: typeof clientOrder.stage === 'string' ? clientOrder.stage : null,
+    actionState,
+    creditBudgetCap,
+    resonanceScore,
+    shareLinks: mergedLinks,
+    continuitySummary: args.continuitySummary ?? null,
   }
 }

@@ -183,7 +183,6 @@ export const metadata: Metadata = {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
     'apple-mobile-web-app-title': 'SceneFlow Studio',
-    'msapplication-config': '/icons/browserconfig.xml',
     'msapplication-TileColor': '#050A18',
     'msapplication-tap-highlight': 'no',
   },
@@ -192,7 +191,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  viewportFit: 'cover',
   themeColor: '#050A18',
 }
 

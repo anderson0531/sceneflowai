@@ -1,4 +1,5 @@
 import type { StudioLandingCopy } from './types'
+import { MOBILE_COMPANION_COPY_ZH_CN } from '../mobileCompanionCopy'
 
 export const STUDIO_LANDING_COPY_ZH_CN = {
   heroDock: {
@@ -580,4 +581,5 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
     watchAcademyCta: '观看 30 秒学院导览',
     startExplorerCta: '以 Explorer 方案起步 — $9',
   },
+  mobileCompanion: MOBILE_COMPANION_COPY_ZH_CN,
 } satisfies StudioLandingCopy

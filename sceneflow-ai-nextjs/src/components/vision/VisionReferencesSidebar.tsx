@@ -37,6 +37,7 @@ import {
 import { LocationPromptPayload } from './LocationPromptBuilder'
 import { ImageEditModal } from './ImageEditModal'
 import { ReferenceStillDirectorDialog } from './ReferenceStillDirectorDialog'
+import { ShareContinuityDialog } from './ShareContinuityDialog'
 import { seedObjectDirectorPrompt } from '@/lib/intelligence/reference-still-director-fallback'
 import type { ReferenceExpressScope } from '@/lib/vision/referenceExpress/types'
 import { LibraryAgentConfirmDialog } from './LibraryAgentConfirmDialog'
@@ -1844,6 +1845,10 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               </span>
             ) : null}
             <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+              <ShareContinuityDialog
+                projectId={projectId}
+                onPromoted={onReferenceLibrarySynced}
+              />
               {onExpressGenerateReferences && (
                 <Tooltip>
                   <TooltipTrigger asChild>

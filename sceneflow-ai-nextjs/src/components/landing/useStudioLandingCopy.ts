@@ -31,9 +31,13 @@ export function useStudioLandingCopy(): StudioLandingCopy {
     const localized = resolveLocalizedStudioLandingCopy(locale)
     if (t.has('studioLanding')) {
       try {
-        const fromCatalog = t.raw('studioLanding') as StudioLandingCopy
+        const fromCatalog = t.raw('studioLanding') as Partial<StudioLandingCopy>
         if (fromCatalog && typeof fromCatalog === 'object' && fromCatalog.audienceGateway?.cards) {
-          return fromCatalog
+          return {
+            ...localized,
+            ...fromCatalog,
+            mobileCompanion: fromCatalog.mobileCompanion ?? localized.mobileCompanion,
+          }
         }
       } catch {
         // Fallback to strongly typed localized copy

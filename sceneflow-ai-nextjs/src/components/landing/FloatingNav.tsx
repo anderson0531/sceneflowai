@@ -10,6 +10,7 @@ import {
   GraduationCap,
   Layers,
   Shield,
+  Smartphone,
   Sparkles,
   Users,
 } from 'lucide-react'
@@ -34,6 +35,11 @@ export function FloatingNav() {
         id: 'video-services',
         label: t.has('videoServices') ? t('videoServices') : 'Business',
         icon: Briefcase,
+      },
+      {
+        id: 'mobile-app',
+        label: t.has('mobileApp') ? t('mobileApp') : 'Mobile App',
+        icon: Smartphone,
       },
       {
         id: 'studio-tour',

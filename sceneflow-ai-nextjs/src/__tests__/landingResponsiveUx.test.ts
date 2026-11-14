@@ -12,6 +12,7 @@ import path from 'path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { NextIntlClientProvider } from 'next-intl'
 import { VideoServicesSpotlightSection } from '@/components/landing/VideoServicesSpotlightSection'
+import { MobileCompanionPwaSection } from '@/components/landing/MobileCompanionPwaSection'
 import { StudioDoorWalkthroughModal } from '@/components/landing/StudioDoorWalkthroughModal'
 import {
   DOOR_WALKTHROUGH_COPY,
@@ -371,5 +372,65 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
 
     const pricingGrid = readSource('src/components/landing/PricingTierGrid.tsx')
     expect(pricingGrid).not.toContain('truncate')
+  })
+
+  it('renders MobileCompanionPwaSection cleanly across all 7 languages for Samsung Galaxy S23 (360px) and Desktop (1280px+) with interactive Customer-PM & Team modes', () => {
+    const mobileSectionSrc = readSource('src/components/landing/MobileCompanionPwaSection.tsx')
+    expect(mobileSectionSrc).not.toContain('truncate')
+
+    for (const locale of PRIORITY_LOCALES) {
+      const messages = loadMessages(locale)
+      const copy = resolveLocalizedStudioLandingCopy(locale).mobileCompanion
+
+      renderElement(
+        React.createElement(
+          NextIntlClientProvider,
+          { key: locale, locale, messages },
+          React.createElement(MobileCompanionPwaSection)
+        )
+      )
+
+      const sectionEl = container?.querySelector('#mobile-app')
+      expect(sectionEl, `[${locale}] #mobile-app section`).toBeTruthy()
+
+      // 1. Mode switcher tabs stack at 360px (272px text box) and 2-col at >=420px (142px text box), with tooltips
+      const tabs = Array.from(container?.querySelectorAll('[role="tab"]') ?? [])
+      expect(tabs).toHaveLength(2)
+      for (const tab of tabs) {
+        expect(tab.getAttribute('title')?.length ?? 0).toBeGreaterThan(4)
+        expect(tab.innerHTML).not.toContain('truncate')
+      }
+
+      const customerTabWordPx = estimateLongestWordPx(copy.modeCustomerTab, 14, locale)
+      const teamTabWordPx = estimateLongestWordPx(copy.modeTeamTab, 14, locale)
+      expect(customerTabWordPx).toBeLessThanOrEqual(142)
+      expect(teamTabWordPx).toBeLessThanOrEqual(142)
+
+      // 2. Every interactive button inside #mobile-app has a native `title` tooltip
+      const buttons = Array.from(container?.querySelectorAll('button') ?? [])
+      for (const btn of buttons) {
+        expect(
+          (btn.getAttribute('title') ?? '').trim().length,
+          `[${locale}] button missing title: "${btn.textContent}"`
+        ).toBeGreaterThan(1)
+      }
+
+      // 3. Clicking Step 03 (Shared Continuity & Mobile Photo Uploads) updates the live phone preview
+      const step3Btn = buttons.find((btn) =>
+        btn.getAttribute('title')?.startsWith(`03 · ${copy.customerSteps[2].title}`)
+      )
+      expect(step3Btn, `[${locale}] step 03 button`).toBeTruthy()
+      if (step3Btn) {
+        clickElement(step3Btn)
+        expect(container?.textContent).toContain(copy.customerSteps[2].phoneHeadline)
+        expect(container?.textContent).toContain(copy.customerSteps[2].phoneStatus)
+      }
+
+      // 4. Switching to Team & Budget Hub mode renders push notification + credit budget guardrails
+      clickElement(tabs[1])
+      expect(container?.textContent).toContain(copy.teamHeading)
+      expect(container?.textContent).toContain(copy.phoneTeamAlertTitle)
+      expect(container?.textContent).toContain(copy.phoneTeamBudgetValue)
+    }
   })
 })

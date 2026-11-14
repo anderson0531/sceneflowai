@@ -169,7 +169,8 @@
       "resolved": "सुलझ गया",
       "open": "खुला",
       "inReview": "समीक्षा में",
-      "score": "{score}/5"
+      "score": "{score}/5",
+      "continuity": "कंटिन्यूटी"
     },
     "plan": {
       "empty": "अभी तक कोई प्रोजेक्ट नहीं",
@@ -190,6 +191,51 @@
       "chapters": "अध्याय समाप्त",
       "back": "सभी परियोजनाएँ",
       "creditsOnDate": "{amount} करोड़"
+    },
+    "initiate": {
+      "button": "नया प्रोजेक्ट",
+      "title": "प्रोजेक्ट और Blueprint शुरू करें",
+      "subtitle": "बेसलाइन Blueprint बनाएं और वैकल्पिक रूप से Project Manager (PM) सहायता चुनें।",
+      "projectTitle": "प्रोजेक्ट शीर्षक",
+      "projectTitlePlaceholder": "जैसे: फैमिली मेमॉयर या प्रॉपर्टी टूर",
+      "vertical": "प्रोजेक्ट प्रकार",
+      "verticalMemoir": "वीडियो मेमॉयर",
+      "verticalRealEstate": "रियल एस्टेट टूर",
+      "verticalEducation": "ट्रेनिंग और SOP",
+      "verticalBrand": "ब्रांड स्टोरी",
+      "verticalFilm": "क्रिएटर फिल्म / सीरीज़",
+      "brief": "प्रोजेक्ट विवरण (टाइप करें या बोलें)",
+      "briefPlaceholder": "कहानी, लक्ष्य, प्रमुख लोग, स्थान और टोन बताएं...",
+      "pmSupport": "Project Manager (PM) सहायता का अनुरोध करें",
+      "pmSupportHint": "Blueprint, रेज़ोनेंस, कंटिन्यूटी और Screening Room समीक्षा हेतु PM को सूचित करता है।",
+      "pmEmail": "PM ईमेल (वैकल्पिक)",
+      "budgetCap": "क्रेडिट बजट सीमा (वैकल्पिक)",
+      "submit": "प्रोजेक्ट और Blueprint बनाएं",
+      "cancel": "रद्द करें",
+      "dictate": "बोलें",
+      "stopDictate": "रोकें"
+    },
+    "links": {
+      "heading": "साझा समीक्षा और फोटो अपलोड लिंक",
+      "blueprint": "Blueprint",
+      "resonance": "रेज़ोनेंस",
+      "continuity": "कंटिन्यूटी और फोटो",
+      "screening": "Screening Room",
+      "createContinuity": "कंटिन्यूटी लिंक बनाएं",
+      "open": "खोलें",
+      "share": "शेयर करें",
+      "copied": "लिंक कॉपी हुआ",
+      "pmRequested": "PM समर्थित",
+      "actionRequired": "कार्रवाई आवश्यक",
+      "waitingClient": "समीक्षा प्रतीक्षित",
+      "approved": "स्वीकृत"
+    },
+    "stages": {
+      "blueprint": "Blueprint",
+      "resonance": "रेज़ोनेंस",
+      "continuity": "कंटिन्यूटी",
+      "production": "प्रोडक्शन",
+      "screening": "स्क्रीनिंग"
     }
   }
 }

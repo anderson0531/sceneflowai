@@ -1422,7 +1422,8 @@
     "workflow": "वर्कफ़्लो",
     "platformWalkthrough": "प्लेटफ़ॉर्म वॉकथ्रू",
     "videoServices": "वीडियो व्यवसाय",
-    "studioTour": "टूर"
+    "studioTour": "टूर",
+    "mobileApp": "मोबाइल ऐप"
   },
   "floatingNav": {
     "productionExamples": "उदाहरण",
@@ -1439,7 +1440,8 @@
     "whoItsFor": "रास्ते",
     "superpowers": "सुपरपावर",
     "videoServices": "व्यवसाय",
-    "studioTour": "टूर"
+    "studioTour": "टूर",
+    "mobileApp": "मोबाइल ऐप"
   },
   "imaginePossibilities": {
     "headline": "संभावनाओं की कल्पना करें",
@@ -4392,6 +4394,106 @@
       ],
       "watchAcademyCta": "30s Academy टूर देखें",
       "startExplorerCta": "Explorer के साथ शुरू करें — $9"
+    },
+    "mobileCompanion": {
+      "eyebrow": "मोबाइल कम्पैनियन ऐप (PWA) · iOS और Android",
+      "title": "डेस्कटॉप स्टूडियो की शक्ति।",
+      "titleAccent": "टीम और ग्राहकों के लिए पॉकेट कमांड।",
+      "subtitle": "चूंकि मल्टी-ट्रैक 4K प्रोडक्शन डेस्कटॉप स्क्रीन के लिए बना है, SceneFlow आपके स्टूडियो को इंस्टेंट-इंस्टॉल मोबाइल PWA से जोड़ता है—जिससे टीमें, प्रोजेक्ट मैनेजर (PM) और सब्सक्राइबर ग्राहक लाइव नोटिफिकेशन, स्थिति, बजट और शेयर लिंक से जुड़े रहते हैं।",
+      "whyPwaBadge": "इंस्टेंट PWA · बिना ऐप स्टोर झंझट",
+      "whyPwaNote": "Safari या Chrome से एक टैप में होम स्क्रीन पर इंस्टॉल करें और तुरंत Web Push अलर्ट पाएं।",
+      "modeCustomerTab": "ग्राहक और PM लूप",
+      "modeTeamTab": "टीम और बजट हब",
+      "customerHeading": "PM सहायता के साथ ग्राहक-प्रारंभित प्रोजेक्ट",
+      "customerSubheading": "सब्सक्राइबर ग्राहक फ़ोन से प्रोजेक्ट और Blueprint शुरू करते हैं, PM सपोर्ट चुनते हैं और चार साझा लिंक से समीक्षा करते हैं।",
+      "customerSteps": [
+        {
+          "step": "01",
+          "badge": "मोबाइल शुरुआत",
+          "title": "सब्सक्राइब करें, प्रोजेक्ट व Blueprint शुरू करें",
+          "detail": "ग्राहक मोबाइल पर बोलकर या टाइप करके बेसलाइन Blueprint बनाते हैं और एक टैप में Project Manager (PM) सहायता मांगते हैं।",
+          "linkLabel": "मोबाइल ऐप · + नया प्रोजेक्ट",
+          "phoneHeadline": "हार्बर फैमिली मेमॉयर",
+          "phoneStatus": "PM नियुक्त · Blueprint तैयार",
+          "phoneMeta": "मोबाइल PWA से शुरू · बजट सीमा: 2,500 cr"
+        },
+        {
+          "step": "02",
+          "badge": "Blueprint व रेज़ोनेंस",
+          "title": "Blueprint और Audience Resonance पर सहयोग",
+          "detail": "PM डेस्कटॉप पर Blueprint और Audience Resonance स्कोर निखारते हैं और ग्राहक समीक्षा हेतु लाइव लिंक भेजते हैं।",
+          "linkLabel": "/blueprint/share · /share/script-resonance",
+          "phoneHeadline": "Blueprint और रेज़ोनेंस समीक्षा",
+          "phoneStatus": "94 / 100 Audience Resonance · स्वीकृत",
+          "phoneMeta": "PM के साथ 2 नोट्स हल · कंटिन्यूटी के लिए तैयार"
+        },
+        {
+          "step": "03",
+          "badge": "साझा कंटिन्यूटी लिंक",
+          "title": "मोबाइल से फोटो अपलोड और कंटिन्यूटी मंज़ूरी",
+          "detail": "PM साझा कंटिन्यूटी लिंक भेजते हैं जिससे ग्राहक फ़ोन गैलरी या कैमरे से असली फ़ोटो अपलोड करते हैं और पात्र, पोशाक, लोकेशन व प्रॉप्स मंज़ूर करते हैं।",
+          "linkLabel": "/share/continuity · गैलरी और कैमरा अपलोड",
+          "phoneHeadline": "कंटिन्यूटी और फोटो संग्रह",
+          "phoneStatus": "6 फोटो अपलोड · कास्ट और लोकेशन लॉक",
+          "phoneMeta": "ऑटो-ऑप्टिमाइज़्ड व EXIF सुरक्षित · 1-क्लिक स्टूडियो प्रमोट"
+        },
+        {
+          "step": "04",
+          "badge": "साझा Screening Room",
+          "title": "मोबाइल Screening Room समीक्षा और अंतिम मंज़ूरी",
+          "detail": "किसी भी फ़ोन पर Pre-Vis एनिमैटिक और 4K कट देखें, टाइमस्टैम्प नोट्स दें और फाइनल मास्टर मंज़ूर करें।",
+          "linkLabel": "/share/screening-room · अंतिम मंज़ूरी",
+          "phoneHeadline": "प्रीमियर Screening Room",
+          "phoneStatus": "फाइनल 4K मास्टर स्वीकृत ✓",
+          "phoneMeta": "बहुभाषी स्ट्रीम डिलीवरी के लिए तैयार"
+        }
+      ],
+      "teamHeading": "प्रोड्यूसर, डायरेक्टर और PM के लिए रियल-टाइम पॉकेट कमांड",
+      "teamSubheading": "डेस्क से दूर रहते हुए भी हर प्रोजेक्ट की रफ़्तार, फीडबैक और क्रेडिट बजट नियंत्रण में रखें।",
+      "teamPillars": [
+        {
+          "id": "alerts",
+          "title": "तुरंत Web Push नोटिफिकेशन",
+          "detail": "रेंडर पूरा होने, ग्राहक ब्रीफ आने या कंटिन्यूटी फोटो अपलोड होते ही फ़ोन पर अलर्ट पाएं।",
+          "metric": "लाइव पुश + इनबॉक्स"
+        },
+        {
+          "id": "status",
+          "title": "5-चरण माइलस्टोन और गति ट्रैकर",
+          "detail": "Blueprint, रेज़ोनेंस, कंटिन्यूटी, प्रोडक्शन और Screening Room की लाइव स्थिति ट्रैक करें।",
+          "metric": "ऑन-पेस ट्रैकिंग"
+        },
+        {
+          "id": "budget",
+          "title": "क्रेडिट बैलेंस और बजट कैप",
+          "detail": "उपलब्ध क्रेडिट, प्रति-प्रोजेक्ट बजट सीमा और PM मासिक अलाउंस रियल टाइम में देखें।",
+          "metric": "मार्जिन सुरक्षा"
+        },
+        {
+          "id": "links",
+          "title": "1-टैप मोबाइल लिंक शेयरिंग",
+          "detail": "WhatsApp, SMS, Slack या ईमेल से चारों समीक्षा और अपलोड लिंक तुरंत साझा करें।",
+          "metric": "4 साझा पोर्टल"
+        }
+      ],
+      "phoneHeaderBrand": "SceneFlow Companion",
+      "phoneCreditsPill": "14,250 cr",
+      "phonePmBadge": "PM कनेक्टेड",
+      "phoneStageBarLabels": [
+        "Blueprint",
+        "रेज़ोनेंस",
+        "कंटिन्यूटी",
+        "प्रोडक्शन",
+        "स्क्रीनिंग"
+      ],
+      "phoneTeamAlertTitle": "नया कंटिन्यूटी फोटो अपलोड",
+      "phoneTeamAlertBody": "एलेना ने 6 पारिवारिक फोटो अपलोड किए · समीक्षा हेतु टैप करें",
+      "phoneTeamBudgetLabel": "प्रोजेक्ट क्रेडिट बजट",
+      "phoneTeamBudgetValue": "1,180 / 2,500 cr",
+      "phoneTeamPaceBadge": "समय पर · बजट के भीतर",
+      "installIosBadge": "iOS Safari: Share → Add to Home Screen",
+      "installAndroidBadge": "Android / Chrome: 1-टैप ऐप इंस्टॉल",
+      "ctaPrimary": "स्टूडियो + मोबाइल PWA शुरू करें ($9)"
     }
   }
 }

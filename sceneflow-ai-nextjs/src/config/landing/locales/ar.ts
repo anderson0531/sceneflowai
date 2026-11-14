@@ -1,4 +1,5 @@
 import type { StudioLandingCopy } from './types'
+import { MOBILE_COMPANION_COPY_AR } from '../mobileCompanionCopy'
 
 export const STUDIO_LANDING_COPY_AR = {
   heroDock: {
@@ -592,4 +593,5 @@ export const STUDIO_LANDING_COPY_AR = {
     watchAcademyCta: 'شاهد جولة الأكاديمية (30 ث)',
     startExplorerCta: 'ابدأ بباقة Explorer — $9',
   },
+  mobileCompanion: MOBILE_COMPANION_COPY_AR,
 } satisfies StudioLandingCopy

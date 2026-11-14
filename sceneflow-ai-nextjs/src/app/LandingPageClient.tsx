@@ -6,6 +6,7 @@ import { ImaginePossibilitiesHero } from '@/components/landing/ImaginePossibilit
 import { CreatorAndBusinessGatewaySection } from '@/components/landing/CreatorAndBusinessGatewaySection'
 import { DirectorOperatingSystemSection } from '@/components/landing/DirectorOperatingSystemSection'
 import { VideoServicesSpotlightSection } from '@/components/landing/VideoServicesSpotlightSection'
+import { MobileCompanionPwaSection } from '@/components/landing/MobileCompanionPwaSection'
 import { LandingSectionCollapseProvider } from '@/components/landing/LandingSectionCollapse'
 import { FullStudioDirectoryDrawer } from '@/components/landing/FullStudioDirectoryDrawer'
 import { PersistLandingLocale } from '@/components/i18n/PersistLandingLocale'
@@ -64,6 +65,9 @@ export default function LandingPageClient() {
 
       {/* 4. Dedicated Video Services Business Engine & Monthly Income Estimator */}
       <VideoServicesSpotlightSection />
+
+      {/* 4b. Mobile Companion PWA: Customer-Initiated Projects, PM Loop, Shared Continuity & Alerts */}
+      <MobileCompanionPwaSection />
 
       <LandingSectionCollapseProvider>
         <FloatingNav />

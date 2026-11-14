@@ -169,7 +169,8 @@
       "resolved": "Resuelto",
       "open": "Abierto",
       "inReview": "En revisión",
-      "score": "{score}/5"
+      "score": "{score}/5",
+      "continuity": "Continuidad"
     },
     "plan": {
       "empty": "Aún no hay proyectos",
@@ -190,6 +191,51 @@
       "chapters": "El capítulo termina",
       "back": "Todos los proyectos",
       "creditsOnDate": "{amount} cr"
+    },
+    "initiate": {
+      "button": "Nuevo proyecto",
+      "title": "Iniciar Proyecto y Blueprint",
+      "subtitle": "Crea un Blueprint base y solicita soporte opcional de un Project Manager (PM).",
+      "projectTitle": "Título del proyecto",
+      "projectTitlePlaceholder": "Ej.: Recorrido Inmobiliario o Memoria Familiar",
+      "vertical": "Tipo de proyecto",
+      "verticalMemoir": "Memoria en Video",
+      "verticalRealEstate": "Recorrido Inmobiliario",
+      "verticalEducation": "Capacitación y SOP",
+      "verticalBrand": "Historia de Marca",
+      "verticalFilm": "Corto / Serie Creador",
+      "brief": "Resumen del proyecto (escribe o dicta)",
+      "briefPlaceholder": "Describe la historia, objetivos, personas clave, lugares y tono...",
+      "pmSupport": "Solicitar soporte de Project Manager (PM)",
+      "pmSupportHint": "Notifica a tu PM para revisar Blueprint, Resonancia, Continuidad y Screening Room.",
+      "pmEmail": "Correo del PM (opcional)",
+      "budgetCap": "Límite de créditos (opcional)",
+      "submit": "Crear Proyecto y Blueprint",
+      "cancel": "Cancelar",
+      "dictate": "Dictar",
+      "stopDictate": "Detener"
+    },
+    "links": {
+      "heading": "Enlaces Compartidos de Revisión y Fotos",
+      "blueprint": "Blueprint",
+      "resonance": "Resonancia",
+      "continuity": "Continuidad y Fotos",
+      "screening": "Screening Room",
+      "createContinuity": "Activar Enlace de Continuidad",
+      "open": "Abrir",
+      "share": "Compartir",
+      "copied": "Enlace copiado",
+      "pmRequested": "Con Soporte PM",
+      "actionRequired": "Acción Requerida",
+      "waitingClient": "Esperando Revisión",
+      "approved": "Aprobado"
+    },
+    "stages": {
+      "blueprint": "Blueprint",
+      "resonance": "Resonancia",
+      "continuity": "Continuidad",
+      "production": "Producción",
+      "screening": "Screening"
     }
   }
 }

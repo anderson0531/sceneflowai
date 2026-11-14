@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
-import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass, CreditCard, Briefcase, Layers } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass, CreditCard, Briefcase, Layers, Smartphone } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import {
@@ -329,6 +329,10 @@ export function Header() {
                   <button onClick={() => scrollToSection('video-services')} className="flex items-center gap-2 text-emerald-300 hover:text-white hover:bg-emerald-500/10 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Briefcase className="w-4 h-4 text-emerald-400" />
                     {t.has('videoServices') ? t('videoServices') : 'Video Business'}
+                  </button>
+                  <button onClick={() => scrollToSection('mobile-app')} className="flex items-center gap-2 text-cyan-300 hover:text-white hover:bg-cyan-500/10 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Smartphone className="w-4 h-4 text-cyan-400" />
+                    {t.has('mobileApp') ? t('mobileApp') : 'Mobile App'}
                   </button>
                   <button onClick={() => scrollToSection('studio-tour')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Layers className="w-4 h-4 text-sf-primary" />

@@ -114,6 +114,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body: payload.message || '',
+      icon: '/icons/icon-192x192.png',
+      badge: '/icons/icon-96x96.png',
       data: { url },
     })
   )
@@ -125,5 +127,23 @@ self.addEventListener('notificationclick', (event) => {
     typeof event.notification.data?.url === 'string'
       ? event.notification.data.url
       : '/dashboard?companion=inbox'
-  event.waitUntil(self.clients.openWindow(url))
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      for (const client of windows) {
+        if ('focus' in client) {
+          try {
+            if ('navigate' in client) {
+              await client.navigate(url)
+            }
+            await client.focus()
+            return
+          } catch {
+            // Fall through to openWindow if focus/navigate fails.
+          }
+        }
+      }
+      await self.clients.openWindow(url)
+    })()
+  )
 })

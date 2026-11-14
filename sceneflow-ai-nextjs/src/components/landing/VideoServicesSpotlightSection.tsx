@@ -11,6 +11,7 @@ import {
   Info,
   Megaphone,
   ShieldCheck,
+  Smartphone,
   Sparkles,
   TrendingUp,
 } from 'lucide-react'
@@ -37,7 +38,9 @@ function formatUsd(amount: number): string {
 }
 
 export function VideoServicesSpotlightSection() {
-  const copy = useStudioLandingCopy().videoServices
+  const studioCopy = useStudioLandingCopy()
+  const copy = studioCopy.videoServices
+  const mobileCopy = studioCopy.mobileCompanion
   const [selectedVerticalId, setSelectedVerticalId] = useState<
     'memoir' | 'realestate' | 'training' | 'brand'
   >('memoir')
@@ -410,6 +413,18 @@ export function VideoServicesSpotlightSection() {
                 <p className="mt-1 text-xs leading-relaxed text-gray-300">{ws.detail}</p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-5 flex justify-center">
+            <a
+              href="#mobile-app"
+              title={`${mobileCopy.eyebrow} — ${mobileCopy.modeCustomerTab}`}
+              className="inline-flex items-center gap-2 rounded-full border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-200 transition-colors hover:border-cyan-300/60 hover:bg-cyan-500/20 hover:text-white"
+            >
+              <Smartphone className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
+              <span className="whitespace-normal break-words">{mobileCopy.eyebrow}</span>
+              <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            </a>
           </div>
         </div>
       </div>

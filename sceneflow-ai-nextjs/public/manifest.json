@@ -1,7 +1,7 @@
 {
   "name": "SceneFlow Studio - AI-Powered Video Creation",
   "short_name": "SceneFlow Studio",
-  "description": "Transform your ideas into professional videos with AI-powered workflow automation",
+  "description": "Mobile companion for project alerts, status, budgets, and client-PM collaboration — paired with the desktop AI production studio.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050A18",
@@ -74,10 +74,10 @@
   ],
   "shortcuts": [
     {
-      "name": "Create New Project",
+      "name": "Initiate New Project",
       "short_name": "New Project",
-      "description": "Start a new video project",
-      "url": "/projects/new",
+      "description": "Initiate a new video project and Blueprint",
+      "url": "/dashboard?companion=new",
       "icons": [
         {
           "src": "/icons/icon-96x96.png?v=3",
@@ -86,10 +86,10 @@
       ]
     },
     {
-      "name": "Continue Project",
-      "short_name": "Continue",
-      "description": "Resume your latest project",
-      "url": "/projects/continue",
+      "name": "Project Status & Budget",
+      "short_name": "Status",
+      "description": "Track project milestones, shared links, and budget",
+      "url": "/dashboard?companion=plan",
       "icons": [
         {
           "src": "/icons/icon-96x96.png?v=3",

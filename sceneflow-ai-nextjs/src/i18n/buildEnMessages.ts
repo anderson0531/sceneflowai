@@ -79,6 +79,7 @@ export function buildEnMessages() {
     nav: {
       overview: 'Overview',
       videoServices: 'Video Business',
+      mobileApp: 'Mobile App',
       studioTour: 'Studio Tour',
       plansPricing: 'Plans & Pricing',
       productionExamples: 'Examples',
@@ -98,6 +99,7 @@ export function buildEnMessages() {
       whoItsFor: 'Paths',
       superpowers: 'Superpowers',
       videoServices: 'Business',
+      mobileApp: 'Mobile App',
       productionExamples: 'Examples',
       studioTour: 'Tour',
       twoModes: 'One Pipeline',

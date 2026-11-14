@@ -13,6 +13,7 @@ import { STUDIO_LANDING_COPY_HI } from './locales/hi'
 import { STUDIO_LANDING_COPY_PT } from './locales/pt'
 import { STUDIO_LANDING_COPY_TH } from './locales/th'
 import { STUDIO_LANDING_COPY_ZH_CN } from './locales/zhCN'
+import { MOBILE_COMPANION_COPY_EN } from './mobileCompanionCopy'
 import type { StudioLandingCopy } from './locales/types'
 
 export * from './locales/types'
@@ -220,9 +221,9 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
       },
       {
         step: '03',
-        title: 'Hybrid Photo + AI Build',
+        title: 'Shared Continuity & Mobile Photo Uploads',
         detail:
-          'Combine real client photos with multi-age cast continuity, custom wardrobes, and autonomous Audio Agent / Clips Agent.',
+          'Send a Continuity link so clients upload real photos from their phone and approve Cast, Wardrobes, Locations & Props before autonomous agents render.',
       },
       {
         step: '04',
@@ -609,6 +610,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     watchAcademyCta: 'Watch 30s Academy Tour',
     startExplorerCta: 'Start with Explorer — $9',
   },
+  mobileCompanion: MOBILE_COMPANION_COPY_EN,
 }
 
 export const WORLD_CLASS_LANDING_TRANSLATIONS: Record<

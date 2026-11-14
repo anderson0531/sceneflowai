@@ -7,11 +7,13 @@ import {
   Check,
   CheckCircle2,
   Globe,
+  ImagePlus,
   Loader2,
   MapPin,
   Package,
   RefreshCw,
   ShieldCheck,
+  Shirt,
   User as UserIcon,
 } from 'lucide-react'
 import { getLocaleDirection } from '@/i18n/locale'
@@ -23,6 +25,7 @@ import {
 } from '@/lib/intake/clientPortalCopy'
 import type { BrandProfileSnapshot } from '@/lib/producer/producerProfileService'
 import type { ContinuityPortalSlot } from '@/lib/continuity/continuityPortalService'
+import { prepareImageForContinuityUpload } from '@/lib/continuity/clientImageDownscale'
 
 interface UploadedItem {
   id: string
@@ -31,6 +34,7 @@ interface UploadedItem {
   slotName: string
   blobUrl: string
   caption: string | null
+  approvalStatus?: string
 }
 
 export function ContinuityClientPortal({ token }: { token: string }) {
@@ -42,10 +46,13 @@ export function ContinuityClientPortal({ token }: { token: string }) {
   )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [projectTitle, setProjectTitle] = useState<string | null>(null)
+  const [clientMode, setClientMode] = useState(false)
+  const [allowUploads, setAllowUploads] = useState(true)
   const [brand, setBrand] = useState<BrandProfileSnapshot>({
-    brandName: 'Production Studio',
-    primaryColor: '#7c3aed',
-    hideSceneFlowBranding: true,
+    brandName: 'SceneFlow Studio',
+    primaryColor: '#06b6d4',
+    hideSceneFlowBranding: false,
   })
   const [consentAccepted, setConsentAccepted] = useState(false)
   const [customerName, setCustomerName] = useState('')
@@ -57,8 +64,9 @@ export function ContinuityClientPortal({ token }: { token: string }) {
   const [slots, setSlots] = useState<ContinuityPortalSlot[]>([])
   const [uploads, setUploads] = useState<UploadedItem[]>([])
   const [roundsUsed, setRoundsUsed] = useState(0)
-  const [maxRounds, setMaxRounds] = useState(2)
+  const [maxRounds, setMaxRounds] = useState(3)
   const [approvalStatus, setApprovalStatus] = useState<string>('pending_review')
+  const [generalNotes, setGeneralNotes] = useState('')
 
   const [uploadingSlotId, setUploadingSlotId] = useState<string | null>(null)
   const [uploadNotice, setUploadNotice] = useState<string | null>(null)
@@ -81,11 +89,16 @@ export function ContinuityClientPortal({ token }: { token: string }) {
         return
       }
       if (data.brandProfile) setBrand(data.brandProfile)
+      if (data.projectTitle) setProjectTitle(data.projectTitle)
+      setClientMode(Boolean(data.clientMode))
+      setAllowUploads(data.allowUploads !== false)
       if (data.locale && !langParam) {
         setLocale(resolveClientPortalLocale(data.locale))
       }
       setConsentAccepted(Boolean(data.consentAccepted))
       if (data.customerName) setCustomerName(data.customerName)
+      if (data.generalNotes) setGeneralNotes(data.generalNotes)
+
       const loadedSlots: ContinuityPortalSlot[] = Array.isArray(data.slots) ? data.slots : []
       setSlots(loadedSlots)
       const initialDecisions: Record<
@@ -101,7 +114,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
       setDecisions(initialDecisions)
       setUploads(Array.isArray(data.submissions) ? data.submissions : [])
       setRoundsUsed(Number(data.roundsUsed || 0))
-      setMaxRounds(Number(data.maxRounds || 2))
+      setMaxRounds(Number(data.maxRounds || 3))
       setApprovalStatus(data.approvalStatus || 'pending_review')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load continuity portal')
@@ -116,7 +129,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
 
   const handleConsent = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!customerName.trim() || !mediaRightsChecked || !zeroPrivityChecked) return
+    if (!customerName.trim() || !mediaRightsChecked || (clientMode && !zeroPrivityChecked)) return
     setConsentSaving(true)
     setError(null)
     try {
@@ -128,7 +141,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
           customerName: customerName.trim(),
           customerEmail: customerEmail.trim() || undefined,
           attestedMediaRights: mediaRightsChecked,
-          acknowledgedZeroPrivity: zeroPrivityChecked,
+          acknowledgedZeroPrivity: clientMode ? zeroPrivityChecked : true,
         }),
       })
       const data = await res.json()
@@ -144,30 +157,38 @@ export function ContinuityClientPortal({ token }: { token: string }) {
     }
   }
 
-  const handleFileChange = async (slot: ContinuityPortalSlot, file: File | undefined) => {
-    if (!file) return
+  const handleFilesSelected = async (
+    slot: ContinuityPortalSlot,
+    fileList: FileList | null | undefined
+  ) => {
+    if (!fileList || fileList.length === 0) return
+    const selectedFiles = Array.from(fileList).slice(0, 5)
     setUploadingSlotId(slot.slotId)
     setUploadNotice(null)
     setError(null)
     try {
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('slotId', slot.slotId)
-      fd.append('slotType', slot.slotType)
-      fd.append('slotName', slot.name)
-      const note = decisions[slot.slotId]?.note
-      if (note) fd.append('caption', note)
+      for (const rawFile of selectedFiles) {
+        const preparedFile = await prepareImageForContinuityUpload(rawFile)
+        const fd = new FormData()
+        fd.append('file', preparedFile)
+        fd.append('slotId', slot.slotId)
+        fd.append('slotType', slot.slotType)
+        fd.append('slotName', slot.name)
+        if (customerName.trim()) fd.append('reviewerName', customerName.trim())
+        const note = decisions[slot.slotId]?.note
+        if (note) fd.append('caption', note)
 
-      const res = await fetch(`/api/share/continuity/${encodeURIComponent(token)}/upload`, {
-        method: 'POST',
-        body: fd,
-      })
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        setError(data.error || 'Upload failed')
-        return
+        const res = await fetch(`/api/share/continuity/${encodeURIComponent(token)}/upload`, {
+          method: 'POST',
+          body: fd,
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          setError(data.error || 'Upload failed')
+          return
+        }
+        setUploads((prev) => [data.submission, ...prev])
       }
-      setUploads((prev) => [data.submission, ...prev])
       setUploadNotice(formatPortalCopy(locale, 'photoUploadedClean'))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
@@ -189,7 +210,8 @@ export function ContinuityClientPortal({ token }: { token: string }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          reviewerName: customerName || 'Client',
+          reviewerName: customerName.trim() || 'Reviewer',
+          generalNotes: generalNotes.trim() || undefined,
           slotDecisions,
         }),
       })
@@ -208,39 +230,50 @@ export function ContinuityClientPortal({ token }: { token: string }) {
     }
   }
 
-  const accentColor = brand.primaryColor || '#7c3aed'
-  const roundLimitReached = roundsUsed >= maxRounds || approvalStatus === 'approved'
+  const accentColor = brand.primaryColor || '#06b6d4'
+  const roundLimitReached =
+    clientMode && (roundsUsed >= maxRounds || approvalStatus === 'approved')
 
   const renderSection = (
-    type: 'character' | 'location' | 'prop',
-    headingKey: 'charactersHeading' | 'locationsHeading' | 'propsHeading',
+    types: Array<ContinuityPortalSlot['slotType']>,
+    heading: string,
     Icon: typeof UserIcon
   ) => {
-    const group = slots.filter((s) => s.slotType === type)
+    const group = slots.filter((s) => types.includes(s.slotType))
     if (group.length === 0) return null
     return (
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Icon className="w-5 h-5 text-purple-400" />
-          {formatPortalCopy(locale, headingKey)}
+          <Icon className="w-5 h-5 text-cyan-400 shrink-0" />
+          <span>{heading}</span>
+          <span className="text-xs font-normal text-slate-400">({group.length})</span>
         </h2>
         <div className="grid sm:grid-cols-2 gap-4">
           {group.map((slot) => {
             const slotUploads = uploads.filter((u) => u.slotId === slot.slotId)
             const currentDecision = decisions[slot.slotId]?.decision || 'approved'
+            const isUploading = uploadingSlotId === slot.slotId
             return (
               <div
                 key={slot.slotId}
-                className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 space-y-4"
+                className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5 space-y-4"
               >
                 <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-base font-bold text-white">{slot.name}</h3>
-                    {slot.role && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-base font-bold text-white leading-snug">{slot.name}</h3>
+                    {slot.role ? (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 shrink-0">
                         {slot.role}
                       </span>
-                    )}
+                    ) : slot.slotType === 'wardrobe' ? (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30 shrink-0">
+                        Wardrobe
+                      </span>
+                    ) : slot.slotType === 'location_version' ? (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shrink-0">
+                        Set State
+                      </span>
+                    ) : null}
                   </div>
                   {slot.description && (
                     <p className="text-sm text-slate-400 mt-1 leading-relaxed">
@@ -249,60 +282,99 @@ export function ContinuityClientPortal({ token }: { token: string }) {
                   )}
                 </div>
 
-                {slot.referenceImageUrl && (
+                {slot.referenceImageUrl ? (
                   <div className="rounded-xl overflow-hidden border border-slate-800 bg-black">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={slot.referenceImageUrl}
                       alt={slot.name}
-                      className="w-full h-44 object-cover"
+                      className="w-full h-48 object-cover"
                     />
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-slate-700 bg-slate-950/60 px-4 py-6 text-center text-xs text-slate-400">
+                    Reference photo needed — upload from your phone gallery or camera below.
                   </div>
                 )}
 
                 {slotUploads.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2">
-                    {slotUploads.map((u) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        key={u.id}
-                        src={u.blobUrl}
-                        alt={u.slotName}
-                        className="h-20 w-full rounded-lg object-cover border border-emerald-500/40"
-                      />
-                    ))}
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-emerald-300">
+                      Uploaded photos ({slotUploads.length})
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {slotUploads.map((u) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          key={u.id}
+                          src={u.blobUrl}
+                          alt={u.slotName}
+                          className="h-20 w-full rounded-lg object-cover border border-emerald-500/40"
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3.5 py-2 text-xs sm:text-sm font-medium text-white transition">
-                    {uploadingSlotId === slot.slotId ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        {formatPortalCopy(locale, 'uploadingPhoto')}
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-4 h-4 text-purple-400" />
-                        {formatPortalCopy(locale, 'uploadReferencePhoto')}
-                      </>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      capture="environment"
-                      className="hidden"
-                      disabled={uploadingSlotId === slot.slotId}
-                      onChange={(e) => handleFileChange(slot, e.target.files?.[0])}
-                    />
-                  </label>
-                </div>
+                {allowUploads && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Gallery / File Picker (no forced `capture` attribute so iOS/Android Camera Roll works!) */}
+                    <label
+                      title={formatPortalCopy(locale, 'uploadReferencePhoto')}
+                      className="cursor-pointer flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2 text-xs sm:text-sm font-medium text-white transition"
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                          <span>{formatPortalCopy(locale, 'uploadingPhoto')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <ImagePlus className="w-4 h-4 text-cyan-400 shrink-0" />
+                          <span>{formatPortalCopy(locale, 'uploadReferencePhoto')}</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        disabled={isUploading}
+                        onChange={(e) => {
+                          void handleFilesSelected(slot, e.target.files)
+                          e.currentTarget.value = ''
+                        }}
+                      />
+                    </label>
+
+                    {/* Direct Mobile Camera Snap Button */}
+                    <label
+                      title="Take Photo with Camera"
+                      className="cursor-pointer inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 px-3 py-2 text-xs sm:text-sm font-medium text-slate-200 transition"
+                    >
+                      <Camera className="w-4 h-4 text-purple-400 shrink-0" />
+                      <span>Camera</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        disabled={isUploading}
+                        onChange={(e) => {
+                          void handleFilesSelected(slot, e.target.files)
+                          e.currentTarget.value = ''
+                        }}
+                      />
+                    </label>
+                  </div>
+                )}
 
                 {!roundLimitReached && (
                   <div className="pt-2 border-t border-slate-800 space-y-2">
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
+                        title={formatPortalCopy(locale, 'approveItem')}
                         onClick={() =>
                           setDecisions((prev) => ({
                             ...prev,
@@ -312,17 +384,18 @@ export function ContinuityClientPortal({ token }: { token: string }) {
                             },
                           }))
                         }
-                        className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition ${
+                        className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold transition ${
                           currentDecision === 'approved'
                             ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-800 text-slate-300'
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                         }`}
                       >
-                        <Check className="w-3.5 h-3.5" />
-                        {formatPortalCopy(locale, 'approveItem')}
+                        <Check className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{formatPortalCopy(locale, 'approveItem')}</span>
                       </button>
                       <button
                         type="button"
+                        title={formatPortalCopy(locale, 'needsAdjustment')}
                         onClick={() =>
                           setDecisions((prev) => ({
                             ...prev,
@@ -332,14 +405,16 @@ export function ContinuityClientPortal({ token }: { token: string }) {
                             },
                           }))
                         }
-                        className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition ${
+                        className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold transition ${
                           currentDecision === 'revision_requested'
                             ? 'bg-amber-600 text-white'
-                            : 'bg-slate-800 text-slate-300'
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                         }`}
                       >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        {formatPortalCopy(locale, 'needsAdjustment')}
+                        <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">
+                          {formatPortalCopy(locale, 'needsAdjustment')}
+                        </span>
                       </button>
                     </div>
                     {currentDecision === 'revision_requested' && (
@@ -355,8 +430,8 @@ export function ContinuityClientPortal({ token }: { token: string }) {
                             },
                           }))
                         }
-                        placeholder="Describe Era, Clothing, or Detail..."
-                        className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-1.5 text-xs text-white"
+                        placeholder="Describe wardrobe, era, angle, or adjustment needed..."
+                        className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white"
                       />
                     )}
                   </div>
@@ -372,7 +447,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
       </div>
     )
   }
@@ -383,34 +458,38 @@ export function ContinuityClientPortal({ token }: { token: string }) {
       className="min-h-screen bg-slate-950 text-slate-100 flex flex-col"
     >
       <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           {brand.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={brand.logoUrl}
               alt={brand.brandName}
-              className="h-9 w-9 rounded-lg object-cover border border-slate-700"
+              className="h-9 w-9 rounded-lg object-cover border border-slate-700 shrink-0"
             />
           ) : (
             <div
-              className="h-9 w-9 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+              className="h-9 w-9 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0"
               style={{ backgroundColor: accentColor }}
             >
               {brand.brandName.slice(0, 2).toUpperCase()}
             </div>
           )}
-          <div>
-            <div className="text-base font-semibold text-white">
-              {formatPortalCopy(locale, 'producedBy', { brand: brand.brandName })}
+          <div className="min-w-0">
+            <div className="text-sm sm:text-base font-semibold text-white truncate">
+              {projectTitle
+                ? `${projectTitle} · Continuity`
+                : formatPortalCopy(locale, 'producedBy', { brand: brand.brandName })}
             </div>
             <div className="text-xs text-slate-400">
-              {formatPortalCopy(locale, 'roundBadge', { used: roundsUsed, max: maxRounds })}
+              {clientMode
+                ? formatPortalCopy(locale, 'roundBadge', { used: roundsUsed, max: maxRounds })
+                : formatPortalCopy(locale, 'producedBy', { brand: brand.brandName })}
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Globe className="w-4 h-4 text-slate-400" />
+          <Globe className="w-4 h-4 text-slate-400 shrink-0" />
           <select
             aria-label="Language"
             value={locale}
@@ -426,7 +505,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8 pb-28">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8 pb-28">
         {error && (
           <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             {error}
@@ -444,7 +523,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
             className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 sm:p-8 space-y-5 max-w-2xl mx-auto"
           >
             <div className="flex items-center gap-3">
-              <ShieldCheck className="w-7 h-7 text-purple-400 shrink-0" />
+              <ShieldCheck className="w-7 h-7 text-cyan-400 shrink-0" />
               <div>
                 <h1 className="text-xl font-bold text-white">
                   {formatPortalCopy(locale, 'consentTitle')}
@@ -491,21 +570,28 @@ export function ContinuityClientPortal({ token }: { token: string }) {
                 {formatPortalCopy(locale, 'mediaRightsLabel')}
               </span>
             </label>
-            <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-800 bg-slate-950/60 p-3.5">
-              <input
-                type="checkbox"
-                required
-                checked={zeroPrivityChecked}
-                onChange={(e) => setZeroPrivityChecked(e.target.checked)}
-                className="mt-1 h-4 w-4"
-              />
-              <span className="text-sm text-slate-300">
-                {formatPortalCopy(locale, 'zeroPrivityLabel', { brand: brand.brandName })}
-              </span>
-            </label>
+            {clientMode && (
+              <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-800 bg-slate-950/60 p-3.5">
+                <input
+                  type="checkbox"
+                  required
+                  checked={zeroPrivityChecked}
+                  onChange={(e) => setZeroPrivityChecked(e.target.checked)}
+                  className="mt-1 h-4 w-4"
+                />
+                <span className="text-sm text-slate-300">
+                  {formatPortalCopy(locale, 'zeroPrivityLabel', { brand: brand.brandName })}
+                </span>
+              </label>
+            )}
             <button
               type="submit"
-              disabled={consentSaving || !customerName.trim() || !mediaRightsChecked || !zeroPrivityChecked}
+              disabled={
+                consentSaving ||
+                !customerName.trim() ||
+                !mediaRightsChecked ||
+                (clientMode && !zeroPrivityChecked)
+              }
               className="w-full rounded-xl py-3 text-base font-semibold text-white disabled:opacity-50"
               style={{ backgroundColor: accentColor }}
             >
@@ -514,21 +600,50 @@ export function ContinuityClientPortal({ token }: { token: string }) {
           </form>
         ) : (
           <>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                {formatPortalCopy(locale, 'continuityPortalTitle')}
-              </h1>
-              <p className="text-slate-400 mt-1">
-                {formatPortalCopy(locale, 'continuityPortalSubtitle')}
-              </p>
+            <div className="space-y-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                  {formatPortalCopy(locale, 'continuityPortalTitle')}
+                </h1>
+                <p className="text-slate-400 mt-1">
+                  {formatPortalCopy(locale, 'continuityPortalSubtitle')}
+                </p>
+              </div>
+
+              {!clientMode && (
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 grid sm:grid-cols-2 gap-3">
+                  <label className="block text-xs text-slate-300">
+                    {formatPortalCopy(locale, 'yourName')}
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Your name (shown on approvals & uploads)"
+                      className="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white"
+                    />
+                  </label>
+                  <label className="block text-xs text-slate-300">
+                    Overall Continuity Note (optional)
+                    <input
+                      type="text"
+                      value={generalNotes}
+                      onChange={(e) => setGeneralNotes(e.target.value)}
+                      placeholder="Any overall notes for your Project Manager..."
+                      className="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white"
+                    />
+                  </label>
+                </div>
+              )}
             </div>
 
             {reviewSubmitted || approvalStatus === 'approved' ? (
-              <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-6 flex items-center gap-4">
-                <CheckCircle2 className="w-10 h-10 text-emerald-400 shrink-0" />
+              <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5 sm:p-6 flex items-center gap-4">
+                <CheckCircle2 className="w-9 h-9 text-emerald-400 shrink-0" />
                 <div>
-                  <div className="text-lg font-bold text-white">
-                    {formatPortalCopy(locale, 'interviewCompletedTitle')}
+                  <div className="text-base sm:text-lg font-bold text-white">
+                    {approvalStatus === 'approved'
+                      ? 'Continuity Approved — Production Ready'
+                      : 'Continuity Feedback Sent to Your Producer'}
                   </div>
                   <div className="text-sm text-slate-300">
                     {formatPortalCopy(locale, 'interviewCompletedBody', {
@@ -539,21 +654,35 @@ export function ContinuityClientPortal({ token }: { token: string }) {
               </div>
             ) : null}
 
-            {renderSection('character', 'charactersHeading', UserIcon)}
-            {renderSection('location', 'locationsHeading', MapPin)}
-            {renderSection('prop', 'propsHeading', Package)}
+            {renderSection(
+              ['character'],
+              formatPortalCopy(locale, 'charactersHeading'),
+              UserIcon
+            )}
+            {renderSection(['wardrobe'], 'Wardrobes & Looks', Shirt)}
+            {renderSection(
+              ['location', 'location_version'],
+              formatPortalCopy(locale, 'locationsHeading'),
+              MapPin
+            )}
+            {renderSection(['prop'], formatPortalCopy(locale, 'propsHeading'), Package)}
           </>
         )}
       </main>
 
-      {consentAccepted && !roundLimitReached && !reviewSubmitted && (
-        <div className="fixed bottom-0 inset-x-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur px-4 py-3">
-          <div className="max-w-4xl mx-auto flex justify-end">
+      {consentAccepted && !roundLimitReached && (
+        <div className="fixed bottom-0 inset-x-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+            <span className="text-xs text-slate-400 hidden sm:inline">
+              {slots.filter((s) => (decisions[s.slotId]?.decision || 'approved') === 'approved')
+                .length}{' '}
+              / {slots.length} approved
+            </span>
             <button
               type="button"
               disabled={submittingReview}
               onClick={handleSubmitReview}
-              className="rounded-xl px-6 py-3 text-sm sm:text-base font-semibold text-white disabled:opacity-50"
+              className="w-full sm:w-auto rounded-xl px-6 py-3 text-sm sm:text-base font-semibold text-white disabled:opacity-50"
               style={{ backgroundColor: accentColor }}
             >
               {submittingReview ? '...' : formatPortalCopy(locale, 'submitContinuityReview')}

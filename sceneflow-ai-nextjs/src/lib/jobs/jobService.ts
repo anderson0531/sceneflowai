@@ -246,28 +246,49 @@ export async function notifyUser(input: {
   sendEmail?: boolean
 }): Promise<void> {
   await ensureNotificationsSchema()
-  await Notification.create({
-    user_id: input.userId,
-    project_id: input.projectId ?? null,
-    job_id: input.jobId ?? null,
+
+  const fanOutToStakeholders =
+    Boolean(input.projectId) &&
+    (input.type === 'feedback' || input.type.startsWith('client_'))
+
+  let recipientIds = [input.userId]
+  if (fanOutToStakeholders && input.projectId) {
+    try {
+      const { listProjectStakeholderUserIds } = await import(
+        '@/lib/producer/workspaceProjectsQuery'
+      )
+      recipientIds = await listProjectStakeholderUserIds(input.projectId, input.userId)
+    } catch {
+      recipientIds = [input.userId]
+    }
+  }
+
+  const pushUrl = companionOpenPath({
     type: input.type,
-    title: input.title,
-    message: input.message,
-    metadata: input.metadata ?? null,
-    read: false,
+    projectId: input.projectId,
+    metadata: input.metadata,
   })
-  try {
-    await sendWebPushToUser(input.userId, {
+
+  for (const targetUserId of recipientIds) {
+    await Notification.create({
+      user_id: targetUserId,
+      project_id: input.projectId ?? null,
+      job_id: input.jobId ?? null,
+      type: input.type,
       title: input.title,
       message: input.message,
-      url: companionOpenPath({
-        type: input.type,
-        projectId: input.projectId,
-        metadata: input.metadata,
-      }),
+      metadata: input.metadata ?? null,
+      read: false,
     })
-  } catch (error) {
-    console.error('[notifyUser] web push failed', error)
+    try {
+      await sendWebPushToUser(targetUserId, {
+        title: input.title,
+        message: input.message,
+        url: pushUrl,
+      })
+    } catch (error) {
+      console.error('[notifyUser] web push failed', error)
+    }
   }
 
   const shouldSendEmail =

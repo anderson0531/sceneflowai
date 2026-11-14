@@ -1,7 +1,12 @@
 import { DataTypes, Model, Optional } from 'sequelize'
 import { sequelize } from '../config/database'
 
-export type ContinuitySlotType = 'character' | 'location' | 'prop'
+export type ContinuitySlotType =
+  | 'character'
+  | 'wardrobe'
+  | 'location'
+  | 'location_version'
+  | 'prop'
 export type QuarantineStatus = 'clean' | 'flagged'
 export type SubmissionApprovalStatus = 'pending' | 'promoted' | 'rejected'
 

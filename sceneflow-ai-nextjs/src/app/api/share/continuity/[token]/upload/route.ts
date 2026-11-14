@@ -13,6 +13,14 @@ export const maxDuration = 60
 
 type RouteCtx = { params: Promise<{ token: string }> }
 
+const VALID_SLOT_TYPES = new Set<ContinuitySlotType>([
+  'character',
+  'wardrobe',
+  'location',
+  'location_version',
+  'prop',
+])
+
 export async function POST(req: NextRequest, ctx: RouteCtx) {
   try {
     const { token } = await ctx.params
@@ -27,8 +35,15 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     }
 
     const { session, payload } = resolved
+    if (payload.allowUploads === false) {
+      return NextResponse.json(
+        { success: false, error: 'Photo uploads are disabled on this continuity link' },
+        { status: 403 }
+      )
+    }
+
     const consent = await getLatestCustomerConsent(session.id)
-    if (!consent) {
+    if (payload.clientMode && !consent) {
       return NextResponse.json(
         {
           success: false,
@@ -41,8 +56,9 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
     const slotId = String(formData.get('slotId') || '').trim()
-    const slotTypeRaw = String(formData.get('slotType') || 'character').trim()
+    const slotTypeRaw = String(formData.get('slotType') || 'character').trim() as ContinuitySlotType
     const slotName = String(formData.get('slotName') || 'Reference').trim().slice(0, 200)
+    const reviewerNameRaw = String(formData.get('reviewerName') || '').trim().slice(0, 160)
     const caption = formData.get('caption') ? String(formData.get('caption')).slice(0, 1000) : null
 
     if (!file || !slotId) {
@@ -52,8 +68,9 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       )
     }
 
-    const slotType: ContinuitySlotType =
-      slotTypeRaw === 'location' || slotTypeRaw === 'prop' ? slotTypeRaw : 'character'
+    const slotType: ContinuitySlotType = VALID_SLOT_TYPES.has(slotTypeRaw)
+      ? slotTypeRaw
+      : 'character'
 
     const rawBuffer = Buffer.from(await file.arrayBuffer())
     const sanitized = await sanitizeCustomerImageUpload({
@@ -79,11 +96,15 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       )
     }
 
-    const blobKey = `projects/${session.project_id}/client-continuity/${slotId}-${Date.now()}.jpg`
+    const safeSlotSegment = slotId.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 80)
+    const blobKey = `projects/${session.project_id}/client-continuity/${safeSlotSegment}-${Date.now()}.jpg`
     const blob = await put(blobKey, sanitized.sanitizedBuffer, {
       access: 'public',
       contentType: sanitized.outputMimeType,
     })
+
+    const uploaderName =
+      consent?.customer_name || reviewerNameRaw || payload.lastReviewerName || 'Reviewer'
 
     const submission = await ClientAssetSubmission.create({
       collab_session_id: session.id,
@@ -92,8 +113,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       slot_id: slotId,
       slot_type: slotType,
       slot_name: slotName,
-      customer_name: consent.customer_name,
-      customer_email: consent.customer_email,
+      customer_name: uploaderName,
+      customer_email: consent?.customer_email || null,
       blob_url: blob.url,
       mime_type: sanitized.outputMimeType,
       file_size_bytes: sanitized.sanitizedBuffer.length,
@@ -107,17 +128,19 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     if (project) {
       const md = ((project.metadata || {}) as Record<string, unknown>)
       const co = ((md.clientOrder || {}) as Record<string, unknown>)
-      await project.update({
-        metadata: {
-          ...md,
-          clientOrder: {
-            ...co,
-            isClientProject: true,
-            stage: 'continuity_uploads_received',
-            actionState: 'action_required',
+      if (co.isClientProject || payload.clientMode || co.pmSupportRequested) {
+        await project.update({
+          metadata: {
+            ...md,
+            clientOrder: {
+              ...co,
+              isClientProject: Boolean(co.isClientProject || payload.clientMode),
+              stage: 'continuity_uploads_received',
+              actionState: 'action_required',
+            },
           },
-        },
-      })
+        })
+      }
     }
 
     try {
@@ -125,15 +148,16 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         userId: session.owner_user_id,
         projectId: session.project_id,
         type: 'client_assets_uploaded',
-        title: `Client Photo Uploaded: ${slotName}`,
-        message: `${consent.customer_name} uploaded a photo for "${slotName}". Review and promote to Continuity Library.`,
+        title: `Continuity Photo Uploaded: ${slotName}`,
+        message: `${uploaderName} uploaded a photo for "${slotName}". Review and promote in Continuity Library.`,
         sendEmail: false,
         metadata: {
           projectId: session.project_id,
           submissionId: submission.id,
           slotId,
+          source: 'continuity',
           brandName: payload.brandProfileSnapshot.brandName,
-          openPath: `/dashboard/settings/producer`,
+          openPath: `/dashboard/workflow/vision/${session.project_id}?openLibrary=1`,
         },
       })
     } catch (notifyErr) {

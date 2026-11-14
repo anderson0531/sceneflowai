@@ -169,7 +169,8 @@
       "resolved": "แก้ไขแล้ว",
       "open": "เปิดอยู่",
       "inReview": "กำลังตรวจสอบ",
-      "score": "{score}/5"
+      "score": "{score}/5",
+      "continuity": "ความต่อเนื่อง"
     },
     "plan": {
       "empty": "ยังไม่มีโปรเจกต์",
@@ -190,6 +191,51 @@
       "chapters": "สิ้นสุดบท (Chapter)",
       "back": "โปรเจกต์ทั้งหมด",
       "creditsOnDate": "{amount} เครดิต"
+    },
+    "initiate": {
+      "button": "โปรเจกต์ใหม่",
+      "title": "เริ่มโปรเจกต์และ Blueprint",
+      "subtitle": "สร้าง Blueprint ตั้งต้น พร้อมเลือกขอรับการดูแลจากผู้จัดการโปรเจกต์ (PM)",
+      "projectTitle": "ชื่อโปรเจกต์",
+      "projectTitlePlaceholder": "เช่น วิดีโออัตชีวประวัติครอบครัว หรือ ทัวร์อสังหาฯ",
+      "vertical": "ประเภทโปรเจกต์",
+      "verticalMemoir": "วิดีโอความทรงจำ",
+      "verticalRealEstate": "ทัวร์อสังหาริมทรัพย์",
+      "verticalEducation": "สื่อฝึกอบรมและ SOP",
+      "verticalBrand": "เรื่องราวแบรนด์",
+      "verticalFilm": "ภาพยนตร์สั้น / ซีรีส์",
+      "brief": "รายละเอียดโปรเจกต์ (พิมพ์หรือพูด)",
+      "briefPlaceholder": "อธิบายเรื่องราว เป้าหมาย บุคคลสำคัญ สถานที่ และโทนเรื่อง...",
+      "pmSupport": "ขอรับการดูแลจาก Project Manager (PM)",
+      "pmSupportHint": "แจ้งเตือน PM เพื่อตรวจทาน Blueprint, Audience Resonance, ความต่อเนื่อง และ Screening Room",
+      "pmEmail": "อีเมล PM (ไม่บังคับ)",
+      "budgetCap": "เพดานเครดิต (ไม่บังคับ)",
+      "submit": "สร้างโปรเจกต์และ Blueprint",
+      "cancel": "ยกเลิก",
+      "dictate": "พูด",
+      "stopDictate": "หยุด"
+    },
+    "links": {
+      "heading": "ลิงก์ตรวจทานและอัปโหลดรูปภาพ",
+      "blueprint": "Blueprint",
+      "resonance": "Resonance",
+      "continuity": "ความต่อเนื่องและรูปภาพ",
+      "screening": "Screening Room",
+      "createContinuity": "เปิดใช้ลิงก์ความต่อเนื่อง",
+      "open": "เปิด",
+      "share": "แชร์",
+      "copied": "คัดลอกลิงก์แล้ว",
+      "pmRequested": "ดูแลโดย PM",
+      "actionRequired": "รอดำเนินการ",
+      "waitingClient": "รอตรวจทาน",
+      "approved": "อนุมัติแล้ว"
+    },
+    "stages": {
+      "blueprint": "Blueprint",
+      "resonance": "Resonance",
+      "continuity": "ความต่อเนื่อง",
+      "production": "การผลิต",
+      "screening": "ห้องฉาย"
     }
   }
 }

@@ -91,6 +91,63 @@ export type ClientStepCopy = {
   detail: string
 }
 
+export type MobileLoopStepCopy = {
+  step: string
+  badge: string
+  title: string
+  detail: string
+  linkLabel: string
+  phoneHeadline: string
+  phoneStatus: string
+  phoneMeta: string
+}
+
+export type MobileTeamPillarCopy = {
+  id: 'alerts' | 'status' | 'budget' | 'links'
+  title: string
+  detail: string
+  metric: string
+}
+
+export type MobileCompanionPwaCopy = {
+  eyebrow: string
+  title: string
+  titleAccent: string
+  subtitle: string
+  whyPwaBadge: string
+  whyPwaNote: string
+  modeCustomerTab: string
+  modeTeamTab: string
+  customerHeading: string
+  customerSubheading: string
+  customerSteps: readonly [
+    MobileLoopStepCopy,
+    MobileLoopStepCopy,
+    MobileLoopStepCopy,
+    MobileLoopStepCopy,
+  ]
+  teamHeading: string
+  teamSubheading: string
+  teamPillars: readonly [
+    MobileTeamPillarCopy,
+    MobileTeamPillarCopy,
+    MobileTeamPillarCopy,
+    MobileTeamPillarCopy,
+  ]
+  phoneHeaderBrand: string
+  phoneCreditsPill: string
+  phonePmBadge: string
+  phoneStageBarLabels: readonly [string, string, string, string, string]
+  phoneTeamAlertTitle: string
+  phoneTeamAlertBody: string
+  phoneTeamBudgetLabel: string
+  phoneTeamBudgetValue: string
+  phoneTeamPaceBadge: string
+  installIosBadge: string
+  installAndroidBadge: string
+  ctaPrimary: string
+}
+
 export type GuidedRoomCallout = {
   label: string
   detail: string
@@ -229,4 +286,5 @@ export type StudioLandingCopy = {
     watchAcademyCta: string
     startExplorerCta: string
   }
+  mobileCompanion: MobileCompanionPwaCopy
 }

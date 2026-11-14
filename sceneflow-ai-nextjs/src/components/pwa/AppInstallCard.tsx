@@ -12,10 +12,23 @@ type BeforeInstallPromptEvent = Event & {
 }
 
 const NEVER_KEY = 'pwa-install-never-show'
+const DISMISS_KEY = 'pwa-install-dismissed'
+const DISMISS_SNOOZE_MS = 7 * 24 * 60 * 60 * 1000
 
 function readNeverAsk(): boolean {
   try {
     return localStorage.getItem(NEVER_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function readRecentlyDismissed(): boolean {
+  try {
+    const raw = localStorage.getItem(DISMISS_KEY)
+    if (!raw) return false
+    const ts = Number(raw)
+    return Number.isFinite(ts) && Date.now() - ts < DISMISS_SNOOZE_MS
   } catch {
     return false
   }
@@ -43,6 +56,7 @@ export function AppInstallCard({
     setStandalone(isStandaloneDisplay)
     setIsIOS(/iphone|ipad|ipod/i.test(window.navigator.userAgent))
     setNeverAsk(readNeverAsk())
+    setDismissed(readRecentlyDismissed())
 
     const handler = (event: Event) => {
       event.preventDefault()

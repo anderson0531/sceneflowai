@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
       project: access.project,
       ownerUserId: access.billingOwnerUserId || actorUserId,
       ownerDisplayName: (authSession?.user as { name?: string })?.name || 'Studio Producer',
+      clientMode: body.clientMode === true,
+      allowUploads: body.allowUploads !== false,
       locale: body.locale,
       maxRounds: body.maxRounds,
       clientGroupSlug: body.clientGroupSlug,

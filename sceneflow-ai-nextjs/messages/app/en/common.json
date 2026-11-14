@@ -169,7 +169,8 @@
       "resolved": "Resolved",
       "open": "Open",
       "inReview": "In review",
-      "score": "{score}/5"
+      "score": "{score}/5",
+      "continuity": "Continuity"
     },
     "plan": {
       "empty": "No projects yet",
@@ -190,6 +191,51 @@
       "chapters": "Chapter ends",
       "back": "All projects",
       "creditsOnDate": "{amount} cr"
+    },
+    "initiate": {
+      "button": "New Project",
+      "title": "Initiate Project & Blueprint",
+      "subtitle": "Create a baseline Blueprint and optionally assign Project Manager (PM) support.",
+      "projectTitle": "Project title",
+      "projectTitlePlaceholder": "e.g., Harbor Estate Tour or Family Memoir",
+      "vertical": "Project type",
+      "verticalMemoir": "Video Memoir",
+      "verticalRealEstate": "Real Estate Tour",
+      "verticalEducation": "Training & SOP",
+      "verticalBrand": "Brand Story",
+      "verticalFilm": "Creator Film / Series",
+      "brief": "Project brief (type or dictate)",
+      "briefPlaceholder": "Describe the story, goals, key people, locations, and tone...",
+      "pmSupport": "Request Project Manager (PM) support",
+      "pmSupportHint": "Notifies your PM to review Blueprint, Audience Resonance, Continuity, and Screening Room.",
+      "pmEmail": "Assign PM email (optional)",
+      "budgetCap": "Credit budget cap (optional)",
+      "submit": "Create Project & Blueprint",
+      "cancel": "Cancel",
+      "dictate": "Speak",
+      "stopDictate": "Stop"
+    },
+    "links": {
+      "heading": "Shared Review & Upload Links",
+      "blueprint": "Blueprint",
+      "resonance": "Resonance",
+      "continuity": "Continuity & Photos",
+      "screening": "Screening Room",
+      "createContinuity": "Enable Continuity Link",
+      "open": "Open",
+      "share": "Share",
+      "copied": "Link copied",
+      "pmRequested": "PM Managed",
+      "actionRequired": "Action Required",
+      "waitingClient": "Waiting on Review",
+      "approved": "Approved"
+    },
+    "stages": {
+      "blueprint": "Blueprint",
+      "resonance": "Resonance",
+      "continuity": "Continuity",
+      "production": "Production",
+      "screening": "Screening"
     }
   }
 }

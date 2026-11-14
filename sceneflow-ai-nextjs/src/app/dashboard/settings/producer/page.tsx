@@ -330,6 +330,7 @@ export default function ProducerSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId: selectedProjectId,
+          clientMode: true,
           locale: continuityLocale,
           maxRounds: Number(continuityMaxRounds) || 2,
           clientGroupSlug: clientGroupSlug.trim() || undefined,

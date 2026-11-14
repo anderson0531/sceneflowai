@@ -1422,7 +1422,8 @@
     "workflow": "工作流程",
     "platformWalkthrough": "平台导览",
     "videoServices": "视频服务商机",
-    "studioTour": "制片导览"
+    "studioTour": "制片导览",
+    "mobileApp": "移动应用"
   },
   "floatingNav": {
     "productionExamples": "示例",
@@ -1439,7 +1440,8 @@
     "whoItsFor": "受众路径",
     "superpowers": "五大能力",
     "videoServices": "商业变现",
-    "studioTour": "制片导览"
+    "studioTour": "制片导览",
+    "mobileApp": "移动应用"
   },
   "imaginePossibilities": {
     "headline": "想象无限可能",
@@ -4392,6 +4394,106 @@
       ],
       "watchAcademyCta": "观看 30 秒学院导览",
       "startExplorerCta": "以 Explorer 方案起步 — $9"
+    },
+    "mobileCompanion": {
+      "eyebrow": "移动伴侣应用 (PWA) · 支持 iOS 与 Android",
+      "title": "桌面级制片性能，",
+      "titleAccent": "装进口袋的团队与客户控制中心。",
+      "subtitle": "多轨 4K 精细制片专为桌面大屏设计，因此 SceneFlow 配备即装即用的移动伴侣 PWA——通过实时通知、里程碑状态、积分预算与共享审阅链接，无缝连接制作团队、项目经理 (PM) 与订阅客户。",
+      "whyPwaBadge": "即装 PWA · 零应用商店门槛",
+      "whyPwaNote": "通过 Safari 或 Chrome 一键添加至主屏幕，支持原生 Web Push 推送提醒，免下载等待、实时同步更新。",
+      "modeCustomerTab": "客户与 PM 协作环",
+      "modeTeamTab": "团队与预算中枢",
+      "customerHeading": "客户自主发起项目 + PM 全程托管协作",
+      "customerSubheading": "订阅客户可在手机端直接发起项目与初始 Blueprint，一键开启 PM 支持，并通过四个共享链接高效迭代定稿。",
+      "customerSteps": [
+        {
+          "step": "01",
+          "badge": "手机端发起",
+          "title": "订阅并创建项目与 Blueprint（申请 PM 支持）",
+          "detail": "客户在手机上语音或文字输入需求即可生成初始故事 Blueprint，并一键勾选项目经理 (PM) 协作支持。",
+          "linkLabel": "移动伴侣 · + 新建项目",
+          "phoneHeadline": "海港家族回忆录",
+          "phoneStatus": "已指派 PM · Blueprint 已就绪",
+          "phoneMeta": "通过移动 PWA 发起 · 预算上限：2,500 cr"
+        },
+        {
+          "step": "02",
+          "badge": "共享 Blueprint 与共鸣评分",
+          "title": "协同打磨 Blueprint 与受众共鸣 (ARA)",
+          "detail": "PM 在桌面端优化剧本结构与受众共鸣评分，并分享 Blueprint 与共鸣评估链接供客户手机审阅确认。",
+          "linkLabel": "/blueprint/share · /share/script-resonance",
+          "phoneHeadline": "Blueprint 与共鸣审阅",
+          "phoneStatus": "94 / 100 受众共鸣评分 · 已批准",
+          "phoneMeta": "已与 PM 确认 2 处节拍调整 · 进入连续性阶段"
+        },
+        {
+          "step": "03",
+          "badge": "共享连续性链接",
+          "title": "手机上传参考照片并确认角色/场景连续性",
+          "detail": "PM 发送专属连续性链接，客户直接从手机相册或相机上传家庭老照片、房产实景或产品图，并逐项确认角色、服装、场景与道具。",
+          "linkLabel": "/share/continuity · 相册与相机上传",
+          "phoneHeadline": "视觉连续性与照片采集",
+          "phoneStatus": "已上传 6 张实拍图 · 角色与场景已锁定",
+          "phoneMeta": "自动压缩并清除 EXIF 隐私 · 一键同步至制片库"
+        },
+        {
+          "step": "04",
+          "badge": "共享审片室",
+          "title": "手机端逐帧审片与成片签收",
+          "detail": "在手机端随时观看配音动态预演与 4K 成片，添加时间戳批注，一键点击批准最终母带。",
+          "linkLabel": "/share/screening-room · 最终签收",
+          "phoneHeadline": "首映审片室 Screening Room",
+          "phoneStatus": "4K 最终母带已签收 ✓",
+          "phoneMeta": "多语种音轨已就绪 · 随时交付发布"
+        }
+      ],
+      "teamHeading": "制片人、导演与 PM 的随身指挥舱",
+      "teamSubheading": "离开办公桌也能掌控全局，全面支持工作区管理员与项目经理的权限协同与预算管控。",
+      "teamPillars": [
+        {
+          "id": "alerts",
+          "title": "即时 Web Push 手机推送",
+          "detail": "当智能体渲染完成、客户发起新项目或上传连续性照片时，第一时间收到手机通知。",
+          "metric": "实时推送 + 收件箱"
+        },
+        {
+          "id": "status",
+          "title": "5 阶段里程碑与排期进度",
+          "detail": "一目了然查看 Blueprint、共鸣、连续性、制作与审片室进度以及每日场次完成节奏。",
+          "metric": "全流程进度可视"
+        },
+        {
+          "id": "budget",
+          "title": "积分余额与硬性预算上限",
+          "detail": "实时监控账户积分、单项目客户预算上限以及每位 PM 的月度积分额度，严守交付利润率。",
+          "metric": "利润率护栏"
+        },
+        {
+          "id": "links",
+          "title": "一键调用手机原生分享",
+          "detail": "通过微信、WhatsApp、短信、Slack 或邮件一键发送四大共享审阅与照片上传链接。",
+          "metric": "4 大共享门户"
+        }
+      ],
+      "phoneHeaderBrand": "SceneFlow 移动伴侣",
+      "phoneCreditsPill": "14,250 cr",
+      "phonePmBadge": "PM 已连接",
+      "phoneStageBarLabels": [
+        "Blueprint",
+        "共鸣评估",
+        "连续性",
+        "制作中",
+        "审片室"
+      ],
+      "phoneTeamAlertTitle": "客户上传了新的连续性照片",
+      "phoneTeamAlertBody": "Elena 上传了 6 张家族档案照 · 点击审阅并入库",
+      "phoneTeamBudgetLabel": "项目积分预算",
+      "phoneTeamBudgetValue": "1,180 / 2,500 cr",
+      "phoneTeamPaceBadge": "进度正常 · 预算可控",
+      "installIosBadge": "iOS Safari：分享 → 添加到主屏幕",
+      "installAndroidBadge": "Android / Chrome：一键安装应用",
+      "ctaPrimary": "开启桌面制片室 + 移动 PWA ($9)"
     }
   }
 }

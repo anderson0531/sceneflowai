@@ -1,6 +1,6 @@
 import type { NotificationType } from '@/models/Notification'
 
-export type FeedbackSource = 'blueprint' | 'screening'
+export type FeedbackSource = 'blueprint' | 'continuity' | 'screening'
 
 export interface FeedbackNotificationInput {
   userId: string
@@ -25,9 +25,18 @@ export function companionOpenPath(input: {
 }): string {
   const source = input.metadata?.source
   const tab =
-    input.type === 'feedback' || source === 'blueprint' || source === 'screening'
+    input.type === 'feedback' ||
+    input.type === 'client_feedback_received' ||
+    source === 'blueprint' ||
+    source === 'continuity' ||
+    source === 'screening'
       ? 'feedback'
-      : 'inbox'
+      : input.projectId &&
+          (input.type === 'client_assets_uploaded' ||
+            input.type === 'client_stage_approved' ||
+            input.type === 'client_intake_submitted')
+        ? 'plan'
+        : 'inbox'
   const params = new URLSearchParams({ companion: tab })
   if (input.projectId) params.set('project', input.projectId)
   return `/dashboard?${params.toString()}`

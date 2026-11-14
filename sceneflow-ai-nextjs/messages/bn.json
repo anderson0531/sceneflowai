@@ -1154,7 +1154,8 @@
     "searchLanguages": "ভাষা অনুসন্ধান করুন...",
     "noLanguagesFound": "কোন ভাষা পাওয়া যায় নি",
     "videoServices": "Video Business",
-    "studioTour": "Studio Tour"
+    "studioTour": "Studio Tour",
+    "mobileApp": "Mobile App"
   },
   "floatingNav": {
     "productionExamples": "উদাহরণসমূহ",
@@ -1171,7 +1172,8 @@
     "whoItsFor": "Paths",
     "superpowers": "Superpowers",
     "videoServices": "Business",
-    "studioTour": "Tour"
+    "studioTour": "Tour",
+    "mobileApp": "Mobile App"
   },
   "hero": {
     "eyebrow": "গল্পকার, সিরিজ নির্মাতা এবং স্টুডিওর জন্য গণতান্ত্রিক চলচ্চিত্র নির্মাণ",
@@ -4145,6 +4147,106 @@
       ],
       "watchAcademyCta": "Watch 30s Academy Tour",
       "startExplorerCta": "Start with Explorer — $9"
+    },
+    "mobileCompanion": {
+      "eyebrow": "Mobile Companion App (PWA) · iOS & Android",
+      "title": "Desktop Studio Power.",
+      "titleAccent": "Pocket Command for Teams & Clients.",
+      "subtitle": "Because multi-track 4K production belongs on a desktop display, SceneFlow pairs your Studio with an instant-install Mobile PWA—connecting teams, Project Managers (PMs), and subscribed customers with live notifications, milestone status, credit budgets, and shared review links.",
+      "whyPwaBadge": "Instant PWA · Zero App Store Friction",
+      "whyPwaNote": "Installs in one tap from Safari or Chrome with native Web Push alerts—no downloads, gatekeeping, or version lag.",
+      "modeCustomerTab": "Customer & PM Loop",
+      "modeTeamTab": "Team & Budget Hub",
+      "customerHeading": "Customer-Initiated Projects with Managed PM Collaboration",
+      "customerSubheading": "Subscribed customers can initiate a project and baseline Blueprint from their phone, request PM support, and iterate through four shared approval links.",
+      "customerSteps": [
+        {
+          "step": "01",
+          "badge": "Mobile Initiation",
+          "title": "Subscribe, Initiate Project & Request PM Support",
+          "detail": "Customers subscribe, speak or type their story brief on mobile to generate a baseline Blueprint, and flag Project Manager (PM) support in one tap.",
+          "linkLabel": "Mobile Companion · + New Project",
+          "phoneHeadline": "Harbor Family Memoir",
+          "phoneStatus": "PM Support Assigned · Blueprint Ready",
+          "phoneMeta": "Customer initiated via Mobile PWA · Budget cap: 2,500 cr"
+        },
+        {
+          "step": "02",
+          "badge": "Shared Blueprint & ARA",
+          "title": "Iterate on Blueprint & Audience Resonance",
+          "detail": "Your PM reviews the baseline, optimizes Audience Resonance on desktop, and shares live Blueprint & Resonance links for mobile feedback and sign-off.",
+          "linkLabel": "/blueprint/share · /share/script-resonance",
+          "phoneHeadline": "Blueprint & Resonance Review",
+          "phoneStatus": "94 / 100 Audience Resonance · Approved",
+          "phoneMeta": "2 beat notes resolved with PM · Ready for Continuity"
+        },
+        {
+          "step": "03",
+          "badge": "Shared Continuity Link",
+          "title": "Upload Mobile Photos & Approve Continuity",
+          "detail": "PM shares a dedicated Continuity link so customers can upload real family, property, or product photos straight from their phone gallery or camera and approve Cast, Wardrobes, Locations & Props.",
+          "linkLabel": "/share/continuity · Gallery & Camera Upload",
+          "phoneHeadline": "Continuity & Photo Collection",
+          "phoneStatus": "6 Client Photos Uploaded · Cast & Sets Locked",
+          "phoneMeta": "Auto-downscaled & EXIF-sanitized · 1-click Studio promote"
+        },
+        {
+          "step": "04",
+          "badge": "Shared Screening Room",
+          "title": "Frame-Accurate Mobile Screening & Final Sign-Off",
+          "detail": "Watch voiced Pre-Vis animatics and 4K rendered cuts on any phone, leave timestamped notes, and tap Approve Final Master for delivery.",
+          "linkLabel": "/share/screening-room · Final Approval",
+          "phoneHeadline": "Premiere Screening Room",
+          "phoneStatus": "Final 4K Master Approved ✓",
+          "phoneMeta": "Multilanguage streams unlocked · Ready to publish"
+        }
+      ],
+      "teamHeading": "Real-Time Pocket Command for Producers, Directors & PMs",
+      "teamSubheading": "Keep every production moving while away from your desk—with role-aware visibility across workspace admins and assigned Project Managers.",
+      "teamPillars": [
+        {
+          "id": "alerts",
+          "title": "Instant Web Push Notifications",
+          "detail": "Get alerted the second an autonomous agent finishes rendering, a customer initiates a brief, or new Continuity photos land.",
+          "metric": "Live Push + Inbox"
+        },
+        {
+          "id": "status",
+          "title": "5-Stage Milestone & Pace Tracker",
+          "detail": "Monitor Blueprint, Resonance, Continuity, Production, and Screening Room progress plus daily scene schedule pace.",
+          "metric": "On-Pace Visibility"
+        },
+        {
+          "id": "budget",
+          "title": "Credit Balance & Hard Budget Caps",
+          "detail": "Track available studio credits, per-project client budget caps, and PM monthly credit allowances in real time.",
+          "metric": "Margin Guardrails"
+        },
+        {
+          "id": "links",
+          "title": "1-Tap Native Mobile Link Sharing",
+          "detail": "Dispatch Blueprint, Resonance, Continuity Upload, and Screening Room links via SMS, WhatsApp, Slack, or Email.",
+          "metric": "4 Shared Portals"
+        }
+      ],
+      "phoneHeaderBrand": "SceneFlow Companion",
+      "phoneCreditsPill": "14,250 cr",
+      "phonePmBadge": "PM Connected",
+      "phoneStageBarLabels": [
+        "Blueprint",
+        "Resonance",
+        "Continuity",
+        "Build",
+        "Screening"
+      ],
+      "phoneTeamAlertTitle": "New Client Continuity Upload",
+      "phoneTeamAlertBody": "Elena uploaded 6 family archive photos · Tap to review & promote",
+      "phoneTeamBudgetLabel": "Project Credit Budget",
+      "phoneTeamBudgetValue": "1,180 / 2,500 cr",
+      "phoneTeamPaceBadge": "On Pace · Under Budget",
+      "installIosBadge": "iOS Safari: Share → Add to Home Screen",
+      "installAndroidBadge": "Android / Chrome: 1-Tap Install App",
+      "ctaPrimary": "Start with Studio + Mobile PWA ($9)"
     }
   }
 }

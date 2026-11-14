@@ -169,7 +169,8 @@
       "resolved": "تم الحل",
       "open": "مفتوح",
       "inReview": "قيد المراجعة",
-      "score": "{score}/5"
+      "score": "{score}/5",
+      "continuity": "الاستمرارية"
     },
     "plan": {
       "empty": "لا توجد مشاريع حتى الآن",
@@ -190,6 +191,51 @@
       "chapters": "ينتهي الفصل",
       "back": "جميع المشاريع",
       "creditsOnDate": "{amount} كر"
+    },
+    "initiate": {
+      "button": "مشروع جديد",
+      "title": "بدء مشروع و Blueprint",
+      "subtitle": "أنشئ Blueprint مبدئي مع إمكانية طلب دعم مدير المشروع (PM).",
+      "projectTitle": "عنوان المشروع",
+      "projectTitlePlaceholder": "مثال: جولة عقارية أو مذكرات عائلية",
+      "vertical": "نوع المشروع",
+      "verticalMemoir": "مذكرات فيديو",
+      "verticalRealEstate": "جولة عقارية",
+      "verticalEducation": "تدريب وإجراءات SOP",
+      "verticalBrand": "قصة علامة تجارية",
+      "verticalFilm": "فيلم / سلسلة إبداعية",
+      "brief": "ملخص المشروع (كتابة أو إملاء صوتي)",
+      "briefPlaceholder": "صف القصة والأهداف والأشخاص الرئيسيين والمواقع والنبرة...",
+      "pmSupport": "طلب دعم مدير المشروع (PM)",
+      "pmSupportHint": "يُشعر مدير المشروع لمراجعة Blueprint وصدى الجمهور والاستمرارية وغرفة العرض.",
+      "pmEmail": "بريد مدير المشروع (اختياري)",
+      "budgetCap": "سقف ميزانية الرصيد (اختياري)",
+      "submit": "إنشاء المشروع و Blueprint",
+      "cancel": "إلغاء",
+      "dictate": "تحدث",
+      "stopDictate": "إيقاف"
+    },
+    "links": {
+      "heading": "روابط المراجعة ورفع الصور المشتركة",
+      "blueprint": "Blueprint",
+      "resonance": "الصدى",
+      "continuity": "الاستمرارية والصور",
+      "screening": "Screening Room",
+      "createContinuity": "تفعيل رابط الاستمرارية",
+      "open": "فتح",
+      "share": "مشاركة",
+      "copied": "تم نسخ الرابط",
+      "pmRequested": "بدعم PM",
+      "actionRequired": "إجراء مطلوب",
+      "waitingClient": "بانتظار المراجعة",
+      "approved": "معتمد"
+    },
+    "stages": {
+      "blueprint": "Blueprint",
+      "resonance": "الصدى",
+      "continuity": "الاستمرارية",
+      "production": "الإنتاج",
+      "screening": "العرض"
     }
   }
 }

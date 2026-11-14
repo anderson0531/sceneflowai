@@ -91,6 +91,16 @@ export function MobileAppGate({ children, translateControl }: MobileAppGateProps
     return <PhoneSignIn />
   }
 
+  // Allow authenticated mobile users to navigate all /dashboard/settings/* sub-pages
+  if (pathname?.startsWith('/dashboard/settings/')) {
+    return (
+      <SubscriptionAccessGate>
+        {children}
+        {translateControl}
+      </SubscriptionAccessGate>
+    )
+  }
+
   return (
     <SubscriptionAccessGate>
       <MobileCompanion />

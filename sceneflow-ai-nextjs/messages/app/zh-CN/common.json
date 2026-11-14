@@ -169,7 +169,8 @@
       "resolved": "已解决",
       "open": "打开",
       "inReview": "审核中",
-      "score": "{score}/5"
+      "score": "{score}/5",
+      "continuity": "连续性"
     },
     "plan": {
       "empty": "还没有项目",
@@ -190,6 +191,51 @@
       "chapters": "章节结束",
       "back": "所有项目",
       "creditsOnDate": "{amount} cr"
+    },
+    "initiate": {
+      "button": "新建项目",
+      "title": "发起项目与 Blueprint",
+      "subtitle": "生成初始故事 Blueprint，并可选请求项目经理（PM）全程协作支持。",
+      "projectTitle": "项目名称",
+      "projectTitlePlaceholder": "例如：家族回忆录 或 房产导览",
+      "vertical": "项目类型",
+      "verticalMemoir": "视频回忆录",
+      "verticalRealEstate": "房产实景导览",
+      "verticalEducation": "培训与 SOP",
+      "verticalBrand": "品牌故事片",
+      "verticalFilm": "创作者短片 / 剧集",
+      "brief": "项目简介（输入或语音口述）",
+      "briefPlaceholder": "描述核心故事、目标、关键人物、场景与基调...",
+      "pmSupport": "请求项目经理（PM）支持",
+      "pmSupportHint": "自动通知 PM 审核 Blueprint、受众共鸣、连续性照片与 Screening Room。",
+      "pmEmail": "指定 PM 邮箱（可选）",
+      "budgetCap": "积分预算上限（可选）",
+      "submit": "创建项目与 Blueprint",
+      "cancel": "取消",
+      "dictate": "语音",
+      "stopDictate": "停止"
+    },
+    "links": {
+      "heading": "共享审阅与照片上传链接",
+      "blueprint": "Blueprint",
+      "resonance": "受众共鸣",
+      "continuity": "连续性与照片",
+      "screening": "Screening Room",
+      "createContinuity": "启用连续性链接",
+      "open": "打开",
+      "share": "分享",
+      "copied": "链接已复制",
+      "pmRequested": "PM 托管",
+      "actionRequired": "待处理",
+      "waitingClient": "等待审阅",
+      "approved": "已批准"
+    },
+    "stages": {
+      "blueprint": "Blueprint",
+      "resonance": "共鸣评估",
+      "continuity": "连续性",
+      "production": "制作中",
+      "screening": "审片室"
     }
   }
 }

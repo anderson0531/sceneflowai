@@ -11,12 +11,12 @@ export const LANDING_LOCALE_ROUTE_PATTERN =
   /^\/(es|pt|fr|de|it|nl|pl|ru|uk|cs|sv|da|no|fi|el|tr|ro|hu|zh-CN|zh-TW|ja|ko|hi|bn|th|vi|id|ms|tl|ur|ar|he|fa|sw|am|yo|zu|af)$/;
 
 // Prefix match routes (no navigation for any path starting with these)
-export const PUBLIC_ROUTE_PREFIXES = ['/c/', '/collaborate/', '/share/', '/s/', '/blueprint/share/', '/embed/', '/notify/'] as const;
+export const PUBLIC_ROUTE_PREFIXES = ['/c/', '/collaborate/', '/share/', '/s/', '/blueprint/share/', '/embed/', '/notify/', '/intake/'] as const;
 
 // Known private app route prefixes (for identifying root-level branded links)
 const APP_ROUTES = [
   'dashboard', 'api', 'admin', 'setup-database', 'test-neon', 
-  'evolution', 'product-description', 'screening-room', 'c', 'collaborate', 'share', 's', 'blueprint', 'embed'
+  'evolution', 'product-description', 'screening-room', 'c', 'collaborate', 'share', 's', 'blueprint', 'embed', 'intake'
 ];
 
 /**
