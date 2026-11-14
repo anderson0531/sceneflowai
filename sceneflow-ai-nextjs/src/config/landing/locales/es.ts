@@ -91,11 +91,11 @@ export const STUDIO_LANDING_COPY_ES = {
       {
         id: 'review',
         number: '03',
-        badge: 'Luz Verde Antes de Gastar',
-        title: 'Revisión Experta con Audience Resonance y FlowDirector',
+        badge: 'Control Experto Pre y Post Render',
+        title: 'Revisión de Video con Audience Resonance y FlowDirector',
         description:
-          'Audience Resonance califica tu Serie, Blueprint y Guion frente a tu público objetivo, mientras FlowDirector detecta caídas de ritmo y aplica mejoras creativas en un clic antes de renderizar.',
-        outcomeTag: 'Puntuación de Serie · Blueprint · Guion',
+          'Audience Resonance califica tu Serie, Blueprint y Guion antes de producir, y FlowDirector revisa los videos de escena desde la perspectiva de Audiencia y Director, aplicando arreglos en 1 clic vía Shot Director para recrear clips en 20+ proyectos.',
+        outcomeTag: 'QA de Video Audiencia + Director · Arreglo en 1 Clic',
       },
       {
         id: 'agents',
@@ -135,12 +135,13 @@ export const STUDIO_LANDING_COPY_ES = {
         chipWardrobe: '✓ Plano 2 Vestuario: Abrigo de Gala',
       },
       review: {
-        arLabel: 'Audience Resonance',
-        arStatus: 'Luz Verde Lista · 3 Etapas',
+        arLabel: 'Audience Resonance + FlowDirector',
+        arStatus: 'Etapas Pre-Render + QA de Video',
         gateSeries: 'Serie 90',
         gateBlueprint: 'Blueprint 92',
-        gateScript: 'Guion 94',
-        flowDirectorNote: 'FlowDirector: refuerzo emocional en el clímax con 1 clic (+6 pts)',
+        gateScript: 'Escena AR 86→89',
+        flowDirectorNote:
+          'FlowDirector QA de Video: Audiencia AR 86 + Director 81 → reparación en 1 clic recrea el clip (+3 AR)',
       },
       agents: {
         rows: [
@@ -492,30 +493,34 @@ export const STUDIO_LANDING_COPY_ES = {
         badge: 'Servicio de Alto Margen · $300–$950/Filme',
         headline: 'Transforma Entrevistas Familiares y Fotos Antiguas en Cine Conmemorativo',
         description:
-          'Captura una historia de vida mediante entrevista inteligente, bloquea retratos multiedad desde la juventud de los años 70 hasta hoy, previsualiza con animatics económicos y entrega por enlace privado de Screening Room sin inicio de sesión.',
+          'Captura una historia de vida con entrevista inteligente, bloquea retratos multiedad desde los años 70 hasta hoy, ejecuta Production Agents autónomos, recrea clips en 1 clic con FlowDirector y entrega por enlace privado de Screening Room.',
         featureIcons: [
           'startBlueprint',
           'treatment',
           'continuity',
           'directShot',
           'animatic',
+          'scriptSupervisor',
+          'productionAgent',
           'screeningCollab',
           'languageStreams',
         ],
       },
       {
         id: 'commercial-training',
-        tabLabel: 'Agencias y Videos de Capacitación',
-        badge: 'Igualas B2B · Inmobiliaria · SOPs Multilingües',
-        headline: 'Entrega Videos Corporativos y Comerciales con un 50%–80% Menos de Costo',
+        tabLabel: 'Agencias de 20 Proyectos y Capacitación',
+        badge: '20+ Proyectos Activos · Agentes Autónomos + FlowDirector QA',
+        headline: 'Gestiona 20 Proyectos Simultáneos con un 50%–80% Menos de Costo mediante Automatización',
         description:
-          'Pronostica créditos Pre-vis antes de renderizar, bloquea presentadores de marca y propiedades, ejecuta agentes autónomos por lotes y publica cursos localizados en más de 70 idiomas.',
+          'Pronostica créditos Pre-vis, lanza agentes autónomos de Audio, Stills, Clips y Producción en 20 proyectos activos, revisa videos desde perspectiva de Audiencia y Director en FlowDirector con recreación de clips en 1 clic, y entrega en 70+ idiomas.',
         featureIcons: [
+          'scriptSupervisor',
+          'productionAgent',
           'budget',
           'castLocations',
           'audioAgent',
           'stillsAgent',
-          'productionAgent',
+          'videoAgent',
           'multilanguageUi',
           'screeningPlayer',
         ],
@@ -573,12 +578,22 @@ export const STUDIO_LANDING_COPY_ES = {
     ],
   },
   directoryDrawer: {
-    badge: 'Capacidades Completas del Estudio · Por Caso de Uso o Sala',
-    title: 'Explora las 30+ Capacidades del Estudio por Caso de Uso o Espacio',
+    badge: 'Automatización y 34 Capacidades · Recorrido 5K Narrado en 7 Idiomas',
+    title: 'Automatiza Producción y Control de Calidad en 20+ Proyectos Simultáneos',
     subtitle:
-      'Filtra herramientas según lo que quieras crear —Video Memorias, Agencias B2B, Series Episódicas, Canales de Creadores o Pitch de Cineastas— o inspecciona cada sala con capturas reales en 5K.',
-    expandCta: 'Explorar Capacidades por Caso de Uso (30+)',
+      'Cada herramienta incluye ahora un recorrido 5K panorámico y narrado en 7 idiomas. Descubre cómo FlowDirector evalúa el video desde la perspectiva de Audiencia y Director con recreación de clips en 1 clic, y cómo los agentes reemplazan 300+ prompts.',
+    expandCta: 'Explorar 34 Capacidades 5K Narradas',
     collapseCta: 'Ocultar Directorio de Capacidades',
+    automationEyebrow: 'Diseñado para Creadores de Alto Volumen y Proveedores con 20 Proyectos',
+    automationTitle: 'Automatización Integral: Los Agentes Producen. FlowDirector Audita y Repara en 1 Clic.',
+    automationSubtitle:
+      'Deja de vigilar prompts plano por plano. Los agentes de Audio, Stills, Clips y Producción construyen escenas en segundo plano mientras FlowDirector evalúa cada MP4 en Audience Resonance y Cumplimiento del Director, recreando clips en un clic.',
+    spotlightFlowDirectorLabel: 'FlowDirector QA de Video',
+    spotlightFlowDirectorMeta: 'Audiencia AR + Director · Recrea Clips en 1 Clic',
+    spotlightAgentsLabel: 'Agentes Autónomos de Producción',
+    spotlightAgentsMeta: '300+ Prompts Automatizados · Escala a 20 Proyectos Activos',
+    spotlightNarrated5kLabel: '34 Capacidades · Tour 5K Narrado',
+    spotlightNarrated5kMeta: 'Paneo 5K Sincronizado + Voz Neuronal en los 7 Idiomas',
   },
   academyStrip: {
     badge: 'Garantía de Curva de Aprendizaje Cero · Studio Academy',

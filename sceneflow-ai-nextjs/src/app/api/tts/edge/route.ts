@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { synthesizeEdgeMp3 } from '@/lib/tts/synthesizeEdgeMp3'
+import { resolveLandingNarratorEdgeVoice } from '@/lib/tts/edgeTtsVoices'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -14,10 +15,17 @@ export async function POST(request: NextRequest) {
       typeof body.text === 'string' && body.text.trim()
         ? body.text.trim()
         : DEFAULT_PREVIEW
-    const voiceId =
+    const explicitVoiceId =
       typeof body.voiceId === 'string' && body.voiceId.trim()
         ? body.voiceId.trim()
         : undefined
+    const language =
+      typeof body.language === 'string' && body.language.trim()
+        ? body.language.trim()
+        : undefined
+
+    const voiceId =
+      explicitVoiceId || (language ? resolveLandingNarratorEdgeVoice(language) : undefined)
 
     if (!voiceId) {
       return NextResponse.json(
@@ -31,11 +39,11 @@ export async function POST(request: NextRequest) {
       voice: voiceId,
     })
 
-    return new Response(audioBuffer, {
+    return new Response(new Uint8Array(audioBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'audio/mpeg',
-        'Cache-Control': 'no-store',
+        'Cache-Control': explicitVoiceId ? 'no-store' : 'public, max-age=86400',
       },
     })
   } catch (error: unknown) {

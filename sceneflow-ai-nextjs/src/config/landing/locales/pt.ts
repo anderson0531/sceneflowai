@@ -91,11 +91,11 @@ export const STUDIO_LANDING_COPY_PT = {
       {
         id: 'review',
         number: '03',
-        badge: 'Sinal Verde Antes de Gastar',
-        title: 'Revisão Especialista com Audience Resonance e FlowDirector',
+        badge: 'QA Especialista Pré e Pós-Render',
+        title: 'Audience Resonance e Revisão de Vídeo com FlowDirector',
         description:
-          'O Audience Resonance avalia sua Série, Blueprint e Roteiro perante seu público-alvo, enquanto o FlowDirector aponta ajustes de ritmo e aplica melhorias criativas em um clique antes da renderização.',
-        outcomeTag: 'Pontuação de Série · Blueprint · Roteiro',
+          'O Audience Resonance avalia Série, Blueprint e Roteiro antes da renderização — e o FlowDirector revisa o vídeo renderizado sob a perspectiva do Público e do Diretor, aplicando correções em 1 clique via Shot Director para recriar clipes em mais de 20 projetos simultâneos.',
+        outcomeTag: 'QA Público + Diretor · Recria Clipes em 1 Clique',
       },
       {
         id: 'agents',
@@ -135,12 +135,13 @@ export const STUDIO_LANDING_COPY_PT = {
         chipWardrobe: '✓ Tomada 2 Figurino: Casaco de Gala',
       },
       review: {
-        arLabel: 'Audience Resonance',
-        arStatus: 'Pronto para Produção · 3 Etapas',
+        arLabel: 'Audience Resonance + FlowDirector',
+        arStatus: 'Portas Pré-Render + QA de Vídeo',
         gateSeries: 'Série 90',
         gateBlueprint: 'Blueprint 92',
-        gateScript: 'Roteiro 94',
-        flowDirectorNote: 'FlowDirector: reforço emocional no clímax com 1 clique (+6 pts)',
+        gateScript: 'Cena AR 86→89',
+        flowDirectorNote:
+          'FlowDirector QA de Vídeo: Público AR 86 + Diretor 81 → correção em 1 clique recria o clipe (+3 AR)',
       },
       agents: {
         rows: [
@@ -492,30 +493,34 @@ export const STUDIO_LANDING_COPY_PT = {
         badge: 'Serviço de Alta Margem · $300–$950/Filme',
         headline: 'Transforme Entrevistas de Família e Fotos de Acervo em Cinema de Legado',
         description:
-          'Capture uma história de vida por entrevista inteligente, trave retratos em várias idades dos anos 70 até hoje, pré-visualize com animatics econômicos e entregue por link privado da Screening Room sem login.',
+          'Capture uma história de vida por entrevista inteligente, trave retratos em várias idades dos anos 70 até hoje, acione Production Agents autônomos, recrie clipes em 1 clique no FlowDirector e entregue por link privado da Screening Room.',
         featureIcons: [
           'startBlueprint',
           'treatment',
           'continuity',
           'directShot',
           'animatic',
+          'scriptSupervisor',
+          'productionAgent',
           'screeningCollab',
           'languageStreams',
         ],
       },
       {
         id: 'commercial-training',
-        tabLabel: 'Agências e Vídeo de Treinamento',
-        badge: 'Contratos B2B · Imóveis · POPs Multilíngues',
-        headline: 'Entregue Vídeos Corporativos e Comerciais com 50%–80% Menos Custo',
+        tabLabel: 'Agências de 20 Projetos e Treinamento',
+        badge: '20+ Projetos Simultâneos · Agentes Autônomos + FlowDirector QA',
+        headline: 'Gerencie 20 Projetos Simultâneos com 50%–80% Menos Custo via Automação de Fluxo',
         description:
-          'Preveja créditos Pre-vis antes de renderizar, trave apresentadores da marca e imóveis, acione agentes autônomos em lote e publique treinamentos localizados em mais de 70 idiomas.',
+          'Preveja créditos Pre-vis, dispare agentes autônomos de Áudio, Stills, Clips e Produção em 20 carteiras de clientes, revise vídeos na visão do Público e do Diretor no FlowDirector com recriação de clipes em 1 clique e publique em 70+ idiomas.',
         featureIcons: [
+          'scriptSupervisor',
+          'productionAgent',
           'budget',
           'castLocations',
           'audioAgent',
           'stillsAgent',
-          'productionAgent',
+          'videoAgent',
           'multilanguageUi',
           'screeningPlayer',
         ],
@@ -573,12 +578,22 @@ export const STUDIO_LANDING_COPY_PT = {
     ],
   },
   directoryDrawer: {
-    badge: 'Capacidades Completas do Estúdio · Por Caso de Uso ou Sala',
-    title: 'Explore Todas as 30+ Capacidades por Caso de Uso ou Espaço',
+    badge: 'Automação e 34 Capacidades · Tour 5K Narrado em 7 Idiomas',
+    title: 'Automatize Produção e QA de Vídeo em 20+ Projetos Simultâneos',
     subtitle:
-      'Filtre recursos pelo que você quer produzir — Vídeo Memórias, Agências B2B, Séries Episódicas, Canais de Criadores ou Pitch de Cineastas — ou inspecione cada sala em resolução 5K.',
-    expandCta: 'Explorar Capacidades por Caso de Uso (30+)',
+      'Cada capacidade agora inclui um tour 5K panorâmico e narrado em 7 idiomas. Veja como o FlowDirector avalia vídeos sob a perspectiva do Público e do Diretor com recriação de clipes em 1 clique — e como agentes substituem 300+ prompts.',
+    expandCta: 'Explorar 34 Capacidades 5K Narradas',
     collapseCta: 'Ocultar Diretório de Capacidades',
+    automationEyebrow: 'Feito para Criadores de Alto Volume e Agências com 20 Projetos Ativos',
+    automationTitle: 'Automação Completa: Os Agentes Produzem. O FlowDirector Audita e Recria em 1 Clique.',
+    automationSubtitle:
+      'Pare de vigiar prompts clipe por clipe. Agentes autônomos de Áudio, Stills, Clips e Produção executam cenas em segundo plano enquanto o FlowDirector inspeciona cada MP4 em Audience Resonance e Conformidade do Diretor — recriando clipes em um único clique.',
+    spotlightFlowDirectorLabel: 'FlowDirector QA de Vídeo',
+    spotlightFlowDirectorMeta: 'Público AR + Diretor · Recria Clipes em 1 Clique',
+    spotlightAgentsLabel: 'Agentes Autônomos de Produção',
+    spotlightAgentsMeta: '300+ Prompts Automatizados · Escala para 20 Projetos Ativos',
+    spotlightNarrated5kLabel: '34 Capacidades · Pan 5K Narrado',
+    spotlightNarrated5kMeta: 'Câmera 5K Sincronizada + Narração Neural nos 7 Idiomas',
   },
   academyStrip: {
     badge: 'Garantia de Curva de Aprendizado Zero · Studio Academy',

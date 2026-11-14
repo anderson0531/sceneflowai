@@ -91,11 +91,11 @@ export const STUDIO_LANDING_COPY_HI = {
       {
         id: 'review',
         number: '03',
-        badge: 'खर्च से पहले गुणवत्ता जाँच',
-        title: 'Audience Resonance और FlowDirector समीक्षा',
+        badge: 'प्री और पोस्ट-रेंडर विशेषज्ञ QA',
+        title: 'Audience Resonance और FlowDirector वीडियो समीक्षा',
         description:
-          'अंतर्निहित Audience Resonance आपकी सीरीज़, Blueprint और स्क्रिप्ट को लक्षित दर्शकों के अनुसार स्कोर करता है, जबकि FlowDirector वीडियो रेंडर करने से पहले एक क्लिक में सुधार सुझाता है।',
-        outcomeTag: 'सीरीज़ · Blueprint · स्क्रिप्ट स्कोरिंग',
+          'Audience Resonance रेंडर से पहले सीरीज़, Blueprint और स्क्रिप्ट को स्कोर करता है — फिर FlowDirector दर्शक और निर्देशक दोनों दृष्टिकोण से रेंडर किए गए दृश्य वीडियो की समीक्षा करता है, और 20+ सक्रिय प्रोजेक्ट्स में Shot Director से 1-क्लिक में क्लिप दोबारा बनाता है।',
+        outcomeTag: 'दर्शक + निर्देशक वीडियो QA · 1-क्लिक क्लिप सुधार',
       },
       {
         id: 'agents',
@@ -135,12 +135,13 @@ export const STUDIO_LANDING_COPY_HI = {
         chipWardrobe: '✓ शॉट 2 पोशाक: गाला सिल्क कोट',
       },
       review: {
-        arLabel: 'Audience Resonance',
-        arStatus: 'ग्रीनलाइट तैयार · 3 चरण',
+        arLabel: 'Audience Resonance + FlowDirector',
+        arStatus: 'प्री-रेंडर गेट्स + वीडियो QA',
         gateSeries: 'सीरीज़ 90',
         gateBlueprint: 'Blueprint 92',
-        gateScript: 'स्क्रिप्ट 94',
-        flowDirectorNote: 'FlowDirector: 1-क्लिक भावनात्मक मिडपॉइंट सुधार (+6 अंक)',
+        gateScript: 'सीन AR 86→89',
+        flowDirectorNote:
+          'FlowDirector सीन वीडियो QA: दर्शक AR 86 + निर्देशक 81 → 1-क्लिक सुधार क्लिप री-क्रिएट करे (+3 AR)',
       },
       agents: {
         rows: [
@@ -492,30 +493,34 @@ export const STUDIO_LANDING_COPY_HI = {
         badge: 'उच्च-मार्जिन सेवा · $300–$950/फ़िल्म',
         headline: 'पारिवारिक साक्षात्कार और पुरानी तस्वीरों को यादगार सिनेमा में बदलें',
         description:
-          'स्मार्ट इंटरव्यू से जीवन कहानी दर्ज करें, 1970 के युवा दौर से आज तक के बहु-आयु पात्र पोर्ट्रेट लॉक करें, कम-लागत एनिमैटिक से प्रीव्यू करें और बिना लॉगिन निजी Screening Room लिंक से डिलीवर करें।',
+          'स्मार्ट इंटरव्यू से जीवन कहानी दर्ज करें, 1970 के युवा दौर से आज तक के बहु-आयु पोर्ट्रेट लॉक करें, स्वायत्त Production Agents चलाएँ, FlowDirector से 1-क्लिक में क्लिप सुधारें और निजी Screening Room लिंक से डिलीवर करें।',
         featureIcons: [
           'startBlueprint',
           'treatment',
           'continuity',
           'directShot',
           'animatic',
+          'scriptSupervisor',
+          'productionAgent',
           'screeningCollab',
           'languageStreams',
         ],
       },
       {
         id: 'commercial-training',
-        tabLabel: 'क्लाइंट एजेंसियाँ और ट्रेनिंग वीडियो',
-        badge: 'B2B रिटेनर · रियल एस्टेट · बहुभाषी SOPs',
-        headline: '50%–80% कम लागत पर विश्वसनीय ब्रांड और कॉर्पोरेट वीडियो डिलीवर करें',
+        tabLabel: '20-प्रोजेक्ट एजेंसियाँ और ट्रेनिंग वीडियो',
+        badge: '20+ सक्रिय प्रोजेक्ट · स्वायत्त एजेंट + FlowDirector QA',
+        headline: 'वर्कफ़्लो ऑटोमेशन के साथ 50%–80% कम लागत पर 20 समानांतर क्लाइंट प्रोजेक्ट संभालें',
         description:
-          'रेंडरिंग से पहले Pre-vis क्रेडिट खर्च का अनुमान लगाएँ, ब्रांड होस्ट और प्रॉपर्टी सेट लॉक करें, स्वायत्त बैच एजेंट चलाएँ और 70+ भाषाओं में ट्रेनिंग स्ट्रीम प्रकाशित करें।',
+          'Pre-vis खर्च का अनुमान लगाएँ, 20 सक्रिय क्लाइंट पाइपलाइन में Audio, Stills, Clips और Production Agents चलाएँ, FlowDirector में दर्शक व निर्देशक दृष्टि से वीडियो जाँचकर 1-क्लिक में क्लिप री-क्रिएट करें और 70+ भाषाओं में डिलीवर करें।',
         featureIcons: [
+          'scriptSupervisor',
+          'productionAgent',
           'budget',
           'castLocations',
           'audioAgent',
           'stillsAgent',
-          'productionAgent',
+          'videoAgent',
           'multilanguageUi',
           'screeningPlayer',
         ],
@@ -573,12 +578,22 @@ export const STUDIO_LANDING_COPY_HI = {
     ],
   },
   directoryDrawer: {
-    badge: 'पूर्ण स्टूडियो क्षमताएँ · उपयोग या रूम के अनुसार व्यवस्थित',
-    title: 'उपयोग या कार्यक्षेत्र के अनुसार सभी 30+ स्टूडियो क्षमताएँ देखें',
+    badge: 'वर्कफ़्लो ऑटोमेशन और 34 क्षमताएँ · 7 भाषाओं में 5K नैरेटेड टूर',
+    title: '20+ समानांतर प्रोजेक्ट्स में निर्माण और विशेषज्ञ वीडियो QA स्वचालित करें',
     subtitle:
-      'आप जो बनाना चाहते हैं उसके अनुसार फ़िल्टर करें — वीडियो मेमॉयर, क्लाइंट एजेंसियाँ, एपिसोडिक सीरीज़, क्रिएटर चैनल या फ़िल्ममेकर पिच — या पूर्ण 5K स्क्रीनशॉट के साथ हर स्टूडियो रूम देखें।',
-    expandCta: 'उपयोग के अनुसार क्षमताएँ देखें (30+)',
+      'हर क्षमता में अब 7 भाषाओं के वॉइसओवर के साथ इंटरैक्टिव 5K पैन वॉकथ्रू शामिल है। देखें कैसे FlowDirector दर्शक और निर्देशक दृष्टि से वीडियो की समीक्षा कर 1-क्लिक में क्लिप दोबारा बनाता है — और एजेंट 300+ प्रॉम्प्ट की बचत करते हैं।',
+    expandCta: '34 नैरेटेड 5K क्षमताएँ देखें',
     collapseCta: 'स्टूडियो क्षमता डायरेक्टरी छुपाएँ',
+    automationEyebrow: 'उच्च-वॉल्यूम क्रिएटर्स और 20-प्रोजेक्ट वीडियो सेवा प्रदाताओं के लिए निर्मित',
+    automationTitle: 'एंड-टू-एंड वर्कफ़्लो ऑटोमेशन: एजेंट्स बनाते हैं। FlowDirector 1 क्लिक में जाँचता और सुधारता है।',
+    automationSubtitle:
+      'हर क्लिप के लिए मैनुअल प्रॉम्प्ट लिखना छोड़ें। Audio, Stills, Clips और Production Agents बैकग्राउंड में दृश्य बनाते हैं, जबकि FlowDirector हर रेंडर MP4 को Audience Resonance और डायरेक्टर अनुपालन पर परखकर 1-क्लिक में क्लिप री-क्रिएट करता है।',
+    spotlightFlowDirectorLabel: 'FlowDirector सीन वीडियो QA',
+    spotlightFlowDirectorMeta: 'दर्शक AR + निर्देशक जाँच · 1-क्लिक में क्लिप री-क्रिएशन',
+    spotlightAgentsLabel: 'स्वायत्त Production Agents',
+    spotlightAgentsMeta: '300+ प्रॉम्प्ट स्वचालित · 20 सक्रिय प्रोजेक्ट्स तक विस्तार',
+    spotlightNarrated5kLabel: '34 क्षमताएँ · 5K पैन नैरेटेड',
+    spotlightNarrated5kMeta: 'सिंक किया गया 5K कैमरा पैन + सभी 7 भाषाओं में न्यूरल वॉइसओवर',
   },
   academyStrip: {
     badge: 'शून्य लर्निंग कर्व गारंटी · Studio Academy',

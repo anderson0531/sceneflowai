@@ -2,12 +2,22 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useTranslations } from 'next-intl'
-import { Sparkles, ChevronDown, ChevronUp, ImageIcon, Briefcase, Layers } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
+import {
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  ImageIcon,
+  Briefcase,
+  Layers,
+  Clapperboard,
+  Bot,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FEATURE_ICONS } from './keyFeatureIcons'
 import { FeatureRoomOverview } from '@/components/landing/FeatureRoomOverview'
 import { FeatureScreenshotFrame } from '@/components/landing/FeatureScreenshotFrame'
+import type { FocusKeyFeaturePayload } from '@/components/landing/FullStudioDirectoryDrawer'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import {
@@ -274,6 +284,7 @@ function FeatureLearnMore({
 
 function FeatureDetail({
   feature,
+  locale,
   gradient,
   expanded,
   onToggle,
@@ -288,6 +299,7 @@ function FeatureDetail({
   exitFullscreenLabel,
 }: {
   feature: FeatureData
+  locale: string
   gradient: string
   expanded: boolean
   onToggle: () => void
@@ -341,6 +353,8 @@ function FeatureDetail({
           label={feature.title}
           enterFullscreenLabel={enterFullscreenLabel}
           exitFullscreenLabel={exitFullscreenLabel}
+          featureIcon={feature.icon}
+          locale={locale}
         />
       ) : (
         <div className="relative mt-4 aspect-video overflow-hidden rounded-xl border border-dashed border-slate-700 bg-slate-950/70">
@@ -392,15 +406,44 @@ function FeatureDetail({
 
 export default function KeyFeaturesSection() {
   const t = useTranslations('keyFeatures')
-  const useCaseCopy = useStudioLandingCopy().useCaseDirectory
+  const locale = useLocale()
+  const landingCopy = useStudioLandingCopy()
+  const useCaseCopy = landingCopy.useCaseDirectory
+  const automationCopy = landingCopy.directoryDrawer
   const rooms = useMemo(() => t.raw('rooms') as RoomData[], [t])
   const [browseMode, setBrowseMode] = useState<'use-case' | 'room'>('use-case')
-  const [activeTrackId, setActiveTrackId] = useState<string>('memoir-services')
+  const [activeTrackId, setActiveTrackId] = useState<string>('commercial-training')
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null)
   const [activeGroupId, setActiveGroupId] = useState('spend')
-  const [selectedIcon, setSelectedIcon] = useState<string | null>(null)
+  const [selectedIcon, setSelectedIcon] = useState<string | null>('scriptSupervisor')
   const [expandedFeature, setExpandedFeature] = useState<string | null>(null)
   const [showFeaturesList, setShowFeaturesList] = useState(false)
+
+  useEffect(() => {
+    const applyFocus = (payload?: FocusKeyFeaturePayload | null) => {
+      if (!payload) return
+      setBrowseMode('use-case')
+      setActiveTrackId(payload.trackId)
+      setSelectedIcon(payload.icon)
+      setExpandedFeature(null)
+    }
+
+    if (typeof window !== 'undefined' && window.__sceneflowPendingKeyFeature) {
+      applyFocus(window.__sceneflowPendingKeyFeature)
+      window.__sceneflowPendingKeyFeature = null
+    }
+
+    const onFocusFeature = (event: Event) => {
+      const detail = (event as CustomEvent<FocusKeyFeaturePayload>).detail
+      applyFocus(detail)
+      if (typeof window !== 'undefined') {
+        window.__sceneflowPendingKeyFeature = null
+      }
+    }
+
+    window.addEventListener('sceneflow:focus-key-feature', onFocusFeature)
+    return () => window.removeEventListener('sceneflow:focus-key-feature', onFocusFeature)
+  }, [])
 
   useEffect(() => {
     const syncRoomFromHash = () => {
@@ -528,6 +571,67 @@ export default function KeyFeaturesSection() {
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">{t('subtitle')}</p>
 
+          {/* Workflow Automation & FlowDirector 20-Project Scale Callout */}
+          <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-emerald-500/30 bg-slate-900/80 p-4 text-left sm:p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
+                  {automationCopy.automationEyebrow}
+                </p>
+                <h3 className="mt-1 text-base font-bold text-white sm:text-lg">
+                  {automationCopy.automationTitle}
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm">
+                  {automationCopy.automationSubtitle}
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
+                <button
+                  type="button"
+                  title={automationCopy.spotlightFlowDirectorLabel}
+                  onClick={() => {
+                    setBrowseMode('use-case')
+                    setActiveTrackId('commercial-training')
+                    setSelectedIcon('scriptSupervisor')
+                    setExpandedFeature(null)
+                  }}
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all',
+                    selected.icon === 'scriptSupervisor'
+                      ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-100 shadow-sm'
+                      : 'border-slate-700 bg-slate-800/80 text-gray-200 hover:border-emerald-400/50 hover:text-white'
+                  )}
+                >
+                  <Clapperboard className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
+                  <span className="whitespace-normal text-left leading-snug">
+                    {automationCopy.spotlightFlowDirectorLabel}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  title={automationCopy.spotlightAgentsLabel}
+                  onClick={() => {
+                    setBrowseMode('use-case')
+                    setActiveTrackId('commercial-training')
+                    setSelectedIcon('productionAgent')
+                    setExpandedFeature(null)
+                  }}
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all',
+                    selected.icon === 'productionAgent'
+                      ? 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 shadow-sm'
+                      : 'border-slate-700 bg-slate-800/80 text-gray-200 hover:border-cyan-400/50 hover:text-white'
+                  )}
+                >
+                  <Bot className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
+                  <span className="whitespace-normal text-left leading-snug">
+                    {automationCopy.spotlightAgentsLabel}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Browse Mode Switcher: By Use Case (Default) vs By Studio Room */}
           <div className="mt-6 flex w-full flex-col items-stretch justify-center gap-1.5 rounded-2xl border border-slate-700/70 bg-slate-900/90 p-1.5 sm:inline-flex sm:w-auto sm:flex-row sm:items-center">
             <button
@@ -614,7 +718,10 @@ export default function KeyFeaturesSection() {
             </div>
 
             {/* Curated Features List + Full 5K Detail Panel */}
-            <div className="flex flex-col gap-1 lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6 lg:gap-y-1">
+            <div
+              id="key-features-feature-stage"
+              className="scroll-mt-24 flex flex-col gap-1 lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6 lg:gap-y-1"
+            >
               {visibleFeatures.map((feature, index) => {
                 const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
                 const isSelected = feature.icon === selected.icon
@@ -674,6 +781,7 @@ export default function KeyFeaturesSection() {
               >
                 <FeatureDetail
                   feature={selected}
+                  locale={locale}
                   gradient={gradient}
                   expanded={expandedFeature === selected.icon}
                   onToggle={toggleSelectedLearnMore}
@@ -852,6 +960,7 @@ export default function KeyFeaturesSection() {
                     >
                       <FeatureDetail
                         feature={selected}
+                        locale={locale}
                         gradient={gradient}
                         expanded={expandedFeature === selected.icon}
                         onToggle={toggleSelectedLearnMore}

@@ -210,8 +210,7 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
     ])
 
     const tourComponent = readSource('src/components/landing/StudioGuidedTourSection.tsx')
-    expect(tourComponent).toContain('PipelineReviewDialog')
-    expect(tourComponent).toContain('/share/screening-room/glass-ledger-screening')
+    expect(tourComponent).toContain('StudioDoorWalkthroughModal')
     expect(tourComponent).toContain('getFeatureRoomMedia')
     expect(tourComponent).toContain('ExpandedImageModal')
 

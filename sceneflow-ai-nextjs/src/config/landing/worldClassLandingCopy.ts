@@ -108,11 +108,11 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
       {
         id: 'review',
         number: '03',
-        badge: 'Greenlight Before You Spend',
-        title: 'Audience Resonance & FlowDirector Review',
+        badge: 'Pre- & Post-Render Expert QA',
+        title: 'Audience Resonance & FlowDirector Video Review',
         description:
-          'Built-in Audience Resonance scores your Series, Blueprint, and Script against your target audience, while FlowDirector highlights pacing gaps and applies one-click creative upgrades before rendering video.',
-        outcomeTag: 'Series · Blueprint · Script Scoring',
+          'Audience Resonance scores your Series, Blueprint, and Script pre-render—then FlowDirector reviews rendered scene videos from both the Audience and Director perspectives, applying one-click fixes via Shot Director to recreate clips across 20+ active client projects.',
+        outcomeTag: 'Audience + Director Video QA · 1-Click Clip Fixes',
       },
       {
         id: 'agents',
@@ -152,12 +152,13 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         chipWardrobe: '✓ Shot 2 Wardrobe: Gala Silk Coat',
       },
       review: {
-        arLabel: 'Audience Resonance',
-        arStatus: 'Greenlight Ready · 3 Gates',
+        arLabel: 'Audience Resonance + FlowDirector',
+        arStatus: 'Pre-Render Gates + Scene Video QA',
         gateSeries: 'Series 90',
         gateBlueprint: 'Blueprint 92',
-        gateScript: 'Script 94',
-        flowDirectorNote: 'FlowDirector: 1-click emotional midpoint boost (+6 pts)',
+        gateScript: 'Scene AR 86→89',
+        flowDirectorNote:
+          'FlowDirector Scene Video QA: Audience AR 86 + Director 81 → 1-click fix recreates clip (+3 AR)',
       },
       agents: {
         rows: [
@@ -509,30 +510,34 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         badge: 'High-Margin Client Service · $300–$950/Film',
         headline: 'Turn Family Interviews & Keepsake Photos into Heirloom Cinema',
         description:
-          'Capture a life story through intelligent intake, lock multi-age character portraits across 1970s youth to modern day, preview with low-cost animatics, and deliver via a private zero-login Screening Room link.',
+          'Capture a life story through intelligent intake, lock multi-age portraits from 1970s youth to modern day, dispatch autonomous Production Agents, run FlowDirector 1-click clip fixes, and deliver via a zero-login Screening Room link.',
         featureIcons: [
           'startBlueprint',
           'treatment',
           'continuity',
           'directShot',
           'animatic',
+          'scriptSupervisor',
+          'productionAgent',
           'screeningCollab',
           'languageStreams',
         ],
       },
       {
         id: 'commercial-training',
-        tabLabel: 'Client Agencies & Training Video',
-        badge: 'B2B Retainers · Real Estate · Multilingual SOPs',
-        headline: 'Deliver Predictable, On-Brand Client & Corporate Video at 50%–80% Lower Cost',
+        tabLabel: '20-Project Agencies & Training Video',
+        badge: '20+ Concurrent Projects · Autonomous Agents + FlowDirector QA',
+        headline: 'Manage 20 Concurrent Client Projects at 50%–80% Lower Cost with Workflow Automation',
         description:
-          'Forecast Pre-vis credit spend before rendering, lock brand presenters and property plates, dispatch autonomous batch agents, and publish localized training streams across 70+ languages.',
+          'Forecast Pre-vis spend, dispatch autonomous Audio, Stills, Clips, and Production Agents across 20 active client pipelines, review scene videos from Audience + Director perspectives in FlowDirector with 1-click clip recreation, and ship 70+ language streams.',
         featureIcons: [
+          'scriptSupervisor',
+          'productionAgent',
           'budget',
           'castLocations',
           'audioAgent',
           'stillsAgent',
-          'productionAgent',
+          'videoAgent',
           'multilanguageUi',
           'screeningPlayer',
         ],
@@ -590,12 +595,22 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     ],
   },
   directoryDrawer: {
-    badge: 'Complete Studio Capabilities · Organized by Use Case or Room',
-    title: 'Explore All 30+ Studio Capabilities by Use Case or Workspace',
+    badge: 'Workflow Automation & 34 Studio Capabilities · 5K Narrated in 7 Languages',
+    title: 'Automate Production & Expert Video QA Across 20+ Concurrent Projects',
     subtitle:
-      'Filter capabilities by what you want to build—Video Memoirs, Client Agencies, Episodic Series, Creator Channels, or Filmmaker Pitch Decks—or inspect every Studio room with full-resolution 5K screenshots.',
-    expandCta: 'Explore Capabilities by Use Case (30+)',
+      'Every capability now includes an interactive 5K panned & 7-language narrated walkthrough. See how FlowDirector reviews rendered scene videos from both Audience and Director perspectives with 1-click clip recreation—and how autonomous agents replace 300+ manual prompts.',
+    expandCta: 'Explore 34 Narrated 5K Capabilities',
     collapseCta: 'Hide Studio Capabilities Directory',
+    automationEyebrow: 'Built for High-Volume Creators & 20-Project Video Service Providers',
+    automationTitle: 'End-to-End Workflow Automation: Agents Build. FlowDirector Audits & Fixes in 1 Click.',
+    automationSubtitle:
+      'Stop babysitting prompts clip by clip. Autonomous Audio, Stills, Clips, and Production Agents execute scenes in the background while FlowDirector inspects every rendered scene MP4 for Audience Resonance and Director Compliance—recreating flagged clips via Shot Director in a single click.',
+    spotlightFlowDirectorLabel: 'FlowDirector Scene Video QA',
+    spotlightFlowDirectorMeta: 'Audience AR + Director Compliance · 1-Click Fix Recreates Clips',
+    spotlightAgentsLabel: 'Autonomous Production Agents',
+    spotlightAgentsMeta: '300+ Prompts Automated · Self-Healing Across 20 Active Projects',
+    spotlightNarrated5kLabel: '34 Capabilities · 5K Pan Narrated',
+    spotlightNarrated5kMeta: 'Synchronized 5K Camera Pan + Neural Voiceover in All 7 Languages',
   },
   academyStrip: {
     badge: 'Zero Learning Curve Guarantee · Studio Academy',

@@ -885,25 +885,25 @@
               {
                 "icon": "scriptSupervisor",
                 "title": "FlowDirector",
-                "description": "Ubicado justo después de `Clips` en el flujo de escena, `FlowDirector` utiliza inteligencia de video multimodal para iterar y optimizar tus fotogramas y clips antes de la mezcla final y la generación de streams multilingües. Unificando la supervisión de Resonancia de Audiencia (`AR Score`) y del Director—con auditorías independientes guardadas por idioma tanto para tu Master en inglés como para cada stream localizado—inspecciona subpuntuaciones en 5 ejes, cumplimiento de guion y continuidad, y atribución de causa raíz (`Keyframe`, `Motion Video` o `Scene Direction`) para aplicar correcciones opcionales con un clic.",
-                "screenshot": "FlowDirector — revisión multimodal de video con Audience Resonance (AR Score) y Director, matriz de cumplimiento por toma y pickups opcionales",
+                "description": "Ubicado justo después de `Clips` en el flujo de escena, `FlowDirector` ofrece una revisión experta multimodal del video renderizado desde la perspectiva tanto de Audience Resonance (`AR Score`) como del Director — haciendo que el control de calidad sea ágil para creadores y proveedores de servicios de video que gestionan más de 20 proyectos simultáneos. Con reseñas guardadas por idioma para tu Master en inglés y cada stream localizado, inspecciona subpuntuaciones en 5 ejes, cumplimiento plano por plano y atribución de anomalías (`Keyframe`, `Motion Video` o `Scene Direction`) para aplicar reparaciones en un clic mediante Shot Director y recrear clips automáticamente.",
+                "screenshot": "FlowDirector — revisión multimodal de video en Audience Resonance (AR Score) y Director, matriz de cumplimiento por plano y reparaciones en 1 clic con Shot Director para recrear clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Supervisión dual de Audience Resonance y Director",
-                      "description": "Evalúa clips renderizados y MP4 de escenas simultáneamente para obtener el AR Score en 5 ejes y el cumplimiento de guion y continuidad del Director."
+                      "title": "Revisión dual de video: Audiencia y Director",
+                      "description": "Evalúa los videos de escena renderizados simultáneamente desde la perspectiva de Audience Resonance (AR Score) y el cumplimiento del Director."
                     },
                     {
-                      "title": "Auditorías multimodales diferenciadas por idioma",
-                      "description": "Audita de forma independiente tanto tu corte maestro en inglés como cada stream de idioma localizado, con historial de revisiones guardado por idioma y verificación de sincronía labial."
+                      "title": "Reparaciones en 1 clic para recrear clips",
+                      "description": "Aplica correcciones específicas en un solo clic mediante Shot Director para actualizar encuadre, bloqueo, utilería y recrear clips automáticamente."
                     },
                     {
-                      "title": "Correcciones y parches de prompts en 1 clic con el Shot Director",
-                      "description": "Aplica recomendaciones visuales opcionales directamente a través del Shot Director para actualizar encuadre, bloqueo, utilería y prompts compilados."
+                      "title": "Diseñado para 20+ proyectos activos",
+                      "description": "Escala la entrega de servicios de video de alto margen en 20 proyectos simultáneos sin revisar ni reescribir prompts manualmente."
                     },
                     {
-                      "title": "Entrega quirúrgica al Scene Director",
-                      "description": "Dirige los ajustes de ritmo narrativo y diálogo hacia una revisión precargada en el Scene Director conservando intactas las demás tomas bloqueadas."
+                      "title": "Reseñas multimodales por idioma",
+                      "description": "Audita de forma independiente tu corte Master en inglés y cada stream localizado con historial guardado y verificación de sincronización labial."
                     }
                   ]
                 }
@@ -3910,10 +3910,10 @@
         {
           "id": "review",
           "number": "03",
-          "badge": "Luz Verde Antes de Gastar",
-          "title": "Revisión Experta con Audience Resonance y FlowDirector",
-          "description": "Audience Resonance califica tu Serie, Blueprint y Guion frente a tu público objetivo, mientras FlowDirector detecta caídas de ritmo y aplica mejoras creativas en un clic antes de renderizar.",
-          "outcomeTag": "Puntuación de Serie · Blueprint · Guion"
+          "badge": "Control Experto Pre y Post Render",
+          "title": "Revisión de Video con Audience Resonance y FlowDirector",
+          "description": "Audience Resonance califica tu Serie, Blueprint y Guion antes de producir, y FlowDirector revisa los videos de escena desde la perspectiva de Audiencia y Director, aplicando arreglos en 1 clic vía Shot Director para recrear clips en 20+ proyectos.",
+          "outcomeTag": "QA de Video Audiencia + Director · Arreglo en 1 Clic"
         },
         {
           "id": "agents",
@@ -3959,12 +3959,12 @@
           "chipWardrobe": "✓ Plano 2 Vestuario: Abrigo de Gala"
         },
         "review": {
-          "arLabel": "Audience Resonance",
-          "arStatus": "Luz Verde Lista · 3 Etapas",
+          "arLabel": "Audience Resonance + FlowDirector",
+          "arStatus": "Etapas Pre-Render + QA de Video",
           "gateSeries": "Serie 90",
           "gateBlueprint": "Blueprint 92",
-          "gateScript": "Guion 94",
-          "flowDirectorNote": "FlowDirector: refuerzo emocional en el clímax con 1 clic (+6 pts)"
+          "gateScript": "Escena AR 86→89",
+          "flowDirectorNote": "FlowDirector QA de Video: Audiencia AR 86 + Director 81 → reparación en 1 clic recrea el clip (+3 AR)"
         },
         "agents": {
           "rows": [
@@ -4300,29 +4300,33 @@
           "tabLabel": "Video Memorias y Legado Familiar",
           "badge": "Servicio de Alto Margen · $300–$950/Filme",
           "headline": "Transforma Entrevistas Familiares y Fotos Antiguas en Cine Conmemorativo",
-          "description": "Captura una historia de vida mediante entrevista inteligente, bloquea retratos multiedad desde la juventud de los años 70 hasta hoy, previsualiza con animatics económicos y entrega por enlace privado de Screening Room sin inicio de sesión.",
+          "description": "Captura una historia de vida con entrevista inteligente, bloquea retratos multiedad desde los años 70 hasta hoy, ejecuta Production Agents autónomos, recrea clips en 1 clic con FlowDirector y entrega por enlace privado de Screening Room.",
           "featureIcons": [
             "startBlueprint",
             "treatment",
             "continuity",
             "directShot",
             "animatic",
+            "scriptSupervisor",
+            "productionAgent",
             "screeningCollab",
             "languageStreams"
           ]
         },
         {
           "id": "commercial-training",
-          "tabLabel": "Agencias y Videos de Capacitación",
-          "badge": "Igualas B2B · Inmobiliaria · SOPs Multilingües",
-          "headline": "Entrega Videos Corporativos y Comerciales con un 50%–80% Menos de Costo",
-          "description": "Pronostica créditos Pre-vis antes de renderizar, bloquea presentadores de marca y propiedades, ejecuta agentes autónomos por lotes y publica cursos localizados en más de 70 idiomas.",
+          "tabLabel": "Agencias de 20 Proyectos y Capacitación",
+          "badge": "20+ Proyectos Activos · Agentes Autónomos + FlowDirector QA",
+          "headline": "Gestiona 20 Proyectos Simultáneos con un 50%–80% Menos de Costo mediante Automatización",
+          "description": "Pronostica créditos Pre-vis, lanza agentes autónomos de Audio, Stills, Clips y Producción en 20 proyectos activos, revisa videos desde perspectiva de Audiencia y Director en FlowDirector con recreación de clips en 1 clic, y entrega en 70+ idiomas.",
           "featureIcons": [
+            "scriptSupervisor",
+            "productionAgent",
             "budget",
             "castLocations",
             "audioAgent",
             "stillsAgent",
-            "productionAgent",
+            "videoAgent",
             "multilanguageUi",
             "screeningPlayer"
           ]
@@ -4377,11 +4381,20 @@
       ]
     },
     "directoryDrawer": {
-      "badge": "Capacidades Completas del Estudio · Por Caso de Uso o Sala",
-      "title": "Explora las 30+ Capacidades del Estudio por Caso de Uso o Espacio",
-      "subtitle": "Filtra herramientas según lo que quieras crear —Video Memorias, Agencias B2B, Series Episódicas, Canales de Creadores o Pitch de Cineastas— o inspecciona cada sala con capturas reales en 5K.",
-      "expandCta": "Explorar Capacidades por Caso de Uso (30+)",
-      "collapseCta": "Ocultar Directorio de Capacidades"
+      "badge": "Automatización y 34 Capacidades · Recorrido 5K Narrado en 7 Idiomas",
+      "title": "Automatiza Producción y Control de Calidad en 20+ Proyectos Simultáneos",
+      "subtitle": "Cada herramienta incluye ahora un recorrido 5K panorámico y narrado en 7 idiomas. Descubre cómo FlowDirector evalúa el video desde la perspectiva de Audiencia y Director con recreación de clips en 1 clic, y cómo los agentes reemplazan 300+ prompts.",
+      "expandCta": "Explorar 34 Capacidades 5K Narradas",
+      "collapseCta": "Ocultar Directorio de Capacidades",
+      "automationEyebrow": "Diseñado para Creadores de Alto Volumen y Proveedores con 20 Proyectos",
+      "automationTitle": "Automatización Integral: Los Agentes Producen. FlowDirector Audita y Repara en 1 Clic.",
+      "automationSubtitle": "Deja de vigilar prompts plano por plano. Los agentes de Audio, Stills, Clips y Producción construyen escenas en segundo plano mientras FlowDirector evalúa cada MP4 en Audience Resonance y Cumplimiento del Director, recreando clips en un clic.",
+      "spotlightFlowDirectorLabel": "FlowDirector QA de Video",
+      "spotlightFlowDirectorMeta": "Audiencia AR + Director · Recrea Clips en 1 Clic",
+      "spotlightAgentsLabel": "Agentes Autónomos de Producción",
+      "spotlightAgentsMeta": "300+ Prompts Automatizados · Escala a 20 Proyectos Activos",
+      "spotlightNarrated5kLabel": "34 Capacidades · Tour 5K Narrado",
+      "spotlightNarrated5kMeta": "Paneo 5K Sincronizado + Voz Neuronal en los 7 Idiomas"
     },
     "academyStrip": {
       "badge": "Garantía de Curva de Aprendizaje Cero · Studio Academy",

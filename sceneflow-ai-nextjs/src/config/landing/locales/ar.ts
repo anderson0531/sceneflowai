@@ -91,11 +91,11 @@ export const STUDIO_LANDING_COPY_AR = {
       {
         id: 'review',
         number: '03',
-        badge: 'تقييم واعتماد قبل الإنفاق',
-        title: 'مراجعة Audience Resonance وFlowDirector',
+        badge: 'ضمان جودة خبير قبل وبعد التصيير',
+        title: 'Audience Resonance ومراجعة فيديو المشاهد عبر FlowDirector',
         description:
-          'يقيس Audience Resonance مدى تأثير المسلسل وBlueprint والسيناريو لدى جمهورك المستهدف، بينما يكشف FlowDirector ثغرات الإيقاع ويطبق تحسينات بنقرة واحدة.',
-        outcomeTag: 'تقييم المسلسل · Blueprint · السيناريو',
+          'يقيس Audience Resonance قوة المسلسل وBlueprint والسيناريو قبل التصيير — ثم يراجع FlowDirector فيديو المشهد المُصيَّر من منظوري الجمهور والمخرج معاً، ويطبّق إصلاحات بنقرة واحدة عبر Shot Director لإعادة إنشاء المقاطع عبر أكثر من 20 مشروعاً نشطاً.',
+        outcomeTag: 'فحص فيديو للجمهور والمخرج · إعادة إنشاء اللقطة بنقرة',
       },
       {
         id: 'agents',
@@ -135,12 +135,13 @@ export const STUDIO_LANDING_COPY_AR = {
         chipWardrobe: '✓ زي اللقطة 2: معطف الحرير المسائي',
       },
       review: {
-        arLabel: 'Audience Resonance',
-        arStatus: 'جاهز للإنتاج · 3 بوابات تقييم',
+        arLabel: 'Audience Resonance + FlowDirector',
+        arStatus: 'بوابات ما قبل التصيير + فحص الفيديو',
         gateSeries: 'المسلسل 90',
         gateBlueprint: 'Blueprint 92',
-        gateScript: 'السيناريو 94',
-        flowDirectorNote: 'FlowDirector: تعزيز الذروة العاطفية بنقرة واحدة (+6 نقاط)',
+        gateScript: 'المشهد AR 86→89',
+        flowDirectorNote:
+          'فحص فيديو المشهد في FlowDirector: الجمهور 86 + المخرج 81 ← إصلاح بنقرة يعيد إنشاء المقطع (+3 AR)',
       },
       agents: {
         rows: [
@@ -492,30 +493,34 @@ export const STUDIO_LANDING_COPY_AR = {
         badge: 'خدمة عملاء عالية الربح · $300–$950/فيلم',
         headline: 'حوّل المقابلات العائلية والصور التذكارية إلى سينما خالدة',
         description:
-          'التقط قصة حياة عبر مقابلة ذكية، وثبّت صور الشخصيات عبر مراحل العمر من السبعينيات حتى اليوم، وعاين العمل بأنيماتيك منخفض التكلفة، وسلّمه عبر رابط Screening Room خاص بدون تسجيل دخول.',
+          'التقط قصة حياة عبر مقابلة ذكية، وثبّت صور الشخصيات عبر مراحل العمر، وشغّل وكلاء الإنتاج الذاتيين، وأعد إنشاء اللقطات بنقرة واحدة في FlowDirector، وسلّم عبر رابط Screening Room خاص.',
         featureIcons: [
           'startBlueprint',
           'treatment',
           'continuity',
           'directShot',
           'animatic',
+          'scriptSupervisor',
+          'productionAgent',
           'screeningCollab',
           'languageStreams',
         ],
       },
       {
         id: 'commercial-training',
-        tabLabel: 'وكالات العملاء وفيديوهات التدريب',
-        badge: 'عقود شهرية للشركات · عقارات · تدريب متعدد اللغات',
-        headline: 'قدّم فيديوهات الشركات والعلامات التجارية بتكلفة أقل بنسبة 50%–80%',
+        tabLabel: 'وكالات الـ 20 مشروعاً وفيديوهات التدريب',
+        badge: '20+ مشروعاً متزامناً · وكلاء ذاتيون + فحص FlowDirector',
+        headline: 'أدِر 20 مشروع عميل متزامن بتكلفة أقل 50%–80% بفضل أتمتة سير العمل',
         description:
-          'توقع استهلاك رصيد Pre-vis قبل التصيير، وثبّت مقدمي العلامة التجارية وصور العقارات، وشغّل وكلاء الإنتاج الدفعي، وانشر مسارات تدريبية بأكثر من 70 لغة.',
+          'توقع استهلاك Pre-vis، وأطلق وكلاء الصوت والصور والمقاطع والإنتاج عبر 20 خط إنتاج نشط، وراجع الفيديوهات من منظوري الجمهور والمخرج في FlowDirector مع إعادة إنشاء اللقطات بنقرة واحدة بـ 70+ لغة.',
         featureIcons: [
+          'scriptSupervisor',
+          'productionAgent',
           'budget',
           'castLocations',
           'audioAgent',
           'stillsAgent',
-          'productionAgent',
+          'videoAgent',
           'multilanguageUi',
           'screeningPlayer',
         ],
@@ -573,12 +578,22 @@ export const STUDIO_LANDING_COPY_AR = {
     ],
   },
   directoryDrawer: {
-    badge: 'قدرات الاستوديو الكاملة · مصنفة حسب حالة الاستخدام أو الغرفة',
-    title: 'استكشف أكثر من 30 قدرة احترافية حسب حالة الاستخدام أو مساحة العمل',
+    badge: 'أتمتة سير العمل و34 قدرة احترافية · جولة 5K مروية بـ 7 لغات',
+    title: 'أتمت الإنتاج وفحص الفيديو الخبير عبر أكثر من 20 مشروعاً متزامناً',
     subtitle:
-      'رشّح الأدوات حسب ما تريد بناءه — أفلام السيرة، وكالات الشركات، المسلسلات، قنوات الصناع، أو عروض السينمائيين — أو استعرض كل غرفة بلقطات شاشة حقيقية بدقة 5K.',
-    expandCta: 'استكشف القدرات حسب حالة الاستخدام (30+)',
+      'تتضمن كل أداة الآن جولة بانورامية بدقة 5K مع تعليق صوتي بـ 7 لغات. شاهد كيف يراجع FlowDirector فيديو المشاهد من منظوري الجمهور والمخرج مع إعادة إنشاء المقاطع بنقرة واحدة — وكيف يستبدل الوكلاء أكثر من 300 أمر يدوي.',
+    expandCta: 'استكشف 34 قدرة مروية بدقة 5K',
     collapseCta: 'إخفاء دليل قدرات الاستوديو',
+    automationEyebrow: 'مصمم لصنّاع المحتوى الغزير ومقدمي خدمات الفيديو لـ 20 مشروعاً متزامناً',
+    automationTitle: 'أتمتة شاملة: الوكلاء ينفذون المشاهد، وFlowDirector يدقق ويعيد الإنشاء بنقرة واحدة.',
+    automationSubtitle:
+      'توقف عن متابعة الأوامر لقطة بلقطة. ينفذ وكلاء الصوت والصور والمقاطع والإنتاج المشاهد في الخلفية بينما يفحص FlowDirector كل ملف MP4 من حيث تفاعل الجمهور ومطابقة المخرج — ويعيد إنشاء المقاطع عبر Shot Director بنقرة واحدة.',
+    spotlightFlowDirectorLabel: 'فحص فيديو المشاهد في FlowDirector',
+    spotlightFlowDirectorMeta: 'تقييم الجمهور + مطابقة المخرج · إعادة إنشاء اللقطات بنقرة',
+    spotlightAgentsLabel: 'وكلاء الإنتاج الذاتيون',
+    spotlightAgentsMeta: 'أتمتة أكثر من 300 أمر · التوسع إلى 20 مشروعاً نشطاً',
+    spotlightNarrated5kLabel: '34 قدرة · تحريك 5K بتعليق صوتي',
+    spotlightNarrated5kMeta: 'حركة كاميرا 5K متزامنة + تعليق صوتي عصبي بجميع اللغات السبع',
   },
   academyStrip: {
     badge: 'ضمان سهولة التعلم من اليوم الأول · Studio Academy',

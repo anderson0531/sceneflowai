@@ -91,11 +91,11 @@ export const STUDIO_LANDING_COPY_TH = {
       {
         id: 'review',
         number: '03',
-        badge: 'ประเมินความปังก่อนจ่ายเครดิต',
-        title: 'ผู้ช่วยวิเคราะห์ Audience Resonance และ FlowDirector',
+        badge: 'ตรวจคุณภาพผู้เชี่ยวชาญทั้งก่อนและหลังเรนเดอร์',
+        title: 'Audience Resonance และตรวจวิดีโอด้วย FlowDirector',
         description:
-          'Audience Resonance ให้คะแนนซีรีส์ Blueprint และบทเทียบกับกลุ่มเป้าหมาย ขณะที่ FlowDirector ชี้จุดที่จังหวะแผ่วและช่วยปรับปรุงในคลิกเดียวก่อนเรนเดอร์วิดีโอ',
-        outcomeTag: 'ให้คะแนนซีรีส์ · Blueprint · บท',
+          'Audience Resonance ให้คะแนนซีรีส์ Blueprint และบทก่อนเรนเดอร์ — จากนั้น FlowDirector ตรวจวิดีโอซีนที่เรนเดอร์แล้วทั้งมุมมองผู้ชมและผู้กำกับ พร้อมสั่งแก้ไขใน 1 คลิกผ่าน Shot Director เพื่อสร้างคลิปใหม่ รองรับการดูแลกว่า 20 โปรเจกต์พร้อมกัน',
+        outcomeTag: 'QA มุมมองผู้ชม + ผู้กำกับ · สร้างคลิปใหม่ใน 1 คลิก',
       },
       {
         id: 'agents',
@@ -135,12 +135,13 @@ export const STUDIO_LANDING_COPY_TH = {
         chipWardrobe: '✓ ชุดช็อต 2: โค้ทผ้าไหมงานกาล่า',
       },
       review: {
-        arLabel: 'Audience Resonance',
-        arStatus: 'พร้อมไฟเขียว · ครบ 3 ด่าน',
+        arLabel: 'Audience Resonance + FlowDirector',
+        arStatus: 'ด่านก่อนเรนเดอร์ + ตรวจวิดีโอซีน',
         gateSeries: 'ซีรีส์ 90',
         gateBlueprint: 'Blueprint 92',
-        gateScript: 'บท 94',
-        flowDirectorNote: 'FlowDirector: ยกระดับอารมณ์ช่วงกลางเรื่องใน 1 คลิก (+6 คะแนน)',
+        gateScript: 'ซีน AR 86→89',
+        flowDirectorNote:
+          'FlowDirector ตรวจวิดีโอซีน: ผู้ชม AR 86 + ผู้กำกับ 81 → แก้ใน 1 คลิกสร้างคลิปใหม่ (+3 AR)',
       },
       agents: {
         rows: [
@@ -492,30 +493,34 @@ export const STUDIO_LANDING_COPY_TH = {
         badge: 'บริการกำไรสูง · $300–$950/เรื่อง',
         headline: 'เปลี่ยนบทสัมภาษณ์ครอบครัวและภาพถ่ายเก่าแก่ให้เป็นภาพยนตร์ทรงคุณค่า',
         description:
-          'เก็บเรื่องราวชีวิตผ่านบทสัมภาษณ์อัจฉริยะ ล็อกใบหน้าตัวละครหลายช่วงวัยตั้งแต่ยุค 70 จนถึงปัจจุบัน พรีวิวด้วยแอนิเมติกประหยัดงบ และส่งมอบผ่านลิงก์ Screening Room ส่วนตัวโดยไม่ต้องล็อกอิน',
+          'เก็บเรื่องราวชีวิตผ่านบทสัมภาษณ์อัจฉริยะ ล็อกใบหน้าหลายช่วงวัย สั่งรัน Production Agents อัตโนมัติ ซ่อมคลิปใน 1 คลิกด้วย FlowDirector และส่งมอบผ่านลิงก์ Screening Room ส่วนตัว',
         featureIcons: [
           'startBlueprint',
           'treatment',
           'continuity',
           'directShot',
           'animatic',
+          'scriptSupervisor',
+          'productionAgent',
           'screeningCollab',
           'languageStreams',
         ],
       },
       {
         id: 'commercial-training',
-        tabLabel: 'เอเจนซี่โฆษณาและสื่ออบรมองค์กร',
-        badge: 'งานสัญญารายเดือน B2B · อสังหาฯ · SOP หลายภาษา',
-        headline: 'ส่งมอบวิดีโอแบรนด์และสื่ออบรมองค์กรด้วยต้นทุนที่ลดลง 50%–80%',
+        tabLabel: 'เอเจนซี่ 20 โปรเจกต์และสื่ออบรมองค์กร',
+        badge: 'ดูแล 20+ โปรเจกต์พร้อมกัน · เอเจนต์อัตโนมัติ + FlowDirector QA',
+        headline: 'บริหาร 20 โปรเจกต์ลูกค้าพร้อมกันด้วยต้นทุนที่ลดลง 50%–80% ผ่านระบบอัตโนมัติ',
         description:
-          'คาดการณ์งบเครดิต Pre-vis ก่อนเรนเดอร์จริง ล็อกผู้ดำเนินรายการและภาพสถานที่ สั่งงานเอเจนต์อัตโนมัติแบบชุด และเผยแพร่บทเรียนพากย์เสียงกว่า 70 ภาษา',
+          'คาดการณ์งบ Pre-vis สั่งเอเจนต์ Audio, Stills, Clips และ Production ทำงานพร้อมกัน 20 โปรเจกต์ ตรวจวิดีโอทั้งมุมมองผู้ชมและผู้กำกับใน FlowDirector พร้อมสร้างคลิปใหม่ใน 1 คลิก และพากย์ 70+ ภาษา',
         featureIcons: [
+          'scriptSupervisor',
+          'productionAgent',
           'budget',
           'castLocations',
           'audioAgent',
           'stillsAgent',
-          'productionAgent',
+          'videoAgent',
           'multilanguageUi',
           'screeningPlayer',
         ],
@@ -573,12 +578,22 @@ export const STUDIO_LANDING_COPY_TH = {
     ],
   },
   directoryDrawer: {
-    badge: 'ความสามารถสตูดิโอครบวงจร · จัดหมวดหมู่ตามรูปแบบงานหรือห้องทำงาน',
-    title: 'สำรวจความสามารถกว่า 30+ รายการตามรูปแบบงานหรือห้องสตูดิโอ',
+    badge: 'เวิร์กโฟลว์อัตโนมัติและ 34 ความสามารถ · ทัวร์ 5K พากย์เสียง 7 ภาษา',
+    title: 'ทำงานผลิตและตรวจคุณภาพวิดีโออัตโนมัติพร้อมกันกว่า 20+ โปรเจกต์',
     subtitle:
-      'กรองดูเครื่องมือตามสิ่งที่คุณต้องการสร้าง — วิดีโอชีวประวัติ เอเจนซี่ลูกค้า ซีรีส์หลายตอน ช่องครีเอเตอร์ หรือพรีวิซขายงาน — หรือซูมดูภาพหน้าจอจริง 5K ของทุกห้อง',
-    expandCta: 'สำรวจความสามารถตามรูปแบบงาน (30+)',
+      'ทุกฟีเจอร์มาพร้อมทัวร์แพนกล้อง 5K และเสียงบรรยายครบ 7 ภาษา ดูวิธีที่ FlowDirector ตรวจวิดีโอซีนจากทั้งมุมมองผู้ชมและผู้กำกับพร้อมสร้างคลิปใหม่ใน 1 คลิก และให้เอเจนต์ทำงานแทนกว่า 300+ พรอมต์',
+    expandCta: 'สำรวจ 34 ความสามารถ 5K พร้อมเสียงบรรยาย',
     collapseCta: 'ซ่อนสารบบความสามารถสตูดิโอ',
+    automationEyebrow: 'สร้างมาเพื่อครีเอเตอร์สายโปรดักชันและผู้ให้บริการวิดีโอที่ดูแล 20 โปรเจกต์พร้อมกัน',
+    automationTitle: 'เวิร์กโฟลว์อัตโนมัติครบวงจร: เอเจนต์สร้างงานเบื้องหลัง FlowDirector ตรวจและซ่อมใน 1 คลิก',
+    automationSubtitle:
+      'ไม่ต้องนั่งเฝ้าพรอมต์ทีละช็อตอีกต่อไป เอเจนต์ Audio, Stills, Clips และ Production สร้างซีนเบื้องหลัง ขณะที่ FlowDirector ตรวจไฟล์ MP4 ทุกฉากทั้งด้าน Audience Resonance และมาตรฐานผู้กำกับ พร้อมสร้างคลิปใหม่ผ่าน Shot Director ในคลิกเดียว',
+    spotlightFlowDirectorLabel: 'FlowDirector ตรวจคุณภาพวิดีโอซีน',
+    spotlightFlowDirectorMeta: 'คะแนนผู้ชม AR + มาตรฐานผู้กำกับ · สร้างคลิปใหม่ใน 1 คลิก',
+    spotlightAgentsLabel: 'เอเจนต์ผลิตงานอัตโนมัติ',
+    spotlightAgentsMeta: 'ทำงานแทน 300+ พรอมต์ · ขยายสเกลสู่ 20 โปรเจกต์พร้อมกัน',
+    spotlightNarrated5kLabel: '34 ฟีเจอร์ · แพนกล้อง 5K พากย์เสียง',
+    spotlightNarrated5kMeta: 'แพนภาพ 5K ซิงก์คำบรรยาย + เสียงพากย์ Neural ครบทั้ง 7 ภาษา',
   },
   academyStrip: {
     badge: 'การันตีเริ่มใช้งานได้ทันที · Studio Academy',

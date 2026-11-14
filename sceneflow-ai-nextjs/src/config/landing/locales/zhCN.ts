@@ -91,11 +91,11 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
       {
         id: 'review',
         number: '03',
-        badge: '投入积分前先获绿灯评估',
-        title: 'Audience Resonance 与 FlowDirector 专家审片',
+        badge: '渲染前后双重专家质检',
+        title: 'Audience Resonance 与 FlowDirector 成片视频审阅',
         description:
-          '内置 Audience Resonance 针对目标受众为剧集、Blueprint 与剧本打分，FlowDirector 自动指出节奏短板并提供一键优化建议，先打磨剧本再渲染视频。',
-        outcomeTag: '剧集 · Blueprint · 剧本三阶评分',
+          'Audience Resonance 在渲染前为剧集、Blueprint 与剧本打分 — 随后 FlowDirector 从观众共鸣与导演执行双视角审阅已渲染的场景视频，通过 Shot Director 一键重制瑕疵镜头，轻松统管 20+ 个并行客户项目。',
+        outcomeTag: '观众 + 导演双视角质检 · 一键重制镜头',
       },
       {
         id: 'agents',
@@ -135,12 +135,13 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         chipWardrobe: '✓ 镜头 2 服装：晚宴丝绸大衣',
       },
       review: {
-        arLabel: 'Audience Resonance',
-        arStatus: '绿灯通过 · 3 大关卡',
+        arLabel: 'Audience Resonance + FlowDirector',
+        arStatus: '渲染前把关 + 视频成片质检',
         gateSeries: '剧集 90',
         gateBlueprint: 'Blueprint 92',
-        gateScript: '剧本 94',
-        flowDirectorNote: 'FlowDirector：一键强化中段情感高潮（+6 分）',
+        gateScript: '场次 AR 86→89',
+        flowDirectorNote:
+          'FlowDirector 场次视频质检：观众 AR 86 + 导演 81 → 一键修复自动重制镜头 (+3 AR)',
       },
       agents: {
         rows: [
@@ -480,30 +481,34 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         badge: '高利润定制服务 · $300–$950/部',
         headline: '将家庭深度访谈与珍藏老照片转化为传世电影',
         description:
-          '通过智能故事访谈采集人生历程，锁定从 70 年代青年时期到晚年的分龄人物肖像，以低成本动态分镜预演，并通过免登录私密 Screening Room 链接交付审片。',
+          '通过智能故事访谈采集人生历程，锁定从 70 年代青年时期到晚年的分龄人物肖像，调度全自动 Production Agents，由 FlowDirector 一键修复镜头，并通过免登录 Screening Room 链接交付。',
         featureIcons: [
           'startBlueprint',
           'treatment',
           'continuity',
           'directShot',
           'animatic',
+          'scriptSupervisor',
+          'productionAgent',
           'screeningCollab',
           'languageStreams',
         ],
       },
       {
         id: 'commercial-training',
-        tabLabel: '广告代理机构与企业培训视频',
-        badge: 'B2B 包月客户 · 房产导览 · 多语种 SOP',
-        headline: '以直降 50%–80% 的综合成本稳定交付品牌宣传与企业内训大片',
+        tabLabel: '20 项目并行机构与培训视频',
+        badge: '20+ 并行项目 · 全自动智能体 + FlowDirector 质检',
+        headline: '借助全流程自动化，以直降 50%–80% 的成本同时推进 20 个客户项目',
         description:
-          '渲染前精准预测 Pre-vis 积分消耗，锁定品牌主播与房源实景底板，调度全自动批量智能体，并一键发布覆盖 70+ 种语言的培训配音流。',
+          '精准预测 Pre-vis 积分消耗，在 20 条并行客户产线中批量调度 Audio、Stills、Clips 与 Production Agents，由 FlowDirector 从观众与导演双视角审片并一键重制镜头，输出 70+ 语言版本。',
         featureIcons: [
+          'scriptSupervisor',
+          'productionAgent',
           'budget',
           'castLocations',
           'audioAgent',
           'stillsAgent',
-          'productionAgent',
+          'videoAgent',
           'multilanguageUi',
           'screeningPlayer',
         ],
@@ -561,12 +566,22 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
     ],
   },
   directoryDrawer: {
-    badge: '完整制片厂能力名录 · 支持按应用场景或制片空间检索',
-    title: '按应用场景或工作空间，探索全部 30+ 项核心制片能力',
+    badge: '工作流自动化与 34 项核心能力 · 7 语种 5K 运镜解说导览',
+    title: '自动化制片与专家视频质检，轻松统管 20+ 个并行项目',
     subtitle:
-      '既可按您想打造的业务筛选（人生传记、广告代理、多集剧集、自媒体频道或导演路演），也可按五大制片空间高清查看 5K 全尺寸真实工作台截图。',
-    expandCta: '按应用场景浏览全部功能 (30+)',
+      '每项功能现均配备交互式 5K 平移运镜与 7 种语言配音解说。亲眼见证 FlowDirector 如何从观众与导演双视角审阅场景视频并一键重制镜头，以及智能体如何替代 300+ 次手动提示词。',
+    expandCta: '探索全部 34 项 5K 配音功能导览',
     collapseCta: '收起工作室核心能力名录',
+    automationEyebrow: '专为高产创作者与同时管理 20 个项目的视频服务商打造',
+    automationTitle: '端到端工作流自动化：智能体后台批量生成，FlowDirector 一键审片与重制。',
+    automationSubtitle:
+      '告别逐个镜头手动盯守提示词。Audio、Stills、Clips 与 Production Agents 在后台并行构建场景，FlowDirector 对每段渲染 MP4 进行观众共鸣与导演合规双审，并通过 Shot Director 一键重制问题镜头。',
+    spotlightFlowDirectorLabel: 'FlowDirector 场景视频质检',
+    spotlightFlowDirectorMeta: '观众 AR + 导演合规评分 · 一键修复自动重制镜头',
+    spotlightAgentsLabel: '全自动制片智能体矩阵',
+    spotlightAgentsMeta: '替代 300+ 手动提示词 · 轻松扩展至 20 个并行项目',
+    spotlightNarrated5kLabel: '34 项能力 · 5K 运镜配音解说',
+    spotlightNarrated5kMeta: '同步 5K 镜头平移 + 覆盖全部 7 种语言的神经网络配音',
   },
   academyStrip: {
     badge: '零学习门槛保障 · Studio Academy',

@@ -885,25 +885,25 @@
               {
                 "icon": "scriptSupervisor",
                 "title": "FlowDirector",
-                "description": "Positioned right after `Clips` in the Scene Workflow, `FlowDirector` uses multimodal video intelligence to iterate and optimize your Stills and Clips before final edits in the Mixer and multi-language Stream generation. Uniting oversight and action from both the Audience Resonance (`AR Score`) and Director perspectives—with language-distinctive reviews saved independently for your English Master and each localized language stream—it inspects 5-axis audience sub-scores, script and continuity compliance telemetry, and root-cause anomaly attribution (`Keyframe`, `Motion Video`, or `Scene Direction`) so you can selectively apply optional pickup fixes through the Shot Director or Scene Director.",
-                "screenshot": "FlowDirector — multimodal Audience Resonance (AR Score) and Director video review, shot compliance matrix, and optional Shot & Scene Director pickups",
+                "description": "Positioned right after `Clips` in the Scene Workflow, `FlowDirector` delivers an expert multimodal review of your rendered scene video from both the Audience Resonance (`AR Score`) and Director perspectives—making quality assurance effortless for creators and video service providers managing 20+ concurrent client projects. With language-distinctive reviews saved independently for your English Master and each localized stream, it inspects 5-axis audience sub-scores, shot-by-shot continuity compliance, and root-cause anomaly attribution (`Keyframe`, `Motion Video`, or `Scene Direction`) so you can apply one-click fixes through Shot Director to recreate flagged clips automatically.",
+                "screenshot": "FlowDirector — multimodal Audience Resonance (AR Score) and Director video review, shot compliance matrix, and 1-click Shot Director fixes to recreate clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Dual Audience Resonance & Director oversight",
-                      "description": "Evaluate rendered clips and scene MP4s simultaneously for 5-axis Audience Resonance (AR Score) and Director script and continuity compliance."
+                      "title": "Dual Audience & Director video review",
+                      "description": "Evaluate rendered scene videos simultaneously from the Audience Resonance (AR Score) and Director compliance perspectives."
+                    },
+                    {
+                      "title": "1-click fixes to recreate clips",
+                      "description": "Apply targeted pickup fixes in a single click through Shot Director to automatically update framing, blocking, props, and recreate flagged clips."
+                    },
+                    {
+                      "title": "Built for 20+ concurrent client projects",
+                      "description": "Scale high-margin video service delivery across 20 active client pipelines without manually scrubbing and re-prompting every take."
                     },
                     {
                       "title": "Language-distinctive multimodal reviews",
-                      "description": "Audit both your English Master cut and localized language streams independently, with per-language saved review histories and lip-sync verification."
-                    },
-                    {
-                      "title": "1-click Shot Director fixes & prompt patches",
-                      "description": "Apply optional visual pickup recommendations directly through the Shot Director to update camera framing, blocking, props, and compiled prompts automatically."
-                    },
-                    {
-                      "title": "Surgical Scene Director handoff",
-                      "description": "Route narrative pacing and dialogue adjustments into a pre-loaded Scene Director revision while preserving all unaffected locked shots."
+                      "description": "Audit both your English Master cut and localized language streams independently with saved per-language review histories and lip-sync checks."
                     }
                   ]
                 }

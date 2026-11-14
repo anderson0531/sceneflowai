@@ -23,9 +23,31 @@ export const EDGE_VOICE_BY_LANG: Record<
   hi: { male: 'hi-IN-MadhurNeural', female: 'hi-IN-SwaraNeural' },
   ar: { male: 'ar-SA-HamedNeural', female: 'ar-SA-ZariyahNeural' },
   es: { male: 'es-ES-AlvaroNeural', female: 'es-ES-ElviraNeural' },
+  pt: { male: 'pt-BR-AntonioNeural', female: 'pt-BR-FranciscaNeural' },
   th: { male: 'th-TH-NiwatNeural', female: 'th-TH-PremwadeeNeural' },
   ja: { male: 'ja-JP-KeitaNeural', female: 'ja-JP-NanamiNeural' },
   zh: { male: 'zh-CN-YunxiNeural', female: 'zh-CN-XiaoxiaoNeural' },
+}
+
+/** Studio narrator voice per priority landing locale (7 languages). */
+export const LANDING_NARRATOR_EDGE_VOICE_BY_LOCALE: Record<string, string> = {
+  en: 'en-US-AriaNeural',
+  es: 'es-MX-DaliaNeural',
+  pt: 'pt-BR-FranciscaNeural',
+  hi: 'hi-IN-SwaraNeural',
+  zh: 'zh-CN-XiaoxiaoNeural',
+  'zh-cn': 'zh-CN-XiaoxiaoNeural',
+  ar: 'ar-SA-ZariyahNeural',
+  th: 'th-TH-PremwadeeNeural',
+}
+
+export function resolveLandingNarratorEdgeVoice(locale?: string): string {
+  const cleaned = (locale || 'en').trim().toLowerCase()
+  if (LANDING_NARRATOR_EDGE_VOICE_BY_LOCALE[cleaned]) {
+    return LANDING_NARRATOR_EDGE_VOICE_BY_LOCALE[cleaned]
+  }
+  const base = cleaned.split(/[-_]/)[0] || 'en'
+  return LANDING_NARRATOR_EDGE_VOICE_BY_LOCALE[base] ?? LANDING_NARRATOR_EDGE_VOICE_BY_LOCALE.en
 }
 
 /** Curated catalog for manual Edge fallback voice selection. */
@@ -54,6 +76,10 @@ export const EDGE_VOICES: EdgeVoice[] = [
   { id: 'es-ES-ElviraNeural', name: 'Elvira (Spain)', gender: 'female', language: 'es', description: 'Castilian Spanish female.' },
   { id: 'es-MX-DaliaNeural', name: 'Dalia (Mexico)', gender: 'female', language: 'es', description: 'Mexican Spanish female.' },
   { id: 'es-MX-JorgeNeural', name: 'Jorge (Mexico)', gender: 'male', language: 'es', description: 'Mexican Spanish male.' },
+  // Portuguese
+  { id: 'pt-BR-FranciscaNeural', name: 'Francisca (Brazil)', gender: 'female', language: 'pt', description: 'Warm Brazilian Portuguese female.' },
+  { id: 'pt-BR-AntonioNeural', name: 'Antonio (Brazil)', gender: 'male', language: 'pt', description: 'Natural Brazilian Portuguese male.' },
+  { id: 'pt-PT-RaquelNeural', name: 'Raquel (Portugal)', gender: 'female', language: 'pt', description: 'European Portuguese female.' },
   // Thai
   { id: 'th-TH-NiwatNeural', name: 'Niwat (Thai)', gender: 'male', language: 'th', description: 'Thai male voice.' },
   { id: 'th-TH-PremwadeeNeural', name: 'Premwadee (Thai)', gender: 'female', language: 'th', description: 'Thai female voice.' },

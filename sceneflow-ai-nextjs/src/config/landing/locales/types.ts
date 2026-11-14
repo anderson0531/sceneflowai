@@ -277,6 +277,15 @@ export type StudioLandingCopy = {
     subtitle: string
     expandCta: string
     collapseCta: string
+    automationEyebrow: string
+    automationTitle: string
+    automationSubtitle: string
+    spotlightFlowDirectorLabel: string
+    spotlightFlowDirectorMeta: string
+    spotlightAgentsLabel: string
+    spotlightAgentsMeta: string
+    spotlightNarrated5kLabel: string
+    spotlightNarrated5kMeta: string
   }
   academyStrip: {
     badge: string

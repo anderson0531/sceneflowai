@@ -3,11 +3,14 @@ import {
   resolveEdgeVoice,
   resolveEdgeVoiceForCharacter,
   resolveEdgeVoiceConfigForCharacter,
+  resolveLandingNarratorEdgeVoice,
+  LANDING_NARRATOR_EDGE_VOICE_BY_LOCALE,
   listEdgeVoices,
   getEdgeVoiceLanguageFromId,
   getEdgeVoiceConfigForLang,
   getEdgeVoiceConfigForResolution,
   EDGE_VOICE_BY_LANG,
+  EDGE_VOICES,
 } from '@/lib/tts/edgeTtsVoices'
 import { isEdgeTtsFallbackEnabled, isQuotaOrRateLimitError, shouldFallbackToEdgeTts } from '@/lib/tts/edgeTtsFallback'
 import { GoogleTtsBlockedError } from '@/lib/tts/googleTtsPolicy'
@@ -165,6 +168,19 @@ describe('edgeTtsVoices', () => {
     const femaleVoices = listEdgeVoices({ lang: 'en', gender: 'female' })
     expect(femaleVoices.length).toBeGreaterThan(0)
     expect(femaleVoices.every((v) => v.gender === 'female')).toBe(true)
+  })
+
+  it('supports Portuguese and resolves all 7 landing narrator neural voices', () => {
+    expect(resolveEdgeVoice('pt', 'female')).toBe(EDGE_VOICE_BY_LANG.pt.female)
+    expect(resolveEdgeVoice('pt-BR', 'male')).toBe(EDGE_VOICE_BY_LANG.pt.male)
+
+    const validIds = new Set(EDGE_VOICES.map((v) => v.id))
+    for (const loc of ['en', 'es', 'pt', 'hi', 'zh-CN', 'zh', 'ar', 'th']) {
+      const narratorId = resolveLandingNarratorEdgeVoice(loc)
+      expect(validIds.has(narratorId), `${loc} -> ${narratorId}`).toBe(true)
+    }
+    expect(resolveLandingNarratorEdgeVoice('zh-CN')).toBe(LANDING_NARRATOR_EDGE_VOICE_BY_LOCALE.zh)
+    expect(resolveLandingNarratorEdgeVoice('pt-BR')).toBe(LANDING_NARRATOR_EDGE_VOICE_BY_LOCALE.pt)
   })
 })
 

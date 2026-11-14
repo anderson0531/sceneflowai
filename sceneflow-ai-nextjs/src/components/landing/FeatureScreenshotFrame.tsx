@@ -13,14 +13,26 @@ import {
 import {
   ChevronDown,
   ChevronUp,
+  Globe2,
   Maximize,
   Minimize,
   Move,
+  Pause,
+  Play,
   RotateCcw,
+  Volume2,
+  VolumeX,
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  FEATURE_PAN_LOCALE_OPTIONS,
+  FEATURE_PAN_UI_COPY,
+  getKeyFeatureNarratedPan,
+  normalizeFeaturePanLocale,
+  type FeaturePanLocaleId,
+} from '@/config/landing/keyFeatureNarratedPan'
 
 type FullscreenVideo = HTMLVideoElement & {
   webkitEnterFullscreen?: () => void
@@ -57,12 +69,14 @@ export type FeatureScreenshotFrameProps = {
   enterFullscreenLabel: string
   exitFullscreenLabel: string
   variants?: readonly FeatureScreenshotVariant[]
+  featureIcon?: string
+  locale?: string
 }
 
 type ScreenshotFramingPreset = {
   width: number
   height: number
-  /** Fraction of horizontal canvas occupied by the active UI column or modal (0..1). */
+  /** Fraction of horizontal surface occupied by the active UI column or modal (0..1). */
   contentWidthFraction: number
   /** Horizontal anchor in [-1, 1] where 1 = left edge, 0 = center, -1 = right edge. */
   anchorX?: number
@@ -74,6 +88,48 @@ const MIN_ZOOM = 1
 const MAX_ZOOM = 4
 const ZOOM_STEP = 0.25
 const PAN_KEY_STEP = 72
+
+/** Session-scoped cache for synthesized 7-language MP3 blobs + unlocked audio state. */
+const ttsBlobUrlCache = new Map<string, string>()
+const ttsInflightMap = new Map<string, Promise<string | null>>()
+let sessionVoiceoverUnlocked = false
+
+function fetchNarratedBeatAudioUrl(
+  locale: FeaturePanLocaleId,
+  text: string
+): Promise<string | null> {
+  if (typeof window === 'undefined' || typeof fetch !== 'function') {
+    return Promise.resolve(null)
+  }
+  const cacheKey = `${locale}::${text}`
+  const cached = ttsBlobUrlCache.get(cacheKey)
+  if (cached) return Promise.resolve(cached)
+  const existing = ttsInflightMap.get(cacheKey)
+  if (existing) return existing
+
+  const request = fetch('/api/tts/edge', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ language: locale, text }),
+  })
+    .then(async (res) => {
+      if (!res.ok) return null
+      const blob = await res.blob()
+      if (!blob || blob.size < 256 || typeof URL.createObjectURL !== 'function') {
+        return null
+      }
+      const objectUrl = URL.createObjectURL(blob)
+      ttsBlobUrlCache.set(cacheKey, objectUrl)
+      return objectUrl
+    })
+    .catch(() => null)
+    .finally(() => {
+      ttsInflightMap.delete(cacheKey)
+    })
+
+  ttsInflightMap.set(cacheKey, request)
+  return request
+}
 
 const SCREENSHOT_FRAMING_PRESETS: Array<{
   match: string
@@ -192,8 +248,18 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     preset: { width: 5120, height: 2656, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
-    match: 'script-supervisor',
+    match: 'script-supervisor-pickups.webp',
     preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
+  },
+  {
+    match: 'script-supervisor.webp',
+    preset: {
+      width: 5120,
+      height: 3967,
+      contentWidthFraction: 0.96,
+      anchorX: 0,
+      anchorY: 0.88,
+    },
   },
   {
     match: 'production-agent.webp',
@@ -275,6 +341,10 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
+function lerp(start: number, end: number, t: number): number {
+  return start + (end - start) * t
+}
+
 function computeBaseMediaBox(
   containerWidth: number,
   containerHeight: number,
@@ -345,31 +415,83 @@ function isImageScreenshot(src: string): boolean {
   return /\.(webp|png|jpe?g|svg)(?:$|[?#])/i.test(src)
 }
 
+function prefersReducedMotionSetting(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false
+  }
+  return Boolean(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+}
+
 export function FeatureScreenshotFrame({
   src,
   label,
   enterFullscreenLabel,
   exitFullscreenLabel,
   variants,
+  featureIcon,
+  locale,
 }: FeatureScreenshotFrameProps) {
   const [activeVariantId, setActiveVariantId] = useState<string>(
     variants?.[0]?.id ?? ''
   )
+  const [panLocale, setPanLocale] = useState<FeaturePanLocaleId>(() =>
+    normalizeFeaturePanLocale(locale)
+  )
+  const [beatIndex, setBeatIndex] = useState(0)
+  const [beatProgress, setBeatProgress] = useState(0)
+  const [isTourPlaying, setIsTourPlaying] = useState<boolean>(
+    () => !prefersReducedMotionSetting()
+  )
+  const [isVoiceoverEnabled, setIsVoiceoverEnabled] = useState<boolean>(
+    () => sessionVoiceoverUnlocked
+  )
+
+  useEffect(() => {
+    setPanLocale(normalizeFeaturePanLocale(locale))
+  }, [locale])
 
   useEffect(() => {
     setActiveVariantId(variants?.[0]?.id ?? '')
-  }, [src, variants])
+    setBeatIndex(0)
+    setBeatProgress(0)
+    setIsTourPlaying(!prefersReducedMotionSetting())
+  }, [src, featureIcon, variants])
 
   const activeVariant = useMemo(
     () => variants?.find((v) => v.id === activeVariantId) ?? variants?.[0],
     [variants, activeVariantId]
   )
   const effectiveSrc = activeVariant?.imageUrl || src
+  const panSpec = useMemo(
+    () => getKeyFeatureNarratedPan(featureIcon, src),
+    [featureIcon, src]
+  )
+  const panUi = FEATURE_PAN_UI_COPY[panLocale]
+  const currentBeat = panSpec?.beats[beatIndex] ?? panSpec?.beats[0] ?? null
+
+  // Sync screenshot variant automatically when a tour beat targets a specific variant (e.g. FlowDirector)
+  useEffect(() => {
+    if (!isTourPlaying || !currentBeat?.variantId || !variants?.length) return
+    if (variants.some((v) => v.id === currentBeat.variantId)) {
+      setActiveVariantId(currentBeat.variantId)
+    }
+  }, [isTourPlaying, currentBeat?.variantId, variants])
+
+  // Sync Multilanguage Studio UI screenshot variant when switching the 7-language narrator
+  useEffect(() => {
+    if (!variants?.length) return
+    const targetId = panLocale === 'zh' ? 'zh-CN' : panLocale
+    if (variants.some((v) => v.id === targetId)) {
+      setActiveVariantId(targetId)
+    }
+  }, [panLocale, variants])
+
   const preset = useMemo(() => getFramingPreset(effectiveSrc), [effectiveSrc])
   const frameRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const minimapRef = useRef<HTMLDivElement>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [containerSize, setContainerSize] = useState({ width: 880, height: 620 })
@@ -377,7 +499,9 @@ export function FeatureScreenshotFrame({
     width: preset.width,
     height: preset.height,
   })
-  const [viewMode, setViewMode] = useState<'readable' | 'fit' | 'custom'>('readable')
+  const [viewMode, setViewMode] = useState<'readable' | 'fit' | 'custom' | 'tour'>(
+    panSpec && !prefersReducedMotionSetting() ? 'tour' : 'readable'
+  )
 
   const initialFocusZoom = useMemo(
     () =>
@@ -468,6 +592,195 @@ export function FeatureScreenshotFrame({
     [containerSize.width, containerSize.height, baseWidth, baseHeight, zoom]
   )
 
+  const stopActiveSpeech = useCallback(() => {
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause()
+        audioRef.current.src = ''
+      } catch {
+        // Ignore teardown errors in headless browsers
+      }
+      audioRef.current = null
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel()
+      } catch {
+        // Ignore unsupported speechSynthesis teardown
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      stopActiveSpeech()
+    }
+  }, [stopActiveSpeech])
+
+  const pauseTourForManual = useCallback(() => {
+    setIsTourPlaying(false)
+    stopActiveSpeech()
+  }, [stopActiveSpeech])
+
+  // Apply smooth 5K camera choreography from the current beat + progress
+  const applyBeatCamera = useCallback(
+    (progress01: number) => {
+      if (!currentBeat) return
+      const eased = 0.5 - 0.5 * Math.cos(Math.PI * clamp(progress01, 0, 1))
+      const targetZoom = Number(
+        clamp(lerp(currentBeat.fromZoom, currentBeat.toZoom, eased), MIN_ZOOM, MAX_ZOOM).toFixed(3)
+      )
+      const bounds = computePanBounds(
+        containerSize.width,
+        containerSize.height,
+        baseWidth,
+        baseHeight,
+        targetZoom
+      )
+      const anchorX = lerp(currentBeat.fromAnchorX, currentBeat.toAnchorX, eased)
+      const anchorY = lerp(currentBeat.fromAnchorY, currentBeat.toAnchorY, eased)
+      setZoom(targetZoom)
+      setPan({
+        x: clamp(anchorX * bounds.maxPanX, -bounds.maxPanX, bounds.maxPanX),
+        y: clamp(anchorY * bounds.maxPanY, -bounds.maxPanY, bounds.maxPanY),
+      })
+    },
+    [currentBeat, containerSize.width, containerSize.height, baseWidth, baseHeight]
+  )
+
+  // Synchronized 5K Pan + 7-Language Neural Narration loop
+  useEffect(() => {
+    if (!panSpec || !currentBeat) return
+
+    if (!isTourPlaying) {
+      stopActiveSpeech()
+      return
+    }
+
+    setViewMode('tour')
+    applyBeatCamera(0)
+    setBeatProgress(0)
+
+    // Pre-warm the next beat's MP3 when voiceover is enabled so transitions have zero gap
+    if (isVoiceoverEnabled && panSpec.beats.length > 1) {
+      const nextBeat = panSpec.beats[(beatIndex + 1) % panSpec.beats.length]
+      if (nextBeat) {
+        void fetchNarratedBeatAudioUrl(panLocale, nextBeat.narration[panLocale])
+      }
+    }
+
+    let cancelled = false
+    let rafId = 0
+    const totalBeats = panSpec.beats.length
+    const fallbackDurationMs = Math.max(3500, currentBeat.durationSec * 1000)
+
+    const advanceBeat = () => {
+      if (cancelled) return
+      setBeatProgress(1)
+      setBeatIndex((prev) => (prev + 1) % totalBeats)
+    }
+
+    const startTimerLoop = (durationMs: number) => {
+      const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now()
+      const tick = () => {
+        if (cancelled) return
+        const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+        const progress = clamp((now - startedAt) / durationMs, 0, 1)
+        setBeatProgress(progress)
+        applyBeatCamera(progress)
+        if (progress >= 1) {
+          advanceBeat()
+          return
+        }
+        rafId = window.requestAnimationFrame(tick)
+      }
+      rafId = window.requestAnimationFrame(tick)
+    }
+
+    if (!isVoiceoverEnabled) {
+      stopActiveSpeech()
+      startTimerLoop(fallbackDurationMs)
+      return () => {
+        cancelled = true
+        if (rafId) window.cancelAnimationFrame(rafId)
+      }
+    }
+
+    const spokenText = currentBeat.narration[panLocale]
+    void (async () => {
+      stopActiveSpeech()
+      const audioUrl = await fetchNarratedBeatAudioUrl(panLocale, spokenText)
+      if (cancelled) return
+
+      if (audioUrl && typeof Audio !== 'undefined') {
+        try {
+          const audio = new Audio(audioUrl)
+          audioRef.current = audio
+          const syncFromAudio = () => {
+            if (cancelled) return
+            const dur =
+              Number.isFinite(audio.duration) && audio.duration > 0.4
+                ? audio.duration
+                : currentBeat.durationSec
+            const progress = clamp(audio.currentTime / dur, 0, 1)
+            setBeatProgress(progress)
+            applyBeatCamera(progress)
+            if (!audio.paused && !audio.ended) {
+              rafId = window.requestAnimationFrame(syncFromAudio)
+            }
+          }
+          audio.onended = () => {
+            if (!cancelled) advanceBeat()
+          }
+          audio.onerror = () => {
+            if (!cancelled) startTimerLoop(fallbackDurationMs)
+          }
+          await audio.play()
+          rafId = window.requestAnimationFrame(syncFromAudio)
+          return
+        } catch {
+          // Fall through to speechSynthesis + timer fallback
+        }
+      }
+
+      if (
+        !cancelled &&
+        typeof window !== 'undefined' &&
+        'speechSynthesis' in window &&
+        typeof SpeechSynthesisUtterance !== 'undefined'
+      ) {
+        try {
+          const utterance = new SpeechSynthesisUtterance(spokenText)
+          const langOpt = FEATURE_PAN_LOCALE_OPTIONS.find((opt) => opt.id === panLocale)
+          utterance.lang = langOpt?.speechLang ?? 'en-US'
+          window.speechSynthesis.cancel()
+          window.speechSynthesis.speak(utterance)
+        } catch {
+          // Ignore browser speechSynthesis errors
+        }
+      }
+
+      if (!cancelled) {
+        startTimerLoop(fallbackDurationMs)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      if (rafId) window.cancelAnimationFrame(rafId)
+      stopActiveSpeech()
+    }
+  }, [
+    panSpec,
+    currentBeat,
+    beatIndex,
+    panLocale,
+    isTourPlaying,
+    isVoiceoverEnabled,
+    applyBeatCamera,
+    stopActiveSpeech,
+  ])
+
   const applyClampedTransform = useCallback(
     (
       nextZoom: number,
@@ -475,6 +788,7 @@ export function FeatureScreenshotFrame({
       targetPanY: number,
       nextMode: 'readable' | 'fit' | 'custom' = 'custom'
     ) => {
+      pauseTourForManual()
       const clampedZoom = Number(clamp(nextZoom, MIN_ZOOM, MAX_ZOOM).toFixed(2))
       const bounds = computePanBounds(
         containerSize.width,
@@ -490,7 +804,7 @@ export function FeatureScreenshotFrame({
       })
       setViewMode(nextMode)
     },
-    [containerSize.width, containerSize.height, baseWidth, baseHeight]
+    [containerSize.width, containerSize.height, baseWidth, baseHeight, pauseTourForManual]
   )
 
   const applyReadableFraming = useCallback(
@@ -498,8 +812,10 @@ export function FeatureScreenshotFrame({
       cw = containerSize.width,
       ch = containerSize.height,
       mw = naturalSize.width,
-      mh = naturalSize.height
+      mh = naturalSize.height,
+      stopTour = true
     ) => {
+      if (stopTour) pauseTourForManual()
       const targetZoom = computeReadableZoom(
         cw,
         ch,
@@ -522,19 +838,23 @@ export function FeatureScreenshotFrame({
       naturalSize.width,
       naturalSize.height,
       preset,
+      pauseTourForManual,
     ]
   )
 
   const applyFitFraming = useCallback(() => {
+    pauseTourForManual()
     setZoom(1)
     setPan({ x: 0, y: 0 })
     setViewMode('fit')
-  }, [])
+  }, [pauseTourForManual])
 
-  // Reset to preset dimensions and readable framing whenever screenshot src changes
+  // Reset to preset dimensions whenever screenshot src changes
   useEffect(() => {
     const nextPreset = getFramingPreset(effectiveSrc)
     setNaturalSize({ width: nextPreset.width, height: nextPreset.height })
+    if (isTourPlaying && panSpec) return
+
     const viewport = viewportRef.current
     const cw = viewport?.clientWidth || containerSize.width || 880
     const ch = viewport?.clientHeight || containerSize.height || 620
@@ -585,12 +905,15 @@ export function FeatureScreenshotFrame({
 
   // Keep framing synchronized when container size changes
   useEffect(() => {
-    if (viewMode === 'readable') {
+    if (viewMode === 'tour' && isTourPlaying) {
+      applyBeatCamera(beatProgress)
+    } else if (viewMode === 'readable') {
       applyReadableFraming(
         containerSize.width,
         containerSize.height,
         naturalSize.width,
-        naturalSize.height
+        naturalSize.height,
+        false
       )
     } else if (viewMode === 'fit') {
       setPan({ x: 0, y: 0 })
@@ -631,7 +954,6 @@ export function FeatureScreenshotFrame({
       const rect = viewport.getBoundingClientRect()
       if (rect.width <= 0 || rect.height <= 0) return
 
-      // Trackpad pinch or Ctrl/Cmd + wheel zooms toward cursor
       if (event.ctrlKey || event.metaKey) {
         event.preventDefault()
         const cursorOffsetX = event.clientX - (rect.left + rect.width / 2)
@@ -645,7 +967,6 @@ export function FeatureScreenshotFrame({
         return
       }
 
-      // When zoomed in, allow natural wheel panning within screenshot bounds
       if (zoom > 1.01) {
         const canPanDown = event.deltaY > 0 && pan.y > -maxPanY + 1
         const canPanUp = event.deltaY < 0 && pan.y < maxPanY - 1
@@ -702,6 +1023,7 @@ export function FeatureScreenshotFrame({
     })
 
     if (activePointersRef.current.size === 2) {
+      pauseTourForManual()
       const pts = Array.from(activePointersRef.current.values())
       pinchDistanceRef.current = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y)
       dragStateRef.current = null
@@ -711,6 +1033,7 @@ export function FeatureScreenshotFrame({
 
     if (zoom <= 1.01) return
 
+    pauseTourForManual()
     event.currentTarget.setPointerCapture?.(event.pointerId)
     dragStateRef.current = {
       pointerId: event.pointerId,
@@ -828,6 +1151,36 @@ export function FeatureScreenshotFrame({
     applyClampedTransform(zoom, targetPanX, targetPanY, 'custom')
   }
 
+  const handleToggleTourPlay = () => {
+    if (isTourPlaying) {
+      setIsTourPlaying(false)
+      stopActiveSpeech()
+    } else {
+      sessionVoiceoverUnlocked = true
+      setIsVoiceoverEnabled(true)
+      setIsTourPlaying(true)
+    }
+  }
+
+  const handleToggleVoiceover = () => {
+    const nextVoice = !isVoiceoverEnabled
+    sessionVoiceoverUnlocked = nextVoice
+    setIsVoiceoverEnabled(nextVoice)
+    if (nextVoice && !isTourPlaying) {
+      setIsTourPlaying(true)
+    } else if (!nextVoice) {
+      stopActiveSpeech()
+    }
+  }
+
+  const handleSelectLanguage = (nextLoc: FeaturePanLocaleId) => {
+    setPanLocale(nextLoc)
+    sessionVoiceoverUnlocked = true
+    setIsVoiceoverEnabled(true)
+    setBeatProgress(0)
+    setIsTourPlaying(true)
+  }
+
   const visibleWidthRatio = Math.min(1, containerSize.width / Math.max(1, scaledWidth))
   const visibleHeightRatio = Math.min(1, containerSize.height / Math.max(1, scaledHeight))
   const viewportLeftRatio =
@@ -847,6 +1200,7 @@ export function FeatureScreenshotFrame({
       ref={frameRef}
       tabIndex={0}
       onKeyDown={handleKeyDown}
+      data-testid="feature-screenshot-frame"
       aria-label={`${label} interactive studio viewport`}
       className={cn(
         'group/frame relative mt-4 min-h-[56vh] lg:min-h-[68vh] w-full overflow-hidden rounded-xl border border-slate-700/90 bg-black shadow-[0_20px_60px_rgba(0,0,0,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60',
@@ -864,7 +1218,7 @@ export function FeatureScreenshotFrame({
         }}
       />
 
-      {/* Interactive Pan & Zoom Canvas */}
+      {/* Interactive Pan & Zoom Stage */}
       <div
         ref={viewportRef}
         onPointerDown={handlePointerDown}
@@ -886,7 +1240,7 @@ export function FeatureScreenshotFrame({
           className={cn(
             'relative flex w-full items-center justify-center will-change-transform',
             isFullscreen && 'h-full',
-            !isDragging && 'transition-transform duration-150 ease-out'
+            !isDragging && !isTourPlaying && 'transition-transform duration-150 ease-out'
           )}
           style={{
             transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
@@ -941,62 +1295,158 @@ export function FeatureScreenshotFrame({
         </div>
       </div>
 
-      {/* Interactive Language / Variant Switcher Bar (when screenshot has variants) */}
-      {variants && variants.length > 1 ? (
-        <div
-          onClick={(event) => event.stopPropagation()}
-          className="absolute inset-x-3 top-3 z-30 flex justify-center pointer-events-none"
-        >
-          <div
-            role="tablist"
-            aria-label={`${label} language variants`}
-            className="pointer-events-auto inline-flex flex-wrap items-center gap-1 rounded-full border border-indigo-400/35 bg-slate-950/90 p-1 text-xs shadow-[0_10px_30px_rgba(0,0,0,0.75)] backdrop-blur-xl"
-          >
-            {variants.map((variant) => {
-              const isSelected = variant.id === (activeVariant?.id ?? variants[0].id)
-              return (
-                <button
-                  key={variant.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isSelected}
-                  onClick={() => setActiveVariantId(variant.id)}
-                  className={cn(
-                    'rounded-full px-3 py-1 text-xs font-semibold transition-all',
-                    isSelected
-                      ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-400/60'
-                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
-                  )}
-                >
-                  {variant.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      ) : null}
+      {/* Top Overlay: 5K Narrated Pan Bar (7 Languages) + Fullscreen + Optional Variants */}
+      <div
+        onClick={(event) => event.stopPropagation()}
+        className="pointer-events-none absolute inset-x-2.5 top-2.5 z-30 flex flex-col gap-1.5 sm:inset-x-3 sm:top-3"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-1.5">
+          {panSpec ? (
+            <div
+              data-testid="feature-pan-narrator-bar"
+              className="pointer-events-auto flex flex-wrap items-center gap-1 rounded-2xl border border-cyan-400/35 bg-slate-950/90 px-2 py-1 text-[11px] text-white shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:gap-1.5 sm:px-2.5 sm:py-1.5"
+            >
+              {/* Play / Pause 5K Pan Tour */}
+              <button
+                type="button"
+                onClick={handleToggleTourPlay}
+                title={isTourPlaying ? panUi.pauseTourLabel : panUi.playTourLabel}
+                aria-pressed={isTourPlaying}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-[11px] font-semibold transition-all',
+                  isTourPlaying
+                    ? 'bg-cyan-500/25 text-cyan-100 ring-1 ring-cyan-400/60'
+                    : 'bg-white/10 text-slate-200 hover:bg-white/20 hover:text-white'
+                )}
+              >
+                {isTourPlaying ? (
+                  <Pause className="h-3.5 w-3.5 text-cyan-300" aria-hidden="true" />
+                ) : (
+                  <Play className="h-3.5 w-3.5 fill-current text-cyan-300" aria-hidden="true" />
+                )}
+                <span className="whitespace-normal leading-tight">
+                  {isTourPlaying ? panUi.tourBadge : panUi.playTourLabel}
+                </span>
+              </button>
 
-      {/* Top-Left Studio Viewport Telemetry Pill */}
-      <div className="pointer-events-none absolute left-3 top-3 z-20 hidden items-center gap-1.5 rounded-full border border-white/15 bg-slate-950/75 px-3 py-1.5 text-[11px] font-medium text-slate-300 shadow-lg backdrop-blur-md sm:flex">
-        <Move className="h-3 w-3 text-cyan-400" />
-        <span>Drag or scroll to pan · Double-click to zoom</span>
+              {/* Voiceover Unmute / Mute */}
+              <button
+                type="button"
+                onClick={handleToggleVoiceover}
+                title={
+                  isVoiceoverEnabled ? panUi.muteVoiceoverLabel : panUi.hearVoiceoverLabel
+                }
+                aria-pressed={isVoiceoverEnabled}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-[11px] font-semibold transition-all',
+                  isVoiceoverEnabled
+                    ? 'bg-emerald-500/25 text-emerald-200 ring-1 ring-emerald-400/60'
+                    : 'bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/45 hover:bg-amber-500/30'
+                )}
+              >
+                {isVoiceoverEnabled ? (
+                  <Volume2 className="h-3.5 w-3.5 text-emerald-300" aria-hidden="true" />
+                ) : (
+                  <VolumeX className="h-3.5 w-3.5 text-amber-300" aria-hidden="true" />
+                )}
+                <span className="whitespace-normal leading-tight">
+                  {isVoiceoverEnabled ? panUi.voiceoverOnLabel : panUi.hearVoiceoverLabel}
+                </span>
+              </button>
+
+              {/* 7-Language Instant Selector Pills */}
+              <div
+                role="group"
+                aria-label={panUi.languagePickerTitle}
+                className="inline-flex flex-wrap items-center gap-0.5 rounded-xl border border-white/10 bg-slate-900/90 p-0.5"
+              >
+                <Globe2
+                  className="mx-1 hidden h-3 w-3 text-cyan-300 sm:inline-block"
+                  aria-hidden="true"
+                />
+                {FEATURE_PAN_LOCALE_OPTIONS.map((opt) => {
+                  const active = opt.id === panLocale
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      title={`${opt.nativeName} (${opt.shortLabel})`}
+                      aria-pressed={active}
+                      onClick={() => handleSelectLanguage(opt.id)}
+                      className={cn(
+                        'rounded-lg px-1.5 py-0.5 text-[10px] font-bold transition-all sm:px-2 sm:text-[11px]',
+                        active
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      )}
+                    >
+                      {opt.shortLabel}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="pointer-events-none hidden items-center gap-1.5 rounded-full border border-white/15 bg-slate-950/75 px-3 py-1.5 text-[11px] font-medium text-slate-300 shadow-lg backdrop-blur-md sm:flex">
+              <Move className="h-3 w-3 text-cyan-400" />
+              <span>Drag or scroll to pan · Double-click to zoom</span>
+            </div>
+          )}
+
+          {/* Top-Right Fullscreen Action */}
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
+            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-slate-950/85 px-3 py-1.5 text-xs font-medium text-white shadow-lg backdrop-blur-md transition hover:border-cyan-400/50 hover:bg-slate-900"
+            aria-label={isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
+            aria-pressed={isFullscreen}
+          >
+            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            <span>{isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}</span>
+          </button>
+        </div>
+
+        {/* Interactive Screenshot Variant Switcher (when screenshot has multiple views) */}
+        {variants && variants.length > 1 ? (
+          <div className="flex justify-center">
+            <div
+              role="tablist"
+              aria-label={`${label} language variants`}
+              className="pointer-events-auto inline-flex flex-wrap items-center gap-1 rounded-full border border-indigo-400/35 bg-slate-950/90 p-1 text-xs shadow-[0_10px_30px_rgba(0,0,0,0.75)] backdrop-blur-xl"
+            >
+              {variants.map((variant) => {
+                const isSelected = variant.id === (activeVariant?.id ?? variants[0].id)
+                return (
+                  <button
+                    key={variant.id}
+                    type="button"
+                    role="tab"
+                    title={variant.label}
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      pauseTourForManual()
+                      setActiveVariantId(variant.id)
+                    }}
+                    className={cn(
+                      'rounded-full px-3 py-1 text-xs font-semibold transition-all',
+                      isSelected
+                        ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-400/60'
+                        : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                    )}
+                  >
+                    {variant.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
 
-      {/* Top-Right Fullscreen Action */}
-      <button
-        type="button"
-        onClick={toggleFullscreen}
-        className="absolute right-3 top-3 z-20 inline-flex items-center gap-2 rounded-full border border-white/20 bg-slate-950/75 px-3 py-2 text-xs font-medium text-white shadow-lg backdrop-blur-md transition hover:border-cyan-400/50 hover:bg-slate-900"
-        aria-label={isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
-        aria-pressed={isFullscreen}
-      >
-        {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-        {isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
-      </button>
-
-      {/* Corner Interactive Minimap (when zoomed in) */}
+      {/* Corner Interactive Minimap (when zoomed in manually or during tour) */}
       {zoom > 1.08 ? (
-        <div className="hidden sm:flex flex-col gap-1 absolute right-3 bottom-16 z-20 rounded-xl border border-cyan-500/30 bg-slate-950/90 p-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+        <div className="hidden lg:flex flex-col gap-1 absolute right-3 bottom-28 z-20 rounded-xl border border-cyan-500/30 bg-slate-950/90 p-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.75)] backdrop-blur-xl">
           <div
             ref={minimapRef}
             onPointerDown={(event) => {
@@ -1050,12 +1500,66 @@ export function FeatureScreenshotFrame({
         </div>
       ) : null}
 
-      {/* Bottom Floating Glassmorphic Studio Zoom & Pan Dock */}
-      <div className="absolute inset-x-3 bottom-3 z-20 flex justify-center pointer-events-none">
-        <div
-          onClick={(event) => event.stopPropagation()}
-          className="pointer-events-auto flex flex-wrap items-center gap-1.5 rounded-2xl border border-white/15 bg-slate-950/85 px-2.5 py-1.5 text-xs text-white shadow-[0_12px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:gap-2 sm:px-3.5 sm:py-2"
-        >
+      {/* Bottom Stack: Synchronized 7-Language Narrated Caption + Studio Zoom & Pan Dock */}
+      <div
+        onClick={(event) => event.stopPropagation()}
+        className="pointer-events-none absolute inset-x-2.5 bottom-2.5 z-20 flex flex-col items-center gap-1.5 sm:inset-x-3 sm:bottom-3"
+      >
+        {panSpec && currentBeat ? (
+          <div
+            data-testid="feature-pan-caption"
+            dir={panLocale === 'ar' ? 'rtl' : 'ltr'}
+            className="pointer-events-auto w-full max-w-3xl rounded-2xl border border-white/15 bg-slate-950/90 px-3 py-2 text-xs text-slate-100 shadow-[0_12px_36px_rgba(0,0,0,0.85)] backdrop-blur-xl sm:px-4 sm:py-2.5"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="inline-flex items-center gap-1">
+                {panSpec.beats.map((_, idx) => {
+                  const isCurrent = idx === beatIndex
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      title={`${panUi.beatPrefix} ${idx + 1} / ${panSpec.beats.length}`}
+                      aria-pressed={isCurrent}
+                      onClick={() => {
+                        setBeatIndex(idx)
+                        setBeatProgress(0)
+                        setIsTourPlaying(true)
+                      }}
+                      className={cn(
+                        'rounded-md px-1.5 py-0.5 font-mono text-[10px] font-bold transition-all',
+                        isCurrent
+                          ? 'bg-cyan-500/25 text-cyan-200 ring-1 ring-cyan-400/50'
+                          : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-white'
+                      )}
+                    >
+                      0{idx + 1}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <span className="hidden text-[10px] text-slate-400 sm:inline">
+                {panUi.manualHint}
+              </span>
+            </div>
+
+            <p className="mt-1 text-xs leading-relaxed text-slate-100 sm:text-[13px]">
+              {currentBeat.narration[panLocale]}
+            </p>
+
+            {isTourPlaying ? (
+              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-slate-800">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400"
+                  style={{ width: `${Math.round(clamp(beatProgress, 0.04, 1) * 100)}%` }}
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-white/15 bg-slate-950/85 px-2.5 py-1.5 text-xs text-white shadow-[0_12px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:gap-2 sm:px-3.5 sm:py-2">
           {/* View Mode Presets */}
           <button
             type="button"
@@ -1138,7 +1642,7 @@ export function FeatureScreenshotFrame({
                 nextZoom <= 1.01 ? 'fit' : 'custom'
               )
             }}
-            className="h-1.5 w-20 cursor-pointer appearance-none rounded-lg bg-slate-700 accent-cyan-400 sm:w-28"
+            className="h-1.5 w-16 cursor-pointer appearance-none rounded-lg bg-slate-700 accent-cyan-400 sm:w-28"
           />
 
           <button
@@ -1154,7 +1658,7 @@ export function FeatureScreenshotFrame({
             <ZoomIn className="h-4 w-4" />
           </button>
 
-          <span className="min-w-[3.25rem] text-center font-mono text-xs font-semibold tabular-nums text-cyan-300">
+          <span className="min-w-[3rem] text-center font-mono text-xs font-semibold tabular-nums text-cyan-300">
             {zoomPercent}%
           </span>
 

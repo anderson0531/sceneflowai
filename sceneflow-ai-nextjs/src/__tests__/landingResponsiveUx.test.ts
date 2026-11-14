@@ -7,13 +7,14 @@
 
 import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync, readFileSync, statSync } from 'fs'
 import path from 'path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { NextIntlClientProvider } from 'next-intl'
 import { VideoServicesSpotlightSection } from '@/components/landing/VideoServicesSpotlightSection'
 import { MobileCompanionPwaSection } from '@/components/landing/MobileCompanionPwaSection'
 import { StudioDoorWalkthroughModal } from '@/components/landing/StudioDoorWalkthroughModal'
+import { FeatureScreenshotFrame } from '@/components/landing/FeatureScreenshotFrame'
 import {
   DOOR_WALKTHROUGH_COPY,
   ROOM_PANNED_SLIDES,
@@ -23,6 +24,17 @@ import {
 } from '@/config/landing/doorWalkthroughCopy'
 import { FEATURE_ROOM_IDS } from '@/config/landing/featureRoomMedia'
 import { FEATURE_ROOM_SCRIPTS, type HeroDubLocaleId } from '@/config/landing/featureRoomScripts'
+import {
+  KEY_FEATURE_SCREENSHOTS,
+  getKeyFeatureScreenshot,
+  keyFeatureScreenshotSrc,
+} from '@/config/landing/keyFeatureScreenshots'
+import {
+  FEATURE_PAN_UI_COPY,
+  KEY_FEATURE_NARRATED_PAN,
+  getKeyFeatureNarratedPan,
+  normalizeFeaturePanLocale,
+} from '@/config/landing/keyFeatureNarratedPan'
 import { resolveLocalizedStudioLandingCopy } from '@/config/landing/worldClassLandingCopy'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -432,5 +444,94 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       expect(container?.textContent).toContain(copy.phoneTeamAlertTitle)
       expect(container?.textContent).toContain(copy.phoneTeamBudgetValue)
     }
+  })
+
+  it('ships the 5120x3967 FlowDirector 5K screenshot and 7-language 5K pan narrated tours across all 34 capabilities', () => {
+    const flowDirectorDisk = path.join(
+      ROOT,
+      'public/landing/key-features/screenshots/script-supervisor.webp'
+    )
+    expect(existsSync(flowDirectorDisk)).toBe(true)
+    expect(statSync(flowDirectorDisk).size).toBeGreaterThan(800_000)
+
+    const buf = readFileSync(flowDirectorDisk)
+    expect(buf.subarray(0, 4).toString('ascii')).toBe('RIFF')
+    expect(buf.subarray(8, 12).toString('ascii')).toBe('WEBP')
+
+    // Every single one of the 34 KEY_FEATURE_SCREENSHOTS has a 5K Pan Narrated tour in all 7 languages
+    const screenshotIcons = Object.keys(KEY_FEATURE_SCREENSHOTS)
+    expect(screenshotIcons.length).toBe(34)
+    expect(Object.keys(KEY_FEATURE_NARRATED_PAN).sort()).toEqual(screenshotIcons.sort())
+
+    for (const icon of screenshotIcons) {
+      const tour = getKeyFeatureNarratedPan(icon)
+      expect(tour, `missing 5K pan tour for ${icon}`).toBeTruthy()
+      expect(tour!.beats.length, `${icon} beat count`).toBeGreaterThanOrEqual(3)
+
+      for (const beat of tour!.beats) {
+        expect(beat.fromZoom).toBeGreaterThanOrEqual(1)
+        expect(beat.toZoom).toBeGreaterThanOrEqual(1)
+        expect(beat.durationSec).toBeGreaterThanOrEqual(4)
+        for (const loc of DUB_LOCALES) {
+          expect(beat.narration[loc].trim().length, `${icon} ${beat.id} ${loc}`).toBeGreaterThan(25)
+        }
+        expect(beat.narration.es).not.toBe(beat.narration.en)
+        expect(beat.narration.zh).not.toBe(beat.narration.en)
+        expect(beat.narration.ar).not.toBe(beat.narration.en)
+      }
+    }
+
+    // FlowDirector (scriptSupervisor) has 4 beats spanning overview -> pickups
+    const fdTour = getKeyFeatureNarratedPan('scriptSupervisor')!
+    expect(fdTour.beats).toHaveLength(4)
+    expect(fdTour.beats[0].variantId).toBe('overview')
+    expect(fdTour.beats[3].variantId).toBe('pickups')
+
+    // Render FeatureScreenshotFrame for FlowDirector and verify 7-language switching + variant sync + zero truncate
+    const frameSrc = readSource('src/components/landing/FeatureScreenshotFrame.tsx')
+    const drawerSrc = readSource('src/components/landing/FullStudioDirectoryDrawer.tsx')
+    expect(frameSrc).not.toContain('truncate')
+    expect(drawerSrc).not.toContain('truncate')
+
+    const fdMeta = getKeyFeatureScreenshot('scriptSupervisor')!
+    renderElement(
+      React.createElement(FeatureScreenshotFrame, {
+        src: keyFeatureScreenshotSrc(fdMeta),
+        variants: fdMeta.variants,
+        label: 'FlowDirector',
+        enterFullscreenLabel: 'Enter fullscreen',
+        exitFullscreenLabel: 'Exit fullscreen',
+        featureIcon: 'scriptSupervisor',
+        locale: 'en',
+      })
+    )
+
+    const narratorBar = container?.querySelector('[data-testid="feature-pan-narrator-bar"]')
+    const captionEl = container?.querySelector('[data-testid="feature-pan-caption"]')
+    expect(narratorBar).toBeTruthy()
+    expect(captionEl?.textContent).toContain(fdTour.beats[0].narration.en)
+
+    // Switch to Arabic ('ar') and verify RTL caption + Arabic script
+    const arBtn = Array.from(narratorBar?.querySelectorAll('button') ?? []).find((btn) =>
+      btn.getAttribute('title')?.includes('العربية')
+    )
+    expect(arBtn).toBeTruthy()
+    clickElement(arBtn!)
+    expect(captionEl?.getAttribute('dir')).toBe('rtl')
+    expect(captionEl?.textContent).toContain(fdTour.beats[0].narration.ar)
+
+    // Click beat 04 ('pickups' variant) and verify active image transitions to script-supervisor-pickups.webp
+    const beat4Btn = Array.from(container?.querySelectorAll('button') ?? []).find(
+      (btn) => btn.textContent?.trim() === '04'
+    )
+    expect(beat4Btn).toBeTruthy()
+    clickElement(beat4Btn!)
+    expect(captionEl?.textContent).toContain(fdTour.beats[3].narration.ar)
+    const imgEl = container?.querySelector('img')
+    expect(imgEl?.getAttribute('src')).toContain('script-supervisor-pickups.webp')
+
+    expect(normalizeFeaturePanLocale('zh-CN')).toBe('zh')
+    expect(normalizeFeaturePanLocale('pt-BR')).toBe('pt')
+    expect(normalizeFeaturePanLocale('th')).toBe('th')
   })
 })

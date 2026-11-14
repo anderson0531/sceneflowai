@@ -884,26 +884,26 @@
               },
               {
                 "icon": "scriptSupervisor",
-                "title": "SFAFlowDirector 术语",
-                "description": "位于场景工作流中 `Clips` 之后的 `FlowDirector`，利用多模态视频智能在进入混音台与多语种流生成前迭代优化你的关键帧与视频片段。它将观众共鸣指数（`AR Score`）与导演审片视角融为一体——支持为英语母带及每个本地化语种流独立保存审片报告——全面检查 5 轴受众子评分、剧本与连续性合规遥测以及根因异常归因（`Keyframe`、`Motion Video` 或 `Scene Direction`），让你通过镜头导演或场景导演一键应用补拍修复。",
-                "screenshot": "FlowDirector — 多模态 Audience Resonance (AR Score) 与导演视频审查、分镜合规矩阵及可选补拍派发",
+                "title": "FlowDirector",
+                "description": "位于场景工作流 `Clips` 之后的 `FlowDirector` 运用多模态视频智能，同时从观众共鸣（`AR Score`）与导演执行双重视角对已渲染的场景视频进行专家级审阅 — 让同时管理 20+ 个并行客户项目的创作者与视频服务商轻松完成质检。系统为英文母带与每条多语种流独立保存审片记录，精准剖析五维观众子评分、逐镜头连续性合规度及异常根因归属（`Keyframe`、`Motion Video` 或 `Scene Direction`），让您通过 Shot Director 一键应用修复方案并自动重制问题镜头。",
+                "screenshot": "FlowDirector — 多模态观众共鸣（AR Score）与导演视频双审、逐镜头合规矩阵及一键重制镜头的 Shot Director 修复",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Audience Resonance 与导演双重统筹审查",
-                      "description": "同时评估已渲染片段与场景 MP4 的五维 Audience Resonance (AR Score) 以及导演剧本与连贯性合规度。"
+                      "title": "观众与导演双重视角视频审阅",
+                      "description": "同时从 Audience Resonance（AR Score）观众共鸣与导演剧本连续性合规双视角评估已渲染的场景视频。"
                     },
                     {
-                      "title": "分语种独立保存的多模态审片报告",
-                      "description": "对英语母带剪辑与各个本地化语种流进行独立多模态审片，提供按语种保存的审片历史记录与逐帧口型同步核验。"
+                      "title": "一键修复并自动重制镜头",
+                      "description": "通过 Shot Director 一键应用补拍修复建议，自动更新构图、场面调度与道具绑定并重制标记镜头。"
                     },
                     {
-                      "title": "分镜导演一键修正与提示词补丁",
-                      "description": "通过分镜导演直接应用可选视觉修正建议，自动同步更新景别构图、人物调度、关键道具与底层编译提示词。"
+                      "title": "专为 20+ 个并行客户项目打造",
+                      "description": "无需逐条手动反复调试提示词，即可在 20 条活跃客户产线中规模化交付高利润视频服务。"
                     },
                     {
-                      "title": "场景导演精准协同交接",
-                      "description": "将叙事节奏与台词调整路由至预填充的场景导演修订指令中，同时完好保留其余已锁定镜头。"
+                      "title": "分语种独立保存的多模态审片",
+                      "description": "独立审计英文原版母带与各语种本地化译制流，配备按语言保存的审片历史与口型同步校验。"
                     }
                   ]
                 }
@@ -3910,10 +3910,10 @@
         {
           "id": "review",
           "number": "03",
-          "badge": "投入积分前先获绿灯评估",
-          "title": "Audience Resonance 与 FlowDirector 专家审片",
-          "description": "内置 Audience Resonance 针对目标受众为剧集、Blueprint 与剧本打分，FlowDirector 自动指出节奏短板并提供一键优化建议，先打磨剧本再渲染视频。",
-          "outcomeTag": "剧集 · Blueprint · 剧本三阶评分"
+          "badge": "渲染前后双重专家质检",
+          "title": "Audience Resonance 与 FlowDirector 成片视频审阅",
+          "description": "Audience Resonance 在渲染前为剧集、Blueprint 与剧本打分 — 随后 FlowDirector 从观众共鸣与导演执行双视角审阅已渲染的场景视频，通过 Shot Director 一键重制瑕疵镜头，轻松统管 20+ 个并行客户项目。",
+          "outcomeTag": "观众 + 导演双视角质检 · 一键重制镜头"
         },
         {
           "id": "agents",
@@ -3959,12 +3959,12 @@
           "chipWardrobe": "✓ 镜头 2 服装：晚宴丝绸大衣"
         },
         "review": {
-          "arLabel": "Audience Resonance",
-          "arStatus": "绿灯通过 · 3 大关卡",
+          "arLabel": "Audience Resonance + FlowDirector",
+          "arStatus": "渲染前把关 + 视频成片质检",
           "gateSeries": "剧集 90",
           "gateBlueprint": "Blueprint 92",
-          "gateScript": "剧本 94",
-          "flowDirectorNote": "FlowDirector：一键强化中段情感高潮（+6 分）"
+          "gateScript": "场次 AR 86→89",
+          "flowDirectorNote": "FlowDirector 场次视频质检：观众 AR 86 + 导演 81 → 一键修复自动重制镜头 (+3 AR)"
         },
         "agents": {
           "rows": [
@@ -4300,29 +4300,33 @@
           "tabLabel": "人生传记电影与家族传承",
           "badge": "高利润定制服务 · $300–$950/部",
           "headline": "将家庭深度访谈与珍藏老照片转化为传世电影",
-          "description": "通过智能故事访谈采集人生历程，锁定从 70 年代青年时期到晚年的分龄人物肖像，以低成本动态分镜预演，并通过免登录私密 Screening Room 链接交付审片。",
+          "description": "通过智能故事访谈采集人生历程，锁定从 70 年代青年时期到晚年的分龄人物肖像，调度全自动 Production Agents，由 FlowDirector 一键修复镜头，并通过免登录 Screening Room 链接交付。",
           "featureIcons": [
             "startBlueprint",
             "treatment",
             "continuity",
             "directShot",
             "animatic",
+            "scriptSupervisor",
+            "productionAgent",
             "screeningCollab",
             "languageStreams"
           ]
         },
         {
           "id": "commercial-training",
-          "tabLabel": "广告代理机构与企业培训视频",
-          "badge": "B2B 包月客户 · 房产导览 · 多语种 SOP",
-          "headline": "以直降 50%–80% 的综合成本稳定交付品牌宣传与企业内训大片",
-          "description": "渲染前精准预测 Pre-vis 积分消耗，锁定品牌主播与房源实景底板，调度全自动批量智能体，并一键发布覆盖 70+ 种语言的培训配音流。",
+          "tabLabel": "20 项目并行机构与培训视频",
+          "badge": "20+ 并行项目 · 全自动智能体 + FlowDirector 质检",
+          "headline": "借助全流程自动化，以直降 50%–80% 的成本同时推进 20 个客户项目",
+          "description": "精准预测 Pre-vis 积分消耗，在 20 条并行客户产线中批量调度 Audio、Stills、Clips 与 Production Agents，由 FlowDirector 从观众与导演双视角审片并一键重制镜头，输出 70+ 语言版本。",
           "featureIcons": [
+            "scriptSupervisor",
+            "productionAgent",
             "budget",
             "castLocations",
             "audioAgent",
             "stillsAgent",
-            "productionAgent",
+            "videoAgent",
             "multilanguageUi",
             "screeningPlayer"
           ]
@@ -4377,11 +4381,20 @@
       ]
     },
     "directoryDrawer": {
-      "badge": "完整制片厂能力名录 · 支持按应用场景或制片空间检索",
-      "title": "按应用场景或工作空间，探索全部 30+ 项核心制片能力",
-      "subtitle": "既可按您想打造的业务筛选（人生传记、广告代理、多集剧集、自媒体频道或导演路演），也可按五大制片空间高清查看 5K 全尺寸真实工作台截图。",
-      "expandCta": "按应用场景浏览全部功能 (30+)",
-      "collapseCta": "收起工作室核心能力名录"
+      "badge": "工作流自动化与 34 项核心能力 · 7 语种 5K 运镜解说导览",
+      "title": "自动化制片与专家视频质检，轻松统管 20+ 个并行项目",
+      "subtitle": "每项功能现均配备交互式 5K 平移运镜与 7 种语言配音解说。亲眼见证 FlowDirector 如何从观众与导演双视角审阅场景视频并一键重制镜头，以及智能体如何替代 300+ 次手动提示词。",
+      "expandCta": "探索全部 34 项 5K 配音功能导览",
+      "collapseCta": "收起工作室核心能力名录",
+      "automationEyebrow": "专为高产创作者与同时管理 20 个项目的视频服务商打造",
+      "automationTitle": "端到端工作流自动化：智能体后台批量生成，FlowDirector 一键审片与重制。",
+      "automationSubtitle": "告别逐个镜头手动盯守提示词。Audio、Stills、Clips 与 Production Agents 在后台并行构建场景，FlowDirector 对每段渲染 MP4 进行观众共鸣与导演合规双审，并通过 Shot Director 一键重制问题镜头。",
+      "spotlightFlowDirectorLabel": "FlowDirector 场景视频质检",
+      "spotlightFlowDirectorMeta": "观众 AR + 导演合规评分 · 一键修复自动重制镜头",
+      "spotlightAgentsLabel": "全自动制片智能体矩阵",
+      "spotlightAgentsMeta": "替代 300+ 手动提示词 · 轻松扩展至 20 个并行项目",
+      "spotlightNarrated5kLabel": "34 项能力 · 5K 运镜配音解说",
+      "spotlightNarrated5kMeta": "同步 5K 镜头平移 + 覆盖全部 7 种语言的神经网络配音"
     },
     "academyStrip": {
       "badge": "零学习门槛保障 · Studio Academy",

@@ -167,7 +167,7 @@ export type KeyFeatureScreenshot = {
   variants?: readonly KeyFeatureScreenshotVariant[]
 }
 
-const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
+export const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   newSeries: { webmUrl: NEW_SERIES_SCREENSHOT_WEBM },
   seriesReview: { imageUrl: SERIES_REVIEW_SCREENSHOT_WEBP },
   seriesResonance: { imageUrl: SERIES_RESONANCE_SCREENSHOT_WEBP },
