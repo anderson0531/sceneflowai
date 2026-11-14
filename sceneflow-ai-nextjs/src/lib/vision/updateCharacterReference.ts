@@ -56,14 +56,31 @@ export function updateCharacterInList<T extends CharacterLike>(
  * stripping `undefined` keys so unset fields never clobber existing `referenceImage`, `wardrobes`,
  * `voiceConfig`, `name`, or `description`.
  */
+const CLEARABLE_CHARACTER_ATTRIBUTE_KEYS = new Set([
+  'likenessMode',
+  'likenessCharacterId',
+  'likenessCharacterName',
+  'likenessImageUrl',
+  'secondaryLikenessCharacterId',
+  'secondaryLikenessCharacterName',
+  'secondaryLikenessImageUrl',
+  'likenessTransformNote',
+])
+
 export function updateCharacterAttributesInList<T extends CharacterLike>(
   characters: T[],
   characterId: string,
   attributes: Record<string, unknown>
 ): T[] {
   const cleanAttributes: Record<string, unknown> = {}
+  const keysToDelete = new Set<string>()
   for (const [key, val] of Object.entries(attributes || {})) {
-    if (val !== undefined && key !== 'name') {
+    if (key === 'name') continue
+    if (CLEARABLE_CHARACTER_ATTRIBUTE_KEYS.has(key) && (val === null || val === '')) {
+      keysToDelete.add(key)
+      continue
+    }
+    if (val !== undefined) {
       cleanAttributes[key] = val
     }
   }
@@ -86,7 +103,7 @@ export function updateCharacterAttributesInList<T extends CharacterLike>(
 
   return characters.map((char, idx) => {
     if (idx !== resolvedIndex) return char
-    return {
+    const merged: Record<string, unknown> = {
       ...char,
       ...cleanAttributes,
       name: char.name,
@@ -96,6 +113,10 @@ export function updateCharacterAttributesInList<T extends CharacterLike>(
         (cleanAttributes.referenceImage as string | undefined) ?? char.referenceImage,
       wardrobes: (cleanAttributes.wardrobes as CharacterWardrobe[] | undefined) ?? char.wardrobes,
     }
+    for (const delKey of keysToDelete) {
+      delete merged[delKey]
+    }
+    return merged as T
   })
 }
 

@@ -62,6 +62,8 @@ export interface FamilyAwareCharacter {
   description?: string
   backstory?: string
   samePersonGroupId?: string
+  referenceImage?: string
+  likenessTransformNote?: string
   familyRelationships?: CharacterFamilyRelationship[]
 }
 
@@ -345,7 +347,8 @@ export function inferFamilyRelationshipsForEnsemble<T extends FamilyAwareCharact
 
   const castIndices: number[] = []
   const byNormName = new Map<string, number>()
-  const firstNameCounts = new Map<string, number>()
+  const firstNamePersonGroups = new Map<string, Set<string>>()
+  const firstNameAnchorRank = new Map<string, number>()
   const byFirstName = new Map<string, number>()
 
   characters.forEach((char, idx) => {
@@ -356,10 +359,30 @@ export function inferFamilyRelationshipsForEnsemble<T extends FamilyAwareCharact
     castIndices.push(idx)
     const norm = normalizeCharacterName(name)
     if (norm) byNormName.set(norm, idx)
-    const first = extractFirstName(name).toUpperCase()
-    if (first.length >= 2) {
-      firstNameCounts.set(first, (firstNameCounts.get(first) || 0) + 1)
-      byFirstName.set(first, idx)
+
+    const stage = extractSamePersonAgeStage(name)
+    const baseFirst = extractFirstName(stage.baseName || name).toUpperCase()
+    const personKey =
+      cleanText(char?.samePersonGroupId).toLowerCase() ||
+      normalizeCharacterName(stage.baseName || name) ||
+      norm
+    if (baseFirst.length >= 2 && personKey) {
+      let groupSet = firstNamePersonGroups.get(baseFirst)
+      if (!groupSet) {
+        groupSet = new Set<string>()
+        firstNamePersonGroups.set(baseFirst, groupSet)
+      }
+      groupSet.add(personKey)
+
+      // Prefer a drawn portrait or older/base life-stage anchor (e.g. "Arthur 78" over "Arthur 26")
+      const rank =
+        (cleanText(char?.referenceImage) ? 1000 : 0) +
+        (!stage.isAgeVariant ? 200 : stage.numericAge ?? 0)
+      const prevRank = firstNameAnchorRank.get(baseFirst)
+      if (prevRank === undefined || rank > prevRank) {
+        firstNameAnchorRank.set(baseFirst, rank)
+        byFirstName.set(baseFirst, idx)
+      }
     }
   })
 
@@ -367,13 +390,17 @@ export function inferFamilyRelationshipsForEnsemble<T extends FamilyAwareCharact
 
   const edgeMaps = characters.map(() => new Map<number, CharacterFamilyRelationship>())
 
+  const isUniquePersonFirstName = (firstUpper: string): boolean =>
+    Boolean(firstUpper && firstNamePersonGroups.get(firstUpper)?.size === 1)
+
   const resolveTargetIndex = (rawRef: string, selfIdx: number): number | null => {
     const norm = normalizeCharacterName(rawRef)
     if (!norm) return null
     const exact = byNormName.get(norm)
     if (exact !== undefined && exact !== selfIdx) return exact
-    const first = extractFirstName(rawRef).toUpperCase()
-    if (first && firstNameCounts.get(first) === 1) {
+    const stage = extractSamePersonAgeStage(rawRef)
+    const first = extractFirstName(stage.baseName || rawRef).toUpperCase()
+    if (isUniquePersonFirstName(first)) {
       const byFirst = byFirstName.get(first)
       if (byFirst !== undefined && byFirst !== selfIdx) return byFirst
     }
@@ -451,32 +478,59 @@ export function inferFamilyRelationshipsForEnsemble<T extends FamilyAwareCharact
     }
   }
 
-  // 2. Scan character bios (`subject`, `keyFeature`, `description`, `backstory`) for relational mentions of other cast members
+  // 2. Scan character bios (`subject`, `keyFeature`, `description`, `appearance`, `backstory`, `likenessTransformNote`)
+  // for relational and genetic trait-inheritance mentions of other cast members
   for (const selfIdx of castIndices) {
     const self = characters[selfIdx]!
+    const selfStage = extractSamePersonAgeStage(cleanText(self.name))
+    const selfPersonKey =
+      cleanText(self.samePersonGroupId).toLowerCase() ||
+      normalizeCharacterName(selfStage.baseName || cleanText(self.name))
     const bioText = [
       cleanText(self.subject),
       cleanText(self.keyFeature),
       cleanText(self.description),
+      cleanText(self.appearanceDescription),
+      cleanText(self.appearance),
       cleanText(self.backstory),
+      cleanText(self.likenessTransformNote),
     ]
       .filter(Boolean)
       .join('. ')
     if (!bioText) continue
 
+    const hasGrandchildSelfCue = /\b(granddaughter|grandson|grandchild)\b/i.test(bioText)
+    const hasSiblingSelfCue =
+      !hasGrandchildSelfCue &&
+      !/\b(daughter|son|child|offspring|firstborn)\b/i.test(bioText) &&
+      /\b(sister|brother|twin|sibling)\b/i.test(bioText)
+
     for (const otherIdx of castIndices) {
       if (otherIdx === selfIdx) continue
-      const otherName = cleanText(characters[otherIdx]!.name)
-      const otherFirst = extractFirstName(otherName)
+      const otherChar = characters[otherIdx]!
+      const otherName = cleanText(otherChar.name)
+      const otherStage = extractSamePersonAgeStage(otherName)
+      const otherPersonKey =
+        cleanText(otherChar.samePersonGroupId).toLowerCase() ||
+        normalizeCharacterName(otherStage.baseName || otherName)
+      // Never infer family kinship between two age variants of the SAME person (e.g. Arthur 26 & Arthur 78)
+      if (selfPersonKey && otherPersonKey && selfPersonKey === otherPersonKey) continue
+
+      const otherFirst = extractFirstName(otherStage.baseName || otherName)
+      const otherFirstUpper = otherFirst.toUpperCase()
       const tokensToTry = [otherName]
-      if (otherFirst.length >= 3 && firstNameCounts.get(otherFirst.toUpperCase()) === 1) {
+      if (
+        otherFirst.length >= 3 &&
+        isUniquePersonFirstName(otherFirstUpper) &&
+        byFirstName.get(otherFirstUpper) === otherIdx
+      ) {
         tokensToTry.push(otherFirst)
       }
 
       for (const nameToken of tokensToTry) {
         const esc = escapeRegex(nameToken)
         const nonBio = new RegExp(
-          `\\b(adoptive|adopted|step[-\\s]?|foster|in[-\\s]?law)\\b[^.]{0,35}\\b${esc}\\b|\\b${esc}(?:'s)?\\s+(adoptive|adopted|step[-\\s]?|foster)`,
+          `\\b(adoptive|adopted|step[-\\s]?|foster|in[-\\s]?law)\\b[^.]{0,35}\\b${esc}\\b|\\b${esc}(?:'s|’s)?\\s+(adoptive|adopted|step[-\\s]?|foster)`,
           'i'
         ).test(bioText)
 
@@ -510,6 +564,26 @@ export function inferFamilyRelationshipsForEnsemble<T extends FamilyAwareCharact
             addBidirectionalEdge(selfIdx, otherIdx, parsed.relation, parsed.biological)
             break
           }
+        }
+
+        // Pattern C: Genetic trait inheritance ("adult daughter inheriting Arthur's hazel eyes and Eleanor's cheekbones")
+        const inheritsClauseMatch = new RegExp(
+          `\\binherit(?:s|ing|ed)?\\b[^.;\\n]{0,130}?\\b${esc}(?:'s|’s|\\b)`,
+          'i'
+        ).test(bioText)
+        const physicalTraitPossessiveMatch = new RegExp(
+          `\\b${esc}(?:'s|’s)\\s+(?:[a-z-]+\\s+){0,2}(?:eyes|cheekbones|jaw|jawline|smile|nose|brow|forehead|chin|dimples|freckles|curls|hair|complexion|bone\\s+structure|facial\\s+structure|features)\\b`,
+          'i'
+        ).test(bioText)
+
+        if (!nonBio && (inheritsClauseMatch || physicalTraitPossessiveMatch)) {
+          const inferredRelation: KinshipRelationType = hasGrandchildSelfCue
+            ? 'grandchild_of'
+            : hasSiblingSelfCue
+              ? 'sibling_of'
+              : 'child_of'
+          addBidirectionalEdge(selfIdx, otherIdx, inferredRelation, true)
+          break
         }
       }
     }

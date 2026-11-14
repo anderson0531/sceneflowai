@@ -63,8 +63,10 @@ import {
   seedWardrobeDirectorPrompt,
 } from "@/lib/intelligence/reference-still-director-fallback";
 import {
+  detectTraitDonorCandidatesFromProse,
   resolveAnchorWardrobeForTransition,
   resolveCharacterLikenessInput,
+  type DetectedTraitDonorCandidate,
 } from "@/lib/character/characterReferencePrompts";
 import {
   defaultCharacterWardrobeId,
@@ -491,7 +493,7 @@ interface CharacterCardProps {
   isSelected: boolean;
   onClick: () => void;
   onRegenerate: () => void;
-  onGenerate: () => void;
+  onGenerate: (override?: { likenessTransformNote?: string }) => void;
   onUpload: (file: File) => void;
   onApprove: () => void;
   prompt: string;
@@ -603,12 +605,16 @@ interface CharacterCardProps {
   focusWardrobeId?: string;
   focusNonce?: number;
   defaultArtStyle?: string;
-  /** Other cast members with portraits available as optional facial likeness anchors. */
+  /** Other cast members available as optional facial likeness anchors (sorted same-person & drawn first). */
   castReferenceCandidates?: Array<{
     id: string;
     name: string;
-    imageUrl: string;
+    imageUrl?: string;
+    hasPortrait: boolean;
+    isSamePersonSibling?: boolean;
   }>;
+  /** Parent/relative trait donors auto-detected from prose (e.g. "inheriting Arthur's hazel eyes and Eleanor's cheekbones"). */
+  suggestedTraitDonors?: DetectedTraitDonorCandidate[];
 }
 
 export function CharacterLibrary({
@@ -1005,9 +1011,9 @@ export function CharacterLibrary({
           defaultWardrobeOverride: ageVariantWardrobe.trim() || undefined,
           samePersonGroupId: groupKey,
           lookTransformNote: ageVariantLookNote.trim() || undefined,
-          likenessCharacterId: isDisplayableImageUrl(sourceChar.referenceImage)
-            ? ageVariantModalCharId
-            : undefined,
+          likenessCharacterId: ageVariantModalCharId,
+          likenessCharacterName:
+            stampedCurrentName || String(sourceChar.name || "").trim() || undefined,
         });
         await onAddCharacter(variantChar);
         existingLowerNames.add(candidateName.toLowerCase());
@@ -1042,19 +1048,50 @@ export function CharacterLibrary({
       char.appearanceDescription ||
       char.imagePrompt ||
       `${char.name || "Character"}`;
-    const castReferenceCandidates = castCharacters.flatMap((other, otherIdx) => {
-      const otherId = getCharacterId(other, otherIdx);
-      if (otherId === charId || !isDisplayableImageUrl(other.referenceImage)) {
-        return [];
-      }
-      return [
-        {
-          id: otherId,
-          name: String(other.name || "Character"),
-          imageUrl: String(other.referenceImage),
-        },
-      ];
-    });
+    const selfStage = extractSamePersonAgeStage(String(char.name || ""));
+    const selfBaseLower = selfStage.baseName.toLowerCase().trim();
+    const selfGroupId = String(char.samePersonGroupId || "").trim();
+    const castReferenceCandidates = castCharacters
+      .flatMap((other, otherIdx) => {
+        const otherId = getCharacterId(other, otherIdx);
+        if (otherId === charId) {
+          return [];
+        }
+        const hasPortrait = isDisplayableImageUrl(other.referenceImage);
+        const otherStage = extractSamePersonAgeStage(String(other.name || ""));
+        const otherBaseLower = otherStage.baseName.toLowerCase().trim();
+        const otherGroupId = String(other.samePersonGroupId || "").trim();
+        const isSamePersonSibling = Boolean(
+          (selfGroupId && otherGroupId && selfGroupId === otherGroupId) ||
+            (selfBaseLower &&
+              otherBaseLower &&
+              selfBaseLower === otherBaseLower &&
+              (selfStage.isAgeVariant || otherStage.isAgeVariant)),
+        );
+        return [
+          {
+            id: otherId,
+            name: String(other.name || "Character"),
+            imageUrl: hasPortrait ? String(other.referenceImage) : undefined,
+            hasPortrait,
+            isSamePersonSibling,
+          },
+        ];
+      })
+      .sort((a, b) => {
+        if (Boolean(a.isSamePersonSibling) !== Boolean(b.isSamePersonSibling)) {
+          return a.isSamePersonSibling ? -1 : 1;
+        }
+        if (a.hasPortrait !== b.hasPortrait) {
+          return a.hasPortrait ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name);
+      });
+    const suggestedTraitDonors = detectTraitDonorCandidatesFromProse(
+      char,
+      castCharacters,
+      charId,
+    );
 
     return (
       <CharacterCard
@@ -1067,7 +1104,7 @@ export function CharacterLibrary({
         }
         onClick={() => setSelectedChar(charId)}
         onRegenerate={() => onRegenerateCharacter(charId)}
-        onGenerate={async () => {
+        onGenerate={async (override) => {
           setGeneratingChars((prev) => new Set(prev).add(charId));
           try {
             const latestList = getLatestCharacters?.() ?? characters;
@@ -1075,15 +1112,86 @@ export function CharacterLibrary({
               latestList.find(
                 (c, i) => resolveCharacterId(c, i) === charId,
               ) || char;
-            const resolved = resolveCastIdentityGenerationPrompt(
-              latestChar,
-              defaultArtStyle,
-            );
+            const effectiveMode =
+              latestChar?.likenessSourceType === "character" ||
+              latestChar?.likenessSourceType === "upload" ||
+              latestChar?.likenessSourceType === "none"
+                ? latestChar.likenessSourceType
+                : latestChar?.likenessCharacterId ||
+                    latestChar?.likenessCharacterName ||
+                    latestChar?.secondaryLikenessCharacterId ||
+                    latestChar?.secondaryLikenessCharacterName
+                  ? "character"
+                  : latestChar?.likenessImageUrl ||
+                      latestChar?.secondaryLikenessImageUrl
+                    ? "upload"
+                    : "none";
+            if (effectiveMode === "character") {
+              const primaryDonorCand = latestChar?.likenessCharacterId || latestChar?.likenessCharacterName
+                ? castReferenceCandidates.find(
+                    (cand) =>
+                      cand.id === latestChar?.likenessCharacterId ||
+                      (Boolean(latestChar?.likenessCharacterName) &&
+                        cand.name.trim().toLowerCase() ===
+                          String(latestChar.likenessCharacterName).trim().toLowerCase()),
+                  )
+                : undefined;
+              const secondaryDonorCand = latestChar?.secondaryLikenessCharacterId || latestChar?.secondaryLikenessCharacterName
+                ? castReferenceCandidates.find(
+                    (cand) =>
+                      cand.id === latestChar?.secondaryLikenessCharacterId ||
+                      (Boolean(latestChar?.secondaryLikenessCharacterName) &&
+                        cand.name.trim().toLowerCase() ===
+                          String(latestChar.secondaryLikenessCharacterName).trim().toLowerCase()),
+                  )
+                : undefined;
+              const missingCastDonor = [primaryDonorCand, secondaryDonorCand].find(
+                (cand) => cand && !cand.hasPortrait,
+              );
+              if (missingCastDonor) {
+                toast.error(
+                  `Generate or upload ${missingCastDonor.name}'s portrait first so ${latestChar?.name || "this character"} can inherit their reference features (or run Cast Agent to generate donors first).`,
+                );
+                return;
+              }
+            }
             const likeness = resolveCharacterLikenessInput(
               latestChar,
               latestList,
               charId,
             );
+            if (
+              effectiveMode === "character" &&
+              !likeness.likenessReferenceImageUrl
+            ) {
+              const donorLabel =
+                latestChar?.likenessCharacterName ||
+                castReferenceCandidates.find(
+                  (cand) => cand.id === latestChar?.likenessCharacterId,
+                )?.name ||
+                "the selected donor character";
+              toast.error(
+                `Generate or upload ${donorLabel}'s portrait first so ${latestChar?.name || "this character"} can anchor to their facial likeness (or run Cast Agent to generate both in sequence).`,
+              );
+              return;
+            }
+            if (
+              effectiveMode === "upload" &&
+              !likeness.likenessReferenceImageUrl
+            ) {
+              toast.error(
+                "Upload a reference photo first, or switch Reference Likeness to None.",
+              );
+              return;
+            }
+            const resolved = resolveCastIdentityGenerationPrompt(
+              latestChar,
+              defaultArtStyle,
+            );
+            const effectiveTransformNote =
+              override?.likenessTransformNote !== undefined
+                ? override.likenessTransformNote
+                : likeness.likenessTransformNote;
             await onGenerateCharacter(charId, {
               characterPrompt: resolved.prompt,
               ...(resolved.rawMode ? { rawMode: true } : {}),
@@ -1091,10 +1199,14 @@ export function CharacterLibrary({
               ...(likeness.likenessReferenceImageUrl
                 ? {
                     likenessReferenceImageUrl: likeness.likenessReferenceImageUrl,
-                    likenessTransformNote: likeness.likenessTransformNote,
+                    likenessDonors: likeness.donors,
+                    likenessMode: likeness.likenessMode,
+                    likenessTransformNote: effectiveTransformNote,
+                    donorCharacterName: likeness.donorCharacterName,
                   }
                 : {}),
               ...(latestChar?.age ? { targetAge: latestChar.age } : {}),
+              ...(latestChar?.gender ? { targetGender: latestChar.gender } : {}),
             });
           } finally {
             setGeneratingChars((prev) => {
@@ -1156,10 +1268,14 @@ export function CharacterLibrary({
               ...(likeness?.likenessReferenceImageUrl
                 ? {
                     likenessReferenceImageUrl: likeness.likenessReferenceImageUrl,
+                    likenessDonors: likeness.donors,
+                    likenessMode: likeness.likenessMode,
                     likenessTransformNote: likeness.likenessTransformNote,
+                    donorCharacterName: likeness.donorCharacterName,
                   }
                 : {}),
               ...(generate && latestChar?.age ? { targetAge: latestChar.age } : {}),
+              ...(generate && latestChar?.gender ? { targetGender: latestChar.gender } : {}),
             });
           } finally {
             if (generate) {
@@ -1189,6 +1305,7 @@ export function CharacterLibrary({
           return [voiceId as string];
         })}
         castReferenceCandidates={castReferenceCandidates}
+        suggestedTraitDonors={suggestedTraitDonors}
       />
     );
   };
@@ -1857,14 +1974,15 @@ export function CharacterLibrary({
                     type="text"
                     value={ageVariantLookNote}
                     onChange={(e) => setAgeVariantLookNote(e.target.value)}
-                    placeholder="e.g. medium afro and no facial hair"
+                    placeholder="e.g. thick tousled chestnut-brown hair, clean-shaven jawline, warm smile"
                     className="w-full px-2.5 py-1.5 text-xs rounded-md border border-gray-700 bg-gray-800 text-gray-100"
                   />
-                  {isDisplayableImageUrl(sourceChar.referenceImage) ? (
-                    <p className="text-[11px] text-cyan-400/90 mt-1">
-                      New character card(s) will automatically link &ldquo;{sourceChar.name}&rdquo; as a facial likeness reference without coupling deletion.
-                    </p>
-                  ) : null}
+                  <p className="text-[11px] text-cyan-400/90 mt-1">
+                    New character card(s) will automatically link &ldquo;{sourceChar.name}&rdquo; as a facial likeness reference without coupling deletion.
+                    {!isDisplayableImageUrl(sourceChar.referenceImage)
+                      ? " Upload your photo or generate a portrait on the base card first (or run Cast Agent to generate both in sequence)."
+                      : ""}
+                  </p>
                 </div>
               </div>
 
@@ -2021,13 +2139,17 @@ const CharacterCard = ({
   focusNonce,
   defaultArtStyle,
   castReferenceCandidates = [],
+  suggestedTraitDonors = [],
 }: CharacterCardProps) => {
   const [imageError, setImageError] = useState(false); // Track if image failed to load
   const [likenessNoteDraft, setLikenessNoteDraft] = useState<string>(
     character.likenessTransformNote || "",
   );
   const [isUploadingLikenessRef, setIsUploadingLikenessRef] = useState(false);
+  const [isUploadingSecondaryLikenessRef, setIsUploadingSecondaryLikenessRef] =
+    useState(false);
   const likenessFileInputRef = useRef<HTMLInputElement>(null);
+  const secondaryLikenessFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setLikenessNoteDraft(character.likenessTransformNote || "");
@@ -3950,12 +4072,102 @@ const CharacterCard = ({
     );
   }
 
+  const activeLikenessMode: "none" | "character" | "upload" =
+    character.likenessSourceType === "character" ||
+    character.likenessSourceType === "upload" ||
+    character.likenessSourceType === "none"
+      ? character.likenessSourceType
+      : character.likenessCharacterId ||
+          character.likenessCharacterName ||
+          character.secondaryLikenessCharacterId ||
+          character.secondaryLikenessCharacterName
+        ? "character"
+        : character.likenessImageUrl || character.secondaryLikenessImageUrl
+          ? "upload"
+          : "none";
+  const selectedLikenessDonor = castReferenceCandidates.find(
+    (c) =>
+      c.id === character.likenessCharacterId ||
+      (Boolean(character.likenessCharacterName) &&
+        c.name.trim().toLowerCase() ===
+          String(character.likenessCharacterName).trim().toLowerCase()),
+  );
+  const secondaryLikenessDonor = castReferenceCandidates.find(
+    (c) =>
+      c.id === character.secondaryLikenessCharacterId ||
+      (Boolean(character.secondaryLikenessCharacterName) &&
+        c.name.trim().toLowerCase() ===
+          String(character.secondaryLikenessCharacterName).trim().toLowerCase()),
+  );
+  const hasUploadedLikeness = isDisplayableImageUrl(character.likenessImageUrl);
+  const hasSecondaryUploadedLikeness = isDisplayableImageUrl(
+    character.secondaryLikenessImageUrl,
+  );
+  const activeLikenessRelationMode: "same_person" | "family_blend" =
+    character.likenessMode === "family_blend" ||
+    Boolean(secondaryLikenessDonor || hasSecondaryUploadedLikeness)
+      ? "family_blend"
+      : character.likenessMode === "same_person"
+        ? "same_person"
+        : !selectedLikenessDonor?.isSamePersonSibling &&
+            (suggestedTraitDonors.length > 0 ||
+              /\b(?:daughter|son|child|offspring|granddaughter|grandson|sister|brother|sibling|inherit(?:s|ing|ed)?)\b/i.test(
+                `${likenessNoteDraft} ${character.appearanceDescription || ""} ${character.description || ""}`,
+              ))
+          ? "family_blend"
+          : "same_person";
+  const canGenerateFromReference =
+    (activeLikenessMode === "character" &&
+      Boolean(selectedLikenessDonor?.hasPortrait) &&
+      (!secondaryLikenessDonor || Boolean(secondaryLikenessDonor.hasPortrait))) ||
+    (activeLikenessMode === "upload" && hasUploadedLikeness);
+  const suggestedSamePersonDonor = castReferenceCandidates.find(
+    (c) => c.isSamePersonSibling,
+  );
+  const likenessBadgeLabel =
+    activeLikenessMode === "character" && selectedLikenessDonor
+      ? secondaryLikenessDonor
+        ? `Family Blend: ${selectedLikenessDonor.name} + ${secondaryLikenessDonor.name}`
+        : activeLikenessRelationMode === "family_blend"
+          ? `Family Trait: ${selectedLikenessDonor.name}`
+          : `Likeness: ${selectedLikenessDonor.name}`
+      : activeLikenessMode === "upload" && hasUploadedLikeness
+        ? hasSecondaryUploadedLikeness
+          ? "Family Blend: 2 Photos"
+          : activeLikenessRelationMode === "family_blend"
+            ? "Family Trait: Photo"
+            : "Likeness: Uploaded Photo"
+        : null;
+
+  const flushLikenessNoteIfDirty = async (): Promise<string> => {
+    const trimmed = likenessNoteDraft.trim();
+    if (
+      onUpdateCharacterAttributes &&
+      trimmed !== (character.likenessTransformNote || "")
+    ) {
+      await onUpdateCharacterAttributes(
+        characterId,
+        { likenessTransformNote: trimmed },
+        { quiet: true },
+      );
+    }
+    return trimmed;
+  };
+
   const identityImageSection = (
     <div
       className={`relative bg-gray-100 dark:bg-gray-800 group rounded-md overflow-hidden ${
         splitLayout ? "h-full w-full" : "aspect-[9/16]"
       }`}
     >
+      {likenessBadgeLabel && (
+        <div className="absolute top-2 left-2 z-20 max-w-[85%] pointer-events-none">
+          <span className="inline-flex items-center gap-1 rounded-full bg-cyan-950/85 border border-cyan-500/40 px-2 py-0.5 text-[10px] font-medium text-cyan-200 shadow-sm truncate">
+            <ImagePlus className="w-2.5 h-2.5 text-cyan-400 shrink-0" />
+            <span className="truncate">{likenessBadgeLabel}</span>
+          </span>
+        </div>
+      )}
       {isDeferredImage ? (
         <DeferredImageSkeleton
           className="w-full h-full"
@@ -3971,10 +4183,12 @@ const CharacterCard = ({
           onError={() => setImageError(true)}
         />
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center">
+        <div className="w-full h-full flex flex-col items-center justify-center px-3 text-center">
           <Camera className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            No reference image
+            {likenessBadgeLabel
+              ? `Ready to generate from ${selectedLikenessDonor?.name || "reference photo"}`
+              : "No reference image"}
           </span>
         </div>
       )}
@@ -3998,10 +4212,15 @@ const CharacterCard = ({
       >
         <button
           type="button"
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
             if (isGenerating) return;
-            onGenerate();
+            const trimmed = await flushLikenessNoteIfDirty();
+            onGenerate(
+              activeLikenessMode !== "none"
+                ? { likenessTransformNote: trimmed }
+                : undefined,
+            );
           }}
           disabled={isGenerating}
           className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
@@ -4020,9 +4239,10 @@ const CharacterCard = ({
 
         <button
           type="button"
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
             if (isGenerating) return;
+            await flushLikenessNoteIfDirty();
             setDirectorTarget({ kind: "cast" });
           }}
           disabled={isGenerating}
@@ -4512,322 +4732,740 @@ const CharacterCard = ({
 
                 {onUpdateCharacterAttributes && (
                   <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300">
-                        <ImagePlus className="w-3.5 h-3.5 text-cyan-400" />
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-700 dark:text-gray-200">
+                        <ImagePlus className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                         Reference Likeness
                       </span>
-                      <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium bg-gray-500/10 text-gray-400 border border-gray-500/20">
-                        Optional
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium truncate max-w-[165px] ${
+                          activeLikenessMode !== "none"
+                            ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/35"
+                            : "bg-gray-500/10 text-gray-400 border border-gray-500/20"
+                        }`}
+                      >
+                        {activeLikenessMode === "character" && selectedLikenessDonor
+                          ? secondaryLikenessDonor
+                            ? `Blend · ${selectedLikenessDonor.name} + ${secondaryLikenessDonor.name}`
+                            : `Active · ${selectedLikenessDonor.name}`
+                          : activeLikenessMode === "upload" && hasUploadedLikeness
+                            ? hasSecondaryUploadedLikeness
+                              ? "Blend · 2 Photos"
+                              : "Active · Photo"
+                            : activeLikenessMode !== "none"
+                              ? "Select Source"
+                              : "Optional"}
                       </span>
                     </div>
                     <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
-                      Generate this character&apos;s portrait using another cast character or an uploaded photo as a facial structure reference (e.g. younger/older version).
+                      Create a younger/older version of the same person, or blend inherited traits from 1–2 parents/relatives (e.g. father&apos;s eyes + mother&apos;s cheekbones).
                     </p>
-                    {(() => {
-                      const activeLikenessMode: "none" | "character" | "upload" =
-                        character.likenessSourceType === "character" ||
-                        character.likenessSourceType === "upload" ||
-                        character.likenessSourceType === "none"
-                          ? character.likenessSourceType
-                          : character.likenessCharacterId
-                            ? "character"
-                            : character.likenessImageUrl
-                              ? "upload"
-                              : "none";
-                      const selectedDonor = castReferenceCandidates.find(
-                        (c) => c.id === character.likenessCharacterId,
-                      );
-                      const hasUploadedLikeness = isDisplayableImageUrl(
-                        character.likenessImageUrl,
-                      );
-                      const canGenerateFromReference =
-                        (activeLikenessMode === "character" && Boolean(selectedDonor)) ||
-                        (activeLikenessMode === "upload" && hasUploadedLikeness);
 
-                      return (
-                        <div className="space-y-2.5">
-                          <div className="flex flex-wrap gap-1">
-                            {(
-                              [
-                                { key: "none", label: "None" },
-                                { key: "character", label: "Cast Character" },
-                                { key: "upload", label: "Upload Photo" },
-                              ] as const
-                            ).map((opt) => {
-                              const isActive = activeLikenessMode === opt.key;
-                              return (
-                                <button
-                                  key={opt.key}
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const patch: Record<string, any> = {
-                                      likenessSourceType: opt.key,
-                                    };
-                                    if (
-                                      opt.key === "character" &&
-                                      !character.likenessCharacterId &&
-                                      castReferenceCandidates[0]?.id
-                                    ) {
-                                      patch.likenessCharacterId =
-                                        castReferenceCandidates[0].id;
+                    {activeLikenessMode === "none" && suggestedSamePersonDonor && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const parsedSelf = extractSamePersonAgeStage(
+                            String(character.name || ""),
+                          );
+                          const targetAgeStr =
+                            parsedSelf.numericAge || character.age || "";
+                          const starterNote =
+                            likenessNoteDraft.trim() ||
+                            (targetAgeStr
+                              ? `${targetAgeStr}-year-old version of ${suggestedSamePersonDonor.name}`
+                              : `Transformed version of ${suggestedSamePersonDonor.name}`);
+                          setLikenessNoteDraft(starterNote);
+                          void onUpdateCharacterAttributes(
+                            characterId,
+                            {
+                              likenessSourceType: "character",
+                              likenessMode: "same_person",
+                              likenessCharacterId: suggestedSamePersonDonor.id,
+                              likenessCharacterName: suggestedSamePersonDonor.name,
+                              likenessTransformNote: starterNote,
+                            },
+                            { quiet: true },
+                          );
+                        }}
+                        className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-left text-[11px] bg-cyan-950/40 hover:bg-cyan-950/70 border border-cyan-500/35 text-cyan-200 transition-colors"
+                      >
+                        <span className="truncate">
+                          Link facial likeness from{" "}
+                          <strong>{suggestedSamePersonDonor.name}</strong>
+                        </span>
+                        <span className="text-[10px] text-cyan-400 shrink-0 font-medium">
+                          Link →
+                        </span>
+                      </button>
+                    )}
+
+                    {activeLikenessMode === "none" &&
+                      !suggestedSamePersonDonor &&
+                      suggestedTraitDonors.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const primary = suggestedTraitDonors[0]!;
+                            const secondary = suggestedTraitDonors[1];
+                            const starterNote =
+                              likenessNoteDraft.trim() ||
+                              String(
+                                character.appearanceDescription ||
+                                  character.description ||
+                                  "",
+                              ).trim();
+                            if (starterNote) {
+                              setLikenessNoteDraft(starterNote);
+                            }
+                            void onUpdateCharacterAttributes(
+                              characterId,
+                              {
+                                likenessSourceType: "character",
+                                likenessMode: "family_blend",
+                                likenessCharacterId: primary.characterId,
+                                likenessCharacterName: primary.characterName,
+                                secondaryLikenessCharacterId:
+                                  secondary?.characterId || "",
+                                secondaryLikenessCharacterName:
+                                  secondary?.characterName || "",
+                                ...(starterNote
+                                  ? { likenessTransformNote: starterNote }
+                                  : {}),
+                              },
+                              { quiet: true },
+                            );
+                          }}
+                          className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-left text-[11px] bg-cyan-950/40 hover:bg-cyan-950/70 border border-cyan-500/35 text-cyan-200 transition-colors"
+                        >
+                          <span className="truncate">
+                            Link inherited family traits from{" "}
+                            <strong>
+                              {suggestedTraitDonors
+                                .slice(0, 2)
+                                .map((d) => d.characterName)
+                                .join(" + ")}
+                            </strong>
+                          </span>
+                          <span className="text-[10px] text-cyan-400 shrink-0 font-medium">
+                            Link →
+                          </span>
+                        </button>
+                      )}
+
+                    <div className="space-y-2.5">
+                      <div className="flex flex-wrap gap-1">
+                        {(
+                          [
+                            { key: "none", label: "None" },
+                            { key: "character", label: "Cast Character" },
+                            { key: "upload", label: "Upload Photo" },
+                          ] as const
+                        ).map((opt) => {
+                          const isActive = activeLikenessMode === opt.key;
+                          return (
+                            <button
+                              key={opt.key}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const patch: Record<string, any> = {
+                                  likenessSourceType: opt.key,
+                                };
+                                if (
+                                  opt.key === "character" &&
+                                  !character.likenessCharacterId
+                                ) {
+                                  if (suggestedTraitDonors[0]) {
+                                    patch.likenessMode = "family_blend";
+                                    patch.likenessCharacterId =
+                                      suggestedTraitDonors[0].characterId;
+                                    patch.likenessCharacterName =
+                                      suggestedTraitDonors[0].characterName;
+                                    if (suggestedTraitDonors[1]) {
+                                      patch.secondaryLikenessCharacterId =
+                                        suggestedTraitDonors[1].characterId;
+                                      patch.secondaryLikenessCharacterName =
+                                        suggestedTraitDonors[1].characterName;
                                     }
+                                  } else if (castReferenceCandidates[0]) {
+                                    patch.likenessCharacterId =
+                                      castReferenceCandidates[0].id;
+                                    patch.likenessCharacterName =
+                                      castReferenceCandidates[0].name;
+                                  }
+                                }
+                                void onUpdateCharacterAttributes(
+                                  characterId,
+                                  patch,
+                                  { quiet: true },
+                                );
+                              }}
+                              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors border ${
+                                isActive
+                                  ? "bg-cyan-600/25 text-cyan-200 border-cyan-500/50"
+                                  : "bg-gray-100 dark:bg-gray-800/80 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-500"
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {activeLikenessMode !== "none" && (
+                        <div className="flex flex-wrap gap-1">
+                          {(
+                            [
+                              {
+                                key: "same_person",
+                                label: "Same Person (Age / Era)",
+                              },
+                              {
+                                key: "family_blend",
+                                label: "Family / Parent Blend",
+                              },
+                            ] as const
+                          ).map((relOpt) => {
+                            const isRelActive =
+                              activeLikenessRelationMode === relOpt.key;
+                            return (
+                              <button
+                                key={relOpt.key}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const patch: Record<string, any> = {
+                                    likenessMode: relOpt.key,
+                                  };
+                                  if (relOpt.key === "same_person") {
+                                    patch.secondaryLikenessCharacterId = "";
+                                    patch.secondaryLikenessCharacterName = "";
+                                    patch.secondaryLikenessImageUrl = "";
+                                  }
+                                  void onUpdateCharacterAttributes(
+                                    characterId,
+                                    patch,
+                                    { quiet: true },
+                                  );
+                                }}
+                                className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors border ${
+                                  isRelActive
+                                    ? "bg-indigo-500/25 text-indigo-200 border-indigo-400/50"
+                                    : "bg-gray-100 dark:bg-gray-800/60 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-500"
+                                }`}
+                              >
+                                {relOpt.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {activeLikenessMode === "character" && (
+                        <div className="space-y-2 rounded-md border border-gray-200 dark:border-gray-700/80 bg-gray-50/60 dark:bg-gray-900/50 p-2">
+                          {castReferenceCandidates.length === 0 ? (
+                            <p className="text-[11px] text-amber-400">
+                              No other cast characters exist yet. Add a base character card or switch to Upload Photo.
+                            </p>
+                          ) : (
+                            <>
+                              <div>
+                                <label className="block text-[10px] font-medium text-gray-400 mb-1">
+                                  {activeLikenessRelationMode === "family_blend"
+                                    ? "Parent / Relative Donor [1]"
+                                    : "Base Character Reference [1]"}
+                                </label>
+                                <select
+                                  value={
+                                    selectedLikenessDonor?.id ||
+                                    character.likenessCharacterId ||
+                                    ""
+                                  }
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    const nextId = e.target.value;
+                                    const nextCand = castReferenceCandidates.find(
+                                      (cand) => cand.id === nextId,
+                                    );
                                     void onUpdateCharacterAttributes(
                                       characterId,
-                                      patch,
+                                      {
+                                        likenessSourceType: nextId
+                                          ? "character"
+                                          : secondaryLikenessDonor
+                                            ? "character"
+                                            : "none",
+                                        likenessCharacterId: nextId || "",
+                                        likenessCharacterName:
+                                          nextCand?.name || "",
+                                      },
                                       { quiet: true },
                                     );
                                   }}
-                                  className={`px-2 py-1 rounded text-[10px] font-medium transition-colors border ${
-                                    isActive
-                                      ? "bg-cyan-600/25 text-cyan-200 border-cyan-500/50"
-                                      : "bg-gray-100 dark:bg-gray-800/80 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-500"
-                                  }`}
+                                  className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                 >
-                                  {opt.label}
-                                </button>
-                              );
-                            })}
-                          </div>
+                                  <option value="">Select cast character…</option>
+                                  {castReferenceCandidates.map((cand) => (
+                                    <option key={cand.id} value={cand.id}>
+                                      {cand.name}
+                                      {cand.isSamePersonSibling
+                                        ? " (Same person)"
+                                        : ""}
+                                      {!cand.hasPortrait
+                                        ? " — needs portrait"
+                                        : ""}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
 
-                          {activeLikenessMode === "character" && (
-                            <div className="space-y-1.5 rounded-md border border-gray-200 dark:border-gray-700/80 bg-gray-50/60 dark:bg-gray-900/50 p-2">
-                              {castReferenceCandidates.length === 0 ? (
-                                <p className="text-[11px] text-amber-400">
-                                  No other cast characters have portraits yet. Generate or upload a portrait on the base character first, or switch to Upload Photo.
-                                </p>
-                              ) : (
-                                <>
-                                  <label className="block text-[10px] font-medium text-gray-400">
-                                    Base Character Reference
+                              {activeLikenessRelationMode === "family_blend" ? (
+                                <div>
+                                  <label className="block text-[10px] font-medium text-gray-400 mb-1">
+                                    Second Parent / Relative Donor [2] (Optional)
                                   </label>
                                   <select
-                                    value={character.likenessCharacterId || ""}
+                                    value={
+                                      secondaryLikenessDonor?.id ||
+                                      character.secondaryLikenessCharacterId ||
+                                      ""
+                                    }
                                     onChange={(e) => {
                                       e.stopPropagation();
+                                      const nextId = e.target.value;
+                                      const nextCand =
+                                        castReferenceCandidates.find(
+                                          (cand) => cand.id === nextId,
+                                        );
                                       void onUpdateCharacterAttributes(
                                         characterId,
                                         {
-                                          likenessSourceType: "character",
-                                          likenessCharacterId:
-                                            e.target.value || undefined,
+                                          likenessMode: "family_blend",
+                                          secondaryLikenessCharacterId:
+                                            nextId || "",
+                                          secondaryLikenessCharacterName:
+                                            nextCand?.name || "",
                                         },
                                         { quiet: true },
                                       );
                                     }}
                                     className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                   >
-                                    <option value="">Select cast character…</option>
-                                    {castReferenceCandidates.map((cand) => (
-                                      <option key={cand.id} value={cand.id}>
-                                        {cand.name}
-                                      </option>
-                                    ))}
+                                    <option value="">
+                                      None (single parent / relative)…
+                                    </option>
+                                    {castReferenceCandidates
+                                      .filter(
+                                        (cand) =>
+                                          cand.id !== selectedLikenessDonor?.id,
+                                      )
+                                      .map((cand) => (
+                                        <option key={cand.id} value={cand.id}>
+                                          {cand.name}
+                                          {!cand.hasPortrait
+                                            ? " — needs portrait"
+                                            : ""}
+                                        </option>
+                                      ))}
                                   </select>
-                                  {selectedDonor ? (
-                                    <div className="flex items-center gap-2 pt-1">
-                                      <img
-                                        src={selectedDonor.imageUrl}
-                                        alt={selectedDonor.name}
-                                        className="w-9 h-9 rounded object-cover border border-cyan-500/30 flex-shrink-0"
-                                      />
-                                      <span className="text-[10px] text-gray-400 leading-tight">
-                                        Anchors facial structure to{" "}
-                                        <strong className="text-gray-200">
-                                          {selectedDonor.name}
-                                        </strong>{" "}
-                                        as an independent character slot.
-                                      </span>
-                                    </div>
-                                  ) : null}
-                                </>
-                              )}
-                            </div>
-                          )}
-
-                          {activeLikenessMode === "upload" && (
-                            <div className="space-y-1.5 rounded-md border border-gray-200 dark:border-gray-700/80 bg-gray-50/60 dark:bg-gray-900/50 p-2">
-                              <input
-                                ref={likenessFileInputRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  e.target.value = "";
-                                  if (!file) return;
-                                  setIsUploadingLikenessRef(true);
-                                  try {
-                                    const ext =
-                                      file.name.split(".").pop()?.toLowerCase() ||
-                                      "jpg";
-                                    const blob = await upload(
-                                      `characters/likeness-${characterId}-${Date.now()}.${ext}`,
-                                      file,
-                                      {
-                                        access: "public",
-                                        handleUploadUrl:
-                                          "/api/character/upload-url",
-                                      },
-                                    );
-                                    await onUpdateCharacterAttributes(
-                                      characterId,
-                                      {
-                                        likenessSourceType: "upload",
-                                        likenessImageUrl: blob.url,
-                                      },
-                                      { quiet: true },
-                                    );
-                                    toast.success("Likeness reference photo uploaded");
-                                  } catch (err) {
-                                    console.error(
-                                      "[Likeness Upload] Failed:",
-                                      err,
-                                    );
-                                    toast.error(
-                                      "Failed to upload reference photo",
-                                    );
-                                  } finally {
-                                    setIsUploadingLikenessRef(false);
-                                  }
-                                }}
-                              />
-                              {hasUploadedLikeness ? (
-                                <div className="flex items-center gap-2">
-                                  <img
-                                    src={character.likenessImageUrl}
-                                    alt="Likeness reference"
-                                    className="w-10 h-10 rounded object-cover border border-cyan-500/30 flex-shrink-0"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[10px] text-gray-300 truncate">
-                                      Reference photo ready
-                                    </p>
-                                    <div className="flex items-center gap-1.5 mt-1">
-                                      <button
-                                        type="button"
-                                        disabled={isUploadingLikenessRef}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          likenessFileInputRef.current?.click();
-                                        }}
-                                        className="px-2 py-0.5 rounded text-[10px] bg-gray-800 border border-gray-600 text-gray-200 hover:bg-gray-700"
-                                      >
-                                        {isUploadingLikenessRef
-                                          ? "Uploading…"
-                                          : "Replace"}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          void onUpdateCharacterAttributes(
-                                            characterId,
-                                            {
-                                              likenessImageUrl: undefined,
-                                              likenessSourceType: "none",
-                                            },
-                                            { quiet: true },
-                                          );
-                                        }}
-                                        className="px-2 py-0.5 rounded text-[10px] text-gray-400 hover:text-red-400"
-                                      >
-                                        Clear
-                                      </button>
-                                    </div>
-                                  </div>
                                 </div>
                               ) : (
-                                <Button
+                                castReferenceCandidates.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      void onUpdateCharacterAttributes(
+                                        characterId,
+                                        { likenessMode: "family_blend" },
+                                        { quiet: true },
+                                      );
+                                    }}
+                                    className="text-[10px] text-cyan-400 hover:text-cyan-300 font-medium"
+                                  >
+                                    + Blend 2nd parent / relative character
+                                  </button>
+                                )
+                              )}
+
+                              {selectedLikenessDonor ? (
+                                selectedLikenessDonor.hasPortrait &&
+                                (!secondaryLikenessDonor ||
+                                  secondaryLikenessDonor.hasPortrait) ? (
+                                  <div className="flex items-center gap-2 pt-1">
+                                    <div className="flex items-center -space-x-1.5 flex-shrink-0">
+                                      {selectedLikenessDonor.imageUrl && (
+                                        <img
+                                          src={selectedLikenessDonor.imageUrl}
+                                          alt={selectedLikenessDonor.name}
+                                          className="w-8 h-8 rounded object-cover border border-cyan-500/40"
+                                        />
+                                      )}
+                                      {secondaryLikenessDonor?.imageUrl && (
+                                        <img
+                                          src={secondaryLikenessDonor.imageUrl}
+                                          alt={secondaryLikenessDonor.name}
+                                          className="w-8 h-8 rounded object-cover border border-indigo-400/50"
+                                        />
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] text-gray-400 leading-tight">
+                                      {activeLikenessRelationMode ===
+                                      "family_blend" ? (
+                                        <>
+                                          Blends inherited traits from{" "}
+                                          <strong className="text-gray-200">
+                                            {selectedLikenessDonor.name}
+                                            {secondaryLikenessDonor
+                                              ? ` + ${secondaryLikenessDonor.name}`
+                                              : ""}
+                                          </strong>{" "}
+                                          into a distinct person.
+                                        </>
+                                      ) : (
+                                        <>
+                                          Anchors bone structure &amp; eyes to{" "}
+                                          <strong className="text-gray-200">
+                                            {selectedLikenessDonor.name}
+                                          </strong>{" "}
+                                          as an independent character slot.
+                                        </>
+                                      )}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <p className="text-[10px] text-amber-400 leading-snug pt-0.5">
+                                    Generate or upload{" "}
+                                    <strong>
+                                      {!selectedLikenessDonor.hasPortrait
+                                        ? selectedLikenessDonor.name
+                                        : secondaryLikenessDonor?.name}
+                                    </strong>
+                                    &apos;s portrait first, or run{" "}
+                                    <strong>Cast Agent</strong> to generate
+                                    donors first.
+                                  </p>
+                                )
+                              ) : null}
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {activeLikenessMode === "upload" && (
+                        <div className="space-y-2 rounded-md border border-gray-200 dark:border-gray-700/80 bg-gray-50/60 dark:bg-gray-900/50 p-2">
+                          <input
+                            ref={likenessFileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              e.target.value = "";
+                              if (!file) return;
+                              setIsUploadingLikenessRef(true);
+                              try {
+                                const ext =
+                                  file.name.split(".").pop()?.toLowerCase() ||
+                                  "jpg";
+                                const blob = await upload(
+                                  `characters/likeness-${characterId}-${Date.now()}.${ext}`,
+                                  file,
+                                  {
+                                    access: "public",
+                                    handleUploadUrl:
+                                      "/api/character/upload-url",
+                                  },
+                                );
+                                await onUpdateCharacterAttributes(
+                                  characterId,
+                                  {
+                                    likenessSourceType: "upload",
+                                    likenessImageUrl: blob.url,
+                                  },
+                                  { quiet: true },
+                                );
+                                toast.success(
+                                  "Reference photo uploaded — add a transform note and click Generate Portrait from Reference",
+                                );
+                              } catch (err) {
+                                console.error(
+                                  "[Likeness Upload] Failed:",
+                                  err,
+                                );
+                                toast.error(
+                                  "Failed to upload reference photo",
+                                );
+                              } finally {
+                                setIsUploadingLikenessRef(false);
+                              }
+                            }}
+                          />
+                          <input
+                            ref={secondaryLikenessFileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              e.target.value = "";
+                              if (!file) return;
+                              setIsUploadingSecondaryLikenessRef(true);
+                              try {
+                                const ext =
+                                  file.name.split(".").pop()?.toLowerCase() ||
+                                  "jpg";
+                                const blob = await upload(
+                                  `characters/likeness2-${characterId}-${Date.now()}.${ext}`,
+                                  file,
+                                  {
+                                    access: "public",
+                                    handleUploadUrl:
+                                      "/api/character/upload-url",
+                                  },
+                                );
+                                await onUpdateCharacterAttributes(
+                                  characterId,
+                                  {
+                                    likenessSourceType: "upload",
+                                    likenessMode: "family_blend",
+                                    secondaryLikenessImageUrl: blob.url,
+                                  },
+                                  { quiet: true },
+                                );
+                                toast.success("Second parent/relative photo uploaded");
+                              } catch (err) {
+                                console.error(
+                                  "[Secondary Likeness Upload] Failed:",
+                                  err,
+                                );
+                                toast.error(
+                                  "Failed to upload second reference photo",
+                                );
+                              } finally {
+                                setIsUploadingSecondaryLikenessRef(false);
+                              }
+                            }}
+                          />
+                          {hasUploadedLikeness ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={character.likenessImageUrl}
+                                  alt="Likeness reference 1"
+                                  className="w-10 h-10 rounded object-cover border border-cyan-500/30 flex-shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[10px] text-gray-300 leading-tight">
+                                    {activeLikenessRelationMode === "family_blend"
+                                      ? "Donor photo [1] ready"
+                                      : "Donor photo ready — generates a transformed portrait"}
+                                  </p>
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <button
+                                      type="button"
+                                      disabled={isUploadingLikenessRef}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        likenessFileInputRef.current?.click();
+                                      }}
+                                      className="px-2 py-0.5 rounded text-[10px] bg-gray-800 border border-gray-600 text-gray-200 hover:bg-gray-700"
+                                    >
+                                      {isUploadingLikenessRef
+                                        ? "Uploading…"
+                                        : "Replace"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        void onUpdateCharacterAttributes(
+                                          characterId,
+                                          {
+                                            likenessImageUrl: "",
+                                            secondaryLikenessImageUrl: "",
+                                            likenessSourceType: "none",
+                                          },
+                                          { quiet: true },
+                                        );
+                                      }}
+                                      className="px-2 py-0.5 rounded text-[10px] text-gray-400 hover:text-red-400"
+                                    >
+                                      Clear
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {activeLikenessRelationMode === "family_blend" ? (
+                                hasSecondaryUploadedLikeness ? (
+                                  <div className="flex items-center gap-2 pt-1 border-t border-gray-800">
+                                    <img
+                                      src={character.secondaryLikenessImageUrl}
+                                      alt="Likeness reference 2"
+                                      className="w-10 h-10 rounded object-cover border border-indigo-400/40 flex-shrink-0"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-[10px] text-gray-300 leading-tight">
+                                        Donor photo [2] ready
+                                      </p>
+                                      <div className="flex items-center gap-1.5 mt-1">
+                                        <button
+                                          type="button"
+                                          disabled={
+                                            isUploadingSecondaryLikenessRef
+                                          }
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            secondaryLikenessFileInputRef.current?.click();
+                                          }}
+                                          className="px-2 py-0.5 rounded text-[10px] bg-gray-800 border border-gray-600 text-gray-200 hover:bg-gray-700"
+                                        >
+                                          {isUploadingSecondaryLikenessRef
+                                            ? "Uploading…"
+                                            : "Replace"}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            void onUpdateCharacterAttributes(
+                                              characterId,
+                                              {
+                                                secondaryLikenessImageUrl: "",
+                                              },
+                                              { quiet: true },
+                                            );
+                                          }}
+                                          className="px-2 py-0.5 rounded text-[10px] text-gray-400 hover:text-red-400"
+                                        >
+                                          Remove [2]
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isUploadingSecondaryLikenessRef}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      secondaryLikenessFileInputRef.current?.click();
+                                    }}
+                                    className="w-full h-7 text-xs"
+                                  >
+                                    {isUploadingSecondaryLikenessRef ? (
+                                      <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                    ) : (
+                                      <Upload className="w-3.5 h-3.5 mr-1.5" />
+                                    )}
+                                    Upload 2nd Parent / Relative Photo [2]
+                                  </Button>
+                                )
+                              ) : (
+                                <button
                                   type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={isUploadingLikenessRef}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    likenessFileInputRef.current?.click();
-                                  }}
-                                  className="w-full h-7 text-xs"
-                                >
-                                  {isUploadingLikenessRef ? (
-                                    <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                                  ) : (
-                                    <Upload className="w-3.5 h-3.5 mr-1.5" />
-                                  )}
-                                  {isUploadingLikenessRef
-                                    ? "Uploading Reference Photo…"
-                                    : "Upload Reference Photo"}
-                                </Button>
-                              )}
-                            </div>
-                          )}
-
-                          {activeLikenessMode !== "none" && (
-                            <div className="space-y-1.5">
-                              <label className="block text-[10px] font-medium text-gray-400">
-                                Look / Age Transformation from Reference
-                              </label>
-                              <input
-                                type="text"
-                                value={likenessNoteDraft}
-                                onChange={(e) =>
-                                  setLikenessNoteDraft(e.target.value)
-                                }
-                                onBlur={() => {
-                                  const nextVal = likenessNoteDraft.trim();
-                                  if (
-                                    nextVal !==
-                                    (character.likenessTransformNote || "")
-                                  ) {
                                     void onUpdateCharacterAttributes(
                                       characterId,
-                                      { likenessTransformNote: nextVal },
+                                      { likenessMode: "family_blend" },
                                       { quiet: true },
                                     );
-                                  }
-                                }}
-                                placeholder="e.g., 17-year-old version of the reference with medium afro and no facial hair"
-                                className="w-full px-2.5 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500"
-                              />
+                                  }}
+                                  className="text-[10px] text-cyan-400 hover:text-cyan-300 font-medium"
+                                >
+                                  + Blend 2nd parent / relative photo
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="space-y-1">
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                disabled={
-                                  isGenerating || !canGenerateFromReference
-                                }
-                                onClick={async (e) => {
+                                disabled={isUploadingLikenessRef}
+                                onClick={(e) => {
                                   e.stopPropagation();
-                                  const trimmed = likenessNoteDraft.trim();
-                                  if (
-                                    trimmed !==
-                                    (character.likenessTransformNote || "")
-                                  ) {
-                                    await onUpdateCharacterAttributes(
-                                      characterId,
-                                      { likenessTransformNote: trimmed },
-                                      { quiet: true },
-                                    );
-                                  }
-                                  onGenerate();
+                                  likenessFileInputRef.current?.click();
                                 }}
-                                className="w-full h-7 text-xs border-cyan-500/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20"
+                                className="w-full h-7 text-xs"
                               >
-                                {isGenerating ? (
+                                {isUploadingLikenessRef ? (
                                   <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                                 ) : (
-                                  <Wand2 className="w-3.5 h-3.5 mr-1.5" />
+                                  <Upload className="w-3.5 h-3.5 mr-1.5" />
                                 )}
-                                {isGenerating
-                                  ? "Generating Portrait…"
-                                  : "Generate Portrait from Reference"}
+                                {isUploadingLikenessRef
+                                  ? "Uploading Reference Photo…"
+                                  : "Upload Your Photo / Reference [1]"}
                               </Button>
+                              <p className="text-[10px] text-gray-500 leading-tight">
+                                Uses uploaded photo(s) strictly for genetic facial traits without overwriting this character with the raw upload.
+                              </p>
                             </div>
                           )}
                         </div>
-                      );
-                    })()}
+                      )}
+
+                      {activeLikenessMode !== "none" && (
+                        <div
+                          className="space-y-1.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <label className="block text-[10px] font-medium text-gray-300">
+                            {activeLikenessRelationMode === "family_blend"
+                              ? "Inherited Traits & Look (Parents, Age, Hair & Outfit)"
+                              : "Transform Note (Age, Era, Hair, Expression & Outfit)"}
+                          </label>
+                          <DictationTextarea
+                            value={likenessNoteDraft}
+                            onChange={setLikenessNoteDraft}
+                            onBlur={() => {
+                              void flushLikenessNoteIfDirty();
+                            }}
+                            rows={3}
+                            placeholder={
+                              activeLikenessRelationMode === "family_blend"
+                                ? "e.g., Warm 44-year-old adult daughter inheriting Arthur’s hazel eyes and Eleanor’s cheekbones, chestnut shoulder-length hair, sage knit sweater"
+                                : "e.g., 26-year-old 1974 version with thick tousled chestnut-brown hair, clean-shaven jawline, identical hazel-green eyes and warm smile, vintage cream cable-knit sweater under tan corduroy jacket"
+                            }
+                            className="text-xs min-h-[68px]"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={
+                              isGenerating || !canGenerateFromReference
+                            }
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const trimmed = await flushLikenessNoteIfDirty();
+                              onGenerate({ likenessTransformNote: trimmed });
+                            }}
+                            className="w-full h-8 text-xs font-medium border-cyan-500/40 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25"
+                          >
+                            {isGenerating ? (
+                              <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                            ) : (
+                              <Wand2 className="w-3.5 h-3.5 mr-1.5" />
+                            )}
+                            {isGenerating
+                              ? "Generating Portrait…"
+                              : activeLikenessRelationMode === "family_blend"
+                                ? "Generate Blended Family Portrait"
+                                : "Generate Portrait from Reference"}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -6368,7 +7006,14 @@ const CharacterCard = ({
               directorTarget.kind === "cast"
                 ? {
                     name: character.name,
-                    appearance: character.appearanceDescription,
+                    appearance: [
+                      character.appearanceDescription,
+                      activeLikenessMode !== "none" && likenessNoteDraft.trim()
+                        ? `Likeness transformation target: ${likenessNoteDraft.trim()}`
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(". "),
                   }
                 : {
                     name: character.name,

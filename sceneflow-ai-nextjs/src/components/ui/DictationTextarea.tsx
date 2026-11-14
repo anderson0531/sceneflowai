@@ -9,6 +9,7 @@ import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 interface DictationTextareaProps {
   value: string
   onChange: (value: string) => void
+  onBlur?: () => void
   placeholder?: string
   className?: string
   rows?: number
@@ -18,6 +19,7 @@ interface DictationTextareaProps {
 export function DictationTextarea({
   value,
   onChange,
+  onBlur,
   placeholder,
   className,
   rows = 5,
@@ -70,6 +72,7 @@ export function DictationTextarea({
         <Textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           placeholder={placeholder}
           rows={rows}
           disabled={disabled}

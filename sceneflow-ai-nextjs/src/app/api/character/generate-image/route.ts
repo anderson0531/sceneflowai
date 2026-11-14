@@ -58,8 +58,13 @@ export async function POST(req: NextRequest) {
       skipAutoEnhance: body.skipAutoEnhance,
       artStyle: body.artStyle,
       likenessReferenceImageUrl: body.likenessReferenceImageUrl,
+      likenessDonors: body.likenessDonors,
+      likenessMode: body.likenessMode,
       likenessTransformNote: body.likenessTransformNote,
+      donorCharacterName: body.donorCharacterName,
       targetAge: body.targetAge,
+      targetGender: body.targetGender,
+      wardrobeDescription: body.wardrobeDescription,
     })
 
     let newBalance: number | undefined

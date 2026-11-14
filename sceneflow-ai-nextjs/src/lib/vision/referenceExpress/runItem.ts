@@ -36,6 +36,7 @@ import { generateAndUploadFullBodyWardrobe } from '@/lib/character/sceneCharacte
 import {
   resolveAnchorWardrobeForTransition,
   resolveCharacterLikenessInput,
+  resolveDefaultWardrobeDescription,
 } from '@/lib/character/characterReferencePrompts'
 import {
   composeUploadAndPersistCombinedCharacterRef,
@@ -140,6 +141,7 @@ export async function runReferenceExpressItem(input: {
       activeContext.characters as any[],
       item.targetId
     )
+    const defaultWardrobeDesc = resolveDefaultWardrobeDescription(character)
 
     const generated = await generateCastReferenceImage({
       userId,
@@ -148,12 +150,17 @@ export async function runReferenceExpressItem(input: {
       characterId: item.targetId,
       characterName: character.name,
       rawMode: resolvedPrompt.rawMode,
+      ...(defaultWardrobeDesc ? { wardrobeDescription: defaultWardrobeDesc } : {}),
       ...(activeContext.artStyle ? { artStyle: activeContext.artStyle } : {}),
       ...(likeness.likenessReferenceImageUrl
         ? {
             likenessReferenceImageUrl: likeness.likenessReferenceImageUrl,
+            likenessDonors: likeness.donors,
+            likenessMode: likeness.likenessMode,
             likenessTransformNote: likeness.likenessTransformNote,
+            donorCharacterName: likeness.donorCharacterName,
             targetAge: (character as { age?: string | number }).age,
+            targetGender: (character as { gender?: string }).gender,
           }
         : {}),
     })
@@ -177,7 +184,9 @@ export async function runReferenceExpressItem(input: {
       expectedFingerprint: usedFingerprint,
       patch: {
         referenceImage: generated.imageUrl,
-        imagePrompt: prompt,
+        ...(likeness.likenessReferenceImageUrl && !resolvedPrompt.rawMode
+          ? {}
+          : { imagePrompt: prompt }),
         ...appearance.patch,
       },
     })

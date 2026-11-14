@@ -45,6 +45,8 @@ import {
   getVideoServicePromoMp4Path,
   getVideoServicePromoWebmPath,
 } from '@/config/landing/videoServicePromoScripts'
+import { cleanOmniRefScenePrompt } from '@/lib/gemini/cleanOmniRefPrompt'
+import { rewriteVisualNamesToTokens } from '@/lib/vision/referenceImageBinding'
 import { resolveLocalizedStudioLandingCopy } from '@/config/landing/worldClassLandingCopy'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -610,13 +612,22 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     expect(showcaseSrc).toContain('video/webm')
     expect(sectionSrc).not.toContain('truncate')
 
-    // Verify 48s (6 × 8s) Promo Demonstration Trailer Scripts + .webm encoder script readiness
+    // Verify Google Omni 1.2 Flash (10s blocks · 10–12 blocks · up to 2:00) Promo Demonstration Scripts + native cleanOmniRefPrompt compatibility
     expect(existsSync(path.join(ROOT, 'scripts/encode-video-services-webm.mjs'))).toBe(true)
+    const expectedBlockCounts: Record<VideoServiceVerticalId, number> = {
+      memoir: 12,
+      realestate: 10,
+      training: 11,
+      brand: 11,
+    }
     for (const vid of verticalIds) {
       const promo = VIDEO_SERVICE_PROMO_SCRIPTS[vid]
-      expect(promo.durationSeconds).toBe(48)
-      expect(promo.blocks).toHaveLength(6)
-      expect(promo.referenceLocks.length).toBeGreaterThanOrEqual(5)
+      expect(promo.blocks).toHaveLength(expectedBlockCounts[vid])
+      expect(promo.blocks.length).toBeGreaterThanOrEqual(10)
+      expect(promo.blocks.length).toBeLessThanOrEqual(12)
+      expect(promo.durationSeconds).toBe(promo.blocks.length * 10)
+      expect(promo.durationSeconds).toBeLessThanOrEqual(120)
+      expect(promo.referenceLocks.length).toBeGreaterThanOrEqual(6)
       expect(promo.backgroundMusic.mixLevel).toContain('25%')
       expect(getVideoServicePromoWebmPath(vid, 'en')).toBe(
         `/landing/video-services/videos/${vid}-en.webm`
@@ -624,10 +635,31 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       expect(getVideoServicePromoMp4Path(vid, 'ar')).toBe(
         `/landing/video-services/videos/${vid}-ar.mp4`
       )
+      const lockNames = promo.referenceLocks.map((r) => r.name)
       for (const block of promo.blocks) {
-        expect(block.durationSeconds).toBe(8)
-        expect(block.videoPrompt).toContain('Single continuous take, no cuts.')
-        expect(block.videoPrompt).toContain('REF:')
+        expect(block.durationSeconds).toBe(10)
+        expect(block.videoModel).toBe('Google Omni 1.2 Flash (10s)')
+        expect(block.videoPrompt).toContain('0s–2s (Start frame):')
+        expect(block.videoPrompt).toContain('2s–8s (Action):')
+        expect(block.videoPrompt).toContain('8s–10s (End frame):')
+        expect(block.videoPrompt).toContain('Camera:')
+        expect(block.videoPrompt).toMatch(/No spoken dialogue\.|The only spoken line is:/)
+        expect(
+          lockNames.some((n) => block.videoPrompt.includes(n)),
+          `${vid} block ${block.blockNumber} must include at least one exact Continuity Library item name for rewriteVisualNamesToTokens`
+        ).toBe(true)
+
+        // Verify SceneFlow's Google Omni 1.2 Flash REF preprocessor preserves 100% of phases & binds tokens
+        const cleaned = cleanOmniRefScenePrompt(block.videoPrompt)
+        expect(cleaned).toContain('0s–2s (Start frame):')
+        expect(cleaned).toContain('2s–8s (Action):')
+        expect(cleaned).toContain('8s–10s (End frame):')
+        expect(cleaned).toContain('Camera:')
+        const tokenized = rewriteVisualNamesToTokens(
+          cleaned,
+          promo.referenceLocks.map((r) => ({ name: r.name, token: r.token }))
+        )
+        expect(tokenized).toMatch(/\b(?:person|location|prop) \[\d+\]/)
         for (const loc of DUB_LOCALES) {
           expect(block.localizedCues[loc].narrationVo.trim().length).toBeGreaterThan(30)
         }

@@ -42,6 +42,10 @@ import {
   sortCharactersFamilyAnchorsFirst,
   type CharacterFamilyRelationship,
 } from '@/lib/character/characterFamily'
+import {
+  detectTraitDonorCandidatesFromProse,
+  type CharacterLikenessFields,
+} from '@/lib/character/characterReferencePrompts'
 
 export type CastSource = {
   id?: string
@@ -69,8 +73,13 @@ export type CastSource = {
   voiceConfig?: CastingBriefVoiceConfig
   familyRelationships?: CharacterFamilyRelationship[]
   likenessSourceType?: string
+  likenessMode?: string
   likenessCharacterId?: string
+  likenessCharacterName?: string
   likenessImageUrl?: string
+  secondaryLikenessCharacterId?: string
+  secondaryLikenessCharacterName?: string
+  secondaryLikenessImageUrl?: string
   likenessTransformNote?: string
   wardrobes?: Array<{
     id?: string
@@ -154,6 +163,15 @@ export function castFingerprint(character: CastSource): string {
     character.personality,
     character.defaultWardrobe ?? firstWardrobe?.description,
     character.wardrobeAccessories ?? firstWardrobe?.accessories,
+    character.likenessSourceType,
+    character.likenessMode,
+    character.likenessCharacterId,
+    character.likenessCharacterName,
+    character.likenessImageUrl,
+    character.secondaryLikenessCharacterId,
+    character.secondaryLikenessCharacterName,
+    character.secondaryLikenessImageUrl,
+    character.likenessTransformNote,
   ])
 }
 
@@ -282,6 +300,106 @@ export function filterExpressItemsByKinds(
  * `includeNestedStills` (or a single kind) so set versions and stale wardrobes
  * join the same job.
  */
+function collectCastDonorLookupPairs(
+  c: CastSource,
+  selfId: string,
+  allCharacters: ReadonlyArray<CastSource>
+): Array<{ id: string; nameKey: string }> {
+  const explicitMode = String(c.likenessSourceType || '').trim().toLowerCase()
+  if (explicitMode === 'none') return []
+
+  const pairs: Array<{ id: string; nameKey: string }> = []
+  const hasPrimaryCast = Boolean(c.likenessCharacterId?.trim() || c.likenessCharacterName?.trim())
+  const hasSecondaryCast = Boolean(
+    c.secondaryLikenessCharacterId?.trim() || c.secondaryLikenessCharacterName?.trim()
+  )
+  const hasAnyUpload = Boolean(
+    c.likenessImageUrl?.trim() || c.secondaryLikenessImageUrl?.trim()
+  )
+
+  if (explicitMode !== 'upload' && hasPrimaryCast) {
+    const donorId = typeof c.likenessCharacterId === 'string' ? c.likenessCharacterId.trim() : ''
+    const donorNameKey =
+      typeof c.likenessCharacterName === 'string' && c.likenessCharacterName.trim()
+        ? `name:${c.likenessCharacterName.trim().toLowerCase()}`
+        : ''
+    pairs.push({ id: donorId, nameKey: donorNameKey })
+  }
+
+  if (hasSecondaryCast) {
+    const secId =
+      typeof c.secondaryLikenessCharacterId === 'string'
+        ? c.secondaryLikenessCharacterId.trim()
+        : ''
+    const secNameKey =
+      typeof c.secondaryLikenessCharacterName === 'string' &&
+      c.secondaryLikenessCharacterName.trim()
+        ? `name:${c.secondaryLikenessCharacterName.trim().toLowerCase()}`
+        : ''
+    pairs.push({ id: secId, nameKey: secNameKey })
+  }
+
+  // Implicit prose trait inheritance (e.g. "Claire 44: ... inheriting Arthur's hazel eyes and Eleanor's cheekbones")
+  if (!hasPrimaryCast && !hasSecondaryCast && !hasAnyUpload) {
+    const proseDonors = detectTraitDonorCandidatesFromProse(
+      c as unknown as CharacterLikenessFields,
+      allCharacters as unknown as CharacterLikenessFields[],
+      selfId
+    )
+    for (const d of proseDonors) {
+      pairs.push({
+        id: d.characterId,
+        nameKey: d.characterName ? `name:${d.characterName.trim().toLowerCase()}` : '',
+      })
+    }
+  }
+
+  return pairs
+}
+
+function orderCastDonorsBeforeDependents<T extends CastSource & { __planOriginalIndex: number }>(
+  characters: T[]
+): T[] {
+  const byLookupKey = new Map<string, T>()
+  characters.forEach((c) => {
+    const canonicalId = resolveCharacterId(c as CastSource, c.__planOriginalIndex)
+    const legacyId = c.id || `char-${c.__planOriginalIndex}`
+    byLookupKey.set(canonicalId, c)
+    byLookupKey.set(legacyId, c)
+    const lowerName = (c.name || '').trim().toLowerCase()
+    if (lowerName && !byLookupKey.has(`name:${lowerName}`)) {
+      byLookupKey.set(`name:${lowerName}`, c)
+    }
+  })
+
+  const ordered: T[] = []
+  const visitedIds = new Set<string>()
+  const visitChar = (c: T, depth = 0) => {
+    const id = resolveCharacterId(c as CastSource, c.__planOriginalIndex)
+    if (visitedIds.has(id)) return
+    if (depth < 6) {
+      const donorPairs = collectCastDonorLookupPairs(c, id, characters)
+      for (const pair of donorPairs) {
+        const donor =
+          (pair.id && byLookupKey.get(pair.id)) ||
+          (pair.nameKey && byLookupKey.get(pair.nameKey)) ||
+          (pair.id && byLookupKey.get(`name:${pair.id.toLowerCase()}`)) ||
+          undefined
+        if (donor) {
+          const resolvedDonorId = resolveCharacterId(donor as CastSource, donor.__planOriginalIndex)
+          if (resolvedDonorId !== id && !visitedIds.has(resolvedDonorId)) {
+            visitChar(donor, depth + 1)
+          }
+        }
+      }
+    }
+    visitedIds.add(id)
+    ordered.push(c)
+  }
+  characters.forEach((c) => visitChar(c))
+  return ordered
+}
+
 export function planReferenceExpressItems(
   input: ReferenceExpressPlanInput,
   kinds?: ReferenceExpressKind[],
@@ -296,29 +414,8 @@ export function planReferenceExpressItems(
   }))
   const familyOrdered = sortCharactersFamilyAnchorsFirst(indexedCharacters)
 
-  // Ensure any likeness donor character (`likenessCharacterId`) is generated before dependents
-  const byResolvedId = new Map<string, (typeof familyOrdered)[number]>()
-  familyOrdered.forEach((c) => {
-    byResolvedId.set(resolveCharacterId(c as CastSource, c.__planOriginalIndex), c)
-  })
-  const orderedCharacters: typeof familyOrdered = []
-  const visitedIds = new Set<string>()
-  const visitChar = (c: (typeof familyOrdered)[number], depth = 0) => {
-    const id = resolveCharacterId(c as CastSource, c.__planOriginalIndex)
-    if (visitedIds.has(id)) return
-    const donorId =
-      depth < 6 &&
-      c.likenessSourceType === 'character' &&
-      typeof c.likenessCharacterId === 'string'
-        ? c.likenessCharacterId.trim()
-        : ''
-    if (donorId && donorId !== id && byResolvedId.has(donorId) && !visitedIds.has(donorId)) {
-      visitChar(byResolvedId.get(donorId)!, depth + 1)
-    }
-    visitedIds.add(id)
-    orderedCharacters.push(c)
-  }
-  familyOrdered.forEach((c) => visitChar(c))
+  // Ensure any likeness donor character (`likenessCharacterId` / `likenessCharacterName`) is generated before dependents
+  const orderedCharacters = orderCastDonorsBeforeDependents(familyOrdered)
 
   orderedCharacters.forEach((character) => {
     const index = character.__planOriginalIndex
@@ -584,9 +681,17 @@ export function planSelectedLibraryBaseItems(
   if (wanted.size === 0) return []
   const items: ReferenceExpressItem[] = []
 
-  input.characters.forEach((character, index) => {
+  const orderedSelectedCast = orderCastDonorsBeforeDependents(
+    input.characters.map((character, __planOriginalIndex) => ({
+      ...character,
+      __planOriginalIndex,
+    }))
+  )
+  orderedSelectedCast.forEach((entry) => {
+    const index = entry.__planOriginalIndex
+    const { __planOriginalIndex: _omit, ...character } = entry
     if (character.type === 'narrator') return
-    const targetId = resolveCharacterId(character, index)
+    const targetId = resolveCharacterId(character as CastSource, index)
     const key = referenceExpressItemKey({ kind: 'cast', targetId })
     if (!wanted.has(key.toLowerCase())) return
     const drawn = hasImage(character.referenceImage)
@@ -594,7 +699,7 @@ export function planSelectedLibraryBaseItems(
       kind: 'cast',
       targetId,
       label: character.name?.trim() || `Character ${index + 1}`,
-      sourceFingerprint: castFingerprint(character),
+      sourceFingerprint: castFingerprint(character as CastSource),
       ...(drawn ? { forceRegenerate: true } : {}),
     })
   })
@@ -684,6 +789,7 @@ function planItemsForRequirements(
     items.push(withForce(item))
   }
 
+  const requiredCastIndices = new Map<number, boolean>()
   for (const requirement of requirements) {
     if (requirement.kind !== 'cast') continue
     const index = findCastIndex(input.characters, requirement.id)
@@ -691,12 +797,60 @@ function planItemsForRequirements(
     const character = input.characters[index]
     if (character.type === 'narrator') continue
     if (hasImage(character.referenceImage) && !requirement.stale && !force) continue
-    push({
-      kind: 'cast',
-      targetId: resolveCharacterId(character, index),
-      label: character.name?.trim() || `Character ${index + 1}`,
-      sourceFingerprint: castFingerprint(character),
-    })
+    requiredCastIndices.set(index, Boolean(requirement.stale))
+  }
+
+  if (requiredCastIndices.size > 0) {
+    const orderedAllCast = orderCastDonorsBeforeDependents(
+      input.characters.map((character, __planOriginalIndex) => ({
+        ...character,
+        __planOriginalIndex,
+      }))
+    )
+    // Also pull in any undrawn likeness/parent donor(s) required by a scene character so donors render first
+    const queue = [...requiredCastIndices.keys()]
+    while (queue.length > 0) {
+      const reqIndex = queue.shift()!
+      const reqChar = input.characters[reqIndex]
+      if (!reqChar) continue
+      const reqId = resolveCharacterId(reqChar, reqIndex)
+      const donorPairs = collectCastDonorLookupPairs(reqChar, reqId, input.characters)
+      for (const pair of donorPairs) {
+        const donorNeedle = pair.id || pair.nameKey.replace(/^name:/, '')
+        if (!donorNeedle) continue
+        const donorIndex = input.characters.findIndex((cand, candIdx) => {
+          const canonicalId = resolveCharacterId(cand, candIdx)
+          const legacyId = cand.id || `char-${candIdx}`
+          return (
+            canonicalId === donorNeedle ||
+            legacyId === donorNeedle ||
+            (cand.name || '').trim().toLowerCase() === donorNeedle.toLowerCase()
+          )
+        })
+        if (
+          donorIndex >= 0 &&
+          donorIndex !== reqIndex &&
+          input.characters[donorIndex]?.type !== 'narrator' &&
+          !hasImage(input.characters[donorIndex]?.referenceImage) &&
+          !requiredCastIndices.has(donorIndex)
+        ) {
+          requiredCastIndices.set(donorIndex, false)
+          queue.push(donorIndex)
+        }
+      }
+    }
+
+    for (const entry of orderedAllCast) {
+      const index = entry.__planOriginalIndex
+      if (!requiredCastIndices.has(index)) continue
+      const { __planOriginalIndex: _omit, ...character } = entry
+      push({
+        kind: 'cast',
+        targetId: resolveCharacterId(character as CastSource, index),
+        label: character.name?.trim() || `Character ${index + 1}`,
+        sourceFingerprint: castFingerprint(character as CastSource),
+      })
+    }
   }
 
   for (const requirement of requirements) {

@@ -218,7 +218,11 @@ import {
   updateCharacterInList,
 } from '@/lib/vision/updateCharacterReference'
 import { castAppearanceAfterImage } from '@/lib/character/castAppearanceAfterImage'
-import { resolveCharacterLikenessInput } from '@/lib/character/characterReferencePrompts'
+import {
+  resolveCharacterLikenessInput,
+  resolveDefaultWardrobeDescription,
+} from '@/lib/character/characterReferencePrompts'
+import { resolveCastIdentityGenerationPrompt } from '@/lib/intelligence/reference-still-director-fallback'
 import { updateObjectReferenceInList } from '@/lib/vision/updateObjectReference'
 import {
   mergeObjectDuplicateIgnores,
@@ -11692,8 +11696,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleRegenerateCharacter = async (characterId: string) => {
-    // Implement character regeneration
-    console.log('Regenerate character:', characterId)
+    const targetChar = charactersRef.current.find(
+      (c, idx) => resolveCharacterId(c, idx) === characterId
+    )
+    if (!targetChar) return
+    const resolved = resolveCastIdentityGenerationPrompt(targetChar, lockedArtStyle)
+    const likeness = resolveCharacterLikenessInput(targetChar, charactersRef.current, characterId)
+    await handleGenerateCharacter(characterId, {
+      characterPrompt: resolved.prompt,
+      ...(resolved.rawMode ? { rawMode: true } : {}),
+      artStyle: lockedArtStyle,
+      ...(likeness.likenessReferenceImageUrl
+        ? {
+            likenessReferenceImageUrl: likeness.likenessReferenceImageUrl,
+            likenessTransformNote: likeness.likenessTransformNote,
+            donorCharacterName: likeness.donorCharacterName,
+          }
+        : {}),
+      ...(targetChar.age ? { targetAge: targetChar.age } : {}),
+    })
   }
 
   const visionScreenplayContext = () => ({
@@ -11970,11 +11991,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const likenessReferenceImageUrl =
         (isObjectPayload ? promptOrPayload.likenessReferenceImageUrl : undefined) ||
         fallbackLikeness?.likenessReferenceImageUrl
+      const likenessDonors =
+        (isObjectPayload ? promptOrPayload.likenessDonors : undefined) ||
+        fallbackLikeness?.donors
+      const likenessMode =
+        (isObjectPayload ? promptOrPayload.likenessMode : undefined) ||
+        fallbackLikeness?.likenessMode
       const likenessTransformNote =
         (isObjectPayload ? promptOrPayload.likenessTransformNote : undefined) ??
         fallbackLikeness?.likenessTransformNote
+      const donorCharacterName =
+        (isObjectPayload ? promptOrPayload.donorCharacterName : undefined) ||
+        fallbackLikeness?.donorCharacterName
       const targetAge =
         (isObjectPayload ? promptOrPayload.targetAge : undefined) ?? namedCharacter?.age
+      const targetGender =
+        (isObjectPayload ? promptOrPayload.targetGender : undefined) ?? namedCharacter?.gender
+      const wardrobeDescription =
+        (isObjectPayload ? promptOrPayload.wardrobeDescription : undefined) ||
+        (namedCharacter ? resolveDefaultWardrobeDescription(namedCharacter) : undefined)
       const res = await fetch('/api/character/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -11991,8 +12026,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           quality: imageQuality,
           rawMode,
           ...(likenessReferenceImageUrl ? { likenessReferenceImageUrl } : {}),
+          ...(Array.isArray(likenessDonors) && likenessDonors.length > 0 ? { likenessDonors } : {}),
+          ...(likenessMode ? { likenessMode } : {}),
           ...(likenessTransformNote ? { likenessTransformNote } : {}),
+          ...(donorCharacterName ? { donorCharacterName } : {}),
           ...(targetAge != null && targetAge !== '' ? { targetAge } : {}),
+          ...(targetGender ? { targetGender } : {}),
+          ...(wardrobeDescription ? { wardrobeDescription } : {}),
         })
       })
       
@@ -12017,7 +12057,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           (char) => ({
             ...char,
             referenceImage: json.imageUrl,
-            imagePrompt: prompt,
+            ...(likenessReferenceImageUrl && !rawMode ? {} : { imagePrompt: prompt }),
             ...appearance.patch,
             ...castingFields,
           })

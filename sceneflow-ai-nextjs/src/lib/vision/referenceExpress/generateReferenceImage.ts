@@ -27,8 +27,12 @@ import { buildRelatedLocationContinuityClause } from '@/lib/vision/locationFamil
 import {
   buildCharacterIdentityReferencePrompt,
   buildLikenessGuidedIdentityPrompt,
+  cleanLikenessDonorBaseLabel,
+  extractWardrobeFromIdentityPrompt,
   identityAppearanceFromPrompt,
   promptHasIdentityReferenceAnchor,
+  type LikenessRelationMode,
+  type ResolvedLikenessDonor,
 } from '@/lib/character/characterReferencePrompts'
 import {
   ENHANCE_IDENTITY_ASPECT_RATIO,
@@ -547,10 +551,48 @@ export type GenerateCastImageInput = {
   artStyle?: string | null
   /** Optional subject reference image URL (uploaded photo or another cast character's portrait). */
   likenessReferenceImageUrl?: string | null
-  /** Optional natural-language transformation instructions relative to `likenessReferenceImageUrl`. */
+  /** Optional multi-donor list (e.g. 2 biological parents `[Arthur, Eleanor]` for `Claire 44`). */
+  likenessDonors?: Array<Partial<ResolvedLikenessDonor> & { imageUrl: string }> | null
+  /** Relationship mode (`same_person` age/era shift vs `family_blend` trait inheritance). */
+  likenessMode?: LikenessRelationMode | string | null
+  /** Optional natural-language transformation instructions relative to donor reference image(s). */
   likenessTransformNote?: string | null
+  /** Optional donor character name so older donor age numbers are scrubbed from target prompt text. */
+  donorCharacterName?: string | null
   /** Optional target age/era for likeness transformation. */
   targetAge?: string | number | null
+  /** Optional target gender presentation (`female` / `male`) for cross-gender parent trait harmony. */
+  targetGender?: string | null
+  /** Optional target attire/wardrobe so likeness prompts preserve collar/shoulder outfit. */
+  wardrobeDescription?: string | null
+}
+
+/**
+ * Multimodal caption attached directly above Reference Image [1] when transforming age/styling.
+ * Explicitly avoids labeling the older/donor photo with the target character's name (e.g. "Arthur 26"),
+ * includes "Reference Image [1]" for 1-to-1 text binding, and contains "character reference" so
+ * `isIdentityReferencePartName` treats it as a reference plate without spurious face-crop warnings.
+ */
+export const LIKENESS_DONOR_REFERENCE_PART_CAPTION =
+  'Reference Image [1] — genetic facial bone-structure donor character reference photo ONLY (depicts this individual at a different age/era; preserve underlying bone structure and eyes, do NOT copy the donor photo age, wrinkles, hair, or clothing):'
+
+export function buildLikenessDonorReferencePartCaption(
+  index1Based: number,
+  mode: 'same_person' | 'family_blend',
+  donorLabel?: string | null
+): string {
+  if (mode === 'same_person' && index1Based === 1) {
+    return LIKENESS_DONOR_REFERENCE_PART_CAPTION
+  }
+  const cleanLabel = cleanLikenessDonorBaseLabel(donorLabel, index1Based)
+  const hasNamedDonor = Boolean(
+    donorLabel?.trim() && !/^Reference Donor\s+\d+$/i.test(cleanLabel) && !/^Donor\s+\d+$/i.test(cleanLabel)
+  )
+  const labelDisplay = hasNamedDonor ? ` (${cleanLabel})` : ''
+  const attributionClause = hasNamedDonor
+    ? `extract ONLY inherited familial traits attributed to ${cleanLabel}`
+    : `extract ONLY inherited familial traits from Reference Image [${index1Based}]`
+  return `Reference Image [${index1Based}]${labelDisplay} — biological family trait donor character reference photo ONLY (parent/relative of target character; ${attributionClause}; target is a DISTINCT individual, do NOT clone this donor's exact face, gender, age, hairstyle, or clothing):`
 }
 
 export async function generateCastReferenceImage(
@@ -579,8 +621,37 @@ export async function generateCastReferenceImage(
 
   const effectiveArtStyle = await resolveEffectiveArtStyle(input.artStyle, projectId)
   const isLiveAction = isPhotorealisticArtStyle(effectiveArtStyle)
-  const likenessUrl = input.likenessReferenceImageUrl?.trim() || ''
-  const usingLikenessRef = Boolean(likenessUrl)
+  const resolvedDonors: Array<{
+    imageUrl: string
+    characterName?: string
+    cleanLabel?: string
+    gender?: string
+  }> = []
+  const seenDonorUrls = new Set<string>()
+  if (Array.isArray(input.likenessDonors)) {
+    for (const d of input.likenessDonors) {
+      const url = typeof d?.imageUrl === 'string' ? d.imageUrl.trim() : ''
+      if (!url || seenDonorUrls.has(url)) continue
+      seenDonorUrls.add(url)
+      resolvedDonors.push({
+        imageUrl: url,
+        characterName: d.characterName?.trim() || undefined,
+        cleanLabel:
+          d.cleanLabel?.trim() ||
+          cleanLikenessDonorBaseLabel(d.characterName, resolvedDonors.length + 1),
+        gender: d.gender?.trim() || undefined,
+      })
+    }
+  }
+  const singleLikenessUrl = input.likenessReferenceImageUrl?.trim() || ''
+  if (resolvedDonors.length === 0 && singleLikenessUrl) {
+    resolvedDonors.push({
+      imageUrl: singleLikenessUrl,
+      characterName: input.donorCharacterName?.trim() || undefined,
+      cleanLabel: cleanLikenessDonorBaseLabel(input.donorCharacterName, 1),
+    })
+  }
+  const usingLikenessRef = resolvedDonors.length > 0
 
   const resolvedCharacterName =
     (typeof characterName === 'string' && characterName.trim()) ||
@@ -588,20 +659,35 @@ export async function generateCastReferenceImage(
     'Character'
 
   let extraNegativeTerms: string[] = []
+  let effectiveLikenessMode: 'same_person' | 'family_blend' =
+    resolvedDonors.length >= 2 || input.likenessMode === 'family_blend'
+      ? 'family_blend'
+      : 'same_person'
+  const extractedWardrobe =
+    input.wardrobeDescription?.trim() || extractWardrobeFromIdentityPrompt(finalPrompt)
   if (usingLikenessRef) {
     const coreAppearance = identityAppearanceFromPrompt(finalPrompt)
     const likenessBuilt = buildLikenessGuidedIdentityPrompt({
       characterName: resolvedCharacterName,
+      donorCharacterName: input.donorCharacterName || resolvedDonors[0]?.characterName,
+      donors: resolvedDonors,
+      likenessMode: input.likenessMode,
+      targetGender: input.targetGender,
       appearanceDescription: coreAppearance,
       likenessTransformNote: input.likenessTransformNote,
       targetAge: input.targetAge,
+      wardrobeDescription: extractedWardrobe,
       artStyle: effectiveArtStyle,
     })
     finalPrompt = likenessBuilt.prompt
     extraNegativeTerms = likenessBuilt.negativeTerms
+    if (likenessBuilt.prompt.includes('Familial Genetic Inheritance (')) {
+      effectiveLikenessMode = 'family_blend'
+    }
   } else if (!rawMode && !promptHasIdentityReferenceAnchor(finalPrompt)) {
     finalPrompt = buildCharacterIdentityReferencePrompt({
       appearanceDescription: finalPrompt,
+      wardrobeDescription: extractedWardrobe,
       artStyle: effectiveArtStyle,
     })
   } else if (rawMode && !isLiveAction && effectiveArtStyle) {
@@ -621,7 +707,7 @@ export async function generateCastReferenceImage(
     combinedNegativeTerms.length > 0 ? combinedNegativeTerms.join(', ') : undefined
 
   console.log(
-    `[Character Image] Generating identity headshot (designer 2K, likenessRef=${usingLikenessRef})...`
+    `[Character Image] Generating identity headshot (designer 2K, likenessRef=${usingLikenessRef}, donors=${resolvedDonors.length}, mode=${effectiveLikenessMode})...`
   )
   let draftResult: Awaited<ReturnType<typeof generateImageWithGeminiStudio>>
   try {
@@ -632,12 +718,14 @@ export async function generateCastReferenceImage(
       modelTier: ENHANCE_IDENTITY_MODEL_TIER,
       ...(usingLikenessRef
         ? {
-            referenceImages: [
-              {
-                imageUrl: likenessUrl,
-                name: resolvedCharacterName,
-              },
-            ],
+            referenceImages: resolvedDonors.map((donor, idx) => ({
+              imageUrl: donor.imageUrl,
+              name: buildLikenessDonorReferencePartCaption(
+                idx + 1,
+                effectiveLikenessMode,
+                donor.characterName || donor.cleanLabel
+              ),
+            })),
           }
         : {}),
       ...(combinedNegativePrompt ? { negativePrompt: combinedNegativePrompt } : {}),
@@ -652,24 +740,38 @@ export async function generateCastReferenceImage(
       '[Character Image] Likeness reference inline call failed; falling back to vision-extracted bone-structure anchor:',
       (genErr as Error)?.message || genErr
     )
-    let referenceTraits = ''
+    const donorTraitSummaries: string[] = []
     try {
       const { analyzeCharacterImage } = await import('@/lib/imagen/visionAnalyzer')
-      referenceTraits = await analyzeCharacterImage(likenessUrl, resolvedCharacterName)
+      for (const donor of resolvedDonors.slice(0, 2)) {
+        const traits = await analyzeCharacterImage(
+          donor.imageUrl,
+          donor.cleanLabel || resolvedCharacterName
+        )
+        if (traits?.trim()) {
+          donorTraitSummaries.push(
+            donor.cleanLabel ? `${donor.cleanLabel}: ${traits.slice(0, 200)}` : traits.slice(0, 220)
+          )
+        }
+      }
     } catch {}
+    const referenceTraits = donorTraitSummaries.join('; ')
     const fallbackAppearance = [
       identityAppearanceFromPrompt(input.prompt?.trim() || ''),
       input.likenessTransformNote?.trim()
         ? `Transformation target: ${input.likenessTransformNote.trim()}.`
         : '',
       referenceTraits
-        ? `Underlying genetic bone structure, eye color, and complexion matching donor reference (${referenceTraits.slice(0, 260)}), adjusted strictly to the target age, hair, and clean-shaven/facial-hair specification above.`
+        ? effectiveLikenessMode === 'family_blend'
+          ? `Inherited family genetics from donor reference(s) (${referenceTraits}), blended into a distinct individual strictly at the target age, hair, and attire specification above.`
+          : `Underlying genetic bone structure, eye color, and complexion matching donor reference (${referenceTraits}), adjusted strictly to the target age, smooth age-accurate skin, hair, and clean-shaven/facial-hair specification above.`
         : '',
     ]
       .filter(Boolean)
       .join(' ')
     const fallbackPrompt = buildCharacterIdentityReferencePrompt({
       appearanceDescription: fallbackAppearance,
+      wardrobeDescription: extractedWardrobe,
       artStyle: effectiveArtStyle,
     })
     draftResult = await generateImageWithGeminiStudio({

@@ -521,6 +521,7 @@ export interface BuildAgeVariantOptions {
   samePersonGroupId?: string
   lookTransformNote?: string
   likenessCharacterId?: string
+  likenessCharacterName?: string
 }
 
 /**
@@ -539,6 +540,7 @@ export function buildAgeVariantCharacter<T extends Record<string, any>>(
     samePersonGroupId,
     lookTransformNote,
     likenessCharacterId,
+    likenessCharacterName,
   } = options
   const parsed = extractSamePersonAgeStage(String(sourceChar?.name || 'Character'))
   const baseName = parsed.baseName || 'Character'
@@ -636,18 +638,29 @@ export function buildAgeVariantCharacter<T extends Record<string, any>>(
     imagePrompt: undefined,
     visionDescription: undefined,
     wardrobes: [],
-    ...(likenessCharacterId
+    ...(likenessCharacterId || likenessCharacterName
       ? {
           likenessSourceType: 'character',
-          likenessCharacterId,
+          ...(likenessCharacterId ? { likenessCharacterId } : {}),
+          ...(likenessCharacterName || sourceChar?.name
+            ? { likenessCharacterName: (likenessCharacterName || String(sourceChar?.name || '')).trim() }
+            : {}),
           likenessImageUrl: undefined,
           likenessTransformNote:
             trimmedLookNote ||
-            `${targetAge}-year-old version of the reference${eraLabel ? ` (${eraLabel})` : ''}`,
+            [
+              `${targetAge}-year-old${eraLabel ? ` ${eraLabel}` : ''} version of the reference`,
+              adaptedHairColor ? `with ${adaptedHairColor} hair` : '',
+              eyeColor ? `identical ${eyeColor} eyes` : '',
+              defaultWardrobeOverride?.trim() ? defaultWardrobeOverride.trim() : '',
+            ]
+              .filter(Boolean)
+              .join(', '),
         }
       : {
           likenessSourceType: 'none',
           likenessCharacterId: undefined,
+          likenessCharacterName: undefined,
           likenessImageUrl: undefined,
           likenessTransformNote: trimmedLookNote || undefined,
         }),

@@ -26,6 +26,7 @@ interface CharacterPromptBuilderProps {
     cameraAngle?: string
     lighting?: string
     additionalDetails?: string
+    rawMode?: boolean
   }) => void
 }
 
@@ -164,6 +165,39 @@ export function CharacterPromptBuilder({
               <div className="text-xs text-blue-300">
                 <p className="font-medium mb-1">Character Reference Active</p>
                 <p className="text-blue-400/80">Use Close-Up or Medium Close-Up for strongest facial consistency.</p>
+              </div>
+            </div>
+          </div>
+        )}
+        {(character?.likenessSourceType === 'character' ||
+          character?.likenessSourceType === 'upload' ||
+          character?.likenessSourceType === 'blend' ||
+          (!character?.likenessSourceType &&
+            (character?.likenessCharacterId ||
+              character?.secondaryLikenessCharacterId ||
+              character?.likenessImageUrl ||
+              character?.secondaryLikenessImageUrl))) && (
+          <div className="mt-2 p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-cyan-200">
+                <p className="font-medium mb-0.5">
+                  {character?.likenessMode === 'family_blend' ||
+                  character?.secondaryLikenessCharacterId ||
+                  character?.secondaryLikenessImageUrl
+                    ? 'Family Trait Inheritance Active'
+                    : 'Reference Likeness Active'}
+                </p>
+                <p className="text-cyan-300/80">
+                  {character?.likenessMode === 'family_blend' ||
+                  character?.secondaryLikenessCharacterId ||
+                  character?.secondaryLikenessImageUrl
+                    ? 'Generating from this builder blends inherited facial traits from your linked parent/relative donor reference(s) into a distinct individual'
+                    : 'Generating from this builder automatically anchors underlying facial bone structure & eyes to your selected Reference Likeness'}
+                  {character?.likenessTransformNote
+                    ? ` ("${character.likenessTransformNote}")`
+                    : ''}.
+                </p>
               </div>
             </div>
           </div>

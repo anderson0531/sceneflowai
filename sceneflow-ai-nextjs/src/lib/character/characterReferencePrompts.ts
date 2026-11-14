@@ -14,6 +14,7 @@ import {
   buildFamilialVisualContinuityClause,
   type CharacterFamilyRelationship,
 } from '@/lib/character/characterFamily'
+import { extractSamePersonAgeStage } from '@/lib/character/ageStageContinuity'
 
 export const CHARACTER_IDENTITY_REFERENCE_ANCHOR =
   'Photorealistic headshot to be used as a character reference.'
@@ -80,6 +81,33 @@ export function identityAppearanceFromPrompt(prompt: string): string {
   const lockAt = afterAnchor.indexOf(IDENTITY_APPEARANCE_LOCK)
   const body = (lockAt >= 0 ? afterAnchor.slice(0, lockAt) : afterAnchor).trim()
   return body || trimmed
+}
+
+/** Extract trailing `Wearing ...` or `Attire: ...` wardrobe directive from a built identity prompt. */
+export function extractWardrobeFromIdentityPrompt(prompt: string): string | undefined {
+  const trimmed = prompt.trim()
+  if (!trimmed) return undefined
+  const lockAt = trimmed.indexOf(IDENTITY_APPEARANCE_LOCK)
+  const tail = lockAt >= 0 ? trimmed.slice(lockAt) : trimmed
+  const lines = tail
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i]!
+    const wearingMatch = line.match(/^Wearing\s+(.+?)\.?$/i)
+    if (wearingMatch?.[1]?.trim()) {
+      return wearingMatch[1].trim()
+    }
+    const attireMatch = line.match(/^(?:Wardrobe\s*\/\s*Attire[^:]*|Attire|Outfit)\s*:\s*(.+?)\.?$/i)
+    if (attireMatch?.[1]?.trim()) {
+      return attireMatch[1]
+        .trim()
+        .replace(/^Do NOT copy clothing from [^.]+\.\s*Dress the subject in:\s*/i, '')
+        .trim()
+    }
+  }
+  return undefined
 }
 
 export interface CharacterIdentityReferencePromptInput {
@@ -498,15 +526,51 @@ export function buildCharacterIdentityReferencePromptFromCharacter(
   })
 }
 
+export type LikenessRelationMode = 'auto' | 'same_person' | 'family_blend'
+
 export interface CharacterLikenessFields {
   id?: string
   name?: string
+  role?: string | null
+  type?: string | null
   age?: string | number | null
+  gender?: string | null
+  subject?: string | null
+  keyFeature?: string | null
+  description?: string | null
+  appearance?: string | null
+  appearanceDescription?: string | null
+  samePersonGroupId?: string | null
+  familyRelationships?: CharacterFamilyRelationship[] | null
   referenceImage?: string | null
-  likenessSourceType?: 'none' | 'character' | 'upload' | string | null
+  likenessSourceType?: 'none' | 'character' | 'upload' | 'blend' | string | null
+  likenessMode?: LikenessRelationMode | string | null
   likenessCharacterId?: string | null
+  likenessCharacterName?: string | null
   likenessImageUrl?: string | null
+  secondaryLikenessCharacterId?: string | null
+  secondaryLikenessCharacterName?: string | null
+  secondaryLikenessImageUrl?: string | null
   likenessTransformNote?: string | null
+}
+
+export interface ResolvedLikenessDonor {
+  imageUrl: string
+  sourceType: 'character' | 'upload'
+  characterId?: string
+  characterName?: string
+  /** Age-scrubbed display name for multimodal bindings (e.g. "Arthur" from "Arthur 78"). */
+  cleanLabel: string
+  gender?: string
+}
+
+export interface DetectedTraitDonorCandidate {
+  index: number
+  characterId: string
+  characterName: string
+  cleanLabel: string
+  referenceImage?: string
+  gender?: string
 }
 
 export interface ResolvedCharacterLikeness {
@@ -514,11 +578,323 @@ export interface ResolvedCharacterLikeness {
   likenessTransformNote?: string
   donorCharacterId?: string
   donorCharacterName?: string
+  likenessMode?: 'same_person' | 'family_blend'
+  donors?: ResolvedLikenessDonor[]
+}
+
+function escapeRegexLiteral(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /**
- * Resolve optional reference likeness image (either uploaded reference photo or another
- * cast character's portrait) without coupling character lifecycles or overwriting portraits.
+ * Strip life-stage suffixes (e.g. `"Arthur 78"` -> `"Arthur"`, `"Eleanor (Age 75)"` -> `"Eleanor"`)
+ * so donor labels never inject older age numbers into target age extraction or Gemini prompts.
+ */
+export function cleanLikenessDonorBaseLabel(
+  rawName?: string | null,
+  fallbackIndex = 1
+): string {
+  const trimmed = (rawName || '').trim()
+  if (!trimmed) return `Donor ${fallbackIndex}`
+  const stage = extractSamePersonAgeStage(trimmed)
+  const base = (stage.baseName || trimmed)
+    .replace(/\s*\(\s*(?:Age\s*)?\d{1,3}\s*\)\s*$/i, '')
+    .replace(/\s+\d{1,3}\s*$/, '')
+    .trim()
+  return base || trimmed
+}
+
+function extractSimpleFirstName(rawName: string): string {
+  const cleaned = rawName.replace(/^(dr\.?|mr\.?|mrs\.?|ms\.?|prof\.?|capt\.?|lt\.?)\s+/i, '').trim()
+  return cleaned.split(/\s+/)[0] || cleaned
+}
+
+function areSamePersonLikenessEntries(
+  a?: CharacterLikenessFields | null,
+  b?: CharacterLikenessFields | null
+): boolean {
+  if (!a || !b) return false
+  const gA = (a.samePersonGroupId || '').trim().toLowerCase()
+  const gB = (b.samePersonGroupId || '').trim().toLowerCase()
+  if (gA && gB && gA === gB) return true
+  const sA = extractSamePersonAgeStage((a.name || '').trim())
+  const sB = extractSamePersonAgeStage((b.name || '').trim())
+  const bA = sA.baseName.trim().toLowerCase()
+  const bB = sB.baseName.trim().toLowerCase()
+  return Boolean(bA && bB && bA === bB && (sA.isAgeVariant || sB.isAgeVariant))
+}
+
+/**
+ * Detect cast members explicitly cited as physical/genetic trait donors in a character's
+ * Transform Note, appearance, or description — e.g.:
+ *   `"Warm 44-year-old adult daughter inheriting Arthur’s hazel eyes and Eleanor’s cheekbones"`
+ *
+ * Ordered by first text mention (`Arthur` -> `[1]`, `Eleanor` -> `[2]`) and deduplicated across
+ * same-person age variants (preferring drawn portraits and older/base life-stage anchors).
+ */
+export function detectTraitDonorCandidatesFromProse(
+  character: CharacterLikenessFields | null | undefined,
+  allCharacters: CharacterLikenessFields[] = [],
+  selfId?: string
+): DetectedTraitDonorCandidate[] {
+  if (!character || !Array.isArray(allCharacters) || allCharacters.length === 0) return []
+
+  const prose = [
+    character.likenessTransformNote,
+    character.appearanceDescription,
+    character.appearance,
+    character.description,
+    character.keyFeature,
+    character.subject,
+  ]
+    .map((v) => (typeof v === 'string' ? v.trim() : ''))
+    .filter(Boolean)
+    .join('. ')
+  if (!prose) return []
+
+  const resolvedSelfId = (selfId || character.id || '').trim()
+  const selfNameLower = (character.name || '').trim().toLowerCase()
+
+  // Group first names by same-person identity so "Arthur 78" + "Arthur 26" still resolve "Arthur" uniquely
+  const firstNamePersonGroups = new Map<string, Set<string>>()
+  const firstNamePrimaryIndex = new Map<string, number>()
+  const firstNamePrimaryRank = new Map<string, number>()
+
+  allCharacters.forEach((cand, idx) => {
+    const name = (cand?.name || '').trim()
+    if (!name || cand?.type === 'narrator' || cand?.role === 'narrator' || cand?.type === 'description') {
+      return
+    }
+    const stage = extractSamePersonAgeStage(name)
+    const cleanBase = cleanLikenessDonorBaseLabel(name, idx + 1)
+    const firstUpper = extractSimpleFirstName(cleanBase).toUpperCase()
+    const personKey =
+      (cand?.samePersonGroupId || '').trim().toLowerCase() ||
+      cleanBase.toLowerCase()
+    if (firstUpper.length >= 2 && personKey) {
+      let set = firstNamePersonGroups.get(firstUpper)
+      if (!set) {
+        set = new Set<string>()
+        firstNamePersonGroups.set(firstUpper, set)
+      }
+      set.add(personKey)
+      const rank =
+        (cand?.referenceImage?.trim() ? 1000 : 0) +
+        (!stage.isAgeVariant ? 200 : stage.numericAge ?? 0)
+      const prevRank = firstNamePrimaryRank.get(firstUpper)
+      if (prevRank === undefined || rank > prevRank) {
+        firstNamePrimaryRank.set(firstUpper, rank)
+        firstNamePrimaryIndex.set(firstUpper, idx)
+      }
+    }
+  })
+
+  const matched: Array<DetectedTraitDonorCandidate & { matchOffset: number; personKey: string }> = []
+
+  allCharacters.forEach((cand, idx) => {
+    const candName = (cand?.name || '').trim()
+    if (!candName || cand?.type === 'narrator' || cand?.role === 'narrator' || cand?.type === 'description') {
+      return
+    }
+    const canonicalId = cand?.id || String(idx)
+    const legacyId = cand?.id || `char-${idx}`
+    if (
+      (resolvedSelfId && (canonicalId === resolvedSelfId || legacyId === resolvedSelfId)) ||
+      (!resolvedSelfId && selfNameLower && candName.toLowerCase() === selfNameLower)
+    ) {
+      return
+    }
+    if (areSamePersonLikenessEntries(character, cand)) return
+
+    const cleanLabel = cleanLikenessDonorBaseLabel(candName, idx + 1)
+    const first = extractSimpleFirstName(cleanLabel)
+    const firstUpper = first.toUpperCase()
+    const personKey =
+      (cand?.samePersonGroupId || '').trim().toLowerCase() ||
+      cleanLabel.toLowerCase()
+
+    const tokensToTry: string[] = [candName]
+    if (cleanLabel.toLowerCase() !== candName.toLowerCase() && firstNamePrimaryIndex.get(firstUpper) === idx) {
+      tokensToTry.push(cleanLabel)
+    }
+    if (
+      first.length >= 3 &&
+      first.toLowerCase() !== cleanLabel.toLowerCase() &&
+      firstNamePersonGroups.get(firstUpper)?.size === 1 &&
+      firstNamePrimaryIndex.get(firstUpper) === idx
+    ) {
+      tokensToTry.push(first)
+    }
+
+    for (const token of tokensToTry) {
+      const esc = escapeRegexLiteral(token)
+      const patterns = [
+        new RegExp(`\\binherit(?:s|ing|ed)?\\b[^.;\\n]{0,140}?\\b(${esc})(?:'s|’s|\\b)`, 'i'),
+        new RegExp(
+          `\\b(${esc})(?:'s|’s)\\s+(?:[a-z-]+\\s+){0,2}(?:eyes|cheekbones|jaw|jawline|smile|nose|brow|forehead|chin|dimples|freckles|curls|hair|complexion|bone\\s+structure|facial\\s+structure|features|likeness)\\b`,
+          'i'
+        ),
+        new RegExp(`\\b(?:blend(?:ing|s)?\\s+(?:of\\s+)?|resembl(?:es|ing)\\s+)[^.;\\n]{0,70}?\\b(${esc})\\b`, 'i'),
+      ]
+
+      let earliestOffset = Infinity
+      for (const re of patterns) {
+        const m = re.exec(prose)
+        if (m) {
+          const subOffset = m[0].toLowerCase().lastIndexOf(token.toLowerCase())
+          const exactOffset = m.index + (subOffset >= 0 ? subOffset : 0)
+          if (exactOffset < earliestOffset) earliestOffset = exactOffset
+        }
+      }
+
+      if (Number.isFinite(earliestOffset)) {
+        matched.push({
+          index: idx,
+          characterId: canonicalId,
+          characterName: candName,
+          cleanLabel,
+          referenceImage: cand?.referenceImage?.trim() || undefined,
+          gender: cand?.gender?.trim() || undefined,
+          matchOffset: earliestOffset,
+          personKey,
+        })
+        break
+      }
+    }
+  })
+
+  matched.sort((a, b) => a.matchOffset - b.matchOffset)
+  const seenPersons = new Set<string>()
+  const deduped: DetectedTraitDonorCandidate[] = []
+  for (const item of matched) {
+    if (seenPersons.has(item.personKey)) continue
+    seenPersons.add(item.personKey)
+    const { matchOffset: _m, personKey: _p, ...cleanItem } = item
+    deduped.push(cleanItem)
+    if (deduped.length >= 3) break
+  }
+  return deduped
+}
+
+function findDonorCharacterByIdOrName(
+  allCharacters: CharacterLikenessFields[],
+  donorId?: string | null,
+  donorName?: string | null,
+  resolvedSelfId?: string,
+  selfNameLower?: string
+): { donor: CharacterLikenessFields; index: number; canonicalId: string } | null {
+  const targetDonorId = (donorId || '').trim()
+  const targetDonorNameLower = (donorName || '').trim().toLowerCase()
+  if (!targetDonorId && !targetDonorNameLower) return null
+
+  let matchedIndex = -1
+  if (targetDonorId) {
+    matchedIndex = allCharacters.findIndex((c, idx) => {
+      const canonicalId = c?.id || String(idx)
+      const legacyId = c?.id || `char-${idx}`
+      return canonicalId === targetDonorId || legacyId === targetDonorId
+    })
+  }
+  if (matchedIndex < 0 && targetDonorNameLower) {
+    matchedIndex = allCharacters.findIndex(
+      (c) => (c?.name || '').trim().toLowerCase() === targetDonorNameLower
+    )
+  }
+  if (matchedIndex < 0 && targetDonorId) {
+    const idAsNameLower = targetDonorId.toLowerCase()
+    matchedIndex = allCharacters.findIndex(
+      (c) => (c?.name || '').trim().toLowerCase() === idAsNameLower
+    )
+  }
+  if (matchedIndex < 0) return null
+
+  const donor = allCharacters[matchedIndex]
+  const donorCanonicalId = donor?.id || String(matchedIndex)
+  const donorLegacyId = donor?.id || `char-${matchedIndex}`
+  const donorNameTrimmed = (donor?.name || '').trim()
+
+  if (
+    (resolvedSelfId &&
+      (donorCanonicalId === resolvedSelfId || donorLegacyId === resolvedSelfId)) ||
+    (!resolvedSelfId && selfNameLower && donorNameTrimmed.toLowerCase() === selfNameLower)
+  ) {
+    return null
+  }
+
+  return { donor, index: matchedIndex, canonicalId: donorCanonicalId }
+}
+
+const FAMILY_OFFSPRING_OR_KIN_CUE_RE =
+  /\b(?:daughter|son|child|offspring|firstborn|granddaughter|grandson|grandchild|sister|brother|twin|sibling|niece|nephew|cousin|inherit(?:s|ing|ed)?|family\s+resemblance|parent(?:s)?)\b/i
+
+function inferGenderToken(
+  explicitGender?: string | null,
+  ...proseSources: Array<string | null | undefined>
+): 'female' | 'male' | null {
+  const g = (explicitGender || '').trim().toLowerCase()
+  if (/^(female|woman|girl|f|she|her)$/.test(g)) return 'female'
+  if (/^(male|man|boy|m|he|him)$/.test(g)) return 'male'
+
+  const combined = proseSources
+    .map((s) => (typeof s === 'string' ? s.trim() : ''))
+    .filter(Boolean)
+    .join(' ')
+  if (!combined) return null
+
+  const hasFemaleNoun =
+    /\b(?:daughter|woman|female|mother|mom|mama|matriarch|sister|granddaughter|grandmother|girl|actress|bride|wife)\b/i.test(
+      combined
+    )
+  const hasMaleNoun =
+    /\b(?:son|man|male|father|dad|papa|patriarch|brother|grandson|grandfather|boy|actor|groom|husband)\b/i.test(
+      combined
+    )
+  if (hasFemaleNoun && !hasMaleNoun) return 'female'
+  if (hasMaleNoun && !hasFemaleNoun) return 'male'
+  return null
+}
+
+function resolveEffectiveLikenessRelationMode(input: {
+  explicitRelationMode?: string | null
+  donorCount: number
+  isSamePersonPair: boolean
+  targetGender: 'female' | 'male' | null
+  donorGenders: Array<'female' | 'male' | null>
+  combinedText: string
+  hasBiologicalKinshipToDonor: boolean
+}): 'same_person' | 'family_blend' {
+  const modeClean = (input.explicitRelationMode || '').trim().toLowerCase()
+  if (input.donorCount >= 2 || modeClean === 'family_blend') {
+    return 'family_blend'
+  }
+  if (modeClean === 'same_person') {
+    return 'same_person'
+  }
+  if (input.isSamePersonPair) {
+    return 'same_person'
+  }
+  if (input.hasBiologicalKinshipToDonor || FAMILY_OFFSPRING_OR_KIN_CUE_RE.test(input.combinedText)) {
+    return 'family_blend'
+  }
+  const primaryDonorGender = input.donorGenders[0] ?? null
+  if (
+    input.targetGender &&
+    primaryDonorGender &&
+    input.targetGender !== primaryDonorGender
+  ) {
+    return 'family_blend'
+  }
+  return 'same_person'
+}
+
+/**
+ * Resolve optional reference likeness image(s) — single-donor same-person transformation
+ * (e.g. `Arthur 78 -> Arthur 26` or uploaded selfie -> younger self) OR 1–2+ donor
+ * family trait inheritance (e.g. `Arthur + Eleanor -> Claire 44`).
+ *
+ * Matches both `resolveCharacterId` (`c?.id || String(idx)`) and legacy `char-${idx}` IDs,
+ * plus case-insensitive `likenessCharacterName` fallback and automatic prose trait-donor
+ * inference when `likenessSourceType` was not explicitly set to `'none'`.
  */
 export function resolveCharacterLikenessInput(
   character: CharacterLikenessFields | null | undefined,
@@ -526,46 +902,234 @@ export function resolveCharacterLikenessInput(
   selfId?: string
 ): ResolvedCharacterLikeness {
   if (!character) return {}
-  const mode = (character.likenessSourceType || '').trim().toLowerCase()
-  const note = character.likenessTransformNote?.trim() || undefined
-  const resolvedSelfId = selfId || character.id || ''
+  const explicitSource = (character.likenessSourceType || '').trim().toLowerCase()
+  if (explicitSource === 'none') return {}
 
+  const hasPrimaryCastRef = Boolean(
+    character.likenessCharacterId?.trim() || character.likenessCharacterName?.trim()
+  )
+  const hasSecondaryCastRef = Boolean(
+    character.secondaryLikenessCharacterId?.trim() ||
+      character.secondaryLikenessCharacterName?.trim()
+  )
+  const hasPrimaryUpload = Boolean(character.likenessImageUrl?.trim())
+  const hasSecondaryUpload = Boolean(character.secondaryLikenessImageUrl?.trim())
+
+  const mode =
+    explicitSource === 'character' || explicitSource === 'upload' || explicitSource === 'blend'
+      ? explicitSource
+      : hasPrimaryCastRef || hasSecondaryCastRef
+        ? 'character'
+        : hasPrimaryUpload || hasSecondaryUpload
+          ? 'upload'
+          : 'auto'
+
+  const resolvedSelfId = (selfId || character.id || '').trim()
+  const selfNameLower = (character.name || '').trim().toLowerCase()
+  const explicitNote = character.likenessTransformNote?.trim() || undefined
+
+  const donors: ResolvedLikenessDonor[] = []
+  const matchedCastRecords: CharacterLikenessFields[] = []
+  const seenUrls = new Set<string>()
+  const pushDonor = (entry: ResolvedLikenessDonor) => {
+    const url = entry.imageUrl.trim()
+    if (!url || seenUrls.has(url)) return
+    seenUrls.add(url)
+    donors.push({ ...entry, imageUrl: url })
+  }
+
+  // 1. Primary donor slot
   if (mode === 'upload') {
     const uploadUrl = character.likenessImageUrl?.trim()
     if (uploadUrl) {
-      return {
-        likenessReferenceImageUrl: uploadUrl,
-        likenessTransformNote: note,
+      pushDonor({
+        imageUrl: uploadUrl,
+        sourceType: 'upload',
+        cleanLabel: 'Reference Donor 1',
+      })
+    }
+  } else if (mode === 'character' || mode === 'blend') {
+    const primaryMatch = findDonorCharacterByIdOrName(
+      allCharacters,
+      character.likenessCharacterId,
+      character.likenessCharacterName,
+      resolvedSelfId,
+      selfNameLower
+    )
+    if (primaryMatch?.donor?.referenceImage?.trim()) {
+      matchedCastRecords.push(primaryMatch.donor)
+      const donorNameTrimmed = primaryMatch.donor.name?.trim() || undefined
+      pushDonor({
+        imageUrl: primaryMatch.donor.referenceImage.trim(),
+        sourceType: 'character',
+        characterId: primaryMatch.canonicalId,
+        characterName: donorNameTrimmed,
+        cleanLabel: cleanLikenessDonorBaseLabel(donorNameTrimmed, 1),
+        gender: primaryMatch.donor.gender?.trim() || undefined,
+      })
+    } else if (mode === 'blend' && character.likenessImageUrl?.trim()) {
+      pushDonor({
+        imageUrl: character.likenessImageUrl.trim(),
+        sourceType: 'upload',
+        cleanLabel: 'Reference Donor 1',
+      })
+    }
+  }
+
+  // 2. Secondary donor slot (e.g. 2nd parent/relative in Cast OR 2nd uploaded parent photo)
+  if (hasSecondaryCastRef) {
+    const secondaryMatch = findDonorCharacterByIdOrName(
+      allCharacters,
+      character.secondaryLikenessCharacterId,
+      character.secondaryLikenessCharacterName,
+      resolvedSelfId,
+      selfNameLower
+    )
+    if (secondaryMatch?.donor?.referenceImage?.trim()) {
+      matchedCastRecords.push(secondaryMatch.donor)
+      const secNameTrimmed = secondaryMatch.donor.name?.trim() || undefined
+      pushDonor({
+        imageUrl: secondaryMatch.donor.referenceImage.trim(),
+        sourceType: 'character',
+        characterId: secondaryMatch.canonicalId,
+        characterName: secNameTrimmed,
+        cleanLabel: cleanLikenessDonorBaseLabel(secNameTrimmed, donors.length + 1),
+        gender: secondaryMatch.donor.gender?.trim() || undefined,
+      })
+    }
+  }
+  if (hasSecondaryUpload && character.secondaryLikenessImageUrl?.trim()) {
+    pushDonor({
+      imageUrl: character.secondaryLikenessImageUrl.trim(),
+      sourceType: 'upload',
+      cleanLabel: `Reference Donor ${donors.length + 1}`,
+    })
+  }
+
+  // 3. Automatic prose trait-donor resolution when user wrote e.g.
+  // "Claire 44: Warm 44-year-old adult daughter inheriting Arthur's hazel eyes and Eleanor's cheekbones"
+  // without manually configuring the Reference Likeness panel (and did not set likenessSourceType='none').
+  let usedImplicitProseDonors = false
+  if (
+    donors.length === 0 &&
+    !hasPrimaryCastRef &&
+    !hasSecondaryCastRef &&
+    !hasPrimaryUpload &&
+    !hasSecondaryUpload
+  ) {
+    const proseCandidates = detectTraitDonorCandidatesFromProse(
+      character,
+      allCharacters,
+      resolvedSelfId
+    )
+    for (const cand of proseCandidates) {
+      if (cand.referenceImage) {
+        const donorRec = allCharacters[cand.index]
+        if (donorRec) matchedCastRecords.push(donorRec)
+        pushDonor({
+          imageUrl: cand.referenceImage,
+          sourceType: 'character',
+          characterId: cand.characterId,
+          characterName: cand.characterName,
+          cleanLabel: cand.cleanLabel,
+          gender: cand.gender,
+        })
+        usedImplicitProseDonors = true
       }
     }
+  }
+
+  if (donors.length === 0) {
     return {}
   }
 
-  if (mode === 'character') {
-    const targetDonorId = character.likenessCharacterId?.trim()
-    if (!targetDonorId || (resolvedSelfId && targetDonorId === resolvedSelfId)) {
-      return {}
-    }
-    const donor = allCharacters.find((c, idx) => {
-      const candidateId = c?.id || `char-${idx}`
-      return candidateId === targetDonorId
-    })
-    const donorImg = donor?.referenceImage?.trim()
-    if (donorImg) {
-      return {
-        likenessReferenceImageUrl: donorImg,
-        likenessTransformNote: note,
-        donorCharacterId: targetDonorId,
-        donorCharacterName: donor?.name?.trim() || undefined,
-      }
-    }
-  }
+  const fallbackProseNote = usedImplicitProseDonors
+    ? character.appearanceDescription?.trim() ||
+      character.appearance?.trim() ||
+      character.description?.trim() ||
+      undefined
+    : undefined
+  const effectiveNote = explicitNote || fallbackProseNote
 
-  return {}
+  const combinedText = [
+    effectiveNote,
+    character.appearanceDescription,
+    character.appearance,
+    character.description,
+  ]
+    .map((s) => (typeof s === 'string' ? s.trim() : ''))
+    .filter(Boolean)
+    .join('. ')
+
+  const isSamePersonPair =
+    donors.length === 1 &&
+    matchedCastRecords.length === 1 &&
+    areSamePersonLikenessEntries(character, matchedCastRecords[0])
+
+  const hasBioKinship =
+    Array.isArray(character.familyRelationships) &&
+    character.familyRelationships.some(
+      (r) =>
+        r.biological &&
+        donors.some(
+          (d) =>
+            (d.characterId && r.relatedCharacterId === d.characterId) ||
+            (d.characterName &&
+              r.relatedCharacterName.trim().toLowerCase() === d.characterName.trim().toLowerCase())
+        )
+    )
+
+  const targetGender = inferGenderToken(
+    character.gender,
+    character.name,
+    effectiveNote,
+    character.appearanceDescription,
+    character.description
+  )
+  const donorGenders = donors.map((d, idx) =>
+    inferGenderToken(
+      d.gender,
+      d.characterName,
+      matchedCastRecords[idx]?.appearanceDescription,
+      matchedCastRecords[idx]?.description
+    )
+  )
+
+  const resolvedRelationMode = usedImplicitProseDonors
+    ? 'family_blend'
+    : resolveEffectiveLikenessRelationMode({
+        explicitRelationMode: character.likenessMode,
+        donorCount: donors.length,
+        isSamePersonPair,
+        targetGender,
+        donorGenders,
+        combinedText,
+        hasBiologicalKinshipToDonor: Boolean(hasBioKinship),
+      })
+
+  const primary = donors[0]!
+  return {
+    likenessReferenceImageUrl: primary.imageUrl,
+    likenessTransformNote: effectiveNote,
+    donorCharacterId: primary.characterId,
+    donorCharacterName: primary.characterName,
+    likenessMode: resolvedRelationMode,
+    donors,
+  }
+}
+
+export interface LikenessDonorPromptSpec {
+  characterName?: string | null
+  cleanLabel?: string | null
+  gender?: string | null
 }
 
 export interface LikenessGuidedIdentityPromptInput {
   characterName?: string | null
+  donorCharacterName?: string | null
+  donors?: LikenessDonorPromptSpec[] | null
+  likenessMode?: LikenessRelationMode | string | null
+  targetGender?: string | null
   appearanceDescription: string
   likenessTransformNote?: string | null
   targetAge?: string | number | null
@@ -581,12 +1145,102 @@ export interface LikenessGuidedIdentityPromptResult {
 const CLEAN_SHAVEN_INTENT_RE =
   /\b(?:no|not|without|zero|free\s+of|lack(?:ing)?)\s+(?:any\s+)?(?:facial\s+hair|beard|mustache|moustache|stubble|goatee)\b|\b(?:clean[- ]shaven|beardless|smooth[- ]shaven)\b/i
 
+const SMILE_OR_EXPRESSION_INTENT_RE =
+  /\b(?:warm|gentle|soft|broad|bright|slight|subtle|friendly|confident|easy|open|joyful|radiant|charismatic)?\s*(?:smile|smiling|grin|grinning|beam|beaming)\b|\bsmil(?:e|ing)\b|\b(?:warm|kind|gentle|joyful|affectionate)\s+(?:\d{1,3}[-\s]*year[-\s]*old\s+)?(?:adult\s+|young\s+)?(?:expression|demeanor|daughter|son|woman|man|mother|father|person)\b/i
+
+const WANTS_GRAY_OR_WHITE_HAIR_RE =
+  /\b(?:gray|grey|silver|white|salt[-\s]*and[-\s]*pepper|platinum|frosted)\s+(?:hair|locks|curls|waves|temples|streaks|strands|afro|bob|bun|braids)\b/i
+
+const WANTS_RECEDING_OR_BALD_RE =
+  /\b(?:receding\s+hairline|balding|bald|shaved\s+head|thinning\s+hair)\b/i
+
+/**
+ * Strip donor-character age references like `"of Arthur 78"` or `"from Arthur (Age 78)"`
+ * before scanning free text for the TARGET age or sending text to Gemini Image, so the
+ * donor's older age number (`78`) never leaks into target age extraction or visual tokens.
+ */
+function stripDonorAgeReferencesFromNote(
+  text: string,
+  donorCharacterName?: string | null,
+  extraDonorSpecs?: LikenessDonorPromptSpec[] | null,
+  keepDistinctDonorNames = false
+): string {
+  if (!text) return ''
+  let out = text
+
+  const specs =
+    Array.isArray(extraDonorSpecs) && extraDonorSpecs.length > 0
+      ? extraDonorSpecs
+      : donorCharacterName?.trim()
+        ? [{ characterName: donorCharacterName.trim() }]
+        : []
+
+  specs.forEach((spec, idx) => {
+    const rawName = (spec.characterName || '').trim()
+    const cleanLabel =
+      (spec.cleanLabel || '').trim() || cleanLikenessDonorBaseLabel(rawName, idx + 1)
+    const refTag = `Reference Image [${idx + 1}]`
+
+    if (keepDistinctDonorNames) {
+      // Family blend: strip trailing age numbers from donor names ("Arthur 78" -> "Arthur")
+      // AND bind clean donor names to their exact multimodal slot ("Arthur's" -> "Arthur's (Reference Image [1])")
+      if (rawName && rawName.toLowerCase() !== cleanLabel.toLowerCase()) {
+        const escapedRaw = escapeRegexLiteral(rawName)
+        out = out.replace(new RegExp(`\\b${escapedRaw}\\b`, 'gi'), cleanLabel)
+      }
+      if (cleanLabel && !/^Donor\s+\d+$/i.test(cleanLabel) && !/^Reference Donor/i.test(cleanLabel)) {
+        const escapedClean = escapeRegexLiteral(cleanLabel)
+        // Strip any inline "<CleanLabel> 78" or "<CleanLabel> (Age 78)" age tokens
+        out = out.replace(
+          new RegExp(
+            `\\b(${escapedClean})\\s*(?:\\(\\s*(?:Age\\s*)?\\d{1,3}\\s*\\)|\\bAge\\s*\\d{1,3}\\b|\\s+\\d{1,3}\\b)`,
+            'gi'
+          ),
+          '$1'
+        )
+        // Annotate possessive ("Arthur's" -> "Arthur's (Reference Image [1])") or bare name if not already tagged
+        out = out.replace(
+          new RegExp(`\\b(${escapedClean}(?:'s|’s))(?!\\s*\\(Reference Image)`, 'gi'),
+          `$1 (${refTag})`
+        )
+        out = out.replace(
+          new RegExp(`\\b(${escapedClean})(?!'s|’s|\\s*\\(Reference Image)`, 'gi'),
+          `$1 (${refTag})`
+        )
+      }
+    } else if (rawName) {
+      const escapedDonor = escapeRegexLiteral(rawName)
+      out = out.replace(
+        new RegExp(`\\b(?:of|from|as|like|than)\\s+${escapedDonor}\\b`, 'gi'),
+        `of the person in ${refTag}`
+      )
+      out = out.replace(
+        new RegExp(`\\b${escapedDonor}\\b`, 'gi'),
+        `the person in ${refTag}`
+      )
+    }
+  })
+
+  if (!keepDistinctDonorNames) {
+    // Generic pattern: "version of Arthur 78", "version of Arthur (Age 78)", "from John Miller 65"
+    out = out.replace(
+      /\b(version\s+(?:of|from)|likeness\s+(?:of|from)|based\s+on|younger\s+version\s+of|older\s+version\s+of)\s+(?!the\b|reference\b|this\b)([A-Z][A-Za-z.'-]*(?:\s+[A-Z][A-Za-z.'-]*){0,3})\s*(?:\(\s*(?:Age\s*)?\d{1,3}\s*\)|\bAge\s*\d{1,3}\b|\s+\d{1,3}\b)/g,
+      '$1 the person in Reference Image [1]'
+    )
+  }
+  return out
+}
+
 function extractNumericTargetAge(...sources: Array<string | number | null | undefined>): number | null {
   for (const src of sources) {
     if (typeof src === 'number' && Number.isFinite(src) && src > 0 && src < 120) {
       return src
     }
     if (typeof src !== 'string' || !src.trim()) continue
+    const stageParsed = extractSamePersonAgeStage(src.trim())
+    if (stageParsed.isAgeVariant && stageParsed.numericAge && stageParsed.numericAge > 0 && stageParsed.numericAge < 120) {
+      return stageParsed.numericAge
+    }
     const explicit = src.match(
       /\b(?:age[d]?\s*(\d{1,3})|(\d{1,3})\s*(?:-|\s)?\s*(?:year[s]?[-\s]*old|yo|yrs?))\b/i
     )
@@ -607,8 +1261,19 @@ function extractNumericTargetAge(...sources: Array<string | number | null | unde
   return null
 }
 
-function sanitizeReferenceTransformTextForRai(text: string, numericAge: number | null): string {
-  let out = text
+function sanitizeReferenceTransformTextForRai(
+  text: string,
+  numericAge: number | null,
+  donorCharacterName?: string | null,
+  donorSpecs?: LikenessDonorPromptSpec[] | null,
+  keepDistinctDonorNames = false
+): string {
+  let out = stripDonorAgeReferencesFromNote(
+    text,
+    donorCharacterName,
+    donorSpecs,
+    keepDistinctDonorNames
+  )
     // Fix common natural-language typo "not facial hair" -> "no facial hair"
     .replace(/\bnot\s+facial\s+hair\b/gi, 'no facial hair')
     .replace(/\bboys?\b/gi, 'young man')
@@ -622,17 +1287,17 @@ function sanitizeReferenceTransformTextForRai(text: string, numericAge: number |
       )
       .replace(/\b(?:teen|teenage|teenager|adolescent|minor|underage|high[\s-]*school\w*)\b/gi, 'youthful collegiate')
   } else if (numericAge !== null && numericAge < 14) {
-    out = out
-      .replace(/\b(?:minor|underage)\b/gi, 'young')
+    out = out.replace(/\b(?:minor|underage)\b/gi, 'young')
   }
 
   return out.replace(/\s+/g, ' ').trim()
 }
 
 /**
- * Build a portrait generation prompt anchored to a Subject Likeness Reference Image
- * (either an uploaded photo or another cast character's portrait) while explicitly
- * overriding age, hairstyle, and facial hair where specified.
+ * Build a portrait generation prompt anchored to 1 or more Subject Likeness Reference Images:
+ * - `'same_person'` mode: younger/older/era-styled version of the SAME individual (`Arthur 78 -> Arthur 26` or selfie -> younger self).
+ * - `'family_blend'` mode: ORIGINAL distinct relative/offspring inheriting specific traits from 1 or 2+ parent/family donors
+ *   (e.g. `Claire 44: Warm 44-year-old adult daughter inheriting Arthur’s hazel eyes and Eleanor’s cheekbones`).
  */
 export function buildLikenessGuidedIdentityPrompt(
   input: LikenessGuidedIdentityPromptInput
@@ -652,34 +1317,136 @@ export function buildLikenessGuidedIdentityPrompt(
     styleDirectives = `${IDENTITY_PHOTO_REALISM_DIRECTIVES}\nGlobal Art Style grade: ${spec.stylePrompt}.`
   }
 
+  const normalizedDonors: Array<{ characterName?: string; cleanLabel: string; gender?: string }> =
+    Array.isArray(input.donors) && input.donors.length > 0
+      ? input.donors.map((d, idx) => ({
+          characterName: d.characterName?.trim() || undefined,
+          cleanLabel:
+            d.cleanLabel?.trim() || cleanLikenessDonorBaseLabel(d.characterName, idx + 1),
+          gender: d.gender?.trim() || undefined,
+        }))
+      : [
+          {
+            characterName: input.donorCharacterName?.trim() || undefined,
+            cleanLabel: cleanLikenessDonorBaseLabel(input.donorCharacterName, 1),
+          },
+        ]
+
   const rawNote = input.likenessTransformNote?.trim() || ''
   const rawAppearance = input.appearanceDescription?.trim() || ''
+  const targetGender = inferGenderToken(
+    input.targetGender,
+    input.characterName,
+    rawNote,
+    rawAppearance
+  )
+  const donorGenders = normalizedDonors.map((d) =>
+    inferGenderToken(d.gender, d.characterName)
+  )
+
+  const targetBaseLower = cleanLikenessDonorBaseLabel(input.characterName, 0).toLowerCase()
+  const primaryDonorBaseLower = normalizedDonors[0]?.cleanLabel.toLowerCase() || ''
+  const isSamePersonByBaseName = Boolean(
+    normalizedDonors.length === 1 &&
+      targetBaseLower &&
+      primaryDonorBaseLower &&
+      targetBaseLower === primaryDonorBaseLower &&
+      !/^donor\s+\d+$/i.test(primaryDonorBaseLower)
+  )
+
+  const effectiveMode = resolveEffectiveLikenessRelationMode({
+    explicitRelationMode: input.likenessMode,
+    donorCount: normalizedDonors.length,
+    isSamePersonPair: isSamePersonByBaseName,
+    targetGender,
+    donorGenders,
+    combinedText: `${rawNote} ${rawAppearance}`.trim(),
+    hasBiologicalKinshipToDonor: false,
+  })
+  const isFamilyBlend = effectiveMode === 'family_blend'
+
+  const donorScrubbedNote = stripDonorAgeReferencesFromNote(
+    rawNote,
+    input.donorCharacterName,
+    normalizedDonors,
+    isFamilyBlend
+  )
+  const donorScrubbedAppearance = stripDonorAgeReferencesFromNote(
+    rawAppearance,
+    input.donorCharacterName,
+    normalizedDonors,
+    isFamilyBlend
+  )
+
   const numericAge = extractNumericTargetAge(
     input.targetAge,
-    rawNote,
     input.characterName,
-    rawAppearance
+    donorScrubbedNote,
+    donorScrubbedAppearance
   )
 
   const wantsCleanShaven =
     CLEAN_SHAVEN_INTENT_RE.test(rawNote) || CLEAN_SHAVEN_INTENT_RE.test(rawAppearance)
+  const wantsSmileOrCustomExpression =
+    SMILE_OR_EXPRESSION_INTENT_RE.test(rawNote) ||
+    SMILE_OR_EXPRESSION_INTENT_RE.test(rawAppearance)
+  const wantsGrayHair =
+    WANTS_GRAY_OR_WHITE_HAIR_RE.test(donorScrubbedNote) ||
+    WANTS_GRAY_OR_WHITE_HAIR_RE.test(donorScrubbedAppearance)
+  const wantsRecedingOrBald =
+    WANTS_RECEDING_OR_BALD_RE.test(donorScrubbedNote) ||
+    WANTS_RECEDING_OR_BALD_RE.test(donorScrubbedAppearance)
 
-  const safeNote = rawNote ? sanitizeReferenceTransformTextForRai(rawNote, numericAge) : ''
-  const safeAppearance = sanitizeReferenceTransformTextForRai(rawAppearance, numericAge)
+  if (wantsSmileOrCustomExpression) {
+    styleDirectives = styleDirectives.replace(
+      'Expression: neutral relaxed expression, mouth closed, direct eye contact.',
+      'Expression: natural, warm, authentic expression honoring the requested character demeanor/smile above, direct eye contact.'
+    )
+  }
+
+  const safeNote = rawNote
+    ? sanitizeReferenceTransformTextForRai(
+        rawNote,
+        numericAge,
+        input.donorCharacterName,
+        normalizedDonors,
+        isFamilyBlend
+      )
+    : ''
+  const safeAppearance = sanitizeReferenceTransformTextForRai(
+    rawAppearance,
+    numericAge,
+    input.donorCharacterName,
+    normalizedDonors,
+    isFamilyBlend
+  )
+
+  const donorRefsSummary =
+    normalizedDonors.length === 1
+      ? 'Reference Image [1]'
+      : normalizedDonors.map((_, idx) => `Reference Image [${idx + 1}]`).join(' and ')
 
   const ageStageClause =
-    numericAge !== null && numericAge >= 15 && numericAge < 20
-      ? 'Depict at a fresh, youthful collegiate young-adult life stage with smooth unlined skin, lean youthful jawline, and zero middle-aged facial lines.'
-      : numericAge !== null && numericAge >= 20
-        ? `Depict strictly at biological age ${numericAge}.`
-        : ''
+    numericAge !== null && numericAge >= 14 && numericAge < 20
+      ? `DE-AGING & YOUTH REJUVENATION OVERRIDE: Depict at a fresh, youthful collegiate young-adult life stage. Completely strip away all adult or senior aging markers from ${donorRefsSummary}: render smooth, taut, unlined skin, lean youthful jawline and neck, bright clear eyes with zero crow’s feet, zero forehead creases, zero nasolabial folds, zero under-eye bags, zero jowls, and full youthful hair density.`
+      : numericAge !== null && numericAge >= 20 && numericAge <= 35
+        ? `DE-AGING & REJUVENATION OVERRIDE: Depict strictly in young-adult prime at biological age ${numericAge}. Completely strip away any middle-aged or elderly aging markers visible in ${donorRefsSummary}: render smooth, firm, taut age-${numericAge} skin texture, a crisp youthful jawline and smooth neck with zero jowls or skin laxity, bright clear eyes with zero heavy under-eye bags, crow’s feet, deep forehead furrows, nasolabial folds, or age spots, and a full, thick youthful hairline with rich natural pigment${wantsGrayHair ? '' : ' (strictly zero silver, white, or gray hair)'}.`
+        : numericAge !== null && numericAge >= 36 && numericAge <= 48
+          ? `AGE TRANSFORMATION OVERRIDE: Depict strictly in prime adulthood at biological age ${numericAge}. If ${donorRefsSummary} show${normalizedDonors.length > 1 ? '' : 's'} older senior individual(s), rejuvenate skin elasticity, jawline firmness, and hair fullness/pigment to authentic age ${numericAge}, removing elderly deep wrinkles, jowls, age spots${wantsGrayHair ? '' : ', and white/silver hair'}.`
+          : numericAge !== null && numericAge >= 60
+            ? `AGE PROGRESSION OVERRIDE: Depict strictly at biological age ${numericAge} (senior life stage), rendering natural age-${numericAge} skin character, wisdom lines, and age-authentic hair texture/color as specified while preserving the requested genetic features from ${donorRefsSummary}.`
+            : numericAge !== null
+              ? `Depict strictly at biological age ${numericAge}.`
+              : ''
 
   const cleanShavenClause = wantsCleanShaven
-    ? 'FACIAL HAIR OVERRIDE: Render with a completely clean-shaven, smooth jawline, chin, and upper lip — strictly zero beard, zero mustache, zero goatee, zero stubble, and zero five-o’clock shadow, completely removing any facial hair visible in Reference Image [1].'
+    ? `FACIAL HAIR OVERRIDE: Render with a completely clean-shaven, smooth jawline, chin, and upper lip — strictly zero beard, zero mustache, zero goatee, zero stubble, and zero five-o’clock shadow, completely removing any facial hair visible in ${donorRefsSummary}.`
     : ''
 
   const negativeTerms: string[] = []
-  if (wantsCleanShaven) {
+  const needsAntiFacialHair =
+    wantsCleanShaven || (isFamilyBlend && targetGender === 'female')
+  if (needsAntiFacialHair) {
     negativeTerms.push(
       'beard',
       'mustache',
@@ -689,40 +1456,134 @@ export function buildLikenessGuidedIdentityPrompt(
       'facial hair'
     )
   }
-  if (numericAge !== null && numericAge < 26) {
+  if (normalizedDonors.length >= 2) {
     negativeTerms.push(
-      'deep wrinkles',
-      "crow's feet",
-      'receding hairline',
-      'gray hair',
-      'middle-aged'
+      'multiple people',
+      'two people',
+      'couple',
+      'family group photo',
+      'split screen',
+      'diptych',
+      'side-by-side',
+      'collage',
+      'picture-in-picture'
     )
   }
-
-  const lines: string[] = [
-    anchor,
-    '',
-    'Subject Identity Anchor (Reference Image [1]): Preserve the exact underlying genetic facial identity of the person in Reference Image [1] — identical cranial and facial bone structure, eye shape, eye color, eye spacing, nose bridge and nostril contour, lip proportions, ear shape, skin tone, and heritage.',
-    '',
-    'Life-Stage & Styling Transformation (OVERRIDES Reference Image [1]): Reference Image [1] shows this individual at a different age or styling. Do NOT copy the age, skin wrinkles, hairline/hairstyle, or facial hair from Reference Image [1] wherever they differ from the target character specification below.',
-  ]
-
-  if (safeNote) {
-    lines.push('', `Requested Transformation from Reference [1]: ${safeNote}.`)
+  if (numericAge !== null && numericAge <= 38) {
+    negativeTerms.push(
+      'elderly',
+      'senior',
+      'old man',
+      'old woman',
+      'aged skin',
+      'deep wrinkles',
+      "crow's feet",
+      'forehead furrows',
+      'deep nasolabial folds',
+      'age spots',
+      'liver spots',
+      'jowls',
+      'sagging skin',
+      'loose neck skin',
+      'heavy under-eye bags'
+    )
+    if (!wantsGrayHair) {
+      negativeTerms.push(
+        'gray hair',
+        'grey hair',
+        'silver hair',
+        'white hair',
+        'salt-and-pepper hair'
+      )
+    }
+    if (!wantsRecedingOrBald) {
+      negativeTerms.push('receding hairline', 'balding')
+    }
+    if (numericAge < 30) {
+      negativeTerms.push('middle-aged')
+    }
+  } else if (numericAge !== null && numericAge >= 39 && numericAge <= 48) {
+    negativeTerms.push(
+      'elderly',
+      'octogenarian',
+      'deep elderly wrinkles',
+      'liver spots',
+      'heavy jowls'
+    )
+    if (!wantsGrayHair) {
+      negativeTerms.push('pure white hair', 'snow-white hair')
+    }
   }
+
+  const lines: string[] = [anchor]
+
+  if (isFamilyBlend) {
+    const donorHeaderLabels = normalizedDonors
+      .map((d, idx) =>
+        d.cleanLabel && !/^Donor\s+\d+$/i.test(d.cleanLabel)
+          ? `Reference Image [${idx + 1}]: ${d.cleanLabel}`
+          : `Reference Image [${idx + 1}]`
+      )
+      .join(' + ')
+    const targetLabel =
+      cleanLikenessDonorBaseLabel(input.characterName, 0) || 'the target character'
+    lines.push(
+      '',
+      `Familial Genetic Inheritance (${donorHeaderLabels}): Generate an ORIGINAL, DISTINCT individual (${targetLabel}${numericAge ? `, biological age ${numericAge}` : ''}) who is a biological relative/offspring — NOT the same person as ${donorRefsSummary}. Blend recognizable family genetics naturally across the attached donor reference photo(s) while giving the subject their own authentic, independent personal identity.`,
+      '',
+      `Trait Inheritance & Anti-Cloning Override (OVERRIDES ${donorRefsSummary}): Extract ONLY the specific inherited facial traits requested below (such as eye color/shape, cheekbone contour, smile geometry, and shared ancestral skin undertone) from the respective donor reference photo(s). Do NOT clone any donor photo’s exact overall face, age, elderly skin wrinkles, hairstyle, facial hair, or clothing.`
+    )
+    if (normalizedDonors.length >= 2) {
+      lines.push(
+        '',
+        'SINGLE-SUBJECT PORTRAIT LOCK: Render ONLY ONE single person centered in frame (the target character alone) — strictly NO two-shot, NO parents in frame, NO split-screen, and NO side-by-side collage.'
+      )
+    }
+    if (targetGender === 'female') {
+      lines.push(
+        '',
+        'GENDER & FACIAL HARMONY LOCK: Subject is female (woman). Harmonize any facial traits inherited from a male donor photo into naturally feminine facial proportions, soft feminine jawline/brow balance, and completely smooth feminine skin with zero facial hair or stubble.'
+      )
+    } else if (targetGender === 'male') {
+      lines.push(
+        '',
+        'GENDER & FACIAL HARMONY LOCK: Subject is male (man). Harmonize any facial traits inherited from a female donor photo into naturally masculine facial proportions and authentic male bone-structure harmony.'
+      )
+    }
+    if (safeNote) {
+      lines.push(
+        '',
+        `Requested Familial Trait Inheritance & Look: ${safeNote.replace(/\.*\s*$/, '')}.`
+      )
+    }
+  } else {
+    lines.push(
+      '',
+      'Subject Identity Anchor (Reference Image [1]): Preserve the exact underlying genetic facial identity of the person in Reference Image [1] — identical cranial and facial bone structure, eye shape, iris color, eye spacing, nose bridge and nostril contour, lip proportions, characteristic smile geometry, ear shape, skin tone, and ancestral heritage.',
+      '',
+      'Life-Stage, Hair & Attire Transformation (OVERRIDES Reference Image [1]): Reference Image [1] shows this individual at a DIFFERENT age, era, hairstyle, and outfit. Do NOT copy the donor photo’s age, skin wrinkles, sagging skin, hair color/hairstyle, facial hair, or clothing wherever they differ from the target character specification below.'
+    )
+    if (safeNote) {
+      lines.push('', `Requested Transformation from Reference [1]: ${safeNote.replace(/\.*\s*$/, '')}.`)
+    }
+  }
+
   if (ageStageClause) {
-    lines.push(ageStageClause)
+    lines.push('', ageStageClause)
   }
   if (cleanShavenClause) {
-    lines.push(cleanShavenClause)
+    lines.push('', cleanShavenClause)
   }
-  if (safeAppearance) {
+  if (safeAppearance && safeAppearance.toLowerCase() !== safeNote.toLowerCase()) {
     lines.push('', `Target Character Appearance: ${safeAppearance}`)
   }
 
   const wardrobe = input.wardrobeDescription?.trim()
   if (wardrobe) {
-    lines.push('', `Attire: ${wardrobe}`)
+    lines.push(
+      '',
+      `Wardrobe / Attire (OVERRIDES ${donorRefsSummary}): Do NOT copy clothing from ${donorRefsSummary}. Dress the subject in: ${wardrobe.replace(/\.*\s*$/, '')}.`
+    )
   }
 
   lines.push('', styleDirectives)
