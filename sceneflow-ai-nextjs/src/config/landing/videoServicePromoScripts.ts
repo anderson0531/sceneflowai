@@ -89,8 +89,25 @@ export function getVideoServicePromoMp4Path(
   return `/landing/video-services/videos/${verticalId}-${locale}.mp4`
 }
 
+export function getVideoServicePromoPosterPath(
+  verticalId: VideoServiceVerticalId
+): string {
+  return `/landing/video-services/videos/${verticalId}-poster.webp`
+}
+
 /**
- * Locales that currently have encoded `.webm` promo trailers deployed in
+ * Canonical Vercel Blob master source URLs for Video Business promo trailers.
+ */
+export const VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS: Partial<
+  Record<VideoServiceVerticalId, Partial<Record<FeaturePanLocaleId, string>>>
+> = {
+  memoir: {
+    en: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Video%20Memoir%20%28English%29%20.mp4',
+  },
+}
+
+/**
+ * Locales that currently have encoded `.webm` + `.mp4` promo trailers deployed in
  * `public/landing/video-services/videos/{verticalId}-{locale}.webm`.
  * Populate each array after running `node scripts/encode-video-services-webm.mjs`.
  */
@@ -98,10 +115,17 @@ export const VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES: Record<
   VideoServiceVerticalId,
   readonly FeaturePanLocaleId[]
 > = {
-  memoir: [],
+  memoir: ['en'],
   realestate: [],
   training: [],
   brand: [],
+}
+
+export function hasNativePromoVideoForLocale(
+  verticalId: VideoServiceVerticalId,
+  locale: FeaturePanLocaleId
+): boolean {
+  return VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES[verticalId].includes(locale)
 }
 
 export function resolveAvailablePromoVideoLocale(

@@ -41,9 +41,14 @@ import {
   type VideoServiceVerticalId,
 } from '@/config/landing/videoServicesNarratedPan'
 import {
+  VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES,
   VIDEO_SERVICE_PROMO_SCRIPTS,
+  VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS,
   getVideoServicePromoMp4Path,
+  getVideoServicePromoPosterPath,
   getVideoServicePromoWebmPath,
+  hasNativePromoVideoForLocale,
+  resolveAvailablePromoVideoLocale,
 } from '@/config/landing/videoServicePromoScripts'
 import { cleanOmniRefScenePrompt } from '@/lib/gemini/cleanOmniRefPrompt'
 import { rewriteVisualNamesToTokens } from '@/lib/vision/referenceImageBinding'
@@ -706,8 +711,24 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
 
       const stageEl = container?.querySelector('[data-testid="video-service-pan-stage"]')
       const captionEl = container?.querySelector('[data-testid="video-service-pan-caption"]')
-      expect(stageEl, `[${locale}] 5K pan stage`).toBeTruthy()
+      expect(stageEl, `[${locale}] Video Memoir promo stage`).toBeTruthy()
       expect(stageEl?.getAttribute('dir')).toBe(panLoc === 'ar' ? 'rtl' : 'ltr')
+      // Video Memoirs now renders the live .webm + .mp4 film replacing the 5K Output Showcase
+      const videoEl = stageEl?.querySelector('video')
+      expect(videoEl, `[${locale}] Video Memoir HTML5 <video>`).toBeTruthy()
+      const sources = Array.from(videoEl?.querySelectorAll('source') ?? [])
+      expect(sources.map((s) => s.getAttribute('src'))).toEqual([
+        '/landing/video-services/videos/memoir-en.webm',
+        '/landing/video-services/videos/memoir-en.mp4',
+      ])
+      expect(videoEl?.getAttribute('poster')).toBe('/landing/video-services/videos/memoir-poster.webp')
+      expect(stageEl?.textContent).toContain(VIDEO_SERVICE_PAN_UI_COPY[panLoc].promoVideoBadge)
+      expect(stageEl?.textContent).not.toContain(VIDEO_SERVICE_PAN_UI_COPY[panLoc].outputBadge)
+      if (panLoc !== 'en') {
+        expect(stageEl?.textContent).toContain(
+          VIDEO_SERVICE_PAN_UI_COPY[panLoc].englishAudioPreviewNote
+        )
+      }
       expect(captionEl?.textContent).toContain(VIDEO_SERVICES_NARRATED_PAN.memoir[0].narration[panLoc])
       expect(container?.textContent).toContain(copy.globalDemandLabel)
       expect(container?.textContent).toContain(copy.verticals[0].globalMarketNeed)
@@ -723,7 +744,35 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       }
     }
 
-    // Interactive check in English: switch vertical -> beat -> language (Arabic RTL)
+    // Verify encoded Video Memoir (English) .webm + .mp4 + .webp poster exist on disk with valid headers
+    expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES.memoir).toContain('en')
+    expect(hasNativePromoVideoForLocale('memoir', 'en')).toBe(true)
+    expect(resolveAvailablePromoVideoLocale('memoir', 'en')).toBe('en')
+    expect(resolveAvailablePromoVideoLocale('memoir', 'es')).toBe('en')
+    expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.en).toContain('vercel-storage.com')
+
+    const memoirWebmDisk = path.join(ROOT, 'public', getVideoServicePromoWebmPath('memoir', 'en'))
+    const memoirMp4Disk = path.join(ROOT, 'public', getVideoServicePromoMp4Path('memoir', 'en'))
+    const memoirPosterDisk = path.join(ROOT, 'public', getVideoServicePromoPosterPath('memoir'))
+    expect(existsSync(memoirWebmDisk), 'memoir-en.webm exists').toBe(true)
+    expect(existsSync(memoirMp4Disk), 'memoir-en.mp4 exists').toBe(true)
+    expect(existsSync(memoirPosterDisk), 'memoir-poster.webp exists').toBe(true)
+    expect(statSync(memoirWebmDisk).size).toBeGreaterThan(5_000_000)
+    expect(statSync(memoirMp4Disk).size).toBeGreaterThan(5_000_000)
+    expect(statSync(memoirPosterDisk).size).toBeGreaterThan(10_000)
+
+    // EBML magic bytes for WebM: 0x1A 0x45 0xDF 0xA3
+    const webmHead = readFileSync(memoirWebmDisk).subarray(0, 4)
+    expect(Array.from(webmHead)).toEqual([0x1a, 0x45, 0xdf, 0xa3])
+    // ISO BMFF 'ftyp' box for MP4
+    const mp4Head = readFileSync(memoirMp4Disk).subarray(4, 8).toString('ascii')
+    expect(mp4Head).toBe('ftyp')
+    // RIFF/WEBP header for poster
+    const posterHead = readFileSync(memoirPosterDisk)
+    expect(posterHead.subarray(0, 4).toString('ascii')).toBe('RIFF')
+    expect(posterHead.subarray(8, 12).toString('ascii')).toBe('WEBP')
+
+    // Interactive check in English: Video Memoir unmute & replay -> switch vertical -> beat -> language (Arabic RTL)
     const enMessages = loadMessages('en')
     renderElement(
       React.createElement(
@@ -732,6 +781,22 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
         React.createElement(VideoServicesSpotlightSection)
       )
     )
+
+    const memoirStage = container?.querySelector('[data-testid="video-service-pan-stage"]')
+    const memoirVideo = memoirStage?.querySelector('video') as HTMLVideoElement | null
+    expect(memoirVideo).toBeTruthy()
+    // Clicking the muted video surface immediately unmutes studio pitch audio
+    expect(memoirVideo?.muted).toBe(true)
+    clickElement(memoirVideo!)
+    expect(memoirVideo?.muted).toBe(false)
+
+    // Replay button resets video to 0:00 with studio audio active
+    const replayBtn = Array.from(memoirStage?.querySelectorAll('button') ?? []).find(
+      (btn) => btn.getAttribute('title') === VIDEO_SERVICE_PAN_UI_COPY.en.restartLabel
+    )
+    expect(replayBtn).toBeTruthy()
+    clickElement(replayBtn!)
+    expect(memoirVideo?.muted).toBe(false)
 
     const tabs = Array.from(container?.querySelectorAll('[role="tab"]') ?? [])
     expect(tabs).toHaveLength(4)

@@ -1,23 +1,34 @@
 #!/usr/bin/env node
 /**
- * Batch-encodes user-produced Video Business Promo Demonstration Trailers into
- * web-optimized 1080p VP9 + Opus `.webm` (and Safari-safe H.264 + AAC `.mp4`)
- * files for all 4 verticals × 7 priority languages:
+ * Encodes Video Business Promo Demonstration Trailers into web-optimized
+ * VP9 + Opus `.webm` (with front-loaded Cues for instant seeking), Safari-safe
+ * H.264 + AAC `.mp4` (`+faststart`), and a matching `.webp` poster frame:
  *
  *   public/landing/video-services/videos/{memoir|realestate|training|brand}-{en|es|pt|hi|zh|ar|th}.webm
  *   public/landing/video-services/videos/{memoir|realestate|training|brand}-{en|es|pt|hi|zh|ar|th}.mp4
+ *   public/landing/video-services/videos/{memoir|realestate|training|brand}-poster.webp
  *
  * Usage:
- *   node scripts/encode-video-services-webm.mjs [sourceDirectory]
+ *   # Single file or Vercel Blob URL:
+ *   node scripts/encode-video-services-webm.mjs --vertical memoir --locale en --input "/tmp/memoir-en.mp4"
+ *   node scripts/encode-video-services-webm.mjs --vertical memoir --locale es --url "https://.../Video%20Memoir%20(Spanish).mp4"
  *
- * Default source directory: `tmp/video-services-source`
- * Accepted input filenames (case-insensitive):
- *   memoir-en.mp4, realestate-es.mov, training-zh-CN.mp4, brand_ar.mp4, etc.
+ *   # Batch directory (supports both "memoir-en.mp4" and "Video Memoir (English).mp4"):
+ *   node scripts/encode-video-services-webm.mjs [sourceDirectory]
  */
 
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs'
+import {
+  createWriteStream,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  statSync,
+  unlinkSync,
+} from 'node:fs'
 import { basename, extname, join, resolve } from 'node:path'
+import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 import ffmpegPath from 'ffmpeg-static'
 
 if (!ffmpegPath) {
@@ -30,57 +41,67 @@ const DEFAULT_INPUT_DIR = join(ROOT, 'tmp/video-services-source')
 const OUTPUT_DIR = join(ROOT, 'public/landing/video-services/videos')
 
 const VERTICAL_ALIASES = {
-  memoir: 'memoir',
-  memoirs: 'memoir',
-  videomemoir: 'memoir',
+  'video-memoirs': 'memoir',
+  'video-memoir': 'memoir',
   videomemoirs: 'memoir',
-  realestate: 'realestate',
+  videomemoir: 'memoir',
+  memoirs: 'memoir',
+  memoir: 'memoir',
   'real-estate': 'realestate',
+  realestate: 'realestate',
   property: 'realestate',
   training: 'training',
-  sop: 'training',
   sops: 'training',
-  brand: 'brand',
-  brands: 'brand',
-  brandstory: 'brand',
+  sop: 'training',
+  'brand-stories': 'brand',
+  'brand-story': 'brand',
   brandstories: 'brand',
+  brandstory: 'brand',
+  brands: 'brand',
+  brand: 'brand',
 }
 
 const LOCALE_ALIASES = {
-  en: 'en',
   'en-us': 'en',
   english: 'en',
-  es: 'es',
+  en: 'en',
   'es-es': 'es',
   'es-mx': 'es',
   spanish: 'es',
-  pt: 'pt',
+  espanol: 'es',
+  es: 'es',
   'pt-br': 'pt',
+  'pt-pt': 'pt',
   portuguese: 'pt',
-  hi: 'hi',
+  portugues: 'pt',
+  pt: 'pt',
   'hi-in': 'hi',
   hindi: 'hi',
-  zh: 'zh',
+  hi: 'hi',
   'zh-cn': 'zh',
+  'zh-hans': 'zh',
   chinese: 'zh',
   mandarin: 'zh',
-  ar: 'ar',
+  zh: 'zh',
   'ar-sa': 'ar',
   arabic: 'ar',
-  th: 'th',
+  ar: 'ar',
   'th-th': 'th',
   thai: 'th',
+  th: 'th',
 }
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.m4v', '.mkv', '.webm'])
 
-function parseTargetFromFilename(fileName) {
-  const stem = basename(fileName, extname(fileName)).toLowerCase().trim()
+export function parseTargetFromFilename(fileName) {
+  const rawStem = basename(fileName, extname(fileName)).toLowerCase().trim()
+
+  // 1. Canonical `<vertical>-<locale>` / `<vertical>_<locale>` match
   for (const [vAlias, canonicalVertical] of Object.entries(VERTICAL_ALIASES)) {
     for (const sep of ['-', '_']) {
       const prefix = `${vAlias}${sep}`
-      if (stem.startsWith(prefix)) {
-        const rawLoc = stem.slice(prefix.length)
+      if (rawStem.startsWith(prefix)) {
+        const rawLoc = rawStem.slice(prefix.length).trim()
         const canonicalLocale = LOCALE_ALIASES[rawLoc]
         if (canonicalLocale) {
           return { verticalId: canonicalVertical, locale: canonicalLocale }
@@ -88,6 +109,34 @@ function parseTargetFromFilename(fileName) {
       }
     }
   }
+
+  // 2. Natural human title match, e.g. "Video Memoir (English) .mp4"
+  const slugged = rawStem
+    .replace(/[()[\]]+/g, ' ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  const tokens = slugged.split('-').filter(Boolean)
+
+  let matchedVertical = null
+  for (const [vAlias, canonicalVertical] of Object.entries(VERTICAL_ALIASES)) {
+    if (slugged.includes(vAlias)) {
+      matchedVertical = canonicalVertical
+      break
+    }
+  }
+  if (!matchedVertical) return null
+
+  // Match longest locale alias from end tokens (e.g. "zh-cn", "english", "es")
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    const pair = i > 0 ? `${tokens[i - 1]}-${tokens[i]}` : null
+    if (pair && LOCALE_ALIASES[pair]) {
+      return { verticalId: matchedVertical, locale: LOCALE_ALIASES[pair] }
+    }
+    if (LOCALE_ALIASES[tokens[i]]) {
+      return { verticalId: matchedVertical, locale: LOCALE_ALIASES[tokens[i]] }
+    }
+  }
+
   return null
 }
 
@@ -103,20 +152,21 @@ function hasAudioStream(filePath) {
   return /Stream #\d+:\d+.*Audio:/i.test(res.stderr || '')
 }
 
-function encodeWebmAndMp4(inputPath, verticalId, locale) {
+function encodeWebmAndMp4(inputPath, verticalId, locale, { generatePoster = locale === 'en' } = {}) {
   mkdirSync(OUTPUT_DIR, { recursive: true })
   const outWebm = join(OUTPUT_DIR, `${verticalId}-${locale}.webm`)
   const outMp4 = join(OUTPUT_DIR, `${verticalId}-${locale}.mp4`)
+  const outPoster = join(OUTPUT_DIR, `${verticalId}-poster.webp`)
   const withAudio = hasAudioStream(inputPath)
 
-  // Scale up to 1920x1080 max preserving 16:9 pad-free aspect ratio and even dimensions
+  // Preserve native resolution up to 1920x1080 without upscaling 720p sources; guarantee even dimensions
   const vf =
-    'scale=1920:1080:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2:(ow-iw)/2:(oh-ih)/2,setsar=1'
+    "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2:(ow-iw)/2:(oh-ih)/2,setsar=1"
   const af = 'loudnorm=I=-16:TP=-1.5:LRA=11'
 
   console.log(`\n[encode] ${verticalId}-${locale} <- ${basename(inputPath)}`)
 
-  // 1. Primary VP9 + Opus .webm
+  // 1. Primary VP9 + Opus .webm with front-loaded Cues for instant HTTP range seeking
   const webmArgs = [
     '-y',
     '-i',
@@ -126,20 +176,26 @@ function encodeWebmAndMp4(inputPath, verticalId, locale) {
     '-c:v',
     'libvpx-vp9',
     '-crf',
-    '29',
+    '30',
     '-b:v',
     '0',
     '-deadline',
     'good',
     '-cpu-used',
-    '2',
+    '3',
     '-row-mt',
     '1',
+    '-threads',
+    '8',
+    '-g',
+    '120',
     '-pix_fmt',
     'yuv420p',
     ...(withAudio
-      ? ['-af', af, '-c:a', 'libopus', '-b:a', '128k', '-ar', '48000']
+      ? ['-af', af, '-c:a', 'libopus', '-b:a', '128k', '-ar', '48000', '-ac', '2']
       : ['-an']),
+    '-cues_to_front',
+    '1',
     outWebm,
   ]
 
@@ -149,7 +205,7 @@ function encodeWebmAndMp4(inputPath, verticalId, locale) {
     process.exit(1)
   }
 
-  // 2. Safari/iOS fallback H.264 + AAC .mp4
+  // 2. Safari/iOS fallback H.264 + AAC .mp4 (+faststart)
   const mp4Args = [
     '-y',
     '-i',
@@ -159,15 +215,21 @@ function encodeWebmAndMp4(inputPath, verticalId, locale) {
     '-c:v',
     'libx264',
     '-preset',
-    'slow',
+    'medium',
     '-crf',
-    '22',
+    '23',
+    '-maxrate',
+    '2800k',
+    '-bufsize',
+    '5600k',
+    '-g',
+    '120',
     '-pix_fmt',
     'yuv420p',
     '-movflags',
     '+faststart',
     ...(withAudio
-      ? ['-af', af, '-c:a', 'aac', '-b:a', '160k', '-ar', '48000']
+      ? ['-af', af, '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-ac', '2']
       : ['-an']),
     outMp4,
   ]
@@ -178,19 +240,108 @@ function encodeWebmAndMp4(inputPath, verticalId, locale) {
     process.exit(1)
   }
 
+  // 3. Matching first-scene WebP poster so initial frame matches t=0 seamlessly
+  if (generatePoster) {
+    const posterArgs = [
+      '-y',
+      '-ss',
+      '00:00:01.2',
+      '-i',
+      inputPath,
+      '-vf',
+      vf,
+      '-frames:v',
+      '1',
+      '-c:v',
+      'libwebp',
+      '-quality',
+      '85',
+      outPoster,
+    ]
+    const posterRes = spawnSync(ffmpegPath, posterArgs, { encoding: 'utf8' })
+    if (posterRes.status !== 0) {
+      console.warn(`Warning: poster generation failed for ${outPoster}:\n${posterRes.stderr}`)
+    }
+  }
+
   const dur = probeDurationSec(outWebm).toFixed(1)
   const webmMb = (statSync(outWebm).size / (1024 * 1024)).toFixed(2)
   const mp4Mb = (statSync(outMp4).size / (1024 * 1024)).toFixed(2)
+  const posterInfo =
+    generatePoster && existsSync(outPoster)
+      ? ` + poster (${(statSync(outPoster).size / 1024).toFixed(0)} KB)`
+      : ''
   console.log(
-    `  ✓ ${verticalId}-${locale}.webm (${webmMb} MB, ${dur}s) + .mp4 (${mp4Mb} MB)`
+    `  ✓ ${verticalId}-${locale}.webm (${webmMb} MB, ${dur}s) + .mp4 (${mp4Mb} MB)${posterInfo}`
   )
 }
 
-function main() {
-  const cliDir = process.argv[2] ? resolve(process.argv[2]) : DEFAULT_INPUT_DIR
+function parseCliFlags(argv) {
+  const getFlag = (name) => {
+    const idx = argv.indexOf(name)
+    return idx >= 0 ? argv[idx + 1] : undefined
+  }
+  const positional = argv.filter((arg, i) => {
+    if (arg.startsWith('--')) return false
+    const prev = i > 0 ? argv[i - 1] : ''
+    if (['--vertical', '--locale', '--input', '--url'].includes(prev)) return false
+    return true
+  })
+  return {
+    vertical: getFlag('--vertical'),
+    locale: getFlag('--locale'),
+    input: getFlag('--input'),
+    url: getFlag('--url'),
+    noPoster: argv.includes('--no-poster'),
+    positionalDir: positional[0],
+  }
+}
+
+async function downloadTempVideo(url, verticalId, locale) {
+  const dest = join('/tmp', `sceneflow-${verticalId}-${locale}-src.mp4`)
+  console.log(`Downloading ${url} -> ${dest}`)
+  const res = await fetch(url)
+  if (!res.ok || !res.body) {
+    throw new Error(`Failed to download (${res.status}): ${url}`)
+  }
+  await pipeline(Readable.fromWeb(res.body), createWriteStream(dest))
+  return dest
+}
+
+async function main() {
+  const flags = parseCliFlags(process.argv.slice(2))
+
+  if (flags.input || flags.url) {
+    const verticalId = VERTICAL_ALIASES[(flags.vertical || '').toLowerCase()]
+    const locale = LOCALE_ALIASES[(flags.locale || '').toLowerCase()]
+    if (!verticalId || !locale) {
+      console.error(
+        'Error: when using --input or --url, pass valid --vertical (memoir|realestate|training|brand) and --locale (en|es|pt|hi|zh|ar|th).'
+      )
+      process.exit(1)
+    }
+
+    const srcPath = flags.input
+      ? resolve(flags.input)
+      : await downloadTempVideo(flags.url, verticalId, locale)
+    const shouldCleanup = !flags.input && Boolean(flags.url)
+
+    try {
+      encodeWebmAndMp4(srcPath, verticalId, locale, {
+        generatePoster: !flags.noPoster && locale === 'en',
+      })
+    } finally {
+      if (shouldCleanup && existsSync(srcPath)) {
+        unlinkSync(srcPath)
+      }
+    }
+    return
+  }
+
+  const cliDir = flags.positionalDir ? resolve(flags.positionalDir) : DEFAULT_INPUT_DIR
   if (!existsSync(cliDir)) {
     console.log(
-      `Source directory not found: ${cliDir}\nPlace rendered videos named e.g. "memoir-en.mp4", "realestate-es.mp4", "training-zh.mp4", "brand-ar.mp4" inside ${cliDir} and re-run.`
+      `Source directory not found: ${cliDir}\nPlace rendered videos named e.g. "memoir-en.mp4" or "Video Memoir (English).mp4" inside ${cliDir} and re-run.`
     )
     process.exit(0)
   }
@@ -209,7 +360,7 @@ function main() {
     const parsed = parseTargetFromFilename(name)
     if (!parsed) {
       console.warn(
-        `Skipping unrecognized filename "${name}" (expected <vertical>-<locale>.mp4, e.g. memoir-en.mp4)`
+        `Skipping unrecognized filename "${name}" (expected e.g. memoir-en.mp4 or "Video Memoir (English).mp4")`
       )
       continue
     }
@@ -217,7 +368,9 @@ function main() {
   }
 
   for (const item of matched) {
-    encodeWebmAndMp4(item.inputPath, item.verticalId, item.locale)
+    encodeWebmAndMp4(item.inputPath, item.verticalId, item.locale, {
+      generatePoster: !flags.noPoster && item.locale === 'en',
+    })
   }
 
   console.log(
@@ -225,4 +378,9 @@ function main() {
   )
 }
 
-main()
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((err) => {
+    console.error(err instanceof Error ? err.message : err)
+    process.exit(1)
+  })
+}

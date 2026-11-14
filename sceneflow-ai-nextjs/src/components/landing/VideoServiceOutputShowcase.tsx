@@ -7,11 +7,17 @@ import {
   Minimize,
   Pause,
   Play,
+  RotateCcw,
   Volume2,
   VolumeX,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
+import {
+  enterPhoneVideoFullscreen,
+  isCoarsePointer,
+  isNativeVideoFullscreen,
+} from '@/lib/landing/phoneVideoFullscreen'
 import {
   FEATURE_PAN_LOCALE_OPTIONS,
   VIDEO_SERVICES_NARRATED_PAN,
@@ -21,8 +27,11 @@ import {
   type VideoServiceVerticalId,
 } from '@/config/landing/videoServicesNarratedPan'
 import {
+  VIDEO_SERVICE_PROMO_SCRIPTS,
   getVideoServicePromoMp4Path,
+  getVideoServicePromoPosterPath,
   getVideoServicePromoWebmPath,
+  hasNativePromoVideoForLocale,
   resolveAvailablePromoVideoLocale,
 } from '@/config/landing/videoServicePromoScripts'
 
@@ -31,6 +40,13 @@ type FullscreenCapableElement = HTMLElement & {
 }
 
 let sessionPromoAudioUnmuted = false
+
+function formatTimecode(totalSeconds: number): string {
+  const safe = Number.isFinite(totalSeconds) && totalSeconds > 0 ? Math.floor(totalSeconds) : 0
+  const mins = Math.floor(safe / 60)
+  const secs = safe % 60
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`
+}
 
 export type VideoServiceOutputShowcaseProps = {
   verticalId: VideoServiceVerticalId
@@ -44,6 +60,7 @@ export function VideoServiceOutputShowcase({
   locale,
 }: VideoServiceOutputShowcaseProps) {
   const beats = VIDEO_SERVICES_NARRATED_PAN[verticalId]
+  const promoScript = VIDEO_SERVICE_PROMO_SCRIPTS[verticalId]
   const uniqueImages = useMemo(
     () => Array.from(new Set(beats.map((b) => b.imageSrc))),
     [beats]
@@ -54,7 +71,11 @@ export function VideoServiceOutputShowcase({
   )
   const [beatIndex, setBeatIndex] = useState(0)
   const [beatProgress, setBeatProgress] = useState(0)
+  const [currentTimeSec, setCurrentTimeSec] = useState(0)
+  const [durationSec, setDurationSec] = useState(0)
   const [isPlaying, setIsPlaying] = useState(true)
+  const [inViewport, setInViewport] = useState(true)
+  const [nearViewport, setNearViewport] = useState(true)
   const [promoAudioUnmuted, setPromoAudioUnmuted] = useState(
     () => sessionPromoAudioUnmuted
   )
@@ -64,8 +85,10 @@ export function VideoServiceOutputShowcase({
   const stageRef = useRef<HTMLDivElement | null>(null)
   const imageRefs = useRef<Record<string, HTMLImageElement | null>>({})
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const pendingSeekRatioRef = useRef<number | null>(null)
 
   const availablePromoLocale = resolveAvailablePromoVideoLocale(verticalId, panLocale)
+  const hasNativeLocaleVideo = hasNativePromoVideoForLocale(verticalId, panLocale)
   const hasPromoVideo = Boolean(availablePromoLocale) && !promoVideoError
   const promoWebmSrc = availablePromoLocale
     ? getVideoServicePromoWebmPath(verticalId, availablePromoLocale)
@@ -73,6 +96,7 @@ export function VideoServiceOutputShowcase({
   const promoMp4Src = availablePromoLocale
     ? getVideoServicePromoMp4Path(verticalId, availablePromoLocale)
     : null
+  const promoPosterSrc = getVideoServicePromoPosterPath(verticalId)
 
   // Sync language when page locale changes
   useEffect(() => {
@@ -81,8 +105,11 @@ export function VideoServiceOutputShowcase({
 
   // Reset to Beat 0 when switching verticals
   useEffect(() => {
+    pendingSeekRatioRef.current = null
     setBeatIndex(0)
     setBeatProgress(0)
+    setCurrentTimeSec(0)
+    setDurationSec(0)
     setIsPlaying(true)
   }, [verticalId])
 
@@ -91,15 +118,47 @@ export function VideoServiceOutputShowcase({
     setPromoVideoError(false)
   }, [verticalId, panLocale])
 
-  // Track native Fullscreen API changes
+  // Viewport observer so off-screen promo videos wait at 0:00 until scrolled near/into view
+  useEffect(() => {
+    const el = stageRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.target !== stageRef.current) continue
+          if (entry.isIntersecting) {
+            setNearViewport(true)
+          }
+          setInViewport(entry.isIntersecting && entry.intersectionRatio >= 0.12)
+        }
+      },
+      { rootMargin: '400px 0px', threshold: [0, 0.12, 0.4] }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [verticalId])
+
+  // Track native Fullscreen API + iOS video fullscreen changes
   useEffect(() => {
     if (typeof document === 'undefined') return
+    const vid = videoRef.current
     const onFsChange = () => {
-      setIsFullscreen(document.fullscreenElement === stageRef.current)
+      const nativeVidFs = vid ? isNativeVideoFullscreen(vid) : false
+      setIsFullscreen(
+        document.fullscreenElement === stageRef.current ||
+          document.fullscreenElement === vid ||
+          nativeVidFs
+      )
     }
     document.addEventListener('fullscreenchange', onFsChange)
-    return () => document.removeEventListener('fullscreenchange', onFsChange)
-  }, [])
+    vid?.addEventListener('webkitbeginfullscreen', onFsChange)
+    vid?.addEventListener('webkitendfullscreen', onFsChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange)
+      vid?.removeEventListener('webkitbeginfullscreen', onFsChange)
+      vid?.removeEventListener('webkitendfullscreen', onFsChange)
+    }
+  }, [hasPromoVideo, availablePromoLocale, verticalId])
 
   const safeIdx = beatIndex < beats.length ? beatIndex : 0
   const currentBeat = beats[safeIdx]
@@ -136,7 +195,7 @@ export function VideoServiceOutputShowcase({
 
   // 60fps requestAnimationFrame 5K pan choreography when in 5K Stills Showcase mode
   useEffect(() => {
-    if (hasPromoVideo || !isPlaying) return
+    if (hasPromoVideo || !isPlaying || (!inViewport && !isFullscreen)) return
     if (typeof window === 'undefined') return
 
     const durationMs = Math.max(4000, currentBeat.durationSec * 1000)
@@ -168,6 +227,8 @@ export function VideoServiceOutputShowcase({
     beats.length,
     currentBeat.durationSec,
     hasPromoVideo,
+    inViewport,
+    isFullscreen,
     isPlaying,
     safeIdx,
     verticalId,
@@ -179,11 +240,12 @@ export function VideoServiceOutputShowcase({
     const vid = videoRef.current
     if (!vid) return
     vid.muted = !promoAudioUnmuted
-    if (isPlaying) {
+    const shouldPlay = isPlaying && (inViewport || isFullscreen)
+    if (shouldPlay) {
       const p = vid.play()
       if (p && typeof p.catch === 'function') {
         p.catch(() => {
-          // If browser blocks unmuted autoplay, gracefully mute and play
+          // If browser blocks unmuted autoplay prior to user gesture, gracefully mute and play
           if (promoAudioUnmuted) {
             vid.muted = true
             setPromoAudioUnmuted(false)
@@ -194,7 +256,7 @@ export function VideoServiceOutputShowcase({
     } else {
       vid.pause()
     }
-  }, [hasPromoVideo, isPlaying, promoAudioUnmuted, promoWebmSrc])
+  }, [hasPromoVideo, inViewport, isFullscreen, isPlaying, promoAudioUnmuted, promoWebmSrc])
 
   const handleTogglePlay = () => {
     setIsPlaying((prev) => !prev)
@@ -207,20 +269,86 @@ export function VideoServiceOutputShowcase({
       if (next && !isPlaying) {
         setIsPlaying(true)
       }
+      if (videoRef.current) {
+        videoRef.current.muted = !next
+        if (next) {
+          void videoRef.current.play().catch(() => undefined)
+        }
+      }
       return next
     })
   }
 
+  const handleVideoSurfaceClick = () => {
+    if (!hasPromoVideo) return
+    if (!promoAudioUnmuted) {
+      sessionPromoAudioUnmuted = true
+      setPromoAudioUnmuted(true)
+      setIsPlaying(true)
+      if (videoRef.current) {
+        videoRef.current.muted = false
+        void videoRef.current.play().catch(() => undefined)
+      }
+      return
+    }
+    setIsPlaying((prev) => !prev)
+  }
+
+  const handleRestartFromBeginning = () => {
+    setBeatIndex(0)
+    setBeatProgress(0)
+    setCurrentTimeSec(0)
+    setIsPlaying(true)
+    if (hasPromoVideo) {
+      sessionPromoAudioUnmuted = true
+      setPromoAudioUnmuted(true)
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0
+        videoRef.current.muted = false
+        void videoRef.current.play().catch(() => undefined)
+      }
+    }
+  }
+
+  const handleSeekBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!hasPromoVideo || !videoRef.current || !(videoRef.current.duration > 0)) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    if (rect.width <= 0) return
+    const rawRatio = isRtl
+      ? (rect.right - e.clientX) / rect.width
+      : (e.clientX - rect.left) / rect.width
+    const clamped = Math.max(0, Math.min(1, rawRatio))
+    videoRef.current.currentTime = clamped * videoRef.current.duration
+    setBeatProgress(clamped)
+    setCurrentTimeSec(videoRef.current.currentTime)
+    const syncedBeat = Math.min(beats.length - 1, Math.floor(clamped * beats.length))
+    setBeatIndex(syncedBeat)
+    if (!isPlaying) {
+      setIsPlaying(true)
+    }
+  }
+
   const handleSelectBeat = (idx: number) => {
     setBeatIndex(idx)
-    setBeatProgress(0)
+    setBeatProgress(idx / beats.length)
     setIsPlaying(true)
     if (hasPromoVideo && videoRef.current && videoRef.current.duration > 0) {
-      videoRef.current.currentTime = (idx / beats.length) * videoRef.current.duration
+      const targetTime = (idx / beats.length) * videoRef.current.duration
+      videoRef.current.currentTime = targetTime
+      setCurrentTimeSec(targetTime)
     }
   }
 
   const handleSelectLanguage = (nextLocale: FeaturePanLocaleId) => {
+    if (
+      hasPromoVideo &&
+      videoRef.current &&
+      videoRef.current.duration > 0 &&
+      videoRef.current.currentTime > 0
+    ) {
+      pendingSeekRatioRef.current =
+        videoRef.current.currentTime / videoRef.current.duration
+    }
     setPanLocale(nextLocale)
     setIsPlaying(true)
     if (resolveAvailablePromoVideoLocale(verticalId, nextLocale)) {
@@ -230,6 +358,17 @@ export function VideoServiceOutputShowcase({
   }
 
   const handleToggleFullscreen = async () => {
+    if (hasPromoVideo && videoRef.current && isCoarsePointer()) {
+      sessionPromoAudioUnmuted = true
+      setPromoAudioUnmuted(true)
+      setIsPlaying(true)
+      videoRef.current.muted = false
+      void videoRef.current.play().catch(() => undefined)
+      if (enterPhoneVideoFullscreen(videoRef.current)) {
+        return
+      }
+    }
+
     const el = stageRef.current as FullscreenCapableElement | null
     if (!el || typeof document === 'undefined') return
     try {
@@ -247,10 +386,15 @@ export function VideoServiceOutputShowcase({
 
   const badgeLabel = hasPromoVideo ? uiCopy.promoVideoBadge : uiCopy.outputBadge
   const playToggleLabel = isPlaying ? uiCopy.pauseLabel : uiCopy.playLabel
-  const audioToggleLabel = promoAudioUnmuted ? uiCopy.muteLabel : uiCopy.hearPitchLabel
+  const audioToggleTooltip = promoAudioUnmuted ? uiCopy.muteLabel : uiCopy.hearPitchLabel
+  const audioTogglePillText = promoAudioUnmuted
+    ? uiCopy.voiceoverOnLabel
+    : uiCopy.hearPitchShortLabel
   const fsToggleLabel = isFullscreen
     ? uiCopy.exitFullscreenLabel
     : uiCopy.enterFullscreenLabel
+  const effectiveDurationSec = durationSec > 0 ? durationSec : promoScript.durationSeconds
+  const segmentPrefix = hasPromoVideo ? uiCopy.actPrefix : uiCopy.scenePrefix
 
   return (
     <div
@@ -273,16 +417,32 @@ export function VideoServiceOutputShowcase({
           <video
             key={`${verticalId}-${availablePromoLocale}`}
             ref={videoRef}
-            poster={beats[0].imageSrc}
-            autoPlay
+            poster={promoPosterSrc}
             loop
             muted={!promoAudioUnmuted}
             playsInline
-            preload="metadata"
+            preload={nearViewport ? 'metadata' : 'none'}
             aria-label={`${verticalTitle} — ${uiCopy.promoVideoBadge}`}
+            onClick={handleVideoSurfaceClick}
+            onContextMenu={(e) => e.preventDefault()}
+            onLoadedMetadata={(e) => {
+              const vid = e.currentTarget
+              if (vid.duration > 0) {
+                setDurationSec(vid.duration)
+                if (pendingSeekRatioRef.current !== null) {
+                  const ratio = pendingSeekRatioRef.current
+                  pendingSeekRatioRef.current = null
+                  if (ratio > 0 && ratio < 0.98) {
+                    vid.currentTime = ratio * vid.duration
+                  }
+                }
+              }
+            }}
             onTimeUpdate={(e) => {
               const vid = e.currentTarget
               if (vid.duration > 0) {
+                setDurationSec(vid.duration)
+                setCurrentTimeSec(vid.currentTime)
                 const overall = vid.currentTime / vid.duration
                 setBeatProgress(overall)
                 const syncedBeat = Math.min(
@@ -295,7 +455,10 @@ export function VideoServiceOutputShowcase({
               }
             }}
             onError={() => setPromoVideoError(true)}
-            className="h-full w-full object-cover"
+            className={cn(
+              'h-full w-full cursor-pointer bg-black',
+              isFullscreen ? 'object-contain' : 'object-cover'
+            )}
           >
             <source src={promoWebmSrc} type="video/webm" />
             <source src={promoMp4Src} type="video/mp4" />
@@ -327,17 +490,17 @@ export function VideoServiceOutputShowcase({
 
         {/* Subtle top & bottom cinema vignettes so badges stay legible without covering the output */}
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-slate-950/80 via-slate-950/25 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-slate-950/75 via-slate-950/20 to-transparent sm:h-20"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-slate-950/85 to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/80 to-transparent sm:h-14"
           aria-hidden
         />
 
-        {/* Top Bar: Deliverable Badge + Studio Audio (when .webm active) / Play / Fullscreen Controls */}
-        <div className="absolute inset-x-2.5 top-2.5 z-10 flex flex-wrap items-center justify-between gap-2 sm:inset-x-3.5 sm:top-3">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-slate-950/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-200 backdrop-blur-md">
+        {/* Top Bar: Deliverable Badge + Studio Audio / Replay / Play / Fullscreen Controls */}
+        <div className="pointer-events-none absolute inset-x-2 top-2 z-10 flex flex-wrap items-center justify-between gap-1.5 sm:inset-x-3.5 sm:top-3 sm:gap-2">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-slate-950/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-200 backdrop-blur-md sm:px-2.5 sm:py-1 sm:text-[11px]">
             <span
               className={cn(
                 'h-2 w-2 shrink-0 rounded-full',
@@ -348,20 +511,20 @@ export function VideoServiceOutputShowcase({
             <span>{badgeLabel}</span>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5">
             {hasPromoVideo ? (
-              <VideoControlTooltip label={audioToggleLabel} side="bottom">
+              <VideoControlTooltip label={audioToggleTooltip} side="bottom">
                 <button
                   type="button"
-                  title={audioToggleLabel}
-                  aria-label={audioToggleLabel}
+                  title={audioToggleTooltip}
+                  aria-label={audioToggleTooltip}
                   aria-pressed={promoAudioUnmuted}
                   onClick={handleTogglePromoAudio}
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold backdrop-blur-md transition-all cursor-pointer',
+                    'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold backdrop-blur-md transition-all cursor-pointer sm:gap-1.5 sm:px-2.5 sm:text-[11px]',
                     promoAudioUnmuted
                       ? 'border-emerald-400/70 bg-emerald-500/25 text-emerald-100 shadow-sm shadow-emerald-500/20'
-                      : 'border-amber-400/60 bg-slate-950/85 text-amber-200 hover:border-amber-300 hover:bg-amber-500/20 hover:text-white'
+                      : 'border-amber-400/70 bg-slate-950/90 text-amber-200 shadow-sm shadow-amber-500/15 hover:border-amber-300 hover:bg-amber-500/20 hover:text-white'
                   )}
                 >
                   {promoAudioUnmuted ? (
@@ -369,9 +532,21 @@ export function VideoServiceOutputShowcase({
                   ) : (
                     <VolumeX className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
                   )}
-                  <span className="hidden min-[440px]:inline">
-                    {promoAudioUnmuted ? uiCopy.voiceoverOnLabel : uiCopy.hearPitchLabel}
-                  </span>
+                  <span>{audioTogglePillText}</span>
+                </button>
+              </VideoControlTooltip>
+            ) : null}
+
+            {hasPromoVideo ? (
+              <VideoControlTooltip label={uiCopy.restartLabel} side="bottom">
+                <button
+                  type="button"
+                  title={uiCopy.restartLabel}
+                  aria-label={uiCopy.restartLabel}
+                  onClick={handleRestartFromBeginning}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-slate-950/80 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 cursor-pointer"
+                >
+                  <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden />
                 </button>
               </VideoControlTooltip>
             ) : null}
@@ -411,18 +586,40 @@ export function VideoServiceOutputShowcase({
           </div>
         </div>
 
-        {/* Bottom-of-Stage Scene Pill + Live Progress Track */}
-        <div className="pointer-events-none absolute inset-x-2.5 bottom-2.5 z-10 flex items-center justify-between gap-2 sm:inset-x-3.5">
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[11px] font-medium text-gray-100 backdrop-blur-md">
-            <span className="font-bold text-emerald-300">
-              {uiCopy.scenePrefix} 0{safeIdx + 1}
+        {/* Bottom-of-Stage Pill: Timecode on Promo Video (keeps SceneFlow Studio watermark unobstructed) OR Scene Pill on 5K Stills */}
+        {hasPromoVideo ? (
+          <div className="pointer-events-none absolute bottom-2.5 left-2.5 z-10 flex items-center gap-1.5 sm:left-3.5">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-gray-100 backdrop-blur-md sm:text-[11px]">
+              <span className="text-emerald-300">{formatTimecode(currentTimeSec)}</span>
+              <span className="text-slate-500">/</span>
+              <span className="text-gray-300">{formatTimecode(effectiveDurationSec)}</span>
             </span>
-            <span className="text-slate-500">·</span>
-            <span>{currentBeat.sceneTag[panLocale]}</span>
-          </span>
-        </div>
+            {!hasNativeLocaleVideo ? (
+              <span className="inline-flex items-center rounded-md border border-amber-400/30 bg-slate-950/80 px-2 py-0.5 text-[10px] font-medium text-amber-200 backdrop-blur-md">
+                {uiCopy.englishAudioPreviewNote}
+              </span>
+            ) : null}
+          </div>
+        ) : (
+          <div className="pointer-events-none absolute inset-x-2.5 bottom-2.5 z-10 flex items-center justify-between gap-2 sm:inset-x-3.5">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[11px] font-medium text-gray-100 backdrop-blur-md">
+              <span className="font-bold text-emerald-300">
+                {uiCopy.scenePrefix} 0{safeIdx + 1}
+              </span>
+              <span className="text-slate-500">·</span>
+              <span>{currentBeat.sceneTag[panLocale]}</span>
+            </span>
+          </div>
+        )}
 
-        <div className="absolute inset-x-0 bottom-0 z-10 h-1 bg-slate-900/90">
+        {/* Live Progress Track (Scrubbable when Promo Video is active) */}
+        <div
+          onClick={hasPromoVideo ? handleSeekBarClick : undefined}
+          className={cn(
+            'absolute inset-x-0 bottom-0 z-10 bg-slate-900/90',
+            hasPromoVideo ? 'h-1.5 cursor-pointer hover:h-2 transition-all' : 'h-1'
+          )}
+        >
           <div
             className="h-full bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300 transition-[width] duration-75"
             style={{ width: `${Math.round(beatProgress * 100)}%` }}
@@ -430,7 +627,7 @@ export function VideoServiceOutputShowcase({
         </div>
       </div>
 
-      {/* Business Opportunity Pitch Caption + Beat & 7-Language Switcher Bar */}
+      {/* Business Opportunity Pitch Caption + Act/Beat & 7-Language Switcher Bar */}
       <div className="border-t border-white/10 bg-slate-950/95 p-3 sm:p-4">
         <p
           data-testid="video-service-pan-caption"
@@ -440,11 +637,11 @@ export function VideoServiceOutputShowcase({
         </p>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/90 pt-2.5">
-          {/* 3-Beat Selector Pills (regular buttons with aria-pressed) */}
+          {/* 3-Act / 3-Beat Selector Pills (regular buttons with aria-pressed) */}
           <div className="flex flex-wrap items-center gap-1.5">
             {beats.map((beat, idx) => {
               const active = idx === safeIdx
-              const beatLabel = `${uiCopy.scenePrefix} 0${idx + 1}: ${beat.sceneTag[panLocale]}`
+              const beatLabel = `${segmentPrefix} 0${idx + 1}: ${beat.sceneTag[panLocale]}`
               return (
                 <button
                   key={idx}
@@ -473,6 +670,7 @@ export function VideoServiceOutputShowcase({
             <Globe2 className="me-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300/80" aria-hidden />
             {FEATURE_PAN_LOCALE_OPTIONS.map((opt) => {
               const selected = opt.id === panLocale
+              const hasNativeDub = hasNativePromoVideoForLocale(verticalId, opt.id)
               const langTooltip = `${opt.nativeName} (${opt.shortLabel}) — ${uiCopy.languagePickerTitle}`
               return (
                 <button
@@ -482,13 +680,15 @@ export function VideoServiceOutputShowcase({
                   aria-pressed={selected}
                   onClick={() => handleSelectLanguage(opt.id)}
                   className={cn(
-                    'rounded-md border px-1.5 py-0.5 text-[10px] font-bold transition-all cursor-pointer sm:px-2',
+                    'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold transition-all cursor-pointer sm:px-2',
                     selected
                       ? 'border-emerald-400/70 bg-emerald-500/25 text-emerald-100'
-                      : 'border-slate-800 bg-slate-900/70 text-gray-400 hover:border-slate-600 hover:text-white'
+                      : hasPromoVideo && hasNativeDub
+                        ? 'border-emerald-500/35 bg-slate-900/80 text-emerald-200 hover:border-emerald-400/60 hover:text-white'
+                        : 'border-slate-800 bg-slate-900/70 text-gray-400 hover:border-slate-600 hover:text-white'
                   )}
                 >
-                  {opt.shortLabel}
+                  <span>{opt.shortLabel}</span>
                 </button>
               )
             })}
