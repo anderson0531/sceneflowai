@@ -2310,6 +2310,7 @@ const CharacterCard = ({
     voiceId: string,
     prompt?: string,
     sampleText?: string,
+    designPrompt?: string,
   ): Promise<boolean> => {
     const text =
       sampleText ||
@@ -2330,6 +2331,7 @@ const CharacterCard = ({
         voiceId,
         audioType: "dialogue",
         ...(prompt ? { prompt } : {}),
+        ...(designPrompt ? { designPrompt } : {}),
       }),
     });
 
@@ -2379,6 +2381,8 @@ const CharacterCard = ({
         await playGeminiVoicePreview(
           vc.voiceId,
           isDesignedGeminiVoiceId(vc.voiceId) ? undefined : vc.prompt,
+          undefined,
+          isDesignedGeminiVoiceId(vc.voiceId) ? vc.designPrompt || vc.prompt : undefined,
         );
       } catch (err) {
         console.warn("[Voice Preview] Playback failed:", err);
@@ -2642,6 +2646,9 @@ const CharacterCard = ({
           assignment.voiceId,
           isDesignedGeminiVoiceId(assignment.voiceId) ? undefined : assignment.prompt,
           sampleText,
+          isDesignedGeminiVoiceId(assignment.voiceId)
+            ? assignment.designPrompt || assignment.prompt
+            : undefined,
         );
       } catch (testErr) {
         console.warn("[Auto Voice] Test playback failed:", testErr);

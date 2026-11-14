@@ -1,18 +1,30 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   DESIGNED_VOICE_TYPE,
   buildDesignedVoiceSynthesisBody,
+  buildNeutralVoiceDesignFallback,
   buildVoiceDesignCreateBody,
   composeVoiceDesignDescription,
   designedVoiceStyle,
   prepareDesignedVoiceLine,
+  readDesignedVoiceId,
+  sanitizeVoiceDesignDisplayName,
   shortenVoiceDesignDescription,
   isDesignedGeminiVoiceId,
   voiceDesignCreateAttempts,
   voicesToEvict,
+  voicesToOverlay,
 } from '@/lib/tts/geminiVoiceDesign'
+import {
+  createDesignedGeminiVoice,
+  synthesizeDesignedGeminiVoiceWav,
+} from '@/lib/tts/geminiDesignedVoiceTts'
+
+vi.mock('@/lib/vertexai/client', () => ({
+  getVertexAIAuthToken: vi.fn().mockResolvedValue('mock-vertex-token'),
+}))
 
 describe('composeVoiceDesignDescription', () => {
   it('builds a short persona from the portrait traits and role', () => {
@@ -181,14 +193,268 @@ describe('Vertex voice create', () => {
   })
 })
 
-describe('voicesToEvict', () => {
-  it('drops the oldest unassigned voices before the cap', () => {
+describe('voicesToEvict and voicesToOverlay', () => {
+  it('drops the oldest unassigned voices so total stored voices + 1 stays under the cap', () => {
     const voices = Array.from({ length: 181 }, (_, index) => ({
       id: `voice_${index}`,
       createTime: `2026-01-${String((index % 28) + 1).padStart(2, '0')}T00:00:${String(index % 60).padStart(2, '0')}Z`,
     }))
     const dropped = voicesToEvict(voices, ['voice_180'], 180)
-    expect(dropped).toHaveLength(1)
+    expect(dropped).toHaveLength(2)
     expect(dropped).not.toContain('voice_180')
+  })
+
+  it('counts retained voices toward the project cap so multi-cast projects still evict old slots', () => {
+    const voices = Array.from({ length: 200 }, (_, index) => ({
+      id: `voice_${index}`,
+      createTime: `2026-02-01T00:${String(Math.floor(index / 60)).padStart(2, '0')}:${String(index % 60).padStart(2, '0')}Z`,
+    }))
+    const retainIds = Array.from({ length: 25 }, (_, i) => `voice_${175 + i}`)
+    const dropped = voicesToEvict(voices, retainIds, 180)
+    // 200 total + 1 new - 180 cap = 21 oldest unretained slots must be evicted
+    expect(dropped).toHaveLength(21)
+    expect(dropped[0]).toBe('voice_0')
+    expect(dropped[20]).toBe('voice_20')
+    for (const retained of retainIds) {
+      expect(dropped).not.toContain(retained)
+    }
+  })
+
+  it('evicts oldest entries using listIndex when Vertex omits createTime on newest-first lists', () => {
+    // Vertex returns newest-first: index 0 is newest, index 4 is oldest
+    const voices = Array.from({ length: 5 }, (_, index) => ({
+      id: `voice_item_${index}`,
+      listIndex: index,
+    }))
+    const dropped = voicesToEvict(voices, [], 4)
+    expect(dropped).toEqual(['voice_item_4', 'voice_item_3'])
+  })
+
+  it('overlays oldest retained voices when all stored slots are retained', () => {
+    const voices = [
+      { id: 'voice_old_1', createTime: '2026-01-01T00:00:00Z' },
+      { id: 'voice_old_2', createTime: '2026-01-02T00:00:00Z' },
+      { id: 'voice_new_3', createTime: '2026-01-03T00:00:00Z' },
+    ]
+    const overlaid = voicesToOverlay(voices, ['voice_old_1', 'voice_old_2', 'voice_new_3'], 2, true)
+    expect(overlaid).toEqual(['voice_old_1', 'voice_old_2'])
+  })
+})
+
+describe('minor age & safety prompt sanitization', () => {
+  it('sanitizes under-20 ages, teen/school labels, and safety words for characters like Age 17', () => {
+    const description = composeVoiceDesignDescription({
+      role: '17-year-old high school athlete',
+      gender: 'boy',
+      apparentAge: '17',
+      timbre: 'earnest baritone',
+      accent: 'Pittsburgh American',
+      emotionalDefault: 'predatory focus',
+    })
+    expect(description).toContain('young adult male athlete')
+    expect(description).not.toMatch(/\b17\b/i)
+    expect(description).not.toMatch(/high school|teen|boy|predatory/i)
+
+    const displayName = sanitizeVoiceDesignDisplayName('Brian Eric Anderson Sr. (Age 17)')
+    expect(displayName).toBe('Brian Eric Anderson Sr')
+    expect(displayName).not.toContain('17')
+
+    const ensembleDisplay = sanitizeVoiceDesignDisplayName("Brian's Children & Granddaughter")
+    expect(ensembleDisplay).toBe('Brian')
+    expect(ensembleDisplay).not.toMatch(/children|granddaughter/i)
+
+    const body = buildVoiceDesignCreateBody({
+      description: 'A 17-year-old teenage boy with a clear tenor voice.',
+      displayName: 'Brian Eric Anderson Sr. (Age 17)',
+    })
+    const voice = body.voice as { displayName: string; prompted: { input: string } }
+    expect(voice.displayName).not.toContain('17')
+    expect(voice.prompted.input).not.toMatch(/\b17\b|teenage|boy/i)
+    expect(voice.prompted.input).toContain('young adult')
+  })
+
+  it('builds a studio-safe neutral acoustic fallback from persona text', () => {
+    const fallback = buildNeutralVoiceDesignFallback(
+      'A young adult male protagonist with an earnest baritone voice and a Pittsburgh American accent.'
+    )
+    expect(fallback).toContain('An adult male speaker')
+    expect(fallback).toContain('baritone')
+    expect(fallback).toContain('Pittsburgh American accent')
+  })
+
+  it('reads voice_ ids across snake_case and nested voice objects', () => {
+    expect(readDesignedVoiceId({ voice_id: 'voice_snake_1' })).toBe('voice_snake_1')
+    expect(
+      readDesignedVoiceId({
+        voice: { name: 'projects/demo/locations/global/voices/voice_nested_99' },
+      })
+    ).toBe('voice_nested_99')
+  })
+})
+
+describe('createDesignedGeminiVoice & self-healing slot overlay', () => {
+  const originalFetch = global.fetch
+  const originalProjectId = process.env.VERTEX_PROJECT_ID
+
+  afterEach(() => {
+    global.fetch = originalFetch
+    if (originalProjectId === undefined) {
+      delete process.env.VERTEX_PROJECT_ID
+    } else {
+      process.env.VERTEX_PROJECT_ID = originalProjectId
+    }
+    vi.restoreAllMocks()
+  })
+
+  it('recovers via neutral studio fallback when Tier 1 and Tier 2 return HTTP 400 rephrase errors', async () => {
+    process.env.VERTEX_PROJECT_ID = 'test-gcp-project'
+    const postedInputs: string[] = []
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = init?.method ?? 'GET'
+      const url = String(input)
+      if (method === 'GET' && url.includes('/voices')) {
+        return new Response(JSON.stringify({ voices: [] }), { status: 200 })
+      }
+      if (method === 'POST' && url.endsWith('/voices')) {
+        const parsed = JSON.parse(String(init?.body ?? '{}')) as {
+          voice: { displayName: string; prompted: { input: string } }
+        }
+        postedInputs.push(parsed.voice.prompted.input)
+        if (postedInputs.length <= 2) {
+          return new Response(
+            JSON.stringify({
+              error: {
+                code: 400,
+                message:
+                  'Voice generation did not complete, so no voice was created. Try rephrasing the prompt.',
+                status: 'INVALID_ARGUMENT',
+              },
+            }),
+            { status: 400 }
+          )
+        }
+        return new Response(
+          JSON.stringify({ name: 'projects/test-gcp-project/locations/global/voices/voice_recovered_3' }),
+          { status: 200 }
+        )
+      }
+      return new Response('{}', { status: 200 })
+    }) as typeof fetch
+
+    const created = await createDesignedGeminiVoice({
+      description:
+        'A young adult male protagonist with a resonant baritone voice and a neutral American accent, speaking at a measured pace with quiet focus.',
+      displayName: 'Brian Eric Anderson Sr. (Age 17)',
+    })
+
+    expect(created.voiceId).toBe('voice_recovered_3')
+    expect(postedInputs).toHaveLength(3)
+    expect(postedInputs[2]).toContain('An adult male speaker')
+  })
+
+  it('deletes and overlays old stored voice slots when Vertex returns 429 RESOURCE_EXHAUSTED', async () => {
+    process.env.VERTEX_PROJECT_ID = 'test-gcp-project'
+    const deletedUrls: string[] = []
+    let postAttempts = 0
+
+    // Simulate all 6 cloud voices marked retained so overlay fallback must kick in on 429
+    const storedVoices = Array.from({ length: 6 }, (_, i) => ({
+      name: `projects/test-gcp-project/locations/global/voices/voice_slot_${i}`,
+      createTime: `2026-01-0${i + 1}T00:00:00Z`,
+    }))
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = init?.method ?? 'GET'
+      const url = String(input)
+      if (method === 'GET' && url.includes('/voices')) {
+        return new Response(JSON.stringify({ voices: storedVoices }), { status: 200 })
+      }
+      if (method === 'DELETE' && url.includes('/voices/')) {
+        deletedUrls.push(url)
+        return new Response('{}', { status: 200 })
+      }
+      if (method === 'POST' && url.endsWith('/voices')) {
+        postAttempts++
+        if (postAttempts === 1) {
+          return new Response(
+            JSON.stringify({
+              error: {
+                code: 429,
+                message: 'Quota exceeded: maximum active stored voices reached.',
+                status: 'RESOURCE_EXHAUSTED',
+              },
+            }),
+            { status: 429 }
+          )
+        }
+        return new Response(
+          JSON.stringify({ voice: { id: 'voice_overlaid_new' } }),
+          { status: 200 }
+        )
+      }
+      return new Response('{}', { status: 200 })
+    }) as typeof fetch
+
+    const retainAll = storedVoices.map((_, i) => `voice_slot_${i}`)
+    const created = await createDesignedGeminiVoice({
+      description: 'A late 40s male mentor with a warm baritone voice.',
+      displayName: 'Curtis Hefflin',
+      retainVoiceIds: retainAll,
+      replaceVoiceId: 'voice_previous_char',
+    })
+
+    expect(created.voiceId).toBe('voice_overlaid_new')
+    // Deleted replaceVoiceId upfront + overlaid oldest stored voices on 429
+    expect(deletedUrls.some((u) => u.endsWith('/voice_previous_char'))).toBe(true)
+    expect(deletedUrls.some((u) => u.endsWith('/voice_slot_0'))).toBe(true)
+  })
+
+  it('self-heals an overlaid/deleted voice_ slot during synthesis using designPrompt', async () => {
+    process.env.VERTEX_PROJECT_ID = 'test-gcp-project'
+    let synthCalls = 0
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = init?.method ?? 'GET'
+      const url = String(input)
+      if (url.includes(':generateContent')) {
+        synthCalls++
+        if (synthCalls === 1) {
+          return new Response(
+            JSON.stringify({ error: { code: 404, message: 'Voice voice_evicted_old not found' } }),
+            { status: 404 }
+          )
+        }
+        return new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [{ inlineData: { data: Buffer.from('RIFF_WAV_DATA').toString('base64') } }],
+                },
+              },
+            ],
+          }),
+          { status: 200 }
+        )
+      }
+      if (method === 'GET' && url.includes('/voices')) {
+        return new Response(JSON.stringify({ voices: [] }), { status: 200 })
+      }
+      if (method === 'POST' && url.endsWith('/voices')) {
+        return new Response(JSON.stringify({ id: 'voice_recreated_fresh' }), { status: 200 })
+      }
+      return new Response('{}', { status: 200 })
+    }) as typeof fetch
+
+    const wav = await synthesizeDesignedGeminiVoiceWav({
+      text: 'Testing self-healing synthesis.',
+      voiceId: 'voice_evicted_old',
+      designPrompt: 'A late 40s male speaker with a warm baritone voice.',
+      displayName: 'Curtis',
+    })
+
+    expect(wav.toString()).toBe('RIFF_WAV_DATA')
+    expect(synthCalls).toBe(2)
   })
 })

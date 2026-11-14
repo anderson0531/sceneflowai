@@ -11,8 +11,8 @@ export const DESIGNED_VOICE_TTS_MODEL = 'gemini-3.8-flash-tts'
 /** Vertex CreateVoice enum. The string "prompted" is rejected as an unsupported type. */
 export const DESIGNED_VOICE_TYPE = 'VOICE_TYPE_PROMPTED'
 
-/** Stay under Google's 200 stored voices per project. */
-export const DESIGNED_VOICE_PROJECT_CAP = 180
+/** Stay well under Google's 200 stored voices per project across concurrent productions. */
+export const DESIGNED_VOICE_PROJECT_CAP = 120
 
 export const DESIGNED_VOICE_STYLE_MAX = 160
 
@@ -39,14 +39,99 @@ export interface VoiceDesignDescriptionInput {
 
 const VOICE_DESIGN_PROMPT_MAX = 220
 
+const MINOR_AGE_WORDS_RE =
+  /\b(infants?|bab(?:y|ies)|toddlers?|child|children|kids?|preteens?|pre-teens?|tweens?|teens?|teenaged?|teenagers?|adolescents?|youths?|minors?|underage|juveniles?|boys?|girls?|schoolboys?|schoolgirls?|grandchild|grandchildren|granddaughters?|grandsons?|high[\s-]*school\w*|middle[\s-]*school\w*|elementary[\s-]*school\w*)\b/gi
+
+const SAFETY_REFUSAL_WORDS_RE =
+  /\b(predatory|bloodshot|furious|violent|brutal|savage|menacing|threatening|hostile|traumatized|hysterical|screaming|shrieking|crying|sobbing|weeping|choking|gasping|dying|dead|bleeding|drunk|intoxicated|slurred|seductive|sensual|erotic|abusive|terrified|panicked)\b/gi
+
 function cleanPhrase(value: string | undefined): string {
   return (value ?? '').replace(/\s+/g, ' ').replace(/[“”"']/g, '').trim()
+}
+
+function hasUnderTwentyAge(text: string): boolean {
+  const matches = text.matchAll(/\b(\d{1,3})(?:s|'s|-year-old|\s*years?\s*old|\s*yo|\s*y\/o)?\b/gi)
+  for (const match of matches) {
+    const numeric = Number(match[1])
+    if (Number.isFinite(numeric) && numeric >= 0 && numeric < 20) {
+      return true
+    }
+  }
+  return false
+}
+
+function stripUnderTwentyTokens(text: string): string {
+  return text
+    .replace(/\([^)]*\)/g, (paren) =>
+      hasUnderTwentyAge(paren) || new RegExp(MINOR_AGE_WORDS_RE.source, 'i').test(paren) ? ' ' : paren
+    )
+    .replace(/\b(?:age\s*)?\d{1,2}(?:\s*(?:to|-|–)\s*\d{1,2})?(?:-year-old|\s*years?\s*old|\s*yo|\s*y\/o)?\b/gi, (tok) =>
+      hasUnderTwentyAge(tok) ? ' ' : tok
+    )
+}
+
+function sanitizeVoiceDesignTrait(value: string | undefined): string {
+  const cleaned = cleanPhrase(value)
+  if (!cleaned) return ''
+  return stripUnderTwentyTokens(cleaned)
+    .replace(SAFETY_REFUSAL_WORDS_RE, ' ')
+    .replace(/\s*,\s*,+/g, ', ')
+    .replace(/^[\s,.;:-]+|[\s,.;:-]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+export function sanitizeVoiceDesignAge(value: string | undefined): string {
+  const cleaned = cleanPhrase(value)
+  if (!cleaned) return ''
+  if (
+    new RegExp(MINOR_AGE_WORDS_RE.source, 'i').test(cleaned) ||
+    hasUnderTwentyAge(cleaned) ||
+    /^young$/i.test(cleaned)
+  ) {
+    return 'young adult'
+  }
+  return sanitizeVoiceDesignTrait(cleaned)
+}
+
+function sanitizeVoiceDesignGender(value: string | undefined): string {
+  const cleaned = cleanPhrase(value)
+  if (!cleaned) return ''
+  if (/^(boy|boys|young\s+man|teen\s+boy)$/i.test(cleaned)) return 'male'
+  if (/^(girl|girls|young\s+woman|teen\s+girl)$/i.test(cleaned)) return 'female'
+  return sanitizeVoiceDesignTrait(
+    cleaned.replace(/\bboys?\b/gi, 'male').replace(/\bgirls?\b/gi, 'female')
+  )
+    .replace(MINOR_AGE_WORDS_RE, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+export function sanitizeVoiceDesignDisplayName(displayName: string | undefined): string {
+  const raw = (displayName ?? '').replace(/\s+/g, ' ').trim()
+  if (!raw) return 'SceneFlow character'
+  const sanitized = stripUnderTwentyTokens(raw)
+    .replace(MINOR_AGE_WORDS_RE, ' ')
+    .replace(SAFETY_REFUSAL_WORDS_RE, ' ')
+    .replace(/'s\b/gi, '')
+    .replace(/[&/|+]+/g, ' ')
+    .replace(/\(\s*\)/g, ' ')
+    .replace(/^[\s,.;:–-]+|[\s,.;:–-]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (sanitized.length < 2) return 'SceneFlow character'
+  return sanitized.slice(0, 80)
 }
 
 /** Words before a slash, without a leading article, capped so a story paragraph stays out. */
 function shortRole(role: string | undefined): string {
   const head = cleanPhrase(role).split('/')[0] ?? ''
-  return head
+  const safeHead = sanitizeVoiceDesignTrait(head)
+    .replace(MINOR_AGE_WORDS_RE, ' ')
+    .replace(/\bstudents?\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return safeHead
     .replace(/^(the|a|an)\s+/i, '')
     .split(' ')
     .filter(Boolean)
@@ -73,7 +158,15 @@ function vocalLineFromBrief(brief: string | undefined): string {
   const head = cleanPhrase(brief).split(/vocal qualities:/i)[0] ?? ''
   const first = head.split(/[.!?]/)[0]?.trim() ?? ''
   if (first.length < 12) return ''
-  return capSentence(first)
+  const safeFirst = stripUnderTwentyTokens(
+    first.replace(/\bboys?\b/gi, 'male').replace(/\bgirls?\b/gi, 'female')
+  )
+    .replace(MINOR_AGE_WORDS_RE, 'young adult')
+    .replace(SAFETY_REFUSAL_WORDS_RE, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (safeFirst.length < 12) return ''
+  return capSentence(safeFirst)
 }
 
 /**
@@ -81,15 +174,15 @@ function vocalLineFromBrief(brief: string | undefined): string {
  * and how they speak. Built from the portrait analysis and the character's role.
  */
 export function composeVoiceDesignDescription(input: VoiceDesignDescriptionInput): string {
-  const gender = cleanPhrase(input.gender)
-  const age = cleanPhrase(input.apparentAge)
+  const gender = sanitizeVoiceDesignGender(input.gender)
+  const age = sanitizeVoiceDesignAge(input.apparentAge)
   const role = shortRole(input.role)
-  const timbre = cleanPhrase(input.timbre)
-  const accent = cleanPhrase(input.accent)
-  const pace = cleanPhrase(input.pace)
-  const warmth = cleanPhrase(input.warmth)
-  const authority = cleanPhrase(input.authority)
-  const baseline = cleanPhrase(input.emotionalDefault)
+  const timbre = sanitizeVoiceDesignTrait(input.timbre)
+  const accent = sanitizeVoiceDesignTrait(input.accent)
+  const pace = sanitizeVoiceDesignTrait(input.pace)
+  const warmth = sanitizeVoiceDesignTrait(input.warmth)
+  const authority = sanitizeVoiceDesignTrait(input.authority)
+  const baseline = sanitizeVoiceDesignTrait(input.emotionalDefault)
 
   const subject = [age, gender, role].filter(Boolean).join(' ') || 'speaker'
   const voice = [warmth, timbre].filter(Boolean).join(', ')
@@ -113,6 +206,28 @@ export function composeVoiceDesignDescription(input: VoiceDesignDescriptionInput
   const description = capSentence(sentence)
   if (description.length >= 24) return description
   return vocalLineFromBrief(input.voiceDescription)
+}
+
+/**
+ * Pure studio-acoustic fallback sentence stripped of story roles and edge traits,
+ * used when Vertex rejects both the full and shortened persona prompts.
+ */
+export function buildNeutralVoiceDesignFallback(description: string): string {
+  const clean = cleanPhrase(description)
+  const isFemale = /\b(female|woman|mezzo|soprano|contralto|actress)\b/i.test(clean)
+  const isMale = !isFemale && /\b(male|man|baritone|tenor|bass|actor)\b/i.test(clean)
+  const genderWord = isFemale ? 'female' : isMale ? 'male' : ''
+  const registerMatch = clean.match(/\b(baritone|tenor|bass|alto|mezzo-soprano|soprano|contralto)\b/i)
+  const register = registerMatch ? registerMatch[1]!.toLowerCase() : ''
+  const accentMatch = clean.match(
+    /\b(?:voice\s+and|with)\s+an?\s+([A-Za-z][A-Za-z\s-]{1,28}?)\s+accent\b/i
+  )
+  const safeAccent = accentMatch ? sanitizeVoiceDesignTrait(accentMatch[1]) : ''
+
+  const subject = ['adult', genderWord, 'speaker'].filter(Boolean).join(' ')
+  const timbre = register ? `clear, natural ${register}` : 'clear, warm, natural'
+  const accentClause = safeAccent ? ` and a ${safeAccent} accent` : ''
+  return capSentence(`An ${subject} with a ${timbre} voice${accentClause}, speaking at a steady conversational pace`)
 }
 
 /** Drop the speaking clause for a second attempt after Google asks for a rephrase. */
@@ -206,6 +321,24 @@ export function prepareDesignedVoiceLine(args: {
   }
 }
 
+function sanitizePromptedVoiceInput(description: string): string {
+  const trimmed = description.trim()
+  if (!hasUnderTwentyAge(trimmed) && !new RegExp(MINOR_AGE_WORDS_RE.source, 'i').test(trimmed)) {
+    return trimmed
+  }
+  const replaced = trimmed
+    .replace(/\b(?:age\s*)?\d{1,2}(?:\s*(?:to|-|–)\s*\d{1,2})?(?:-year-old|\s*years?\s*old|\s*yo|\s*y\/o)\b/gi, (tok) =>
+      hasUnderTwentyAge(tok) ? 'young adult' : tok
+    )
+    .replace(/\bboys?\b/gi, 'male')
+    .replace(/\bgirls?\b/gi, 'female')
+    .replace(MINOR_AGE_WORDS_RE, 'young adult')
+    .replace(/\byoung adult(?:\s+young adult)+\b/gi, 'young adult')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return replaced
+}
+
 export function buildVoiceDesignCreateBody(args: {
   description: string
   displayName: string
@@ -214,10 +347,10 @@ export function buildVoiceDesignCreateBody(args: {
   return {
     store: true,
     voice: {
-      displayName: args.displayName.slice(0, 80),
+      displayName: sanitizeVoiceDesignDisplayName(args.displayName),
       type: DESIGNED_VOICE_TYPE,
       languageCode: args.languageCode?.trim() || 'en-US',
-      prompted: { input: args.description.trim() },
+      prompted: { input: sanitizePromptedVoiceInput(args.description) },
     },
   }
 }
@@ -265,11 +398,26 @@ export function buildDesignedVoiceSynthesisBody(args: {
 export interface StoredPromptedVoice {
   id: string
   createTime?: string
+  /** Position in Vertex ListVoices response (0 = first returned, which is newest). */
+  listIndex?: number
+}
+
+function compareStoredVoicesOldestFirst(a: StoredPromptedVoice, b: StoredPromptedVoice): number {
+  const timeA = a.createTime?.trim() ?? ''
+  const timeB = b.createTime?.trim() ?? ''
+  if (timeA && timeB && timeA !== timeB) {
+    return timeA.localeCompare(timeB)
+  }
+  if (typeof a.listIndex === 'number' && typeof b.listIndex === 'number' && a.listIndex !== b.listIndex) {
+    return b.listIndex - a.listIndex
+  }
+  return timeA.localeCompare(timeB)
 }
 
 /**
  * Voices to delete so creating one more stays under the project cap.
- * Retained ids (voices still assigned to characters) are kept.
+ * Counts ALL stored designed voices (including retained ones) toward `cap`
+ * while keeping `retainIds` intact during proactive cleanup.
  */
 export function voicesToEvict(
   voices: StoredPromptedVoice[],
@@ -277,18 +425,64 @@ export function voicesToEvict(
   cap: number = DESIGNED_VOICE_PROJECT_CAP
 ): string[] {
   const retain = new Set(retainIds)
-  const candidates = voices
-    .filter((voice) => isDesignedGeminiVoiceId(voice.id) && !retain.has(voice.id))
-    .sort((a, b) => (a.createTime ?? '').localeCompare(b.createTime ?? ''))
-  const overflow = candidates.length + 1 - cap
+  const allDesigned = voices.filter((voice) => isDesignedGeminiVoiceId(voice.id))
+  const candidates = allDesigned
+    .filter((voice) => !retain.has(voice.id))
+    .sort(compareStoredVoicesOldestFirst)
+  const overflow = allDesigned.length + 1 - cap
   if (overflow <= 0) return []
   return candidates.slice(0, overflow).map((voice) => voice.id)
+}
+
+/**
+ * Select up to `count` oldest voice slots to delete/overlay when Vertex reports
+ * the voice library is full. Prefers unretained voices first, then falls back
+ * to the oldest retained voices if `allowRetainedOverlay` is true so creation
+ * never deadlocks at the 200-voice ceiling (overlaid voices self-heal via `designPrompt`).
+ */
+export function voicesToOverlay(
+  voices: StoredPromptedVoice[],
+  retainIds: Iterable<string>,
+  count: number,
+  allowRetainedOverlay: boolean = true
+): string[] {
+  if (count <= 0) return []
+  const retain = new Set(retainIds)
+  const allDesigned = voices.filter((voice) => isDesignedGeminiVoiceId(voice.id))
+  const unretainedOldest = allDesigned
+    .filter((voice) => !retain.has(voice.id))
+    .sort(compareStoredVoicesOldestFirst)
+    .map((voice) => voice.id)
+
+  if (!allowRetainedOverlay || unretainedOldest.length >= count) {
+    return unretainedOldest.slice(0, count)
+  }
+
+  const retainedOldest = allDesigned
+    .filter((voice) => retain.has(voice.id))
+    .sort(compareStoredVoicesOldestFirst)
+    .map((voice) => voice.id)
+
+  return [...unretainedOldest, ...retainedOldest].slice(0, count)
 }
 
 export function readDesignedVoiceId(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null
   const record = payload as Record<string, unknown>
-  const fields = [record.id, record.name, record.voiceId]
+  const nested =
+    record.voice && typeof record.voice === 'object'
+      ? (record.voice as Record<string, unknown>)
+      : null
+  const fields = [
+    record.id,
+    record.name,
+    record.voiceId,
+    record.voice_id,
+    nested?.id,
+    nested?.name,
+    nested?.voiceId,
+    nested?.voice_id,
+  ]
   for (const field of fields) {
     if (typeof field !== 'string') continue
     const match = field.match(/voice_[A-Za-z0-9_-]+/)
