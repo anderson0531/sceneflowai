@@ -296,7 +296,7 @@ export function sortLocationsParentsFirst<T extends LocationFamilyMemberLike>(lo
 
 export const LOCATION_SUBZONE_REFERENCE_INSTRUCTION =
   'ARCHITECTURAL CONTINUITY WITH PARENT LOCATION: The attached reference image shows the primary parent location of this same architectural complex. ' +
-  'Render this location as a distinct sub-area or adjacent zone within that exact same architectural world — match the wall masonry/materials, floor construction, rail tracks or structural beams, ceiling geometry, color palette, era, and ambient lighting quality from the parent reference image while framing this sub-area’s specific layout and resident set pieces.'
+  'Render this location as a distinct sub-area or adjacent zone within that exact same architectural world — match the wall materials, floor construction, structural beams, ceiling geometry, color palette, era, and ambient lighting quality from the parent reference image while framing this sub-area’s specific layout and resident set pieces.'
 
 /**
  * Compose an architectural continuity prompt clause linking a sub-location
@@ -326,7 +326,7 @@ export function buildRelatedLocationContinuityClause(input: {
 
   const parts: string[] = [
     `Related location continuity: ${targetName} is a connected area of ${parentName} ${zonePhrase}`,
-    `Maintain strict architectural consistency with ${parentName} — matching wall materials, floor surfaces, structural lines/rail tracks, ceiling vaulting, color palette, and lighting atmosphere`,
+    `Maintain strict architectural consistency with ${parentName} — matching wall materials, floor surfaces, structural lines, ceiling geometry, color palette, and lighting atmosphere`,
   ]
 
   if (cleanParentDesc) {

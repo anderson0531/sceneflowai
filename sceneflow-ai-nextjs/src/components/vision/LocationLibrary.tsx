@@ -745,8 +745,8 @@ export function LocationLibrary({
               ...(nextCeiling || nextDoor || nextFixtures
                 ? {
                     canonicalScale: {
-                      ceilingHeightFt: nextCeiling || 10,
-                      doorHeightFt: nextDoor || 7,
+                      ...(nextCeiling ? { ceilingHeightFt: nextCeiling } : {}),
+                      ...(nextDoor ? { doorHeightFt: nextDoor } : {}),
                       ...(nextFixtures ? { fixtureHeights: nextFixtures } : {}),
                     },
                   }
@@ -1334,15 +1334,27 @@ export function LocationLibrary({
                                 const current = loc.canonicalScale?.ceilingHeightFt
                                 if (parsed === current || (!parsed && !current)) return
                                 const nextScale = {
-                                  ceilingHeightFt: parsed || 10,
-                                  doorHeightFt: loc.canonicalScale?.doorHeightFt || 7,
+                                  ...(parsed && Number.isFinite(parsed)
+                                    ? { ceilingHeightFt: parsed }
+                                    : {}),
+                                  ...(loc.canonicalScale?.doorHeightFt
+                                    ? { doorHeightFt: loc.canonicalScale.doorHeightFt }
+                                    : {}),
                                   ...(loc.canonicalScale?.fixtureHeights
                                     ? { fixtureHeights: loc.canonicalScale.fixtureHeights }
                                     : {}),
                                 }
                                 void onUpdateLocations(
                                   mergedLocations.map((item) =>
-                                    item.id === loc.id ? { ...item, canonicalScale: nextScale } : item
+                                    item.id === loc.id
+                                      ? {
+                                          ...item,
+                                          canonicalScale:
+                                            Object.keys(nextScale).length > 0
+                                              ? nextScale
+                                              : undefined,
+                                        }
+                                      : item
                                   )
                                 )
                               }}
@@ -1363,15 +1375,27 @@ export function LocationLibrary({
                                 const current = loc.canonicalScale?.doorHeightFt
                                 if (parsed === current || (!parsed && !current)) return
                                 const nextScale = {
-                                  ceilingHeightFt: loc.canonicalScale?.ceilingHeightFt || 10,
-                                  doorHeightFt: parsed || 7,
+                                  ...(loc.canonicalScale?.ceilingHeightFt
+                                    ? { ceilingHeightFt: loc.canonicalScale.ceilingHeightFt }
+                                    : {}),
+                                  ...(parsed && Number.isFinite(parsed)
+                                    ? { doorHeightFt: parsed }
+                                    : {}),
                                   ...(loc.canonicalScale?.fixtureHeights
                                     ? { fixtureHeights: loc.canonicalScale.fixtureHeights }
                                     : {}),
                                 }
                                 void onUpdateLocations(
                                   mergedLocations.map((item) =>
-                                    item.id === loc.id ? { ...item, canonicalScale: nextScale } : item
+                                    item.id === loc.id
+                                      ? {
+                                          ...item,
+                                          canonicalScale:
+                                            Object.keys(nextScale).length > 0
+                                              ? nextScale
+                                              : undefined,
+                                        }
+                                      : item
                                   )
                                 )
                               }}
@@ -1382,19 +1406,29 @@ export function LocationLibrary({
                         <input
                           type="text"
                           defaultValue={loc.canonicalScale?.fixtureHeights ?? ''}
-                          placeholder="e.g. chalkboard mounted at a height of 6-foot"
+                          placeholder="e.g. wall shelving mounted at 6-foot height"
                           onBlur={(e) => {
                             const nextFixtures = e.currentTarget.value.trim()
                             const current = loc.canonicalScale?.fixtureHeights ?? ''
                             if (nextFixtures === current) return
                             const nextScale = {
-                              ceilingHeightFt: loc.canonicalScale?.ceilingHeightFt || 10,
-                              doorHeightFt: loc.canonicalScale?.doorHeightFt || 7,
+                              ...(loc.canonicalScale?.ceilingHeightFt
+                                ? { ceilingHeightFt: loc.canonicalScale.ceilingHeightFt }
+                                : {}),
+                              ...(loc.canonicalScale?.doorHeightFt
+                                ? { doorHeightFt: loc.canonicalScale.doorHeightFt }
+                                : {}),
                               ...(nextFixtures ? { fixtureHeights: nextFixtures } : {}),
                             }
                             void onUpdateLocations(
                               mergedLocations.map((item) =>
-                                item.id === loc.id ? { ...item, canonicalScale: nextScale } : item
+                                item.id === loc.id
+                                  ? {
+                                      ...item,
+                                      canonicalScale:
+                                        Object.keys(nextScale).length > 0 ? nextScale : undefined,
+                                    }
+                                  : item
                               )
                             )
                           }}

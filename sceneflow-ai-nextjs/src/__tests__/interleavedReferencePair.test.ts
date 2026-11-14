@@ -234,4 +234,26 @@ describe('applyInterleavedPairCaptionsToNamedImages', () => {
     expect(captions[2].name).not.toMatch(/furniture \/ set-piece/)
     expect(captions[3].name).not.toMatch(/extreme-wide establishing/)
   })
+
+  it('does not invent 10-foot ceiling or 7-foot door on location captions without explicit measurements', () => {
+    const [caption] = buildInterleavedReferencePairCaptions(
+      [
+        {
+          imageUrl: 'https://example.com/chamber.jpg',
+          role: 'location',
+          locationName: 'SUBTERRANEAN CHAMBER',
+          locationDescription: 'Damp limestone walls and a central zinc workbench',
+          canonicalScale: { ceilingHeightFt: 10, doorHeightFt: 7 },
+          promptToken: 'location [1]',
+        },
+      ],
+      [{ name: 'Piper Hayes', promptToken: 'person [1]', subjectOrdinal: 1 }]
+    )
+
+    expect(caption.name).toBe(
+      'The next image is location [1]. Environment reference: Damp limestone walls and a central zinc workbench'
+    )
+    expect(caption.name).not.toContain('7-foot door')
+    expect(caption.name).not.toContain('10-foot ceiling')
+  })
 })

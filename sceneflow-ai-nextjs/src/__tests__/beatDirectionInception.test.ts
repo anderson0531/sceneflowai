@@ -37,10 +37,11 @@ describe('script inception ships beat direction contracts', () => {
     expect(block).toContain('door/hatch/vault/lockdown/valve wheels')
   })
 
-  it('scene direction does not catalog mounted wheels as keyProps', () => {
+  it('scene direction does not catalog mounted wheels as keyProps or prime vault wheels in scene.location', () => {
     const source = readSource('src/lib/sceneGeneration/generateDirection.ts')
     expect(source).toContain('Do not list door/hatch/vault/lockdown/valve wheels')
-    expect(source).toContain('heavy door wheel mounted across the room')
+    expect(source).toContain('built-in wooden cabinetry')
+    expect(source).not.toContain('heavy door wheel mounted across the room')
   })
 
   it('narration policy schema example inlines BeatDirection JSON snippet', () => {

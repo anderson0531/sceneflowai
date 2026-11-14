@@ -12,6 +12,7 @@ import sharp from 'sharp'
 import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
 import {
   extractLocationCanonicalScale,
+  isExteriorLocation,
   type LocationCanonicalScale,
 } from '@/lib/imagen/locationScaleClause'
 
@@ -56,22 +57,25 @@ function yForFeet(height: number, feet: number, ceilingHeightFt: number): number
 }
 
 /**
- * Build right-margin architectural height tick marks (0, 6ft, door, ceiling).
- * Never draw a stick figure / human silhouette inside the overlay strip: image
- * diffusion models copy line-drawn figures from reference plates into the scene.
+ * Build right-margin architectural height tick marks (0, 6ft, 7ft, 10ft).
+ * Never draw stick figures / human silhouettes or object nouns ("door") inside
+ * the overlay strip: multimodal image models read text/shapes on reference
+ * plates and hallucinate physical doors or figures into doorless rooms.
  */
 export function buildLocationScaleOverlaySvg(
   width: number,
   height: number,
-  scale: LocationCanonicalScale
+  scale: LocationCanonicalScale,
+  options?: { includeDoorLabel?: boolean }
 ): string {
   const stripW = Math.max(48, Math.round(width * 0.08))
   const x0 = width - stripW
+  const doorSuffix = options?.includeDoorLabel ? ' door' : ''
   const ticks = [
     { ft: 0, label: '0' },
     { ft: scale.figureHeightFt, label: `${scale.figureHeightFt}ft` },
-    { ft: scale.doorHeightFt, label: `${scale.doorHeightFt}ft door` },
-    { ft: scale.ceilingHeightFt, label: `${scale.ceilingHeightFt}ft ceil` },
+    { ft: scale.doorHeightFt, label: `${scale.doorHeightFt}ft${doorSuffix}` },
+    { ft: scale.ceilingHeightFt, label: `${scale.ceilingHeightFt}ft` },
   ]
   const uniqueTicks = ticks.filter(
     (tick, index, all) => all.findIndex((other) => other.ft === tick.ft) === index
@@ -123,6 +127,7 @@ async function overlayLocationScaleOnOneReference<T extends OverlayableLocationR
   ref: T
 ): Promise<T> {
   if (!isLocationReferencePartName(ref.name, ref.role, ref.locationName)) return ref
+  if (isExteriorLocation(ref.locationDescription, ref.locationName || ref.name)) return ref
   try {
     const scale = extractLocationCanonicalScale(
       ref.locationDescription,

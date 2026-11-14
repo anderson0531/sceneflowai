@@ -135,7 +135,7 @@ export function buildLocationBasePrompt(
 export const LOCATION_TURNAROUND_GENERATION_INSTRUCTION =
   'Single unified cinematic frame — extreme wide establishing shot of the location. ' +
   'One photograph capturing the full room/environment layout, furniture placement, and architectural features. ' +
-  'Include named built-in architectural hardware in its mounted position (hatch wheels, vault door wheels, lockdown wheels, bolted valves). ' +
+  'Include any named built-in architectural hardware or permanent fixtures in their mounted position only when described for this location; never invent unrelated doors, vaults, or hardware. ' +
   'Do not add handheld props. ' +
   'NOT a 2x2 grid, NOT a multi-panel sheet, NOT split-screen, NOT a collage, NOT multiple camera angles. ' +
   'Empty scene with NO people or characters present.'
@@ -160,7 +160,7 @@ export const LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION =
   'LOCATION REFERENCE: The attached plate is the set, not a second wide establishing subject. ' +
   'Match architectural layout, color palette, and lighting as the surrounding environment. ' +
   'Do not copy the plate as an extreme-wide establishing shot or empty room. ' +
-  'Only include specific wall-mounted fixtures (such as chalkboards, gauges, or wall instruments) if the shot angle directly faces that wall; do not duplicate every fixture from the wide plate into the background.'
+  'Only include specific wall-mounted fixtures from the reference plate if the shot angle directly faces that wall; do not duplicate every fixture from the wide plate into the background.'
 
 export function isObjectInsertLocationShot(options?: {
   shotType?: string | null
@@ -236,7 +236,7 @@ export function buildLocationConsumptionInstruction(options?: {
       'LOCATION REFERENCE: The attached plate is the set, not a second wide establishing subject. ' +
         `Match architectural layout, color palette, and lighting of ${token} as the surrounding environment. ` +
         `Do not copy ${token} as an extreme-wide establishing shot or empty room. ` +
-        'Only include specific wall-mounted fixtures (such as chalkboards, gauges, or wall instruments) if the shot angle directly faces that wall; do not duplicate every fixture from the wide plate into the background.'
+        'Only include specific wall-mounted fixtures from the reference plate if the shot angle directly faces that wall; do not duplicate every fixture from the wide plate into the background.'
     )
   }
   if (!isDetailShot(options?.shotType) && !shot.isDetail) {
@@ -246,7 +246,7 @@ export function buildLocationConsumptionInstruction(options?: {
         'LOCATION REFERENCE: The attached plate is the set, not a second wide establishing subject. ' +
           `Match architectural layout, color palette, and lighting of ${token} as the surrounding environment. ` +
           `Do not copy ${token} as an extreme-wide establishing shot or empty room. ` +
-          'Only include specific wall-mounted fixtures (such as chalkboards, gauges, or wall instruments) if the shot angle directly faces that wall; do not duplicate every fixture from the wide plate into the background.'
+          'Only include specific wall-mounted fixtures from the reference plate if the shot angle directly faces that wall; do not duplicate every fixture from the wide plate into the background.'
       )
     }
     return withScale(LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION)
@@ -271,10 +271,10 @@ export const LOCATION_VERSION_GENERATION_INSTRUCTION =
   'Treat the attached base location photograph as the master wide-shot set containing all resident fixtures, and render this version as a camera angle of that base location showing the active structural set-state changes on existing set pieces without inventing new objects. ' +
   'Paint ONLY lasting structural set-state changes as the new source of truth: architecture, ' +
   'doors, windows, walls, floors, built-in or overturned set furniture (desks, chairs bolted to the room), ' +
-  'built-in hardware (hatch wheels, vault door wheels, lockdown wheels, bolted valves), ' +
+  'built-in architectural hardware and permanent fixtures, ' +
   'flooding, debris that is the room, boarded windows, exploded or missing architectural features. ' +
   'Do NOT add handheld objects, beat keyProps, or objects a character will introduce ' +
-  '(journals, vellum, tools, weapons, papers, bags). If the state notes name those, ignore them and leave the set empty of that object. ' +
+  '(journals, documents, tools, weapons, papers, bags). If the state notes name those, ignore them and leave the set empty of that object. ' +
   'Do not restore pre-change dressing that the structural state notes say is gone, destroyed, or redressed.'
 
 /**

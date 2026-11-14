@@ -1863,7 +1863,7 @@ ${narrationSection}
 SCENE ARC → BEATS (PLAN BEFORE YOU WRITE):
 • Before writing beats[], write "movements": 2–${MAX_SCENE_MOVEMENTS} ordered dramatic movements that carry the scene from its opening state to its closing state.
 • Each movement is ONE sentence of plain narrative prose naming WHO does WHAT and HOW the situation changes — not camera language, not a shot list.
-• Movements read end-to-end as the scene's description. Example for a three-movement scene: "Piper tumbles out of the pneumatic access tube into the vault." / "Gideon pins her at gunpoint, certain she is corporate espionage." / "Piper reveals she carries Clara's encrypted final schematics and Gideon's fury collapses into shock."
+• Movements read end-to-end as the scene's description. Example for a three-movement scene: "Elena steps onto the rain-slick station platform searching the crowd." / "Marcus intercepts her by the ticket booth, convinced she brought the confidential dossier." / "Elena reveals the folder is empty and Marcus realizes they were both set up."
 • Then write beats[]. EVERY beat MUST carry "movementIndex": the 0-based index of the movement it dramatizes.
 • Beats must be in movement order: all of movement 0's beats, then all of movement 1's beats, and so on. Never interleave, never skip a movement, never leave a movement with zero beats.
 • Spread beats across movements roughly in proportion to each movement's dramatic weight. A ${TARGET_BEATS_PER_SCENE}-beat scene with 4 movements is about ${Math.round(TARGET_BEATS_PER_SCENE / 4)} beats each — not ${TARGET_BEATS_PER_SCENE - 4} beats on one movement and 1 on the rest.

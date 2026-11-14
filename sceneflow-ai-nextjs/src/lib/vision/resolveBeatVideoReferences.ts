@@ -8,7 +8,10 @@ import {
 } from '@/lib/character/characterReferenceAssembly'
 import { formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
-import { formatLocationScaleDescriptor } from '@/lib/imagen/locationScaleClause'
+import {
+  formatLocationScaleDescriptor,
+  hasExplicitLocationScale,
+} from '@/lib/imagen/locationScaleClause'
 import { extractPropScalePhrase, formatPropScaleDescriptor } from '@/lib/imagen/propScaleClause'
 import {
   buildIdentityTraitsClause,
@@ -644,16 +647,27 @@ export function resolveBeatVideoReferences(
       },
       buildLocationLabel: (_locationName, _sendIndex, promptToken) => {
         const base = formatNextImageCaption({ role: 'location', token: promptToken || 'location [1]' })
+        const locName =
+          mappedLocation?.location || (mappedLocation as { name?: string } | undefined)?.name
         if (
           !tightUpperBodyShot &&
-          (mappedLocation?.description?.trim() || mappedLocation?.canonicalScale)
+          mappedLocation &&
+          hasExplicitLocationScale(
+            mappedLocation.description,
+            locName,
+            mappedLocation.canonicalScale,
+            mappedLocation.intExt
+          )
         ) {
           const scale = formatLocationScaleDescriptor(
             mappedLocation.description,
-            mappedLocation.location || (mappedLocation as { name?: string }).name,
-            mappedLocation.canonicalScale
+            locName,
+            mappedLocation.canonicalScale,
+            { intExt: mappedLocation.intExt }
           )
-          return `${base} Environment scale: ${scale}.`
+          if (scale) {
+            return `${base} Environment scale: ${scale}.`
+          }
         }
         return base
       },

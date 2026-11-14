@@ -128,4 +128,18 @@ describe('locationFamily', () => {
     expect(fullPrompt).toContain('Related location continuity')
     expect(fullPrompt.toLowerCase()).toContain('narrow-gauge rail tracks')
   })
+
+  it('does not inject hardcoded rail tracks or ceiling vaulting into ordinary sub-locations', () => {
+    const clause = buildRelatedLocationContinuityClause({
+      locationName: 'CORPORATE HEADQUARTERS - CONFERENCE ROOM',
+      parentLocationName: 'CORPORATE HEADQUARTERS',
+      parentLocationDescription: 'Modern glass-walled office tower floor with oak paneling.',
+      subZoneLabel: 'CONFERENCE ROOM',
+      hasParentReferenceImage: true,
+    })
+
+    expect(clause.toLowerCase()).not.toContain('rail tracks')
+    expect(clause.toLowerCase()).not.toContain('ceiling vaulting')
+    expect(clause.toLowerCase()).toContain('ceiling geometry')
+  })
 })

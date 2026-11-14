@@ -29,15 +29,15 @@ export type LocationDescriptionDirectorResult = {
 }
 
 const RESPONSE_SCHEMA = `{
-  "description": "2-4 sentences of standing place identity for an establishing still: architecture, materials, explicit proportional scale in feet (e.g. 11-foot ceiling, 7-foot door, chalkboard mounted at a height of 6-foot), light, era, and atmosphere. No plot, performance, or a different location.",
-  "ceilingHeightFt": 11,
-  "doorHeightFt": 7,
-  "fixtureHeights": "chalkboard mounted at a height of 6-foot"
+  "description": "2-4 sentences of standing place identity for an establishing still: architecture, materials, spatial scale, light, era, and atmosphere. No plot, performance, or a different location.",
+  "ceilingHeightFt": null,
+  "doorHeightFt": null,
+  "fixtureHeights": null
 }`
 
 const SHARED_RULES = `INCLUDE:
 - Architecture, materials, scale, light, time of day, and era
-- Explicit proportional scale in feet inside the description so character height stays proportionate across shots (e.g., "11-foot ceiling", "7-foot doorway", and mounted fixture heights such as "chalkboard mounted at a height of 6-foot" or "control panel mounted at 5-foot height")
+- Optional proportional scale in feet ONLY for features that genuinely exist in this location (e.g., populate "ceilingHeightFt" only for interior spaces with ceilings, populate "doorHeightFt" only when a visible doorway/entryway is part of this setting, and populate "fixtureHeights" only when the scenes feature specific wall-mounted fixtures; leave inapplicable fields null and never invent doors, ceilings, or fixtures absent from the setting)
 - Standing place details that stay true across scenes in this location
 
 EXCLUDE:

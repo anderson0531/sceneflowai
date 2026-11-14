@@ -573,4 +573,37 @@ describe('resolveBeatVideoReferences', () => {
     ])
     expect(resolved.warnings.some((w) => w.includes('Dropped 2 reference(s) (cap=8)'))).toBe(true)
   })
+
+  it('does not inject phantom 7-foot door or 10-foot ceiling into Wide/Medium clip location captions unless explicitly described', () => {
+    const beat: SceneBeat = {
+      beatId: 'beat-wide-doorless',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Elara Vance walks across the damp stone chamber.',
+      beatDirection: {
+        shotType: 'Wide Shot',
+        castInFrame: ['Elara Vance'],
+      },
+    }
+    const resolved = resolveBeatVideoReferences({
+      scene: { heading: 'INT. SUBTERRANEAN CHAMBER - NIGHT', beats: [beat] },
+      beat,
+      projectCharacters: characters,
+      locationReferences: [
+        {
+          id: 'loc-chamber',
+          location: 'SUBTERRANEAN CHAMBER',
+          imageUrl: 'https://blob.example/chamber.jpg',
+          description: 'Damp subterranean stone chamber with rough limestone walls and a zinc workbench.',
+          canonicalScale: { ceilingHeightFt: 10, doorHeightFt: 7 },
+        },
+      ],
+      objectReferences: [],
+    })
+
+    const locRef = resolved.labeledRefs.find((r) => r.role === 'location')
+    expect(locRef?.name).toBe('The next image is location [1].')
+    expect(locRef?.name).not.toContain('7-foot door')
+    expect(locRef?.name).not.toContain('10-foot ceiling')
+  })
 })

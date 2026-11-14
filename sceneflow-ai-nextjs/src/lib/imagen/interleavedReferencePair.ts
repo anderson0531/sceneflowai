@@ -14,6 +14,7 @@ import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
 import { formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
 import {
   formatLocationScaleDescriptor,
+  hasExplicitLocationScale,
   type LocationCanonicalScale,
 } from '@/lib/imagen/locationScaleClause'
 import { extractPropScalePhrase, formatPropScaleDescriptor } from '@/lib/imagen/propScaleClause'
@@ -224,13 +225,12 @@ function environmentDescriptor(
   const cleanDescription =
     description && !SCALE_ESSAY_PATTERN.test(description) ? description : null
   const usable = cleanDescription ? clipPairDescriptor(cleanDescription, 12) : ''
-  const hasExplicitScale = Boolean(
-    cleanDescription ||
-      canonicalScale?.ceilingHeightFt ||
-      canonicalScale?.doorHeightFt ||
-      canonicalScale?.fixtureHeights
+  const explicitScale = hasExplicitLocationScale(
+    cleanDescription,
+    locationName,
+    canonicalScale
   )
-  const scale = hasExplicitScale
+  const scale = explicitScale
     ? formatLocationScaleDescriptor(cleanDescription, locationName, canonicalScale, options)
     : ''
   const base = usable

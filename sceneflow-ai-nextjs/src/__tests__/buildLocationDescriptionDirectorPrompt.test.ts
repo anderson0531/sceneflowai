@@ -56,6 +56,8 @@ describe('buildLocationDescriptionDirectorPrompt', () => {
     expect(prompt).not.toContain("DIRECTOR'S NOTES")
     expect(prompt).not.toContain("Director's notes outrank")
     expect(prompt).toContain('Do not describe plot or performance')
+    expect(prompt).not.toContain('chalkboard')
+    expect(prompt).not.toContain('"doorHeightFt": 7')
   })
 })
 

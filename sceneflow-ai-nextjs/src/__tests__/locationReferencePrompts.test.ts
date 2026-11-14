@@ -18,16 +18,20 @@ import { extractActionFramingBody } from '@/lib/imagen/structuredStillPrompt'
 import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
 
 describe('locationReferencePrompts', () => {
-  it('generation instruction requests single extreme-wide establishing shot', () => {
+  it('generation instruction requests single extreme-wide establishing shot without vault/wheel priming', () => {
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('extreme wide')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('single unified')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('not a 2x2 grid')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('not a multi-panel')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('no people')
-    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('hatch wheels')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('mounted position')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('hatch wheel')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('vault door')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('lockdown wheel')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('bolted valve')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('ruler')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('scale ticks')
+    expect(LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION.toLowerCase()).not.toContain('chalkboard')
   })
 
   it('consumption instruction matches layout and palette from single reference', () => {
@@ -44,7 +48,7 @@ describe('locationReferencePrompts', () => {
     expect(LOCATION_TURNAROUND_USER_PROMPT_HINT.toLowerCase()).toContain('match layout and palette')
   })
 
-  it('buildLocationReferencePromptLine includes reference index and consumption instruction', () => {
+  it('buildLocationReferencePromptLine includes reference index and consumption instruction without inventing doors', () => {
     const line = buildLocationReferencePromptLine('Kitchen', 5)
     expect(line).toContain('Reference image 5')
     expect(line).toContain('Kitchen')
@@ -52,7 +56,8 @@ describe('locationReferencePrompts', () => {
     expect(line.toLowerCase()).toContain('match architectural layout')
     expect(line).not.toContain('CURRENT set state')
     expect(line.toLowerCase()).toContain('right-margin scale ticks')
-    expect(line.toLowerCase()).toContain('~7ft')
+    expect(line.toLowerCase()).toContain('~10ft')
+    expect(line.toLowerCase()).not.toContain('door ~7ft')
   })
 
   it('attenuates location consumption on a close-up to lighting and palette bokeh', () => {
@@ -158,7 +163,9 @@ describe('locationReferencePrompts', () => {
     expect(prompt).not.toMatch(/violet ink/i)
     expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('handheld')
     expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('keyprops')
-    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('hatch wheels')
+    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('built-in architectural hardware')
+    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('hatch wheel')
+    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('vault door')
   })
 
   it('stripBeatPropsFromLocationStateNotes keeps structural clauses only', () => {

@@ -35,7 +35,7 @@ import { matchObjectsBySelectedNames } from '@/lib/character/matching'
 import { extractSceneWardrobeAndAppearanceNotes } from '@/lib/character/wardrobeAnalysis'
 import { notesCoverBeat } from '@/lib/character/wardrobeScriptSync'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
-import { extractLocationCanonicalScale } from '@/lib/imagen/locationScaleClause'
+import { extractExplicitLocationCanonicalScale } from '@/lib/imagen/locationScaleClause'
 import { extractPropScalePhrase } from '@/lib/imagen/propScaleClause'
 import {
   findLocationReferencesAssignedToScene,
@@ -481,10 +481,11 @@ export function syncSceneDirectionToContinuityCatalog(args: {
       let updatedLoc: LocationReference = { ...nextLocations[locIdx] }
 
       if (dirSettingText.trim()) {
-        const extractedScale = extractLocationCanonicalScale(
+        const extractedScale = extractExplicitLocationCanonicalScale(
           [updatedLoc.description, dirSettingText].filter(Boolean).join(' '),
           updatedLoc.location || updatedLoc.locationDisplay,
-          updatedLoc.canonicalScale
+          updatedLoc.canonicalScale,
+          updatedLoc.intExt
         )
         const prevScale = updatedLoc.canonicalScale
         if (

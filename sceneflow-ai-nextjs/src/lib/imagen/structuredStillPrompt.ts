@@ -40,6 +40,7 @@ import {
 import { propScaleClause, formatPropScaleDescriptor } from '@/lib/imagen/propScaleClause'
 import {
   formatLocationScaleDescriptor,
+  hasExplicitLocationScale,
   locationScaleClause,
   type LocationCanonicalScale,
 } from '@/lib/imagen/locationScaleClause'
@@ -241,14 +242,19 @@ export function formatProportionalScaleTaskLine(
   if (!hasPeople) return undefined
   const parts: string[] = []
   for (const ref of refs) {
-    if (ref.kind === 'location' && (ref.description?.trim() || ref.canonicalScale)) {
+    if (
+      ref.kind === 'location' &&
+      hasExplicitLocationScale(ref.description, ref.name, ref.canonicalScale)
+    ) {
       const scaleDesc = formatLocationScaleDescriptor(
         ref.description,
         ref.name,
         ref.canonicalScale
       )
-      const label = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
-      parts.push(`${label}: ${scaleDesc}`)
+      if (scaleDesc) {
+        const label = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
+        parts.push(`${label}: ${scaleDesc}`)
+      }
     } else if (ref.kind === 'prop' && ref.dimensions?.trim()) {
       const scaleDesc = formatPropScaleDescriptor(ref.description, ref.name, ref.dimensions)
       const label = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
@@ -256,7 +262,7 @@ export function formatProportionalScaleTaskLine(
     }
   }
   if (parts.length === 0) return undefined
-  return `Proportional scale lock: maintain true spatial proportions between environment, fixtures, props, and standing characters (${parts.join('; ')}) — do not shrink ceiling or doors relative to characters. Ignore any right-margin scale ticks on the location plate; do not draw rulers, height marks, or stick figures into the frame.`
+  return `Proportional scale lock: maintain true spatial proportions between environment, fixtures, props, and standing characters (${parts.join('; ')}) — do not shrink the environment relative to characters. Ignore any right-margin scale ticks on the location plate; do not draw rulers or height marks into the frame.`
 }
 
 export function formatPairedIdentityLandmarkLines(
@@ -1366,7 +1372,7 @@ export function formatStillReferencesLegend(
       return `${named} is the object in the prop image of ${ref.token}. ${propScaleClause(ref.description, ref.name, ref.dimensions)}`
     }
     const baseLocationLine = `${named} is the place in the location image of ${ref.token}.`
-    if (ref.description?.trim() || ref.canonicalScale) {
+    if (hasExplicitLocationScale(ref.description, ref.name, ref.canonicalScale)) {
       return `${baseLocationLine} ${locationScaleClause(ref.description, ref.name, ref.canonicalScale)}`
     }
     return baseLocationLine
