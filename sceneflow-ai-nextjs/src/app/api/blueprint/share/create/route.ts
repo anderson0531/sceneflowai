@@ -7,7 +7,7 @@ import CollabSession from '@/models/CollabSession'
 import CollabParticipant from '@/models/CollabParticipant'
 import { getAuthenticatedUserId, assertProjectAccess } from '@/lib/projectAccess'
 import type { BlueprintSessionPayload, BlueprintShareCreateBody } from '@/lib/blueprint/shareTypes'
-import { getPayload } from '@/lib/blueprint/shareSession'
+import { findActiveBlueprintSession, getPayload } from '@/lib/blueprint/shareSession'
 import { sanitizeBlueprintARForShare } from '@/lib/blueprint/sanitizeShareAR'
 import { loadBlueprintARFromMetadata } from '@/lib/types/audienceResonance'
 import {
@@ -110,24 +110,6 @@ function invalidateAudioIfTreatmentChanged(
     sectionAudioStartedAt: undefined,
     sectionAudioGeneratedAt: undefined,
   }
-}
-
-async function findActiveBlueprintSession(projectId: string, ownerUserId: string) {
-  const candidates = await CollabSession.findAll({
-    where: {
-      project_id: projectId,
-      owner_user_id: ownerUserId,
-      status: 'active',
-    },
-    order: [['created_at', 'DESC']],
-    limit: 10,
-  })
-  for (const s of candidates) {
-    const expiresAt = (s as { expires_at?: Date | null }).expires_at
-    if (expiresAt && new Date(expiresAt) < new Date()) continue
-    if (getPayload(s)) return s
-  }
-  return null
 }
 
 export async function POST(req: NextRequest) {
