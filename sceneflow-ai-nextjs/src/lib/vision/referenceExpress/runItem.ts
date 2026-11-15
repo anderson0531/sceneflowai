@@ -32,6 +32,10 @@ import {
 } from '@/lib/vision/mountedSetFixtures'
 import { resolveParentLocationAnchor } from '@/lib/vision/locationFamily'
 import { resolveAnchorForLocationVersion } from '@/lib/vision/locationVersionResolve'
+import {
+  resolveLocationBaseGenerationPrompt,
+  resolveLocationVersionGenerationPrompt,
+} from '@/lib/vision/locationReferencePrompts'
 import { generateAndUploadFullBodyWardrobe } from '@/lib/character/sceneCharacterHeadshot'
 import {
   resolveAnchorWardrobeForTransition,
@@ -262,12 +266,18 @@ export async function runReferenceExpressItem(input: {
     const scenes = context.scenes || []
     const fixtures = mountedFixturesForLocation(location, scenes)
     const description = withMountedFixturesInLocationDescription(location.description, fixtures)
-    const storedPrompt =
-      typeof location.generationPrompt === 'string' && location.generationPrompt.trim()
-        ? location.generationPrompt.trim()
-        : undefined
     const parentAnchor = resolveParentLocationAnchor(location, context.locations)
     const parentLoc = parentAnchor?.parentLocation
+    const storedPrompt = resolveLocationBaseGenerationPrompt({
+      storedPrompt:
+        typeof location.generationPrompt === 'string' && location.generationPrompt.trim()
+          ? location.generationPrompt.trim()
+          : undefined,
+      locationName: location.location || location.locationDisplay,
+      description,
+      parentLocationName: parentLoc?.location || parentLoc?.locationDisplay,
+      artStyle: context.artStyle,
+    })
 
     const generated = await generateLocationReferenceImage({
       userId,
@@ -294,7 +304,7 @@ export async function runReferenceExpressItem(input: {
       expectedFingerprint: usedFingerprint,
       patch: {
         imageUrl: generated.imageUrl,
-        generationPrompt: generated.prompt,
+        generationPrompt: storedPrompt ? generated.prompt : undefined,
         description,
       },
     })
@@ -525,6 +535,16 @@ async function runLocationVersionItem(input: {
   const previousVersion = anchor.previousVersion
   const baseImageUrl = anchor.anchorImageUrl || location.imageUrl!.trim()
   const usedFingerprint = locationVersionFingerprint(location, version)
+  const storedVersionPrompt = resolveLocationVersionGenerationPrompt({
+    storedPrompt:
+      typeof version.generationPrompt === 'string' && version.generationPrompt.trim()
+        ? version.generationPrompt
+        : undefined,
+    locationName: location.location || location.locationDisplay,
+    stateNotes: version.stateNotes,
+    description: location.description,
+    artStyle,
+  })
   const generated = await generateLocationVersionReferenceImage({
     userId,
     projectId,
@@ -537,10 +557,7 @@ async function runLocationVersionItem(input: {
     stateNotes: version.stateNotes,
     previousStateNotes: previousVersion?.stateNotes,
     versionId: version.id,
-    locationPrompt:
-      typeof version.generationPrompt === 'string' && version.generationPrompt.trim()
-        ? version.generationPrompt
-        : undefined,
+    locationPrompt: storedVersionPrompt,
     ...(artStyle ? { artStyle } : {}),
   })
 
@@ -552,7 +569,7 @@ async function runLocationVersionItem(input: {
     expectedFingerprint: usedFingerprint,
     patch: {
       imageUrl: generated.imageUrl,
-      generationPrompt: generated.prompt,
+      generationPrompt: storedVersionPrompt ? generated.prompt : undefined,
       needsImageRegen: false,
     },
   })

@@ -19,6 +19,9 @@ import {
   LOCATION_VERSION_GENERATION_INSTRUCTION,
   buildLocationBasePrompt,
   buildLocationVersionPrompt,
+  resolveLocationBaseGenerationPrompt,
+  resolveLocationVersionGenerationPrompt,
+  sanitizeLegacyLocationPromptPriming,
 } from '@/lib/vision/locationReferencePrompts'
 import {
   OBJECT_REFERENCE_PURPOSE,
@@ -143,7 +146,10 @@ export function ensureReferenceKindAnchor(
   prompt: string,
   artStyle?: string | null
 ): string {
-  const trimmed = prompt.trim()
+  const trimmed =
+    kind === 'location' || kind === 'locationVersion'
+      ? sanitizeLegacyLocationPromptPriming(prompt)
+      : prompt.trim()
   const anchor = kindAnchor(kind, artStyle)
   if (!trimmed) return anchor
   if (trimmed.includes(anchor) || (kind === 'location' && /empty scene with no people/i.test(trimmed))) {
@@ -245,10 +251,18 @@ export function seedLocationDirectorPrompt(input: {
   intExt?: string
   timeOfDay?: string
   description?: string
+  parentLocationName?: string
   artStyle?: string | null
 }): string {
+  const resolvedStored = resolveLocationBaseGenerationPrompt({
+    storedPrompt: input.storedPrompt,
+    locationName: input.locationName,
+    description: input.description,
+    parentLocationName: input.parentLocationName,
+    artStyle: input.artStyle,
+  })
   return preferredStoredOrBuiltPrompt(
-    input.storedPrompt,
+    resolvedStored,
     buildLocationBasePrompt(
       input.locationName,
       input.intExt,
@@ -263,17 +277,27 @@ export function seedLocationVersionDirectorPrompt(input: {
   storedPrompt?: string
   locationName: string
   stateNotes: string
+  previousStateNotes?: string
   intExt?: string
   timeOfDay?: string
   description?: string
   catalogPropNames?: string[]
   artStyle?: string | null
 }): string {
+  const resolvedStored = resolveLocationVersionGenerationPrompt({
+    storedPrompt: input.storedPrompt,
+    locationName: input.locationName,
+    stateNotes: input.stateNotes,
+    description: input.description,
+    catalogPropNames: input.catalogPropNames,
+    artStyle: input.artStyle,
+  })
   return preferredStoredOrBuiltPrompt(
-    input.storedPrompt,
+    resolvedStored,
     buildLocationVersionPrompt({
       locationName: input.locationName,
       stateNotes: input.stateNotes,
+      previousStateNotes: input.previousStateNotes,
       intExt: input.intExt,
       timeOfDay: input.timeOfDay,
       description: input.description,

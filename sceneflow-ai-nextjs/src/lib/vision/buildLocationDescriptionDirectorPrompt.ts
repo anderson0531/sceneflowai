@@ -1,3 +1,5 @@
+import { stripAutoMountedFixtureClause } from '@/lib/vision/mountedSetFixtures'
+
 export type LocationSceneExcerpt = {
   sceneNumber?: number
   heading?: string
@@ -100,7 +102,7 @@ function sceneBlock(scenes: LocationSceneExcerpt[] | undefined): string {
 export function buildLocationDescriptionDirectorPrompt(
   request: LocationDescriptionDirectorRequest
 ): string {
-  const current = request.currentDescription?.trim()
+  const current = stripAutoMountedFixtureClause(request.currentDescription)
   const place = placeLines(request)
   const screenplay = screenplayLines(request)
   const scenes = sceneBlock(request.scenes)

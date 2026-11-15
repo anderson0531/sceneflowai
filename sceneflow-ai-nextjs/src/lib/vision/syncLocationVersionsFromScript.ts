@@ -8,6 +8,7 @@
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import { stripAutoMountedFixtureClause } from '@/lib/vision/mountedSetFixtures'
 import {
   formatSceneForLocationVersionAnalysis,
   type LocationAnalysisSceneInput,
@@ -62,7 +63,8 @@ function headingText(scene: Record<string, unknown>): string | undefined {
 
 /** Payload the version-sync LLM reads — one row per scene, beats included. */
 export function buildLocationVersionAnalysisScenes(
-  scenes: unknown[]
+  scenes: unknown[],
+  allScenes?: unknown[]
 ): LocationAnalysisSceneInput[] {
   return scenes.map((raw, idx) => {
     const scene = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
@@ -70,8 +72,15 @@ export function buildLocationVersionAnalysisScenes(
       | { scene?: { location?: string; atmosphere?: string } }
       | undefined
     const beats = getSceneBeats(scene)
+    const explicitSceneNumber =
+      typeof scene.sceneNumber === 'number' && Number.isFinite(scene.sceneNumber) && scene.sceneNumber > 0
+        ? scene.sceneNumber
+        : 0
+    const fullIndex = Array.isArray(allScenes) ? allScenes.indexOf(raw) : -1
+    const sceneNumber =
+      explicitSceneNumber > 0 ? explicitSceneNumber : fullIndex >= 0 ? fullIndex + 1 : idx + 1
     return {
-      sceneNumber: idx + 1,
+      sceneNumber,
       heading: headingText(scene),
       action: typeof scene.action === 'string' ? scene.action : undefined,
       visualDescription:
@@ -126,7 +135,7 @@ export async function analyzeLocationVersionsFromScript(input: {
   const analysisPrompt = `You are a production designer and set-continuity supervisor RESYNCING set-state versions after a script edit for ${locationName}.
 
 LOCATION: ${locationName}
-Description: ${location.description || 'Not specified'}
+Description: ${stripAutoMountedFixtureClause(location.description) || 'Not specified'}
 
 SCREENPLAY CONTEXT:
 Genre: ${screenplayContext?.genre || 'Drama'}

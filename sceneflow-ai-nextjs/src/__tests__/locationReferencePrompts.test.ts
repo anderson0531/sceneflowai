@@ -11,8 +11,15 @@ import {
   buildLocationReferencePromptLine,
   buildLocationVersionPrompt,
   buildLocationBasePrompt,
+  resolveLocationBaseGenerationPrompt,
+  resolveLocationVersionGenerationPrompt,
+  sanitizeLegacyLocationPromptPriming,
   stripBeatPropsFromLocationStateNotes,
 } from '@/lib/vision/locationReferencePrompts'
+import {
+  seedLocationDirectorPrompt,
+  seedLocationVersionDirectorPrompt,
+} from '@/lib/intelligence/reference-still-director-fallback'
 import { buildSceneImageLocationLabel } from '@/lib/imagen/sceneImageReferenceLabels'
 import { extractActionFramingBody } from '@/lib/imagen/structuredStillPrompt'
 import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
@@ -27,6 +34,10 @@ describe('locationReferencePrompts', () => {
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).toContain('mounted position')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('hatch wheel')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('vault door')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('vault')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('door')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('wheel')
+    expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('hardware')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('lockdown wheel')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('bolted valve')
     expect(LOCATION_TURNAROUND_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('ruler')
@@ -163,7 +174,10 @@ describe('locationReferencePrompts', () => {
     expect(prompt).not.toMatch(/violet ink/i)
     expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('handheld')
     expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('keyprops')
-    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('built-in architectural hardware')
+    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).toContain('permanent architectural fixtures')
+    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('hardware')
+    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('vault')
+    expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('wheel')
     expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('hatch wheel')
     expect(LOCATION_VERSION_GENERATION_INSTRUCTION.toLowerCase()).not.toContain('vault door')
   })
@@ -248,6 +262,70 @@ describe('locationReferencePrompts', () => {
       `Action/Framing: Wide shot of the vault.\n${LOCATION_VERSION_CONSUMPTION_SUFFIX}`
     )
     expect(body).toBe('Wide shot of the vault.')
+  })
+
+  it('sanitizes legacy hardware/vaults priming and rejects contaminated stored prompts on non-vault locations', () => {
+    const legacyCustomPrompt =
+      'Sunlit parlor with oak wainscoting. ' +
+      'Include any named built-in architectural hardware or permanent fixtures in their mounted position only when described for this location; never invent unrelated doors, vaults, or hardware. ' +
+      'Empty scene with NO people or characters present.'
+    const sanitized = sanitizeLegacyLocationPromptPriming(legacyCustomPrompt)
+    expect(sanitized.toLowerCase()).not.toContain('vaults')
+    expect(sanitized.toLowerCase()).not.toContain('hardware')
+    expect(sanitized).toContain('Sunlit parlor with oak wainscoting.')
+
+    // Stored auto-saved prompt poisoned with a vault door wheel on a non-vault room is invalidated
+    const poisonedStored =
+      'Sunlit parlor with oak wainscoting. Built-in set architecture (mounted in place): vault door wheel. ' +
+      'Film production location reference photograph for visual consistency across scenes.'
+    expect(
+      resolveLocationBaseGenerationPrompt({
+        storedPrompt: poisonedStored,
+        locationName: 'CLARA PARLOR',
+        description: 'Sunlit parlor with oak wainscoting.',
+      })
+    ).toBeUndefined()
+
+    // Director seed heals poisoned stored prompt instead of replaying the vault door wheel
+    const healedSeed = seedLocationDirectorPrompt({
+      storedPrompt:
+        'Sunlit parlor with oak wainscoting and a massive cast-iron vault door wheel on the back wall.',
+      locationName: 'CLARA PARLOR',
+      intExt: 'INT',
+      timeOfDay: 'DAY',
+      description: 'Sunlit parlor with oak wainscoting.',
+    })
+    expect(healedSeed.toLowerCase()).not.toContain('vault')
+    expect(healedSeed.toLowerCase()).not.toContain('wheel')
+    expect(healedSeed).toContain('Sunlit parlor with oak wainscoting.')
+
+    // Genuine user-directed prompt without unbacked vault/wheel contamination stays intact
+    expect(
+      resolveLocationBaseGenerationPrompt({
+        storedPrompt: 'Directed warehouse with skylight beams',
+        locationName: 'WAREHOUSE',
+        description: 'Brick warehouse',
+      })
+    ).toBe('Directed warehouse with skylight beams')
+
+    // Version prompt poisoned with unbacked vault door wheel is invalidated and rebuilt cleanly
+    const healedVerSeed = seedLocationVersionDirectorPrompt({
+      storedPrompt:
+        'Same location with heavy vault door wheel jammed shut and broken window glass.',
+      locationName: 'CLARA PARLOR',
+      stateNotes: 'Window glass shattered inward across the rug.',
+      description: 'Sunlit parlor with oak wainscoting.',
+    })
+    expect(healedVerSeed.toLowerCase()).not.toContain('vault')
+    expect(healedVerSeed.toLowerCase()).not.toContain('wheel')
+    expect(healedVerSeed.toLowerCase()).toContain('window glass shattered')
+    expect(
+      resolveLocationVersionGenerationPrompt({
+        storedPrompt: 'Directed parlor version with shattered window glass',
+        locationName: 'CLARA PARLOR',
+        stateNotes: 'Window glass shattered inward across the rug.',
+      })
+    ).toBe('Directed parlor version with shattered window glass')
   })
 })
 

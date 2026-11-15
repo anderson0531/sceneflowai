@@ -76,12 +76,24 @@ import {
   filterScenesForLocation,
   locationDescriptionWithMountedFixtures,
   mountedFixturesForLocation,
+  stripAutoMountedFixtureClause,
 } from '@/lib/vision/mountedSetFixtures'
+import { resolveParentLocationAnchor } from '@/lib/vision/locationFamily'
 
-function buildScenesPayloadForLocationVersions(scenes: LocationLibraryProps['scenes']) {
-  return scenes.map((s, idx) => ({
-    sceneNumber: idx + 1,
-    heading: typeof s.heading === 'string' ? s.heading : s.heading?.text,
+function buildScenesPayloadForLocationVersions(
+  scenes: LocationLibraryProps['scenes'],
+  allScenes?: LocationLibraryProps['scenes']
+) {
+  return scenes.map((s, idx) => {
+    const explicitNum =
+      typeof (s as Record<string, unknown>)?.sceneNumber === 'number'
+        ? Number((s as Record<string, unknown>).sceneNumber)
+        : 0
+    const fullIdx = Array.isArray(allScenes) ? allScenes.indexOf(s) : -1
+    const sceneNumber = explicitNum > 0 ? explicitNum : fullIdx >= 0 ? fullIdx + 1 : idx + 1
+    return {
+      sceneNumber,
+      heading: typeof s.heading === 'string' ? s.heading : s.heading?.text,
     action: s.action,
     visualDescription: s.visualDescription,
     locationDescription: s.sceneDirection?.scene?.location,
@@ -101,7 +113,8 @@ function buildScenesPayloadForLocationVersions(scenes: LocationLibraryProps['sce
           }))
         : undefined
     })(),
-  }))
+    }
+  })
 }
 
 /**
@@ -143,8 +156,7 @@ function scenesForLocation(
   location: LocationReference,
   scenes: LocationLibraryProps['scenes']
 ): LocationLibraryProps['scenes'] {
-  const matched = filterScenesForLocation(location, scenes)
-  return matched.length > 0 ? matched : scenes
+  return filterScenesForLocation(location, scenes)
 }
 
 function locationSceneExcerpts(
@@ -539,6 +551,8 @@ export function LocationLibrary({
     stale: number
   } | null> => {
     if (scenesSnapshot.length === 0) return null
+    const scopedScenes = scenesForLocation(location, scenesSnapshot)
+    if (scopedScenes.length === 0) return null
     const response = await fetch('/api/vision/sync-location-versions-from-script', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -546,16 +560,20 @@ export function LocationLibrary({
         location: {
           id: location.id,
           location: location.location,
-          description: location.description,
+          description: stripAutoMountedFixtureClause(location.description),
           versions: location.versions || [],
         },
-        scenes: buildScenesPayloadForLocationVersions(scenesForLocation(location, scenesSnapshot)),
+        scenes: buildScenesPayloadForLocationVersions(scopedScenes, scenesSnapshot),
         screenplayContext,
       }),
     })
     const data = await response.json()
     if (!response.ok) throw new Error(data.error || 'Failed to sync location versions')
-    return applyLocationUpdateFromSyncDiff(location, data.diff as LocationVersionSyncDiff)
+    return applyLocationUpdateFromSyncDiff(
+      location,
+      data.diff as LocationVersionSyncDiff,
+      scenesSnapshot as any
+    )
   }
 
   const handleDirectLocationScenes = useCallback(
@@ -709,7 +727,7 @@ export function LocationLibrary({
           setting: screenplayContext?.setting,
           logline: screenplayContext?.logline,
           visualStyle: screenplayContext?.visualStyle,
-          currentDescription: location.description,
+          currentDescription: stripAutoMountedFixtureClause(location.description),
           directorNotes: recommendMode ? undefined : descriptionDirectorText,
           recommendMode,
           scenes: locationSceneExcerpts(location, effectiveScenes),
@@ -742,6 +760,7 @@ export function LocationLibrary({
           ? {
               ...loc,
               description: nextDescription,
+              generationPrompt: undefined,
               ...(nextCeiling || nextDoor || nextFixtures
                 ? {
                     canonicalScale: {
@@ -853,7 +872,8 @@ export function LocationLibrary({
 
   const directedBeats = useMemo((): DirectedLocationBeatOption[] => {
     if (!directedLocation) return []
-    const scoped = scenesForLocation(directedLocation, effectiveScenes)
+    const matched = scenesForLocation(directedLocation, effectiveScenes)
+    const scoped = matched.length > 0 ? matched : effectiveScenes
     return scoped.flatMap((scene) => {
       const sceneNumber = effectiveScenes.indexOf(scene) + 1
       return directedBeatOptionsFromScene(scene as Record<string, unknown>, sceneNumber || 1)
@@ -1841,6 +1861,9 @@ export function LocationLibrary({
                     intExt: location.intExt,
                     timeOfDay: location.timeOfDay,
                     description: locationDescriptionWithMountedFixtures(location, scenes),
+                    parentLocationName:
+                      resolveParentLocationAnchor(location, mergedLocations)?.parentLocation
+                        .location,
                     artStyle: defaultArtStyle,
                   })
             }

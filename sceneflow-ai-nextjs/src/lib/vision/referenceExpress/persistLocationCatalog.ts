@@ -51,7 +51,7 @@ export async function persistLocationCatalogPatch(input: {
         return {
           ...entry,
           versions: patchById.versions,
-          ...(typeof patchById.description === 'string' && patchById.description.trim()
+          ...(typeof patchById.description === 'string'
             ? { description: patchById.description }
             : {}),
         }

@@ -21,6 +21,7 @@ import {
   buildLocationBasePrompt,
   buildLocationVersionPrompt,
   ensureLocationVersionPromptIsStructural,
+  sanitizeLegacyLocationPromptPriming,
   type BuildLocationBasePromptOptions,
 } from '@/lib/vision/locationReferencePrompts'
 import { buildRelatedLocationContinuityClause } from '@/lib/vision/locationFamily'
@@ -166,9 +167,11 @@ export async function generateLocationReferenceImage(
   const effectiveArtStyle = await resolveEffectiveArtStyle(input.artStyle, projectId)
   const isStylized = Boolean(effectiveArtStyle && !isPhotorealisticArtStyle(effectiveArtStyle))
 
+  const sanitizedCustomPrompt = sanitizeLegacyLocationPromptPriming(locationPrompt)
+
   let prompt =
-    locationPrompt && locationPrompt.trim()
-      ? locationPrompt
+    sanitizedCustomPrompt
+      ? sanitizedCustomPrompt
       : buildLocationPrompt(locationName, intExt, timeOfDay, description, {
           parentLocationName,
           parentLocationDescription,
@@ -177,7 +180,7 @@ export async function generateLocationReferenceImage(
           artStyle: effectiveArtStyle,
         })
 
-  if (locationPrompt && locationPrompt.trim() && isStylized && effectiveArtStyle) {
+  if (sanitizedCustomPrompt && isStylized && effectiveArtStyle) {
     const spec = buildArtStyleSpecFromValue(effectiveArtStyle)
     if (!prompt.toLowerCase().includes(spec.title.toLowerCase())) {
       prompt = `${prompt.replace(/[.]+$/, '')}. ${spec.locationRefDirective}`
@@ -185,13 +188,13 @@ export async function generateLocationReferenceImage(
   }
 
   if (
-    locationPrompt &&
-    locationPrompt.trim() &&
+    sanitizedCustomPrompt &&
     parentLocationName?.trim() &&
     !prompt.toLowerCase().includes(parentLocationName.trim().toLowerCase())
   ) {
     const continuityClause = buildRelatedLocationContinuityClause({
       locationName,
+      locationDescription: description,
       parentLocationName,
       parentLocationDescription,
       subZoneLabel,

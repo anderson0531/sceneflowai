@@ -104,7 +104,8 @@ async function syncOneLocation(projectId: string, locationId: string): Promise<v
     },
     context.scenes
   )
-  const pool = matched.length > 0 ? matched : context.scenes
+  if (matched.length === 0) return
+  const pool = matched
   const ready = pool.filter((scene) => isSceneScriptReadyForReferences(scene))
   const scoped = ready.length > 0 ? ready : pool.filter((scene) => !isSceneOutline(scene))
   if (scoped.length === 0) return
@@ -116,19 +117,22 @@ async function syncOneLocation(projectId: string, locationId: string): Promise<v
       description: location.description,
       versions: (location.versions || []) as LocationReference['versions'],
     },
-    scenes: buildLocationVersionAnalysisScenes(scoped),
+    scenes: buildLocationVersionAnalysisScenes(scoped, context.scenes),
     screenplayContext: context.screenplayContext,
   })
   const applied = applyLocationUpdateFromSyncDiff(
     asLocationReference(location),
-    analysis.diff
+    analysis.diff,
+    context.scenes as any
   )
   await persistLocationCatalogPatch({
     projectId,
     patchById: {
       id: location.id,
       versions: applied.location.versions || [],
-      ...(applied.location.description ? { description: applied.location.description } : {}),
+      ...(applied.location.description !== undefined
+        ? { description: applied.location.description }
+        : {}),
     },
   })
 }

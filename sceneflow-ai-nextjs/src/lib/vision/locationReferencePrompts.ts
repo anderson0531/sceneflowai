@@ -10,7 +10,10 @@ import {
   dedupeStateNoteClauses,
   extractVersionFocalDelta,
 } from '@/lib/vision/locationScriptSync'
-import { buildRelatedLocationContinuityClause } from '@/lib/vision/locationFamily'
+import {
+  buildRelatedLocationContinuityClause,
+  parseLocationHierarchy,
+} from '@/lib/vision/locationFamily'
 import { isWideEstablishingShotType } from '@/lib/character/characterReferenceAssembly'
 import {
   isDetailShot,
@@ -21,7 +24,12 @@ import {
   locationScaleClause,
   type LocationCanonicalScale,
 } from '@/lib/imagen/locationScaleClause'
-import { isMountedSetFixtureCatalogName, extractMountedSetFixturePhrases } from '@/lib/vision/mountedSetFixtures'
+import {
+  isMountedSetFixtureCatalogName,
+  extractMountedSetFixturePhrases,
+  stripAutoMountedFixtureClause,
+  stripTemporalAftermathFromBaseDescription,
+} from '@/lib/vision/mountedSetFixtures'
 import {
   formatLocationResidentInstrumentDirective,
   isLocationResidentInstrumentName,
@@ -65,6 +73,7 @@ export function buildLocationBasePrompt(
   if (options?.parentLocationName) {
     const continuityClause = buildRelatedLocationContinuityClause({
       locationName,
+      locationDescription: description,
       parentLocationName: options.parentLocationName,
       parentLocationDescription: options.parentLocationDescription,
       subZoneLabel: options.subZoneLabel,
@@ -134,9 +143,8 @@ export function buildLocationBasePrompt(
 /** Generation: single extreme-wide establishing shot of the location. */
 export const LOCATION_TURNAROUND_GENERATION_INSTRUCTION =
   'Single unified cinematic frame — extreme wide establishing shot of the location. ' +
-  'One photograph capturing the full room/environment layout, furniture placement, and architectural features. ' +
-  'Include any named built-in architectural hardware or permanent fixtures in their mounted position only when described for this location; never invent unrelated doors, vaults, or hardware. ' +
-  'Do not add handheld props. ' +
+  'One photograph capturing the full environment layout, spatial geometry, and permanent set features in their mounted position as described for this space. ' +
+  'Depict only features explicitly described for this location; do not add handheld props. ' +
   'NOT a 2x2 grid, NOT a multi-panel sheet, NOT split-screen, NOT a collage, NOT multiple camera angles. ' +
   'Empty scene with NO people or characters present.'
 
@@ -270,12 +278,39 @@ export const LOCATION_VERSION_GENERATION_INSTRUCTION =
   'materials, palette, and any furniture that is NOT listed as changed, exactly. ' +
   'Treat the attached base location photograph as the master wide-shot set containing all resident fixtures, and render this version as a camera angle of that base location showing the active structural set-state changes on existing set pieces without inventing new objects. ' +
   'Paint ONLY lasting structural set-state changes as the new source of truth: architecture, ' +
-  'doors, windows, walls, floors, built-in or overturned set furniture (desks, chairs bolted to the room), ' +
-  'built-in architectural hardware and permanent fixtures, ' +
-  'flooding, debris that is the room, boarded windows, exploded or missing architectural features. ' +
+  'structural openings, walls, floors, built-in or overturned set furniture, ' +
+  'permanent architectural fixtures, flooding, room debris, boarded windows, or damaged architectural features described in the state notes. ' +
   'Do NOT add handheld objects, beat keyProps, or objects a character will introduce ' +
   '(journals, documents, tools, weapons, papers, bags). If the state notes name those, ignore them and leave the set empty of that object. ' +
   'Do not restore pre-change dressing that the structural state notes say is gone, destroyed, or redressed.'
+
+const LEGACY_LOCATION_HARDWARE_PRIMING_PATTERNS: RegExp[] = [
+  /\s*Include any named built-in architectural hardware or permanent fixtures in their mounted position only when described for this location;\s*never invent unrelated doors,\s*vaults,\s*or hardware\.?/gi,
+  /\s*Include any named built-in architectural hardware[^.!?]*(?:hatch\s+wheel|vault\s+door|lockdown\s+wheel|bolted\s+valve|door\s+wheel|vault\s+wheel|doors,\s*vaults)[^.!?]*\.?/gi,
+  /\s*(?:Any\s+)?(?:named\s+)?built-in\s+(?:architectural\s+)?hardware\s*\([^)]*(?:wheel|vault|hatch|valve)[^)]*\)[^.!?]*\.?/gi,
+]
+
+/**
+ * Strip legacy positive-prompt priming clauses ("doors, vaults, or hardware",
+ * "hatch wheel", "vault door", "lockdown wheel") from previously saved prompts.
+ */
+export function sanitizeLegacyLocationPromptPriming(prompt?: string): string {
+  let next = (prompt || '').trim()
+  if (!next) return ''
+  for (const pattern of LEGACY_LOCATION_HARDWARE_PRIMING_PATTERNS) {
+    next = next.replace(pattern, ' ')
+  }
+  next = next.replace(
+    /doors,\s*windows,\s*walls,\s*floors,\s*built-in or overturned set furniture \(desks,\s*chairs bolted to the room\),\s*built-in architectural hardware and permanent fixtures,\s*flooding,\s*debris that is the room,\s*boarded windows,\s*exploded or missing architectural features/gi,
+    'structural openings, walls, floors, built-in or overturned set furniture, permanent architectural fixtures, flooding, room debris, boarded windows, or damaged architectural features described in the state notes'
+  )
+  return next
+    .replace(/\.{2,}/g, '.')
+    .replace(/\s+\./g, '.')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[.\s]+/, '')
+    .trim()
+}
 
 /**
  * Handheld / beat-prop nouns that must not bake into a location version still.
@@ -390,7 +425,7 @@ export function ensureLocationVersionPromptIsStructural(
   prompt: string,
   catalogPropNames?: string[]
 ): string {
-  let next = (prompt || '').trim()
+  let next = sanitizeLegacyLocationPromptPriming(prompt)
   if (!next) return LOCATION_VERSION_GENERATION_INSTRUCTION
   const lower = next.toLowerCase()
   if (
@@ -401,6 +436,191 @@ export function ensureLocationVersionPromptIsStructural(
   }
   next = stripCatalogPropPhrases(next, catalogPropNames)
   return next.replace(/\s{2,}/g, ' ').trim()
+}
+
+function hasLocationArtStyleConflict(promptText: string, artStyle?: string | null): boolean {
+  const rawStyle = artStyle?.trim()
+  if (!rawStyle || rawStyle === 'photorealistic' || isPhotorealisticArtStyle(rawStyle)) {
+    return false
+  }
+  return (
+    promptText.includes('One photograph capturing') ||
+    /\bFilm production location reference photograph\b/i.test(promptText) ||
+    /\battached base reference photograph\b/i.test(promptText)
+  )
+}
+
+function hasUnbackedVaultOrWheelLeak(
+  promptText: string,
+  locationName: string | undefined,
+  backingProse: string,
+  isAutoBuiltSystemPlate: boolean
+): boolean {
+  const promptHasVaultDoor = /\bvault\s+doors?\b/i.test(promptText)
+  const promptWheelFixtures = extractMountedSetFixturePhrases(promptText)
+  if (!promptHasVaultDoor && promptWheelFixtures.length === 0) {
+    return false
+  }
+
+  const combinedBacking = [locationName || '', backingProse].filter(Boolean).join(' ')
+  if (promptHasVaultDoor) {
+    const proseHasVaultDoor = /\bvault\s+doors?\b/i.test(combinedBacking)
+    const parsed = parseLocationHierarchy(locationName)
+    const isPrimaryVaultRoom = /\bvault\b/i.test(locationName || '') && !parsed.subZoneLabel
+    if (!proseHasVaultDoor && (!isPrimaryVaultRoom || isAutoBuiltSystemPlate)) {
+      return true
+    }
+  }
+
+  if (promptWheelFixtures.length > 0) {
+    const backingLower = combinedBacking.toLowerCase()
+    const backingFixtures = extractMountedSetFixturePhrases(combinedBacking)
+    const anyBacked =
+      backingFixtures.length > 0 ||
+      promptWheelFixtures.some((phrase) => backingLower.includes(phrase.toLowerCase())) ||
+      /\bwheels?\b/i.test(combinedBacking)
+    if (!anyBacked) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Validate and sanitize a stored `location.generationPrompt`.
+ *
+ * Returns `undefined` when the stored prompt is blank, stale against the current
+ * `description` / `artStyle` / `parentLocationName`, or contaminated by legacy
+ * vault-door / mounted-wheel leaks — allowing the caller to rebuild a clean plate.
+ */
+export function resolveLocationBaseGenerationPrompt(input: {
+  storedPrompt?: string | null
+  locationName?: string
+  description?: string
+  parentLocationName?: string
+  artStyle?: string | null
+}): string | undefined {
+  const raw = typeof input.storedPrompt === 'string' ? input.storedPrompt.trim() : ''
+  if (!raw) return undefined
+
+  const sanitized = stripAutoMountedFixtureClause(sanitizeLegacyLocationPromptPriming(raw))
+  if (!sanitized) return undefined
+
+  if (hasLocationArtStyleConflict(sanitized, input.artStyle)) {
+    return undefined
+  }
+
+  const isAutoBuiltSystemPlate =
+    /\bFilm production location reference photograph for visual consistency across scenes\b/i.test(
+      sanitized
+    ) || /\bdetailed environment continuity plate across scenes\b/i.test(sanitized)
+
+  // Auto-saved system prompts that carried legacy priming or stale auto-fixture clauses
+  // should rebuild cleanly rather than replaying outdated template structure.
+  if (isAutoBuiltSystemPlate && sanitized !== raw) {
+    return undefined
+  }
+
+  const cleanDescription = stripAutoMountedFixtureClause(
+    stripTemporalAftermathFromBaseDescription(input.description)
+  )
+  const isTurnaroundOrSystemPlate =
+    isAutoBuiltSystemPlate ||
+    sanitized.includes('Single unified cinematic frame — extreme wide establishing shot')
+  if (
+    isTurnaroundOrSystemPlate &&
+    cleanDescription &&
+    !sanitized.toLowerCase().includes(cleanDescription.toLowerCase())
+  ) {
+    return undefined
+  }
+
+  const hasContinuityBlock =
+    /\bRelated location continuity:/i.test(sanitized) ||
+    /\bParent complex architecture\s*\(/i.test(sanitized)
+  if (hasContinuityBlock) {
+    const expectedParent = input.parentLocationName?.trim()
+    if (!expectedParent) {
+      return undefined
+    }
+    const parentMatch = sanitized.match(/Parent complex architecture\s*\(([^)]+)\):/i)
+    if (parentMatch && parentMatch[1]!.trim().toUpperCase() !== expectedParent.toUpperCase()) {
+      return undefined
+    }
+  }
+
+  if (
+    hasUnbackedVaultOrWheelLeak(
+      sanitized,
+      input.locationName,
+      input.description || '',
+      isAutoBuiltSystemPlate
+    )
+  ) {
+    return undefined
+  }
+
+  return sanitized
+}
+
+/**
+ * Validate and sanitize a stored `version.generationPrompt`.
+ *
+ * Returns `undefined` when blank, stale against current `stateNotes` / `artStyle`,
+ * or contaminated by unbacked vault-door / mounted-wheel prose.
+ */
+export function resolveLocationVersionGenerationPrompt(input: {
+  storedPrompt?: string | null
+  locationName?: string
+  stateNotes?: string
+  description?: string
+  catalogPropNames?: string[]
+  artStyle?: string | null
+}): string | undefined {
+  const raw = typeof input.storedPrompt === 'string' ? input.storedPrompt.trim() : ''
+  if (!raw) return undefined
+
+  const sanitized = stripAutoMountedFixtureClause(sanitizeLegacyLocationPromptPriming(raw))
+  if (!sanitized) return undefined
+
+  if (hasLocationArtStyleConflict(sanitized, input.artStyle)) {
+    return undefined
+  }
+
+  const isAutoBuiltVersionPlate =
+    sanitized.includes('Current structural set state (source of truth') ||
+    sanitized.includes('No lasting structural set changes remain after removing beat props')
+
+  if (isAutoBuiltVersionPlate && sanitized !== raw) {
+    return undefined
+  }
+
+  const structuralNotes = stripBeatPropsFromLocationStateNotes(
+    input.stateNotes || '',
+    input.catalogPropNames
+  )
+  if (isAutoBuiltVersionPlate) {
+    if (structuralNotes && !sanitized.toLowerCase().includes(structuralNotes.toLowerCase())) {
+      return undefined
+    }
+    if (!structuralNotes && sanitized.includes('Current structural set state (source of truth')) {
+      return undefined
+    }
+  }
+
+  if (
+    hasUnbackedVaultOrWheelLeak(
+      sanitized,
+      input.locationName,
+      [input.stateNotes || '', input.description || ''].filter(Boolean).join('. '),
+      isAutoBuiltVersionPlate
+    )
+  ) {
+    return undefined
+  }
+
+  return sanitized
 }
 
 export interface LocationVersionPromptInput {

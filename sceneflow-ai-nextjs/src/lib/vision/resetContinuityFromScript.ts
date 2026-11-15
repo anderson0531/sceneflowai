@@ -339,7 +339,8 @@ export async function resetContinuityFromScript(
         },
         rawScenes as any
       )
-      const pool = matched.length > 0 ? matched : (rawScenes as any)
+      if (matched.length === 0) return
+      const pool = matched
       const ready = pool.filter((s: any) => isSceneScriptReadyForReferences(s))
       const scoped = ready.length > 0 ? ready : pool.filter((s: any) => !isSceneOutline(s))
       if (scoped.length === 0) return
@@ -351,10 +352,10 @@ export async function resetContinuityFromScript(
           description: loc.description,
           versions: [],
         },
-        scenes: buildLocationVersionAnalysisScenes(scoped),
+        scenes: buildLocationVersionAnalysisScenes(scoped, rawScenes as any),
         screenplayContext,
       })
-      const applied = applyLocationUpdateFromSyncDiff(loc, analysis.diff)
+      const applied = applyLocationUpdateFromSyncDiff(loc, analysis.diff, rawScenes as any)
       rebuiltLocations[idx] = {
         ...applied.location,
         imageUrl: loc.imageUrl || '',

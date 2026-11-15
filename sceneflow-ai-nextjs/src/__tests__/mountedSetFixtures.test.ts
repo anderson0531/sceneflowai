@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   extractMountedSetFixturePhrases,
+  filterScenesForLocation,
   harvestMountedSetFixturesFromScenes,
   isMountedSetFixtureCatalogName,
   isMountedSetFixtureName,
   locationDescriptionWithMountedFixtures,
+  mountedFixturesForLocation,
   rejectMountedSetFixtures,
+  stripAutoMountedFixtureClause,
   withMountedFixturesInLocationDescription,
 } from '@/lib/vision/mountedSetFixtures'
 
@@ -173,5 +176,93 @@ describe('Freight Tunnel Vault base location completeness', () => {
     expect(enriched.toLowerCase()).toContain('massive slate board')
     expect(enriched.toLowerCase()).toContain('wall-mounted acoustic seismograph')
     expect(enriched.toLowerCase()).toContain('overhead eighteen-inch pneumatic mail dispatch hatch')
+  })
+})
+
+describe('vault door & wheel leak prevention across unrelated locations', () => {
+  const scriptScenes = [
+    {
+      heading: 'INT. FREIGHT TUNNEL VAULT - NIGHT',
+      action: 'Gideon braces against the massive brass lockdown wheel on the vault door.',
+      beats: [
+        {
+          actionDescription: 'He strains against the vault door wheel.',
+          beatDirection: { keyProps: ['vault door wheel'] },
+        },
+      ],
+    },
+    {
+      heading: 'INT. CLARA APARTMENT - DAY',
+      action: 'Warm morning light across a wooden drafting table. There is no vault door wheel here, only a blueprint showing a vault door wheel.',
+      beats: [
+        {
+          actionDescription: 'Clara pours tea beside the window.',
+          line: 'Gideon is still down by the vault door wheel trying to turn the hatch wheel!',
+        },
+      ],
+    },
+  ]
+
+  it('never falls back to harvesting vault wheels from all project scenes when a location has zero matching scenes', () => {
+    expect(
+      mountedFixturesForLocation(
+        { location: 'ROOFTOP OBSERVATORY', description: 'Open brick rooftop under stars.' },
+        scriptScenes
+      )
+    ).toEqual([])
+
+    const description = locationDescriptionWithMountedFixtures(
+      { location: 'ROOFTOP OBSERVATORY', description: 'Open brick rooftop under stars.' },
+      scriptScenes
+    )
+    expect(description).toBe('Open brick rooftop under stars.')
+    expect(description.toLowerCase()).not.toContain('vault')
+    expect(description.toLowerCase()).not.toContain('wheel')
+  })
+
+  it('matches mixed-case location names and ignores stale sceneNumbers pointing at a Vault scene', () => {
+    const matched = filterScenesForLocation(
+      {
+        location: 'Clara Apartment',
+        // Stale sceneNumbers [1] points to FREIGHT TUNNEL VAULT, which must be rejected by heading mismatch
+        sceneNumbers: [1, 2],
+      },
+      scriptScenes
+    )
+    expect(matched).toHaveLength(1)
+    expect(matched[0]?.heading).toBe('INT. CLARA APARTMENT - DAY')
+    expect(
+      mountedFixturesForLocation(
+        { location: 'Clara Apartment', sceneNumbers: [1, 2] },
+        scriptScenes
+      )
+    ).toEqual([])
+  })
+
+  it('ignores spoken dialogue (beat.line), negated phrases, and 2D blueprint/photo depictions', () => {
+    expect(harvestMountedSetFixturesFromScenes([scriptScenes[1]!])).toEqual([])
+    expect(
+      extractMountedSetFixturePhrases('A quiet study without a vault door wheel or hatch wheel.')
+    ).toEqual([])
+    expect(
+      extractMountedSetFixturePhrases('A framed photograph of the heavy door wheel hangs on plaster.')
+    ).toEqual([])
+  })
+
+  it('self-heals previously contaminated descriptions by stripping stale Built-in set architecture clauses', () => {
+    const contaminated =
+      'Warm sunlit parlor with oak bookshelves. Built-in set architecture (mounted in place): vault door wheel, massive brass lockdown wheel.'
+    expect(stripAutoMountedFixtureClause(contaminated)).toBe(
+      'Warm sunlit parlor with oak bookshelves.'
+    )
+    expect(withMountedFixturesInLocationDescription(contaminated, [])).toBe(
+      'Warm sunlit parlor with oak bookshelves.'
+    )
+    expect(
+      locationDescriptionWithMountedFixtures(
+        { location: 'Clara Apartment', description: contaminated },
+        scriptScenes
+      )
+    ).toBe('Warm sunlit parlor with oak bookshelves.')
   })
 })

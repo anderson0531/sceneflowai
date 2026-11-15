@@ -712,7 +712,8 @@ export function toLocationReferenceFromExtracted(
 /** Apply the sync-from-script merge (create / patch / soft-obsolete). */
 export function applyLocationUpdateFromSyncDiff(
   location: LocationReference,
-  diff: LocationVersionSyncDiff
+  diff: LocationVersionSyncDiff,
+  scenes?: HeadingLocationScene[]
 ): {
   location: LocationReference
   created: number
@@ -721,22 +722,33 @@ export function applyLocationUpdateFromSyncDiff(
 } {
   const { versions } = mergeLocationVersionSyncDiff(location.versions || [], diff)
   const summary = summarizeLocationVersionSyncDiff(diff)
-  const versionNotesText = versions
-    .map((v) => v.stateNotes || '')
-    .filter(Boolean)
-    .join(' ')
-  const versionFixtures = versionNotesText
-    ? extractResidentSetPiecesFromText(versionNotesText)
-    : []
-  const updatedDescription = withMountedFixturesInLocationDescription(
-    location.description,
-    versionFixtures
-  )
+  const nextVersions = versions as LocationVersion[]
+  let updatedDescription: string
+  if (Array.isArray(scenes)) {
+    updatedDescription = locationDescriptionWithMountedFixtures(
+      { ...location, versions: nextVersions },
+      scenes as any
+    )
+  } else {
+    const versionNotesText = nextVersions
+      .map((v) => v.stateNotes || '')
+      .filter(Boolean)
+      .join(' ')
+    const versionFixtures = versionNotesText
+      ? extractResidentSetPiecesFromText(versionNotesText)
+      : []
+    updatedDescription = withMountedFixturesInLocationDescription(
+      location.description,
+      versionFixtures,
+      { preserveExistingAutoClause: true }
+    )
+  }
+  const hasDescriptionField = Boolean(updatedDescription || location.description !== undefined)
   return {
     location: {
       ...location,
-      ...(updatedDescription ? { description: updatedDescription } : {}),
-      versions: versions as LocationVersion[],
+      ...(hasDescriptionField ? { description: updatedDescription } : {}),
+      versions: nextVersions,
     },
     created: summary.createCount,
     updated: summary.updateCount,

@@ -154,6 +154,11 @@ import {
 } from '@/lib/vision/mountedSetFixtures'
 import { resolveParentLocationAnchor } from '@/lib/vision/locationFamily'
 import {
+  resolveLocationBaseGenerationPrompt,
+  resolveLocationVersionGenerationPrompt,
+  sanitizeLegacyLocationPromptPriming,
+} from '@/lib/vision/locationReferencePrompts'
+import {
   applyEndFrameUrlToProductionSegments,
   applyStartFrameUrlToProductionSegments,
   resolveEffectiveStartFrameUrl,
@@ -13034,6 +13039,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
 
       const anchor = resolveAnchorForLocationVersion(workingLocation, targetVer.id)
+      const resolvedVerPrompt = resolveLocationVersionGenerationPrompt({
+        storedPrompt: targetVer.generationPrompt?.trim(),
+        locationName: workingLocation.location,
+        stateNotes: targetVer.stateNotes,
+        description: workingLocation.description,
+        catalogPropNames: options.catalogPropNames,
+        artStyle: lockedArtStyle,
+      })
       const verResponse = await fetch('/api/vision/generate-location', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -13044,7 +13057,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           intExt: workingLocation.intExt,
           timeOfDay: workingLocation.timeOfDay,
           description: workingLocation.description,
-          locationPrompt: targetVer.generationPrompt?.trim() || undefined,
+          locationPrompt: resolvedVerPrompt,
           baseImageUrl: anchor.anchorImageUrl || workingLocation.imageUrl,
           stateNotes: targetVer.stateNotes,
           previousStateNotes: anchor.previousVersion?.stateNotes,
@@ -13059,7 +13072,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const verResult = await verResponse.json()
       workingLocation = patchLocationVersion(workingLocation, targetVer.id, {
         imageUrl: verResult.imageUrl,
-        generationPrompt: verResult.prompt,
+        generationPrompt: resolvedVerPrompt ? verResult.prompt : undefined,
         needsImageRegen: false,
       })
       const nextList = upsertLocationInList(
@@ -13100,12 +13113,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const scenes = scriptRef.current?.script?.scenes ?? script?.script?.scenes ?? []
       const fixtures = mountedFixturesForLocation(location, scenes)
       const description = withMountedFixturesInLocationDescription(location.description, fixtures)
-      const storedPrompt = location.generationPrompt?.trim()
+      const parentAnchor = resolveParentLocationAnchor(location, locationReferencesRef.current || locationReferences)
+      const parentLoc = parentAnchor?.parentLocation
+      const storedPrompt = resolveLocationBaseGenerationPrompt({
+        storedPrompt: location.generationPrompt?.trim(),
+        locationName: location.location,
+        description,
+        parentLocationName: parentLoc?.location || parentLoc?.locationDisplay,
+        artStyle: lockedArtStyle,
+      })
       const locationPrompt = storedPrompt
         ? withMountedFixturesInLocationDescription(storedPrompt, fixtures)
         : undefined
-      const parentAnchor = resolveParentLocationAnchor(location, locationReferencesRef.current || locationReferences)
-      const parentLoc = parentAnchor?.parentLocation
       const catalogPropNames = (objectReferencesRef.current || [])
         .map((obj) => obj.name)
         .filter((name): name is string => Boolean(name?.trim()))
@@ -13148,7 +13167,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       let nextLoc = withStaleVersionsAfterBaseChange({
         ...latestBase,
         imageUrl: result.imageUrl,
-        generationPrompt: result.prompt,
+        generationPrompt: storedPrompt ? result.prompt : undefined,
         description,
       })
       let updatedLocations = upsertLocationInList(
@@ -13242,9 +13261,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const scenes = scriptRef.current?.script?.scenes ?? script?.script?.scenes ?? []
       const fixtures = mountedFixturesForLocation(location, scenes)
       const description = withMountedFixturesInLocationDescription(location.description, fixtures)
+      const cleanedPayloadPrompt = sanitizeLegacyLocationPromptPriming(payload.locationPrompt)
       const locationPrompt = version
-        ? payload.locationPrompt
-        : withMountedFixturesInLocationDescription(payload.locationPrompt, fixtures)
+        ? cleanedPayloadPrompt
+        : withMountedFixturesInLocationDescription(cleanedPayloadPrompt, fixtures)
       const parentAnchor = !version
         ? resolveParentLocationAnchor(location, locationReferencesRef.current || locationReferences)
         : null
@@ -13448,6 +13468,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
 
       const startAnchor = resolveAnchorForLocationVersion(location, startVersion.id)
+      const resolvedStartVerPrompt = resolveLocationVersionGenerationPrompt({
+        storedPrompt: startVersion.generationPrompt?.trim(),
+        locationName: location.location,
+        stateNotes: startVersion.stateNotes,
+        description: location.description,
+        catalogPropNames,
+        artStyle: lockedArtStyle,
+      })
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -13458,7 +13486,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           intExt: location.intExt,
           timeOfDay: location.timeOfDay,
           description: location.description,
-          locationPrompt: startVersion.generationPrompt?.trim() || undefined,
+          locationPrompt: resolvedStartVerPrompt,
           baseImageUrl: startAnchor.anchorImageUrl || location.imageUrl,
           stateNotes: startVersion.stateNotes,
           previousStateNotes: startAnchor.previousVersion?.stateNotes,
@@ -13484,7 +13512,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       let nextLoc = withStaleDownstreamVersionsAfterVersionChange(
         patchLocationVersion(baseForPatch, startVersion.id, {
           imageUrl: result.imageUrl,
-          generationPrompt: result.prompt,
+          generationPrompt: resolvedStartVerPrompt ? result.prompt : undefined,
           needsImageRegen: false,
         }),
         startVersion.id

@@ -563,6 +563,7 @@ export function mergeLocationVersionSyncDiff(
     const next = { ...current, ...update.patch }
     if (update.imageStale) {
       next.needsImageRegen = true
+      next.generationPrompt = undefined
       staleVersionIds.push(current.id)
     }
     byId.set(update.versionId, next)

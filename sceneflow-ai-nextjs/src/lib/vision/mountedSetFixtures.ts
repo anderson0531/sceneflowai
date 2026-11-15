@@ -79,9 +79,36 @@ export interface LocationFixtureScene {
 
 export interface LocationFixtureTarget {
   location?: string
+  locationDisplay?: string
+  name?: string
   sceneNumbers?: number[]
   description?: string
-  versions?: Array<{ stateNotes?: string }>
+  versions?: Array<{ stateNotes?: string; sceneNumbers?: number[] }>
+}
+
+const NEGATED_FIXTURE_CLAUSE_PREFIX =
+  /\b(?:no|not|never|without|lack(?:s|ing)?|absent|free\s+of|remove(?:d)?|devoid\s+of)\b[^.!?;:\n]*$/i
+
+const DEPICTED_MEDIA_CLAUSE_PREFIX =
+  /\b(?:photo(?:graph)?s?|pictures?|portraits?|blueprints?|schematics?|drawings?|sketches?|diagrams?|maps?|screens?|monitors?|footage)\s+(?:of|showing|depicting)\b[^.!?;:\n]*$/i
+
+function isNegatedOrDepictedFixtureMatch(text: string, matchIndex: number | undefined): boolean {
+  if (typeof matchIndex !== 'number' || matchIndex <= 0) return false
+  const lookbackStart = Math.max(0, matchIndex - 80)
+  const rawPrefix = text.slice(lookbackStart, matchIndex)
+  const clauseBoundary = Math.max(
+    rawPrefix.lastIndexOf('.'),
+    rawPrefix.lastIndexOf('!'),
+    rawPrefix.lastIndexOf('?'),
+    rawPrefix.lastIndexOf(';'),
+    rawPrefix.lastIndexOf(':'),
+    rawPrefix.lastIndexOf('\n')
+  )
+  const clausePrefix = clauseBoundary >= 0 ? rawPrefix.slice(clauseBoundary + 1) : rawPrefix
+  return (
+    NEGATED_FIXTURE_CLAUSE_PREFIX.test(clausePrefix) ||
+    DEPICTED_MEDIA_CLAUSE_PREFIX.test(clausePrefix)
+  )
 }
 
 function headingText(scene: LocationFixtureScene): string {
@@ -118,6 +145,7 @@ export function extractMountedSetFixturePhrases(text: string): string[] {
   const byKey = new Map<string, string>()
   for (const pattern of FIXTURE_PATTERNS) {
     for (const match of trimmed.matchAll(clonePattern(pattern))) {
+      if (isNegatedOrDepictedFixtureMatch(trimmed, match.index)) continue
       const phrase = (match[1] || match[0] || '').replace(/\s+/g, ' ').trim()
       const key = normalizeFixtureKey(phrase)
       if (!key) continue
@@ -139,6 +167,7 @@ export function extractResidentSetPiecesFromText(text: string): string[] {
   const byKey = new Map<string, string>()
   for (const pattern of RESIDENT_SET_PIECE_PATTERNS) {
     for (const match of trimmed.matchAll(clonePattern(pattern))) {
+      if (isNegatedOrDepictedFixtureMatch(trimmed, match.index)) continue
       const phrase = (match[1] || match[0] || '').replace(/\s+/g, ' ').trim()
       const key = normalizeFixtureKey(phrase)
       if (!key) continue
@@ -147,8 +176,11 @@ export function extractResidentSetPiecesFromText(text: string): string[] {
     }
   }
 
+  const lowerTrimmed = trimmed.toLowerCase()
   for (const instrument of extractLocationResidentInstrumentPhrases(trimmed)) {
     const phrase = instrument.replace(/\s+/g, ' ').trim()
+    const pos = lowerTrimmed.indexOf(phrase.toLowerCase())
+    if (pos >= 0 && isNegatedOrDepictedFixtureMatch(trimmed, pos)) continue
     const key = normalizeFixtureKey(phrase)
     if (!key) continue
     const existing = byKey.get(key)
@@ -202,6 +234,26 @@ export function stripTemporalAftermathFromBaseDescription(description: string | 
     .trim()
 }
 
+const AUTO_MOUNTED_FIXTURE_CLAUSE_REGEX =
+  /(?:^|\.\s*|\s+)Built-in set architecture \(mounted in place\):\s*[^.]+\.?/gi
+
+/**
+ * Remove any previously auto-appended `Built-in set architecture (mounted in place): ...`
+ * clause so re-evaluating a location against its scoped scenes replaces stale or
+ * cross-scene leaked fixtures instead of accumulating them forever.
+ */
+export function stripAutoMountedFixtureClause(text: string | undefined): string {
+  const raw = (text || '').trim()
+  if (!raw) return ''
+  return raw
+    .replace(AUTO_MOUNTED_FIXTURE_CLAUSE_REGEX, (match) => (match.startsWith('.') ? '.' : ' '))
+    .replace(/\.{2,}/g, '.')
+    .replace(/\s+\./g, '.')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[.\s]+/, '')
+    .trim()
+}
+
 function sceneBeatRecords(scene: LocationFixtureScene): Record<string, unknown>[] {
   return Array.isArray(scene.beats)
     ? scene.beats.map(asRecord).filter((beat): beat is Record<string, unknown> => !!beat)
@@ -219,9 +271,10 @@ function sceneHarvestText(scene: LocationFixtureScene): string {
   for (const beat of sceneBeatRecords(scene)) {
     const direction = asRecord(beat.beatDirection)
     const keyProps = Array.isArray(direction?.keyProps) ? direction.keyProps : []
+    // Never harvest spoken dialogue / narration (`beat.line`): characters talking
+    // about a vault door or wheel in another location must not bolt it onto this set.
     parts.push(
       asString(beat.actionDescription),
-      asString(beat.line),
       asString(beat.description),
       asString(direction?.frozenMoment),
       asString(direction?.propInteraction),
@@ -229,7 +282,7 @@ function sceneHarvestText(scene: LocationFixtureScene): string {
       ...keyProps.map((entry) => asString(entry))
     )
   }
-  return parts.filter(Boolean).join(' ')
+  return parts.filter(Boolean).join('. ')
 }
 
 function deduplicateFixturePhrases(phrases: string[]): string[] {
@@ -260,26 +313,41 @@ export function harvestMountedSetFixturesFromScenes(scenes: LocationFixtureScene
   return deduplicateFixturePhrases(collected)
 }
 
+function normalizeTargetLocationName(raw?: string): string {
+  const trimmed = (raw || '').trim()
+  if (!trimmed) return ''
+  const extracted = extractLocation(trimmed)
+  return (extracted || trimmed.toUpperCase()).replace(/\s+/g, ' ').trim()
+}
+
 export function filterScenesForLocation<T extends LocationFixtureScene>(
   location: LocationFixtureTarget,
   scenes: T[]
 ): T[] {
-  const locationName = location.location?.trim()
+  const targetName = normalizeTargetLocationName(
+    location.location || location.locationDisplay || location.name
+  )
   const sceneNumbers = new Set(location.sceneNumbers || [])
   return (scenes ?? []).filter((scene, index) => {
     const sceneNumber = index + 1
+    const extracted = normalizeTargetLocationName(headingText(scene))
+    if (targetName && extracted) {
+      return extracted === targetName
+    }
     if (sceneNumbers.has(sceneNumber)) return true
-    if (!locationName) return false
-    const extracted = extractLocation(headingText(scene))
-    return Boolean(extracted && extracted === locationName)
+    return false
   })
 }
 
 export function withMountedFixturesInLocationDescription(
   description: string | undefined,
-  fixtures: string[]
+  fixtures: string[],
+  options?: { preserveExistingAutoClause?: boolean }
 ): string {
-  const base = stripTemporalAftermathFromBaseDescription(description)
+  const strippedTemporal = stripTemporalAftermathFromBaseDescription(description)
+  const base = options?.preserveExistingAutoClause
+    ? strippedTemporal
+    : stripAutoMountedFixtureClause(strippedTemporal)
   const unique = deduplicateFixturePhrases(fixtures)
   if (unique.length === 0) return base
 
@@ -296,13 +364,31 @@ export function mountedFixturesForLocation(
   location: LocationFixtureTarget,
   scenes: LocationFixtureScene[]
 ): string[] {
-  const scoped = filterScenesForLocation(location, scenes)
-  const harvestFrom = scoped.length > 0 ? scoped : scenes
-  const fromScenes = harvestMountedSetFixturesFromScenes(harvestFrom)
+  const allScenes = scenes ?? []
+  const scoped = filterScenesForLocation(location, allScenes)
+  // Never fall back to all project scenes when `scoped` is empty — doing so leaks
+  // vault doors and mounted wheels from unrelated scenes into every unmatched location.
+  const fromScenes = scoped.length > 0 ? harvestMountedSetFixturesFromScenes(scoped) : []
+
+  const scopedSceneNumberSet =
+    scoped.length > 0
+      ? new Set(
+          scoped
+            .map((scene) => allScenes.indexOf(scene) + 1)
+            .filter((n) => n > 0)
+        )
+      : null
+
   const versionText = (location.versions ?? [])
+    .filter((v) => {
+      if (!scopedSceneNumberSet || !Array.isArray(v?.sceneNumbers) || v.sceneNumbers.length === 0) {
+        return true
+      }
+      return v.sceneNumbers.some((n) => scopedSceneNumberSet.has(n))
+    })
     .map((v) => v?.stateNotes || '')
     .filter(Boolean)
-    .join(' ')
+    .join('. ')
   const fromVersions = versionText ? extractResidentSetPiecesFromText(versionText) : []
   return deduplicateFixturePhrases([...fromScenes, ...fromVersions])
 }

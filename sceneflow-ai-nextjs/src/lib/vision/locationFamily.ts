@@ -2,7 +2,7 @@
  * Location Family & Sub-Area Continuity Resolution
  *
  * Connects related locations that represent different areas, workstations, or
- * vaults of the same overarching architectural complex — for example:
+ * zones of the same overarching architectural complex — for example:
  * - "FREIGHT TUNNEL VAULT"
  * - "FREIGHT TUNNEL VAULT - WORKSHOP"
  * - "FREIGHT TUNNEL VAULT - CLARA'S WORKSTATION"
@@ -15,6 +15,11 @@
  * 3. When the parent location already has a base reference image, it is passed
  *    as an architectural continuity reference image when generating sub-areas.
  */
+
+import {
+  extractMountedSetFixturePhrases,
+  stripAutoMountedFixtureClause,
+} from '@/lib/vision/mountedSetFixtures'
 
 export interface LocationFamilyMemberLike {
   id?: string
@@ -212,28 +217,37 @@ export function resolveParentLocationAnchor<T extends LocationFamilyMemberLike>(
     }
   }
 
-  // 2. Shared multi-word complex prefix (at least 2 leading significant tokens, e.g. "FREIGHT TUNNEL")
+  // 2. Shared multi-word complex prefix (at least 2 leading significant tokens, e.g. "FREIGHT TUNNEL").
+  // Only elect a candidate `e` as a parent anchor of `target` when `e` is a root complex
+  // (no explicit sub-zone label of its own) AND every significant token of `e` is retained
+  // in `target` (e.g. "FREIGHT TUNNEL VAULT" -> "FREIGHT TUNNEL ARCHIVE VAULT"). Peer rooms
+  // that swap out a room noun (e.g. "CITY BANK VAULT" vs "CITY BANK LOBBY", or
+  // "FREIGHT TUNNEL VAULT" vs "FREIGHT TUNNEL CORRIDOR") must NOT hijack each other as parents.
   if (targetParsed.baseTokens.length < 2) return null
 
-  const family = entries.filter((e) => {
+  const targetFullTokenSet = new Set(targetParsed.fullTokens)
+  const validParents = entries.filter((e) => {
+    if (isSameLocation(e.loc, e.parsed)) return false
+    if (e.parsed.subZoneLabel) return false
     const sharedLead = sharedLeadingPrefixLength(targetParsed.baseTokens, e.parsed.baseTokens)
-    return sharedLead >= 2
+    if (sharedLead < 2) return false
+    if (e.parsed.fullTokens.length === 0 || e.parsed.fullTokens.length >= targetParsed.fullTokens.length) {
+      return false
+    }
+    return e.parsed.fullTokens.every((tok) => targetFullTokenSet.has(tok))
   })
 
-  if (family.length <= 1) return null
+  if (validParents.length === 0) return null
 
-  // Sort family members to elect the canonical primary anchor
-  const sortedFamily = [...family].sort(
+  // Sort candidate parent anchors to elect the canonical root complex
+  const sortedParents = [...validParents].sort(
     (a, b) =>
       rankAsPrimaryAnchor(a.loc, a.parsed, a.index) -
       rankAsPrimaryAnchor(b.loc, b.parsed, b.index)
   )
 
-  const primary = sortedFamily[0]
-  if (!primary || isSameLocation(primary.loc, primary.parsed)) {
-    // Target itself is the primary parent anchor of this location family!
-    return null
-  }
+  const primary = sortedParents[0]
+  if (!primary) return null
 
   const sharedLeadCount = sharedLeadingPrefixLength(
     primary.parsed.baseTokens,
@@ -295,8 +309,46 @@ export function sortLocationsParentsFirst<T extends LocationFamilyMemberLike>(lo
 }
 
 export const LOCATION_SUBZONE_REFERENCE_INSTRUCTION =
-  'ARCHITECTURAL CONTINUITY WITH PARENT LOCATION: The attached reference image shows the primary parent location of this same architectural complex. ' +
-  'Render this location as a distinct sub-area or adjacent zone within that exact same architectural world — match the wall materials, floor construction, structural beams, ceiling geometry, color palette, era, and ambient lighting quality from the parent reference image while framing this sub-area’s specific layout and resident set pieces.'
+  'ARCHITECTURAL CONTINUITY WITH PARENT LOCATION: The attached reference image shows another area of this same architectural complex. ' +
+  'Render this location as a distinct sub-area or adjacent zone within that same architectural world — match only the shared wall materials, floor construction, structural beams, ceiling geometry, color palette, era, and ambient lighting quality from the attached reference image while framing this sub-area’s own distinct layout and resident set pieces. ' +
+  'Do not duplicate one-off focal entryways, portals, or zone-specific apparatus from the parent reference image unless explicitly described for this sub-area.'
+
+const PARENT_FOCAL_PORTAL_OR_WHEEL_PATTERN =
+  /\b(?:(?:vault|bulkhead|airlock|blast|lockdown)\s+doors?|(?:door|hatch|vault|gate|bulkhead|airlock|lockdown|valve)[- ]wheels?|hand[- ]?wheels?|wheels?\s+(?:of|on)\s+(?:the\s+|a\s+|an\s+)?(?:[a-z-]+\s+){0,3}(?:door|hatch|vault|gate|bulkhead|airlock)s?)\b/i
+
+function stripParentFocalHardwareForSubzone(
+  parentDescription: string,
+  targetContext: string
+): string {
+  const withoutAutoFixtures = stripAutoMountedFixtureClause(parentDescription)
+    .replace(/,?\s+and\s+(?:later|eventually|subsequently|afterward)\s+[^.;]+/gi, '')
+    .trim()
+  if (!withoutAutoFixtures) return ''
+
+  const targetMentionsPortalOrWheel =
+    PARENT_FOCAL_PORTAL_OR_WHEEL_PATTERN.test(targetContext) ||
+    extractMountedSetFixturePhrases(targetContext).length > 0
+  if (targetMentionsPortalOrWheel) return withoutAutoFixtures
+
+  const sentences = withoutAutoFixtures
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => {
+      // Strip trailing list items like ", and a massive circular steel vault door with a brass wheel"
+      const trimmedList = sentence.replace(
+        /,?\s+(?:and|with)\s+(?:a\s+|an\s+|the\s+)?[^.,;!]*(?:\b(?:vault|bulkhead|airlock|blast|lockdown)\s+doors?\b|\b(?:door|hatch|vault|gate|bulkhead|airlock|lockdown|valve)[- ]wheels?\b|\bhand[- ]?wheels?\b)[^.!?;]*/gi,
+        ''
+      )
+      return trimmedList.trim()
+    })
+    .filter((sentence) => {
+      if (!sentence) return false
+      if (PARENT_FOCAL_PORTAL_OR_WHEEL_PATTERN.test(sentence)) return false
+      if (extractMountedSetFixturePhrases(sentence).length > 0) return false
+      return true
+    })
+
+  return sentences.join(' ').replace(/\s{2,}/g, ' ').trim()
+}
 
 /**
  * Compose an architectural continuity prompt clause linking a sub-location
@@ -305,6 +357,7 @@ export const LOCATION_SUBZONE_REFERENCE_INSTRUCTION =
  */
 export function buildRelatedLocationContinuityClause(input: {
   locationName: string
+  locationDescription?: string
   parentLocationName: string
   parentLocationDescription?: string
   subZoneLabel?: string
@@ -316,9 +369,13 @@ export function buildRelatedLocationContinuityClause(input: {
     return ''
   }
 
-  const cleanParentDesc = (input.parentLocationDescription || '')
-    .replace(/,?\s+and\s+(?:later|eventually|subsequently|afterward)\s+[^.;]+/gi, '')
-    .trim()
+  const targetContext = [input.subZoneLabel || '', input.locationDescription || '']
+    .filter(Boolean)
+    .join(' ')
+  const cleanParentDesc = stripParentFocalHardwareForSubzone(
+    input.parentLocationDescription || '',
+    targetContext
+  )
 
   const zonePhrase = input.subZoneLabel
     ? `("${input.subZoneLabel}" sub-area of ${parentName})`

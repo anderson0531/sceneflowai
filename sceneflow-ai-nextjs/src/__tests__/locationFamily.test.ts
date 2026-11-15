@@ -142,4 +142,60 @@ describe('locationFamily', () => {
     expect(clause.toLowerCase()).not.toContain('ceiling vaulting')
     expect(clause.toLowerCase()).toContain('ceiling geometry')
   })
+
+  it('never elects a sibling Vault room as the parent anchor of unrelated peer rooms sharing a building prefix', () => {
+    const locations = [
+      {
+        id: 'loc-vault',
+        location: 'CITY BANK VAULT',
+        description: 'Massive circular steel vault door with brass vault door wheel.',
+        imageUrl: 'https://blob.example/bank-vault.png',
+        sourceSceneIndex: 0,
+      },
+      {
+        id: 'loc-lobby',
+        location: 'CITY BANK LOBBY',
+        description: 'Marble teller hall with tall arched windows and brass chandeliers.',
+        sourceSceneIndex: 1,
+      },
+      {
+        id: 'loc-corridor',
+        location: 'FREIGHT TUNNEL CORRIDOR',
+        description: 'Narrow brick service passage.',
+        sourceSceneIndex: 2,
+      },
+      {
+        id: 'loc-ft-vault',
+        location: 'FREIGHT TUNNEL VAULT',
+        description: 'Cavernous vault with heavy door wheel.',
+        imageUrl: 'https://blob.example/ft-vault.png',
+        sourceSceneIndex: 0,
+      },
+    ]
+
+    const lobby = locations.find((l) => l.id === 'loc-lobby')!
+    const corridor = locations.find((l) => l.id === 'loc-corridor')!
+    expect(resolveParentLocationAnchor(lobby, locations)).toBeNull()
+    expect(resolveParentLocationAnchor(corridor, locations)).toBeNull()
+  })
+
+  it('strips parent vault doors, mounted wheels, and Built-in set architecture clauses from sub-zone continuity prompts', () => {
+    const clause = buildRelatedLocationContinuityClause({
+      locationName: 'FREIGHT TUNNEL VAULT - WORKSHOP',
+      locationDescription: 'Subterranean alcove with wooden workbench and storage cells.',
+      parentLocationName: 'FREIGHT TUNNEL VAULT',
+      parentLocationDescription:
+        'Cavernous 1906 freight tunnel with damp limestone walls and narrow-gauge rail tracks. ' +
+        'A massive circular steel vault door with a heavy brass lockdown wheel seals the north end. ' +
+        'Built-in set architecture (mounted in place): heavy brass lockdown wheel, vault door wheel.',
+      subZoneLabel: 'WORKSHOP',
+      hasParentReferenceImage: true,
+    })
+
+    expect(clause.toLowerCase()).toContain('damp limestone walls')
+    expect(clause.toLowerCase()).not.toContain('vault door')
+    expect(clause.toLowerCase()).not.toContain('lockdown wheel')
+    expect(clause.toLowerCase()).not.toContain('built-in set architecture')
+    expect(clause.toLowerCase()).toContain('do not duplicate one-off focal entryways')
+  })
 })
