@@ -763,18 +763,22 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       }
     }
 
-    // Verify encoded Video Memoir (English & Spanish) .webm + .mp4 + .webp poster exist on disk with valid headers
+    // Verify encoded Video Memoir (English, Spanish & Portuguese) .webm + .mp4 + .webp poster exist on disk with valid headers
     expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES.memoir).toContain('en')
     expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES.memoir).toContain('es')
+    expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES.memoir).toContain('pt')
     expect(hasNativePromoVideoForLocale('memoir', 'en')).toBe(true)
     expect(hasNativePromoVideoForLocale('memoir', 'es')).toBe(true)
+    expect(hasNativePromoVideoForLocale('memoir', 'pt')).toBe(true)
     expect(resolveAvailablePromoVideoLocale('memoir', 'en')).toBe('en')
     expect(resolveAvailablePromoVideoLocale('memoir', 'es')).toBe('es')
-    expect(resolveAvailablePromoVideoLocale('memoir', 'pt')).toBe('en')
+    expect(resolveAvailablePromoVideoLocale('memoir', 'pt')).toBe('pt')
+    expect(resolveAvailablePromoVideoLocale('memoir', 'hi')).toBe('en')
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.en).toContain('vercel-storage.com')
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.es).toContain('vercel-storage.com')
+    expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.pt).toContain('vercel-storage.com')
 
-    for (const encodedLoc of ['en', 'es'] as const) {
+    for (const encodedLoc of ['en', 'es', 'pt'] as const) {
       const memoirWebmDisk = path.join(ROOT, 'public', getVideoServicePromoWebmPath('memoir', encodedLoc))
       const memoirMp4Disk = path.join(ROOT, 'public', getVideoServicePromoMp4Path('memoir', encodedLoc))
       expect(existsSync(memoirWebmDisk), `memoir-${encodedLoc}.webm exists`).toBe(true)
@@ -836,6 +840,20 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     ).toEqual([
       '/landing/video-services/videos/memoir-es.webm',
       '/landing/video-services/videos/memoir-es.mp4',
+    ])
+
+    // Clicking 'PT' switches Video Memoir <video> to the native Portuguese WebM + MP4 pitch
+    const ptLangBtn = Array.from(
+      container?.querySelectorAll('[data-testid="video-service-pan-stage"] button') ?? []
+    ).find((btn) => btn.textContent?.trim() === 'PT')
+    expect(ptLangBtn).toBeTruthy()
+    clickElement(ptLangBtn!)
+    const ptVideo = container?.querySelector('[data-testid="video-service-pan-stage"] video')
+    expect(
+      Array.from(ptVideo?.querySelectorAll('source') ?? []).map((s) => s.getAttribute('src'))
+    ).toEqual([
+      '/landing/video-services/videos/memoir-pt.webm',
+      '/landing/video-services/videos/memoir-pt.mp4',
     ])
 
     // Return to 'EN' before testing Real Estate Tours vertical switch
