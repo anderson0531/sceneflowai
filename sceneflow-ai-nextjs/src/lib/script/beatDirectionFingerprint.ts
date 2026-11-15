@@ -97,7 +97,11 @@ function fingerprintDirection(
 
 /** Full direction fingerprint (still + video/audio facets). */
 export function beatDirectionFingerprint(direction?: BeatDirection | null): string {
-  return fingerprintDirection(direction, FINGERPRINTED_KEYS, true)
+  const base = fingerprintDirection(direction, FINGERPRINTED_KEYS, true)
+  if (direction?.policyCompliance === true) {
+    return base ? `${base}|policyCompliance=true` : 'policyCompliance=true'
+  }
+  return base
 }
 
 /** Facets that actually enter the still / pre-vis frame prompt. */

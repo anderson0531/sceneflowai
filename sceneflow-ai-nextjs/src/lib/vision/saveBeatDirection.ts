@@ -1117,6 +1117,12 @@ export function saveDirectorPatchToScenes(args: {
    * When true, allows the patch to introduce new library characters and props.
    */
   allowUnboundReferences?: boolean
+  /**
+   * When true, stamps `policyCompliance: true` onto `beatDirection` so Still & Clip
+   * prompt compilation scrubs prominent-person names and softens sensitive phrasing.
+   * When explicitly false, clears `policyCompliance` from `beatDirection`.
+   */
+  policyCompliance?: boolean
 }): any[] {
   const beat = getSceneBeats(args.scenes[args.sceneIdx] ?? {}).find(
     (entry) => entry.beatId === args.beatId
@@ -1128,6 +1134,15 @@ export function saveDirectorPatchToScenes(args: {
     merged.unboundContinuity = true
   } else {
     delete merged.unboundContinuity
+  }
+  const effectivePolicyCompliance =
+    typeof args.policyCompliance === 'boolean'
+      ? args.policyCompliance
+      : args.patch.policyCompliance
+  if (effectivePolicyCompliance === true) {
+    merged.policyCompliance = true
+  } else if (effectivePolicyCompliance === false) {
+    delete merged.policyCompliance
   }
   let nextReferenceSelection = args.referenceSelection
   if (args.characters && args.characters.length > 0 && Array.isArray(merged.castInFrame)) {

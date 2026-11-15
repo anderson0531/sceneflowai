@@ -445,6 +445,9 @@ export function normalizeBeatDirection(raw: unknown): BeatDirection | undefined 
   const updatedAt = trimmedString(b.updatedAt ?? b.updated_at)
   if (updatedAt) direction.updatedAt = updatedAt
 
+  if (b.unboundContinuity === true) direction.unboundContinuity = true
+  if (b.policyCompliance === true) direction.policyCompliance = true
+
   if (direction.castInFrame) {
     direction.castInFrame = filterCastInFrameByVisualStaging(direction)
   }

@@ -254,6 +254,12 @@ export interface BeatDirection {
    * new continuity references beyond the previously bound references.
    */
   unboundContinuity?: boolean
+  /**
+   * True when Shot Director Safety compliance was enabled for this beat,
+   * instructing video/still compilation to scrub prominent-person name triggers
+   * and soften policy-sensitive phrasing while keeping bound references intact.
+   */
+  policyCompliance?: boolean
   /** ISO timestamp of last write. */
   updatedAt?: string
 }

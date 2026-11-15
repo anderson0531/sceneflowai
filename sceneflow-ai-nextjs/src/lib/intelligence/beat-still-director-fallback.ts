@@ -7,6 +7,7 @@
  */
 
 import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
+import { splitSentencesPreservingTitles } from '@/lib/generation/prominentPersonSafePrompt'
 import { buildPolicySafePhrasingRules } from '@/lib/generation/policySafePhrasing'
 import {
   composeBeatActionFraming,
@@ -116,6 +117,7 @@ export interface StillDirectorPatch {
   transition?: BeatDirection['transition']
   castInFrame?: string[]
   keyProps?: string[]
+  policyCompliance?: boolean
 }
 
 export interface StillDirectorBoundWardrobe {
@@ -247,8 +249,7 @@ export function parseStillDirectorPatch(raw: unknown): StillDirectorPatch | unde
   if (!raw || typeof raw !== 'object') return undefined
   const record = raw as Record<string, unknown>
   const cleanClipActionSentences = (text: string): string =>
-    text
-      .split(/(?<=[.!?])\s+/)
+    splitSentencesPreservingTitles(text)
       .map((s) => stripLeadingTimeLabel(s).trim())
       .filter(Boolean)
       .map((s) => (/[.!?]$/.test(s) ? s : `${s}.`))
@@ -425,7 +426,7 @@ export function applyStillDirectorPatchToScene(
 }
 
 export function applyPolicyComplianceToPatch(patch: StillDirectorPatch): StillDirectorPatch {
-  const next: StillDirectorPatch = { ...patch }
+  const next: StillDirectorPatch = { ...patch, policyCompliance: true }
   const soften = (value?: string) => {
     const trimmed = trimOrUndef(value)
     if (!trimmed) return value

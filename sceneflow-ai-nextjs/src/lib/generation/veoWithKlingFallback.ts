@@ -11,11 +11,16 @@ import {
 import type { VideoGenerationOptions } from '@/lib/gemini/videoClient'
 import {
   isVertexContentPolicyError,
+  isProminentPeoplePolicyError,
   getKlingFallbackProvider,
   getVeoPolicyMaxAttempts,
   isVeoPolicyFastFallbackEnabled,
   ContentPolicyExhaustedError,
 } from '@/lib/generation/contentPolicy'
+import {
+  deidentifyPromptForProminentPersonPolicy,
+  deidentifyReferenceImageLabel,
+} from '@/lib/generation/prominentPersonSafePrompt'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { runKlingVideo } from '@/lib/kling/klingDirectClient'
 import { KLING_FALLBACK_MODEL_FAMILY } from '@/lib/kling/config'
@@ -69,14 +74,15 @@ function stripExtForKling(opts: VideoGenerationOptions): VideoGenerationOptions 
 
 function sanitizeReferenceImageLabels(
   options: VideoGenerationOptions,
-  opts: { stripOutfitDescriptors?: boolean } = {}
+  opts: { stripOutfitDescriptors?: boolean; deidentifyNames?: boolean } = {}
 ): VideoGenerationOptions {
   if (!options.referenceImages?.length) return options
   return {
     ...options,
-    referenceImages: options.referenceImages.map((ref) => {
-      const label = (ref as { label?: string }).label
-      if (!label?.trim()) return ref
+    referenceImages: options.referenceImages.map(
+      (ref: { label?: string; [key: string]: unknown }, idx: number) => {
+        const label = ref.label
+        if (!label?.trim()) return ref
       const sanitized = autoSanitizePrompt(label, { logChanges: true })
       let nextLabel = neutralizeReferenceConflictPrompt(
         sanitized.wasModified ? sanitized.sanitizedPrompt : label
@@ -90,6 +96,9 @@ function sanitizeReferenceImageLabels(
           .replace(/\s+Outfit:\s*[^.]+\./gi, '')
           .replace(/\s{2,}/g, ' ')
           .trim()
+      }
+      if (opts.deidentifyNames) {
+        nextLabel = deidentifyReferenceImageLabel(nextLabel, idx + 1)
       }
       return { ...ref, label: nextLabel }
     }),
@@ -121,6 +130,7 @@ function preparePolicyRetry(
     guidePrompt?: string
     options: VideoGenerationOptions
     referenceFallbackPrompt?: string
+    lastError?: string
   }
 ): {
   method: VideoGenerationMethod
@@ -129,6 +139,18 @@ function preparePolicyRetry(
   options: VideoGenerationOptions
 } {
   let { method, prompt, guidePrompt, options } = ctx
+  const prominentPeopleBlocked = isProminentPeoplePolicyError(ctx.lastError)
+
+  if (prominentPeopleBlocked) {
+    prompt = deidentifyPromptForProminentPersonPolicy(prompt, {
+      softenPhotorealistic: true,
+    }).prompt
+    if (guidePrompt?.trim()) {
+      guidePrompt = deidentifyPromptForProminentPersonPolicy(guidePrompt, {
+        softenPhotorealistic: true,
+      }).prompt
+    }
+  }
 
   if (guidePrompt?.trim()) {
     const sg = autoSanitizePrompt(guidePrompt, { logChanges: true })
@@ -138,12 +160,18 @@ function preparePolicyRetry(
   if (attempt === 1) {
     const sp = autoSanitizePrompt(prompt, { logChanges: true })
     if (sp.wasModified) prompt = sp.sanitizedPrompt
-    options = sanitizeReferenceImageLabels(options, { stripOutfitDescriptors: true })
+    options = sanitizeReferenceImageLabels(options, {
+      stripOutfitDescriptors: true,
+      deidentifyNames: prominentPeopleBlocked,
+    })
     return { method, prompt, guidePrompt, options }
   }
 
   if (attempt >= 2 && method === 'REF' && options.referenceImages?.length) {
-    options = sanitizeReferenceImageLabels(options, { stripOutfitDescriptors: true })
+    options = sanitizeReferenceImageLabels(options, {
+      stripOutfitDescriptors: true,
+      deidentifyNames: true,
+    })
     const sp = autoSanitizePrompt(prompt, { logChanges: true })
     if (sp.wasModified) prompt = sp.sanitizedPrompt
     prompt = softenChoreographyForPolicyRetry(prompt)
@@ -284,6 +312,7 @@ export async function generateVideoWithVeoKlingFallback(
             guidePrompt,
             options,
             referenceFallbackPrompt: input.referenceFallbackPrompt,
+            lastError,
           })
           method = next.method
           prompt = next.prompt
@@ -325,6 +354,7 @@ export async function generateVideoWithVeoKlingFallback(
           guidePrompt,
           options,
           referenceFallbackPrompt: input.referenceFallbackPrompt,
+          lastError,
         })
         method = next.method
         prompt = next.prompt

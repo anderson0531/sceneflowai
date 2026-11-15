@@ -5,6 +5,10 @@
 import { downloadProductionVideo } from '@/lib/gemini/productionVideoClient'
 import { generateVideoWithVeoKlingFallback } from '@/lib/generation/veoWithKlingFallback'
 import { ContentPolicyExhaustedError } from '@/lib/generation/contentPolicy'
+import {
+  deidentifyPromptForProminentPersonPolicy,
+  deidentifyReferenceImageLabel,
+} from '@/lib/generation/prominentPersonSafePrompt'
 import { neutralizePromptForVeo } from '@/lib/generation/preflightPromptGuard'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import {
@@ -542,6 +546,51 @@ export async function generateSegmentVideoCore(
   if (override) {
     enhancedPrompt = override
   } else if (!useAggregator && !useKling) {
+    const knownCharacterNames = (rawReferenceImages ?? [])
+      .map((r) => {
+        if (r.characterName?.trim()) return r.characterName.trim()
+        if (r.type === 'character' && r.name && !isNextImageCaption(r.name)) {
+          return r.name
+            .replace(/^(?:identity|wardrobe|character)\s+reference(?:\s+\d+)?:\s*/i, '')
+            .replace(/\s*\([^)]*outfit[^)]*\)\s*$/i, '')
+            .split('—')[0]
+            ?.trim()
+        }
+        return undefined
+      })
+      .filter((name): name is string => Boolean(name))
+    const activeBindings =
+      !usesFrameConditioningOnly && referenceImages && referenceImages.length > 0
+        ? bindingsFromReferenceRecords(veoRefsToPrioritized(referenceImages))
+        : undefined
+    const deidentified = deidentifyPromptForProminentPersonPolicy(enhancedPrompt, {
+      characterNames: knownCharacterNames,
+      boundReplacements: activeBindings,
+    })
+    if (deidentified.wasModified) {
+      console.log(
+        '[Segment Video] Scrubbed personal/character names from Vertex prompt to prevent prominent-individuals false positives'
+      )
+      enhancedPrompt = deidentified.prompt
+    }
+    if (referenceFallbackPrompt) {
+      referenceFallbackPrompt = deidentifyPromptForProminentPersonPolicy(
+        referenceFallbackPrompt,
+        { characterNames: knownCharacterNames }
+      ).prompt
+    }
+    if (Array.isArray(videoOptions.referenceImages)) {
+      videoOptions.referenceImages = (
+        videoOptions.referenceImages as Array<Record<string, unknown>>
+      ).map((ref, idx) => ({
+        ...ref,
+        label:
+          typeof ref.label === 'string'
+            ? deidentifyReferenceImageLabel(ref.label, idx + 1)
+            : ref.label,
+      }))
+    }
+
     const preflight = await neutralizePromptForVeo({
       prompt: enhancedPrompt,
       guidePrompt,

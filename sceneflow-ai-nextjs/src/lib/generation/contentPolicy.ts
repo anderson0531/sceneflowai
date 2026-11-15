@@ -2,6 +2,8 @@
  * Unified Vertex / Veo content-policy detection for retry ladders and Kling fallback.
  */
 
+export { isProminentPeoplePolicyError } from '@/lib/generation/prominentPersonSafePrompt'
+
 export class ContentPolicyExhaustedError extends Error {
   readonly attempts: number
   readonly lastError: string
@@ -34,6 +36,9 @@ const POLICY_MARKERS = [
   'finishreason=safety',
   'finishreason=image_safety',
   'prohibited content',
+  'prohibited_content',
+  'prominent individuals',
+  'certain prominent',
   'support code',
   'content_blocked',
   'policy reason',

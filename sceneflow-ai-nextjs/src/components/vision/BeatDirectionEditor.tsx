@@ -413,7 +413,7 @@ export function BeatDirectionEditor({
 
   const saveDirectionPreview = (
     patch: StillDirectorPatch,
-    options?: { allowUnboundReferences?: boolean }
+    options?: { allowUnboundReferences?: boolean; policyCompliance?: boolean }
   ) => {
     if (!onScriptChange) return
     return onScriptChange({
@@ -430,6 +430,7 @@ export function BeatDirectionEditor({
           objectReferences,
           promptComposition,
           allowUnboundReferences: options?.allowUnboundReferences,
+          policyCompliance: options?.policyCompliance,
         }),
       },
     })

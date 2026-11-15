@@ -104,7 +104,7 @@ export interface BeatDirectorDialogProps {
   referenceSelection: BeatReferenceSelection
   onSaveDirection: (
     patch: StillDirectorPatch,
-    options?: { allowUnboundReferences?: boolean }
+    options?: { allowUnboundReferences?: boolean; policyCompliance?: boolean }
   ) => void | Promise<void>
   /** Save direction and immediately shoot the frame or render the clip. */
   onSaveAndGenerate?: () => void | Promise<void>
@@ -239,7 +239,9 @@ export function BeatDirectorDialog({
   const [previewing, setPreviewing] = useState(false)
   const [optimizing, setOptimizing] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [safety, setSafety] = useState(initialSafety)
+  const [safety, setSafety] = useState(
+    initialSafety || Boolean(beat.beatDirection?.policyCompliance)
+  )
   const [allowUnboundReferences, setAllowUnboundReferences] = useState(false)
   const [showCompiledPrompts, setShowCompiledPrompts] = useState(false)
 
@@ -268,7 +270,7 @@ export function BeatDirectorDialog({
     setModeTab('direct')
     setInstruction(initialInstruction || '')
     setPreview(initialPatch ?? null)
-    setSafety(initialSafety)
+    setSafety(initialSafety || Boolean(beat.beatDirection?.policyCompliance))
     setAllowUnboundReferences(false)
     setRefineInstruction('')
     setWorkingFrameUrl(currentFrameImageUrl ?? '')
@@ -282,6 +284,7 @@ export function BeatDirectorDialog({
   }, [
     open,
     initialSafety,
+    beat.beatDirection?.policyCompliance,
     initialInstruction,
     initialPatch,
     currentFrameImageUrl,
@@ -492,6 +495,7 @@ export function BeatDirectorDialog({
     try {
       await onSaveDirection(safety ? applyPolicyComplianceToPatch(preview) : preview, {
         allowUnboundReferences,
+        policyCompliance: safety,
       })
       setInstruction('')
       setPreview(null)
@@ -504,6 +508,50 @@ export function BeatDirectorDialog({
     } finally {
       setSaving(false)
     }
+  }
+
+  const applySafetyAndDirectGenerate = async () => {
+    if (!onSaveAndGenerate || saving) return
+    const currentPolicy = Boolean(beat.beatDirection?.policyCompliance)
+    if (safety !== currentPolicy) {
+      setSaving(true)
+      try {
+        const d = beat.beatDirection
+        const currentPatch: StillDirectorPatch = {
+          shotType: d?.shotType,
+          cameraAngle: d?.cameraAngle,
+          frozenMoment: d?.frozenMoment,
+          startFrame: d?.startFrame,
+          clipAction: d?.clipAction,
+          endFrame: d?.endFrame,
+          blocking: d?.blocking,
+          gaze: d?.gaze,
+          emotion: d?.emotion,
+          propInteraction: d?.propInteraction,
+          lightingAccent: d?.lightingAccent,
+          cameraMovement: d?.cameraMovement,
+          audioCue: d?.audioCue,
+          transition: d?.transition,
+          castInFrame: d?.castInFrame,
+          keyProps: d?.keyProps,
+          voiceDirection: beat.voiceDirection,
+        }
+        await onSaveDirection(
+          safety ? applyPolicyComplianceToPatch(currentPatch) : currentPatch,
+          {
+            allowUnboundReferences,
+            policyCompliance: safety,
+          }
+        )
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Failed to apply safety direction')
+        setSaving(false)
+        return
+      }
+      setSaving(false)
+    }
+    onOpenChange(false)
+    await onSaveAndGenerate()
   }
 
   const refineChips = useMemo(
@@ -920,13 +968,12 @@ export function BeatDirectorDialog({
                   className="inline-flex w-fit items-center gap-1.5 rounded border border-indigo-500/60 bg-indigo-950/40 px-3 py-1.5 text-xs font-medium text-indigo-100 hover:bg-indigo-900/50 disabled:opacity-50"
                   disabled={readOnly || busy}
                   title="Generate using the currently connected cast, wardrobe, location, and prop references"
-                  onClick={async () => {
-                    onOpenChange(false)
-                    await onSaveAndGenerate()
-                  }}
+                  onClick={() => void applySafetyAndDirectGenerate()}
                 >
                   <Play className="h-3 w-3 fill-current" />
-                  {directGenerateLabel}
+                  {safety && !beat.beatDirection?.policyCompliance
+                    ? `Apply Safety & ${directGenerateLabel}`
+                    : directGenerateLabel}
                 </button>
               )}
             </div>

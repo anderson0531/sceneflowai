@@ -32,6 +32,11 @@ import {
   type CharacterGender,
 } from '@/lib/character/visualGender'
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
+import {
+  deidentifyPromptForProminentPersonPolicy,
+  splitSentencesPreservingTitles,
+} from '@/lib/generation/prominentPersonSafePrompt'
+import { softenStillPhrasingForPolicy } from '@/lib/generation/policySafePhrasing'
 import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import { formatMusicCueSteer } from '@/lib/script/sceneMusicCues'
@@ -306,10 +311,7 @@ export function sanitizeReferenceEndFrame(
   if (ACTIVE_SURFACE_WRITING_RE.test(clipAction || '')) {
     return sanitized
   }
-  const sentences = sanitized
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter(Boolean)
+  const sentences = splitSentencesPreservingTitles(sanitized)
   if (sentences.length <= 1) {
     return sanitized
   }
@@ -350,9 +352,7 @@ export function resolveBeatClipDirection(
   let startFrame = cleanSingle(direction?.startFrame)
   if (!startFrame) {
     const actionText = beat.kind === 'action' ? beat.actionDescription?.trim() : undefined
-    const sentences = actionText
-      ? actionText.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean)
-      : []
+    const sentences = actionText ? splitSentencesPreservingTitles(actionText) : []
     const frozen = stripLeadingTimeLabel(direction?.frozenMoment)
     if (
       sentences.length > 1 &&
@@ -434,8 +434,7 @@ export function buildTimedClipSequence(beat: SceneBeat): string | undefined {
     if (/\b2\s*s?\s*[–-]\s*[58]\s*s\b/i.test(cleanedAction)) {
       parts.push(cleanedAction)
     } else {
-      const sentences = cleanedAction
-        .split(/(?<=[.!?])\s+/)
+      const sentences = splitSentencesPreservingTitles(cleanedAction)
         .map((s) => stripLeadingTimeLabel(s).replace(/\.+$/, '').trim())
         .filter(Boolean)
       if (sentences.length >= 2) {
@@ -523,7 +522,7 @@ function summarizeStatedActionForGuardrail(
   const trimmed = statedAction.trim()
   if (!trimmed) return ''
   if (coreText && tokenAlreadyInPrompt(trimmed, coreText) && trimmed.length > 100) {
-    const firstSentence = trimmed.split(/(?<=[.!?])\s+/)[0]?.trim()
+    const firstSentence = splitSentencesPreservingTitles(trimmed)[0]?.trim()
     if (firstSentence && firstSentence.length >= 16) {
       return firstSentence
     }
@@ -774,12 +773,31 @@ function finishVideoPrompt(args: {
   const style = isWideLandscapeShot
     ? rawStyle.replace(/\bshallow depth of field\b/gi, 'deep depth of field')
     : rawStyle
-  const prompt =
+  const rawPrompt =
     style && !tokenAlreadyInPrompt(style, core) ? normalizePromptJoin(core, style) : core
+  const prompt =
+    args.beat.beatDirection?.policyCompliance === true
+      ? applyBeatVideoPolicyCompliance(rawPrompt, args.beat)
+      : rawPrompt
   return {
     prompt,
     negativePrompt: videoNegatives(args.beat, args.styleNegative),
   }
+}
+
+export function applyBeatVideoPolicyCompliance(prompt: string, beat: SceneBeat): string {
+  if (!prompt?.trim()) return prompt
+  const castNames = [
+    ...(Array.isArray(beat.beatDirection?.castInFrame) ? beat.beatDirection.castInFrame : []),
+    ...(beat.character && !/^narrator$/i.test(beat.character.trim()) ? [beat.character] : []),
+  ]
+    .map((name) => name.trim())
+    .filter(Boolean)
+  const softened = softenStillPhrasingForPolicy(prompt).text
+  return deidentifyPromptForProminentPersonPolicy(softened, {
+    characterNames: castNames,
+    softenPhotorealistic: true,
+  }).prompt
 }
 
 function applySceneHints(
@@ -797,8 +815,7 @@ function applySceneHints(
  * prompts distribute motion smoothly across the entire 0s–10s keyframe bridge.
  */
 function flattenActionForContinuousFrameBridge(actionText: string): string {
-  return actionText
-    .split(/(?<=[.!?])\s+/)
+  return splitSentencesPreservingTitles(actionText)
     .map((sentence) => stripLeadingTimeLabel(sentence).replace(/\.+$/, '').trim())
     .filter(Boolean)
     .join('. ')
@@ -971,11 +988,18 @@ export function isStaleSavedVideoPrompt(
   }
 
   const isCompilerGenerated =
-    /\b(?:No spoken dialogue|The only spoken line is:|The only action is:|End on:|Continuous motion from start frame to end frame|photorealistic,\s*cinematic motion)/i.test(
+    /\b(?:No spoken dialogue|The only spoken line is:|The only action is:|End on:|Continuous motion from start frame to end frame|photorealistic,\s*cinematic motion|cinematic 35mm live-action,\s*cinematic motion)/i.test(
       trimmed
     )
   if (!isCompilerGenerated) {
     return false
+  }
+
+  if (
+    d?.policyCompliance === true &&
+    (/\bChar_[A-Za-z0-9_]+\b/.test(trimmed) || /\bphotorealistic\b/i.test(trimmed))
+  ) {
+    return true
   }
 
   if (
@@ -1040,19 +1064,28 @@ export function isStaleSavedVideoPrompt(
     return true
   }
 
-  if (cleanStart && !tokenAlreadyInPrompt(cleanStart.slice(0, 48), trimmed)) {
+  const checkExpectedSnippet = (rawSnippet?: string | null): boolean => {
+    if (!rawSnippet?.trim()) return true
+    const snippet =
+      d?.policyCompliance === true
+        ? applyBeatVideoPolicyCompliance(rawSnippet, beat)
+        : rawSnippet
+    return tokenAlreadyInPrompt(snippet.slice(0, 48), trimmed)
+  }
+
+  if (cleanStart && !checkExpectedSnippet(cleanStart)) {
     return true
   }
-  if (cleanClipAction && !tokenAlreadyInPrompt(cleanClipAction.slice(0, 48), trimmed)) {
+  if (cleanClipAction && !checkExpectedSnippet(cleanClipAction)) {
     return true
   }
-  if (cleanEnd && !tokenAlreadyInPrompt(cleanEnd.slice(0, 48), trimmed)) {
+  if (cleanEnd && !checkExpectedSnippet(cleanEnd)) {
     return true
   }
   if (
     !cleanEnd &&
     cleanFrozen &&
-    !tokenAlreadyInPrompt(cleanFrozen.slice(0, 48), trimmed)
+    !checkExpectedSnippet(cleanFrozen)
   ) {
     return true
   }
@@ -1060,17 +1093,17 @@ export function isStaleSavedVideoPrompt(
     beat.kind !== 'dialogue' &&
     !cleanClipAction &&
     beat.actionDescription?.trim() &&
-    !tokenAlreadyInPrompt(beat.actionDescription.slice(0, 48), trimmed)
+    !checkExpectedSnippet(beat.actionDescription)
   ) {
     return true
   }
   if (d?.cameraMovement?.trim() && !tokenAlreadyInPrompt(d.cameraMovement, trimmed)) {
     return true
   }
-  if (d?.blocking?.trim() && !tokenAlreadyInPrompt(d.blocking.slice(0, 48), trimmed)) {
+  if (d?.blocking?.trim() && !checkExpectedSnippet(d.blocking)) {
     return true
   }
-  if (d?.emotion?.trim() && !tokenAlreadyInPrompt(d.emotion, trimmed)) {
+  if (d?.emotion?.trim() && !checkExpectedSnippet(d.emotion)) {
     return true
   }
 
@@ -1155,7 +1188,10 @@ export function compileBeatVideoPromptFromDirection(
       prompt = normalizePromptJoin(prompt, styleSuffix)
     }
     return {
-      prompt,
+      prompt:
+        beat.beatDirection?.policyCompliance === true
+          ? applyBeatVideoPolicyCompliance(prompt, beat)
+          : prompt,
       negativePrompt: videoNegatives(beat, styleNegative),
     }
   }

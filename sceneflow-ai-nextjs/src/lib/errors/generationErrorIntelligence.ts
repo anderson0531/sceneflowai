@@ -8,6 +8,8 @@
  * Safe to import in both server routes and client components.
  */
 
+import { isProminentPeoplePolicyError } from '@/lib/generation/prominentPersonSafePrompt'
+
 export type GenerationMediaType = 'still' | 'clip'
 
 export type GenerationErrorCategory =
@@ -105,6 +107,10 @@ const CONTENT_POLICY_MARKERS = [
   'finishreason=image_safety',
   'mix of references',
   'kling_hive_guard',
+  'prohibited_content',
+  'prohibited content',
+  'prominent individuals',
+  'certain prominent',
   'violates',
 ]
 
@@ -459,6 +465,34 @@ export function evaluateGenerationError(
   // 6. General Content Policy / Safety Filter Rejection
   if (isPolicyMatch) {
     const onCreative = providerLow === 'kling' || providerLow === 'aggregator'
+    if (isProminentPeoplePolicyError(low)) {
+      return {
+        mediaType,
+        category: 'content_policy',
+        severity: 'warning',
+        title: `${mediaTitleNoun} Blocked by Likeness Filter`,
+        explanation:
+          'Google’s Responsible AI filter flagged a character name or portrait likeness as resembling a public figure — a common false positive on full names or photorealistic portraits. No credits were charged.',
+        suggestion: onCreative
+          ? 'Open Shot Director with Safety enabled to replace full character names with neutral visual descriptors and rerun.'
+          : `Click "${mediaType === 'clip' ? 'Rewrite for Safety' : 'Shot Director'}" to replace full character names with neutral visual descriptors, or switch ${mediaType === 'clip' ? 'Clips' : 'Frames'} to Creative if the filter is flagging the reference portrait itself.`,
+        shortSummary:
+          mediaType === 'still'
+            ? 'Likeness filter false positive — rewrite in Shot Director or switch Frames to Creative'
+            : 'Likeness filter false positive — Rewrite for Safety or switch Clips to Creative',
+        primaryCta: {
+          action: 'rewrite_director',
+          label: mediaType === 'clip' ? 'Rewrite for Safety' : 'Shot Director',
+        },
+        secondaryCta: onCreative
+          ? { action: 'rerun', label: rerunLabel }
+          : { action: 'switch_creative', label: 'Switch to Creative' },
+        noCreditsCharged: true,
+        canReportToSupport: true,
+        recommendSupportEscalation: false,
+        technicalDetails,
+      }
+    }
     return {
       mediaType,
       category: 'content_policy',
