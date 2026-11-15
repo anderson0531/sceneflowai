@@ -43,6 +43,7 @@ import type {
   SelfieExpressionMode,
   SelfieFramingPreset,
   SelfieLightingMode,
+  SelfieSkinComplexionMode,
 } from '@/lib/character/characterReferencePrompts'
 import {
   applyPixelDragToSelfieTransform,
@@ -104,7 +105,12 @@ interface EnhancedSelfieCandidate {
 
 type StudioStageMode = 'capture' | 'studio'
 type PreviewDisplayMode = 'crop' | 'split' | 'enhanced'
-type PresetKey = 'studio_headshot' | 'natural_portrait' | 'casting_neutral' | 'custom'
+type PresetKey =
+  | 'studio_headshot'
+  | 'groom_and_beautify'
+  | 'natural_portrait'
+  | 'casting_neutral'
+  | 'custom'
 
 const ENHANCE_CREDITS = IMAGE_CREDITS.GEMINI_EDIT
 const MAX_ENHANCE_PASSES = 3
@@ -117,6 +123,24 @@ const PRESET_CONFIGS: Record<Exclude<PresetKey, 'custom'>, SelfieEnhanceOptions>
     fixLensDistortion: true,
     fixEyeContact: true,
     removeGlassesGlare: true,
+    skinComplexionMode: 'camera_ready_polish',
+    groomHairAndBeard: true,
+    fixRedEye: true,
+    harmonizeSymmetry: false,
+    expressionMode: 'keep_natural',
+    collarMode: 'keep_original',
+  },
+  groom_and_beautify: {
+    framingPreset: 'casting_headshot',
+    backdropMode: 'neutral_gray',
+    lightingMode: 'studio_key_fill',
+    fixLensDistortion: true,
+    fixEyeContact: true,
+    removeGlassesGlare: true,
+    skinComplexionMode: 'studio_makeup_retouch',
+    groomHairAndBeard: true,
+    fixRedEye: true,
+    harmonizeSymmetry: true,
     expressionMode: 'keep_natural',
     collarMode: 'keep_original',
   },
@@ -127,6 +151,10 @@ const PRESET_CONFIGS: Record<Exclude<PresetKey, 'custom'>, SelfieEnhanceOptions>
     fixLensDistortion: true,
     fixEyeContact: true,
     removeGlassesGlare: true,
+    skinComplexionMode: 'natural_texture',
+    groomHairAndBeard: false,
+    fixRedEye: true,
+    harmonizeSymmetry: false,
     expressionMode: 'keep_natural',
     collarMode: 'keep_original',
   },
@@ -137,6 +165,10 @@ const PRESET_CONFIGS: Record<Exclude<PresetKey, 'custom'>, SelfieEnhanceOptions>
     fixLensDistortion: true,
     fixEyeContact: true,
     removeGlassesGlare: true,
+    skinComplexionMode: 'camera_ready_polish',
+    groomHairAndBeard: true,
+    fixRedEye: true,
+    harmonizeSymmetry: true,
     expressionMode: 'neutral_casting',
     collarMode: 'neutral_crewneck',
   },
@@ -722,8 +754,8 @@ export function CharacterSelfieStudioDialog({
           </div>
           <DialogDescription className="text-xs text-zinc-400">
             {stageMode === 'capture'
-              ? 'Position your head and shoulders inside the 9:16 casting guide with eyes near the upper line.'
-              : 'Fine-tune your 9:16 portrait framing for free, or apply AI Studio Framing & Enhancement before saving.'}
+              ? 'Position your head and shoulders inside the 9:16 casting guide with eyes near the upper line — no grooming or makeup prep needed.'
+              : 'Fine-tune your 9:16 portrait framing for free, or apply AI Grooming, Correction & Studio Enhancement while retaining 100% of your base identity.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -1306,28 +1338,33 @@ export function CharacterSelfieStudioDialog({
                         AI Studio Presets (Pre-Save)
                       </h3>
                     </div>
-                    <span className="text-[11px] text-zinc-400">
-                      Locks 100% facial identity
+                    <span className="text-[11px] text-emerald-300/90 font-medium">
+                      Retains 100% base identity
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {(
                       [
                         {
                           key: 'studio_headshot',
                           title: 'Studio Headshot',
-                          desc: 'Neutral gray backdrop, 3-point key light, 85mm lens fix',
+                          desc: 'Neutral gray backdrop, 85mm lens fix, hair/beard tidy & camera-ready polish',
+                        },
+                        {
+                          key: 'groom_and_beautify',
+                          title: 'Groom & Beautify',
+                          desc: 'Zero-prep hair/beard groom, studio makeup retouch, red-eye & symmetry fix',
                         },
                         {
                           key: 'natural_portrait',
                           title: 'Natural Portrait',
-                          desc: 'Soft portrait bokeh room cleanup + daylight balance',
+                          desc: 'Soft portrait bokeh room cleanup, daylight balance & raw skin texture',
                         },
                         {
                           key: 'casting_neutral',
                           title: 'Casting Neutral',
-                          desc: 'Calm neutral look + clean dark crewneck collar',
+                          desc: 'Calm neutral look, dark crewneck collar, groomed & symmetry-balanced',
                         },
                       ] as const
                     ).map((p) => {
@@ -1519,41 +1556,153 @@ export function CharacterSelfieStudioDialog({
                     </div>
                   </div>
 
-                  {/* Optical & Gaze Checkboxes */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                    <label className="flex items-center gap-2 rounded-lg bg-zinc-950/60 border border-zinc-800 px-2.5 py-1.5 cursor-pointer text-[11px] text-zinc-300">
-                      <input
-                        type="checkbox"
-                        checked={selfieOptions.fixLensDistortion !== false}
-                        onChange={(e) =>
-                          updateOption('fixLensDistortion', e.target.checked)
-                        }
-                        className="rounded accent-purple-500"
-                      />
-                      <span>85mm Lens Fix</span>
-                    </label>
+                  {/* Grooming, Complexion & Beautification Section */}
+                  <div className="rounded-lg bg-zinc-950/70 border border-zinc-800/90 p-3 space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                      <span className="text-xs font-medium text-zinc-200 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                        Grooming, Complexion &amp; Correction
+                      </span>
+                      <span className="text-[10px] text-zinc-400">
+                        Saves grooming/makeup prep • Keeps pores &amp; bone structure
+                      </span>
+                    </div>
 
-                    <label className="flex items-center gap-2 rounded-lg bg-zinc-950/60 border border-zinc-800 px-2.5 py-1.5 cursor-pointer text-[11px] text-zinc-300">
-                      <input
-                        type="checkbox"
-                        checked={selfieOptions.fixEyeContact !== false}
-                        onChange={(e) => updateOption('fixEyeContact', e.target.checked)}
-                        className="rounded accent-purple-500"
-                      />
-                      <span>Align Eye Contact</span>
-                    </label>
+                    {/* Complexion / Makeup Retouch Mode */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                      {(
+                        [
+                          {
+                            id: 'camera_ready_polish',
+                            label: 'Camera-Ready Polish',
+                            hint: 'Clears blemishes, tired eyes & shine',
+                          },
+                          {
+                            id: 'studio_makeup_retouch',
+                            label: 'Studio Makeup & Retouch',
+                            hint: 'Even concealer, matte finish & glow',
+                          },
+                          {
+                            id: 'natural_texture',
+                            label: 'Raw Skin Texture',
+                            hint: 'Lighting balance only',
+                          },
+                        ] as Array<{
+                          id: SelfieSkinComplexionMode
+                          label: string
+                          hint: string
+                        }>
+                      ).map((mode) => {
+                        const selected =
+                          (selfieOptions.skinComplexionMode ?? 'natural_texture') === mode.id
+                        return (
+                          <button
+                            key={mode.id}
+                            type="button"
+                            onClick={() => updateOption('skinComplexionMode', mode.id)}
+                            className={`rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
+                              selected
+                                ? 'bg-purple-500/15 border-purple-400/60 text-purple-100'
+                                : 'bg-zinc-900/70 border-zinc-800 text-zinc-300 hover:border-zinc-700'
+                            }`}
+                          >
+                            <div className="text-[11px] font-medium leading-tight">
+                              {mode.label}
+                            </div>
+                            <div className="text-[9px] text-zinc-500 mt-0.5">{mode.hint}</div>
+                          </button>
+                        )
+                      })}
+                    </div>
 
-                    <label className="flex items-center gap-2 rounded-lg bg-zinc-950/60 border border-zinc-800 px-2.5 py-1.5 cursor-pointer text-[11px] text-zinc-300">
-                      <input
-                        type="checkbox"
-                        checked={selfieOptions.removeGlassesGlare !== false}
-                        onChange={(e) =>
-                          updateOption('removeGlassesGlare', e.target.checked)
-                        }
-                        className="rounded accent-purple-500"
-                      />
-                      <span>Remove Lens Glare</span>
-                    </label>
+                    {/* Grooming + Optical Correction Toggles */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5">
+                      <label
+                        className="flex items-center gap-2 rounded-lg bg-zinc-900/70 border border-zinc-800 px-2.5 py-1.5 cursor-pointer text-[11px] text-zinc-200"
+                        title="Tames bedhead, cowlicks & flyaways and neatly tidies existing beard, mustache, stubble & eyebrows without changing your hairstyle or hairline"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Boolean(selfieOptions.groomHairAndBeard)}
+                          onChange={(e) =>
+                            updateOption('groomHairAndBeard', e.target.checked)
+                          }
+                          className="rounded accent-purple-500"
+                        />
+                        <span>Groom Hair &amp; Beard</span>
+                      </label>
+
+                      <label
+                        className="flex items-center gap-2 rounded-lg bg-zinc-900/70 border border-zinc-800 px-2.5 py-1.5 cursor-pointer text-[11px] text-zinc-200"
+                        title="Eliminates flash red-eye, webcam pupil glare, and tired/bloodshot sclera redness while preserving exact iris color"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Boolean(selfieOptions.fixRedEye)}
+                          onChange={(e) => updateOption('fixRedEye', e.target.checked)}
+                          className="rounded accent-purple-500"
+                        />
+                        <span>Remove Red-Eye</span>
+                      </label>
+
+                      <label
+                        className="flex items-center gap-2 rounded-lg bg-zinc-900/70 border border-zinc-800 px-2.5 py-1.5 cursor-pointer text-[11px] text-zinc-200"
+                        title="Subtly balances webcam squint, head tilt & off-axis facial skew without altering your true bone structure or likeness"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Boolean(selfieOptions.harmonizeSymmetry)}
+                          onChange={(e) =>
+                            updateOption('harmonizeSymmetry', e.target.checked)
+                          }
+                          className="rounded accent-purple-500"
+                        />
+                        <span>Facial Symmetry Fix</span>
+                      </label>
+
+                      <label
+                        className="flex items-center gap-2 rounded-lg bg-zinc-900/70 border border-zinc-800 px-2.5 py-1.5 cursor-pointer text-[11px] text-zinc-300"
+                        title="Corrects close-range wide-angle webcam distortion to a natural 85mm portrait lens look"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selfieOptions.fixLensDistortion !== false}
+                          onChange={(e) =>
+                            updateOption('fixLensDistortion', e.target.checked)
+                          }
+                          className="rounded accent-purple-500"
+                        />
+                        <span>85mm Lens Fix</span>
+                      </label>
+
+                      <label
+                        className="flex items-center gap-2 rounded-lg bg-zinc-900/70 border border-zinc-800 px-2.5 py-1.5 cursor-pointer text-[11px] text-zinc-300"
+                        title="Subtly aligns downward screen gaze directly into the camera lens"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selfieOptions.fixEyeContact !== false}
+                          onChange={(e) => updateOption('fixEyeContact', e.target.checked)}
+                          className="rounded accent-purple-500"
+                        />
+                        <span>Align Eye Contact</span>
+                      </label>
+
+                      <label
+                        className="flex items-center gap-2 rounded-lg bg-zinc-900/70 border border-zinc-800 px-2.5 py-1.5 cursor-pointer text-[11px] text-zinc-300"
+                        title="Removes computer monitor glare and reflections from eyeglasses while keeping frames intact"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selfieOptions.removeGlassesGlare !== false}
+                          onChange={(e) =>
+                            updateOption('removeGlassesGlare', e.target.checked)
+                          }
+                          className="rounded accent-purple-500"
+                        />
+                        <span>Remove Lens Glare</span>
+                      </label>
+                    </div>
                   </div>
 
                   {/* Generate AI Preview Button */}
@@ -1611,9 +1760,10 @@ export function CharacterSelfieStudioDialog({
                   <div className="rounded-lg bg-zinc-900/50 border border-zinc-800/80 px-3 py-2 flex items-start gap-2 text-[11px] text-zinc-400">
                     <AlertCircle className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
                     <span>
-                      Tip: Running <strong>AI Framing &amp; Enhance</strong> replaces room
-                      clutter with a clean studio backdrop and corrects laptop wide-angle
-                      distortion for significantly higher scene-to-scene consistency.
+                      Tip: <strong>AI Framing &amp; Enhance</strong> grooms hair &amp; facial
+                      hair, clears red-eye &amp; tired skin/shine, balances subtle facial
+                      symmetry, and replaces room clutter with an 85mm studio headshot while
+                      strictly keeping your true base identity.
                     </span>
                   </div>
                 )}

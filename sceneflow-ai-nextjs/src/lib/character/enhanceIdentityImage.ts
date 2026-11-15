@@ -118,7 +118,7 @@ function getDefaultAnalysis(existingDescription?: string): ImageAnalysis {
   }
 }
 
-function getImprovementsSummary(
+export function getImprovementsSummary(
   analysis: ImageAnalysis,
   selfieOptions?: SelfieEnhanceOptions
 ): string[] {
@@ -152,6 +152,20 @@ function getImprovementsSummary(
     }
     if (selfieOptions.fixEyeContact !== false) {
       improvements.push('Aligned eye contact naturally to the camera lens')
+    }
+    if (selfieOptions.fixRedEye) {
+      improvements.push('Removed red-eye and cleared tired/bloodshot eye redness')
+    }
+    if (selfieOptions.groomHairAndBeard) {
+      improvements.push('Groomed hair, flyaways, brows & facial hair while retaining natural style')
+    }
+    if (selfieOptions.skinComplexionMode === 'studio_makeup_retouch') {
+      improvements.push('Applied camera-ready studio makeup & complexion retouch (pores preserved)')
+    } else if (selfieOptions.skinComplexionMode === 'camera_ready_polish') {
+      improvements.push('Cleared temporary blemishes, under-eye fatigue & monitor shine')
+    }
+    if (selfieOptions.harmonizeSymmetry) {
+      improvements.push('Balanced webcam squint, posture cant & subtle facial symmetry')
     }
     return improvements
   }
@@ -214,10 +228,10 @@ Evaluate and respond in JSON format with these exact fields:
   "hasFace": boolean (is there a visible human face?),
   "faceCount": number (how many faces are visible?),
   "optimizationScore": number 0-100 (how suitable is this as a professional headshot reference?),
-  "issues": ["issue1", "issue2"] (problems that reduce reference quality),
+  "issues": ["issue1", "issue2"] (problems that reduce reference quality, including transient grooming/camera issues like messy bedhead/flyaways, unkempt beard, red-eye/bloodshot eyes, temporary blemishes/shine, or squint/head tilt),
   "suggestions": ["suggestion1", "suggestion2"] (how to improve the image),
   "demographicAnchor": "string" (e.g., "African American man in his late 40s with salt-and-pepper beard"),
-  "physicalTraits": ["trait1", "trait2"] (key permanent physical features to preserve)
+  "physicalTraits": ["trait1", "trait2"] (ONLY permanent anatomical identity traits to preserve: bone structure, eye color/shape, nose, hairline, permanent moles/freckles/scars — do NOT list transient un-groomed hair, red-eye, or temporary skin blemishes here)
 }
 
 Scoring criteria (100 = perfect professional headshot):

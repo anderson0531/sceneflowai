@@ -89,6 +89,11 @@ export type SelfieCollarMode =
   | 'keep_original'
   | 'neutral_crewneck'
 
+export type SelfieSkinComplexionMode =
+  | 'natural_texture'
+  | 'camera_ready_polish'
+  | 'studio_makeup_retouch'
+
 export interface SelfieEnhanceOptions {
   framingPreset?: SelfieFramingPreset
   backdropMode?: SelfieBackdropMode
@@ -98,6 +103,14 @@ export interface SelfieEnhanceOptions {
   removeGlassesGlare?: boolean
   expressionMode?: SelfieExpressionMode
   collarMode?: SelfieCollarMode
+  /** Camera-ready complexion & makeup retouch level while preserving authentic pores & permanent marks. */
+  skinComplexionMode?: SelfieSkinComplexionMode
+  /** Tame bedhead/flyaways/frizz and neatly groom existing beard, mustache, stubble & brows without changing style/hairline. */
+  groomHairAndBeard?: boolean
+  /** Eliminate flash red-eye, webcam pupil bounce, and bloodshot/tired sclera redness while preserving iris color & eye shape. */
+  fixRedEye?: boolean
+  /** Subtly harmonize transient webcam squint, jaw/head cant, and off-axis skew without altering bone structure or likeness. */
+  harmonizeSymmetry?: boolean
 }
 
 const VALID_FRAMING_PRESETS = new Set<SelfieFramingPreset>([
@@ -123,6 +136,11 @@ const VALID_EXPRESSION_MODES = new Set<SelfieExpressionMode>([
 const VALID_COLLAR_MODES = new Set<SelfieCollarMode>([
   'keep_original',
   'neutral_crewneck',
+])
+const VALID_SKIN_COMPLEXION_MODES = new Set<SelfieSkinComplexionMode>([
+  'natural_texture',
+  'camera_ready_polish',
+  'studio_makeup_retouch',
 ])
 
 /** Sanitize untrusted API payload into strongly-typed SelfieEnhanceOptions. */
@@ -172,6 +190,21 @@ export function sanitizeSelfieEnhanceOptions(
   ) {
     out.collarMode = obj.collarMode as SelfieCollarMode
   }
+  if (
+    typeof obj.skinComplexionMode === 'string' &&
+    VALID_SKIN_COMPLEXION_MODES.has(obj.skinComplexionMode as SelfieSkinComplexionMode)
+  ) {
+    out.skinComplexionMode = obj.skinComplexionMode as SelfieSkinComplexionMode
+  }
+  if (typeof obj.groomHairAndBeard === 'boolean') {
+    out.groomHairAndBeard = obj.groomHairAndBeard
+  }
+  if (typeof obj.fixRedEye === 'boolean') {
+    out.fixRedEye = obj.fixRedEye
+  }
+  if (typeof obj.harmonizeSymmetry === 'boolean') {
+    out.harmonizeSymmetry = obj.harmonizeSymmetry
+  }
 
   return Object.keys(out).length > 0 ? out : {}
 }
@@ -192,6 +225,10 @@ function buildSelfieDirectiveLines(
   const fixLensDistortion = opts.fixLensDistortion ?? true
   const fixEyeContact = opts.fixEyeContact ?? true
   const removeGlassesGlare = opts.removeGlassesGlare ?? true
+  const skinComplexionMode = opts.skinComplexionMode ?? 'natural_texture'
+  const groomHairAndBeard = opts.groomHairAndBeard ?? false
+  const fixRedEye = opts.fixRedEye ?? false
+  const harmonizeSymmetry = opts.harmonizeSymmetry ?? false
 
   const framingLine =
     framingPreset === 'close_portrait'
@@ -233,6 +270,49 @@ function buildSelfieDirectiveLines(
       'if the subject wears eyeglasses, preserve the exact frame geometry and color while removing screen glare and specular reflections so eyes are clearly visible'
     )
   }
+  if (fixRedEye) {
+    polishParts.push(
+      'eliminate flash red-eye, webcam sensor color bounce in the pupils, and tired bloodshot sclera redness for clear, rested eyes while strictly preserving exact iris color, pupil size, and natural eyelid geometry'
+    )
+  }
+
+  const groomingLines: string[] = []
+  if (groomHairAndBeard) {
+    groomingLines.push(
+      "Grooming (Hair, Beard & Brows): neatly groom and style the subject's existing hair and facial hair as if freshly prepared on set — tame bedhead, cowlicks, frizz, and stray flyaways into a clean, well-kept version of their exact hairstyle, hairline, length, and color/gray pattern; tidy and define existing beard, mustache, stubble, and eyebrows with neat edges (never add facial hair to a clean-shaven face, never shave off existing facial hair, and never alter natural hairline geometry)."
+    )
+  }
+
+  if (skinComplexionMode === 'camera_ready_polish') {
+    groomingLines.push(
+      isLiveAction
+        ? 'Complexion & Grooming Polish: camera-ready natural complexion without heavy visible makeup — clear temporary blemishes, acne, razor bumps, blotchy redness, dark under-eye fatigue circles, chapped lips, and oily monitor T-zone shine while strictly preserving authentic skin pores, natural skin tone and undertone, fine expression lines, and permanent identity marks (moles, freckles, scars).'
+        : 'Complexion Polish: clean, rested camera-ready complexion — remove temporary blemishes, dark under-eye fatigue shadows, and blotchy uneven tones while preserving exact skin tone, age, and permanent character marks (moles, freckles, scars).'
+    )
+  } else if (skinComplexionMode === 'studio_makeup_retouch') {
+    groomingLines.push(
+      isLiveAction
+        ? 'Studio Makeup & Complexion Retouch: apply subtle, professional on-set camera makeup and grooming — even, rested complexion concealer, soft matte T-zone finish, brightened rested under-eyes, naturally hydrated lips, subtle clean brow/lash definition, and clean natural tooth brightness (if teeth are visible) while strictly retaining real photographic skin pores, true skin tone/undertone, natural age, and permanent marks (moles, freckles, scars) with zero plastic airbrushing.'
+        : 'Studio Complexion & Polish: polished, camera-ready studio finish — even, rested complexion, bright clear eyes, neat brow definition, and balanced facial shading while preserving exact skin tone, age, and permanent character marks (moles, freckles, scars).'
+    )
+  }
+
+  if (harmonizeSymmetry) {
+    groomingLines.push(
+      "Symmetry & Posture Balance: subtly harmonize transient webcam asymmetries — relax uneven eye squint from screen glare, level slight head tilt or uneven shoulder posture, and balance off-axis wide-angle facial skew for composed bilateral harmony while strictly preserving 100% of the subject's true cranial and facial bone structure, nose bridge, lip proportions, jawline, and unmistakable personal identity."
+    )
+  }
+
+  if (
+    groomHairAndBeard ||
+    fixRedEye ||
+    harmonizeSymmetry ||
+    skinComplexionMode !== 'natural_texture'
+  ) {
+    groomingLines.push(
+      'Base Identity Lock: Correct, groom, and polish ONLY transient camera, lighting, and un-groomed imperfections — do NOT de-age into a different person, do NOT morph features toward a generic beauty/fashion model, and do NOT alter bone structure, ethnicity, skin tone, eye shape, nose, mouth, or permanent facial marks.'
+    )
+  }
 
   const backdropLine =
     backdropMode === 'warm_studio'
@@ -251,6 +331,7 @@ function buildSelfieDirectiveLines(
     lightingLine,
     lensLine,
     ...(polishParts.length > 0 ? [`Optical Polish: ${polishParts.join('; ')}.`] : []),
+    ...groomingLines,
     backdropLine,
     styleLine,
   ].join('\n')
@@ -1841,8 +1922,8 @@ export function buildEnhanceIdentityReferencePrompt(input: {
     ? 'Correct ethnicity, skin tone, age, face shape, hair, and eyes to the written identity. The reference photo is only the starting composition.'
     : hasSelfieOpts
       ? isLiveAction
-        ? 'Maintain 100% facial identity fidelity to the person in the captured photo while applying the requested studio framing and optical enhancements.'
-        : 'Maintain unmistakable facial likeness to the person in the captured photo while rendering cleanly in the target art style.'
+        ? 'Maintain 100% facial identity fidelity to the person in the captured photo while applying the requested studio framing, grooming, complexion, and optical enhancements.'
+        : 'Maintain unmistakable facial likeness to the person in the captured photo while applying the requested grooming/corrections and rendering cleanly in the target art style.'
       : isLiveAction
         ? 'Transform lighting to bright professional studio quality while keeping facial features identical to the reference.'
         : 'Refine studio lighting and linework/shading clarity while keeping facial features and art style identical to the reference.'

@@ -5,7 +5,10 @@ import {
   buildEnhanceIdentityReferencePrompt,
   sanitizeSelfieEnhanceOptions,
 } from '@/lib/character/characterReferencePrompts'
-import { parseImageDataUrl } from '@/lib/character/enhanceIdentityImage'
+import {
+  getImprovementsSummary,
+  parseImageDataUrl,
+} from '@/lib/character/enhanceIdentityImage'
 
 describe('Selfie Studio AI framing & enhancement prompts', () => {
   it('sanitizes untrusted selfieOptions payloads safely', () => {
@@ -21,6 +24,10 @@ describe('Selfie Studio AI framing & enhancement prompts', () => {
       removeGlassesGlare: false,
       expressionMode: 'keep_natural',
       collarMode: 'neutral_crewneck',
+      skinComplexionMode: 'studio_makeup_retouch',
+      groomHairAndBeard: true,
+      fixRedEye: true,
+      harmonizeSymmetry: 'invalid',
     })
 
     expect(sanitized).toEqual({
@@ -30,6 +37,18 @@ describe('Selfie Studio AI framing & enhancement prompts', () => {
       removeGlassesGlare: false,
       expressionMode: 'keep_natural',
       collarMode: 'neutral_crewneck',
+      skinComplexionMode: 'studio_makeup_retouch',
+      groomHairAndBeard: true,
+      fixRedEye: true,
+    })
+
+    expect(
+      sanitizeSelfieEnhanceOptions({
+        skinComplexionMode: 'invalid_skin_mode',
+        harmonizeSymmetry: false,
+      })
+    ).toEqual({
+      harmonizeSymmetry: false,
     })
   })
 
@@ -102,6 +121,117 @@ describe('Selfie Studio AI framing & enhancement prompts', () => {
     expect(prompt).toContain('Transform this captured portrait into a clean character reference portrait')
     expect(prompt).toContain('Maintain unmistakable facial likeness to the person in the captured photo')
     expect(prompt).not.toContain('photorealistic human photography only')
+  })
+
+  it('applies camera-ready grooming, studio makeup retouch, red-eye removal, and facial symmetry while locking base identity', () => {
+    const prompt = buildEnhanceIdentityReferencePrompt({
+      characterName: 'Brian',
+      appearanceDescription: 'Man in his late 50s with salt-and-pepper beard.',
+      identitySource: 'photo',
+      selfieOptions: {
+        framingPreset: 'casting_headshot',
+        backdropMode: 'neutral_gray',
+        lightingMode: 'studio_key_fill',
+        fixLensDistortion: true,
+        fixEyeContact: true,
+        removeGlassesGlare: true,
+        skinComplexionMode: 'studio_makeup_retouch',
+        groomHairAndBeard: true,
+        fixRedEye: true,
+        harmonizeSymmetry: true,
+      },
+    })
+
+    // Red-eye & bloodshot sclera removal with iris color lock
+    expect(prompt).toContain('eliminate flash red-eye')
+    expect(prompt).toContain('tired bloodshot sclera redness')
+    expect(prompt).toContain('preserving exact iris color')
+
+    // Hair, beard & brow grooming without inventing/shaving facial hair or changing hairline
+    expect(prompt).toContain('Grooming (Hair, Beard & Brows):')
+    expect(prompt).toContain('tame bedhead, cowlicks, frizz, and stray flyaways')
+    expect(prompt).toContain('never add facial hair to a clean-shaven face')
+    expect(prompt).toContain('never alter natural hairline geometry')
+
+    // Studio makeup & complexion retouch with real skin pores & permanent marks preserved
+    expect(prompt).toContain('Studio Makeup & Complexion Retouch:')
+    expect(prompt).toContain('even, rested complexion concealer')
+    expect(prompt).toContain('retaining real photographic skin pores')
+    expect(prompt).toContain('permanent marks (moles, freckles, scars)')
+    expect(prompt).toContain('zero plastic airbrushing')
+
+    // Subtle facial symmetry & posture balance without altering bone structure
+    expect(prompt).toContain('Symmetry & Posture Balance:')
+    expect(prompt).toContain('relax uneven eye squint')
+    expect(prompt).toContain('cranial and facial bone structure')
+
+    // Explicit Base Identity Lock preventing generic model morphing or de-aging
+    expect(prompt).toContain('Base Identity Lock:')
+    expect(prompt).toContain('do NOT morph features toward a generic beauty/fashion model')
+  })
+
+  it('supports natural no-makeup camera-ready complexion polish and reports applied grooming improvements', () => {
+    const prompt = buildEnhanceIdentityReferencePrompt({
+      characterName: 'Maya',
+      appearanceDescription: 'Woman in her 30s.',
+      identitySource: 'photo',
+      selfieOptions: {
+        skinComplexionMode: 'camera_ready_polish',
+        groomHairAndBeard: true,
+        fixRedEye: true,
+        harmonizeSymmetry: false,
+      },
+    })
+
+    expect(prompt).toContain('Complexion & Grooming Polish:')
+    expect(prompt).toContain('clear temporary blemishes, acne, razor bumps')
+    expect(prompt).not.toContain('Symmetry & Posture Balance:')
+
+    const bullets = getImprovementsSummary(
+      {
+        hasFace: true,
+        faceCount: 1,
+        isAlreadyOptimized: false,
+        optimizationScore: 62,
+        issues: [],
+        suggestions: [],
+        demographicAnchor: 'woman in her 30s',
+        physicalTraits: [],
+      },
+      {
+        framingPreset: 'casting_headshot',
+        backdropMode: 'neutral_gray',
+        lightingMode: 'studio_key_fill',
+        fixLensDistortion: true,
+        fixEyeContact: true,
+        fixRedEye: true,
+        groomHairAndBeard: true,
+        skinComplexionMode: 'studio_makeup_retouch',
+        harmonizeSymmetry: true,
+      }
+    )
+
+    expect(bullets).toEqual(
+      expect.arrayContaining([
+        'Removed red-eye and cleared tired/bloodshot eye redness',
+        'Groomed hair, flyaways, brows & facial hair while retaining natural style',
+        'Applied camera-ready studio makeup & complexion retouch (pores preserved)',
+        'Balanced webcam squint, posture cant & subtle facial symmetry',
+      ])
+    )
+  })
+
+  it('exposes Groom & Beautify preset and granular grooming/correction controls in CharacterSelfieStudioDialog', () => {
+    const dialogSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/vision/CharacterSelfieStudioDialog.tsx'),
+      'utf8'
+    )
+    expect(dialogSource).toContain("key: 'groom_and_beautify'")
+    expect(dialogSource).toContain('Groom & Beautify')
+    expect(dialogSource).toContain("updateOption('skinComplexionMode'")
+    expect(dialogSource).toContain("updateOption('groomHairAndBeard'")
+    expect(dialogSource).toContain("updateOption('fixRedEye'")
+    expect(dialogSource).toContain("updateOption('harmonizeSymmetry'")
   })
 
   it('wires Selfie Studio into Continuity Library character cards and forwards onApplyEnhancedReference', () => {
