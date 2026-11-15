@@ -10,6 +10,7 @@ import {
   buildEnhanceIdentityReferencePrompt,
   resolveDefaultWardrobeDescription,
   type EnhanceIdentitySource,
+  type SelfieEnhanceOptions,
 } from '@/lib/character/characterReferencePrompts'
 import { isPhotorealisticArtStyle } from '@/lib/artStyle/globalArtStyle'
 import { getArtStyleNegativeTerms, resolveProjectArtStyle } from '@/lib/vision/artStyle'
@@ -31,7 +32,9 @@ interface ImageAnalysis {
 }
 
 export interface EnhanceIdentityImageInput {
-  sourceImageUrl: string
+  sourceImageUrl?: string
+  /** Inline `data:image/...;base64,...` capture (e.g. pre-save Selfie Studio preview). */
+  sourceImageDataUrl?: string
   characterName: string
   appearanceDescription?: string
   wardrobeDescription?: string | null
@@ -48,6 +51,21 @@ export interface EnhanceIdentityImageInput {
    */
   identitySource?: EnhanceIdentitySource
   artStyle?: string | null
+  selfieOptions?: SelfieEnhanceOptions
+}
+
+export function parseImageDataUrl(
+  dataUrl?: string | null
+): { base64: string; mimeType: string } | null {
+  if (!dataUrl || typeof dataUrl !== 'string') return null
+  const match = dataUrl
+    .trim()
+    .match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)$/)
+  if (!match) return null
+  return {
+    mimeType: match[1].toLowerCase(),
+    base64: match[2].replace(/\s+/g, ''),
+  }
 }
 
 export interface EnhanceIdentityImageResult {
@@ -100,8 +118,43 @@ function getDefaultAnalysis(existingDescription?: string): ImageAnalysis {
   }
 }
 
-function getImprovementsSummary(analysis: ImageAnalysis): string[] {
+function getImprovementsSummary(
+  analysis: ImageAnalysis,
+  selfieOptions?: SelfieEnhanceOptions
+): string[] {
   const improvements: string[] = []
+
+  if (selfieOptions) {
+    if (selfieOptions.framingPreset === 'close_portrait') {
+      improvements.push('Reframed to tight 9:16 casting headshot')
+    } else if (selfieOptions.framingPreset === 'upper_torso') {
+      improvements.push('Reframed to 9:16 upper-torso portrait')
+    } else if (selfieOptions.framingPreset !== 'preserve_crop') {
+      improvements.push('Reframed to 9:16 head-and-shoulders casting plate')
+    }
+
+    if (selfieOptions.backdropMode === 'warm_studio') {
+      improvements.push('Applied warm editorial studio backdrop')
+    } else if (selfieOptions.backdropMode === 'soft_blur_original') {
+      improvements.push('Cleaned background into soft portrait bokeh')
+    } else {
+      improvements.push('Replaced room background with neutral gray studio backdrop')
+    }
+
+    if (selfieOptions.lightingMode === 'natural_daylight') {
+      improvements.push('Balanced with soft directional daylight illumination')
+    } else if (selfieOptions.lightingMode !== 'preserve_original') {
+      improvements.push('Normalized studio lighting and removed screen color cast')
+    }
+
+    if (selfieOptions.fixLensDistortion !== false) {
+      improvements.push('Corrected wide-angle webcam distortion to 85mm portrait look')
+    }
+    if (selfieOptions.fixEyeContact !== false) {
+      improvements.push('Aligned eye contact naturally to the camera lens')
+    }
+    return improvements
+  }
 
   if (analysis.issues.includes('lighting') || analysis.optimizationScore < 80) {
     improvements.push('Optimized lighting for even, professional illumination')
@@ -128,19 +181,31 @@ function getImprovementsSummary(analysis: ImageAnalysis): string[] {
 }
 
 async function analyzeSourceImage(
-  imageUrl: string,
+  source: { imageUrl?: string; inlineImage?: { base64: string; mimeType: string } | null },
   characterName: string,
   existingDescription?: string
 ): Promise<ImageAnalysis> {
   try {
-    const response = await fetch(imageUrl)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.status}`)
+    let base64: string
+    let mimeType: string
+
+    if (source.inlineImage) {
+      base64 = source.inlineImage.base64
+      mimeType = source.inlineImage.mimeType
+    } else if (source.imageUrl) {
+      const response = await fetch(source.imageUrl)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status}`)
+      }
+      const arrayBuffer = await response.arrayBuffer()
+      base64 = Buffer.from(arrayBuffer).toString('base64')
+      mimeType =
+        source.imageUrl.includes('.jpg') || source.imageUrl.includes('.jpeg')
+          ? 'image/jpeg'
+          : 'image/png'
+    } else {
+      return getDefaultAnalysis(existingDescription)
     }
-    const arrayBuffer = await response.arrayBuffer()
-    const base64 = Buffer.from(arrayBuffer).toString('base64')
-    const mimeType =
-      imageUrl.includes('.jpg') || imageUrl.includes('.jpeg') ? 'image/jpeg' : 'image/png'
 
     const analysisPrompt = `Analyze this image for use as a professional character reference in film/video production.
 
@@ -188,12 +253,13 @@ Respond ONLY with valid JSON, no other text.`
   }
 }
 
-/** Enhance a character identity reference into a photoreal 1:1 headshot (reference-anchored). */
+/** Enhance a character identity reference into a photoreal 9:16 headshot (reference-anchored). */
 export async function enhanceIdentityImage(
   input: EnhanceIdentityImageInput
 ): Promise<EnhanceIdentityImageResult> {
   const {
     sourceImageUrl,
+    sourceImageDataUrl,
     characterName,
     appearanceDescription,
     wardrobeDescription,
@@ -203,11 +269,20 @@ export async function enhanceIdentityImage(
     skipIterationGuard = false,
     skipPreAnalysis = false,
     identitySource = 'photo',
+    selfieOptions,
   } = input
+
+  const inlineImage = parseImageDataUrl(sourceImageDataUrl)
+  if (!inlineImage && !sourceImageUrl) {
+    throw new EnhanceIdentityError(
+      'A source image URL or captured image data URL is required.',
+      'MISSING_SOURCE_IMAGE'
+    )
+  }
 
   if (!skipIterationGuard && iterationCount >= 3) {
     throw new EnhanceIdentityError(
-      'Maximum enhancement iterations reached. Please upload a new source image.',
+      'Maximum enhancement iterations reached. Please capture or upload a new source image.',
       'MAX_ITERATIONS_REACHED'
     )
   }
@@ -222,10 +297,15 @@ export async function enhanceIdentityImage(
 
   const imageAnalysis = skipPreAnalysis
     ? getDefaultAnalysis(appearance)
-    : await analyzeSourceImage(sourceImageUrl, characterName, appearance)
+    : await analyzeSourceImage(
+        { imageUrl: sourceImageUrl, inlineImage },
+        characterName,
+        appearance
+      )
 
   if (
     !skipIterationGuard &&
+    !selfieOptions &&
     imageAnalysis.isAlreadyOptimized &&
     iterationCount >= 1
   ) {
@@ -268,6 +348,7 @@ export async function enhanceIdentityImage(
     subjectDescription,
     identitySource,
     artStyle: effectiveArtStyle,
+    selfieOptions,
   })
 
   const isLiveAction = isPhotorealisticArtStyle(effectiveArtStyle)
@@ -280,10 +361,16 @@ export async function enhanceIdentityImage(
       ? { negativePrompt: getArtStyleNegativeTerms(effectiveArtStyle) }
       : {}),
     referenceImages: [
-      {
-        imageUrl: sourceImageUrl,
-        name: characterName,
-      },
+      inlineImage
+        ? {
+            base64Image: inlineImage.base64,
+            mimeType: inlineImage.mimeType,
+            name: characterName,
+          }
+        : {
+            imageUrl: sourceImageUrl!,
+            name: characterName,
+          },
     ],
   })
 
@@ -309,7 +396,7 @@ export async function enhanceIdentityImage(
     qualityFeedback: {
       originalScore: imageAnalysis.optimizationScore,
       issuesFixed: imageAnalysis.issues,
-      improvements: getImprovementsSummary(imageAnalysis),
+      improvements: getImprovementsSummary(imageAnalysis, selfieOptions),
     },
   }
 }

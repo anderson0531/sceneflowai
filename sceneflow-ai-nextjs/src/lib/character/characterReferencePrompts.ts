@@ -65,6 +65,197 @@ export const IDENTITY_APPEARANCE_LOCK =
 
 export type EnhanceIdentitySource = 'description' | 'photo'
 
+export type SelfieFramingPreset =
+  | 'casting_headshot'
+  | 'close_portrait'
+  | 'upper_torso'
+  | 'preserve_crop'
+
+export type SelfieBackdropMode =
+  | 'neutral_gray'
+  | 'warm_studio'
+  | 'soft_blur_original'
+
+export type SelfieLightingMode =
+  | 'studio_key_fill'
+  | 'natural_daylight'
+  | 'preserve_original'
+
+export type SelfieExpressionMode =
+  | 'keep_natural'
+  | 'neutral_casting'
+
+export type SelfieCollarMode =
+  | 'keep_original'
+  | 'neutral_crewneck'
+
+export interface SelfieEnhanceOptions {
+  framingPreset?: SelfieFramingPreset
+  backdropMode?: SelfieBackdropMode
+  lightingMode?: SelfieLightingMode
+  fixLensDistortion?: boolean
+  fixEyeContact?: boolean
+  removeGlassesGlare?: boolean
+  expressionMode?: SelfieExpressionMode
+  collarMode?: SelfieCollarMode
+}
+
+const VALID_FRAMING_PRESETS = new Set<SelfieFramingPreset>([
+  'casting_headshot',
+  'close_portrait',
+  'upper_torso',
+  'preserve_crop',
+])
+const VALID_BACKDROP_MODES = new Set<SelfieBackdropMode>([
+  'neutral_gray',
+  'warm_studio',
+  'soft_blur_original',
+])
+const VALID_LIGHTING_MODES = new Set<SelfieLightingMode>([
+  'studio_key_fill',
+  'natural_daylight',
+  'preserve_original',
+])
+const VALID_EXPRESSION_MODES = new Set<SelfieExpressionMode>([
+  'keep_natural',
+  'neutral_casting',
+])
+const VALID_COLLAR_MODES = new Set<SelfieCollarMode>([
+  'keep_original',
+  'neutral_crewneck',
+])
+
+/** Sanitize untrusted API payload into strongly-typed SelfieEnhanceOptions. */
+export function sanitizeSelfieEnhanceOptions(
+  raw: unknown
+): SelfieEnhanceOptions | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const obj = raw as Record<string, unknown>
+  const out: SelfieEnhanceOptions = {}
+
+  if (
+    typeof obj.framingPreset === 'string' &&
+    VALID_FRAMING_PRESETS.has(obj.framingPreset as SelfieFramingPreset)
+  ) {
+    out.framingPreset = obj.framingPreset as SelfieFramingPreset
+  }
+  if (
+    typeof obj.backdropMode === 'string' &&
+    VALID_BACKDROP_MODES.has(obj.backdropMode as SelfieBackdropMode)
+  ) {
+    out.backdropMode = obj.backdropMode as SelfieBackdropMode
+  }
+  if (
+    typeof obj.lightingMode === 'string' &&
+    VALID_LIGHTING_MODES.has(obj.lightingMode as SelfieLightingMode)
+  ) {
+    out.lightingMode = obj.lightingMode as SelfieLightingMode
+  }
+  if (typeof obj.fixLensDistortion === 'boolean') {
+    out.fixLensDistortion = obj.fixLensDistortion
+  }
+  if (typeof obj.fixEyeContact === 'boolean') {
+    out.fixEyeContact = obj.fixEyeContact
+  }
+  if (typeof obj.removeGlassesGlare === 'boolean') {
+    out.removeGlassesGlare = obj.removeGlassesGlare
+  }
+  if (
+    typeof obj.expressionMode === 'string' &&
+    VALID_EXPRESSION_MODES.has(obj.expressionMode as SelfieExpressionMode)
+  ) {
+    out.expressionMode = obj.expressionMode as SelfieExpressionMode
+  }
+  if (
+    typeof obj.collarMode === 'string' &&
+    VALID_COLLAR_MODES.has(obj.collarMode as SelfieCollarMode)
+  ) {
+    out.collarMode = obj.collarMode as SelfieCollarMode
+  }
+
+  return Object.keys(out).length > 0 ? out : {}
+}
+
+function buildSelfieDirectiveLines(
+  opts: SelfieEnhanceOptions,
+  artStyleValue?: string | null
+): string {
+  const rawStyle = artStyleValue?.trim()
+  const isLiveAction =
+    !rawStyle || rawStyle === 'photorealistic' || isPhotorealisticArtStyle(rawStyle)
+  const spec = !isLiveAction && rawStyle ? buildArtStyleSpecFromValue(rawStyle) : null
+
+  const framingPreset = opts.framingPreset ?? 'casting_headshot'
+  const backdropMode = opts.backdropMode ?? 'neutral_gray'
+  const lightingMode = opts.lightingMode ?? 'studio_key_fill'
+  const expressionMode = opts.expressionMode ?? 'keep_natural'
+  const fixLensDistortion = opts.fixLensDistortion ?? true
+  const fixEyeContact = opts.fixEyeContact ?? true
+  const removeGlassesGlare = opts.removeGlassesGlare ?? true
+
+  const framingLine =
+    framingPreset === 'close_portrait'
+      ? 'Framing: tight vertical 9:16 casting headshot from collarbones to just above the crown of the head, face dominant in frame, eyes in the upper third, clean headroom.'
+      : framingPreset === 'upper_torso'
+        ? 'Framing: vertical 9:16 medium close-up portrait from mid-chest/upper torso to above the crown of the head, naturally reconstructing shoulder and torso posture if cropped at the edges.'
+        : framingPreset === 'preserve_crop'
+          ? 'Framing: vertical 9:16 portrait maintaining the exact subject scale, crop boundaries, and camera distance of the source frame.'
+          : 'Framing: balanced vertical 9:16 head-and-shoulders casting portrait with eyes positioned in the upper third; if shoulders or crown of hair are cropped near the webcam edges, naturally reconstruct shoulders and hair silhouette, or crop in cleanly if seated far back.'
+
+  const expressionLine =
+    expressionMode === 'neutral_casting'
+      ? 'Expression: calm neutral relaxed casting expression, mouth gently closed, relaxed brow and jaw.'
+      : "Expression: preserve the subject's authentic, relaxed captured expression without forcing an artificial grin or altering their natural facial demeanor."
+
+  const lightingLine =
+    lightingMode === 'natural_daylight'
+      ? 'Lighting: soft directional natural window daylight with gentle fill, natural eye catchlights, removing harsh overhead shadows and blue computer-monitor color cast.'
+      : lightingMode === 'preserve_original'
+        ? 'Lighting: preserve the ambient lighting direction of the capture while cleaning sensor noise and balancing skin-tone white balance.'
+        : 'Lighting: soft professional 3-point studio key and fill lighting with crisp natural catchlights in both eyes; neutralize blue computer-monitor cast and harsh room shadows.'
+
+  const lensLine = isLiveAction
+    ? fixLensDistortion
+      ? 'Lens & Perspective: 85mm prime portrait lens look at f/2.8; correct close-range wide-angle webcam foreshortening (24mm distortion) so nose, jawline, and ear proportions read naturally while preserving 100% recognizable likeness, authentic skin pores, and fine hair detail with no plastic smoothing.'
+      : 'Lens: crisp portrait focus, natural skin texture and pores, no plastic smoothing.'
+    : fixLensDistortion
+      ? 'Proportions: correct close-range wide-angle webcam foreshortening so facial proportions translate cleanly into balanced portrait proportions while keeping exact recognizable likeness.'
+      : 'Proportions: maintain exact facial proportions from the source capture.'
+
+  const polishParts: string[] = []
+  if (fixEyeContact) {
+    polishParts.push(
+      'subtly align iris/pupil gaze directly into the camera lens if looking slightly downward at a desktop screen without changing eyelid shape'
+    )
+  }
+  if (removeGlassesGlare) {
+    polishParts.push(
+      'if the subject wears eyeglasses, preserve the exact frame geometry and color while removing screen glare and specular reflections so eyes are clearly visible'
+    )
+  }
+
+  const backdropLine =
+    backdropMode === 'warm_studio'
+      ? 'Background: clean, softly graded warm charcoal-taupe editorial studio backdrop with subtle vignette, no props or clutter.'
+      : backdropMode === 'soft_blur_original'
+        ? 'Background: clean and declutter the ambient room environment into smooth, shallow depth-of-field portrait bokeh so the subject stands out cleanly.'
+        : 'Background: plain neutral medium-gray studio casting backdrop, no props, furniture, or distractions.'
+
+  const styleLine = isLiveAction
+    ? 'Style: photorealistic human photography only — no illustration, cartoon, CGI, or stylization.'
+    : `Style: ${spec!.characterRefDirective}`
+
+  return [
+    framingLine,
+    expressionLine,
+    lightingLine,
+    lensLine,
+    ...(polishParts.length > 0 ? [`Optical Polish: ${polishParts.join('; ')}.`] : []),
+    backdropLine,
+    styleLine,
+  ].join('\n')
+}
+
 /** Body paragraph inside a wrapped identity prompt. A bare appearance string is returned as-is. */
 export function identityAppearanceFromPrompt(prompt: string): string {
   const trimmed = prompt.trim()
@@ -1603,11 +1794,13 @@ export function buildEnhanceIdentityReferencePrompt(input: {
   /** description: written body wins. photo: keep the person already in the picture. */
   identitySource?: EnhanceIdentitySource
   artStyle?: string | null
+  selfieOptions?: SelfieEnhanceOptions
 }): string {
   const appearance = input.appearanceDescription.trim()
   const fromDescription = input.identitySource === 'description'
   const rawStyle = input.artStyle?.trim()
   const isLiveAction = !rawStyle || rawStyle === 'photorealistic' || isPhotorealisticArtStyle(rawStyle)
+  const hasSelfieOpts = Boolean(input.selfieOptions)
 
   const subjectLine = fromDescription
     ? `Subject: ${appearance}`
@@ -1615,7 +1808,9 @@ export function buildEnhanceIdentityReferencePrompt(input: {
       ? `Subject: ${input.subjectDescription}.`
       : isLiveAction
         ? 'Subject: the exact person shown in the reference photo.'
-        : 'Subject: the exact character shown in the reference image.'
+        : hasSelfieOpts
+          ? 'Subject: the exact real person shown in the captured reference photo, translated faithfully into the target art style.'
+          : 'Subject: the exact character shown in the reference image.'
 
   const prefixLine = isLiveAction
     ? fromDescription
@@ -1623,7 +1818,9 @@ export function buildEnhanceIdentityReferencePrompt(input: {
       : ENHANCE_IDENTITY_REFERENCE_PREFIX
     : fromDescription
       ? `Polish this into a clean character reference portrait in ${buildArtStyleSpecFromValue(rawStyle).title}. The written identity overrides the draft image wherever they disagree.`
-      : `Refine this character reference portrait in ${buildArtStyleSpecFromValue(rawStyle).title}. Preserve the exact character design, facial features, age, ethnicity, and hairstyle.`
+      : hasSelfieOpts
+        ? `Transform this captured portrait into a clean character reference portrait in ${buildArtStyleSpecFromValue(rawStyle).title}. Preserve the exact person's recognizable facial structure, eye spacing, nose bridge, jawline, skin tone, age, ethnicity, and hairstyle.`
+        : `Refine this character reference portrait in ${buildArtStyleSpecFromValue(rawStyle).title}. Preserve the exact character design, facial features, age, ethnicity, and hairstyle.`
 
   const lines = [
     prefixLine,
@@ -1634,9 +1831,21 @@ export function buildEnhanceIdentityReferencePrompt(input: {
     lines.push('', appearance)
   }
 
-  const styleDirectives = isLiveAction
-    ? IDENTITY_PHOTO_REALISM_DIRECTIVES
-    : buildStylizedIdentityDirectives(rawStyle!).directives
+  const styleDirectives = hasSelfieOpts
+    ? buildSelfieDirectiveLines(input.selfieOptions!, rawStyle)
+    : isLiveAction
+      ? IDENTITY_PHOTO_REALISM_DIRECTIVES
+      : buildStylizedIdentityDirectives(rawStyle!).directives
+
+  const closingDirective = fromDescription
+    ? 'Correct ethnicity, skin tone, age, face shape, hair, and eyes to the written identity. The reference photo is only the starting composition.'
+    : hasSelfieOpts
+      ? isLiveAction
+        ? 'Maintain 100% facial identity fidelity to the person in the captured photo while applying the requested studio framing and optical enhancements.'
+        : 'Maintain unmistakable facial likeness to the person in the captured photo while rendering cleanly in the target art style.'
+      : isLiveAction
+        ? 'Transform lighting to bright professional studio quality while keeping facial features identical to the reference.'
+        : 'Refine studio lighting and linework/shading clarity while keeping facial features and art style identical to the reference.'
 
   lines.push(
     '',
@@ -1644,16 +1853,24 @@ export function buildEnhanceIdentityReferencePrompt(input: {
     '',
     styleDirectives,
     '',
-    fromDescription
-      ? 'Correct ethnicity, skin tone, age, face shape, hair, and eyes to the written identity. The reference photo is only the starting composition.'
-      : isLiveAction
-        ? 'Transform lighting to bright professional studio quality while keeping facial features identical to the reference.'
-        : 'Refine studio lighting and linework/shading clarity while keeping facial features and art style identical to the reference.',
+    closingDirective,
   )
 
-  const wardrobe = input.wardrobeDescription?.trim()
-  if (wardrobe) {
-    lines.push('', formatWardrobeLine(wardrobe))
+  if (hasSelfieOpts && input.selfieOptions?.collarMode === 'neutral_crewneck') {
+    lines.push(
+      '',
+      'Wardrobe: simple understated dark charcoal crewneck tee with no logos, hoods, or distracting graphics.'
+    )
+  } else if (hasSelfieOpts && input.selfieOptions?.collarMode === 'keep_original') {
+    lines.push(
+      '',
+      'Wardrobe: preserve the neckline and top worn in the source capture cleanly, removing webcam noise or distracting wrinkles.'
+    )
+  } else {
+    const wardrobe = input.wardrobeDescription?.trim()
+    if (wardrobe) {
+      lines.push('', formatWardrobeLine(wardrobe))
+    }
   }
 
   return lines.join('\n')

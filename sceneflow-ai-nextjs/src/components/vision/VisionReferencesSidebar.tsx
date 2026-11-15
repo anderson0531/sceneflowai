@@ -2044,6 +2044,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               duplicateCastCount={duplicateCastCount}
               onMergeDuplicateCast={onMergeDuplicateCast}
               onEditCharacterImage={handleEditCharacterImage}
+              onApplyEnhancedReference={props.onApplyEnhancedReference}
               voiceAssignmentProvider="google"
               ttsProvider={ttsProvider}
               uploadingRef={uploadingRef}

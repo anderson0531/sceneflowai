@@ -11901,14 +11901,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       referenceImageUrl: string
       visionDescription?: string | null
       enhanceIterationCount?: number
+      syncAppearance?: boolean
     }
   ) => {
     try {
       const existing = charactersRef.current.find((c, idx) => resolveCharacterId(c, idx) === characterId)
-      const appearance = castAppearanceAfterImage({
-        existingAppearance: existing?.appearanceDescription,
-        visionDescription: payload.visionDescription,
-      })
+      const trimmedVision = payload.visionDescription?.trim() || ''
+      const appearance =
+        payload.syncAppearance === true && trimmedVision
+          ? {
+              patch: {
+                visionDescription: trimmedVision,
+                appearanceDescription: trimmedVision,
+              },
+              briefAppearance: trimmedVision,
+              appearanceChanged: true,
+            }
+          : payload.syncAppearance === false
+            ? {
+                patch: trimmedVision ? { visionDescription: trimmedVision } : {},
+                briefAppearance: undefined,
+                appearanceChanged: false,
+              }
+            : castAppearanceAfterImage({
+                existingAppearance: existing?.appearanceDescription,
+                visionDescription: payload.visionDescription,
+              })
       const castingFields = appearance.briefAppearance
         ? await castingBriefFieldsFromAppearance(
             { ...existing, appearanceDescription: appearance.briefAppearance },
@@ -11919,15 +11937,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const updatedCharacters = updateCharacterInList(
         charactersRef.current,
         characterId,
-        (char) => ({
-          ...char,
-          referenceImage: payload.referenceImageUrl,
-          ...appearance.patch,
-          ...castingFields,
-          ...(payload.enhanceIterationCount != null
-            ? { enhanceIterationCount: payload.enhanceIterationCount }
-            : {}),
-        })
+        (char) => {
+          const refChanged =
+            Boolean(char.referenceImage) && char.referenceImage !== payload.referenceImageUrl
+          const nextWardrobes =
+            refChanged && Array.isArray(char.wardrobes)
+              ? char.wardrobes.map((w: any) => {
+                  const hasWardrobeStill = Boolean(
+                    w?.fullBodyUrl || w?.headshotUrl || w?.previewImageUrl || w?.combinedCharacterRefUrl
+                  )
+                  if (!hasWardrobeStill) return w
+                  return {
+                    ...w,
+                    combinedCharacterRefUrl: undefined,
+                    needsImageRegen: true,
+                  }
+                })
+              : char.wardrobes
+
+          return {
+            ...char,
+            referenceImage: payload.referenceImageUrl,
+            imageApproved: false,
+            ...(nextWardrobes ? { wardrobes: nextWardrobes } : {}),
+            ...appearance.patch,
+            ...castingFields,
+            ...(payload.enhanceIterationCount != null
+              ? { enhanceIterationCount: payload.enhanceIterationCount }
+              : {}),
+          }
+        }
       )
 
       const saveResponse = await persistVisionCharacters(
@@ -11941,12 +11980,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       try {
-        toast.success('Enhanced reference applied')
+        toast.success('Character identity reference saved')
       } catch {}
     } catch (error) {
       console.error('[Apply Enhanced Reference] Error:', error)
       try {
-        toast.error('Failed to save enhanced reference')
+        toast.error('Failed to save character identity reference')
       } catch {}
     }
   }

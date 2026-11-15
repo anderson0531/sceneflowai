@@ -58,6 +58,11 @@ import { upload } from "@vercel/blob/client";
 import { CharacterPromptBuilder } from "@/components/vision/CharacterPromptBuilder";
 import { ReferenceStillDirectorDialog } from "@/components/vision/ReferenceStillDirectorDialog";
 import {
+  CharacterSelfieStudioDialog,
+  type CharacterSelfieSaveResult,
+  type SelfieSaveTarget,
+} from "@/components/vision/CharacterSelfieStudioDialog";
+import {
   resolveCastIdentityGenerationPrompt,
   seedCastDirectorPrompt,
   seedWardrobeDirectorPrompt,
@@ -268,8 +273,9 @@ export interface CharacterLibraryProps {
       referenceImageUrl: string
       visionDescription?: string | null
       enhanceIterationCount?: number
+      syncAppearance?: boolean
     },
-  ) => void;
+  ) => void | Promise<void>;
   ttsProvider: "google" | "elevenlabs";
   /**
    * When set (e.g. `"google"` in the Vision Reference Library), voice picker and Auto voice
@@ -579,8 +585,9 @@ interface CharacterCardProps {
       referenceImageUrl: string
       visionDescription?: string | null
       enhanceIterationCount?: number
+      syncAppearance?: boolean
     },
-  ) => void;
+  ) => void | Promise<void>;
   ttsProvider: "google" | "elevenlabs";
   voiceAssignmentProvider?: "google" | "elevenlabs";
   voiceSectionExpanded?: boolean;
@@ -4070,6 +4077,62 @@ const CharacterCard = ({
     }
   };
 
+  const [selfieStudioTarget, setSelfieStudioTarget] =
+    useState<SelfieSaveTarget | null>(null);
+
+  const handleSaveSelfie = async (result: CharacterSelfieSaveResult) => {
+    if (result.target === "likeness_primary") {
+      await onUpdateCharacterAttributes?.(
+        characterId,
+        {
+          likenessSourceType: "upload",
+          likenessImageUrl: result.imageUrl,
+        },
+        { quiet: true },
+      );
+      toast.success(
+        "Selfie saved as Reference Likeness photo — add a transform note and click Generate Portrait from Reference",
+      );
+      return;
+    }
+
+    if (result.target === "likeness_secondary") {
+      await onUpdateCharacterAttributes?.(
+        characterId,
+        {
+          likenessSourceType: "upload",
+          likenessMode: "family_blend",
+          secondaryLikenessImageUrl: result.imageUrl,
+        },
+        { quiet: true },
+      );
+      toast.success("Second parent/relative selfie saved");
+      return;
+    }
+
+    if (onApplyEnhancedReference) {
+      await onApplyEnhancedReference(characterId, {
+        referenceImageUrl: result.imageUrl,
+        visionDescription: result.visionDescription,
+        enhanceIterationCount: result.enhanceIterationCount,
+        syncAppearance: result.syncAppearance,
+      });
+      return;
+    }
+
+    if (result.rawFile) {
+      onUpload(result.rawFile);
+      return;
+    }
+
+    const res = await fetch(result.imageUrl);
+    const blob = await res.blob();
+    const file = new File([blob], `selfie-${characterId}.png`, {
+      type: blob.type || "image/png",
+    });
+    onUpload(file);
+  };
+
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: `character-reference-${characterId}`,
@@ -4276,7 +4339,7 @@ const CharacterCard = ({
       )}
 
       <div
-        className={`absolute inset-0 z-10 bg-black/40 transition-opacity flex items-center justify-center gap-3 ${
+        className={`absolute inset-0 z-10 bg-black/40 transition-opacity flex flex-wrap items-center justify-center gap-2.5 px-2 ${
           character.referenceImage && !imageError
             ? "opacity-0 group-hover:opacity-100"
             : "opacity-100"
@@ -4357,6 +4420,20 @@ const CharacterCard = ({
           ) : (
             <Upload className="w-5 h-5 text-white" />
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isUploading || isGenerating) return;
+            setSelfieStudioTarget("identity");
+          }}
+          disabled={isUploading || isGenerating}
+          className="p-3 bg-cyan-600/85 hover:bg-cyan-500 rounded-full transition-colors disabled:opacity-50"
+          title="Take Selfie (Desktop Camera + AI Studio Enhance)"
+        >
+          <Camera className="w-5 h-5 text-white" />
         </button>
         {character.referenceImage && !imageError && (
           <button
@@ -5352,6 +5429,18 @@ const CharacterCard = ({
                                     </button>
                                     <button
                                       type="button"
+                                      disabled={isUploadingLikenessRef}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelfieStudioTarget("likeness_primary");
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-cyan-950/70 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/70"
+                                    >
+                                      <Camera className="w-2.5 h-2.5" />
+                                      Selfie
+                                    </button>
+                                    <button
+                                      type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         void onUpdateCharacterAttributes(
@@ -5402,6 +5491,18 @@ const CharacterCard = ({
                                         </button>
                                         <button
                                           type="button"
+                                          disabled={isUploadingSecondaryLikenessRef}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelfieStudioTarget("likeness_secondary");
+                                          }}
+                                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-cyan-950/70 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/70"
+                                        >
+                                          <Camera className="w-2.5 h-2.5" />
+                                          Selfie
+                                        </button>
+                                        <button
+                                          type="button"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             void onUpdateCharacterAttributes(
@@ -5420,24 +5521,40 @@ const CharacterCard = ({
                                     </div>
                                   </div>
                                 ) : (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={isUploadingSecondaryLikenessRef}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      secondaryLikenessFileInputRef.current?.click();
-                                    }}
-                                    className="w-full h-7 text-xs"
-                                  >
-                                    {isUploadingSecondaryLikenessRef ? (
-                                      <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                                    ) : (
-                                      <Upload className="w-3.5 h-3.5 mr-1.5" />
-                                    )}
-                                    Upload 2nd Parent / Relative Photo [2]
-                                  </Button>
+                                  <div className="grid grid-cols-2 gap-1.5">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={isUploadingSecondaryLikenessRef}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        secondaryLikenessFileInputRef.current?.click();
+                                      }}
+                                      className="w-full h-7 text-xs"
+                                    >
+                                      {isUploadingSecondaryLikenessRef ? (
+                                        <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                      ) : (
+                                        <Upload className="w-3.5 h-3.5 mr-1.5" />
+                                      )}
+                                      Upload Photo [2]
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={isUploadingSecondaryLikenessRef}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelfieStudioTarget("likeness_secondary");
+                                      }}
+                                      className="w-full h-7 text-xs border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/15"
+                                    >
+                                      <Camera className="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
+                                      Take Selfie [2]
+                                    </Button>
+                                  </div>
                                 )
                               ) : (
                                 <button
@@ -5458,28 +5575,44 @@ const CharacterCard = ({
                             </div>
                           ) : (
                             <div className="space-y-1">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled={isUploadingLikenessRef}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  likenessFileInputRef.current?.click();
-                                }}
-                                className="w-full h-7 text-xs"
-                              >
-                                {isUploadingLikenessRef ? (
-                                  <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                                ) : (
-                                  <Upload className="w-3.5 h-3.5 mr-1.5" />
-                                )}
-                                {isUploadingLikenessRef
-                                  ? "Uploading Reference Photo…"
-                                  : "Upload Your Photo / Reference [1]"}
-                              </Button>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={isUploadingLikenessRef}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    likenessFileInputRef.current?.click();
+                                  }}
+                                  className="w-full h-7 text-xs"
+                                >
+                                  {isUploadingLikenessRef ? (
+                                    <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                  ) : (
+                                    <Upload className="w-3.5 h-3.5 mr-1.5" />
+                                  )}
+                                  {isUploadingLikenessRef
+                                    ? "Uploading…"
+                                    : "Upload Photo [1]"}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={isUploadingLikenessRef}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelfieStudioTarget("likeness_primary");
+                                  }}
+                                  className="w-full h-7 text-xs border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/15"
+                                >
+                                  <Camera className="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
+                                  Take Selfie [1]
+                                </Button>
+                              </div>
                               <p className="text-[10px] text-gray-500 leading-tight">
-                                Uses uploaded photo(s) strictly for genetic facial traits without overwriting this character with the raw upload.
+                                Uses uploaded or captured photo(s) strictly for genetic facial traits without overwriting this character with the raw photo.
                               </p>
                             </div>
                           )}
@@ -7129,6 +7262,37 @@ const CharacterCard = ({
                 return;
               }
               await onDirectCast?.({ prompt, generate });
+            }}
+          />
+        )}
+        {selfieStudioTarget && (
+          <CharacterSelfieStudioDialog
+            open={!!selfieStudioTarget}
+            onOpenChange={(next) => {
+              if (!next) setSelfieStudioTarget(null);
+            }}
+            projectId={projectId}
+            characterId={characterId}
+            characterName={character.name || "Character"}
+            existingAppearance={character.appearanceDescription}
+            wardrobeDescription={
+              wardrobes.find((row: CharacterWardrobe) => row.isDefault)
+                ?.description || character.defaultWardrobe
+            }
+            defaultArtStyle={defaultArtStyle}
+            target={selfieStudioTarget}
+            onSaveSelfie={handleSaveSelfie}
+            onFallbackUploadClick={() => {
+              if (selfieStudioTarget === "likeness_primary") {
+                likenessFileInputRef.current?.click();
+              } else if (selfieStudioTarget === "likeness_secondary") {
+                secondaryLikenessFileInputRef.current?.click();
+              } else {
+                const input = document.getElementById(
+                  `upload-${characterId}`,
+                ) as HTMLInputElement | null;
+                input?.click();
+              }
             }}
           />
         )}

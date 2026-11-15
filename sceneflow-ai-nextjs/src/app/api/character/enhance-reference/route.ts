@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   EnhanceIdentityError,
   enhanceIdentityImage,
+  parseImageDataUrl,
   resolveWardrobeForEnhance,
 } from '@/lib/character/enhanceIdentityImage'
+import { sanitizeSelfieEnhanceOptions } from '@/lib/character/characterReferencePrompts'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
@@ -14,6 +16,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 300
 
 const CREDIT_COST = IMAGE_CREDITS.GEMINI_EDIT
+const MAX_INLINE_DATA_URL_LENGTH = Math.floor(3.5 * 1024 * 1024)
 
 export async function POST(req: NextRequest) {
   try {
@@ -46,24 +49,46 @@ export async function POST(req: NextRequest) {
       characterId,
       projectId,
       sourceImageUrl,
+      sourceImageDataUrl,
       characterName,
       appearanceDescription,
       wardrobeDescription,
       iterationCount = 0,
       artStyle,
+      selfieOptions: rawSelfieOptions,
     } = body
 
-    if (!sourceImageUrl) {
-      return NextResponse.json({ error: 'Source image URL is required' }, { status: 400 })
+    if (!sourceImageUrl && !sourceImageDataUrl) {
+      return NextResponse.json(
+        { error: 'Source image URL or captured image data is required' },
+        { status: 400 }
+      )
+    }
+    if (typeof sourceImageDataUrl === 'string') {
+      if (sourceImageDataUrl.length > MAX_INLINE_DATA_URL_LENGTH) {
+        return NextResponse.json(
+          { error: 'Captured image payload exceeds maximum allowed size' },
+          { status: 413 }
+        )
+      }
+      if (!parseImageDataUrl(sourceImageDataUrl)) {
+        return NextResponse.json(
+          { error: 'Invalid captured image data URL format' },
+          { status: 400 }
+        )
+      }
     }
     if (!characterName) {
       return NextResponse.json({ error: 'Character name is required' }, { status: 400 })
     }
 
+    const selfieOptions = sanitizeSelfieEnhanceOptions(rawSelfieOptions)
+
     console.log(`[Enhance Reference] Enhancing character: ${characterName}`)
 
     const result = await enhanceIdentityImage({
       sourceImageUrl,
+      sourceImageDataUrl,
       characterName,
       appearanceDescription,
       wardrobeDescription,
@@ -71,6 +96,7 @@ export async function POST(req: NextRequest) {
       projectId,
       iterationCount,
       artStyle,
+      selfieOptions,
     })
 
     let newBalance: number | undefined
