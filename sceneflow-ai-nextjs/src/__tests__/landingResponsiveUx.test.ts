@@ -716,10 +716,11 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       // Video Memoirs now renders the live .webm + .mp4 film replacing the 5K Output Showcase
       const videoEl = stageEl?.querySelector('video')
       expect(videoEl, `[${locale}] Video Memoir HTML5 <video>`).toBeTruthy()
+      const expectedVideoLoc = hasNativePromoVideoForLocale('memoir', panLoc) ? panLoc : 'en'
       const sources = Array.from(videoEl?.querySelectorAll('source') ?? [])
       expect(sources.map((s) => s.getAttribute('src'))).toEqual([
-        '/landing/video-services/videos/memoir-en.webm',
-        '/landing/video-services/videos/memoir-en.mp4',
+        `/landing/video-services/videos/memoir-${expectedVideoLoc}.webm`,
+        `/landing/video-services/videos/memoir-${expectedVideoLoc}.mp4`,
       ])
       expect(videoEl?.getAttribute('poster')).toBe('/landing/video-services/videos/memoir-poster.webp')
       // Keep mobile/desktop video view unobstructed: no top-left badge, icon-only audio button,
@@ -738,8 +739,12 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       expect(controlsOverlay?.className).toContain('bottom-2')
       expect(controlsOverlay?.className).toContain('left-2')
       expect(controlsOverlay?.textContent?.trim()).toBe('')
-      if (panLoc !== 'en') {
+      if (!hasNativePromoVideoForLocale('memoir', panLoc)) {
         expect(stageEl?.textContent).toContain(
+          VIDEO_SERVICE_PAN_UI_COPY[panLoc].englishAudioPreviewNote
+        )
+      } else {
+        expect(stageEl?.textContent).not.toContain(
           VIDEO_SERVICE_PAN_UI_COPY[panLoc].englishAudioPreviewNote
         )
       }
@@ -758,35 +763,42 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       }
     }
 
-    // Verify encoded Video Memoir (English) .webm + .mp4 + .webp poster exist on disk with valid headers
+    // Verify encoded Video Memoir (English & Spanish) .webm + .mp4 + .webp poster exist on disk with valid headers
     expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES.memoir).toContain('en')
+    expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES.memoir).toContain('es')
     expect(hasNativePromoVideoForLocale('memoir', 'en')).toBe(true)
+    expect(hasNativePromoVideoForLocale('memoir', 'es')).toBe(true)
     expect(resolveAvailablePromoVideoLocale('memoir', 'en')).toBe('en')
-    expect(resolveAvailablePromoVideoLocale('memoir', 'es')).toBe('en')
+    expect(resolveAvailablePromoVideoLocale('memoir', 'es')).toBe('es')
+    expect(resolveAvailablePromoVideoLocale('memoir', 'pt')).toBe('en')
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.en).toContain('vercel-storage.com')
+    expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.es).toContain('vercel-storage.com')
 
-    const memoirWebmDisk = path.join(ROOT, 'public', getVideoServicePromoWebmPath('memoir', 'en'))
-    const memoirMp4Disk = path.join(ROOT, 'public', getVideoServicePromoMp4Path('memoir', 'en'))
+    for (const encodedLoc of ['en', 'es'] as const) {
+      const memoirWebmDisk = path.join(ROOT, 'public', getVideoServicePromoWebmPath('memoir', encodedLoc))
+      const memoirMp4Disk = path.join(ROOT, 'public', getVideoServicePromoMp4Path('memoir', encodedLoc))
+      expect(existsSync(memoirWebmDisk), `memoir-${encodedLoc}.webm exists`).toBe(true)
+      expect(existsSync(memoirMp4Disk), `memoir-${encodedLoc}.mp4 exists`).toBe(true)
+      expect(statSync(memoirWebmDisk).size).toBeGreaterThan(5_000_000)
+      expect(statSync(memoirMp4Disk).size).toBeGreaterThan(5_000_000)
+
+      // EBML magic bytes for WebM: 0x1A 0x45 0xDF 0xA3
+      const webmHead = readFileSync(memoirWebmDisk).subarray(0, 4)
+      expect(Array.from(webmHead)).toEqual([0x1a, 0x45, 0xdf, 0xa3])
+      // ISO BMFF 'ftyp' box for MP4
+      const mp4Head = readFileSync(memoirMp4Disk).subarray(4, 8).toString('ascii')
+      expect(mp4Head).toBe('ftyp')
+    }
+
     const memoirPosterDisk = path.join(ROOT, 'public', getVideoServicePromoPosterPath('memoir'))
-    expect(existsSync(memoirWebmDisk), 'memoir-en.webm exists').toBe(true)
-    expect(existsSync(memoirMp4Disk), 'memoir-en.mp4 exists').toBe(true)
     expect(existsSync(memoirPosterDisk), 'memoir-poster.webp exists').toBe(true)
-    expect(statSync(memoirWebmDisk).size).toBeGreaterThan(5_000_000)
-    expect(statSync(memoirMp4Disk).size).toBeGreaterThan(5_000_000)
     expect(statSync(memoirPosterDisk).size).toBeGreaterThan(10_000)
-
-    // EBML magic bytes for WebM: 0x1A 0x45 0xDF 0xA3
-    const webmHead = readFileSync(memoirWebmDisk).subarray(0, 4)
-    expect(Array.from(webmHead)).toEqual([0x1a, 0x45, 0xdf, 0xa3])
-    // ISO BMFF 'ftyp' box for MP4
-    const mp4Head = readFileSync(memoirMp4Disk).subarray(4, 8).toString('ascii')
-    expect(mp4Head).toBe('ftyp')
     // RIFF/WEBP header for poster
     const posterHead = readFileSync(memoirPosterDisk)
     expect(posterHead.subarray(0, 4).toString('ascii')).toBe('RIFF')
     expect(posterHead.subarray(8, 12).toString('ascii')).toBe('WEBP')
 
-    // Interactive check in English: Video Memoir unmute & replay -> switch vertical -> beat -> language (Arabic RTL)
+    // Interactive check in English: Video Memoir unmute & replay -> Spanish WebM switch -> switch vertical -> beat -> language (Arabic RTL)
     const enMessages = loadMessages('en')
     renderElement(
       React.createElement(
@@ -811,6 +823,27 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     expect(replayBtn).toBeTruthy()
     clickElement(replayBtn!)
     expect(memoirVideo?.muted).toBe(false)
+
+    // Clicking 'ES' switches Video Memoir <video> to the native Spanish WebM + MP4 pitch
+    const esLangBtn = Array.from(memoirStage?.querySelectorAll('button') ?? []).find(
+      (btn) => btn.textContent?.trim() === 'ES'
+    )
+    expect(esLangBtn).toBeTruthy()
+    clickElement(esLangBtn!)
+    const esVideo = container?.querySelector('[data-testid="video-service-pan-stage"] video')
+    expect(
+      Array.from(esVideo?.querySelectorAll('source') ?? []).map((s) => s.getAttribute('src'))
+    ).toEqual([
+      '/landing/video-services/videos/memoir-es.webm',
+      '/landing/video-services/videos/memoir-es.mp4',
+    ])
+
+    // Return to 'EN' before testing Real Estate Tours vertical switch
+    const enLangBtn = Array.from(
+      container?.querySelectorAll('[data-testid="video-service-pan-stage"] button') ?? []
+    ).find((btn) => btn.textContent?.trim() === 'EN')
+    expect(enLangBtn).toBeTruthy()
+    clickElement(enLangBtn!)
 
     const tabs = Array.from(container?.querySelectorAll('[role="tab"]') ?? [])
     expect(tabs).toHaveLength(4)

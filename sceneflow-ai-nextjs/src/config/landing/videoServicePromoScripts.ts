@@ -103,6 +103,7 @@ export const VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS: Partial<
 > = {
   memoir: {
     en: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Video%20Memoir%20%28English%29%20.mp4',
+    es: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Video%20Memoir%20%28Spanish%29.mp4',
   },
 }
 
@@ -115,7 +116,7 @@ export const VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES: Record<
   VideoServiceVerticalId,
   readonly FeaturePanLocaleId[]
 > = {
-  memoir: ['en'],
+  memoir: ['en', 'es'],
   realestate: [],
   training: [],
   brand: [],
