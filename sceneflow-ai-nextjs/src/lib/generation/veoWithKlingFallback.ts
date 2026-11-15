@@ -20,6 +20,7 @@ import {
 import {
   deidentifyPromptForProminentPersonPolicy,
   deidentifyReferenceImageLabel,
+  softenVideoSafetyTriggerClusters,
 } from '@/lib/generation/prominentPersonSafePrompt'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { runKlingVideo } from '@/lib/kling/klingDirectClient'
@@ -123,7 +124,7 @@ function softenChoreographyForPolicyRetry(prompt: string): string {
 
 function preparePolicyRetry(
   attempt: number,
-  _maxAttempts: number,
+  maxAttempts: number,
   ctx: {
     method: VideoGenerationMethod
     prompt: string
@@ -140,19 +141,17 @@ function preparePolicyRetry(
 } {
   let { method, prompt, guidePrompt, options } = ctx
   const prominentPeopleBlocked = isProminentPeoplePolicyError(ctx.lastError)
+  const softenPhotorealistic = prominentPeopleBlocked || attempt >= 2
 
-  if (prominentPeopleBlocked) {
-    prompt = deidentifyPromptForProminentPersonPolicy(prompt, {
-      softenPhotorealistic: true,
-    }).prompt
-    if (guidePrompt?.trim()) {
-      guidePrompt = deidentifyPromptForProminentPersonPolicy(guidePrompt, {
-        softenPhotorealistic: true,
-      }).prompt
-    }
-  }
-
+  // Omni often masks specific RAI categories behind `[content_blocked] ... unspecified policy reason`,
+  // so scrub personal names and semantic medical/supremacy/multi-location clusters on every policy retry.
+  prompt = softenVideoSafetyTriggerClusters(
+    deidentifyPromptForProminentPersonPolicy(prompt, { softenPhotorealistic }).prompt
+  ).prompt
   if (guidePrompt?.trim()) {
+    guidePrompt = softenVideoSafetyTriggerClusters(
+      deidentifyPromptForProminentPersonPolicy(guidePrompt, { softenPhotorealistic }).prompt
+    ).prompt
     const sg = autoSanitizePrompt(guidePrompt, { logChanges: true })
     if (sg.wasModified) guidePrompt = sg.sanitizedPrompt
   }
@@ -162,8 +161,12 @@ function preparePolicyRetry(
     if (sp.wasModified) prompt = sp.sanitizedPrompt
     options = sanitizeReferenceImageLabels(options, {
       stripOutfitDescriptors: true,
-      deidentifyNames: prominentPeopleBlocked,
+      deidentifyNames: true,
     })
+    if (method === 'FTV' && options.lastFrame) {
+      method = 'I2V'
+      options = { ...options, lastFrame: undefined }
+    }
     return { method, prompt, guidePrompt, options }
   }
 
@@ -178,6 +181,8 @@ function preparePolicyRetry(
     return { method, prompt, guidePrompt, options }
   }
 
+  const sp = autoSanitizePrompt(prompt, { logChanges: true })
+  if (sp.wasModified) prompt = sp.sanitizedPrompt
   prompt = softenChoreographyForPolicyRetry(prompt)
   const next = downgradeMethod(method)
   if (next !== method && method !== 'REF') {
@@ -185,6 +190,16 @@ function preparePolicyRetry(
     if (method === 'I2V' || method === 'T2V') {
       options = stripExtForKling(options)
     }
+  } else if (
+    attempt >= maxAttempts - 1 &&
+    method === 'I2V' &&
+    options.startFrame &&
+    !options.referenceImages?.length
+  ) {
+    // Final Vertex retry: if a dark chiaroscuro continuity startFrame tripped the image
+    // safety classifier on both prior attempts, detach startFrame and try clean text-only.
+    method = 'T2V'
+    options = { ...options, startFrame: undefined, lastFrame: undefined }
   }
 
   return { method, prompt, guidePrompt, options }

@@ -13,7 +13,10 @@
  * or a move, so the model is not asked to dolly and establish at once.
  */
 
-import { isPhotorealisticArtStyle } from '@/lib/artStyle/globalArtStyle'
+import {
+  isMultiSceneStyleBibleArc,
+  isPhotorealisticArtStyle,
+} from '@/lib/artStyle/globalArtStyle'
 import { getArtStyleNegativeTerms, getArtStyleVideoPromptSuffix } from '@/lib/vision/artStyle'
 import { affirmativeStartFrameState } from '@/lib/vision/locationStateAnalysis'
 
@@ -34,6 +37,7 @@ import {
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
 import {
   deidentifyPromptForProminentPersonPolicy,
+  softenVideoSafetyTriggerClusters,
   splitSentencesPreservingTitles,
 } from '@/lib/generation/prominentPersonSafePrompt'
 import { softenStillPhrasingForPolicy } from '@/lib/generation/policySafePhrasing'
@@ -793,7 +797,9 @@ export function applyBeatVideoPolicyCompliance(prompt: string, beat: SceneBeat):
   ]
     .map((name) => name.trim())
     .filter(Boolean)
-  const softened = softenStillPhrasingForPolicy(prompt).text
+  const softened = softenVideoSafetyTriggerClusters(
+    softenStillPhrasingForPolicy(prompt).text
+  ).prompt
   return deidentifyPromptForProminentPersonPolicy(softened, {
     characterNames: castNames,
     softenPhotorealistic: true,
@@ -995,9 +1001,19 @@ export function isStaleSavedVideoPrompt(
     return false
   }
 
+  if (/\bbrushed-stage\s+prop\b/i.test(trimmed)) {
+    return true
+  }
+
+  if (splitSentencesPreservingTitles(trimmed).some((s) => isMultiSceneStyleBibleArc(s))) {
+    return true
+  }
+
   if (
     d?.policyCompliance === true &&
-    (/\bChar_[A-Za-z0-9_]+\b/.test(trimmed) || /\bphotorealistic\b/i.test(trimmed))
+    (/\bChar_[A-Za-z0-9_]+\b/.test(trimmed) ||
+      /\bphotorealistic\b/i.test(trimmed) ||
+      softenVideoSafetyTriggerClusters(trimmed).wasModified)
   ) {
     return true
   }

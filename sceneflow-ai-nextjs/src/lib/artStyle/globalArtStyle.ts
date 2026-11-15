@@ -209,7 +209,81 @@ export function isPhotorealisticArtStyle(input?: string | ArtStyleSpec | null): 
   return inferArtStyleMedium(input) === 'live-action'
 }
 
+/**
+ * Detect when a live-action `stylePrompt` (typically inherited from a Blueprint
+ * `visual_style` treatment paragraph) describes a multi-era or multi-location
+ * act progression (e.g. `1970s Pittsburgh; ... corporate corridors; ... shifting to ... Pattaya, Thailand`)
+ * rather than a single camera/rendering look. Injecting all acts/locations into every
+ * single clip pollutes unrelated scenes and triggers composite Vertex RAI blocks.
+ */
+export function isMultiSceneStyleBibleArc(stylePrompt?: string | null): boolean {
+  const text = cleanText(stylePrompt)
+  if (!text) return false
+  // Never classify a compiled beat facet sentence (Emotion:, Delivery:, Blocking:, etc.) as a style bible
+  if (
+    /^(?:Emotion|Blocking|Delivery|Performance|Lighting|Shot|Angle|Camera|Scored moment|Incoming continuity|Only these people|The only spoken|\d+s[–-]\d+s|End on)\b/i.test(
+      text
+    )
+  ) {
+    return false
+  }
+  const hasSemicolonClauses =
+    text.includes(';') && text.split(';').filter((s) => s.trim().length > 12).length >= 2
+  const hasActTransition =
+    /\b(?:shifting\s+to|transitioning\s+(?:to|from)|giving\s+way\s+to|evolving\s+(?:into|from))\b/i.test(
+      text
+    )
+  const hasScopedSettingClause =
+    /\bfor\s+the\s+[a-z0-9,\s-]{3,50}\b(?:corridors|scenes|acts|sequences|interiors|exteriors|flashbacks)\b/i.test(
+      text
+    )
+  const hasEraAndPlaceClauses =
+    /\b(?:19\d{2}s|20\d{2}s)\s+[A-Z][a-z]+/.test(text) && /,\s*[A-Z][a-z]{3,}/.test(text)
+
+  return (
+    (hasSemicolonClauses && (hasActTransition || hasScopedSettingClause || hasEraAndPlaceClauses)) ||
+    (hasActTransition && (hasScopedSettingClause || hasEraAndPlaceClauses))
+  )
+}
+
+/**
+ * Extract pure camera, lens, and film-stock attributes from a multi-act live-action
+ * style bible so individual clips keep consistent cinematography without cross-scene
+ * geographic, medical, or era pollution.
+ */
+export function distillMultiSceneStyleBibleForVideo(stylePrompt: string): string {
+  const lower = cleanText(stylePrompt).toLowerCase()
+  const tokens: string[] = []
+
+  if (/\b16\s*mm\b/.test(lower)) {
+    tokens.push('16mm live-action cinematography')
+  } else if (/\b65\s*mm\b|\bimax\b/.test(lower)) {
+    tokens.push('large-format 65mm live-action cinematography')
+  } else if (/\b35\s*mm\b/.test(lower)) {
+    tokens.push('35mm live-action cinematography')
+  } else {
+    tokens.push('live-action cinematography')
+  }
+
+  if (/\banamorphic\b/.test(lower)) {
+    tokens.push('anamorphic glass')
+  } else if (/\bspherical\b/.test(lower)) {
+    tokens.push('spherical cinema lens')
+  }
+
+  if (/\bgrain\b/.test(lower)) {
+    tokens.push('subtle film grain')
+  }
+
+  tokens.push('professional cinematography', 'coherent motion', 'shallow depth of field')
+  return tokens.join(', ')
+}
+
 function toVideoSafeMotionPrompt(stylePrompt: string, medium: ArtStyleMedium): string {
+  if (medium === 'live-action' && isMultiSceneStyleBibleArc(stylePrompt)) {
+    return distillMultiSceneStyleBibleForVideo(stylePrompt)
+  }
+
   const stripped = stylePrompt
     .replace(/\bcinematic film still\b/gi, 'cinematic motion')
     .replace(/\bfilm still\b/gi, 'cinematic footage')
@@ -425,7 +499,14 @@ export function serializeArtStyleValue(spec: ArtStyleSpec): string {
   const title = cleanText(spec.title)
   const prompt = cleanText(spec.stylePrompt)
   if (!prompt) return preset?.id || DEFAULT_GLOBAL_ART_STYLE_ID
-  if (title && !prompt.toLowerCase().includes(title.toLowerCase())) {
+  const isTruncatedTitle = /(?:…|\.{3})\s*$/.test(title)
+  const titleStem = title.replace(/(?:…|\.{3})\s*$/, '').trim()
+  if (
+    title &&
+    !isTruncatedTitle &&
+    titleStem &&
+    !prompt.toLowerCase().includes(titleStem.toLowerCase())
+  ) {
     return `${title}: ${prompt}`
   }
   return prompt

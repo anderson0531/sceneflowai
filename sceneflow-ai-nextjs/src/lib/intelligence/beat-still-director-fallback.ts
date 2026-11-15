@@ -7,7 +7,10 @@
  */
 
 import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
-import { splitSentencesPreservingTitles } from '@/lib/generation/prominentPersonSafePrompt'
+import {
+  softenVideoSafetyTriggerClusters,
+  splitSentencesPreservingTitles,
+} from '@/lib/generation/prominentPersonSafePrompt'
 import { buildPolicySafePhrasingRules } from '@/lib/generation/policySafePhrasing'
 import {
   composeBeatActionFraming,
@@ -430,7 +433,11 @@ export function applyPolicyComplianceToPatch(patch: StillDirectorPatch): StillDi
   const soften = (value?: string) => {
     const trimmed = trimOrUndef(value)
     if (!trimmed) return value
-    return escalateImagePromptForRetry(trimmed, 1, { skipProductionStillFraming: true })
+    const escalated = escalateImagePromptForRetry(trimmed, 1, {
+      skipProductionStillFraming: true,
+      applyDestructiveNouns: false,
+    })
+    return softenVideoSafetyTriggerClusters(escalated).prompt
   }
   for (const key of PATCH_STRING_KEYS) {
     const softened = soften(next[key])

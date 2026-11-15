@@ -8,6 +8,10 @@
  * Pure TypeScript (client-bundle safe — do not import server-only modules here).
  */
 
+import {
+  distillMultiSceneStyleBibleForVideo,
+  isMultiSceneStyleBibleArc,
+} from '@/lib/artStyle/globalArtStyle'
 import { rewriteVisualNamesToTokens } from '@/lib/vision/referenceImageBinding'
 
 const PROMINENT_PEOPLE_ERROR_MARKERS = [
@@ -326,8 +330,72 @@ export function deidentifyPromptForProminentPersonPolicy(
   const boundPersonEntries = (options.boundReplacements ?? []).filter(
     (entry) => entry.name?.trim() && entry.token && /^person\s*\[\d+\]$/i.test(entry.token.trim())
   )
+  const uniqueBoundPersons: Array<{ name: string; token: string }> = []
+  const seenBoundTokens = new Set<string>()
+  for (const entry of boundPersonEntries) {
+    const cleanToken = entry.token!.replace(/\s+/g, ' ').trim()
+    const key = cleanToken.toLowerCase()
+    if (seenBoundTokens.has(key)) continue
+    seenBoundTokens.add(key)
+    uniqueBoundPersons.push({ name: entry.name!.trim(), token: cleanToken })
+  }
+
   if (boundPersonEntries.length > 0) {
     next = rewriteVisualNamesToTokens(next, boundPersonEntries)
+  }
+
+  const partsAfterBind = next.split(QUOTED_SPEECH_SPLIT)
+  const unquotedBeforeDescriptorRebind = partsAfterBind.filter((_, idx) => idx % 2 === 0).join(' ')
+
+  // If the prompt was pre-sanitized by Shot Director Safe (e.g. "The 34-year-old man"),
+  // re-bind that neutral descriptor back to `person [N]` when REF plates are attached.
+  if (uniqueBoundPersons.length > 0) {
+    const boundDescriptorMap = new Map<string, { token: string; count: number }>()
+    const recordBoundDesc = (desc: string, token: string) => {
+      const key = desc.trim().toLowerCase()
+      if (!key) return
+      const existing = boundDescriptorMap.get(key)
+      if (existing && existing.token !== token) {
+        existing.count += 1
+      } else if (!existing) {
+        boundDescriptorMap.set(key, { token, count: 1 })
+      }
+    }
+    const usedForBound = new Set<string>()
+    for (const bp of uniqueBoundPersons) {
+      const descMulti = deriveNeutralCharacterDescriptor(bp.name, {
+        unquotedContext: unquotedBeforeDescriptorRebind,
+        totalCharacters: uniqueBoundPersons.length,
+        usedDescriptors: usedForBound,
+      })
+      recordBoundDesc(descMulti, bp.token)
+      const descSingle = deriveNeutralCharacterDescriptor(bp.name, {
+        unquotedContext: unquotedBeforeDescriptorRebind,
+        totalCharacters: 1,
+      })
+      recordBoundDesc(descSingle, bp.token)
+    }
+    const unambiguousBoundDescs = [...boundDescriptorMap.entries()]
+      .filter(([, v]) => v.count === 1)
+      .sort((a, b) => b[0].length - a[0].length)
+
+    if (unambiguousBoundDescs.length > 0) {
+      next = next
+        .split(QUOTED_SPEECH_SPLIT)
+        .map((segment, idx) => {
+          if (idx % 2 === 1) return segment
+          let chunk = segment
+          for (const [desc, { token }] of unambiguousBoundDescs) {
+            const re = new RegExp(
+              `(?<![\\p{L}\\p{N}_])${escapeRegExp(desc)}(?![\\p{L}\\p{N}_])`,
+              'giu'
+            )
+            chunk = chunk.replace(re, token)
+          }
+          return chunk
+        })
+        .join('')
+    }
   }
 
   const parts = next.split(QUOTED_SPEECH_SPLIT)
@@ -347,7 +415,7 @@ export function deidentifyPromptForProminentPersonPolicy(
       name,
       token: deriveNeutralCharacterDescriptor(name, {
         unquotedContext: unquotedJoined,
-        totalCharacters: unboundCharacterNames.length + boundPersonEntries.length,
+        totalCharacters: unboundCharacterNames.length + uniqueBoundPersons.length,
         usedDescriptors,
       }),
     }))
@@ -470,8 +538,8 @@ export function deidentifyPromptForProminentPersonPolicy(
       .map((segment, idx) => {
         if (idx % 2 === 1) return segment
         return segment.replace(/\bChar_[A-Za-z0-9_]+\b/g, (rawTag) => {
-          const firstPersonToken = boundPersonEntries[0]?.token
-          if (firstPersonToken && boundPersonEntries.length === 1) return firstPersonToken
+          const firstPersonToken = uniqueBoundPersons[0]?.token
+          if (firstPersonToken && uniqueBoundPersons.length === 1) return firstPersonToken
           const decoded = decodeCharTokenToDisplayCandidate(rawTag)
           return decoded
             ? deriveNeutralCharacterDescriptor(decoded, { unquotedContext: unquotedJoined })
@@ -522,4 +590,96 @@ export function deidentifyReferenceImageLabel(label: string, fallbackIndex = 1):
       /\b(person\s*\[\d+\])\s*\((?:[^()\n]|\([^()\n]*\))*\)/gi,
       '$1'
     )
+}
+
+function preserveLeadCase(matched: string, replacement: string): string {
+  if (!matched || !replacement) return replacement
+  const first = matched[0]
+  if (first >= 'A' && first <= 'Z') {
+    return replacement[0].toUpperCase() + replacement.slice(1)
+  }
+  return replacement
+}
+
+const SEMANTIC_SAFETY_CLUSTER_RULES: Array<[RegExp, string]> = [
+  [/\bbrushed-stage\s+prop\b/gi, 'brushed-metal'],
+  [
+    /\bclinical\s+supremacy\s+and\s+absolute\s+mathematical\s+certainty\b/gi,
+    'calm analytical certainty and unshakable focus',
+  ],
+  [/\bclinical\s+supremacy\b/gi, 'calm analytical certainty'],
+  [/\bsupremacy\b/gi, 'certainty'],
+  [/\bclinical\s+delivery\b/gi, 'calm, measured delivery'],
+  [/\brelentless\s+delivery\b/gi, 'authoritative delivery'],
+  [/\bsurgical,\s+and\s+utterly\s+commanding\b/gi, 'precise, and composed'],
+  [/\butterly\s+commanding\b/gi, 'composed and authoritative'],
+  [/\bmachine-like\s+cadence\b/gi, 'rhythmic cadence'],
+  [/\boverwhelming\s+technical\s+dominance\b/gi, 'quiet technical confidence'],
+  [/\boverwhelming\s+dominance\b/gi, 'quiet confidence'],
+  [/\btechnical\s+dominance\b/gi, 'technical confidence'],
+  [/\bmedical\s+modernism\b/gi, 'clean architectural modernism'],
+  [
+    /\bfilm\s+noir\s+infused\s+with\s+cold,\s*clinical\s+corporate\s+neo-realism\s+and\s+high-contrast\s+anamorphic\s+chiaroscuro\b/gi,
+    'corporate neo-realism with high-contrast anamorphic lighting',
+  ],
+  [/\bcold,\s*clinical\s+corporate\b/gi, 'sleek corporate'],
+  [/\bclinical\s+corporate\b/gi, 'sleek corporate'],
+  [/\bgaze\s+locked\s+unblinkingly\b/gi, 'gaze locked steadily'],
+  [/\brigid\s+athletic\s+stance\b/gi, 'poised athletic stance'],
+  [
+    /\bsurgical\b(?![-\s]+(?:mask|masks|gown|gowns|gloves|scrubs|tray|suite|theater|theatre|ward|table|instrument|instruments|scalpel|lamp|lights?))/gi,
+    'precise',
+  ],
+  [
+    /\bclinical\b(?![-\s]+(?:trial|trials|ward|clinic|hospital|chart|coat|lab))/gi,
+    'composed',
+  ],
+  [/\brelentless\b/gi, 'unwavering'],
+  [/\bdominance\b/gi, 'authority'],
+]
+
+/**
+ * Neutralizes composite Vertex AI safety trigger clusters (medical + supremacy +
+ * dominance + multi-location style-bible tails such as `Pattaya, Thailand`)
+ * outside spoken quotation marks while preserving timing, blocking, and dialogue.
+ */
+export function softenVideoSafetyTriggerClusters(prompt: string): {
+  prompt: string
+  wasModified: boolean
+} {
+  if (!prompt?.trim()) return { prompt, wasModified: false }
+
+  const next = prompt
+    .split(QUOTED_SPEECH_SPLIT)
+    .map((segment, idx) => {
+      if (idx % 2 === 1) return segment
+      let chunk = segment
+        .split('\n')
+        .map((line) => {
+          if (!line.trim()) return line
+          const lineLead = line.match(/^\s*/)?.[0] ?? ''
+          const lineTrail = line.match(/\s*$/)?.[0] ?? ''
+          const rewritten = splitSentencesPreservingTitles(line)
+            .map((sentence) => {
+              if (isMultiSceneStyleBibleArc(sentence)) {
+                return `${distillMultiSceneStyleBibleForVideo(sentence)}.`
+              }
+              return sentence
+            })
+            .join(' ')
+          return rewritten ? `${lineLead}${rewritten}${lineTrail}` : line
+        })
+        .join('\n')
+
+      for (const [re, replacement] of SEMANTIC_SAFETY_CLUSTER_RULES) {
+        chunk = chunk.replace(re, (matched) => preserveLeadCase(matched, replacement))
+      }
+      return chunk
+    })
+    .join('')
+
+  return {
+    prompt: next,
+    wasModified: next !== prompt,
+  }
 }

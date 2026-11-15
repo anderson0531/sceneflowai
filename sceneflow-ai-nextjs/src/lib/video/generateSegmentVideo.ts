@@ -8,6 +8,7 @@ import { ContentPolicyExhaustedError } from '@/lib/generation/contentPolicy'
 import {
   deidentifyPromptForProminentPersonPolicy,
   deidentifyReferenceImageLabel,
+  softenVideoSafetyTriggerClusters,
 } from '@/lib/generation/prominentPersonSafePrompt'
 import { neutralizePromptForVeo } from '@/lib/generation/preflightPromptGuard'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
@@ -567,17 +568,19 @@ export async function generateSegmentVideoCore(
       characterNames: knownCharacterNames,
       boundReplacements: activeBindings,
     })
-    if (deidentified.wasModified) {
+    const clusterSoftened = softenVideoSafetyTriggerClusters(deidentified.prompt)
+    if (deidentified.wasModified || clusterSoftened.wasModified) {
       console.log(
-        '[Segment Video] Scrubbed personal/character names from Vertex prompt to prevent prominent-individuals false positives'
+        '[Segment Video] Sanitized Vertex prompt names and semantic safety clusters to prevent false-positive blocks'
       )
-      enhancedPrompt = deidentified.prompt
+      enhancedPrompt = clusterSoftened.prompt
     }
     if (referenceFallbackPrompt) {
-      referenceFallbackPrompt = deidentifyPromptForProminentPersonPolicy(
+      const fbDeid = deidentifyPromptForProminentPersonPolicy(
         referenceFallbackPrompt,
         { characterNames: knownCharacterNames }
       ).prompt
+      referenceFallbackPrompt = softenVideoSafetyTriggerClusters(fbDeid).prompt
     }
     if (Array.isArray(videoOptions.referenceImages)) {
       videoOptions.referenceImages = (

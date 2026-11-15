@@ -39,6 +39,7 @@ The image model's content filter cannot be configured off, and it refuses any st
 • Describe a face by its expression, not by a predatory or animal metaphor. "jaw set, chest heaving" passes where "eyes feral" does not.
 • Keep every prop's real name. A prop reference image is bound to the prop's own noun, so never soften "spanner" into "weapon" or "stage prop" — change the action around it instead.
 • Avoid celebrity, public-figure, or real-world prominent-person comparisons or biographical impersonation cues — ground character staging strictly in physical wardrobe, posture, gaze, and dramatic performance.
+• Avoid combining clinical/medical metaphors ("surgical", "clinical", "sterile") with supremacy or dominance nouns ("clinical supremacy", "overwhelming dominance", "relentless") — use grounded acting phrasing ("calm analytical certainty", "precise", "composed", "quiet confidence") instead.
 Rejected: "${REJECTED_EXAMPLE}"
 Accepted: "${ACCEPTED_EXAMPLE}"
 Same two-shot and prop. The difference is aftermath at eye level, not a blow in progress or a figure standing over someone on the floor.`

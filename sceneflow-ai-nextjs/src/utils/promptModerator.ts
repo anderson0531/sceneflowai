@@ -352,6 +352,17 @@ const TRIGGER_PHRASES: Record<string, string> = {
   'wall of fire': 'wall of radiant energy',
   'rain of fire': 'cascade of radiant light',
   'sea of flames': 'sea of luminous energy',
+
+  // Medical / supremacy / dominance co-occurrence clusters (Vertex RAI false positives)
+  'clinical supremacy': 'calm analytical certainty',
+  'overwhelming technical dominance': 'quiet technical confidence',
+  'overwhelming dominance': 'quiet confidence',
+  'medical modernism': 'clean architectural modernism',
+  'clinical delivery': 'calm, measured delivery',
+  'relentless delivery': 'authoritative delivery',
+  'utterly commanding': 'composed and authoritative',
+  'machine-like cadence': 'rhythmic cadence',
+  'brushed-stage prop': 'brushed-metal',
 };
 
 export interface ModerationResult {
