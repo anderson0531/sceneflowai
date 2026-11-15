@@ -21,13 +21,19 @@ export function getClipsAssignedToSegment(
   segment: SceneSegment,
   clips: AudioTrackClipV2[],
   narrationPrefix = 0,
-  scene?: Record<string, unknown> | null
+  scene?: Record<string, unknown> | null,
+  excludedLineIds?: ReadonlySet<string>
 ): AudioTrackClipV2[] {
-  const lineIds = segment.dialogueLineIds ?? []
-  if (lineIds.length === 0) return []
-  return clips.filter((c) =>
-    lineIds.some((id) => clipMatchesDialogueLineId(c, id, narrationPrefix, scene))
+  const lineIds = (segment.dialogueLineIds ?? []).filter(
+    (id) => !excludedLineIds || !excludedLineIds.has(id)
   )
+  if (lineIds.length === 0) return []
+  return clips.filter((c) => {
+    if (excludedLineIds && ((c.lineId && excludedLineIds.has(c.lineId)) || excludedLineIds.has(c.id))) {
+      return false
+    }
+    return lineIds.some((id) => clipMatchesDialogueLineId(c, id, narrationPrefix, scene))
+  })
 }
 
 export function getVisualBaseDuration(
@@ -78,15 +84,20 @@ export interface SegmentDurationInput {
   dialogueClips: AudioTrackClipV2[]
   probedDurations?: Record<string, number>
   measuredVideoDuration?: number
+  /** Intro freeze-frame hold on Frame 0 before motion begins (seconds). */
+  preSegmentHoldSec?: number
   manualPostPause?: number
+  /** Automatic narration overrun hold added to this shot (seconds). */
+  narrationPostPause?: number
   dialogueEnabled?: boolean
   narrationPrefix?: number
+  excludedLineIds?: ReadonlySet<string>
   getPlaybackRate?: (clipId: string) => number
-  /** Picture speed for this language version. 1 leaves the master timing unchanged. */
+  /** Picture speed (0.5x slow-mo to 1.5x fast). 1 leaves master timing unchanged. */
   videoPlaybackRate?: number
 }
 
-/** Content duration (visual vs dialogue), before post-dialogue pause. */
+/** Content duration (visual vs dialogue), before intro hold and post-dialogue/narration pause. */
 export function computeSegmentContentDuration(input: SegmentDurationInput): number {
   const {
     segment,
@@ -95,6 +106,7 @@ export function computeSegmentContentDuration(input: SegmentDurationInput): numb
     measuredVideoDuration,
     dialogueEnabled = true,
     narrationPrefix = 0,
+    excludedLineIds,
     getPlaybackRate,
     videoPlaybackRate,
   } = input
@@ -105,7 +117,13 @@ export function computeSegmentContentDuration(input: SegmentDurationInput): numb
 
   if (!dialogueEnabled) return visual
 
-  const assigned = getClipsAssignedToSegment(segment, dialogueClips, narrationPrefix)
+  const assigned = getClipsAssignedToSegment(
+    segment,
+    dialogueClips,
+    narrationPrefix,
+    null,
+    excludedLineIds
+  )
   if (assigned.length === 0) return visual
 
   const dialogueDur = sumAssignedDialogueDuration(assigned, probedDurations, getPlaybackRate)
@@ -113,11 +131,14 @@ export function computeSegmentContentDuration(input: SegmentDurationInput): numb
 }
 
 export function computePlaybackSegmentDuration(input: SegmentDurationInput): number {
+  const preHold = Math.max(0, input.preSegmentHoldSec ?? 0)
   const content = computeSegmentContentDuration(input)
   const assigned = getClipsAssignedToSegment(
     input.segment,
     input.dialogueClips,
-    input.narrationPrefix ?? 0
+    input.narrationPrefix ?? 0,
+    null,
+    input.excludedLineIds
   )
   const hasDialogue =
     (input.dialogueEnabled ?? true) &&
@@ -125,8 +146,9 @@ export function computePlaybackSegmentDuration(input: SegmentDurationInput): num
     sumAssignedDialogueDuration(assigned, input.probedDurations ?? {}, input.getPlaybackRate) > 0
 
   const autoPause = hasDialogue ? MIXER_SEGMENT_DIALOGUE_PAUSE_SEC : 0
-  const manualPause = input.manualPostPause ?? 0
-  return content + autoPause + manualPause
+  const manualPause = Math.max(0, input.manualPostPause ?? 0)
+  const narrationPause = Math.max(0, input.narrationPostPause ?? 0)
+  return preHold + content + autoPause + manualPause + narrationPause
 }
 
 export interface AlignSegmentsToDialogueOptions {

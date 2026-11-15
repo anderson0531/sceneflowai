@@ -1170,6 +1170,10 @@ export interface MultiLanguageAudioTracks {
  */
 export interface AudioTracksDataV2 {
   voiceover: AudioTrackClipV2 | null
+  /**
+   * Per-cue shot-aligned narration clips spanning 1 or more beats (`SceneNarrationCue`).
+   */
+  narrationCues?: AudioTrackClipV2[]
   description: AudioTrackClipV2 | null
   dialogue: AudioTrackClipV2[]
   music: AudioTrackClipV2 | null
@@ -1689,6 +1693,8 @@ export interface AudioTrackConfig {
   autoDuck?: boolean
   /** Gain reduction in dB when auto-ducking (default -8) */
   duckDb?: number
+  /** Narration: apply warm broadcast presence shelf (+4/+6 dB @ 120 Hz) */
+  warmBroadcastEq?: boolean
 }
 
 /**
@@ -1748,20 +1754,53 @@ export interface WatermarkConfig {
 /** Visual hold treatment when a shot's playback duration exceeds its source video duration */
 export type ShotHoldStyle = 'freeze' | 'push' | 'pingpong'
 
+/** Visual hold treatment for intro freeze-frame before clip motion begins */
+export type ShotPreHoldStyle = 'freeze' | 'push'
+
 /** Master loudness normalization target for export & preview */
 export type MixerLoudnessTarget = 'web-14lufs' | 'broadcast-24lkfs' | 'off'
 
-/** Per-beat audio mix settings in the Production Mixer */
+/** Per-beat audio & temporal pacing settings in the Production Mixer */
 export interface MixerSegmentAudioConfig {
   includeAudio: boolean
   volume: number
+  /** Intro hold on Frame 0 before motion begins (0–10s), e.g. for shot introduction narration */
+  preSegmentHoldSec?: number
+  /** Visual behavior during intro hold ('freeze' = static opening frame, 'push' = subtle 103% push-in) */
+  preHoldStyle?: ShotPreHoldStyle
+  /** Picture playback speed (0.5 slow-mo to 1.5 fast), unlocked for all languages */
+  videoPlaybackRate?: number
+  /** Close/tail hold after motion ends (0–15s), e.g. for after-shot explanation or dramatic pause */
   postSegmentPause?: number
   /** J-Cut lead-in offset (0–1.0s): starts shot dialogue/audio before the visual cut */
   audioLeadInSec?: number
   /** L-Cut tail-out offset (0–1.0s): trails shot audio under the next visual shot */
   audioTailOutSec?: number
-  /** Visual behavior during tail hold when dialogue or pause extends shot duration */
+  /** Visual behavior during tail hold when dialogue, narration, or pause extends shot duration */
   holdStyle?: ShotHoldStyle
+}
+
+/** Per-cue narration overrides in the Production Mixer, keyed by cueId. */
+export interface MixerNarrationCueConfig {
+  enabled: boolean
+  volume: number
+  startOffsetSec?: number
+  alignmentMode?: import('@/lib/script/segmentTypes').NarrationAlignmentMode
+}
+
+/** Scene-level opening bookend transition & lead-in hold */
+export interface SceneIntroTransition {
+  effect: 'cut' | 'fade_in'
+  durationSec: number
+  leadInHoldSec?: number
+  leadInMode?: 'black' | 'freeze_first_frame'
+}
+
+/** Scene-level closing bookend override */
+export interface SceneEndTransitionOverride {
+  effect: 'cut' | 'fade' | 'dissolve'
+  durationSec: number
+  holdSec?: number
 }
 
 /** Per-shot score level in the Production Mixer. Mute lives on the shot itself. */
@@ -1817,10 +1856,16 @@ export interface SceneMixerSettings {
   audioTracks?: Partial<MixerAudioTracks>
   segmentAudioConfigs?: Record<string, Partial<MixerSegmentAudioConfig>>
   dialogueClipConfigs?: Record<string, Partial<MixerDialogueClipConfig>>
+  /** Per-cue narration mix & alignment overrides, keyed by cueId. */
+  narrationCueConfigs?: Record<string, Partial<MixerNarrationCueConfig>>
   /** Per-shot score volume, keyed by shot id. */
   musicShotConfigs?: Record<string, Partial<MixerMusicShotConfig>>
   /** Per-shot language method and video speed, keyed by segment id. */
   languageShotConfigs?: Record<string, MixerLanguageShotConfig>
+  /** Scene-level intro bookend (fade-in / lead-in hold). */
+  sceneIntroTransition?: SceneIntroTransition
+  /** Scene-level close bookend override (fade-out / dissolve / tail hold). */
+  sceneEndTransition?: SceneEndTransitionOverride | null
   masterSegmentVolume?: number
   resolution?: '720p' | '1080p' | '4K'
   loudnessTarget?: MixerLoudnessTarget

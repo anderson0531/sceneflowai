@@ -61,6 +61,8 @@ export interface PromoTrailerBeatPlan {
   durationSec?: number
   /** Reused storyboard frame from the source beat. */
   frameUrl?: string
+  /** Optional still image URL fallback when a promo shot has no motion clip yet. */
+  imageUrl?: string
   /** Reused production take / segment video from the source beat. */
   videoUrl?: string
   beatRole?: string

@@ -19,6 +19,7 @@ import {
   Trash2,
   Globe,
   Target,
+  Mic,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -48,6 +49,9 @@ import {
 import { DEFAULT_TRAILER_SEC } from '@/lib/publish/trailerPlanner'
 import { resolvePromoPlayback, promoPlanForLanguage } from '@/lib/publish/promoBeatMedia'
 import { buildPromoPreviewSequence } from '@/lib/publish/promoPreviewSequence'
+import { SceneNarrationCuePanel } from '@/components/vision/SceneNarrationCuePanel'
+import { getSceneNarrationCues } from '@/lib/script/sceneNarrationCues'
+import type { DialogueTtsCharacter } from '@/lib/character/dialogueTtsVoice'
 import { parsePromoRenderBody, pollPromoRenderJob } from '@/lib/publish/promoRenderPoll'
 import { getPublishingState, upsertPublishingState } from '@/lib/publish/publishingState'
 import { promoFrameClass, resolvePromoFrameAspect } from '@/lib/publish/promoFrame'
@@ -159,7 +163,32 @@ function sourceDirectionOptimized(scenes: unknown[], beat: PromoTrailerBeatPlan)
 function narrationTrackFor(
   scene: Record<string, unknown> | null,
   language: string
-): { audioUrl?: string; line?: string; durationSec?: number } | undefined {
+): { audioUrl?: string; line?: string; durationSec?: number; cueCount?: number } | undefined {
+  if (scene && Array.isArray(scene.sceneNarrationCues) && scene.sceneNarrationCues.length > 0) {
+    const cues = getSceneNarrationCues(scene)
+    if (cues.length > 0) {
+      const lang = (language || 'en').trim().toLowerCase()
+      let firstAudioUrl: string | undefined
+      let totalDur = 0
+      const lines: string[] = []
+      for (const cue of cues) {
+        const entry = cue.byLanguage?.[lang] || cue.byLanguage?.en
+        if (entry?.text?.trim()) lines.push(entry.text.trim())
+        if (!firstAudioUrl && entry?.audioUrl?.trim()) firstAudioUrl = entry.audioUrl.trim()
+        if (typeof entry?.durationSec === 'number' && entry.durationSec > 0) {
+          totalDur += entry.durationSec
+        }
+      }
+      if (lines.length > 0 || firstAudioUrl) {
+        return {
+          audioUrl: firstAudioUrl,
+          line: lines.join(' '),
+          durationSec: totalDur > 0 ? totalDur : undefined,
+          cueCount: cues.length,
+        }
+      }
+    }
+  }
   const tracks = scene?.dialogueAudio as
     | Record<
         string,
@@ -213,14 +242,18 @@ function narrationLineFor(scene: Record<string, unknown> | null, language: strin
 function narrationDetailFor(scene: Record<string, unknown> | null, language: string): string | undefined {
   const track = narrationTrackFor(scene, language)
   const line = typeof track?.line === 'string' ? track.line.trim() : ''
+  const cueLabel =
+    typeof track?.cueCount === 'number' && track.cueCount > 0
+      ? `${track.cueCount} shot cue${track.cueCount === 1 ? '' : 's'}`
+      : ''
   const seconds = track?.durationSec
   const length =
     typeof seconds === 'number' && seconds > 0 ? `${Math.round(seconds)}s recording` : ''
   const short =
-    typeof seconds === 'number' && seconds > 0 && seconds <= 12
+    !cueLabel && typeof seconds === 'number' && seconds > 0 && seconds <= 12
       ? 'This recording is about 10 seconds. A full voice-over should cover the cut.'
       : ''
-  const detail = [line, length, short].filter(Boolean).join(' · ')
+  const detail = [cueLabel, line, length, short].filter(Boolean).join(' · ')
   return detail || undefined
 }
 
@@ -364,6 +397,7 @@ export function PublishingPromoTab({
   const [selectedClipKey, setSelectedClipKey] = useState<string>('')
   const [selectedRenderedStreamId, setSelectedRenderedStreamId] = useState<string>('')
   const [multilangGenerating, setMultilangGenerating] = useState(false)
+  const [showNarrationCueStudio, setShowNarrationCueStudio] = useState<boolean>(false)
 
   const promoSceneIndex = useMemo(
     () => (creatingNewPromo ? -1 : findPromoSceneIndex(scenes, activePromoId || undefined)),
@@ -374,6 +408,26 @@ export function PublishingPromoTab({
     if (creatingNewPromo) return null
     return promoSceneIndex >= 0 ? (scenes[promoSceneIndex] as Record<string, unknown>) : null
   }, [scenes, promoSceneIndex, creatingNewPromo])
+
+  const promoNarrationCues = useMemo(
+    () => (promoScene ? getSceneNarrationCues(promoScene) : []),
+    [promoScene]
+  )
+
+  const promoSceneBeats = useMemo(
+    () => (promoScene ? getSceneBeats(promoScene) : []),
+    [promoScene]
+  )
+
+  const projectCharacters = useMemo<DialogueTtsCharacter[]>(() => {
+    const vp = (metadata as { visionPhase?: { characters?: unknown } } | undefined)?.visionPhase
+    return Array.isArray(vp?.characters) ? (vp.characters as DialogueTtsCharacter[]) : []
+  }, [metadata])
+
+  const projectNarrationVoice = useMemo(() => {
+    const vp = (metadata as { visionPhase?: { narrationVoice?: unknown } } | undefined)?.visionPhase
+    return vp?.narrationVoice ?? null
+  }, [metadata])
 
   const aspect: PromoFrameAspect = useMemo(() => {
     if (aspectOverride) return aspectOverride
@@ -1608,22 +1662,73 @@ export function PublishingPromoTab({
               label="Promo Voiceover"
               detail={
                 narrationDetailFor(promoScene, language) ||
-                'Opening trailer voice-over hook'
+                'Shot-aligned trailer voiceover cues'
               }
               ready={Boolean(narrationAudioUrl)}
               generating={audioGenerating === 'narration'}
               disabled={Boolean(audioGenerating) || planning}
               onGenerate={() => void handleRegenAudio('narration')}
               extra={
-                narrationAudioUrl ? (
-                  <audio
-                    controls
-                    preload="metadata"
-                    src={narrationAudioUrl}
-                    className="h-7 max-w-[150px]"
-                  />
-                ) : null
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowNarrationCueStudio((v) => !v)}
+                    className={cn(
+                      'h-7 shrink-0 px-2 text-[10px] border',
+                      showNarrationCueStudio || promoNarrationCues.length > 0
+                        ? 'border-indigo-500/50 bg-indigo-500/15 text-indigo-200'
+                        : 'border-zinc-700 text-zinc-300'
+                    )}
+                  >
+                    <Mic className="h-3 w-3 mr-1" />
+                    Cues{promoNarrationCues.length > 0 ? ` (${promoNarrationCues.length})` : ''}
+                  </Button>
+                  {narrationAudioUrl && promoNarrationCues.length <= 1 ? (
+                    <audio
+                      controls
+                      preload="metadata"
+                      src={narrationAudioUrl}
+                      className="h-7 max-w-[130px]"
+                    />
+                  ) : null}
+                </div>
               }
+            />
+          </div>
+        )}
+
+        {promoScene && !creatingNewPromo && showNarrationCueStudio && (
+          <div className="mb-4">
+            <SceneNarrationCuePanel
+              compact
+              isPromo
+              projectId={projectId}
+              sceneId={String(promoScene.id || promoScene.sceneId || activePromoId || '')}
+              sceneIndex={promoSceneIndex >= 0 ? promoSceneIndex : undefined}
+              scene={promoScene}
+              beats={promoSceneBeats}
+              characters={projectCharacters}
+              narrationVoice={projectNarrationVoice}
+              activeLanguage={language}
+              onActiveLanguageChange={(nextLang) => setLanguage(nextLang)}
+              availableLanguages={languages}
+              onSceneUpdated={(updatedPromo) => {
+                const nextScenes = upsertPromoSceneInScenes(
+                  scenes,
+                  updatedPromo as unknown as import('@/lib/publish/buildPromoScene').PromoSceneRecord,
+                  {
+                    promoId: String(updatedPromo.id || promoScene.id || activePromoId || ''),
+                    createNew: false,
+                  }
+                )
+                syncServerPersistedPromo({
+                  scenes: nextScenes,
+                  promoScene:
+                    updatedPromo as unknown as import('@/lib/publish/buildPromoScene').PromoSceneRecord,
+                  createNew: false,
+                })
+              }}
             />
           </div>
         )}
@@ -1738,6 +1843,8 @@ export function PublishingPromoTab({
                     timelineBeats.filter((beat) => promoShotIncluded(beat)),
                     narrationStartShotKey
                   )}
+                  narrationCues={promoNarrationCues}
+                  language={language}
                   musicUrl={musicAudioUrl}
                   aspect={aspect}
                   watermark={watermarkEnabled}

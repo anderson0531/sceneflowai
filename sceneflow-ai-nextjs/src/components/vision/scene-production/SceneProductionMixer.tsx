@@ -36,6 +36,18 @@ import {
   type SpeechDuckWindow,
 } from '@/lib/scene/mixerScoreMusic'
 import {
+  buildCombinedSpeechDuckWindows,
+  computeNarrationElasticAdjustments,
+  mixerNarrationClipsToRenderPayload,
+  resolveMixerNarrationClips,
+  resolveUnifiedManualVideoRate,
+} from '@/lib/scene/mixerNarrationCues'
+import {
+  getNarrationCueLanguages,
+  getNarrationOwnedLineIds,
+  getSceneNarrationCues,
+} from '@/lib/script/sceneNarrationCues'
+import {
   DEFAULT_MUSIC_FILE_DURATION_SEC,
   isBeatMusicEnabled,
   isCuedBeatMusicEnabled,
@@ -150,6 +162,7 @@ import {
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
 import { MixerTimeline } from './MixerTimeline'
+import { NarrationCueControls } from './NarrationCueControls'
 import { ScoreMusicControls, type ScoreShotRow } from './ScoreMusicControls'
 import { ScenePreviewPlayer } from './ScenePreviewPlayer'
 import { ProductionSectionHeader } from './ProductionSectionHeader'
@@ -173,9 +186,13 @@ import type {
   MixerLanguageShotConfig,
   MixerLoudnessTarget,
   MixerMusicShotConfig,
+  MixerNarrationCueConfig,
   MixerSegmentAudioConfig,
   MixerSettingsPersistPayload,
+  SceneEndTransitionOverride,
+  SceneIntroTransition,
   ShotHoldStyle,
+  ShotPreHoldStyle,
   TextOverlayTranslationsByLanguage,
   WatermarkAnchor,
   WatermarkConfig,
@@ -613,6 +630,8 @@ function AudioTrackRow({
   isRegenerating,
   scoreMode = false,
   scorePanel,
+  narrationCueMode = false,
+  narrationPanel,
 }: {
   type: 'narration' | 'dialogue' | 'music' | 'sfx'
   label: string
@@ -646,6 +665,10 @@ function AudioTrackRow({
   scoreMode?: boolean
   /** Per-track and per-shot score controls, shown under the master Score row. */
   scorePanel?: React.ReactNode
+  /** Shot-aligned Narration cues own shot spans and per-cue previews — hide legacy single-clip range selector. */
+  narrationCueMode?: boolean
+  /** Per-cue narration controls and broadcast warmth EQ, shown under the master Narration row. */
+  narrationPanel?: React.ReactNode
 }) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
@@ -764,7 +787,7 @@ function AudioTrackRow({
         )}
         
         {/* Preview Button */}
-        {hasAudio && audioUrl && (
+        {hasAudio && audioUrl && !narrationCueMode && (
           <button
             onClick={(e) => { e.stopPropagation(); togglePreview(); }}
             disabled={disabled}
@@ -794,7 +817,7 @@ function AudioTrackRow({
       {config.enabled && hasAudio && !isCollapsed && (
         <div className="flex flex-col gap-3 px-4 pb-4 pt-3 border-t border-gray-700/50">
           {/* Beat Range Selector */}
-          {!scoreMode && segmentCount && segmentCount > 0 && (
+          {!scoreMode && !narrationCueMode && segmentCount && segmentCount > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-gray-500 uppercase w-16">Shots</span>
               <div className="flex items-center gap-1 flex-wrap">
@@ -1081,6 +1104,7 @@ function AudioTrackRow({
           )}
           
           {scoreMode && scorePanel}
+          {narrationCueMode && narrationPanel}
 
           {/* Individual Dialogue Line Controls */}
           {type === 'dialogue' && dialogueClips && dialogueClips.length > 0 && dialogueClipConfigs && onDialogueClipConfigChange && (
@@ -2396,7 +2420,7 @@ function SegmentBeatTrimControls({
 }
 
 /**
- * SegmentAudioControls - Mute/unmute, volume, and manual tail hold control for individual segment audio
+ * SegmentAudioControls - Shot Audio, Intro/Close Freeze, Slow-Mo Speed, and Scene Bookend Alignment
  */
 function SegmentAudioControls({
   segments,
@@ -2408,11 +2432,17 @@ function SegmentAudioControls({
   isCollapsed = false,
   onToggleCollapse,
   getPlaybackSegmentDuration,
+  getEffectiveVideoRate,
+  getEffectivePreHoldSec,
   audioTracks,
   languageActive = false,
   preserveBackgroundStem = true,
   extractingStemIds = {},
   onExtractSegmentStem,
+  sceneIntroTransition,
+  onSceneIntroChange,
+  sceneEndTransition,
+  onSceneEndChange,
 }: {
   segments: SceneSegment[]
   segmentConfigs: Record<string, SegmentAudioConfig>
@@ -2423,11 +2453,17 @@ function SegmentAudioControls({
   isCollapsed?: boolean
   onToggleCollapse?: () => void
   getPlaybackSegmentDuration: (segment: SceneSegment) => number
+  getEffectiveVideoRate?: (segmentId: string) => number
+  getEffectivePreHoldSec?: (segmentId: string) => number
   audioTracks?: MixerAudioTracks
   languageActive?: boolean
   preserveBackgroundStem?: boolean
   extractingStemIds?: Record<string, boolean>
   onExtractSegmentStem?: (segment: SceneSegment) => void
+  sceneIntroTransition?: SceneIntroTransition
+  onSceneIntroChange?: (next: SceneIntroTransition) => void
+  sceneEndTransition?: SceneEndTransitionOverride | null
+  onSceneEndChange?: (next: SceneEndTransitionOverride | null) => void
 }) {
   const allMuted = segments.length > 0 && segments.every(
     (seg) => !(segmentConfigs[seg.segmentId]?.includeAudio ?? true)
@@ -2458,38 +2494,55 @@ function SegmentAudioControls({
     })
   }
 
-  const updateSegmentHold = (segmentId: string, postSegmentPause: number) => {
+  const patchSegmentConfig = (segmentId: string, patch: Partial<SegmentAudioConfig>) => {
     const current = segmentConfigs[segmentId] || { includeAudio: true, volume: 1.0 }
-    const clamped = Math.max(0, Math.min(5, Math.round(postSegmentPause * 10) / 10))
     onConfigChange({
       ...segmentConfigs,
-      [segmentId]: { ...current, postSegmentPause: clamped > 0 ? clamped : undefined }
+      [segmentId]: { ...current, ...patch },
+    })
+  }
+
+  const updateSegmentPreHold = (segmentId: string, preSegmentHoldSec: number) => {
+    const clamped = Math.max(0, Math.min(10, Math.round(preSegmentHoldSec * 10) / 10))
+    patchSegmentConfig(segmentId, {
+      preSegmentHoldSec: clamped > 0 ? clamped : undefined,
+      preHoldStyle: segmentConfigs[segmentId]?.preHoldStyle ?? 'push',
+    })
+  }
+
+  const updateSegmentPreHoldStyle = (segmentId: string, preHoldStyle: ShotPreHoldStyle) => {
+    patchSegmentConfig(segmentId, { preHoldStyle })
+  }
+
+  const updateSegmentVideoRate = (segmentId: string, rate: number) => {
+    const clamped = Math.max(0.5, Math.min(1.5, Math.round(rate * 100) / 100))
+    patchSegmentConfig(segmentId, {
+      videoPlaybackRate: Math.abs(clamped - 1) < 0.01 ? undefined : clamped,
+    })
+  }
+
+  const updateSegmentHold = (segmentId: string, postSegmentPause: number) => {
+    const clamped = Math.max(0, Math.min(15, Math.round(postSegmentPause * 10) / 10))
+    patchSegmentConfig(segmentId, {
+      postSegmentPause: clamped > 0 ? clamped : undefined,
     })
   }
 
   const updateSegmentHoldStyle = (segmentId: string, holdStyle: ShotHoldStyle) => {
-    const current = segmentConfigs[segmentId] || { includeAudio: true, volume: 1.0 }
-    onConfigChange({
-      ...segmentConfigs,
-      [segmentId]: { ...current, holdStyle }
-    })
+    patchSegmentConfig(segmentId, { holdStyle })
   }
 
   const updateSegmentLeadIn = (segmentId: string, audioLeadInSec: number) => {
-    const current = segmentConfigs[segmentId] || { includeAudio: true, volume: 1.0 }
     const clamped = Math.max(0, Math.min(1.0, Math.round(audioLeadInSec * 10) / 10))
-    onConfigChange({
-      ...segmentConfigs,
-      [segmentId]: { ...current, audioLeadInSec: clamped > 0 ? clamped : undefined }
+    patchSegmentConfig(segmentId, {
+      audioLeadInSec: clamped > 0 ? clamped : undefined,
     })
   }
 
   const updateSegmentTailOut = (segmentId: string, audioTailOutSec: number) => {
-    const current = segmentConfigs[segmentId] || { includeAudio: true, volume: 1.0 }
     const clamped = Math.max(0, Math.min(1.0, Math.round(audioTailOutSec * 10) / 10))
-    onConfigChange({
-      ...segmentConfigs,
-      [segmentId]: { ...current, audioTailOutSec: clamped > 0 ? clamped : undefined }
+    patchSegmentConfig(segmentId, {
+      audioTailOutSec: clamped > 0 ? clamped : undefined,
     })
   }
   
@@ -2509,8 +2562,8 @@ function SegmentAudioControls({
               {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
             </button>
           )}
-          <Film className="w-4 h-4 text-purple-400" />
-          <span className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">Shot Audio & Hold</span>
+          <Sliders className="w-4 h-4 text-purple-400" />
+          <span className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">Shot Audio &amp; Pacing Alignment</span>
           <span className="text-[11px] text-zinc-500 font-mono">
             {segments.length} {segments.length === 1 ? 'shot' : 'shots'}
           </span>
@@ -2526,6 +2579,159 @@ function SegmentAudioControls({
       
       {!isCollapsed && (
         <div className="px-3 pb-3 space-y-3 border-t border-zinc-800/80 pt-2.5">
+          {/* Scene Bookends: Intro & Close Alignment */}
+          {(onSceneIntroChange || onSceneEndChange) && (
+            <div className="rounded-md border border-zinc-800 bg-zinc-950/75 p-2.5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-cyan-300">
+                  Scene Bookends (Intro &amp; Close)
+                </span>
+                <span className="text-[9px] text-zinc-500">
+                  Opening &amp; closing transitions + holds
+                </span>
+              </div>
+              {onSceneIntroChange && sceneIntroTransition && (
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[10px]">
+                  <div className="flex items-center gap-1">
+                    <span className="text-zinc-500 uppercase w-11 shrink-0">Intro:</span>
+                    {(
+                      [
+                        ['cut', 'Cut In'],
+                        ['fade_in', 'Fade In'],
+                      ] as const
+                    ).map(([fx, lbl]) => {
+                      const active = sceneIntroTransition.effect === fx
+                      return (
+                        <button
+                          key={fx}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() =>
+                            onSceneIntroChange({
+                              ...sceneIntroTransition,
+                              effect: fx,
+                              durationSec: fx === 'fade_in' ? (sceneIntroTransition.durationSec || 0.8) : 0,
+                            })
+                          }
+                          className={cn(
+                            'px-2 py-0.5 rounded border font-medium transition-colors',
+                            active
+                              ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-200'
+                              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                          )}
+                        >
+                          {lbl}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="flex items-center gap-1" title="Hold opening frame at the start of the scene before Shot 1 motion begins">
+                    <span className="text-zinc-500 uppercase">Lead Hold:</span>
+                    {[0, 1.0, 2.0].map((holdVal) => {
+                      const active = Math.abs((sceneIntroTransition.leadInHoldSec ?? 0) - holdVal) < 0.05
+                      return (
+                        <button
+                          key={holdVal}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() =>
+                            onSceneIntroChange({
+                              ...sceneIntroTransition,
+                              leadInHoldSec: holdVal > 0 ? holdVal : undefined,
+                            })
+                          }
+                          className={cn(
+                            'px-1.5 py-0.5 rounded font-mono border transition-colors',
+                            active
+                              ? 'bg-indigo-500/20 border-indigo-400/50 text-indigo-200'
+                              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                          )}
+                        >
+                          {holdVal === 0 ? '0s' : `+${holdVal.toFixed(0)}s`}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              {onSceneEndChange && (
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[10px]">
+                  <div className="flex items-center gap-1">
+                    <span className="text-zinc-500 uppercase w-11 shrink-0">Close:</span>
+                    {(
+                      [
+                        ['auto', 'Auto'],
+                        ['cut', 'Cut'],
+                        ['fade', 'Fade Out'],
+                        ['dissolve', 'Dissolve'],
+                      ] as const
+                    ).map(([fx, lbl]) => {
+                      const currentFx = sceneEndTransition?.effect ?? 'auto'
+                      const active = currentFx === fx
+                      return (
+                        <button
+                          key={fx}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => {
+                            if (fx === 'auto') {
+                              onSceneEndChange(null)
+                            } else {
+                              onSceneEndChange({
+                                effect: fx,
+                                durationSec: fx === 'cut' ? 0 : (sceneEndTransition?.durationSec || 1.0),
+                                holdSec: sceneEndTransition?.holdSec ?? 0,
+                              })
+                            }
+                          }}
+                          className={cn(
+                            'px-1.5 py-0.5 rounded border font-medium transition-colors',
+                            active
+                              ? 'bg-amber-500/20 border-amber-400/50 text-amber-200'
+                              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                          )}
+                        >
+                          {lbl}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="flex items-center gap-1" title="Hold final frame at the end of the scene">
+                    <span className="text-zinc-500 uppercase">Tail Hold:</span>
+                    {[0, 1.5, 3.0].map((holdVal) => {
+                      const active = Math.abs((sceneEndTransition?.holdSec ?? 0) - holdVal) < 0.05
+                      return (
+                        <button
+                          key={holdVal}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() =>
+                            onSceneEndChange({
+                              effect: sceneEndTransition?.effect ?? 'fade',
+                              durationSec:
+                                (sceneEndTransition?.effect ?? 'fade') === 'cut'
+                                  ? 0
+                                  : (sceneEndTransition?.durationSec || 1.0),
+                              holdSec: holdVal,
+                            })
+                          }
+                          className={cn(
+                            'px-1.5 py-0.5 rounded font-mono border transition-colors',
+                            active
+                              ? 'bg-amber-500/20 border-amber-400/50 text-amber-200'
+                              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                          )}
+                        >
+                          {holdVal === 0 ? '0s' : `+${holdVal.toFixed(1)}s`}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Master Volume Slider */}
           <div className="flex items-center gap-3">
             <Volume2 className="w-4 h-4 text-zinc-400 flex-shrink-0" />
@@ -2544,19 +2750,30 @@ function SegmentAudioControls({
           <div className="space-y-2">
             {segments.map((seg, i) => {
               const config = segmentConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
+              const manualPreHold = config.preSegmentHoldSec ?? 0
+              const effectivePreHold = getEffectivePreHoldSec?.(seg.segmentId) ?? manualPreHold
+              const elasticIntroSec = Math.max(0, effectivePreHold - manualPreHold)
               const manualHold = config.postSegmentPause ?? 0
-              const baseClipDur = seg.actualVideoDuration ?? seg.imageDuration ?? (seg.endTime - seg.startTime) ?? 4
-              const autoPauseSec = audioTracks?.dialogue?.enabled
-                ? Math.max(0, getPlaybackSegmentDuration(seg) - baseClipDur - manualHold)
-                : 0
+              const effectiveRate =
+                getEffectiveVideoRate?.(seg.segmentId) ?? config.videoPlaybackRate ?? 1
+              const baseClipDur =
+                (seg.actualVideoDuration ?? seg.imageDuration ?? ((seg.endTime - seg.startTime) || 4)) /
+                Math.max(0.5, effectiveRate)
+              const autoPauseSec =
+                audioTracks?.dialogue?.enabled || audioTracks?.narration?.enabled
+                  ? Math.max(
+                      0,
+                      getPlaybackSegmentDuration(seg) - effectivePreHold - baseClipDur - manualHold
+                    )
+                  : 0
               return (
                 <div 
                   key={seg.segmentId}
                   className={cn(
-                    'flex flex-col gap-2 p-2 rounded-md transition-colors border',
+                    'flex flex-col gap-2 p-2.5 rounded-md transition-colors border',
                     config.includeAudio 
                       ? 'bg-zinc-950/70 border-zinc-800' 
-                      : 'bg-zinc-950/30 border-zinc-800/50 opacity-75'
+                      : 'bg-zinc-950/30 border-zinc-800/50 opacity-85'
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -2626,10 +2843,208 @@ function SegmentAudioControls({
                     )}
                   </div>
 
-                  {/* Pacing Hold & Auto Pause Row */}
+                  {/* Quick Shot Alignment Presets */}
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 pl-11 text-[10px]">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="text-zinc-500 uppercase tracking-wider mr-0.5">Preset:</span>
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() =>
+                          patchSegmentConfig(seg.segmentId, {
+                            preSegmentHoldSec: undefined,
+                            videoPlaybackRate: undefined,
+                            postSegmentPause: undefined,
+                          })
+                        }
+                        className={cn(
+                          'px-1.5 py-0.5 rounded border font-medium transition-colors',
+                          manualPreHold <= 0 &&
+                            manualHold <= 0 &&
+                            Math.abs((config.videoPlaybackRate ?? 1) - 1) < 0.02
+                            ? 'bg-zinc-800 border-zinc-600 text-zinc-100'
+                            : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                        )}
+                        title="Reset manual Intro Freeze, Speed, and Close Hold to 1.0x Normal"
+                      >
+                        1.0× Normal
+                      </button>
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() =>
+                          patchSegmentConfig(seg.segmentId, {
+                            preSegmentHoldSec: 2.0,
+                            preHoldStyle: 'push',
+                          })
+                        }
+                        className={cn(
+                          'px-1.5 py-0.5 rounded border font-medium transition-colors',
+                          manualPreHold >= 1.5
+                            ? 'bg-indigo-500/20 border-indigo-400/50 text-indigo-200'
+                            : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                        )}
+                        title="Hold opening frame for 2.0s with subtle Slow Push so narration introduces the shot before motion starts"
+                      >
+                        Intro Freeze (+2s)
+                      </button>
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() =>
+                          patchSegmentConfig(seg.segmentId, {
+                            postSegmentPause: 2.5,
+                            holdStyle: 'push',
+                          })
+                        }
+                        className={cn(
+                          'px-1.5 py-0.5 rounded border font-medium transition-colors',
+                          manualHold >= 2.0
+                            ? 'bg-amber-500/20 border-amber-400/50 text-amber-200'
+                            : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                        )}
+                        title="Hold closing frame for 2.5s with Slow Zoom for after-shot explanation"
+                      >
+                        Close Freeze (+2.5s)
+                      </button>
+                      {seg.assetType !== 'image' && (
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => updateSegmentVideoRate(seg.segmentId, 0.75)}
+                          className={cn(
+                            'px-1.5 py-0.5 rounded border font-medium transition-colors',
+                            Math.abs((config.videoPlaybackRate ?? 1) - 0.75) < 0.03
+                              ? 'bg-purple-500/20 border-purple-400/50 text-purple-200'
+                              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                          )}
+                          title="Play shot in smooth 0.75× slow motion (extends 8s clip to 10.7s)"
+                        >
+                          Slow-Mo (0.75×)
+                        </button>
+                      )}
+                    </div>
+                    <span className="font-mono text-[10px] text-cyan-300/90">
+                      Total {getPlaybackSegmentDuration(seg).toFixed(1)}s
+                    </span>
+                  </div>
+
+                  {/* Intro Freeze Row (preSegmentHoldSec + preHoldStyle) */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pl-11 text-[10px]">
+                    <div
+                      className="flex items-center gap-1.5"
+                      title="Intro Freeze: hold Frame 0 before shot motion begins so narration can introduce the visual"
+                    >
+                      <span className="text-zinc-500 uppercase tracking-wider w-20 shrink-0">
+                        Intro Freeze:
+                      </span>
+                      <button
+                        type="button"
+                        disabled={disabled || manualPreHold <= 0}
+                        onClick={() => updateSegmentPreHold(seg.segmentId, manualPreHold - 0.5)}
+                        className="px-1.5 py-0.2 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white disabled:opacity-40"
+                      >
+                        -0.5s
+                      </button>
+                      <span
+                        className={cn(
+                          'font-mono w-11 text-center',
+                          effectivePreHold > 0.05 ? 'text-indigo-300 font-semibold' : 'text-zinc-400'
+                        )}
+                      >
+                        +{manualPreHold.toFixed(1)}s
+                      </span>
+                      <button
+                        type="button"
+                        disabled={disabled || manualPreHold >= 10}
+                        onClick={() => updateSegmentPreHold(seg.segmentId, manualPreHold + 0.5)}
+                        className="px-1.5 py-0.2 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white disabled:opacity-40"
+                      >
+                        +0.5s
+                      </button>
+                      {elasticIntroSec > 0.05 && (
+                        <span
+                          className="text-[9px] font-mono text-purple-300"
+                          title="Added automatically by Narration Cue Intro Freeze mode"
+                        >
+                          (+{elasticIntroSec.toFixed(1)}s VO)
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {(
+                        [
+                          ['freeze', 'Still'],
+                          ['push', 'Slow Push'],
+                        ] as const
+                      ).map(([pVal, pLbl]) => {
+                        const activeP = (config.preHoldStyle ?? 'push') === pVal
+                        return (
+                          <button
+                            key={pVal}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => updateSegmentPreHoldStyle(seg.segmentId, pVal)}
+                            className={cn(
+                              'px-1.5 py-0.5 rounded font-medium border transition-colors',
+                              activeP
+                                ? 'bg-indigo-500/20 border-indigo-400/50 text-indigo-200'
+                                : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                            )}
+                          >
+                            {pLbl}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Motion Speed Row (0.5x - 1.5x unlocked for English & all languages) */}
+                  {seg.assetType !== 'image' && (
+                    <div className="flex flex-wrap items-center gap-2 pl-11 text-[10px]">
+                      <span className="text-zinc-500 uppercase tracking-wider w-20 shrink-0">
+                        Motion Speed:
+                      </span>
+                      <Slider
+                        value={[Math.round(effectiveRate * 100)]}
+                        onValueChange={([v]) => updateSegmentVideoRate(seg.segmentId, v / 100)}
+                        min={50}
+                        max={150}
+                        step={5}
+                        disabled={disabled}
+                        className="flex-1 min-w-[90px]"
+                      />
+                      <span className="font-mono w-10 text-right text-purple-200 tabular-nums">
+                        {effectiveRate.toFixed(2).replace(/0$/, '')}×
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {([0.67, 0.75, 0.85, 1.0, 1.25] as const).map((rVal) => {
+                          const activeR = Math.abs(effectiveRate - rVal) < 0.02
+                          return (
+                            <button
+                              key={rVal}
+                              type="button"
+                              disabled={disabled}
+                              onClick={() => updateSegmentVideoRate(seg.segmentId, rVal)}
+                              className={cn(
+                                'px-1.5 py-0.2 rounded font-mono border transition-colors text-[9px]',
+                                activeR
+                                  ? 'bg-purple-500/25 border-purple-400/50 text-purple-200'
+                                  : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-200'
+                              )}
+                            >
+                              {rVal === 1 ? '1.0×' : `${rVal}×`}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Close Hold & Auto Pause Row */}
                   <div className="flex items-center justify-between gap-2 pl-11 text-[10px]">
-                    <div className="flex items-center gap-1.5" title="Tail Hold: add extra pause at the end of this shot for dramatic pacing or audio overlap (L-cuts)">
-                      <span className="text-zinc-500 uppercase tracking-wider">Extra Pause:</span>
+                    <div className="flex items-center gap-1.5" title="Close Hold: hold the last frame at the end of this shot for after-shot explanation or L-cut overlap (0–15s)">
+                      <span className="text-zinc-500 uppercase tracking-wider w-20 shrink-0">Close Hold:</span>
                       <button
                         type="button"
                         disabled={disabled || manualHold <= 0}
@@ -2639,24 +3054,24 @@ function SegmentAudioControls({
                         -0.5s
                       </button>
                       <span className={cn(
-                        'font-mono w-10 text-center',
+                        'font-mono w-11 text-center',
                         manualHold > 0 ? 'text-amber-300 font-semibold' : 'text-zinc-400'
                       )}>
                         +{manualHold.toFixed(1)}s
                       </span>
                       <button
                         type="button"
-                        disabled={disabled || manualHold >= 5}
+                        disabled={disabled || manualHold >= 15}
                         onClick={() => updateSegmentHold(seg.segmentId, manualHold + 0.5)}
                         className="px-1.5 py-0.2 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white disabled:opacity-40"
                       >
                         +0.5s
                       </button>
                     </div>
-                    <div className="flex items-center gap-1 text-zinc-500" title="Automatic pause added to sync with dialogue audio duration">
-                      <span>Auto Pause:</span>
+                    <div className="flex items-center gap-1 text-zinc-500" title="Automatic hold added to sync with Dialogue or Narration Cue duration">
+                      <span>Elastic Sync:</span>
                       <span className="text-zinc-300 font-mono">
-                        {autoPauseSec.toFixed(1)}s
+                        +{autoPauseSec.toFixed(1)}s
                       </span>
                     </div>
                   </div>
@@ -2664,7 +3079,7 @@ function SegmentAudioControls({
                   {/* Hold Motion Style (Freeze vs. Ken Burns Push vs. Ping-Pong Tail) */}
                   <div className="flex flex-wrap items-center justify-between gap-2 pl-11 text-[10px]">
                     <div className="flex items-center gap-1">
-                      <span className="text-zinc-500 uppercase tracking-wider mr-0.5">Hold Style:</span>
+                      <span className="text-zinc-500 uppercase tracking-wider mr-0.5">Close Style:</span>
                       {(
                         [
                           ['freeze', 'Still Frame'],
@@ -2687,7 +3102,7 @@ function SegmentAudioControls({
                             )}
                             title={
                               modeVal === 'push'
-                                ? '103% Ken Burns Push: subtle slow zoom during extended dialogue/manual hold'
+                                ? '103% Ken Burns Push: subtle slow zoom during extended dialogue/narration/manual hold'
                                 : modeVal === 'pingpong'
                                   ? 'Ping-Pong Tail: micro-motion loop during extended hold so the frame never looks static'
                                   : 'Freeze Frame: standard static last-frame freeze during extended hold'
@@ -2925,6 +3340,16 @@ export function SceneProductionMixer({
   const [dialogueClipConfigs, setDialogueClipConfigs] = useState<Record<string, AudioClipConfig>>({})
   const [musicShotConfigs, setMusicShotConfigs] = useState<Record<string, MixerMusicShotConfig>>({})
   const [languageShotConfigs, setLanguageShotConfigs] = useState<Record<string, MixerLanguageShotConfig>>({})
+  const [narrationCueConfigs, setNarrationCueConfigs] = useState<
+    Record<string, Partial<MixerNarrationCueConfig>>
+  >({})
+  const [sceneIntroTransition, setSceneIntroTransition] = useState<SceneIntroTransition>({
+    effect: 'cut',
+    durationSec: 0,
+  })
+  const [sceneEndTransition, setSceneEndTransition] = useState<SceneEndTransitionOverride | null>(
+    null
+  )
   
   // Handle Dialogue Clip updates from timeline (declared early to avoid TDZ in minified production builds)
   const handleDialogueClipChange = useCallback((clipId: string, newStartTime: number, newDuration?: number) => {
@@ -2953,6 +3378,16 @@ export function SceneProductionMixer({
   const mixerIncludedSegments = useMemo(
     () => filterMixerIncludedSegments(mixerBeatSegments),
     [mixerBeatSegments]
+  )
+
+  const sceneNarrationCues = useMemo(() => {
+    if (!audioAssets.scoreScene) return []
+    return getSceneNarrationCues(audioAssets.scoreScene, getSceneBeats(audioAssets.scoreScene))
+  }, [audioAssets.scoreScene])
+
+  const narrationOwnedLineIds = useMemo(
+    () => getNarrationOwnedLineIds(audioAssets.scoreScene),
+    [audioAssets.scoreScene]
   )
 
   /** Minimal scene shape for shared audio layout (segment dialogueLineIds + multi-lang audio). */
@@ -3015,10 +3450,96 @@ export function SceneProductionMixer({
     [isEnglish, mixerBeatSegments, segments, selectedLanguage, languageShotConfigs, klingLipsyncEnabled]
   )
 
+  const activeSegmentsForElastic = useMemo(() => {
+    const presented = mixerBeatSegments.map((segment) =>
+      presentSegmentForShotMethod(
+        segment,
+        productionTarget.language,
+        shotMethodFor(segment.segmentId)
+      )
+    )
+    const videos = listIncludedBeatVideos(presented, audioAssets.scoreScene)
+    return videos.length > 0 ? videos : filterMixerIncludedSegments(presented)
+  }, [mixerBeatSegments, productionTarget.language, shotMethodFor, audioAssets.scoreScene])
+
+  const narrationElasticAdjustments = useMemo(
+    () =>
+      computeNarrationElasticAdjustments({
+        scene: audioAssets.scoreScene,
+        segments: activeSegmentsForElastic,
+        language: selectedLanguage,
+        narrationEnabled: audioTracks.narration.enabled,
+        narrationCueConfigs,
+        segmentAudioConfigs,
+        languageShotConfigs,
+        measuredVideoDurations: measuredSegmentDurations,
+        probedDurations,
+        getBaseShotDuration: (seg, manualRate) => {
+          const isLocalizedRegenWithEmbedAudio =
+            !isEnglish &&
+            shotMethodFor(seg.segmentId) === 'regenerate' &&
+            !resolveLanguageClipPlayback(seg, selectedLanguage).usingMaster &&
+            isBeatEmbedAudioIncluded(segmentAudioConfigs[seg.segmentId]) &&
+            masterSegmentVolume > 0
+          return computePlaybackSegmentDuration({
+            segment: seg,
+            dialogueClips: resolvedDialogueClips,
+            probedDurations,
+            measuredVideoDuration: measuredSegmentDurations[seg.segmentId],
+            preSegmentHoldSec: segmentAudioConfigs[seg.segmentId]?.preSegmentHoldSec,
+            manualPostPause: segmentAudioConfigs[seg.segmentId]?.postSegmentPause,
+            dialogueEnabled: audioTracks.dialogue.enabled && !isLocalizedRegenWithEmbedAudio,
+            narrationPrefix,
+            getPlaybackRate: getDialoguePlaybackRate,
+            videoPlaybackRate: manualRate,
+            excludedLineIds: narrationOwnedLineIds,
+          })
+        },
+      }),
+    [
+      audioAssets.scoreScene,
+      activeSegmentsForElastic,
+      selectedLanguage,
+      audioTracks.narration.enabled,
+      audioTracks.dialogue.enabled,
+      narrationCueConfigs,
+      segmentAudioConfigs,
+      languageShotConfigs,
+      measuredSegmentDurations,
+      probedDurations,
+      isEnglish,
+      shotMethodFor,
+      masterSegmentVolume,
+      resolvedDialogueClips,
+      narrationPrefix,
+      getDialoguePlaybackRate,
+      narrationOwnedLineIds,
+    ]
+  )
+
   const shotVideoRateFor = useCallback(
     (segmentId: string) =>
-      isEnglish ? 1 : resolveShotVideoPlaybackRate(languageShotConfigs[segmentId]),
-    [isEnglish, languageShotConfigs]
+      narrationElasticAdjustments[segmentId]?.effectiveVideoPlaybackRate ??
+      resolveUnifiedManualVideoRate(segmentId, segmentAudioConfigs, languageShotConfigs),
+    [narrationElasticAdjustments, segmentAudioConfigs, languageShotConfigs]
+  )
+
+  const shotPreHoldSecFor = useCallback(
+    (segmentId: string) =>
+      Math.max(
+        0,
+        (segmentAudioConfigs[segmentId]?.preSegmentHoldSec ?? 0) +
+          (narrationElasticAdjustments[segmentId]?.addedPreHoldSec ?? 0)
+      ),
+    [segmentAudioConfigs, narrationElasticAdjustments]
+  )
+
+  const shotPreHoldStyleFor = useCallback(
+    (segmentId: string): ShotPreHoldStyle =>
+      segmentAudioConfigs[segmentId]?.preHoldStyle ??
+      narrationElasticAdjustments[segmentId]?.suggestedPreHoldStyle ??
+      'push',
+    [segmentAudioConfigs, narrationElasticAdjustments]
   )
 
   const buildSegmentDurationInput = useCallback(
@@ -3034,28 +3555,32 @@ export function SceneProductionMixer({
         dialogueClips: resolvedDialogueClips,
         probedDurations,
         measuredVideoDuration: measuredSegmentDurations[segment.segmentId],
+        preSegmentHoldSec: shotPreHoldSecFor(segment.segmentId),
         manualPostPause: segmentAudioConfigs[segment.segmentId]?.postSegmentPause,
+        narrationPostPause: narrationElasticAdjustments[segment.segmentId]?.addedPostHoldSec,
         dialogueEnabled: audioTracks.dialogue.enabled && !isLocalizedRegenWithEmbedAudio,
         narrationPrefix,
         getPlaybackRate: getDialoguePlaybackRate,
-        videoPlaybackRate: isEnglish
-          ? 1
-          : resolveShotVideoPlaybackRate(languageShotConfigs[segment.segmentId]),
+        videoPlaybackRate: shotVideoRateFor(segment.segmentId),
+        excludedLineIds: narrationOwnedLineIds,
       }
     },
     [
       resolvedDialogueClips,
       probedDurations,
       measuredSegmentDurations,
+      shotPreHoldSecFor,
       segmentAudioConfigs,
+      narrationElasticAdjustments,
       audioTracks.dialogue.enabled,
       narrationPrefix,
       getDialoguePlaybackRate,
+      shotVideoRateFor,
+      narrationOwnedLineIds,
       isEnglish,
       selectedLanguage,
       shotMethodFor,
       masterSegmentVolume,
-      languageShotConfigs,
     ]
   )
 
@@ -3205,9 +3730,9 @@ export function SceneProductionMixer({
       const assigned = getClipsAssignedToSegment(
         seg,
         resolvedDialogueClips,
-        segments,
         narrationPrefix,
-        mixerAudioSceneStub
+        mixerAudioSceneStub,
+        narrationOwnedLineIds
       )
       if (assigned.length === 0) {
         map[seg.segmentId] = { naturalSec: 0, effectiveSec: 0, clipIds: [] }
@@ -3230,11 +3755,11 @@ export function SceneProductionMixer({
   }, [
     mixerBeatSegments,
     resolvedDialogueClips,
-    segments,
     narrationPrefix,
     mixerAudioSceneStub,
     probedDurations,
     getDialoguePlaybackRate,
+    narrationOwnedLineIds,
   ])
 
   const handleSelectDialogueSignageShots = useCallback(() => {
@@ -3634,6 +4159,20 @@ export function SceneProductionMixer({
     }))
   }, [])
 
+  const handleNarrationCueConfigChange = useCallback(
+    (cueId: string, patch: Partial<MixerNarrationCueConfig>) => {
+      setNarrationCueConfigs((prev) => ({
+        ...prev,
+        [cueId]: {
+          ...prev[cueId],
+          ...patch,
+          cueId,
+        },
+      }))
+    },
+    []
+  )
+
   const [selectedTrimSegmentId, setSelectedTrimSegmentId] = useState<string | null>(null)
   const [focusBeatSegmentId, setFocusBeatSegmentId] = useState<string | null>(null)
 
@@ -3913,6 +4452,9 @@ export function SceneProductionMixer({
       setAudioTracks(merged.audioTracks)
       setDialogueClipConfigs(merged.dialogueClipConfigs)
       setMusicShotConfigs(merged.musicShotConfigs)
+      setNarrationCueConfigs(merged.narrationCueConfigs)
+      setSceneIntroTransition(merged.sceneIntroTransition)
+      setSceneEndTransition(merged.sceneEndTransition)
       setMasterSegmentVolume(merged.masterSegmentVolume)
       setResolution(merged.resolution)
       setPreserveBackgroundStem(merged.preserveBackgroundStem)
@@ -3963,6 +4505,9 @@ export function SceneProductionMixer({
           segmentAudioConfigs: hydratedSegmentAudioConfigs,
           dialogueClipConfigs: merged.dialogueClipConfigs,
           musicShotConfigs: merged.musicShotConfigs,
+          narrationCueConfigs: merged.narrationCueConfigs,
+          sceneIntroTransition: merged.sceneIntroTransition,
+          sceneEndTransition: merged.sceneEndTransition,
           masterSegmentVolume: merged.masterSegmentVolume,
           resolution: merged.resolution,
           preserveBackgroundStem: merged.preserveBackgroundStem,
@@ -4063,6 +4608,9 @@ export function SceneProductionMixer({
         segmentAudioConfigs,
         dialogueClipConfigs,
         musicShotConfigs,
+        narrationCueConfigs,
+        sceneIntroTransition,
+        sceneEndTransition,
         masterSegmentVolume,
         resolution,
         preserveBackgroundStem,
@@ -4086,6 +4634,9 @@ export function SceneProductionMixer({
     segmentAudioConfigs,
     dialogueClipConfigs,
     musicShotConfigs,
+    narrationCueConfigs,
+    sceneIntroTransition,
+    sceneEndTransition,
     masterSegmentVolume,
     resolution,
     preserveBackgroundStem,
@@ -4159,7 +4710,7 @@ export function SceneProductionMixer({
     )
   }, [segmentIdsKey])
   
-  // Languages available in the mixer: configured streams + per-scene audio keys + segment language clips
+  // Languages available in the mixer: configured streams + per-scene audio keys + narration cues + segment language clips
   const availableLanguages = useMemo(() => {
     const langs = new Set<string>()
     if (audioAssets.narrationAudio) {
@@ -4168,12 +4719,15 @@ export function SceneProductionMixer({
     if (audioAssets.dialogueAudio && !Array.isArray(audioAssets.dialogueAudio)) {
       Object.keys(audioAssets.dialogueAudio).forEach((l) => langs.add(l))
     }
+    for (const cueLang of getNarrationCueLanguages(sceneNarrationCues)) {
+      langs.add(cueLang)
+    }
     for (const seg of segments) {
       Object.keys(seg.languageVersions || {}).forEach((l) => langs.add(l))
     }
     if (selectedLanguage) langs.add(selectedLanguage)
     return mergeStreamSelectorLanguages(projectStreams, langs)
-  }, [audioAssets, segments, projectStreams, selectedLanguage])
+  }, [audioAssets, sceneNarrationCues, segments, projectStreams, selectedLanguage])
 
   const languagesNotYetGenerated = useMemo(
     () =>
@@ -4270,7 +4824,21 @@ export function SceneProductionMixer({
       : audioAssets.dialogueAudio?.[selectedLanguage] || []
 
     const dialogueEntries = resolvedDialogueClips
-      .filter(c => c.url)
+      .filter((c) => {
+        if (!c.url) return false
+        if (narrationOwnedLineIds.size > 0) {
+          for (const ownedLineId of narrationOwnedLineIds) {
+            if (
+              c.id === ownedLineId ||
+              c.id === `dialogue-${ownedLineId}` ||
+              clipMatchesDialogueLineId(c, ownedLineId, narrationPrefix, mixerAudioSceneStub)
+            ) {
+              return false
+            }
+          }
+        }
+        return true
+      })
       .map(clip => {
         const di = clip.dialogueIndex
         const raw = (Array.isArray(rawDialogue)
@@ -4305,7 +4873,16 @@ export function SceneProductionMixer({
       music: musicUrl,
       sfx: sfxEntries,
     }
-  }, [audioAssets, isEnglish, selectedLanguage, resolvedDialogueClips, normalizedSceneSfx])
+  }, [
+    audioAssets,
+    isEnglish,
+    selectedLanguage,
+    resolvedDialogueClips,
+    normalizedSceneSfx,
+    narrationOwnedLineIds,
+    narrationPrefix,
+    mixerAudioSceneStub,
+  ])
 
   /** Dialogue start/duration from timeline drags override layout engine for preview + render. */
   const dialoguePlaybackAudioUrls = useMemo(() => {
@@ -4708,13 +5285,112 @@ export function SceneProductionMixer({
     })
   }, [mixerMusic.usingScore, audioAssets.scoreScene, previewSegments, scoredMusicCues, musicShotConfigs])
 
+  const mixerNarration = useMemo(
+    () =>
+      resolveMixerNarrationClips({
+        scene: audioAssets.scoreScene,
+        segments: previewSegments,
+        language: selectedLanguage,
+        getPlaybackSegmentDuration,
+        narrationConfig: audioTracks.narration,
+        narrationCueConfigs,
+        probedDurations,
+        legacyNarrationUrl: currentAudioUrls.narration,
+        legacyNarrationDuration: currentAudioUrls.narrationDuration,
+      }),
+    [
+      audioAssets.scoreScene,
+      previewSegments,
+      selectedLanguage,
+      getPlaybackSegmentDuration,
+      audioTracks.narration,
+      narrationCueConfigs,
+      probedDurations,
+      currentAudioUrls.narration,
+      currentAudioUrls.narrationDuration,
+    ]
+  )
+
+  // Auto-enable Track A2 Narration once per scene/language when shot-aligned narration cues
+  // with synthesized audio arrive and the user has not yet persisted explicit cue overrides.
+  const autoEnabledNarrationKeysRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const langKey = selectedLanguage.trim().toLowerCase() || 'en'
+    const token = `${sceneId}:${langKey}`
+    if (autoEnabledNarrationKeysRef.current.has(token)) return
+    if (!mixerNarration.usingCues || !mixerNarration.hasAnyCueForLanguage) return
+    autoEnabledNarrationKeysRef.current.add(token)
+    const persistedByLang = migrateMixerSettingsByLanguage(productionData)
+    const savedForLang = persistedByLang[langKey] ?? (langKey === 'en' ? productionData?.mixerSettings : undefined)
+    const explicitlyConfiguredNarration =
+      savedForLang?.narrationCueConfigs !== undefined &&
+      Object.keys(savedForLang.narrationCueConfigs).length > 0
+    if (!audioTracks.narration.enabled && !explicitlyConfiguredNarration) {
+      setAudioTracks((prev) => ({
+        ...prev,
+        narration: {
+          ...prev.narration,
+          enabled: true,
+        },
+      }))
+    }
+  }, [
+    sceneId,
+    selectedLanguage,
+    mixerNarration.usingCues,
+    mixerNarration.hasAnyCueForLanguage,
+    audioTracks.narration.enabled,
+    productionData,
+  ])
+
+  const narrationAudioProbeKey = useMemo(
+    () =>
+      mixerNarration.clips
+        .filter((c) => Boolean(c.url))
+        .map((c) => `${c.id}:${c.url}`)
+        .join('|'),
+    [mixerNarration.clips]
+  )
+
+  useEffect(() => {
+    if (!narrationAudioProbeKey) return
+    const cleaners: Array<() => void> = []
+    for (const clip of mixerNarration.clips) {
+      if (!clip.url) continue
+      const audio = document.createElement('audio')
+      audio.preload = 'metadata'
+      audio.src = clip.url
+      const clipId = clip.id
+      const storedDur = clip.duration
+      const onMeta = () => {
+        const decoded = audio.duration
+        if (!Number.isFinite(decoded) || decoded <= 0) return
+        setProbedDurations((prev) => {
+          const prevVal = prev[clipId]
+          if (prevVal != null && Math.abs(prevVal - decoded) < 0.05) return prev
+          if (prevVal == null && Math.abs(storedDur - decoded) < 0.05) return prev
+          return { ...prev, [clipId]: decoded }
+        })
+      }
+      audio.addEventListener('loadedmetadata', onMeta)
+      cleaners.push(() => {
+        audio.removeEventListener('loadedmetadata', onMeta)
+        audio.removeAttribute('src')
+        audio.load()
+      })
+    }
+    return () => cleaners.forEach((fn) => fn())
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by narrationAudioProbeKey
+  }, [narrationAudioProbeKey])
+
   const playbackAudioUrls = useMemo(
     () => ({
       ...dialoguePlaybackAudioUrls,
+      narrationClips: mixerNarration.clips,
       music: mixerMusic.clips[0]?.url ?? dialoguePlaybackAudioUrls.music,
       musicClips: mixerMusic.clips,
     }),
-    [dialoguePlaybackAudioUrls, mixerMusic]
+    [dialoguePlaybackAudioUrls, mixerNarration.clips, mixerMusic]
   )
 
   const nonEnglishBeatsMissingBackgroundStem = useMemo(() => {
@@ -4759,9 +5435,17 @@ export function SceneProductionMixer({
   const maxAudioDuration = useMemo(() => {
     let maxDuration = 0
     
-    // Narration duration
-    if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
-      maxDuration = Math.max(maxDuration, audioTracks.narration.startOffset + (playbackAudioUrls.narrationDuration ?? 0))
+    // Narration duration (shot-aligned cues or legacy stream)
+    if (audioTracks.narration.enabled) {
+      if (mixerNarration.clips.length > 0) {
+        const narrEndTimes = mixerNarration.clips.map((c) => c.startTime + c.duration)
+        maxDuration = Math.max(maxDuration, ...narrEndTimes)
+      } else if (playbackAudioUrls.narration) {
+        maxDuration = Math.max(
+          maxDuration,
+          audioTracks.narration.startOffset + (playbackAudioUrls.narrationDuration ?? 0)
+        )
+      }
     }
     
     // Dialogue duration - sum of all clips or last clip end time
@@ -4787,15 +5471,33 @@ export function SceneProductionMixer({
     }
     
     return maxDuration
-  }, [audioTracks, playbackAudioUrls, dialogueClipConfigs])
+  }, [audioTracks, playbackAudioUrls, dialogueClipConfigs, mixerNarration.clips])
   
   // Total duration = max of video and audio (Elastic Timing)
   const totalDuration = useMemo(() => {
     return Math.max(videoTotalDuration, maxAudioDuration)
   }, [videoTotalDuration, maxAudioDuration])
 
+  const narrationClipsForTimeline = useMemo(() => {
+    if (!audioTracks.narration.enabled || mixerNarration.clips.length === 0) return []
+    return mixerNarration.clips.map((c) => ({
+      id: c.id,
+      label: c.label,
+      startTime: c.startTime,
+      duration: c.duration,
+      audioUrl: c.url,
+      character: c.speakerLabel,
+    }))
+  }, [audioTracks.narration.enabled, mixerNarration.clips])
+
   const narrationClipForTimeline = useMemo(() => {
-    if (!audioTracks.narration.enabled || !playbackAudioUrls.narration) return null
+    if (
+      !audioTracks.narration.enabled ||
+      mixerNarration.clips.length > 0 ||
+      !playbackAudioUrls.narration
+    ) {
+      return null
+    }
     return {
       id: 'narration-main',
       label: 'Voiceover Narration',
@@ -4806,10 +5508,28 @@ export function SceneProductionMixer({
   }, [
     audioTracks.narration.enabled,
     audioTracks.narration.startOffset,
+    mixerNarration.clips.length,
     playbackAudioUrls.narration,
     playbackAudioUrls.narrationDuration,
     videoTotalDuration,
   ])
+
+  const videoPlaybackRatesForTimeline = useMemo(() => {
+    const map: Record<string, number> = {}
+    previewSegments.forEach((seg) => {
+      map[seg.segmentId] = shotVideoRateFor(seg.segmentId)
+    })
+    return map
+  }, [previewSegments, shotVideoRateFor])
+
+  const preHoldDurationsForTimeline = useMemo(() => {
+    const map: Record<string, number> = {}
+    previewSegments.forEach((seg, idx) => {
+      const lead = idx === 0 ? (sceneIntroTransition.leadInHoldSec ?? 0) : 0
+      map[seg.segmentId] = shotPreHoldSecFor(seg.segmentId) + lead
+    })
+    return map
+  }, [previewSegments, shotPreHoldSecFor, sceneIntroTransition.leadInHoldSec])
 
   const sfxClipsForTimeline = useMemo(() => {
     if (!audioTracks.sfx.enabled || !playbackAudioUrls.sfx?.length) return []
@@ -4874,14 +5594,25 @@ export function SceneProductionMixer({
 
   const nextScene = scenes?.[effectiveSceneIdx + 1]
   const nextSceneFrameUrl = sceneOpeningFrameUrl(nextScene)
-  const sceneEnd = useMemo(
-    () =>
-      resolveMixerSceneEnd(
-        scenes?.[effectiveSceneIdx]?.transitionToNext,
-        !!nextSceneFrameUrl
-      ),
-    [scenes, effectiveSceneIdx, nextSceneFrameUrl]
-  )
+  const sceneEnd = useMemo(() => {
+    const scriptResolved = resolveMixerSceneEnd(
+      scenes?.[effectiveSceneIdx]?.transitionToNext,
+      !!nextSceneFrameUrl
+    )
+    if (!sceneEndTransition) return scriptResolved
+    if (sceneEndTransition.effect === 'dissolve' && !nextSceneFrameUrl) {
+      return {
+        effect: 'fade' as const,
+        durationSec: sceneEndTransition.durationSec || 1.0,
+        holdSec: sceneEndTransition.holdSec || 0,
+      }
+    }
+    return {
+      effect: sceneEndTransition.effect,
+      durationSec: sceneEndTransition.effect === 'cut' ? 0 : (sceneEndTransition.durationSec || 1.0),
+      holdSec: sceneEndTransition.holdSec || 0,
+    }
+  }, [scenes, effectiveSceneIdx, nextSceneFrameUrl, sceneEndTransition])
   const timelineDuration = totalDuration + sceneEnd.holdSec
   
   // === Language Audio Generation Handler ===
@@ -5018,13 +5749,16 @@ export function SceneProductionMixer({
         const trimWin = resolveVideoTrimWindow(seg, sourceDur)
         const videoRate = shotVideoRateFor(seg.segmentId)
         const videoWall = videoWallDurationSec(trimWin.playableSec, videoRate)
-        const manualPostPause = Math.max(0, audioConfig.postSegmentPause ?? 0)
-        const autoDialoguePause = audioTracks.dialogue.enabled
-          ? Math.max(0, getPlaybackSegmentDuration(seg) - videoWall - manualPostPause)
-          : 0
-        const pauseDuration = manualPostPause + autoDialoguePause
+        const preSegmentHoldSec =
+          shotPreHoldSecFor(seg.segmentId) +
+          (index === 0 ? Math.max(0, sceneIntroTransition.leadInHoldSec ?? 0) : 0)
+        const preHoldStyle = shotPreHoldStyleFor(seg.segmentId)
+        const pauseDuration = Math.max(
+          0,
+          getPlaybackSegmentDuration(seg) - shotPreHoldSecFor(seg.segmentId) - videoWall
+        )
         const segStartTime = runningRenderStartSec
-        const segEndTime = segStartTime + videoWall + pauseDuration
+        const segEndTime = segStartTime + preSegmentHoldSec + videoWall + pauseDuration
         runningRenderStartSec = segEndTime
         const previous = index > 0 ? serverRenderSegments[index - 1] : undefined
         const join = renderTransitionFromPreviousShot(
@@ -5035,12 +5769,18 @@ export function SceneProductionMixer({
           segmentId: seg.segmentId,
           sequenceIndex: seg.sequenceIndex,
           videoUrl: lipsyncedVideoBySegment[seg.segmentId] || seg.activeAssetUrl!,
+          assetType: (seg.assetType === 'image' ? 'image' : 'video') as 'video' | 'image',
           startTime: segStartTime,
           endTime: segEndTime,
           audioSource: embedAudio.audioSource,
           audioVolume: embedAudio.audioVolume,
+          preSegmentHoldSec: preSegmentHoldSec > 0.01 ? preSegmentHoldSec : undefined,
+          preHoldStyle,
           pauseDuration,
-          holdStyle: audioConfig.holdStyle || 'freeze',
+          holdStyle:
+            audioConfig.holdStyle ||
+            narrationElasticAdjustments[seg.segmentId]?.suggestedHoldStyle ||
+            'freeze',
           audioLeadInSec: audioConfig.audioLeadInSec,
           audioTailOutSec: audioConfig.audioTailOutSec,
           watermarkCropPercent: seg.watermarkCropPercent,
@@ -5050,7 +5790,7 @@ export function SceneProductionMixer({
           ...join,
         }
       })
-      const renderVideoTotalDuration = runningRenderStartSec
+      let renderVideoTotalDuration = runningRenderStartSec
       
       // Build audio tracks payload
       const audioTracksPayload: Record<
@@ -5066,37 +5806,55 @@ export function SceneProductionMixer({
           fadeInSec?: number
           fadeOutSec?: number
           trimStart?: number
+          warmBroadcastEq?: boolean
         }>
       > = {}
 
-      const speechWindows: SpeechDuckWindow[] = []
+      const rawSpeechWindows: SpeechDuckWindow[] = []
 
       // Include active embedded video clip audio spans so Auto-Reduce ducks music under principal video clip audio
       for (const seg of segmentData) {
-        const clipAudioDur = Math.max(0, (seg.endTime - seg.startTime) - (seg.pauseDuration || 0))
+        const preHold = seg.preSegmentHoldSec || 0
+        const clipAudioDur = Math.max(
+          0,
+          (seg.endTime - seg.startTime) - preHold - (seg.pauseDuration || 0)
+        )
         if (seg.audioSource !== 'none' && (seg.audioVolume ?? 1) > 0 && clipAudioDur > 0) {
-          speechWindows.push({
-            startTime: Math.max(0, seg.startTime),
-            endTime: Math.max(0, seg.startTime) + clipAudioDur,
+          rawSpeechWindows.push({
+            startTime: Math.max(0, seg.startTime + preHold),
+            endTime: Math.max(0, seg.startTime + preHold) + clipAudioDur,
           })
         }
       }
       
-      if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
-        const narrStart = audioTracks.narration.startOffset
-        const narrDur = playbackAudioUrls.narrationDuration || renderVideoTotalDuration || totalDuration
-        if (narrDur > 0) {
-          speechWindows.push({
-            startTime: Math.max(0, narrStart),
-            endTime: Math.max(0, narrStart) + narrDur,
-          })
+      if (audioTracks.narration.enabled) {
+        if (mixerNarration.clips.length > 0) {
+          const { narrationRenderClips, extraFinalHoldSec } =
+            mixerNarrationClipsToRenderPayload(
+              mixerNarration.clips,
+              audioTracks.narration,
+              renderVideoTotalDuration
+            )
+          if (narrationRenderClips.length > 0) {
+            audioTracksPayload.narration = narrationRenderClips
+            if (extraFinalHoldSec > 0 && segmentData.length > 0) {
+              const lastSeg = segmentData[segmentData.length - 1]
+              lastSeg.pauseDuration = (lastSeg.pauseDuration || 0) + extraFinalHoldSec
+              lastSeg.endTime += extraFinalHoldSec
+              renderVideoTotalDuration += extraFinalHoldSec
+            }
+          }
+        } else if (playbackAudioUrls.narration) {
+          const narrStart = audioTracks.narration.startOffset
+          const narrDur = playbackAudioUrls.narrationDuration || renderVideoTotalDuration || totalDuration
+          audioTracksPayload.narration = [{
+            url: playbackAudioUrls.narration,
+            startTime: narrStart,
+            duration: narrDur,
+            volume: audioTracks.narration.volume,
+            warmBroadcastEq: audioTracks.narration.warmBroadcastEq !== false,
+          }]
         }
-        audioTracksPayload.narration = [{
-          url: playbackAudioUrls.narration,
-          startTime: narrStart,
-          duration: narrDur,
-          volume: audioTracks.narration.volume,
-        }]
       }
       
       if (audioTracks.dialogue.enabled && playbackAudioUrls.dialogue.length > 0) {
@@ -5110,7 +5868,7 @@ export function SceneProductionMixer({
             const duration = (d as { duration?: number }).duration || 3
             const playbackRate = clampDialoguePlaybackRate(dialogueClipConfigs[key]?.playbackRate)
             const wallDur = dialogueClipWallDuration(duration, playbackRate)
-            speechWindows.push({
+            rawSpeechWindows.push({
               startTime: Math.max(0, startTime - 0.1),
               endTime: Math.max(0, startTime) + wallDur + 0.15,
             })
@@ -5124,6 +5882,12 @@ export function SceneProductionMixer({
             }
           })
       }
+
+      const speechWindows = buildCombinedSpeechDuckWindows({
+        dialogueWindows: rawSpeechWindows,
+        narrationClips: audioTracksPayload.narration,
+        narrationEnabled: audioTracks.narration.enabled,
+      })
       
       if (audioTracks.music.enabled && (playbackAudioUrls.musicClips?.length ?? 0) > 0) {
         audioTracksPayload.music = mixerMusicClipsToRenderPayload(
@@ -5173,11 +5937,14 @@ export function SceneProductionMixer({
             const trimWin = resolveVideoTrimWindow(seg, sourceDur)
             const videoRate = shotVideoRateFor(seg.segmentId)
             const videoWall = videoWallDurationSec(trimWin.playableSec, videoRate)
-            const startTime = shotStartTimesBySegmentId[seg.segmentId] ?? seg.startTime ?? 0
+            const preHold = shotPreHoldSecFor(seg.segmentId)
+            const startTime =
+              (shotStartTimesBySegmentId[seg.segmentId] ?? seg.startTime ?? 0) + preHold
             return {
               url: seg.stemSeparation!.backgroundStemUrl!,
               startTime,
               duration: Math.max(0.5, videoWall),
+              trimStart: trimWin.inSec > 0.001 ? trimWin.inSec : undefined,
               volume: (audioConfig?.volume ?? 1.0) * masterSegmentVolume,
               playbackRate: videoRate !== 1 ? videoRate : undefined,
             }
@@ -5239,7 +6006,15 @@ export function SceneProductionMixer({
             },
             timing: overlay.timing,
           })),
-          // Include watermark config for FFmpeg burning
+          // Include scene intro & end transitions and watermark config for FFmpeg burning
+          sceneIntroTransition:
+            sceneIntroTransition.effect === 'fade_in' && sceneIntroTransition.durationSec > 0
+              ? {
+                  effect: sceneIntroTransition.effect,
+                  durationSec: sceneIntroTransition.durationSec,
+                  leadInHoldSec: sceneIntroTransition.leadInHoldSec,
+                }
+              : undefined,
           sceneEndTransition:
             sceneEnd.effect === 'cut'
               ? undefined
@@ -5303,9 +6078,11 @@ export function SceneProductionMixer({
     totalDuration, sceneId, projectId, sceneNumber, resolution, encodeQuality, selectedLanguage, languageLabel,
     textOverlays, displayOverlays, masterSegmentVolume, watermarkConfig, displayWatermarkConfig,
     preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled, resolvedDialogueClips,
-    shotMethodFor, shotVideoRateFor,
+    shotMethodFor, shotVideoRateFor, shotPreHoldSecFor, shotPreHoldStyleFor,
+    narrationElasticAdjustments, mixerNarration.clips, sceneIntroTransition,
     measuredSegmentDurations, getPlaybackSegmentDuration,
     onSceneRenderQueued, sceneEnd, nextSceneFrameUrl, loudnessTarget,
+    isEnglish, shotStartTimesBySegmentId, timelineDuration,
   ])
 
   /**
@@ -5394,24 +6171,47 @@ export function SceneProductionMixer({
         headlessRunningStart += segDur
       }
 
-      if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
-        const narrStart = audioTracks.narration.startOffset
-        const narrDur =
-          playbackAudioUrls.narrationDuration ||
-          Math.max(0, totalDuration - audioTracks.narration.startOffset)
-        if (narrDur > 0) {
-          headlessSpeechWindows.push({
-            startTime: Math.max(0, narrStart),
-            endTime: Math.max(0, narrStart) + narrDur,
+      if (audioTracks.narration.enabled) {
+        if (mixerNarration.clips.length > 0) {
+          const { narrationRenderClips } = mixerNarrationClipsToRenderPayload(
+            mixerNarration.clips,
+            audioTracks.narration,
+            headlessVideoTotalDuration
+          )
+          narrationRenderClips.forEach((nc) => {
+            headlessSpeechWindows.push({
+              startTime: Math.max(0, nc.startTime - 0.1),
+              endTime: Math.max(0, nc.startTime) + nc.duration + 0.15,
+            })
+            audioClips.push({
+              url: nc.url,
+              startTime: nc.startTime,
+              duration: nc.duration,
+              volume: nc.volume,
+              type: 'narration',
+              fadeInSec: nc.fadeInSec,
+              fadeOutSec: nc.fadeOutSec,
+            })
+          })
+        } else if (playbackAudioUrls.narration) {
+          const narrStart = audioTracks.narration.startOffset
+          const narrDur =
+            playbackAudioUrls.narrationDuration ||
+            Math.max(0, totalDuration - audioTracks.narration.startOffset)
+          if (narrDur > 0) {
+            headlessSpeechWindows.push({
+              startTime: Math.max(0, narrStart),
+              endTime: Math.max(0, narrStart) + narrDur,
+            })
+          }
+          audioClips.push({
+            url: playbackAudioUrls.narration,
+            startTime: narrStart,
+            duration: narrDur,
+            volume: audioTracks.narration.volume,
+            type: 'narration',
           })
         }
-        audioClips.push({
-          url: playbackAudioUrls.narration,
-          startTime: narrStart,
-          duration: narrDur,
-          volume: audioTracks.narration.volume,
-          type: 'narration',
-        })
       }
       
       if (audioTracks.dialogue.enabled && playbackAudioUrls.dialogue.length > 0) {
@@ -5591,7 +6391,7 @@ export function SceneProductionMixer({
     preserveBackgroundStem, includeSpeechStem, productionTarget.language,
     productionTarget.streamType,
     measuredSegmentDurations, getPlaybackSegmentDuration,
-    shotVideoRateFor,
+    shotVideoRateFor, isEnglish, shotMethodFor, mixerNarration.clips,
     projectId, sceneId, sceneNumber, selectedLanguage, languageLabel, onSceneRenderQueued,
   ])
   
@@ -5702,6 +6502,7 @@ export function SceneProductionMixer({
                 currentAudioUrls={playbackAudioUrls}
                 dialogueClipConfigs={dialogueClipConfigs}
                 totalDuration={timelineDuration}
+                sceneIntro={sceneIntroTransition}
                 sceneEnd={sceneEnd}
                 nextSceneFrameUrl={sceneEnd.effect === 'dissolve' ? nextSceneFrameUrl : null}
                 isMuted={isMuted}
@@ -5710,6 +6511,8 @@ export function SceneProductionMixer({
                 masterSegmentVolume={masterSegmentVolume}
                 getPlaybackSegmentDuration={getPlaybackSegmentDuration}
                 getVideoPlaybackRate={shotVideoRateFor}
+                getPreSegmentHoldSec={shotPreHoldSecFor}
+                getPreHoldStyle={shotPreHoldStyleFor}
                 getSegmentDuration={getSegmentDuration}
                 measuredSegmentDurations={measuredSegmentDurations}
                 onMeasuredDurationsChange={setMeasuredSegmentDurations}
@@ -6395,7 +7198,10 @@ export function SceneProductionMixer({
                       segmentDurations={segmentDurationsForTimeline}
                       measuredDurations={measuredSegmentDurations}
                       segmentAudioConfigs={segmentAudioConfigs}
+                      videoPlaybackRates={videoPlaybackRatesForTimeline}
+                      preHoldDurations={preHoldDurationsForTimeline}
                       dialogueClips={audioTracks.dialogue.enabled ? dialogueClipsForTimeline : []}
+                      narrationClips={narrationClipsForTimeline}
                       narrationClip={narrationClipForTimeline}
                       sfxClips={sfxClipsForTimeline}
                       musicClips={musicClipsForTimeline}
@@ -7294,11 +8100,17 @@ export function SceneProductionMixer({
                 isCollapsed={collapsedSections.segmentAudio}
                 onToggleCollapse={() => toggleSection('segmentAudio')}
                 getPlaybackSegmentDuration={getPlaybackSegmentDuration}
+                getEffectiveVideoRate={shotVideoRateFor}
+                getEffectivePreHoldSec={shotPreHoldSecFor}
                 audioTracks={audioTracks}
                 languageActive={!isEnglish}
                 preserveBackgroundStem={preserveBackgroundStem}
                 extractingStemIds={extractingStemIds}
                 onExtractSegmentStem={onSegmentsChange ? handleExtractSegmentStem : undefined}
+                sceneIntroTransition={sceneIntroTransition}
+                onSceneIntroChange={setSceneIntroTransition}
+                sceneEndTransition={sceneEndTransition}
+                onSceneEndChange={setSceneEndTransition}
               />
               <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg px-3 py-2.5 space-y-2">
                 <div
@@ -7384,6 +8196,65 @@ export function SceneProductionMixer({
                 onToggleCollapse={() => toggleSection('dialogue')}
                 onRegenerate={onGenerateSceneAudio ? () => handleGenerateLanguageAudio(selectedLanguage) : undefined}
                 isRegenerating={isGeneratingAudio || isGeneratingLanguageAudio}
+              />
+
+              <AudioTrackRow
+                type="narration"
+                label="Narration"
+                icon={Mic}
+                config={audioTracks.narration}
+                onConfigChange={(c) => updateTrackConfig('narration', c)}
+                audioUrl={mixerNarration.clips[0]?.url ?? playbackAudioUrls.narration}
+                videoTotalDuration={videoTotalDuration}
+                audioDuration={
+                  mixerNarration.clips.length > 0
+                    ? mixerNarration.clips.reduce((sum, clip) => sum + clip.duration, 0)
+                    : playbackAudioUrls.narrationDuration
+                }
+                segmentCount={previewSegments.length}
+                clipCount={mixerNarration.clips.length > 1 ? mixerNarration.clips.length : undefined}
+                narrationCueMode={mixerNarration.usingCues}
+                subtitle={
+                  mixerNarration.usingCues
+                    ? `${sceneNarrationCues.length} shot-aligned cue${sceneNarrationCues.length === 1 ? '' : 's'} • ${languageLabel}`
+                    : playbackAudioUrls.narration
+                      ? `Voiceover stream • ${languageLabel}`
+                      : 'Direct shot-aligned voiceover in the Narration tab'
+                }
+                hasAudio={
+                  mixerNarration.hasAnyCueForLanguage ||
+                  mixerNarration.clips.length > 0 ||
+                  Boolean(playbackAudioUrls.narration)
+                }
+                disabled={isRendering}
+                isCollapsed={collapsedSections.narration}
+                onToggleCollapse={() => toggleSection('narration')}
+                onRegenerate={
+                  !mixerNarration.usingCues && onGenerateSceneAudio && audioAssets.narration
+                    ? () => void handleRegenerateNarration()
+                    : undefined
+                }
+                isRegenerating={isRegeneratingNarration}
+                narrationPanel={
+                  mixerNarration.usingCues ? (
+                    <NarrationCueControls
+                      cues={sceneNarrationCues}
+                      clips={mixerNarration.clips}
+                      language={selectedLanguage}
+                      cueConfigs={narrationCueConfigs}
+                      warmBroadcastEq={audioTracks.narration.warmBroadcastEq !== false}
+                      disabled={isRendering}
+                      onWarmBroadcastEqChange={(warmBroadcastEq) =>
+                        updateTrackConfig('narration', {
+                          ...audioTracks.narration,
+                          warmBroadcastEq,
+                        })
+                      }
+                      onCueConfigChange={handleNarrationCueConfigChange}
+                      onSeekToTime={handleTimelineSeek}
+                    />
+                  ) : undefined
+                }
               />
               
               <AudioTrackRow

@@ -365,7 +365,9 @@ def main():
         text_overlays = job_spec.get('textOverlays', [])
         watermark = job_spec.get('watermark')
         encode_quality = job_spec.get('encodeQuality') or 'delivery'
+        scene_intro_transition = job_spec.get('sceneIntroTransition')
         scene_end_transition = job_spec.get('sceneEndTransition')
+        loudness_target = job_spec.get('loudnessTarget')
         log(f"Video Segments: {len(video_segments)}")
         log(f"Encode quality: {encode_quality}")
         
@@ -374,7 +376,8 @@ def main():
             audio_src = seg.get('audioSource', 'original')
             audio_vol = seg.get('audioVolume', 1.0)
             log(
-                f"  Segment {i}: audioSource='{audio_src}', audioVolume={audio_vol}, "
+                f"  Segment {i}: assetType={seg.get('assetType', 'video')}, audioSource='{audio_src}', "
+                f"audioVolume={audio_vol}, preHold={seg.get('preSegmentHoldSec', 0)}, "
                 f"watermarkCropPercent={seg.get('watermarkCropPercent', 'none')}"
             )
         
@@ -391,7 +394,8 @@ def main():
         log(f"Aspect ratio: {aspect_ratio}")
         render_video_concatenation(job_id, video_segments, audio_clips, output_path_gcs, 
                                    resolution, fps, callback_url, include_segment_audio, segment_audio_volume,
-                                   text_overlays, watermark, encode_quality, scene_end_transition, aspect_ratio)
+                                   text_overlays, watermark, encode_quality, scene_end_transition, aspect_ratio,
+                                   scene_intro_transition, loudness_target)
     else:
         # Ken Burns mode (for project renders with images)
         segments = job_spec.get('segments', [])
@@ -480,7 +484,8 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
                                include_segment_audio: bool = True, segment_audio_volume: float = 1.0,
                                text_overlays: list = None, watermark: dict = None,
                                encode_quality: str = 'delivery', scene_end_transition: dict = None,
-                               aspect_ratio: str = '16:9'):
+                               aspect_ratio: str = '16:9', scene_intro_transition: dict = None,
+                               loudness_target: str = None):
     """Render by concatenating video segments with audio mixing, text overlays, and watermark."""
     
     if text_overlays is None:
@@ -501,8 +506,9 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
             log(f"Video segment {i} has no videoUrl", 'ERROR')
             send_callback(callback_url, job_id, 'FAILED', 0, error=f"Segment {i} missing video")
             sys.exit(1)
+        seg_asset_type = 'image' if segment.get('assetType') == 'image' else 'video'
         video_job_at.append(len(download_jobs))
-        download_jobs.append({'url': video_url, 'asset_type': 'video', 'index': i})
+        download_jobs.append({'url': video_url, 'asset_type': seg_asset_type, 'index': i})
         audio_source = segment.get('audioSource', 'original')
         voiceover_url = segment.get('voiceoverUrl', '')
         if audio_source == 'voiceover' and voiceover_url:
@@ -605,7 +611,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
     output_file = os.path.join(OUTPUT_DIR, f"{job_id}.mp4")
 
     probes = [
-        probe_media(os.path.join(ASSETS_DIR, segment['localFile']))
+        None if segment.get('assetType') == 'image' else probe_media(os.path.join(ASSETS_DIR, segment['localFile']))
         for segment in video_segments
     ]
     copy_block = video_stream_copy_block_reason(
@@ -618,6 +624,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
         watermark=wm_for_cmd,
         include_segment_audio=include_segment_audio,
         scene_end_transition=end_for_cmd,
+        scene_intro_transition=scene_intro_transition,
     )
     if copy_block:
         log(f"Stream copy rejected: {copy_block}")
@@ -635,6 +642,8 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
             encode_quality=encode_quality,
             scene_end_transition=end_for_cmd,
             aspect_ratio=aspect_ratio,
+            scene_intro_transition=scene_intro_transition,
+            loudness_target=loudness_target,
         )
     else:
         full_block = full_stream_copy_block_reason(
@@ -643,6 +652,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
             audio_clips=audio_clips_with_files,
             include_segment_audio=include_segment_audio,
             segment_audio_volume=segment_audio_volume,
+            loudness_target=loudness_target,
         )
         segment_gain = 1.0
         if include_segment_audio and video_segments:
@@ -665,6 +675,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
             segment_audio_volume=segment_audio_volume,
             segment_audio_gain=segment_gain,
             full_copy=full_block is None,
+            loudness_target=loudness_target,
         )
     
     log(f"FFmpeg command length: {len(ffmpeg_cmd)} args")

@@ -149,6 +149,28 @@ function firstTrackLine(tracks: unknown): string | undefined {
 }
 
 export function promoNarrationLineFromScene(scene: unknown, language: string): string | undefined {
+  if (scene && typeof scene === 'object') {
+    const rawCues = (scene as { sceneNarrationCues?: unknown }).sceneNarrationCues
+    if (Array.isArray(rawCues) && rawCues.length > 0) {
+      const lang = (language || 'en').trim().toLowerCase()
+      const joined = rawCues
+        .map((cue) => {
+          if (!cue || typeof cue !== 'object') return ''
+          const byLang = (cue as { byLanguage?: Record<string, { text?: string }> }).byLanguage
+          const localized =
+            byLang?.[lang]?.text?.trim() ||
+            byLang?.en?.text?.trim() ||
+            (typeof (cue as { text?: unknown }).text === 'string'
+              ? ((cue as { text: string }).text || '').trim()
+              : '')
+          return localized
+        })
+        .filter(Boolean)
+        .join(' ')
+        .trim()
+      if (joined) return joined
+    }
+  }
   const fromAudio = firstTrackLine(dialogueAudioRecord(scene)?.[language])
   if (fromAudio) return fromAudio
   if (scene && typeof scene === 'object') {
@@ -164,6 +186,63 @@ export function promoNarrationLineFromScene(scene: unknown, language: string): s
       if (typeof rawNarr === 'string' && rawNarr.trim()) return rawNarr.trim()
     }
   }
+  return undefined
+}
+
+/**
+ * Preserve stored shot-aligned `sceneNarrationCues` across Promo timeline edits when
+ * client state omits or lags the server's synthesized `byLanguage` entries.
+ */
+export function mergePromoNarrationCues(
+  clientScene: unknown,
+  storedScene: unknown
+): unknown[] | undefined {
+  const clientCues =
+    clientScene &&
+    typeof clientScene === 'object' &&
+    Array.isArray((clientScene as { sceneNarrationCues?: unknown }).sceneNarrationCues)
+      ? ((clientScene as { sceneNarrationCues: unknown[] }).sceneNarrationCues ?? [])
+      : undefined
+  const storedCues =
+    storedScene &&
+    typeof storedScene === 'object' &&
+    Array.isArray((storedScene as { sceneNarrationCues?: unknown }).sceneNarrationCues)
+      ? ((storedScene as { sceneNarrationCues: unknown[] }).sceneNarrationCues ?? [])
+      : undefined
+
+  if (clientCues && clientCues.length > 0) {
+    if (!storedCues || storedCues.length === 0) return clientCues
+    const storedById = new Map<string, Record<string, unknown>>()
+    for (const sc of storedCues) {
+      if (sc && typeof sc === 'object' && typeof (sc as { cueId?: unknown }).cueId === 'string') {
+        storedById.set((sc as { cueId: string }).cueId, sc as Record<string, unknown>)
+      }
+    }
+    return clientCues.map((cc) => {
+      if (!cc || typeof cc !== 'object') return cc
+      const rec = cc as Record<string, unknown>
+      const prev = typeof rec.cueId === 'string' ? storedById.get(rec.cueId) : undefined
+      if (!prev) return rec
+      const prevLangs =
+        prev.byLanguage && typeof prev.byLanguage === 'object'
+          ? (prev.byLanguage as Record<string, unknown>)
+          : {}
+      const clientLangs =
+        rec.byLanguage && typeof rec.byLanguage === 'object'
+          ? (rec.byLanguage as Record<string, unknown>)
+          : {}
+      return {
+        ...prev,
+        ...rec,
+        byLanguage: {
+          ...prevLangs,
+          ...clientLangs,
+        },
+      }
+    })
+  }
+
+  if (storedCues && storedCues.length > 0) return storedCues
   return undefined
 }
 

@@ -121,7 +121,9 @@ interface MixerTimelineProps {
   timelineDuration?: number
   /** Dialogue clips positioned on the global timeline */
   dialogueClips?: AudioClipInfo[]
-  /** Narration track span on the global timeline */
+  /** Shot-aligned Narration cue clips positioned on Track A2 */
+  narrationClips?: AudioClipInfo[]
+  /** Legacy single narration track span on the global timeline */
   narrationClip?: TimelineNarrationInfo | null
   /** SFX clips positioned on the global timeline */
   sfxClips?: TimelineSfxClipInfo[]
@@ -139,6 +141,10 @@ interface MixerTimelineProps {
   measuredDurations?: Record<string, number>
   /** Per-segment audio & hold configs (for J-cut/L-cut & holdStyle badges) */
   segmentAudioConfigs?: Record<string, MixerSegmentAudioConfig>
+  /** Effective per-segment video playback rate (slow-mo / speed fit) */
+  videoPlaybackRates?: Record<string, number>
+  /** Effective per-segment Intro Freeze duration in seconds (manual + elastic narration) */
+  preHoldDurations?: Record<string, number>
   /** Whether Auto-Ducking (-8 dB under dialogue/narration) is enabled on A4 Score/Music */
   musicAutoDuck?: boolean
   /** Whether Auto-Ducking (-8 dB under dialogue/narration) is enabled on A3 SFX */
@@ -241,6 +247,7 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
   videoTotalDuration,
   timelineDuration,
   dialogueClips = [],
+  narrationClips = [],
   narrationClip = null,
   sfxClips = [],
   musicClips = [],
@@ -250,6 +257,8 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
   segmentDurations = {},
   measuredDurations = {},
   segmentAudioConfigs = {},
+  videoPlaybackRates = {},
+  preHoldDurations = {},
   musicAutoDuck = false,
   sfxAutoDuck = false,
   selectedSegmentId = null,
@@ -292,6 +301,12 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
     for (const clip of dialogueClips) {
       maxEnd = Math.max(maxEnd, clip.startTime + wallClockClipDuration(clip))
     }
+    for (const nc of narrationClips) {
+      maxEnd = Math.max(maxEnd, nc.startTime + wallClockClipDuration(nc))
+    }
+    if (narrationClip && narrationClip.duration > 0) {
+      maxEnd = Math.max(maxEnd, narrationClip.startTime + narrationClip.duration)
+    }
     for (const mc of musicClips) {
       maxEnd = Math.max(maxEnd, mc.startTime + mc.duration)
     }
@@ -304,6 +319,8 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
     timelineDuration,
     textOverlays,
     dialogueClips,
+    narrationClips,
+    narrationClip,
     musicClips,
     sfxClips,
     wallClockClipDuration,
@@ -438,7 +455,7 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
     }
   }, [currentPlaybackTime, totalDuration, effectiveWidth, isScrubbing])
 
-  // Calculate segment positions, trim metadata, and freeze-hold extensions for V1 track
+  // Calculate segment positions, trim metadata, and intro/close freeze-hold extensions for V1 track
   const segmentPositions = useMemo(() => {
     let elapsed = 0
     return segments.map((seg) => {
@@ -448,12 +465,24 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
         (seg.endTime - seg.startTime)
       const sourceSec = resolveSegmentSourceDurationSec(seg, measuredDurations?.[seg.segmentId])
       const trim = resolveVideoTrimWindow(seg, sourceSec)
-      const holdSec = Math.max(0, duration - trim.playableSec)
       const segAudioCfg = segmentAudioConfigs?.[seg.segmentId]
+      const rawRate =
+        videoPlaybackRates?.[seg.segmentId] ?? segAudioCfg?.videoPlaybackRate ?? 1
+      const videoRate = Number.isFinite(rawRate) && rawRate > 0 ? rawRate : 1
+      const preHoldSec = Math.max(
+        0,
+        preHoldDurations?.[seg.segmentId] ?? segAudioCfg?.preSegmentHoldSec ?? 0
+      )
+      const motionWallSec = trim.playableSec / videoRate
+      const holdSec = Math.max(0, duration - preHoldSec - motionWallSec)
       const pos = {
         start: elapsed,
         duration,
         playableVideoSec: trim.playableSec,
+        motionWallSec,
+        videoRate,
+        preHoldSec,
+        preHoldStyle: segAudioCfg?.preHoldStyle ?? 'push',
         holdSec,
         holdStyle: segAudioCfg?.holdStyle ?? 'freeze',
         audioLeadInSec: segAudioCfg?.audioLeadInSec ?? 0,
@@ -464,7 +493,14 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
       elapsed += duration
       return pos
     })
-  }, [segments, segmentDurations, measuredDurations, segmentAudioConfigs])
+  }, [
+    segments,
+    segmentDurations,
+    measuredDurations,
+    segmentAudioConfigs,
+    videoPlaybackRates,
+    preHoldDurations,
+  ])
 
   // Active speech windows (A1 Dialogue + A2 Narration) for Auto-Ducking envelope rendering
   const speechWindows = useMemo(() => {
@@ -475,14 +511,20 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
         wins.push({ start: c.startTime, end: c.startTime + dur })
       }
     }
-    if (narrationClip && narrationClip.duration > 0.05) {
+    for (const nc of narrationClips) {
+      const dur = wallClockClipDuration(nc)
+      if (dur > 0.05) {
+        wins.push({ start: nc.startTime, end: nc.startTime + dur })
+      }
+    }
+    if (narrationClips.length === 0 && narrationClip && narrationClip.duration > 0.05) {
       wins.push({
         start: narrationClip.startTime,
         end: narrationClip.startTime + narrationClip.duration,
       })
     }
     return wins
-  }, [dialogueClips, narrationClip, wallClockClipDuration])
+  }, [dialogueClips, narrationClips, narrationClip, wallClockClipDuration])
 
   const clampedPlayheadRatio =
     totalDuration > 0 ? Math.max(0, Math.min(1, currentPlaybackTime / totalDuration)) : 0
@@ -631,10 +673,15 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
                 const widthPercent = (pos.duration / totalDuration) * 100
                 const isUserUpload = pos.segment.isUserUpload
                 const isSelected = selectedSegmentId === pos.segment.segmentId
+                const preHoldRatio =
+                  pos.duration > 0 && pos.preHoldSec > 0.15
+                    ? Math.min(0.8, pos.preHoldSec / pos.duration)
+                    : 0
                 const holdRatio =
                   pos.duration > 0 && pos.holdSec > 0.15
-                    ? Math.min(0.85, pos.holdSec / pos.duration)
+                    ? Math.min(0.85 - preHoldRatio * 0.5, pos.holdSec / pos.duration)
                     : 0
+                const hasSpeedChange = Math.abs(pos.videoRate - 1) > 0.02
                 const joinEffect =
                   pos.segment.shotJoin === 'dissolve' || pos.segment.shotJoin === 'fade'
                     ? pos.segment.shotJoin
@@ -662,11 +709,24 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
                         borderLeft: `2px solid ${isUserUpload ? '#10b981' : '#06b6d4'}`,
                       }}
                       title={`Shot #${idx + 1}: ${pos.duration.toFixed(1)}s${
+                        pos.preHoldSec > 0.15 ? ` (+${pos.preHoldSec.toFixed(1)}s intro freeze)` : ''
+                      }${hasSpeedChange ? ` (${pos.videoRate.toFixed(2)}× speed)` : ''}${
                         pos.isTrimmed ? ` (Trimmed: ${pos.playableVideoSec.toFixed(1)}s)` : ''
-                      }${pos.holdSec > 0.15 ? ` (+${pos.holdSec.toFixed(1)}s hold)` : ''}${
+                      }${pos.holdSec > 0.15 ? ` (+${pos.holdSec.toFixed(1)}s close hold)` : ''}${
                         isUserUpload ? ' • Uploaded' : ''
                       }`}
                     >
+                      {/* Intro Freeze Shading before motion starts */}
+                      {preHoldRatio > 0 && (
+                        <div
+                          className="absolute top-0 bottom-0 left-0 pointer-events-none border-r border-dashed border-indigo-400/65"
+                          style={{
+                            width: `${preHoldRatio * 100}%`,
+                            backgroundImage:
+                              'repeating-linear-gradient(-45deg, rgba(129,140,248,0.16), rgba(129,140,248,0.16) 4px, rgba(0,0,0,0.22) 4px, rgba(0,0,0,0.22) 8px)',
+                          }}
+                        />
+                      )}
                       {/* Freeze/Hold Tail Shading when audio or manual hold extends shot */}
                       {holdRatio > 0 && (
                         <div
@@ -685,6 +745,22 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
                         <span className="text-[8px] font-mono text-zinc-300/80 hidden sm:inline">
                           {pos.duration.toFixed(1)}s
                         </span>
+                        {pos.preHoldSec > 0.15 && (
+                          <span
+                            className="text-[7px] font-medium px-1 rounded bg-indigo-950/90 text-indigo-200 border border-indigo-400/40 shrink-0"
+                            title={`Intro Freeze (+${pos.preHoldSec.toFixed(1)}s ${pos.preHoldStyle === 'push' ? 'Slow Push' : 'Still Frame'} on opening frame)`}
+                          >
+                            Intro
+                          </span>
+                        )}
+                        {hasSpeedChange && (
+                          <span
+                            className="text-[7px] font-mono px-1 rounded bg-purple-950/90 text-purple-200 border border-purple-400/40 shrink-0"
+                            title={`Motion Speed: ${pos.videoRate.toFixed(2)}×`}
+                          >
+                            {pos.videoRate.toFixed(2).replace(/0$/, '')}×
+                          </span>
+                        )}
                         {(pos.audioLeadInSec > 0.05 || pos.audioTailOutSec > 0.05) && (
                           <span
                             className="text-[7px] font-mono px-1 rounded bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 shrink-0"
@@ -818,8 +894,8 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
             </div>
           )}
 
-          {/* A2: Narration Track */}
-          {narrationClip && narrationClip.duration > 0 && (
+          {/* A2: Narration Track (Shot-Aligned Cues or Legacy Stream) */}
+          {(narrationClips.length > 0 || (narrationClip && narrationClip.duration > 0)) && (
             <div className="h-7 relative mb-1.5 rounded bg-zinc-900/50 border border-zinc-800/50 flex">
               <div
                 className="sticky left-0 z-20 shrink-0 flex items-center gap-1 px-2 bg-zinc-950 border-r border-zinc-800/90 h-full"
@@ -835,21 +911,50 @@ const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
                 </span>
               </div>
               <div className="flex-1 h-full relative min-w-0">
-                <div
-                  onClick={() => onSeekTime?.(narrationClip.startTime)}
-                  className="absolute top-1 bottom-1 rounded-sm flex items-center overflow-hidden px-1.5 cursor-pointer"
-                  style={{
-                    left: `${(narrationClip.startTime / totalDuration) * 100}%`,
-                    width: `calc(${Math.max((narrationClip.duration / totalDuration) * 100, 1)}% - 2px)`,
-                    backgroundColor: NARRATION_TRACK_VISUAL.bgColor,
-                    borderLeft: `2px solid ${NARRATION_TRACK_VISUAL.color}`,
-                  }}
-                  title={`Narration (${narrationClip.duration.toFixed(1)}s)`}
-                >
-                  <span className="text-[8px] font-medium text-purple-200 truncate">
-                    Voiceover Narration ({narrationClip.duration.toFixed(1)}s)
-                  </span>
-                </div>
+                {narrationClips.length > 0 ? (
+                  narrationClips.map((clip) => {
+                    const wallDur = wallClockClipDuration(clip)
+                    const startPercent = (clip.startTime / totalDuration) * 100
+                    const widthPercent = (wallDur / totalDuration) * 100
+                    return (
+                      <div
+                        key={clip.id}
+                        onClick={() => onSeekTime?.(clip.startTime)}
+                        className="absolute top-1 bottom-1 rounded-sm flex items-center justify-between overflow-hidden px-1.5 cursor-pointer hover:ring-1 hover:ring-purple-400/60"
+                        style={{
+                          left: `${startPercent}%`,
+                          width: `calc(${Math.max(widthPercent, 1.2)}% - 2px)`,
+                          backgroundColor: NARRATION_TRACK_VISUAL.bgColor,
+                          borderLeft: `2px solid ${NARRATION_TRACK_VISUAL.color}`,
+                        }}
+                        title={`${clip.label || clip.character || 'Narration Cue'} (${wallDur.toFixed(1)}s)`}
+                      >
+                        <span className="text-[8px] font-medium text-purple-100 truncate">
+                          {clip.label || 'Narration Cue'}
+                        </span>
+                        <span className="text-[7px] font-mono text-purple-300/90 ml-1 shrink-0 hidden sm:inline">
+                          {wallDur.toFixed(1)}s
+                        </span>
+                      </div>
+                    )
+                  })
+                ) : narrationClip ? (
+                  <div
+                    onClick={() => onSeekTime?.(narrationClip.startTime)}
+                    className="absolute top-1 bottom-1 rounded-sm flex items-center overflow-hidden px-1.5 cursor-pointer"
+                    style={{
+                      left: `${(narrationClip.startTime / totalDuration) * 100}%`,
+                      width: `calc(${Math.max((narrationClip.duration / totalDuration) * 100, 1)}% - 2px)`,
+                      backgroundColor: NARRATION_TRACK_VISUAL.bgColor,
+                      borderLeft: `2px solid ${NARRATION_TRACK_VISUAL.color}`,
+                    }}
+                    title={`Narration (${narrationClip.duration.toFixed(1)}s)`}
+                  >
+                    <span className="text-[8px] font-medium text-purple-200 truncate">
+                      Voiceover Narration ({narrationClip.duration.toFixed(1)}s)
+                    </span>
+                  </div>
+                ) : null}
               </div>
             </div>
           )}

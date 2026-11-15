@@ -426,11 +426,15 @@ export async function createSceneRenderJob(
     // Build audio clips from audio tracks (preserving per-clip volume, trimStart, playbackRate, and auto-ducking)
     const audioClips: SceneRenderAudioClip[] = buildSceneRenderAudioClips(
       request.audioConfig,
-      request.audioTracks
+      request.audioTracks,
+      videoSegments
     )
     
     // Calculate estimated duration
-    const estimatedDuration = videoSegments.reduce((sum, seg) => sum + seg.duration, 0)
+    const estimatedDuration = videoSegments.reduce(
+      (sum, seg) => sum + (seg.preSegmentHoldSec || 0) + seg.duration + (seg.pauseDuration || 0),
+      0
+    )
     
     // Build scene render job spec
     const jobSpec: SceneRenderJobSpec = {
@@ -439,6 +443,7 @@ export async function createSceneRenderJob(
       sceneId: request.sceneId,
       sceneNumber: request.sceneNumber,
       resolution: request.resolution,
+      aspectRatio: request.aspectRatio,
       fps: RENDER_DEFAULTS.fps,
       videoSegments,
       audioClips,
@@ -449,6 +454,10 @@ export async function createSceneRenderJob(
       language: request.audioConfig.language,
       includeSegmentAudio: request.audioConfig.includeSegmentAudio,
       segmentAudioVolume: request.audioConfig.segmentAudioVolume ?? 1,
+      encodeQuality: request.encodeQuality,
+      sceneIntroTransition: request.sceneIntroTransition,
+      sceneEndTransition: request.sceneEndTransition,
+      loudnessTarget: request.loudnessTarget ?? request.audioConfig?.loudnessTarget,
     }
     
     console.log(`[CloudRunJobs] Scene job spec created:`, {

@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Minimize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Palette, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, GalleryHorizontal } from 'lucide-react'
+import { FileText, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, ChevronRight, ChevronUp, ChevronLeft, Music, Mic, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Minimize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Palette, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, GalleryHorizontal } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import {
@@ -144,6 +144,8 @@ import {
   resolveBeatSfxSlot,
 } from '@/lib/script/deriveSfxFromSceneContent'
 import { SceneMusicCuePanel } from '@/components/vision/SceneMusicCuePanel'
+import { SceneNarrationCuePanel } from '@/components/vision/SceneNarrationCuePanel'
+import { getSceneNarrationCues } from '@/lib/script/sceneNarrationCues'
 import { BeatPerformanceDirectorControl } from '@/components/vision/BeatPerformanceDirectorDialog'
 import {
   SceneReferencesPanel,
@@ -5218,6 +5220,7 @@ function SceneCard({
   type ProductionWorkflowTab =
     | 'direction'
     | 'beats'
+    | 'narration'
     | 'music'
     | 'references'
     | 'previs'
@@ -5950,10 +5953,31 @@ function SceneCard({
     setMusicPlayDuration(defaultMusicPlayDuration)
   }, [defaultMusicPlayDuration, sceneIdx])
 
+  const sceneNarrationCues = useMemo(() => getSceneNarrationCues(scene), [scene])
+
+  const handleNarrationSceneUpdated = useCallback(
+    async (updatedScene: Record<string, unknown>) => {
+      if (!onScriptChange || !script || !Array.isArray(scenes)) return
+      const current = scenes[sceneIdx]
+      if (!current) return
+      const updatedScenes = [...scenes]
+      updatedScenes[sceneIdx] = {
+        ...current,
+        ...updatedScene,
+      }
+      await onScriptChange({
+        ...script,
+        script: { ...script.script, scenes: updatedScenes },
+      })
+    },
+    [onScriptChange, script, scenes, sceneIdx]
+  )
+
   const availableSceneTabs = useMemo<ProductionWorkflowTab[]>(
     () => [
       'direction',
       'beats',
+      'narration',
       'music',
       'references',
       'previs',
@@ -7854,6 +7878,19 @@ function SceneCard({
                                 </span>
                               )}
                             </TabsTrigger>
+                            <TabsTrigger
+                              value="narration"
+                              title="Shot-aligned narration overlay, multi-language voiceover, and Cast assignment"
+                              className={sceneTabTriggerClass}
+                            >
+                              <Mic className="w-3.5 h-3.5 shrink-0" />
+                              Narration
+                              {sceneNarrationCues.length > 0 && (
+                                <span className="text-[10px] font-medium opacity-70">
+                                  ({sceneNarrationCues.length})
+                                </span>
+                              )}
+                            </TabsTrigger>
                             <TabsTrigger value="music" className={sceneTabTriggerClass}>
                               <Music className="w-3.5 h-3.5 shrink-0" />
                               Music
@@ -8380,6 +8417,30 @@ function SceneCard({
                     />
                   </TabsContent>
                   )}
+
+                  {/* Narration */}
+                  <TabsContent value="narration" className="mt-3 focus-visible:outline-none space-y-3">
+                    <SceneNarrationCuePanel
+                      projectId={projectId}
+                      sceneId={workflowSceneId}
+                      sceneIndex={sceneIdx}
+                      isPromo={isPromoCinematicScene(scene)}
+                      scene={scene}
+                      beats={sceneBeatsForTabs}
+                      characters={characters}
+                      narrationVoice={narrationVoice}
+                      activeLanguage={selectedLanguage}
+                      onActiveLanguageChange={onLanguageChange}
+                      availableLanguages={
+                        Array.isArray(projectStreams)
+                          ? projectStreams
+                              .map((s: any) => String(s?.language || '').trim().toLowerCase())
+                              .filter(Boolean)
+                          : []
+                      }
+                      onSceneUpdated={handleNarrationSceneUpdated}
+                    />
+                  </TabsContent>
 
                   {/* Music */}
                   {hasMusicTab && (

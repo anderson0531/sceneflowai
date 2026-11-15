@@ -30,10 +30,16 @@ import { promoLanguageName, promoNarrationWordBudget } from '@/lib/publish/promo
 import {
   buildPromoNarrationPrompt,
   mergePromoDialogueAudio,
+  mergePromoNarrationCues,
   promoNarrationLineFromScene,
   promoNarrationShotsFromPlan,
   unwrapPromoNarrationText,
 } from '@/lib/publish/promoNarrationScript'
+import {
+  buildNarrationPlanningInputsFromBeats,
+  planShotAlignedNarrationCuesWithModel,
+  synthesizeCuesForLanguages,
+} from '@/lib/audio/narrationCueServerService'
 import { upsertPublishingState } from '@/lib/publish/publishingState'
 import {
   planPromoTrailer,
@@ -304,11 +310,13 @@ function promoSceneForRebuild(
       ? clientPromoScene
       : null
   const dialogueAudio = mergePromoDialogueAudio(client, stored)
-  if (!client && !stored && !dialogueAudio) return { existing: null }
+  const sceneNarrationCues = mergePromoNarrationCues(client, stored)
+  if (!client && !stored && !dialogueAudio && !sceneNarrationCues) return { existing: null }
   const existing: Record<string, unknown> = {
     ...(stored ?? {}),
     ...(client ?? {}),
     ...(dialogueAudio ? { dialogueAudio } : {}),
+    ...(sceneNarrationCues ? { sceneNarrationCues } : {}),
   }
   return {
     existing,
@@ -433,6 +441,9 @@ export async function POST(request: NextRequest) {
       language?: string
       aspect?: '16:9' | '9:16'
       legacyOwnerId?: string
+      speakerType?: 'narrator' | 'character'
+      characterId?: string
+      characterName?: string
     }
 
     const projectId = (body.projectId || '').trim()
@@ -804,11 +815,6 @@ export async function POST(request: NextRequest) {
     const promoScene = { ...(scenes[promoIdx] as Record<string, unknown>) }
 
     if (action === 'narration') {
-      const fromPlan = promoNarrationShotsFromPlan(promoScene.promoBeatPlan)
-      const shots =
-        fromPlan.length > 0
-          ? fromPlan
-          : planLabels(promoScene).map((label) => ({ label, durationSec: 5 }))
       const campaignStrategyText = [
         presetDef?.directorStrategyPrompt,
         campaignObjective ||
@@ -824,10 +830,7 @@ export async function POST(request: NextRequest) {
         visionPhase.narrationVoice && typeof visionPhase.narrationVoice === 'object'
           ? (visionPhase.narrationVoice as { voiceId?: string })
           : null
-      const voiceId = resolvePromoNarrationVoiceId({
-        characters: Array.isArray(visionPhase.characters) ? visionPhase.characters : [],
-        narrationVoice,
-      })
+      const characters = Array.isArray(visionPhase.characters) ? visionPhase.characters : []
 
       // Support generating narration for the active language AND any additional requested targetLanguages
       const languagesToGenerate =
@@ -835,38 +838,7 @@ export async function POST(request: NextRequest) {
           ? Array.from(new Set(body.targetLanguages.map((l) => normalizeStreamLanguage(l)).filter(Boolean)))
           : [language]
 
-      let primaryNarrationText = ''
-      let primaryAudioUrl: string | undefined
-      const generatedByLanguage: Record<string, { text: string; audioUrl?: string; durationSec?: number }> = {}
-
-      for (const lang of languagesToGenerate) {
-        const text = await generatePromoNarrationScript({
-          title: project.title || 'Untitled',
-          logline: typeof project.description === 'string' ? project.description : undefined,
-          genre: typeof project.genre === 'string' ? project.genre : undefined,
-          shots,
-          targetDurationSec,
-          language: lang,
-          audienceText,
-          campaignStrategyText: campaignStrategyText || undefined,
-        })
-        const tts = await synthesizeNarrationTts({
-          text,
-          language: lang,
-          voiceId,
-        })
-        generatedByLanguage[lang] = {
-          text,
-          ...(tts?.audioUrl ? { audioUrl: tts.audioUrl } : {}),
-          ...(tts?.durationSec ? { durationSec: tts.durationSec } : {}),
-        }
-        if (lang === language || !primaryNarrationText) {
-          primaryNarrationText = text
-          primaryAudioUrl = tts?.audioUrl
-        }
-      }
-
-      // Rebuild with narration beat while preserving music
+      // Rebuild clean Promo scene without legacy single-beat narration mutation
       const storedPlan =
         Array.isArray(promoScene.promoBeatPlan) && promoScene.promoBeatPlan.length
           ? (promoScene.promoBeatPlan as import('@/types/publishingAssets').PromoTrailerBeatPlan[])
@@ -901,7 +873,7 @@ export async function POST(request: NextRequest) {
         targetDurationSec: plan.targetDurationSec ?? targetDurationSec,
         projectTitle: project.title,
         existingPromoScene: promoScene,
-        narrationLine: primaryNarrationText,
+        skipLegacyNarrationBeat: true,
         promoId: String(promoScene.id || requestedPromoId || ''),
         campaignName:
           typeof promoScene.campaignName === 'string' ? promoScene.campaignName : campaignName,
@@ -918,35 +890,72 @@ export async function POST(request: NextRequest) {
         artStyleId: resolveProjectArtStyle(metadata),
       })
 
-      const priorAudio =
-        scene.dialogueAudio && typeof scene.dialogueAudio === 'object' ? { ...scene.dialogueAudio } : {}
-      const nextDialogueAudio: Record<string, unknown[]> = { ...priorAudio }
-      for (const [lang, entry] of Object.entries(generatedByLanguage)) {
-        const existingLangTracks = Array.isArray(priorAudio[lang])
-          ? (priorAudio[lang] as Array<Record<string, unknown>>).filter(
-              (row) =>
-                row &&
-                typeof row === 'object' &&
-                row.kind !== 'narration' &&
-                String(row.character || '').trim().toUpperCase() !== 'NARRATOR'
-            )
-          : []
-        nextDialogueAudio[lang] = [
-          {
-            character: 'NARRATOR',
-            characterId: 'narrator',
-            kind: 'narration',
-            lineId: 'ln_promo_narration_0',
-            line: entry.text,
-            ...(entry.audioUrl ? { audioUrl: entry.audioUrl } : {}),
-            ...(entry.durationSec ? { durationSec: entry.durationSec } : {}),
-          },
-          ...existingLangTracks,
-        ]
+      const shotInputs = buildNarrationPlanningInputsFromBeats(scene.beats, {
+        promoBeatPlan: plan.beatPlan,
+      })
+      const plannedCues = await planShotAlignedNarrationCuesWithModel({
+        title: project.title || 'Untitled',
+        logline: typeof project.description === 'string' ? project.description : undefined,
+        genre: typeof project.genre === 'string' ? project.genre : undefined,
+        sceneHeading: scene.heading,
+        isPromo: true,
+        audienceText,
+        campaignStrategyText: campaignStrategyText || undefined,
+        directorNotes:
+          typeof body.directorNotes === 'string' ? body.directorNotes.trim() : undefined,
+        language,
+        beats: scene.beats,
+        shots: shotInputs,
+        speakerType: body.speakerType === 'character' ? 'character' : 'narrator',
+        characterId: body.characterId,
+        characterName: body.characterName,
+        allowOverDialogue: false,
+      })
+
+      const synthesizedCues = await synthesizeCuesForLanguages({
+        cues: plannedCues,
+        languages: languagesToGenerate,
+        beats: scene.beats,
+        characters,
+        narrationVoice,
+        contextSummary: `${project.title || 'Untitled'}: ${campaignStrategyText || ''}`.trim(),
+        forceRegenerate: true,
+      })
+
+      scene.sceneNarrationCues = synthesizedCues
+      scene.narrationCuesAuthoritative = true
+
+      const generatedByLanguage: Record<string, { text: string; audioUrl?: string; durationSec?: number }> = {}
+      let primaryNarrationText = ''
+      let primaryAudioUrl: string | undefined
+
+      for (const lang of languagesToGenerate) {
+        const texts: string[] = []
+        let firstAudioUrl: string | undefined
+        let totalDur = 0
+        for (const cue of synthesizedCues) {
+          const entry = cue.byLanguage?.[lang]
+          if (entry?.text?.trim()) texts.push(entry.text.trim())
+          if (!firstAudioUrl && entry?.audioUrl?.trim()) firstAudioUrl = entry.audioUrl.trim()
+          if (typeof entry?.durationSec === 'number' && entry.durationSec > 0) {
+            totalDur += entry.durationSec
+          }
+        }
+        const joinedText = texts.join(' ').trim()
+        generatedByLanguage[lang] = {
+          text: joinedText,
+          ...(firstAudioUrl ? { audioUrl: firstAudioUrl } : {}),
+          ...(totalDur > 0 ? { durationSec: Math.round(totalDur * 10) / 10 } : {}),
+        }
+        if (lang === language || !primaryNarrationText) {
+          primaryNarrationText = joinedText
+          primaryAudioUrl = firstAudioUrl
+        }
       }
-      scene.dialogueAudio = nextDialogueAudio
-      const narrationBeat = scene.beats.find((b) => b.kind === 'narration')
-      if (narrationBeat && primaryAudioUrl) narrationBeat.audioUrl = primaryAudioUrl
+
+      if (primaryNarrationText) {
+        scene.narration = primaryNarrationText
+      }
 
       const savedMetadata = await commitPromoMetadataMutation(projectId, (latestMeta) => {
         const latestScenes = getScenesFromMetadata(latestMeta)
@@ -979,6 +988,7 @@ export async function POST(request: NextRequest) {
         action: 'narration',
         narrationText: primaryNarrationText,
         audioUrl: primaryAudioUrl,
+        cues: synthesizedCues,
         generatedByLanguage,
         promoScene: scene,
         promoProductionSeed: readSceneProductionEntry(savedMetadata, scene.id),

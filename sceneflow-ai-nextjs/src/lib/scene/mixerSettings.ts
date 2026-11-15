@@ -6,7 +6,10 @@ import type {
   MixerLanguageShotConfig,
   MixerLoudnessTarget,
   MixerMusicShotConfig,
+  MixerNarrationCueConfig,
   MixerSegmentAudioConfig,
+  SceneEndTransitionOverride,
+  SceneIntroTransition,
   SceneMixerCollapsedSections,
   SceneMixerLanguageSettings,
   SceneMixerSettings,
@@ -48,7 +51,7 @@ export const DEFAULT_MIXER_COLLAPSED_SECTIONS: SceneMixerCollapsedSections = {
   beatVideo: false,
   beatTrim: true,
   segmentAudio: true,
-  narration: true,
+  narration: false,
   dialogue: false,
   sfx: true,
   music: false,
@@ -65,7 +68,14 @@ export const BACKGROUND_MUSIC_LEVEL_PRESETS = [
 ] as const
 
 export const DEFAULT_MIXER_AUDIO_TRACKS: MixerAudioTracks = {
-  narration: { enabled: false, volume: 0.8, startOffset: 0, startSegment: 0, endSegment: -1 },
+  narration: {
+    enabled: false,
+    volume: 0.9,
+    startOffset: 0,
+    startSegment: 0,
+    endSegment: -1,
+    warmBroadcastEq: true,
+  },
   dialogue: { enabled: false, volume: 1, startOffset: 0, startSegment: 0, endSegment: -1 },
   music: {
     enabled: false,
@@ -100,12 +110,20 @@ export const DEFAULT_MIXER_MUSIC_SHOT_CONFIG: MixerMusicShotConfig = {
   volume: 1,
 }
 
+export const DEFAULT_SCENE_INTRO_TRANSITION: SceneIntroTransition = {
+  effect: 'cut',
+  durationSec: 0,
+}
+
 export interface ResolvedMixerSettings {
   audioTracks: MixerAudioTracks
   segmentAudioConfigs: Record<string, MixerSegmentAudioConfig>
   dialogueClipConfigs: Record<string, MixerDialogueClipConfig>
+  narrationCueConfigs: Record<string, MixerNarrationCueConfig>
   musicShotConfigs: Record<string, MixerMusicShotConfig>
   languageShotConfigs: Record<string, MixerLanguageShotConfig>
+  sceneIntroTransition: SceneIntroTransition
+  sceneEndTransition: SceneEndTransitionOverride | null
   masterSegmentVolume: number
   resolution: '720p' | '1080p' | '4K'
   loudnessTarget: MixerLoudnessTarget
@@ -166,6 +184,29 @@ function mergeMusicShotConfigs(
   return out
 }
 
+function mergeNarrationCueConfigs(
+  saved?: Record<string, Partial<MixerNarrationCueConfig>>
+): Record<string, MixerNarrationCueConfig> {
+  if (!saved) return {}
+  const out: Record<string, MixerNarrationCueConfig> = {}
+  for (const [cueId, partial] of Object.entries(saved)) {
+    if (!cueId || !partial) continue
+    const vol = partial.volume
+    out[cueId] = {
+      enabled: partial.enabled ?? true,
+      volume:
+        typeof vol === 'number' && Number.isFinite(vol)
+          ? Math.max(0, Math.min(1.5, vol))
+          : 1,
+      ...(typeof partial.startOffsetSec === 'number' && Number.isFinite(partial.startOffsetSec)
+        ? { startOffsetSec: Math.max(-5, Math.min(30, partial.startOffsetSec)) }
+        : {}),
+      ...(partial.alignmentMode ? { alignmentMode: partial.alignmentMode } : {}),
+    }
+  }
+  return out
+}
+
 function mergeDialogueClipConfigs(
   saved?: Record<string, Partial<MixerDialogueClipConfig>>
 ): Record<string, MixerDialogueClipConfig> {
@@ -207,8 +248,13 @@ export function mergeMixerSettings(saved?: SceneMixerSettings | null): ResolvedM
     audioTracks: mergeAudioTracks(saved?.audioTracks),
     segmentAudioConfigs: mergeSegmentAudioConfigs(saved?.segmentAudioConfigs),
     dialogueClipConfigs: mergeDialogueClipConfigs(saved?.dialogueClipConfigs),
+    narrationCueConfigs: mergeNarrationCueConfigs(saved?.narrationCueConfigs),
     musicShotConfigs: mergeMusicShotConfigs(saved?.musicShotConfigs),
     languageShotConfigs: mergeLanguageShotConfigs(saved?.languageShotConfigs),
+    sceneIntroTransition: saved?.sceneIntroTransition
+      ? { ...DEFAULT_SCENE_INTRO_TRANSITION, ...saved.sceneIntroTransition }
+      : { ...DEFAULT_SCENE_INTRO_TRANSITION },
+    sceneEndTransition: saved?.sceneEndTransition ?? null,
     masterSegmentVolume: saved?.masterSegmentVolume ?? 0.8,
     resolution: saved?.resolution ?? '1080p',
     loudnessTarget: saved?.loudnessTarget ?? 'web-14lufs',
@@ -250,8 +296,11 @@ export interface MixerSettingsPersistInput {
   audioTracks: MixerAudioTracks
   segmentAudioConfigs: Record<string, MixerSegmentAudioConfig>
   dialogueClipConfigs: Record<string, MixerDialogueClipConfig>
+  narrationCueConfigs?: Record<string, Partial<MixerNarrationCueConfig>>
   musicShotConfigs?: Record<string, MixerMusicShotConfig>
   languageShotConfigs?: Record<string, MixerLanguageShotConfig>
+  sceneIntroTransition?: SceneIntroTransition
+  sceneEndTransition?: SceneEndTransitionOverride | null
   masterSegmentVolume: number
   resolution: '720p' | '1080p' | '4K'
   loudnessTarget?: MixerLoudnessTarget
@@ -259,8 +308,8 @@ export interface MixerSettingsPersistInput {
   includeSpeechStem: boolean
   klingLipsyncEnabled: boolean
   watermarkConfig: WatermarkConfig
-  collapsedSections: SceneMixerCollapsedSections
-  theaterMode: boolean
+  collapsedSections?: SceneMixerCollapsedSections
+  theaterMode?: boolean
   productionTarget?: SceneMixerSettings['productionTarget']
 }
 
@@ -270,8 +319,11 @@ export function buildPersistedMixerSettings(input: MixerSettingsPersistInput): S
     audioTracks: input.audioTracks,
     segmentAudioConfigs: input.segmentAudioConfigs,
     dialogueClipConfigs: input.dialogueClipConfigs,
+    narrationCueConfigs: mergeNarrationCueConfigs(input.narrationCueConfigs),
     musicShotConfigs: input.musicShotConfigs ?? {},
     languageShotConfigs: input.languageShotConfigs ?? {},
+    ...(input.sceneIntroTransition ? { sceneIntroTransition: input.sceneIntroTransition } : {}),
+    ...(input.sceneEndTransition !== undefined ? { sceneEndTransition: input.sceneEndTransition } : {}),
     masterSegmentVolume: input.masterSegmentVolume,
     resolution: input.resolution,
     loudnessTarget: input.loudnessTarget ?? 'web-14lufs',
@@ -280,8 +332,8 @@ export function buildPersistedMixerSettings(input: MixerSettingsPersistInput): S
     includeSpeechStem: input.includeSpeechStem,
     klingLipsyncEnabled: input.klingLipsyncEnabled,
     watermarkConfig: input.watermarkConfig,
-    collapsedSections: input.collapsedSections,
-    theaterMode: input.theaterMode,
+    collapsedSections: input.collapsedSections ?? { ...DEFAULT_MIXER_COLLAPSED_SECTIONS },
+    theaterMode: input.theaterMode ?? false,
   }
 }
 

@@ -33,6 +33,14 @@ export async function POST(request: NextRequest) {
       narrationAudioUrl?: string
       /** Seconds of picture before the narration voice begins. */
       narrationStartSec?: number
+      /** Shot-aligned narration overlay cues (preferred when present). */
+      narrationCues?: Array<{
+        id?: string
+        url: string
+        startTime: number
+        duration?: number
+        volume?: number
+      }>
       musicAudioUrl?: string
       promoSceneId?: string
       aspect?: '16:9' | '9:16'
@@ -59,16 +67,21 @@ export async function POST(request: NextRequest) {
     const clipSegments = playingPlan
       .map((beat, idx) => {
         const videoUrl = (beat.videoUrl || fallbackVideoUrl || '').trim()
-        if (!videoUrl) return null
+        const imageUrl = !videoUrl ? (beat.imageUrl || beat.frameUrl || '').trim() : ''
+        const mediaUrl = videoUrl || imageUrl
+        if (!mediaUrl) return null
+        const isStill = !videoUrl && !!imageUrl
         const duration = beat.durationSec ?? beat.endSec - beat.startSec
         return {
           segmentId: `beat-${beat.beatId}-${idx}`,
           sequenceIndex: idx,
-          videoUrl,
-          startTime: beat.videoUrl ? 0 : beat.startSec,
-          endTime: beat.videoUrl ? Math.max(0.5, duration) : beat.endSec,
-          audioSource: 'original' as const,
-          audioVolume: PROMO_AUDIO_MIX.clip,
+          videoUrl: mediaUrl,
+          ...(isStill ? { assetType: 'image' as const } : {}),
+          startTime: beat.videoUrl || isStill ? 0 : beat.startSec,
+          endTime: beat.videoUrl || isStill ? Math.max(0.5, duration) : beat.endSec,
+          audioSource: isStill ? ('none' as const) : ('original' as const),
+          audioVolume: isStill ? 0 : PROMO_AUDIO_MIX.clip,
+          ...(isStill ? { holdStyle: 'push' as const } : {}),
           pauseDuration: 0,
         }
       })
@@ -76,10 +89,12 @@ export async function POST(request: NextRequest) {
       segmentId: string
       sequenceIndex: number
       videoUrl: string
+      assetType?: 'video' | 'image'
       startTime: number
       endTime: number
-      audioSource: 'original'
+      audioSource: 'original' | 'none'
       audioVolume: number
+      holdStyle?: 'freeze' | 'push' | 'pingpong'
       pauseDuration: number
     }>
 
@@ -114,7 +129,21 @@ export async function POST(request: NextRequest) {
     const durationSec = Math.min(targetDurationSec, Math.max(30, totalBeatSec))
 
     const audioTracks: Record<string, unknown> = {}
-    if (body.narrationAudioUrl) {
+    const validCueTracks = Array.isArray(body.narrationCues)
+      ? body.narrationCues.filter((c) => c && typeof c.url === 'string' && c.url.trim())
+      : []
+    if (validCueTracks.length > 0) {
+      audioTracks.narration = validCueTracks.map((cue, idx) => ({
+        id: cue.id || `promo-narration-cue-${idx}`,
+        url: cue.url.trim(),
+        startTime: typeof cue.startTime === 'number' && cue.startTime >= 0 ? cue.startTime : 0,
+        ...(typeof cue.duration === 'number' && cue.duration > 0 ? { duration: cue.duration } : {}),
+        volume:
+          typeof cue.volume === 'number' && Number.isFinite(cue.volume)
+            ? cue.volume * PROMO_AUDIO_MIX.narration
+            : PROMO_AUDIO_MIX.narration,
+      }))
+    } else if (body.narrationAudioUrl) {
       audioTracks.narration = [
         {
           id: 'promo-narration',
@@ -153,7 +182,7 @@ export async function POST(request: NextRequest) {
         aspect: aspectRatio,
         aspectRatio,
         audioConfig: {
-          includeNarration: !!body.narrationAudioUrl,
+          includeNarration: validCueTracks.length > 0 || !!body.narrationAudioUrl,
           includeDialogue: false,
           includeMusic: !!body.musicAudioUrl,
           includeSfx: false,
@@ -162,6 +191,7 @@ export async function POST(request: NextRequest) {
           segmentAudioVolume: PROMO_AUDIO_MIX.clip,
           narrationVolume: PROMO_AUDIO_MIX.narration,
           musicVolume: PROMO_AUDIO_MIX.music,
+          autoDuckMusic: true,
         },
         segments,
         audioTracks,

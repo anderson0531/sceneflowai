@@ -386,7 +386,9 @@ export async function POST(
       textOverlays: textOverlays.length > 0 ? textOverlays : undefined,
       watermark,
       encodeQuality: body.encodeQuality === 'draft' ? 'draft' : 'delivery',
+      sceneIntroTransition: body.sceneIntroTransition,
       sceneEndTransition: body.sceneEndTransition,
+      loudnessTarget: body.loudnessTarget ?? body.audioConfig?.loudnessTarget,
     }
     
     console.log(`[SceneRender] Job spec created:`, {

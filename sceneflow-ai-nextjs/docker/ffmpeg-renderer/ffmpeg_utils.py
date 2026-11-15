@@ -117,6 +117,15 @@ def build_loudnorm_filter(
     return f"loudnorm=I={target_i:.1f}:TP={true_peak:.1f}:LRA={lra:.1f}"
 
 
+def resolve_loudnorm_filter(loudness_target: Optional[str]) -> Optional[str]:
+    """Return loudnorm filter for 'web-14lufs' or 'broadcast-24lkfs', or None when 'off'/omitted."""
+    if loudness_target == 'web-14lufs':
+        return build_loudnorm_filter(-14.0, -1.5, 11.0)
+    if loudness_target == 'broadcast-24lkfs':
+        return build_loudnorm_filter(-24.0, -2.0, 7.0)
+    return None
+
+
 # Font mapping for text overlays (maps UI font names to system font names)
 FONT_MAP = {
     'Montserrat': 'Montserrat',
@@ -1021,11 +1030,16 @@ def clamp_video_playback_rate(value: Any) -> float:
 
 def _segment_video_filter_reason(segment: Dict[str, Any]) -> Optional[str]:
     """Reason this beat needs a video filter, or None when the frames can be copied."""
+    if segment.get('assetType') == 'image':
+        return 'still image segment'
     if abs(clamp_video_playback_rate(segment.get('playbackRate')) - 1.0) > 0.001:
         return 'playback rate'
     trim_in = float(segment.get('videoTrimInSec') or 0)
     if trim_in > 0.001 or segment.get('videoTrimOutSec') is not None:
         return 'trim'
+    pre_hold = float(segment.get('preSegmentHoldSec') or 0)
+    if pre_hold > 0.001:
+        return 'pre-segment hold'
     pause = float(segment.get('pauseDuration') or 0)
     if pause > 0.001:
         return 'pause'
@@ -1054,6 +1068,7 @@ def video_stream_copy_block_reason(
     watermark: Optional[Dict[str, Any]] = None,
     include_segment_audio: bool = True,
     scene_end_transition: Optional[Dict[str, Any]] = None,
+    scene_intro_transition: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     """
     First reason the concat demuxer cannot copy video.
@@ -1064,6 +1079,13 @@ def video_stream_copy_block_reason(
     """
     if not video_segments:
         return 'no segments'
+    intro_effect = (scene_intro_transition or {}).get('effect')
+    try:
+        intro_dur = float((scene_intro_transition or {}).get('durationSec') or 0)
+    except (TypeError, ValueError):
+        intro_dur = 0.0
+    if intro_effect == 'fade_in' and intro_dur >= 0.05:
+        return 'scene intro transition'
     end_effect = (scene_end_transition or {}).get('effect')
     if end_effect in ('fade', 'dissolve'):
         return 'scene end transition'
@@ -1136,6 +1158,7 @@ def full_stream_copy_block_reason(
     audio_clips: Optional[List[Dict[str, Any]]] = None,
     include_segment_audio: bool = True,
     segment_audio_volume: float = 1.0,
+    loudness_target: Optional[str] = None,
 ) -> Optional[str]:
     """
     Extra reason `-c copy` cannot keep audio as well as video.
@@ -1143,6 +1166,8 @@ def full_stream_copy_block_reason(
     None means the concat demuxer can copy both streams. A reason here still
     allows video copy with an audio re-encode when video copy itself is allowed.
     """
+    if resolve_loudnorm_filter(loudness_target) is not None:
+        return 'loudness target'
     if audio_clips:
         return 'overlay audio'
     if not include_segment_audio:
@@ -1172,17 +1197,40 @@ def _clip_seconds(clip: Dict[str, Any], key: str) -> float:
 
 
 def _segment_output_duration(segment: Dict[str, Any]) -> float:
-    pause = float(segment.get('pauseDuration') or 0)
+    pre_hold = max(0.0, float(segment.get('preSegmentHoldSec') or 0))
+    pause = max(0.0, float(segment.get('pauseDuration') or 0))
+    if segment.get('assetType') == 'image':
+        motion_wall = max(0.1, float(segment.get('duration') or 0))
+        return pre_hold + motion_wall + pause
     trim_in = float(segment.get('videoTrimInSec') or 0)
     raw_out = segment.get('videoTrimOutSec')
+    rate = clamp_video_playback_rate(segment.get('playbackRate'))
     if raw_out is not None:
         play = max(0.0, float(raw_out) - trim_in)
+        motion_wall = play / rate
     else:
-        play = float(segment.get('duration') or 0)
-        if trim_in > 0.001:
-            play = max(0.0, play - trim_in)
-    rate = clamp_video_playback_rate(segment.get('playbackRate'))
-    return max(0.0, play) / rate + max(0.0, pause)
+        # segment['duration'] from toSceneRenderVideoSegment is already motion wall time
+        motion_wall = max(0.0, float(segment.get('duration') or 0))
+    return pre_hold + motion_wall + pause
+
+
+def apply_scene_intro_transition(
+    video_label: str,
+    transition: Optional[Dict[str, Any]],
+    video_duration: float,
+) -> Tuple[str, List[str]]:
+    """Fade in from black at scene opening when authored in Mixer."""
+    effect = (transition or {}).get('effect') or 'cut'
+    try:
+        duration = float((transition or {}).get('durationSec') or 0)
+    except (TypeError, ValueError):
+        duration = 0.0
+    if effect != 'fade_in' or duration < 0.05 or video_duration <= 0:
+        return video_label, []
+    fade_d = min(duration, video_duration)
+    return "[sceneintro]", [
+        f"{video_label}fade=t=in:st=0:d={fade_d:.3f}:color=black[sceneintro]"
+    ]
 
 
 def apply_scene_end_transition(
@@ -1272,8 +1320,10 @@ def audio_source_window_filters(clip: Dict[str, Any]) -> List[str]:
 
 
 def narration_bass_filters(clip: Dict[str, Any]) -> List[str]:
-    """Low-shelf on narration so the voice has body under the mix."""
+    """Low-shelf on narration so the voice has body under the mix (opt-out via warmBroadcastEq=False)."""
     if clip.get('type') != 'narration':
+        return []
+    if clip.get('warmBroadcastEq') is False:
         return []
     return ['bass=g=6:f=120:w=0.5']
 
@@ -1329,6 +1379,7 @@ def build_stream_copy_ffmpeg_command(
     segment_audio_volume: float = 1.0,
     segment_audio_gain: float = 1.0,
     full_copy: bool = False,
+    loudness_target: Optional[str] = None,
 ) -> List[str]:
     """
     Concat with the demuxer.
@@ -1378,6 +1429,11 @@ def build_stream_copy_ffmpeg_command(
         audio_output = mix_inputs[0]
     else:
         audio_output = None
+
+    loudnorm_str = resolve_loudnorm_filter(loudness_target)
+    if audio_output and loudnorm_str:
+        filter_parts.append(f'{audio_output}{loudnorm_str}[loudnorma]')
+        audio_output = '[loudnorma]'
 
     if filter_parts:
         cmd.extend(['-filter_complex', ';'.join(filter_parts)])
@@ -1472,6 +1528,8 @@ def build_concat_ffmpeg_command(
     encode_quality: Optional[str] = None,
     scene_end_transition: Optional[Dict[str, Any]] = None,
     aspect_ratio: str = '16:9',
+    scene_intro_transition: Optional[Dict[str, Any]] = None,
+    loudness_target: Optional[str] = None,
 ) -> List[str]:
     """
     Build FFmpeg command for concatenating video segments with audio mixing.
@@ -1500,10 +1558,14 @@ def build_concat_ffmpeg_command(
     
     cmd = ['ffmpeg', '-y']  # -y = overwrite output
     
-    # Add input files (videos)
+    # Add input files (videos or hybrid still images)
     for i, segment in enumerate(video_segments):
         video_path = os.path.join(temp_dir, 'assets', segment['localFile'])
-        cmd.extend(['-i', video_path])
+        if segment.get('assetType') == 'image':
+            seg_total_dur = max(0.1, _segment_output_duration(segment))
+            cmd.extend(['-loop', '1', '-framerate', str(fps), '-t', f'{seg_total_dur:.3f}', '-i', video_path])
+        else:
+            cmd.extend(['-i', video_path])
     
     # Track input indices
     video_input_count = len(video_segments)
@@ -1565,33 +1627,74 @@ def build_concat_ffmpeg_command(
     )
     
     for i, segment in enumerate(video_segments):
-        pause_duration = float(segment.get('pauseDuration', 0))
-        tpad_str = f",tpad=stop_mode=clone:stop_duration={pause_duration}" if pause_duration > 0 else ""
+        is_still = segment.get('assetType') == 'image'
+        pre_hold = max(0.0, float(segment.get('preSegmentHoldSec') or 0))
+        pause_duration = max(0.0, float(segment.get('pauseDuration', 0) or 0))
         apad_str = f",apad=pad_dur={pause_duration}" if pause_duration > 0 else ""
-
-        crop_filter = build_frame_crop_filter(segment.get('watermarkCropPercent'))
-
-        trim_in = float(segment.get('videoTrimInSec') or 0)
-        raw_trim_out = segment.get('videoTrimOutSec')
-        trim_filter = ""
-        if trim_in > 0.001 or raw_trim_out is not None:
-            end_clause = f":end={float(raw_trim_out)}" if raw_trim_out is not None else ""
-            trim_filter = f"trim=start={trim_in}{end_clause},"
-
-        playback_rate = clamp_video_playback_rate(segment.get('playbackRate'))
-        speed_filter = ""
-        if abs(playback_rate - 1.0) > 0.001:
-            speed_filter = f"setpts=PTS/{playback_rate:.4f},"
+        adelay_ms = int(round(pre_hold * 1000))
+        adelay_str = f",adelay={adelay_ms}|{adelay_ms}" if adelay_ms > 0 else ""
 
         fade_suffix = "".join(f",{part}" for part in shot_join_fade_filters(i, video_segments))
-        
-        # Scale to target resolution and set framerate
-        # setpts=PTS-STARTPTS resets video timestamps to start at 0 for proper concatenation sync
-        filter_str = (
-            f"[{i}:v]{trim_filter}setpts=PTS-STARTPTS,{speed_filter}{crop_filter}scale={width}:{height}:force_original_aspect_ratio=decrease,"
-            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,"
-            f"fps={fps},setsar=1{tpad_str}{fade_suffix}[v{i}]"
-        )
+        playback_rate = clamp_video_playback_rate(segment.get('playbackRate'))
+
+        if is_still:
+            seg_total_dur = max(0.1, _segment_output_duration(segment))
+            use_push = (segment.get('holdStyle') == 'push') or (
+                pre_hold > 0.05 and segment.get('preHoldStyle') == 'push'
+            )
+            if use_push:
+                duration_frames = max(1, int(round(seg_total_dur * fps)))
+                kb_raw = build_ken_burns_filter(
+                    segment_index=i,
+                    duration_frames=duration_frames,
+                    fps=fps,
+                    zoom_start=1.0,
+                    zoom_end=1.03,
+                    pan_x=0.0,
+                    pan_y=0.0,
+                    width=width,
+                    height=height,
+                )
+                kb_prefix = kb_raw[:-len(f"[v{i}]")]
+                filter_str = (
+                    f"{kb_prefix},trim=duration={seg_total_dur:.4f},setpts=PTS-STARTPTS,"
+                    f"setsar=1,format=yuv420p{fade_suffix}[v{i}]"
+                )
+            else:
+                filter_str = (
+                    f"[{i}:v]scale={width}:{height}:force_original_aspect_ratio=decrease,"
+                    f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,"
+                    f"fps={fps},setsar=1,format=yuv420p,"
+                    f"trim=duration={seg_total_dur:.4f},setpts=PTS-STARTPTS{fade_suffix}[v{i}]"
+                )
+        else:
+            tpad_clauses = []
+            if pre_hold > 0.001:
+                tpad_clauses.append(f"start_mode=clone:start_duration={pre_hold:.3f}")
+            if pause_duration > 0.001:
+                tpad_clauses.append(f"stop_mode=clone:stop_duration={pause_duration}")
+            tpad_str = f",tpad={':'.join(tpad_clauses)},setpts=PTS-STARTPTS" if tpad_clauses else ""
+
+            crop_filter = build_frame_crop_filter(segment.get('watermarkCropPercent'))
+
+            trim_in = float(segment.get('videoTrimInSec') or 0)
+            raw_trim_out = segment.get('videoTrimOutSec')
+            trim_filter = ""
+            if trim_in > 0.001 or raw_trim_out is not None:
+                end_clause = f":end={float(raw_trim_out)}" if raw_trim_out is not None else ""
+                trim_filter = f"trim=start={trim_in}{end_clause},"
+
+            speed_filter = ""
+            if abs(playback_rate - 1.0) > 0.001:
+                speed_filter = f"setpts=PTS/{playback_rate:.4f},"
+
+            # Scale to target resolution and set framerate
+            # setpts=PTS-STARTPTS resets video timestamps to start at 0 for proper concatenation sync
+            filter_str = (
+                f"[{i}:v]{trim_filter}setpts=PTS-STARTPTS,{speed_filter}{crop_filter}scale={width}:{height}:force_original_aspect_ratio=decrease,"
+                f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,"
+                f"fps={fps},setsar=1{tpad_str}{fade_suffix}[v{i}]"
+            )
         filter_parts.append(filter_str)
         video_concat_inputs.append(f"[v{i}]")
         
@@ -1604,14 +1707,18 @@ def build_concat_ffmpeg_command(
             else float(segment_audio_volume)
         )
         duration = segment.get('duration', 5)
+        seg_out_dur = _segment_output_duration(segment)
         
         # Debug: Log per-segment audio settings
-        print(f"[FFmpeg] Segment {i}: audioSource='{audio_source}', volume={seg_audio_volume}, duration={duration}, pauseDuration={pause_duration}")
+        print(
+            f"[FFmpeg] Segment {i}: assetType={'image' if is_still else 'video'}, audioSource='{audio_source}', "
+            f"volume={seg_audio_volume}, duration={duration}, preHold={pre_hold}, pauseDuration={pause_duration}"
+        )
         
         if not has_embed_audio:
             continue
         
-        if audio_source == 'original':
+        if not is_still and audio_source == 'original':
             # Use original MP4 audio - normalize format for concat compatibility
             print(f"[FFmpeg] Segment {i}: Using ORIGINAL audio from MP4")
             trim_in = float(segment.get('videoTrimInSec') or 0)
@@ -1620,15 +1727,17 @@ def build_concat_ffmpeg_command(
             if trim_in > 0.001 or raw_trim_out is not None:
                 end_clause = f":end={float(raw_trim_out)}" if raw_trim_out is not None else ""
                 atrim_clause = f"atrim=start={trim_in}{end_clause},"
-            atempo = ""
-            if abs(playback_rate - 1.0) > 0.001:
-                atempo = f"atempo={playback_rate:.4f},"
-            audio_filter = f"[{i}:a]{atrim_clause}asetpts=PTS-STARTPTS,{atempo}aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo{apad_str}"
+            atempo_chain = build_atempo_filter_chain(playback_rate)
+            atempo = f"{atempo_chain}," if atempo_chain else ""
+            audio_filter = (
+                f"[{i}:a]{atrim_clause}asetpts=PTS-STARTPTS,{atempo}"
+                f"aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo{adelay_str}{apad_str}"
+            )
             if seg_audio_volume != 1.0:
                 audio_filter += f",volume={seg_audio_volume}"
             audio_filter += f"[seg_audio_{i}]"
             filter_parts.append(audio_filter)
-            segment_audio_streams.append((f"[seg_audio_{i}]", (duration / playback_rate) + pause_duration))
+            segment_audio_streams.append((f"[seg_audio_{i}]", seg_out_dur))
         elif audio_source == 'voiceover' and i in voiceover_input_map:
             # Use voiceover audio (with optional time slicing)
             voiceover_input_idx = voiceover_input_map[i]
@@ -1636,19 +1745,22 @@ def build_concat_ffmpeg_command(
             voiceover_duration = segment.get('voiceoverDuration', duration)
             
             # Build filter: extract time slice, apply volume, and normalize format for concat compatibility
-            vo_filter = f"[{voiceover_input_idx}:a]atrim=start={voiceover_start}:duration={voiceover_duration},asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo{apad_str}"
+            vo_filter = (
+                f"[{voiceover_input_idx}:a]atrim=start={voiceover_start}:duration={voiceover_duration},"
+                f"asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo{adelay_str}{apad_str}"
+            )
             if seg_audio_volume != 1.0:
                 vo_filter += f",volume={seg_audio_volume}"
             vo_filter += f"[vo_audio_{i}]"
             filter_parts.append(vo_filter)
-            segment_audio_streams.append((f"[vo_audio_{i}]", duration + pause_duration))
+            segment_audio_streams.append((f"[vo_audio_{i}]", seg_out_dur))
         else:
-            # Muted segment — synthetic silence for timeline alignment (no embedded audio)
-            print(f"[FFmpeg] Segment {i}: Synthetic silence for muted segment ({duration + pause_duration}s)")
-            silent_dur = duration + pause_duration
+            # Muted or still-image segment — synthetic silence for timeline alignment
+            silent_dur = max(0.05, seg_out_dur)
+            print(f"[FFmpeg] Segment {i}: Synthetic silence ({silent_dur}s)")
             audio_filter = (
                 f"anullsrc=channel_layout=stereo:sample_rate=48000,"
-                f"atrim=duration={silent_dur},asetpts=PTS-STARTPTS[seg_audio_{i}]"
+                f"atrim=duration={silent_dur:.3f},asetpts=PTS-STARTPTS[seg_audio_{i}]"
             )
             filter_parts.append(audio_filter)
             segment_audio_streams.append((f"[seg_audio_{i}]", silent_dur))
@@ -1765,6 +1877,12 @@ def build_concat_ffmpeg_command(
         audio_output = None
 
     video_duration = sum(_segment_output_duration(segment) for segment in video_segments)
+    video_output, intro_filters = apply_scene_intro_transition(
+        video_output,
+        scene_intro_transition,
+        video_duration,
+    )
+    filter_parts.extend(intro_filters)
     video_output, end_filters = apply_scene_end_transition(
         video_output,
         scene_end_transition,
@@ -1782,6 +1900,11 @@ def build_concat_ffmpeg_command(
     if hold >= 0.05 and audio_output and end_filters:
         filter_parts.append(f"{audio_output}apad=pad_dur={hold:.3f}[sceneholda]")
         audio_output = "[sceneholda]"
+
+    loudnorm_str = resolve_loudnorm_filter(loudness_target)
+    if audio_output and loudnorm_str:
+        filter_parts.append(f"{audio_output}{loudnorm_str}[loudnorma]")
+        audio_output = "[loudnorma]"
     
     # Add filter complex to command
     if filter_parts:

@@ -170,6 +170,10 @@ class StreamCopyEligibilityTest(unittest.TestCase):
 class NarrationBassTests(unittest.TestCase):
     def test_shelf_is_only_on_narration(self):
         self.assertEqual(narration_bass_filters({'type': 'narration'}), ['bass=g=6:f=120:w=0.5'])
+        self.assertEqual(
+            narration_bass_filters({'type': 'narration', 'warmBroadcastEq': False}),
+            [],
+        )
         self.assertEqual(narration_bass_filters({'type': 'music'}), [])
 
     def test_overlay_filter_places_the_shelf_before_volume(self):
@@ -197,6 +201,78 @@ class NarrationBassTests(unittest.TestCase):
         self.assertNotIn('atrim=duration=', shot_two)
         self.assertIn('adelay=5000|5000', shot_two)
         self.assertIn('volume=0.125', shot_two)
+
+
+class HybridAndAlignmentConcatTests(unittest.TestCase):
+    def test_pre_hold_and_still_segments_reject_stream_copy(self):
+        self.assertIn(
+            'pre-segment hold',
+            video_stream_copy_block_reason([segment(preSegmentHoldSec=2.0)], [probe()]) or '',
+        )
+        self.assertIn(
+            'still image',
+            video_stream_copy_block_reason([segment(assetType='image')], [None]) or '',
+        )
+        self.assertEqual(
+            video_stream_copy_block_reason(
+                [segment()],
+                [probe()],
+                scene_intro_transition={'effect': 'fade_in', 'durationSec': 1.0},
+            ),
+            'scene intro transition',
+        )
+        self.assertEqual(
+            full_stream_copy_block_reason(
+                [segment()],
+                [probe()],
+                audio_clips=[],
+                loudness_target='web-14lufs',
+            ),
+            'loudness target',
+        )
+
+    def test_concat_command_supports_intro_freeze_hybrid_still_and_loudnorm(self):
+        cmd = build_concat_ffmpeg_command(
+            video_segments=[
+                {
+                    'localFile': 'shot1.mp4',
+                    'assetType': 'video',
+                    'audioSource': 'original',
+                    'audioVolume': 1.0,
+                    'duration': 5.0,
+                    'preSegmentHoldSec': 2.0,
+                    'pauseDuration': 1.5,
+                },
+                {
+                    'localFile': 'shot2.png',
+                    'assetType': 'image',
+                    'audioSource': 'none',
+                    'duration': 4.0,
+                    'holdStyle': 'push',
+                    'pauseDuration': 0,
+                },
+            ],
+            audio_clips=[
+                {
+                    'localFile': 'cue1.mp3',
+                    'type': 'narration',
+                    'startTime': 0.5,
+                    'duration': 6.0,
+                    'volume': 0.9,
+                }
+            ],
+            output_path='/tmp/out.mp4',
+            include_segment_audio=True,
+            scene_intro_transition={'effect': 'fade_in', 'durationSec': 1.0},
+            loudness_target='web-14lufs',
+        )
+        joined = ' '.join(cmd)
+        self.assertIn('-loop 1 -framerate 24 -t 4.000 -i /tmp/assets/shot2.png', joined)
+        self.assertIn('tpad=start_mode=clone:start_duration=2.000:stop_mode=clone:stop_duration=1.5', joined)
+        self.assertIn('adelay=2000|2000', joined)
+        self.assertIn('zoompan=', joined)
+        self.assertIn('fade=t=in:st=0:d=1.000:color=black', joined)
+        self.assertIn('loudnorm=I=-14.0:TP=-1.5:LRA=11.0', joined)
 
 
 if __name__ == '__main__':

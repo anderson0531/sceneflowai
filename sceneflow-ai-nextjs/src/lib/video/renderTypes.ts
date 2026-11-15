@@ -318,11 +318,13 @@ export interface SceneRenderVideoSegment {
   segmentId: string
   /** Sequence index in the scene (0, 1, 2...) */
   sequenceIndex: number
-  /** URL to the MP4 video file (GCS or HTTPS) */
+  /** URL to the MP4 video file or still image (GCS or HTTPS) */
   videoUrl: string
+  /** Media type for hybrid Promo / Memoir renders ('image' loops a still frame; default 'video') */
+  assetType?: 'video' | 'image'
   /** Start time in final output (seconds) */
   startTime: number
-  /** Duration in seconds */
+  /** Motion duration in seconds (excludes preSegmentHoldSec and pauseDuration) */
   duration: number
   /** Audio source for this segment: 'original' (MP4 audio), 'voiceover' (TTS/dialogue), or 'none' */
   audioSource?: SegmentAudioSource
@@ -334,8 +336,18 @@ export interface SceneRenderVideoSegment {
   voiceoverStartTime?: number
   /** Duration of voiceover to use (for slicing narration) */
   voiceoverDuration?: number
+  /** Intro freeze hold before segment motion begins (seconds) */
+  preSegmentHoldSec?: number
+  /** Visual treatment during intro freeze ('freeze' | 'push') */
+  preHoldStyle?: 'freeze' | 'push'
   /** Pause duration after this segment ends (seconds) */
   pauseDuration?: number
+  /** Visual treatment during post-segment hold ('freeze' | 'push' | 'pingpong') */
+  holdStyle?: 'freeze' | 'push' | 'pingpong'
+  /** J-Cut audio lead-in before visual cut (seconds) */
+  audioLeadInSec?: number
+  /** L-Cut audio tail-out after visual cut (seconds) */
+  audioTailOutSec?: number
   /** Uniform frame crop % (2–10) for uploaded video; preserves aspect ratio */
   watermarkCropPercent?: number
   /** Seconds into source MP4 where beat playback begins */
@@ -403,12 +415,14 @@ export interface SceneRenderAudioClip {
   playbackRate?: number
   /** Music: loop clip for duration */
   loop?: boolean
-  /** Music: fade-in seconds */
+  /** Music/Narration: fade-in seconds */
   fadeInSec?: number
-  /** Music: fade-out seconds */
+  /** Music/Narration: fade-out seconds */
   fadeOutSec?: number
   /** Offset into the source file, seconds. */
   trimStart?: number
+  /** Narration: apply low-shelf broadcast warmth EQ (defaults true on worker when omitted) */
+  warmBroadcastEq?: boolean
 }
 
 /**
@@ -457,6 +471,12 @@ export interface SceneRenderJobSpec {
    * `draft` uses a faster preset for iteration exports.
    */
   encodeQuality?: SceneEncodeQuality
+  /** Incoming scene opening transition burned into this scene's MP4. */
+  sceneIntroTransition?: {
+    effect: 'cut' | 'fade_in'
+    durationSec: number
+    leadInHoldSec?: number
+  }
   /** Outgoing scene join burned into this scene's MP4. */
   sceneEndTransition?: {
     effect: 'fade' | 'dissolve' | 'cut'
@@ -464,6 +484,8 @@ export interface SceneRenderJobSpec {
     holdSec?: number
     nextFrameUrl?: string
   }
+  /** Target loudness preset for final audio bus normalization. */
+  loudnessTarget?: 'broadcast-24lkfs' | 'web-14lufs' | 'off'
 }
 
 /**
@@ -557,6 +579,7 @@ export interface CreateSceneRenderJobRequest {
     segmentId: string
     sequenceIndex: number
     videoUrl: string
+    assetType?: 'video' | 'image'
     startTime: number
     endTime: number
     audioSource?: SegmentAudioSource
@@ -564,7 +587,12 @@ export interface CreateSceneRenderJobRequest {
     voiceoverUrl?: string
     voiceoverStartTime?: number
     voiceoverDuration?: number
+    preSegmentHoldSec?: number
+    preHoldStyle?: 'freeze' | 'push'
     pauseDuration?: number
+    holdStyle?: 'freeze' | 'push' | 'pingpong'
+    audioLeadInSec?: number
+    audioTailOutSec?: number
     watermarkCropPercent?: number
     videoTrimInSec?: number
     videoTrimOutSec?: number
@@ -576,7 +604,17 @@ export interface CreateSceneRenderJobRequest {
   }>
   /** Audio tracks with timing */
   audioTracks: {
-    narration?: Array<{ url: string; startTime: number; duration: number; volume?: number }>
+    narration?: Array<{
+      url: string
+      startTime: number
+      duration?: number
+      volume?: number
+      fadeInSec?: number
+      fadeOutSec?: number
+      trimStart?: number
+      playbackRate?: number
+      warmBroadcastEq?: boolean
+    }>
     dialogue?: Array<{
       url: string
       startTime: number
@@ -603,6 +641,7 @@ export interface CreateSceneRenderJobRequest {
       duration: number
       volume?: number
       playbackRate?: number
+      trimStart?: number
     }>
   }
   /** Text overlays to burn into video */
@@ -634,6 +673,12 @@ export interface CreateSceneRenderJobRequest {
   streamType?: 'video' | 'animatic'
   /** Omitted means delivery. Draft is the Mixer iteration export. */
   encodeQuality?: SceneEncodeQuality
+  /** Incoming scene opening transition burned into this scene's MP4. */
+  sceneIntroTransition?: {
+    effect: 'cut' | 'fade_in'
+    durationSec: number
+    leadInHoldSec?: number
+  }
   /** Outgoing scene join burned into this scene's MP4. */
   sceneEndTransition?: {
     effect: 'fade' | 'dissolve' | 'cut'
@@ -641,6 +686,8 @@ export interface CreateSceneRenderJobRequest {
     holdSec?: number
     nextFrameUrl?: string
   }
+  /** Target loudness preset for final audio bus normalization. */
+  loudnessTarget?: 'broadcast-24lkfs' | 'web-14lufs' | 'off'
 }
 
 import { computeSpeechDuckMultiplier, type SpeechDuckWindow } from '@/lib/scene/mixerScoreMusic'
@@ -673,7 +720,11 @@ export function buildSceneRenderAudioClips(
 
   const maxVideoDuration =
     videoSegments && videoSegments.length > 0
-      ? videoSegments.reduce((sum, seg) => sum + (seg.duration || 0) + (seg.pauseDuration || 0), 0)
+      ? videoSegments.reduce(
+          (sum, seg) =>
+            sum + (seg.preSegmentHoldSec || 0) + (seg.duration || 0) + (seg.pauseDuration || 0),
+          0
+        )
       : undefined
 
   const clampDurationToVideo = (startTime: number, duration: number): number | null => {
@@ -689,12 +740,19 @@ export function buildSceneRenderAudioClips(
   if (audioConfig.includeSegmentAudio && videoSegments && videoSegments.length > 0) {
     let runningStart = 0
     for (const seg of videoSegments) {
-      const segDur = (seg.duration || 0) + (seg.pauseDuration || 0)
+      const preHold = seg.preSegmentHoldSec || 0
+      const motionDur = seg.duration || 0
+      const segDur = preHold + motionDur + (seg.pauseDuration || 0)
       const segStart = typeof seg.startTime === 'number' && Number.isFinite(seg.startTime) ? seg.startTime : runningStart
-      if (seg.audioSource !== 'none' && (seg.audioVolume ?? 1) > 0 && (seg.duration || 0) > 0) {
+      if (
+        seg.assetType !== 'image' &&
+        seg.audioSource !== 'none' &&
+        (seg.audioVolume ?? 1) > 0 &&
+        motionDur > 0
+      ) {
         speechWindows.push({
-          startTime: Math.max(0, segStart),
-          endTime: Math.max(0, segStart) + (seg.duration || 0),
+          startTime: Math.max(0, segStart + preHold),
+          endTime: Math.max(0, segStart + preHold) + motionDur,
         })
       }
       runningStart = segStart + segDur
@@ -703,31 +761,21 @@ export function buildSceneRenderAudioClips(
 
   if (audioConfig.includeNarration && audioTracks.narration) {
     for (const track of audioTracks.narration) {
-      const clampedDuration = clampDurationToVideo(track.startTime, track.duration || 0)
-      if (clampedDuration == null) continue
-      if (clampedDuration > 0) {
-        speechWindows.push({
-          startTime: Math.max(0, track.startTime),
-          endTime: Math.max(0, track.startTime) + clampedDuration,
-        })
-      }
-      audioClips.push({
-        url: track.url,
-        startTime: track.startTime,
-        duration: clampedDuration,
-        volume: clampRenderVolume(track.volume, narrationVolume),
-        type: 'narration',
-      })
-    }
-  }
-
-  if (audioConfig.includeDialogue && audioTracks.dialogue) {
-    for (const track of audioTracks.dialogue) {
-      const clampedDuration = clampDurationToVideo(track.startTime, track.duration || 0)
-      if (clampedDuration == null) continue
+      if (!track?.url) continue
       const playbackRate = clampRenderPlaybackRate(track.playbackRate)
       const effectiveRate = playbackRate ?? 1
-      const wallDur = clampedDuration / effectiveRate
+      // Never clamp narration voiceover to maxVideoDuration or 0.05s when duration is omitted:
+      // 0 signals Cloud Run FFmpeg's explicit_audio_duration_filters to play the full voice file.
+      const explicitDuration =
+        track.duration != null && Number.isFinite(track.duration) && track.duration > 0
+          ? track.duration
+          : 0
+      const wallDur =
+        explicitDuration > 0
+          ? explicitDuration / effectiveRate
+          : maxVideoDuration != null && maxVideoDuration > track.startTime
+            ? maxVideoDuration - track.startTime
+            : 10
       if (wallDur > 0) {
         speechWindows.push({
           startTime: Math.max(0, track.startTime - 0.1),
@@ -736,8 +784,39 @@ export function buildSceneRenderAudioClips(
       }
       audioClips.push({
         url: track.url,
-        startTime: track.startTime,
-        duration: clampedDuration,
+        startTime: Math.max(0, track.startTime),
+        duration: explicitDuration,
+        volume: clampRenderVolume(track.volume, narrationVolume),
+        type: 'narration',
+        ...(playbackRate != null ? { playbackRate } : {}),
+        ...(track.fadeInSec != null && track.fadeInSec > 0 ? { fadeInSec: track.fadeInSec } : {}),
+        ...(track.fadeOutSec != null && track.fadeOutSec > 0 ? { fadeOutSec: track.fadeOutSec } : {}),
+        ...(track.trimStart != null && track.trimStart > 0 ? { trimStart: track.trimStart } : {}),
+        ...(track.warmBroadcastEq !== undefined ? { warmBroadcastEq: track.warmBroadcastEq } : {}),
+      })
+    }
+  }
+
+  if (audioConfig.includeDialogue && audioTracks.dialogue) {
+    for (const track of audioTracks.dialogue) {
+      if (!track?.url) continue
+      const explicitDuration =
+        track.duration != null && Number.isFinite(track.duration) && track.duration > 0
+          ? track.duration
+          : 0
+      const playbackRate = clampRenderPlaybackRate(track.playbackRate)
+      const effectiveRate = playbackRate ?? 1
+      const wallDur = explicitDuration / effectiveRate
+      if (wallDur > 0) {
+        speechWindows.push({
+          startTime: Math.max(0, track.startTime - 0.1),
+          endTime: Math.max(0, track.startTime) + wallDur + 0.15,
+        })
+      }
+      audioClips.push({
+        url: track.url,
+        startTime: Math.max(0, track.startTime),
+        duration: explicitDuration,
         volume: clampRenderVolume(track.volume, dialogueVolume),
         type: 'dialogue',
         character: track.character,
@@ -803,6 +882,12 @@ export function buildSceneRenderAudioClips(
         maxVideoDuration != null &&
         maxVideoDuration > 0 &&
         track.startTime + (track.duration || 0) > maxVideoDuration + 0.01
+      const resolvedSfxTrimStart =
+        track.trimStart != null && track.trimStart > 0
+          ? track.trimStart
+          : wasTrimmedByVideoEnd && clampedDuration > 0
+            ? 0.001
+            : undefined
       audioClips.push({
         url: track.url,
         startTime: track.startTime,
@@ -810,7 +895,7 @@ export function buildSceneRenderAudioClips(
         volume,
         type: 'sfx',
         ...(playbackRate != null ? { playbackRate } : {}),
-        ...(wasTrimmedByVideoEnd && clampedDuration > 0 ? { trimStart: 0.001 } : {}),
+        ...(resolvedSfxTrimStart != null ? { trimStart: resolvedSfxTrimStart } : {}),
       })
     }
   }
@@ -823,18 +908,36 @@ export function toSceneRenderVideoSegment(
   seg: CreateSceneRenderJobRequest['segments'][number]
 ): SceneRenderVideoSegment {
   const audioSource = seg.audioSource ?? 'original'
+  const preHold =
+    seg.preSegmentHoldSec != null && Number.isFinite(seg.preSegmentHoldSec) && seg.preSegmentHoldSec > 0
+      ? seg.preSegmentHoldSec
+      : 0
+  const pause =
+    seg.pauseDuration != null && Number.isFinite(seg.pauseDuration) && seg.pauseDuration > 0
+      ? seg.pauseDuration
+      : 0
+  const rawSpan = Math.max(0, seg.endTime - seg.startTime)
+  // Callers supply [startTime, endTime] as the full timeline slot (preSegmentHoldSec + motionWall + pauseDuration).
+  // Extract pure motion wall duration so downstream maxVideoDuration and FFmpeg tpad never double-count holds.
+  const motionDuration = rawSpan > preHold + pause + 1e-4 ? rawSpan - preHold - pause : rawSpan
   return {
     segmentId: seg.segmentId,
     sequenceIndex: seg.sequenceIndex,
     videoUrl: seg.videoUrl,
+    ...(seg.assetType === 'image' ? { assetType: 'image' as const } : {}),
     startTime: seg.startTime,
-    duration: seg.endTime - seg.startTime,
+    duration: motionDuration,
     audioSource,
     audioVolume: seg.audioVolume ?? 1.0,
     voiceoverUrl: seg.voiceoverUrl,
     voiceoverStartTime: seg.voiceoverStartTime,
     voiceoverDuration: seg.voiceoverDuration,
-    pauseDuration: seg.pauseDuration ?? 0,
+    ...(preHold > 0 ? { preSegmentHoldSec: preHold } : {}),
+    ...(seg.preHoldStyle ? { preHoldStyle: seg.preHoldStyle } : {}),
+    pauseDuration: pause,
+    ...(seg.holdStyle ? { holdStyle: seg.holdStyle } : {}),
+    ...(seg.audioLeadInSec != null && seg.audioLeadInSec > 0 ? { audioLeadInSec: seg.audioLeadInSec } : {}),
+    ...(seg.audioTailOutSec != null && seg.audioTailOutSec > 0 ? { audioTailOutSec: seg.audioTailOutSec } : {}),
     watermarkCropPercent: seg.watermarkCropPercent,
     videoTrimInSec: seg.videoTrimInSec,
     videoTrimOutSec: seg.videoTrimOutSec,

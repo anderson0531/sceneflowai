@@ -24,6 +24,7 @@ export interface PromoSceneApiResponse {
   narrationText?: string
   audioUrl?: string
   musicUrl?: string
+  cues?: unknown[]
   generatedByLanguage?: Record<string, { text: string; audioUrl?: string; durationSec?: number }>
   /** Legacy fallback fields if any mock/caller returns full arrays */
   scenes?: unknown[]
@@ -113,6 +114,7 @@ export function slimClientPromoSceneForRequest(
     'duration',
     'music',
     'musicAudio',
+    'narrationCuesAuthoritative',
   ] as const
 
   for (const key of scalarKeys) {
@@ -126,6 +128,9 @@ export function slimClientPromoSceneForRequest(
   }
   if (Array.isArray(promoScene.sceneMusicCues)) {
     slim.sceneMusicCues = promoScene.sceneMusicCues
+  }
+  if (Array.isArray(promoScene.sceneNarrationCues)) {
+    slim.sceneNarrationCues = promoScene.sceneNarrationCues
   }
   if (promoScene.dialogueAudio && typeof promoScene.dialogueAudio === 'object') {
     slim.dialogueAudio = promoScene.dialogueAudio

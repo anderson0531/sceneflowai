@@ -15,6 +15,7 @@ import {
   type PromoPreviewShot,
 } from '@/lib/publish/promoPreviewSequence'
 import type { PromoFrameAspect } from '@/types/publishingAssets'
+import type { SceneNarrationCue } from '@/lib/script/segmentTypes'
 import { cn } from '@/lib/utils'
 
 export interface PromoCutPreviewProps {
@@ -23,6 +24,10 @@ export interface PromoCutPreviewProps {
   narrationUrl?: string
   /** Seconds of picture before the voice begins. */
   narrationStartSec?: number
+  /** Shot-aligned narration overlay cues (when present, cues trigger on their assigned `beatStart` shot). */
+  narrationCues?: SceneNarrationCue[]
+  /** Active preview language for `narrationCues`. */
+  language?: string
   musicUrl?: string
   onEnded: () => void
   /** Source frame. 16:9 unless the blueprint is vertical. */
@@ -52,6 +57,8 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
       shots,
       narrationUrl,
       narrationStartSec = 0,
+      narrationCues,
+      language = 'en',
       musicUrl,
       onEnded,
       aspect = '16:9',
@@ -62,6 +69,8 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
     const [index, setIndex] = useState(0)
     const advanced = useRef(false)
     const narrationRef = useRef<HTMLAudioElement>(null)
+    const cueAudioRefs = useRef<Record<string, HTMLAudioElement | null>>({})
+    const startedCueIdsRef = useRef<Set<string>>(new Set())
     const musicRef = useRef<HTMLAudioElement>(null)
     const videoRef = useRef<HTMLVideoElement | null>(null)
     const narrationGraphRef = useRef<AudioContext | null>(null)
@@ -70,6 +79,29 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
     const narrationCueStartedRef = useRef(false)
     const onEndedRef = useRef(onEnded)
     onEndedRef.current = onEnded
+
+    const resolvedCueTracks = React.useMemo(() => {
+      if (!Array.isArray(narrationCues) || narrationCues.length === 0) return []
+      const lang = (language || 'en').trim().toLowerCase()
+      return narrationCues
+        .map((cue) => {
+          const url =
+            cue.byLanguage?.[lang]?.audioUrl?.trim() ||
+            cue.byLanguage?.en?.audioUrl?.trim() ||
+            ''
+          if (!url) return null
+          return {
+            cueId: cue.cueId,
+            beatStart: cue.beatStart,
+            beatEnd: cue.beatEnd,
+            url,
+            volume: typeof cue.volume === 'number' ? cue.volume : 1,
+          }
+        })
+        .filter((x): x is NonNullable<typeof x> => Boolean(x))
+    }, [narrationCues, language])
+
+    const useMultiCuePlayback = resolvedCueTracks.length > 0
 
     const applyNarrationCue = useCallback((narration: HTMLAudioElement, voiceOn: boolean) => {
       const cue = promoNarrationCue({
@@ -157,8 +189,22 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
       const narration = narrationRef.current
       const music = musicRef.current
       narrationCueStartedRef.current = false
+      startedCueIdsRef.current.clear()
       playClip(videoRef.current)
-      if (narration) {
+      if (useMultiCuePlayback) {
+        for (const ct of resolvedCueTracks) {
+          const el = cueAudioRefs.current[ct.cueId]
+          if (!el) continue
+          el.currentTime = 0
+          el.volume = Math.min(1, Math.max(0, PROMO_AUDIO_MIX.narration * ct.volume))
+          if (ct.beatStart === 0) {
+            startedCueIdsRef.current.add(ct.cueId)
+            void el.play().catch(() => undefined)
+          } else {
+            el.pause()
+          }
+        }
+      } else if (narration) {
         narration.currentTime = 0
         const unlock = narration.play()
         if (narrationStartSec > 0.05) {
@@ -174,6 +220,7 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
         music.volume = PROMO_AUDIO_MIX.music
         void music.play().catch(() => undefined)
       }
+      if (useMultiCuePlayback) return
       const context = narrationGraphRef.current
       if (context && narrationSourceRef.current) {
         void context.resume().catch(() => {
@@ -183,7 +230,7 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
       }
       if (narrationConnectingRef.current) return
       connectNarrationGraph()
-    }, [connectNarrationGraph, narrationStartSec, playClip])
+    }, [connectNarrationGraph, narrationStartSec, playClip, useMultiCuePlayback, resolvedCueTracks])
 
     useEffect(() => {
       narrationCueStartedRef.current = false
@@ -231,18 +278,52 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
       const music = musicRef.current
       if (!playing) {
         narrationCueStartedRef.current = false
+        startedCueIdsRef.current.clear()
         narration?.pause()
         music?.pause()
         if (narration) narration.currentTime = 0
         if (music) music.currentTime = 0
+        for (const el of Object.values(cueAudioRefs.current)) {
+          if (el) {
+            el.pause()
+            el.currentTime = 0
+          }
+        }
         return
       }
       if (music) music.volume = PROMO_AUDIO_MIX.music
-      if (narration) {
+      if (useMultiCuePlayback) {
+        for (const ct of resolvedCueTracks) {
+          const el = cueAudioRefs.current[ct.cueId]
+          if (!el) continue
+          el.volume = Math.min(1, Math.max(0, PROMO_AUDIO_MIX.narration * ct.volume))
+          if (index >= ct.beatStart && !startedCueIdsRef.current.has(ct.cueId) && index <= ct.beatEnd) {
+            // Pause any earlier cue that might still be trailing so cues never talk over each other
+            for (const [otherId, otherEl] of Object.entries(cueAudioRefs.current)) {
+              if (otherId !== ct.cueId && otherEl && !otherEl.paused) {
+                otherEl.pause()
+              }
+            }
+            startedCueIdsRef.current.add(ct.cueId)
+            el.currentTime = 0
+            void el.play().catch(() => undefined)
+          }
+        }
+      } else if (narration) {
         applyNarrationCue(narration, promoPreviewNarrationOn(shots, index, narrationStartSec))
       }
       void music?.play().catch(() => undefined)
-    }, [playing, narrationUrl, musicUrl, shots, index, narrationStartSec, applyNarrationCue])
+    }, [
+      playing,
+      narrationUrl,
+      musicUrl,
+      shots,
+      index,
+      narrationStartSec,
+      applyNarrationCue,
+      useMultiCuePlayback,
+      resolvedCueTracks,
+    ])
 
     useEffect(() => {
       const music = musicRef.current
@@ -297,15 +378,26 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
             </div>
           </div>
         ) : null}
-        {narrationUrl ? (
-          <audio
-            key={narrationUrl}
-            ref={narrationRef}
-            src={narrationUrl}
-            crossOrigin="anonymous"
-            preload="auto"
-          />
-        ) : null}
+        {useMultiCuePlayback
+          ? resolvedCueTracks.map((ct) => (
+              <audio
+                key={`${ct.cueId}-${ct.url}`}
+                ref={(el) => {
+                  cueAudioRefs.current[ct.cueId] = el
+                }}
+                src={ct.url}
+                preload="auto"
+              />
+            ))
+          : narrationUrl ? (
+              <audio
+                key={narrationUrl}
+                ref={narrationRef}
+                src={narrationUrl}
+                crossOrigin="anonymous"
+                preload="auto"
+              />
+            ) : null}
         {musicUrl ? <audio ref={musicRef} src={musicUrl} loop preload="auto" /> : null}
       </>
     )

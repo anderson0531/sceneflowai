@@ -15,6 +15,7 @@ import {
   isStaleSavedVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
+import { parsePersistedNarrationCues } from '@/lib/script/sceneNarrationCues'
 import { mergeLanguageClipVersions } from '@/lib/scene/languageClipVersions'
 import { promoShotIncluded } from '@/lib/publish/promoTimeline'
 import {
@@ -28,7 +29,7 @@ import {
   unionMediaVersions,
   type StillSlotSpec,
 } from '@/lib/storyboard/mediaVersions'
-import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
+import type { SceneBeat, SceneMusicCue, SceneNarrationCue } from '@/lib/script/segmentTypes'
 import type {
   PromoCampaignPresetId,
   PromoFrameAspect,
@@ -208,13 +209,17 @@ export interface PromoSceneRecord {
   interior: boolean
   action: string
   dialogue: unknown[]
+  narration?: string
   characters: unknown[]
   duration: number
   cinematicType: typeof PROMO_SCENE_CINEMATIC_TYPE
+  sceneDirection?: unknown
   beats: PromoSceneBeat[]
   music?: string
   musicAudio?: string
   sceneMusicCues?: SceneMusicCue[]
+  sceneNarrationCues?: SceneNarrationCue[]
+  narrationCuesAuthoritative?: boolean
   dialogueAudio?: Record<string, unknown[]>
   promoBeatPlan?: PromoTrailerBeatPlan[]
 }
@@ -451,6 +456,8 @@ export interface BuildPromoSceneInput {
   projectTitle?: string
   existingPromoScene?: Record<string, unknown> | null
   narrationLine?: string
+  narrationCues?: SceneNarrationCue[]
+  skipLegacyNarrationBeat?: boolean
   promoId?: string
   campaignName?: string
   campaignPreset?: PromoCampaignPresetId
@@ -472,7 +479,8 @@ export interface BuildPromoSceneResult {
 function buildPromoBeats(
   beatPlan: PromoTrailerBeatPlan[],
   narrationLine?: string,
-  existingBeats?: PromoSceneBeat[]
+  existingBeats?: PromoSceneBeat[],
+  options?: { skipLegacyNarrationBeat?: boolean }
 ): PromoSceneBeat[] {
   const includedPlan = beatPlan.filter((plan) => promoShotIncluded(plan))
   const usedExistingIndices = new Set<number>()
@@ -540,7 +548,9 @@ function buildPromoBeats(
               : {}),
           }
         : {}),
-      beatId: `bt_promo_${plan.sceneIndex}_${plan.beatId || 'shot'}_${index}`,
+      beatId:
+        existingMatch?.beatId?.trim() ||
+        `bt_promo_${plan.sceneIndex}_${plan.beatId || 'shot'}_${index}`,
       sequenceIndex: index,
       kind,
       actionDescription: label,
@@ -574,7 +584,7 @@ function buildPromoBeats(
     }
   })
 
-  if (narrationLine?.trim()) {
+  if (narrationLine?.trim() && !options?.skipLegacyNarrationBeat) {
     const cleanNarration = narrationLine.trim()
     // Dub the voice-over narration onto the first actual non-dialogue (establishing / action) shot
     // instead of inserting a synthetic duplicate shot.
@@ -802,13 +812,64 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
   const existingPromoBeats = Array.isArray(input.existingPromoScene?.beats)
     ? (input.existingPromoScene?.beats as PromoSceneBeat[])
     : undefined
-  const beats = buildPromoBeats(input.beatPlan, input.narrationLine, existingPromoBeats)
+  const includedPlanCount = input.beatPlan.filter((b) => promoShotIncluded(b)).length
+  const autoSplitBlocks =
+    !input.narrationCues &&
+    !Array.isArray(input.existingPromoScene?.sceneNarrationCues) &&
+    input.narrationLine
+      ? input.narrationLine
+          .split(/\n\s*\n+/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : []
+  const autoSeededCues =
+    autoSplitBlocks.length >= 2 && includedPlanCount >= 1
+      ? autoSplitBlocks.map((block, idx) => {
+          const start = Math.min(
+            includedPlanCount - 1,
+            Math.floor((idx * includedPlanCount) / autoSplitBlocks.length)
+          )
+          const nextStart =
+            idx === autoSplitBlocks.length - 1
+              ? includedPlanCount
+              : Math.floor(((idx + 1) * includedPlanCount) / autoSplitBlocks.length)
+          const end = Math.max(start, Math.min(includedPlanCount - 1, nextStart - 1))
+          return {
+            cueId: `ncue-promo-${idx}`,
+            beatStart: start,
+            beatEnd: end,
+            speakerType: 'narrator' as const,
+            characterName: 'NARRATOR',
+            alignmentMode: 'flow' as const,
+            volume: 1,
+            byLanguage: { en: { text: block } },
+            generatedBy: 'auto' as const,
+          }
+        })
+      : undefined
+  const rawNarrationCues =
+    input.narrationCues ??
+    (Array.isArray(input.existingPromoScene?.sceneNarrationCues)
+      ? input.existingPromoScene.sceneNarrationCues
+      : autoSeededCues)
+  const hasAuthoritativeNarrationCues = Boolean(
+    input.skipLegacyNarrationBeat ||
+      (Array.isArray(rawNarrationCues) && rawNarrationCues.length > 0) ||
+      input.existingPromoScene?.narrationCuesAuthoritative === true
+  )
+  const beats = buildPromoBeats(input.beatPlan, input.narrationLine, existingPromoBeats, {
+    skipLegacyNarrationBeat: hasAuthoritativeNarrationCues,
+  })
+  const sceneNarrationCues =
+    Array.isArray(rawNarrationCues) && rawNarrationCues.length > 0
+      ? parsePersistedNarrationCues(rawNarrationCues, beats)
+      : undefined
   const existingDialogueAudio =
     input.existingPromoScene?.dialogueAudio &&
     typeof input.existingPromoScene.dialogueAudio === 'object'
       ? (input.existingPromoScene.dialogueAudio as Record<string, unknown[]>)
       : undefined
-  if (existingDialogueAudio) {
+  if (existingDialogueAudio && !hasAuthoritativeNarrationCues) {
     const narrBeat = beats.find((b) => b.kind === 'narration')
     if (narrBeat && !narrBeat.audioUrl) {
       for (const list of Object.values(existingDialogueAudio)) {
@@ -851,10 +912,13 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
         const r = row as Record<string, unknown>
         const isNarr =
           r.kind === 'narration' ||
+          r.lineId === 'ln_promo_narration_0' ||
           String(r.character || '')
             .trim()
             .toUpperCase() === 'NARRATOR'
-        if (isNarr) return true
+        if (isNarr) {
+          return !hasAuthoritativeNarrationCues
+        }
         const rowLineId = typeof r.lineId === 'string' ? r.lineId.trim() : ''
         if (rowLineId) {
           return activeDialogueLineIds.has(rowLineId)
@@ -871,7 +935,16 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
     return Object.keys(out).length > 0 ? out : undefined
   })()
   const legacyFromBeats = beatsToLegacyFields(beats)
+  const cueSummaryText =
+    sceneNarrationCues && sceneNarrationCues.length > 0
+      ? sceneNarrationCues
+          .map((c) => c.byLanguage?.en?.text?.trim() || Object.values(c.byLanguage || {})[0]?.text?.trim() || '')
+          .filter(Boolean)
+          .join(' ')
+          .trim()
+      : ''
   const resolvedNarrationText =
+    cueSummaryText ||
     legacyFromBeats.narration ||
     (typeof input.narrationLine === 'string' && input.narrationLine.trim()
       ? input.narrationLine.trim()
@@ -967,6 +1040,8 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
     music: musicPrompt,
     musicAudio,
     sceneMusicCues,
+    ...(sceneNarrationCues && sceneNarrationCues.length > 0 ? { sceneNarrationCues } : {}),
+    ...(hasAuthoritativeNarrationCues ? { narrationCuesAuthoritative: true } : {}),
     dialogueAudio: filteredDialogueAudio,
   }
 

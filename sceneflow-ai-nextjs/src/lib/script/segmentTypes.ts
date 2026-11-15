@@ -43,6 +43,70 @@ export type BeatDirectionTransition = 'CUT' | 'CONTINUE' | 'DISSOLVE' | 'FADE' |
 export type BeatDirectionSource = 'llm' | 'planner' | 'derived' | 'user' | 'director'
 export type SceneMovementSource = 'llm' | 'derived' | 'user'
 export type SceneMusicCueSource = 'llm' | 'derived' | 'user'
+export type SceneNarrationCueSource = 'ai-director' | 'migrated' | 'user'
+
+/**
+ * Alignment preset governing how underlying shots adapt when narration audio
+ * duration differs from the visual span of `beatStart..beatEnd`.
+ */
+export type NarrationAlignmentMode =
+  | 'flow'
+  | 'intro-freeze'
+  | 'outro-freeze'
+  | 'slow-mo-fit'
+  | 'manual'
+
+export interface NarrationCueLanguageAudio {
+  /** Source text (EN) or localized/syllable-adapted script for this language. */
+  text: string
+  /** Cached Vercel Blob MP3/WAV URL. */
+  audioUrl?: string
+  /** Probed audio duration in seconds. */
+  durationSec?: number
+  /** Synthesized voice ID (Gemini or ElevenLabs). */
+  voiceId?: string
+  provider?: 'google' | 'elevenlabs'
+  generatedAt?: string
+  /** Fingerprint of text + voice + delivery at generation time for staleness detection. */
+  sourceFingerprint?: string
+}
+
+/**
+ * One shot-aligned narration overlay cue spanning `beatStart..beatEnd` (inclusive).
+ *
+ * Parallel to `SceneMusicCue`, narration cues allow continuous voiceover to span
+ * 1 or multiple shots (Promo cuts, Video Memoirs, Documentaries, Narrative V.O.)
+ * without mutating underlying source script beats or polluting Veo clip prompts.
+ */
+export interface SceneNarrationCue {
+  cueId: string
+  /** Inclusive zero-based first beat index covered by this narration cue. */
+  beatStart: number
+  /** Inclusive zero-based last beat index covered by this narration cue. */
+  beatEnd: number
+  /** Stable beatId anchors so reordering or excluding shots preserves cue spans. */
+  anchorBeatIds?: string[]
+  /** Optional origin `lineId` when migrated or synced with a script narration beat. */
+  originLineId?: string
+  /** Whether spoken by the scene/project Narrator or a specific Cast Character. */
+  speakerType: 'narrator' | 'character'
+  characterId?: string
+  characterName?: string
+  /** Optional vocal performance brief (e.g., "Warm, reflective, unhurried"). */
+  deliveryCue?: string
+  /** Alignment mode governing how shots adapt when VO duration != visual span. */
+  alignmentMode: NarrationAlignmentMode
+  /** Seconds of opening speech to play over frozen Frame 0 when `alignmentMode === 'intro-freeze'`. */
+  introNarrationSec?: number
+  /** Offset relative to `beatStart` start time in seconds (supports J-cut lead-in or delayed entry). */
+  startOffsetSec?: number
+  /** Per-cue gain multiplier (0..1.5, default 1.0). */
+  volume?: number
+  /** Multi-language scripts & synthesized audio keyed by ISO language code ('en', 'es', ...). */
+  byLanguage: Record<string, NarrationCueLanguageAudio>
+  generatedBy?: SceneNarrationCueSource
+  updatedAt?: string
+}
 
 /** How a cue arrives. */
 export type MusicCueEntry = 'fade' | 'hard' | 'swell'

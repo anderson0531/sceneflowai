@@ -27,6 +27,12 @@ import {
   buildProductionMusicCueClips,
   type MusicCueSegment,
 } from '@/lib/scene/productionMusicCues'
+import {
+  getNarrationCueLanguages,
+  parsePersistedNarrationCues,
+  PROMO_LEGACY_NARRATION_LINE_ID,
+} from '@/lib/script/sceneNarrationCues'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 
 function dialogueAudioCharacterNamesMatch(a: string, b: string): boolean {
   const canonicalA = toCanonicalName(a)
@@ -197,6 +203,11 @@ export function detectAvailableLanguages(scene: any): string[] {
         languages.add(lang)
       }
     })
+  }
+
+  // Check shot-aligned narration cue languages
+  for (const lang of getNarrationCueLanguages(scene, { requireAudio: true })) {
+    languages.add(lang)
   }
   
   // Default to English if no languages detected
@@ -727,7 +738,43 @@ export function buildAudioTracksForLanguage(
     dialogueClips.push(narrationAsDialogue)
   }
 
-  tracks.dialogue = dialogueClips
+  const persistedNarrCues = Array.isArray(scene.sceneNarrationCues)
+    ? parsePersistedNarrationCues(scene.sceneNarrationCues, getSceneBeats(scene))
+    : []
+  const narrationOwnedIds = new Set<string>([PROMO_LEGACY_NARRATION_LINE_ID])
+  for (const nc of persistedNarrCues) {
+    if (nc.originLineId) narrationOwnedIds.add(nc.originLineId)
+  }
+
+  tracks.dialogue = dialogueClips.filter(
+    (clip) => !(clip.lineId && narrationOwnedIds.has(clip.lineId)) && !narrationOwnedIds.has(clip.id)
+  )
+
+  if (persistedNarrCues.length > 0) {
+    const langKey = language.trim().toLowerCase() || 'en'
+    tracks.narrationCues = persistedNarrCues.flatMap((cue) => {
+      const entry = cue.byLanguage?.[langKey]
+      const url = entry?.audioUrl?.trim()
+      if (!url) return []
+      return [
+        {
+          id: `narration-${cue.cueId}`,
+          url,
+          startTime: Math.max(0, cue.startOffsetSec ?? 0),
+          duration: entry?.durationSec ?? 3,
+          label:
+            cue.speakerType === 'character' && cue.characterName
+              ? `${cue.characterName} (V.O.)`
+              : 'Narration',
+          volume: cue.volume ?? 1,
+          language: langKey,
+          source: 'scene' as AudioClipSource,
+          scenePropertyPath: 'sceneNarrationCues',
+          characterName: cue.characterName || 'NARRATOR',
+        },
+      ]
+    })
+  }
 
   const segmentOffset = options?.segmentPlaybackOffsetSeconds ?? 0
   const timelineSpan = computeSceneTimelineSpanFromSegments(scene, segmentOffset)

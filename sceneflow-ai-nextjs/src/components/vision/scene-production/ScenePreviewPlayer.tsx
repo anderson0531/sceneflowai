@@ -42,6 +42,7 @@ import {
   scoreStemEnvelopeGain,
   type MixerMusicClip,
 } from '@/lib/scene/mixerScoreMusic'
+import type { MixerNarrationClip } from '@/lib/scene/mixerNarrationCues'
 import { resolveBeatPreviewVolume } from '@/lib/scene/segmentAudioPreview'
 import { DEFAULT_MUSIC_FILE_DURATION_SEC } from '@/lib/storyboard/musicPlayback'
 import { getFrameCropClipPath } from '@/lib/video/segmentVideoCrop'
@@ -56,8 +57,10 @@ import type {
   MixerDialogueClipConfig,
   MixerLoudnessTarget,
   MixerSegmentAudioConfig,
+  SceneIntroTransition,
   SceneSegment,
   ShotHoldStyle,
+  ShotPreHoldStyle,
   TextOverlay,
   WatermarkConfig,
 } from './types'
@@ -161,6 +164,7 @@ export function ScenePreviewPlayer({
   onFocusBeatHandled,
   autoPlay = false,
   onPlaybackComplete,
+  sceneIntro,
   sceneEnd,
   nextSceneFrameUrl = null,
   fillScreen = false,
@@ -168,12 +172,15 @@ export function ScenePreviewPlayer({
   loudnessTarget = 'web-14lufs',
   useStemDubbingPolicy = false,
   includeSpeechStem = false,
+  getPreSegmentHoldSec,
+  getPreHoldStyle,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
   currentAudioUrls: {
     narration?: string
     narrationDuration?: number
+    narrationClips?: MixerNarrationClip[]
     dialogue: Array<{ id?: string; audioUrl?: string; duration?: number; startTime?: number }>
     music?: string
     musicClips?: MixerMusicClip[]
@@ -197,6 +204,10 @@ export function ScenePreviewPlayer({
   getPlaybackSegmentDuration: (segment: SceneSegment) => number
   /** Picture speed for the selected language. Omitted means 1. */
   getVideoPlaybackRate?: (segmentId: string) => number
+  /** Effective Intro Freeze duration (manual + elastic narration) for a shot in seconds. */
+  getPreSegmentHoldSec?: (segmentId: string) => number
+  /** Effective Intro Freeze style ('freeze' | 'push') for a shot. */
+  getPreHoldStyle?: (segmentId: string) => ShotPreHoldStyle
   getSegmentDuration: (segment: SceneSegment) => number
   measuredSegmentDurations: Record<string, number>
   onMeasuredDurationsChange: (durations: Record<string, number>) => void
@@ -219,6 +230,8 @@ export function ScenePreviewPlayer({
    * Otherwise the player restarts, matching the Mixer.
    */
   onPlaybackComplete?: () => boolean | void
+  /** Start-of-scene intro join (e.g. fade in from black). */
+  sceneIntro?: SceneIntroTransition
   /** End-of-scene join. Fade holds black; dissolve crossfades the next opening frame. */
   sceneEnd?: { effect: 'cut' | 'dissolve' | 'fade'; durationSec: number; holdSec: number }
   nextSceneFrameUrl?: string | null
@@ -234,7 +247,6 @@ export function ScenePreviewPlayer({
   loudnessTarget?: MixerLoudnessTarget
   /** When true, replace master embedded speech with extracted dialogue-free background stem */
   useStemDubbingPolicy?: boolean
-  /** When true, retain the original speech stem alongside dubbed dialogue */
   includeSpeechStem?: boolean
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -243,6 +255,7 @@ export function ScenePreviewPlayer({
   const standbyVideoRef = useRef<HTMLVideoElement>(null)
   const dissolveVideoRef = useRef<HTMLVideoElement>(null)
   const narrationRef = useRef<HTMLAudioElement>(null)
+  const narrationRefsById = useRef<Map<string, HTMLAudioElement | null>>(new Map())
   const backgroundStemRef = useRef<HTMLAudioElement>(null)
   const musicRefsById = useRef<Map<string, HTMLAudioElement | null>>(new Map())
   const dialogueRefsById = useRef<Map<string, HTMLAudioElement | null>>(new Map())
@@ -276,6 +289,7 @@ export function ScenePreviewPlayer({
       playbackKind === 'image-sequence'
         ? []
         : segments
+            .filter((s) => s.assetType !== 'image')
             .map((s) => s.activeAssetUrl?.trim())
             .filter((u): u is string => Boolean(u)),
     [playbackKind, segments]
@@ -286,6 +300,7 @@ export function ScenePreviewPlayer({
       playbackKind === 'image-sequence'
         ? ''
         : segments
+            .filter((s) => s.assetType !== 'image')
             .map((s) => `${s.segmentId}:${s.activeAssetUrl?.trim() || ''}`)
             .join('|'),
     [playbackKind, segments]
@@ -603,6 +618,24 @@ export function ScenePreviewPlayer({
     },
     [measuredSegmentDurations]
   )
+
+  const resolveEffectivePreHoldSec = useCallback(
+    (seg: SceneSegment | undefined, segIndex?: number) => {
+      if (!seg) return 0
+      const basePre =
+        getPreSegmentHoldSec?.(seg.segmentId) ??
+        segmentAudioConfigs[seg.segmentId]?.preSegmentHoldSec ??
+        0
+      const introLeadIn =
+        segIndex === 0 &&
+        typeof sceneIntro?.leadInHoldSec === 'number' &&
+        sceneIntro.leadInHoldSec > 0
+          ? sceneIntro.leadInHoldSec
+          : 0
+      return Math.max(0, basePre + introLeadIn)
+    },
+    [getPreSegmentHoldSec, segmentAudioConfigs, sceneIntro]
+  )
   
   // Helper: Start time on the playback timeline (uses measured segment lengths)
   const getSegmentStartTime = useCallback(
@@ -709,9 +742,169 @@ export function ScenePreviewPlayer({
     return () => cancelAnimationFrame(frameId)
   }, [playbackKind, isPlaying, isVideoFrozen, scrubberTotalDuration, finishPlayback])
 
+  const isCurrentSegmentStillInVideoMode =
+    playbackKind === 'video' && currentSegment.segment?.assetType === 'image'
+
+  const computeTrailingAudioEndTime = useCallback(() => {
+    const dialogueStartBase = getSegmentStartTime(audioTracks.dialogue.startSegment)
+    const dialogueEnds =
+      audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0
+        ? currentAudioUrls.dialogue.map((d, i) => {
+            const cfg = dialogueClipConfigs?.[dialogueClipConfigKey(d, i)]
+            if (cfg?.enabled === false) return 0
+            const t0 = dialogueStartBase + mixerDialogueStart(d, i, 3)
+            return t0 + dialogueClipWallDuration(d.duration, cfg?.playbackRate)
+          })
+        : [0]
+    const narrationClips = currentAudioUrls.narrationClips ?? []
+    const narrationCueEnds =
+      audioTracks.narration.enabled && narrationClips.length > 0
+        ? narrationClips.map((c) => c.startTime + c.duration)
+        : [0]
+    const legacyNarrEnd =
+      audioTracks.narration.enabled &&
+      narrationClips.length === 0 &&
+      currentAudioUrls.narration &&
+      (currentAudioUrls.narrationDuration ?? 0) > 0
+        ? getSegmentStartTime(audioTracks.narration.startSegment) +
+          (currentAudioUrls.narrationDuration ?? 0)
+        : 0
+    return Math.max(legacyNarrEnd, ...narrationCueEnds, ...dialogueEnds)
+  }, [audioTracks, currentAudioUrls, dialogueClipConfigs, getSegmentStartTime])
+
+  // Hybrid Still Shot in Video Mode: advance global time across still duration, then advance shot
+  useEffect(() => {
+    if (!isCurrentSegmentStillInVideoMode || !isPlaying) return
+    const seg = segments[currentSegmentIndex]
+    if (!seg) return
+    videoRef.current?.pause()
+
+    const segEnd = segmentStartTime + getPlaybackSegmentDuration(seg)
+    let lastNow = performance.now()
+    let rafId = 0
+
+    const tick = (now: number) => {
+      const dt = (now - lastNow) / 1000
+      lastNow = now
+      const base = Math.max(segmentStartTime, currentTimeRef.current)
+      const next = base + dt
+      if (next >= segEnd) {
+        setCurrentTime(segEnd)
+        if (currentSegmentIndex < segments.length - 1) {
+          setCurrentSegmentIndex((prev) => prev + 1)
+        } else {
+          const audioEndTime = computeTrailingAudioEndTime()
+          if (audioEndTime > timelineVideoDuration && segEnd < audioEndTime) {
+            setIsVideoFrozen(true)
+            const startFreezeTime = timelineVideoDuration
+            const remainingTime = audioEndTime - startFreezeTime
+            const startMs = performance.now()
+            const freezeTick = () => {
+              const elapsedFrozen = (performance.now() - startMs) / 1000
+              setCurrentTime(startFreezeTime + elapsedFrozen)
+              if (elapsedFrozen >= remainingTime) {
+                audioTimerRef.current = null
+                finishPlayback()
+              } else {
+                audioTimerRef.current = requestAnimationFrame(freezeTick) as unknown as NodeJS.Timeout
+              }
+            }
+            audioTimerRef.current = requestAnimationFrame(freezeTick) as unknown as NodeJS.Timeout
+          } else {
+            finishPlayback()
+          }
+        }
+        return
+      }
+      setCurrentTime(next)
+      rafId = requestAnimationFrame(tick)
+    }
+
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+  }, [
+    isCurrentSegmentStillInVideoMode,
+    isPlaying,
+    currentSegmentIndex,
+    segments,
+    segmentStartTime,
+    getPlaybackSegmentDuration,
+    computeTrailingAudioEndTime,
+    timelineVideoDuration,
+    finishPlayback,
+  ])
+
+  // Intro Freeze (preSegmentHoldSec) before video motion begins on the active shot
+  useEffect(() => {
+    if (playbackKind === 'image-sequence' || isCurrentSegmentStillInVideoMode) return
+    if (!isPlaying) return
+    const seg = segments[currentSegmentIndex]
+    if (!seg) return
+    const preHoldSec = resolveEffectivePreHoldSec(seg, currentSegmentIndex)
+    if (preHoldSec <= 0.02) return
+
+    const preHoldEnd = segmentStartTime + preHoldSec
+    if (currentTimeRef.current >= preHoldEnd - 0.02) return
+
+    const video = videoRef.current
+    const trim = getTrimForSegment(seg)
+    if (video) {
+      video.pause()
+      if (Math.abs(video.currentTime - trim.inSec) > 0.03) {
+        try {
+          video.currentTime = trim.inSec
+        } catch {
+          // Ignore seek before metadata
+        }
+      }
+    }
+    setIsVideoFrozen(true)
+
+    const initialTime = Math.max(segmentStartTime, currentTimeRef.current)
+    const remainingSec = preHoldEnd - initialTime
+    const startMs = performance.now()
+    let rafId = 0
+
+    const tick = () => {
+      const elapsed = (performance.now() - startMs) / 1000
+      if (elapsed >= remainingSec) {
+        setCurrentTime(preHoldEnd)
+        setIsVideoFrozen(false)
+        if (videoRef.current && isPlayingRef.current) {
+          const r = getVideoPlaybackRate?.(seg.segmentId) ?? 1
+          videoRef.current.playbackRate = r
+          if (Math.abs(videoRef.current.currentTime - trim.inSec) > 0.03) {
+            try {
+              videoRef.current.currentTime = trim.inSec
+            } catch {
+              // Ignore seek errors
+            }
+          }
+          videoRef.current.play().catch(() => {})
+        }
+        return
+      }
+      setCurrentTime(initialTime + elapsed)
+      rafId = requestAnimationFrame(tick)
+    }
+
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+  }, [
+    playbackKind,
+    isCurrentSegmentStillInVideoMode,
+    isPlaying,
+    currentSegmentIndex,
+    segments,
+    segmentStartTime,
+    resolveEffectivePreHoldSec,
+    getTrimForSegment,
+    getVideoPlaybackRate,
+  ])
+
   // Handle video time updates
   useEffect(() => {
-    if (playbackKind === 'image-sequence') return
+    if (playbackKind === 'image-sequence' || isCurrentSegmentStillInVideoMode) return
     const video = videoRef.current
     if (!video) return
     
@@ -719,14 +912,15 @@ export function ScenePreviewPlayer({
       if (segmentEndHandledRef.current) return
       segmentEndHandledRef.current = true
 
-      const config = segmentAudioConfigs[segments[currentSegmentIndex].segmentId]
-      const trim = getTrimForSegment(segments[currentSegmentIndex])
-      const videoRate = getVideoPlaybackRate?.(segments[currentSegmentIndex].segmentId) ?? 1
+      const activeSeg = segments[currentSegmentIndex]
+      const preHoldSec = resolveEffectivePreHoldSec(activeSeg, currentSegmentIndex)
+      const trim = getTrimForSegment(activeSeg)
+      const videoRate = getVideoPlaybackRate?.(activeSeg.segmentId) ?? 1
       const videoWall = videoWallDurationSec(trim.playableSec, videoRate)
-      const autoPauseVal = audioTracks?.dialogue?.enabled
-        ? Math.max(0, getPlaybackSegmentDuration(segments[currentSegmentIndex]) - videoWall)
-        : 0.0
-      const pauseDuration = (config?.postSegmentPause || 0) + autoPauseVal
+      const pauseDuration = Math.max(
+        0,
+        getPlaybackSegmentDuration(activeSeg) - preHoldSec - videoWall
+      )
 
       const advanceOrEnd = () => {
         // Check if we should advance to next segment or freeze
@@ -735,28 +929,7 @@ export function ScenePreviewPlayer({
           setCurrentSegmentIndex(prev => prev + 1)
         } else {
           // Last segment ended - check if audio extends beyond video
-          const dialogueStartBase = getSegmentStartTime(audioTracks.dialogue.startSegment)
-          const dialogueEnds =
-            audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0
-              ? currentAudioUrls.dialogue.map((d, i) => {
-                  const cfg = dialogueClipConfigs?.[dialogueClipConfigKey(d, i)]
-                  if (cfg?.enabled === false) return 0
-                  const t0 = dialogueStartBase + mixerDialogueStart(d, i, 3)
-                  return t0 + dialogueClipWallDuration(d.duration, cfg?.playbackRate)
-                })
-              : [0]
-          const narrEnd =
-            audioTracks.narration.enabled &&
-            currentAudioUrls.narration &&
-            (currentAudioUrls.narrationDuration ?? 0) > 0
-              ? getSegmentStartTime(audioTracks.narration.startSegment) +
-                (currentAudioUrls.narrationDuration ?? 0)
-              : 0
-          // Music is a background bed and never extends playback past the video clip end
-          const audioEndTime = Math.max(
-            narrEnd,
-            ...dialogueEnds
-          )
+          const audioEndTime = computeTrailingAudioEndTime()
           
           if (audioEndTime > timelineVideoDuration && currentTimeRef.current < audioEndTime) {
             // Freeze video on last frame, continue audio
@@ -790,10 +963,10 @@ export function ScenePreviewPlayer({
         }
       }
 
-      if (pauseDuration > 0) {
+      if (pauseDuration > 0.02) {
         setIsVideoFrozen(true)
         
-        const startFreezeTime = segmentStartTime + (getPlaybackSegmentDuration(segments[currentSegmentIndex]) - pauseDuration)
+        const startFreezeTime = segmentStartTime + (getPlaybackSegmentDuration(activeSeg) - pauseDuration)
         const remainingTime = pauseDuration
         const startTimeMs = performance.now()
         
@@ -823,13 +996,17 @@ export function ScenePreviewPlayer({
       
       const seg = segments[currentSegmentIndex]
       if (!seg) return
+      const preHoldSec = resolveEffectivePreHoldSec(seg, currentSegmentIndex)
       const trim = getTrimForSegment(seg)
       const videoRate = getVideoPlaybackRate?.(seg.segmentId) ?? 1
       if (Math.abs(video.playbackRate - videoRate) > 0.01) {
         video.playbackRate = videoRate
       }
       // Source time advances at `videoRate`; the timeline stays in wall-clock seconds.
-      const globalTime = segmentStartTime + Math.max(0, video.currentTime - trim.inSec) / videoRate
+      const globalTime =
+        segmentStartTime +
+        preHoldSec +
+        Math.max(0, video.currentTime - trim.inSec) / videoRate
       setCurrentTime(globalTime)
 
       if (video.currentTime >= trim.outSec - 0.05 && !isVideoFrozen) {
@@ -851,6 +1028,7 @@ export function ScenePreviewPlayer({
     }
   }, [
     playbackKind,
+    isCurrentSegmentStillInVideoMode,
     currentSegmentIndex,
     segments,
     segmentStartTime,
@@ -865,6 +1043,8 @@ export function ScenePreviewPlayer({
     getVideoPlaybackRate,
     getSegmentStartTime,
     getTrimForSegment,
+    resolveEffectivePreHoldSec,
+    computeTrailingAudioEndTime,
     finishPlayback,
   ])
   
@@ -873,39 +1053,77 @@ export function ScenePreviewPlayer({
     const effectiveIsPlaying =
       isPlaying && (!isVideoBuffering || isVideoFrozen || playbackKind === 'image-sequence')
 
-    // Narration sync — only when a real narration URL exists (avoids enabled + empty track)
-    if (
-      narrationRef.current &&
-      audioTracks.narration.enabled &&
-      currentAudioUrls.narration
-    ) {
-      narrationRef.current.volume = isMuted ? 0 : audioTracks.narration.volume
-      const narrationStartTime = getSegmentStartTime(audioTracks.narration.startSegment)
-      
-      if (effectiveIsPlaying && currentTime >= narrationStartTime) {
-        const narrationLocalTime = currentTime - narrationStartTime
-        const drift = Math.abs(narrationRef.current.currentTime - narrationLocalTime)
-        if (drift > 0.85) {
-          narrationRef.current.currentTime = narrationLocalTime
+    // Narration sync — shot-aligned Narration Cues (or single legacy narration fallback)
+    const narrationClips = currentAudioUrls.narrationClips ?? []
+    if (audioTracks.narration.enabled && narrationClips.length > 0) {
+      narrationRef.current?.pause()
+      const EPS = 0.03
+      const activeNarrIds = new Set<string>()
+      narrationClips.forEach((clip) => {
+        const audioEl = narrationRefsById.current.get(clip.id)
+        if (!audioEl || !clip.url) return
+        const clipStart = clip.startTime
+        const clipEnd = clipStart + clip.duration + EPS
+        const effVol = Math.max(
+          0,
+          Math.min(1, audioTracks.narration.volume * (clip.volume ?? 1))
+        )
+        audioEl.volume = isMuted ? 0 : effVol
+        if (effectiveIsPlaying && currentTime >= clipStart && currentTime < clipEnd) {
+          activeNarrIds.add(clip.id)
+          const expectedTime = Math.max(0, currentTime - clipStart)
+          if (Math.abs(audioEl.currentTime - expectedTime) > 0.85) {
+            audioEl.currentTime = expectedTime
+          }
+          if (audioEl.paused) {
+            audioEl.play().catch(() => {})
+          }
+        } else if (!audioEl.paused) {
+          audioEl.pause()
         }
-        if (narrationRef.current.paused) {
-          narrationRef.current.play().catch(() => {})
+      })
+      narrationRefsById.current.forEach((el, id) => {
+        if (el && !activeNarrIds.has(id) && !el.paused) el.pause()
+      })
+    } else {
+      narrationRefsById.current.forEach((el) => el?.pause())
+      if (
+        narrationRef.current &&
+        audioTracks.narration.enabled &&
+        currentAudioUrls.narration
+      ) {
+        narrationRef.current.volume = isMuted ? 0 : audioTracks.narration.volume
+        const narrationStartTime = getSegmentStartTime(audioTracks.narration.startSegment)
+        
+        if (effectiveIsPlaying && currentTime >= narrationStartTime) {
+          const narrationLocalTime = currentTime - narrationStartTime
+          const drift = Math.abs(narrationRef.current.currentTime - narrationLocalTime)
+          if (drift > 0.85) {
+            narrationRef.current.currentTime = narrationLocalTime
+          }
+          if (narrationRef.current.paused) {
+            narrationRef.current.play().catch(() => {})
+          }
+        } else {
+          narrationRef.current.pause()
         }
-      } else {
+      } else if (narrationRef.current) {
         narrationRef.current.pause()
       }
-    } else if (narrationRef.current) {
-      narrationRef.current.pause()
     }
     
     // Determine if speech (narration or dialogue) is active at currentTime for Auto-Ducking (-8 dB)
     const narrationStartTime = getSegmentStartTime(audioTracks.narration.startSegment)
     const isNarrationSpeaking =
       audioTracks.narration.enabled &&
-      !!currentAudioUrls.narration &&
-      (currentAudioUrls.narrationDuration ?? 0) > 0 &&
-      currentTime >= narrationStartTime &&
-      currentTime <= narrationStartTime + (currentAudioUrls.narrationDuration ?? 0)
+      (narrationClips.length > 0
+        ? narrationClips.some(
+            (c) => currentTime >= c.startTime - 0.1 && currentTime <= c.startTime + c.duration + 0.15
+          )
+        : !!currentAudioUrls.narration &&
+          (currentAudioUrls.narrationDuration ?? 0) > 0 &&
+          currentTime >= narrationStartTime &&
+          currentTime <= narrationStartTime + (currentAudioUrls.narrationDuration ?? 0))
 
     const dialogueBaseForDuck = getSegmentStartTime(audioTracks.dialogue.startSegment)
     const isDialogueSpeaking =
@@ -1179,7 +1397,7 @@ export function ScenePreviewPlayer({
   
   // Load new segment video when segment index changes (uses preloaded blob: URL when available)
   useEffect(() => {
-    if (playbackKind === 'image-sequence') return
+    if (playbackKind === 'image-sequence' || isCurrentSegmentStillInVideoMode) return
     const video = videoRef.current
     const seg = currentSegment.segment
     const rawUrl = seg?.activeAssetUrl?.trim()
@@ -1196,13 +1414,22 @@ export function ScenePreviewPlayer({
       const applyTrimAndPlay = () => {
         if (!currentSegment.segment) return
         const trim = getTrimForSegment(currentSegment.segment)
+        const preHoldSec = resolveEffectivePreHoldSec(currentSegment.segment, currentSegmentIndex)
+        const segStart = getSegmentStartTime(currentSegmentIndex)
+        const inPreHold =
+          preHoldSec > 0.02 && currentTimeRef.current < segStart + preHoldSec - 0.02
         const videoRate = getVideoPlaybackRate?.(currentSegment.segment.segmentId) ?? 1
         video.playbackRate = videoRate
         if (Math.abs(video.currentTime - trim.inSec) > 0.03) {
           video.currentTime = trim.inSec
         }
         setIsVideoBuffering(false)
-        if (isPlayingRef.current && !isVideoFrozenRef.current && !segmentEndHandledRef.current) {
+        if (
+          isPlayingRef.current &&
+          !inPreHold &&
+          !isVideoFrozenRef.current &&
+          !segmentEndHandledRef.current
+        ) {
           video.play().catch(() => {})
         }
       }
@@ -1219,15 +1446,20 @@ export function ScenePreviewPlayer({
       }
     } else if (video && resolvedUrl && seg) {
       const trim = getTrimForSegment(seg)
+      const preHoldSec = resolveEffectivePreHoldSec(seg, currentSegmentIndex)
+      const segStart = getSegmentStartTime(currentSegmentIndex)
+      const inPreHold =
+        preHoldSec > 0.02 && currentTimeRef.current < segStart + preHoldSec - 0.02
       if (video.currentTime < trim.inSec - 0.05 || video.currentTime > trim.outSec) {
         video.currentTime = trim.inSec
       }
-      if (isPlaying && !isVideoFrozen && !segmentEndHandledRef.current && video.paused) {
+      if (isPlaying && !inPreHold && !isVideoFrozen && !segmentEndHandledRef.current && video.paused) {
         video.play().catch(() => {})
       }
     }
   }, [
     playbackKind,
+    isCurrentSegmentStillInVideoMode,
     currentSegmentIndex,
     currentSegment.segment,
     resolvedUrlsBySegmentId,
@@ -1235,6 +1467,8 @@ export function ScenePreviewPlayer({
     isVideoFrozen,
     getTrimForSegment,
     getVideoPlaybackRate,
+    resolveEffectivePreHoldSec,
+    getSegmentStartTime,
   ])
 
   // Pre-warm the upcoming shot (currentSegmentIndex + 1) in a standby <video> element
@@ -1309,6 +1543,13 @@ export function ScenePreviewPlayer({
         narrationRef.current.pause()
         narrationRef.current.src = ''
       }
+      narrationRefsById.current.forEach((el) => {
+        if (el) {
+          el.pause()
+          el.src = ''
+        }
+      })
+      narrationRefsById.current.clear()
       if (backgroundStemRef.current) {
         backgroundStemRef.current.pause()
         backgroundStemRef.current.src = ''
@@ -1359,6 +1600,7 @@ export function ScenePreviewPlayer({
     if (isPlaying) {
       video.pause()
       narrationRef.current?.pause()
+      narrationRefsById.current.forEach((el) => el?.pause())
       backgroundStemRef.current?.pause()
       musicRefsById.current.forEach(el => el?.pause())
       dialogueRefsById.current.forEach(el => el?.pause())
@@ -1447,12 +1689,14 @@ export function ScenePreviewPlayer({
         if (videoTargetTime < elapsed + segDuration) {
           setCurrentSegmentIndex(i)
           const localTime = videoTargetTime - elapsed
-          const trim = getTrimForSegment(segments[i])
-          const rate = getVideoPlaybackRate?.(segments[i].segmentId) ?? 1
-          if (videoRef.current) {
+          if (segments[i].assetType !== 'image' && videoRef.current) {
+            const preHoldSec = resolveEffectivePreHoldSec(segments[i], i)
+            const trim = getTrimForSegment(segments[i])
+            const rate = getVideoPlaybackRate?.(segments[i].segmentId) ?? 1
+            const motionLocal = Math.max(0, localTime - preHoldSec)
             videoRef.current.currentTime = Math.min(
               trim.outSec - 0.01,
-              trim.inSec + localTime * rate
+              trim.inSec + motionLocal * rate
             )
           }
           setCurrentTime(targetTime)
@@ -1462,9 +1706,9 @@ export function ScenePreviewPlayer({
       }
 
       setCurrentSegmentIndex(Math.max(0, segments.length - 1))
-      if (videoRef.current && segments.length > 0) {
-        const lastSegDuration = getPlaybackSegmentDuration(segments[segments.length - 1])
-        videoRef.current.currentTime = lastSegDuration
+      if (videoRef.current && segments.length > 0 && segments[segments.length - 1].assetType !== 'image') {
+        const lastTrim = getTrimForSegment(segments[segments.length - 1])
+        videoRef.current.currentTime = Math.max(lastTrim.inSec, lastTrim.outSec - 0.01)
       }
       setCurrentTime(targetTime)
     },
@@ -1476,6 +1720,7 @@ export function ScenePreviewPlayer({
       getPlaybackSegmentDuration,
       getTrimForSegment,
       getVideoPlaybackRate,
+      resolveEffectivePreHoldSec,
     ]
   )
 
@@ -1601,6 +1846,14 @@ export function ScenePreviewPlayer({
     const outgoing =
       index < segments.length - 1 ? resolveShotJoin(segment.shotJoin, duration) : null
     let fadeBlack = 0
+    if (
+      index === 0 &&
+      sceneIntro?.effect === 'fade_in' &&
+      sceneIntro.durationSec > 0 &&
+      currentTime < sceneIntro.durationSec
+    ) {
+      fadeBlack = Math.max(fadeBlack, Math.max(0, 1 - currentTime / sceneIntro.durationSec))
+    }
     if (incoming?.effect === 'fade' && incoming.durationSec > 0) {
       fadeBlack = Math.max(fadeBlack, Math.max(0, 1 - local / incoming.durationSec))
     }
@@ -1664,22 +1917,46 @@ export function ScenePreviewPlayer({
     return { kind: 'fade' as const, opacity: progress }
   })()
 
-  // Optical Flow / Motion Hold style when a shot is extended beyond its raw video duration
+  // Optical Flow / Motion Hold style when a shot has an Intro Freeze or Close Hold extension
   const activeHoldVisual = useMemo(() => {
     const seg = currentSegment.segment
     if (!seg) return { holdStyle: 'freeze' as ShotHoldStyle, transform: undefined, label: 'Extended Audio' }
     const cfg = segmentAudioConfigs[seg.segmentId]
     const holdStyle: ShotHoldStyle = cfg?.holdStyle || 'freeze'
+    const preHoldSec = resolveEffectivePreHoldSec(seg, activeSegmentIndex)
+    const segStart = getSegmentStartTime(activeSegmentIndex)
+    const localTime = Math.max(0, currentTime - segStart)
+
+    if (preHoldSec > 0.02 && localTime < preHoldSec - 0.01) {
+      const preStyle: ShotPreHoldStyle =
+        getPreHoldStyle?.(seg.segmentId) ?? cfg?.preHoldStyle ?? 'push'
+      const progress = Math.min(1, localTime / preHoldSec)
+      if (preStyle === 'push') {
+        const scale = 1 + progress * 0.03
+        return {
+          holdStyle: 'push' as ShotHoldStyle,
+          transform: `scale(${scale.toFixed(4)})`,
+          label: 'Intro Hold: Slow Push',
+          technicalLabel: '103% Intro Frame Push Hold',
+        }
+      }
+      return {
+        holdStyle: 'freeze' as ShotHoldStyle,
+        transform: undefined,
+        label: 'Intro Hold: Still Frame',
+        technicalLabel: 'Static Opening-Frame Intro Hold',
+      }
+    }
+
     if (!isVideoFrozen) {
       return { holdStyle, transform: undefined, label: 'Extended Audio' }
     }
     const trim = getTrimForSegment(seg)
     const rate = getVideoPlaybackRate?.(seg.segmentId) ?? 1
     const rawWall = videoWallDurationSec(trim.playableSec, rate)
-    const segStart = getSegmentStartTime(activeSegmentIndex)
     const totalSegDur = getPlaybackSegmentDuration(seg)
-    const holdDur = Math.max(0.25, totalSegDur - rawWall)
-    const holdElapsed = Math.max(0, currentTime - (segStart + rawWall))
+    const holdDur = Math.max(0.25, totalSegDur - preHoldSec - rawWall)
+    const holdElapsed = Math.max(0, currentTime - (segStart + preHoldSec + rawWall))
     const progress = Math.min(1, holdElapsed / holdDur)
 
     if (holdStyle === 'push') {
@@ -1718,6 +1995,8 @@ export function ScenePreviewPlayer({
     activeSegmentIndex,
     getPlaybackSegmentDuration,
     currentTime,
+    resolveEffectivePreHoldSec,
+    getPreHoldStyle,
   ])
 
   // Real-time Stereo VU / Peak & EBU R128 / -14 LUFS Meter State
@@ -1752,15 +2031,24 @@ export function ScenePreviewPlayer({
       }
     }
     let energy = 0
+    const narrClips = currentAudioUrls.narrationClips ?? []
     const narrStart = getSegmentStartTime(audioTracks.narration.startSegment)
+    const activeNarrClip =
+      audioTracks.narration.enabled && narrClips.length > 0
+        ? narrClips.find(
+            (c) => currentTime >= c.startTime && currentTime <= c.startTime + c.duration
+          )
+        : undefined
     const narrActive =
       audioTracks.narration.enabled &&
-      !!currentAudioUrls.narration &&
-      (currentAudioUrls.narrationDuration ?? 0) > 0 &&
-      currentTime >= narrStart &&
-      currentTime <= narrStart + (currentAudioUrls.narrationDuration ?? 0)
+      (narrClips.length > 0
+        ? Boolean(activeNarrClip)
+        : !!currentAudioUrls.narration &&
+          (currentAudioUrls.narrationDuration ?? 0) > 0 &&
+          currentTime >= narrStart &&
+          currentTime <= narrStart + (currentAudioUrls.narrationDuration ?? 0))
     if (narrActive) {
-      energy += audioTracks.narration.volume * 0.55
+      energy += audioTracks.narration.volume * (activeNarrClip?.volume ?? 1) * 0.55
     }
 
     const dialBase = getSegmentStartTime(audioTracks.dialogue.startSegment)
@@ -1878,7 +2166,19 @@ export function ScenePreviewPlayer({
       durationSec: number
     }> = []
 
-    if (currentAudioUrls.narration) {
+    if (currentAudioUrls.narrationClips && currentAudioUrls.narrationClips.length > 0) {
+      currentAudioUrls.narrationClips.forEach((nc, idx) => {
+        if (!nc.url) return
+        audioClips.push({
+          id: nc.id || `narration-${idx + 1}`,
+          name: nc.label || `Narration Cue ${idx + 1}`,
+          url: nc.url,
+          type: 'narration',
+          startTimeSec: nc.startTime,
+          durationSec: nc.duration,
+        })
+      })
+    } else if (currentAudioUrls.narration) {
       audioClips.push({
         id: 'narration-main',
         name: 'Narration Stem',
@@ -2103,7 +2403,7 @@ export function ScenePreviewPlayer({
           }`}
         >
         {currentSegment.segment?.activeAssetUrl ? (
-          playbackKind === 'image-sequence' ? (
+          playbackKind === 'image-sequence' || isCurrentSegmentStillInVideoMode ? (
             <div className="relative w-full h-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -2112,7 +2412,10 @@ export function ScenePreviewPlayer({
                 className="absolute inset-0 w-full h-full object-contain select-none opacity-100"
                 draggable={false}
                 style={{
-                  transform: `scale(${1 + animaticFrameProgress * 0.02})`,
+                  clipPath: getFrameCropClipPath(currentSegment.segment.watermarkCropPercent),
+                  transform:
+                    activeHoldVisual.transform ||
+                    `scale(${1 + Math.max(0, Math.min(1, activeSegmentDuration > 0 ? (currentTime - segmentStartTime) / activeSegmentDuration : 0)) * 0.025})`,
                   transformOrigin: 'center center',
                 }}
               />
@@ -2855,9 +3158,20 @@ export function ScenePreviewPlayer({
       )}
       
       {/* Hidden Audio Elements for sync playback */}
-      {currentAudioUrls.narration && (
+      {currentAudioUrls.narration && !(currentAudioUrls.narrationClips?.length) && (
         <audio ref={narrationRef} src={currentAudioUrls.narration} preload="auto" />
       )}
+      {(currentAudioUrls.narrationClips ?? []).map((clip) => (
+        <audio
+          key={clip.id}
+          ref={(el) => {
+            if (el) narrationRefsById.current.set(clip.id, el)
+            else narrationRefsById.current.delete(clip.id)
+          }}
+          src={clip.url}
+          preload="auto"
+        />
+      ))}
       <audio ref={backgroundStemRef} preload="auto" />
       {(currentAudioUrls.musicClips ?? []).map((clip) => (
         <audio
