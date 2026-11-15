@@ -1,0 +1,39 @@
+{
+  "verticalId": "memoir",
+  "narratorVoiceId": "gemini-Charon",
+  "narratorDirectorNotes": "Warm, grounded, empathetic documentary and executive studio narrator. Clear articulation, unhurried authority, and heartfelt emotional resonance.",
+  "watermarkAlreadyInClips": true,
+  "musicUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Nostalgic%20Family%20Memoir%20Orchestral%20Score%20%281%29.mp3",
+  "sharedBlocks": {
+    "2": "https://flow.google.com/shared/video/1dc96278-a21b-47c7-81d2-970c7f4e0f68",
+    "3": "https://flow.google.com/shared/video/55c34945-c603-428a-a791-9b0d03d7042c",
+    "4": "https://flow.google.com/shared/video/69e1939a-2acb-4edd-8545-6fd77f96be94",
+    "5": "https://flow.google.com/shared/video/ff4d468f-a09a-4998-a699-ef7e34b0239c",
+    "6": "https://flow.google.com/shared/video/ca81061f-61d5-4534-886a-99adb85cb1bd",
+    "7": "https://flow.google.com/shared/video/2ebb57af-c00c-4b27-84af-d21927eaa1c4",
+    "8": "https://flow.google.com/shared/video/ff520861-8be9-42f4-9541-c5001d51afe6",
+    "10": "https://flow.google.com/shared/video/5e803ee0-9616-4b8a-aeb0-5bf13e05f2c5",
+    "11": "https://flow.google.com/shared/video/1c820d43-8ee2-46e5-a74a-b2dfc1f7dd42",
+    "12": "https://flow.google.com/shared/video/b35fc64a-0e61-4def-8ba9-b3d5bce55744"
+  },
+  "localizedBlocks": {
+    "1": {
+      "en": "https://flow.google.com/shared/video/1c1659e8-1917-4935-bc8c-ec13127e0288",
+      "es": "https://flow.google.com/shared/video/50c9db29-f154-4228-aacf-3f935d337479",
+      "pt": "https://flow.google.com/shared/video/a65a57bc-06c1-440f-a7f4-7d34449159e0",
+      "hi": "https://flow.google.com/shared/video/e62ac472-aa73-4f51-816a-89ec6ef4e6a1",
+      "zh": "https://flow.google.com/shared/video/0d9101e3-b2be-483c-915a-827149942bd8",
+      "ar": "https://flow.google.com/shared/video/38149bdf-ba7c-4b7a-85de-4bb33ac114bf",
+      "th": "https://flow.google.com/shared/video/1174654d-0bc7-47ee-a490-a6e9c8b8a5c7"
+    },
+    "9": {
+      "en": "https://flow.google.com/shared/video/75056ecd-0791-46c6-a22f-98e588e4ffc9",
+      "es": "https://flow.google.com/shared/video/6faa6b52-0e7f-42e0-8478-d007b8d470ef",
+      "pt": "https://flow.google.com/shared/video/b68fd62b-f932-43fc-a36f-0f1a44a749a9",
+      "hi": "https://flow.google.com/shared/video/c08a1839-9df8-436c-bf6c-29d6cfed3b95",
+      "zh": "https://flow.google.com/shared/video/e1f7ebae-6775-475d-b5a6-5dd20823e885",
+      "ar": "https://flow.google.com/shared/video/c7fb9e05-61b8-462c-ba7e-d8e6c0de3a43",
+      "th": "https://flow.google.com/shared/video/4cd63089-6ff3-434a-aeb6-f9f2f591809c"
+    }
+  }
+}

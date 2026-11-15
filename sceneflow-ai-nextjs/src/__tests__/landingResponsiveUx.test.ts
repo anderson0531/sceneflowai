@@ -763,22 +763,20 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       }
     }
 
-    // Verify encoded Video Memoir (English, Spanish & Portuguese) .webm + .mp4 + .webp poster exist on disk with valid headers
-    expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES.memoir).toContain('en')
-    expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES.memoir).toContain('es')
-    expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES.memoir).toContain('pt')
-    expect(hasNativePromoVideoForLocale('memoir', 'en')).toBe(true)
-    expect(hasNativePromoVideoForLocale('memoir', 'es')).toBe(true)
-    expect(hasNativePromoVideoForLocale('memoir', 'pt')).toBe(true)
-    expect(resolveAvailablePromoVideoLocale('memoir', 'en')).toBe('en')
-    expect(resolveAvailablePromoVideoLocale('memoir', 'es')).toBe('es')
-    expect(resolveAvailablePromoVideoLocale('memoir', 'pt')).toBe('pt')
-    expect(resolveAvailablePromoVideoLocale('memoir', 'hi')).toBe('en')
+    // Verify all 7 localized Video Memoir ('en', 'es', 'pt', 'hi', 'zh', 'ar', 'th') .webm + .mp4 + .webp poster exist on disk with valid headers
+    const ALL_MEMOIR_LOCALES = ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'] as const
+    expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES.memoir).toEqual(ALL_MEMOIR_LOCALES)
+    for (const loc of ALL_MEMOIR_LOCALES) {
+      expect(hasNativePromoVideoForLocale('memoir', loc)).toBe(true)
+      expect(resolveAvailablePromoVideoLocale('memoir', loc)).toBe(loc)
+    }
+    expect(hasNativePromoVideoForLocale('realestate', 'hi')).toBe(false)
+    expect(resolveAvailablePromoVideoLocale('realestate', 'hi')).toBeNull()
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.en).toContain('vercel-storage.com')
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.es).toContain('vercel-storage.com')
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.pt).toContain('vercel-storage.com')
 
-    for (const encodedLoc of ['en', 'es', 'pt'] as const) {
+    for (const encodedLoc of ALL_MEMOIR_LOCALES) {
       const memoirWebmDisk = path.join(ROOT, 'public', getVideoServicePromoWebmPath('memoir', encodedLoc))
       const memoirMp4Disk = path.join(ROOT, 'public', getVideoServicePromoMp4Path('memoir', encodedLoc))
       expect(existsSync(memoirWebmDisk), `memoir-${encodedLoc}.webm exists`).toBe(true)
