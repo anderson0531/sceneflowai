@@ -213,6 +213,7 @@ async function synthesizeCueWithRetry(args: {
 
   const languageCode = resolveGeminiTtsLanguageCode(args.locale)
   let lastErr: unknown
+  let omitDirectorNotes = false
   for (let attempt = 1; attempt <= 7; attempt++) {
     try {
       const buf = await synthesizeGeminiFlashMp3({
@@ -220,10 +221,17 @@ async function synthesizeCueWithRetry(args: {
         voiceId: args.voiceId,
         languageCode,
         audioType: 'narration',
-        directorNotes: args.directorNotes,
+        directorNotes: omitDirectorNotes ? undefined : args.directorNotes,
       })
       if (!buf || buf.length < 1_000) {
         throw new Error(`Gemini TTS returned empty/tiny buffer (${buf?.length ?? 0} bytes)`)
+      }
+      // Guard against rare Gemini TTS style-prompt leakage (speaking directorNotes aloud doubles MP3 > 58 KB)
+      if (buf.length > 58_000) {
+        omitDirectorNotes = true
+        throw new Error(
+          `Gemini TTS buffer unexpectedly long (${(buf.length / 1024).toFixed(1)} KB > 58 KB; likely prompt leakage) — retrying without directorNotes`
+        )
       }
       writeFileSync(args.outPath, buf)
       console.log(`  [tts] ${args.locale} -> ${args.outPath.replace(`${ROOT}/`, '')} (${(buf.length / 1024).toFixed(1)} KB)`)

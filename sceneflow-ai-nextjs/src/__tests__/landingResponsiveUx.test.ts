@@ -7,7 +7,7 @@
 
 import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { existsSync, readFileSync, statSync } from 'fs'
+import { closeSync, existsSync, openSync, readFileSync, readSync, statSync } from 'fs'
 import path from 'path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { NextIntlClientProvider } from 'next-intl'
@@ -597,11 +597,22 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       'brand-2.webp',
     ]
 
+    const readHeaderBytes = (filePath: string, length: number): Buffer => {
+      const fd = openSync(filePath, 'r')
+      try {
+        const buf = Buffer.alloc(length)
+        readSync(fd, buf, 0, length, 0)
+        return buf
+      } finally {
+        closeSync(fd)
+      }
+    }
+
     for (const imgName of expectedImages) {
       const diskPath = path.join(ROOT, 'public/landing/video-services', imgName)
       expect(existsSync(diskPath), `missing ${imgName}`).toBe(true)
       expect(statSync(diskPath).size, `${imgName} size`).toBeGreaterThan(300_000)
-      const buf = readFileSync(diskPath)
+      const buf = readHeaderBytes(diskPath, 12)
       expect(buf.subarray(0, 4).toString('ascii')).toBe('RIFF')
       expect(buf.subarray(8, 12).toString('ascii')).toBe('WEBP')
     }
@@ -763,42 +774,44 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       }
     }
 
-    // Verify all 7 localized Video Memoir ('en', 'es', 'pt', 'hi', 'zh', 'ar', 'th') .webm + .mp4 + .webp poster exist on disk with valid headers
-    const ALL_MEMOIR_LOCALES = ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'] as const
-    expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES.memoir).toEqual(ALL_MEMOIR_LOCALES)
-    for (const loc of ALL_MEMOIR_LOCALES) {
-      expect(hasNativePromoVideoForLocale('memoir', loc)).toBe(true)
-      expect(resolveAvailablePromoVideoLocale('memoir', loc)).toBe(loc)
+    // Verify all 7 localized Video Memoir & Real Estate ('en', 'es', 'pt', 'hi', 'zh', 'ar', 'th') .webm + .mp4 + .webp poster exist on disk with valid headers
+    const ALL_PROMO_LOCALES = ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'] as const
+    for (const completedVertical of ['memoir', 'realestate'] as const) {
+      expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES[completedVertical]).toEqual(ALL_PROMO_LOCALES)
+      for (const loc of ALL_PROMO_LOCALES) {
+        expect(hasNativePromoVideoForLocale(completedVertical, loc)).toBe(true)
+        expect(resolveAvailablePromoVideoLocale(completedVertical, loc)).toBe(loc)
+      }
+
+      for (const encodedLoc of ALL_PROMO_LOCALES) {
+        const webmDisk = path.join(ROOT, 'public', getVideoServicePromoWebmPath(completedVertical, encodedLoc))
+        const mp4Disk = path.join(ROOT, 'public', getVideoServicePromoMp4Path(completedVertical, encodedLoc))
+        expect(existsSync(webmDisk), `${completedVertical}-${encodedLoc}.webm exists`).toBe(true)
+        expect(existsSync(mp4Disk), `${completedVertical}-${encodedLoc}.mp4 exists`).toBe(true)
+        expect(statSync(webmDisk).size).toBeGreaterThan(5_000_000)
+        expect(statSync(mp4Disk).size).toBeGreaterThan(5_000_000)
+
+        // EBML magic bytes for WebM: 0x1A 0x45 0xDF 0xA3
+        const webmHead = readHeaderBytes(webmDisk, 4)
+        expect(Array.from(webmHead)).toEqual([0x1a, 0x45, 0xdf, 0xa3])
+        // ISO BMFF 'ftyp' box for MP4
+        const mp4Head = readHeaderBytes(mp4Disk, 8).subarray(4, 8).toString('ascii')
+        expect(mp4Head).toBe('ftyp')
+      }
+
+      const posterDisk = path.join(ROOT, 'public', getVideoServicePromoPosterPath(completedVertical))
+      expect(existsSync(posterDisk), `${completedVertical}-poster.webp exists`).toBe(true)
+      expect(statSync(posterDisk).size).toBeGreaterThan(10_000)
+      // RIFF/WEBP header for poster
+      const posterHead = readHeaderBytes(posterDisk, 12)
+      expect(posterHead.subarray(0, 4).toString('ascii')).toBe('RIFF')
+      expect(posterHead.subarray(8, 12).toString('ascii')).toBe('WEBP')
     }
-    expect(hasNativePromoVideoForLocale('realestate', 'hi')).toBe(false)
-    expect(resolveAvailablePromoVideoLocale('realestate', 'hi')).toBeNull()
+    expect(hasNativePromoVideoForLocale('training', 'hi')).toBe(false)
+    expect(resolveAvailablePromoVideoLocale('training', 'hi')).toBeNull()
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.en).toContain('vercel-storage.com')
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.es).toContain('vercel-storage.com')
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.pt).toContain('vercel-storage.com')
-
-    for (const encodedLoc of ALL_MEMOIR_LOCALES) {
-      const memoirWebmDisk = path.join(ROOT, 'public', getVideoServicePromoWebmPath('memoir', encodedLoc))
-      const memoirMp4Disk = path.join(ROOT, 'public', getVideoServicePromoMp4Path('memoir', encodedLoc))
-      expect(existsSync(memoirWebmDisk), `memoir-${encodedLoc}.webm exists`).toBe(true)
-      expect(existsSync(memoirMp4Disk), `memoir-${encodedLoc}.mp4 exists`).toBe(true)
-      expect(statSync(memoirWebmDisk).size).toBeGreaterThan(5_000_000)
-      expect(statSync(memoirMp4Disk).size).toBeGreaterThan(5_000_000)
-
-      // EBML magic bytes for WebM: 0x1A 0x45 0xDF 0xA3
-      const webmHead = readFileSync(memoirWebmDisk).subarray(0, 4)
-      expect(Array.from(webmHead)).toEqual([0x1a, 0x45, 0xdf, 0xa3])
-      // ISO BMFF 'ftyp' box for MP4
-      const mp4Head = readFileSync(memoirMp4Disk).subarray(4, 8).toString('ascii')
-      expect(mp4Head).toBe('ftyp')
-    }
-
-    const memoirPosterDisk = path.join(ROOT, 'public', getVideoServicePromoPosterPath('memoir'))
-    expect(existsSync(memoirPosterDisk), 'memoir-poster.webp exists').toBe(true)
-    expect(statSync(memoirPosterDisk).size).toBeGreaterThan(10_000)
-    // RIFF/WEBP header for poster
-    const posterHead = readFileSync(memoirPosterDisk)
-    expect(posterHead.subarray(0, 4).toString('ascii')).toBe('RIFF')
-    expect(posterHead.subarray(8, 12).toString('ascii')).toBe('WEBP')
 
     // Interactive check in English: Video Memoir unmute & replay -> Spanish WebM switch -> switch vertical -> beat -> language (Arabic RTL)
     const enMessages = loadMessages('en')
@@ -864,27 +877,40 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     const tabs = Array.from(container?.querySelectorAll('[role="tab"]') ?? [])
     expect(tabs).toHaveLength(4)
 
-    // Switch to Real Estate Tours (tab index 1)
+    // Switch to Real Estate Tours (tab index 1) -> verifies native Real Estate <video> player
     clickElement(tabs[1])
+    const stageRealEstate = container?.querySelector('[data-testid="video-service-pan-stage"]')
+    const reVideo = stageRealEstate?.querySelector('video')
+    expect(reVideo).toBeTruthy()
+    expect(reVideo?.getAttribute('poster')).toBe('/landing/video-services/videos/realestate-poster.webp')
+    expect(
+      Array.from(reVideo?.querySelectorAll('source') ?? []).map((s) => s.getAttribute('src'))
+    ).toEqual([
+      '/landing/video-services/videos/realestate-en.webm',
+      '/landing/video-services/videos/realestate-en.mp4',
+    ])
+
+    // Switch to Training & Onboarding (tab index 2) -> verifies 5K screenshot showcase fallback
+    clickElement(tabs[2])
     const stageAfterVertical = container?.querySelector('[data-testid="video-service-pan-stage"]')
     const captionAfterVertical = container?.querySelector('[data-testid="video-service-pan-caption"]')
     expect(captionAfterVertical?.textContent).toContain(
-      VIDEO_SERVICES_NARRATED_PAN.realestate[0].narration.en
+      VIDEO_SERVICES_NARRATED_PAN.training[0].narration.en
     )
     const imgs = Array.from(stageAfterVertical?.querySelectorAll('img') ?? [])
     expect(imgs.map((img) => img.getAttribute('src'))).toEqual([
-      '/landing/video-services/realestate-1.webp',
-      '/landing/video-services/realestate-2.webp',
+      '/landing/video-services/training-1.webp',
+      '/landing/video-services/training-2.webp',
     ])
 
-    // Step to Beat 02 (realestate-2.webp)
+    // Step to Beat 02 (training-2.webp)
     const beat2Btn = Array.from(stageAfterVertical?.querySelectorAll('button') ?? []).find(
       (btn) => btn.textContent?.trim() === '02'
     )
     expect(beat2Btn).toBeTruthy()
     clickElement(beat2Btn!)
     expect(captionAfterVertical?.textContent).toContain(
-      VIDEO_SERVICES_NARRATED_PAN.realestate[1].narration.en
+      VIDEO_SERVICES_NARRATED_PAN.training[1].narration.en
     )
 
     // Switch narration language to Arabic ('AR') and verify RTL + Arabic pitch
@@ -896,7 +922,7 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     expect(stageAfterVertical?.getAttribute('dir')).toBe('rtl')
     expect(stageAfterVertical?.textContent).toContain(VIDEO_SERVICE_PAN_UI_COPY.ar.outputBadge)
     expect(captionAfterVertical?.textContent).toContain(
-      VIDEO_SERVICES_NARRATED_PAN.realestate[1].narration.ar
+      VIDEO_SERVICES_NARRATED_PAN.training[1].narration.ar
     )
   })
 })

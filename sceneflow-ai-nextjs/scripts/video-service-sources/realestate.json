@@ -1,0 +1,37 @@
+{
+  "verticalId": "realestate",
+  "narratorVoiceId": "gemini-Charon",
+  "narratorDirectorNotes": "Poised, sophisticated, authoritative luxury architectural and executive studio narrator. Crisp broadcast articulation, warm modern confidence, unhurried cadence.",
+  "watermarkAlreadyInClips": true,
+  "musicUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Luxury%20Real%20Estate%20Cinematic%20Score.mp3",
+  "sharedBlocks": {
+    "1": "https://flow.google.com/shared/video/f333ff9c-378f-4904-8d1b-69439ddf52c4",
+    "2": "https://flow.google.com/shared/video/89fd6bfe-90de-4e08-b54f-2ae5b932eb64",
+    "4": "https://flow.google.com/shared/video/a36a75e2-70e4-4ae8-978c-57c90d2f05a7",
+    "5": "https://flow.google.com/shared/video/7dfa277e-ea9e-482c-9e29-330b9eadcf5c",
+    "6": "https://flow.google.com/shared/video/9efa7e5f-c67c-4bed-96d6-d83742bf52c2",
+    "7": "https://flow.google.com/shared/video/113f1f25-6db3-44cf-9c42-2e99fa540f39",
+    "9": "https://flow.google.com/shared/video/fe2052cf-7358-4db0-8864-4f888e462769",
+    "10": "https://flow.google.com/shared/video/12699098-3ec8-4560-aad0-171ff87d0e4e"
+  },
+  "localizedBlocks": {
+    "3": {
+      "en": "https://flow.google.com/shared/video/5490a153-e262-4922-8b2e-fa5028b394c2",
+      "es": "https://flow.google.com/shared/video/4e94838e-fc64-4a2e-ae76-aa3c18a8fd3e",
+      "pt": "https://flow.google.com/shared/video/d0403aae-c219-4b9b-b46d-3c525e33b425",
+      "hi": "https://flow.google.com/shared/video/21c11ca7-26fc-4ddb-b849-958e7215eccb",
+      "zh": "https://flow.google.com/shared/video/3782b4c8-d3f0-4f2c-8ac8-0ff43daa06e9",
+      "ar": "https://flow.google.com/shared/video/8305c2c2-b758-4674-8927-7ff56580ebc2",
+      "th": "https://flow.google.com/shared/video/98461d3c-c313-4b27-8227-1755a832e980"
+    },
+    "8": {
+      "en": "https://flow.google.com/shared/video/0efc7e06-554c-42eb-ac7e-85e5858dab5d",
+      "es": "https://flow.google.com/shared/video/3abb3268-753a-4a36-ad7d-92e7f40b5776",
+      "pt": "https://flow.google.com/shared/video/1c23d706-790c-4be1-94ac-088ffdb435ab",
+      "hi": "https://flow.google.com/shared/video/5db7d366-b22e-4ef5-9917-7266a6dd91b6",
+      "zh": "https://flow.google.com/shared/video/98061694-629b-4f05-8bd1-911ebe97f131",
+      "ar": "https://flow.google.com/shared/video/66d05e5e-5430-4c90-ada7-602f66b73110",
+      "th": "https://flow.google.com/shared/video/8b569641-966c-42dd-9e8a-ba280e029a8b"
+    }
+  }
+}

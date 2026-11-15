@@ -118,7 +118,7 @@ export const VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES: Record<
   readonly FeaturePanLocaleId[]
 > = {
   memoir: ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'],
-  realestate: [],
+  realestate: ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'],
   training: [],
   brand: [],
 }

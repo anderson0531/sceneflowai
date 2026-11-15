@@ -403,19 +403,40 @@ function detectClipDialogueBounds(clipPath: string, workDir: string, tag: string
     spark += bars[Math.min(bars.length - 1, Math.round(Math.min(1, bMax) * (bars.length - 1)))]
   }
 
-  // Require 200ms neighborhood articulation so isolated 1-frame foley clicks or sustained piano chords do not trigger
-  let firstArticulated = -1
-  let lastArticulated = -1
+  // Group articulated 200ms frames into speech islands (bridging intra-sentence pauses <= 1.0s),
+  // discarding isolated short foley transients (< 0.6s, e.g. a champagne glass clink 2s after speech).
+  interface ArticulatedIsland {
+    startF: number
+    endF: number
+    energy: number
+  }
+  const islands: ArticulatedIsland[] = []
+  const maxBridgeFrames = 10 // 1.0s bridge across natural comma/breath pauses
   for (let f = 2; f < numFrames; f++) {
     const hiAvg = (hiArr[f]! + hiArr[f - 1]!) * 0.5
     const midAvg = (midArr[f]! + midArr[f - 1]!) * 0.5
     if (hiAvg >= peakHi * 0.13 && midAvg >= peakRms * 0.10) {
-      if (firstArticulated < 0) firstArticulated = f - 1
-      lastArticulated = f
+      const s = f - 1
+      const prev = islands[islands.length - 1]
+      const frameScore = midAvg * hiAvg
+      if (prev && s - prev.endF <= maxBridgeFrames) {
+        prev.endF = f
+        prev.energy += frameScore
+      } else {
+        islands.push({ startF: s, endF: f, energy: frameScore })
+      }
     }
   }
 
-  if (firstArticulated < 0 || lastArticulated < 0) {
+  const maxIslEnergy = islands.reduce((m, x) => Math.max(m, x.energy), 0)
+  const speechIslands = islands.filter((isl) => {
+    const durFrames = isl.endF - isl.startF + 1
+    // Keep the main speech island + any substantial multi-syllable phrase (>= 0.6s and >= 20% of main island energy)
+    if (isl.energy >= maxIslEnergy * 0.85) return true
+    return durFrames >= 6 && isl.energy >= maxIslEnergy * 0.20
+  })
+
+  if (speechIslands.length === 0) {
     return {
       speechStartSec: 0.6,
       speechEndSec: 3.4,
@@ -425,10 +446,13 @@ function detectClipDialogueBounds(clipPath: string, workDir: string, tag: string
     }
   }
 
-  // Allow up to +1.0s post-speech extension ONLY if a fresh vocal/chuckle onset occurs (rising mid burst + hi presence),
-  // avoiding monotonically decaying background piano chords.
+  const firstArticulated = speechIslands[0]!.startF
+  const lastArticulated = speechIslands[speechIslands.length - 1]!.endF
+
+  // Allow up to +0.8s post-speech extension ONLY if a fresh vocal/chuckle onset occurs (rising mid burst + hi presence),
+  // avoiding monotonically decaying background piano chords or late glass clinks.
   let lastVocal = lastArticulated
-  for (let f = lastArticulated + 1; f <= Math.min(numFrames - 1, lastArticulated + 10); f++) {
+  for (let f = lastArticulated + 1; f <= Math.min(numFrames - 1, lastArticulated + 8); f++) {
     const prevMid = midArr[Math.max(0, f - 2)]!
     if (midArr[f]! >= peakRms * 0.18 && midArr[f]! > prevMid * 1.35 && hiArr[f]! >= peakHi * 0.07) {
       lastVocal = f
