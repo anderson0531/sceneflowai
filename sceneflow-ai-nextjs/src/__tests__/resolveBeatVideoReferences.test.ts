@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { resolveBeatElementSelection, resolveBeatVideoReferences, shouldReplaceClientVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
 import { bindingFromCaption, formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
 import { buildOmniVideoReferencePrompt } from '@/lib/gemini/buildOmniVideoReferencePrompt'
+import { normalizeRefsForVeoPredictLongRunning } from '@/lib/video/normalizeReferenceImages'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference } from '@/types/visionReferences'
 
@@ -605,5 +606,58 @@ describe('resolveBeatVideoReferences', () => {
     expect(locRef?.name).toBe('The next image is location [1].')
     expect(locRef?.name).not.toContain('7-foot door')
     expect(locRef?.name).not.toContain('10-foot ceiling')
+  })
+
+  it('orders prop [1] ahead of location [1] on 0-character Macro Insert shots so Veo keeps the hero prop', () => {
+    const beat: SceneBeat = {
+      beatId: 'bt_70f50757-348',
+      sequenceIndex: 2,
+      kind: 'action',
+      actionDescription:
+        "Macro insert of the enterprise server rack's anodized faceplate under cold overhead illumination as the counter locks at '500,000 TPS'.",
+      beatDirection: {
+        shotType: 'Macro Insert',
+        castInFrame: [],
+        keyProps: ['Enterprise Server Rack'],
+      },
+      referenceSelection: {
+        characterIds: [],
+        locationRefId: 'loc-server-room',
+        objectRefIds: ['obj-server-rack'],
+        source: 'user',
+        resolvedAt: '2026-11-15T00:00:00.000Z',
+      },
+    }
+
+    const resolved = resolveBeatVideoReferences({
+      scene: { heading: 'INT. DATA CENTER - NIGHT', beats: [beat] },
+      beat,
+      projectCharacters: characters,
+      locationReferences: [
+        {
+          id: 'loc-server-room',
+          location: 'DATA CENTER',
+          imageUrl: 'https://blob.example/data-center.jpg',
+        },
+      ],
+      objectReferences: [
+        {
+          id: 'obj-server-rack',
+          name: 'Enterprise Server Rack',
+          imageUrl: 'https://blob.example/server-rack.jpg',
+          importance: 'critical',
+          category: 'prop',
+        },
+      ],
+    })
+
+    expect(resolved.labeledRefs.map((r) => r.url)).toEqual([
+      'https://blob.example/server-rack.jpg',
+      'https://blob.example/data-center.jpg',
+    ])
+    const veoRefs = normalizeRefsForVeoPredictLongRunning(resolved.labeledRefs as any)
+    expect(veoRefs?.referenceType).toBe('style')
+    expect(veoRefs?.refs).toHaveLength(1)
+    expect(veoRefs?.refs[0].url).toBe('https://blob.example/server-rack.jpg')
   })
 })

@@ -547,4 +547,29 @@ describe('characterReferenceAssembly', () => {
       /head-to-toe/
     )
   })
+
+  it('falls back to likenessImageUrl when referenceImage is empty on split age-variant cast rows', () => {
+    const pair = resolveCharacterReferencePair({
+      character: {
+        name: 'Brian Eric Anderson Sr. (Age 34)',
+        referenceImage: '',
+        likenessImageUrl: 'https://example.com/brian-base-selfie.jpg',
+        wardrobes: [
+          {
+            id: 'w-suit',
+            name: 'Charcoal Suit',
+            description: 'Tailored charcoal suit',
+            fullBodyUrl: 'https://example.com/brian34-suit.jpg',
+            isDefault: true,
+          },
+        ],
+      },
+      includeWardrobeReferenceImages: true,
+      includeWardrobeDiptych: false,
+    })
+
+    expect(pair.identityUrl).toBe('https://example.com/brian-base-selfie.jpg')
+    expect(pair.wardrobeUrl).toBe('https://example.com/brian34-suit.jpg')
+    expect(pair.hasDualReferences).toBe(true)
+  })
 })

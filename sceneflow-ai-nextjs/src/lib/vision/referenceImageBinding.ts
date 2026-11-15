@@ -451,27 +451,74 @@ export function rewriteVisualNamesToTokens(
     .filter((entry) => entry.name && entry.token && entry.name !== entry.token)
   if (baseEntries.length === 0) return text
 
-  const firstWordCounts = new Map<string, number>()
-  for (const entry of baseEntries) {
-    if (!/^person\s*\[\d+\]$/i.test(entry.token)) continue
-    const words = entry.name.split(/\s+/).filter(Boolean)
-    if (words.length >= 2) {
-      const firstLower = words[0].replace(/[^A-Za-z0-9_-]/g, '').toLowerCase()
-      if (firstLower.length >= 3 && !GENERIC_PERSON_FIRST_TOKENS.has(firstLower)) {
-        firstWordCounts.set(firstLower, (firstWordCounts.get(firstLower) ?? 0) + 1)
-      }
+  const stripQualifiers = (raw: string): string =>
+    raw.replace(/\s*\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()
+  const isSuffixToken = (tok: string): boolean => /^(?:sr|jr|ii|iii|iv|v)\.?$/i.test(tok)
+
+  const extractPersonAliases = (fullName: string): { base: string; core: string; aliases: string[] } => {
+    const base = stripQualifiers(fullName)
+    const rawWords = base.split(/\s+/).filter(Boolean)
+    const withoutTitles = rawWords.filter(
+      (w) => !GENERIC_PERSON_FIRST_TOKENS.has(w.replace(/[^A-Za-z0-9_-]/g, '').toLowerCase())
+    )
+    const coreWords = withoutTitles.filter((w) => !isSuffixToken(w))
+    const core = coreWords.join(' ').trim()
+    const out = new Set<string>()
+    if (base && base.toLowerCase() !== fullName.toLowerCase()) out.add(base)
+    if (core && core.toLowerCase() !== fullName.toLowerCase()) out.add(core)
+    if (coreWords.length > 2) {
+      out.add(`${coreWords[0]} ${coreWords[coreWords.length - 1]}`)
+    }
+    if (coreWords.length >= 2) {
+      const first = coreWords[0].replace(/[^A-Za-z0-9_-]/g, '')
+      const last = coreWords[coreWords.length - 1].replace(/[^A-Za-z0-9_-]/g, '')
+      if (first.length >= 3 && !GENERIC_PERSON_FIRST_TOKENS.has(first.toLowerCase())) out.add(first)
+      if (last.length >= 3 && !GENERIC_PERSON_FIRST_TOKENS.has(last.toLowerCase())) out.add(last)
+    }
+    return {
+      base,
+      core: core || base,
+      aliases: [...out].map((a) => a.replace(/[.,;:]+$/, '').trim()).filter((a) => a.length >= 3),
     }
   }
 
-  const expanded: Array<{ name: string; token: string }> = []
-  const seenNames = new Set<string>()
-  const pushCandidate = (name: string, token: string) => {
+  const aliasOwners = new Map<string, Set<string>>()
+  const baseOwners = new Map<string, { base: string; core: string; tokens: Set<string> }>()
+  for (const entry of baseEntries) {
+    if (!/^person\s*\[\d+\]$/i.test(entry.token)) continue
+    const { base, core, aliases } = extractPersonAliases(entry.name)
+    if (core) {
+      const bKey = core.toLowerCase()
+      const existing = baseOwners.get(bKey) ?? { base, core, tokens: new Set<string>() }
+      existing.tokens.add(entry.token)
+      baseOwners.set(bKey, existing)
+    }
+    for (const alias of aliases) {
+      const key = alias.toLowerCase()
+      if (!aliasOwners.has(key)) aliasOwners.set(key, new Set())
+      aliasOwners.get(key)!.add(entry.token)
+    }
+  }
+
+  const exactEntries: Array<{ name: string; token: string }> = []
+  const aliasEntries: Array<{ name: string; token: string }> = []
+  const seenExact = new Set<string>()
+  const seenAlias = new Set<string>()
+  const pushExact = (name: string, token: string) => {
     const clean = name.trim()
     if (!clean || clean === token) return
     const key = clean.toLowerCase()
-    if (seenNames.has(key)) return
-    seenNames.add(key)
-    expanded.push({ name: clean, token })
+    if (seenExact.has(key)) return
+    seenExact.add(key)
+    exactEntries.push({ name: clean, token })
+  }
+  const pushAlias = (name: string, token: string) => {
+    const clean = name.trim()
+    if (!clean || clean === token) return
+    const key = clean.toLowerCase()
+    if (seenExact.has(key) || seenAlias.has(key)) return
+    seenAlias.add(key)
+    aliasEntries.push({ name: clean, token })
   }
 
   for (const entry of baseEntries) {
@@ -481,36 +528,53 @@ export function rewriteVisualNamesToTokens(
         .replace(/^_+|_+$/g, '')
         .toUpperCase()}`
       if (charAlias.length > 5) {
-        pushCandidate(charAlias, entry.token)
+        pushExact(charAlias, entry.token)
       }
     }
-    pushCandidate(entry.name, entry.token)
+    pushExact(entry.name, entry.token)
     if (/^person\s*\[\d+\]$/i.test(entry.token)) {
-      const words = entry.name.split(/\s+/).filter(Boolean)
-      if (words.length >= 2) {
-        const firstWord = words[0].replace(/[^A-Za-z0-9_-]/g, '')
-        const firstLower = firstWord.toLowerCase()
-        if (
-          firstLower.length >= 3 &&
-          !GENERIC_PERSON_FIRST_TOKENS.has(firstLower) &&
-          firstWordCounts.get(firstLower) === 1
-        ) {
-          pushCandidate(firstWord, entry.token)
+      const { aliases } = extractPersonAliases(entry.name)
+      for (const alias of aliases) {
+        if (aliasOwners.get(alias.toLowerCase())?.size === 1) {
+          pushAlias(alias, entry.token)
         }
       }
     }
   }
 
-  const sorted = expanded.sort((a, b) => b.name.length - a.name.length)
-  if (sorted.length === 0) return text
+  const sortedExact = exactEntries.sort((a, b) => b.name.length - a.name.length)
+  const sortedAliases = aliasEntries.sort((a, b) => b.name.length - a.name.length)
+  if (sortedExact.length === 0 && sortedAliases.length === 0) return text
 
   const parts = text.split(QUOTED_SPEECH_SPLIT)
   return parts
     .map((part, index) => {
       if (index % 2 === 1) return part
       let next = part
-      for (const entry of sorted) {
-        const pattern = new RegExp(`\\b${escapeRegExp(entry.name)}\\b`, 'gi')
+      for (const entry of sortedExact) {
+        const pattern = new RegExp(
+          `(?<![\\p{L}\\p{N}_])${escapeRegExp(entry.name)}(?![\\p{L}\\p{N}_])`,
+          'giu'
+        )
+        next = next.replace(pattern, entry.token)
+      }
+      for (const owner of baseOwners.values()) {
+        if (owner.tokens.size !== 1) continue
+        const [token] = [...owner.tokens]
+        for (const stem of [owner.base, owner.core]) {
+          if (!stem || stem.length < 3) continue
+          const siblingPattern = new RegExp(
+            `(?<![\\p{L}\\p{N}_])${escapeRegExp(stem)}(?:\\s+(?:Sr|Jr|II|III|IV)\\.?)?\\s*\\((?:Age[d]?\\s*\\d{1,3}|\\d{1,3}(?:\\s*yrs?)?|Young|Teen|Adult|Older|Elder|(?:19|20)\\d{2})[^)]*\\)(?![\\p{L}\\p{N}_])`,
+            'giu'
+          )
+          next = next.replace(siblingPattern, token)
+        }
+      }
+      for (const entry of sortedAliases) {
+        const pattern = new RegExp(
+          `(?<![\\p{L}\\p{N}_])${escapeRegExp(entry.name)}(?![\\p{L}\\p{N}_])`,
+          'giu'
+        )
         next = next.replace(pattern, entry.token)
       }
       return next

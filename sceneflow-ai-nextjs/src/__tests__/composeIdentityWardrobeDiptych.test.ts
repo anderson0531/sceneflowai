@@ -416,6 +416,43 @@ describe('expandLeftoverDiptychSheetsIntoDualSlots', () => {
     expect(refs[0].wardrobeImageUrl).toBe('https://example.com/gideon-wardrobe.jpg')
   })
 
+  it('restores discrete identity + wardrobe slot IDs when dropping a stored PiP card on close-ups without colliding with subsequent cast', async () => {
+    const refs = await expandLeftoverDiptychSheetsIntoDualSlots(
+      [
+        {
+          name: 'Brian Eric Anderson Sr. (Age 58)',
+          hasWardrobeDiptych: true,
+          isStoredPip: true,
+          diptychReferenceId: 1,
+          identityReferenceId: undefined,
+          wardrobeReferenceId: undefined,
+          identityImageUrl: 'https://example.com/brian58-face.jpg',
+          wardrobeImageUrl: 'https://example.com/brian58-linen.jpg',
+          wardrobeDiptychImageUrl: 'https://example.com/brian58-pip.jpg',
+        },
+        {
+          name: 'Max Gould',
+          hasDualReferences: false,
+          identityReferenceId: 2,
+          identityImageUrl: 'https://example.com/max-face.jpg',
+        },
+      ],
+      {
+        splitDiptych: async () => {
+          throw new Error('must not split a stored PiP card')
+        },
+      }
+    )
+
+    expect(refs[0].diptychReferenceId).toBeUndefined()
+    expect(refs[0].identityReferenceId).toBe(1)
+    expect(refs[0].wardrobeReferenceId).toBe(2)
+    expect(refs[0].identityImageUrl).toBe('https://example.com/brian58-face.jpg')
+    expect(refs[0].wardrobeImageUrl).toBe('https://example.com/brian58-linen.jpg')
+    // Second character shifts cleanly from slot 2 -> slot 3 so IDs never collide
+    expect(refs[1].identityReferenceId).toBe(3)
+  })
+
   it('keeps identity only when leftover split fails', async () => {
     const refs = await expandLeftoverDiptychSheetsIntoDualSlots(
       [

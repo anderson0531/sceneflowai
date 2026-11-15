@@ -381,7 +381,7 @@ function textNamesSubject(text: string, name: string): boolean {
   const trimmed = name.trim()
   if (trimmed.length < 3) return true
   const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return new RegExp(`\\b${escaped}\\b`, 'i').test(text)
+  return new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'iu').test(text)
 }
 
 /**

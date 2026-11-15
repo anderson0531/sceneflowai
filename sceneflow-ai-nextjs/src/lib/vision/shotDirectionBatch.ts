@@ -19,6 +19,7 @@ import {
 } from '@/lib/vision/saveBeatDirection'
 import { resolveBeatElementSelection } from '@/lib/vision/resolveBeatVideoReferences'
 import { resolveWardrobeForCharacter } from '@/lib/character/characterReferenceAssembly'
+import { extractSamePersonAgeStage } from '@/lib/character/ageStageContinuity'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 
 /**
@@ -279,6 +280,68 @@ export function buildBeatBoundContinuity(args: {
  * Ask the Still Director for every eligible shot in a scene, a few beats per
  * call and several calls at once. One scene at a time is the caller's job.
  */
+export function scopeShotDirectionCatalogForContinuity(args: {
+  catalog: BeatSequenceReferenceCatalog | undefined
+  scene?: unknown
+  boundCastNames?: string[]
+  allowUnboundReferences?: boolean
+}): BeatSequenceReferenceCatalog | undefined {
+  const { catalog, scene, boundCastNames = [], allowUnboundReferences } = args
+  if (!catalog || allowUnboundReferences === true || !catalog.characterNames?.length) {
+    return catalog
+  }
+
+  const sceneRec = (scene && typeof scene === 'object' ? scene : {}) as Record<string, unknown>
+  const rawSceneChars = Array.isArray(sceneRec.characters) ? sceneRec.characters : []
+  const sceneCharNames = rawSceneChars
+    .map((entry) =>
+      typeof entry === 'string'
+        ? entry.trim()
+        : entry && typeof entry === 'object' && 'name' in entry
+          ? String((entry as { name?: unknown }).name ?? '').trim()
+          : ''
+    )
+    .filter(Boolean)
+
+  // Prefer beat-level bound cast when present; otherwise fall back to scene-level cast
+  const activeNames = boundCastNames.length > 0 ? boundCastNames : sceneCharNames
+  if (activeNames.length === 0) return catalog
+
+  const activeByBase = new Map<string, Set<string>>()
+  for (const rawName of activeNames) {
+    const trimmed = rawName.trim()
+    if (!trimmed) continue
+    const baseKey = extractSamePersonAgeStage(trimmed).baseName.trim().toLowerCase()
+    if (!baseKey) continue
+    let set = activeByBase.get(baseKey)
+    if (!set) {
+      set = new Set<string>()
+      activeByBase.set(baseKey, set)
+    }
+    set.add(trimmed.toLowerCase())
+  }
+
+  if (activeByBase.size === 0) return catalog
+
+  const filteredCharacterNames = catalog.characterNames.filter((catName) => {
+    const trimmed = catName.trim()
+    if (!trimmed) return false
+    const baseKey = extractSamePersonAgeStage(trimmed).baseName.trim().toLowerCase()
+    const allowedVariants = activeByBase.get(baseKey)
+    if (!allowedVariants) return true
+    return allowedVariants.has(trimmed.toLowerCase())
+  })
+
+  if (filteredCharacterNames.length === catalog.characterNames.length) {
+    return catalog
+  }
+
+  return {
+    ...catalog,
+    characterNames: filteredCharacterNames,
+  }
+}
+
 export async function runShotDirectionChunks(args: {
   scene: Record<string, unknown>
   sceneIdx?: number
@@ -307,34 +370,44 @@ export async function runShotDirectionChunks(args: {
 
   await runWithConcurrencyLimit(chunks, concurrency, async (chunk) => {
     if (args.signal?.aborted) return
+    const chunkBeats = chunk.map(({ beat, beatIndex }) => {
+      const boundContinuity = buildBeatBoundContinuity({
+        scene: args.scene,
+        beat,
+        sceneIdx: args.sceneIdx,
+        characters: args.characters,
+        locationReferences: args.locationReferences,
+        objectReferences: args.objectReferences,
+      })
+      return {
+        beatIndex,
+        beat,
+        ...(boundContinuity ? { boundContinuity } : {}),
+        previousMoment:
+          beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
+        nextMoment:
+          beatIndex + 1 < beats.length
+            ? composeBeatActionFraming(beats[beatIndex + 1])
+            : undefined,
+      }
+    })
+    const chunkBoundCastNames = chunkBeats.flatMap(
+      (entry) => entry.boundContinuity?.castNames ?? []
+    )
+    const scopedCatalog = scopeShotDirectionCatalogForContinuity({
+      catalog: args.catalog,
+      scene: args.scene,
+      boundCastNames: chunkBoundCastNames,
+      allowUnboundReferences: args.allowUnboundReferences,
+    })
     const request: DirectBeatStillRequest = {
       mode: 'optimize',
-      catalog: args.catalog,
+      catalog: scopedCatalog,
       ...(args.allowUnboundReferences !== undefined
         ? { allowUnboundReferences: args.allowUnboundReferences }
         : {}),
       ...(sceneContext ? { sceneContext } : {}),
-      beats: chunk.map(({ beat, beatIndex }) => {
-        const boundContinuity = buildBeatBoundContinuity({
-          scene: args.scene,
-          beat,
-          sceneIdx: args.sceneIdx,
-          characters: args.characters,
-          locationReferences: args.locationReferences,
-          objectReferences: args.objectReferences,
-        })
-        return {
-          beatIndex,
-          beat,
-          ...(boundContinuity ? { boundContinuity } : {}),
-          previousMoment:
-            beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
-          nextMoment:
-            beatIndex + 1 < beats.length
-              ? composeBeatActionFraming(beats[beatIndex + 1])
-              : undefined,
-        }
-      }),
+      beats: chunkBeats,
     }
     try {
       const result = await args.direct(request)

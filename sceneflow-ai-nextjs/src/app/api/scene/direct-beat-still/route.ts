@@ -18,6 +18,7 @@ import { scoreBeatDirectionFidelity } from '@/lib/intelligence/beatDirectionFide
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import {
   buildBeatBoundContinuity,
+  scopeShotDirectionCatalogForContinuity,
   shotDirectionCatalogFromPhase,
 } from '@/lib/vision/shotDirectionBatch'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
@@ -153,6 +154,12 @@ export async function POST(req: NextRequest) {
       locationReferences,
       objectReferences,
     })
+    const scopedCatalog = scopeShotDirectionCatalogForContinuity({
+      catalog,
+      scene,
+      boundCastNames: boundContinuity?.castNames ?? [],
+      allowUnboundReferences,
+    })
 
     const sceneContext = buildStillDirectorSceneContext(
       scene as Record<string, unknown>,
@@ -171,7 +178,7 @@ export async function POST(req: NextRequest) {
             nextMoment: next ? composeBeatActionFraming(next) : undefined,
           },
         ],
-        catalog,
+        catalog: scopedCatalog,
         userDirection,
         overlay,
         policyCompliance,

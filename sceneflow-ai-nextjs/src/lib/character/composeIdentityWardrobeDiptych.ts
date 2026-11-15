@@ -713,12 +713,32 @@ function applyDualSlotsFromLeftoverSheet<T extends DualRefForDiptychConsolidatio
 }
 
 function dropLeftoverSheet<T extends DualRefForDiptychConsolidation>(ref: T): T {
+  const fallbackSlotId = ref.diptychReferenceId ?? ref.referenceId
+  const identityReferenceId =
+    ref.identityReferenceId ??
+    (ref.identityImageUrl && fallbackSlotId != null ? fallbackSlotId : undefined)
+  const wardrobeReferenceId =
+    ref.wardrobeReferenceId ??
+    (ref.wardrobeImageUrl && fallbackSlotId != null
+      ? identityReferenceId != null
+        ? identityReferenceId + 1
+        : fallbackSlotId
+      : undefined)
+  const referenceId = identityReferenceId ?? wardrobeReferenceId ?? ref.referenceId
+  const hasDualReferences = Boolean(ref.identityImageUrl && ref.wardrobeImageUrl)
+  const hasCostumeReference = Boolean(ref.wardrobeImageUrl)
+
   return {
     ...ref,
     hasWardrobeDiptych: false,
     isStoredPip: false,
     wardrobeDiptychImageUrl: undefined,
     diptychReferenceId: undefined,
+    ...(identityReferenceId !== undefined ? { identityReferenceId } : {}),
+    ...(wardrobeReferenceId !== undefined ? { wardrobeReferenceId } : {}),
+    ...(referenceId !== undefined ? { referenceId } : {}),
+    ...(ref.hasDualReferences !== undefined ? { hasDualReferences } : {}),
+    ...(ref.hasCostumeReference !== undefined ? { hasCostumeReference } : {}),
     imageUrl: ref.identityImageUrl ?? ref.wardrobeImageUrl ?? ref.imageUrl,
   }
 }
@@ -741,7 +761,7 @@ export async function expandLeftoverDiptychSheetsIntoDualSlots<
 ): Promise<T[]> {
   const splitDiptych = deps.splitDiptych ?? splitLeftoverDiptychUrl
 
-  return Promise.all(
+  const expanded = await Promise.all(
     refs.map(async (ref) => {
       if (ref.hasDualReferences && ref.identityImageUrl && ref.wardrobeImageUrl) {
         if (!ref.hasWardrobeDiptych && !ref.isStoredPip) return ref
@@ -776,6 +796,44 @@ export async function expandLeftoverDiptychSheetsIntoDualSlots<
       return applyDualSlotsFromLeftoverSheet(ref, identityUrl, split.wardrobeDataUrl)
     })
   )
+
+  // Ensure expanded 2-slot entries never collide with subsequent characters' referenceIds
+  let maxAssignedId = 0
+  return expanded.map((ref) => {
+    const ids = [ref.identityReferenceId, ref.wardrobeReferenceId, ref.diptychReferenceId].filter(
+      (id): id is number => typeof id === 'number'
+    )
+    if (ids.length === 0) return ref
+    const minId = Math.min(...ids)
+    if (minId > maxAssignedId) {
+      maxAssignedId = Math.max(...ids)
+      return ref
+    }
+    const shift = maxAssignedId - minId + 1
+    const nextIdentityId =
+      typeof ref.identityReferenceId === 'number' ? ref.identityReferenceId + shift : undefined
+    const nextWardrobeId =
+      typeof ref.wardrobeReferenceId === 'number' ? ref.wardrobeReferenceId + shift : undefined
+    const nextDiptychId =
+      typeof ref.diptychReferenceId === 'number' ? ref.diptychReferenceId + shift : undefined
+    const nextReferenceId =
+      typeof ref.referenceId === 'number'
+        ? nextIdentityId ?? nextWardrobeId ?? nextDiptychId ?? ref.referenceId + shift
+        : ref.referenceId
+    maxAssignedId = Math.max(
+      maxAssignedId,
+      ...[nextIdentityId, nextWardrobeId, nextDiptychId].filter(
+        (id): id is number => typeof id === 'number'
+      )
+    )
+    return {
+      ...ref,
+      ...(nextIdentityId !== undefined ? { identityReferenceId: nextIdentityId } : {}),
+      ...(nextWardrobeId !== undefined ? { wardrobeReferenceId: nextWardrobeId } : {}),
+      ...(nextDiptychId !== undefined ? { diptychReferenceId: nextDiptychId } : {}),
+      ...(nextReferenceId !== undefined ? { referenceId: nextReferenceId } : {}),
+    }
+  })
 }
 
 /** @deprecated Use consolidateBeatCharacterRefsIntoPipBadges. */

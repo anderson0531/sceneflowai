@@ -9,6 +9,7 @@ import {
   DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY,
   getShotDirectionTextConcurrency,
   runShotDirectionChunks,
+  scopeShotDirectionCatalogForContinuity,
   SHOT_DIRECTION_BEAT_CHUNK,
   shotDirectionTargets,
 } from '@/lib/vision/shotDirectionBatch'
@@ -484,6 +485,38 @@ describe('shot direction batches', () => {
       'obj-coil',
       'obj-ledger',
     ])
+  })
+
+  it('scopes out sibling age variants of the same person from the Shot Direction catalog in bound mode', async () => {
+    const fullCatalog = {
+      characterNames: [
+        'Brian Eric Anderson Sr. (Age 17)',
+        'Brian Eric Anderson Sr. (Age 34)',
+        'Brian Eric Anderson Sr. (Age 58)',
+        'Brian Eric Anderson Sr.',
+        'Max Gould',
+      ],
+      propNames: ['Enterprise Server Rack'],
+      locationNames: ['GOULD ENTERPRISES - EXECUTIVE PENTHOUSE'],
+    }
+
+    const scoped = scopeShotDirectionCatalogForContinuity({
+      catalog: fullCatalog,
+      boundCastNames: ['Brian Eric Anderson Sr. (Age 58)'],
+    })
+    expect(scoped?.characterNames).toEqual([
+      'Brian Eric Anderson Sr. (Age 58)',
+      'Max Gould',
+    ])
+
+    // Unbound mode keeps full catalog intact
+    expect(
+      scopeShotDirectionCatalogForContinuity({
+        catalog: fullCatalog,
+        boundCastNames: ['Brian Eric Anderson Sr. (Age 58)'],
+        allowUnboundReferences: true,
+      })?.characterNames
+    ).toEqual(fullCatalog.characterNames)
   })
 })
 

@@ -1076,7 +1076,7 @@ function detectObjectsNamedInText(
     if (!name || name.length < 3) return false
     if (isMountedSetFixtureName(name)) return false
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    return new RegExp(`\\b${escaped}\\b`, 'i').test(text)
+    return new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'iu').test(text)
   })
 }
 

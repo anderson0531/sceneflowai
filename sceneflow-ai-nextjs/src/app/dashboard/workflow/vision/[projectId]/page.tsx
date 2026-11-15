@@ -131,9 +131,12 @@ import {
   explicitBeatReferenceSelection,
   mapBeatReferenceSelectionForApi,
   resolveBeatFrameGenerationContext,
+  resolveVerifiedBeatRefsForApi,
   shouldUseExplicitBeatReferences,
   toBeatReferenceSelection,
 } from '@/lib/vision/beatFrameGenerationContext'
+import { resolveCharacterReferencePair } from '@/lib/character/characterReferenceAssembly'
+import { detectCharactersInText } from '@/lib/scene/characterDetection'
 import {
   locationReferenceForGeneration,
   patchLocationVersion,
@@ -4357,6 +4360,84 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           scene?.imageUrl
         )
 
+        const resolvedSceneIdxForSegment =
+          script?.script?.scenes?.findIndex((s: any) =>
+            (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
+          ) ?? -1
+        const quickFrameActionPrompt = resolveQuickFrameActionPrompt(segment as any)
+        const sceneBeatsForSegment = scene
+          ? getSceneBeats(scene as Record<string, unknown>)
+          : []
+        const matchedBeatForSegment = segment.beatId
+          ? sceneBeatsForSegment.find((b) => b.beatId === segment.beatId)
+          : undefined
+        const verifiedBeatRefsForQuickStill =
+          !fromDialog && matchedBeatForSegment && scene
+            ? resolveVerifiedBeatRefsForApi({
+                beat: matchedBeatForSegment,
+                scene: scene as Record<string, unknown>,
+                sceneIndex: resolvedSceneIdxForSegment >= 0 ? resolvedSceneIdxForSegment : undefined,
+                projectCharacters: characters,
+                locationReferences,
+                objectReferences,
+                filmTitle: project?.title,
+              })
+            : null
+
+        const resolvedBatchCharactersForStill =
+          !fromDialog && !options?.selectedCharacters?.length
+            ? (() => {
+                if (verifiedBeatRefsForQuickStill) {
+                  return verifiedBeatRefsForQuickStill.selectedCharacters
+                    .map((idOrName) =>
+                      characters.find(
+                        (c) =>
+                          c.id === idOrName ||
+                          c.name === idOrName ||
+                          c.name?.toLowerCase() === idOrName.toLowerCase()
+                      )
+                    )
+                    .filter((c): c is NonNullable<typeof c> => Boolean(c))
+                    .map((fullChar) => {
+                      const charId = fullChar.id || fullChar.name
+                      const wardrobeOverride = verifiedBeatRefsForQuickStill.characterWardrobes.find(
+                        (cw) => cw.characterId === charId || cw.characterId === fullChar.name
+                      )
+                      const refPair = resolveCharacterReferencePair({
+                        character: fullChar as any,
+                        scene: scene as Record<string, unknown>,
+                        sceneIndex:
+                          resolvedSceneIdxForSegment >= 0 ? resolvedSceneIdxForSegment : undefined,
+                        characterWardrobes: verifiedBeatRefsForQuickStill.characterWardrobes,
+                        includeWardrobeReferenceImages: true,
+                        includeWardrobeDiptych: false,
+                      })
+                      return {
+                        name: fullChar.name,
+                        referenceImageUrl:
+                          refPair.identityUrl ||
+                          fullChar.referenceImage ||
+                          (fullChar as any)?.likenessImageUrl,
+                        wardrobeReferenceUrl: refPair.wardrobeUrl,
+                        hasDualReferences: refPair.hasDualReferences,
+                        hasCostumeReference: Boolean(refPair.wardrobeUrl),
+                        selectedWardrobeId: wardrobeOverride?.wardrobeId,
+                      }
+                    })
+                }
+                return detectCharactersInText(quickFrameActionPrompt, characters)
+                  .filter((c) => c.referenceImage || (c as any)?.likenessImageUrl)
+                  .map((c) => ({
+                    name: c.name,
+                    referenceImageUrl: c.referenceImage || (c as any)?.likenessImageUrl,
+                    wardrobeReferenceUrl: undefined as string | undefined,
+                    hasDualReferences: undefined as boolean | undefined,
+                    hasCostumeReference: undefined as boolean | undefined,
+                    selectedWardrobeId: undefined as string | undefined,
+                  }))
+              })()
+            : undefined
+
         const autoCharactersForStill =
           autoFillRefs
             ? characters
@@ -4365,7 +4446,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   name: c.name,
                   referenceImageUrl: c.referenceImage,
                 }))
-            : options?.selectedCharacters
+            : options?.selectedCharacters ?? resolvedBatchCharactersForStill
         const autoObjectsForStill =
           fromDialog && options?.selectedObjectReferences == null
             ? objectReferences
@@ -4376,7 +4457,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   imageUrl: o.imageUrl,
                   description: o.description,
                 }))
-            : options?.selectedObjectReferences
+            : options?.selectedObjectReferences ??
+              (verifiedBeatRefsForQuickStill
+                ? verifiedBeatRefsForQuickStill.objectReferences
+                    .filter((o) => o.imageUrl)
+                    .map((o) => ({
+                      id: o.id,
+                      name: o.name,
+                      imageUrl: o.imageUrl,
+                      description: o.description,
+                    }))
+                : undefined)
         const autoLocationsForStill =
           fromDialog && options?.selectedLocationReferences == null
             ? locationReferences
@@ -4387,7 +4478,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   imageUrl: l.imageUrl,
                   description: l.description,
                 }))
-            : options?.selectedLocationReferences
+            : options?.selectedLocationReferences ??
+              (verifiedBeatRefsForQuickStill
+                ? verifiedBeatRefsForQuickStill.locationReferences
+                    .filter((l) => l.imageUrl)
+                    .map((l) => ({
+                      id: l.id,
+                      name: l.location || l.locationDisplay || l.id,
+                      imageUrl: l.imageUrl,
+                      description: l.description,
+                    }))
+                : undefined)
 
         const response = await fetch('/api/production/generate-segment-frames', {
           method: 'POST',
@@ -4462,50 +4563,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Character data for identity lock
             // CRITICAL FIX: When fromDialog=true, the user explicitly chose which characters
             // to include (even if none). Only auto-populate for batch generation (fromDialog=false).
-            characters: fromDialog
-              ? (autoCharactersForStill || []).map(selected => {
-                  const fullChar = characters.find(c => c.name === selected.name)
-                  return {
-                    name: selected.name,
-                    appearance: fullChar?.appearanceDescription || fullChar?.description,
-                    referenceUrl: selected.referenceImageUrl || fullChar?.referenceImage,
-                    sceneHeadshotUrl: selected.sceneHeadshotUrl,
-                    wardrobeReferenceUrl: selected.wardrobeReferenceUrl,
-                    hasDualReferences: selected.hasDualReferences,
-                    hasCostumeReference: selected.hasCostumeReference,
-                    ethnicity: (fullChar as any)?.ethnicity,
-                    age: (fullChar as any)?.age,
-                    emotion: selected.emotion,
-                    selectedWardrobeId: selected.selectedWardrobeId,
-                    hairStyle: (fullChar as any)?.hairStyle,
-                    hairColor: (fullChar as any)?.hairColor,
-                    characterRecord: fullChar as Record<string, unknown> | undefined,
-                  }
-                })
-              : options?.selectedCharacters?.length
-                ? options.selectedCharacters.map(selected => {
-                    const fullChar = characters.find(c => c.name === selected.name)
-                    return {
-                      name: selected.name,
-                      appearance: fullChar?.appearanceDescription || fullChar?.description,
-                      referenceUrl: selected.referenceImageUrl || fullChar?.referenceImage,
-                      sceneHeadshotUrl: selected.sceneHeadshotUrl,
-                      wardrobeReferenceUrl: selected.wardrobeReferenceUrl,
-                      hasDualReferences: selected.hasDualReferences,
-                      hasCostumeReference: selected.hasCostumeReference,
-                      ethnicity: (fullChar as any)?.ethnicity,
-                      age: (fullChar as any)?.age,
-                      emotion: selected.emotion,
-                      selectedWardrobeId: selected.selectedWardrobeId,
-                      hairStyle: (fullChar as any)?.hairStyle,
-                      hairColor: (fullChar as any)?.hairColor,
-                      characterRecord: fullChar as Record<string, unknown> | undefined,
-                    }
-                  })
-                : [],
-            sceneIndex: script?.script?.scenes?.findIndex((s: any) =>
-              (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
-            ),
+            characters: (autoCharactersForStill || []).map(selected => {
+              const fullChar = characters.find(c => c.name === selected.name)
+              return {
+                name: selected.name,
+                appearance: fullChar?.appearanceDescription || fullChar?.description,
+                referenceUrl:
+                  selected.referenceImageUrl ||
+                  fullChar?.referenceImage ||
+                  (fullChar as any)?.likenessImageUrl,
+                sceneHeadshotUrl: (selected as any).sceneHeadshotUrl,
+                wardrobeReferenceUrl: selected.wardrobeReferenceUrl,
+                hasDualReferences: selected.hasDualReferences,
+                hasCostumeReference: selected.hasCostumeReference,
+                ethnicity: (fullChar as any)?.ethnicity,
+                age: (fullChar as any)?.age,
+                emotion: (selected as any).emotion,
+                selectedWardrobeId: selected.selectedWardrobeId,
+                hairStyle: (fullChar as any)?.hairStyle,
+                hairColor: (fullChar as any)?.hairColor,
+                characterRecord: fullChar as Record<string, unknown> | undefined,
+              }
+            }),
+            sceneIndex: resolvedSceneIdxForSegment,
             sceneRecord: scene as Record<string, unknown> | undefined,
             sceneContext: {
               heading: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
@@ -4515,33 +4595,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 : undefined
             },
             // Object references for prop consistency
-            // CRITICAL FIX: When fromDialog=true, use EXACTLY what user selected (empty = none).
-            // Only auto-detect for batch generation (fromDialog=false).
-            objectReferences: fromDialog
-              ? (autoObjectsForStill || []).map(obj => ({
-                  name: obj.name,
-                  description: obj.description,
-                  category: 'prop' as const,
-                  importance: 'critical' as const,
-                  imageUrl: obj.imageUrl
-                }))
-              : options?.selectedObjectReferences?.length
-                ? options.selectedObjectReferences.map(obj => ({
-                    name: obj.name,
-                    description: obj.description,
-                    category: 'prop' as const,
-                    importance: 'critical' as const,
-                    imageUrl: obj.imageUrl
-                  }))
-                : [],
-            locationReferences: fromDialog
-              ? (autoLocationsForStill || []).map(loc => ({
+            objectReferences: (autoObjectsForStill || []).map(obj => ({
+              name: obj.name,
+              description: obj.description,
+              category: 'prop' as const,
+              importance: 'critical' as const,
+              imageUrl: obj.imageUrl
+            })),
+            locationReferences: autoLocationsForStill?.length
+              ? autoLocationsForStill.map(loc => ({
                   name: loc.name,
                   description: loc.description,
                   imageUrl: loc.imageUrl,
-                  boundVersionId: loc.boundVersionId,
+                  boundVersionId: (loc as any).boundVersionId,
                 }))
-              : undefined
+              : fromDialog
+                ? []
+                : undefined
           })
         })
 
@@ -15049,6 +15119,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 userDirection: options.userDirection,
                 visualSetup: options.visualSetup,
                 talentDirection: options.talentDirection,
+                ...(options.beatReferenceSelection
+                  ? { referenceSelection: options.beatReferenceSelection }
+                  : {}),
               }),
             })
             const rewriteData = await rewriteResponse.json()
@@ -15335,7 +15408,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           frameType: 'dialogue',
           dialogueIndex: dialogueIdx,
           quality: imageQuality,
-          characterSelectionExplicit: true,
           ...GALLERY_MANUAL_GENERATE_OPTS,
         }),
       })

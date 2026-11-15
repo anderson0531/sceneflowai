@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   detectCharactersInText,
+  intersectDetectedCharactersWithDirectionText,
   resolveBeatSpeaker,
 } from '@/lib/scene/characterDetection'
 
@@ -125,5 +126,56 @@ describe('resolveBeatSpeaker', () => {
   it('skips narrator type when resolving by name', () => {
     const speaker = resolveBeatSpeaker({ character: 'Narrator' }, characters)
     expect(speaker).toBeUndefined()
+  })
+
+  it('disambiguates multi-age cast variants and matches capitalized 3-letter names like Max', () => {
+    const multiAgeProjectCast = [
+      { id: 'c-narrator', name: 'Narrator', type: 'narrator' },
+      { id: 'c-curtis', name: 'Curtis Hefflin' },
+      { id: 'c-brian-17', name: 'Brian Eric Anderson Sr. (Age 17)' },
+      { id: 'c-frances', name: 'Frances Hefflin' },
+      { id: 'c-brian-34', name: 'Brian Eric Anderson Sr. (Age 34)' },
+      { id: 'c-brian-58', name: 'Brian Eric Anderson Sr. (Age 58)' },
+      { id: 'c-brian-base', name: 'Brian Eric Anderson Sr.' },
+      { id: 'c-betty', name: 'Ms. Betty Ellis' },
+      { id: 'c-max', name: 'Max Gould' },
+      { id: 'c-ashley', name: 'Ashley Pollard' },
+    ]
+
+    // Explicit (Age 34) selects ONLY Age 34, not all 4 Brian entries
+    const detectedAge34 = detectCharactersInText(
+      'Brian Eric Anderson Sr. (Age 34) stands immovable beside the glowing terminal console.',
+      multiAgeProjectCast
+    )
+    expect(detectedAge34.map((c) => c.name)).toEqual(['Brian Eric Anderson Sr. (Age 34)'])
+
+    // Capitalized 3-letter given name "Max" matches Max Gould without matching lowercase stopwords
+    const detectedMax = detectCharactersInText(
+      'Max sits motionless in his high-backed leather executive chair while red strobes flash.',
+      multiAgeProjectCast
+    )
+    expect(detectedMax.map((c) => c.name)).toEqual(['Max Gould'])
+
+    const noFalsePositive = detectCharactersInText(
+      'The red alert strobes may set off the alarm.',
+      multiAgeProjectCast
+    )
+    expect(noFalsePositive).toEqual([])
+
+    // Speaker resolution prefers exact match over earlier substring sibling (Age 17 at index 2)
+    expect(
+      resolveBeatSpeaker({ character: 'Brian Eric Anderson Sr.' }, multiAgeProjectCast)?.id
+    ).toBe('c-brian-base')
+    expect(
+      resolveBeatSpeaker({ character: 'Brian Eric Anderson Sr. (Age 58)' }, multiAgeProjectCast)?.id
+    ).toBe('c-brian-58')
+
+    // Intersecting pre-detected Age 34 with direction naming bare "Brian" keeps Age 34
+    const intersected = intersectDetectedCharactersWithDirectionText(
+      [multiAgeProjectCast[4], multiAgeProjectCast[8]],
+      'Brian stands alone beside the terminal console.',
+      multiAgeProjectCast
+    )
+    expect(intersected.map((c) => c.id)).toEqual(['c-brian-34'])
   })
 })

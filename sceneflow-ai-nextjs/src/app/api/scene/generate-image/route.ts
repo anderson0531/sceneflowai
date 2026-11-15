@@ -1950,6 +1950,18 @@ async function postGenerateImage(req: NextRequest) {
       }
     }
 
+    const isBeatCloseUpFraming =
+      isBeatFrame &&
+      isFaceCloseUpShot(
+        resolveStillShotClass(
+          effectiveShotType,
+          beatForEmotion ? composeBeatActionFraming(beatForEmotion) : undefined
+        ).shotHint || effectiveShotType
+      )
+    const effectiveIncludeWardrobeDiptych = Boolean(
+      includeWardrobeDiptych && !isBeatCloseUpFraming
+    )
+
     const beatFrameHairLockNeeded =
       isBeatFrame && beatFrameNeedsHairLock(fullSceneContext, effectiveShotType)
     let characterReferences = characterObjects.map((char: any, idx: number) => {
@@ -2042,7 +2054,7 @@ async function postGenerateImage(req: NextRequest) {
         sceneIndex,
         characterWardrobes: effectiveCharacterWardrobes,
         includeWardrobeReferenceImages,
-        includeWardrobeDiptych: Boolean(includeWardrobeDiptych),
+        includeWardrobeDiptych: effectiveIncludeWardrobeDiptych,
       })
       const hasExplicitTextOverride = Boolean(
         wardrobeOverrides && char.name && wardrobeOverrides[char.name]?.trim()
@@ -2271,17 +2283,8 @@ async function postGenerateImage(req: NextRequest) {
       }
     })
 
-    const isBeatCloseUpFraming =
-      isBeatFrame &&
-      isFaceCloseUpShot(
-        resolveStillShotClass(
-          effectiveShotType,
-          beatForEmotion ? composeBeatActionFraming(beatForEmotion) : undefined
-        ).shotHint || effectiveShotType
-      )
-
     if (
-      includeWardrobeDiptych &&
+      effectiveIncludeWardrobeDiptych &&
       !isBeatCloseUpFraming &&
       characterReferences.some(
         (ref: any) => ref.hasDualReferences || ref.hasWardrobeDiptych || ref.isStoredPip
@@ -2388,7 +2391,13 @@ async function postGenerateImage(req: NextRequest) {
     }
     const directedFramePrompt = beatForPromptCompose?.beatDirection?.framePrompt?.trim()
     const persistedBeatPrompt = directedFramePrompt
-      ? directedFramePrompt
+      ? characterReferences.length > 0
+        ? sanitizePromptForIdentityRefs(directedFramePrompt, characterReferences, {
+            protectPhrases: detectedObjectReferences
+              .map((obj: { name?: string }) => obj.name)
+              .filter((name: unknown): name is string => typeof name === 'string'),
+          })
+        : directedFramePrompt
       : beatForPromptCompose
       ? composePersistedBeatStillPrompt({
           lookbook: projectLookbook,
@@ -2878,9 +2887,30 @@ async function postGenerateImage(req: NextRequest) {
     // done this for objects; beat frames now hold cast to the same rule, so the
     // reference stays out of both the sent images and the [REFERENCES] legend.
     if (isBeatFrame) {
-      const unplacedCast = characterReferencesForImages.filter(
-        (ref: any) => !promptPlacesCharacter(optimizedPrompt, ref)
-      )
+      const explicitCastInFrame = beatForEmotion?.beatDirection?.castInFrame
+      const beatHasExplicitEmptyCast =
+        stillActionHasEmptyCast(optimizedPrompt) ||
+        (Array.isArray(explicitCastInFrame) && explicitCastInFrame.length === 0)
+      const beatSourcePlacementText = !beatHasExplicitEmptyCast
+        ? [
+            beatForEmotion?.actionDescription,
+            beatForEmotion?.character,
+            ...(Array.isArray(explicitCastInFrame) ? explicitCastInFrame : []),
+          ]
+            .filter(Boolean)
+            .join(' ')
+        : ''
+      const keepSingleVerifiedCharacter =
+        !beatHasExplicitEmptyCast &&
+        characterSelectionExplicit &&
+        characterReferencesForImages.length === 1
+      const unplacedCast = keepSingleVerifiedCharacter
+        ? []
+        : characterReferencesForImages.filter(
+            (ref: any) =>
+              !promptPlacesCharacter(optimizedPrompt, ref) &&
+              !(beatSourcePlacementText && promptPlacesCharacter(beatSourcePlacementText, ref))
+          )
       if (unplacedCast.length > 0) {
         console.log(
           `[Scene Image] Dropping ${unplacedCast.length} character reference(s) not placed by the frame:`,
@@ -2994,17 +3024,33 @@ async function postGenerateImage(req: NextRequest) {
     if (isBeatFrame) {
       const unnamedProps: any[] = []
       const namedProps: Array<{ item: any; match: LibraryItemPromptMatch }> = []
+      const propMatchCorpus = [
+        actionFramingForLibraryMatch(optimizedPrompt),
+        beatForEmotion?.actionDescription,
+        ...(beatForEmotion?.beatDirection?.keyProps ?? []),
+      ]
+        .filter(Boolean)
+        .join('\n')
       for (const obj of detectedObjectReferences) {
         if (!obj?.imageUrl) continue
-        const match = resolveLibraryItemPromptMatch(
-          actionFramingForLibraryMatch(optimizedPrompt),
-          obj
-        )
+        const match = resolveLibraryItemPromptMatch(propMatchCorpus, obj)
         if (match.matched) {
           console.log(
             `[Scene Image] Prop reference "${obj.name}" kept — frame names it by ${match.basis} ("${match.matchedTerm}")`
           )
           namedProps.push({ item: obj, match })
+        } else if (skipObjectAutoDetection) {
+          console.log(
+            `[Scene Image] Prop reference "${obj.name}" kept — explicitly attached via verified beat references`
+          )
+          namedProps.push({
+            item: obj,
+            match: {
+              matched: true,
+              basis: 'token',
+              matchedTerm: obj.promptToken || obj.name || 'prop',
+            },
+          })
         } else {
           unnamedProps.push(obj)
         }
@@ -3458,6 +3504,7 @@ async function postGenerateImage(req: NextRequest) {
                 allowTypography,
                 includeAttachedIdentityTraits,
                 omitReferencesSection: useInterleavedProRefs,
+                keepAttachedProps: Boolean(skipObjectAutoDetection),
               })
             : useInterleavedProRefs
               ? joinPromptBlocks(

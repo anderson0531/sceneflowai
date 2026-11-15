@@ -582,7 +582,7 @@ export function resolveCharacterReferencePair(
     args.includeWardrobeDiptych ?? (!explicitDualOnly && !explicitIdentityOnly)
   const includeWardrobeReferenceImages =
     args.includeWardrobeReferenceImages ?? includeWardrobeDiptych
-  const identityUrl = trimUrl(character.referenceImage)
+  const identityUrl = trimUrl(character.referenceImage) || trimUrl(character.likenessImageUrl)
   const resolvedWardrobe = resolveWardrobeForCharacter(
     character,
     scene,

@@ -81,26 +81,34 @@ function placeElementTagsOnSubjects(prompt: string, bindings: ElementPromptBindi
     if (token && result.includes(token)) {
       result = result.replace(token, `${token} ${tag}`)
       for (const candidate of sortedNames) {
-        result = result.replace(new RegExp(`\\b${escapeRegExp(candidate)}\\b`, 'gi'), token)
+        result = result.replace(
+          new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(candidate)}(?![\\p{L}\\p{N}_])`, 'giu'),
+          token
+        )
       }
       continue
     }
     const name = sortedNames.find((candidate) =>
-      new RegExp(`\\b${escapeRegExp(candidate)}\\b`, 'i').test(result)
+      new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(candidate)}(?![\\p{L}\\p{N}_])`, 'iu').test(
+        result
+      )
     )
     if (name) {
       let replacedFirst = false
-      result = result.replace(new RegExp(`\\b${escapeRegExp(name)}\\b`, 'gi'), (matched) => {
-        if (!replacedFirst) {
-          replacedFirst = true
-          return `${token || matched} ${tag}`
+      result = result.replace(
+        new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(name)}(?![\\p{L}\\p{N}_])`, 'giu'),
+        (matched) => {
+          if (!replacedFirst) {
+            replacedFirst = true
+            return `${token || matched} ${tag}`
+          }
+          return token || matched
         }
-        return token || matched
-      })
+      )
       for (const candidate of sortedNames) {
         if (candidate.toLowerCase() === name.toLowerCase()) continue
         result = result.replace(
-          new RegExp(`\\b${escapeRegExp(candidate)}\\b`, 'gi'),
+          new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(candidate)}(?![\\p{L}\\p{N}_])`, 'giu'),
           token || name
         )
       }

@@ -21,6 +21,7 @@ import {
   isMediumCoverageLocationShot,
 } from '@/lib/imagen/stillFramingNormalize'
 import { buildIdentityPromptToken } from '@/lib/imagen/promptOptimizer'
+import { extractSamePersonAgeStage } from '@/lib/character/ageStageContinuity'
 import { buildIdentityTraitsClause } from '@/lib/imagen/identityTraitsClause'
 import {
   mentionsWord,
@@ -882,7 +883,9 @@ export function resolveLibraryItemPromptMatch(
 
   const name = item.name?.trim()
   if (!name) return { matched: false, basis: 'none' }
-  if (new RegExp(`\\b${escapeRegExp(name)}\\b`, 'i').test(text)) {
+  if (
+    new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(name)}(?![\\p{L}\\p{N}_])`, 'iu').test(text)
+  ) {
     return { matched: true, basis: 'name', matchedTerm: name }
   }
 
@@ -923,8 +926,10 @@ export function actionFramingForLibraryMatch(prompt: string): string {
 
 function propsUsedInAction(
   refs: StillPromptBoundRef[],
-  actionFraming: string
+  actionFraming: string,
+  keepAttachedProps?: boolean
 ): StillPromptBoundRef[] {
+  if (keepAttachedProps) return refs
   return refs.filter((ref) => {
     if (ref.kind !== 'prop') return true
     return promptReferencesLibraryItem(actionFraming, {
@@ -1011,27 +1016,45 @@ function escapeRegExp(value: string): string {
 const NAME_TITLE_PATTERN =
   /^(?:dr|doctor|prof|professor|mr|mrs|ms|miss|sir|madam|capt|captain|officer|det|detective|sgt|sergeant|lt|lieutenant|col|colonel|gen|general|father|mother|sister|brother|rev|reverend|judge|mayor|president|king|queen|lord|lady|uncle|aunt)\.?$/i
 
+const NAME_SUFFIX_PATTERN = /^(?:sr|jr|ii|iii|iv|v)\.?$/i
+
+function stripParentheticalQualifiers(raw: string): string {
+  return raw.replace(/\s*\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
 /**
  * Shorter forms a script actually uses for a cast member — "Piper Hayes" is
- * written as "Piper", and "Professor Gideon Croft" as "Gideon". Without these
- * the composed action keeps display names instead of person tokens.
+ * written as "Piper", "Professor Gideon Croft" as "Gideon", and
+ * "Brian Eric Anderson Sr. (Age 34)" as "Brian Eric Anderson Sr.", "Brian", or "Anderson".
  */
 function personNameAliases(name: string): string[] {
-  const parts = name.split(/\s+/).filter(Boolean)
+  const stage = extractSamePersonAgeStage(name)
+  const base = stripParentheticalQualifiers(stage.baseName || name)
+  const parts = base.split(/\s+/).filter(Boolean)
   const withoutTitles = parts.filter((part) => !NAME_TITLE_PATTERN.test(part))
+  const coreParts = withoutTitles.filter((part) => !NAME_SUFFIX_PATTERN.test(part))
   const aliases = new Set<string>()
 
+  if (base && base.toLowerCase() !== name.trim().toLowerCase()) {
+    aliases.add(base)
+  }
   if (withoutTitles.length > 0 && withoutTitles.length !== parts.length) {
     aliases.add(withoutTitles.join(' '))
   }
-  if (withoutTitles.length > 1) {
-    aliases.add(withoutTitles[0])
-    aliases.add(withoutTitles[withoutTitles.length - 1])
+  if (coreParts.length > 0 && coreParts.length !== withoutTitles.length) {
+    aliases.add(coreParts.join(' '))
+  }
+  if (coreParts.length > 2) {
+    aliases.add(`${coreParts[0]} ${coreParts[coreParts.length - 1]}`)
+  }
+  if (coreParts.length > 1) {
+    aliases.add(coreParts[0])
+    aliases.add(coreParts[coreParts.length - 1])
   }
 
-  return [...aliases].filter(
-    (alias) => alias.length >= 3 && alias.toLowerCase() !== name.toLowerCase()
-  )
+  return [...aliases]
+    .map((alias) => alias.replace(/[.,;:]+$/, '').trim())
+    .filter((alias) => alias.length >= 3 && alias.toLowerCase() !== name.trim().toLowerCase())
 }
 
 /** Label words long enough to identify a prop, minus the object's own noun. */
@@ -1193,10 +1216,57 @@ export function replaceLibraryNamesWithTokens(
 ): string {
   if (!text || refs.length === 0) return text
 
-  const sorted = bindableNameTokenPairs(refs).sort((a, b) => b.name.length - a.name.length)
+  // Exact full labels first (so multi-variant shots like `Brian (Age 17)` + `Brian (Age 58)`
+  // bind each exact label before any shared/sibling fallback runs).
+  const exactSorted = refs
+    .filter((ref) => ref.name.trim())
+    .sort((a, b) => b.name.length - a.name.length)
   let result = text
+  for (const ref of exactSorted) {
+    const pattern = new RegExp(
+      `(?<![\\p{L}\\p{N}_])${escapeRegExp(ref.name.trim())}(?![\\p{L}\\p{N}_])`,
+      'giu'
+    )
+    result = result.replace(pattern, ref.token)
+  }
+
+  // When only ONE variant of a base person is attached to this shot (e.g. `Age 58`),
+  // also absorb any stale sibling `(Age NN)` / era qualifier span in the prose so
+  // old age text never leaks next to `person [N]`.
+  const baseOwners = new Map<string, { base: string; core: string; tokens: Set<string> }>()
+  for (const ref of refs) {
+    if (ref.kind !== 'person' || !ref.name.trim()) continue
+    const stage = extractSamePersonAgeStage(ref.name)
+    const base = stripParentheticalQualifiers(stage.baseName || ref.name)
+    if (!base) continue
+    const core = base
+      .split(/\s+/)
+      .filter((p) => p && !NAME_TITLE_PATTERN.test(p) && !NAME_SUFFIX_PATTERN.test(p))
+      .join(' ')
+    const key = (core || base).toLowerCase()
+    const entry = baseOwners.get(key) ?? { base, core: core || base, tokens: new Set<string>() }
+    entry.tokens.add(ref.token)
+    baseOwners.set(key, entry)
+  }
+  for (const entry of baseOwners.values()) {
+    if (entry.tokens.size !== 1) continue
+    const [token] = [...entry.tokens]
+    for (const stem of [entry.base, entry.core]) {
+      if (!stem || stem.length < 3) continue
+      const siblingPattern = new RegExp(
+        `(?<![\\p{L}\\p{N}_])${escapeRegExp(stem)}(?:\\s+(?:Sr|Jr|II|III|IV)\\.?)?\\s*\\((?:Age[d]?\\s*\\d{1,3}|\\d{1,3}(?:\\s*yrs?)?|Young|Teen|Adult|Older|Elder|(?:19|20)\\d{2})[^)]*\\)(?![\\p{L}\\p{N}_])`,
+        'giu'
+      )
+      result = result.replace(siblingPattern, token)
+    }
+  }
+
+  const sorted = bindableNameTokenPairs(refs).sort((a, b) => b.name.length - a.name.length)
   for (const pair of sorted) {
-    const pattern = new RegExp(`\\b${escapeRegExp(pair.name)}\\b`, 'gi')
+    const pattern = new RegExp(
+      `(?<![\\p{L}\\p{N}_])${escapeRegExp(pair.name)}(?![\\p{L}\\p{N}_])`,
+      'giu'
+    )
     result = result.replace(pattern, pair.token)
   }
 
@@ -1777,6 +1847,8 @@ export function assembleStructuredStillPrompt(input: {
    * already sit on the plates) and do not cite that section from `[TASK]`.
    */
   omitReferencesSection?: boolean
+  /** Keep explicitly attached prop plates even when frozenMoment paraphrases the noun. */
+  keepAttachedProps?: boolean
 }): string {
   const parsed = parseStillPromptSource(input.actionOrStructured)
   const styleSignal = input.artStyle?.trim() || parsed.style
@@ -1793,7 +1865,7 @@ export function assembleStructuredStillPrompt(input: {
     castNames: [],
     shotType: input.shotType,
   })
-  const refs = propsUsedInAction(boundRefs, actionFraming)
+  const refs = propsUsedInAction(boundRefs, actionFraming, input.keepAttachedProps)
   const emptyCast = stillActionHasEmptyCast(actionFraming)
   const shot = resolveStillShotClass(input.shotType, actionFraming)
 

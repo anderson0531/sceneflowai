@@ -3,6 +3,7 @@ import {
   buildIdentityPromptToken,
   filterCharactersForPromptRefs,
   optimizePromptForImagen,
+  promptPlacesCharacter,
   sanitizePromptForIdentityRefs,
   stripReferenceImageMappingBlock,
 } from '@/lib/imagen/promptOptimizer'
@@ -411,5 +412,58 @@ describe('what optimizing an already-sectioned prompt costs', () => {
     expect(reparsed).toContain('8K, sharp focus')
     expect(reparsed).toContain('no watermarks')
     expect(isStructuredStillPrompt(flattened)).toBe(true)
+  })
+})
+
+describe('age-variant, suffix, and 3-letter name binding & placement', () => {
+  it('binds Brian Eric Anderson Sr. (Age 34) completely without leaving parenthetical or Sr. fragments', () => {
+    const sanitized = sanitizePromptForIdentityRefs(
+      'Action/Framing: Medium Close-Up. Brian Eric Anderson Sr. (Age 34) stands beside the terminal console. Cast in frame: Brian Eric Anderson Sr. (Age 34).',
+      [{ name: 'Brian Eric Anderson Sr. (Age 34)', promptToken: 'person [1]' }]
+    )
+
+    expect(sanitized).toContain('person [1] stands beside the terminal console.')
+    expect(sanitized).not.toContain('Brian')
+    expect(sanitized).not.toContain('Anderson')
+    expect(sanitized).not.toContain('(Age 34)')
+    expect(
+      promptPlacesCharacter(sanitized, {
+        name: 'Brian Eric Anderson Sr. (Age 34)',
+        promptToken: 'person [1]',
+      })
+    ).toBe(true)
+  })
+
+  it('absorbs stale sibling Brian Eric Anderson Sr. (Age 17) into person [1] when Age 58 is the sole attached variant', () => {
+    const preSavedFramePrompt =
+      '[STILL]\nAction/Framing: Low-angle Close-Up. Brian Eric Anderson Sr. (Age 17) stands in rigid, dignified stillness in his natural-tone linen shirt.'
+    const sanitized = sanitizePromptForIdentityRefs(preSavedFramePrompt, [
+      { name: 'Brian Eric Anderson Sr. (Age 58)', promptToken: 'person [1]' },
+    ])
+
+    expect(sanitized).toContain('person [1] stands in rigid, dignified stillness')
+    expect(sanitized).not.toContain('(Age 17)')
+    expect(sanitized).not.toContain('Brian')
+    expect(
+      promptPlacesCharacter(sanitized, {
+        name: 'Brian Eric Anderson Sr. (Age 58)',
+        promptToken: 'person [1]',
+      })
+    ).toBe(true)
+  })
+
+  it('binds and places 3-letter given name Max and surname Gould for Max Gould', () => {
+    const byFirstName = 'Action/Framing: Medium Shot. Max sits motionless in his high-backed leather executive chair.'
+    const bySurname = 'Action/Framing: Close-Up. Gould narrows his eyes at the throughput readout.'
+    const maxRef = { name: 'Max Gould', promptToken: 'person [1]' }
+
+    expect(promptPlacesCharacter(byFirstName, maxRef)).toBe(true)
+    expect(promptPlacesCharacter(bySurname, maxRef)).toBe(true)
+    expect(sanitizePromptForIdentityRefs(byFirstName, [maxRef])).toContain(
+      'person [1] sits motionless'
+    )
+    expect(sanitizePromptForIdentityRefs(bySurname, [maxRef])).toContain(
+      'person [1] narrows his eyes'
+    )
   })
 })

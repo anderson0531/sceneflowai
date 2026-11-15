@@ -370,7 +370,7 @@ function isNoTalentFromSceneDirection(sceneDirection: DetailedSceneDirection | n
   return NO_TALENT_SCENE_TOKENS.some(x => lower.includes(x))
 }
 
-const MAX_GEMINI_REFERENCE_IMAGES = 5
+const MAX_GEMINI_REFERENCE_IMAGES = 8
 
 /**
  * Generate Segment Frames API
@@ -790,6 +790,7 @@ export async function POST(req: NextRequest) {
         console.log('[Generate Frames] Using simplified beat frame prompt (character reference-first)')
       }
 
+      const maxReferenceImages = modelTier === 'eco' ? 6 : MAX_GEMINI_REFERENCE_IMAGES
       const personTokenByName = new Map<string, string>()
       const personTokenFor = (name: string) => {
         const existing = personTokenByName.get(name)
@@ -811,7 +812,7 @@ export async function POST(req: NextRequest) {
           c.hasDualReferences &&
           c.referenceUrl &&
           c.wardrobeReferenceUrl &&
-          allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES
+          allReferenceImages.length < maxReferenceImages
         ) {
           allReferenceImages.push({
             imageUrl: c.referenceUrl,
@@ -823,7 +824,7 @@ export async function POST(req: NextRequest) {
             role: 'identity',
             characterName: c.name,
           })
-          if (allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
+          if (allReferenceImages.length < maxReferenceImages) {
             allReferenceImages.push({
               imageUrl: c.wardrobeReferenceUrl,
               name: formatNextImageCaption({
@@ -838,7 +839,7 @@ export async function POST(req: NextRequest) {
           continue
         }
 
-        if (sceneHeadshotUrl && !c.referenceUrl && allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
+        if (sceneHeadshotUrl && !c.referenceUrl && allReferenceImages.length < maxReferenceImages) {
           const pip = await composeIdentityWardrobePipFromDiptychUrl({
             diptychUrl: sceneHeadshotUrl,
             label: c.name,
@@ -855,7 +856,7 @@ export async function POST(req: NextRequest) {
           })
           continue
         }
-        if (!c.referenceUrl || allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) continue
+        if (!c.referenceUrl || allReferenceImages.length >= maxReferenceImages) continue
         allReferenceImages.push({
           imageUrl: c.referenceUrl,
           name: formatNextImageCaption({
@@ -873,8 +874,8 @@ export async function POST(req: NextRequest) {
       for (const c of charPool) {
         if (sceneHeadshotByName.get(c.name)) continue
         if (c.hasDualReferences) continue
-        if (!c.wardrobeReferenceUrl || allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) {
-          if (c.wardrobeReferenceUrl && allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) {
+        if (!c.wardrobeReferenceUrl || allReferenceImages.length >= maxReferenceImages) {
+          if (c.wardrobeReferenceUrl && allReferenceImages.length >= maxReferenceImages) {
             console.warn(`[Generate Frames] Wardrobe ref dropped for ${c.name} — reference budget full`)
           }
           continue
@@ -897,7 +898,7 @@ export async function POST(req: NextRequest) {
       // Add location reference images (1 guaranteed slot)
       const locationRefs = locationReferences.filter(l => l.imageUrl).slice(0, 1)
       for (const loc of locationRefs) {
-        if (allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
+        if (allReferenceImages.length < maxReferenceImages) {
           allReferenceImages.push({
             imageUrl: loc.imageUrl!,
             name: formatNextImageCaption({
@@ -913,17 +914,20 @@ export async function POST(req: NextRequest) {
       }
       
       // Add scene/frame reference if available
-      if (referenceImageUrl && allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
+      if (referenceImageUrl && allReferenceImages.length < maxReferenceImages) {
         allReferenceImages.push({
           imageUrl: referenceImageUrl,
           name: 'Scene Reference'
         })
       }
       
-      // Add prop/object reference images (critical and important props with images)
-      const propRefs = objectReferences
-        .filter(obj => obj.imageUrl && (obj.importance === 'critical' || obj.importance === 'important'))
-        .slice(0, MAX_GEMINI_REFERENCE_IMAGES - allReferenceImages.length)
+      // Add prop/object reference images (prioritize critical -> important -> other props with images)
+      const importanceRank = (imp?: string): number =>
+        imp === 'critical' ? 0 : imp === 'important' ? 1 : 2
+      const propRefs = [...objectReferences]
+        .filter(obj => obj.imageUrl)
+        .sort((a, b) => importanceRank(a.importance) - importanceRank(b.importance))
+        .slice(0, Math.max(0, maxReferenceImages - allReferenceImages.length))
       for (const prop of propRefs) {
         allReferenceImages.push({
           imageUrl: prop.imageUrl!,

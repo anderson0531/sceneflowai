@@ -613,18 +613,39 @@ export function resolveBeatVideoReferences(
   }
   if (locationRefEntry) locationRefEntry.promptToken = 'location [1]'
 
-  // Priority & multimodal send order: Character -> Wardrobe -> Location -> Props
-  const allPrioritized = [
-    ...characterRefEntries,
-    ...(locationRefEntry ? [locationRefEntry] : []),
-    ...propRefEntries,
+  const insertShotText = [
+    beat.beatDirection?.shotType,
+    beat.actionDescription,
+    beat.beatDirection?.frozenMoment,
+    beat.beatDirection?.startFrame,
   ]
+    .filter(Boolean)
+    .join(' ')
+  const isObjectInsertShot =
+    characterRefEntries.length === 0 &&
+    propRefEntries.length > 0 &&
+    /\b(?:insert|macro|extreme\s+close[- ]?up|ecu)\b/i.test(insertShotText)
+
+  // Priority & multimodal send order: Character -> Wardrobe -> Location -> Props
+  // On 0-character macro/insert shots, props lead location so Veo's 1-style-ref cap keeps the hero object.
+  const allPrioritized = isObjectInsertShot
+    ? [
+        ...characterRefEntries,
+        ...propRefEntries,
+        ...(locationRefEntry ? [locationRefEntry] : []),
+      ]
+    : [
+        ...characterRefEntries,
+        ...(locationRefEntry ? [locationRefEntry] : []),
+        ...propRefEntries,
+      ]
 
   const { selected, dropped } = selectReferenceImagesInOrder(
     allPrioritized,
     MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
     {
       groupByRole: true,
+      locationLast: isObjectInsertShot,
       buildIdentityLabel: buildIdentityWithHeight,
       buildWardrobeLabel: buildWardrobeWithSummary,
       buildDiptychLabel: buildDiptychWithHeight,

@@ -311,14 +311,22 @@ export function filterCastInFrameByVisualStaging(
     const member = rawMember?.trim()
     if (!member) return false
     if (
-      new RegExp(`\\b${escapeRegexLiteral(member)}\\b`, 'i').test(visualStagingText)
+      new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegexLiteral(member)}(?![\\p{L}\\p{N}_])`, 'iu').test(
+        visualStagingText
+      )
     ) {
       return true
     }
-    const rawTokens = member
-      .split(/[\s.,'-]+/)
+    const strippedMember = member.replace(/\s*\([^)]*\)/g, ' ')
+    const rawTokens = strippedMember
+      .split(/[\s.,'()\-]+/)
       .map((tok) => tok.trim().toLowerCase())
-      .filter((tok) => tok.length >= 2 && !CAST_TITLE_STOPWORDS.has(tok))
+      .filter(
+        (tok) =>
+          tok.length >= 2 &&
+          !CAST_TITLE_STOPWORDS.has(tok) &&
+          !/^(?:sr|jr|ii|iii|iv|age|aged)$/.test(tok)
+      )
     const tokens =
       rawTokens.some((tok) => tok.length >= 3)
         ? rawTokens.filter((tok) => tok.length >= 3)

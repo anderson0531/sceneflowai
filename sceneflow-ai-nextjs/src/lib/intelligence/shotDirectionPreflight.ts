@@ -195,7 +195,7 @@ export async function rewriteThinClipPrompt(args: {
     const trimmed = name.trim()
     if (trimmed.length < 3) return false
     const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    return !new RegExp(`\\b${escaped}\\b`, 'i').test(prompt)
+    return !new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'iu').test(prompt)
   })
   if (
     !unnamedPlate ||

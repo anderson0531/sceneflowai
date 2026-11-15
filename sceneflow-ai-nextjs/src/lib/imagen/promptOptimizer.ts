@@ -117,7 +117,7 @@ export function buildIdentityPromptToken(refIndex: number): string {
 
 function replaceNameOutsideParentheses(text: string, name: string, token: string): string {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const pattern = new RegExp(`\\b${escaped}\\b`, 'gi')
+  const pattern = new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'giu')
   return text.replace(pattern, (match, offset, full) => {
     const before = full.slice(0, offset)
     const openParens = (before.match(/\(/g) || []).length
@@ -179,18 +179,80 @@ export function sanitizePromptForIdentityRefs(
   let sanitized = masked
 
   const sortedRefs = [...characterRefs].sort((a, b) => b.name.length - a.name.length)
+  const resolvedTokens = new Map<string, string>()
+  const aliasOwners = new Map<string, Set<string>>()
+  const baseStems = new Map<string, { base: string; core: string; tokens: Set<string> }>()
   for (const ref of sortedRefs) {
     const token =
       ref.promptToken ??
       (ref.identityReferenceId != null ? buildIdentityPromptToken(ref.identityReferenceId) : undefined)
     if (!token) continue
+    resolvedTokens.set(ref.name, token)
+    const base = ref.name.replace(/\s*\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()
+    const parts = base
+      .split(/\s+/)
+      .filter((p) => p && !NAME_TITLE_PATTERN.test(p) && !NAME_SUFFIX_PATTERN.test(p))
+    const core = parts.join(' ').trim()
+    if (core) {
+      const bKey = core.toLowerCase()
+      const entry = baseStems.get(bKey) ?? { base, core, tokens: new Set<string>() }
+      entry.tokens.add(token)
+      baseStems.set(bKey, entry)
+    }
+    const candidates = [
+      base,
+      core,
+      parts.length >= 2 ? parts[0] : undefined,
+      parts.length >= 2 ? parts[parts.length - 1] : undefined,
+    ]
+      .map((c) => c?.replace(/[.,;:]+$/, '').trim())
+      .filter((c): c is string => Boolean(c && c.length >= 3 && c.toLowerCase() !== ref.name.trim().toLowerCase()))
+    for (const alias of candidates) {
+      const aKey = alias.toLowerCase()
+      if (!aliasOwners.has(aKey)) aliasOwners.set(aKey, new Set())
+      aliasOwners.get(aKey)!.add(token)
+    }
+  }
 
+  for (const ref of sortedRefs) {
+    const token = resolvedTokens.get(ref.name)
+    if (!token) continue
     sanitized = replaceNameOutsideParentheses(sanitized, ref.name, token)
+  }
 
-    const nameParts = ref.name.split(/\s+/).filter((part) => part.length >= 4)
-    const firstName = nameParts.find((part) => !/^(dr|mr|mrs|ms|prof|professor|sir)\.?$/i.test(part))
-    if (firstName && firstName.length > 1) {
-      sanitized = replaceNameOutsideParentheses(sanitized, firstName, token)
+  for (const owner of baseStems.values()) {
+    if (owner.tokens.size !== 1) continue
+    const [token] = [...owner.tokens]
+    for (const stem of [owner.base, owner.core]) {
+      if (!stem || stem.length < 3) continue
+      const siblingPattern = new RegExp(
+        `(?<![\\p{L}\\p{N}_])${escapeRegExp(stem)}(?:\\s+(?:Sr|Jr|II|III|IV)\\.?)?\\s*\\((?:Age[d]?\\s*\\d{1,3}|\\d{1,3}(?:\\s*yrs?)?|Young|Teen|Adult|Older|Elder|(?:19|20)\\d{2})[^)]*\\)(?![\\p{L}\\p{N}_])`,
+        'giu'
+      )
+      sanitized = sanitized.replace(siblingPattern, token)
+    }
+  }
+
+  for (const ref of sortedRefs) {
+    const token = resolvedTokens.get(ref.name)
+    if (!token) continue
+    const base = ref.name.replace(/\s*\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()
+    const parts = base
+      .split(/\s+/)
+      .filter((p) => p && !NAME_TITLE_PATTERN.test(p) && !NAME_SUFFIX_PATTERN.test(p))
+    const core = parts.join(' ').trim()
+    const aliases = [
+      base,
+      core,
+      parts.length >= 2 ? parts[0] : undefined,
+      parts.length >= 2 ? parts[parts.length - 1] : undefined,
+    ]
+      .map((c) => c?.replace(/[.,;:]+$/, '').trim())
+      .filter((c): c is string => Boolean(c && c.length >= 3 && c.toLowerCase() !== ref.name.trim().toLowerCase()))
+      .sort((a, b) => b.length - a.length)
+    for (const alias of aliases) {
+      if (aliasOwners.get(alias.toLowerCase())?.size !== 1) continue
+      sanitized = replaceNameOutsideParentheses(sanitized, alias, token)
     }
   }
 
@@ -241,14 +303,27 @@ function escapeForRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-const NAME_TITLE_PATTERN = /^(dr|mr|mrs|ms|prof|professor|sir|lady|capt|captain|sgt|officer)\.?$/i
+const NAME_TITLE_PATTERN =
+  /^(dr|doctor|mr|mrs|ms|miss|prof|professor|sir|lady|capt|captain|sgt|sergeant|lt|lieutenant|col|colonel|gen|general|father|mother|sister|brother|rev|reverend|officer)\.?$/i
+const NAME_SUFFIX_PATTERN = /^(sr|jr|ii|iii|iv|v)\.?$/i
 
-/** The part of a full name a prompt is likely to use on its own. */
-function shortNameFor(fullName: string): string | undefined {
-  return fullName
+/** Candidate written forms a prompt may use to refer to this cast member. */
+function candidateNamesForPlacement(fullName: string): string[] {
+  const trimmed = fullName.trim()
+  if (!trimmed) return []
+  const base = trimmed.replace(/\s*\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()
+  const parts = base
     .split(/\s+/)
-    .filter((part) => part.length >= 4 && !NAME_TITLE_PATTERN.test(part))
-    .find((part) => part !== fullName)
+    .filter((part) => part && !NAME_TITLE_PATTERN.test(part) && !NAME_SUFFIX_PATTERN.test(part))
+  const core = parts.join(' ').trim()
+  const out = new Set<string>([trimmed])
+  if (base.length >= 3) out.add(base)
+  if (core.length >= 3) out.add(core)
+  for (const part of parts) {
+    const clean = part.replace(/[.,;:]+$/, '').trim()
+    if (clean.length >= 3) out.add(clean)
+  }
+  return [...out]
 }
 
 /**
@@ -276,9 +351,15 @@ export function promptPlacesCharacter(
 
   const name = ref.name?.trim()
   if (name) {
-    for (const candidate of [name, shortNameFor(name)]) {
+    for (const candidate of candidateNamesForPlacement(name)) {
       if (!candidate) continue
-      if (new RegExp(`\\b${escapeForRegExp(candidate)}\\b`, 'i').test(promptBody)) return true
+      if (
+        new RegExp(`(?<![\\p{L}\\p{N}_])${escapeForRegExp(candidate)}(?![\\p{L}\\p{N}_])`, 'iu').test(
+          promptBody
+        )
+      ) {
+        return true
+      }
     }
   }
 

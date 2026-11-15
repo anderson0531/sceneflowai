@@ -61,6 +61,7 @@ import {
   composePersistedBeatStillPrompt,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import { PROJECT_LOOKBOOK_VERSION } from '@/lib/intelligence/project-lookbook-fallback'
+import { rewriteVisualNamesToTokens } from '@/lib/vision/referenceImageBinding'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 describe('assembleStructuredStillPrompt', () => {
@@ -1931,5 +1932,74 @@ describe('generate-image Direct/regen still payload', () => {
     expect(src).toContain('stillRefsFromNamedLibrary')
     expect(src).toContain('shotType: effectiveShotType')
     expect(src).toContain('combinedCharacterReferenceInstruction(effectiveShotType)')
+  })
+
+  it('cleanly binds parenthetical (Age NN) and Sr. suffixes and absorbs stale sibling age variants in Stills and Clips', () => {
+    const refsAge34 = [
+      {
+        kind: 'person' as const,
+        token: 'person [1]',
+        name: 'Brian Eric Anderson Sr. (Age 34)',
+        roleLabel: 'identity',
+      },
+    ]
+    const beat1Action =
+      'Medium Close-Up, eye-level angle. Brian Eric Anderson Sr. (Age 34) is poised screen-left in medium close-up, shoulders squared in his charcoal suit. Brian\'s hands hang relaxed. Cast in frame: Brian Eric Anderson Sr. (Age 34) — and no other people.'
+
+    const replacedStill = replaceLibraryNamesWithTokens(beat1Action, refsAge34)
+    expect(replacedStill).toContain('person [1] is poised screen-left')
+    expect(replacedStill).toContain("person [1]'s hands hang relaxed")
+    expect(replacedStill).toContain('Cast in frame: person [1] — and no other people.')
+    expect(replacedStill).not.toContain('Brian')
+    expect(replacedStill).not.toContain('Anderson')
+    expect(replacedStill).not.toContain('(Age 34)')
+
+    // Stale sibling (Age 17) prose when only (Age 58) is attached to the shot
+    const refsAge58 = [
+      {
+        kind: 'person' as const,
+        token: 'person [1]',
+        name: 'Brian Eric Anderson Sr. (Age 58)',
+        roleLabel: 'identity',
+      },
+    ]
+    const staleAge17Prose =
+      'Brian Eric Anderson Sr. (Age 17) stands in rigid, dignified stillness as cool 5600K daylight pours through the panoramic curtain wall.'
+    const reboundStill = replaceLibraryNamesWithTokens(staleAge17Prose, refsAge58)
+    expect(reboundStill).toContain('person [1] stands in rigid, dignified stillness')
+    expect(reboundStill).not.toContain('(Age 17)')
+    expect(reboundStill).not.toContain('Brian')
+
+    // Clips / Omni video token rewriter preserves quoted speech while binding (Age NN) + sibling variants
+    const clipProse =
+      'Brian Eric Anderson Sr. (Age 17) turns toward Max Gould and says, "Brian Eric Anderson Sr. built this architecture."'
+    const reboundClip = rewriteVisualNamesToTokens(clipProse, [
+      { role: 'identity', token: 'person [1]', name: 'Brian Eric Anderson Sr. (Age 58)' },
+      { role: 'identity', token: 'person [2]', name: 'Max Gould' },
+    ])
+    expect(reboundClip).toBe(
+      'person [1] turns toward person [2] and says, "Brian Eric Anderson Sr. built this architecture."'
+    )
+  })
+
+  it('retains verified attached prop plates via keepAttachedProps on paraphrased Macro Insert stills', () => {
+    const prompt = assembleStructuredStillPrompt({
+      actionOrStructured:
+        "Macro insert of the anodized faceplate under cold overhead illumination as the counter locks at '500,000 TPS'. Cast in frame: None.",
+      refs: [
+        {
+          kind: 'prop',
+          token: 'prop [1]',
+          name: 'Enterprise Server Rack',
+          roleLabel: 'library prop',
+        },
+      ],
+      shotType: 'Macro Insert',
+      omitReferencesSection: true,
+      keepAttachedProps: true,
+    })
+
+    expect(prompt).toContain('prop [1]')
+    expect(prompt).toContain('Also in frame: prop [1]')
   })
 })
