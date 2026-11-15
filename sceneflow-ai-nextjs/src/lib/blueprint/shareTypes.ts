@@ -33,6 +33,12 @@ export type BlueprintSectionTranslationsByLanguage = Record<
   BlueprintSectionTranslationsMap
 >
 
+export type BlueprintBeatAudioMap = Record<string, BlueprintSectionAudioEntry>
+
+export type BlueprintBeatAudioByLanguage = Record<string, BlueprintBeatAudioMap>
+
+export type BlueprintBeatTranslationsByLanguage = Record<string, Record<string, string>>
+
 export type BlueprintFeedbackSection = {
   score?: number
   strengths?: string
@@ -89,6 +95,9 @@ export type BlueprintSessionPayload = {
   sectionAudio?: BlueprintSectionAudioMap
   sectionAudioByLanguage?: BlueprintSectionAudioByLanguage
   sectionTranslations?: BlueprintSectionTranslationsByLanguage
+  /** Per-beat narrated storyboard audio indexed by language -> String(beatIndex). */
+  beatAudioByLanguage?: BlueprintBeatAudioByLanguage
+  beatTranslations?: BlueprintBeatTranslationsByLanguage
   /** Last language used for generation (reviewer default). */
   sectionAudioLanguage?: string
   sectionAudioStatus?: BlueprintSectionAudioStatus

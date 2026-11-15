@@ -305,6 +305,19 @@ export async function POST(request: NextRequest) {
         ...(inheritedSeriesBibleRef && { seriesBibleRef: inheritedSeriesBibleRef }),
         audienceDefinition: inheritedAudienceDefinition || undefined,
         blueprintAudienceResonance: inheritedBlueprintAR || undefined,
+        ...(typeof sourceMetadata.creditsBudget === 'number' && sourceMetadata.creditsBudget > 0
+          ? { creditsBudget: sourceMetadata.creditsBudget }
+          : {}),
+        ...(sourceMetadata.creditsBudgetParams &&
+        typeof sourceMetadata.creditsBudgetParams === 'object'
+          ? { creditsBudgetParams: sourceMetadata.creditsBudgetParams }
+          : {}),
+        ...(sourceMetadata.clientOrder && typeof sourceMetadata.clientOrder === 'object'
+          ? { clientOrder: sourceMetadata.clientOrder }
+          : {}),
+        ...(Number(sourceMetadata.creditsUsed || 0) > 0
+          ? { blueprintCreditsUsed: Number(sourceMetadata.creditsUsed || 0) }
+          : {}),
         visionPhase: {
           ...(sourceMetadata.visionPhase || {}),
           scriptGenerated: false,

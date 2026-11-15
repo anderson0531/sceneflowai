@@ -10,6 +10,7 @@ import {
 import { resolveGeminiTtsLanguageCode } from '@/lib/tts/googleTtsLocale'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import type {
+  BlueprintBeatAudioMap,
   BlueprintSectionAudioEntry,
   BlueprintSectionAudioMap,
   BlueprintSectionAudioStatus,
@@ -287,6 +288,8 @@ export async function patchSessionSectionAudio(
       | 'sectionAudio'
       | 'sectionAudioByLanguage'
       | 'sectionTranslations'
+      | 'beatAudioByLanguage'
+      | 'beatTranslations'
       | 'sectionAudioLanguage'
       | 'sectionAudioStatus'
       | 'sectionAudioVoiceId'
@@ -419,6 +422,114 @@ async function generateResonanceShareAudio(params: {
   }
 }
 
+export function buildSingleBeatNarrationText(
+  beat: Record<string, unknown>,
+  beatIndex: number
+): string {
+  const title = typeof beat.title === 'string' ? beat.title.trim() : ''
+  const era = typeof beat.eraOrAge === 'string' ? beat.eraOrAge.trim() : ''
+  const synopsis =
+    typeof beat.synopsis === 'string' && beat.synopsis.trim()
+      ? beat.synopsis.trim()
+      : typeof beat.intent === 'string'
+        ? beat.intent.trim()
+        : ''
+  const impact = typeof beat.impact === 'string' ? beat.impact.trim() : ''
+
+  return [
+    title ? `Chapter ${beatIndex + 1}: ${title}.` : `Chapter ${beatIndex + 1}.`,
+    era ? `${era}.` : '',
+    synopsis,
+    impact ? `Impact: ${impact}` : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+}
+
+async function generateShareBeatAudio(params: {
+  sessionId: string
+  projectId: string
+  language: string
+  voiceId: string
+  directorNotes?: string
+  payload: BlueprintSessionPayload
+}): Promise<{
+  beatAudioByLanguage: Record<string, BlueprintBeatAudioMap>
+  beatTranslations: Record<string, Record<string, string>>
+} | null> {
+  const rawBeats = Array.isArray(params.payload.treatment?.beats)
+    ? (params.payload.treatment.beats as Array<Record<string, unknown>>)
+    : []
+  if (rawBeats.length === 0) return null
+
+  const beats = rawBeats.slice(0, 16)
+  const existingForLang: BlueprintBeatAudioMap = {
+    ...(params.payload.beatAudioByLanguage?.[params.language] || {}),
+  }
+  const transForLang: Record<string, string> = {
+    ...(params.payload.beatTranslations?.[params.language] || {}),
+  }
+
+  for (let i = 0; i < beats.length; i++) {
+    const key = String(i)
+    const rawText = buildSingleBeatNarrationText(beats[i]!, i)
+    if (!rawText) continue
+
+    let speakableText = rawText
+    try {
+      speakableText = await translateBlueprintNarration(rawText, params.language)
+    } catch (err) {
+      console.error(`[generateShareBeatAudio] translate beat ${i}:`, err)
+      if (params.language !== DEFAULT_SHARE_AUDIO_LANGUAGE) continue
+    }
+
+    transForLang[key] = speakableText
+    const textHash = hashForLanguage(
+      hashShareAudioContent(speakableText, params.voiceId, params.directorNotes),
+      params.language
+    )
+
+    const existing = existingForLang[key]
+    if (existing?.url && existing.textHash === textHash) {
+      continue
+    }
+
+    try {
+      const buffer = await synthesizeSectionMp3(
+        speakableText,
+        params.voiceId,
+        params.directorNotes,
+        params.language
+      )
+      if (!buffer.length) continue
+      const filename = `audio/blueprint-share/${params.projectId}/${params.sessionId}/${params.language}/beat-${i}.mp3`
+      const blob = await put(filename, buffer, {
+        access: 'public',
+        contentType: 'audio/mpeg',
+        addRandomSuffix: false,
+      })
+      existingForLang[key] = {
+        url: blob.url,
+        textHash,
+      }
+    } catch (err) {
+      console.error(`[generateShareBeatAudio] beat ${i} failed:`, err)
+    }
+  }
+
+  return {
+    beatAudioByLanguage: {
+      ...(params.payload.beatAudioByLanguage || {}),
+      [params.language]: existingForLang,
+    },
+    beatTranslations: {
+      ...(params.payload.beatTranslations || {}),
+      [params.language]: transForLang,
+    },
+  }
+}
+
 export async function runShareSectionAudioGeneration(
   sessionId: string,
   options?: RunShareSectionAudioOptions
@@ -480,10 +591,28 @@ export async function runShareSectionAudioGeneration(
       directorNotes,
       payload,
     })
-    if (resonance) {
+    const beatAudio = await generateShareBeatAudio({
+      sessionId,
+      projectId: payload.projectId,
+      language,
+      voiceId,
+      directorNotes,
+      payload,
+    })
+    if (resonance || beatAudio) {
       await patchSessionSectionAudio(sessionId, {
-        resonanceAudioByLanguage: resonance.resonanceAudioByLanguage,
-        resonanceTranslations: resonance.resonanceTranslations,
+        ...(resonance
+          ? {
+              resonanceAudioByLanguage: resonance.resonanceAudioByLanguage,
+              resonanceTranslations: resonance.resonanceTranslations,
+            }
+          : {}),
+        ...(beatAudio
+          ? {
+              beatAudioByLanguage: beatAudio.beatAudioByLanguage,
+              beatTranslations: beatAudio.beatTranslations,
+            }
+          : {}),
       })
     }
     console.info(`[runShareSectionAudioGeneration] up-to-date session=${sessionId} lang=${language}`)
@@ -548,6 +677,15 @@ export async function runShareSectionAudioGeneration(
       payload,
     })
 
+    const beatAudio = await generateShareBeatAudio({
+      sessionId,
+      projectId: payload.projectId,
+      language,
+      voiceId,
+      directorNotes,
+      payload,
+    })
+
     await patchSessionSectionAudio(sessionId, {
       sectionAudio: sectionAudio,
       sectionAudioByLanguage: { ...prevByLang, [language]: sectionAudio },
@@ -564,6 +702,12 @@ export async function runShareSectionAudioGeneration(
         ? {
             resonanceAudioByLanguage: resonance.resonanceAudioByLanguage,
             resonanceTranslations: resonance.resonanceTranslations,
+          }
+        : {}),
+      ...(beatAudio
+        ? {
+            beatAudioByLanguage: beatAudio.beatAudioByLanguage,
+            beatTranslations: beatAudio.beatTranslations,
           }
         : {}),
     })

@@ -63,6 +63,8 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
         sectionAudio: getSectionAudioForLanguage(payload, lang),
         sectionAudioByLanguage: payload.sectionAudioByLanguage,
         sectionTranslations: payload.sectionTranslations,
+        beatAudioByLanguage: payload.beatAudioByLanguage || {},
+        beatTranslations: payload.beatTranslations || {},
         sectionAudioLanguage: lang,
         sectionAudioStatus: payload.sectionAudioStatus,
         sectionAudioVoiceId: payload.sectionAudioVoiceId,

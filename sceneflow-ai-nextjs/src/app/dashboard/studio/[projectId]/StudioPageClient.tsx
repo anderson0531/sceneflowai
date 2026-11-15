@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon, Edit, Settings, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, PanelRight, PanelRightClose, RefreshCw, Wand2, Clapperboard } from "lucide-react";
+import { DownloadIcon, Edit, Settings, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, PanelRight, PanelRightClose, RefreshCw, Wand2, Clapperboard, Calculator } from "lucide-react";
 import { useShallow } from 'zustand/react/shallow';
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
@@ -76,7 +76,9 @@ import {
 import { ProductEmptyState } from '@/components/product'
 import { BlueprintResonanceStrip } from '@/components/blueprint/BlueprintResonanceStrip'
 import { BlueprintNextStepBanner } from '@/components/blueprint/BlueprintNextStepBanner'
+import { ClientOrderStudioBanner } from '@/components/blueprint/ClientOrderStudioBanner'
 import { StartProductionDialog } from '@/components/blueprint/StartProductionDialog'
+import { estimateBlueprintProjectCost } from '@/lib/credits/blueprintCostEstimator'
 import {
   BlueprintRefineDiffBanner,
   type RefineDiffSummary,
@@ -302,6 +304,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [collaborationTabSignal, setCollaborationTabSignal] = useState(0)
   const [resonanceTabSignal, setResonanceTabSignal] = useState(0)
   const [foundationTabSignal, setFoundationTabSignal] = useState(0)
+  const [budgetTabSignal, setBudgetTabSignal] = useState(0)
+  const [isIllustratingBeats, setIsIllustratingBeats] = useState(false)
   const [refineDiffSummary, setRefineDiffSummary] = useState<RefineDiffSummary[]>([])
   const hadBlueprintOnLoadRef = useRef(false)
   
@@ -330,6 +334,17 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     const id = selectedId || variants?.[0]?.id
     return variants?.find((v) => v.id === id) ?? variants?.[0] ?? null
   }, [guide])
+
+  const liveBlueprintCostEstimate = useMemo(() => {
+    if (!activeTreatmentVariant) return null
+    const meta = (currentProject?.metadata || {}) as Record<string, any>
+    return estimateBlueprintProjectCost({
+      treatment: activeTreatmentVariant as Record<string, unknown>,
+      visionPhase: (meta.visionPhase || null) as Record<string, unknown> | null,
+      sunkCreditsUsed: Number(meta.creditsUsed || 0),
+      options: (meta.creditsBudgetParams || undefined) as any,
+    })
+  }, [activeTreatmentVariant, currentProject?.metadata])
 
   const resolvedHeroContinuity = useMemo(
     () =>
@@ -572,7 +587,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
   const [listenOnlyShare, setListenOnlyShare] = useState(false)
 
-  const handleShare = async (opts?: { forceNew?: boolean; listenOnly?: boolean }) => {
+  const handleShare = async (opts?: {
+    forceNew?: boolean
+    listenOnly?: boolean
+    clientMode?: boolean
+  }) => {
     if (!projectId || projectId.startsWith('new-project')) {
       toast.error(t('toast.saveBeforeSharing'))
       return
@@ -592,6 +611,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       return
     }
 
+    const clientOrderMeta = (
+      (currentProject?.metadata as Record<string, unknown> | undefined)
+        ?.clientOrder || null
+    ) as Record<string, unknown> | null
+    const isClientProj = Boolean(clientOrderMeta?.isClientProject)
+    const effectiveClientMode = opts?.clientMode ?? isClientProj
+
     setIsSharing(true)
     try {
       const heroImageUrl = resolveBlueprintHeroImageUrl(variant as Record<string, unknown>)
@@ -607,6 +633,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         forceNew: opts?.forceNew === true,
         allowFeedback: !listenOnly,
         neverExpires: listenOnly,
+        clientMode: effectiveClientMode,
+        maxFeedbackRounds:
+          typeof clientOrderMeta?.maxFeedbackRounds === 'number'
+            ? clientOrderMeta.maxFeedbackRounds
+            : undefined,
       })
 
       if (result.success) {
@@ -1664,6 +1695,70 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     setFoundationTabSignal((s) => s + 1)
   }, [])
 
+  const openBudgetPanel = useCallback(() => {
+    setShowSidePanel(true)
+    setBudgetTabSignal((s) => s + 1)
+  }, [])
+
+  const handleProjectMetadataPatched = useCallback(
+    (patch: Record<string, unknown>) => {
+      const latest = useStore.getState().currentProject || currentProject
+      if (!latest) return
+      setCurrentProject({
+        ...latest,
+        metadata: {
+          ...(latest.metadata || {}),
+          ...patch,
+        },
+      })
+    },
+    [currentProject, setCurrentProject]
+  )
+
+  const handleIllustrateAllBeats = useCallback(async () => {
+    if (!projectId || projectId.startsWith('new-project')) {
+      toast.error('Save the Blueprint project before generating beat illustrations')
+      return
+    }
+    const variants = (useGuideStore.getState().guide as any)?.treatmentVariants || []
+    const selectedId = (useGuideStore.getState().guide as any)?.selectedTreatmentId
+    const targetVariant =
+      variants.find((v: any) => v.id === selectedId) || variants[0]
+    if (!targetVariant?.id) return
+
+    setIsIllustratingBeats(true)
+    try {
+      const res = await fetch('/api/blueprint/beats/illustrate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          variantId: targetVariant.id,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Beat illustration generation failed')
+      }
+      if (Array.isArray(data.beats)) {
+        updateTreatmentVariant(targetVariant.id, { beats: data.beats })
+        const updatedVariant = { ...targetVariant, beats: data.beats }
+        await syncActiveBlueprintShare(updatedVariant)
+      }
+      toast.success(
+        `Illustrated ${data.generatedCount ?? 'all'} storyboard ${
+          data.generatedCount === 1 ? 'beat' : 'beats'
+        }`
+      )
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to illustrate storyboard beats'
+      )
+    } finally {
+      setIsIllustratingBeats(false)
+    }
+  }, [projectId, updateTreatmentVariant, syncActiveBlueprintShare])
+
   /**
    * Closing clears the tab signals so the next open lands on Narrative.
    *
@@ -1676,6 +1771,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     setCollaborationTabSignal(0)
     setResonanceTabSignal(0)
     setFoundationTabSignal(0)
+    setBudgetTabSignal(0)
   }, [])
 
   const studioEventHandlers = useMemo(
@@ -1907,6 +2003,22 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                     </span>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
+                    {hasBlueprint && liveBlueprintCostEstimate && (
+                      <button
+                        type="button"
+                        onClick={openBudgetPanel}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-900/80 hover:border-cyan-500/40 hover:bg-slate-800/80 px-2.5 py-1.5 text-xs text-slate-200 transition-colors"
+                        title="Open Blueprint Cost & Scope Estimator (1 Beat = 1 Production Chapter)"
+                      >
+                        <Calculator className="w-3.5 h-3.5 text-cyan-400" />
+                        <span className="font-semibold text-white">
+                          ~{liveBlueprintCostEstimate.totalEstimatedCredits.toLocaleString()} cr
+                        </span>
+                        <span className="text-emerald-300 font-medium hidden sm:inline">
+                          (${liveBlueprintCostEstimate.totalEstimatedUsd.toFixed(2)})
+                        </span>
+                      </button>
+                    )}
                     {hasBlueprint && (
                       <BlueprintResonanceStrip
                         progress={blueprintProgress}
@@ -1934,6 +2046,41 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               
               {/* Content area with proper padding */}
               <div className="p-6 space-y-6">
+                {hasBlueprint &&
+                  Boolean(
+                    (currentProject?.metadata as Record<string, any> | undefined)
+                      ?.clientOrder?.isClientProject
+                  ) && (
+                    <ClientOrderStudioBanner
+                      projectId={projectId}
+                      treatment={
+                        (activeTreatmentVariant ||
+                          guide.treatmentVariants?.[0]) as
+                          | Record<string, unknown>
+                          | undefined
+                      }
+                      projectMetadata={
+                        (currentProject?.metadata || null) as Record<
+                          string,
+                          unknown
+                        > | null
+                      }
+                      shareUrl={shareUrl}
+                      isSharing={isSharing}
+                      isIllustratingBeats={isIllustratingBeats}
+                      onOpenBudgetTab={openBudgetPanel}
+                      onAcceptAndShareBlueprint={async () => {
+                        await handleShare({ clientMode: true })
+                      }}
+                      onIllustrateAllBeats={handleIllustrateAllBeats}
+                      onStartProduction={handleRequestStartProduction}
+                      onClientOrderUpdated={(nextClientOrder) => {
+                        handleProjectMetadataPatched({
+                          clientOrder: nextClientOrder,
+                        })
+                      }}
+                    />
+                  )}
                 {hasBlueprint && (
                   <BlueprintNextStepBanner
                     progress={blueprintProgress}
@@ -2073,6 +2220,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 collaborationTabSignal={collaborationTabSignal}
                 resonanceTabSignal={resonanceTabSignal}
                 foundationTabSignal={foundationTabSignal}
+                budgetTabSignal={budgetTabSignal}
+                projectMetadata={
+                  (currentProject?.metadata || null) as Record<string, unknown> | null
+                }
+                onProjectMetadataPatched={handleProjectMetadataPatched}
                 projectId={projectId}
                 audienceDefinition={audienceDefinition}
                 onAudienceDefinitionSave={handleAudienceDefinitionSave}
@@ -2459,6 +2611,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         isStarting={isStartingProduction}
         onConfirm={confirmStartProduction}
         onCancel={cancelStartProduction}
+        estimatedCredits={liveBlueprintCostEstimate?.totalEstimatedCredits}
+        lockedBudgetCredits={
+          Number((currentProject?.metadata as Record<string, any> | undefined)?.creditsBudget || 0) ||
+          undefined
+        }
       />
 
       <BlueprintOnboarding />

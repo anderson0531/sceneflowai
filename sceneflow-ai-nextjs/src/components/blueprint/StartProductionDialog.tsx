@@ -12,7 +12,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
-import { AlertTriangle, Clapperboard, Loader2 } from 'lucide-react'
+import { AlertTriangle, Calculator, Clapperboard, Loader2 } from 'lucide-react'
 import type { StartProductionGateResult } from '@/lib/blueprint/blueprintReadinessGate'
 import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
@@ -24,6 +24,8 @@ interface StartProductionDialogProps {
   isStarting: boolean
   onConfirm: (override?: boolean) => void
   onCancel: () => void
+  estimatedCredits?: number
+  lockedBudgetCredits?: number
 }
 
 export function StartProductionDialog({
@@ -33,6 +35,8 @@ export function StartProductionDialog({
   isStarting,
   onConfirm,
   onCancel,
+  estimatedCredits,
+  lockedBudgetCredits,
 }: StartProductionDialogProps) {
   const t = useTranslations('blueprint.startProduction')
   const tGate = useTranslations('blueprint.gate')
@@ -91,6 +95,36 @@ export function StartProductionDialog({
               </dd>
             </div>
           </dl>
+
+          {typeof estimatedCredits === 'number' && estimatedCredits > 0 && (
+            <div className="rounded-lg bg-cyan-950/30 border border-cyan-500/30 p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center shrink-0">
+                  <Calculator className="w-4 h-4 text-cyan-300" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-cyan-200">
+                    Est. Production Cost
+                  </div>
+                  <div className="text-[11px] text-gray-400">
+                    {lockedBudgetCredits && lockedBudgetCredits > 0
+                      ? `Locked budget: ${lockedBudgetCredits.toLocaleString()} cr ($${(
+                          lockedBudgetCredits / 100
+                        ).toFixed(2)})`
+                      : '1 Blueprint Beat = 1 Production Chapter'}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-sm font-bold text-white">
+                  ~{estimatedCredits.toLocaleString()} cr
+                </div>
+                <div className="text-[11px] text-emerald-300 font-medium">
+                  ~${(estimatedCredits / 100).toFixed(2)}
+                </div>
+              </div>
+            </div>
+          )}
 
           {reasonKeys.length > 0 && (
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">

@@ -393,8 +393,9 @@ export async function submitContinuityClientReview(input: {
   }
   const { session, payload } = resolved
 
+  const isClientContinuity = payload.clientMode !== false
   const consent = await getLatestCustomerConsent(session.id)
-  if (payload.clientMode && !consent) {
+  if (isClientContinuity && !consent) {
     return {
       ok: false,
       status: 403,
@@ -409,7 +410,7 @@ export async function submitContinuityClientReview(input: {
     (d) => d.decision === 'revision_requested'
   )
 
-  if (payload.clientMode && hasRevisionRequest && payload.roundsUsed >= payload.maxRounds) {
+  if (isClientContinuity && hasRevisionRequest && payload.roundsUsed >= payload.maxRounds) {
     return {
       ok: false,
       status: 409,

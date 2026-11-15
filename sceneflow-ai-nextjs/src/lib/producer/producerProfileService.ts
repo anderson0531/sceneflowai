@@ -24,7 +24,7 @@ export async function getOrCreateProducerProfile(userId: string): Promise<Produc
     user_id: userId,
     brand_name: '',
     primary_color: '#7c3aed',
-    hide_sceneflow_branding: true,
+    hide_sceneflow_branding: false,
     default_max_rounds: 2,
     daily_public_intake_credit_cap: 200,
   })
@@ -41,7 +41,7 @@ export function toBrandProfileSnapshot(
     primaryColor: profile?.primary_color || '#7c3aed',
     supportEmail: profile?.support_email || null,
     customTermsUrl: profile?.custom_terms_url || null,
-    hideSceneFlowBranding: profile?.hide_sceneflow_branding !== false,
+    hideSceneFlowBranding: Boolean(profile?.hide_sceneflow_branding),
   }
 }
 

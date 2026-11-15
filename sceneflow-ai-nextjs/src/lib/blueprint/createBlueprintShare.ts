@@ -10,6 +10,8 @@ export type CreateBlueprintShareInput = {
   forceNew?: boolean
   allowFeedback?: boolean
   neverExpires?: boolean
+  clientMode?: boolean
+  maxFeedbackRounds?: number
 }
 
 function legacyOwnerIdFromStorage(): string | undefined {

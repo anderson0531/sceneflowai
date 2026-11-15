@@ -38,6 +38,13 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
           ]
         : payload.turns
 
+    const effectivePhase = payload.completedAt || session.status === 'closed'
+      ? 'completed'
+      : payload.phase ||
+        (payload.customerTurnsUsed > 0 || payload.visionProposal?.confirmed
+          ? 'structured_interview'
+          : 'vision_clarification')
+
     return NextResponse.json({
       success: true,
       sessionId: session.id,
@@ -45,13 +52,22 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       vertical: payload.vertical,
       mode: payload.mode,
       locale: activeLocale,
+      phase: effectivePhase,
+      visionProposal: payload.visionProposal || null,
       brandProfile: payload.brandProfileSnapshot,
       consentAccepted: Boolean(consent),
       customerName: consent?.customer_name || null,
       customerTurnsUsed: payload.customerTurnsUsed,
       maxCustomerTurns: payload.maxCustomerTurns,
       turns: localizedTurns,
+      extractedCharacters: Array.isArray(payload.extractedCharacters)
+        ? payload.extractedCharacters
+        : [],
       resonatingBeats: Array.isArray(payload.resonatingBeats) ? payload.resonatingBeats : [],
+      completenessChecklist: payload.completenessChecklist || null,
+      readyToComplete: Boolean(
+        payload.readyToComplete || payload.customerTurnsUsed >= payload.maxCustomerTurns
+      ),
       completed: Boolean(payload.completedAt || session.status === 'closed'),
     })
   } catch (err: unknown) {

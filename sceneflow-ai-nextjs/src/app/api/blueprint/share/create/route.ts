@@ -30,6 +30,7 @@ import {
   toBrandProfileSnapshot,
   type BrandProfileSnapshot,
 } from '@/lib/producer/producerProfileService'
+import ProducerProfile from '@/models/ProducerProfile'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -184,6 +185,17 @@ export async function POST(req: NextRequest) {
       if (effectiveMaxRounds === undefined && profile) {
         effectiveMaxRounds = profile.default_max_rounds
       }
+    } else {
+      const existingProfile = await ProducerProfile.findOne({
+        where: { user_id: effectiveOwnerId },
+      }).catch(() => null)
+      if (
+        existingProfile &&
+        (Boolean(existingProfile.brand_name?.trim()) ||
+          Boolean(existingProfile.brand_logo_url?.trim()))
+      ) {
+        brandSnapshot = toBrandProfileSnapshot(existingProfile, ownerName)
+      }
     }
 
     const { persisted: persistedAR } = loadBlueprintARFromMetadata(
@@ -258,6 +270,18 @@ export async function POST(req: NextRequest) {
           shareSettings: {
             ...nextPayload.shareSettings,
             allowTts: true,
+            ...(clientMode ? { clientMode: true } : {}),
+            ...(typeof hideAudienceResonance === 'boolean'
+              ? { hideAudienceResonance }
+              : clientMode
+                ? { hideAudienceResonance: true }
+                : {}),
+            ...(effectiveMaxRounds !== undefined
+              ? { maxFeedbackRounds: effectiveMaxRounds }
+              : {}),
+            ...(brandSnapshot
+              ? { brandProfileSnapshot: brandSnapshot }
+              : {}),
             ...(settingsChanged
               ? {
                   expiresAt: expiresAt?.toISOString(),

@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl'
 import { useShallow } from 'zustand/react/shallow'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ChevronDown, MessageSquare, Loader2, Wand2, X, User, Users, Clock, MapPin, Package, Film, ExternalLink, Lightbulb, SparklesIcon, Award, RotateCcw, FileText, ArrowRight, Volume2 } from 'lucide-react'
+import { ChevronDown, MessageSquare, Loader2, Wand2, X, User, Users, Clock, MapPin, Package, Film, ExternalLink, Lightbulb, SparklesIcon, Award, RotateCcw, FileText, ArrowRight, Volume2, Image as ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -264,6 +264,55 @@ export function TreatmentCard({
     window.dispatchEvent(new CustomEvent('sf:set-composer', { detail }))
   }
   const [narrationMode, setNarrationMode] = useState<BlueprintNarrationMode>('synopsis')
+  const [illustratingBeatKey, setIllustratingBeatKey] = useState<string | null>(null)
+
+  const handleIllustrateBeat = useCallback(
+    async (variantId: string, beatIndex?: number, force = false) => {
+      if (!projectId || projectId.startsWith('new-project')) {
+        const { toast } = await import('sonner')
+        toast.error('Save the Blueprint project before generating storyboard illustrations')
+        return
+      }
+      const key = typeof beatIndex === 'number' ? `${variantId}:${beatIndex}` : `${variantId}:all`
+      setIllustratingBeatKey(key)
+      try {
+        const res = await fetch('/api/blueprint/beats/illustrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            variantId,
+            ...(typeof beatIndex === 'number' ? { beatIndex } : {}),
+            force,
+          }),
+        })
+        const data = await res.json().catch(() => ({}))
+        const { toast } = await import('sonner')
+        if (!res.ok || !data.success) {
+          toast.error(data.error || 'Beat illustration failed')
+          return
+        }
+        if (Array.isArray(data.beats)) {
+          ;(useGuideStore.getState() as any).updateTreatmentVariant?.(variantId, {
+            beats: data.beats,
+          })
+        }
+        toast.success(
+          typeof beatIndex === 'number'
+            ? `Storyboard frame ready for Chapter ${beatIndex + 1}`
+            : `Generated ${data.generatedCount ?? 'all'} storyboard ${
+                data.generatedCount === 1 ? 'frame' : 'frames'
+              }`
+        )
+      } catch (err) {
+        const { toast } = await import('sonner')
+        toast.error(err instanceof Error ? err.message : 'Beat illustration failed')
+      } finally {
+        setIllustratingBeatKey(null)
+      }
+    },
+    [projectId]
+  )
   // Character state removed - all character management moved to Vision phase
 
   const active = useMemo(() => {
@@ -933,7 +982,7 @@ export function TreatmentCard({
                     title={t('sections.beatsRuntime')}
                     data-blueprint-section="beats"
                     actions={
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {/* Runtime belongs to the beats that produce it, and is summed
                             from the list below rather than read from a stored field. */}
                         {beatsRuntime.display && (
@@ -946,6 +995,22 @@ export function TreatmentCard({
                           >
                             {t('sections.runtimeTotal', { display: beatsRuntime.display })}
                           </span>
+                        )}
+                        {projectId && !projectId.startsWith('new-project') && Array.isArray((v as any).beats) && (v as any).beats.length > 0 && (
+                          <button
+                            type="button"
+                            disabled={illustratingBeatKey !== null}
+                            onClick={() => void handleIllustrateBeat(v.id)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 disabled:opacity-50 px-2.5 py-1 text-xs font-medium text-cyan-200 transition"
+                            title="Generate 16:9 storyboard illustrations for unillustrated beats"
+                          >
+                            {illustratingBeatKey === `${v.id}:all` ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
+                            )}
+                            <span>Illustrate Beats</span>
+                          </button>
                         )}
                         <AssistantButton
                           onClick={() => openGuidedForSection('beats')}
@@ -984,11 +1049,27 @@ export function TreatmentCard({
                               b.synopsis || ''
                             )
                             const beatEra = typeof b.eraOrAge === 'string' ? b.eraOrAge.trim() : ''
+                            const beatImpact = typeof b.impact === 'string' ? b.impact.trim() : ''
+                            const beatImg = b.imageUrl || b.storyboardStillUrl || b.stillUrl || ''
+                            const isThisBeatIllustrating =
+                              illustratingBeatKey === `${v.id}:${idx}` ||
+                              illustratingBeatKey === `${v.id}:all`
                             const beatCharacters: string[] = Array.isArray(b.characters)
                               ? b.characters.map((ch: unknown) => String(ch || '').trim()).filter(Boolean)
                               : []
                             return (
                             <div key={idx} className={`p-3 rounded-lg border border-slate-700/60 bg-slate-800/50 ${v.id===activeVariant.id ? flashIf('beats') : ''}`}>
+                              {beatImg ? (
+                                <div className="relative w-full aspect-[16/9] max-h-56 rounded-lg overflow-hidden border border-slate-700/70 mb-3 bg-slate-950">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={beatImg}
+                                    alt={beatTitle || `Chapter ${idx + 1}`}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                  />
+                                </div>
+                              ) : null}
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0 flex-1">
                                   <div className="flex flex-wrap items-center gap-2">
@@ -1002,9 +1083,33 @@ export function TreatmentCard({
                                   </div>
                                   {beatIntent && <div className="text-xs text-gray-400 mt-0.5">{beatIntent}</div>}
                                 </div>
-                                <div className="shrink-0 text-xs px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 font-medium">{t('fields.minutesSuffix', { value: Number(b.minutes||0).toFixed(2) })}</div>
+                                <div className="shrink-0 flex items-center gap-1.5">
+                                  {projectId && !projectId.startsWith('new-project') && (
+                                    <button
+                                      type="button"
+                                      disabled={illustratingBeatKey !== null}
+                                      onClick={() => void handleIllustrateBeat(v.id, idx, true)}
+                                      className="inline-flex items-center gap-1 rounded border border-slate-600/70 bg-slate-900/70 hover:border-cyan-500/40 px-2 py-0.5 text-[11px] text-slate-300 hover:text-cyan-200 disabled:opacity-50"
+                                      title={beatImg ? 'Regenerate storyboard frame' : 'Generate 16:9 storyboard frame'}
+                                    >
+                                      {isThisBeatIllustrating ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <ImageIcon className="w-3 h-3 text-cyan-400" />
+                                      )}
+                                      <span>{beatImg ? 'Redraw' : 'Illustrate'}</span>
+                                    </button>
+                                  )}
+                                  <div className="text-xs px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 font-medium">{t('fields.minutesSuffix', { value: Number(b.minutes||0).toFixed(2) })}</div>
+                                </div>
                               </div>
                               {beatSynopsis && <div className="text-sm text-gray-300 mt-2 whitespace-pre-wrap leading-relaxed">{beatSynopsis}</div>}
+                              {beatImpact && (
+                                <div className="mt-2 rounded-md border border-emerald-500/20 bg-emerald-500/8 px-2.5 py-1.5 text-xs text-emerald-200">
+                                  <span className="font-semibold text-emerald-300">Impact:</span>{' '}
+                                  {beatImpact}
+                                </div>
+                              )}
                               {beatCharacters.length > 0 && (
                                 <div className="mt-2.5 pt-2 border-t border-slate-700/50 flex flex-wrap items-center gap-1.5">
                                   <span className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400/90 mr-1">

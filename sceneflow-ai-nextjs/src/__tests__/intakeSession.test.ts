@@ -66,6 +66,9 @@ vi.mock('@/lib/jobs/jobService', () => ({
 
 import {
   createClientIntakeLink,
+  clarifyCustomerIntakeVision,
+  confirmCustomerIntakeVision,
+  reopenCustomerIntakeVision,
   submitCustomerIntakeTurn,
   completeClientIntakeToBlueprint,
 } from '@/lib/intake/intakeService'
@@ -493,5 +496,220 @@ describe('Embeddable Client Intake Interview, Consent Shield & Blueprint Synthes
     expect(savedBeats[0].characters).toEqual(['John Miller (Age 16)'])
     expect(savedBeats[1].characters).toEqual(['John Miller (Age 32)'])
     expect(savedBeats[2].characters).toEqual(['John Miller (Age 62)', 'Sarah Miller (Age 28)'])
+    // Also verify locations & props are mapped to scene_descriptions and prop_descriptions
+    expect(savedArgs.metadata.filmTreatmentVariant.scene_descriptions).toHaveLength(1)
+    expect(savedArgs.metadata.filmTreatmentVariant.prop_descriptions).toHaveLength(1)
+  })
+
+  it('clarifies, iterates up to 3 passes, confirms, and reopens Customer Vision Statement before starting the interview', async () => {
+    let storedPayload: Record<string, any> = {
+      type: 'intake',
+      mode: 'single_project',
+      vertical: 'brand_story',
+      locale: 'en',
+      phase: 'vision_clarification',
+      maxVisionRevisions: 3,
+      maxCustomerTurns: 10,
+      customerTurnsUsed: 0,
+      maxFeedbackRounds: 2,
+      brandProfileSnapshot: { brandName: 'Apex Studio' },
+      turns: [],
+    }
+    const updateSessionMock = vi.fn().mockImplementation(async (patch: any) => {
+      if (patch?.payload) storedPayload = patch.payload
+    })
+
+    findOneSessionMock.mockImplementation(async () => ({
+      id: 'sess-vision-1',
+      owner_user_id: 'producer-1',
+      project_id: 'proj-vision-1',
+      status: 'active',
+      expires_at: null,
+      payload: storedPayload,
+      update: updateSessionMock,
+    }))
+    getConsentMock.mockResolvedValue({ id: 'consent-v1', customer_name: 'Maya Lin' })
+    ensureCreditsMock.mockResolvedValue(true)
+    chargeCreditsMock.mockResolvedValue(undefined)
+
+    // Pass 1: Clarify customer vision
+    generateTextMock.mockResolvedValueOnce({
+      text: JSON.stringify({
+        clarifiedVision:
+          'A 3-minute founder documentary tracing Solara Ceramics from Maya’s garage kiln to opening her Portland flagship.',
+        intendedImpact: 'Inspire design-conscious buyers to trust handcrafted heritage.',
+        targetAudience: 'Design-conscious homeowners and boutique hospitality buyers.',
+        toneAndStyle: 'Warm tactile daylight cinematography with artisan studio sound.',
+        openQuestionsToConfirm: ['Should we feature co-founder Leo Chen on camera?'],
+      }),
+    })
+
+    const pass1 = await clarifyCustomerIntakeVision({
+      token: 'tok-vision-1',
+      message:
+        'I want a founder story about how I started Solara Ceramics in my garage and opened our Portland studio.',
+    })
+    expect(pass1.ok).toBe(true)
+    if (pass1.ok) {
+      expect(pass1.visionProposal.revisionCount).toBe(1)
+      expect(pass1.visionProposal.confirmed).toBe(false)
+      expect(pass1.visionProposal.clarifiedVision).toContain('Solara Ceramics')
+    }
+
+    // Pass 2 & Pass 3 succeed, Pass 4 hits VISION_REVISION_LIMIT (409)
+    for (let i = 2; i <= 3; i++) {
+      generateTextMock.mockResolvedValueOnce({
+        text: JSON.stringify({
+          clarifiedVision: `Refined vision v${i}`,
+          intendedImpact: 'Build lasting brand trust.',
+          targetAudience: 'Homeowners',
+          toneAndStyle: 'Warm documentary',
+        }),
+      })
+      const p = await clarifyCustomerIntakeVision({
+        token: 'tok-vision-1',
+        message: `Include detail ${i}`,
+      })
+      expect(p.ok).toBe(true)
+    }
+
+    const pass4 = await clarifyCustomerIntakeVision({
+      token: 'tok-vision-1',
+      message: 'One too many revisions',
+    })
+    expect(pass4.ok).toBe(false)
+    if (!pass4.ok) {
+      expect(pass4.status).toBe(409)
+      expect(pass4.error).toContain('VISION_REVISION_LIMIT')
+    }
+
+    // Confirm Vision -> locks visionProposal.confirmed=true, transitions phase='structured_interview', appends targeted kickoff question
+    generateTextMock.mockResolvedValueOnce({
+      text: JSON.stringify({
+        openingQuestion:
+          'Your vision is locked! Let’s map the key people first: besides you, who played a pivotal role in launching Solara Ceramics, and what was their impact?',
+      }),
+    })
+    const confirmed = await confirmCustomerIntakeVision({ token: 'tok-vision-1' })
+    expect(confirmed.ok).toBe(true)
+    if (confirmed.ok) {
+      expect(confirmed.phase).toBe('structured_interview')
+      expect(confirmed.visionProposal.confirmed).toBe(true)
+      expect(confirmed.turns).toHaveLength(1)
+      expect(confirmed.turns[0].content).toContain('Solara Ceramics')
+    }
+
+    // Reopen Vision -> returns to vision_clarification while keeping turns intact
+    const reopened = await reopenCustomerIntakeVision({ token: 'tok-vision-1' })
+    expect(reopened.ok).toBe(true)
+    if (reopened.ok) {
+      expect(reopened.phase).toBe('vision_clarification')
+      expect(reopened.visionProposal?.confirmed).toBe(false)
+    }
+  })
+
+  it('tracks extractedCharacters (role + impact), beat impacts, and completenessChecklist during the interview', async () => {
+    const updateSessionMock = vi.fn().mockResolvedValue(undefined)
+    findOneSessionMock.mockResolvedValue({
+      id: 'sess-comp-1',
+      owner_user_id: 'producer-1',
+      project_id: 'proj-comp-1',
+      status: 'active',
+      expires_at: null,
+      update: updateSessionMock,
+      payload: {
+        type: 'intake',
+        mode: 'single_project',
+        vertical: 'brand_story',
+        locale: 'en',
+        phase: 'structured_interview',
+        visionProposal: {
+          rawInput: 'Founder story',
+          clarifiedVision: 'Solara Ceramics founder documentary',
+          intendedImpact: 'Inspire buyers',
+          targetAudience: 'Design lovers',
+          toneAndStyle: 'Warm documentary',
+          deliverableScope: '~3 min production',
+          assistantMessage: 'Confirmed',
+          readyToConfirm: true,
+          revisionCount: 1,
+          maxRevisions: 3,
+          confirmed: true,
+          turns: [],
+        },
+        maxCustomerTurns: 10,
+        customerTurnsUsed: 2,
+        maxFeedbackRounds: 2,
+        brandProfileSnapshot: { brandName: 'Apex Studio' },
+        turns: [
+          { role: 'assistant', content: 'Who are the key people?', createdAt: new Date().toISOString() },
+        ],
+      },
+    })
+    getConsentMock.mockResolvedValue({ id: 'consent-c1', customer_name: 'Maya Lin' })
+    ensureCreditsMock.mockResolvedValue(true)
+    chargeCreditsMock.mockResolvedValue(undefined)
+    generateTextMock.mockResolvedValue({
+      text: JSON.stringify({
+        reply: 'Wonderful — we now have a complete cast and chapter arc ready to build your Blueprint!',
+        readyToComplete: true,
+        extractedCharacters: [
+          {
+            name: 'Maya Lin',
+            role: 'Founder & Master Ceramist',
+            impact: 'Risked her savings to build the first neighborhood kiln.',
+          },
+          {
+            name: 'Leo Chen',
+            role: 'Head Glaze Chemist',
+            impact: 'Invented the signature Pacific ash glaze that saved the studio.',
+          },
+        ],
+        resonatingBeats: [
+          {
+            title: '1. The Garage Kiln',
+            summary: 'Maya fires her first 100 bowls through a winter blackout.',
+            impact: 'Establishes grit and authentic craft.',
+            keyCharacters: ['Maya Lin'],
+          },
+          {
+            title: '2. The Ash Glaze Breakthrough',
+            summary: 'Leo formulates the coastal ash glaze after 40 failed tests.',
+            impact: 'Turning point that wins their first boutique hotel order.',
+            keyCharacters: ['Maya Lin', 'Leo Chen'],
+          },
+          {
+            title: '3. Opening Doors in Portland',
+            summary: 'Community gathers as Solara opens its sunlit flagship workshop.',
+            impact: 'Emotional payoff celebrating shared craftsmanship.',
+            keyCharacters: ['Maya Lin', 'Leo Chen'],
+          },
+        ],
+        completenessChecklist: {
+          visionConfirmed: true,
+          charactersComplete: true,
+          beatsComplete: true,
+          closingImpactComplete: true,
+          completenessScore: 95,
+          missingGaps: [],
+        },
+      }),
+    })
+
+    const turn = await submitCustomerIntakeTurn({
+      token: 'tok-comp-1',
+      message: 'Leo Chen is my glaze chemist; our three moments are the garage blackout, the ash glaze breakthrough, and opening day.',
+    })
+    expect(turn.ok).toBe(true)
+    if (turn.ok) {
+      expect(turn.readyToComplete).toBe(true)
+      expect(turn.extractedCharacters).toHaveLength(2)
+      expect(turn.extractedCharacters[0].impact).toContain('kiln')
+      expect(turn.resonatingBeats).toHaveLength(3)
+      expect(turn.resonatingBeats[1].impact).toContain('Turning point')
+      expect(turn.completenessChecklist.charactersComplete).toBe(true)
+      expect(turn.completenessChecklist.beatsComplete).toBe(true)
+      expect(turn.completenessChecklist.closingImpactComplete).toBe(true)
+    }
   })
 })

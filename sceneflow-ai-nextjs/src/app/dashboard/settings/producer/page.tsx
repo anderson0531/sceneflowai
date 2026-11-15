@@ -121,7 +121,7 @@ export default function ProducerSettingsPage() {
   const [customerLabel, setCustomerLabel] = useState('')
   const [clientPriceUsd, setClientPriceUsd] = useState('300')
   const [creditBudgetCap, setCreditBudgetCap] = useState('950')
-  const [maxCustomerTurns, setMaxCustomerTurns] = useState('8')
+  const [maxCustomerTurns, setMaxCustomerTurns] = useState('10')
   const [intakeMaxRounds, setIntakeMaxRounds] = useState('2')
   const [creatingIntake, setCreatingIntake] = useState(false)
   const [generatedIntake, setGeneratedIntake] = useState<{
@@ -748,7 +748,7 @@ export default function ProducerSettingsPage() {
               <Input
                 type="number"
                 min={3}
-                max={15}
+                max={16}
                 value={maxCustomerTurns}
                 onChange={(e) => setMaxCustomerTurns(e.target.value)}
                 className="bg-gray-900 border-gray-700 text-white"

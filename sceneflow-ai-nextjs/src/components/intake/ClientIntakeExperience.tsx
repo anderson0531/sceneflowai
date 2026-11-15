@@ -2,7 +2,23 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { CheckCircle2, Clock, Film, Globe, Loader2, Mic, MicOff, Send, ShieldCheck, Sparkles, User } from 'lucide-react'
+import {
+  CheckCircle2,
+  Clock,
+  Compass,
+  Edit3,
+  Film,
+  Globe,
+  Loader2,
+  Mic,
+  MicOff,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  User,
+  Users,
+} from 'lucide-react'
 import {
   formatPortalCopy,
   getSpeechLangForPortalLocale,
@@ -12,7 +28,14 @@ import {
 } from '@/lib/intake/clientPortalCopy'
 import { getLocaleDirection } from '@/i18n/locale'
 import type { BrandProfileSnapshot } from '@/lib/producer/producerProfileService'
-import type { IntakeMessageTurn, IntakeResonatingBeat } from '@/lib/intake/intakePlaybooks'
+import type {
+  IntakeCompletenessChecklist,
+  IntakeExtractedCharacter,
+  IntakeMessageTurn,
+  IntakePhase,
+  IntakeResonatingBeat,
+  IntakeVisionProposal,
+} from '@/lib/intake/intakePlaybooks'
 
 interface ClientIntakeExperienceProps {
   token: string
@@ -33,8 +56,11 @@ export function ClientIntakeExperience({
   const [error, setError] = useState<string | null>(null)
   const [brand, setBrand] = useState<BrandProfileSnapshot>({
     brandName: 'Production Studio',
+    logoUrl: null,
     primaryColor: '#7c3aed',
-    hideSceneFlowBranding: true,
+    supportEmail: null,
+    customTermsUrl: null,
+    hideSceneFlowBranding: false,
   })
   const [consentAccepted, setConsentAccepted] = useState(false)
   const [customerName, setCustomerName] = useState('')
@@ -43,8 +69,20 @@ export function ClientIntakeExperience({
   const [zeroPrivityChecked, setZeroPrivityChecked] = useState(false)
   const [consentSubmitting, setConsentSubmitting] = useState(false)
 
+  // Phase 1: Customer Vision Statement + Clarification & Confirmation Gate
+  const [phase, setPhase] = useState<IntakePhase>('vision_clarification')
+  const [visionProposal, setVisionProposal] = useState<IntakeVisionProposal | null>(null)
+  const [visionDraft, setVisionDraft] = useState('')
+  const [clarifyingVision, setClarifyingVision] = useState(false)
+  const [confirmingVision, setConfirmingVision] = useState(false)
+
+  // Phase 2: Automated Completeness-Driven Interview
   const [turns, setTurns] = useState<IntakeMessageTurn[]>([])
+  const [extractedCharacters, setExtractedCharacters] = useState<IntakeExtractedCharacter[]>([])
   const [resonatingBeats, setResonatingBeats] = useState<IntakeResonatingBeat[]>([])
+  const [completenessChecklist, setCompletenessChecklist] =
+    useState<IntakeCompletenessChecklist | null>(null)
+  const [readyToComplete, setReadyToComplete] = useState(false)
   const [turnsUsed, setTurnsUsed] = useState(0)
   const [maxTurns, setMaxTurns] = useState(10)
   const [draftMessage, setDraftMessage] = useState('')
@@ -92,8 +130,15 @@ export function ClientIntakeExperience({
         }
         setConsentAccepted(Boolean(data.consentAccepted))
         if (data.customerName) setCustomerName(data.customerName)
+        if (data.phase) setPhase(data.phase)
+        setVisionProposal(data.visionProposal || null)
         setTurns(Array.isArray(data.turns) ? data.turns : [])
+        setExtractedCharacters(
+          Array.isArray(data.extractedCharacters) ? data.extractedCharacters : []
+        )
         setResonatingBeats(Array.isArray(data.resonatingBeats) ? data.resonatingBeats : [])
+        setCompletenessChecklist(data.completenessChecklist || null)
+        setReadyToComplete(Boolean(data.readyToComplete))
         setTurnsUsed(Number(data.customerTurnsUsed || 0))
         setMaxTurns(Number(data.maxCustomerTurns || 10))
         setCompleted(Boolean(data.completed))
@@ -120,7 +165,7 @@ export function ClientIntakeExperience({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     postEmbedEvent('resized', { height: document.body?.scrollHeight || 680 })
-  }, [turns, consentAccepted, completed, postEmbedEvent])
+  }, [turns, visionProposal, phase, consentAccepted, completed, postEmbedEvent])
 
   const stopDictation = useCallback(() => {
     if (recognitionRef.current) {
@@ -134,49 +179,56 @@ export function ClientIntakeExperience({
     setIsRecording(false)
   }, [])
 
-  const toggleDictation = useCallback(() => {
-    if (isRecording) {
-      stopDictation()
-      return
-    }
-    if (typeof window === 'undefined') return
-    const Ctor =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!Ctor) return
+  const toggleDictation = useCallback(
+    (target: 'vision' | 'interview') => {
+      if (isRecording) {
+        stopDictation()
+        return
+      }
+      if (typeof window === 'undefined') return
+      const Ctor =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      if (!Ctor) return
 
-    try {
-      const rec = new Ctor()
-      rec.lang = getSpeechLangForPortalLocale(locale)
-      rec.continuous = false
-      rec.interimResults = false
-      rec.maxAlternatives = 1
+      try {
+        const rec = new Ctor()
+        rec.lang = getSpeechLangForPortalLocale(locale)
+        rec.continuous = false
+        rec.interimResults = false
+        rec.maxAlternatives = 1
 
-      rec.onresult = (event: any) => {
-        const piece = event.results?.[0]?.[0]?.transcript?.trim()
-        if (piece) {
-          setDraftMessage((prev) => (prev ? `${prev} ${piece}` : piece))
+        rec.onresult = (event: any) => {
+          const piece = event.results?.[0]?.[0]?.transcript?.trim()
+          if (piece) {
+            if (target === 'vision') {
+              setVisionDraft((prev) => (prev ? `${prev} ${piece}` : piece))
+            } else {
+              setDraftMessage((prev) => (prev ? `${prev} ${piece}` : piece))
+            }
+          }
         }
-      }
-      rec.onend = () => {
+        rec.onend = () => {
+          setIsRecording(false)
+          recognitionRef.current = null
+        }
+        rec.onerror = () => {
+          setIsRecording(false)
+          recognitionRef.current = null
+        }
+        recognitionRef.current = rec
+        setIsRecording(true)
+        rec.start()
+      } catch {
         setIsRecording(false)
-        recognitionRef.current = null
       }
-      rec.onerror = () => {
-        setIsRecording(false)
-        recognitionRef.current = null
-      }
-      recognitionRef.current = rec
-      setIsRecording(true)
-      rec.start()
-    } catch {
-      setIsRecording(false)
-    }
-  }, [isRecording, locale, stopDictation])
+    },
+    [isRecording, locale, stopDictation]
+  )
 
   const handleLocaleChange = async (nextLocale: ClientPortalLocale) => {
     stopDictation()
     setLocale(nextLocale)
-    if (turnsUsed === 0) {
+    if (turnsUsed === 0 && !visionProposal) {
       await loadSession(nextLocale)
     }
   }
@@ -211,6 +263,91 @@ export function ClientIntakeExperience({
     }
   }
 
+  const handleClarifyVision = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    stopDictation()
+    const content = visionDraft.trim()
+    if (!content || clarifyingVision || confirmingVision) return
+
+    setClarifyingVision(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/intake/${encodeURIComponent(token)}/vision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'clarify',
+          message: content,
+          locale,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Unable to clarify vision')
+        return
+      }
+      setVisionProposal(data.visionProposal)
+      setVisionDraft('')
+      if (data.phase) setPhase(data.phase)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error')
+    } finally {
+      setClarifyingVision(false)
+    }
+  }
+
+  const handleConfirmVision = async () => {
+    if (!visionProposal || confirmingVision || clarifyingVision) return
+    stopDictation()
+    setConfirmingVision(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/intake/${encodeURIComponent(token)}/vision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'confirm',
+          locale,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Unable to confirm vision')
+        return
+      }
+      setVisionProposal(data.visionProposal)
+      setPhase('structured_interview')
+      if (Array.isArray(data.turns)) {
+        setTurns(data.turns)
+      }
+      postEmbedEvent('vision_confirmed')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error')
+    } finally {
+      setConfirmingVision(false)
+    }
+  }
+
+  const handleEditVision = async () => {
+    if (sending || completing) return
+    stopDictation()
+    setError(null)
+    try {
+      const res = await fetch(`/api/intake/${encodeURIComponent(token)}/vision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reopen' }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setPhase('vision_clarification')
+        if (data.visionProposal) setVisionProposal(data.visionProposal)
+      }
+    } catch {
+      /* non-fatal */
+    }
+  }
+
   const handleSendTurn = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     stopDictation()
@@ -241,9 +378,16 @@ export function ClientIntakeExperience({
         return
       }
       setTurns(data.turns)
+      if (Array.isArray(data.extractedCharacters)) {
+        setExtractedCharacters(data.extractedCharacters)
+      }
       if (Array.isArray(data.resonatingBeats)) {
         setResonatingBeats(data.resonatingBeats)
       }
+      if (data.completenessChecklist) {
+        setCompletenessChecklist(data.completenessChecklist)
+      }
+      setReadyToComplete(Boolean(data.readyToComplete))
       setTurnsUsed(data.customerTurnsUsed)
       setMaxTurns(data.maxCustomerTurns)
     } catch (err) {
@@ -279,6 +423,13 @@ export function ClientIntakeExperience({
   }
 
   const accentColor = brand.primaryColor || '#7c3aed'
+  const isVisionPhase =
+    phase === 'vision_clarification' && !visionProposal?.confirmed && turnsUsed === 0
+  const maxVisionPasses = visionProposal?.maxRevisions || 3
+  const usedVisionPasses = visionProposal?.revisionCount || 0
+  const canRefineVisionMore = !visionProposal || usedVisionPasses < maxVisionPasses
+  const completenessScore = completenessChecklist?.completenessScore ?? 0
+  const isInterviewReadyToSubmit = readyToComplete || turnsUsed >= maxTurns
 
   if (loading) {
     return (
@@ -447,35 +598,280 @@ export function ClientIntakeExperience({
               {consentSubmitting ? '...' : formatPortalCopy(locale, 'acceptAndBegin')}
             </button>
           </form>
-        ) : (
-          /* Voice-First Conversational Interview */
-          <div className="flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
-                {formatPortalCopy(locale, 'questionProgress', {
-                  current: Math.min(turnsUsed + 1, maxTurns),
-                  max: maxTurns,
-                })}
-              </span>
-              {turnsUsed >= 2 && (
-                <button
-                  type="button"
-                  onClick={handleCompleteBlueprint}
-                  disabled={completing || sending}
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                >
-                  {completing ? (
-                    <>
+        ) : isVisionPhase ? (
+          /* STEP 1: Customer Vision Statement + Clarification & Confirmation Gate */
+          <div className="flex-1 flex flex-col space-y-5">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 space-y-3 shadow-lg">
+              <div className="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-300">
+                <Compass className="w-3.5 h-3.5" />
+                {formatPortalCopy(locale, 'visionStepBadge')}
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                {formatPortalCopy(locale, 'visionQuestionTitle')}
+              </h1>
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+                {formatPortalCopy(locale, 'visionQuestionSubtitle')}
+              </p>
+            </div>
+
+            {/* Vision Clarification Thread */}
+            {visionProposal && Array.isArray(visionProposal.turns) && visionProposal.turns.length > 0 && (
+              <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                {visionProposal.turns.map((turn, idx) => (
+                  <div
+                    key={`vt-${idx}`}
+                    className={`flex ${
+                      turn.role === 'customer' ? 'justify-end' : 'justify-start'
+                    }`}
+                  >
+                    <div
+                      className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm sm:text-base leading-relaxed ${
+                        turn.role === 'customer'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-slate-900 border border-cyan-500/25 text-slate-100'
+                      }`}
+                    >
+                      {turn.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Emerald Clarified Vision Preview Card (like Shot Director / Synopsis Clarify & Confirm) */}
+            {visionProposal && (
+              <section className="rounded-2xl border border-emerald-500/35 bg-emerald-500/5 p-5 space-y-4 shadow-lg">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-emerald-300 text-sm font-semibold">
+                    <Target className="w-4 h-4 shrink-0" />
+                    {formatPortalCopy(locale, 'proposedVisionHeading')}
+                  </div>
+                  <span className="text-xs text-slate-400">
+                    {formatPortalCopy(locale, 'visionPassesRemaining', {
+                      used: usedVisionPasses,
+                      max: maxVisionPasses,
+                    })}
+                  </span>
+                </div>
+
+                <p className="text-sm sm:text-base text-white leading-relaxed whitespace-pre-line">
+                  {visionProposal.clarifiedVision}
+                </p>
+
+                <div className="grid sm:grid-cols-3 gap-2.5 text-xs">
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 space-y-1">
+                    <div className="font-semibold text-emerald-300">
+                      {formatPortalCopy(locale, 'visionImpactLabel')}
+                    </div>
+                    <div className="text-slate-300 leading-relaxed">
+                      {visionProposal.intendedImpact}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 space-y-1">
+                    <div className="font-semibold text-cyan-300">
+                      {formatPortalCopy(locale, 'visionAudienceLabel')}
+                    </div>
+                    <div className="text-slate-300 leading-relaxed">
+                      {visionProposal.targetAudience}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 space-y-1">
+                    <div className="font-semibold text-purple-300">
+                      {formatPortalCopy(locale, 'visionStyleLabel')}
+                    </div>
+                    <div className="text-slate-300 leading-relaxed">
+                      {visionProposal.toneAndStyle}
+                      {visionProposal.deliverableScope
+                        ? ` • ${visionProposal.deliverableScope}`
+                        : ''}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-1 flex flex-wrap items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={handleConfirmVision}
+                    disabled={confirmingVision || clarifyingVision}
+                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-5 py-3 text-sm sm:text-base font-semibold text-white transition disabled:opacity-50"
+                  >
+                    {confirmingVision ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      {formatPortalCopy(locale, 'completingBlueprint')}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      {formatPortalCopy(locale, 'finishAndCreateBlueprint')}
-                    </>
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4" />
+                    )}
+                    {formatPortalCopy(locale, 'confirmVisionButton')}
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {/* Vision Input / Iterative Refinement Composer */}
+            {canRefineVisionMore && (
+              <form
+                onSubmit={handleClarifyVision}
+                className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3"
+              >
+                <textarea
+                  rows={visionProposal ? 3 : 5}
+                  value={visionDraft}
+                  onChange={(e) => setVisionDraft(e.target.value)}
+                  placeholder={formatPortalCopy(
+                    locale,
+                    visionProposal ? 'visionRefinementPlaceholder' : 'visionInputPlaceholder'
                   )}
-                </button>
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-base text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                />
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  {speechSupported ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleDictation('vision')}
+                      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
+                        isRecording
+                          ? 'bg-red-600 text-white animate-pulse'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                      }`}
+                    >
+                      {isRecording ? (
+                        <>
+                          <MicOff className="w-4 h-4" />
+                          {formatPortalCopy(locale, 'stopRecording')}
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="w-4 h-4 text-purple-400" />
+                          {formatPortalCopy(locale, 'tapMicToSpeak')}
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <div />
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={!visionDraft.trim() || clarifyingVision || confirmingVision}
+                    className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm sm:text-base font-semibold text-white transition disabled:opacity-50"
+                    style={{ backgroundColor: accentColor }}
+                  >
+                    {clarifyingVision ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    {formatPortalCopy(
+                      locale,
+                      visionProposal ? 'updateVisionButton' : 'clarifyVisionButton'
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+        ) : (
+          /* STEP 2: Automated Completeness-Driven Discovery Interview */
+          <div className="flex-1 flex flex-col">
+            {/* Pinned North-Star Confirmed Vision Card */}
+            {visionProposal?.confirmed && (
+              <div className="mb-4 rounded-2xl border border-cyan-500/30 bg-cyan-500/5 px-4 py-3.5 space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    {formatPortalCopy(locale, 'confirmedVisionHeading')}
+                  </div>
+                  {turnsUsed < maxTurns && (
+                    <button
+                      type="button"
+                      onClick={handleEditVision}
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900/80 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:text-white"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      {formatPortalCopy(locale, 'editVisionButton')}
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                  {visionProposal.clarifiedVision}
+                </p>
+              </div>
+            )}
+
+            {/* Interview Progress & Completeness Readiness Header */}
+            <div className="mb-4 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                    {formatPortalCopy(locale, 'questionProgress', {
+                      current: Math.min(turnsUsed + 1, maxTurns),
+                      max: maxTurns,
+                    })}
+                  </span>
+                  {turnsUsed > 0 && (
+                    <span
+                      className={`text-xs font-medium ${
+                        isInterviewReadyToSubmit ? 'text-emerald-400' : 'text-cyan-400'
+                      }`}
+                    >
+                      {formatPortalCopy(
+                        locale,
+                        isInterviewReadyToSubmit
+                          ? 'completenessReadyLabel'
+                          : 'completenessGatheringLabel',
+                        { score: isInterviewReadyToSubmit ? Math.max(completenessScore, 90) : completenessScore }
+                      )}
+                    </span>
+                  )}
+                </div>
+
+                {isInterviewReadyToSubmit && turnsUsed >= 1 ? (
+                  <button
+                    type="button"
+                    onClick={handleCompleteBlueprint}
+                    disabled={completing || sending}
+                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    {completing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {formatPortalCopy(locale, 'completingBlueprint')}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        {formatPortalCopy(locale, 'finishAndCreateBlueprint')}
+                      </>
+                    )}
+                  </button>
+                ) : turnsUsed >= 4 ? (
+                  <button
+                    type="button"
+                    onClick={handleCompleteBlueprint}
+                    disabled={completing || sending}
+                    className="text-xs font-medium text-slate-400 hover:text-emerald-300 underline underline-offset-4 disabled:opacity-50"
+                  >
+                    {completing
+                      ? formatPortalCopy(locale, 'completingBlueprint')
+                      : formatPortalCopy(locale, 'submitEarlyButton')}
+                  </button>
+                ) : null}
+              </div>
+
+              {turnsUsed > 0 && (
+                <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-500 ${
+                      isInterviewReadyToSubmit ? 'bg-emerald-500' : 'bg-cyan-500'
+                    }`}
+                    style={{
+                      width: `${Math.max(
+                        12,
+                        isInterviewReadyToSubmit ? 100 : completenessScore
+                      )}%`,
+                    }}
+                  />
+                </div>
               )}
             </div>
 
@@ -508,7 +904,47 @@ export function ClientIntakeExperience({
               <div ref={chatEndRef} />
             </div>
 
-            {/* Live Resonating Story Beats & Highlighted Individual Characters */}
+            {/* Live Discovered Characters: Name, Role & Impact */}
+            {extractedCharacters.length > 0 && (
+              <section className="mb-3 rounded-2xl border border-purple-500/25 bg-slate-900/80 p-4 space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-purple-400 shrink-0" />
+                  <h2 className="text-sm font-semibold text-white">
+                    {formatPortalCopy(locale, 'discoveredPeopleTitle')}
+                  </h2>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                  {extractedCharacters.map((char, cIdx) => (
+                    <div
+                      key={char.id || `ec-${cIdx}`}
+                      className="rounded-xl border border-slate-800 bg-slate-950/75 p-2.5 space-y-1"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-1">
+                        <span className="text-xs font-semibold text-white flex items-center gap-1">
+                          <User className="w-3 h-3 text-purple-400" />
+                          {char.name}
+                        </span>
+                        {char.role && (
+                          <span className="rounded-md border border-purple-500/30 bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-200">
+                            {char.role}
+                          </span>
+                        )}
+                      </div>
+                      {char.impact && (
+                        <p className="text-[11px] text-slate-300 leading-snug line-clamp-2">
+                          <span className="font-medium text-slate-400 mr-1">
+                            {formatPortalCopy(locale, 'characterImpactLabel')}
+                          </span>
+                          {char.impact}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Live Resonating Story Beats, Impact & Highlighted Individual Characters */}
             {resonatingBeats.length > 0 && (
               <section className="mb-4 rounded-2xl border border-cyan-500/25 bg-slate-900/80 p-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -544,6 +980,14 @@ export function ClientIntakeExperience({
                           {beat.summary}
                         </p>
                       )}
+                      {beat.impact && (
+                        <p className="text-[11px] text-emerald-300/90 leading-snug line-clamp-2">
+                          <span className="font-semibold mr-1">
+                            {formatPortalCopy(locale, 'beatImpactLabel')}
+                          </span>
+                          {beat.impact}
+                        </p>
+                      )}
                       {Array.isArray(beat.keyCharacters) && beat.keyCharacters.length > 0 && (
                         <div className="pt-1 flex flex-wrap items-center gap-1">
                           <span className="text-[10px] font-semibold uppercase tracking-wide text-cyan-400/90 mr-0.5">
@@ -572,7 +1016,7 @@ export function ClientIntakeExperience({
                 className="pt-3 border-t border-slate-800 space-y-3"
               >
                 <textarea
-                  rows={turnsUsed === 0 ? 5 : 3}
+                  rows={turnsUsed === 0 ? 4 : 3}
                   value={draftMessage}
                   onChange={(e) => setDraftMessage(e.target.value)}
                   placeholder={formatPortalCopy(
@@ -585,7 +1029,7 @@ export function ClientIntakeExperience({
                   {speechSupported ? (
                     <button
                       type="button"
-                      onClick={toggleDictation}
+                      onClick={() => toggleDictation('interview')}
                       className={`inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                         isRecording
                           ? 'bg-red-600 text-white animate-pulse'

@@ -20,6 +20,9 @@ interface ClientQuoteMarginPanelProps {
   onApplyPresetParams: (params: FullProjectParameters, presetId: ServiceVerticalPresetId) => void
   onChangeHybridVideoShare: (share: number) => void
   onApplyCreditCeiling?: (ceilingCredits: number, clientOrderMeta: Record<string, unknown>) => void
+  initialClientPriceUsd?: number
+  initialIncludedRounds?: number
+  defaultOpen?: boolean
 }
 
 const PRESET_BUTTONS: Array<{ id: ServiceVerticalPresetId; label: string }> = [
@@ -35,13 +38,28 @@ export function ClientQuoteMarginPanel({
   onApplyPresetParams,
   onChangeHybridVideoShare,
   onApplyCreditCeiling,
+  initialClientPriceUsd = 300,
+  initialIncludedRounds = 2,
+  defaultOpen = false,
 }: ClientQuoteMarginPanelProps) {
   const rawLocale = useLocale()
   const locale = resolveClientPortalLocale(rawLocale)
 
-  const [clientPriceUsd, setClientPriceUsd] = useState<number>(300)
-  const [includedRounds, setIncludedRounds] = useState<number>(2)
+  const [clientPriceUsd, setClientPriceUsd] = useState<number>(initialClientPriceUsd)
+  const [includedRounds, setIncludedRounds] = useState<number>(initialIncludedRounds)
   const [selectedPreset, setSelectedPreset] = useState<ServiceVerticalPresetId | null>(null)
+
+  React.useEffect(() => {
+    if (typeof initialClientPriceUsd === 'number' && initialClientPriceUsd > 0) {
+      setClientPriceUsd(initialClientPriceUsd)
+    }
+  }, [initialClientPriceUsd])
+
+  React.useEffect(() => {
+    if (typeof initialIncludedRounds === 'number' && initialIncludedRounds >= 0) {
+      setIncludedRounds(initialIncludedRounds)
+    }
+  }, [initialIncludedRounds])
 
   const analysis = useMemo(
     () =>
@@ -62,7 +80,7 @@ export function ClientQuoteMarginPanel({
   }
 
   return (
-    <details className="group rounded-xl border border-purple-500/30 bg-purple-950/15 p-4">
+    <details open={defaultOpen} className="group rounded-xl border border-purple-500/30 bg-purple-950/15 p-4">
       <summary className="cursor-pointer flex items-center justify-between gap-2 text-sm font-semibold text-purple-200">
         <span className="flex items-center gap-2">
           <Briefcase className="w-4 h-4 text-purple-400" />

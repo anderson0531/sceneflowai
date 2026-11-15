@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import type {
+  BlueprintBeatAudioByLanguage,
+  BlueprintBeatTranslationsByLanguage,
   BlueprintFeedbackSection,
   BlueprintFeedbackSections,
   BlueprintSectionAudioMap,
@@ -107,6 +109,10 @@ export function BlueprintShareViewer({ token }: Props) {
   >({})
   const [sectionTranslations, setSectionTranslations] =
     useState<BlueprintSectionTranslationsByLanguage>({})
+  const [beatAudioByLanguage, setBeatAudioByLanguage] =
+    useState<BlueprintBeatAudioByLanguage>({})
+  const [beatTranslations, setBeatTranslations] =
+    useState<BlueprintBeatTranslationsByLanguage>({})
   const [reviewLanguage, setReviewLanguage] = useState('en')
   const [audioStatus, setAudioStatus] = useState<BlueprintSectionAudioStatus | undefined>()
   const [audioStartedAt, setAudioStartedAt] = useState<string | undefined>()
@@ -165,9 +171,20 @@ export function BlueprintShareViewer({ token }: Props) {
     }
     setSectionAudioByLanguage(byLang)
     setSectionTranslations(data.payload?.sectionTranslations || {})
+    setBeatAudioByLanguage(data.payload?.beatAudioByLanguage || {})
+    setBeatTranslations(data.payload?.beatTranslations || {})
     setSectionAudio(flat)
     setAudioStatus(data.payload?.sectionAudioStatus)
     setAudioStartedAt(data.payload?.sectionAudioStartedAt)
+    const incomingBeats = Array.isArray(data.payload?.treatment?.beats)
+      ? data.payload.treatment.beats
+      : []
+    const hasIllustratedBeats = incomingBeats.some((b: any) =>
+      Boolean(b?.imageUrl || b?.storyboardStillUrl || b?.stillUrl)
+    )
+    if (data.payload?.shareSettings?.clientMode || hasIllustratedBeats) {
+      setExpanded((prev) => ({ ...prev, beats: true, characters: true }))
+    }
     return true
   }, [token])
 
@@ -482,7 +499,14 @@ export function BlueprintShareViewer({ token }: Props) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 text-gray-100">
-      <header className="border-b border-gray-800/60 bg-gray-900/80 backdrop-blur-md sticky top-0 z-20">
+      <header
+        className="border-b border-gray-800/60 bg-gray-900/85 backdrop-blur-md sticky top-0 z-20"
+        style={
+          brandSnapshot?.primaryColor
+            ? { borderTop: `3px solid ${brandSnapshot.primaryColor}` }
+            : undefined
+        }
+      >
         <div className="max-w-4xl mx-auto px-4 py-3 space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             {brandSnapshot?.brandName ? (
@@ -492,27 +516,37 @@ export function BlueprintShareViewer({ token }: Props) {
                   <img
                     src={brandSnapshot.logoUrl}
                     alt={brandSnapshot.brandName}
-                    className="h-8 w-8 rounded-lg object-cover border border-gray-700"
+                    className="h-9 w-9 rounded-lg object-cover border border-gray-700"
                   />
                 ) : (
                   <div
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                    className="h-9 w-9 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-sm"
                     style={{ backgroundColor: brandSnapshot.primaryColor || '#7c3aed' }}
                   >
                     {brandSnapshot.brandName.slice(0, 2).toUpperCase()}
                   </div>
                 )}
-                <span className="font-semibold text-white">
-                  {formatPortalCopy(portalLocale, 'producedBy', {
-                    brand: brandSnapshot.brandName,
-                  })}
-                </span>
+                <div className="leading-tight">
+                  <span className="font-semibold text-white block">
+                    {formatPortalCopy(portalLocale, 'producedBy', {
+                      brand: brandSnapshot.brandName,
+                    })}
+                  </span>
+                  {brandSnapshot.supportEmail ? (
+                    <a
+                      href={`mailto:${brandSnapshot.supportEmail}`}
+                      className="text-[11px] text-gray-400 hover:text-gray-200"
+                    >
+                      {brandSnapshot.supportEmail}
+                    </a>
+                  ) : null}
+                </div>
               </div>
             ) : (
               <SceneFlowStudioBrand href="/" nameClassName="text-white" />
             )}
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
               {typeof shareSettings?.maxFeedbackRounds === 'number' && (
                 <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-200">
                   {formatPortalCopy(portalLocale, 'roundBadge', {
@@ -527,7 +561,7 @@ export function BlueprintShareViewer({ token }: Props) {
                   disabled={isApproved || approvingBlueprint}
                   onClick={handleApproveBlueprint}
                   className={cn(
-                    'rounded-lg px-3.5 py-1.5 text-xs font-semibold transition',
+                    'rounded-lg px-3.5 py-1.5 text-xs font-semibold transition shadow-sm',
                     isApproved
                       ? 'bg-emerald-600/20 border border-emerald-500/40 text-emerald-300'
                       : 'bg-emerald-600 hover:bg-emerald-500 text-white'
@@ -538,14 +572,24 @@ export function BlueprintShareViewer({ token }: Props) {
                     : formatPortalCopy(portalLocale, 'approveBlueprint')}
                 </button>
               )}
-              {!brandSnapshot?.hideSceneFlowBranding && (
-                <Link
-                  href="/"
-                  className="text-sm text-purple-300/90 hover:text-purple-200 underline-offset-2 hover:underline shrink-0"
-                >
-                  Learn more about SceneFlow
-                </Link>
-              )}
+              {brandSnapshot?.brandName
+                ? !brandSnapshot.hideSceneFlowBranding && (
+                    <Link
+                      href="/"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-700/80 bg-slate-900/90 hover:border-purple-500/40 px-2.5 py-1 text-[11px] font-medium text-gray-300 hover:text-white transition shrink-0"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
+                      Powered by SceneFlow Studio
+                    </Link>
+                  )
+                : !brandSnapshot?.hideSceneFlowBranding && (
+                    <Link
+                      href="/"
+                      className="text-sm text-purple-300/90 hover:text-purple-200 underline-offset-2 hover:underline shrink-0"
+                    >
+                      Learn more about SceneFlow
+                    </Link>
+                  )}
             </div>
           </div>
           {roundLimitReached && !isApproved && (
@@ -587,11 +631,53 @@ export function BlueprintShareViewer({ token }: Props) {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-8 pb-36">
+        {shareSettings?.clientMode && isApproved && (
+          <div className="rounded-2xl border border-emerald-500/35 bg-gradient-to-r from-emerald-950/60 via-slate-900/90 to-slate-900/90 p-4 space-y-1.5 shadow-lg">
+            <div className="text-sm font-semibold text-emerald-200">
+              {formatPortalCopy(portalLocale, 'blueprintApproved')}
+            </div>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              Thank you! {brandSnapshot?.brandName || ownerName} has been notified that you
+              approved this Blueprint. Next, if reference photos are needed for key people,
+              locations, or keepsakes, your producer will share a private upload link before
+              starting Production.
+            </p>
+          </div>
+        )}
+
         <BlueprintReviewHero
           title={filmTitle}
           logline={logline}
           heroImageUrl={heroImageUrl}
           genre={displayGenre}
+          runtimeLabel={
+            reviewVariant.estimatedDurationMinutes
+              ? `~${reviewVariant.estimatedDurationMinutes} min`
+              : typeof reviewVariant.format_length === 'string'
+                ? reviewVariant.format_length
+                : undefined
+          }
+          chapterCount={
+            Array.isArray(reviewVariant.beats) ? reviewVariant.beats.length : undefined
+          }
+          visualStyle={
+            typeof reviewVariant.visual_style === 'string' && reviewVariant.visual_style.trim()
+              ? reviewVariant.visual_style
+              : typeof reviewVariant.artStyle === 'string' && reviewVariant.artStyle.trim()
+                ? reviewVariant.artStyle
+                : undefined
+          }
+          visionStatement={
+            typeof reviewVariant.visionStatement === 'string'
+              ? reviewVariant.visionStatement
+              : undefined
+          }
+          intendedImpact={
+            typeof reviewVariant.intendedImpact === 'string'
+              ? reviewVariant.intendedImpact
+              : undefined
+          }
+          accentColor={brandSnapshot?.primaryColor}
         />
 
         {arSnapshot ? (
@@ -624,6 +710,14 @@ export function BlueprintShareViewer({ token }: Props) {
               expanded={!!expanded[s.id]}
               onToggle={() => setExpanded((p) => ({ ...p, [s.id]: !p[s.id] }))}
               audio={sectionAudio[s.id]}
+              beatAudioMap={
+                s.id === 'beats'
+                  ? beatAudioByLanguage[reviewLanguage] || beatAudioByLanguage.en
+                  : undefined
+              }
+              beatTranslationMap={
+                s.id === 'beats' ? beatTranslations[reviewLanguage] : undefined
+              }
               translationNarration={sectionTranslations[reviewLanguage]?.[s.id]}
               audioPlayerStatus={resolveSectionAudioPlayerStatus(
                 s.id,
@@ -634,6 +728,7 @@ export function BlueprintShareViewer({ token }: Props) {
                 audioStartedAt
               )}
               allowTts={allowTts}
+              clientMode={Boolean(shareSettings?.clientMode)}
               canFeedback={canFeedback}
               feedback={draft.sections?.[s.id]}
               onFeedbackChange={

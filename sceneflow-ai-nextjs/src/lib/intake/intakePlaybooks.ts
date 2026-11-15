@@ -7,10 +7,39 @@ export type IntakeVerticalId =
   | 'education_module'
   | 'brand_story'
 
+export type IntakePhase = 'vision_clarification' | 'structured_interview' | 'completed'
+
 export interface IntakeMessageTurn {
   role: 'assistant' | 'customer'
   content: string
   createdAt: string
+}
+
+export interface IntakeVisionProposal {
+  rawInput: string
+  clarifiedVision: string
+  intendedImpact: string
+  targetAudience: string
+  toneAndStyle: string
+  deliverableScope?: string
+  assistantMessage: string
+  readyToConfirm: boolean
+  revisionCount: number
+  maxRevisions: number
+  confirmed: boolean
+  confirmedAt?: string
+  turns: IntakeMessageTurn[]
+}
+
+export interface IntakeExtractedCharacter {
+  id: string
+  /** Single named individual — NEVER plural/collective groups; "(Age NN)" when spanning eras */
+  name: string
+  eraOrAge?: string
+  /** Narrative or real-world role in the project (e.g., Protagonist, Co-Founder, Lead Host) */
+  role: string
+  /** Why this person matters and how they impact the Confirmed Vision */
+  impact: string
 }
 
 export interface IntakeResonatingBeat {
@@ -18,8 +47,21 @@ export interface IntakeResonatingBeat {
   title: string
   eraOrAge?: string
   summary: string
+  /** Emotional, narrative, or business impact of this event toward fulfilling the Confirmed Vision */
+  impact?: string
   /** Single named individuals featured in this beat — NEVER plural/collective groups */
   keyCharacters: string[]
+  settingHint?: string
+  deliveryFormatHint?: 'archival_photo' | 'ai_reenactment'
+}
+
+export interface IntakeCompletenessChecklist {
+  visionConfirmed: boolean
+  charactersComplete: boolean
+  beatsComplete: boolean
+  closingImpactComplete: boolean
+  completenessScore: number
+  missingGaps: string[]
 }
 
 export interface IntakePlaybook {
@@ -74,7 +116,7 @@ export const INTAKE_PLAYBOOKS: Record<IntakeVerticalId, IntakePlaybook> = {
     tone: 'Architectural, inviting, aspirational, and crisp',
     defaultDurationMinutes: 1.5,
     hybridVideoShare: 0.5,
-    suggestedMaxTurns: 8,
+    suggestedMaxTurns: 10,
     interviewerPersona:
       'You are an executive real estate video producer interviewing a listing agent or property owner. Ask ONE concise question at a time to capture architectural highlights, lifestyle appeal, and photo inventory.',
     welcomeByLocale: {
@@ -102,7 +144,7 @@ export const INTAKE_PLAYBOOKS: Record<IntakeVerticalId, IntakePlaybook> = {
     tone: 'Clear, engaging, authoritative, and memorable',
     defaultDurationMinutes: 5,
     hybridVideoShare: 0.35,
-    suggestedMaxTurns: 8,
+    suggestedMaxTurns: 10,
     interviewerPersona:
       'You are an instructional film designer helping an educator or training lead turn a lesson into a vivid visual blueprint. Ask ONE focused question at a time.',
     welcomeByLocale: {
@@ -129,7 +171,7 @@ export const INTAKE_PLAYBOOKS: Record<IntakeVerticalId, IntakePlaybook> = {
     tone: 'Authentic, dynamic, trustworthy, and persuasive',
     defaultDurationMinutes: 2,
     hybridVideoShare: 0.6,
-    suggestedMaxTurns: 8,
+    suggestedMaxTurns: 10,
     interviewerPersona:
       'You are a creative director interviewing a founder or business owner to craft a high-converting brand story. Ask ONE crisp question at a time.',
     welcomeByLocale: {
@@ -159,6 +201,100 @@ export function isValidIntakeVertical(v: unknown): v is IntakeVerticalId {
   )
 }
 
+export function buildClarifyIntakeVisionPrompt(input: {
+  vertical: IntakeVerticalId
+  locale: ClientPortalLocale
+  brandName: string
+  visionTurns: IntakeMessageTurn[]
+  currentProposal?: Partial<IntakeVisionProposal> | null
+  revisionNumber: number
+  maxRevisions: number
+}): string {
+  const playbook = INTAKE_PLAYBOOKS[input.vertical]
+  const languageName = getLocaleEnglishName(input.locale)
+  const canAskFollowUp = input.revisionNumber < input.maxRevisions
+  const transcriptText = input.visionTurns
+    .map((t) => `${t.role === 'assistant' ? 'PRODUCER' : 'CLIENT'}: ${t.content}`)
+    .join('\n')
+
+  const priorBlock = input.currentProposal?.clarifiedVision
+    ? `\nCurrent Proposed Vision Card:\n${JSON.stringify(
+        {
+          clarifiedVision: input.currentProposal.clarifiedVision,
+          intendedImpact: input.currentProposal.intendedImpact,
+          targetAudience: input.currentProposal.targetAudience,
+          toneAndStyle: input.currentProposal.toneAndStyle,
+          deliverableScope: input.currentProposal.deliverableScope,
+        },
+        null,
+        2
+      )}\n`
+    : ''
+
+  return `You are an executive creative producer at "${input.brandName}" clarifying a client's overarching Project Vision Statement BEFORE beginning the detailed character & story beat interview.
+Vertical: ${playbook.id} (${playbook.genre} — default tone: ${playbook.tone}; typical runtime ~${playbook.defaultDurationMinutes} min)
+Output Language: ${languageName} (${input.locale}) — write ALL fields strictly in ${languageName}.
+Clarification pass: ${input.revisionNumber} of ${input.maxRevisions}.
+${priorBlock}
+Vision Conversation:
+${transcriptText}
+
+VISION CLARIFICATION & CONFIRMATION RULES (MANDATORY):
+1. PRESERVE EVERY CLIENT DETAIL: Synthesize a polished, vivid 3-5 sentence "clarifiedVision" brief that captures the client's exact subject, purpose, occasion, and creative intent without inventing fictional facts or subplots.
+2. EXTRACT STRUCTURED TARGET FACETS:
+   - "intendedImpact": The emotional or business outcome viewers should feel or act on when the video finishes (1-2 sentences).
+   - "targetAudience": Who will watch this and in what setting/occasion.
+   - "toneAndStyle": Desired visual look, pacing, and emotional atmosphere.
+   - "deliverableScope": Rough target duration or presentation format (default to ~${playbook.defaultDurationMinutes} min if unspecified).
+3. CLARIFY OR CONFIRM:
+   - ${
+     canAskFollowUp
+       ? 'If a critical North-Star element (such as who/what the film centers on, the desired emotional/business outcome, or the audience/occasion) is still vague, ask ONE concise, warm clarifying question in "assistantMessage" (under 45 words, plain conversational language, NO bullet lists) and set "readyToConfirm": false. Do NOT jump into granular scene-by-scene questions yet — save those for Phase 2!'
+       : 'This is the final clarification pass — do NOT ask another question. Affirm the locked vision warmly in "assistantMessage" (1-2 sentences) and set "readyToConfirm": true.'
+   }
+   - If the client's vision is already clear enough to serve as our North Star target, affirm what makes it compelling in "assistantMessage" (1-2 sentences, no question) and set "readyToConfirm": true.
+
+Return valid JSON ONLY:
+{
+  "clarifiedVision": "3-5 sentence North Star vision statement in ${languageName}",
+  "intendedImpact": "1-2 sentence emotional or business impact target in ${languageName}",
+  "targetAudience": "Specific audience and viewing context in ${languageName}",
+  "toneAndStyle": "Tone and visual style direction in ${languageName}",
+  "deliverableScope": "Target length / format scope in ${languageName}",
+  "assistantMessage": "Conversational producer reply in ${languageName}",
+  "readyToConfirm": true
+}`
+}
+
+export function buildVisionConfirmedKickoffPrompt(input: {
+  vertical: IntakeVerticalId
+  locale: ClientPortalLocale
+  brandName: string
+  confirmedVision: IntakeVisionProposal
+}): string {
+  const playbook = INTAKE_PLAYBOOKS[input.vertical]
+  const languageName = getLocaleEnglishName(input.locale)
+  return `${playbook.interviewerPersona}
+Production Studio Brand: ${input.brandName}
+Output Language: ${languageName} (${input.locale}) — write strictly in ${languageName}.
+
+The client just CONFIRMED their Project Vision Statement:
+- Vision: ${input.confirmedVision.clarifiedVision}
+- Intended Impact: ${input.confirmedVision.intendedImpact}
+- Target Audience: ${input.confirmedVision.targetAudience}
+- Tone & Style: ${input.confirmedVision.toneAndStyle}
+
+Write a warm, concise kickoff message (2-3 sentences max) that acknowledges their confirmed vision and asks the FIRST focused discovery question to begin capturing:
+1) The key INDIVIDUAL people/characters involved (their full names, roles, and why they matter to this vision), AND
+2) The opening chapter or foundational turning-point event (including approximate year/age if a life story) that sets this vision in motion.
+Do NOT re-ask facts already stated in the Confirmed Vision!
+
+Return JSON ONLY:
+{
+  "openingQuestion": "Warm kickoff + ONE focused discovery question in ${languageName}"
+}`
+}
+
 export function buildNextIntakeQuestionPrompt(input: {
   vertical: IntakeVerticalId
   locale: ClientPortalLocale
@@ -166,6 +302,8 @@ export function buildNextIntakeQuestionPrompt(input: {
   turns: IntakeMessageTurn[]
   customerTurnNumber: number
   maxCustomerTurns: number
+  confirmedVision?: IntakeVisionProposal | null
+  existingCharacters?: IntakeExtractedCharacter[]
   existingBeats?: IntakeResonatingBeat[]
 }): string {
   const playbook = INTAKE_PLAYBOOKS[input.vertical]
@@ -180,48 +318,83 @@ export function buildNextIntakeQuestionPrompt(input: {
     .map((t) => `${t.role === 'assistant' ? 'INTERVIEWER' : 'CLIENT'}: ${t.content}`)
     .join('\n')
 
+  const confirmedVisionBlock = input.confirmedVision?.clarifiedVision
+    ? `\nCONFIRMED PROJECT VISION (NORTH STAR TARGET — EVERY QUESTION MUST HELP FULFILL THIS):\n- Vision: ${input.confirmedVision.clarifiedVision}\n- Intended Impact: ${input.confirmedVision.intendedImpact}\n- Audience: ${input.confirmedVision.targetAudience}\n- Tone & Style: ${input.confirmedVision.toneAndStyle}\n`
+    : ''
+
+  const priorCharactersBlock =
+    Array.isArray(input.existingCharacters) && input.existingCharacters.length > 0
+      ? `\nCurrent Extracted Characters (refine names, roles, ages/eras, and impact):\n${JSON.stringify(input.existingCharacters, null, 2)}\n`
+      : ''
+
   const priorBeatsBlock =
     Array.isArray(input.existingBeats) && input.existingBeats.length > 0
-      ? `\nCurrent Resonating Beats Draft (refine, expand, or sharpen based on the latest answer):\n${JSON.stringify(input.existingBeats, null, 2)}\n`
+      ? `\nCurrent Resonating Beats Draft (refine events, ages/eras, keyCharacters, and impact):\n${JSON.stringify(input.existingBeats, null, 2)}\n`
       : ''
 
   return `${playbook.interviewerPersona}
 Production Studio Brand: ${input.brandName}
-Output Language: ${languageName} (${input.locale}) — write "reply", beat "title", "eraOrAge", and "summary" strictly in ${languageName}.
+Output Language: ${languageName} (${input.locale}) — write "reply", character fields, and beat fields strictly in ${languageName}.
 Client turns completed: ${input.customerTurnNumber} of ${input.maxCustomerTurns} (${remaining} remaining).
-
-Suggested topic if not already covered by the client's story:
+${confirmedVisionBlock}
+Suggested angle if a gap remains:
 "${nextMilestone}"
-${priorBeatsBlock}
+${priorCharactersBlock}${priorBeatsBlock}
 Conversation so far:
 ${transcriptText}
 
-INTELLIGENT DRAMATURG & CONTINUITY INTERVIEW RULES (MANDATORY):
-1. DISTILL RESONATING BEATS: Extract and refine 3 to 7 emotionally resonating story beats ("resonatingBeats") from everything the client has shared so far. Do NOT ask repetitive questions about facts the client already shared in their opening story!
-2. HIGHLIGHT KEY INDIVIDUAL CHARACTERS PER BEAT (NEVER GROUPS):
-   - Every beat MUST list its "keyCharacters" as SINGLE NAMED INDIVIDUALS (e.g., "John Miller (Age 16)", "Margaret Miller (Age 42)", "David Chen (Age 17)").
-   - NEVER output plural or collective groups ("John's Friends", "His Brothers", "Neighbors", "Parents", "Classmates", "Coworkers", "The Family") in "keyCharacters"!
-   - If the client mentioned a group (e.g. "my army buddies" or "her sisters") in an important moment without naming a specific individual, ask a warm clarifying question to identify the ONE or TWO specific individuals by name who should appear on screen in that beat.
-3. PINPOINT AGES & TIME PERIODS FOR MULTI-ERA CONTINUITY:
-   - Production Stage creates separate character cards for distinct life stages (e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)") rather than trying to age one portrait with outfits.
-   - Whenever a character appears across different decades/eras, stamp their approximate age on the beat's "eraOrAge" (e.g. "1968 — Age 16") AND on their name in "keyCharacters" ("John Miller (Age 16)").
-   - If an important beat is missing when it happened or how old the key person was, ask for that age/time period naturally in your clarification!
-4. ASK ONE FOCUSED CLARIFICATION AT A TIME:
-   - In "reply", warmly acknowledge a specific detail or emerging beat from what the client just shared (1-2 sentences), briefly note how the story beats are taking shape, and ask ONE high-value clarifying question that deepens emotional resonance, clarifies an individual character, or anchors an age/era.
-   - If ${remaining} <= 1 (or if we already have 4+ rich resonating beats with clear individual characters, ages/eras, and closing resonance), invite any final detail and let them know they can click Submit Story & Build Blueprint whenever ready.
+AUTOMATED COMPLETENESS-DRIVEN INTERVIEW RULES (MANDATORY — MINIMIZE DOWNSTREAM PRODUCER REWORK):
+1. EXTRACT & CLARIFY INDIVIDUAL CHARACTERS, ROLES & IMPACT ("extractedCharacters"):
+   - Capture every key person/subject as a SINGLE NAMED INDIVIDUAL (NEVER plural/collective groups like "John's Friends", "Neighbors", "Parents", "Coworkers", "The Family").
+   - When the same person spans distinct decades/ages (>= 10 years apart), list separate life-stage entries named "Full Name (Age NN)" (e.g. "John Miller (Age 16)", "John Miller (Age 32)").
+   - For EVERY character, capture both their "role" (e.g., "Protagonist / Grandfather", "Co-Founder", "Mentor", "Lead Presenter") AND their "impact" (how they shape the story, emotional arc, or business outcome). If a mentioned person's name, role, or impact is missing, add it to "missingGaps"!
+2. EXTRACT & CLARIFY KEY EVENTS (BEATS) & THEIR IMPACT ("resonatingBeats"):
+   - Distill 3 to 7 concrete story beats spanning beginning -> pivotal moments -> closing payoff aligned to the Confirmed Vision.
+   - For EVERY beat, capture "title", "eraOrAge" (when applicable, e.g. "1968 — Age 16"), "summary" (what visibly happens), "impact" (WHY this event matters and what emotional/narrative/business shift it creates), "keyCharacters" (exact individual names), and optional "settingHint" + "deliveryFormatHint" ("archival_photo" vs "ai_reenactment").
+   - If beats lack clear impact, chronological/structural progression, or closing payoff for the Vision, add those specifics to "missingGaps"!
+3. ITERATE UNTIL COMPLETE ("completenessChecklist" & "readyToComplete"):
+   - Evaluate honestly whether a producer could build a complete first-take Blueprint right now WITHOUT guessing character roles/impacts or beat events/impacts:
+     * "charactersComplete": All central individuals have specific names, clear roles, and stated impact (and life-stage ages if multi-era).
+     * "beatsComplete": At least 3-6 concrete key events/beats with clear summaries, visual settings, and stated impact.
+     * "closingImpactComplete": The climax/finale takeaway or call-to-action fulfilling the Confirmed Vision is clear.
+   - Set "readyToComplete": true ONLY when ("charactersComplete" && "beatsComplete" && "closingImpactComplete") OR ${remaining} <= 1.
+4. ASK ONE HIGH-LEVERAGE GAP QUESTION AT A TIME:
+   - Never repeat questions already answered in the Vision or earlier turns.
+   - If "readyToComplete" is false, warmly acknowledge what the client just shared (1-2 sentences) and ask ONE focused question targeting the single highest-priority gap in "missingGaps" (clarifying an unnamed/under-defined character's role & impact, or a missing key event/beat & its impact).
+   - If "readyToComplete" is true, affirm that you now have a complete set of characters and story beats to build their Blueprint, invite any optional final detail (like archival photo availability), and encourage them to click Submit Story & Build Blueprint.
 
 Return JSON ONLY matching:
 {
-  "reply": "Warm acknowledgment + ONE intelligent beat/character/era clarification question in ${languageName}",
+  "reply": "Warm acknowledgment + ONE targeted gap-closing question (or completion affirmation) in ${languageName}",
+  "extractedCharacters": [
+    {
+      "id": "char-1",
+      "name": "Single Individual Name (or 'Full Name (Age NN)' if multi-era)",
+      "eraOrAge": "Optional age/era",
+      "role": "Specific role in the story/project",
+      "impact": "Why this person matters / their impact on the vision"
+    }
+  ],
   "resonatingBeats": [
     {
       "id": "beat-1",
       "title": "Short evocative beat title",
       "eraOrAge": "Year/era & protagonist age if applicable (e.g. '1968 — Age 16')",
-      "summary": "1-2 sentence summary of the resonating moment",
-      "keyCharacters": ["Single Individual Name (Age NN)", "Second Individual Name"]
+      "summary": "1-2 sentence concrete summary of the key event",
+      "impact": "1 sentence explaining the emotional, narrative, or business impact of this beat",
+      "keyCharacters": ["Single Individual Name (Age NN)", "Second Individual Name"],
+      "settingHint": "Specific room, place, or visual anchor",
+      "deliveryFormatHint": "archival_photo"
     }
   ],
+  "completenessChecklist": {
+    "visionConfirmed": true,
+    "charactersComplete": false,
+    "beatsComplete": false,
+    "closingImpactComplete": false,
+    "completenessScore": 55,
+    "missingGaps": ["Clarify Claire's role and impact on opening the shop", "Capture the closing legacy beat"]
+  },
   "readyToComplete": ${remaining <= 1 ? 'true' : 'false'}
 }`
 }
@@ -239,13 +412,16 @@ export interface ExtractedBlueprintFromIntake {
     eraOrAge?: string
     characters?: string[]
     intent: string
+    impact?: string
     synopsis: string
     minutes: number
+    settingHint?: string
     deliveryFormat: 'archival_photo' | 'ai_reenactment'
   }>
   character_descriptions: Array<{
     name: string
     role: string
+    impact?: string
     age?: string
     ethnicity?: string
     appearance?: string
@@ -270,6 +446,8 @@ export function buildIntakeBlueprintSynthesisPrompt(input: {
   locale: ClientPortalLocale
   customerName: string
   turns: IntakeMessageTurn[]
+  confirmedVision?: IntakeVisionProposal | null
+  extractedCharacters?: IntakeExtractedCharacter[]
   resonatingBeats?: IntakeResonatingBeat[]
 }): string {
   const playbook = INTAKE_PLAYBOOKS[input.vertical]
@@ -277,35 +455,54 @@ export function buildIntakeBlueprintSynthesisPrompt(input: {
   const transcriptText = input.turns
     .map((t) => `${t.role === 'assistant' ? 'INTERVIEWER' : 'CLIENT'}: ${t.content}`)
     .join('\n\n')
+  const visionContext = input.confirmedVision?.clarifiedVision
+    ? `\nConfirmed Client Vision Statement (North Star Target):\n${JSON.stringify(
+        {
+          clarifiedVision: input.confirmedVision.clarifiedVision,
+          intendedImpact: input.confirmedVision.intendedImpact,
+          targetAudience: input.confirmedVision.targetAudience,
+          toneAndStyle: input.confirmedVision.toneAndStyle,
+          deliverableScope: input.confirmedVision.deliverableScope,
+        },
+        null,
+        2
+      )}\n`
+    : ''
+  const charsContext =
+    Array.isArray(input.extractedCharacters) && input.extractedCharacters.length > 0
+      ? `\nExtracted Characters, Roles & Impact from Interview:\n${JSON.stringify(input.extractedCharacters, null, 2)}\n`
+      : ''
   const beatsContext =
     Array.isArray(input.resonatingBeats) && input.resonatingBeats.length > 0
-      ? `\nRefined Resonating Beats & Key Individuals from Interview:\n${JSON.stringify(input.resonatingBeats, null, 2)}\n`
+      ? `\nRefined Resonating Beats, Events & Impact from Interview:\n${JSON.stringify(input.resonatingBeats, null, 2)}\n`
       : ''
 
-  return `You are an award-winning executive producer transforming a client onboarding interview into a structured SceneFlow Studio Blueprint and Continuity Asset Checklist.
+  return `You are an award-winning executive producer transforming a client onboarding interview into a production-ready SceneFlow Studio Blueprint and Continuity Asset Checklist.
 Vertical: ${playbook.id} (${playbook.genre})
 Target Output Language: ${languageName} (${input.locale}) — author creative prose fields in ${languageName} (keep "age", "ethnicity", and physical "appearance" concise and clear).
 Client Name: ${input.customerName}
 Target Runtime: ${playbook.defaultDurationMinutes} minutes
-${beatsContext}
+${visionContext}${charsContext}${beatsContext}
 Client Interview Transcript:
 ${transcriptText}
 
-CRITICAL CHARACTER & BEAT CONTINUITY RULES (MANDATORY):
-1. INDIVIDUALS ONLY — NEVER GROUPS:
+CRITICAL FIRST-TAKE BLUEPRINT QUALITY & CONTINUITY RULES (MANDATORY):
+1. HONOR THE CONFIRMED VISION: Align "title", "logline", "synopsis", "tone_description", "visual_style", and "target_audience" directly to the Confirmed Client Vision Statement and Intended Impact. Never invent fictional subplots that contradict client facts.
+2. INDIVIDUALS ONLY — NEVER GROUPS:
    - Every entry in "character_descriptions" and every beat's "characters" array MUST be a SINGLE NAMED INDIVIDUAL person.
    - NEVER output plural or collective groups ("John's Friends", "Neighbors", "The Brothers", "Parents", "Factory Workers", "Guests"). Split any couple ("Arthur & Elena Lin") into two separate individual character entries.
-2. SEPARATE CHARACTER CARDS FOR DIFFERENT AGES / ERAS (CRITICAL FOR VIDEO MEMOIRS):
+   - Include each person's specific "role" and their narrative/emotional "impact" on the project!
+3. SEPARATE CHARACTER CARDS FOR DIFFERENT AGES / ERAS (CRITICAL FOR VIDEO MEMOIRS):
    - Production Stage locks ONE base facial reference portrait per character card and uses Wardrobes ONLY for outfit changes at that same biological age.
    - Therefore, whenever the same person appears at meaningfully different ages or decades (>= 10 years apart, e.g. childhood/teen, young adult, senior), you MUST create SEPARATE entries in "character_descriptions" named "Full Name (Age NN)" — e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)"!
    - Give each "(Age NN)" entry its exact single biological "age" (NEVER a range like "16-62"), shared "ethnicity" and bone structure, age-appropriate hair/skin in "appearance", and set "needsClientPhoto": true so the client can upload a real photo for each life stage in the Continuity Portal!
-3. HIGHLIGHT KEY INDIVIDUAL CHARACTERS ON EVERY BEAT:
-   - Each beat in "beats" MUST include "eraOrAge" (e.g. "1968 — Age 16") and "characters": ["Exact Individual Character Name from character_descriptions"] using the era-matched "(Age NN)" entry for that beat.
+4. HIGHLIGHT KEY CHARACTERS & IMPACT ON EVERY BEAT (1 BEAT = 1 PRODUCTION CHAPTER):
+   - Each beat in "beats" maps 1:1 to a Production Stage Chapter. Include "eraOrAge" (when relevant), "characters": ["Exact Individual Character Name from character_descriptions"], "intent", "impact" (why this event matters to the Vision), concrete "synopsis", realistic "minutes" summing to ~${playbook.defaultDurationMinutes} min, and "deliveryFormat" ("archival_photo" vs "ai_reenactment").
 
 Return valid JSON ONLY matching this exact schema:
 {
   "title": "Compelling production title",
-  "logline": "1-2 sentence emotional hook",
+  "logline": "1-2 sentence emotional hook aligned to Confirmed Vision",
   "synopsis": "2-3 paragraph cohesive narrative treatment",
   "genre": "${playbook.genre}",
   "tone_description": "${playbook.tone}",
@@ -316,16 +513,19 @@ Return valid JSON ONLY matching this exact schema:
       "title": "Chapter / Scene Beat Title",
       "eraOrAge": "Year/era & protagonist age (e.g. '1968 — Age 16')",
       "characters": ["Exact Individual Character Name from character_descriptions"],
-      "intent": "Emotional or informational purpose",
+      "intent": "Narrative or structural purpose of this chapter",
+      "impact": "Emotional, human, or business impact of this key event",
       "synopsis": "Concrete visual and narrative action",
       "minutes": 2.5,
+      "settingHint": "Primary location for this chapter",
       "deliveryFormat": "archival_photo"
     }
   ],
   "character_descriptions": [
     {
       "name": "Single Individual Name — use 'Full Name (Age NN)' when person spans multiple eras (e.g. 'John Miller (Age 16)')",
-      "role": "protagonist | supporting | narrator",
+      "role": "Specific role (e.g. 'protagonist', 'co-founder', 'mentor', 'narrator')",
+      "impact": "How this person shapes the story or fulfills the Vision",
       "age": "Exact biological age for this card, e.g. '16' or '32' or '62'",
       "ethnicity": "Specific heritage shared across all age stages of this person",
       "appearance": "2-3 sentences of standing physical appearance at this exact age",

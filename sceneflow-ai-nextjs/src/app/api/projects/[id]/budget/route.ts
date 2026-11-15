@@ -20,11 +20,16 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { creditsUsed, creditsBudget, creditsBudgetParams } = body ?? {}
+    const { creditsUsed, creditsBudget, creditsBudgetParams, clientOrderPatch } = body ?? {}
 
-    if (creditsUsed === undefined && creditsBudget === undefined && creditsBudgetParams === undefined) {
+    if (
+      creditsUsed === undefined &&
+      creditsBudget === undefined &&
+      creditsBudgetParams === undefined &&
+      clientOrderPatch === undefined
+    ) {
       return NextResponse.json(
-        { error: 'Provide creditsUsed, creditsBudget, and/or creditsBudgetParams' },
+        { error: 'Provide creditsUsed, creditsBudget, creditsBudgetParams, and/or clientOrderPatch' },
         { status: 400 }
       )
     }
@@ -33,6 +38,7 @@ export async function PATCH(
       creditsUsed,
       creditsBudget,
       creditsBudgetParams,
+      clientOrderPatch,
     })
 
     return NextResponse.json({

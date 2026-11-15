@@ -4,10 +4,11 @@ import { useTranslations } from 'next-intl'
 
 import React, { useState } from 'react'
 import { ASSISTANT } from '@/lib/constants/assistant'
-import { Users, X, Copy, Check, Link2, Radar, Lightbulb, Download } from 'lucide-react'
+import { Users, X, Copy, Check, Link2, Radar, Lightbulb, Download, Calculator } from 'lucide-react'
 import { BlueprintExportDialog } from '@/components/blueprint/BlueprintExportDialog'
 import { NarrativeReasoningPanel } from './NarrativeReasoningPanel'
 import { AudienceResonancePanelV3 } from './AudienceResonancePanelV3'
+import { BlueprintCostEstimatorPanel } from './BlueprintCostEstimatorPanel'
 import { cn } from '@/lib/utils'
 import { useGuideStore } from '@/store/useGuideStore'
 import { BlueprintCollabChat } from './BlueprintCollabChat'
@@ -52,6 +53,10 @@ interface SidePanelTabsProps {
   resonanceTabSignal?: number
   /** Increment to switch to the Reasoning tab (e.g. from "Why these choices?"). */
   foundationTabSignal?: number
+  /** Increment to switch to the Budget & Cost Estimator tab. */
+  budgetTabSignal?: number
+  projectMetadata?: Record<string, unknown> | null
+  onProjectMetadataPatched?: (patch: Record<string, unknown>) => void
   onScrollToSection?: (section: string) => void
   /** Language the stored creative / AR text was written in. */
   contentI18n?: import('@/i18n/content/entityI18n').EntityI18n
@@ -78,6 +83,9 @@ export function SidePanelTabs({
   collaborationTabSignal = 0,
   resonanceTabSignal = 0,
   foundationTabSignal = 0,
+  budgetTabSignal = 0,
+  projectMetadata,
+  onProjectMetadataPatched,
   onScrollToSection,
   contentI18n,
 }: SidePanelTabsProps) {
@@ -85,7 +93,7 @@ export function SidePanelTabs({
   const tc = useTranslations('common')
   // Opens on the first tab. Defaulting to the third one left the panel showing
   // Narrative while Resonance sat highlighted-but-inactive at the left edge.
-  const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration' | 'reasoning'>(
+  const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration' | 'budget' | 'reasoning'>(
     'resonance'
   )
 
@@ -106,6 +114,12 @@ export function SidePanelTabs({
       setActiveTab('reasoning')
     }
   }, [foundationTabSignal])
+
+  React.useEffect(() => {
+    if (budgetTabSignal > 0) {
+      setActiveTab('budget')
+    }
+  }, [budgetTabSignal])
   const { guide } = useGuideStore()
   const { updateTreatmentVariant } = useGuideStore() as any
   const activeVariantId = (guide as any)?.selectedTreatmentId || ((guide as any)?.treatmentVariants?.[0]?.id)
@@ -144,7 +158,7 @@ export function SidePanelTabs({
           <button
             onClick={() => setActiveTab('collaboration')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all',
               activeTab === 'collaboration'
                 ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                 : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
@@ -154,9 +168,21 @@ export function SidePanelTabs({
             <span>{t('tabs.collaborate')}</span>
           </button>
           <button
+            onClick={() => setActiveTab('budget')}
+            className={cn(
+              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all',
+              activeTab === 'budget'
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+            )}
+          >
+            <Calculator size={14} />
+            <span>Budget</span>
+          </button>
+          <button
             onClick={() => setActiveTab('reasoning')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all',
               activeTab === 'reasoning'
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                 : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
@@ -195,6 +221,13 @@ export function SidePanelTabs({
             onOpenBlueprintRefine={onOpenBlueprintRefine}
             onScrollToSection={onScrollToSection}
             contentI18n={contentI18n}
+          />
+        ) : activeTab === 'budget' ? (
+          <BlueprintCostEstimatorPanel
+            projectId={projectId}
+            treatment={currentTreatment}
+            projectMetadata={projectMetadata}
+            onProjectMetadataPatched={onProjectMetadataPatched}
           />
         ) : activeTab === 'reasoning' ? (
           <div className="h-full overflow-y-auto">

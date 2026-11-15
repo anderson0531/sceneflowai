@@ -149,6 +149,7 @@ export async function updateProjectBudgetFields(
     creditsUsed?: number
     creditsBudget?: number
     creditsBudgetParams?: Record<string, unknown>
+    clientOrderPatch?: Record<string, unknown>
   }
 ): Promise<{ creditsUsed: number; creditsBudget: number }> {
   if (!isProjectIdRef(projectId)) {
@@ -181,6 +182,17 @@ export async function updateProjectBudgetFields(
 
   if (fields.creditsBudgetParams !== undefined) {
     metadata.creditsBudgetParams = fields.creditsBudgetParams
+  }
+
+  if (fields.clientOrderPatch && typeof fields.clientOrderPatch === 'object') {
+    const existingClientOrder =
+      metadata.clientOrder && typeof metadata.clientOrder === 'object'
+        ? (metadata.clientOrder as Record<string, unknown>)
+        : {}
+    metadata.clientOrder = {
+      ...existingClientOrder,
+      ...fields.clientOrderPatch,
+    }
   }
 
   project.set('metadata', metadata)

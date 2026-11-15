@@ -230,7 +230,7 @@ describe('the side panel lands on its first tab', () => {
   // while Resonance sat highlighted-but-inactive at the left edge.
   it('defaults to the resonance tab', () => {
     expect(panel).toMatch(
-      /useState<'resonance' \| 'collaboration' \| 'reasoning'>\(\s*'resonance'\s*\)/
+      /useState<'resonance' \| 'collaboration' \| 'budget' \| 'reasoning'>\(\s*'resonance'\s*\)/
     )
   })
 
@@ -246,10 +246,11 @@ describe('the side panel lands on its first tab', () => {
   it('clears the tab signals on close so a stale one cannot win on reopen', () => {
     expect(studio).toContain('const closeSidePanel = useCallback(')
     const closeAt = studio.indexOf('const closeSidePanel = useCallback(')
-    const body = studio.slice(closeAt, closeAt + 400)
+    const body = studio.slice(closeAt, closeAt + 450)
     expect(body).toContain('setCollaborationTabSignal(0)')
     expect(body).toContain('setResonanceTabSignal(0)')
     expect(body).toContain('setFoundationTabSignal(0)')
+    expect(body).toContain('setBudgetTabSignal(0)')
     // Both ways of closing go through it.
     expect(studio).toContain('onClose={closeSidePanel}')
     expect(studio).toContain('showSidePanel ? closeSidePanel() : setShowSidePanel(true)')

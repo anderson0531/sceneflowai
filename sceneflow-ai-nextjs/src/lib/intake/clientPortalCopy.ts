@@ -81,6 +81,28 @@ export interface ClientPortalStrings {
   estimatedSceneFlowCogs: string
   estimatedNetProfit: string
   applyProjectCeiling: string
+  visionStepBadge: string
+  visionQuestionTitle: string
+  visionQuestionSubtitle: string
+  visionInputPlaceholder: string
+  visionRefinementPlaceholder: string
+  clarifyVisionButton: string
+  updateVisionButton: string
+  confirmVisionButton: string
+  editVisionButton: string
+  proposedVisionHeading: string
+  confirmedVisionHeading: string
+  visionImpactLabel: string
+  visionAudienceLabel: string
+  visionStyleLabel: string
+  visionPassesRemaining: string
+  discoveredPeopleTitle: string
+  beatImpactLabel: string
+  characterRoleLabel: string
+  characterImpactLabel: string
+  completenessReadyLabel: string
+  completenessGatheringLabel: string
+  submitEarlyButton: string
 }
 
 export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings> = {
@@ -141,6 +163,31 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     estimatedSceneFlowCogs: 'Est. Credit Cost (with buffer)',
     estimatedNetProfit: 'Est. Provider Profit',
     applyProjectCeiling: 'Set Credit Ceiling ({credits} cr)',
+    visionStepBadge: 'Step 1 • Project Vision',
+    visionQuestionTitle: "What's your vision for this project?",
+    visionQuestionSubtitle:
+      'Share as much detail as helpful — who this video is for, the occasion or goal, the feeling or takeaway you want viewers to experience, and any visual or tonal inspiration.',
+    visionInputPlaceholder:
+      'Describe your overall vision in detail — purpose, audience, emotional or business goal, tone, and approximate length (or tap the microphone to speak)...',
+    visionRefinementPlaceholder:
+      'Answer the question above or share any adjustments to refine your project vision...',
+    clarifyVisionButton: 'Clarify Vision',
+    updateVisionButton: 'Update Clarification',
+    confirmVisionButton: 'Confirm Vision & Start Interview',
+    editVisionButton: 'Edit Vision',
+    proposedVisionHeading: 'Clarified Project Vision (Review & Confirm)',
+    confirmedVisionHeading: 'Confirmed Project Vision',
+    visionImpactLabel: 'Intended Impact:',
+    visionAudienceLabel: 'Audience & Context:',
+    visionStyleLabel: 'Tone & Visual Style:',
+    visionPassesRemaining: 'Clarification pass {used} of {max}',
+    discoveredPeopleTitle: 'Key People, Roles & Impact',
+    beatImpactLabel: 'Impact:',
+    characterRoleLabel: 'Role:',
+    characterImpactLabel: 'Impact:',
+    completenessReadyLabel: 'Discovery Complete ({score}%) — Ready to Build Blueprint',
+    completenessGatheringLabel: 'Gathering Characters & Key Events ({score}%)',
+    submitEarlyButton: 'Submit early with current details',
   },
   es: {
     producedBy: 'Producido por {brand}',
@@ -199,6 +246,31 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     estimatedSceneFlowCogs: 'Costo Est. de Créditos (con margen)',
     estimatedNetProfit: 'Ganancia Est. del Proveedor',
     applyProjectCeiling: 'Fijar Tope de Créditos ({credits} cr)',
+    visionStepBadge: 'Paso 1 • Visión del Proyecto',
+    visionQuestionTitle: '¿Cuál es su visión para este proyecto?',
+    visionQuestionSubtitle:
+      'Comparta tantos detalles como sea necesario: para quién es este video, la ocasión o meta, el impacto emocional o comercial deseado y el estilo visual.',
+    visionInputPlaceholder:
+      'Describa su visión general con detalle: propósito, audiencia, impacto deseado, tono y duración aproximada (o use el micrófono)...',
+    visionRefinementPlaceholder:
+      'Responda la pregunta anterior o agregue ajustes para afinar la visión del proyecto...',
+    clarifyVisionButton: 'Clarificar Visión',
+    updateVisionButton: 'Actualizar Clarificación',
+    confirmVisionButton: 'Confirmar Visión e Iniciar Entrevista',
+    editVisionButton: 'Editar Visión',
+    proposedVisionHeading: 'Visión Clarificada (Revisar y Confirmar)',
+    confirmedVisionHeading: 'Visión del Proyecto Confirmada',
+    visionImpactLabel: 'Impacto Deseado:',
+    visionAudienceLabel: 'Audiencia y Contexto:',
+    visionStyleLabel: 'Tono y Estilo Visual:',
+    visionPassesRemaining: 'Ronda de clarificación {used} de {max}',
+    discoveredPeopleTitle: 'Personas Clave, Roles e Impacto',
+    beatImpactLabel: 'Impacto:',
+    characterRoleLabel: 'Rol:',
+    characterImpactLabel: 'Impacto:',
+    completenessReadyLabel: 'Descubrimiento Completo ({score}%) — Listo para Crear Guion',
+    completenessGatheringLabel: 'Recopilando Personajes y Eventos Clave ({score}%)',
+    submitEarlyButton: 'Enviar anticipadamente con los detalles actuales',
   },
   pt: {
     producedBy: 'Produzido por {brand}',
@@ -257,6 +329,31 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     estimatedSceneFlowCogs: 'Custo Est. de Créditos (com reserva)',
     estimatedNetProfit: 'Lucro Est. do Produtor',
     applyProjectCeiling: 'Definir Teto de Créditos ({credits} cr)',
+    visionStepBadge: 'Etapa 1 • Visão do Projeto',
+    visionQuestionTitle: 'Qual é a sua visão para este projeto?',
+    visionQuestionSubtitle:
+      'Compartilhe todos os detalhes importantes — para quem é o vídeo, a ocasião ou objetivo, o impacto emocional ou comercial desejado e referências de estilo.',
+    visionInputPlaceholder:
+      'Descreva sua visão em detalhes — propósito, público, impacto desejado, tom e duração aproximada (ou toque no microfone)...',
+    visionRefinementPlaceholder:
+      'Responda à pergunta acima ou adicione ajustes para refinar a visão do projeto...',
+    clarifyVisionButton: 'Clarificar Visão',
+    updateVisionButton: 'Atualizar Clarificação',
+    confirmVisionButton: 'Confirmar Visão e Iniciar Entrevista',
+    editVisionButton: 'Editar Visão',
+    proposedVisionHeading: 'Visão Clarificada (Revisar e Confirmar)',
+    confirmedVisionHeading: 'Visão do Projeto Confirmada',
+    visionImpactLabel: 'Impacto Desejado:',
+    visionAudienceLabel: 'Público e Contexto:',
+    visionStyleLabel: 'Tom e Estilo Visual:',
+    visionPassesRemaining: 'Refinamento {used} de {max}',
+    discoveredPeopleTitle: 'Pessoas-Chave, Papéis e Impacto',
+    beatImpactLabel: 'Impacto:',
+    characterRoleLabel: 'Papel:',
+    characterImpactLabel: 'Impacto:',
+    completenessReadyLabel: 'Descoberta Completa ({score}%) — Pronto para Gerar Roteiro',
+    completenessGatheringLabel: 'Reunindo Personagens e Eventos-Chave ({score}%)',
+    submitEarlyButton: 'Enviar agora com os detalhes atuais',
   },
   hi: {
     producedBy: '{brand} द्वारा निर्मित',
@@ -315,6 +412,31 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     estimatedSceneFlowCogs: 'अनुमानित क्रेडिट लागत',
     estimatedNetProfit: 'अनुमानित प्रदाता लाभ',
     applyProjectCeiling: 'प्रोजेक्ट क्रेडिट सीमा सेट करें ({credits} cr)',
+    visionStepBadge: 'चरण 1 • प्रोजेक्ट विज़न',
+    visionQuestionTitle: 'इस प्रोजेक्ट के लिए आपका विज़न क्या है?',
+    visionQuestionSubtitle:
+      'जितना उपयोगी हो उतना विस्तार से साझा करें — यह वीडियो किसके लिए है, अवसर या लक्ष्य क्या है, और आप दर्शकों पर क्या भावनात्मक प्रभाव छोड़ना चाहते हैं।',
+    visionInputPlaceholder:
+      'अपने विज़न का विस्तार से वर्णन करें — उद्देश्य, दर्शक, भावनात्मक या व्यावसायिक लक्ष्य और शैली (या माइक दबाएँ)...',
+    visionRefinementPlaceholder:
+      'ऊपर दिए गए प्रश्न का उत्तर दें या अपने प्रोजेक्ट विज़न में सुधार जोड़ें...',
+    clarifyVisionButton: 'विज़न स्पष्ट करें',
+    updateVisionButton: 'स्पष्टीकरण अपडेट करें',
+    confirmVisionButton: 'विज़न की पुष्टि करें और साक्षात्कार शुरू करें',
+    editVisionButton: 'विज़न संपादित करें',
+    proposedVisionHeading: 'स्पष्ट किया गया प्रोजेक्ट विज़न (पुष्टि करें)',
+    confirmedVisionHeading: 'पुष्टि किया गया प्रोजेक्ट विज़न',
+    visionImpactLabel: 'अपेक्षित प्रभाव:',
+    visionAudienceLabel: 'दर्शक और संदर्भ:',
+    visionStyleLabel: 'टोन और विज़ुअल शैली:',
+    visionPassesRemaining: 'स्पष्टीकरण चरण {used} / {max}',
+    discoveredPeopleTitle: 'मुख्य व्यक्ति, भूमिकाएँ और प्रभाव',
+    beatImpactLabel: 'प्रभाव:',
+    characterRoleLabel: 'भूमिका:',
+    characterImpactLabel: 'प्रभाव:',
+    completenessReadyLabel: 'जानकारी पूर्ण ({score}%) — ब्लूप्रिंट बनाने के लिए तैयार',
+    completenessGatheringLabel: 'पात्रों और मुख्य घटनाओं का संकलन ({score}%)',
+    submitEarlyButton: 'वर्तमान विवरण के साथ अभी जमा करें',
   },
   'zh-CN': {
     producedBy: '由 {brand} 制作出品',
@@ -370,6 +492,31 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     estimatedSceneFlowCogs: '预估积分成本（含缓冲）',
     estimatedNetProfit: '预估服务商净利',
     applyProjectCeiling: '设为项目积分上限 ({credits} cr)',
+    visionStepBadge: '第 1 步 • 项目愿景',
+    visionQuestionTitle: '您对这个项目的整体愿景是什么？',
+    visionQuestionSubtitle:
+      '请尽可能详细地描述——这部影片为谁制作、用于什么场合或商业目标、希望带给观众怎样的情感共鸣，以及您偏好的视觉风格。',
+    visionInputPlaceholder:
+      '请详细描述您的项目愿景——目的、目标观众、期望达成的感动或效果、基调与大致时长（也可点击麦克风口述）...',
+    visionRefinementPlaceholder:
+      '请补充回答上方问题，或提出调整建议以进一步完善您的项目愿景...',
+    clarifyVisionButton: '提炼并核对愿景',
+    updateVisionButton: '更新愿景提炼',
+    confirmVisionButton: '确认愿景并开始深度访谈',
+    editVisionButton: '修改愿景',
+    proposedVisionHeading: '提炼后的项目愿景（请审阅并确认）',
+    confirmedVisionHeading: '已确认的项目北极星愿景',
+    visionImpactLabel: '预期情感/核心价值：',
+    visionAudienceLabel: '目标受众与场景：',
+    visionStyleLabel: '基调与视觉风格：',
+    visionPassesRemaining: '愿景校准第 {used} / {max} 轮',
+    discoveredPeopleTitle: '核心人物、角色定位与影响力',
+    beatImpactLabel: '核心意义：',
+    characterRoleLabel: '角色定位：',
+    characterImpactLabel: '故事影响：',
+    completenessReadyLabel: '信息采集完整 ({score}%) — 可生成高质量蓝图',
+    completenessGatheringLabel: '正在完善关键人物与核心事件 ({score}%)',
+    submitEarlyButton: '使用当前信息提前提交',
   },
   th: {
     producedBy: 'อำนวยการผลิตโดย {brand}',
@@ -427,6 +574,31 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     estimatedSceneFlowCogs: 'ต้นทุนเครดิตโดยประมาณ (รวมสำรอง)',
     estimatedNetProfit: 'กำไรสุทธิผู้ให้บริการโดยประมาณ',
     applyProjectCeiling: 'ตั้งเพดานเครดิตโครงการ ({credits} cr)',
+    visionStepBadge: 'ขั้นตอนที่ 1 • วิสัยทัศน์โปรเจกต์',
+    visionQuestionTitle: 'วิสัยทัศน์ของคุณสำหรับโปรเจกต์นี้คืออะไร?',
+    visionQuestionSubtitle:
+      'โปรดเล่ารายละเอียดให้ครบถ้วนที่สุด — วิดีโอนี้ทำเพื่อใคร โอกาสหรือเป้าหมายคืออะไร ความรู้สึกหรือผลลัพธ์ที่ต้องการให้ผู้ชมได้รับ และโทนภาพที่ชื่นชอบ',
+    visionInputPlaceholder:
+      'อธิบายวิสัยทัศน์โดยรวมอย่างละเอียด — เป้าหมาย ผู้ชม ความประทับใจที่ต้องการ โทนอารมณ์ และความยาวคร่าวๆ (หรือแตะไมโครโฟน)...',
+    visionRefinementPlaceholder:
+      'ตอบคำถามเพิ่มเติมด้านบน หรือระบุสิ่งที่ต้องการปรับแก้ในวิสัยทัศน์โปรเจกต์...',
+    clarifyVisionButton: 'สรุปและตรวจสอบวิสัยทัศน์',
+    updateVisionButton: 'อัปเดตวิสัยทัศน์',
+    confirmVisionButton: 'ยืนยันวิสัยทัศน์และเริ่มการสัมภาษณ์',
+    editVisionButton: 'แก้ไขวิสัยทัศน์',
+    proposedVisionHeading: 'วิสัยทัศน์โปรเจกต์ที่สรุปแล้ว (โปรดตรวจสอบและยืนยัน)',
+    confirmedVisionHeading: 'วิสัยทัศน์โปรเจกต์ที่ยืนยันแล้ว',
+    visionImpactLabel: 'ผลลัพธ์และความรู้สึกที่ต้องการ:',
+    visionAudienceLabel: 'กลุ่มผู้ชมและโอกาส:',
+    visionStyleLabel: 'โทนอารมณ์และสไตล์ภาพ:',
+    visionPassesRemaining: 'รอบการปรับความชัดเจน {used} จาก {max}',
+    discoveredPeopleTitle: 'บุคคลสำคัญ บทบาท และความสำคัญ',
+    beatImpactLabel: 'ความสำคัญ:',
+    characterRoleLabel: 'บทบาท:',
+    characterImpactLabel: 'ความสำคัญต่อเรื่อง:',
+    completenessReadyLabel: 'ข้อมูลครบถ้วน ({score}%) — พร้อมสร้างโครงเรื่อง',
+    completenessGatheringLabel: 'กำลังรวบรวมตัวละครและเหตุการณ์สำคัญ ({score}%)',
+    submitEarlyButton: 'ส่งข้อมูลเท่าที่มีอยู่ตอนนี้',
   },
   ar: {
     producedBy: 'إنتاج {brand}',
@@ -485,6 +657,31 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     estimatedSceneFlowCogs: 'تكلفة الرصيد التقديرية (شاملة الاحتياطي)',
     estimatedNetProfit: 'صافي ربح مقدم الخدمة التقديري',
     applyProjectCeiling: 'تطبيق سقف رصيد المشروع ({credits} cr)',
+    visionStepBadge: 'الخطوة 1 • رؤية المشروع',
+    visionQuestionTitle: 'ما هي رؤيتك لهذا المشروع؟',
+    visionQuestionSubtitle:
+      'شاركنا أكبر قدر ممكن من التفاصيل المفيدة — لمن هذا الفيديو، ما المناسبة أو الهدف، وما الأثر العاطفي أو العملي الذي ترغب في تركه لدى المشاهدين.',
+    visionInputPlaceholder:
+      'صف رؤيتك العامة بالتفصيل — الهدف، الجمهور، الأثر المنشود، النبرة والأسلوب البصري والمدة التقريبية (أو اضغط على الميكروفون)...',
+    visionRefinementPlaceholder:
+      'أجب عن السؤال أعلاه أو أضف أي تعديلات لتوضيح رؤية مشروعك...',
+    clarifyVisionButton: 'توضيح الرؤية',
+    updateVisionButton: 'تحديث التوضيح',
+    confirmVisionButton: 'تأكيد الرؤية وبدء المقابلة',
+    editVisionButton: 'تعديل الرؤية',
+    proposedVisionHeading: 'رؤية المشروع الموضحة (راجع وأكّد)',
+    confirmedVisionHeading: 'رؤية المشروع المؤكدة',
+    visionImpactLabel: 'الأثر المنشود:',
+    visionAudienceLabel: 'الجمهور والسياق:',
+    visionStyleLabel: 'النبرة والأسلوب البصري:',
+    visionPassesRemaining: 'جولة التوضيح {used} من {max}',
+    discoveredPeopleTitle: 'الشخصيات الرئيسية والأدوار والأثر',
+    beatImpactLabel: 'الأثر:',
+    characterRoleLabel: 'الدور:',
+    characterImpactLabel: 'الأثر:',
+    completenessReadyLabel: 'اكتمل جمع المعلومات ({score}%) — جاهز لإنشاء المخطط',
+    completenessGatheringLabel: 'جارٍ جمع الشخصيات والأحداث الرئيسية ({score}%)',
+    submitEarlyButton: 'إرسال مبكر بالتفاصيل الحالية',
   },
 }
 
