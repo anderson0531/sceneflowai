@@ -584,6 +584,8 @@ export const STUDIO_LANDING_COPY_AR = {
         description:
           'التقط قصة حياة عبر مقابلة ذكية، وثبّت صور الشخصيات عبر مراحل العمر، وشغّل وكلاء الإنتاج الذاتيين، وأعد إنشاء اللقطات بنقرة واحدة في FlowDirector، وسلّم عبر رابط Screening Room خاص.',
         featureIcons: [
+          'clientIntake',
+          'selfieStudio',
           'startBlueprint',
           'treatment',
           'continuity',
@@ -601,8 +603,10 @@ export const STUDIO_LANDING_COPY_AR = {
         badge: '20+ مشروعاً متزامناً · وكلاء ذاتيون + فحص FlowDirector',
         headline: 'أدِر 20 مشروع عميل متزامن بتكلفة أقل 50%–80% بفضل أتمتة سير العمل',
         description:
-          'توقع استهلاك Pre-vis، وأطلق وكلاء الصوت والصور والمقاطع والإنتاج عبر 20 خط إنتاج نشط، وراجع الفيديوهات من منظوري الجمهور والمخرج في FlowDirector مع إعادة إنشاء اللقطات بنقرة واحدة بـ 70+ لغة.',
+          'فعّل بوابات العلامة البيضاء وسقوف الرصيد لمديري المشاريع، وتحقّق من هوامش الربح في المخططات المشتركة، وأطلق الوكلاء عبر 20 مشروعاً نشطاً، وراجع الفيديوهات في FlowDirector بنقرة واحدة بـ 70+ لغة.',
         featureIcons: [
+          'producerLaunchpad',
+          'blueprintShare',
           'scriptSupervisor',
           'productionAgent',
           'budget',
@@ -638,13 +642,14 @@ export const STUDIO_LANDING_COPY_AR = {
         badge: 'قنوات عالية الاحتفاظ بالمشاهد · برامج متعددة المقدمين',
         headline: 'انشر حلقات أسبوعية بأصوات استوديو وموسيقى تصويرية ومكساج احترافي',
         description:
-          'اختبر خطافات جذب الجمهور قبل التصيير، وأخرج التفاعل بين المقدمين والموسيقى التصويرية، واضبط الإيقاع في Production Mixer، وصدّر باقات 16:9 و9:16 للمنصات.',
+          'اختبر خطافات جذب الجمهور قبل التصيير، وأخرج التفاعل بين المقدمين والموسيقى التصويرية، واضبط الإيقاع في Production Mixer، وانشر باقات 16:9 و9:16 بنقرة واحدة.',
         featureIcons: [
           'sceneWorkflow',
           'seriesResonance',
           'musicScore',
           'scriptSupervisor',
           'mixer',
+          'streamsInventory',
           'shipPackage',
         ],
       },
@@ -654,10 +659,11 @@ export const STUDIO_LANDING_COPY_AR = {
         badge: 'ملفات الإجازة الإنتاجية · إعلانات تشويقية لإثبات الرؤية',
         headline: 'اختبر قوة سيناريوك وادخل اجتماعات التمويل بإعلان سينمائي مكتمل',
         description:
-          'شارك الكتابة مع FlowDirector، وقِس الإيقاع الدرامي عبر Audience Resonance في مرحلتي Blueprint والسيناريو، ونسّق مشاهد قياسية، واصنع عروضاً ترويجية سينمائية.',
+          'شارك الكتابة مع FlowDirector، وقِس الإيقاع الدرامي عبر Audience Resonance في مرحلتي Blueprint والسيناريو، وشارك المخططات المصوّرة واصنع عروضاً ترويجية سينمائية.',
         featureIcons: [
           'blueprintDirector',
           'blueprintResonance',
+          'blueprintShare',
           'goToProduction',
           'productionScript',
           'scriptResonance',
@@ -667,11 +673,11 @@ export const STUDIO_LANDING_COPY_AR = {
     ],
   },
   directoryDrawer: {
-    badge: 'أتمتة سير العمل و34 قدرة احترافية · جولة 5K مروية بـ 7 لغات',
+    badge: 'أتمتة سير العمل و39 قدرة احترافية · عروض WebM مروية بـ 7 لغات',
     title: 'أتمت الإنتاج وفحص الفيديو الخبير عبر أكثر من 20 مشروعاً متزامناً',
     subtitle:
-      'تتضمن كل أداة الآن جولة بانورامية بدقة 5K مع تعليق صوتي بـ 7 لغات. شاهد كيف يراجع FlowDirector فيديو المشاهد من منظوري الجمهور والمخرج مع إعادة إنشاء المقاطع بنقرة واحدة — وكيف يستبدل الوكلاء أكثر من 300 أمر يدوي.',
-    expandCta: 'استكشف 34 قدرة مروية بدقة 5K',
+      'تتضمن كل قدرة الآن عرضاً توضيحياً نظيفاً بصيغة WebM مع تعليق صوتي كامل للاستوديو بـ 7 لغات. اكتشف بوابات العلامة البيضاء واستوديو السيلفي وFlowDirector والوكلاء الذاتيين.',
+    expandCta: 'استكشف 39 قدرة مروية',
     collapseCta: 'إخفاء دليل قدرات الاستوديو',
     automationEyebrow: 'مصمم لصنّاع المحتوى الغزير ومقدمي خدمات الفيديو لـ 20 مشروعاً متزامناً',
     automationTitle: 'أتمتة شاملة: الوكلاء ينفذون المشاهد، وFlowDirector يدقق ويعيد الإنشاء بنقرة واحدة.',
@@ -681,8 +687,8 @@ export const STUDIO_LANDING_COPY_AR = {
     spotlightFlowDirectorMeta: 'تقييم الجمهور + مطابقة المخرج · إعادة إنشاء اللقطات بنقرة',
     spotlightAgentsLabel: 'وكلاء الإنتاج الذاتيون',
     spotlightAgentsMeta: 'أتمتة أكثر من 300 أمر · التوسع إلى 20 مشروعاً نشطاً',
-    spotlightNarrated5kLabel: '34 قدرة · تحريك 5K بتعليق صوتي',
-    spotlightNarrated5kMeta: 'حركة كاميرا 5K متزامنة + تعليق صوتي عصبي بجميع اللغات السبع',
+    spotlightNarrated5kLabel: '39 قدرة · عروض مروية',
+    spotlightNarrated5kMeta: 'أفلام WebM نظيفة بنسبة 16:9 + تعليق استوديو بجميع اللغات السبع',
   },
   academyStrip: {
     badge: 'ضمان سهولة التعلم من اليوم الأول · Studio Academy',

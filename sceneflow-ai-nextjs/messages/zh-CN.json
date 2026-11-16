@@ -415,6 +415,28 @@
         "promise": "无论您是从 Series Room 启动一集还是启动独立功能，Blueprint Room 都是您创意 DNA 的锁定之地。在这里完善节拍表、演员表、地点和视觉风格，以便 Production Stage 在第一遍就构建正确的脚本。",
         "features": [
           {
+            "icon": "clientIntake",
+            "title": "免登录白标客户故事采集门户",
+            "description": "发送支持 7 种母语的白标 `/intake/` 链接或直接将 `/embed/intake/` 嵌入您的机构官网。客户无需注册即可实时语音口述故事、签署带时间戳的肖像与跨年龄声线授权书，并在上传照片（自动剥离 EXIF 定位信息）时接受多模态视觉 AI 的智能追问，一键确认清晰成片愿景方案。",
+            "screenshot": "免登录客户故事采集门户 — 7 语种界面、实时语音口述、肖像授权存证与视觉 AI 识图追问",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "7 语种免登录门户与官网 iframe 嵌入",
+                  "description": "零账号门槛采集家庭传记、房产导览或企业培训需求，大幅缩短前期沟通周期。"
+                },
+                {
+                  "title": "视觉 AI 识图访谈与 EXIF 隐私剥离",
+                  "description": "上传瞬间自动清除照片 GPS 元数据，多模态 AI 识别人物年代与环境细节并提出精准追问。"
+                },
+                {
+                  "title": "肖像、跨年龄重现与声线授权存证账本",
+                  "description": "内置合规点击签约记录，严格执行客户素材零共享模型训练。"
+                }
+              ]
+            }
+          },
+          {
             "icon": "startBlueprint",
             "title": "启动 Blueprint",
             "description": "从您的剧集中引入一集，并预装其大纲、演员阵容和世界观，或者从头开始推出全新的独立电影概念，让人工智能验证、增强和构建基础处理。",
@@ -529,6 +551,28 @@
             }
           },
           {
+            "icon": "blueprintShare",
+            "title": "图文蓝图分享链接与净利测算器",
+            "description": "发送免登录 `/blueprint/share/` 审阅链接，向客户呈现图文故事板节拍、配音阐述与受轮次上限保护的实时沟通线程；同时制片人可在后台查看蓝图成本与利润测算器，精准预估积分消耗、20% 重拍缓冲与 65%–85% 净服务毛利。",
+            "screenshot": "图文蓝图分享与净利测算器 — 可视化故事板签字、修改轮次护栏与实时毛利计算",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "可视化故事板节拍与语音朗读阐述",
+                  "description": "在投入昂贵的动态视频算力前，让客户直观确认每一幕画面构想与叙事节奏。"
+                },
+                {
+                  "title": "蓝图成本与服务净利测算器",
+                  "description": "实时汇总蓝图、连续性、音频、静帧与 10 秒视频片段积分及 20% 缓冲，清晰锁定项目利润。"
+                },
+                {
+                  "title": "客户-制片人实时对话与改稿轮次护栏",
+                  "description": "内置审阅沟通线程与强制修改轮次上限，彻底告别无限改稿蔓延。"
+                }
+              ]
+            }
+          },
+          {
             "icon": "goToProduction",
             "title": "批准生产",
             "description": "当治疗、节拍表和石膏被锁定时，进入 Production Stage。 SceneFlow 直接根据您批准的 Blueprint 编译完整的多章节剧本 - 将每个节拍映射到预先连接演员表和连续性的制作章节中。",
@@ -617,6 +661,28 @@
                 }
               },
               {
+                "icon": "selfieStudio",
+                "title": "角色自拍影棚与跨年代参考肖像",
+                "description": "将任意手机随手拍升级为影棚级连续性定妆照：AI 智能人脸构图、免妆发丝整理、柔光肤质优化与红眼矫正，严格执行 1:1 骨骼五官锁定且零网红化走样；同时支持跨数十年人物年轻化/老年化还原、家族特征融合、从剧本一键重置与多模态肖像配音匹配。",
+                "screenshot": "角色自拍影棚与跨年代肖像 — 1:1 骨相锁定定妆照、跨年龄还原与智能声线匹配",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "免妆 AI 影棚精修与 1:1 骨相锁定",
+                      "description": "自动优化构图、光线与发丝细节，绝不篡改眼睛、鼻梁与下颌线等核心身份特征。"
+                    },
+                    {
+                      "title": "跨年代年龄还原与多亲代特征融合",
+                      "description": "精准生成同一人物在 17 岁、32 岁、62 岁等不同年代的真实样貌，完美契合家族传记电影。"
+                    },
+                    {
+                      "title": "多模态肖像配音匹配与一键重置",
+                      "description": "依据肖像年龄与角色气质自动匹配 70+ 语种声线，并支持从最新剧本一键同步服装道具。"
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "continuity",
                 "title": "Continuity Library",
                 "description": "在整部电影、剧集、播客或客户回忆录中实现绝对的视觉与声纹一致性。锁定独立面部身份参考图、画中画（PiP）角色服装合成图、多角度转面图、克隆声纹、场景代理（Location Set Agent）母版及剧本自动同步的核心道具——或上传演播室实拍机位与家庭老照片，打造零角色漂移的实拍+AI混合电影。",
@@ -682,6 +748,28 @@
                     {
                       "title": "从选秀到决赛的排程",
                       "description": "安排快速草稿通道进行动画预可视化，并保留最终 4K 静态和 FHD 视频计算以进行锁定剪辑。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "producerLaunchpad",
+                "title": "白标制片人启动台与团队权限管理",
+                "description": "通过四步向导快速搭建独立视频制作机构：在 Pro+ 方案中配置 100% 白标门户品牌（专属厂牌名、标志与配色，隐藏平台积分价格），启用四大垂直领域报价卡与 20% 渠道返佣模板，并为项目经理配置角色权限（RBAC）与月度积分硬上限。",
+                "screenshot": "白标制片人启动台与 RBAC — 四步机构向导、Pro+ 专属品牌、行业报价卡与月度积分上限",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "100% 白标客户审阅门户（Pro+）",
+                      "description": "从故事采集、蓝图签字到放映厅交付，客户全程仅见您的工作室品牌标识。"
+                    },
+                    {
+                      "title": "开箱即用行业报价卡与 20% 合伙人方案",
+                      "description": "内置人生传记、房产导览、企业 SOP 培训与本地品牌广告包定价策略。"
+                    },
+                    {
+                      "title": "项目经理 RBAC 权限与隐私清除护栏",
+                      "description": "按人设定月度积分额度，承诺零共享模型训练并支持交付后一键销毁原始素材。"
                     }
                   ]
                 }
@@ -1042,6 +1130,28 @@
                     {
                       "title": "本地化的挂钩和标题卡",
                       "description": "使用翻译的配音挂钩、内置字幕和特定于市场的标题卡渲染本地化的预告片流。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "streamsInventory",
+                "title": "成片流资产总览与一键社媒直发",
+                "description": "在统一的 `Stream Explorer` 面板中集中管控全部项目交付物——涵盖无损拼接的多场预演全片、单场、章节、9:16 竖屏预告与 70+ 语言 4K 母版及完整版本历史——并通过零云配置的 1-Click OAuth 直发 YouTube、TikTok 与 Facebook。",
+                "screenshot": "成片流资产总览与一键直发 — Stream Explorer 目录、无损预演拼接与社交平台 OAuth",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "统一 Stream Explorer 与多版本追溯",
+                      "description": "按交付类型与 70+ 目标语种秒级筛选所有预演、章节、竖屏切片与 4K 成片母版。"
+                    },
+                    {
+                      "title": "多场次无损拼接预演交付片",
+                      "description": "将所有获批场次的动态分镜无损缝合为完整预演长片，先签字再渲染动态视频。"
+                    },
+                    {
+                      "title": "零技术门槛一键 OAuth 社媒发布",
+                      "description": "一键连接主流视频社交账号，自动附带高点击率封面与多语种标题简介。"
                     }
                   ]
                 }
@@ -4425,6 +4535,8 @@
           "headline": "将家庭深度访谈与珍藏老照片转化为传世电影",
           "description": "通过智能故事访谈采集人生历程，锁定从 70 年代青年时期到晚年的分龄人物肖像，调度全自动 Production Agents，由 FlowDirector 一键修复镜头，并通过免登录 Screening Room 链接交付。",
           "featureIcons": [
+            "clientIntake",
+            "selfieStudio",
             "startBlueprint",
             "treatment",
             "continuity",
@@ -4441,8 +4553,10 @@
           "tabLabel": "20 项目并行机构与培训视频",
           "badge": "20+ 并行项目 · 全自动智能体 + FlowDirector 质检",
           "headline": "借助全流程自动化，以直降 50%–80% 的成本同时推进 20 个客户项目",
-          "description": "精准预测 Pre-vis 积分消耗，在 20 条并行客户产线中批量调度 Audio、Stills、Clips 与 Production Agents，由 FlowDirector 从观众与导演双视角审片并一键重制镜头，输出 70+ 语言版本。",
+          "description": "启用白标客户门户与项目经理积分上限，在共享蓝图中核验净利率，调度全自动智能体推进 20 条客户产线，由 FlowDirector 一键重制镜头并输出 70+ 语言版本。",
           "featureIcons": [
+            "producerLaunchpad",
+            "blueprintShare",
             "scriptSupervisor",
             "productionAgent",
             "budget",
@@ -4476,13 +4590,14 @@
           "tabLabel": "YouTube 频道与叙事播客节目",
           "badge": "高完播率频道 · 多主持人对谈节目",
           "headline": "配备录音棚级多角色人声、原创配乐与精修混音，每周稳定更新",
-          "description": "渲染前测试观众完播率钩子，执导多主持人互动张力与专属情绪配乐，在 Production Mixer 中精细打磨节奏，并打包导出 16:9 + 9:16 社媒矩阵成片。",
+          "description": "渲染前测试观众完播率钩子，执导多主持人互动张力与专属情绪配乐，在 Production Mixer 中精细打磨节奏，并通过一键 OAuth 直发 16:9 + 9:16 社媒矩阵成片。",
           "featureIcons": [
             "sceneWorkflow",
             "seriesResonance",
             "musicScore",
             "scriptSupervisor",
             "mixer",
+            "streamsInventory",
             "shipPackage"
           ]
         },
@@ -4491,10 +4606,11 @@
           "tabLabel": "导演前视预演与路演概念预告片",
           "badge": "立项路演案卷 · 概念验证院线短片",
           "headline": "全面压测剧本结构，带着成片级概念预告片自信走进投资路演会",
-          "description": "与 FlowDirector 协同打磨剧本，在 Blueprint 与剧本双重关卡用 Audience Resonance 评估结构节奏，生成好莱坞工业标准剧本，并剪辑震撼路演预告片。",
+          "description": "与 FlowDirector 协同打磨剧本，在 Blueprint 与剧本双重关卡用 Audience Resonance 评估结构节奏，分享图文故事板并剪辑震撼路演预告片。",
           "featureIcons": [
             "blueprintDirector",
             "blueprintResonance",
+            "blueprintShare",
             "goToProduction",
             "productionScript",
             "scriptResonance",
@@ -4504,10 +4620,10 @@
       ]
     },
     "directoryDrawer": {
-      "badge": "工作流自动化与 34 项核心能力 · 7 语种 5K 运镜解说导览",
+      "badge": "工作流自动化与 39 项核心能力 · 7 语种配音动态演示",
       "title": "自动化制片与专家视频质检，轻松统管 20+ 个并行项目",
-      "subtitle": "每项功能现均配备交互式 5K 平移运镜与 7 种语言配音解说。亲眼见证 FlowDirector 如何从观众与导演双视角审阅场景视频并一键重制镜头，以及智能体如何替代 300+ 次手动提示词。",
-      "expandCta": "探索全部 34 项 5K 配音功能导览",
+      "subtitle": "每项能力现均配备清爽的 16:9 WebM 动态分镜演示与覆盖 7 种语言的完整演播室配音解说。了解白标门户、自拍影棚、FlowDirector 一键修片与全自动智能体矩阵。",
+      "expandCta": "探索全部 39 项配音核心能力",
       "collapseCta": "收起工作室核心能力名录",
       "automationEyebrow": "专为高产创作者与同时管理 20 个项目的视频服务商打造",
       "automationTitle": "端到端工作流自动化：智能体后台批量生成，FlowDirector 一键审片与重制。",
@@ -4516,8 +4632,8 @@
       "spotlightFlowDirectorMeta": "观众 AR + 导演合规评分 · 一键修复自动重制镜头",
       "spotlightAgentsLabel": "全自动制片智能体矩阵",
       "spotlightAgentsMeta": "替代 300+ 手动提示词 · 轻松扩展至 20 个并行项目",
-      "spotlightNarrated5kLabel": "34 项能力 · 5K 运镜配音解说",
-      "spotlightNarrated5kMeta": "同步 5K 镜头平移 + 覆盖全部 7 种语言的神经网络配音"
+      "spotlightNarrated5kLabel": "39 项能力 · 配音动态演示",
+      "spotlightNarrated5kMeta": "清爽 16:9 WebM 动态演示短片 + 覆盖全部 7 种语言的演播室解说"
     },
     "academyStrip": {
       "badge": "零学习门槛保障 · Studio Academy",

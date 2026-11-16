@@ -194,7 +194,7 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
     expect(WORLD_CLASS_LANDING_COPY.mobileCompanion.modeCustomerTab).toContain('White-Label')
   })
 
-  it('organizes all 34 KeyFeatures icons across 5 curated Use-Case Tracks and stages 6 Sandbox video capture scripts', () => {
+  it('organizes all 39 KeyFeatures icons across 5 curated Use-Case Tracks and stages 6 Sandbox video capture scripts', () => {
     const rooms = (enMessages as Record<string, any>).keyFeatures.rooms as Array<Record<string, any>>
     const allCatalogIcons = new Set<string>()
     for (const room of rooms) {
@@ -204,14 +204,23 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
       }
       for (const f of room.features ?? []) allCatalogIcons.add(f.icon)
     }
-    expect(allCatalogIcons.size).toBe(34)
+    expect(allCatalogIcons.size).toBe(39)
+    for (const newIcon of [
+      'clientIntake',
+      'blueprintShare',
+      'selfieStudio',
+      'producerLaunchpad',
+      'streamsInventory',
+    ]) {
+      expect(allCatalogIcons.has(newIcon), `missing new feature icon ${newIcon}`).toBe(true)
+    }
 
     const tracks = WORLD_CLASS_LANDING_COPY.useCaseDirectory.tracks
     expect(tracks).toHaveLength(5)
     const coveredByTracks = new Set<string>()
     for (const track of tracks) {
       expect(track.featureIcons.length).toBeGreaterThanOrEqual(6)
-      expect(track.featureIcons.length).toBeLessThanOrEqual(10)
+      expect(track.featureIcons.length).toBeLessThanOrEqual(12)
       for (const icon of track.featureIcons) {
         expect(allCatalogIcons.has(icon), `unknown feature icon ${icon} in track ${track.id}`).toBe(
           true

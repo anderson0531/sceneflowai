@@ -155,6 +155,21 @@ export const MULTILANGUAGE_UI_AR_SCREENSHOT_WEBP =
 export const MULTILANGUAGE_UI_TH_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/multilanguage-ui-th.webp'
 
+export const CLIENT_INTAKE_PORTAL_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/client-intake-portal.webp'
+
+export const BLUEPRINT_SHARE_ESTIMATOR_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/blueprint-share-estimator.webp'
+
+export const CHARACTER_SELFIE_STUDIO_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/character-selfie-studio.webp'
+
+export const PRODUCER_WHITELABEL_LAUNCHPAD_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/producer-whitelabel-launchpad.webp'
+
+export const STREAMS_INVENTORY_EXPLORER_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/streams-inventory-explorer.webp'
+
 export type KeyFeatureScreenshotVariant = {
   id: string
   label: string
@@ -174,17 +189,21 @@ export const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   seriesDirector: { imageUrl: SERIES_DIRECTOR_SCREENSHOT_WEBP },
   directEpisode: { imageUrl: DIRECT_EPISODE_SCREENSHOT_WEBP },
   startEpisode: { imageUrl: START_EPISODE_SCREENSHOT_WEBP },
+  clientIntake: { imageUrl: CLIENT_INTAKE_PORTAL_SCREENSHOT_WEBP },
   startBlueprint: { imageUrl: START_BLUEPRINT_SCREENSHOT_WEBP },
   treatment: { imageUrl: DIRECT_BEATS_SCREENSHOT_WEBP },
   castLocations: { imageUrl: CAST_LOCATIONS_SCREENSHOT_WEBP },
   blueprintDirector: { imageUrl: BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP },
   blueprintResonance: { imageUrl: BLUEPRINT_RESONANCE_SCREENSHOT_WEBP },
+  blueprintShare: { imageUrl: BLUEPRINT_SHARE_ESTIMATOR_SCREENSHOT_WEBP },
   goToProduction: { imageUrl: GO_TO_PRODUCTION_SCREENSHOT_WEBP },
+  selfieStudio: { imageUrl: CHARACTER_SELFIE_STUDIO_SCREENSHOT_WEBP },
   directShot: { imageUrl: SCENE_DIRECTOR_SCREENSHOT_WEBP },
   sceneWorkflow: { imageUrl: SCENE_WORKFLOW_SCREENSHOT_WEBP },
   continuity: { imageUrl: CONTINUITY_LIBRARY_SCREENSHOT_WEBP },
   scriptResonance: { imageUrl: SCRIPT_RESONANCE_SCREENSHOT_WEBP },
   budget: { imageUrl: PRODUCTION_PLANNER_SCREENSHOT_WEBP },
+  producerLaunchpad: { imageUrl: PRODUCER_WHITELABEL_LAUNCHPAD_SCREENSHOT_WEBP },
   productionScript: { imageUrl: PRODUCTION_SCRIPT_SCREENSHOT_WEBP },
   audioAgent: { imageUrl: AUDIO_AGENT_SCREENSHOT_WEBP },
   musicScore: { imageUrl: SCENE_AUDIO_MUSIC_SCREENSHOT_WEBP },
@@ -223,6 +242,7 @@ export const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
     ],
   },
   promoTrailers: { imageUrl: PROMO_TRAILERS_SCREENSHOT_WEBP },
+  streamsInventory: { imageUrl: STREAMS_INVENTORY_EXPLORER_SCREENSHOT_WEBP },
   shipPackage: { imageUrl: DIRECT_PUBLISHING_SCREENSHOT_WEBP },
   screeningPlayer: { imageUrl: SCREENING_PLAYER_SCREENSHOT_WEBP },
   screeningCollab: { imageUrl: SCREENING_COLLAB_SCREENSHOT_WEBP },

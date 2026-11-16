@@ -415,6 +415,28 @@
         "promise": "Esteja você lançando um episódio do Series Room ou iniciando um recurso independente, o Blueprint Room é onde seu DNA criativo se fixa. Aperfeiçoe a folha de ritmo, o elenco, os locais e o estilo visual aqui - para que o Production Stage crie o roteiro certo na primeira passagem.",
         "features": [
           {
+            "icon": "clientIntake",
+            "title": "Captação de História do Cliente sem Login",
+            "description": "Envie um link white-label `/intake/` ou incorpore `/embed/intake/` ao seu site em 7 idiomas. O cliente fala ou digita com ditado ao vivo, assina o termo digital de imagem, idades e voz, e envia fotos (sem GPS EXIF) enquanto a IA de Visão faz perguntas inteligentes e gera uma Proposta de Visão Clarificada.",
+            "screenshot": "Captação de História sem Login — portal em 7 idiomas, ditado por voz, termo de imagem e entrevista visual IA",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Portal em 7 idiomas e embed sem cadastro",
+                  "description": "Capte memórias de família, briefings de imóveis ou treinamentos via link com sua marca sem exigir conta do cliente."
+                },
+                {
+                  "title": "Entrevista de fotos com IA de Visão e remoção EXIF",
+                  "description": "A IA analisa fotos enviadas (removendo dados GPS EXIF automaticamente) e faz perguntas certeiras sobre época e figurino."
+                },
+                {
+                  "title": "Registro assinado de imagem, múltiplas idades e voz",
+                  "description": "Registra autorização com data e hora para fotos reais e síntese vocal, sem nunca treinar modelos compartilhados."
+                }
+              ]
+            }
+          },
+          {
             "icon": "startBlueprint",
             "title": "Inicie o Blueprint",
             "description": "Traga um episódio da sua série com esboço, elenco e mundo pré-carregados ou lance um novo conceito de filme independente do zero e deixe a IA validar, aprimorar e estruturar o tratamento fundamental.",
@@ -529,6 +551,28 @@
             }
           },
           {
+            "icon": "blueprintShare",
+            "title": "Link de Blueprint Ilustrado e Estimador de Margem",
+            "description": "Compartilhe um link `/blueprint/share/` sem login com beats ilustrados, narração de estúdio e chat ao vivo dentro do limite de revisões — aliado ao Estimador de Custos e Margem que prevê créditos exatos, reserva de 20% para retakes e seu lucro líquido.",
+            "screenshot": "Blueprint Ilustrado e Estimador de Margem — storyboards visuais, aprovação do cliente e cálculo de margem líquida",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Storyboards ilustrados e argumento narrado",
+                  "description": "O cliente vê e ouve cada beat da história antes de você gastar créditos de renderização em vídeo."
+                },
+                {
+                  "title": "Estimador de Custos e Margem Líquida",
+                  "description": "Projeta créditos de Blueprint, Continuidade, Áudio, Stills e Clipes de 10s mais 20% de margem de segurança."
+                },
+                {
+                  "title": "Chat cliente-PM e trava de rodadas de revisão",
+                  "description": "Centralize aprovações com limites automáticos de revisão que protegem margens de 65% a 85%."
+                }
+              ]
+            }
+          },
+          {
             "icon": "goToProduction",
             "title": "Luz verde para produção",
             "description": "Quando o tratamento, a planilha de batimentos e o elenco estiverem bloqueados, entre no Production Stage. SceneFlow compila seu roteiro completo de vários capítulos diretamente de seu Blueprint aprovado - mapeando cada batida em um capítulo de produção com elenco e continuidade pré-configurados.",
@@ -617,6 +661,28 @@
                 }
               },
               {
+                "icon": "selfieStudio",
+                "title": "Estúdio de Selfies de Personagem e Semelhança Multiedade",
+                "description": "Transforme qualquer selfie de celular em retrato de estúdio com enquadramento facial IA, ajuste de cabelo e luz, correção de olhos vermelhos e trava óssea 1:1 sem descaracterizar a pessoa — além de rejuvenescimento entre décadas e Pareamento Retrato-Voz.",
+                "screenshot": "Estúdio de Selfies e Semelhança Multiedade — retrato IA com trava 1:1, múltiplas idades e pareamento de voz",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Retrato de estúdio IA com trava facial 1:1",
+                      "description": "Alinha enquadramento, corrige iluminação e remove olhos vermelhos mantendo olhos, nariz e maxilar idênticos."
+                    },
+                    {
+                      "title": "Rejuvenescimento por décadas e linhagem familiar",
+                      "description": "Recrie pessoas reais em diferentes idades (17, 32 e 62 anos) e combine traços familiares para filmes biográficos."
+                    },
+                    {
+                      "title": "Pareamento multimodal Retrato-Voz",
+                      "description": "Calibra timbre e ritmo de fala automaticamente com base na idade e papel do personagem em mais de 70 idiomas."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "continuity",
                 "title": "O Continuity Library",
                 "description": "Consistência visual e vocal absoluta em todo o seu filme, série, podcast ou documentário. Trave referências discretas de identidade facial, composições PiP de personagem e figurino, folhas de rotação multiângulo, vozes clonadas, cenários do Agente de Locações e objetos de cena com sincronização automática de figurino a partir do roteiro—ou envie vídeos de câmera ao vivo e fotos reais para cinema híbrido sem desvio de personagem.",
@@ -682,6 +748,28 @@
                     {
                       "title": "Programação do nível rascunho até o final",
                       "description": "Agende passagens rápidas de rascunho para pré-visualização animada e reserve a computação final de vídeo 4K e FHD para cortes bloqueados."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "producerLaunchpad",
+                "title": "Launchpad White-Label do Produtor e RBAC",
+                "description": "Estruture sua produtora de vídeo em 4 etapas: configure portais 100% white-label no Pro+, ative tabelas de preços prontas e materiais de comissão de 20% para parceiros, e delegue projetos a gerentes (RBAC) com tetos mensais de créditos.",
+                "screenshot": "Launchpad White-Label e RBAC — assistente em 4 etapas, marca própria Pro+, tabelas de preços e limites por PM",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Portais 100% white-label para clientes (Pro+)",
+                      "description": "Seus clientes interagem apenas com o nome, logo e cores da sua produtora sem ver preços do SceneFlow."
+                    },
+                    {
+                      "title": "Tabelas Service-in-a-Box e comissão de 20%",
+                      "description": "Modelos comerciais prontos para Vídeo Memórias, Imóveis, Treinamentos Corporativos e Pacotes de Marca Local."
+                    },
+                    {
+                      "title": "Permissões RBAC e limites mensais para PMs",
+                      "description": "Gerencie mais de 20 projetos ativos com cotas mensais por gerente e exclusão de arquivos brutos em 1 clique."
                     }
                   ]
                 }
@@ -1042,6 +1130,28 @@
                     {
                       "title": "Ganchos e cartões de título localizados",
                       "description": "Renderize fluxos de trailers localizados com ganchos de narração traduzidos, legendas gravadas e cartões de título específicos do mercado."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "streamsInventory",
+                "title": "Inventário de Streams e Publicação Social em 1 Clique",
+                "description": "Controle todos os entregáveis no painel unificado `Stream Explorer` — animatics Pre-Vis multicena costurados sem perda, cenas, capítulos, promos 9:16 e masters 4K em 70+ idiomas — e publique direto no YouTube, TikTok e Facebook via OAuth em 1 clique.",
+                "screenshot": "Inventário de Streams e Publicação em 1 Clique — catálogo Stream Explorer, Pre-Vis costurado e OAuth social",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Stream Explorer unificado e histórico de versões",
+                      "description": "Filtre e compare animatics, cenas, capítulos, cortes verticais 9:16 e masters em mais de 70 idiomas."
+                    },
+                    {
+                      "title": "Entregável Pre-Vis multicena costurado sem perda",
+                      "description": "Reúna todas as cenas aprovadas em um único filme Pre-Vis antes de investir na geração de vídeo."
+                    },
+                    {
+                      "title": "Publicação OAuth em 1 clique sem configuração complexa",
+                      "description": "Conecte YouTube, TikTok e Facebook rapidamente com miniaturas de alto clique e títulos localizados."
                     }
                   ]
                 }
@@ -4425,6 +4535,8 @@
           "headline": "Transforme Entrevistas de Família e Fotos de Acervo em Cinema de Legado",
           "description": "Capture uma história de vida por entrevista inteligente, trave retratos em várias idades dos anos 70 até hoje, acione Production Agents autônomos, recrie clipes em 1 clique no FlowDirector e entregue por link privado da Screening Room.",
           "featureIcons": [
+            "clientIntake",
+            "selfieStudio",
             "startBlueprint",
             "treatment",
             "continuity",
@@ -4441,8 +4553,10 @@
           "tabLabel": "Agências de 20 Projetos e Treinamento",
           "badge": "20+ Projetos Simultâneos · Agentes Autônomos + FlowDirector QA",
           "headline": "Gerencie 20 Projetos Simultâneos com 50%–80% Menos Custo via Automação de Fluxo",
-          "description": "Preveja créditos Pre-vis, dispare agentes autônomos de Áudio, Stills, Clips e Produção em 20 carteiras de clientes, revise vídeos na visão do Público e do Diretor no FlowDirector com recriação de clipes em 1 clique e publique em 70+ idiomas.",
+          "description": "Configure portais white-label e limites de créditos para PMs, valide margens no Blueprint compartilhado, dispare agentes autônomos em 20 carteiras, revise vídeos no FlowDirector em 1 clique e publique em 70+ idiomas.",
           "featureIcons": [
+            "producerLaunchpad",
+            "blueprintShare",
             "scriptSupervisor",
             "productionAgent",
             "budget",
@@ -4476,13 +4590,14 @@
           "tabLabel": "Canais do YouTube e Podcasts Narrativos",
           "badge": "Canais de Alta Retenção · Shows Multi-Host",
           "headline": "Publique Episódios Semanais com Voz de Estúdio, Trilha Original e Mixagem",
-          "description": "Teste ganchos de retenção antes de renderizar, dirija química entre apresentadores e trilha sonora personalizada, refine o ritmo no Production Mixer e exporte pacotes 16:9 + 9:16.",
+          "description": "Teste ganchos de retenção antes de renderizar, dirija química entre apresentadores e trilha sonora personalizada, refine o ritmo no Production Mixer e publique pacotes 16:9 + 9:16 via OAuth em 1 clique.",
           "featureIcons": [
             "sceneWorkflow",
             "seriesResonance",
             "musicScore",
             "scriptSupervisor",
             "mixer",
+            "streamsInventory",
             "shipPackage"
           ]
         },
@@ -4491,10 +4606,11 @@
           "tabLabel": "Pré-Vis de Cineastas e Trailers de Pitch",
           "badge": "Decks de Sinal Verde · Cinema Proof-of-Concept",
           "headline": "Teste seu Roteiro e Entre em Reuniões de Pitch com um Trailer Finalizado",
-          "description": "Coescreva com o FlowDirector, avalie o ritmo estrutural com Audience Resonance no Blueprint e no Roteiro, formate roteiros padrão da indústria e monte trailers cinematográficos.",
+          "description": "Coescreva com o FlowDirector, avalie o ritmo estrutural com Audience Resonance no Blueprint e no Roteiro, compartilhe storyboards ilustrados, formate roteiros padrão e monte trailers cinematográficos.",
           "featureIcons": [
             "blueprintDirector",
             "blueprintResonance",
+            "blueprintShare",
             "goToProduction",
             "productionScript",
             "scriptResonance",
@@ -4504,10 +4620,10 @@
       ]
     },
     "directoryDrawer": {
-      "badge": "Automação e 34 Capacidades · Tour 5K Narrado em 7 Idiomas",
+      "badge": "Automação e 39 Capacidades · Animatics WebM Narrados em 7 Idiomas",
       "title": "Automatize Produção e QA de Vídeo em 20+ Projetos Simultâneos",
-      "subtitle": "Cada capacidade agora inclui um tour 5K panorâmico e narrado em 7 idiomas. Veja como o FlowDirector avalia vídeos sob a perspectiva do Público e do Diretor com recriação de clipes em 1 clique — e como agentes substituem 300+ prompts.",
-      "expandCta": "Explorar 34 Capacidades 5K Narradas",
+      "subtitle": "Cada capacidade inclui agora um animatic WebM limpo com narração completa de estúdio em 7 idiomas. Veja Portais White-Label, Estúdio de Selfies, FlowDirector em 1 clique e agentes autônomos em ação.",
+      "expandCta": "Explorar 39 Capacidades Narradas",
       "collapseCta": "Ocultar Diretório de Capacidades",
       "automationEyebrow": "Feito para Criadores de Alto Volume e Agências com 20 Projetos Ativos",
       "automationTitle": "Automação Completa: Os Agentes Produzem. O FlowDirector Audita e Recria em 1 Clique.",
@@ -4516,8 +4632,8 @@
       "spotlightFlowDirectorMeta": "Público AR + Diretor · Recria Clipes em 1 Clique",
       "spotlightAgentsLabel": "Agentes Autônomos de Produção",
       "spotlightAgentsMeta": "300+ Prompts Automatizados · Escala para 20 Projetos Ativos",
-      "spotlightNarrated5kLabel": "34 Capacidades · Pan 5K Narrado",
-      "spotlightNarrated5kMeta": "Câmera 5K Sincronizada + Narração Neural nos 7 Idiomas"
+      "spotlightNarrated5kLabel": "39 Capacidades · Animatics Narrados",
+      "spotlightNarrated5kMeta": "Vídeos Animatic WebM 16:9 + Narração de Estúdio nos 7 Idiomas"
     },
     "academyStrip": {
       "badge": "Garantia de Curva de Aprendizado Zero · Studio Academy",

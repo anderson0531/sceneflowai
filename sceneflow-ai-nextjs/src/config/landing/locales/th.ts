@@ -584,6 +584,8 @@ export const STUDIO_LANDING_COPY_TH = {
         description:
           'เก็บเรื่องราวชีวิตผ่านบทสัมภาษณ์อัจฉริยะ ล็อกใบหน้าหลายช่วงวัย สั่งรัน Production Agents อัตโนมัติ ซ่อมคลิปใน 1 คลิกด้วย FlowDirector และส่งมอบผ่านลิงก์ Screening Room ส่วนตัว',
         featureIcons: [
+          'clientIntake',
+          'selfieStudio',
           'startBlueprint',
           'treatment',
           'continuity',
@@ -601,8 +603,10 @@ export const STUDIO_LANDING_COPY_TH = {
         badge: 'ดูแล 20+ โปรเจกต์พร้อมกัน · เอเจนต์อัตโนมัติ + FlowDirector QA',
         headline: 'บริหาร 20 โปรเจกต์ลูกค้าพร้อมกันด้วยต้นทุนที่ลดลง 50%–80% ผ่านระบบอัตโนมัติ',
         description:
-          'คาดการณ์งบ Pre-vis สั่งเอเจนต์ Audio, Stills, Clips และ Production ทำงานพร้อมกัน 20 โปรเจกต์ ตรวจวิดีโอทั้งมุมมองผู้ชมและผู้กำกับใน FlowDirector พร้อมสร้างคลิปใหม่ใน 1 คลิก และพากย์ 70+ ภาษา',
+          'เปิดพอร์ทัลไวท์เลเบลและเพดานเครดิต PM ตรวจอัตรากำไรบน Blueprint สั่งเอเจนต์ทำงานพร้อมกัน 20 โปรเจกต์ ตรวจวิดีโอใน FlowDirector พร้อมแก้คลิปใน 1 คลิก และพากย์ 70+ ภาษา',
         featureIcons: [
+          'producerLaunchpad',
+          'blueprintShare',
           'scriptSupervisor',
           'productionAgent',
           'budget',
@@ -638,13 +642,14 @@ export const STUDIO_LANDING_COPY_TH = {
         badge: 'ช่องที่คนดูจนจบ · รายการหลายผู้ดำเนินรายการ',
         headline: 'ปล่อยตอนใหม่ทุกสัปดาห์ด้วยเสียงพากย์ระดับสตูดิโอ ดนตรีประกอบ และมิกซ์มืออาชีพ',
         description:
-          'ทดสอบจุดดึงดูดผู้ชมก่อนเรนเดอร์ กำกับเคมีผู้จัดรายการหลายเสียงและดนตรีประกอบเฉพาะซีน ปรับจังหวะใน Production Mixer และส่งออกแพ็กเกจ 16:9 + 9:16 พร้อมโพสต์',
+          'ทดสอบจุดดึงดูดผู้ชมก่อนเรนเดอร์ กำกับเคมีผู้จัดรายการหลายเสียงและดนตรีประกอบเฉพาะซีน ปรับจังหวะใน Production Mixer และโพสต์แพ็กเกจ 16:9 + 9:16 ด้วย OAuth คลิกเดียว',
         featureIcons: [
           'sceneWorkflow',
           'seriesResonance',
           'musicScore',
           'scriptSupervisor',
           'mixer',
+          'streamsInventory',
           'shipPackage',
         ],
       },
@@ -654,10 +659,11 @@ export const STUDIO_LANDING_COPY_TH = {
         badge: 'ชุดเสนอนายทุน · ภาพยนตร์ตัวอย่างพิสูจน์แนวคิด',
         headline: 'ทดสอบความแข็งแรงของบทและเดินเข้าห้องขายงานพร้อมตัวอย่างหนังฉบับสมบูรณ์',
         description:
-          'ร่วมเกลาบทกับ FlowDirector วัดจังหวะโครงสร้างด้วย Audience Resonance ทั้งด่าน Blueprint และบทถ่ายทำ จัดหน้าบทมาตรฐานสากล และตัดต่อเทรลเลอร์ระดับโรงภาพยนตร์',
+          'ร่วมเกลาบทกับ FlowDirector วัดจังหวะโครงสร้างด้วย Audience Resonance ทั้งด่าน Blueprint และบทถ่ายทำ แชร์สตอรี่บอร์ดพร้อมภาพประกอบ และตัดต่อเทรลเลอร์ระดับโรงภาพยนตร์',
         featureIcons: [
           'blueprintDirector',
           'blueprintResonance',
+          'blueprintShare',
           'goToProduction',
           'productionScript',
           'scriptResonance',
@@ -667,11 +673,11 @@ export const STUDIO_LANDING_COPY_TH = {
     ],
   },
   directoryDrawer: {
-    badge: 'เวิร์กโฟลว์อัตโนมัติและ 34 ความสามารถ · ทัวร์ 5K พากย์เสียง 7 ภาษา',
+    badge: 'เวิร์กโฟลว์อัตโนมัติและ 39 ความสามารถ · วิดีโอ Animatic พากย์เสียง 7 ภาษา',
     title: 'ทำงานผลิตและตรวจคุณภาพวิดีโออัตโนมัติพร้อมกันกว่า 20+ โปรเจกต์',
     subtitle:
-      'ทุกฟีเจอร์มาพร้อมทัวร์แพนกล้อง 5K และเสียงบรรยายครบ 7 ภาษา ดูวิธีที่ FlowDirector ตรวจวิดีโอซีนจากทั้งมุมมองผู้ชมและผู้กำกับพร้อมสร้างคลิปใหม่ใน 1 คลิก และให้เอเจนต์ทำงานแทนกว่า 300+ พรอมต์',
-    expandCta: 'สำรวจ 34 ความสามารถ 5K พร้อมเสียงบรรยาย',
+      'ทุกฟีเจอร์มาพร้อมวิดีโอ Animatic WebM สะอาดตาและเสียงบรรยายระดับสตูดิโอครบ 7 ภาษา ดูพอร์ทัลไวท์เลเบล สตูดิโอเซลฟี่ FlowDirector ซ่อมคลิปใน 1 คลิก และเอเจนต์อัตโนมัติ',
+    expandCta: 'สำรวจ 39 ความสามารถพร้อมเสียงบรรยาย',
     collapseCta: 'ซ่อนสารบบความสามารถสตูดิโอ',
     automationEyebrow: 'สร้างมาเพื่อครีเอเตอร์สายโปรดักชันและผู้ให้บริการวิดีโอที่ดูแล 20 โปรเจกต์พร้อมกัน',
     automationTitle: 'เวิร์กโฟลว์อัตโนมัติครบวงจร: เอเจนต์สร้างงานเบื้องหลัง FlowDirector ตรวจและซ่อมใน 1 คลิก',
@@ -681,8 +687,8 @@ export const STUDIO_LANDING_COPY_TH = {
     spotlightFlowDirectorMeta: 'คะแนนผู้ชม AR + มาตรฐานผู้กำกับ · สร้างคลิปใหม่ใน 1 คลิก',
     spotlightAgentsLabel: 'เอเจนต์ผลิตงานอัตโนมัติ',
     spotlightAgentsMeta: 'ทำงานแทน 300+ พรอมต์ · ขยายสเกลสู่ 20 โปรเจกต์พร้อมกัน',
-    spotlightNarrated5kLabel: '34 ฟีเจอร์ · แพนกล้อง 5K พากย์เสียง',
-    spotlightNarrated5kMeta: 'แพนภาพ 5K ซิงก์คำบรรยาย + เสียงพากย์ Neural ครบทั้ง 7 ภาษา',
+    spotlightNarrated5kLabel: '39 ฟีเจอร์ · วิดีโอ Animatic พากย์เสียง',
+    spotlightNarrated5kMeta: 'วิดีโอ WebM 16:9 สะอาดตา + เสียงบรรยายสตูดิโอครบทั้ง 7 ภาษา',
   },
   academyStrip: {
     badge: 'การันตีเริ่มใช้งานได้ทันที · Studio Academy',

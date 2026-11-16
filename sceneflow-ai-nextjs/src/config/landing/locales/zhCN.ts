@@ -572,6 +572,8 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         description:
           '通过智能故事访谈采集人生历程，锁定从 70 年代青年时期到晚年的分龄人物肖像，调度全自动 Production Agents，由 FlowDirector 一键修复镜头，并通过免登录 Screening Room 链接交付。',
         featureIcons: [
+          'clientIntake',
+          'selfieStudio',
           'startBlueprint',
           'treatment',
           'continuity',
@@ -589,8 +591,10 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         badge: '20+ 并行项目 · 全自动智能体 + FlowDirector 质检',
         headline: '借助全流程自动化，以直降 50%–80% 的成本同时推进 20 个客户项目',
         description:
-          '精准预测 Pre-vis 积分消耗，在 20 条并行客户产线中批量调度 Audio、Stills、Clips 与 Production Agents，由 FlowDirector 从观众与导演双视角审片并一键重制镜头，输出 70+ 语言版本。',
+          '启用白标客户门户与项目经理积分上限，在共享蓝图中核验净利率，调度全自动智能体推进 20 条客户产线，由 FlowDirector 一键重制镜头并输出 70+ 语言版本。',
         featureIcons: [
+          'producerLaunchpad',
+          'blueprintShare',
           'scriptSupervisor',
           'productionAgent',
           'budget',
@@ -626,13 +630,14 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         badge: '高完播率频道 · 多主持人对谈节目',
         headline: '配备录音棚级多角色人声、原创配乐与精修混音，每周稳定更新',
         description:
-          '渲染前测试观众完播率钩子，执导多主持人互动张力与专属情绪配乐，在 Production Mixer 中精细打磨节奏，并打包导出 16:9 + 9:16 社媒矩阵成片。',
+          '渲染前测试观众完播率钩子，执导多主持人互动张力与专属情绪配乐，在 Production Mixer 中精细打磨节奏，并通过一键 OAuth 直发 16:9 + 9:16 社媒矩阵成片。',
         featureIcons: [
           'sceneWorkflow',
           'seriesResonance',
           'musicScore',
           'scriptSupervisor',
           'mixer',
+          'streamsInventory',
           'shipPackage',
         ],
       },
@@ -642,10 +647,11 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         badge: '立项路演案卷 · 概念验证院线短片',
         headline: '全面压测剧本结构，带着成片级概念预告片自信走进投资路演会',
         description:
-          '与 FlowDirector 协同打磨剧本，在 Blueprint 与剧本双重关卡用 Audience Resonance 评估结构节奏，生成好莱坞工业标准剧本，并剪辑震撼路演预告片。',
+          '与 FlowDirector 协同打磨剧本，在 Blueprint 与剧本双重关卡用 Audience Resonance 评估结构节奏，分享图文故事板并剪辑震撼路演预告片。',
         featureIcons: [
           'blueprintDirector',
           'blueprintResonance',
+          'blueprintShare',
           'goToProduction',
           'productionScript',
           'scriptResonance',
@@ -655,11 +661,11 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
     ],
   },
   directoryDrawer: {
-    badge: '工作流自动化与 34 项核心能力 · 7 语种 5K 运镜解说导览',
+    badge: '工作流自动化与 39 项核心能力 · 7 语种配音动态演示',
     title: '自动化制片与专家视频质检，轻松统管 20+ 个并行项目',
     subtitle:
-      '每项功能现均配备交互式 5K 平移运镜与 7 种语言配音解说。亲眼见证 FlowDirector 如何从观众与导演双视角审阅场景视频并一键重制镜头，以及智能体如何替代 300+ 次手动提示词。',
-    expandCta: '探索全部 34 项 5K 配音功能导览',
+      '每项能力现均配备清爽的 16:9 WebM 动态分镜演示与覆盖 7 种语言的完整演播室配音解说。了解白标门户、自拍影棚、FlowDirector 一键修片与全自动智能体矩阵。',
+    expandCta: '探索全部 39 项配音核心能力',
     collapseCta: '收起工作室核心能力名录',
     automationEyebrow: '专为高产创作者与同时管理 20 个项目的视频服务商打造',
     automationTitle: '端到端工作流自动化：智能体后台批量生成，FlowDirector 一键审片与重制。',
@@ -669,8 +675,8 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
     spotlightFlowDirectorMeta: '观众 AR + 导演合规评分 · 一键修复自动重制镜头',
     spotlightAgentsLabel: '全自动制片智能体矩阵',
     spotlightAgentsMeta: '替代 300+ 手动提示词 · 轻松扩展至 20 个并行项目',
-    spotlightNarrated5kLabel: '34 项能力 · 5K 运镜配音解说',
-    spotlightNarrated5kMeta: '同步 5K 镜头平移 + 覆盖全部 7 种语言的神经网络配音',
+    spotlightNarrated5kLabel: '39 项能力 · 配音动态演示',
+    spotlightNarrated5kMeta: '清爽 16:9 WebM 动态演示短片 + 覆盖全部 7 种语言的演播室解说',
   },
   academyStrip: {
     badge: '零学习门槛保障 · Studio Academy',

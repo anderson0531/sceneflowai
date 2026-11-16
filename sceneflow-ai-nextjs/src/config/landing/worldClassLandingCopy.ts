@@ -599,8 +599,10 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         badge: 'Flagship Client Service · $349–$1,250/Film',
         headline: 'Turn Family Interviews & Keepsake Photos into Heirloom Cinema',
         description:
-          'Capture a life story through intelligent intake, lock multi-age portraits from 1970s youth to modern day, dispatch autonomous Production Agents, run FlowDirector 1-click clip fixes, and deliver via a zero-login Screening Room link.',
+          'Capture a life story through zero-login 7-language intake, polish & de-age portraits in Character Selfie Studio from 1970s youth to modern day, dispatch autonomous Production Agents, run FlowDirector 1-click clip fixes, and deliver via a zero-login Screening Room link.',
         featureIcons: [
+          'clientIntake',
+          'selfieStudio',
           'startBlueprint',
           'treatment',
           'continuity',
@@ -618,8 +620,10 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         badge: '20+ Concurrent Projects · Autonomous Agents + FlowDirector QA',
         headline: 'Manage 20 Concurrent Client Projects at 50%–80% Lower Cost with Workflow Automation',
         description:
-          'Forecast Pre-vis spend, dispatch autonomous Audio, Stills, Clips, and Production Agents across 20 active client pipelines, review scene videos from Audience + Director perspectives in FlowDirector with 1-click clip recreation, and ship 70+ language streams.',
+          'Launch white-label portals & PM credit caps, verify net margins on shared Blueprints, dispatch autonomous Audio, Stills, Clips, and Production Agents across 20 active pipelines, review scene videos in FlowDirector with 1-click clip recreation, and ship 70+ language streams.',
         featureIcons: [
+          'producerLaunchpad',
+          'blueprintShare',
           'scriptSupervisor',
           'productionAgent',
           'budget',
@@ -637,7 +641,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         badge: 'Multi-Episode IP · Locked Art & Cast Continuity',
         headline: 'Run an Entire Showrunner Bible from Episode 1 to Season Finale',
         description:
-          'Build a multi-episode season arc, freeze photorealistic or stylized 3D art direction across every episode, direct storyboard beats and keyframes, and render cinema-grade video clips.',
+          'Build a multi-episode season arc, freeze photorealistic or stylized 3D art direction across every episode, direct storyboard beats and keyframes, and render cinema-grade Omni 1.2 Flash 10s video clips.',
         featureIcons: [
           'newSeries',
           'seriesReview',
@@ -655,13 +659,14 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         badge: 'High-Retention Faceless Channels · Multi-Host Shows',
         headline: 'Publish Weekly Story-Driven Episodes with Studio Voice, Music & Polish',
         description:
-          'Test audience retention hooks before rendering, direct multi-voice host chemistry and custom musical underscore, polish timing in the Production Mixer, and ship 16:9 + 9:16 social packages.',
+          'Test audience retention hooks before rendering, direct multi-voice host chemistry, shot-aligned narration cues, and custom musical underscore, polish 4-stem mixes, and publish 16:9 + 9:16 social streams via 1-Click OAuth.',
         featureIcons: [
           'sceneWorkflow',
           'seriesResonance',
           'musicScore',
           'scriptSupervisor',
           'mixer',
+          'streamsInventory',
           'shipPackage',
         ],
       },
@@ -671,10 +676,11 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         badge: 'Greenlight Decks · Proof-of-Concept Cinema',
         headline: 'Stress-Test Your Screenplay and Walk Into Pitch Meetings with a Finished Trailer',
         description:
-          'Co-write with FlowDirector, score structural pacing with Audience Resonance at Blueprint and Script gates, format industry-standard scene scripts, and cut theatrical proof-of-concept trailers.',
+          'Co-write with FlowDirector, score structural pacing with Audience Resonance at Blueprint and Script gates, share illustrated storyboards with budget forecasts, format industry-standard scene scripts, and cut theatrical proof-of-concept trailers.',
         featureIcons: [
           'blueprintDirector',
           'blueprintResonance',
+          'blueprintShare',
           'goToProduction',
           'productionScript',
           'scriptResonance',
@@ -684,11 +690,11 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     ],
   },
   directoryDrawer: {
-    badge: 'Workflow Automation & 34 Studio Capabilities · 5K Narrated in 7 Languages',
+    badge: 'Workflow Automation & 39 Studio Capabilities · Narrated Animatics in 7 Languages',
     title: 'Automate Production & Expert Video QA Across 20+ Concurrent Projects',
     subtitle:
-      'Every capability now includes an interactive 5K panned & 7-language narrated walkthrough. See how FlowDirector reviews rendered scene videos from both Audience and Director perspectives with 1-click clip recreation—and how autonomous agents replace 300+ manual prompts.',
-    expandCta: 'Explore 34 Narrated 5K Capabilities',
+      'Every capability now includes a clean, mobile-friendly WebM animatic film with complete studio narration in 7 languages. See how White-Label Portals, Selfie Studio, FlowDirector 1-click clip fixes, and autonomous agents replace 300+ manual prompts.',
+    expandCta: 'Explore 39 Narrated Studio Capabilities',
     collapseCta: 'Hide Studio Capabilities Directory',
     automationEyebrow: 'Built for High-Volume Creators & 20-Project Video Service Providers',
     automationTitle: 'End-to-End Workflow Automation: Agents Build. FlowDirector Audits & Fixes in 1 Click.',
@@ -698,8 +704,8 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     spotlightFlowDirectorMeta: 'Audience AR + Director Compliance · 1-Click Fix Recreates Clips',
     spotlightAgentsLabel: 'Autonomous Production Agents',
     spotlightAgentsMeta: '300+ Prompts Automated · Self-Healing Across 20 Active Projects',
-    spotlightNarrated5kLabel: '34 Capabilities · 5K Pan Narrated',
-    spotlightNarrated5kMeta: 'Synchronized 5K Camera Pan + Neural Voiceover in All 7 Languages',
+    spotlightNarrated5kLabel: '39 Capabilities · Narrated Animatics',
+    spotlightNarrated5kMeta: 'Clean 16:9 WebM Animatic Films + Studio Narration in All 7 Languages',
   },
   academyStrip: {
     badge: 'Zero Learning Curve Guarantee · Studio Academy',

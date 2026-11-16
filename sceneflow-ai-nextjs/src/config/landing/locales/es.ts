@@ -584,6 +584,8 @@ export const STUDIO_LANDING_COPY_ES = {
         description:
           'Captura una historia de vida con entrevista inteligente, bloquea retratos multiedad desde los años 70 hasta hoy, ejecuta Production Agents autónomos, recrea clips en 1 clic con FlowDirector y entrega por enlace privado de Screening Room.',
         featureIcons: [
+          'clientIntake',
+          'selfieStudio',
           'startBlueprint',
           'treatment',
           'continuity',
@@ -601,8 +603,10 @@ export const STUDIO_LANDING_COPY_ES = {
         badge: '20+ Proyectos Activos · Agentes Autónomos + FlowDirector QA',
         headline: 'Gestiona 20 Proyectos Simultáneos con un 50%–80% Menos de Costo mediante Automatización',
         description:
-          'Pronostica créditos Pre-vis, lanza agentes autónomos de Audio, Stills, Clips y Producción en 20 proyectos activos, revisa videos desde perspectiva de Audiencia y Director en FlowDirector con recreación de clips en 1 clic, y entrega en 70+ idiomas.',
+          'Activa portales marca blanca y topes de créditos para PMs, valida márgenes en Blueprints compartidos, lanza agentes autónomos en 20 proyectos activos, revisa videos en FlowDirector con arreglos en 1 clic y entrega en 70+ idiomas.',
         featureIcons: [
+          'producerLaunchpad',
+          'blueprintShare',
           'scriptSupervisor',
           'productionAgent',
           'budget',
@@ -638,13 +642,14 @@ export const STUDIO_LANDING_COPY_ES = {
         badge: 'Canales de Alta Retención · Shows Multivoz',
         headline: 'Publica Episodios Semanales con Voces de Estudio, Música Original y Mezcla Fina',
         description:
-          'Evalúa ganchos de retención antes de producir, dirige química entre múltiples anfitriones y banda sonora a medida, ajusta tiempos en Production Mixer y exporta paquetes 16:9 + 9:16.',
+          'Evalúa ganchos de retención antes de producir, dirige química entre múltiples anfitriones y banda sonora a medida, ajusta tiempos en Production Mixer y publica paquetes 16:9 + 9:16 con OAuth en 1 clic.',
         featureIcons: [
           'sceneWorkflow',
           'seriesResonance',
           'musicScore',
           'scriptSupervisor',
           'mixer',
+          'streamsInventory',
           'shipPackage',
         ],
       },
@@ -654,10 +659,11 @@ export const STUDIO_LANDING_COPY_ES = {
         badge: 'Carpetas de Luz Verde · Cine Proof-of-Concept',
         headline: 'Pon a Prueba tu Guion y Entra a Reuniones de Pitch con un Tráiler Terminado',
         description:
-          'Co-escribe con FlowDirector, mide ritmo estructural con Audience Resonance en Blueprint y Guion, formatea guiones estándar de la industria y monta tráilers cinematográficos.',
+          'Co-escribe con FlowDirector, mide ritmo estructural con Audience Resonance en Blueprint y Guion, comparte storyboards ilustrados, formatea guiones estándar y monta tráilers cinematográficos.',
         featureIcons: [
           'blueprintDirector',
           'blueprintResonance',
+          'blueprintShare',
           'goToProduction',
           'productionScript',
           'scriptResonance',
@@ -667,11 +673,11 @@ export const STUDIO_LANDING_COPY_ES = {
     ],
   },
   directoryDrawer: {
-    badge: 'Automatización y 34 Capacidades · Recorrido 5K Narrado en 7 Idiomas',
+    badge: 'Automatización y 39 Capacidades · Animatics WebM Narrados en 7 Idiomas',
     title: 'Automatiza Producción y Control de Calidad en 20+ Proyectos Simultáneos',
     subtitle:
-      'Cada herramienta incluye ahora un recorrido 5K panorámico y narrado en 7 idiomas. Descubre cómo FlowDirector evalúa el video desde la perspectiva de Audiencia y Director con recreación de clips en 1 clic, y cómo los agentes reemplazan 300+ prompts.',
-    expandCta: 'Explorar 34 Capacidades 5K Narradas',
+      'Cada herramienta incluye ahora un animatic WebM limpio con narración completa de estudio en 7 idiomas. Descubre los Portales Marca Blanca, el Estudio de Selfies, FlowDirector en 1 clic y los agentes autónomos.',
+    expandCta: 'Explorar 39 Capacidades Narradas',
     collapseCta: 'Ocultar Directorio de Capacidades',
     automationEyebrow: 'Diseñado para Creadores de Alto Volumen y Proveedores con 20 Proyectos',
     automationTitle: 'Automatización Integral: Los Agentes Producen. FlowDirector Audita y Repara en 1 Clic.',
@@ -681,8 +687,8 @@ export const STUDIO_LANDING_COPY_ES = {
     spotlightFlowDirectorMeta: 'Audiencia AR + Director · Recrea Clips en 1 Clic',
     spotlightAgentsLabel: 'Agentes Autónomos de Producción',
     spotlightAgentsMeta: '300+ Prompts Automatizados · Escala a 20 Proyectos Activos',
-    spotlightNarrated5kLabel: '34 Capacidades · Tour 5K Narrado',
-    spotlightNarrated5kMeta: 'Paneo 5K Sincronizado + Voz Neuronal en los 7 Idiomas',
+    spotlightNarrated5kLabel: '39 Capacidades · Animatics Narrados',
+    spotlightNarrated5kMeta: 'Videos Animatic WebM 16:9 + Narración de Estudio en los 7 Idiomas',
   },
   academyStrip: {
     badge: 'Garantía de Curva de Aprendizaje Cero · Studio Academy',

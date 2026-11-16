@@ -414,6 +414,32 @@
         "promise": "Of jy nou 'n episode vanaf die Series Room begin of 'n selfstandige kenmerk begin, die Blueprint Room is waar jou kreatiewe DNS insluit. Vervolmaak die maatblad, rolverdeling, liggings en visuele styl hier—so die Production Stage bou die regte skrif met die eerste pas.",
         "features": [
           {
+            "icon": "clientIntake",
+            "title": "Zero-Login Client Story Intake",
+            "description": "Send a branded white-label `/intake/` link or embed `/embed/intake/` directly on your agency website across 7 native languages. Clients speak or type their story with live voice dictation, sign a timestamped media, multi-age likeness, and voice consent ledger, and upload photos (with EXIF GPS stripped automatically) while Vision AI inspects each image to ask smart follow-ups and synthesize a Clarified Vision Proposal.",
+            "screenshot": "Zero-Login Client Story Intake — 7-language portal, voice dictation, likeness consent ledger, Vision photo interview, and Clarified Vision Proposal",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Zero-login 7-language portal & iframe embed",
+                  "description": "Collect rich family memoirs, real estate briefs, or corporate SOPs via branded link or website embed with live voice dictation and zero client account friction."
+                },
+                {
+                  "title": "Vision-driven photo interview & EXIF stripping",
+                  "description": "Multimodal Vision AI inspects uploaded family, property, or brand photos (automatically sanitized of EXIF GPS data) to ask smart era, wardrobe, and setting follow-up questions."
+                },
+                {
+                  "title": "Clickwrap likeness, multi-age & voice consent ledger",
+                  "description": "Every submission records timestamped legal authorization for real-person photos, multi-decade likeness reconstruction, and vocal synthesis—with zero shared AI model training."
+                },
+                {
+                  "title": "Completeness Gate & Clarified Vision Proposal",
+                  "description": "Synthesizes an emerald Clarified Vision Proposal that clients confirm in one click to auto-scaffold your Blueprint and Continuity Vault."
+                }
+              ]
+            }
+          },
+          {
             "icon": "startBlueprint",
             "title": "Start the Blueprint",
             "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
@@ -528,6 +554,28 @@
             }
           },
           {
+            "icon": "blueprintShare",
+            "title": "Illustrated Blueprint Share & Margin Estimator",
+            "description": "Share a zero-login `/blueprint/share/` link featuring illustrated storyboard beats, narrated treatment playback, and live client-to-PM chat within enforced revision-round caps—paired internally with the Blueprint Cost & Profit Margin Estimator that forecasts exact compute credits, a 20% smart retake reserve, and your net 65%–85% service margin before greenlighting.",
+            "screenshot": "Illustrated Blueprint Share & Margin Estimator — visual beat storyboards, client sign-off, revision cap chat, and live profit margin calculator",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Illustrated beat storyboards & narrated treatment",
+                  "description": "Clients read or listen to the treatment alongside illustrated storyboard beats so they visualize the exact film before you spend motion compute."
+                },
+                {
+                  "title": "Blueprint Cost & Profit Margin Estimator",
+                  "description": "Forecast exact Blueprint, Continuity, Audio, Stills, and 10s Clip credits plus a 20% retake buffer against your client package fee."
+                },
+                {
+                  "title": "Live client-PM chat & revision-round firewall",
+                  "description": "Resolve feedback in a unified browser thread with enforced revision-round and credit caps that eliminate scope creep."
+                }
+              ]
+            }
+          },
+          {
             "icon": "goToProduction",
             "title": "Greenlight to Production",
             "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
@@ -616,6 +664,32 @@
                 }
               },
               {
+                "icon": "selfieStudio",
+                "title": "Character Selfie Studio & Reference Likeness",
+                "description": "Turn any casual phone selfie or vintage family snapshot into a studio-grade Continuity anchor. AI face framing, zero-prep hair and grooming tidy, complexion lighting polish, and red-eye/symmetry correction preserve strict 1:1 facial bone structure with zero beautification drift—paired with multi-decade Reference Likeness de-aging, multi-parent lineage inheritance, one-click `Reset from Script`, and Multimodal Portrait-to-Voice acoustic matching.",
+                "screenshot": "Character Selfie Studio & Reference Likeness — AI headshot polish with 1:1 identity lock, multi-age de-aging, and Portrait-to-Voice matching",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Zero-prep AI headshot polish with 1:1 bone lock",
+                      "description": "Auto-crop face framing, smooth stray flyaways, balance 5200K key lighting, and fix red-eye or lens distortion without altering eyes, nose, or jawline."
+                    },
+                    {
+                      "title": "Multi-decade Reference Likeness & lineage blending",
+                      "description": "De-age or age real individuals accurately across eras (e.g., Age 17, Age 32, Age 62) and blend multi-parent family traits for biographical memoirs."
+                    },
+                    {
+                      "title": "Multimodal Portrait-to-Voice matching",
+                      "description": "Analyzes portrait age, persona, and script role to calibrate vocal timbre, pitch register, and speaking cadence across 70+ languages."
+                    },
+                    {
+                      "title": "1-Click Reset from Script",
+                      "description": "Re-synchronize cast wardrobes, era looks, and signature props directly from updated screenplay scenes in one click."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "continuity",
                 "title": "The Continuity Library",
                 "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
@@ -681,6 +755,32 @@
                     {
                       "title": "Draft-to-Final tier scheduling",
                       "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "producerLaunchpad",
+                "title": "White-Label Producer Launchpad & RBAC",
+                "description": "Launch a client-facing video production agency in four guided steps. Configure 100% white-label Pro+ portal branding (studio name, logo, accent colors, and hidden SceneFlow credits), deploy turnkey Service-in-a-Box rate cards and 20% partner referral sheets across 4 verticals, and assign Project Managers with role-based access (RBAC) and hard monthly credit caps.",
+                "screenshot": "White-Label Producer Launchpad & RBAC — 4-step agency wizard, Pro+ branding, Service-in-a-Box rate cards, and PM monthly credit caps",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "100% white-label client portals (Pro+)",
+                      "description": "Clients experience only your studio brand across Intake, Blueprint, Continuity, and Screening Room links with zero SceneFlow credit pricing exposed."
+                    },
+                    {
+                      "title": "Service-in-a-Box rate cards & 20% partner sheets",
+                      "description": "Built-in pricing playbooks and referral partner templates for Video Memoirs, Real Estate Tours, Corporate Training SOPs, and Local Brand Packs."
+                    },
+                    {
+                      "title": "Project Manager RBAC & monthly credit caps",
+                      "description": "Invite Project Managers to run 20+ concurrent client pipelines within enforced monthly credit allowances and daily public intake limits."
+                    },
+                    {
+                      "title": "EXIF stripping, zero training & 1-click purge",
+                      "description": "Automatically strips EXIF GPS on upload, never trains shared AI models on client archives, and purges raw uploads in one click post-delivery."
                     }
                   ]
                 }
@@ -1041,6 +1141,28 @@
                     {
                       "title": "Localized hooks & title cards",
                       "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "streamsInventory",
+                "title": "Streams Inventory & 1-Click Social Publishing",
+                "description": "Manage every project deliverable from one unified `Stream Explorer` dashboard—spanning lossless multi-scene Stitched Pre-Vis Animatics, individual scenes, chapters, vertical `9:16` social promos, and 70+ language `4K` masters with full version histories—then publish directly to YouTube, TikTok, and Facebook via zero-GCP 1-Click OAuth.",
+                "screenshot": "Streams Inventory & 1-Click Social Publishing — Stream Explorer catalog, lossless Pre-Vis stitch, 70+ language filter, and 1-Click OAuth",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Unified Stream Explorer & version history",
+                      "description": "Inspect, filter, and compare all Pre-Vis animatics, scenes, chapters, 9:16 cutdowns, and 70+ language masters in one production inventory."
+                    },
+                    {
+                      "title": "Lossless multi-scene Stitched Pre-Vis Deliverable",
+                      "description": "Compile all approved scene animatics into one audio-clocked multi-scene Pre-Vis film for complete stakeholder sign-off before motion spend."
+                    },
+                    {
+                      "title": "Zero-GCP 1-Click OAuth social publishing",
+                      "description": "Connect YouTube, TikTok, and Facebook accounts in one click with zero Google Cloud console setup—complete with localized metadata and thumbnails."
                     }
                   ]
                 }
@@ -3596,13 +3718,13 @@
       "cards": [
         {
           "id": "services",
-          "badge": "Income Opportunity · 65–85% Typical Margin",
+          "badge": "Income Opportunity · 65–85% Gross Service Margin",
           "title": "Video Delivery Businesses",
-          "description": "Deliver bespoke Life Memoirs, Real Estate Walkthroughs, Corporate Training, and Brand Films for paying clients in hours instead of weeks—with full commercial ownership.",
+          "description": "Lead with high-margin Life Memoirs—then stack repeat monthly retainers across Corporate Training, Real Estate, and Brand Films with full commercial ownership.",
           "highlights": [
-            "Guided story-first client intake & multi-age cast continuity",
-            "Shared links for Blueprint, Continuity & Screening Room sign-off",
-            "Hybrid client photos + 4K AI re-enactments keep margins high"
+            "Zero-login white-label portals for Intake, Blueprint, Continuity & Screening",
+            "Voiced Pre-vis Animatic & round caps prevent costly client reshoots",
+            "Hybrid client photos + cinema AI re-enactments protect 65–85% margins"
           ],
           "ctaLabel": "Explore Business Models & Margins",
           "targetAnchor": "video-services"
@@ -3745,88 +3867,145 @@
       "eyebrow": "Video Delivery Services · Solo Operators & Agencies",
       "title": "Deliver $1,500+ Production Value at",
       "titleAccent": "50%–80% Lower Cost to Produce",
-      "subtitle": "Traditional crews and 30-hour manual edits price out 90% of families, realtors, and local businesses. SceneFlow cuts your fully-loaded delivery cost—compute credits plus operator time—by 50% to 80%, so you can win clients at accessible prices and still keep 65%–85% net profit.",
-      "commercialRightsBadge": "100% Commercial Ownership · Deliver Client Masters Anywhere",
-      "costSavingsPillLabel": "50%–80% Lower Cost to Deliver · Win Priced-Out Clients",
-      "verticalsHeading": "1. Choose a High-Demand Client Service",
+      "subtitle": "Traditional crews and 30-hour manual edits price out 90% of families, realtors, and local businesses. Start with flagship Life Memoirs via local referral partners—then layer recurring B2B retainers while cutting fully-loaded delivery cost (compute + operator time) by 50% to 80%.",
+      "commercialRightsBadge": "100% Commercial Ownership · White-Label Client Portals (Pro+)",
+      "costSavingsPillLabel": "Flagship Life Memoirs + Recurring B2B Retainers",
+      "verticalsHeading": "1. Lead with Our Flagship Wedge — Then Expand into Repeat Retainers",
+      "globalDemandLabel": "Massive Global Market Opportunity",
       "whoBuysLabel": "Who Buys Repeatedly",
-      "marginAdvantageLabel": "Cost-to-Deliver Advantage",
-      "calculatorBadge": "Transparent Cost & Profit Estimator",
-      "calculatorTitle": "2. Compare Delivery Cost & Monthly Profit",
-      "priceTierLabel": "Client pricing tier:",
+      "partnerChannelsLabel": "Zero-Ad-Spend Referral Partners",
+      "marginAdvantageLabel": "SceneFlow Margin & Scope Advantage",
+      "calculatorBadge": "Scope-Matched Cost & Profit Estimator",
+      "calculatorTitle": "2. Stress-Test Delivery Cost & Monthly Service Profit",
+      "priceTierLabel": "Client package tier:",
       "priceTierNames": [
         "Accessible",
         "Standard",
         "Boutique"
       ],
+      "tierScopePrefix": "Package scope:",
       "volumeLabel": "Client deliveries / month:",
       "projectsPerMonthSuffix": "projects/mo",
       "projectsUnitLabel": "projects",
-      "perProjectProfitLabel": "Net profit / project",
+      "stressTestToggleLabel": "Stress-test: Month-1 Ramp-Up + Pro Plan ($149/mo)",
+      "stressTestActiveNote": "Conservative ramp-up active: +60% beginner PM hours, +30% extra retake compute buffer, and $149/mo Pro membership (includes 15,000 base credits/mo).",
+      "proPlanLineLabel": "Pro plan ($149/mo) + extra compute",
+      "perProjectProfitLabel": "Service profit / project",
       "traditionalMarketLabel": "Typical market rate",
       "typicalFeeLabel": "Your client price",
-      "fullyLoadedCostLabel": "Fully-loaded cost",
+      "fullyLoadedCostLabel": "Delivery cost / project",
       "costBreakdownSubLabel": "Credits + PM time",
-      "estComputeLabel": "SceneFlow credits",
-      "activeHandsOnLabel": "Operator / PM time",
+      "estComputeLabel": "Compute (incl. 20% retake buffer)",
+      "activeHandsOnLabel": "Operator / PM time (@$50/hr)",
       "monthlyGrossLabel": "Est. Monthly Client Billing",
-      "monthlyNetLabel": "Est. Monthly Net Profit (after credits & PM time)",
+      "monthlyNetLabel": "Est. Monthly Service Profit (after compute & PM time)",
       "perMonthSuffix": "/ mo",
-      "marginBadgeSuffix": "net margin",
-      "disclaimer": "Fully-loaded delivery cost includes SceneFlow compute credits ($0.01/credit add-on rate) plus estimated operator/PM time for client intake, direction, and Screening Room review. You set your own client pricing.",
-      "launchBusinessCta": "Launch Your Video Service ($9)",
-      "workflowHeading": "How a Client Project Flows in 4 Effortless Steps",
+      "marginBadgeSuffix": "service margin",
+      "disclaimer": "Scope-matched delivery cost includes SceneFlow compute ($0.01/credit add-on rate with 20% retake buffer) plus operator/PM time valued at $50/hr. Toggle Stress-Test above to include beginner ramp-up time and Pro ($149/mo) membership; excludes local sales/marketing.",
+      "launchBusinessCta": "Build Your First Sample Film ($9)",
+      "launchBusinessSubnote": "Use the $9 Explorer test flight to produce a watermark-free portfolio sample for local partners—then upgrade to Pro ($149/mo) for 100% White-Label Client Portals.",
+      "trustShieldHeading": "Enterprise-Grade Margin, Privacy & Commercial IP Shield",
+      "trustShieldPillars": [
+        {
+          "title": "Zero-Login White-Label Portals (Pro+)",
+          "detail": "Clients review under your studio name, logo, and colors with zero SceneFlow login or credit pricing exposed."
+        },
+        {
+          "title": "Animatic Firewall & Hard Scope Caps",
+          "detail": "Clients sign off on Blueprint, Continuity, and Voiced Animatic before motion spend—with enforced revision-round and credit caps."
+        },
+        {
+          "title": "Never Trained on Client Photos or Stories",
+          "detail": "Sensitive family archives and B2B assets never train shared AI models, strip EXIF GPS on upload, and log explicit likeness consent."
+        }
+      ],
+      "playbooksBadge": "Service-in-a-Box Starter Kits Included",
+      "playbooksHeading": "Turnkey Operator Playbooks, Rate Cards & Partner Pitch Templates",
+      "playbooksSubtitle": "Accelerate past cold-start guesswork with battle-tested vertical SOPs built directly into SceneFlow Studio:",
+      "playbooksItems": [
+        "7-Language AI Biographer & B2B Client Intake Playbooks",
+        "3-Tier Package Rate Cards & In-App Margin Floor Calculator",
+        "20% Referral Partner Pitch Sheet (Senior Living, Funeral Homes & Realtors)",
+        "Built-In Clickwrap Media, Multi-Age Likeness & Voice Consent Ledger"
+      ],
+      "workflowHeading": "How a White-Label Client Project Flows in 4 Effortless Steps",
       "stepPrefix": "Step",
       "workflowSteps": [
         {
           "step": "01",
-          "title": "Story-First Client Intake",
-          "detail": "Interview your client (\"Tell me your story\") to capture resonating life or brand beats and key individuals."
+          "title": "Zero-Login Story Intake",
+          "detail": "Send a branded Intake link (\"Tell me your story\") with mandatory likeness/media consent to capture key individuals and beats."
         },
         {
           "step": "02",
           "title": "Shared Blueprint Sign-Off",
-          "detail": "Refine with Audience Resonance internally, then send a clean Blueprint link for client approval before production."
+          "detail": "Verify story impact with Audience Resonance internally, then lock client Blueprint approval before spending on renders."
         },
         {
           "step": "03",
-          "title": "Shared Continuity & Mobile Photo Uploads",
-          "detail": "Send a Continuity link so clients upload real photos from their phone and approve Cast, Wardrobes, Locations & Props before autonomous agents render."
+          "title": "Mobile Photo Upload & Continuity Lock",
+          "detail": "Clients upload real photos from their phone (EXIF GPS stripped) and approve multi-age Cast, Wardrobes & Sets within capped rounds."
         },
         {
           "step": "04",
-          "title": "Screening Room Delivery",
-          "detail": "Share a private Screening Room link for frame-accurate review, export the 4K master, and collect payment."
+          "title": "Screening Room Master Delivery",
+          "detail": "Collect frame-accurate notes on a zero-login Screening Room link, ship 4K + 70-language masters, and purge raw uploads in 1 click."
         }
       ],
       "verticals": [
         {
           "id": "memoir",
           "tabLabel": "Video Memoirs",
-          "badge": "$300–$950 / film · Market Rate: $800–$3,500+",
+          "roleTag": "★ Flagship High-Margin Wedge",
+          "badge": "$349–$1,250 / film · Market Rate: $1,200–$4,500+",
           "title": "Life Stories, Milestone Tributes & Family Biographies",
-          "description": "Blend treasured family photographs with cinematic AI era re-enactments and accurate multi-age character continuity (e.g., Age 17 → Age 32 → Age 62) narrated in warm, lifelike voices.",
-          "clientBuyer": "Families, milestone birthdays, estate planners, senior communities & funeral homes",
-          "traditionalMarketRangeLabel": "$800–$3,500+",
-          "typicalRetailUsd": 499,
+          "description": "Blend treasured family photographs with cinematic AI era re-enactments, heirloom prop locks, and accurate multi-age character continuity (e.g., Age 17 → Age 32 → Age 62) narrated in warm, lifelike voices.",
+          "globalMarketNeed": "Hundreds of millions of aging parents, 50th anniversaries, and celebrations of life happen globally every year—yet 90%+ go unfilmed because $2,000+ crews are unaffordable.",
+          "clientBuyer": "Families celebrating milestone birthdays, 50th anniversaries, retirements & legacy tributes",
+          "partnerChannels": "Estate planners, senior living communities, funeral directors & milestone event planners (15–20% referral partner model)",
+          "traditionalMarketRangeLabel": "$1,200–$4,500+",
+          "typicalRetailUsd": 599,
           "priceTiersUsd": [
-            300,
-            499,
-            950
+            349,
+            599,
+            1250
           ],
-          "retailRangeLabel": "$300–$950",
-          "estComputeUsd": 22,
-          "estOperatorUsd": 78,
-          "activeMinutesLabel": "~1.5–2 hrs",
-          "keyAdvantage": "Deliver a $1,500-caliber memoir for ~$100 fully loaded (~$22 credits + ~$78 PM time)—pricing at $300–$500 wins families priced out of traditional crews."
+          "tierScopeLabels": [
+            "5-min Milestone Tribute · 75% Photos + 1080p→4K Clips · 1 Lang",
+            "12-min Family Memoir · Multi-Age Cast + Era Clips · 2 Langs",
+            "20-min Legacy Documentary · 4K Eras + Heirloom Locks · 4 Langs"
+          ],
+          "computeTiersUsd": [
+            18,
+            34,
+            72
+          ],
+          "operatorTiersUsd": [
+            62,
+            88,
+            150
+          ],
+          "activeTimeTiersLabels": [
+            "~1.25 hrs",
+            "~1.75 hrs",
+            "~3.0 hrs"
+          ],
+          "retailRangeLabel": "$349–$1,250",
+          "estComputeUsd": 34,
+          "estOperatorUsd": 88,
+          "activeMinutesLabel": "~1.75 hrs",
+          "keyAdvantage": "Our highest-conviction wedge: zero-competition multi-age continuity delivers a $2,000-caliber family film for ~$122 total cost (~$34 compute + ~$88 PM time)."
         },
         {
           "id": "realestate",
           "tabLabel": "Real Estate Tours",
+          "roleTag": "↻ Repeat Broker Retainer",
           "badge": "$199–$549 / listing · Market Rate: $450–$1,500+",
           "title": "Narrated Luxury Property & Boutique Hospitality Tours",
-          "description": "Turn listing photographs and neighborhood highlights into scored, narrated cinema walkthroughs—plus instant Mandarin, Spanish, Arabic, or Portuguese versions for international buyers.",
-          "clientBuyer": "Residential realtors, luxury brokerages, vacation rentals & boutique hotels",
+          "description": "Turn listing photographs and neighborhood highlights into scored, narrated cinema walkthroughs—plus instant Mandarin, Spanish, Arabic, or Portuguese versions for cross-border buyers.",
+          "globalMarketNeed": "Tens of millions of home listings, short-term rentals, and boutique hotels compete for domestic and international buyers worldwide every month—most still stuck with static photos.",
+          "clientBuyer": "Top-producing residential realtors, luxury brokerages, vacation rentals & boutique hotels",
+          "partnerChannels": "Real estate photography studios, MLS staging teams, luxury brokerages & hospitality marketers",
           "traditionalMarketRangeLabel": "$450–$1,500+",
           "typicalRetailUsd": 299,
           "priceTiersUsd": [
@@ -3834,19 +4013,42 @@
             299,
             549
           ],
+          "tierScopeLabels": [
+            "90s MLS Photo Walkthrough · 1080p Cinema + 1 Lang",
+            "2-min Narrated Property Tour · 4K Upscaled + 2 Langs",
+            "3-min Luxury Estate Film + 9:16 Reels · 4 International Langs"
+          ],
+          "computeTiersUsd": [
+            10,
+            15,
+            28
+          ],
+          "operatorTiersUsd": [
+            38,
+            50,
+            88
+          ],
+          "activeTimeTiersLabels": [
+            "~45 min",
+            "~1.0 hr",
+            "~1.75 hrs"
+          ],
           "retailRangeLabel": "$199–$549",
-          "estComputeUsd": 12,
-          "estOperatorUsd": 48,
-          "activeMinutesLabel": "~45–60 min",
-          "keyAdvantage": "No travel or weather delays: turn MLS photos into narrated, multilingual luxury tours at 60%+ lower cost than on-site shoots."
+          "estComputeUsd": 15,
+          "estOperatorUsd": 50,
+          "activeMinutesLabel": "~1.0 hr",
+          "keyAdvantage": "High repeat volume per broker: one luxury team listing 4 homes/month generates recurring monthly orders with zero travel or weather delays (~$65 delivery cost)."
         },
         {
           "id": "training",
           "tabLabel": "Training & SOPs",
+          "roleTag": "↻ Repeat B2B Retainer",
           "badge": "$599–$1,800 / module · Market Rate: $1,500–$5,000+",
           "title": "Corporate Onboarding, Safety & Multilingual Courses",
-          "description": "Lock a consistent instructor avatar, uniforms, and workplace sets in your Continuity Vault—then ship crystal-clear training episodes localized across every employee’s native language.",
-          "clientBuyer": "HR & L&D teams, manufacturers, healthcare clinics, restaurants & franchises",
+          "description": "Lock a consistent instructor presenter, uniforms, and workplace sets in your Continuity Vault—then ship standardized training episodes localized across every employee’s native language.",
+          "globalMarketNeed": "Every manufacturer, clinic network, hospitality group, and franchise globally battles frontline turnover, safety compliance, and multilingual workforces needing clear video SOPs.",
+          "clientBuyer": "HR & L&D leaders, manufacturers, healthcare clinic networks, restaurant groups & franchises",
+          "partnerChannels": "Fractional HR consultants, workplace safety auditors, LMS integrators & franchise associations",
           "traditionalMarketRangeLabel": "$1,500–$5,000+",
           "typicalRetailUsd": 950,
           "priceTiersUsd": [
@@ -3854,19 +4056,42 @@
             950,
             1800
           ],
+          "tierScopeLabels": [
+            "5-min SOP Module · Locked Instructor + 1 Workforce Lang",
+            "10-min Safety / Onboarding Course · 3 Workforce Langs",
+            "20-min Multi-Chapter Curriculum · 6+ Workforce Langs"
+          ],
+          "computeTiersUsd": [
+            24,
+            40,
+            78
+          ],
+          "operatorTiersUsd": [
+            88,
+            125,
+            210
+          ],
+          "activeTimeTiersLabels": [
+            "~1.75 hrs",
+            "~2.5 hrs",
+            "~4.2 hrs"
+          ],
           "retailRangeLabel": "$599–$1,800",
-          "estComputeUsd": 35,
-          "estOperatorUsd": 115,
-          "activeMinutesLabel": "~2–2.5 hrs",
-          "keyAdvantage": "70% lower delivery cost than live crews—and when compliance rules change, update one beat in minutes without reshooting."
+          "estComputeUsd": 40,
+          "estOperatorUsd": 125,
+          "activeMinutesLabel": "~2.5 hrs",
+          "keyAdvantage": "Sticky B2B retainers: 70%+ lower cost (~$165 vs $3,000+ live shoots), and when compliance rules change, you charge an easy update fee to re-render one beat in minutes."
         },
         {
           "id": "brand",
           "tabLabel": "Brand Stories",
+          "roleTag": "↻ Repeat SMB & Agency Pack",
           "badge": "$399–$1,200 / pack · Market Rate: $3,000–$8,000+",
           "title": "Founder Origin Films, Clinic Explainers & Social Ads",
           "description": "Craft high-converting homepage brand stories paired with automatic 9:16 vertical trailers for Instagram, TikTok, and YouTube Shorts—vetted with clients in the Screening Room.",
-          "clientBuyer": "Medical/dental practices, law firms, local SMBs, agencies & e-commerce founders",
+          "globalMarketNeed": "30M+ local clinics, law firms, restaurants, and craft founders worldwide urgently need homepage trust videos and fresh 9:16 social ads—but are locked out by $5,000+ agency shoots.",
+          "clientBuyer": "Medical/dental practices, law firms, local SMBs, web design agencies & e-commerce founders",
+          "partnerChannels": "Local web design shops, SEO/performance ad agencies, business chambers & dental/medical consultants",
           "traditionalMarketRangeLabel": "$3,000–$8,000+",
           "typicalRetailUsd": 650,
           "priceTiersUsd": [
@@ -3874,11 +4099,31 @@
             650,
             1200
           ],
+          "tierScopeLabels": [
+            "60s Clinic / SMB Trust Spot + 1 Vertical 9:16 Cutdown",
+            "2-min Founder Origin Film + 2 Social 9:16 Cutdowns",
+            "Brand Film + 4 Multilingual Paid-Ad Hook Variations"
+          ],
+          "computeTiersUsd": [
+            16,
+            28,
+            56
+          ],
+          "operatorTiersUsd": [
+            62,
+            88,
+            150
+          ],
+          "activeTimeTiersLabels": [
+            "~1.25 hrs",
+            "~1.75 hrs",
+            "~3.0 hrs"
+          ],
           "retailRangeLabel": "$399–$1,200",
-          "estComputeUsd": 22,
+          "estComputeUsd": 28,
           "estOperatorUsd": 88,
-          "activeMinutesLabel": "~1.5–2 hrs",
-          "keyAdvantage": "Unlocks local clinics, restaurants, and law firms priced out of $5,000 ad shoots—complete with 9:16 social cutdowns."
+          "activeMinutesLabel": "~1.75 hrs",
+          "keyAdvantage": "White-label fulfillment for local web & ad agencies (~$116 total delivery cost)—complete with automatic 9:16 social cutdowns."
         }
       ]
     },
@@ -3980,7 +4225,7 @@
           "creatorExampleTitle": "Scene 1: Subterranean Archive Vault · Anamorphic 4K",
           "creatorExampleNote": "Switch Elara’s wardrobe per shot, direct camera framing by voice or text, blend multi-track dialogue/SFX/score in Production Mixer, and dispatch Production Agents.",
           "serviceExampleTitle": "Hybrid Client Photos + Cinematic Era Re-Enactments",
-          "serviceExampleNote": "Place real client photographs on Ken Burns beats alongside 4K AI re-enactments for unphotographed memories—keeping a 15-minute memoir under ~$75 in compute.",
+          "serviceExampleNote": "Place real client photographs on Ken Burns beats alongside cinema AI re-enactments for unphotographed memories—keeping a 12-minute memoir around ~$34 in compute (and 20-min 4K legacy films under ~$75).",
           "callouts": [
             {
               "label": "Per-Shot Wardrobe & Voice/Typed Shot Director",
@@ -4051,10 +4296,12 @@
         {
           "id": "memoir-services",
           "tabLabel": "Video Memoirs & Family Legacy",
-          "badge": "High-Margin Client Service · $300–$950/Film",
+          "badge": "Flagship Client Service · $349–$1,250/Film",
           "headline": "Turn Family Interviews & Keepsake Photos into Heirloom Cinema",
-          "description": "Capture a life story through intelligent intake, lock multi-age portraits from 1970s youth to modern day, dispatch autonomous Production Agents, run FlowDirector 1-click clip fixes, and deliver via a zero-login Screening Room link.",
+          "description": "Capture a life story through zero-login 7-language intake, polish & de-age portraits in Character Selfie Studio from 1970s youth to modern day, dispatch autonomous Production Agents, run FlowDirector 1-click clip fixes, and deliver via a zero-login Screening Room link.",
           "featureIcons": [
+            "clientIntake",
+            "selfieStudio",
             "startBlueprint",
             "treatment",
             "continuity",
@@ -4071,8 +4318,10 @@
           "tabLabel": "20-Project Agencies & Training Video",
           "badge": "20+ Concurrent Projects · Autonomous Agents + FlowDirector QA",
           "headline": "Manage 20 Concurrent Client Projects at 50%–80% Lower Cost with Workflow Automation",
-          "description": "Forecast Pre-vis spend, dispatch autonomous Audio, Stills, Clips, and Production Agents across 20 active client pipelines, review scene videos from Audience + Director perspectives in FlowDirector with 1-click clip recreation, and ship 70+ language streams.",
+          "description": "Launch white-label portals & PM credit caps, verify net margins on shared Blueprints, dispatch autonomous Audio, Stills, Clips, and Production Agents across 20 active pipelines, review scene videos in FlowDirector with 1-click clip recreation, and ship 70+ language streams.",
           "featureIcons": [
+            "producerLaunchpad",
+            "blueprintShare",
             "scriptSupervisor",
             "productionAgent",
             "budget",
@@ -4089,7 +4338,7 @@
           "tabLabel": "Episodic Series & Stylized Animation",
           "badge": "Multi-Episode IP · Locked Art & Cast Continuity",
           "headline": "Run an Entire Showrunner Bible from Episode 1 to Season Finale",
-          "description": "Build a multi-episode season arc, freeze photorealistic or stylized 3D art direction across every episode, direct storyboard beats and keyframes, and render cinema-grade video clips.",
+          "description": "Build a multi-episode season arc, freeze photorealistic or stylized 3D art direction across every episode, direct storyboard beats and keyframes, and render cinema-grade Omni 1.2 Flash 10s video clips.",
           "featureIcons": [
             "newSeries",
             "seriesReview",
@@ -4106,13 +4355,14 @@
           "tabLabel": "YouTube Channels & Narrative Podcasts",
           "badge": "High-Retention Faceless Channels · Multi-Host Shows",
           "headline": "Publish Weekly Story-Driven Episodes with Studio Voice, Music & Polish",
-          "description": "Test audience retention hooks before rendering, direct multi-voice host chemistry and custom musical underscore, polish timing in the Production Mixer, and ship 16:9 + 9:16 social packages.",
+          "description": "Test audience retention hooks before rendering, direct multi-voice host chemistry, shot-aligned narration cues, and custom musical underscore, polish 4-stem mixes, and publish 16:9 + 9:16 social streams via 1-Click OAuth.",
           "featureIcons": [
             "sceneWorkflow",
             "seriesResonance",
             "musicScore",
             "scriptSupervisor",
             "mixer",
+            "streamsInventory",
             "shipPackage"
           ]
         },
@@ -4121,10 +4371,11 @@
           "tabLabel": "Filmmaker Pre-Vis & Pitch Trailers",
           "badge": "Greenlight Decks · Proof-of-Concept Cinema",
           "headline": "Stress-Test Your Screenplay and Walk Into Pitch Meetings with a Finished Trailer",
-          "description": "Co-write with FlowDirector, score structural pacing with Audience Resonance at Blueprint and Script gates, format industry-standard scene scripts, and cut theatrical proof-of-concept trailers.",
+          "description": "Co-write with FlowDirector, score structural pacing with Audience Resonance at Blueprint and Script gates, share illustrated storyboards with budget forecasts, format industry-standard scene scripts, and cut theatrical proof-of-concept trailers.",
           "featureIcons": [
             "blueprintDirector",
             "blueprintResonance",
+            "blueprintShare",
             "goToProduction",
             "productionScript",
             "scriptResonance",
@@ -4134,10 +4385,10 @@
       ]
     },
     "directoryDrawer": {
-      "badge": "Workflow Automation & 34 Studio Capabilities · 5K Narrated in 7 Languages",
+      "badge": "Workflow Automation & 39 Studio Capabilities · Narrated Animatics in 7 Languages",
       "title": "Automate Production & Expert Video QA Across 20+ Concurrent Projects",
-      "subtitle": "Every capability now includes an interactive 5K panned & 7-language narrated walkthrough. See how FlowDirector reviews rendered scene videos from both Audience and Director perspectives with 1-click clip recreation—and how autonomous agents replace 300+ manual prompts.",
-      "expandCta": "Explore 34 Narrated 5K Capabilities",
+      "subtitle": "Every capability now includes a clean, mobile-friendly WebM animatic film with complete studio narration in 7 languages. See how White-Label Portals, Selfie Studio, FlowDirector 1-click clip fixes, and autonomous agents replace 300+ manual prompts.",
+      "expandCta": "Explore 39 Narrated Studio Capabilities",
       "collapseCta": "Hide Studio Capabilities Directory",
       "automationEyebrow": "Built for High-Volume Creators & 20-Project Video Service Providers",
       "automationTitle": "End-to-End Workflow Automation: Agents Build. FlowDirector Audits & Fixes in 1 Click.",
@@ -4146,8 +4397,8 @@
       "spotlightFlowDirectorMeta": "Audience AR + Director Compliance · 1-Click Fix Recreates Clips",
       "spotlightAgentsLabel": "Autonomous Production Agents",
       "spotlightAgentsMeta": "300+ Prompts Automated · Self-Healing Across 20 Active Projects",
-      "spotlightNarrated5kLabel": "34 Capabilities · 5K Pan Narrated",
-      "spotlightNarrated5kMeta": "Synchronized 5K Camera Pan + Neural Voiceover in All 7 Languages"
+      "spotlightNarrated5kLabel": "39 Capabilities · Narrated Animatics",
+      "spotlightNarrated5kMeta": "Clean 16:9 WebM Animatic Films + Studio Narration in All 7 Languages"
     },
     "academyStrip": {
       "badge": "Zero Learning Curve Guarantee · Studio Academy",
@@ -4162,56 +4413,56 @@
       "startExplorerCta": "Start with Explorer — $9"
     },
     "mobileCompanion": {
-      "eyebrow": "Mobile Companion App (PWA) · iOS & Android",
+      "eyebrow": "Zero-Login Client Links + Operator Mobile PWA · iOS & Android",
       "title": "Desktop Studio Power.",
-      "titleAccent": "Pocket Command for Teams & Clients.",
-      "subtitle": "Because multi-track 4K production belongs on a desktop display, SceneFlow pairs your Studio with an instant-install Mobile PWA—connecting teams, Project Managers (PMs), and subscribed customers with live notifications, milestone status, credit budgets, and shared review links.",
-      "whyPwaBadge": "Instant PWA · Zero App Store Friction",
-      "whyPwaNote": "Installs in one tap from Safari or Chrome with native Web Push alerts—no downloads, gatekeeping, or version lag.",
-      "modeCustomerTab": "Customer & PM Loop",
-      "modeTeamTab": "Team & Budget Hub",
-      "customerHeading": "Customer-Initiated Projects with Managed PM Collaboration",
-      "customerSubheading": "Subscribed customers can initiate a project and baseline Blueprint from their phone, request PM support, and iterate through four shared approval links.",
+      "titleAccent": "Frictionless Mobile Portals for Clients & Teams.",
+      "subtitle": "Paying clients never need a SceneFlow login, app download, or subscription—they interact through your white-label mobile web links, while you and your Project Managers (PMs) track alerts, milestones, and credit caps from an instant-install Mobile PWA.",
+      "whyPwaBadge": "Zero Client Login · Instant Operator PWA",
+      "whyPwaNote": "Clients tap clean Safari/Chrome links under your brand; operators & PMs install the Companion PWA in one tap with native Web Push alerts.",
+      "modeCustomerTab": "White-Label Client Loop",
+      "modeTeamTab": "Operator & PM Hub (PWA)",
+      "customerHeading": "Zero-Login Mobile Portals Under Your Own Studio Brand",
+      "customerSubheading": "Your paying clients never see SceneFlow credit pricing or create an account—they speak their story, upload photos, and sign off across four white-label mobile links.",
       "customerSteps": [
         {
           "step": "01",
-          "badge": "Mobile Initiation",
-          "title": "Subscribe, Initiate Project & Request PM Support",
-          "detail": "Customers subscribe, speak or type their story brief on mobile to generate a baseline Blueprint, and flag Project Manager (PM) support in one tap.",
-          "linkLabel": "Mobile Companion · + New Project",
+          "badge": "Zero-Login Intake",
+          "title": "Speak or Type Story Intake & Log Likeness Consent",
+          "detail": "Clients open your branded /intake link on their phone, accept media & likeness release terms, and speak or type their story with zero account setup.",
+          "linkLabel": "/intake · White-Label Voice & Text Brief",
           "phoneHeadline": "Harbor Family Memoir",
-          "phoneStatus": "PM Support Assigned · Blueprint Ready",
-          "phoneMeta": "Customer initiated via Mobile PWA · Budget cap: 2,500 cr"
+          "phoneStatus": "Consent Logged · Draft Blueprint Ready",
+          "phoneMeta": "Zero client login · Producer cap: 2,500 cr"
         },
         {
           "step": "02",
           "badge": "Shared Blueprint & ARA",
-          "title": "Iterate on Blueprint & Audience Resonance",
-          "detail": "Your PM reviews the baseline, optimizes Audience Resonance on desktop, and shares live Blueprint & Resonance links for mobile feedback and sign-off.",
-          "linkLabel": "/blueprint/share · /share/script-resonance",
-          "phoneHeadline": "Blueprint & Resonance Review",
+          "title": "Approve Story Beats Before Render Spend",
+          "detail": "You refine pacing with Audience Resonance on desktop, then send a white-label Blueprint link for mobile client feedback and greenlight.",
+          "linkLabel": "/blueprint/share · Pre-Spend Sign-Off",
+          "phoneHeadline": "Blueprint & Beat Review",
           "phoneStatus": "94 / 100 Audience Resonance · Approved",
-          "phoneMeta": "2 beat notes resolved with PM · Ready for Continuity"
+          "phoneMeta": "Round 1 of 2 used · Ready for Continuity"
         },
         {
           "step": "03",
           "badge": "Shared Continuity Link",
-          "title": "Upload Mobile Photos & Approve Continuity",
-          "detail": "PM shares a dedicated Continuity link so customers can upload real family, property, or product photos straight from their phone gallery or camera and approve Cast, Wardrobes, Locations & Props.",
+          "title": "Upload Phone Photos (EXIF Stripped) & Lock Cast",
+          "detail": "Clients tap your Continuity link to upload real family, property, or product photos straight from their phone gallery or camera and approve Cast, Wardrobes & Sets.",
           "linkLabel": "/share/continuity · Gallery & Camera Upload",
           "phoneHeadline": "Continuity & Photo Collection",
           "phoneStatus": "6 Client Photos Uploaded · Cast & Sets Locked",
-          "phoneMeta": "Auto-downscaled & EXIF-sanitized · 1-click Studio promote"
+          "phoneMeta": "EXIF GPS auto-sanitized · Zero model training"
         },
         {
           "step": "04",
           "badge": "Shared Screening Room",
-          "title": "Frame-Accurate Mobile Screening & Final Sign-Off",
-          "detail": "Watch voiced Pre-Vis animatics and 4K rendered cuts on any phone, leave timestamped notes, and tap Approve Final Master for delivery.",
+          "title": "Frame-Accurate Mobile Screening & Master Delivery",
+          "detail": "Clients watch voiced Pre-Vis animatics and 4K rendered cuts on any phone with zero login, leave timestamped notes, and approve the final master.",
           "linkLabel": "/share/screening-room · Final Approval",
           "phoneHeadline": "Premiere Screening Room",
           "phoneStatus": "Final 4K Master Approved ✓",
-          "phoneMeta": "Multilanguage streams unlocked · Ready to publish"
+          "phoneMeta": "Multilanguage streams delivered · Raw uploads purgeable"
         }
       ],
       "teamHeading": "Real-Time Pocket Command for Producers, Directors & PMs",

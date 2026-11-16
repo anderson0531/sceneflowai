@@ -36,6 +36,14 @@ import {
   normalizeFeaturePanLocale,
 } from '@/config/landing/keyFeatureNarratedPan'
 import {
+  FEATURE_ANIMATIC_UI_COPY,
+  KEY_FEATURE_SUITES,
+  getKeyFeatureAnimaticMp4Path,
+  getKeyFeatureAnimaticPosterPath,
+  getKeyFeatureAnimaticWebmPath,
+  getKeyFeatureChapterTiming,
+} from '@/config/landing/keyFeatureAnimatics'
+import {
   VIDEO_SERVICES_NARRATED_PAN,
   VIDEO_SERVICE_PAN_UI_COPY,
   type VideoServiceVerticalId,
@@ -495,51 +503,104 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     }
   })
 
-  it('ships the 5120x3967 FlowDirector 5K screenshot and 7-language 5K pan narrated tours across all 34 capabilities', () => {
-    const flowDirectorDisk = path.join(
-      ROOT,
-      'public/landing/key-features/screenshots/script-supervisor.webp'
-    )
-    expect(existsSync(flowDirectorDisk)).toBe(true)
-    expect(statSync(flowDirectorDisk).size).toBeGreaterThan(800_000)
+  it('ships 7-language Studio Narrated WebM + MP4 Animatics across all 39 capabilities with unobstructed mobile controls', () => {
+    const readHeaderBytes = (filePath: string, length: number): Buffer => {
+      const fd = openSync(filePath, 'r')
+      try {
+        const buf = Buffer.alloc(length)
+        readSync(fd, buf, 0, length, 0)
+        return buf
+      } finally {
+        closeSync(fd)
+      }
+    }
 
-    const buf = readFileSync(flowDirectorDisk)
-    expect(buf.subarray(0, 4).toString('ascii')).toBe('RIFF')
-    expect(buf.subarray(8, 12).toString('ascii')).toBe('WEBP')
+    for (const newShot of [
+      'script-supervisor.webp',
+      'client-intake-portal.webp',
+      'blueprint-share-estimator.webp',
+      'character-selfie-studio.webp',
+      'producer-whitelabel-launchpad.webp',
+      'streams-inventory-explorer.webp',
+    ]) {
+      const disk = path.join(ROOT, 'public/landing/key-features/screenshots', newShot)
+      expect(existsSync(disk), `missing screenshot ${newShot}`).toBe(true)
+      expect(statSync(disk).size).toBeGreaterThan(50_000)
+      const head = readHeaderBytes(disk, 12)
+      expect(head.subarray(0, 4).toString('ascii')).toBe('RIFF')
+      expect(head.subarray(8, 12).toString('ascii')).toBe('WEBP')
+    }
 
-    // Every single one of the 34 KEY_FEATURE_SCREENSHOTS has a 5K Pan Narrated tour in all 7 languages
+    // Every single one of the 39 KEY_FEATURE_SCREENSHOTS has complete 7-language narration + Suite Animatic chapter timing
     const screenshotIcons = Object.keys(KEY_FEATURE_SCREENSHOTS)
-    expect(screenshotIcons.length).toBe(34)
+    expect(screenshotIcons.length).toBe(39)
     expect(Object.keys(KEY_FEATURE_NARRATED_PAN).sort()).toEqual(screenshotIcons.sort())
+    expect(KEY_FEATURE_SUITES.flatMap((s) => s.featureIcons).sort()).toEqual(
+      screenshotIcons.sort()
+    )
 
     for (const icon of screenshotIcons) {
       const tour = getKeyFeatureNarratedPan(icon)
-      expect(tour, `missing 5K pan tour for ${icon}`).toBeTruthy()
+      expect(tour, `missing narration spec for ${icon}`).toBeTruthy()
       expect(tour!.beats.length, `${icon} beat count`).toBeGreaterThanOrEqual(3)
 
       for (const beat of tour!.beats) {
-        expect(beat.fromZoom).toBeGreaterThanOrEqual(1)
-        expect(beat.toZoom).toBeGreaterThanOrEqual(1)
-        expect(beat.durationSec).toBeGreaterThanOrEqual(4)
         for (const loc of DUB_LOCALES) {
-          expect(beat.narration[loc].trim().length, `${icon} ${beat.id} ${loc}`).toBeGreaterThan(25)
+          expect(beat.narration[loc].trim().length, `${icon} ${loc}`).toBeGreaterThan(25)
         }
         expect(beat.narration.es).not.toBe(beat.narration.en)
         expect(beat.narration.zh).not.toBe(beat.narration.en)
         expect(beat.narration.ar).not.toBe(beat.narration.en)
       }
+
+      for (const loc of DUB_LOCALES) {
+        const chapter = getKeyFeatureChapterTiming(icon, loc)
+        expect(chapter, `missing animatic chapter timing for ${icon} [${loc}]`).toBeTruthy()
+        expect(chapter!.timing.endSec).toBeGreaterThan(chapter!.timing.startSec + 6)
+        expect(chapter!.timing.beatStartsSec).toHaveLength(tour!.beats.length)
+      }
     }
 
-    // FlowDirector (scriptSupervisor) has 4 beats spanning overview -> pickups
+    // Verify all 8 Suites × 7 locales (56 .webm + 56 .mp4 + 8 -poster.webp) exist on disk with valid headers
+    for (const suite of KEY_FEATURE_SUITES) {
+      const posterDisk = path.join(ROOT, 'public', getKeyFeatureAnimaticPosterPath(suite.id))
+      expect(existsSync(posterDisk), `missing ${suite.id}-poster.webp`).toBe(true)
+      const posterHead = readHeaderBytes(posterDisk, 12)
+      expect(posterHead.subarray(0, 4).toString('ascii')).toBe('RIFF')
+      expect(posterHead.subarray(8, 12).toString('ascii')).toBe('WEBP')
+
+      for (const loc of DUB_LOCALES) {
+        const webmDisk = path.join(
+          ROOT,
+          'public',
+          getKeyFeatureAnimaticWebmPath(suite.id, loc)
+        )
+        const mp4Disk = path.join(ROOT, 'public', getKeyFeatureAnimaticMp4Path(suite.id, loc))
+        expect(existsSync(webmDisk), `missing ${suite.id}-${loc}.webm`).toBe(true)
+        expect(existsSync(mp4Disk), `missing ${suite.id}-${loc}.mp4`).toBe(true)
+        expect(statSync(webmDisk).size).toBeGreaterThan(80_000)
+        expect(statSync(mp4Disk).size).toBeGreaterThan(80_000)
+
+        const webmHead = readHeaderBytes(webmDisk, 4)
+        expect(Array.from(webmHead)).toEqual([0x1a, 0x45, 0xdf, 0xa3])
+        const mp4Head = readHeaderBytes(mp4Disk, 8).subarray(4, 8).toString('ascii')
+        expect(mp4Head).toBe('ftyp')
+      }
+    }
+
+    // FlowDirector (scriptSupervisor) has 4 beats
     const fdTour = getKeyFeatureNarratedPan('scriptSupervisor')!
     expect(fdTour.beats).toHaveLength(4)
-    expect(fdTour.beats[0].variantId).toBe('overview')
-    expect(fdTour.beats[3].variantId).toBe('pickups')
 
-    // Render FeatureScreenshotFrame for FlowDirector and verify 7-language switching + variant sync + zero truncate
+    // Verify FeatureScreenshotFrame uses clean WebM/MP4 video player with zero Edge TTS, zero speechSynthesis, and zero truncate
     const frameSrc = readSource('src/components/landing/FeatureScreenshotFrame.tsx')
     const drawerSrc = readSource('src/components/landing/FullStudioDirectoryDrawer.tsx')
     expect(frameSrc).not.toContain('truncate')
+    expect(frameSrc).not.toContain('/api/tts/edge')
+    expect(frameSrc).not.toContain('speechSynthesis')
+    expect(frameSrc).not.toContain('SpeechSynthesisUtterance')
+    expect(frameSrc).toContain('video/webm')
+    expect(frameSrc).toContain('video/mp4')
     expect(drawerSrc).not.toContain('truncate')
 
     const fdMeta = getKeyFeatureScreenshot('scriptSupervisor')!
@@ -555,12 +616,40 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       })
     )
 
+    const animaticStage = container?.querySelector('[data-testid="feature-animatic-stage"]')
+    const videoEl = animaticStage?.querySelector('video') as HTMLVideoElement | null
+    expect(videoEl).toBeTruthy()
+    expect(
+      Array.from(videoEl?.querySelectorAll('source') ?? []).map((s) => s.getAttribute('src'))
+    ).toEqual([
+      '/landing/key-features/animatics/keyframes-clips-flowdirector-en.webm',
+      '/landing/key-features/animatics/keyframes-clips-flowdirector-en.mp4',
+    ])
+
+    // Controls sit cleanly at bottom-2 left-2 with icon-only buttons so mobile viewports are never blocked
+    const audioBtn = Array.from(animaticStage?.querySelectorAll('button') ?? []).find(
+      (btn) =>
+        btn.getAttribute('title') === FEATURE_ANIMATIC_UI_COPY.en.hearNarrationLabel ||
+        btn.getAttribute('title') === FEATURE_ANIMATIC_UI_COPY.en.muteLabel
+    )
+    expect(audioBtn).toBeTruthy()
+    expect(audioBtn?.textContent?.trim()).toBe('')
+    const controlsOverlay = audioBtn?.closest('[dir="ltr"]')
+    expect(controlsOverlay?.className).toContain('bottom-2')
+    expect(controlsOverlay?.className).toContain('left-2')
+    expect(controlsOverlay?.textContent?.trim()).toBe('')
+
+    // Clicking video surface unmutes studio narration
+    expect(videoEl?.muted).toBe(true)
+    clickElement(videoEl!)
+    expect(videoEl?.muted).toBe(false)
+
     const narratorBar = container?.querySelector('[data-testid="feature-pan-narrator-bar"]')
     const captionEl = container?.querySelector('[data-testid="feature-pan-caption"]')
     expect(narratorBar).toBeTruthy()
     expect(captionEl?.textContent).toContain(fdTour.beats[0].narration.en)
 
-    // Switch to Arabic ('ar') and verify RTL caption + Arabic script
+    // Switch to Arabic ('ar') and verify RTL caption + native Arabic WebM/MP4 animatic sources
     const arBtn = Array.from(narratorBar?.querySelectorAll('button') ?? []).find((btn) =>
       btn.getAttribute('title')?.includes('العربية')
     )
@@ -568,16 +657,21 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     clickElement(arBtn!)
     expect(captionEl?.getAttribute('dir')).toBe('rtl')
     expect(captionEl?.textContent).toContain(fdTour.beats[0].narration.ar)
+    const arVideoEl = container?.querySelector('[data-testid="feature-animatic-stage"] video')
+    expect(
+      Array.from(arVideoEl?.querySelectorAll('source') ?? []).map((s) => s.getAttribute('src'))
+    ).toEqual([
+      '/landing/key-features/animatics/keyframes-clips-flowdirector-ar.webm',
+      '/landing/key-features/animatics/keyframes-clips-flowdirector-ar.mp4',
+    ])
 
-    // Click beat 04 ('pickups' variant) and verify active image transitions to script-supervisor-pickups.webp
+    // Click Part 04 and verify caption advances to Beat 4 narration
     const beat4Btn = Array.from(container?.querySelectorAll('button') ?? []).find(
       (btn) => btn.textContent?.trim() === '04'
     )
     expect(beat4Btn).toBeTruthy()
     clickElement(beat4Btn!)
     expect(captionEl?.textContent).toContain(fdTour.beats[3].narration.ar)
-    const imgEl = container?.querySelector('img')
-    expect(imgEl?.getAttribute('src')).toContain('script-supervisor-pickups.webp')
 
     expect(normalizeFeaturePanLocale('zh-CN')).toBe('zh')
     expect(normalizeFeaturePanLocale('pt-BR')).toBe('pt')

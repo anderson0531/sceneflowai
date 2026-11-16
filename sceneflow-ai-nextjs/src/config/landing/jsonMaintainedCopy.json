@@ -411,9 +411,35 @@
       {
         "id": "blueprint-board",
         "label": "Blueprint Room",
-        "headline": "Lock the story and the look before a single frame renders.",
-        "promise": "Launch an episode from your Series Room, pitch a new concept in plain language, or import an existing screenplay (PDF, FDX, Fountain). Lock the beat sheet, cast turnarounds, locations, and Audience Resonance™ scores here—so you validate the story and look before spending a single video credit.",
+        "headline": "Lock the story, margin, and look before a single frame renders.",
+        "promise": "Capture client stories via zero-login 7-language intake portals, launch an episode from your Series Room, pitch a new concept in plain language, or import an existing screenplay (PDF, FDX, Fountain). Lock the beat sheet, multi-age cast, Audience Resonance™ scores, client sign-off, and net service margin here before spending a single video credit.",
         "features": [
+          {
+            "icon": "clientIntake",
+            "title": "Zero-Login Client Story Intake",
+            "description": "Send a branded white-label `/intake/` link or embed `/embed/intake/` directly on your agency website across 7 native languages. Clients speak or type their story with live voice dictation, sign a timestamped media, multi-age likeness, and voice consent ledger, and upload photos (with EXIF GPS stripped automatically) while Vision AI inspects each image to ask smart follow-ups and synthesize a Clarified Vision Proposal.",
+            "screenshot": "Zero-Login Client Story Intake — 7-language portal, voice dictation, likeness consent ledger, Vision photo interview, and Clarified Vision Proposal",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Zero-login 7-language portal & iframe embed",
+                  "description": "Collect rich family memoirs, real estate briefs, or corporate SOPs via branded link or website embed with live voice dictation and zero client account friction."
+                },
+                {
+                  "title": "Vision-driven photo interview & EXIF stripping",
+                  "description": "Multimodal Vision AI inspects uploaded family, property, or brand photos (automatically sanitized of EXIF GPS data) to ask smart era, wardrobe, and setting follow-up questions."
+                },
+                {
+                  "title": "Clickwrap likeness, multi-age & voice consent ledger",
+                  "description": "Every submission records timestamped legal authorization for real-person photos, multi-decade likeness reconstruction, and vocal synthesis—with zero shared AI model training."
+                },
+                {
+                  "title": "Completeness Gate & Clarified Vision Proposal",
+                  "description": "Synthesizes an emerald Clarified Vision Proposal that clients confirm in one click to auto-scaffold your Blueprint and Continuity Vault."
+                }
+              ]
+            }
+          },
           {
             "icon": "startBlueprint",
             "title": "Start the Blueprint",
@@ -529,6 +555,28 @@
             }
           },
           {
+            "icon": "blueprintShare",
+            "title": "Illustrated Blueprint Share & Margin Estimator",
+            "description": "Share a zero-login `/blueprint/share/` link featuring illustrated storyboard beats, narrated treatment playback, and live client-to-PM chat within enforced revision-round caps—paired internally with the Blueprint Cost & Profit Margin Estimator that forecasts exact compute credits, a 20% smart retake reserve, and your net 65%–85% service margin before greenlighting.",
+            "screenshot": "Illustrated Blueprint Share & Margin Estimator — visual beat storyboards, client sign-off, revision cap chat, and live profit margin calculator",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Illustrated beat storyboards & narrated treatment",
+                  "description": "Clients read or listen to the treatment alongside illustrated storyboard beats so they visualize the exact film before you spend motion compute."
+                },
+                {
+                  "title": "Blueprint Cost & Profit Margin Estimator",
+                  "description": "Forecast exact Blueprint, Continuity, Audio, Stills, and 10s Clip credits plus a 20% retake buffer against your client package fee."
+                },
+                {
+                  "title": "Live client-PM chat & revision-round firewall",
+                  "description": "Resolve feedback in a unified browser thread with enforced revision-round and credit caps that eliminate scope creep."
+                }
+              ]
+            }
+          },
+          {
             "icon": "goToProduction",
             "title": "Greenlight to Production",
             "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
@@ -593,25 +641,51 @@
               {
                 "icon": "directShot",
                 "title": "The Scene & Shot Director",
-                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
-                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
+                "description": "Type or speak your direction in plain language—now supercharged with Physical Realism mode, Shot Director Safe Mode, and exact Per-Shot Wardrobe Selection. Tell the agent who is in the frame, which outfit they wear on that specific shot, where the camera moves, and what the emotional beat is while Shot Director automatically compiles keyframe and motion prompts.",
+                "screenshot": "The Scene & Shot Director — Physical Realism mode, Safe Mode, per-shot wardrobe selection, and plain-language direction",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Plain-language film direction",
-                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
+                      "title": "Physical Realism & Shot Director Safe Mode",
+                      "description": "Ground skin texture, natural optics, and subject physics with Physical Realism mode while Safe Mode pre-sanitizes dramatic phrasing against false-positive safety blocks."
+                    },
+                    {
+                      "title": "Per-shot wardrobe selection",
+                      "description": "Switch any character's outfit shot by shot directly inside Shot Director—automatically binding the matching PiP wardrobe composite to stills and 10s clips."
                     },
                     {
                       "title": "Scene-wide or per-shot precision",
                       "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
                     },
                     {
-                      "title": "Automatic prompt compilation",
-                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
-                    },
-                    {
                       "title": "Intelligent Assistant Director (IAD)",
                       "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "selfieStudio",
+                "title": "Character Selfie Studio & Reference Likeness",
+                "description": "Turn any casual phone selfie or vintage family snapshot into a studio-grade Continuity anchor. AI face framing, zero-prep hair and grooming tidy, complexion lighting polish, and red-eye/symmetry correction preserve strict 1:1 facial bone structure with zero beautification drift—paired with multi-decade Reference Likeness de-aging, multi-parent lineage inheritance, one-click `Reset from Script`, and Multimodal Portrait-to-Voice acoustic matching.",
+                "screenshot": "Character Selfie Studio & Reference Likeness — AI headshot polish with 1:1 identity lock, multi-age de-aging, and Portrait-to-Voice matching",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Zero-prep AI headshot polish with 1:1 bone lock",
+                      "description": "Auto-crop face framing, smooth stray flyaways, balance 5200K key lighting, and fix red-eye or lens distortion without altering eyes, nose, or jawline."
+                    },
+                    {
+                      "title": "Multi-decade Reference Likeness & lineage blending",
+                      "description": "De-age or age real individuals accurately across eras (e.g., Age 17, Age 32, Age 62) and blend multi-parent family traits for biographical memoirs."
+                    },
+                    {
+                      "title": "Multimodal Portrait-to-Voice matching",
+                      "description": "Analyzes portrait age, persona, and script role to calibrate vocal timbre, pitch register, and speaking cadence across 70+ languages."
+                    },
+                    {
+                      "title": "1-Click Reset from Script",
+                      "description": "Re-synchronize cast wardrobes, era looks, and signature props directly from updated screenplay scenes in one click."
                     }
                   ]
                 }
@@ -687,6 +761,32 @@
                 }
               },
               {
+                "icon": "producerLaunchpad",
+                "title": "White-Label Producer Launchpad & RBAC",
+                "description": "Launch a client-facing video production agency in four guided steps. Configure 100% white-label Pro+ portal branding (studio name, logo, accent colors, and hidden SceneFlow credits), deploy turnkey Service-in-a-Box rate cards and 20% partner referral sheets across 4 verticals, and assign Project Managers with role-based access (RBAC) and hard monthly credit caps.",
+                "screenshot": "White-Label Producer Launchpad & RBAC — 4-step agency wizard, Pro+ branding, Service-in-a-Box rate cards, and PM monthly credit caps",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "100% white-label client portals (Pro+)",
+                      "description": "Clients experience only your studio brand across Intake, Blueprint, Continuity, and Screening Room links with zero SceneFlow credit pricing exposed."
+                    },
+                    {
+                      "title": "Service-in-a-Box rate cards & 20% partner sheets",
+                      "description": "Built-in pricing playbooks and referral partner templates for Video Memoirs, Real Estate Tours, Corporate Training SOPs, and Local Brand Packs."
+                    },
+                    {
+                      "title": "Project Manager RBAC & monthly credit caps",
+                      "description": "Invite Project Managers to run 20+ concurrent client pipelines within enforced monthly credit allowances and daily public intake limits."
+                    },
+                    {
+                      "title": "EXIF stripping, zero training & 1-click purge",
+                      "description": "Automatically strips EXIF GPS on upload, never trains shared AI models on client archives, and purges raw uploads in one click post-delivery."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "productionScript",
                 "title": "Production Script",
                 "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
@@ -740,14 +840,14 @@
               },
               {
                 "icon": "musicScore",
-                "title": "Dialogue, SFX & Musical Score Workbench",
-                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, extract embedded audio directly from video clips, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
-                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "title": "Dialogue, Narration, SFX & Musical Score Workbench",
+                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, author Shot-Aligned Narration Cues locked to exact shot spans, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
+                "screenshot": "Dialogue, Narration, SFX & Musical Score Workbench — Shot-aligned narration cues, Lyria score cues, voice casting, and SFX duration presets",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Multi-shot musical score cues",
-                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                      "title": "Shot-Aligned Narration Cues & Lyria score spans",
+                      "description": "Bind narrator voiceover blocks and custom Lyria musical score cues to exact shot ranges with configurable intro fades and auto-ducking metadata."
                     },
                     {
                       "title": "Performance Director & delivery tags",
@@ -836,14 +936,14 @@
               },
               {
                 "icon": "videoAgent",
-                "title": "The Clips Agent",
-                "description": "Once the Pre-Vis is approved, the Clips Agent renders high-fidelity motion clips and continuous dialogue scene extensions that adhere strictly to your approved stills, Frame-to-Video (`F2V`) start and end anchors, and continuity locks—backed by automated safety pre-flight checks.",
-                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
+                "title": "The Clips Agent (Omni 1.2 Flash 10s & F2V)",
+                "description": "Once Pre-Vis is approved, the Clips Agent renders high-fidelity motion clips—including Google Omni 1.2 Flash (10s) multimodal Reference-to-Video clips that bind discrete `person [N]`, `location [N]`, and `prop [N]` tokens alongside PiP wardrobe diptychs, plus Frame-to-Video (`F2V`) start/end anchors and automated safety pre-flight checks.",
+                "screenshot": "The Clips Agent — Google Omni 1.2 Flash 10s multimodal Reference-to-Video and F2V motion clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Triggered after Pre-Vis approval",
-                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
+                      "title": "Google Omni 1.2 Flash (10s) Reference-to-Video",
+                      "description": "Binds exact person, location, and prop reference images plus per-shot PiP wardrobe diptychs into continuous 10-second cinema blocks."
                     },
                     {
                       "title": "Frame-to-Video & continuous scene extensions",
@@ -1042,6 +1142,28 @@
                     {
                       "title": "Localized hooks & title cards",
                       "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "streamsInventory",
+                "title": "Streams Inventory & 1-Click Social Publishing",
+                "description": "Manage every project deliverable from one unified `Stream Explorer` dashboard—spanning lossless multi-scene Stitched Pre-Vis Animatics, individual scenes, chapters, vertical `9:16` social promos, and 70+ language `4K` masters with full version histories—then publish directly to YouTube, TikTok, and Facebook via zero-GCP 1-Click OAuth.",
+                "screenshot": "Streams Inventory & 1-Click Social Publishing — Stream Explorer catalog, lossless Pre-Vis stitch, 70+ language filter, and 1-Click OAuth",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Unified Stream Explorer & version history",
+                      "description": "Inspect, filter, and compare all Pre-Vis animatics, scenes, chapters, 9:16 cutdowns, and 70+ language masters in one production inventory."
+                    },
+                    {
+                      "title": "Lossless multi-scene Stitched Pre-Vis Deliverable",
+                      "description": "Compile all approved scene animatics into one audio-clocked multi-scene Pre-Vis film for complete stakeholder sign-off before motion spend."
+                    },
+                    {
+                      "title": "Zero-GCP 1-Click OAuth social publishing",
+                      "description": "Connect YouTube, TikTok, and Facebook accounts in one click with zero Google Cloud console setup—complete with localized metadata and thumbnails."
                     }
                   ]
                 }

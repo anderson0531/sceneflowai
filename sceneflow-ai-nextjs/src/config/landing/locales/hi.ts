@@ -584,6 +584,8 @@ export const STUDIO_LANDING_COPY_HI = {
         description:
           'स्मार्ट इंटरव्यू से जीवन कहानी दर्ज करें, 1970 के युवा दौर से आज तक के बहु-आयु पोर्ट्रेट लॉक करें, स्वायत्त Production Agents चलाएँ, FlowDirector से 1-क्लिक में क्लिप सुधारें और निजी Screening Room लिंक से डिलीवर करें।',
         featureIcons: [
+          'clientIntake',
+          'selfieStudio',
           'startBlueprint',
           'treatment',
           'continuity',
@@ -601,8 +603,10 @@ export const STUDIO_LANDING_COPY_HI = {
         badge: '20+ सक्रिय प्रोजेक्ट · स्वायत्त एजेंट + FlowDirector QA',
         headline: 'वर्कफ़्लो ऑटोमेशन के साथ 50%–80% कम लागत पर 20 समानांतर क्लाइंट प्रोजेक्ट संभालें',
         description:
-          'Pre-vis खर्च का अनुमान लगाएँ, 20 सक्रिय क्लाइंट पाइपलाइन में Audio, Stills, Clips और Production Agents चलाएँ, FlowDirector में दर्शक व निर्देशक दृष्टि से वीडियो जाँचकर 1-क्लिक में क्लिप री-क्रिएट करें और 70+ भाषाओं में डिलीवर करें।',
+          'व्हाइट-लेबल पोर्टल और पीएम क्रेडिट कैप सेट करें, शेयर्ड ब्लूप्रिंट पर मार्जिन जांचें, 20 सक्रिय प्रोजेक्ट्स में स्वायत्त एजेंट चलाएँ, FlowDirector में 1-क्लिक क्लिप फ़िक्स करें और 70+ भाषाओं में डिलीवर करें।',
         featureIcons: [
+          'producerLaunchpad',
+          'blueprintShare',
           'scriptSupervisor',
           'productionAgent',
           'budget',
@@ -638,13 +642,14 @@ export const STUDIO_LANDING_COPY_HI = {
         badge: 'उच्च-रिटेंशन चैनल · मल्टी-होस्ट शो',
         headline: 'स्टूडियो वॉइस, कस्टम संगीत और प्रो मिक्स के साथ साप्ताहिक एपिसोड प्रकाशित करें',
         description:
-          'रेंडर करने से पहले दर्शक रिटेंशन हुक्स परखें, मल्टी-वॉइस होस्ट केमिस्ट्री और बैकग्राउंड स्कोर निर्देशित करें, Production Mixer में टाइमिंग निखारें और 16:9 + 9:16 सोशल पैकेज एक्सपोर्ट करें।',
+          'रेंडर करने से पहले दर्शक रिटेंशन हुक्स परखें, मल्टी-वॉइस होस्ट केमिस्ट्री और बैकग्राउंड स्कोर निर्देशित करें, Production Mixer में टाइमिंग निखारें और 1-क्लिक OAuth से पब्लिश करें।',
         featureIcons: [
           'sceneWorkflow',
           'seriesResonance',
           'musicScore',
           'scriptSupervisor',
           'mixer',
+          'streamsInventory',
           'shipPackage',
         ],
       },
@@ -654,10 +659,11 @@ export const STUDIO_LANDING_COPY_HI = {
         badge: 'ग्रीनलाइट डेक · प्रूफ़-ऑफ़-कॉन्सेप्ट सिनेमा',
         headline: 'अपनी पटकथा को परखें और पिच मीटिंग में तैयार ट्रेलर के साथ जाएँ',
         description:
-          'FlowDirector के साथ सह-लेखन करें, Blueprint और स्क्रिप्ट स्तर पर Audience Resonance से संरचनात्मक गति मापें, इंडस्ट्री-मानक सीन स्क्रिप्ट तैयार करें और थिएट्रिकल पिच ट्रेलर काटें।',
+          'FlowDirector के साथ सह-लेखन करें, Blueprint और स्क्रिप्ट स्तर पर Audience Resonance से गति मापें, इलस्ट्रेटेड स्टोरीबोर्ड साझा करें और थिएट्रिकल पिच ट्रेलर काटें।',
         featureIcons: [
           'blueprintDirector',
           'blueprintResonance',
+          'blueprintShare',
           'goToProduction',
           'productionScript',
           'scriptResonance',
@@ -667,11 +673,11 @@ export const STUDIO_LANDING_COPY_HI = {
     ],
   },
   directoryDrawer: {
-    badge: 'वर्कफ़्लो ऑटोमेशन और 34 क्षमताएँ · 7 भाषाओं में 5K नैरेटेड टूर',
+    badge: 'वर्कफ़्लो ऑटोमेशन और 39 क्षमताएँ · 7 भाषाओं में नैरेटेड एनिमैटिक्स',
     title: '20+ समानांतर प्रोजेक्ट्स में निर्माण और विशेषज्ञ वीडियो QA स्वचालित करें',
     subtitle:
-      'हर क्षमता में अब 7 भाषाओं के वॉइसओवर के साथ इंटरैक्टिव 5K पैन वॉकथ्रू शामिल है। देखें कैसे FlowDirector दर्शक और निर्देशक दृष्टि से वीडियो की समीक्षा कर 1-क्लिक में क्लिप दोबारा बनाता है — और एजेंट 300+ प्रॉम्प्ट की बचत करते हैं।',
-    expandCta: '34 नैरेटेड 5K क्षमताएँ देखें',
+      'हर क्षमता में अब 7 भाषाओं के संपूर्ण स्टूडियो नैरेशन के साथ साफ़ WebM एनिमैटिक वीडियो शामिल है। देखें व्हाइट-लेबल पोर्टल, सेल्फ़ी स्टूडियो, FlowDirector और स्वायत्त एजेंट कैसे काम करते हैं।',
+    expandCta: '39 नैरेटेड क्षमताएँ देखें',
     collapseCta: 'स्टूडियो क्षमता डायरेक्टरी छुपाएँ',
     automationEyebrow: 'उच्च-वॉल्यूम क्रिएटर्स और 20-प्रोजेक्ट वीडियो सेवा प्रदाताओं के लिए निर्मित',
     automationTitle: 'एंड-टू-एंड वर्कफ़्लो ऑटोमेशन: एजेंट्स बनाते हैं। FlowDirector 1 क्लिक में जाँचता और सुधारता है।',
@@ -681,8 +687,8 @@ export const STUDIO_LANDING_COPY_HI = {
     spotlightFlowDirectorMeta: 'दर्शक AR + निर्देशक जाँच · 1-क्लिक में क्लिप री-क्रिएशन',
     spotlightAgentsLabel: 'स्वायत्त Production Agents',
     spotlightAgentsMeta: '300+ प्रॉम्प्ट स्वचालित · 20 सक्रिय प्रोजेक्ट्स तक विस्तार',
-    spotlightNarrated5kLabel: '34 क्षमताएँ · 5K पैन नैरेटेड',
-    spotlightNarrated5kMeta: 'सिंक किया गया 5K कैमरा पैन + सभी 7 भाषाओं में न्यूरल वॉइसओवर',
+    spotlightNarrated5kLabel: '39 क्षमताएँ · नैरेटेड एनिमैटिक्स',
+    spotlightNarrated5kMeta: 'साफ़ 16:9 WebM एनिमैटिक फ़िल्में + सभी 7 भाषाओं में स्टूडियो वॉइस',
   },
   academyStrip: {
     badge: 'शून्य लर्निंग कर्व गारंटी · Studio Academy',

@@ -93,6 +93,10 @@ const FEATURE_ROW_ORDER = [
   'order-[15]',
   'order-[17]',
   'order-[19]',
+  'order-[21]',
+  'order-[23]',
+  'order-[25]',
+  'order-[27]',
 ]
 const FEATURE_DETAIL_ORDER = [
   'order-2',
@@ -105,6 +109,10 @@ const FEATURE_DETAIL_ORDER = [
   'order-[16]',
   'order-[18]',
   'order-[20]',
+  'order-[22]',
+  'order-[24]',
+  'order-[26]',
+  'order-[28]',
 ]
 const FEATURE_ROW_START = [
   'lg:row-start-1',
@@ -117,6 +125,10 @@ const FEATURE_ROW_START = [
   'lg:row-start-8',
   'lg:row-start-9',
   'lg:row-start-10',
+  'lg:row-start-[11]',
+  'lg:row-start-[12]',
+  'lg:row-start-[13]',
+  'lg:row-start-[14]',
 ]
 
 const ROOM_GRADIENTS: Record<string, string> = {
@@ -770,7 +782,7 @@ export default function KeyFeaturesSection() {
               })}
               <div
                 className={cn(
-                  'lg:col-start-2 lg:row-span-10 lg:row-start-1 lg:order-none',
+                  'lg:col-start-2 lg:row-span-[14] lg:row-start-1 lg:order-none',
                   FEATURE_DETAIL_ORDER[
                     Math.max(
                       0,
@@ -952,7 +964,7 @@ export default function KeyFeaturesSection() {
                     })}
                     <div
                       className={cn(
-                        'lg:col-start-2 lg:row-span-10 lg:row-start-1 lg:order-none',
+                        'lg:col-start-2 lg:row-span-[14] lg:row-start-1 lg:order-none',
                         FEATURE_DETAIL_ORDER[
                           visibleFeatures.findIndex((feature) => feature.icon === selected.icon)
                         ]

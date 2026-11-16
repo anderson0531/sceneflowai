@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { Bot, ChevronDown, Clapperboard, Layers, Volume2 } from 'lucide-react'
+import { unlockFeatureAnimaticAudio } from '@/components/landing/FeatureScreenshotFrame'
 import {
   SectionCollapseBody,
   useLandingSectionCollapse,
@@ -129,7 +130,10 @@ export function FullStudioDirectoryDrawer({ children }: { children: ReactNode })
             <button
               type="button"
               title={`${copy.spotlightNarrated5kLabel} — ${copy.spotlightNarrated5kMeta}`}
-              onClick={() => jumpToFeature('commercial-training', 'scriptSupervisor')}
+              onClick={() => {
+                unlockFeatureAnimaticAudio()
+                jumpToFeature('memoir-services', 'clientIntake')
+              }}
               className="group flex items-start gap-3 rounded-xl border border-indigo-500/30 bg-indigo-500/[0.07] p-3.5 text-left transition-all hover:border-indigo-400/60 hover:bg-indigo-500/[0.13]"
             >
               <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-300">
