@@ -774,9 +774,9 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       }
     }
 
-    // Verify all 7 localized Video Memoir & Real Estate ('en', 'es', 'pt', 'hi', 'zh', 'ar', 'th') .webm + .mp4 + .webp poster exist on disk with valid headers
+    // Verify all 7 localized Video Memoir, Real Estate & Training ('en', 'es', 'pt', 'hi', 'zh', 'ar', 'th') .webm + .mp4 + .webp poster exist on disk with valid headers
     const ALL_PROMO_LOCALES = ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'] as const
-    for (const completedVertical of ['memoir', 'realestate'] as const) {
+    for (const completedVertical of ['memoir', 'realestate', 'training'] as const) {
       expect(VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES[completedVertical]).toEqual(ALL_PROMO_LOCALES)
       for (const loc of ALL_PROMO_LOCALES) {
         expect(hasNativePromoVideoForLocale(completedVertical, loc)).toBe(true)
@@ -807,8 +807,8 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       expect(posterHead.subarray(0, 4).toString('ascii')).toBe('RIFF')
       expect(posterHead.subarray(8, 12).toString('ascii')).toBe('WEBP')
     }
-    expect(hasNativePromoVideoForLocale('training', 'hi')).toBe(false)
-    expect(resolveAvailablePromoVideoLocale('training', 'hi')).toBeNull()
+    expect(hasNativePromoVideoForLocale('brand', 'hi')).toBe(false)
+    expect(resolveAvailablePromoVideoLocale('brand', 'hi')).toBeNull()
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.en).toContain('vercel-storage.com')
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.es).toContain('vercel-storage.com')
     expect(VIDEO_SERVICE_PROMO_SOURCE_BLOB_URLS.memoir?.pt).toContain('vercel-storage.com')
@@ -890,27 +890,40 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       '/landing/video-services/videos/realestate-en.mp4',
     ])
 
-    // Switch to Training & Onboarding (tab index 2) -> verifies 5K screenshot showcase fallback
+    // Switch to Training & Onboarding (tab index 2) -> verifies native Training <video> player
     clickElement(tabs[2])
+    const stageTraining = container?.querySelector('[data-testid="video-service-pan-stage"]')
+    const trVideo = stageTraining?.querySelector('video')
+    expect(trVideo).toBeTruthy()
+    expect(trVideo?.getAttribute('poster')).toBe('/landing/video-services/videos/training-poster.webp')
+    expect(
+      Array.from(trVideo?.querySelectorAll('source') ?? []).map((s) => s.getAttribute('src'))
+    ).toEqual([
+      '/landing/video-services/videos/training-en.webm',
+      '/landing/video-services/videos/training-en.mp4',
+    ])
+
+    // Switch to Local Brand Stories (tab index 3) -> verifies 5K screenshot showcase fallback
+    clickElement(tabs[3])
     const stageAfterVertical = container?.querySelector('[data-testid="video-service-pan-stage"]')
     const captionAfterVertical = container?.querySelector('[data-testid="video-service-pan-caption"]')
     expect(captionAfterVertical?.textContent).toContain(
-      VIDEO_SERVICES_NARRATED_PAN.training[0].narration.en
+      VIDEO_SERVICES_NARRATED_PAN.brand[0].narration.en
     )
     const imgs = Array.from(stageAfterVertical?.querySelectorAll('img') ?? [])
     expect(imgs.map((img) => img.getAttribute('src'))).toEqual([
-      '/landing/video-services/training-1.webp',
-      '/landing/video-services/training-2.webp',
+      '/landing/video-services/brand-1.webp',
+      '/landing/video-services/brand-2.webp',
     ])
 
-    // Step to Beat 02 (training-2.webp)
+    // Step to Beat 02 (brand-2.webp)
     const beat2Btn = Array.from(stageAfterVertical?.querySelectorAll('button') ?? []).find(
       (btn) => btn.textContent?.trim() === '02'
     )
     expect(beat2Btn).toBeTruthy()
     clickElement(beat2Btn!)
     expect(captionAfterVertical?.textContent).toContain(
-      VIDEO_SERVICES_NARRATED_PAN.training[1].narration.en
+      VIDEO_SERVICES_NARRATED_PAN.brand[1].narration.en
     )
 
     // Switch narration language to Arabic ('AR') and verify RTL + Arabic pitch
@@ -922,7 +935,7 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     expect(stageAfterVertical?.getAttribute('dir')).toBe('rtl')
     expect(stageAfterVertical?.textContent).toContain(VIDEO_SERVICE_PAN_UI_COPY.ar.outputBadge)
     expect(captionAfterVertical?.textContent).toContain(
-      VIDEO_SERVICES_NARRATED_PAN.training[1].narration.ar
+      VIDEO_SERVICES_NARRATED_PAN.brand[1].narration.ar
     )
   })
 })

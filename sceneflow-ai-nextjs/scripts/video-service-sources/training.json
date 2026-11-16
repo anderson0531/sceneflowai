@@ -1,0 +1,38 @@
+{
+  "verticalId": "training",
+  "narratorVoiceId": "gemini-Charon",
+  "narratorDirectorNotes": "Clear, authoritative, poised corporate training and executive B2B studio narrator. Crisp broadcast articulation, calm operational precision, confident unhurried cadence.",
+  "watermarkAlreadyInClips": true,
+  "musicUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Corporate%20Innovation%20Precision%20Score.mp3",
+  "sharedBlocks": {
+    "2": "https://flow.google.com/shared/video/c0f1a192-3ee3-49a6-af6f-e8f6e410352d",
+    "3": "https://flow.google.com/shared/video/e42ebc9c-5522-41c4-a783-4eb8bb6e6a20",
+    "4": "https://flow.google.com/shared/video/c0b64972-dee5-4c95-a164-75eac7430083",
+    "5": "https://flow.google.com/shared/video/3e742c1d-356e-4575-a4d6-e30be1eca1dc",
+    "6": "https://flow.google.com/shared/video/3e6ba69c-a423-46b2-b2d0-52d674c51053",
+    "7": "https://flow.google.com/shared/video/4ea9edbe-d136-4863-b3b9-662b0b80c66b",
+    "8": "https://flow.google.com/shared/video/95513c33-057c-4d5d-bde2-53985904455e",
+    "10": "https://flow.google.com/shared/video/06d8484d-62a1-4889-a372-24f65def4775",
+    "11": "https://flow.google.com/shared/video/5d615272-178e-43e3-b713-954bc4cee070"
+  },
+  "localizedBlocks": {
+    "1": {
+      "en": "https://flow.google.com/shared/video/4f806fb3-27ca-4e50-bb01-3785d98fca9e",
+      "es": "https://flow.google.com/shared/video/2c9be3e4-c97e-44b7-a2f4-36db94b19d0f",
+      "pt": "https://flow.google.com/shared/video/14078d76-9665-4ab2-bcc8-79adcf9b3cfd",
+      "hi": "https://flow.google.com/shared/video/fdce152c-1085-4033-b061-c9696184612a",
+      "zh": "https://flow.google.com/shared/video/9e4325fc-b393-47be-a360-65b921598963",
+      "ar": "https://flow.google.com/shared/video/24095ca2-fef5-43a4-8f2d-36b7e54bbc84",
+      "th": "https://flow.google.com/shared/video/912532e3-3cdd-4f59-85d8-7be49a2cac5a"
+    },
+    "9": {
+      "en": "https://flow.google.com/shared/video/92fc6227-ad53-4df2-9a78-2a89d91e5cc1",
+      "es": "https://flow.google.com/shared/video/e7de0623-76c8-4d6a-a595-feb771afe5c6",
+      "pt": "https://flow.google.com/shared/video/679cc753-b994-448d-8821-3aa400766cf8",
+      "hi": "https://flow.google.com/shared/video/c4a4f1b5-37e3-43f1-a9be-bf740a657fa0",
+      "zh": "https://flow.google.com/shared/video/3b977b43-7bf7-461e-8e81-9eca36ff1450",
+      "ar": "https://flow.google.com/shared/video/bdc0c6bb-55aa-4e77-8d80-854240c23462",
+      "th": "https://flow.google.com/shared/video/50d39e06-a774-4a21-8119-ab5d2fc3e43d"
+    }
+  }
+}
