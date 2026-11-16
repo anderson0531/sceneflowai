@@ -1,0 +1,38 @@
+{
+  "verticalId": "brand",
+  "narratorVoiceId": "gemini-Charon",
+  "narratorDirectorNotes": "Warm, charismatic, poised commercial brand and executive agency studio narrator. Crisp broadcast articulation, entrepreneurial confidence, unhurried storytelling cadence.",
+  "watermarkAlreadyInClips": true,
+  "musicUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Boutique%20Brand%20Commercial%20Anthem%20Score.mp3",
+  "sharedBlocks": {
+    "2": "https://flow.google.com/shared/video/53bd8dbf-54f9-4b6b-90cd-5a8d3d73b6da",
+    "3": "https://flow.google.com/shared/video/365708d6-c27f-4152-bf1e-10ac1d694b5b",
+    "4": "https://flow.google.com/shared/video/d289e0db-d5df-4518-a1a9-9ee890d58d49",
+    "5": "https://flow.google.com/shared/video/2464ff8e-03b2-459d-beb0-62dd0d0f9081",
+    "6": "https://flow.google.com/shared/video/5ee144a6-a333-4ef9-a0ce-6d367d618316",
+    "7": "https://flow.google.com/shared/video/2df3a9b8-951c-4602-8682-23dc6996ba8d",
+    "8": "https://flow.google.com/shared/video/d1f7416b-9aee-4426-9ab7-04fa1e4a6d74",
+    "10": "https://flow.google.com/shared/video/4bd61a0a-c1cd-452e-b6b9-605dc15b7c19",
+    "11": "https://flow.google.com/shared/video/214121fd-23bb-4ad1-973b-74587cc0a994"
+  },
+  "localizedBlocks": {
+    "1": {
+      "en": "https://flow.google.com/shared/video/214640c4-0fc3-45ea-bb10-0a5c6d10e501",
+      "es": "https://flow.google.com/shared/video/563d95fb-693f-4288-95f9-5a2c1abaeba0",
+      "pt": "https://flow.google.com/shared/video/c01984d1-146e-4724-b5d6-c892375658ab",
+      "hi": "https://flow.google.com/shared/video/9a42c40a-d0f6-4872-8c23-b986be1a8b78",
+      "zh": "https://flow.google.com/shared/video/291999bb-187e-434c-b9bb-447b567c08f7",
+      "ar": "https://flow.google.com/shared/video/2821172a-b07f-46fe-ac6c-4944bb4a768f",
+      "th": "https://flow.google.com/shared/video/c5195674-4959-4799-8cfc-50974cbd5df6"
+    },
+    "9": {
+      "en": "https://flow.google.com/shared/video/1eba26d8-ed50-4589-8f2e-b525e48751f2",
+      "es": "https://flow.google.com/shared/video/099a19e0-d0a7-45f0-a757-bc155c8017fa",
+      "pt": "https://flow.google.com/shared/video/1d1fc596-da24-413f-8c77-eb32697fc775",
+      "hi": "https://flow.google.com/shared/video/fc28fdf6-7e8f-441a-8e54-7dc9848df415",
+      "zh": "https://flow.google.com/shared/video/0d5954c6-c597-4c7f-93f0-681410a450f3",
+      "ar": "https://flow.google.com/shared/video/e15020a9-7dc1-4ddb-a51b-63cdae320187",
+      "th": "https://flow.google.com/shared/video/223c5c91-3bb1-4c74-a52f-111bf8cf48cb"
+    }
+  }
+}

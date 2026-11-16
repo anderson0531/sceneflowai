@@ -120,7 +120,7 @@ export const VIDEO_SERVICE_AVAILABLE_PROMO_LOCALES: Record<
   memoir: ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'],
   realestate: ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'],
   training: ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'],
-  brand: [],
+  brand: ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'],
 }
 
 export function hasNativePromoVideoForLocale(
