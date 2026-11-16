@@ -24,8 +24,13 @@ import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   applyPolicyComplianceToPatch,
+  applyPhysicalRealismToPatch,
   type StillDirectorPatch,
 } from '@/lib/intelligence/beat-still-director-fallback'
+import {
+  PHYSICAL_REALISM_PREVIEW_SUMMARY,
+  PHYSICAL_REALISM_REFINE_CHIP_TEXT,
+} from '@/lib/generation/physicalRealismGuidance'
 import type { BeatReferenceSelection, SceneBeat } from '@/lib/script/segmentTypes'
 import {
   filterLocationReferences,
@@ -104,7 +109,11 @@ export interface BeatDirectorDialogProps {
   referenceSelection: BeatReferenceSelection
   onSaveDirection: (
     patch: StillDirectorPatch,
-    options?: { allowUnboundReferences?: boolean; policyCompliance?: boolean }
+    options?: {
+      allowUnboundReferences?: boolean
+      policyCompliance?: boolean
+      physicalRealism?: boolean
+    }
   ) => void | Promise<void>
   /** Save direction and immediately shoot the frame or render the clip. */
   onSaveAndGenerate?: () => void | Promise<void>
@@ -192,6 +201,9 @@ function previewLines(patch: StillDirectorPatch): Array<{ label: string; value: 
   add('Interaction', patch.propInteraction)
   add('Voice direction', patch.voiceDirection)
   add('Audio', patch.audioCue)
+  if (patch.physicalRealism) {
+    add('Physical realism', PHYSICAL_REALISM_PREVIEW_SUMMARY)
+  }
   return rows
 }
 
@@ -242,6 +254,9 @@ export function BeatDirectorDialog({
   const [safety, setSafety] = useState(
     initialSafety || Boolean(beat.beatDirection?.policyCompliance)
   )
+  const [physicalRealism, setPhysicalRealism] = useState(
+    Boolean(beat.beatDirection?.physicalRealism)
+  )
   const [allowUnboundReferences, setAllowUnboundReferences] = useState(false)
   const [showCompiledPrompts, setShowCompiledPrompts] = useState(false)
 
@@ -271,6 +286,7 @@ export function BeatDirectorDialog({
     setInstruction(initialInstruction || '')
     setPreview(initialPatch ?? null)
     setSafety(initialSafety || Boolean(beat.beatDirection?.policyCompliance))
+    setPhysicalRealism(Boolean(beat.beatDirection?.physicalRealism))
     setAllowUnboundReferences(false)
     setRefineInstruction('')
     setWorkingFrameUrl(currentFrameImageUrl ?? '')
@@ -285,6 +301,7 @@ export function BeatDirectorDialog({
     open,
     initialSafety,
     beat.beatDirection?.policyCompliance,
+    beat.beatDirection?.physicalRealism,
     initialInstruction,
     initialPatch,
     currentFrameImageUrl,
@@ -388,12 +405,21 @@ export function BeatDirectorDialog({
   const connectedObjects = objectReferences.filter((object) =>
     referenceSelection.objectRefIds.includes(object.id)
   )
-  const displayedPreview = preview
-    ? safety
-      ? applyPolicyComplianceToPatch(preview)
-      : preview
-    : null
+  const displayedPreview = useMemo(() => {
+    if (!preview) return null
+    let next = safety ? applyPolicyComplianceToPatch(preview) : preview
+    if (physicalRealism) {
+      next = applyPhysicalRealismToPatch(next)
+    } else if (next.physicalRealism) {
+      const { physicalRealism: _removed, ...rest } = next
+      next = rest
+    }
+    return next
+  }, [preview, safety, physicalRealism])
   const lines = displayedPreview ? previewLines(displayedPreview) : []
+  const hasUnsavedToggleChange =
+    safety !== Boolean(beat.beatDirection?.policyCompliance) ||
+    physicalRealism !== Boolean(beat.beatDirection?.physicalRealism)
 
   const surfaceBadgeLabel =
     targetSurface === 'action-start'
@@ -424,7 +450,7 @@ export function BeatDirectorDialog({
 
   const previewDirection = async () => {
     const note = instruction.trim()
-    if (!note && !safety) {
+    if (!note && !safety && !physicalRealism) {
       toast.error('Write or dictate a direction note first.')
       return
     }
@@ -444,6 +470,7 @@ export function BeatDirectorDialog({
           mode: note ? 'rewrite' : 'optimize',
           userDirection: note || undefined,
           policyCompliance: safety || undefined,
+          physicalRealism: physicalRealism || undefined,
           allowUnboundReferences: allowUnboundReferences || undefined,
           referenceSelection,
         }),
@@ -475,6 +502,7 @@ export function BeatDirectorDialog({
           beatId: beat.beatId,
           mode: 'optimize',
           policyCompliance: safety || undefined,
+          physicalRealism: physicalRealism || undefined,
           allowUnboundReferences: allowUnboundReferences || undefined,
           referenceSelection,
         }),
@@ -493,9 +521,14 @@ export function BeatDirectorDialog({
     if (!preview || saving) return
     setSaving(true)
     try {
-      await onSaveDirection(safety ? applyPolicyComplianceToPatch(preview) : preview, {
+      let patchToSave = safety ? applyPolicyComplianceToPatch(preview) : preview
+      if (physicalRealism) {
+        patchToSave = applyPhysicalRealismToPatch(patchToSave)
+      }
+      await onSaveDirection(patchToSave, {
         allowUnboundReferences,
         policyCompliance: safety,
+        physicalRealism,
       })
       setInstruction('')
       setPreview(null)
@@ -510,41 +543,67 @@ export function BeatDirectorDialog({
     }
   }
 
+  const buildCurrentDirectionPatch = (): StillDirectorPatch => {
+    const d = beat.beatDirection
+    let currentPatch: StillDirectorPatch = {
+      shotType: d?.shotType,
+      cameraAngle: d?.cameraAngle,
+      frozenMoment: d?.frozenMoment,
+      startFrame: d?.startFrame,
+      clipAction: d?.clipAction,
+      endFrame: d?.endFrame,
+      blocking: d?.blocking,
+      gaze: d?.gaze,
+      emotion: d?.emotion,
+      propInteraction: d?.propInteraction,
+      lightingAccent: d?.lightingAccent,
+      cameraMovement: d?.cameraMovement,
+      audioCue: d?.audioCue,
+      transition: d?.transition,
+      castInFrame: d?.castInFrame,
+      keyProps: d?.keyProps,
+      voiceDirection: beat.voiceDirection,
+    }
+    if (safety) {
+      currentPatch = applyPolicyComplianceToPatch(currentPatch)
+    }
+    if (physicalRealism) {
+      currentPatch = applyPhysicalRealismToPatch(currentPatch)
+    }
+    return currentPatch
+  }
+
+  const saveOptionTogglesOnly = async () => {
+    if (!hasUnsavedToggleChange || saving) return
+    setSaving(true)
+    try {
+      await onSaveDirection(buildCurrentDirectionPatch(), {
+        allowUnboundReferences,
+        policyCompliance: safety,
+        physicalRealism,
+      })
+      onOpenChange(false)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save shot options')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const applySafetyAndDirectGenerate = async () => {
     if (!onSaveAndGenerate || saving) return
     const currentPolicy = Boolean(beat.beatDirection?.policyCompliance)
-    if (safety !== currentPolicy) {
+    const currentRealism = Boolean(beat.beatDirection?.physicalRealism)
+    if (safety !== currentPolicy || physicalRealism !== currentRealism) {
       setSaving(true)
       try {
-        const d = beat.beatDirection
-        const currentPatch: StillDirectorPatch = {
-          shotType: d?.shotType,
-          cameraAngle: d?.cameraAngle,
-          frozenMoment: d?.frozenMoment,
-          startFrame: d?.startFrame,
-          clipAction: d?.clipAction,
-          endFrame: d?.endFrame,
-          blocking: d?.blocking,
-          gaze: d?.gaze,
-          emotion: d?.emotion,
-          propInteraction: d?.propInteraction,
-          lightingAccent: d?.lightingAccent,
-          cameraMovement: d?.cameraMovement,
-          audioCue: d?.audioCue,
-          transition: d?.transition,
-          castInFrame: d?.castInFrame,
-          keyProps: d?.keyProps,
-          voiceDirection: beat.voiceDirection,
-        }
-        await onSaveDirection(
-          safety ? applyPolicyComplianceToPatch(currentPatch) : currentPatch,
-          {
-            allowUnboundReferences,
-            policyCompliance: safety,
-          }
-        )
+        await onSaveDirection(buildCurrentDirectionPatch(), {
+          allowUnboundReferences,
+          policyCompliance: safety,
+          physicalRealism,
+        })
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to apply safety direction')
+        toast.error(error instanceof Error ? error.message : 'Failed to apply shot options')
         setSaving(false)
         return
       }
@@ -556,6 +615,11 @@ export function BeatDirectorDialog({
 
   const refineChips = useMemo(
     () => [
+      {
+        id: 'physical-realism',
+        label: 'Physical realism',
+        text: PHYSICAL_REALISM_REFINE_CHIP_TEXT,
+      },
       {
         id: 'remove-object',
         label: 'Remove extra object',
@@ -921,6 +985,21 @@ export function BeatDirectorDialog({
                   <TooltipTrigger asChild>
                     <label className="inline-flex w-fit cursor-pointer items-center gap-2 text-xs text-slate-300">
                       <Checkbox
+                        checked={physicalRealism}
+                        onCheckedChange={(checked) => setPhysicalRealism(checked === true)}
+                        disabled={readOnly || busy}
+                      />
+                      {t('realismOption')}
+                    </label>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">{t('realismOptionTooltip')}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <label className="inline-flex w-fit cursor-pointer items-center gap-2 text-xs text-slate-300">
+                      <Checkbox
                         checked={allowUnboundReferences}
                         onCheckedChange={(checked) => setAllowUnboundReferences(checked === true)}
                         disabled={readOnly || busy}
@@ -937,6 +1016,7 @@ export function BeatDirectorDialog({
               </TooltipProvider>
             </div>
             {safety && <p className="text-[11px] text-slate-500">{t('safetyHint')}</p>}
+            {physicalRealism && <p className="text-[11px] text-emerald-300/80">{t('realismHint')}</p>}
 
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -962,6 +1042,21 @@ export function BeatDirectorDialog({
                 )}
                 Optimize
               </button>
+              {lines.length === 0 && hasUnsavedToggleChange && (
+                <button
+                  type="button"
+                  className="inline-flex w-fit items-center gap-1.5 rounded border border-emerald-600/70 bg-emerald-950/40 px-3 py-1.5 text-xs font-medium text-emerald-100 hover:bg-emerald-900/40 disabled:opacity-50"
+                  disabled={readOnly || busy}
+                  onClick={() => void saveOptionTogglesOnly()}
+                >
+                  {saving ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Save className="h-3.5 w-3.5" />
+                  )}
+                  Save options
+                </button>
+              )}
               {onSaveAndGenerate && lines.length === 0 && (
                 <button
                   type="button"
@@ -973,7 +1068,9 @@ export function BeatDirectorDialog({
                   <Play className="h-3 w-3 fill-current" />
                   {safety && !beat.beatDirection?.policyCompliance
                     ? `Apply Safety & ${directGenerateLabel}`
-                    : directGenerateLabel}
+                    : physicalRealism && !beat.beatDirection?.physicalRealism
+                      ? `Apply Realism & ${directGenerateLabel}`
+                      : directGenerateLabel}
                 </button>
               )}
             </div>

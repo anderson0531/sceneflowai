@@ -31,6 +31,10 @@ import {
   compileBeatVideoPromptFromDirection,
 } from '@/lib/scene/beatVideoPromptCompiler'
 import {
+  hasPhysicalRealismClause,
+  resolveStillPhysicalRealismDirective,
+} from '@/lib/generation/physicalRealismGuidance'
+import {
   buildPreVisEndFrameEditInstruction,
   buildPreVisStartFrameEditInstruction,
   stripFrameEditPreamble,
@@ -198,6 +202,9 @@ export function buildStartFramePrompt(
   } else {
     startCues.push('Maintain consistent lighting, shadows, and location architecture')
   }
+  if (d?.physicalRealism === true) {
+    startCues.push(resolveStillPhysicalRealismDirective({ emptyCast: noPeopleInFrame }))
+  }
 
   if (startCues.length > 0) {
     return `${startCues.map(cleanBookendClause).filter(Boolean).join('. ')}.`
@@ -320,6 +327,9 @@ export function buildEndFramePrompt(
     } else {
       endCues.push('Maintain consistent lighting and location')
     }
+    if (d?.physicalRealism === true) {
+      endCues.push(resolveStillPhysicalRealismDirective({ emptyCast: noPeopleInFrame }))
+    }
     return `${endCues.map(cleanBookendClause).filter(Boolean).join('. ')}.`
   }
 
@@ -383,6 +393,12 @@ export function isStoredFrameBookendPromptAligned(
   if (!body) return false
 
   if (noPeopleInFrame && /\b(expression|gaze directed|opening posture)\b/i.test(body)) {
+    return false
+  }
+  if (d?.physicalRealism === true && !hasPhysicalRealismClause(body)) {
+    return false
+  }
+  if (!d?.physicalRealism && hasPhysicalRealismClause(body)) {
     return false
   }
 

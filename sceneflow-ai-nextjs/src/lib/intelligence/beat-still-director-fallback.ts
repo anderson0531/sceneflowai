@@ -12,6 +12,7 @@ import {
   splitSentencesPreservingTitles,
 } from '@/lib/generation/prominentPersonSafePrompt'
 import { buildPolicySafePhrasingRules } from '@/lib/generation/policySafePhrasing'
+import { buildPhysicalRealismAuthoringRules } from '@/lib/generation/physicalRealismGuidance'
 import {
   composeBeatActionFraming,
   formatBeatPlannerReferenceCatalog,
@@ -121,6 +122,7 @@ export interface StillDirectorPatch {
   castInFrame?: string[]
   keyProps?: string[]
   policyCompliance?: boolean
+  physicalRealism?: boolean
 }
 
 export interface StillDirectorBoundWardrobe {
@@ -177,6 +179,8 @@ export interface DirectBeatStillRequest {
   overlay?: StillDirectorOverlay
   /** Rewrite Action/Framing to Google Gemini Image content-policy phrasing. */
   policyCompliance?: boolean
+  /** Ground both Still and Clip direction in real-world physics, contact shadows, weight, structural rigidity, object permanence, natural anatomy, and physical camera capture. */
+  physicalRealism?: boolean
   /** Scene-level direction and movement arc so shot batches maintain cohesive flow. */
   sceneContext?: StillDirectorSceneContext
   /**
@@ -315,6 +319,8 @@ export function parseStillDirectorPatch(raw: unknown): StillDirectorPatch | unde
     ...(suggestedNotes ? { suggestedNotes } : {}),
     ...(actionDescription ? { actionDescription } : {}),
     ...(voiceDirection ? { voiceDirection } : {}),
+    ...(record.policyCompliance === true ? { policyCompliance: true } : {}),
+    ...(record.physicalRealism === true ? { physicalRealism: true } : {}),
   }
   if (!normalized?.frozenMoment && actionFraming) {
     patch.frozenMoment = actionFraming
@@ -374,6 +380,14 @@ export function applyStillDirectorPatch(
     nextDirection.keyProps = patch.keyProps
   }
   if (patch.transition) nextDirection.transition = patch.transition
+  if (typeof patch.policyCompliance === 'boolean') {
+    if (patch.policyCompliance) nextDirection.policyCompliance = true
+    else delete nextDirection.policyCompliance
+  }
+  if (typeof patch.physicalRealism === 'boolean') {
+    if (patch.physicalRealism) nextDirection.physicalRealism = true
+    else delete nextDirection.physicalRealism
+  }
   nextDirection.generatedBy = options.generatedBy
   nextDirection.updatedAt = new Date().toISOString()
 
@@ -448,6 +462,10 @@ export function applyPolicyComplianceToPatch(patch: StillDirectorPatch): StillDi
   const voiceDirection = soften(next.voiceDirection)
   if (voiceDirection) next.voiceDirection = voiceDirection
   return next
+}
+
+export function applyPhysicalRealismToPatch(patch: StillDirectorPatch): StillDirectorPatch {
+  return { ...patch, physicalRealism: true }
 }
 
 export function buildStillDirectorSceneContext(
@@ -624,6 +642,9 @@ export function buildStillDirectorUserPrompt(request: DirectBeatStillRequest): s
       'SAFETY COMPLIANCE (authoritative): Rewrite so Google Gemini Image RAI will accept the still. Follow these rules. Keep the story beat. Keep EXACT library character and prop names — never substitute "stage prop" for a named prop.'
     )
     parts.push(buildPolicySafePhrasingRules())
+  }
+  if (request.physicalRealism) {
+    parts.push(buildPhysicalRealismAuthoringRules())
   }
   parts.push('')
 

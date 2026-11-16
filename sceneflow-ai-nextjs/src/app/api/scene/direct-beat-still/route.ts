@@ -10,6 +10,7 @@ import {
   parseStillDirectorPatch,
   previewActionFramingFromPatch,
   applyPolicyComplianceToPatch,
+  applyPhysicalRealismToPatch,
   type StillDirectorMode,
   type StillDirectorOverlay,
 } from '@/lib/intelligence/beat-still-director-fallback'
@@ -116,6 +117,7 @@ export async function POST(req: NextRequest) {
 
     const overlay = overlayFromBody(body)
     const policyCompliance = body.policyCompliance === true
+    const physicalRealism = body.physicalRealism === true
     const allowUnboundReferences = body.allowUnboundReferences === true
     const previous = beats[beatIndex - 1]
     const next = beats[beatIndex + 1]
@@ -182,6 +184,7 @@ export async function POST(req: NextRequest) {
         userDirection,
         overlay,
         policyCompliance,
+        physicalRealism,
         allowUnboundReferences,
         ...(sceneContext ? { sceneContext } : {}),
       })
@@ -192,6 +195,9 @@ export async function POST(req: NextRequest) {
       let fallbackPatch = parseStillDirectorPatch(overlayPatch) ?? overlayPatch
       if (policyCompliance) {
         fallbackPatch = applyPolicyComplianceToPatch(fallbackPatch)
+      }
+      if (physicalRealism) {
+        fallbackPatch = applyPhysicalRealismToPatch(fallbackPatch)
       }
       const actionFraming = previewActionFramingFromPatch(beat, fallbackPatch)
       return NextResponse.json({
@@ -213,6 +219,9 @@ export async function POST(req: NextRequest) {
     let patch = directed?.patch ?? mergeDirectOverlaysIntoPatch({}, overlay)
     if (policyCompliance) {
       patch = applyPolicyComplianceToPatch(patch)
+    }
+    if (physicalRealism) {
+      patch = applyPhysicalRealismToPatch(patch)
     }
     const actionFraming = previewActionFramingFromPatch(beat, patch)
     return NextResponse.json({

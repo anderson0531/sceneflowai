@@ -41,6 +41,11 @@ import {
   splitSentencesPreservingTitles,
 } from '@/lib/generation/prominentPersonSafePrompt'
 import { softenStillPhrasingForPolicy } from '@/lib/generation/policySafePhrasing'
+import {
+  hasPhysicalRealismClause,
+  PHYSICAL_REALISM_VIDEO_NEGATIVES,
+  resolveClipPhysicalRealismDirective,
+} from '@/lib/generation/physicalRealismGuidance'
 import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import { formatMusicCueSteer } from '@/lib/script/sceneMusicCues'
@@ -619,7 +624,11 @@ function videoNegatives(beat: SceneBeat, styleNegative: string): string {
   const singleCastNegatives = isSingleCastBeat(beat)
     ? ', over-the-shoulder foreground person, back of second person head, unreferenced listener in frame'
     : ''
-  return `${BASE_NEGATIVES}, ${styleNegative}${silent}${singleCastNegatives}`
+  const realismNegatives =
+    beat.beatDirection?.physicalRealism === true
+      ? `, ${PHYSICAL_REALISM_VIDEO_NEGATIVES}`
+      : ''
+  return `${BASE_NEGATIVES}, ${styleNegative}${silent}${singleCastNegatives}${realismNegatives}`
 }
 
 function leadForBeat(beat: SceneBeat, options?: CompileBeatVideoPromptOptions): string {
@@ -769,6 +778,12 @@ function finishVideoPrompt(args: {
   const performance = formatPerformanceClause(args.beat.voiceDirection).trim()
   if (performance && !/performance:/i.test(core)) {
     core = normalizePromptJoin(core, performance)
+  }
+  if (args.beat.beatDirection?.physicalRealism === true && !hasPhysicalRealismClause(core)) {
+    const emptyCast =
+      Array.isArray(args.beat.beatDirection?.castInFrame) &&
+      args.beat.beatDirection.castInFrame.map((n) => n.trim()).filter(Boolean).length === 0
+    core = normalizePromptJoin(core, resolveClipPhysicalRealismDirective({ emptyCast }))
   }
   const isWideLandscapeShot = /\b(?:wide|establish|aerial|long\s+shot|master)\b/i.test(
     args.beat.beatDirection?.shotType || ''
@@ -1018,6 +1033,13 @@ export function isStaleSavedVideoPrompt(
     return true
   }
 
+  if (d?.physicalRealism === true && !hasPhysicalRealismClause(trimmed)) {
+    return true
+  }
+  if (!d?.physicalRealism && hasPhysicalRealismClause(trimmed)) {
+    return true
+  }
+
   if (
     targetMethod === 'frame' &&
     (/\b0s[–-]2s\s*\(Start frame\):/i.test(trimmed) ||
@@ -1195,6 +1217,12 @@ export function compileBeatVideoPromptFromDirection(
     const performance = formatPerformanceClause(beat.voiceDirection).trim()
     if (performance && !/performance:/i.test(prompt)) {
       prompt = normalizePromptJoin(prompt, performance)
+    }
+    if (beat.beatDirection?.physicalRealism === true && !hasPhysicalRealismClause(prompt)) {
+      const emptyCast =
+        Array.isArray(beat.beatDirection?.castInFrame) &&
+        beat.beatDirection.castInFrame.map((n) => n.trim()).filter(Boolean).length === 0
+      prompt = normalizePromptJoin(prompt, resolveClipPhysicalRealismDirective({ emptyCast }))
     }
     if (
       !isPhotorealisticArtStyle(artStyleId) &&

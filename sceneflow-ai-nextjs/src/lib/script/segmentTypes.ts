@@ -260,6 +260,14 @@ export interface BeatDirection {
    * and soften policy-sensitive phrasing while keeping bound references intact.
    */
   policyCompliance?: boolean
+  /**
+   * True when Shot Director Physical Realism was enabled for this beat,
+   * grounding both Still and Clip prompts in real-world physics, accurate
+   * contact shadows and weight distribution, rigid structural integrity,
+   * consistent object permanence, natural anatomical proportions, and
+   * physical camera capture.
+   */
+  physicalRealism?: boolean
   /** ISO timestamp of last write. */
   updatedAt?: string
 }

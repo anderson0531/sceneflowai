@@ -1354,7 +1354,10 @@
       "safetyOption": "Safety",
       "safetyOptionTooltip": "When rewriting, rephrase the shot direction, the still prompt, and the clip prompt so they conform with Google AI content policies. Aftermath instead of harm in progress, no predatory metaphors, same characters and named props. Does not choose a generation model.",
       "safetyHint": "Rewrite the shot direction so Google AI content filters are more likely to accept the still and the clip, without changing the story shot, characters, or named props.",
-      "safetyPreview": "Safety rewrite (Google policies)"
+      "safetyPreview": "Safety rewrite (Google policies)",
+      "realismOption": "Physical realism",
+      "realismOptionTooltip": "Grounds both the still and clip prompts in real-world physics: accurate contact shadows and weight distribution, rigid structural integrity, consistent object permanence, natural anatomical proportions, and physical camera capture.",
+      "realismHint": "Grounds both still and clip prompts in real-world physics, accurate contact shadows and weight distribution, rigid structural integrity, consistent object permanence, natural anatomical proportions, and physical camera optics."
     },
     "musicDirector": {
       "title": "Direct score — {label}",
@@ -1395,10 +1398,15 @@
       "chipMatchEndText": "Land on the end-frame composition; no camera move that would miss it.",
       "chipKeepFaces": "Keep faces",
       "chipKeepFacesText": "Keep every directed face in frame for the whole clip.",
+      "chipRealism": "Physical realism",
+      "chipRealismText": "Ground motion in real-world physics: accurate contact shadows and weight distribution, rigid structural integrity, consistent object permanence, natural anatomical proportions, captured on a physical camera.",
       "safetyOption": "Safety",
       "safetyOptionTooltip": "When rewriting, rephrase the shot direction, the still prompt, and the clip prompt so they conform with Google AI content policies. Aftermath instead of harm in progress, no predatory metaphors, same characters and named props. Does not choose a generation model.",
       "safetyHint": "Rewrite the shot direction so Google AI content filters are more likely to accept the still and the clip, without changing the story shot, characters, or named props.",
-      "safetyPreview": "Safety rewrite (Google policies)"
+      "safetyPreview": "Safety rewrite (Google policies)",
+      "realismOption": "Physical realism",
+      "realismOptionTooltip": "Grounds both the still and clip prompts in real-world physics: accurate contact shadows and weight distribution, rigid structural integrity, consistent object permanence, natural anatomical proportions, and physical camera capture.",
+      "realismHint": "Grounds both still and clip prompts in real-world physics, accurate contact shadows and weight distribution, rigid structural integrity, consistent object permanence, natural anatomical proportions, and physical camera optics."
     },
     "referenceDirector": {
       "title": "Director — {label}",

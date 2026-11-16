@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-13T22:27:00.871Z",
+  "generatedAt": "2026-11-16T01:42:09.888Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -1952,6 +1952,9 @@
       "direction.beatDirector.safetyOptionTooltip": "f9ea4cecfbab4d74",
       "direction.beatDirector.safetyHint": "90c41836a77dd8a5",
       "direction.beatDirector.safetyPreview": "864f0029c31c0ce1",
+      "direction.beatDirector.realismOption": "f7ddc6bfa692da81",
+      "direction.beatDirector.realismOptionTooltip": "a59cb2e170851e80",
+      "direction.beatDirector.realismHint": "db80ec238772d9c1",
       "direction.musicDirector.title": "d6c0fb9f8971d106",
       "direction.musicDirector.description": "1686c25599b733f7",
       "direction.musicDirector.instructionPlaceholder": "13ec8c3479c6a525",
@@ -1988,10 +1991,15 @@
       "direction.videoDirector.chipMatchEndText": "ac590e72fd71c6ea",
       "direction.videoDirector.chipKeepFaces": "6e884b0ab407f8d5",
       "direction.videoDirector.chipKeepFacesText": "6d24202bd875152f",
+      "direction.videoDirector.chipRealism": "f7ddc6bfa692da81",
+      "direction.videoDirector.chipRealismText": "6ddf0f4c2472b887",
       "direction.videoDirector.safetyOption": "726d11bd5b230253",
       "direction.videoDirector.safetyOptionTooltip": "f9ea4cecfbab4d74",
       "direction.videoDirector.safetyHint": "90c41836a77dd8a5",
       "direction.videoDirector.safetyPreview": "864f0029c31c0ce1",
+      "direction.videoDirector.realismOption": "f7ddc6bfa692da81",
+      "direction.videoDirector.realismOptionTooltip": "a59cb2e170851e80",
+      "direction.videoDirector.realismHint": "db80ec238772d9c1",
       "direction.referenceDirector.title": "fffd8553242d57c9",
       "direction.referenceDirector.description": "493e0140829f02d9",
       "direction.referenceDirector.instructionPlaceholder": "27e2cbb85ced7be8",

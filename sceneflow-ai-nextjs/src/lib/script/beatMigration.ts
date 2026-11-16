@@ -447,6 +447,7 @@ export function normalizeBeatDirection(raw: unknown): BeatDirection | undefined 
 
   if (b.unboundContinuity === true) direction.unboundContinuity = true
   if (b.policyCompliance === true) direction.policyCompliance = true
+  if (b.physicalRealism === true) direction.physicalRealism = true
 
   if (direction.castInFrame) {
     direction.castInFrame = filterCastInFrameByVisualStaging(direction)

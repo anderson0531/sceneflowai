@@ -49,7 +49,11 @@ const FINGERPRINTED_KEYS: Array<keyof BeatDirection> = [
  */
 const LIST_KEYS = ['castInFrame', 'keyProps'] as const
 
-const STILL_KEY_NAMES = new Set<string>([...STILL_FINGERPRINTED_KEYS, ...LIST_KEYS])
+const STILL_KEY_NAMES = new Set<string>([
+  ...STILL_FINGERPRINTED_KEYS,
+  ...LIST_KEYS,
+  'physicalRealism',
+])
 
 /**
  * Bumped when the composer builds a different frame from direction that has
@@ -97,16 +101,22 @@ function fingerprintDirection(
 
 /** Full direction fingerprint (still + video/audio facets). */
 export function beatDirectionFingerprint(direction?: BeatDirection | null): string {
-  const base = fingerprintDirection(direction, FINGERPRINTED_KEYS, true)
+  let base = fingerprintDirection(direction, FINGERPRINTED_KEYS, true)
   if (direction?.policyCompliance === true) {
-    return base ? `${base}|policyCompliance=true` : 'policyCompliance=true'
+    base = base ? `${base}|policyCompliance=true` : 'policyCompliance=true'
+  }
+  if (direction?.physicalRealism === true) {
+    base = base ? `${base}|physicalRealism=true` : 'physicalRealism=true'
   }
   return base
 }
 
 /** Facets that actually enter the still / pre-vis frame prompt. */
 export function beatStillDirectionFingerprint(direction?: BeatDirection | null): string {
-  const facets = fingerprintDirection(direction, STILL_FINGERPRINTED_KEYS, true)
+  let facets = fingerprintDirection(direction, STILL_FINGERPRINTED_KEYS, true)
+  if (direction?.physicalRealism === true) {
+    facets = facets ? `${facets}|physicalRealism=true` : 'physicalRealism=true'
+  }
   if (!facets) return ''
   return `${STILL_FINGERPRINT_VERSION}|${facets}`
 }
@@ -149,7 +159,10 @@ export function storedStillDirectionContentMatches(
   storedKey: string | undefined,
   direction?: BeatDirection | null
 ): boolean {
-  const currentFacets = fingerprintDirection(direction, STILL_FINGERPRINTED_KEYS, true)
+  let currentFacets = fingerprintDirection(direction, STILL_FINGERPRINTED_KEYS, true)
+  if (direction?.physicalRealism === true) {
+    currentFacets = currentFacets ? `${currentFacets}|physicalRealism=true` : 'physicalRealism=true'
+  }
   if (storedKey === undefined) return currentFacets === ''
   const parts = storedKey.split('|')
   if (VERSION_PREFIX_PATTERN.test(parts[0] ?? '')) {

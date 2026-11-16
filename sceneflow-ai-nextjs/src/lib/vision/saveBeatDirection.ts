@@ -1123,6 +1123,13 @@ export function saveDirectorPatchToScenes(args: {
    * When explicitly false, clears `policyCompliance` from `beatDirection`.
    */
   policyCompliance?: boolean
+  /**
+   * When true, stamps `physicalRealism: true` onto `beatDirection` so Still & Clip
+   * prompt compilation grounds physics, contact shadows, weight, rigid structure,
+   * object permanence, anatomical proportions, and physical camera capture.
+   * When explicitly false, clears `physicalRealism` from `beatDirection`.
+   */
+  physicalRealism?: boolean
 }): any[] {
   const beat = getSceneBeats(args.scenes[args.sceneIdx] ?? {}).find(
     (entry) => entry.beatId === args.beatId
@@ -1143,6 +1150,15 @@ export function saveDirectorPatchToScenes(args: {
     merged.policyCompliance = true
   } else if (effectivePolicyCompliance === false) {
     delete merged.policyCompliance
+  }
+  const effectivePhysicalRealism =
+    typeof args.physicalRealism === 'boolean'
+      ? args.physicalRealism
+      : args.patch.physicalRealism
+  if (effectivePhysicalRealism === true) {
+    merged.physicalRealism = true
+  } else if (effectivePhysicalRealism === false) {
+    delete merged.physicalRealism
   }
   let nextReferenceSelection = args.referenceSelection
   if (args.characters && args.characters.length > 0 && Array.isArray(merged.castInFrame)) {

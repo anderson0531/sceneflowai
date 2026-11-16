@@ -1124,7 +1124,10 @@
       "safetyOption": "Segurança",
       "safetyOptionTooltip": "Ao reescrever, reformule a direção da cena, a solicitação estática e a solicitação do clipe para que estejam em conformidade com as políticas de conteúdo de IA do Google. Consequências em vez de danos em andamento, sem metáforas predatórias, mesmos personagens e adereços nomeados. Não escolhe um modelo de geração.",
       "safetyHint": "Reescreva a direção da cena para que os filtros de conteúdo da IA do Google tenham maior probabilidade de aceitar a imagem estática e o clipe, sem alterar a cena da história, os personagens ou os acessórios nomeados.",
-      "safetyPreview": "Reescrita de segurança (políticas do Google)"
+      "safetyPreview": "Reescrita de segurança (políticas do Google)",
+      "realismOption": "Realismo físico",
+      "realismOptionTooltip": "Fundamenta os prompts da imagem estática e do clipe na física do mundo real: sombras de contato e distribuição de peso precisas, integridade estrutural rígida, permanência consistente de objetos, proporções anatômicas naturais e captura em câmera física.",
+      "realismHint": "Fundamenta os prompts de imagem estática e clipe na física do mundo real, sombras de contato e distribuição de peso precisas, integridade estrutural rígida, permanência de objetos, proporções anatômicas naturais e óptica de câmera física."
     },
     "musicDirector": {
       "title": "Pontuação direta – {label}",
@@ -1165,10 +1168,15 @@
       "chipMatchEndText": "Pouse na composição do quadro final; nenhum movimento de câmera que pudesse perder isso.",
       "chipKeepFaces": "Mantenha rostos",
       "chipKeepFacesText": "Mantenha cada rosto direcionado no quadro durante todo o clipe.",
+      "chipRealism": "Realismo físico",
+      "chipRealismText": "Fundamente o movimento na física do mundo real: sombras de contato e distribuição de peso precisas, integridade estrutural rígida, permanência consistente de objetos, proporções anatômicas naturais, capturado em câmera física.",
       "safetyOption": "Segurança",
       "safetyOptionTooltip": "Ao reescrever, reformule a direção da cena, a solicitação estática e a solicitação do clipe para que estejam em conformidade com as políticas de conteúdo de IA do Google. Consequências em vez de danos em andamento, sem metáforas predatórias, mesmos personagens e adereços nomeados. Não escolhe um modelo de geração.",
       "safetyHint": "Reescreva a direção da cena para que os filtros de conteúdo da IA do Google tenham maior probabilidade de aceitar a imagem estática e o clipe, sem alterar a cena da história, os personagens ou os acessórios nomeados.",
-      "safetyPreview": "Reescrita de segurança (políticas do Google)"
+      "safetyPreview": "Reescrita de segurança (políticas do Google)",
+      "realismOption": "Realismo físico",
+      "realismOptionTooltip": "Fundamenta os prompts da imagem estática e do clipe na física do mundo real: sombras de contato e distribuição de peso precisas, integridade estrutural rígida, permanência consistente de objetos, proporções anatômicas naturais e captura em câmera física.",
+      "realismHint": "Fundamenta os prompts de imagem estática e clipe na física do mundo real, sombras de contato e distribuição de peso precisas, integridade estrutural rígida, permanência de objetos, proporções anatômicas naturais e óptica de câmera física."
     },
     "referenceDirector": {
       "title": "Diretor - {label}",

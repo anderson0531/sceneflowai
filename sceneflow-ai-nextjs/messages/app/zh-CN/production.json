@@ -1124,7 +1124,10 @@
       "safetyOption": "安全",
       "safetyOptionTooltip": "重写时，重新表述镜头方向、静止提示和剪辑提示，使其符合 Google AI 内容政策。后果而不是进展中的伤害，没有掠夺性的隐喻，相同的角色和命名道具。不选择一代机型。",
       "safetyHint": "重写镜头方向，以便 Google AI 内容过滤器更有可能接受剧照和剪辑，而无需更改故事镜头、角色或命名道具。",
-      "safetyPreview": "安全重写（Google 政策）"
+      "safetyPreview": "安全重写（Google 政策）",
+      "realismOption": "物理真实感",
+      "realismOptionTooltip": "让画面与视频片段遵循真实世界物理规律：精准的接触阴影与重心分布、刚性结构完整性、一致的物体恒常性、自然的人体解剖比例，以及真实物理摄影机拍摄质感。",
+      "realismHint": "为剧照与视频片段启用真实世界物理规律、精准接触阴影与重心分布、刚性结构完整性、一致的物体恒常性、自然人体比例与物理摄影机光学质感。"
     },
     "musicDirector": {
       "title": "直接评分 — {label}",
@@ -1165,10 +1168,15 @@
       "chipMatchEndText": "落在端架构图上；任何相机移动都会错过它。",
       "chipKeepFaces": "保持面孔",
       "chipKeepFacesText": "在整个剪辑中，将每个定向脸部保留在画面中。",
+      "chipRealism": "物理真实感",
+      "chipRealismText": "遵循真实世界物理规律：精准的接触阴影与重心分布、刚性结构完整性、一致的物体恒常性、自然的人体解剖比例，以及真实物理摄影机拍摄质感。",
       "safetyOption": "安全",
       "safetyOptionTooltip": "重写时，重新表述镜头方向、静止提示和剪辑提示，使其符合 Google AI 内容政策。后果而不是进展中的伤害，没有掠夺性的隐喻，相同的角色和命名道具。不选择一代机型。",
       "safetyHint": "重写镜头方向，以便 Google AI 内容过滤器更有可能接受剧照和剪辑，而无需更改故事镜头、角色或命名道具。",
-      "safetyPreview": "安全重写（Google 政策）"
+      "safetyPreview": "安全重写（Google 政策）",
+      "realismOption": "物理真实感",
+      "realismOptionTooltip": "让画面与视频片段遵循真实世界物理规律：精准的接触阴影与重心分布、刚性结构完整性、一致的物体恒常性、自然的人体解剖比例，以及真实物理摄影机拍摄质感。",
+      "realismHint": "为剧照与视频片段启用真实世界物理规律、精准接触阴影与重心分布、刚性结构完整性、一致的物体恒常性、自然人体比例与物理摄影机光学质感。"
     },
     "referenceDirector": {
       "title": "主任 — {label}",

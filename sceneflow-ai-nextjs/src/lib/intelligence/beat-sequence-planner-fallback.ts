@@ -20,6 +20,11 @@ import {
   buildPolicySafePhrasingRules,
   softenStillPhrasingForPolicy,
 } from '@/lib/generation/policySafePhrasing'
+import {
+  hasPhysicalRealismClause,
+  PHYSICAL_REALISM_STILL_EXCLUSIONS,
+  resolveStillPhysicalRealismDirective,
+} from '@/lib/generation/physicalRealismGuidance'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { isExplicitDirectToCameraBeat } from '@/lib/character/characterReferenceAssembly'
 import { sanitizeFacialFeatureConflicts } from '@/lib/character/sanitizeFacialFeatureConflicts'
@@ -641,6 +646,10 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     parts.unshift(asSentence(shot))
   }
 
+  if (direction?.physicalRealism === true && !hasPhysicalRealismClause(parts.join(' '))) {
+    parts.push(resolveStillPhysicalRealismDirective({ emptyCast }))
+  }
+
   const framing = parts.join(' ')
   if (emptyCast) return framing
 
@@ -745,6 +754,9 @@ export function composePersistedBeatStillPrompt(args: {
     actionOrStructured: seed,
     refs,
     includeCandid: !isExplicitDirectToCameraBeat(beat),
+    exclusions: beat.beatDirection?.physicalRealism
+      ? PHYSICAL_REALISM_STILL_EXCLUSIONS
+      : undefined,
     shotType: effectiveShotType,
     allowTypography: Boolean(leadIn),
   })

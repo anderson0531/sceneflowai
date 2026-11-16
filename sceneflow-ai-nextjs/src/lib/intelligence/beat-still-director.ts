@@ -23,6 +23,7 @@ export {
   applyStillDirectorPatch,
   applyStillDirectorPatchToScene,
   applyPolicyComplianceToPatch,
+  applyPhysicalRealismToPatch,
   isPlannerAuthoredDirectionSource,
   isProtectedStillDirectionSource,
   mergeDirectOverlaysIntoPatch,

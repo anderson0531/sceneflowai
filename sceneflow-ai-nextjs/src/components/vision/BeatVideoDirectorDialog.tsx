@@ -65,6 +65,7 @@ export function BeatVideoDirectorDialog({
       { id: 'slower', label: t('chipSlower'), text: t('chipSlowerText') },
       { id: 'end-frame', label: t('chipMatchEnd'), text: t('chipMatchEndText') },
       { id: 'faces', label: t('chipKeepFaces'), text: t('chipKeepFacesText') },
+      { id: 'realism', label: t('chipRealism'), text: t('chipRealismText') },
     ],
     [t]
   )

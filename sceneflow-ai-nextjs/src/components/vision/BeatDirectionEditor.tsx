@@ -413,7 +413,11 @@ export function BeatDirectionEditor({
 
   const saveDirectionPreview = (
     patch: StillDirectorPatch,
-    options?: { allowUnboundReferences?: boolean; policyCompliance?: boolean }
+    options?: {
+      allowUnboundReferences?: boolean
+      policyCompliance?: boolean
+      physicalRealism?: boolean
+    }
   ) => {
     if (!onScriptChange) return
     return onScriptChange({
@@ -431,6 +435,7 @@ export function BeatDirectionEditor({
           promptComposition,
           allowUnboundReferences: options?.allowUnboundReferences,
           policyCompliance: options?.policyCompliance,
+          physicalRealism: options?.physicalRealism,
         }),
       },
     })
@@ -560,6 +565,7 @@ export function BeatDirectionEditor({
     direction?.cameraAngle,
     direction?.cameraMovement,
     direction?.transition ? TRANSITION_LABEL[direction.transition] : undefined,
+    direction?.physicalRealism ? 'Physical realism' : undefined,
   ].filter((value): value is string => !!value?.trim())
   const connectedLocation = locationReferences.find(
     (location) => location.id === referenceSelection.locationRefId
