@@ -2,6 +2,10 @@
 
 import React from 'react'
 import { Clock, Film, Layers, Palette, Target } from 'lucide-react'
+import {
+  formatPortalCopy,
+  type ClientPortalLocale,
+} from '@/lib/intake/clientPortalCopy'
 
 type Props = {
   title: string
@@ -14,6 +18,7 @@ type Props = {
   visionStatement?: string
   intendedImpact?: string
   accentColor?: string
+  locale?: ClientPortalLocale
 }
 
 export function BlueprintReviewHero({
@@ -27,6 +32,7 @@ export function BlueprintReviewHero({
   visionStatement,
   intendedImpact,
   accentColor,
+  locale = 'en',
 }: Props) {
   const pills = [
     genre?.trim() ? { icon: Film, label: genre.trim() } : null,
@@ -107,7 +113,7 @@ export function BlueprintReviewHero({
           </div>
           <div className="min-w-0 flex-1 space-y-1">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
-              Confirmed Project Vision
+              {formatPortalCopy(locale, 'confirmedVisionHeading')}
             </div>
             {visionStatement?.trim() ? (
               <p className="text-sm text-gray-100 leading-relaxed">
@@ -116,7 +122,9 @@ export function BlueprintReviewHero({
             ) : null}
             {intendedImpact?.trim() ? (
               <p className="text-xs text-emerald-200/85">
-                <span className="font-semibold">Intended Impact:</span>{' '}
+                <span className="font-semibold">
+                  {formatPortalCopy(locale, 'visionImpactLabel')}
+                </span>{' '}
                 {intendedImpact.trim()}
               </p>
             ) : null}

@@ -7,7 +7,8 @@ import { BlueprintReviewSection } from './BlueprintReviewSection'
 import type { BlueprintSectionAudioPlayerStatus } from './BlueprintSectionAudioPlayer'
 import { BlueprintCollabChat } from './BlueprintCollabChat'
 import { Button } from '@/components/ui/Button'
-import { Textarea } from '@/components/ui/textarea'
+import { DictationTextarea } from '@/components/ui/DictationTextarea'
+import { getLocaleDirection } from '@/i18n/locale'
 import { cn } from '@/lib/utils'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import type {
@@ -46,7 +47,10 @@ import {
 } from '@/lib/blueprint/shareSettings'
 import {
   formatPortalCopy,
+  getPortalLocaleLabel,
+  getSpeechLangForPortalLocale,
   resolveClientPortalLocale,
+  type ClientPortalStrings,
 } from '@/lib/intake/clientPortalCopy'
 import type { SharedBlueprintARSnapshot } from '@/lib/blueprint/sanitizeShareAR'
 import { BlueprintShareResonancePanel } from './BlueprintShareResonancePanel'
@@ -80,12 +84,12 @@ function resolveSectionAudioPlayerStatus(
   return 'unavailable'
 }
 
-const SECTION_NAV: { id: BlueprintFixSection; label: string }[] = [
-  { id: 'core', label: 'Core' },
-  { id: 'story', label: 'Story' },
-  { id: 'characters', label: 'Characters' },
-  { id: 'beats', label: 'Beats' },
-  { id: 'tone', label: 'Tone' },
+const SECTION_NAV: { id: BlueprintFixSection; labelKey: keyof ClientPortalStrings }[] = [
+  { id: 'core', labelKey: 'sectionCoreLabel' },
+  { id: 'story', labelKey: 'sectionStoryLabel' },
+  { id: 'characters', labelKey: 'sectionCharactersLabel' },
+  { id: 'beats', labelKey: 'sectionBeatsLabel' },
+  { id: 'tone', labelKey: 'sectionToneLabel' },
 ]
 
 type Props = { token: string }
@@ -160,12 +164,19 @@ export function BlueprintShareViewer({ token }: Props) {
     setArSnapshot(data.payload?.blueprintAudienceResonance ?? null)
     setResonanceAudioByLanguage(data.payload?.resonanceAudioByLanguage || {})
     setResonanceTranslations(data.payload?.resonanceTranslations || {})
-    const lang = data.payload?.sectionAudioLanguage || 'en'
+    const rawLang = data.payload?.sectionAudioLanguage || 'en'
+    const lang = rawLang.toLowerCase().startsWith('zh') ? 'zh' : rawLang
     const byLang = data.payload?.sectionAudioByLanguage || {}
-    const flat = data.payload?.sectionAudio || byLang[lang] || {}
+    const flat = data.payload?.sectionAudio || byLang[lang] || byLang[rawLang] || {}
     if (typeof window !== 'undefined') {
+      const urlLang = new URLSearchParams(window.location.search).get('lang')?.trim()
+      const normalizedUrlLang = urlLang
+        ? urlLang.toLowerCase().startsWith('zh')
+          ? 'zh'
+          : urlLang
+        : null
       const stored = localStorage.getItem(SHARE_LANG_KEY(token))
-      setReviewLanguage(stored || lang)
+      setReviewLanguage(normalizedUrlLang || stored || lang)
     } else {
       setReviewLanguage(lang)
     }
@@ -228,8 +239,10 @@ export function BlueprintShareViewer({ token }: Props) {
     if (typeof window !== 'undefined') {
       localStorage.setItem(SHARE_LANG_KEY(token), reviewLanguage)
     }
+    const portalLoc = resolveClientPortalLocale(reviewLanguage)
     const langAudio =
       sectionAudioByLanguage[reviewLanguage] ||
+      sectionAudioByLanguage[portalLoc] ||
       (reviewLanguage === 'en' ? sectionAudio : undefined) ||
       {}
     setSectionAudio(langAudio)
@@ -498,7 +511,11 @@ export function BlueprintShareViewer({ token }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 text-gray-100">
+    <div
+      dir={getLocaleDirection(portalLocale)}
+      lang={portalLocale}
+      className="min-h-screen bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 text-gray-100"
+    >
       <header
         className="border-b border-gray-800/60 bg-gray-900/85 backdrop-blur-md sticky top-0 z-20"
         style={
@@ -600,7 +617,9 @@ export function BlueprintShareViewer({ token }: Props) {
             </div>
           )}
           <p className="sf-review-eyebrow">
-            {allowFeedback ? 'Blueprint Review' : 'Blueprint · Listen only'}
+            {allowFeedback
+              ? formatPortalCopy(portalLocale, 'blueprintReviewHeading')
+              : formatPortalCopy(portalLocale, 'blueprintListenOnlyHeading')}
           </p>
           <BlueprintShareLanguageControls
             language={reviewLanguage}
@@ -623,7 +642,7 @@ export function BlueprintShareViewer({ token }: Props) {
                   t.navHover
                 )}
               >
-                {s.label}
+                {formatPortalCopy(portalLocale, s.labelKey)}
               </button>
             )
           })}
@@ -637,10 +656,9 @@ export function BlueprintShareViewer({ token }: Props) {
               {formatPortalCopy(portalLocale, 'blueprintApproved')}
             </div>
             <p className="text-xs text-gray-300 leading-relaxed">
-              Thank you! {brandSnapshot?.brandName || ownerName} has been notified that you
-              approved this Blueprint. Next, if reference photos are needed for key people,
-              locations, or keepsakes, your producer will share a private upload link before
-              starting Production.
+              {formatPortalCopy(portalLocale, 'blueprintApprovedNextSteps', {
+                brand: brandSnapshot?.brandName || ownerName,
+              })}
             </p>
           </div>
         )}
@@ -678,13 +696,20 @@ export function BlueprintShareViewer({ token }: Props) {
               : undefined
           }
           accentColor={brandSnapshot?.primaryColor}
+          locale={portalLocale}
         />
 
         {arSnapshot ? (
           <BlueprintShareResonancePanel
             snapshot={arSnapshot}
-            audio={resonanceAudioByLanguage[reviewLanguage]}
-            translationNarration={resonanceTranslations[reviewLanguage]}
+            audio={
+              resonanceAudioByLanguage[reviewLanguage] ||
+              resonanceAudioByLanguage[portalLocale]
+            }
+            translationNarration={
+              resonanceTranslations[reviewLanguage] ||
+              resonanceTranslations[portalLocale]
+            }
             allowTts={allowTts}
           />
         ) : null}
@@ -705,20 +730,27 @@ export function BlueprintShareViewer({ token }: Props) {
             <BlueprintReviewSection
               key={s.id}
               sectionId={s.id}
-              title={s.label}
+              title={formatPortalCopy(portalLocale, s.labelKey)}
               variant={reviewVariant}
               expanded={!!expanded[s.id]}
               onToggle={() => setExpanded((p) => ({ ...p, [s.id]: !p[s.id] }))}
               audio={sectionAudio[s.id]}
               beatAudioMap={
                 s.id === 'beats'
-                  ? beatAudioByLanguage[reviewLanguage] || beatAudioByLanguage.en
+                  ? beatAudioByLanguage[reviewLanguage] ||
+                    beatAudioByLanguage[portalLocale] ||
+                    beatAudioByLanguage.en
                   : undefined
               }
               beatTranslationMap={
-                s.id === 'beats' ? beatTranslations[reviewLanguage] : undefined
+                s.id === 'beats'
+                  ? beatTranslations[reviewLanguage] || beatTranslations[portalLocale]
+                  : undefined
               }
-              translationNarration={sectionTranslations[reviewLanguage]?.[s.id]}
+              translationNarration={
+                sectionTranslations[reviewLanguage]?.[s.id] ||
+                sectionTranslations[portalLocale]?.[s.id]
+              }
               audioPlayerStatus={resolveSectionAudioPlayerStatus(
                 s.id,
                 sectionAudio,
@@ -738,27 +770,34 @@ export function BlueprintShareViewer({ token }: Props) {
               }
               omitLoglineInCore={!!reviewVariant.logline}
               omitTitleInCore={!!reviewVariant.title}
+              locale={portalLocale}
             />
           ))}
         </div>
 
         {allowFeedback && (!participantId ? (
           <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-white">Join to leave feedback</h3>
+            <h3 className="text-lg font-semibold text-white">
+              {formatPortalCopy(portalLocale, 'joinToLeaveFeedbackTitle')}
+            </h3>
             <p className="text-sm text-gray-400">
-              You can read and listen above. Enter your name to rate sections, submit notes, and chat with{' '}
-              {ownerName}.
+              {formatPortalCopy(portalLocale, 'joinToLeaveFeedbackBody', {
+                owner: brandSnapshot?.brandName || ownerName,
+              })}
             </p>
             <input
               type="text"
-              placeholder="Your name"
+              dir={getLocaleDirection(portalLocale)}
+              lang={portalLocale}
+              placeholder={formatPortalCopy(portalLocale, 'yourName')}
               value={regName}
               onChange={(e) => setRegName(e.target.value)}
               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm"
             />
             <input
               type="email"
-              placeholder="Email (optional)"
+              dir="ltr"
+              placeholder={formatPortalCopy(portalLocale, 'yourEmail')}
               value={regEmail}
               onChange={(e) => setRegEmail(e.target.value)}
               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm"
@@ -768,14 +807,15 @@ export function BlueprintShareViewer({ token }: Props) {
               disabled={regLoading}
               className="w-full bg-purple-600 hover:bg-purple-500"
             >
-              {regLoading ? 'Joining…' : 'Continue'}
+              {regLoading ? '…' : formatPortalCopy(portalLocale, 'continueButton')}
             </Button>
           </div>
         ) : submitted ? (
           <div className="space-y-4">
             <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center">
-              <p className="text-emerald-300 font-medium">Thanks — your notes were sent.</p>
-              <p className="text-sm text-gray-400 mt-2">The project owner can review your feedback in Studio.</p>
+              <p className="text-emerald-300 font-medium">
+                {formatPortalCopy(portalLocale, 'feedbackSubmittedTitle')}
+              </p>
             </div>
             <div className="flex gap-2 border-b border-gray-800">
               <button
@@ -788,7 +828,7 @@ export function BlueprintShareViewer({ token }: Props) {
                     : 'border-transparent text-gray-500'
                 )}
               >
-                Team chat
+                {formatPortalCopy(portalLocale, 'teamChatTab')}
               </button>
             </div>
             {activeTab === 'chat' && (
@@ -796,6 +836,7 @@ export function BlueprintShareViewer({ token }: Props) {
                 shareToken={token}
                 role="collaborator"
                 participantId={participantId}
+                language={reviewLanguage}
               />
             )}
           </div>
@@ -814,7 +855,9 @@ export function BlueprintShareViewer({ token }: Props) {
                       : 'border-transparent text-gray-500 hover:text-gray-300'
                   )}
                 >
-                  {tab === 'review' ? 'Your review' : 'Team chat'}
+                  {tab === 'review'
+                    ? formatPortalCopy(portalLocale, 'yourReviewTab')
+                    : formatPortalCopy(portalLocale, 'teamChatTab')}
                 </button>
               ))}
             </div>
@@ -822,9 +865,11 @@ export function BlueprintShareViewer({ token }: Props) {
             {activeTab === 'review' ? (
               <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-4 space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-white">Overall</h3>
+                  <h3 className="text-sm font-semibold text-white">
+                    {formatPortalCopy(portalLocale, 'overallRatingLabel')}
+                  </h3>
                   <span className="text-xs text-gray-500">
-                    {ratedCount}/5 sections rated
+                    {ratedCount}/5
                   </span>
                 </div>
                 <div className="flex gap-2">
@@ -844,19 +889,17 @@ export function BlueprintShareViewer({ token }: Props) {
                     </button>
                   ))}
                 </div>
-                <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={!!draft.preferred}
-                    onChange={(e) => setDraft((p) => ({ ...p, preferred: e.target.checked }))}
-                    className="rounded border-gray-600"
-                  />
-                  I would pick this version
-                </label>
-                <Textarea
-                  placeholder="Anything else? (optional)"
+                <DictationTextarea
+                  lang={getSpeechLangForPortalLocale(portalLocale)}
+                  dir={getLocaleDirection(portalLocale)}
+                  startLabel={formatPortalCopy(portalLocale, 'tapMicToSpeak')}
+                  stopLabel={formatPortalCopy(portalLocale, 'stopRecording')}
+                  listeningHint={formatPortalCopy(portalLocale, 'listeningInLanguage', {
+                    lang: getPortalLocaleLabel(portalLocale),
+                  })}
+                  placeholder={formatPortalCopy(portalLocale, 'freeformNotesPlaceholder')}
                   value={draft.freeformNotes || ''}
-                  onChange={(e) => setDraft((p) => ({ ...p, freeformNotes: e.target.value }))}
+                  onChange={(val) => setDraft((p) => ({ ...p, freeformNotes: val }))}
                   rows={3}
                   className="bg-gray-900 border-gray-700"
                 />
@@ -866,6 +909,7 @@ export function BlueprintShareViewer({ token }: Props) {
                 shareToken={token}
                 role="collaborator"
                 participantId={participantId}
+                language={reviewLanguage}
               />
             )}
           </>
@@ -876,15 +920,13 @@ export function BlueprintShareViewer({ token }: Props) {
       {allowFeedback && participantId && !submitted && !roundLimitReached && activeTab === 'review' && (
         <div className="fixed bottom-0 inset-x-0 z-30 border-t border-gray-800 bg-gray-950/95 backdrop-blur px-4 py-3">
           <div className="max-w-4xl mx-auto flex items-center gap-3">
-            <p className="text-xs text-gray-500 flex-1 hidden sm:block">
-              {hasAnyFeedback(draft) ? 'Ready to submit' : 'Rate a section or add notes'}
-            </p>
+            <div className="flex-1 hidden sm:block" />
             <Button
               onClick={handleSubmitFeedback}
               disabled={submitting || !hasAnyFeedback(draft)}
               className="w-full sm:w-auto bg-purple-600 hover:bg-purple-500 disabled:opacity-50"
             >
-              {submitting ? 'Sending…' : 'Submit review'}
+              {submitting ? '…' : formatPortalCopy(portalLocale, 'submitReviewButton')}
             </Button>
           </div>
         </div>

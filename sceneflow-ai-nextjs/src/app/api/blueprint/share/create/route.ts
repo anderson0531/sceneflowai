@@ -30,6 +30,10 @@ import {
   toBrandProfileSnapshot,
   type BrandProfileSnapshot,
 } from '@/lib/producer/producerProfileService'
+import {
+  resolveClientPortalLocale,
+  toBlueprintReviewLanguageCode,
+} from '@/lib/intake/clientPortalCopy'
 import ProducerProfile from '@/models/ProducerProfile'
 
 export const runtime = 'nodejs'
@@ -46,7 +50,8 @@ function buildSharePayload(
   ownerName: string,
   expiresAt: Date | null,
   arSnapshot: BlueprintSessionPayload['blueprintAudienceResonance'],
-  brandSnapshot?: BrandProfileSnapshot | null
+  brandSnapshot?: BrandProfileSnapshot | null,
+  defaultLanguage = DEFAULT_SHARE_AUDIO_LANGUAGE
 ): BlueprintSessionPayload {
   const neverExpires = expiresAt == null
   const clientMode = body.clientMode === true
@@ -83,7 +88,7 @@ function buildSharePayload(
     },
     ownerDisplayName: ownerName,
     sectionAudioStatus: isGeminiTtsConfigured() ? 'idle' : 'skipped',
-    sectionAudioLanguage: DEFAULT_SHARE_AUDIO_LANGUAGE,
+    sectionAudioLanguage: defaultLanguage,
     sectionAudioVoiceId: DEFAULT_BLUEPRINT_GEMINI_VOICE,
     sectionAudioByLanguage: {},
     blueprintAudienceResonance: hideAudienceResonance ? null : arSnapshot ?? null,
@@ -155,9 +160,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: access.error }, { status: access.status })
     }
     const effectiveOwnerId = access.billingOwnerUserId || ownerUserId
-    const projectClientOrder = ((access.project.metadata || {}) as {
-      clientOrder?: { isClientProject?: boolean; maxFeedbackRounds?: number }
-    }).clientOrder
+    const projectMeta = (access.project.metadata || {}) as {
+      storyLocale?: string
+      clientOrder?: {
+        isClientProject?: boolean
+        maxFeedbackRounds?: number
+        locale?: string
+      }
+    }
+    const projectClientOrder = projectMeta.clientOrder
+    const defaultShareLang = projectClientOrder?.locale
+      ? toBlueprintReviewLanguageCode(
+          resolveClientPortalLocale(projectClientOrder.locale)
+        )
+      : projectMeta.storyLocale
+        ? toBlueprintReviewLanguageCode(
+            resolveClientPortalLocale(projectMeta.storyLocale)
+          )
+        : DEFAULT_SHARE_AUDIO_LANGUAGE
     const clientMode = Boolean(reqClientMode ?? projectClientOrder?.isClientProject)
     let brandSnapshot: BrandProfileSnapshot | null = null
     let effectiveMaxRounds = reqMaxFeedbackRounds ?? projectClientOrder?.maxFeedbackRounds
@@ -283,11 +303,16 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ success: false, error: 'Invalid session token' }, { status: 500 })
         }
 
+        const langSuffix =
+          defaultShareLang && defaultShareLang !== 'en'
+            ? `?lang=${encodeURIComponent(defaultShareLang)}`
+            : ''
+
         return NextResponse.json({
           success: true,
           token: tokenStr,
           sessionId: existing.id,
-          url: `${origin}/blueprint/share/${tokenStr}`,
+          url: `${origin}/blueprint/share/${tokenStr}${langSuffix}`,
           reused: true,
         })
       }
@@ -311,7 +336,8 @@ export async function POST(req: NextRequest) {
       ownerName,
       expiresAt,
       arSnapshot,
-      brandSnapshot
+      brandSnapshot,
+      defaultShareLang
     )
 
     const t = await sequelize.transaction()
@@ -340,11 +366,16 @@ export async function POST(req: NextRequest) {
 
       await t.commit()
 
+      const langSuffix =
+        defaultShareLang && defaultShareLang !== 'en'
+          ? `?lang=${encodeURIComponent(defaultShareLang)}`
+          : ''
+
       return NextResponse.json({
         success: true,
         token: tokenStr,
         sessionId: collabSession.id,
-        url: `${origin}/blueprint/share/${tokenStr}`,
+        url: `${origin}/blueprint/share/${tokenStr}${langSuffix}`,
         reused: false,
       })
     } catch (e) {

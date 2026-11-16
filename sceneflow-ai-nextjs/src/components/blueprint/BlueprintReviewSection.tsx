@@ -16,7 +16,14 @@ import {
   Volume2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Textarea } from '@/components/ui/textarea'
+import { DictationTextarea } from '@/components/ui/DictationTextarea'
+import { getLocaleDirection } from '@/i18n/locale'
+import {
+  formatPortalCopy,
+  getPortalLocaleLabel,
+  getSpeechLangForPortalLocale,
+  type ClientPortalLocale,
+} from '@/lib/intake/clientPortalCopy'
 import {
   BlueprintSectionAudioPlayer,
   type BlueprintSectionAudioPlayerStatus,
@@ -90,11 +97,13 @@ function IllustratedBeatsList({
   beatAudioMap,
   beatTranslationMap,
   allowTts,
+  locale = 'en',
 }: {
   beats: NormalizedReviewBeat[]
   beatAudioMap?: BlueprintBeatAudioMap
   beatTranslationMap?: Record<string, string>
   allowTts?: boolean
+  locale?: ClientPortalLocale
 }) {
   const [playingIdx, setPlayingIdx] = useState<number | null>(null)
   const [sequenceMode, setSequenceMode] = useState(false)
@@ -207,12 +216,12 @@ function IllustratedBeatsList({
             {sequenceMode && playingIdx !== null ? (
               <>
                 <Pause className="h-3.5 w-3.5" />
-                Stop Storyboard
+                {formatPortalCopy(locale, 'stopStoryboardPlayback')}
               </>
             ) : (
               <>
                 <Play className="h-3.5 w-3.5" />
-                Play Narrated Storyboard
+                {formatPortalCopy(locale, 'playNarratedStoryboard')}
               </>
             )}
           </button>
@@ -329,7 +338,7 @@ function IllustratedBeatsList({
                       ) : (
                         <>
                           <Play className="h-3.5 w-3.5 text-emerald-400" />
-                          Listen
+                          {formatPortalCopy(locale, 'listenButtonLabel')}
                         </>
                       )}
                     </button>
@@ -343,7 +352,9 @@ function IllustratedBeatsList({
                   <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100 flex items-start gap-2">
                     <Sparkles className="h-3.5 w-3.5 text-emerald-300 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-semibold text-emerald-300">Impact: </span>
+                      <span className="font-semibold text-emerald-300">
+                        {formatPortalCopy(locale, 'beatImpactLabel')}{' '}
+                      </span>
                       {beatImpact}
                     </div>
                   </div>
@@ -365,7 +376,7 @@ function IllustratedBeatsList({
                 {beatChars.length > 0 ? (
                   <div className="pt-2 border-t border-emerald-500/15 flex flex-wrap items-center gap-1.5">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-cyan-300/90 mr-1">
-                      Key Characters:
+                      {formatPortalCopy(locale, 'beatKeyPeopleLabel')}:
                     </span>
                     {beatChars.map((charName, cIdx) => (
                       <span
@@ -396,6 +407,7 @@ function SectionContent({
   beatTranslationMap,
   allowTts,
   clientMode,
+  locale = 'en',
 }: {
   sectionId: BlueprintFixSection
   variant: Record<string, unknown>
@@ -405,6 +417,7 @@ function SectionContent({
   beatTranslationMap?: Record<string, string>
   allowTts?: boolean
   clientMode?: boolean
+  locale?: ClientPortalLocale
 }) {
   const fieldStack = sectionId === 'story' ? 'space-y-4' : 'space-y-3'
 
@@ -467,7 +480,9 @@ function SectionContent({
         <div className="space-y-5">
           {chars.length > 0 && (
             <div className="space-y-3">
-              <div className="sf-review-field-label text-amber-300/90">Cast ({chars.length})</div>
+              <div className="sf-review-field-label text-amber-300/90">
+                {formatPortalCopy(locale, 'charactersHeading')} ({chars.length})
+              </div>
               {chars.map((c, i) => {
                 const portrait =
                   (c as { referenceImage?: string; imageUrl?: string }).referenceImage ||
@@ -499,7 +514,7 @@ function SectionContent({
                         {clientMode && needsPhoto && !portrait && (
                           <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/35 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-200">
                             <Camera className="h-3 w-3" />
-                            Photo Requested After Approval
+                            {formatPortalCopy(locale, 'photoRequestedBadge')}
                           </span>
                         )}
                       </div>
@@ -508,7 +523,9 @@ function SectionContent({
                       ) : null}
                       {impact ? (
                         <p className="text-xs text-amber-200/90 mt-1.5">
-                          <span className="font-semibold text-amber-300">Impact: </span>
+                          <span className="font-semibold text-amber-300">
+                            {formatPortalCopy(locale, 'characterImpactLabel')}{' '}
+                          </span>
                           {impact}
                         </p>
                       ) : null}
@@ -538,7 +555,7 @@ function SectionContent({
           {scenes.length > 0 && (
             <div className="space-y-3">
               <div className="sf-review-field-label text-emerald-300/90">
-                Locations ({scenes.length})
+                {formatPortalCopy(locale, 'locationsHeading')} ({scenes.length})
               </div>
               {scenes.map((loc, i) => (
                 <div
@@ -555,7 +572,7 @@ function SectionContent({
                     {clientMode && loc.needsClientPhoto && (
                       <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-medium text-emerald-200">
                         <Camera className="h-3 w-3" />
-                        Reference Photo Optional
+                        {formatPortalCopy(locale, 'photoOptionalBadge')}
                       </span>
                     )}
                   </div>
@@ -585,7 +602,9 @@ function SectionContent({
 
           {props.length > 0 && (
             <div className="space-y-3">
-              <div className="sf-review-field-label text-cyan-300/90">Props ({props.length})</div>
+              <div className="sf-review-field-label text-cyan-300/90">
+                {formatPortalCopy(locale, 'propsHeading')} ({props.length})
+              </div>
               {props.map((prop, i) => (
                 <div
                   key={i}
@@ -601,7 +620,7 @@ function SectionContent({
                     {clientMode && prop.needsClientPhoto && (
                       <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/35 bg-cyan-500/15 px-2.5 py-0.5 text-[11px] font-medium text-cyan-200">
                         <Camera className="h-3 w-3" />
-                        Photo Requested After Approval
+                        {formatPortalCopy(locale, 'photoRequestedBadge')}
                       </span>
                     )}
                   </div>
@@ -631,6 +650,7 @@ function SectionContent({
           beatAudioMap={beatAudioMap}
           beatTranslationMap={beatTranslationMap}
           allowTts={allowTts}
+          locale={locale}
         />
       )
     }
@@ -691,6 +711,7 @@ type Props = {
   omitLoglineInCore?: boolean
   omitTitleInCore?: boolean
   translationNarration?: string
+  locale?: ClientPortalLocale
 }
 
 export function BlueprintReviewSection({
@@ -711,6 +732,7 @@ export function BlueprintReviewSection({
   omitLoglineInCore,
   omitTitleInCore,
   translationNarration,
+  locale = 'en',
 }: Props) {
   const theme = BLUEPRINT_REVIEW_SECTION_THEME[sectionId]
   const SectionIcon = theme.Icon
@@ -762,7 +784,7 @@ export function BlueprintReviewSection({
         {allowTts && (
           <BlueprintSectionAudioPlayer
             sectionId={sectionId}
-            label="Listen"
+            label={formatPortalCopy(locale, 'listenButtonLabel')}
             audio={audio}
             status={audioPlayerStatus}
             compact
@@ -789,15 +811,18 @@ export function BlueprintReviewSection({
             beatTranslationMap={beatTranslationMap}
             allowTts={allowTts}
             clientMode={clientMode}
+            locale={locale}
           />
 
           {canFeedback && onFeedbackChange && (
             <div className="rounded-lg border border-purple-500/25 bg-purple-500/8 p-4 space-y-3">
               <p className="sf-section-title text-base text-purple-200/95">
-                Your feedback on {title}
+                {formatPortalCopy(locale, 'sectionFeedbackHeading', { section: title })}
               </p>
               <div>
-                <span className="sf-review-field-label">Rating</span>
+                <span className="sf-review-field-label">
+                  {formatPortalCopy(locale, 'overallRatingLabel')}
+                </span>
                 <div className="flex gap-1.5 mt-1.5">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <button
@@ -836,12 +861,17 @@ export function BlueprintReviewSection({
                   )
                 })}
               </div>
-              <Textarea
-                placeholder="Notes for this section (optional)"
+              <DictationTextarea
+                lang={getSpeechLangForPortalLocale(locale)}
+                dir={getLocaleDirection(locale)}
+                startLabel={formatPortalCopy(locale, 'tapMicToSpeak')}
+                stopLabel={formatPortalCopy(locale, 'stopRecording')}
+                listeningHint={formatPortalCopy(locale, 'listeningInLanguage', {
+                  lang: getPortalLocaleLabel(locale),
+                })}
+                placeholder={formatPortalCopy(locale, 'sectionNotesPlaceholder')}
                 value={feedback.suggestions || ''}
-                onChange={(e) =>
-                  onFeedbackChange({ ...feedback, suggestions: e.target.value })
-                }
+                onChange={(val) => onFeedbackChange({ ...feedback, suggestions: val })}
                 rows={2}
                 className="bg-gray-900 border-gray-700 text-sm"
               />

@@ -4,7 +4,8 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
-import type { BlueprintFeedbackSections, BlueprintFixSection } from '@/lib/blueprint/shareTypes'
+import type { BlueprintFeedbackSections } from '@/lib/blueprint/shareTypes'
+import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 
 const SECTIONS: { id: BlueprintFixSection; label: string }[] = [
   { id: 'core', label: 'Core' },
@@ -19,6 +20,7 @@ type Props = {
   reviewerName: string
   shareToken: string
   onSubmitted: () => void
+  language?: string
 }
 
 export function BlueprintShareFeedbackForm({
@@ -26,6 +28,7 @@ export function BlueprintShareFeedbackForm({
   reviewerName,
   shareToken,
   onSubmitted,
+  language = 'en',
 }: Props) {
   const [overallScore, setOverallScore] = useState(0)
   const [sections, setSections] = useState<BlueprintFeedbackSections>({})
@@ -130,6 +133,7 @@ export function BlueprintShareFeedbackForm({
       ))}
 
       <DictationTextarea
+        lang={language}
         placeholder="Anything else? Type or dictate. (optional)"
         value={freeformNotes}
         onChange={setFreeformNotes}

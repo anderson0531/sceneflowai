@@ -61,6 +61,7 @@ interface ProjectSummaryItem {
       actionState?: string
       customerName?: string
       customerLabel?: string
+      locale?: string
     }
   }
 }
@@ -81,6 +82,10 @@ interface SubmissionItem {
 }
 
 const VERTICAL_OPTIONS = [
+  {
+    value: 'custom_production',
+    label: 'Vision-Driven Production (Any Genre — Cinematic Drama, Memoir, Sci-Fi, Commercial)',
+  },
   { value: 'video_memoir', label: 'Video Memoir / Family Legacy ($300 Hybrid Preset)' },
   { value: 'real_estate_tour', label: 'Real Estate Property Tour' },
   { value: 'education_module', label: 'Education / Training Module' },
@@ -115,7 +120,7 @@ export default function ProducerSettingsPage() {
   const [addendumChecked, setAddendumChecked] = useState(false)
 
   // Section 2: Intake Link & Embed Generator
-  const [intakeVertical, setIntakeVertical] = useState<string>('video_memoir')
+  const [intakeVertical, setIntakeVertical] = useState<string>('custom_production')
   const [intakeLocale, setIntakeLocale] = useState<string>('en')
   const [intakeMode, setIntakeMode] = useState<'single_project' | 'public_lead'>('single_project')
   const [customerLabel, setCustomerLabel] = useState('')
@@ -244,8 +249,13 @@ export default function ProducerSettingsPage() {
   useEffect(() => {
     if (selectedProjectId) {
       loadProjectSubmissions(selectedProjectId)
+      const proj = projects.find((p) => p.id === selectedProjectId)
+      const projLocale = proj?.metadata?.clientOrder?.locale
+      if (projLocale) {
+        setContinuityLocale(projLocale)
+      }
     }
-  }, [selectedProjectId, loadProjectSubmissions])
+  }, [selectedProjectId, projects, loadProjectSubmissions])
 
   const handleSaveProfile = async () => {
     setSavingProfile(true)

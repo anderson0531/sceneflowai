@@ -16,10 +16,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}))
-    const vertical = body.vertical || 'video_memoir'
+    const vertical = body.vertical || 'custom_production'
     if (!isValidIntakeVertical(vertical)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid vertical. Expected video_memoir, real_estate_tour, education_module, or brand_story.' },
+        {
+          success: false,
+          error:
+            'Invalid vertical. Expected custom_production, video_memoir, real_estate_tour, education_module, or brand_story.',
+        },
         { status: 400 }
       )
     }
@@ -39,7 +43,8 @@ export async function POST(req: NextRequest) {
 
     const created = await createClientIntakeLink({
       ownerUserId: billingOwnerUserId,
-      ownerDisplayName: (session?.user as { name?: string })?.name || 'Studio Producer',
+      ownerDisplayName:
+        (session as { user?: { name?: string } } | null)?.user?.name || 'Studio Producer',
       projectId: body.projectId || null,
       vertical,
       mode: body.mode === 'public_lead' ? 'public_lead' : 'single_project',

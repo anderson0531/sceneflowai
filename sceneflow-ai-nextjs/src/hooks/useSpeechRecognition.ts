@@ -3,6 +3,32 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 // Types for Web Speech API
 type RecognitionConstructor = new () => SpeechRecognition
 
+export interface UseSpeechRecognitionOptions {
+  /** BCP-47 or ISO language code (e.g. 'en', 'es', 'pt', 'hi', 'zh', 'zh-CN', 'ar', 'th') */
+  lang?: string
+}
+
+export function normalizeSpeechRecognitionLang(raw?: string | null): string {
+  const clean = (raw || '').trim()
+  if (!clean) {
+    if (typeof document !== 'undefined' && document.documentElement?.lang) {
+      return normalizeSpeechRecognitionLang(document.documentElement.lang)
+    }
+    return 'en-US'
+  }
+  const lower = clean.toLowerCase()
+  if (lower === 'en') return 'en-US'
+  if (lower === 'es') return 'es-ES'
+  if (lower === 'pt') return 'pt-BR'
+  if (lower === 'hi') return 'hi-IN'
+  if (lower === 'zh' || lower === 'zh-cn' || lower === 'zh-hans') return 'zh-CN'
+  if (lower === 'zh-tw' || lower === 'zh-hant') return 'zh-TW'
+  if (lower === 'ar') return 'ar-SA'
+  if (lower === 'th') return 'th-TH'
+  if (clean.includes('-')) return clean
+  return clean
+}
+
 /**
  * Speech-to-text hook using the Web Speech API.
  *
@@ -12,7 +38,8 @@ type RecognitionConstructor = new () => SpeechRecognition
  * recognition after each utterance so the UX feels continuous, but each
  * chunk is a clean, finalized transcript appended to the cumulative result.
  */
-export function useSpeechRecognition() {
+export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
+  const resolvedLang = normalizeSpeechRecognitionLang(options?.lang)
   const RecognitionCtor: false | RecognitionConstructor =
     (typeof window !== 'undefined' && (window as Window).webkitSpeechRecognition) ||
     (typeof window !== 'undefined' && (window as Window).SpeechRecognition) ||
@@ -21,6 +48,8 @@ export function useSpeechRecognition() {
   const supported = Boolean(RecognitionCtor) && isSecure
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const langRef = useRef(resolvedLang)
+  langRef.current = resolvedLang
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -55,7 +84,7 @@ export function useSpeechRecognition() {
     const recognition: SpeechRecognition = new RecognitionCtor()
     recognitionRef.current = recognition
 
-    recognition.lang = 'en-US'
+    recognition.lang = langRef.current
     // Single-utterance mode — produces one clean finalized result per pause,
     // then fires onend so we can auto-restart if the user is still recording.
     ;(recognition as any).continuous = false
@@ -84,12 +113,19 @@ export function useSpeechRecognition() {
     recognition.onend = () => {
       // Auto-restart if the user hasn't explicitly stopped
       if (wantRecordingRef.current) {
+        recognition.lang = langRef.current
         try {
           recognition.start()
         } catch {
           // Browser may throw if start() is called too fast; retry once
           setTimeout(() => {
-            try { recognition.start() } catch { setIsRecording(false); wantRecordingRef.current = false }
+            try {
+              recognition.lang = langRef.current
+              recognition.start()
+            } catch {
+              setIsRecording(false)
+              wantRecordingRef.current = false
+            }
           }, 100)
         }
       } else {
@@ -126,6 +162,7 @@ export function useSpeechRecognition() {
     setTranscript('')
     wantRecordingRef.current = true
     try {
+      recognitionRef.current.lang = langRef.current
       ;(recognitionRef.current as any).start()
     } catch {}
   }, [supported])

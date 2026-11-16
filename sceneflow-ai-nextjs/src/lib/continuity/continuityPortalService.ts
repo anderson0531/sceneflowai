@@ -267,7 +267,12 @@ export async function createOrUpdateContinuityPortalLink(input: {
     )
   }
 
-  const locale = resolveClientPortalLocale(input.locale)
+  const projectMd = ((input.project.metadata || {}) as Record<string, any>)
+  const projectLocaleFallback =
+    projectMd.clientOrder?.locale ||
+    projectMd.storyLocale ||
+    'en'
+  const locale = resolveClientPortalLocale(input.locale || projectLocaleFallback)
   const brandSnapshot: BrandProfileSnapshot = clientMode
     ? toBrandProfileSnapshot(profile, input.ownerDisplayName || 'Studio Producer')
     : {

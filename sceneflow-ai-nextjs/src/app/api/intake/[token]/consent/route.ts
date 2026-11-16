@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveActiveIntakeSession } from '@/lib/intake/intakeService'
 import { recordCustomerConsent } from '@/lib/producer/producerProfileService'
+import { resolveClientPortalLocale } from '@/lib/intake/clientPortalCopy'
+import { INTAKE_PLAYBOOKS } from '@/lib/intake/intakePlaybooks'
 
 export const runtime = 'nodejs'
 
@@ -35,6 +37,32 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       attestedMediaRights: body.attestedMediaRights === true,
       acknowledgedZeroPrivity: body.acknowledgedZeroPrivity === true,
     })
+
+    if (typeof body.locale === 'string' && body.locale.trim()) {
+      const nextLocale = resolveClientPortalLocale(body.locale)
+      if (nextLocale !== resolved.payload.locale) {
+        const playbook = INTAKE_PLAYBOOKS[resolved.payload.vertical]
+        const nextTurns =
+          resolved.payload.customerTurnsUsed === 0
+            ? [
+                {
+                  role: 'assistant' as const,
+                  content:
+                    playbook.welcomeByLocale[nextLocale] || playbook.welcomeByLocale.en,
+                  createdAt:
+                    resolved.payload.turns[0]?.createdAt || new Date().toISOString(),
+                },
+              ]
+            : resolved.payload.turns
+        await resolved.session.update({
+          payload: {
+            ...resolved.payload,
+            locale: nextLocale,
+            turns: nextTurns,
+          } as unknown as Record<string, unknown>,
+        })
+      }
+    }
 
     return NextResponse.json({
       success: true,

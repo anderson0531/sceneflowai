@@ -6,10 +6,12 @@ export const maxDuration = 120
 
 type RouteCtx = { params: Promise<{ token: string }> }
 
-export async function POST(_req: NextRequest, ctx: RouteCtx) {
+export async function POST(req: NextRequest, ctx: RouteCtx) {
   try {
     const { token } = await ctx.params
-    const result = await completeClientIntakeToBlueprint({ token })
+    const body = await req.json().catch(() => ({}))
+    const locale = body?.locale ? String(body.locale) : undefined
+    const result = await completeClientIntakeToBlueprint({ token, locale })
     if (!result.ok) {
       return NextResponse.json({ success: false, error: result.error }, { status: result.status })
     }

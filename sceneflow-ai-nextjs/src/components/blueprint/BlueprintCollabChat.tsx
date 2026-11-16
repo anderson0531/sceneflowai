@@ -1,7 +1,15 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
+import { Mic, Square } from 'lucide-react'
 import { useBlueprintShareChat } from '@/hooks/useBlueprintShareChat'
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
+import { getLocaleDirection } from '@/i18n/locale'
+import {
+  formatPortalCopy,
+  getSpeechLangForPortalLocale,
+  resolveClientPortalLocale,
+} from '@/lib/intake/clientPortalCopy'
 import { cn } from '@/lib/utils'
 
 type Participant = { id: string; name: string; lastMessage?: { text: string } | null }
@@ -14,6 +22,8 @@ type Props = {
   className?: string
   /** Owner panel: show only team, only DM inbox, or both tabs */
   variant?: 'full' | 'team' | 'dm'
+  /** Active language code for reading & voice dictation */
+  language?: string
 }
 
 function ChatThread({
@@ -23,6 +33,7 @@ function ChatThread({
   participantId,
   targetParticipantId,
   title,
+  language = 'en',
 }: {
   shareToken: string
   mode: 'team' | 'dm'
@@ -30,7 +41,11 @@ function ChatThread({
   participantId?: string | null
   targetParticipantId?: string | null
   title: string
+  language?: string
 }) {
+  const portalLocale = resolveClientPortalLocale(language)
+  const speechLang = getSpeechLangForPortalLocale(portalLocale)
+  const textDir = getLocaleDirection(portalLocale)
   const { messages, send, canSend, isLoading } = useBlueprintShareChat({
     shareToken,
     mode,
@@ -39,7 +54,23 @@ function ChatThread({
     targetParticipantId,
   })
   const [text, setText] = useState('')
+  const baseTextRef = useRef('')
   const scrollerRef = useRef<HTMLDivElement>(null)
+  const {
+    supported: sttSupported,
+    isSecure,
+    isRecording,
+    transcript,
+    start: startMic,
+    stop: stopMic,
+    setTranscript,
+  } = useSpeechRecognition({ lang: speechLang })
+
+  useEffect(() => {
+    if (!transcript) return
+    const base = baseTextRef.current.trim()
+    setText(base ? `${base} ${transcript}` : transcript)
+  }, [transcript])
 
   useEffect(() => {
     const el = scrollerRef.current
@@ -47,13 +78,29 @@ function ChatThread({
   }, [messages.length])
 
   const handleSend = async () => {
+    if (isRecording) stopMic()
     if (!text.trim() || !canSend) return
     await send(text)
     setText('')
+    baseTextRef.current = ''
+    setTranscript('')
+  }
+
+  const handleToggleMic = () => {
+    if (!canSend || !sttSupported || !isSecure) return
+    if (isRecording) {
+      stopMic()
+      baseTextRef.current = text
+      setTranscript('')
+    } else {
+      baseTextRef.current = text
+      setTranscript('')
+      startMic()
+    }
   }
 
   return (
-    <div className="flex flex-col min-h-[200px]">
+    <div dir={textDir} className="flex flex-col min-h-[200px]">
       <div className="text-sm text-gray-300 mb-2 font-medium">{title}</div>
       <div
         ref={scrollerRef}
@@ -71,28 +118,60 @@ function ChatThread({
           </div>
         ))}
         {isLoading && messages.length === 0 && (
-          <div className="text-xs text-gray-500">Loading…</div>
+          <div className="text-xs text-gray-500">…</div>
         )}
       </div>
-      <div className="mt-2 flex gap-2">
+      <div className="mt-2 flex items-start gap-2">
         <textarea
+          dir={textDir}
+          lang={speechLang}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={canSend ? 'Write a message' : 'Register to chat'}
+          placeholder={
+            canSend
+              ? formatPortalCopy(portalLocale, 'chatInputPlaceholder')
+              : formatPortalCopy(portalLocale, 'joinToLeaveFeedbackTitle')
+          }
           rows={2}
           disabled={!canSend}
           className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 resize-y min-h-[40px] text-sm text-gray-200 disabled:opacity-50"
         />
+        {sttSupported && isSecure && (
+          <button
+            type="button"
+            onClick={handleToggleMic}
+            disabled={!canSend}
+            title={
+              isRecording
+                ? formatPortalCopy(portalLocale, 'stopRecording')
+                : formatPortalCopy(portalLocale, 'tapMicToSpeak')
+            }
+            aria-label={
+              isRecording
+                ? formatPortalCopy(portalLocale, 'stopRecording')
+                : formatPortalCopy(portalLocale, 'tapMicToSpeak')
+            }
+            className={cn(
+              'p-2 h-fit rounded text-sm transition-colors',
+              isRecording
+                ? 'bg-red-600 text-white animate-pulse'
+                : 'bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700',
+              !canSend && 'opacity-40 cursor-not-allowed'
+            )}
+          >
+            {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </button>
+        )}
         <button
           type="button"
           onClick={handleSend}
           disabled={!canSend}
           className={cn(
-            'px-3 py-1 h-fit rounded text-sm',
+            'px-3 py-1.5 h-fit rounded text-sm',
             canSend ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed'
           )}
         >
-          Send
+          {formatPortalCopy(portalLocale, 'sendButton')}
         </button>
       </div>
     </div>
@@ -106,6 +185,7 @@ export function BlueprintCollabChat({
   participants = [],
   className,
   variant = 'full',
+  language = 'en',
 }: Props) {
   const [tab, setTab] = useState<'team' | 'direct'>(
     variant === 'dm' ? 'direct' : 'team'
@@ -153,6 +233,7 @@ export function BlueprintCollabChat({
           role={role}
           participantId={participantId}
           title="Team chat"
+          language={language}
         />
       ) : role === 'owner' ? (
         <div className="space-y-3">
@@ -184,6 +265,7 @@ export function BlueprintCollabChat({
                   role="owner"
                   targetParticipantId={dmTarget}
                   title={`DM with ${participants.find((p) => p.id === dmTarget)?.name || 'reviewer'}`}
+                  language={language}
                 />
               ) : (
                 <p className="text-xs text-gray-500">Select a reviewer to open a direct thread.</p>
@@ -198,6 +280,7 @@ export function BlueprintCollabChat({
           role="collaborator"
           participantId={participantId}
           title="Message project owner"
+          language={language}
         />
       )}
     </div>

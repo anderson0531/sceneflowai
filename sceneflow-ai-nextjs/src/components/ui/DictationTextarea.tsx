@@ -14,6 +14,13 @@ interface DictationTextareaProps {
   className?: string
   rows?: number
   disabled?: boolean
+  /** BCP-47 or ISO language code for multilingual speech recognition (e.g. 'en', 'es', 'pt', 'hi', 'zh-CN', 'ar', 'th') */
+  lang?: string
+  /** Optional text direction ('ltr' | 'rtl'); auto-inferred as 'rtl' for Arabic when omitted */
+  dir?: 'ltr' | 'rtl'
+  listeningHint?: string
+  startLabel?: string
+  stopLabel?: string
 }
 
 export function DictationTextarea({
@@ -24,6 +31,11 @@ export function DictationTextarea({
   className,
   rows = 5,
   disabled = false,
+  lang,
+  dir,
+  listeningHint,
+  startLabel,
+  stopLabel,
 }: DictationTextareaProps) {
   const {
     supported: sttSupported,
@@ -34,7 +46,11 @@ export function DictationTextarea({
     start,
     stop,
     setTranscript,
-  } = useSpeechRecognition()
+  } = useSpeechRecognition({ lang })
+
+  const effectiveDir =
+    dir ?? (lang && /^(?:ar|he|fa|ur)(?:[-_]|$)/i.test(lang.trim()) ? 'rtl' : undefined)
+  const isRtl = effectiveDir === 'rtl'
 
   const baseRef = useRef('')
 
@@ -67,25 +83,29 @@ export function DictationTextarea({
   const showMic = sttSupported && isSecure
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div dir={effectiveDir} className="flex flex-col gap-1.5">
       <div className="relative">
         <Textarea
+          dir={effectiveDir}
+          lang={lang}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
           placeholder={placeholder}
           rows={rows}
           disabled={disabled}
-          className={cn('pr-10 resize-none', className)}
+          className={cn(isRtl ? 'pl-10' : 'pr-10', 'resize-none', className)}
         />
         {showMic && (
           <button
             type="button"
             onClick={handleMicClick}
             disabled={disabled}
-            aria-label={isRecording ? 'Stop dictation' : 'Start dictation'}
+            title={isRecording ? stopLabel || 'Stop dictation' : startLabel || 'Start dictation'}
+            aria-label={isRecording ? stopLabel || 'Stop dictation' : startLabel || 'Start dictation'}
             className={cn(
-              'absolute right-2 top-2 p-1.5 rounded-md transition-colors',
+              'absolute top-2 p-1.5 rounded-md transition-colors',
+              isRtl ? 'left-2' : 'right-2',
               isRecording
                 ? 'bg-red-600 text-white animate-pulse'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
@@ -98,7 +118,7 @@ export function DictationTextarea({
       </div>
       {isRecording && (
         <p className="text-xs text-emerald-600 dark:text-emerald-400">
-          Listening… speak your instructions, then tap stop.
+          {listeningHint || 'Listening… speak naturally, then tap stop.'}
         </p>
       )}
       {micError && !isRecording && (

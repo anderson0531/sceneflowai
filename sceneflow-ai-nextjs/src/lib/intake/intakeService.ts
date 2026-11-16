@@ -24,11 +24,16 @@ import {
   buildIntakeBlueprintSynthesisPrompt,
   buildNextIntakeQuestionPrompt,
   buildVisionConfirmedKickoffPrompt,
+  getLocalizedVisionFallbackQuestion,
+  inferNarrativeModeFromVision,
   INTAKE_PLAYBOOKS,
+  isValidNarrativeMode,
+  parseRuntimeMinutesFromScope,
   type ExtractedBlueprintFromIntake,
   type IntakeCompletenessChecklist,
   type IntakeExtractedCharacter,
   type IntakeMessageTurn,
+  type IntakeNarrativeMode,
   type IntakePhase,
   type IntakeResonatingBeat,
   type IntakeVerticalId,
@@ -527,10 +532,12 @@ export async function clarifyCustomerIntakeVision(input: {
   let clarifiedVision = prevProposal?.clarifiedVision
     ? `${prevProposal.clarifiedVision} ${trimmed}`.slice(0, 1200)
     : trimmed.slice(0, 1200)
+  let inferredGenre = prevProposal?.inferredGenre || undefined
+  let parsedNarrativeMode: IntakeNarrativeMode | undefined = prevProposal?.narrativeMode
   let intendedImpact =
     prevProposal?.intendedImpact ||
-    `Deliver a resonant ${playbook.genre.toLowerCase()} experience for ${consent.customer_name}.`
-  let targetAudience = prevProposal?.targetAudience || 'Family, clients, and invited viewers'
+    `Deliver a resonant experience aligned with ${consent.customer_name}'s vision.`
+  let targetAudience = prevProposal?.targetAudience || 'Target viewers for this production'
   let toneAndStyle = prevProposal?.toneAndStyle || playbook.tone
   let deliverableScope =
     prevProposal?.deliverableScope || `~${playbook.defaultDurationMinutes} min production`
@@ -563,6 +570,12 @@ export async function clarifyCustomerIntakeVision(input: {
     if (typeof parsed.clarifiedVision === 'string' && parsed.clarifiedVision.trim()) {
       clarifiedVision = parsed.clarifiedVision.trim().slice(0, 1400)
     }
+    if (typeof parsed.inferredGenre === 'string' && parsed.inferredGenre.trim()) {
+      inferredGenre = parsed.inferredGenre.trim().slice(0, 120)
+    }
+    if (isValidNarrativeMode(parsed.narrativeMode)) {
+      parsedNarrativeMode = parsed.narrativeMode
+    }
     if (typeof parsed.intendedImpact === 'string' && parsed.intendedImpact.trim()) {
       intendedImpact = parsed.intendedImpact.trim().slice(0, 400)
     }
@@ -591,11 +604,25 @@ export async function clarifyCustomerIntakeVision(input: {
     createdAt: new Date().toISOString(),
   }
 
+  const rawCombined = prevProposal?.rawInput
+    ? `${prevProposal.rawInput}\n${trimmed}`.slice(0, 10000)
+    : trimmed.slice(0, 10000)
+  const resolvedNarrativeMode = inferNarrativeModeFromVision(
+    {
+      rawInput: rawCombined,
+      clarifiedVision,
+      inferredGenre,
+      narrativeMode: parsedNarrativeMode,
+      toneAndStyle,
+    },
+    payload.vertical
+  )
+
   const visionProposal: IntakeVisionProposal = {
-    rawInput: prevProposal?.rawInput
-      ? `${prevProposal.rawInput}\n${trimmed}`.slice(0, 10000)
-      : trimmed.slice(0, 10000),
+    rawInput: rawCombined,
     clarifiedVision,
+    ...(inferredGenre ? { inferredGenre } : {}),
+    narrativeMode: resolvedNarrativeMode,
     intendedImpact,
     targetAudience,
     toneAndStyle,
@@ -709,9 +736,8 @@ export async function confirmCustomerIntakeVision(input: {
 
   // When transitioning into Phase 2 with zero Q&A turns used yet, tailor the opening interview question to the Confirmed Vision!
   if (payload.customerTurnsUsed === 0) {
-    const playbook = INTAKE_PLAYBOOKS[payload.vertical]
-    let openingQuestion =
-      playbook.welcomeByLocale[activeLocale] || playbook.welcomeByLocale.en
+    const narrativeMode = inferNarrativeModeFromVision(confirmedVision, payload.vertical)
+    let openingQuestion = getLocalizedVisionFallbackQuestion(activeLocale, 0, narrativeMode)
     try {
       const kickoffPrompt = buildVisionConfirmedKickoffPrompt({
         vertical: payload.vertical,
@@ -735,7 +761,7 @@ export async function confirmCustomerIntakeVision(input: {
         openingQuestion = parsed.openingQuestion.trim().slice(0, 700)
       }
     } catch {
-      /* keep localized playbook greeting */
+      /* keep localized vision-driven fallback kickoff */
     }
 
     nextTurns = [
@@ -1015,8 +1041,20 @@ export async function submitCustomerIntakeTurn(input: {
   )
 
   if (!assistantReply) {
-    const fallbackIdx = Math.min(nextCount - 1, playbook.milestoneQuestions.length - 1)
-    assistantReply = playbook.milestoneQuestions[fallbackIdx]
+    if (payload.visionProposal?.confirmed || payload.vertical === 'custom_production') {
+      const narrativeMode = inferNarrativeModeFromVision(
+        payload.visionProposal,
+        payload.vertical
+      )
+      assistantReply = getLocalizedVisionFallbackQuestion(
+        activeLocale,
+        nextCount - 1,
+        narrativeMode
+      )
+    } else {
+      const fallbackIdx = Math.min(nextCount - 1, playbook.milestoneQuestions.length - 1)
+      assistantReply = playbook.milestoneQuestions[fallbackIdx]
+    }
   }
 
   const assistantTurn: IntakeMessageTurn = {
@@ -1089,6 +1127,16 @@ function buildFallbackBlueprint(
   extractedCharacters?: IntakeExtractedCharacter[]
 ): ExtractedBlueprintFromIntake {
   const playbook = INTAKE_PLAYBOOKS[vertical]
+  const narrativeMode = inferNarrativeModeFromVision(confirmedVision, vertical)
+  const isFictional = narrativeMode === 'fictional_narrative'
+  const fallbackGenre =
+    confirmedVision?.inferredGenre ||
+    (isFictional ? 'Cinematic Drama' : playbook.genre)
+  const targetMinutes = parseRuntimeMinutesFromScope(
+    confirmedVision?.deliverableScope,
+    isFictional ? 5 : playbook.defaultDurationMinutes
+  )
+  const defaultNeedsPhoto = !isFictional
   const customerAnswers = turns
     .filter((t) => t.role === 'customer')
     .map((t) => t.content)
@@ -1104,32 +1152,32 @@ function buildFallbackBlueprint(
           title: rb.title || `Chapter ${idx + 1}`,
           ...(rb.eraOrAge ? { eraOrAge: rb.eraOrAge } : {}),
           ...(rb.keyCharacters?.length ? { characters: rb.keyCharacters } : {}),
-          intent: rb.impact || 'Resonating life chapter',
+          intent: rb.impact || 'Core story beat',
           ...(rb.impact ? { impact: rb.impact } : {}),
           synopsis: rb.summary || customerAnswers[idx]?.slice(0, 400) || '',
           minutes: Number(
-            (playbook.defaultDurationMinutes / Math.max(1, resonatingBeats.length)).toFixed(1)
+            (targetMinutes / Math.max(1, resonatingBeats.length)).toFixed(1)
           ),
           ...(rb.settingHint ? { settingHint: rb.settingHint } : {}),
           deliveryFormat: (rb.deliveryFormatHint ||
-            (idx % 3 === 0 ? 'ai_reenactment' : 'archival_photo')) as
+            (isFictional || idx % 3 === 0 ? 'ai_reenactment' : 'archival_photo')) as
             | 'archival_photo'
             | 'ai_reenactment',
         }))
       : customerAnswers.slice(0, 6).map((ans, idx) => ({
           title: `Chapter ${idx + 1}`,
           characters: [customerName],
-          intent: 'Capture client milestone',
+          intent: 'Advance project vision',
           synopsis: ans.slice(0, 400),
           minutes: Number(
             (
-              playbook.defaultDurationMinutes /
+              targetMinutes /
               Math.max(1, Math.min(6, customerAnswers.length))
             ).toFixed(1)
           ),
-          deliveryFormat: (idx % 3 === 0 ? 'ai_reenactment' : 'archival_photo') as
-            | 'archival_photo'
-            | 'ai_reenactment',
+          deliveryFormat: (isFictional || idx % 3 === 0
+            ? 'ai_reenactment'
+            : 'archival_photo') as 'archival_photo' | 'ai_reenactment',
         }))
 
   const fallbackChars =
@@ -1139,8 +1187,8 @@ function buildFallbackBlueprint(
           role: ec.role || 'protagonist',
           ...(ec.impact ? { impact: ec.impact } : {}),
           ...(ec.eraOrAge ? { age: ec.eraOrAge } : {}),
-          description: ec.impact || `${ec.role || 'Featured subject'} in client production`,
-          needsClientPhoto: true,
+          description: ec.impact || `${ec.role || 'Featured character'} in production`,
+          needsClientPhoto: defaultNeedsPhoto,
         }))
       : [
           {
@@ -1148,8 +1196,8 @@ function buildFallbackBlueprint(
             role: 'protagonist',
             description:
               combined.slice(0, 400) ||
-              'Primary subject described during client onboarding interview',
-            needsClientPhoto: true,
+              'Primary character/subject described during onboarding interview',
+            needsClientPhoto: defaultNeedsPhoto,
           },
         ]
 
@@ -1158,29 +1206,31 @@ function buildFallbackBlueprint(
     logline:
       confirmedVision?.intendedImpact?.slice(0, 220) ||
       customerAnswers[0]?.slice(0, 220) ||
-      `A custom ${playbook.genre.toLowerCase()} created for ${customerName}.`,
-    synopsis: combined.slice(0, 1800) || `Client story intake completed for ${customerName}.`,
-    genre: playbook.genre,
+      `A custom ${fallbackGenre.toLowerCase()} created for ${customerName}.`,
+    synopsis: combined.slice(0, 1800) || `Client intake completed for ${customerName}.`,
+    genre: fallbackGenre,
     tone_description: confirmedVision?.toneAndStyle || playbook.tone,
     visual_style:
       confirmedVision?.toneAndStyle ||
-      'Warm documentary realism with archival photography and cinematic B-roll',
+      (isFictional
+        ? 'Cinematic dramatic lighting and camera composition'
+        : 'Warm documentary realism with archival photography and cinematic B-roll'),
     target_audience:
-      confirmedVision?.targetAudience || 'Family, clients, and invited viewers',
+      confirmedVision?.targetAudience || 'Target audience for this production',
     beats: fallbackBeats,
     character_descriptions: fallbackChars,
     locations: [
       {
         name: 'Primary Featured Setting',
         description: 'Key location described in onboarding interview',
-        needsClientPhoto: true,
+        needsClientPhoto: defaultNeedsPhoto,
       },
     ],
     props: [
       {
-        name: 'Signature Keepsake or Featured Detail',
+        name: 'Signature Story Prop or Detail',
         description: 'Key item highlighted during onboarding interview',
-        needsClientPhoto: true,
+        needsClientPhoto: defaultNeedsPhoto,
       },
     ],
   }
@@ -1188,6 +1238,7 @@ function buildFallbackBlueprint(
 
 export async function completeClientIntakeToBlueprint(input: {
   token: string
+  locale?: string
 }): Promise<
   | {
       ok: true
@@ -1232,16 +1283,24 @@ export async function completeClientIntakeToBlueprint(input: {
     }
   }
 
+  const activeLocale = input.locale
+    ? resolveClientPortalLocale(input.locale)
+    : payload.locale
+
   const synthesisCreditCost = Math.max(5, (TEXT_CREDITS.GEMINI_PRO || 10))
   let extracted: ExtractedBlueprintFromIntake | null = null
   const confirmedVision = payload.visionProposal?.clarifiedVision
     ? payload.visionProposal
     : null
+  const synthesisNarrativeMode = inferNarrativeModeFromVision(confirmedVision, payload.vertical)
+  const isFictionalSynthesis = synthesisNarrativeMode === 'fictional_narrative'
+  const resolveNeedsPhoto = (explicit?: boolean) =>
+    isFictionalSynthesis ? explicit === true : explicit !== false
 
   try {
     const prompt = buildIntakeBlueprintSynthesisPrompt({
       vertical: payload.vertical,
-      locale: payload.locale,
+      locale: activeLocale,
       customerName: consent.customer_name,
       turns: payload.turns,
       confirmedVision,
@@ -1319,7 +1378,7 @@ export async function completeClientIntakeToBlueprint(input: {
     ...extracted,
     character_descriptions: sanitizedIntake.characters.map((c) => ({
       ...c,
-      needsClientPhoto: c.needsClientPhoto !== false,
+      needsClientPhoto: resolveNeedsPhoto(c.needsClientPhoto),
     })),
     beats: sanitizedIntake.beats,
   }
@@ -1359,17 +1418,17 @@ export async function completeClientIntakeToBlueprint(input: {
       ...(c.appearance ? { appearance: String(c.appearance) } : {}),
       ...(c.samePersonGroupId ? { samePersonGroupId: String(c.samePersonGroupId) } : {}),
       description: c.description,
-      needsClientPhoto: c.needsClientPhoto !== false,
+      needsClientPhoto: resolveNeedsPhoto(c.needsClientPhoto),
     })),
     scene_descriptions: extracted.locations.map((l) => ({
       name: l.name,
       description: l.description,
-      needsClientPhoto: l.needsClientPhoto !== false,
+      needsClientPhoto: resolveNeedsPhoto(l.needsClientPhoto),
     })),
     prop_descriptions: extracted.props.map((p) => ({
       name: p.name,
       description: p.description,
-      needsClientPhoto: p.needsClientPhoto !== false,
+      needsClientPhoto: resolveNeedsPhoto(p.needsClientPhoto),
     })),
   }
 
@@ -1383,7 +1442,7 @@ export async function completeClientIntakeToBlueprint(input: {
         ? { impact: String((c as { impact?: string }).impact) }
         : {}),
       description: c.description,
-      needsClientPhoto: c.needsClientPhoto !== false,
+      needsClientPhoto: resolveNeedsPhoto(c.needsClientPhoto),
       approved: false,
     })),
     locations: extracted.locations.map((l, idx) => ({
@@ -1391,7 +1450,7 @@ export async function completeClientIntakeToBlueprint(input: {
       slotType: 'location' as const,
       name: l.name,
       description: l.description,
-      needsClientPhoto: l.needsClientPhoto !== false,
+      needsClientPhoto: resolveNeedsPhoto(l.needsClientPhoto),
       approved: false,
     })),
     props: extracted.props.map((p, idx) => ({
@@ -1399,7 +1458,7 @@ export async function completeClientIntakeToBlueprint(input: {
       slotType: 'prop' as const,
       name: p.name,
       description: p.description,
-      needsClientPhoto: p.needsClientPhoto !== false,
+      needsClientPhoto: resolveNeedsPhoto(p.needsClientPhoto),
       approved: false,
     })),
   }
@@ -1414,13 +1473,18 @@ export async function completeClientIntakeToBlueprint(input: {
       .map((t) => `${t.role === 'assistant' ? 'Interviewer' : consent.customer_name}: ${t.content}`)
       .join('\n\n')
 
+  const targetProjectMinutes = parseRuntimeMinutesFromScope(
+    confirmedVision?.deliverableScope,
+    isFictionalSynthesis ? 5 : INTAKE_PLAYBOOKS[payload.vertical].defaultDurationMinutes
+  )
+
   if (!targetProject) {
     targetProject = await Project.create({
       user_id: session.owner_user_id,
       title: extracted.title,
       description: extracted.logline,
       genre: extracted.genre,
-      duration: Math.round(INTAKE_PLAYBOOKS[payload.vertical].defaultDurationMinutes * 60),
+      duration: Math.round(targetProjectMinutes * 60),
       status: 'in_progress',
       current_step: 'ideation',
       step_statuses: { ideation: 'in_progress' },
@@ -1433,6 +1497,7 @@ export async function completeClientIntakeToBlueprint(input: {
 
   const nextMeta: Record<string, unknown> = {
     ...prevMeta,
+    storyLocale: activeLocale === 'zh-CN' ? 'zh' : activeLocale,
     blueprintPrimeInput: transcriptPrimeText,
     selectedVariantId: variantId,
     filmTreatmentVariant,
@@ -1468,7 +1533,7 @@ export async function completeClientIntakeToBlueprint(input: {
       ...prevOrder,
       isClientProject: true,
       vertical: payload.vertical,
-      locale: payload.locale,
+      locale: activeLocale,
       stage: 'blueprint_review_ready',
       actionState: 'action_required',
       customerName: consent.customer_name,

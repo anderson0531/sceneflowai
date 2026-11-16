@@ -229,6 +229,10 @@ export async function GET(
       clientPortalMeta = {
         clientMode: true,
         brandProfile,
+        locale:
+          md.clientOrder?.locale ||
+          md.storyLocale ||
+          'en',
         watermarkPreview: Boolean(
           shareLink.watermarkPreview ?? md.clientOrder?.watermarkUntilPaid
         ),

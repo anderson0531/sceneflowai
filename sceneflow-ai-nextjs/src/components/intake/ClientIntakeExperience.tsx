@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import {
   formatPortalCopy,
+  getPortalLocaleLabel,
   getSpeechLangForPortalLocale,
   resolveClientPortalLocale,
   SUPPORTED_CLIENT_PORTAL_LOCALES,
@@ -91,8 +92,14 @@ export function ClientIntakeExperience({
   const [completed, setCompleted] = useState(false)
 
   const [isRecording, setIsRecording] = useState(false)
+  const [recordingTarget, setRecordingTarget] = useState<
+    'consent_name' | 'vision' | 'interview' | null
+  >(null)
   const [speechSupported, setSpeechSupported] = useState(false)
   const recognitionRef = useRef<any>(null)
+  const wantRecordingRef = useRef(false)
+  const localeRef = useRef(locale)
+  localeRef.current = locale
   const chatEndRef = useRef<HTMLDivElement | null>(null)
 
   const postEmbedEvent = useCallback(
@@ -126,7 +133,17 @@ export function ClientIntakeExperience({
         }
         if (data.brandProfile) setBrand(data.brandProfile)
         if (data.locale && !targetLocale) {
-          setLocale(resolveClientPortalLocale(data.locale))
+          const resolvedDataLocale = resolveClientPortalLocale(data.locale)
+          if (
+            resolvedDataLocale === 'en' &&
+            !data.consentAccepted &&
+            typeof navigator !== 'undefined' &&
+            navigator.language
+          ) {
+            setLocale(resolveClientPortalLocale(navigator.language))
+          } else {
+            setLocale(resolvedDataLocale)
+          }
         }
         setConsentAccepted(Boolean(data.consentAccepted))
         if (data.customerName) setCustomerName(data.customerName)
@@ -168,6 +185,7 @@ export function ClientIntakeExperience({
   }, [turns, visionProposal, phase, consentAccepted, completed, postEmbedEvent])
 
   const stopDictation = useCallback(() => {
+    wantRecordingRef.current = false
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop()
@@ -177,10 +195,11 @@ export function ClientIntakeExperience({
       recognitionRef.current = null
     }
     setIsRecording(false)
+    setRecordingTarget(null)
   }, [])
 
   const toggleDictation = useCallback(
-    (target: 'vision' | 'interview') => {
+    (target: 'consent_name' | 'vision' | 'interview') => {
       if (isRecording) {
         stopDictation()
         return
@@ -192,7 +211,7 @@ export function ClientIntakeExperience({
 
       try {
         const rec = new Ctor()
-        rec.lang = getSpeechLangForPortalLocale(locale)
+        rec.lang = getSpeechLangForPortalLocale(localeRef.current)
         rec.continuous = false
         rec.interimResults = false
         rec.maxAlternatives = 1
@@ -200,7 +219,9 @@ export function ClientIntakeExperience({
         rec.onresult = (event: any) => {
           const piece = event.results?.[0]?.[0]?.transcript?.trim()
           if (piece) {
-            if (target === 'vision') {
+            if (target === 'consent_name') {
+              setCustomerName((prev) => (prev ? `${prev} ${piece}` : piece))
+            } else if (target === 'vision') {
               setVisionDraft((prev) => (prev ? `${prev} ${piece}` : piece))
             } else {
               setDraftMessage((prev) => (prev ? `${prev} ${piece}` : piece))
@@ -208,21 +229,53 @@ export function ClientIntakeExperience({
           }
         }
         rec.onend = () => {
+          if (wantRecordingRef.current && recognitionRef.current === rec) {
+            rec.lang = getSpeechLangForPortalLocale(localeRef.current)
+            try {
+              rec.start()
+              return
+            } catch {
+              setTimeout(() => {
+                if (!wantRecordingRef.current || recognitionRef.current !== rec) return
+                try {
+                  rec.lang = getSpeechLangForPortalLocale(localeRef.current)
+                  rec.start()
+                } catch {
+                  wantRecordingRef.current = false
+                  setIsRecording(false)
+                  setRecordingTarget(null)
+                  recognitionRef.current = null
+                }
+              }, 120)
+              return
+            }
+          }
           setIsRecording(false)
+          setRecordingTarget(null)
           recognitionRef.current = null
         }
-        rec.onerror = () => {
+        rec.onerror = (event: any) => {
+          const code = event?.error || ''
+          if (code === 'no-speech' && wantRecordingRef.current) {
+            return
+          }
+          wantRecordingRef.current = false
           setIsRecording(false)
+          setRecordingTarget(null)
           recognitionRef.current = null
         }
+        wantRecordingRef.current = true
         recognitionRef.current = rec
         setIsRecording(true)
+        setRecordingTarget(target)
         rec.start()
       } catch {
+        wantRecordingRef.current = false
         setIsRecording(false)
+        setRecordingTarget(null)
       }
     },
-    [isRecording, locale, stopDictation]
+    [isRecording, stopDictation]
   )
 
   const handleLocaleChange = async (nextLocale: ClientPortalLocale) => {
@@ -235,6 +288,7 @@ export function ClientIntakeExperience({
 
   const handleAcceptConsent = async (e: React.FormEvent) => {
     e.preventDefault()
+    stopDictation()
     if (!customerName.trim() || !mediaRightsChecked || !zeroPrivityChecked) return
     setConsentSubmitting(true)
     setError(null)
@@ -247,6 +301,7 @@ export function ClientIntakeExperience({
           customerEmail: customerEmail.trim() || undefined,
           attestedMediaRights: mediaRightsChecked,
           acknowledgedZeroPrivity: zeroPrivityChecked,
+          locale,
         }),
       })
       const data = await res.json()
@@ -407,6 +462,8 @@ export function ClientIntakeExperience({
     try {
       const res = await fetch(`/api/intake/${encodeURIComponent(token)}/complete`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale }),
       })
       const data = await res.json()
       if (!res.ok || !data.success) {
@@ -477,7 +534,7 @@ export function ClientIntakeExperience({
         <div className="flex items-center gap-2">
           <Globe className="w-4 h-4 text-slate-400" />
           <select
-            aria-label="Language"
+            aria-label={formatPortalCopy(locale, 'languageLabel')}
             value={locale}
             onChange={(e) => handleLocaleChange(e.target.value as ClientPortalLocale)}
             className="rounded-lg bg-slate-800 border border-slate-700 px-2.5 py-1.5 text-sm text-white"
@@ -511,11 +568,40 @@ export function ClientIntakeExperience({
             </p>
           </div>
         ) : !consentAccepted ? (
-          /* Mandatory Customer Clickwrap Release (Zero-Privity + Media/Estate Attestation) */
+          /* Mandatory Customer Clickwrap Release (Multilanguage + Dictation + Zero-Privity) */
           <form
             onSubmit={handleAcceptConsent}
+            lang={locale}
+            dir={getLocaleDirection(locale)}
             className="my-auto rounded-2xl border border-slate-800 bg-slate-900/90 p-6 sm:p-8 space-y-5 shadow-xl"
           >
+            {/* Prominent In-Card 7-Language Quick Switcher */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                <Globe className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                {formatPortalCopy(locale, 'languageLabel')}
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {SUPPORTED_CLIENT_PORTAL_LOCALES.map((loc) => {
+                  const active = loc.code === locale
+                  return (
+                    <button
+                      key={loc.code}
+                      type="button"
+                      onClick={() => void handleLocaleChange(loc.code)}
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium border transition ${
+                        active
+                          ? 'bg-purple-600/30 border-purple-400/60 text-white shadow-sm'
+                          : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-200'
+                      }`}
+                    >
+                      {loc.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             <div className="flex items-center gap-3">
               <ShieldCheck className="w-7 h-7 text-purple-400 shrink-0" />
               <div>
@@ -533,13 +619,60 @@ export function ClientIntakeExperience({
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">
                   {formatPortalCopy(locale, 'yourName')} *
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-base text-white"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    dir={getLocaleDirection(locale)}
+                    lang={locale}
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder={formatPortalCopy(locale, 'yourName')}
+                    className={`w-full rounded-xl bg-slate-950 border border-slate-700 py-2.5 text-base text-white ${
+                      speechSupported
+                        ? getLocaleDirection(locale) === 'rtl'
+                          ? 'pl-11 pr-3.5'
+                          : 'pl-3.5 pr-11'
+                        : 'px-3.5'
+                    }`}
+                  />
+                  {speechSupported && (
+                    <button
+                      type="button"
+                      onClick={() => toggleDictation('consent_name')}
+                      title={
+                        isRecording && recordingTarget === 'consent_name'
+                          ? formatPortalCopy(locale, 'stopRecording')
+                          : formatPortalCopy(locale, 'tapMicToSpeak')
+                      }
+                      aria-label={
+                        isRecording && recordingTarget === 'consent_name'
+                          ? formatPortalCopy(locale, 'stopRecording')
+                          : formatPortalCopy(locale, 'tapMicToSpeak')
+                      }
+                      className={`absolute top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition ${
+                        getLocaleDirection(locale) === 'rtl' ? 'left-2' : 'right-2'
+                      } ${
+                        isRecording && recordingTarget === 'consent_name'
+                          ? 'bg-red-600 text-white animate-pulse'
+                          : 'bg-slate-800 hover:bg-slate-700 text-purple-300'
+                      }`}
+                    >
+                      {isRecording && recordingTarget === 'consent_name' ? (
+                        <MicOff className="w-4 h-4" />
+                      ) : (
+                        <Mic className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+                {isRecording && recordingTarget === 'consent_name' && (
+                  <p className="text-xs text-emerald-400 mt-1">
+                    {formatPortalCopy(locale, 'listeningInLanguage', {
+                      lang: getPortalLocaleLabel(locale),
+                    })}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">
@@ -547,8 +680,10 @@ export function ClientIntakeExperience({
                 </label>
                 <input
                   type="email"
+                  dir="ltr"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="name@example.com"
                   className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-base text-white"
                 />
               </div>
@@ -583,6 +718,21 @@ export function ClientIntakeExperience({
                 </span>
               </label>
             </div>
+
+            {brand.customTermsUrl && (
+              <div className="text-xs">
+                <a
+                  href={brand.customTermsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-purple-300 hover:text-purple-200 underline underline-offset-4"
+                >
+                  {formatPortalCopy(locale, 'viewStudioTerms', {
+                    brand: brand.brandName,
+                  })}
+                </a>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -642,9 +792,14 @@ export function ClientIntakeExperience({
             {visionProposal && (
               <section className="rounded-2xl border border-emerald-500/35 bg-emerald-500/5 p-5 space-y-4 shadow-lg">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-emerald-300 text-sm font-semibold">
+                  <div className="flex flex-wrap items-center gap-2 text-emerald-300 text-sm font-semibold">
                     <Target className="w-4 h-4 shrink-0" />
-                    {formatPortalCopy(locale, 'proposedVisionHeading')}
+                    <span>{formatPortalCopy(locale, 'proposedVisionHeading')}</span>
+                    {visionProposal.inferredGenre && (
+                      <span className="rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-200">
+                        {visionProposal.inferredGenre}
+                      </span>
+                    )}
                   </div>
                   <span className="text-xs text-slate-400">
                     {formatPortalCopy(locale, 'visionPassesRemaining', {
@@ -713,6 +868,8 @@ export function ClientIntakeExperience({
                 className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3"
               >
                 <textarea
+                  dir={getLocaleDirection(locale)}
+                  lang={locale}
                   rows={visionProposal ? 3 : 5}
                   value={visionDraft}
                   onChange={(e) => setVisionDraft(e.target.value)}
@@ -722,6 +879,13 @@ export function ClientIntakeExperience({
                   )}
                   className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-base text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
                 />
+                {isRecording && recordingTarget === 'vision' && (
+                  <p className="text-xs text-emerald-400">
+                    {formatPortalCopy(locale, 'listeningInLanguage', {
+                      lang: getPortalLocaleLabel(locale),
+                    })}
+                  </p>
+                )}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   {speechSupported ? (
                     <button
@@ -776,10 +940,15 @@ export function ClientIntakeExperience({
             {/* Pinned North-Star Confirmed Vision Card */}
             {visionProposal?.confirmed && (
               <div className="mb-4 rounded-2xl border border-cyan-500/30 bg-cyan-500/5 px-4 py-3.5 space-y-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-cyan-300">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    {formatPortalCopy(locale, 'confirmedVisionHeading')}
+                    <span>{formatPortalCopy(locale, 'confirmedVisionHeading')}</span>
+                    {visionProposal.inferredGenre && (
+                      <span className="rounded-full border border-cyan-400/30 bg-cyan-500/15 px-2 py-0.5 text-[11px] font-medium text-cyan-200">
+                        {visionProposal.inferredGenre}
+                      </span>
+                    )}
                   </div>
                   {turnsUsed < maxTurns && (
                     <button
@@ -1016,6 +1185,8 @@ export function ClientIntakeExperience({
                 className="pt-3 border-t border-slate-800 space-y-3"
               >
                 <textarea
+                  dir={getLocaleDirection(locale)}
+                  lang={locale}
                   rows={turnsUsed === 0 ? 4 : 3}
                   value={draftMessage}
                   onChange={(e) => setDraftMessage(e.target.value)}
@@ -1025,6 +1196,13 @@ export function ClientIntakeExperience({
                   )}
                   className="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3 text-base sm:text-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
                 />
+                {isRecording && recordingTarget === 'interview' && (
+                  <p className="text-xs text-emerald-400">
+                    {formatPortalCopy(locale, 'listeningInLanguage', {
+                      lang: getPortalLocaleLabel(locale),
+                    })}
+                  </p>
+                )}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   {speechSupported ? (
                     <button

@@ -5,10 +5,17 @@ import { useSearchParams } from 'next/navigation'
 import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
 import { ScreeningRoomLoadingState } from '@/components/screening-room/ScreeningRoomLoadingState'
 import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
-import { AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Globe, RefreshCw } from 'lucide-react'
+import { DictationTextarea } from '@/components/ui/DictationTextarea'
+import { getLocaleDirection } from '@/i18n/locale'
 import {
   formatPortalCopy,
+  getPortalLocaleLabel,
+  getSpeechLangForPortalLocale,
   resolveClientPortalLocale,
+  SUPPORTED_CLIENT_PORTAL_LOCALES,
+  toBlueprintReviewLanguageCode,
+  type ClientPortalLocale,
 } from '@/lib/intake/clientPortalCopy'
 import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
 import { TrailerPlayer } from '@/components/landing/TrailerPlayer'
@@ -68,6 +75,9 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
   const [signoffStatus, setSignoffStatus] = useState<string | null>(null)
 
   const initialLanguage = searchParams.get('lang') || undefined
+  const [selectedPortalLocale, setSelectedPortalLocale] = useState<ClientPortalLocale>(() =>
+    resolveClientPortalLocale(initialLanguage)
+  )
   const activeCut = parseScreeningCut(searchParams.get('cut'))
   const playbackMode = playbackForCut(activeCut, searchParams.get('playback'))
   const placeholder = isPipelinePlaceholderToken(shareToken)
@@ -93,6 +103,9 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
         }
 
         setProjectData(data.project)
+        if (!initialLanguage && data.project?.clientPortal?.locale) {
+          setSelectedPortalLocale(resolveClientPortalLocale(data.project.clientPortal.locale))
+        }
       } catch (err: any) {
         console.error('[Shared Screening Room] Error:', err)
         setError(err.message)
@@ -157,6 +170,7 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
   const clientPortal = projectData?.clientPortal as
     | {
         clientMode?: boolean
+        locale?: string
         brandProfile?: { brandName: string; primaryColor?: string }
         watermarkPreview?: boolean
         maxFeedbackRounds?: number
@@ -164,7 +178,9 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
         approvalStatus?: string
       }
     | undefined
-  const portalLocale = resolveClientPortalLocale(initialLanguage)
+  const portalLocale = selectedPortalLocale
+  const effectiveScreeningLanguage =
+    initialLanguage || toBlueprintReviewLanguageCode(portalLocale)
   const effectiveApproval = signoffStatus || clientPortal?.approvalStatus
   const canRequestScreeningRevision =
     (clientPortal?.roundsUsed ?? 0) < (clientPortal?.maxFeedbackRounds ?? 2) &&
@@ -224,7 +240,7 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
         characters={projectData.characters || []}
         sceneProductionState={projectData.sceneProductionState}
         finalCutSelection={finalCutSelection}
-        initialLanguage={initialLanguage}
+        initialLanguage={effectiveScreeningLanguage}
         playbackMode={playbackMode}
         enableAudienceFeedback={false}
         backButtonLabel={
@@ -238,66 +254,101 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
       />
 
       {clientPortal?.clientMode && (
-        <div className="fixed bottom-0 inset-x-0 z-[65] border-t border-slate-800 bg-slate-950/95 backdrop-blur px-4 py-3 text-white">
-          <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3">
-            <div className="text-xs sm:text-sm text-slate-300 flex items-center gap-3">
-              <span className="font-semibold text-white">
-                {formatPortalCopy(portalLocale, 'producedBy', {
-                  brand: clientPortal.brandProfile?.brandName || 'Studio',
-                })}
-              </span>
-              <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-2.5 py-0.5 text-xs text-purple-200">
-                {formatPortalCopy(portalLocale, 'roundBadge', {
-                  used: clientPortal.roundsUsed ?? 0,
-                  max: clientPortal.maxFeedbackRounds ?? 2,
-                })}
-              </span>
-            </div>
+        <div
+          dir={getLocaleDirection(portalLocale)}
+          lang={portalLocale}
+          className="fixed bottom-0 inset-x-0 z-[65] border-t border-slate-800 bg-slate-950/95 backdrop-blur px-4 py-3 text-white"
+        >
+          <div className="max-w-5xl mx-auto space-y-2.5">
+            {showRevisionBox && canRequestScreeningRevision && (
+              <div className="max-w-2xl ms-auto">
+                <DictationTextarea
+                  rows={2}
+                  lang={getSpeechLangForPortalLocale(portalLocale)}
+                  dir={getLocaleDirection(portalLocale)}
+                  startLabel={formatPortalCopy(portalLocale, 'tapMicToSpeak')}
+                  stopLabel={formatPortalCopy(portalLocale, 'stopRecording')}
+                  listeningHint={formatPortalCopy(portalLocale, 'listeningInLanguage', {
+                    lang: getPortalLocaleLabel(portalLocale),
+                  })}
+                  value={clientNote}
+                  onChange={setClientNote}
+                  placeholder={formatPortalCopy(portalLocale, 'screeningNotesPlaceholder')}
+                  className="rounded-lg bg-slate-900 border border-slate-700 text-xs text-white w-full"
+                />
+              </div>
+            )}
 
-            {effectiveApproval === 'approved' ? (
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600/20 border border-emerald-500/40 px-3.5 py-1.5 text-xs font-semibold text-emerald-300">
-                <CheckCircle2 className="w-4 h-4" />
-                {formatPortalCopy(portalLocale, 'approveFinalVideo')} ✓
-              </span>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                {showRevisionBox && canRequestScreeningRevision && (
-                  <input
-                    type="text"
-                    value={clientNote}
-                    onChange={(e) => setClientNote(e.target.value)}
-                    placeholder="Chapter / timestamp notes..."
-                    className="rounded-lg bg-slate-900 border border-slate-700 px-3 py-1.5 text-xs text-white w-56"
-                  />
-                )}
-                {canRequestScreeningRevision && (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="text-xs sm:text-sm text-slate-300 flex flex-wrap items-center gap-3">
+                <span className="font-semibold text-white">
+                  {formatPortalCopy(portalLocale, 'producedBy', {
+                    brand: clientPortal.brandProfile?.brandName || 'Studio',
+                  })}
+                </span>
+                <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-2.5 py-0.5 text-xs text-purple-200">
+                  {formatPortalCopy(portalLocale, 'roundBadge', {
+                    used: clientPortal.roundsUsed ?? 0,
+                    max: clientPortal.maxFeedbackRounds ?? 2,
+                  })}
+                </span>
+                <div className="inline-flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <select
+                    aria-label={formatPortalCopy(portalLocale, 'languageLabel')}
+                    value={portalLocale}
+                    onChange={(e) =>
+                      setSelectedPortalLocale(e.target.value as ClientPortalLocale)
+                    }
+                    className="rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs text-white"
+                  >
+                    {SUPPORTED_CLIENT_PORTAL_LOCALES.map((l) => (
+                      <option key={l.code} value={l.code}>
+                        {l.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {effectiveApproval === 'approved' ? (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600/20 border border-emerald-500/40 px-3.5 py-1.5 text-xs font-semibold text-emerald-300">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {formatPortalCopy(portalLocale, 'approveFinalVideo')} ✓
+                </span>
+              ) : (
+                <div className="flex flex-wrap items-center gap-2">
+                  {canRequestScreeningRevision && (
+                    <button
+                      type="button"
+                      disabled={submittingSignoff}
+                      onClick={() => {
+                        if (!showRevisionBox) {
+                          setShowRevisionBox(true)
+                        } else if (clientNote.trim()) {
+                          void submitScreeningDecision('revision_requested')
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-200"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      {showRevisionBox && clientNote.trim()
+                        ? formatPortalCopy(portalLocale, 'submitRevisionNotes')
+                        : formatPortalCopy(portalLocale, 'requestVideoRevision')}
+                    </button>
+                  )}
                   <button
                     type="button"
                     disabled={submittingSignoff}
-                    onClick={() => {
-                      if (!showRevisionBox) {
-                        setShowRevisionBox(true)
-                      } else if (clientNote.trim()) {
-                        void submitScreeningDecision('revision_requested')
-                      }
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-200"
+                    onClick={() => void submitScreeningDecision('approved')}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 text-xs font-semibold text-white"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    {formatPortalCopy(portalLocale, 'requestVideoRevision')}
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {formatPortalCopy(portalLocale, 'approveFinalVideo')}
                   </button>
-                )}
-                <button
-                  type="button"
-                  disabled={submittingSignoff}
-                  onClick={() => void submitScreeningDecision('approved')}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 text-xs font-semibold text-white"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  {formatPortalCopy(portalLocale, 'approveFinalVideo')}
-                </button>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

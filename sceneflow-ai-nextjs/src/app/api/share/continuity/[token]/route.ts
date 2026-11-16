@@ -110,6 +110,17 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         attestedMediaRights: body.attestedMediaRights === true,
         acknowledgedZeroPrivity: isClientMode ? body.acknowledgedZeroPrivity === true : true,
       })
+      if (typeof body.locale === 'string' && body.locale.trim()) {
+        const nextLocale = resolveClientPortalLocale(body.locale)
+        if (nextLocale !== resolved.payload.locale) {
+          await resolved.session.update({
+            payload: {
+              ...resolved.payload,
+              locale: nextLocale,
+            } as unknown as Record<string, unknown>,
+          })
+        }
+      }
       return NextResponse.json({
         success: true,
         consentId: consent.id,
@@ -169,7 +180,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     const action = String(body.action || 'resync')
 
     if (action === 'revoke') {
-      await resolved.session.update({ status: 'revoked' })
+      await resolved.session.update({ status: 'closed' })
       return NextResponse.json({ success: true, revoked: true })
     }
 
