@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import ClientAssetSubmission from '@/models/ClientAssetSubmission'
 import { assertProjectAccess, getAuthenticatedUserId } from '@/lib/projectAccess'
 import { promoteCustomerSubmissionToContinuity } from '@/lib/continuity/continuityPortalService'
+import { purgeProjectClientUploads } from '@/lib/producer/producerProfileService'
 import { ensureProducerPlatformSchema } from '@/lib/database/migrateProducerPlatform'
 
 export const runtime = 'nodejs'
@@ -81,6 +82,41 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to promote submission'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest, ctx: RouteCtx) {
+  try {
+    await ctx.params
+    const actorUserId = await getAuthenticatedUserId(req)
+    if (!actorUserId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const projectId =
+      req.nextUrl.searchParams.get('projectId')?.trim() ||
+      String((await req.json().catch(() => ({}))).projectId || '').trim()
+    if (!projectId) {
+      return NextResponse.json({ success: false, error: 'projectId is required' }, { status: 400 })
+    }
+
+    const access = await assertProjectAccess(projectId, actorUserId)
+    if (!access.ok) {
+      return NextResponse.json({ success: false, error: access.error }, { status: access.status })
+    }
+
+    const purged = await purgeProjectClientUploads({
+      projectId,
+      ownerUserId: access.billingOwnerUserId || actorUserId,
+    })
+
+    return NextResponse.json({
+      success: true,
+      deletedCount: purged.deletedCount,
+    })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to purge client uploads'
     return NextResponse.json({ success: false, error: message }, { status: 500 })
   }
 }

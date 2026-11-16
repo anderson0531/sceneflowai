@@ -53,11 +53,11 @@ export const PRICING_LANDING_COPY = {
       },
       {
         id: 'hybrid',
-        badge: 'Filmmakers & Production Businesses • $149–$599/mo',
-        title: 'Production Funding Packages & Hybrid Shoots',
+        badge: 'Service Operators, Agencies & Filmmakers • $149–$599/mo',
+        title: 'White-Label Video Businesses & Production Slates',
         description:
-          'Upload scripts (PDF, FDX, Fountain) to generate a standalone Screening Room Pre-Vis Animatic and Promo Trailer for investor funding—or launch a high-margin online video production business (Video Memoirs, Real Estate Tours, Client Biographies) blending live interviews with 4K AI reenactments.',
-        recommendedPlan: 'Pro / Studio + Add-Ons',
+          'Build a watermark-free portfolio sample on Explorer ($9), launch a solo client business on Pro ($149/mo — 100% White-Label Intake, Continuity & Screening Room Portals + 15,000 credits/mo), or scale a multi-PM agency on Studio ($599/mo — 10 seats, PM credit caps & BYOK). Also ideal for investor Pre-Vis & hybrid shoots.',
+        recommendedPlan: 'Pro ($149/mo) / Studio ($599/mo) + Add-Ons',
       },
     ],
   },

@@ -3992,91 +3992,145 @@
       "eyebrow": "Serviços de Produção de Vídeo · Operadores Solo e Agências",
       "title": "Entregue Valor de Produção de $1,500+ com",
       "titleAccent": "50%–80% Menos Custo para Produzir",
-      "subtitle": "Equipes tradicionais e 30 horas de edição manual deixam de fora 90% das famílias, corretores e comércios locais pelo preço. O SceneFlow reduz de 50% a 80% seu custo total de entrega — créditos de processamento mais tempo de gestão — para conquistar clientes com preços acessíveis mantendo 65% a 85% de lucro líquido real.",
-      "commercialRightsBadge": "100% Propriedade Comercial · Entregue Masters aos Clientes",
-      "costSavingsPillLabel": "50%–80% Menor Custo de Entrega · Demanda Global Gigante",
-      "verticalsHeading": "1. Escolha um Serviço Global de Alta Demanda",
+      "subtitle": "Equipes tradicionais e 30 horas de edição manual deixam de fora 90% das famílias, corretores e empresas locais. Comece com Vídeo Memórias via parceiros locais — e some contratos mensais recorrentes B2B reduzindo seu custo total (créditos + tempo PM) em 50% a 80%.",
+      "commercialRightsBadge": "100% Propriedade Comercial · Portais White-Label (Pro+)",
+      "costSavingsPillLabel": "Vídeo Memórias Carro-Chefe + Retainers B2B Recorrentes",
+      "verticalsHeading": "1. Lidere com Nosso Serviço Carro-Chefe — e Expanda com Retainers Mensais",
       "globalDemandLabel": "Oportunidade de Mercado Global",
       "whoBuysLabel": "Quem Compra com Recorrência",
-      "marginAdvantageLabel": "Vantagem de Baixo Custo no SceneFlow",
-      "calculatorBadge": "Simulador Transparente de Custo e Lucro",
-      "calculatorTitle": "2. Compare Custo de Entrega e Lucro Mensal",
-      "priceTierLabel": "Faixa de preço ao cliente:",
+      "partnerChannelsLabel": "Parceiros de Indicação sem Gasto em Anúncios",
+      "marginAdvantageLabel": "Vantagem de Margem e Escopo no SceneFlow",
+      "calculatorBadge": "Simulador de Custo e Lucro por Escopo",
+      "calculatorTitle": "2. Teste Custo de Entrega e Lucro Mensal do Serviço",
+      "priceTierLabel": "Pacote do cliente:",
       "priceTierNames": [
         "Acessível",
         "Padrão",
         "Boutique"
       ],
+      "tierScopePrefix": "Escopo do pacote:",
       "volumeLabel": "Entregas a clientes / mês:",
       "projectsPerMonthSuffix": "projetos/mês",
       "projectsUnitLabel": "projetos",
-      "perProjectProfitLabel": "Lucro líquido / projeto",
+      "stressTestToggleLabel": "Teste conservador: 1º Mês de Ramp-Up + Plano Pro ($149/mês)",
+      "stressTestActiveNote": "Modo conservador ativo: +60% de tempo PM inicial, +30% de reserva extra para refações e assinatura Pro de $149/mês (inclui 15.000 créditos base/mês).",
+      "proPlanLineLabel": "Plano Pro ($149/mês) + processamento extra",
+      "perProjectProfitLabel": "Lucro do serviço / projeto",
       "traditionalMarketLabel": "Preço tradicional de mercado",
       "typicalFeeLabel": "Seu preço ao cliente",
-      "fullyLoadedCostLabel": "Custo total de entrega",
+      "fullyLoadedCostLabel": "Custo de entrega / projeto",
       "costBreakdownSubLabel": "Créditos + tempo PM",
-      "estComputeLabel": "Créditos SceneFlow",
-      "activeHandsOnLabel": "Tempo operador / PM",
+      "estComputeLabel": "Processamento (incl. 20% reserva)",
+      "activeHandsOnLabel": "Tempo operador / PM (@$50/h)",
       "monthlyGrossLabel": "Faturamento Mensal Estimado",
-      "monthlyNetLabel": "Lucro Líquido Mensal Est. (após créditos e tempo PM)",
+      "monthlyNetLabel": "Lucro Mensal Est. do Serviço (após créditos e tempo PM)",
       "perMonthSuffix": "/ mês",
-      "marginBadgeSuffix": "margem líquida",
-      "disclaimer": "O custo total de entrega inclui créditos de processamento no SceneFlow ($0.01/crédito adicional) mais o tempo estimado do operador/PM na entrevista, direção e revisão na Screening Room. Você define seus preços.",
-      "launchBusinessCta": "Comece seu Serviço de Vídeo ($9)",
-      "workflowHeading": "Como um Projeto de Cliente Flui em 4 Etapas Simples",
+      "marginBadgeSuffix": "margem de serviço",
+      "disclaimer": "O custo por escopo inclui créditos SceneFlow ($0.01/crédito com 20% de reserva) mais tempo PM avaliado a $50/h. Ative o Teste Conservador para incluir curva de aprendizado e Plano Pro ($149/mês); exclui vendas locais.",
+      "launchBusinessCta": "Crie Seu Primeiro Filme de Amostra ($9)",
+      "launchBusinessSubnote": "Use o plano Explorer de $9 para criar uma amostra sem marca d’água para parceiros locais — e faça upgrade para o Pro ($149/mês) para Portais 100% White-Label.",
+      "trustShieldHeading": "Escudo Empresarial de Margem, Privacidade e IP Comercial",
+      "trustShieldPillars": [
+        {
+          "title": "Portais White-Label sem Login (Pro+)",
+          "detail": "Clientes revisam sob seu nome, logotipo e cores sem criar conta no SceneFlow nem ver preços de créditos."
+        },
+        {
+          "title": "Firewall Animatic e Tetos de Revisão",
+          "detail": "O cliente aprova Blueprint, Continuidade e Animatic narrado antes do gasto em vídeo — com limites de rodadas e créditos."
+        },
+        {
+          "title": "Zero Treinamento em Fotos ou Histórias do Cliente",
+          "detail": "Arquivos familiares e corporativos nunca treinam modelos compartilhados, removem GPS EXIF no upload e registram consentimento."
+        }
+      ],
+      "playbooksBadge": "Kits Operacionais “Serviço na Caixa” Inclusos",
+      "playbooksHeading": "Playbooks Prontos, Tabelas de Preços e Roteiros de Parceria",
+      "playbooksSubtitle": "Acelere sua operação com SOPs comerciais testados e integrados diretamente no SceneFlow Studio:",
+      "playbooksItems": [
+        "Entrevistas IA de Biógrafo e B2B em 7 Idiomas",
+        "Tabelas de 3 Pacotes e Calculadora de Piso de Margem",
+        "Roteiro de Comissão de 20% para Residenciais Sênior, Memoriais e Imobiliárias",
+        "Registro Integrado de Consentimento de Mídia, Idades e Voz"
+      ],
+      "workflowHeading": "Como um Projeto White-Label Flui em 4 Etapas Simples",
       "stepPrefix": "Etapa",
       "workflowSteps": [
         {
           "step": "01",
-          "title": "Entrevista Guiada com o Cliente",
-          "detail": "Converse com seu cliente (“Conte-me sua história”) para captar momentos marcantes e personagens individuais."
+          "title": "Entrevista Guiada sem Login",
+          "detail": "Envie um link /intake com sua marca e termo de imagem para captar momentos e personagens individuais."
         },
         {
           "step": "02",
           "title": "Aprovação via Link de Blueprint",
-          "detail": "Refine com Audience Resonance internamente e envie um link limpo de Blueprint para aprovação antes de produzir."
+          "detail": "Valide com Audience Resonance e garanta o aceite do cliente no Blueprint antes de gastar em renderização."
         },
         {
           "step": "03",
-          "title": "Produção Híbrida Fotos + IA",
-          "detail": "Combine fotos reais do cliente com continuidade multigeracional, figurinos por cena e Audio Agent / Clips Agent."
+          "title": "Upload Móvel de Fotos e Continuidade",
+          "detail": "Clientes enviam fotos pelo celular (sem GPS EXIF) e aprovam Elenco multigeracional, Figurinos e Cenários com rodadas limitadas."
         },
         {
           "step": "04",
           "title": "Entrega na Screening Room",
-          "detail": "Compartilhe um link privado da Screening Room para revisão precisa, exporte o master 4K e receba o pagamento."
+          "detail": "Compartilhe a Screening Room sem login, exporte masters 4K em 70+ idiomas e apague arquivos brutos em 1 clique."
         }
       ],
       "verticals": [
         {
           "id": "memoir",
           "tabLabel": "Vídeo Memórias",
-          "badge": "$300–$950 / filme · Mercado: $800–$3,500+",
+          "roleTag": "★ Carro-Chefe de Alta Margem",
+          "badge": "$349–$1,250 / filme · Mercado: $1,200–$4,500+",
           "title": "Histórias de Vida, Homenagens e Biografias Familiares",
-          "description": "Combine fotografias de família com reconstituições cinematográficas de época em IA e continuidade precisa por idade (17 → 32 → 62 anos) narradas com vozes acolhedoras e naturais.",
+          "description": "Combine fotografias de família com reconstituições cinematográficas de época em IA, relíquias travadas e continuidade precisa por idade (17 → 32 → 62 anos) narradas com vozes acolhedoras.",
           "globalMarketNeed": "Centenas de milhões de pais idosos, bodas de ouro e aniversários marcantes acontecem todo ano no mundo, mas mais de 90% não é filmado porque equipes de $2,000+ são caras demais.",
-          "clientBuyer": "Famílias, aniversários marcantes, planejadores sucessórios, residenciais sênior e memoriais",
-          "traditionalMarketRangeLabel": "$800–$3,500+",
-          "typicalRetailUsd": 499,
+          "clientBuyer": "Famílias celebrando aniversários marcantes, bodas de ouro, aposentadorias e tributos de legado",
+          "partnerChannels": "Planejadores sucessórios, residenciais sênior, casas memoriais e cerimonialistas (comissão de indicação de 15–20%)",
+          "traditionalMarketRangeLabel": "$1,200–$4,500+",
+          "typicalRetailUsd": 599,
           "priceTiersUsd": [
-            300,
-            499,
-            950
+            349,
+            599,
+            1250
           ],
-          "retailRangeLabel": "$300–$950",
-          "estComputeUsd": 22,
-          "estOperatorUsd": 78,
-          "activeMinutesLabel": "~1.5–2 h",
-          "keyAdvantage": "Entregue uma memória de padrão $1,500 por ~$100 de custo total (~$22 em créditos + ~$78 de tempo PM) — cobrar $300–$500 conquista famílias excluídas pelas produtoras tradicionais."
+          "tierScopeLabels": [
+            "Tributo 5 min · 75% Fotos + Clipes 1080p→4K · 1 Idioma",
+            "Memória Familiar 12 min · Elenco Multigeracional · 2 Idiomas",
+            "Documentário Legado 20 min · Épocas 4K + Relíquias · 4 Idiomas"
+          ],
+          "computeTiersUsd": [
+            18,
+            34,
+            72
+          ],
+          "operatorTiersUsd": [
+            62,
+            88,
+            150
+          ],
+          "activeTimeTiersLabels": [
+            "~1.25 h",
+            "~1.75 h",
+            "~3.0 h"
+          ],
+          "retailRangeLabel": "$349–$1,250",
+          "estComputeUsd": 34,
+          "estOperatorUsd": 88,
+          "activeMinutesLabel": "~1.75 h",
+          "keyAdvantage": "Nossa frente de maior diferencial: continuidade multigeracional entrega um filme nível $2,000 por ~$122 de custo total (~$34 créditos + ~$88 tempo PM)."
         },
         {
           "id": "realestate",
           "tabLabel": "Tours de Imóveis",
+          "roleTag": "↻ Retainer Mensal Imobiliário",
           "badge": "$199–$549 / imóvel · Mercado: $450–$1,500+",
           "title": "Tours Narrados de Imóveis de Alto Padrão e Hotéis Boutique",
           "description": "Transforme fotos de anúncios e destaques do bairro em visitas cinematográficas narradas e musicadas — com versões imediatas em inglês, mandarim, espanhol ou árabe para compradores internacionais.",
           "globalMarketNeed": "Dezenas de milhões de imóveis residenciais, casas de temporada e hotéis boutique disputam compradores locais e estrangeiros todo mês ainda presos apenas a fotos estáticas.",
           "clientBuyer": "Corretores residenciais, imobiliárias de luxo, aluguéis de temporada e hotéis boutique",
+          "partnerChannels": "Estúdios de fotografia imobiliária, equipes de home staging, imobiliárias premium e marketing hoteleiro",
           "traditionalMarketRangeLabel": "$450–$1,500+",
           "typicalRetailUsd": 299,
           "priceTiersUsd": [
@@ -4084,20 +4138,42 @@
             299,
             549
           ],
+          "tierScopeLabels": [
+            "Tour Fotos 90s · Cinema 1080p + 1 Idioma",
+            "Visita Narrada 2 min · Upscale 4K + 2 Idiomas",
+            "Filme Imóvel de Luxo 3 min + Reels 9:16 · 4 Idiomas"
+          ],
+          "computeTiersUsd": [
+            10,
+            15,
+            28
+          ],
+          "operatorTiersUsd": [
+            38,
+            50,
+            88
+          ],
+          "activeTimeTiersLabels": [
+            "~45 min",
+            "~1.0 h",
+            "~1.75 h"
+          ],
           "retailRangeLabel": "$199–$549",
-          "estComputeUsd": 12,
-          "estOperatorUsd": 48,
-          "activeMinutesLabel": "~45–60 min",
-          "keyAdvantage": "Sem deslocamento nem atrasos de clima: transforme fotos do imóvel em tours narrados multilíngues por ~$60 de custo total — mais de 60% abaixo de gravações presenciais."
+          "estComputeUsd": 15,
+          "estOperatorUsd": 50,
+          "activeMinutesLabel": "~1.0 h",
+          "keyAdvantage": "Alta recorrência por corretor: uma imobiliária com 4 captações/mês gera receita constante sem deslocamento nem atrasos de clima (~$65 de custo)."
         },
         {
           "id": "training",
           "tabLabel": "Treinamento e POPs",
+          "roleTag": "↻ Retainer Corporativo B2B",
           "badge": "$599–$1,800 / módulo · Mercado: $1,500–$5,000+",
           "title": "Integração Corporativa, Segurança e Cursos Multilíngues",
           "description": "Trave um instrutor consistente, uniformes e ambientes de trabalho no Cofre de Continuidade — e entregue episódios claros localizados no idioma nativo de cada colaborador.",
           "globalMarketNeed": "Toda indústria, rede clínica, grupo de restaurantes e franquia no mundo enfrenta rotatividade constante, normas de segurança e equipes multilíngues precisando de vídeos POP claros.",
           "clientBuyer": "Equipes de RH e T&D, indústrias, clínicas de saúde, redes de restaurantes e franquias",
+          "partnerChannels": "Consultorias de RH, auditores de segurança do trabalho, integradores LMS e associações de franquias",
           "traditionalMarketRangeLabel": "$1,500–$5,000+",
           "typicalRetailUsd": 950,
           "priceTiersUsd": [
@@ -4105,20 +4181,42 @@
             950,
             1800
           ],
+          "tierScopeLabels": [
+            "Módulo POP 5 min · Instrutor Fixo + 1 Idioma",
+            "Curso Segurança / Onboarding 10 min · 3 Idiomas",
+            "Currículo Multi-Capítulo 20 min · 6+ Idiomas"
+          ],
+          "computeTiersUsd": [
+            24,
+            40,
+            78
+          ],
+          "operatorTiersUsd": [
+            88,
+            125,
+            210
+          ],
+          "activeTimeTiersLabels": [
+            "~1.75 h",
+            "~2.5 h",
+            "~4.2 h"
+          ],
           "retailRangeLabel": "$599–$1,800",
-          "estComputeUsd": 35,
-          "estOperatorUsd": 115,
-          "activeMinutesLabel": "~2–2.5 h",
-          "keyAdvantage": "70% menos custo de entrega (~$150 vs $3,000+ presenciais) — e quando uma norma muda, você atualiza uma cena em minutos sem regravar."
+          "estComputeUsd": 40,
+          "estOperatorUsd": 125,
+          "activeMinutesLabel": "~2.5 h",
+          "keyAdvantage": "Contratos B2B recorrentes: 70%+ menos custo (~$165 vs $3,000+ presenciais) e atualizações rápidas pagas quando normas mudam."
         },
         {
           "id": "brand",
           "tabLabel": "Filmes de Marca",
+          "roleTag": "↻ Pacote PME e Agências",
           "badge": "$399–$1,200 / pacote · Mercado: $3,000–$8,000+",
           "title": "Filmes de Fundadores, Vídeos para Clínicas e Anúncios Sociais",
           "description": "Crie histórias de marca de alta conversão para sites acompanhadas de trailers verticais 9:16 automáticos para Instagram, TikTok e YouTube Shorts — aprovados na Screening Room.",
           "globalMarketNeed": "Mais de 30 milhões de clínicas, escritórios, restaurantes e marcas artesanais no mundo precisam de vídeos institucionais e anúncios 9:16, mas não pagam $5,000+ por comercial.",
-          "clientBuyer": "Clínicas médicas e odontológicas, escritórios de advocacia, PMEs locais, agências e e-commerces",
+          "clientBuyer": "Clínicas médicas e odontológicas, escritórios de advocacia, PMEs locais, agências web e e-commerces",
+          "partnerChannels": "Estúdios de criação de sites, agências de tráfego pago, associações comerciais e consultores médicos",
           "traditionalMarketRangeLabel": "$3,000–$8,000+",
           "typicalRetailUsd": 650,
           "priceTiersUsd": [
@@ -4126,11 +4224,31 @@
             650,
             1200
           ],
+          "tierScopeLabels": [
+            "Vídeo Institucional Clínica/PME 60s + 1 Corte 9:16",
+            "Filme de Fundador 2 min + 2 Cortes Sociais 9:16",
+            "Filme de Marca + 4 Variações Multilíngues de Anúncios"
+          ],
+          "computeTiersUsd": [
+            16,
+            28,
+            56
+          ],
+          "operatorTiersUsd": [
+            62,
+            88,
+            150
+          ],
+          "activeTimeTiersLabels": [
+            "~1.25 h",
+            "~1.75 h",
+            "~3.0 h"
+          ],
           "retailRangeLabel": "$399–$1,200",
-          "estComputeUsd": 22,
+          "estComputeUsd": 28,
           "estOperatorUsd": 88,
-          "activeMinutesLabel": "~1.5–2 h",
-          "keyAdvantage": "Destrava clínicas, restaurantes e escritórios locais por ~$110 de custo total — já com cortes verticais 9:16 automáticos."
+          "activeMinutesLabel": "~1.75 h",
+          "keyAdvantage": "Produção white-label para agências digitais e clínicas locais (~$116 de custo total) já com cortes verticais 9:16 automáticos."
         }
       ]
     },
@@ -4414,26 +4532,26 @@
       "startExplorerCta": "Começar com Explorer — $9"
     },
     "mobileCompanion": {
-      "eyebrow": "App Móvel Complementar (PWA) · iOS e Android",
+      "eyebrow": "Links sem Login + PWA Móvel para Operadores · iOS e Android",
       "title": "Potência de Estúdio no Desktop.",
-      "titleAccent": "Comando no Bolso para Equipes e Clientes.",
-      "subtitle": "Como a edição 4K multifaixa exige tela de desktop, o SceneFlow une o Estúdio a um PWA Móvel de instalação imediata—conectando equipes, Project Managers (PMs) e clientes assinantes com notificações, status, orçamento de créditos e links de aprovação.",
-      "whyPwaBadge": "PWA Instantâneo · Sem Burocracia de App Store",
-      "whyPwaNote": "Instale com um toque pelo Safari ou Chrome com alertas Web Push nativos—sem downloads pesados.",
-      "modeCustomerTab": "Fluxo Cliente e PM",
-      "modeTeamTab": "Equipe e Orçamento",
-      "customerHeading": "Projetos Iniciados pelo Cliente com Suporte de PM",
-      "customerSubheading": "Clientes assinantes iniciam o projeto e o Blueprint pelo celular, solicitam suporte de PM e iteram por quatro links compartilhados.",
+      "titleAccent": "Portais Móveis White-Label para Clientes e Equipes.",
+      "subtitle": "Seus clientes pagantes nunca precisam de login, download ou assinatura no SceneFlow—eles interagem pelos seus links móveis white-label enquanto você e seus PMs acompanham alertas e tetos de créditos no PWA móvel.",
+      "whyPwaBadge": "Zero Login do Cliente · PWA Instantâneo",
+      "whyPwaNote": "Clientes abrem links limpos no Safari ou Chrome com a sua marca; operadores e PMs instalam o PWA em um toque com alertas Web Push.",
+      "modeCustomerTab": "Fluxo Cliente White-Label",
+      "modeTeamTab": "Hub Operador e PM (PWA)",
+      "customerHeading": "Portais Móveis sem Login com a Identidade do Seu Estúdio",
+      "customerSubheading": "Seus clientes não veem preços de créditos do SceneFlow nem criam conta—contam sua história, enviam fotos e aprovam o master por quatro links.",
       "customerSteps": [
         {
           "step": "01",
-          "badge": "Início no Celular",
-          "title": "Assinar, Iniciar Projeto e Solicitar PM",
-          "detail": "O cliente dita ou digita o briefing no celular para gerar o Blueprint base e aciona o suporte de um Project Manager (PM).",
-          "linkLabel": "App Móvel · + Novo Projeto",
+          "badge": "Entrevista sem Login",
+          "title": "Falar ou Digitar a História e Registrar Consentimento",
+          "detail": "O cliente abre seu link /intake no celular, confirma direitos de imagem e relata sua história sem criar cadastro.",
+          "linkLabel": "/intake · Briefing White-Label por Voz ou Texto",
           "phoneHeadline": "Memória da Família Porto",
-          "phoneStatus": "PM Atribuído · Blueprint Pronto",
-          "phoneMeta": "Iniciado via PWA Móvel · Teto: 2.500 cr"
+          "phoneStatus": "Consentimento Salvo · Blueprint Pronto",
+          "phoneMeta": "Zero login do cliente · Teto produtor: 2.500 cr"
         },
         {
           "step": "02",

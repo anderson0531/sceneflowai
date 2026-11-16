@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUserId } from '@/lib/projectAccess'
 import {
   getOrCreateProducerProfile,
+  resolveProducerWhiteLabelEligibility,
   upsertProducerProfile,
 } from '@/lib/producer/producerProfileService'
 
@@ -20,7 +21,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const profile = await getOrCreateProducerProfile(userId)
+    const [profile, eligibility] = await Promise.all([
+      getOrCreateProducerProfile(userId),
+      resolveProducerWhiteLabelEligibility(userId),
+    ])
     return NextResponse.json({
       success: true,
       profile: {
@@ -30,7 +34,9 @@ export async function GET(req: NextRequest) {
         primaryColor: profile.primary_color,
         supportEmail: profile.support_email,
         customTermsUrl: profile.custom_terms_url,
-        hideSceneFlowBranding: profile.hide_sceneflow_branding,
+        hideSceneFlowBranding: eligibility.eligible ? profile.hide_sceneflow_branding : false,
+        whiteLabelEligible: eligibility.eligible,
+        tierName: eligibility.tierName,
         defaultMaxRounds: profile.default_max_rounds,
         dailyPublicIntakeCreditCap: profile.daily_public_intake_credit_cap,
         commercialAddendumAcceptedAt: profile.commercial_addendum_accepted_at,
@@ -49,6 +55,8 @@ export async function GET(req: NextRequest) {
         supportEmail: 'producers@meridianstoryworks.com',
         customTermsUrl: 'https://meridianstoryworks.com/client-terms',
         hideSceneFlowBranding: false,
+        whiteLabelEligible: true,
+        tierName: 'pro',
         defaultMaxRounds: 2,
         dailyPublicIntakeCreditCap: 1500,
         commercialAddendumAcceptedAt: '2026-11-01T10:00:00.000Z',
@@ -69,6 +77,7 @@ export async function PUT(req: NextRequest) {
 
     parsedBody = await req.json().catch(() => ({}))
     const body = parsedBody
+    const eligibility = await resolveProducerWhiteLabelEligibility(userId)
     const profile = await upsertProducerProfile(userId, {
       brandName: body.brandName,
       brandLogoUrl: body.brandLogoUrl,
@@ -80,6 +89,7 @@ export async function PUT(req: NextRequest) {
       dailyPublicIntakeCreditCap: body.dailyPublicIntakeCreditCap,
       acceptCommercialAddendum: body.acceptCommercialAddendum === true,
       acceptedIp: getRequestIp(req),
+      whiteLabelEligibleOverride: eligibility.eligible,
     })
 
     return NextResponse.json({
@@ -91,7 +101,9 @@ export async function PUT(req: NextRequest) {
         primaryColor: profile.primary_color,
         supportEmail: profile.support_email,
         customTermsUrl: profile.custom_terms_url,
-        hideSceneFlowBranding: profile.hide_sceneflow_branding,
+        hideSceneFlowBranding: eligibility.eligible ? profile.hide_sceneflow_branding : false,
+        whiteLabelEligible: eligibility.eligible,
+        tierName: eligibility.tierName,
         defaultMaxRounds: profile.default_max_rounds,
         dailyPublicIntakeCreditCap: profile.daily_public_intake_credit_cap,
         commercialAddendumAcceptedAt: profile.commercial_addendum_accepted_at,

@@ -67,7 +67,7 @@ ProducerProfile.init(
     primary_color: { type: DataTypes.STRING(24), allowNull: false, defaultValue: '#7c3aed' },
     support_email: { type: DataTypes.STRING(255), allowNull: true },
     custom_terms_url: { type: DataTypes.STRING(1000), allowNull: true },
-    hide_sceneflow_branding: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    hide_sceneflow_branding: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     default_max_rounds: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 2 },
     daily_public_intake_credit_cap: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 200 },
     commercial_addendum_accepted_at: { type: DataTypes.DATE, allowNull: true },

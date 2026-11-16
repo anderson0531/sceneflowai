@@ -36,6 +36,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       userAgent: req.headers.get('user-agent'),
       attestedMediaRights: body.attestedMediaRights === true,
       acknowledgedZeroPrivity: body.acknowledgedZeroPrivity === true,
+      consentedVisualLikeness: body.consentedVisualLikeness !== false,
+      consentedVoiceLocalization: body.consentedVoiceLocalization === true,
     })
 
     if (typeof body.locale === 'string' && body.locale.trim()) {

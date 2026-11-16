@@ -1032,3 +1032,59 @@ export function formatPortalCopy(
     vars[token] !== undefined ? String(vars[token]) : `{${token}}`
   )
 }
+
+export interface PortalPrivacyConsentExtras {
+  voiceLocalizationLabel: string
+  privacyHygieneNote: string
+}
+
+export const PORTAL_PRIVACY_CONSENT_EXTRAS: Record<ClientPortalLocale, PortalPrivacyConsentExtras> = {
+  en: {
+    voiceLocalizationLabel:
+      'Optional: I also authorize multilingual voice timbre localization if dubbed editions are included in my package.',
+    privacyHygieneNote:
+      'Privacy guarantee: Your family or company photos and personal stories are never used to train shared AI models, and uploaded images are automatically stripped of EXIF location metadata.',
+  },
+  es: {
+    voiceLocalizationLabel:
+      'Opcional: También autorizo la localización multilingüe del timbre de voz si mi paquete incluye ediciones dobladas.',
+    privacyHygieneNote:
+      'Garantía de privacidad: Sus fotografías personales o empresariales e historias nunca se usan para entrenar modelos compartidos de IA, y los metadatos de ubicación EXIF se eliminan automáticamente.',
+  },
+  pt: {
+    voiceLocalizationLabel:
+      'Opcional: Também autorizo a localização multilíngue do timbre vocal caso meu pacote inclua versões dubladas.',
+    privacyHygieneNote:
+      'Garantia de privacidade: Suas fotos pessoais ou corporativas e histórias nunca são usadas para treinar modelos compartilhados de IA, e os metadados de localização EXIF são removidos automaticamente.',
+  },
+  hi: {
+    voiceLocalizationLabel:
+      'वैकल्पिक: यदि मेरे पैकेज में बहुभाषी संस्करण शामिल हैं, तो मैं वॉइस टिम्बर लोकलाइज़ेशन के लिए भी अनुमति देता/देती हूँ।',
+    privacyHygieneNote:
+      'गोपनीयता गारंटी: आपकी पारिवारिक या व्यावसायिक तस्वीरें और कहानियाँ कभी भी साझा AI मॉडल को प्रशिक्षित करने के लिए उपयोग नहीं की जातीं, और EXIF लोकेशन मेटाडेटा स्वतः हटा दिया जाता है।',
+  },
+  'zh-CN': {
+    voiceLocalizationLabel:
+      '可选：如我的套餐包含多语种译制版本，我亦授权进行多语言音色本地化合成。',
+    privacyHygieneNote:
+      '隐私承诺：您的家庭或企业照片与个人故事绝不会用于训练共享 AI 模型，且上传图像会自动清除 EXIF 位置信息元数据。',
+  },
+  ar: {
+    voiceLocalizationLabel:
+      'اختياري: أوافق أيضاً على توطين نبرة الصوت بعدة لغات إذا كانت باقتي تتضمن نسخاً مدبلجة.',
+    privacyHygieneNote:
+      'ضمان الخصوصية: لا تُستخدم صورك العائلية أو المؤسسية وقصصك الشخصية أبداً لتدريب نماذج الذكاء الاصطناعي المشتركة، وتُزال بيانات الموقع الجغرافي (EXIF) تلقائياً عند الرفع.',
+  },
+  th: {
+    voiceLocalizationLabel:
+      'ตัวเลือกเสริม: ข้าพเจ้าอนุญาตให้ปรับเทียบโทนเสียงหลายภาษาเพิ่มเติม หากแพ็กเกจของข้าพเจ้ารวมฉบับพากย์หลายภาษาไว้ด้วย',
+    privacyHygieneNote:
+      'การรับรองความเป็นส่วนตัว: ภาพถ่ายครอบครัวหรือองค์กรและเรื่องราวส่วนบุคคลของคุณจะไม่ถูกนำไปใช้ฝึกสอนโมเดล AI สาธารณะ และข้อมูลพิกัด EXIF จะถูกลบออกโดยอัตโนมัติ',
+  },
+}
+
+export function getPortalPrivacyConsentExtras(
+  locale: ClientPortalLocale
+): PortalPrivacyConsentExtras {
+  return PORTAL_PRIVACY_CONSENT_EXTRAS[locale] ?? PORTAL_PRIVACY_CONSENT_EXTRAS.en
+}

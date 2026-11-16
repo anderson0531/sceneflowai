@@ -3992,91 +3992,145 @@
       "eyebrow": "视频交付服务引擎 · 独立主理人与代理机构",
       "title": "以价值 $1,500+ 的制作水准，实现",
       "titleAccent": "50%–80% 更低交付总成本",
-      "subtitle": "传统实拍剧组与动辄 30 小时的手工剪辑，把 90% 的家庭、房产经纪人与本地商户拒之门外。SceneFlow 将您的综合交付成本（算力积分 + 人工统筹时间）直降 50% 至 80%，让您以亲民客单价轻松获客，同时稳享 65%–85% 真实净利率。",
-      "commercialRightsBadge": "100% 商业版权归属 · 自由向客户交付高清母带",
-      "costSavingsPillLabel": "综合交付成本直降 50%–80% · 把握庞大全球刚需市场",
-      "verticalsHeading": "1. 选择全球高需求客户服务赛道",
+      "subtitle": "传统剧组与 30 小时手工剪辑把 90% 的家庭、房产经纪与本地商户拒之门外。通过本地合作渠道以王牌“人生传记电影”切入，再叠加高频复购 B2B 月度包年业务，综合交付成本（算力 + 统筹工时）直降 50% 至 80%。",
+      "commercialRightsBadge": "100% 商业版权归属 · 白标客户门户 (Pro+)",
+      "costSavingsPillLabel": "王牌人生传记切入 + 高复购 B2B 月度包年",
+      "verticalsHeading": "1. 以高毛利王牌赛道破局 — 再拓展月度复购业务",
       "globalDemandLabel": "庞大的全球市场商机",
       "whoBuysLabel": "高频复购客户群体",
-      "marginAdvantageLabel": "SceneFlow 低成本交付优势",
-      "calculatorBadge": "透明成本与净利润测算器",
-      "calculatorTitle": "2. 对比交付成本与月度净利润",
-      "priceTierLabel": "客户报价档位：",
+      "partnerChannelsLabel": "零广告费本地分润合作伙伴",
+      "marginAdvantageLabel": "SceneFlow 利润率与交付范围优势",
+      "calculatorBadge": "按交付规格匹配的成本与利润测算器",
+      "calculatorTitle": "2. 压力测试交付成本与月度服务利润",
+      "priceTierLabel": "客户套餐档位：",
       "priceTierNames": [
         "亲民档",
         "标准档",
         "精品档"
       ],
+      "tierScopePrefix": "套餐交付规格：",
       "volumeLabel": "每月交付客户项目数：",
       "projectsPerMonthSuffix": "单/月",
       "projectsUnitLabel": "个项目",
-      "perProjectProfitLabel": "单项目净利润",
+      "stressTestToggleLabel": "保守压力测试：首月磨合期 + Pro 会员 ($149/月)",
+      "stressTestActiveNote": "保守模式已开启：计入 +60% 新手统筹工时、+30% 额外重生成算力缓冲，以及 $149/月 Pro 订阅费（含每月 15,000 基础积分）。",
+      "proPlanLineLabel": "Pro 订阅 ($149/月) + 超额算力",
+      "perProjectProfitLabel": "单项目服务毛利",
       "traditionalMarketLabel": "传统市场均价",
       "typicalFeeLabel": "您的客户报价",
-      "fullyLoadedCostLabel": "综合交付成本",
+      "fullyLoadedCostLabel": "单项目综合交付成本",
       "costBreakdownSubLabel": "积分 + 统筹工时",
-      "estComputeLabel": "SceneFlow 积分",
-      "activeHandsOnLabel": "人工统筹工时",
+      "estComputeLabel": "算力成本（含 20% 返修缓冲）",
+      "activeHandsOnLabel": "人工统筹工时（按 $50/时折算）",
       "monthlyGrossLabel": "预估月度客户营收总额",
-      "monthlyNetLabel": "预估月度净利润（已扣除积分与人工时间）",
+      "monthlyNetLabel": "预估月度服务利润（扣除算力与统筹工时后）",
       "perMonthSuffix": "/ 月",
-      "marginBadgeSuffix": "净利率",
-      "disclaimer": "综合交付成本包含 SceneFlow 算力积分（按 $0.01/积分加购包折算）以及客户访谈、执导与 Screening Room 审片所需的预估人工统筹工时。实际对客报价由您自主设定。",
-      "launchBusinessCta": "开启您的视频服务业务 ($9)",
-      "workflowHeading": "客户定制项目如何通过 4 个轻松步骤高效交付",
+      "marginBadgeSuffix": "服务利润率",
+      "disclaimer": "按规格匹配的交付成本包含 SceneFlow 算力（$0.01/积分加购价，已含 20% 重生成缓冲）及按 $50/小时折算的统筹工时。开启上方保守压力测试可计入新手磨合期与 Pro ($149/月) 订阅费；不含本地获客开销。",
+      "launchBusinessCta": "花 $9 制作您的首部样片",
+      "launchBusinessSubnote": "先用 $9 Explorer 制作无水印作品集样片拿去谈本地渠道合作 — 接单后升级至 Pro ($149/月) 解锁 100% 白标客户交付门户。",
+      "trustShieldHeading": "企业级利润护栏、隐私保护与商业版权盾牌",
+      "trustShieldPillars": [
+        {
+          "title": "免登录白标客户门户 (Pro+)",
+          "detail": "客户在带有您品牌名称、Logo 与配色的页面审片，无需注册 SceneFlow 也不会看到算力价格。"
+        },
+        {
+          "title": "动态预演防火墙与硬性轮次上限",
+          "detail": "生成昂贵视频前先由客户确认 Blueprint、连续性与配音动态预演，并内置修改轮次与积分硬上限。"
+        },
+        {
+          "title": "客户照片与故事绝不用于模型训练",
+          "detail": "私密家庭老照片与企业素材绝不训练共享 AI 模型，上传自动清除 EXIF 定位并记录肖像授权。"
+        }
+      ],
+      "playbooksBadge": "随附“开箱即用”服务商运营手册",
+      "playbooksHeading": "全套行业交付 SOP、三级报价单与渠道分润话术",
+      "playbooksSubtitle": "告别冷启动摸索，SceneFlow Studio 直接内置经过验证的商业服务交付套件：",
+      "playbooksItems": [
+        "7 大语种 AI 传记作家与 B2B 客户立项访谈剧本",
+        "三级套餐报价单模板与内置最低毛利保护测算器",
+        "康养社区、纪念礼仪机构与豪宅经纪 20% 返佣合作方案",
+        "内置点击签署的素材版权、跨年龄肖像与多语言音色授权台账"
+      ],
+      "workflowHeading": "白标客户定制项目如何通过 4 个步骤轻松闭环",
       "stepPrefix": "步骤",
       "workflowSteps": [
         {
           "step": "01",
-          "title": "故事优先的客户访谈",
-          "detail": "通过自然访谈（“请讲讲您的故事”）提炼打动人心的人生或品牌节拍与关键人物。"
+          "title": "免登录故事访谈",
+          "detail": "发送带有品牌标识与肖像授权协议的 /intake 链接，自动提炼核心人物与人生/品牌节拍。"
         },
         {
           "step": "02",
-          "title": "分享 Blueprint 链接确认",
-          "detail": "内部通过 Audience Resonance 评估打磨后，发送免登录 Blueprint 链接供客户签字立项。"
+          "title": "分享 Blueprint 链接签字",
+          "detail": "内部通过 Audience Resonance 优化评分后，在消耗视频算力前锁定客户 Blueprint 签字确认。"
         },
         {
           "step": "03",
-          "title": "真实照片 + AI 混合制片",
-          "detail": "将客户珍藏照片与分龄角色连续性、专属服装及 Audio Agent / Clips Agent 自动合成完美结合。"
+          "title": "手机传图与连续性锁定",
+          "detail": "客户手机直传照片（自动剥离 EXIF 定位），在限定轮次内确认分龄角色、服装与场景。"
         },
         {
           "step": "04",
-          "title": "Screening Room 审片交付",
-          "detail": "发送私密 Screening Room 链接收集逐帧修改意见，导出 4K 商业母带并完成收款。"
+          "title": "审片室交付与一键清理",
+          "detail": "发送免登录审片室链接收集逐帧批注，交付 4K + 70 语种母带，并可一键清理客户原始上传文件。"
         }
       ],
       "verticals": [
         {
           "id": "memoir",
           "tabLabel": "人生传记电影",
-          "badge": "$300–$950 / 部 · 市场价：$800–$3,500+",
+          "roleTag": "★ 高毛利王牌破局赛道",
+          "badge": "$349–$1,250 / 部 · 市场价：$1,200–$4,500+",
           "title": "人生回忆录、金婚寿辰致敬与家族传记大片",
-          "description": "将珍贵的家庭老照片与电影级 AI 时代重现、精准分龄人物连续性（如 17 岁 → 32 岁 → 62 岁）无缝融合，搭配温暖自然的旁白配音。",
-          "globalMarketNeed": "全球每年有数以亿计的长辈寿辰、金婚庆典与家族纪念需求，但因传统团队动辄 $2,000+ 的高昂费用，超过 90% 的家庭故事从未被影像记录。",
-          "clientBuyer": "家庭客户、重要寿辰/纪念日庆典、财富传承顾问、高端康养社区与纪念礼仪机构",
-          "traditionalMarketRangeLabel": "$800–$3,500+",
-          "typicalRetailUsd": 499,
+          "description": "将珍贵的家庭老照片与电影级 AI 时代重现、传家宝道具锁定、精准分龄人物连续性（17 岁 → 32 岁 → 62 岁）无缝融合，配以温暖自然的旁白。",
+          "globalMarketNeed": "全球每年有数以亿计的长辈寿辰、金婚庆典与人生纪念需求，但因传统团队动辄 $2,000+ 的高昂费用，超过 90% 的家庭故事从未被影像记录。",
+          "clientBuyer": "为重要寿辰、金婚纪念日、荣休仪式与家族传承定制礼物的家庭客户",
+          "partnerChannels": "家族办公室/财富传承顾问、高端康养社区、纪念礼仪机构与寿宴策划师（15%–20% 渠道返佣模式）",
+          "traditionalMarketRangeLabel": "$1,200–$4,500+",
+          "typicalRetailUsd": 599,
           "priceTiersUsd": [
-            300,
-            499,
-            950
+            349,
+            599,
+            1250
           ],
-          "retailRangeLabel": "$300–$950",
-          "estComputeUsd": 22,
-          "estOperatorUsd": 78,
-          "activeMinutesLabel": "~1.5–2 小时",
-          "keyAdvantage": "仅需 ~$100 综合成本（~$22 积分 + ~$78 统筹工时）即可交付 $1,500 级传记大片 — 定价 $300–$500 即可轻松打动嫌传统拍摄太贵的家庭。"
+          "tierScopeLabels": [
+            "5 分钟致敬短片 · 75% 老照片 + 1080p→4K 镜头 · 1 语种",
+            "12 分钟家族回忆录 · 分龄角色 + 时代重现 · 2 语种",
+            "20 分钟传世纪录片 · 4K 时代大戏 + 信物锁定 · 4 语种"
+          ],
+          "computeTiersUsd": [
+            18,
+            34,
+            72
+          ],
+          "operatorTiersUsd": [
+            62,
+            88,
+            150
+          ],
+          "activeTimeTiersLabels": [
+            "~1.25 小时",
+            "~1.75 小时",
+            "~3.0 小时"
+          ],
+          "retailRangeLabel": "$349–$1,250",
+          "estComputeUsd": 34,
+          "estOperatorUsd": 88,
+          "activeMinutesLabel": "~1.75 小时",
+          "keyAdvantage": "最具壁垒的王牌切入点：独家跨年龄人物连续性让您仅用 ~$122 总成本（~$34 算力 + ~$88 工时）交付 $2,000 级传记电影。"
         },
         {
           "id": "realestate",
           "tabLabel": "房产与酒店导览",
+          "roleTag": "↻ 经纪人月度复购单",
           "badge": "$199–$549 / 套 · 市场价：$450–$1,500+",
           "title": "豪宅房源配音漫游与精品酒店沉浸导览",
           "description": "将房源实拍照片与周边配套亮点转化为配乐配音俱全的电影感导览大片 — 并可即时生成英语、西语、阿语或葡语版本吸引海外买家。",
           "globalMarketNeed": "全球每月有数以千万计的住宅房源、度假民宿与精品酒店急需吸引本地及跨国买家，但绝大多数仍停留在缺乏感染力的静态房源照片。",
-          "clientBuyer": "住宅房产经纪人、豪宅代理机构、度假民宿主理人与精品酒店",
+          "clientBuyer": "高产住宅经纪人、豪宅代理机构、度假民宿主理人与精品酒店",
+          "partnerChannels": "房产摄影工作室、软装陈设团队、豪宅经纪门店与文旅酒店营销机构",
           "traditionalMarketRangeLabel": "$450–$1,500+",
           "typicalRetailUsd": 299,
           "priceTiersUsd": [
@@ -4084,20 +4138,42 @@
             299,
             549
           ],
+          "tierScopeLabels": [
+            "90 秒房源照片漫游 · 1080p 电影感 + 1 语种",
+            "2 分钟配音导览片 · 4K 超分 + 2 语种",
+            "3 分钟豪宅大片 + 9:16 竖屏切片 · 4 语种跨境版"
+          ],
+          "computeTiersUsd": [
+            10,
+            15,
+            28
+          ],
+          "operatorTiersUsd": [
+            38,
+            50,
+            88
+          ],
+          "activeTimeTiersLabels": [
+            "~45 分钟",
+            "~1.0 小时",
+            "~1.75 小时"
+          ],
           "retailRangeLabel": "$199–$549",
-          "estComputeUsd": 12,
-          "estOperatorUsd": 48,
-          "activeMinutesLabel": "~45–60 分钟",
-          "keyAdvantage": "无需外景奔波或受天气耽搁：仅约 ~$60 综合成本即可将房源照片转化为多语种配音豪宅导览，比现场实拍省 60% 以上。"
+          "estComputeUsd": 15,
+          "estOperatorUsd": 50,
+          "activeMinutesLabel": "~1.0 小时",
+          "keyAdvantage": "单个大经纪团队即可贡献稳定月单：每月上新 4 套房源即可持续复购，免外景奔波与天气延误（成本仅 ~$65）。"
         },
         {
           "id": "training",
           "tabLabel": "企业培训与 SOP",
+          "roleTag": "↻ 企业 B2B 年度复购",
           "badge": "$599–$1,800 / 门课 · 市场价：$1,500–$5,000+",
           "title": "企业入职培训、安全规范与多语种标准课程",
           "description": "在连续性资产库中锁定讲师形象、工装制服与作业场景 — 一键向全球不同母语员工交付清晰统一的标准培训剧集。",
           "globalMarketNeed": "全球每一家制造工厂、连锁医疗、餐饮集团与加盟品牌都面临高频人员流动、安全合规与多语种员工考核，亟需标准化视频 SOP 课程。",
-          "clientBuyer": "企业 HR 与培训部门、制造工厂、医疗诊所、连锁餐饮与特许加盟品牌",
+          "clientBuyer": "企业 HR 与培训部门、制造工厂、连锁诊所、餐饮集团与特许加盟品牌",
+          "partnerChannels": "外部人力资源顾问、安全生产审核机构、企业 LMS 系统服务商与连锁协会",
           "traditionalMarketRangeLabel": "$1,500–$5,000+",
           "typicalRetailUsd": 950,
           "priceTiersUsd": [
@@ -4105,20 +4181,42 @@
             950,
             1800
           ],
+          "tierScopeLabels": [
+            "5 分钟标准 SOP 课 · 锁定讲师 + 1 语种",
+            "10 分钟安全/入职课程 · 3 大员工语种",
+            "20 分钟多章节系列培训 · 6+ 员工语种"
+          ],
+          "computeTiersUsd": [
+            24,
+            40,
+            78
+          ],
+          "operatorTiersUsd": [
+            88,
+            125,
+            210
+          ],
+          "activeTimeTiersLabels": [
+            "~1.75 小时",
+            "~2.5 小时",
+            "~4.2 小时"
+          ],
           "retailRangeLabel": "$599–$1,800",
-          "estComputeUsd": 35,
-          "estOperatorUsd": 115,
-          "activeMinutesLabel": "~2–2.5 小时",
-          "keyAdvantage": "交付成本比实拍团队低 70%（~$150 对比 $3,000+）— 合规制度更新时只需几分钟微调单个片段，无需重拍。"
+          "estComputeUsd": 40,
+          "estOperatorUsd": 125,
+          "activeMinutesLabel": "~2.5 小时",
+          "keyAdvantage": "高粘性 B2B 长单：交付成本低 70%+（~$165 对比 $3,000+），合规制度更新时几分钟重制单节即可收取维护费。"
         },
         {
           "id": "brand",
           "tabLabel": "品牌故事与广告",
+          "roleTag": "↻ 本地商户与代运营包",
           "badge": "$399–$1,200 / 套 · 市场价：$3,000–$8,000+",
           "title": "创始人品牌故事片、诊所科普与竖屏社媒广告",
           "description": "打造高转化官网品牌故事主片，并自动裁剪适配抖音、TikTok、Instagram 与 YouTube Shorts 的 9:16 竖屏预告片 — 通过 Screening Room 高效审片。",
           "globalMarketNeed": "全球超过 3,000 万家本地诊所、律师事务所、特色餐厅与创业品牌急需官网信任背书大片与 9:16 社媒广告，却无力承担 $5,000+ 传统广告制作费。",
-          "clientBuyer": "医疗/牙科诊所、律师事务所、本地中小企业、营销机构与跨境电商品牌主理人",
+          "clientBuyer": "医疗/牙科诊所、律师事务所、本地中小企业、建站代运营机构与跨境电商品牌",
+          "partnerChannels": "本地网站建设公司、SEO/信息流广告代理商、商会组织与医疗/法律行业顾问",
           "traditionalMarketRangeLabel": "$3,000–$8,000+",
           "typicalRetailUsd": 650,
           "priceTiersUsd": [
@@ -4126,11 +4224,31 @@
             650,
             1200
           ],
+          "tierScopeLabels": [
+            "60 秒诊所/商户信任短片 + 1 条 9:16 竖屏版",
+            "2 分钟创始人品牌故事 + 2 条 9:16 社媒短片",
+            "品牌主片 + 4 组多语种广告黄金前 3 秒变体"
+          ],
+          "computeTiersUsd": [
+            16,
+            28,
+            56
+          ],
+          "operatorTiersUsd": [
+            62,
+            88,
+            150
+          ],
+          "activeTimeTiersLabels": [
+            "~1.25 小时",
+            "~1.75 小时",
+            "~3.0 小时"
+          ],
           "retailRangeLabel": "$399–$1,200",
-          "estComputeUsd": 22,
+          "estComputeUsd": 28,
           "estOperatorUsd": 88,
-          "activeMinutesLabel": "~1.5–2 小时",
-          "keyAdvantage": "仅约 ~$110 综合交付成本即可激活本地诊所、餐厅与律所客群 — 同步自动输出 9:16 竖屏社媒短片。"
+          "activeMinutesLabel": "~1.75 小时",
+          "keyAdvantage": "专为本地建站与广告公司提供白标视频履约（总成本仅 ~$116）— 自动输出全套 9:16 社媒竖屏短片。"
         }
       ]
     },
@@ -4414,26 +4532,26 @@
       "startExplorerCta": "以 Explorer 方案起步 — $9"
     },
     "mobileCompanion": {
-      "eyebrow": "移动伴侣应用 (PWA) · 支持 iOS 与 Android",
+      "eyebrow": "客户免登录白标链接 + 运营方移动伴侣 PWA · iOS 与 Android",
       "title": "桌面级制片性能，",
-      "titleAccent": "装进口袋的团队与客户控制中心。",
-      "subtitle": "多轨 4K 精细制片专为桌面大屏设计，因此 SceneFlow 配备即装即用的移动伴侣 PWA——通过实时通知、里程碑状态、积分预算与共享审阅链接，无缝连接制作团队、项目经理 (PM) 与订阅客户。",
-      "whyPwaBadge": "即装 PWA · 零应用商店门槛",
-      "whyPwaNote": "通过 Safari 或 Chrome 一键添加至主屏幕，支持原生 Web Push 推送提醒，免下载等待、实时同步更新。",
-      "modeCustomerTab": "客户与 PM 协作环",
-      "modeTeamTab": "团队与预算中枢",
-      "customerHeading": "客户自主发起项目 + PM 全程托管协作",
-      "customerSubheading": "订阅客户可在手机端直接发起项目与初始 Blueprint，一键开启 PM 支持，并通过四个共享链接高效迭代定稿。",
+      "titleAccent": "面向客户与团队的零门槛白标移动协同。",
+      "subtitle": "您的付费终端客户无需注册、下载或订阅 SceneFlow——客户直接在手机浏览器打开带有您工作室品牌的专属链接，而您与项目经理 (PM) 通过移动伴侣 PWA 实时接收推送通知并严控积分预算上限。",
+      "whyPwaBadge": "客户免登录 · 运营方一键装 PWA",
+      "whyPwaNote": "客户在 Safari / Chrome 打开您的白标网页门户；制片人与 PM 一键安装 PWA 享受原生 Web Push 提醒。",
+      "modeCustomerTab": "白标客户交付闭环",
+      "modeTeamTab": "制片人与 PM 指挥舱 (PWA)",
+      "customerHeading": "冠以您自有工作室品牌的免登录手机交付门户",
+      "customerSubheading": "终端客户全程不会看到 SceneFlow 算力单价，也无需注册账号——通过四个白标链接即可完成口述访谈、上传照片与审片签收。",
       "customerSteps": [
         {
           "step": "01",
-          "badge": "手机端发起",
-          "title": "订阅并创建项目与 Blueprint（申请 PM 支持）",
-          "detail": "客户在手机上语音或文字输入需求即可生成初始故事 Blueprint，并一键勾选项目经理 (PM) 协作支持。",
-          "linkLabel": "移动伴侣 · + 新建项目",
+          "badge": "免登录故事访谈",
+          "title": "语音/文字口述故事并签署肖像授权",
+          "detail": "客户在手机打开您的专属 /intake 白标链接，勾选素材与肖像授权协议，零注册即可口述或输入故事需求。",
+          "linkLabel": "/intake · 白标语音与文字访谈",
           "phoneHeadline": "海港家族回忆录",
-          "phoneStatus": "已指派 PM · Blueprint 已就绪",
-          "phoneMeta": "通过移动 PWA 发起 · 预算上限：2,500 cr"
+          "phoneStatus": "已签署授权 · Blueprint 初稿就绪",
+          "phoneMeta": "客户免注册 · 制片方预算上限：2,500 cr"
         },
         {
           "step": "02",

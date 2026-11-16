@@ -1,10 +1,46 @@
+import { del } from '@vercel/blob'
 import ProducerProfile from '@/models/ProducerProfile'
 import CustomerConsent from '@/models/CustomerConsent'
+import ClientAssetSubmission from '@/models/ClientAssetSubmission'
+import { SubscriptionService } from '@/services/SubscriptionService'
+import { normalizeTierName, type BillingTierName } from '@/lib/billing/tierCatalog'
 import {
   COMMERCIAL_ADDENDUM_VERSION,
   CUSTOMER_CONSENT_VERSION,
   ensureProducerPlatformSchema,
 } from '@/lib/database/migrateProducerPlatform'
+
+export const WHITE_LABEL_ELIGIBLE_TIERS: readonly BillingTierName[] = [
+  'pro',
+  'studio',
+  'enterprise',
+] as const
+
+export function isWhiteLabelEligibleTier(tierName?: string | null): boolean {
+  if (!tierName) return false
+  const normalized = normalizeTierName(tierName)
+  if (!normalized) return false
+  return WHITE_LABEL_ELIGIBLE_TIERS.includes(normalized)
+}
+
+export async function resolveProducerWhiteLabelEligibility(
+  userId: string
+): Promise<{ eligible: boolean; tierName: BillingTierName }> {
+  try {
+    const sub = await SubscriptionService.getUserSubscription(userId)
+    const rawTierName = (sub.tier as { name?: string } | null)?.name ?? null
+    const normalized = rawTierName ? normalizeTierName(rawTierName) : null
+    const tierName: BillingTierName = normalized ?? 'explorer'
+    const activeStatus =
+      sub.status === 'active' || sub.status === 'trial' || sub.status === null
+    return {
+      eligible: Boolean(normalized && activeStatus && isWhiteLabelEligibleTier(tierName)),
+      tierName,
+    }
+  } catch {
+    return { eligible: false, tierName: 'explorer' }
+  }
+}
 
 export interface BrandProfileSnapshot {
   brandName: string
@@ -32,16 +68,18 @@ export async function getOrCreateProducerProfile(userId: string): Promise<Produc
 
 export function toBrandProfileSnapshot(
   profile: Partial<ProducerProfile> | null | undefined,
-  fallbackDisplayName = 'Production Studio'
+  fallbackDisplayName = 'Production Studio',
+  options?: { whiteLabelEligible?: boolean }
 ): BrandProfileSnapshot {
   const brandName = (profile?.brand_name || '').trim() || fallbackDisplayName
+  const allowHide = options?.whiteLabelEligible !== false
   return {
     brandName,
     logoUrl: profile?.brand_logo_url || null,
     primaryColor: profile?.primary_color || '#7c3aed',
     supportEmail: profile?.support_email || null,
     customTermsUrl: profile?.custom_terms_url || null,
-    hideSceneFlowBranding: Boolean(profile?.hide_sceneflow_branding),
+    hideSceneFlowBranding: allowHide ? Boolean(profile?.hide_sceneflow_branding) : false,
   }
 }
 
@@ -58,6 +96,7 @@ export async function upsertProducerProfile(
     dailyPublicIntakeCreditCap?: number
     acceptCommercialAddendum?: boolean
     acceptedIp?: string | null
+    whiteLabelEligibleOverride?: boolean
   }
 ): Promise<ProducerProfile> {
   const profile = await getOrCreateProducerProfile(userId)
@@ -79,7 +118,15 @@ export async function upsertProducerProfile(
     updates.custom_terms_url = input.customTermsUrl ? String(input.customTermsUrl).trim().slice(0, 1000) : null
   }
   if (typeof input.hideSceneFlowBranding === 'boolean') {
-    updates.hide_sceneflow_branding = input.hideSceneFlowBranding
+    if (input.hideSceneFlowBranding) {
+      const eligible =
+        typeof input.whiteLabelEligibleOverride === 'boolean'
+          ? input.whiteLabelEligibleOverride
+          : (await resolveProducerWhiteLabelEligibility(userId)).eligible
+      updates.hide_sceneflow_branding = eligible
+    } else {
+      updates.hide_sceneflow_branding = false
+    }
   }
   if (typeof input.defaultMaxRounds === 'number' && Number.isFinite(input.defaultMaxRounds)) {
     updates.default_max_rounds = Math.min(10, Math.max(1, Math.round(input.defaultMaxRounds)))
@@ -116,6 +163,8 @@ export async function recordCustomerConsent(input: {
   userAgent?: string | null
   attestedMediaRights: boolean
   acknowledgedZeroPrivity: boolean
+  consentedVisualLikeness?: boolean
+  consentedVoiceLocalization?: boolean
 }): Promise<CustomerConsent> {
   if (!input.attestedMediaRights || !input.acknowledgedZeroPrivity) {
     throw new Error('Customer media rights attestation and provider terms acknowledgment are required')
@@ -138,6 +187,8 @@ export async function recordCustomerConsent(input: {
     user_agent: input.userAgent ? input.userAgent.slice(0, 512) : null,
     attested_media_rights: true,
     acknowledged_zero_privity: true,
+    consented_visual_likeness: input.consentedVisualLikeness !== false,
+    consented_voice_localization: input.consentedVoiceLocalization === true,
     accepted_at: new Date(),
   })
 }
@@ -150,4 +201,38 @@ export async function getLatestCustomerConsent(
     where: { collab_session_id: collabSessionId },
     order: [['accepted_at', 'DESC']],
   })
+}
+
+export async function purgeProjectClientUploads(input: {
+  projectId: string
+  ownerUserId: string
+}): Promise<{ deletedCount: number }> {
+  await ensureProducerPlatformSchema()
+  const rows = await ClientAssetSubmission.findAll({
+    where: {
+      project_id: input.projectId,
+      owner_user_id: input.ownerUserId,
+    },
+  })
+  if (rows.length === 0) {
+    return { deletedCount: 0 }
+  }
+
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const urls = rows.map((r) => r.blob_url).filter(Boolean)
+    if (urls.length > 0) {
+      await del(urls).catch((err) => {
+        console.warn('[purgeProjectClientUploads] Best-effort blob delete warning:', err)
+      })
+    }
+  }
+
+  const deletedCount = await ClientAssetSubmission.destroy({
+    where: {
+      project_id: input.projectId,
+      owner_user_id: input.ownerUserId,
+    },
+  })
+
+  return { deletedCount }
 }

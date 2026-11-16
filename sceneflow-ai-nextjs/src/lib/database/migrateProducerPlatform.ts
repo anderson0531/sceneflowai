@@ -2,7 +2,7 @@ import { sequelize } from '@/config/database'
 import { hasTables } from '@/lib/database/schemaProbe'
 
 export const COMMERCIAL_ADDENDUM_VERSION = '2026-11-v1'
-export const CUSTOMER_CONSENT_VERSION = '2026-11-v1'
+export const CUSTOMER_CONSENT_VERSION = '2026-11-v2'
 
 const PRODUCER_TABLES = [
   'producer_profiles',
@@ -34,6 +34,11 @@ export async function ensureProducerPlatformSchema(): Promise<void> {
   schemaInProgress = true
   try {
     if (await hasTables([...PRODUCER_TABLES])) {
+      await sequelize.query(`
+        ALTER TABLE customer_consents
+          ADD COLUMN IF NOT EXISTS consented_visual_likeness BOOLEAN NOT NULL DEFAULT true,
+          ADD COLUMN IF NOT EXISTS consented_voice_localization BOOLEAN NOT NULL DEFAULT false;
+      `)
       schemaCompleted = true
       return
     }
@@ -47,7 +52,7 @@ export async function ensureProducerPlatformSchema(): Promise<void> {
         primary_color VARCHAR(24) NOT NULL DEFAULT '#7c3aed',
         support_email VARCHAR(255),
         custom_terms_url VARCHAR(1000),
-        hide_sceneflow_branding BOOLEAN NOT NULL DEFAULT true,
+        hide_sceneflow_branding BOOLEAN NOT NULL DEFAULT false,
         default_max_rounds INTEGER NOT NULL DEFAULT 2,
         daily_public_intake_credit_cap INTEGER NOT NULL DEFAULT 200,
         commercial_addendum_accepted_at TIMESTAMPTZ,
@@ -64,11 +69,13 @@ export async function ensureProducerPlatformSchema(): Promise<void> {
         owner_user_id UUID NOT NULL,
         customer_name VARCHAR(160) NOT NULL,
         customer_email VARCHAR(255),
-        consent_version VARCHAR(32) NOT NULL DEFAULT '2026-11-v1',
+        consent_version VARCHAR(32) NOT NULL DEFAULT '2026-11-v2',
         ip_address VARCHAR(96),
         user_agent VARCHAR(512),
         attested_media_rights BOOLEAN NOT NULL DEFAULT true,
         acknowledged_zero_privity BOOLEAN NOT NULL DEFAULT true,
+        consented_visual_likeness BOOLEAN NOT NULL DEFAULT true,
+        consented_voice_localization BOOLEAN NOT NULL DEFAULT false,
         accepted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 

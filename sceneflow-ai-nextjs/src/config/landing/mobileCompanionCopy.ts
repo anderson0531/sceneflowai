@@ -1,63 +1,63 @@
 import type { MobileCompanionPwaCopy } from './locales/types'
 
 export const MOBILE_COMPANION_COPY_EN: MobileCompanionPwaCopy = {
-  eyebrow: 'Mobile Companion App (PWA) · iOS & Android',
+  eyebrow: 'Zero-Login Client Links + Operator Mobile PWA · iOS & Android',
   title: 'Desktop Studio Power.',
-  titleAccent: 'Pocket Command for Teams & Clients.',
+  titleAccent: 'Frictionless Mobile Portals for Clients & Teams.',
   subtitle:
-    'Because multi-track 4K production belongs on a desktop display, SceneFlow pairs your Studio with an instant-install Mobile PWA—connecting teams, Project Managers (PMs), and subscribed customers with live notifications, milestone status, credit budgets, and shared review links.',
-  whyPwaBadge: 'Instant PWA · Zero App Store Friction',
+    'Paying clients never need a SceneFlow login, app download, or subscription—they interact through your white-label mobile web links, while you and your Project Managers (PMs) track alerts, milestones, and credit caps from an instant-install Mobile PWA.',
+  whyPwaBadge: 'Zero Client Login · Instant Operator PWA',
   whyPwaNote:
-    'Installs in one tap from Safari or Chrome with native Web Push alerts—no downloads, gatekeeping, or version lag.',
-  modeCustomerTab: 'Customer & PM Loop',
-  modeTeamTab: 'Team & Budget Hub',
-  customerHeading: 'Customer-Initiated Projects with Managed PM Collaboration',
+    'Clients tap clean Safari/Chrome links under your brand; operators & PMs install the Companion PWA in one tap with native Web Push alerts.',
+  modeCustomerTab: 'White-Label Client Loop',
+  modeTeamTab: 'Operator & PM Hub (PWA)',
+  customerHeading: 'Zero-Login Mobile Portals Under Your Own Studio Brand',
   customerSubheading:
-    'Subscribed customers can initiate a project and baseline Blueprint from their phone, request PM support, and iterate through four shared approval links.',
+    'Your paying clients never see SceneFlow credit pricing or create an account—they speak their story, upload photos, and sign off across four white-label mobile links.',
   customerSteps: [
     {
       step: '01',
-      badge: 'Mobile Initiation',
-      title: 'Subscribe, Initiate Project & Request PM Support',
+      badge: 'Zero-Login Intake',
+      title: 'Speak or Type Story Intake & Log Likeness Consent',
       detail:
-        'Customers subscribe, speak or type their story brief on mobile to generate a baseline Blueprint, and flag Project Manager (PM) support in one tap.',
-      linkLabel: 'Mobile Companion · + New Project',
+        'Clients open your branded /intake link on their phone, accept media & likeness release terms, and speak or type their story with zero account setup.',
+      linkLabel: '/intake · White-Label Voice & Text Brief',
       phoneHeadline: 'Harbor Family Memoir',
-      phoneStatus: 'PM Support Assigned · Blueprint Ready',
-      phoneMeta: 'Customer initiated via Mobile PWA · Budget cap: 2,500 cr',
+      phoneStatus: 'Consent Logged · Draft Blueprint Ready',
+      phoneMeta: 'Zero client login · Producer cap: 2,500 cr',
     },
     {
       step: '02',
       badge: 'Shared Blueprint & ARA',
-      title: 'Iterate on Blueprint & Audience Resonance',
+      title: 'Approve Story Beats Before Render Spend',
       detail:
-        'Your PM reviews the baseline, optimizes Audience Resonance on desktop, and shares live Blueprint & Resonance links for mobile feedback and sign-off.',
-      linkLabel: '/blueprint/share · /share/script-resonance',
-      phoneHeadline: 'Blueprint & Resonance Review',
+        'You refine pacing with Audience Resonance on desktop, then send a white-label Blueprint link for mobile client feedback and greenlight.',
+      linkLabel: '/blueprint/share · Pre-Spend Sign-Off',
+      phoneHeadline: 'Blueprint & Beat Review',
       phoneStatus: '94 / 100 Audience Resonance · Approved',
-      phoneMeta: '2 beat notes resolved with PM · Ready for Continuity',
+      phoneMeta: 'Round 1 of 2 used · Ready for Continuity',
     },
     {
       step: '03',
       badge: 'Shared Continuity Link',
-      title: 'Upload Mobile Photos & Approve Continuity',
+      title: 'Upload Phone Photos (EXIF Stripped) & Lock Cast',
       detail:
-        'PM shares a dedicated Continuity link so customers can upload real family, property, or product photos straight from their phone gallery or camera and approve Cast, Wardrobes, Locations & Props.',
+        'Clients tap your Continuity link to upload real family, property, or product photos straight from their phone gallery or camera and approve Cast, Wardrobes & Sets.',
       linkLabel: '/share/continuity · Gallery & Camera Upload',
       phoneHeadline: 'Continuity & Photo Collection',
       phoneStatus: '6 Client Photos Uploaded · Cast & Sets Locked',
-      phoneMeta: 'Auto-downscaled & EXIF-sanitized · 1-click Studio promote',
+      phoneMeta: 'EXIF GPS auto-sanitized · Zero model training',
     },
     {
       step: '04',
       badge: 'Shared Screening Room',
-      title: 'Frame-Accurate Mobile Screening & Final Sign-Off',
+      title: 'Frame-Accurate Mobile Screening & Master Delivery',
       detail:
-        'Watch voiced Pre-Vis animatics and 4K rendered cuts on any phone, leave timestamped notes, and tap Approve Final Master for delivery.',
+        'Clients watch voiced Pre-Vis animatics and 4K rendered cuts on any phone with zero login, leave timestamped notes, and approve the final master.',
       linkLabel: '/share/screening-room · Final Approval',
       phoneHeadline: 'Premiere Screening Room',
       phoneStatus: 'Final 4K Master Approved ✓',
-      phoneMeta: 'Multilanguage streams unlocked · Ready to publish',
+      phoneMeta: 'Multilanguage streams delivered · Raw uploads purgeable',
     },
   ],
   teamHeading: 'Real-Time Pocket Command for Producers, Directors & PMs',
@@ -108,30 +108,30 @@ export const MOBILE_COMPANION_COPY_EN: MobileCompanionPwaCopy = {
 }
 
 export const MOBILE_COMPANION_COPY_ES: MobileCompanionPwaCopy = {
-  eyebrow: 'App Móvil Complementaria (PWA) · iOS y Android',
+  eyebrow: 'Enlaces sin Registro + PWA Móvil para Operadores · iOS y Android',
   title: 'Potencia de Estudio en Escritorio.',
-  titleAccent: 'Control Móvil para Equipos y Clientes.',
+  titleAccent: 'Portales Móviles de Marca Blanca para Clientes y Equipos.',
   subtitle:
-    'Como la producción 4K multipista requiere pantalla de escritorio, SceneFlow combina tu Estudio con una PWA móvil de instalación instantánea—conectando equipos, Project Managers (PM) y clientes suscritos con alertas, estado de hitos, presupuesto de créditos y enlaces de revisión.',
-  whyPwaBadge: 'PWA Instantánea · Sin Fricción de App Store',
+    'Tus clientes de pago nunca necesitan cuenta, descarga ni suscripción en SceneFlow: interactúan mediante tus enlaces móviles de marca blanca mientras tú y tus PMs reciben alertas y vigilan topes de créditos en la PWA móvil.',
+  whyPwaBadge: 'Cero Registro del Cliente · PWA Instantánea',
   whyPwaNote:
-    'Instálala en un toque desde Safari o Chrome con alertas Web Push nativas—sin descargas pesadas ni esperas.',
-  modeCustomerTab: 'Ciclo Cliente y PM',
-  modeTeamTab: 'Equipo y Presupuesto',
-  customerHeading: 'Proyectos Iniciados por el Cliente con Soporte de PM',
+    'Los clientes abren enlaces limpios en Safari o Chrome bajo tu marca; operadores y PMs instalan la PWA en un toque con alertas Web Push.',
+  modeCustomerTab: 'Ciclo Cliente (Marca Blanca)',
+  modeTeamTab: 'Hub Operador y PM (PWA)',
+  customerHeading: 'Portales Móviles sin Inicio de Sesión Bajo tu Propia Marca',
   customerSubheading:
-    'Los clientes suscritos inician su proyecto y Blueprint base desde el móvil, solicitan un PM e iteran mediante cuatro enlaces compartidos.',
+    'Tus clientes nunca ven tarifas de créditos de SceneFlow ni crean cuenta: cuentan su historia, suben fotos y aprueban su entrega en cuatro enlaces móviles.',
   customerSteps: [
     {
       step: '01',
-      badge: 'Inicio Móvil',
-      title: 'Suscribirse, Iniciar Proyecto y Solicitar PM',
+      badge: 'Entrevista sin Login',
+      title: 'Hablar o Escribir la Historia y Firmar Consentimiento',
       detail:
-        'El cliente suscrito dicta o escribe su idea desde el teléfono para generar el Blueprint inicial y activa el soporte de Project Manager (PM).',
-      linkLabel: 'App Móvil · + Nuevo Proyecto',
+        'El cliente abre tu enlace /intake en su teléfono, acepta permisos de imagen y voz, y relata su historia sin crear cuenta.',
+      linkLabel: '/intake · Entrevista de Marca Blanca',
       phoneHeadline: 'Memoria Familiar del Puerto',
-      phoneStatus: 'PM Asignado · Blueprint Listo',
-      phoneMeta: 'Iniciado en PWA Móvil · Límite: 2,500 cr',
+      phoneStatus: 'Consentimiento Registrado · Blueprint Listo',
+      phoneMeta: 'Sin cuenta del cliente · Tope productor: 2,500 cr',
     },
     {
       step: '02',
@@ -215,30 +215,30 @@ export const MOBILE_COMPANION_COPY_ES: MobileCompanionPwaCopy = {
 }
 
 export const MOBILE_COMPANION_COPY_PT: MobileCompanionPwaCopy = {
-  eyebrow: 'App Móvel Complementar (PWA) · iOS e Android',
+  eyebrow: 'Links sem Login + PWA Móvel para Operadores · iOS e Android',
   title: 'Potência de Estúdio no Desktop.',
-  titleAccent: 'Comando no Bolso para Equipes e Clientes.',
+  titleAccent: 'Portais Móveis White-Label para Clientes e Equipes.',
   subtitle:
-    'Como a edição 4K multifaixa exige tela de desktop, o SceneFlow une o Estúdio a um PWA Móvel de instalação imediata—conectando equipes, Project Managers (PMs) e clientes assinantes com notificações, status, orçamento de créditos e links de aprovação.',
-  whyPwaBadge: 'PWA Instantâneo · Sem Burocracia de App Store',
+    'Seus clientes pagantes nunca precisam de login, download ou assinatura no SceneFlow—eles interagem pelos seus links móveis white-label enquanto você e seus PMs acompanham alertas e tetos de créditos no PWA móvel.',
+  whyPwaBadge: 'Zero Login do Cliente · PWA Instantâneo',
   whyPwaNote:
-    'Instale com um toque pelo Safari ou Chrome com alertas Web Push nativos—sem downloads pesados.',
-  modeCustomerTab: 'Fluxo Cliente e PM',
-  modeTeamTab: 'Equipe e Orçamento',
-  customerHeading: 'Projetos Iniciados pelo Cliente com Suporte de PM',
+    'Clientes abrem links limpos no Safari ou Chrome com a sua marca; operadores e PMs instalam o PWA em um toque com alertas Web Push.',
+  modeCustomerTab: 'Fluxo Cliente White-Label',
+  modeTeamTab: 'Hub Operador e PM (PWA)',
+  customerHeading: 'Portais Móveis sem Login com a Identidade do Seu Estúdio',
   customerSubheading:
-    'Clientes assinantes iniciam o projeto e o Blueprint pelo celular, solicitam suporte de PM e iteram por quatro links compartilhados.',
+    'Seus clientes não veem preços de créditos do SceneFlow nem criam conta—contam sua história, enviam fotos e aprovam o master por quatro links.',
   customerSteps: [
     {
       step: '01',
-      badge: 'Início no Celular',
-      title: 'Assinar, Iniciar Projeto e Solicitar PM',
+      badge: 'Entrevista sem Login',
+      title: 'Falar ou Digitar a História e Registrar Consentimento',
       detail:
-        'O cliente dita ou digita o briefing no celular para gerar o Blueprint base e aciona o suporte de um Project Manager (PM).',
-      linkLabel: 'App Móvel · + Novo Projeto',
+        'O cliente abre seu link /intake no celular, confirma direitos de imagem e relata sua história sem criar cadastro.',
+      linkLabel: '/intake · Briefing White-Label por Voz ou Texto',
       phoneHeadline: 'Memória da Família Porto',
-      phoneStatus: 'PM Atribuído · Blueprint Pronto',
-      phoneMeta: 'Iniciado via PWA Móvel · Teto: 2.500 cr',
+      phoneStatus: 'Consentimento Salvo · Blueprint Pronto',
+      phoneMeta: 'Zero login do cliente · Teto produtor: 2.500 cr',
     },
     {
       step: '02',
@@ -322,30 +322,30 @@ export const MOBILE_COMPANION_COPY_PT: MobileCompanionPwaCopy = {
 }
 
 export const MOBILE_COMPANION_COPY_HI: MobileCompanionPwaCopy = {
-  eyebrow: 'मोबाइल कम्पैनियन ऐप (PWA) · iOS और Android',
+  eyebrow: 'बिना लॉगिन क्लाइंट लिंक + ऑपरेटर मोबाइल PWA · iOS और Android',
   title: 'डेस्कटॉप स्टूडियो की शक्ति।',
-  titleAccent: 'टीम और ग्राहकों के लिए पॉकेट कमांड।',
+  titleAccent: 'ग्राहकों और टीमों के लिए सहज व्हाइट-लेबल पोर्टल।',
   subtitle:
-    'चूंकि मल्टी-ट्रैक 4K प्रोडक्शन डेस्कटॉप स्क्रीन के लिए बना है, SceneFlow आपके स्टूडियो को इंस्टेंट-इंस्टॉल मोबाइल PWA से जोड़ता है—जिससे टीमें, प्रोजेक्ट मैनेजर (PM) और सब्सक्राइबर ग्राहक लाइव नोटिफिकेशन, स्थिति, बजट और शेयर लिंक से जुड़े रहते हैं।',
-  whyPwaBadge: 'इंस्टेंट PWA · बिना ऐप स्टोर झंझट',
+    'भुगतान करने वाले क्लाइंट को कभी SceneFlow लॉगिन, ऐप डाउनलोड या सब्सक्रिप्शन की आवश्यकता नहीं होती—वे आपके ब्रांडेड मोबाइल लिंक खोलते हैं, जबकि आप और आपके PM इंस्टेंट मोबाइल PWA से अलर्ट और बजट कैप ट्रैक करते हैं।',
+  whyPwaBadge: 'शून्य क्लाइंट लॉगिन · इंस्टेंट ऑपरेटर PWA',
   whyPwaNote:
-    'Safari या Chrome से एक टैप में होम स्क्रीन पर इंस्टॉल करें और तुरंत Web Push अलर्ट पाएं।',
-  modeCustomerTab: 'ग्राहक और PM लूप',
-  modeTeamTab: 'टीम और बजट हब',
-  customerHeading: 'PM सहायता के साथ ग्राहक-प्रारंभित प्रोजेक्ट',
+    'क्लाइंट आपके ब्रांड नाम से Safari/Chrome लिंक खोलते हैं; ऑपरेटर और PM एक टैप में Web Push अलर्ट वाला PWA इंस्टॉल करते हैं।',
+  modeCustomerTab: 'व्हाइट-लेबल क्लाइंट लूप',
+  modeTeamTab: 'ऑपरेटर और PM हब (PWA)',
+  customerHeading: 'आपके अपने स्टूडियो ब्रांड में बिना-लॉगिन मोबाइल पोर्टल',
   customerSubheading:
-    'सब्सक्राइबर ग्राहक फ़ोन से प्रोजेक्ट और Blueprint शुरू करते हैं, PM सपोर्ट चुनते हैं और चार साझा लिंक से समीक्षा करते हैं।',
+    'क्लाइंट बिना खाता बनाए चार व्हाइट-लेबल लिंक के माध्यम से अपनी कहानी बताते हैं, फ़ोटो अपलोड करते हैं और मास्टर मंज़ूर करते हैं।',
   customerSteps: [
     {
       step: '01',
-      badge: 'मोबाइल शुरुआत',
-      title: 'सब्सक्राइब करें, प्रोजेक्ट व Blueprint शुरू करें',
+      badge: 'बिना लॉगिन इंटरव्यू',
+      title: 'बोलकर या टाइप कर कहानी साझा करें और सहमति दर्ज करें',
       detail:
-        'ग्राहक मोबाइल पर बोलकर या टाइप करके बेसलाइन Blueprint बनाते हैं और एक टैप में Project Manager (PM) सहायता मांगते हैं।',
-      linkLabel: 'मोबाइल ऐप · + नया प्रोजेक्ट',
+        'क्लाइंट फ़ोन पर आपका ब्रांडेड /intake लिंक खोलते हैं, मीडिया व छवि सहमति देते हैं और बिना लॉगिन अपनी कहानी बताते हैं।',
+      linkLabel: '/intake · व्हाइट-लेबल वॉइस और टेक्स्ट इंटरव्यू',
       phoneHeadline: 'हार्बर फैमिली मेमॉयर',
-      phoneStatus: 'PM नियुक्त · Blueprint तैयार',
-      phoneMeta: 'मोबाइल PWA से शुरू · बजट सीमा: 2,500 cr',
+      phoneStatus: 'सहमति दर्ज · Blueprint तैयार',
+      phoneMeta: 'शून्य क्लाइंट लॉगिन · प्रोड्यूसर कैप: 2,500 cr',
     },
     {
       step: '02',
@@ -429,30 +429,30 @@ export const MOBILE_COMPANION_COPY_HI: MobileCompanionPwaCopy = {
 }
 
 export const MOBILE_COMPANION_COPY_ZH_CN: MobileCompanionPwaCopy = {
-  eyebrow: '移动伴侣应用 (PWA) · 支持 iOS 与 Android',
+  eyebrow: '客户免登录白标链接 + 运营方移动伴侣 PWA · iOS 与 Android',
   title: '桌面级制片性能，',
-  titleAccent: '装进口袋的团队与客户控制中心。',
+  titleAccent: '面向客户与团队的零门槛白标移动协同。',
   subtitle:
-    '多轨 4K 精细制片专为桌面大屏设计，因此 SceneFlow 配备即装即用的移动伴侣 PWA——通过实时通知、里程碑状态、积分预算与共享审阅链接，无缝连接制作团队、项目经理 (PM) 与订阅客户。',
-  whyPwaBadge: '即装 PWA · 零应用商店门槛',
+    '您的付费终端客户无需注册、下载或订阅 SceneFlow——客户直接在手机浏览器打开带有您工作室品牌的专属链接，而您与项目经理 (PM) 通过移动伴侣 PWA 实时接收推送通知并严控积分预算上限。',
+  whyPwaBadge: '客户免登录 · 运营方一键装 PWA',
   whyPwaNote:
-    '通过 Safari 或 Chrome 一键添加至主屏幕，支持原生 Web Push 推送提醒，免下载等待、实时同步更新。',
-  modeCustomerTab: '客户与 PM 协作环',
-  modeTeamTab: '团队与预算中枢',
-  customerHeading: '客户自主发起项目 + PM 全程托管协作',
+    '客户在 Safari / Chrome 打开您的白标网页门户；制片人与 PM 一键安装 PWA 享受原生 Web Push 提醒。',
+  modeCustomerTab: '白标客户交付闭环',
+  modeTeamTab: '制片人与 PM 指挥舱 (PWA)',
+  customerHeading: '冠以您自有工作室品牌的免登录手机交付门户',
   customerSubheading:
-    '订阅客户可在手机端直接发起项目与初始 Blueprint，一键开启 PM 支持，并通过四个共享链接高效迭代定稿。',
+    '终端客户全程不会看到 SceneFlow 算力单价，也无需注册账号——通过四个白标链接即可完成口述访谈、上传照片与审片签收。',
   customerSteps: [
     {
       step: '01',
-      badge: '手机端发起',
-      title: '订阅并创建项目与 Blueprint（申请 PM 支持）',
+      badge: '免登录故事访谈',
+      title: '语音/文字口述故事并签署肖像授权',
       detail:
-        '客户在手机上语音或文字输入需求即可生成初始故事 Blueprint，并一键勾选项目经理 (PM) 协作支持。',
-      linkLabel: '移动伴侣 · + 新建项目',
+        '客户在手机打开您的专属 /intake 白标链接，勾选素材与肖像授权协议，零注册即可口述或输入故事需求。',
+      linkLabel: '/intake · 白标语音与文字访谈',
       phoneHeadline: '海港家族回忆录',
-      phoneStatus: '已指派 PM · Blueprint 已就绪',
-      phoneMeta: '通过移动 PWA 发起 · 预算上限：2,500 cr',
+      phoneStatus: '已签署授权 · Blueprint 初稿就绪',
+      phoneMeta: '客户免注册 · 制片方预算上限：2,500 cr',
     },
     {
       step: '02',
@@ -536,30 +536,30 @@ export const MOBILE_COMPANION_COPY_ZH_CN: MobileCompanionPwaCopy = {
 }
 
 export const MOBILE_COMPANION_COPY_AR: MobileCompanionPwaCopy = {
-  eyebrow: 'تطبيق الرفيق المحمول (PWA) · لنظامي iOS و Android',
+  eyebrow: 'روابط عملاء بدون تسجيل + تطبيق PWA للمنتجين · iOS و Android',
   title: 'قوة الاستوديو على سطح المكتب.',
-  titleAccent: 'وقيادة فورية في جيبك للفرق والعملاء.',
+  titleAccent: 'وبوابات هاتف بعلامتك التجارية للعملاء والفرق.',
   subtitle:
-    'لأن الإنتاج الاحترافي بدقة 4K متعدد المسارات مصمم لشاشات سطح المكتب، يقرن SceneFlow الاستوديو بتطبيق ويب تقدمي (PWA) فوري التثبيت—لربط الفرق ومديري المشاريع (PMs) والعملاء المشتركين بالإشعارات الحية وحالة المراحل والميزانية وروابط المراجعة.',
-  whyPwaBadge: 'تطبيق PWA فوري · بدون قيود متاجر التطبيقات',
+    'لا يحتاج عملاؤك الدافعون إلى حساب أو اشتراك أو تنزيل تطبيق في SceneFlow—بل يتفاعلون عبر روابطك ذات العلامة البيضاء على الهاتف، بينما تتابع أنت ومديرو المشاريع (PMs) التنبيهات وسقوف الميزانية عبر تطبيق PWA.',
+  whyPwaBadge: 'بدون تسجيل للعميل · PWA فوري للمشغل',
   whyPwaNote:
-    'يُثبّت بلمسة واحدة من Safari أو Chrome مع إشعارات Web Push أصلية وتحديثات فورية.',
-  modeCustomerTab: 'حلقة العميل ومدير المشروع',
-  modeTeamTab: 'مركز الفريق والميزانية',
-  customerHeading: 'مشاريع يبدأها العميل بدعم متكامل من مدير المشروع (PM)',
+    'يفتح العملاء روابط أنيقة بعلامتك عبر Safari أو Chrome؛ ويثبّت المشغلون تطبيق PWA بلمسة واحدة مع إشعارات فورية.',
+  modeCustomerTab: 'حلقة العميل (علامة بيضاء)',
+  modeTeamTab: 'مركز المنتج وPM (PWA)',
+  customerHeading: 'بوابات هاتف بدون تسجيل دخول تحمل اسم وشعار استوديوك',
   customerSubheading:
-    'يمكن للعملاء المشتركين بدء المشروع والـ Blueprint من هواتفهم، وطلب دعم مدير المشروع، والمراجعة عبر أربعة روابط مشتركة.',
+    'لا يرى عملاؤك أسعار رصيد SceneFlow ولا ينشئون حساباً—يروون قصتهم ويرفعون الصور ويعتمدون النسخة النهائية عبر أربعة روابط.',
   customerSteps: [
     {
       step: '01',
-      badge: 'بدء من الهاتف',
-      title: 'الاشتراك وبدء المشروع وطلب دعم PM',
+      badge: 'مقابلة بدون تسجيل',
+      title: 'سرد القصة صوتياً أو كتابةً وتوثيق موافقة الحقوق',
       detail:
-        'يشترك العميل ويكتب أو يملي ملخص قصته عبر الهاتف لتوليد Blueprint أساسي مع تفعيل دعم مدير المشروع بلمسة واحدة.',
-      linkLabel: 'تطبيق الهاتف · + مشروع جديد',
+        'يفتح العميل رابط /intake الخاص بك على هاتفه، ويوافق على إقرار حقوق الصور والصوت، ويروي قصته فوراً بدون حساب.',
+      linkLabel: '/intake · مقابلة صوتية ونصية بعلامتك',
       phoneHeadline: 'مذكرات عائلة الميناء',
-      phoneStatus: 'تم تعيين PM · الـ Blueprint جاهز',
-      phoneMeta: 'بدأ عبر تطبيق PWA · سقف الميزانية: 2,500 cr',
+      phoneStatus: 'تم توثيق الموافقة · الـ Blueprint جاهز',
+      phoneMeta: 'بدون تسجيل عميل · سقف المنتج: 2,500 cr',
     },
     {
       step: '02',
@@ -643,30 +643,30 @@ export const MOBILE_COMPANION_COPY_AR: MobileCompanionPwaCopy = {
 }
 
 export const MOBILE_COMPANION_COPY_TH: MobileCompanionPwaCopy = {
-  eyebrow: 'แอปมือถือคู่ใจ (PWA) · รองรับ iOS และ Android',
+  eyebrow: 'ลิงก์ลูกค้าไม่ต้องล็อกอิน + แอป PWA สำหรับผู้ให้บริการ · iOS และ Android',
   title: 'พลังสตูดิโอบนเดสก์ท็อป',
-  titleAccent: 'ควบคุมงานและดูแลลูกค้าได้จากมือถือ',
+  titleAccent: 'พอร์ทัลมือถือ White-Label สำหรับลูกค้าและทีมงาน',
   subtitle:
-    'เพราะการตัดต่อและผลิตวิดีโอ 4K หลายแทร็กออกแบบมาเพื่อจอเดสก์ท็อป SceneFlow จึงจับคู่สตูดิโอเข้ากับแอปมือถือ PWA ที่ติดตั้งได้ทันที—เชื่อมทีมงาน ผู้จัดการโปรเจกต์ (PM) และลูกค้าสมาชิกด้วยการแจ้งเตือนสด สถานะงาน งบเครดิต และลิงก์ตรวจทานร่วมกัน',
-  whyPwaBadge: 'ติดตั้ง PWA ทันที · ไม่ต้องผ่าน App Store',
+    'ลูกค้าที่จ้างผลิตไม่ต้องสมัครบัญชี โหลดแอป หรือซื้อแพ็กเกจ SceneFlow—เพียงเปิดลิงก์แบรนด์ของคุณบนมือถือ ขณะที่คุณและ PM ติดตามแจ้งเตือนสดและเพดานงบเครดิตผ่านแอปมือถือ PWA',
+  whyPwaBadge: 'ลูกค้าไม่ต้องล็อกอิน · ติดตั้ง PWA ทันที',
   whyPwaNote:
-    'เพิ่มลงหน้าจอโฮมจาก Safari หรือ Chrome ในแตะเดียว พร้อมแจ้งเตือน Web Push และอัปเดตอัตโนมัติ',
-  modeCustomerTab: 'ลูปทำงานลูกค้า & PM',
-  modeTeamTab: 'ศูนย์ทีม & งบประมาณ',
-  customerHeading: 'ลูกค้าเริ่มโปรเจกต์เองได้ พร้อม PM ดูแลครบวงจร',
+    'ลูกค้าเปิดลิงก์สะอาดตาภายใต้แบรนด์คุณบน Safari/Chrome ส่วนโปรดิวเซอร์และ PM ติดตั้ง PWA ในแตะเดียวพร้อม Web Push',
+  modeCustomerTab: 'ลูปลูกค้า White-Label',
+  modeTeamTab: 'ศูนย์ผู้ให้บริการ & PM (PWA)',
+  customerHeading: 'พอร์ทัลมือถือไม่ต้องล็อกอินภายใต้โลโก้และแบรนด์ของคุณเอง',
   customerSubheading:
-    'ลูกค้าที่สมัครสมาชิกสามารถเปิดโปรเจกต์และสร้าง Blueprint ตั้งต้นจากมือถือ ขอรับการดูแลจาก PM และตรวจงานผ่าน 4 ลิงก์แชร์',
+    'ลูกค้าไม่เห็นเรตเครดิต SceneFlow และไม่ต้องสร้างบัญชี—เล่าเรื่องราว อัปโหลดรูปภาพ และอนุมัติมาสเตอร์ผ่าน 4 ลิงก์แชร์',
   customerSteps: [
     {
       step: '01',
-      badge: 'เริ่มงานบนมือถือ',
-      title: 'สมัครสมาชิก เริ่มโปรเจกต์ & ขอรับการดูแลจาก PM',
+      badge: 'สัมภาษณ์ไม่ต้องล็อกอิน',
+      title: 'พูดหรือพิมพ์เรื่องราว & ยืนยันสิทธิ์ภาพลักษณ์',
       detail:
-        'ลูกค้าพูดหรือพิมพ์บรีฟบนมือถือเพื่อสร้าง Blueprint ตั้งต้น และกดเลือกให้ Project Manager (PM) เข้ามาดูแลได้ทันที',
-      linkLabel: 'แอปมือถือ · + โปรเจกต์ใหม่',
+        'ลูกค้าเปิดลิงก์ /intake ภายใต้แบรนด์คุณบนมือถือ กดยืนยันสิทธิ์ภาพถ่ายและเสียง แล้วเล่าเรื่องราวได้ทันทีโดยไม่ต้องสมัครสมาชิก',
+      linkLabel: '/intake · บรีฟเสียงและข้อความ White-Label',
       phoneHeadline: 'วิดีโอความทรงจำครอบครัวฮาร์เบอร์',
-      phoneStatus: 'มอบหมาย PM แล้ว · Blueprint พร้อมตรวจ',
-      phoneMeta: 'เริ่มผ่าน Mobile PWA · เพดานงบ: 2,500 cr',
+      phoneStatus: 'บันทึกคำยินยอมแล้ว · Blueprint พร้อมตรวจ',
+      phoneMeta: 'ลูกค้าไม่ต้องล็อกอิน · เพดานผู้ผลิต: 2,500 cr',
     },
     {
       step: '02',

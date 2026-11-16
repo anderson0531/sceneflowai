@@ -13,6 +13,8 @@ export interface CustomerConsentAttributes {
   user_agent: string | null
   attested_media_rights: boolean
   acknowledged_zero_privity: boolean
+  consented_visual_likeness: boolean
+  consented_voice_localization: boolean
   accepted_at: Date
 }
 
@@ -27,6 +29,8 @@ export interface CustomerConsentCreationAttributes
     | 'user_agent'
     | 'attested_media_rights'
     | 'acknowledged_zero_privity'
+    | 'consented_visual_likeness'
+    | 'consented_voice_localization'
     | 'accepted_at'
   > {}
 
@@ -45,6 +49,8 @@ export class CustomerConsent
   declare user_agent: string | null
   declare attested_media_rights: boolean
   declare acknowledged_zero_privity: boolean
+  declare consented_visual_likeness: boolean
+  declare consented_voice_localization: boolean
   declare accepted_at: Date
 }
 
@@ -56,11 +62,13 @@ CustomerConsent.init(
     owner_user_id: { type: DataTypes.UUID, allowNull: false },
     customer_name: { type: DataTypes.STRING(160), allowNull: false },
     customer_email: { type: DataTypes.STRING(255), allowNull: true },
-    consent_version: { type: DataTypes.STRING(32), allowNull: false, defaultValue: '2026-11-v1' },
+    consent_version: { type: DataTypes.STRING(32), allowNull: false, defaultValue: '2026-11-v2' },
     ip_address: { type: DataTypes.STRING(96), allowNull: true },
     user_agent: { type: DataTypes.STRING(512), allowNull: true },
     attested_media_rights: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     acknowledged_zero_privity: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    consented_visual_likeness: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    consented_voice_localization: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     accepted_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   },
   {

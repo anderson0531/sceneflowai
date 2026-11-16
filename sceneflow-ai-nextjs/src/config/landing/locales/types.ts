@@ -54,17 +54,28 @@ export type SuperpowerMicroVisualsCopy = {
   }
 }
 
+export type ServiceTrustPillarCopy = {
+  title: string
+  detail: string
+}
+
 export type ServiceVerticalCopy = {
   id: 'memoir' | 'realestate' | 'training' | 'brand'
   tabLabel: string
+  roleTag: string
   badge: string
   title: string
   description: string
   globalMarketNeed: string
   clientBuyer: string
+  partnerChannels: string
   traditionalMarketRangeLabel: string
   typicalRetailUsd: number
   priceTiersUsd: readonly [number, number, number]
+  tierScopeLabels: readonly [string, string, string]
+  computeTiersUsd: readonly [number, number, number]
+  operatorTiersUsd: readonly [number, number, number]
+  activeTimeTiersLabels: readonly [string, string, string]
   retailRangeLabel: string
   estComputeUsd: number
   estOperatorUsd: number
@@ -214,14 +225,19 @@ export type StudioLandingCopy = {
     verticalsHeading: string
     globalDemandLabel: string
     whoBuysLabel: string
+    partnerChannelsLabel: string
     marginAdvantageLabel: string
     calculatorBadge: string
     calculatorTitle: string
     priceTierLabel: string
     priceTierNames: readonly [string, string, string]
+    tierScopePrefix: string
     volumeLabel: string
     projectsPerMonthSuffix: string
     projectsUnitLabel: string
+    stressTestToggleLabel: string
+    stressTestActiveNote: string
+    proPlanLineLabel: string
     perProjectProfitLabel: string
     traditionalMarketLabel: string
     typicalFeeLabel: string
@@ -235,6 +251,17 @@ export type StudioLandingCopy = {
     marginBadgeSuffix: string
     disclaimer: string
     launchBusinessCta: string
+    launchBusinessSubnote: string
+    trustShieldHeading: string
+    trustShieldPillars: readonly [
+      ServiceTrustPillarCopy,
+      ServiceTrustPillarCopy,
+      ServiceTrustPillarCopy,
+    ]
+    playbooksBadge: string
+    playbooksHeading: string
+    playbooksSubtitle: string
+    playbooksItems: readonly [string, string, string, string]
     workflowHeading: string
     stepPrefix: string
     workflowSteps: readonly [ClientStepCopy, ClientStepCopy, ClientStepCopy, ClientStepCopy]

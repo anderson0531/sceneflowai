@@ -109,6 +109,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         userAgent: req.headers.get('user-agent'),
         attestedMediaRights: body.attestedMediaRights === true,
         acknowledgedZeroPrivity: isClientMode ? body.acknowledgedZeroPrivity === true : true,
+        consentedVisualLikeness: body.consentedVisualLikeness !== false,
+        consentedVoiceLocalization: body.consentedVoiceLocalization === true,
       })
       if (typeof body.locale === 'string' && body.locale.trim()) {
         const nextLocale = resolveClientPortalLocale(body.locale)

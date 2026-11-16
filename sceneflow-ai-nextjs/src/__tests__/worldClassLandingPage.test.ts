@@ -7,6 +7,7 @@ import {
   WORLD_CLASS_LANDING_TRANSLATIONS,
   resolveLocalizedStudioLandingCopy,
 } from '@/config/landing/worldClassLandingCopy'
+import { computeServiceEconomics } from '@/components/landing/VideoServicesSpotlightSection'
 import { SANDBOX_VIDEO_CAPTURE_SCRIPTS } from '@/config/landing/sandboxVideoCaptureScripts'
 
 const ROOT = join(process.cwd())
@@ -151,7 +152,46 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
           expect(trueMarginPct).toBeLessThanOrEqual(92)
         }
       }
+
+      // Scope-matched tier economics + Conservative Month-1 Ramp-Up + Pro ($149/mo) stress test
+      expect(vertical.tierScopeLabels).toHaveLength(3)
+      expect(vertical.computeTiersUsd).toHaveLength(3)
+      expect(vertical.operatorTiersUsd).toHaveLength(3)
+      expect(vertical.partnerChannels.length).toBeGreaterThan(20)
+      expect(vertical.roleTag.length).toBeGreaterThan(5)
+
+      for (const tierIdx of [0, 1, 2] as const) {
+        const tierPrice = vertical.priceTiersUsd[tierIdx]
+        const baseCompute = vertical.computeTiersUsd[tierIdx]
+        const baseOperator = vertical.operatorTiersUsd[tierIdx]
+        for (const monthlyVolume of [4, 8, 15]) {
+          const proficient = computeServiceEconomics({
+            clientPrice: tierPrice,
+            baseComputeUsd: baseCompute,
+            baseOperatorUsd: baseOperator,
+            projectsPerMonth: monthlyVolume,
+            conservativeRampUp: false,
+          })
+          const conservative = computeServiceEconomics({
+            clientPrice: tierPrice,
+            baseComputeUsd: baseCompute,
+            baseOperatorUsd: baseOperator,
+            projectsPerMonth: monthlyVolume,
+            conservativeRampUp: true,
+          })
+
+          expect(proficient.netMarginPct).toBeGreaterThanOrEqual(70)
+          expect(proficient.netMarginPct).toBeLessThanOrEqual(90)
+          expect(conservative.monthlyNet).toBeLessThan(proficient.monthlyNet)
+          expect(conservative.monthlyNet).toBeGreaterThan(0)
+          expect(conservative.netMarginPct).toBeGreaterThanOrEqual(45)
+        }
+      }
     }
+
+    expect(services.trustShieldPillars).toHaveLength(3)
+    expect(services.playbooksItems).toHaveLength(4)
+    expect(WORLD_CLASS_LANDING_COPY.mobileCompanion.modeCustomerTab).toContain('White-Label')
   })
 
   it('organizes all 34 KeyFeatures icons across 5 curated Use-Case Tracks and stages 6 Sandbox video capture scripts', () => {

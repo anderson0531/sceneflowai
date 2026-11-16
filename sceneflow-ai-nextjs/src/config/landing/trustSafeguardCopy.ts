@@ -15,7 +15,7 @@ export const TRUST_SAFEGUARD_COPY = {
       highlights: [
         'Vertex Responsible AI on Veo, Imagen, and Gemini generation',
         'Production-tuned harm thresholds for cinematic content',
-        'Your creative assets are not used to train shared models',
+        'Client photos, voices & stories never train shared AI models (EXIF GPS stripped)',
       ],
       badge: 'Vertex Responsible AI',
     },
@@ -38,8 +38,8 @@ export const TRUST_SAFEGUARD_COPY = {
         'Additional moderation and risk mitigation is available across Blueprint, script, pre-vis, and segment video—using the same credit model as other Studio tools. Successful clips receive signed content provenance records.',
       highlights: [
         'Content validation signals before heavy render spend',
-        'Signed content hash and provenance metadata on segment video',
-        'Audit logs, violation tracking, and abuse reporting for platform protection',
+        'Signed content hash, provenance metadata & logged client likeness consent',
+        'Audit logs, isolated client-upload quarantine, and 1-click post-delivery purge',
       ],
       badge: 'Content validation',
     },

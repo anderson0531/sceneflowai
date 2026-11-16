@@ -32,6 +32,8 @@ interface ProducerProfileDto {
   supportEmail: string | null
   customTermsUrl: string | null
   hideSceneFlowBranding: boolean
+  whiteLabelEligible?: boolean
+  tierName?: string
   defaultMaxRounds: number
   dailyPublicIntakeCreditCap: number
   commercialAddendumAcceptedAt: string | null
@@ -86,7 +88,7 @@ const VERTICAL_OPTIONS = [
     value: 'custom_production',
     label: 'Vision-Driven Production (Any Genre — Cinematic Drama, Memoir, Sci-Fi, Commercial)',
   },
-  { value: 'video_memoir', label: 'Video Memoir / Family Legacy ($300 Hybrid Preset)' },
+  { value: 'video_memoir', label: 'Video Memoir / Family Legacy ($349–$1,250 Hybrid Preset)' },
   { value: 'real_estate_tour', label: 'Real Estate Property Tour' },
   { value: 'education_module', label: 'Education / Training Module' },
   { value: 'brand_story', label: 'Brand / Small Business Story' },
@@ -148,6 +150,7 @@ export default function ProducerSettingsPage() {
   const [submissions, setSubmissions] = useState<SubmissionItem[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(false)
   const [promotingId, setPromotingId] = useState<string | null>(null)
+  const [purgingUploads, setPurgingUploads] = useState(false)
 
   // Section 4: Universal Team Accounts
   const [members, setMembers] = useState<WorkspaceMemberDto[]>([])
@@ -386,6 +389,27 @@ export default function ProducerSettingsPage() {
     }
   }
 
+  const handlePurgeProjectUploads = async () => {
+    if (!selectedProjectId || submissions.length === 0) return
+    setPurgingUploads(true)
+    try {
+      const res = await fetch(
+        `/api/share/continuity/manage/promote?projectId=${encodeURIComponent(selectedProjectId)}`,
+        { method: 'DELETE' }
+      )
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to purge raw client uploads')
+      }
+      toast.success(`Purged ${data.deletedCount ?? 0} raw client upload(s) after delivery`)
+      loadProjectSubmissions(selectedProjectId)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Purge failed')
+    } finally {
+      setPurgingUploads(false)
+    }
+  }
+
   const handleInviteMember = async () => {
     if (!inviteEmail.trim()) {
       toast.error('Enter a team member email')
@@ -591,7 +615,7 @@ export default function ProducerSettingsPage() {
             <label className="block text-xs font-medium text-gray-300 mb-1">
               Brand Accent Color & White-Label Mode
             </label>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Input
                 value={primaryColor}
                 onChange={(e) => setPrimaryColor(e.target.value)}
@@ -600,13 +624,26 @@ export default function ProducerSettingsPage() {
               <label className="inline-flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={hideBranding}
+                  checked={profile?.whiteLabelEligible === false ? false : hideBranding}
+                  disabled={profile?.whiteLabelEligible === false}
                   onChange={(e) => setHideBranding(e.target.checked)}
-                  className="rounded border-gray-600 bg-gray-800 text-cyan-500"
+                  className="rounded border-gray-600 bg-gray-800 text-cyan-500 disabled:opacity-50"
                 />
-                Hide SceneFlow branding on Client links
+                <span>Hide SceneFlow branding on Client links</span>
+                <span className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                  Pro & Studio ($149/mo+)
+                </span>
               </label>
             </div>
+            {profile?.whiteLabelEligible === false && (
+              <p className="mt-1.5 text-[11px] text-amber-300/90">
+                Explorer, Hobbyist, and Starter links display &ldquo;Powered by SceneFlow Studio.&rdquo;{' '}
+                <Link href="/pricing" className="underline hover:text-white">
+                  Upgrade to Pro ($149/mo) or Studio ($599/mo)
+                </Link>{' '}
+                to unlock 100% white-label client portals.
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -982,9 +1019,22 @@ export default function ProducerSettingsPage() {
 
         {/* Quarantine Staging Review List */}
         <div className="pt-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-            Customer Uploaded Photos in Quarantine ({submissions.length})
-          </h3>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Customer Uploaded Photos in Quarantine ({submissions.length})
+            </h3>
+            {submissions.length > 0 && (
+              <button
+                type="button"
+                disabled={purgingUploads}
+                onClick={handlePurgeProjectUploads}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/35 bg-rose-950/30 px-2.5 py-1 text-[11px] font-medium text-rose-200 hover:bg-rose-900/40 disabled:opacity-50"
+              >
+                <Trash2 className="w-3 h-3" />
+                {purgingUploads ? 'Purging…' : 'Purge Raw Client Uploads After Delivery'}
+              </button>
+            )}
+          </div>
           {loadingSubmissions ? (
             <p className="text-xs text-gray-500">Loading customer uploads…</p>
           ) : submissions.length === 0 ? (

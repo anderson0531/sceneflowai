@@ -35,14 +35,14 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     cards: [
       {
         id: 'services',
-        badge: 'Income Opportunity · 65–85% Typical Margin',
+        badge: 'Income Opportunity · 65–85% Gross Service Margin',
         title: 'Video Delivery Businesses',
         description:
-          'Deliver bespoke Life Memoirs, Real Estate Walkthroughs, Corporate Training, and Brand Films for paying clients in hours instead of weeks—with full commercial ownership.',
+          'Lead with high-margin Life Memoirs—then stack repeat monthly retainers across Corporate Training, Real Estate, and Brand Films with full commercial ownership.',
         highlights: [
-          'Guided story-first client intake & multi-age cast continuity',
-          'Shared links for Blueprint, Continuity & Screening Room sign-off',
-          'Hybrid client photos + 4K AI re-enactments keep margins high',
+          'Zero-login white-label portals for Intake, Blueprint, Continuity & Screening',
+          'Voiced Pre-vis Animatic & round caps prevent costly client reshoots',
+          'Hybrid client photos + cinema AI re-enactments protect 65–85% margins',
         ],
         ctaLabel: 'Explore Business Models & Margins',
         targetAnchor: 'video-services',
@@ -178,129 +178,199 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     title: 'Deliver $1,500+ Production Value at',
     titleAccent: '50%–80% Lower Cost to Produce',
     subtitle:
-      'Traditional crews and 30-hour manual edits price out 90% of families, realtors, and local businesses. SceneFlow cuts your fully-loaded delivery cost—compute credits plus operator time—by 50% to 80%, so you can win clients at accessible prices and still keep 65%–85% net profit.',
-    commercialRightsBadge: '100% Commercial Ownership · Deliver Client Masters Anywhere',
-    costSavingsPillLabel: '50%–80% Lower Cost to Deliver · Massive Global Market Demand',
-    verticalsHeading: '1. Choose a High-Demand Global Client Service',
+      'Traditional crews and 30-hour manual edits price out 90% of families, realtors, and local businesses. Start with flagship Life Memoirs via local referral partners—then layer recurring B2B retainers while cutting fully-loaded delivery cost (compute + operator time) by 50% to 80%.',
+    commercialRightsBadge: '100% Commercial Ownership · White-Label Client Portals (Pro+)',
+    costSavingsPillLabel: 'Flagship Life Memoirs + Recurring B2B Retainers',
+    verticalsHeading: '1. Lead with Our Flagship Wedge — Then Expand into Repeat Retainers',
     globalDemandLabel: 'Massive Global Market Opportunity',
     whoBuysLabel: 'Who Buys Repeatedly',
-    marginAdvantageLabel: 'SceneFlow Low-Cost Delivery Advantage',
-    calculatorBadge: 'Transparent Cost & Profit Estimator',
-    calculatorTitle: '2. Compare Delivery Cost & Monthly Profit',
-    priceTierLabel: 'Client pricing tier:',
+    partnerChannelsLabel: 'Zero-Ad-Spend Referral Partners',
+    marginAdvantageLabel: 'SceneFlow Margin & Scope Advantage',
+    calculatorBadge: 'Scope-Matched Cost & Profit Estimator',
+    calculatorTitle: '2. Stress-Test Delivery Cost & Monthly Service Profit',
+    priceTierLabel: 'Client package tier:',
     priceTierNames: ['Accessible', 'Standard', 'Boutique'],
+    tierScopePrefix: 'Package scope:',
     volumeLabel: 'Client deliveries / month:',
     projectsPerMonthSuffix: 'projects/mo',
     projectsUnitLabel: 'projects',
-    perProjectProfitLabel: 'Net profit / project',
+    stressTestToggleLabel: 'Stress-test: Month-1 Ramp-Up + Pro Plan ($149/mo)',
+    stressTestActiveNote:
+      'Conservative ramp-up active: +60% beginner PM hours, +30% extra retake compute buffer, and $149/mo Pro membership (includes 15,000 base credits/mo).',
+    proPlanLineLabel: 'Pro plan ($149/mo) + extra compute',
+    perProjectProfitLabel: 'Service profit / project',
     traditionalMarketLabel: 'Typical market rate',
     typicalFeeLabel: 'Your client price',
-    fullyLoadedCostLabel: 'Fully-loaded cost',
+    fullyLoadedCostLabel: 'Delivery cost / project',
     costBreakdownSubLabel: 'Credits + PM time',
-    estComputeLabel: 'SceneFlow credits',
-    activeHandsOnLabel: 'Operator / PM time',
+    estComputeLabel: 'Compute (incl. 20% retake buffer)',
+    activeHandsOnLabel: 'Operator / PM time (@$50/hr)',
     monthlyGrossLabel: 'Est. Monthly Client Billing',
-    monthlyNetLabel: 'Est. Monthly Net Profit (after credits & PM time)',
+    monthlyNetLabel: 'Est. Monthly Service Profit (after compute & PM time)',
     perMonthSuffix: '/ mo',
-    marginBadgeSuffix: 'net margin',
+    marginBadgeSuffix: 'service margin',
     disclaimer:
-      'Fully-loaded delivery cost includes SceneFlow compute credits ($0.01/credit add-on rate) plus estimated operator/PM time for client intake, direction, and Screening Room review. You set your own client pricing.',
-    launchBusinessCta: 'Launch Your Video Service ($9)',
-    workflowHeading: 'How a Client Project Flows in 4 Effortless Steps',
+      'Scope-matched delivery cost includes SceneFlow compute ($0.01/credit add-on rate with 20% retake buffer) plus operator/PM time valued at $50/hr. Toggle Stress-Test above to include beginner ramp-up time and Pro ($149/mo) membership; excludes local sales/marketing.',
+    launchBusinessCta: 'Build Your First Sample Film ($9)',
+    launchBusinessSubnote:
+      'Use the $9 Explorer test flight to produce a watermark-free portfolio sample for local partners—then upgrade to Pro ($149/mo) for 100% White-Label Client Portals.',
+    trustShieldHeading: 'Enterprise-Grade Margin, Privacy & Commercial IP Shield',
+    trustShieldPillars: [
+      {
+        title: 'Zero-Login White-Label Portals (Pro+)',
+        detail:
+          'Clients review under your studio name, logo, and colors with zero SceneFlow login or credit pricing exposed.',
+      },
+      {
+        title: 'Animatic Firewall & Hard Scope Caps',
+        detail:
+          'Clients sign off on Blueprint, Continuity, and Voiced Animatic before motion spend—with enforced revision-round and credit caps.',
+      },
+      {
+        title: 'Never Trained on Client Photos or Stories',
+        detail:
+          'Sensitive family archives and B2B assets never train shared AI models, strip EXIF GPS on upload, and log explicit likeness consent.',
+      },
+    ],
+    playbooksBadge: 'Service-in-a-Box Starter Kits Included',
+    playbooksHeading: 'Turnkey Operator Playbooks, Rate Cards & Partner Pitch Templates',
+    playbooksSubtitle:
+      'Accelerate past cold-start guesswork with battle-tested vertical SOPs built directly into SceneFlow Studio:',
+    playbooksItems: [
+      '7-Language AI Biographer & B2B Client Intake Playbooks',
+      '3-Tier Package Rate Cards & In-App Margin Floor Calculator',
+      '20% Referral Partner Pitch Sheet (Senior Living, Funeral Homes & Realtors)',
+      'Built-In Clickwrap Media, Multi-Age Likeness & Voice Consent Ledger',
+    ],
+    workflowHeading: 'How a White-Label Client Project Flows in 4 Effortless Steps',
     stepPrefix: 'Step',
     workflowSteps: [
       {
         step: '01',
-        title: 'Story-First Client Intake',
+        title: 'Zero-Login Story Intake',
         detail:
-          'Interview your client ("Tell me your story") to capture resonating life or brand beats and key individuals.',
+          'Send a branded Intake link ("Tell me your story") with mandatory likeness/media consent to capture key individuals and beats.',
       },
       {
         step: '02',
         title: 'Shared Blueprint Sign-Off',
         detail:
-          'Refine with Audience Resonance internally, then send a clean Blueprint link for client approval before production.',
+          'Verify story impact with Audience Resonance internally, then lock client Blueprint approval before spending on renders.',
       },
       {
         step: '03',
-        title: 'Shared Continuity & Mobile Photo Uploads',
+        title: 'Mobile Photo Upload & Continuity Lock',
         detail:
-          'Send a Continuity link so clients upload real photos from their phone and approve Cast, Wardrobes, Locations & Props before autonomous agents render.',
+          'Clients upload real photos from their phone (EXIF GPS stripped) and approve multi-age Cast, Wardrobes & Sets within capped rounds.',
       },
       {
         step: '04',
-        title: 'Screening Room Delivery',
+        title: 'Screening Room Master Delivery',
         detail:
-          'Share a private Screening Room link for frame-accurate review, export the 4K master, and collect payment.',
+          'Collect frame-accurate notes on a zero-login Screening Room link, ship 4K + 70-language masters, and purge raw uploads in 1 click.',
       },
     ],
     verticals: [
       {
         id: 'memoir',
         tabLabel: 'Video Memoirs',
-        badge: '$300–$950 / film · Market Rate: $800–$3,500+',
+        roleTag: '★ Flagship High-Margin Wedge',
+        badge: '$349–$1,250 / film · Market Rate: $1,200–$4,500+',
         title: 'Life Stories, Milestone Tributes & Family Biographies',
         description:
-          'Blend treasured family photographs with cinematic AI era re-enactments and accurate multi-age character continuity (e.g., Age 17 → Age 32 → Age 62) narrated in warm, lifelike voices.',
+          'Blend treasured family photographs with cinematic AI era re-enactments, heirloom prop locks, and accurate multi-age character continuity (e.g., Age 17 → Age 32 → Age 62) narrated in warm, lifelike voices.',
         globalMarketNeed:
-          'Hundreds of millions of aging parents, 50th anniversaries, and milestone birthdays happen globally every year—yet 90%+ go unfilmed because $2,000+ crews are unaffordable.',
+          'Hundreds of millions of aging parents, 50th anniversaries, and celebrations of life happen globally every year—yet 90%+ go unfilmed because $2,000+ crews are unaffordable.',
         clientBuyer:
-          'Families, milestone birthdays, estate planners, senior communities & funeral homes',
-        traditionalMarketRangeLabel: '$800–$3,500+',
-        typicalRetailUsd: 499,
-        priceTiersUsd: [300, 499, 950],
-        retailRangeLabel: '$300–$950',
-        estComputeUsd: 22,
-        estOperatorUsd: 78,
-        activeMinutesLabel: '~1.5–2 hrs',
+          'Families celebrating milestone birthdays, 50th anniversaries, retirements & legacy tributes',
+        partnerChannels:
+          'Estate planners, senior living communities, funeral directors & milestone event planners (15–20% referral partner model)',
+        traditionalMarketRangeLabel: '$1,200–$4,500+',
+        typicalRetailUsd: 599,
+        priceTiersUsd: [349, 599, 1250],
+        tierScopeLabels: [
+          '5-min Milestone Tribute · 75% Photos + 1080p→4K Clips · 1 Lang',
+          '12-min Family Memoir · Multi-Age Cast + Era Clips · 2 Langs',
+          '20-min Legacy Documentary · 4K Eras + Heirloom Locks · 4 Langs',
+        ],
+        computeTiersUsd: [18, 34, 72],
+        operatorTiersUsd: [62, 88, 150],
+        activeTimeTiersLabels: ['~1.25 hrs', '~1.75 hrs', '~3.0 hrs'],
+        retailRangeLabel: '$349–$1,250',
+        estComputeUsd: 34,
+        estOperatorUsd: 88,
+        activeMinutesLabel: '~1.75 hrs',
         keyAdvantage:
-          'Deliver a $1,500-caliber memoir for ~$100 fully loaded (~$22 credits + ~$78 PM time)—pricing at $300–$500 wins families priced out of traditional crews.',
+          'Our highest-conviction wedge: zero-competition multi-age continuity delivers a $2,000-caliber family film for ~$122 total cost (~$34 compute + ~$88 PM time).',
       },
       {
         id: 'realestate',
         tabLabel: 'Real Estate Tours',
+        roleTag: '↻ Repeat Broker Retainer',
         badge: '$199–$549 / listing · Market Rate: $450–$1,500+',
         title: 'Narrated Luxury Property & Boutique Hospitality Tours',
         description:
-          'Turn listing photographs and neighborhood highlights into scored, narrated cinema walkthroughs—plus instant Mandarin, Spanish, Arabic, or Portuguese versions for international buyers.',
+          'Turn listing photographs and neighborhood highlights into scored, narrated cinema walkthroughs—plus instant Mandarin, Spanish, Arabic, or Portuguese versions for cross-border buyers.',
         globalMarketNeed:
-          'Tens of millions of home listings, short-term rentals, and boutique hotels compete for domestic and cross-border buyers worldwide every month—most still stuck with static photos.',
+          'Tens of millions of home listings, short-term rentals, and boutique hotels compete for domestic and international buyers worldwide every month—most still stuck with static photos.',
         clientBuyer:
-          'Residential realtors, luxury brokerages, vacation rentals & boutique hotels',
+          'Top-producing residential realtors, luxury brokerages, vacation rentals & boutique hotels',
+        partnerChannels:
+          'Real estate photography studios, MLS staging teams, luxury brokerages & hospitality marketers',
         traditionalMarketRangeLabel: '$450–$1,500+',
         typicalRetailUsd: 299,
         priceTiersUsd: [199, 299, 549],
+        tierScopeLabels: [
+          '90s MLS Photo Walkthrough · 1080p Cinema + 1 Lang',
+          '2-min Narrated Property Tour · 4K Upscaled + 2 Langs',
+          '3-min Luxury Estate Film + 9:16 Reels · 4 International Langs',
+        ],
+        computeTiersUsd: [10, 15, 28],
+        operatorTiersUsd: [38, 50, 88],
+        activeTimeTiersLabels: ['~45 min', '~1.0 hr', '~1.75 hrs'],
         retailRangeLabel: '$199–$549',
-        estComputeUsd: 12,
-        estOperatorUsd: 48,
-        activeMinutesLabel: '~45–60 min',
+        estComputeUsd: 15,
+        estOperatorUsd: 50,
+        activeMinutesLabel: '~1.0 hr',
         keyAdvantage:
-          'No travel or weather delays: turn MLS photos into narrated, multilingual luxury tours for ~$60 total cost—over 60% lower than on-site shoots.',
+          'High repeat volume per broker: one luxury team listing 4 homes/month generates recurring monthly orders with zero travel or weather delays (~$65 delivery cost).',
       },
       {
         id: 'training',
         tabLabel: 'Training & SOPs',
+        roleTag: '↻ Repeat B2B Retainer',
         badge: '$599–$1,800 / module · Market Rate: $1,500–$5,000+',
         title: 'Corporate Onboarding, Safety & Multilingual Courses',
         description:
-          'Lock a consistent instructor avatar, uniforms, and workplace sets in your Continuity Vault—then ship crystal-clear training episodes localized across every employee’s native language.',
+          'Lock a consistent instructor presenter, uniforms, and workplace sets in your Continuity Vault—then ship standardized training episodes localized across every employee’s native language.',
         globalMarketNeed:
-          'Every manufacturer, clinic network, hospitality group, and franchise globally battles frontline turnover, safety compliance, and multilingual workforces needing standardized video SOPs.',
+          'Every manufacturer, clinic network, hospitality group, and franchise globally battles frontline turnover, safety compliance, and multilingual workforces needing clear video SOPs.',
         clientBuyer:
-          'HR & L&D teams, manufacturers, healthcare clinics, restaurants & franchises',
+          'HR & L&D leaders, manufacturers, healthcare clinic networks, restaurant groups & franchises',
+        partnerChannels:
+          'Fractional HR consultants, workplace safety auditors, LMS integrators & franchise associations',
         traditionalMarketRangeLabel: '$1,500–$5,000+',
         typicalRetailUsd: 950,
         priceTiersUsd: [599, 950, 1800],
+        tierScopeLabels: [
+          '5-min SOP Module · Locked Instructor + 1 Workforce Lang',
+          '10-min Safety / Onboarding Course · 3 Workforce Langs',
+          '20-min Multi-Chapter Curriculum · 6+ Workforce Langs',
+        ],
+        computeTiersUsd: [24, 40, 78],
+        operatorTiersUsd: [88, 125, 210],
+        activeTimeTiersLabels: ['~1.75 hrs', '~2.5 hrs', '~4.2 hrs'],
         retailRangeLabel: '$599–$1,800',
-        estComputeUsd: 35,
-        estOperatorUsd: 115,
-        activeMinutesLabel: '~2–2.5 hrs',
+        estComputeUsd: 40,
+        estOperatorUsd: 125,
+        activeMinutesLabel: '~2.5 hrs',
         keyAdvantage:
-          '70% lower delivery cost (~$150 vs $3,000+ live crews)—and when compliance rules change, update one beat in minutes without reshooting.',
+          'Sticky B2B retainers: 70%+ lower cost (~$165 vs $3,000+ live shoots), and when compliance rules change, you charge an easy update fee to re-render one beat in minutes.',
       },
       {
         id: 'brand',
         tabLabel: 'Brand Stories',
+        roleTag: '↻ Repeat SMB & Agency Pack',
         badge: '$399–$1,200 / pack · Market Rate: $3,000–$8,000+',
         title: 'Founder Origin Films, Clinic Explainers & Social Ads',
         description:
@@ -308,16 +378,26 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         globalMarketNeed:
           '30M+ local clinics, law firms, restaurants, and craft founders worldwide urgently need homepage trust videos and fresh 9:16 social ads—but are locked out by $5,000+ agency shoots.',
         clientBuyer:
-          'Medical/dental practices, law firms, local SMBs, agencies & e-commerce founders',
+          'Medical/dental practices, law firms, local SMBs, web design agencies & e-commerce founders',
+        partnerChannels:
+          'Local web design shops, SEO/performance ad agencies, business chambers & dental/medical consultants',
         traditionalMarketRangeLabel: '$3,000–$8,000+',
         typicalRetailUsd: 650,
         priceTiersUsd: [399, 650, 1200],
+        tierScopeLabels: [
+          '60s Clinic / SMB Trust Spot + 1 Vertical 9:16 Cutdown',
+          '2-min Founder Origin Film + 2 Social 9:16 Cutdowns',
+          'Brand Film + 4 Multilingual Paid-Ad Hook Variations',
+        ],
+        computeTiersUsd: [16, 28, 56],
+        operatorTiersUsd: [62, 88, 150],
+        activeTimeTiersLabels: ['~1.25 hrs', '~1.75 hrs', '~3.0 hrs'],
         retailRangeLabel: '$399–$1,200',
-        estComputeUsd: 22,
+        estComputeUsd: 28,
         estOperatorUsd: 88,
-        activeMinutesLabel: '~1.5–2 hrs',
+        activeMinutesLabel: '~1.75 hrs',
         keyAdvantage:
-          'Unlocks local clinics, restaurants, and law firms for ~$110 total delivery cost—complete with automatic 9:16 social cutdowns.',
+          'White-label fulfillment for local web & ad agencies (~$116 total delivery cost)—complete with automatic 9:16 social cutdowns.',
       },
     ],
   },
@@ -436,7 +516,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
           'Switch Elara’s wardrobe per shot, direct camera framing by voice or text, blend multi-track dialogue/SFX/score in Production Mixer, and dispatch Production Agents.',
         serviceExampleTitle: 'Hybrid Client Photos + Cinematic Era Re-Enactments',
         serviceExampleNote:
-          'Place real client photographs on Ken Burns beats alongside 4K AI re-enactments for unphotographed memories—keeping a 15-minute memoir under ~$75 in compute.',
+          'Place real client photographs on Ken Burns beats alongside cinema AI re-enactments for unphotographed memories—keeping a 12-minute memoir around ~$34 in compute (and 20-min 4K legacy films under ~$75).',
         callouts: [
           {
             label: 'Per-Shot Wardrobe & Voice/Typed Shot Director',
@@ -516,7 +596,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
       {
         id: 'memoir-services',
         tabLabel: 'Video Memoirs & Family Legacy',
-        badge: 'High-Margin Client Service · $300–$950/Film',
+        badge: 'Flagship Client Service · $349–$1,250/Film',
         headline: 'Turn Family Interviews & Keepsake Photos into Heirloom Cinema',
         description:
           'Capture a life story through intelligent intake, lock multi-age portraits from 1970s youth to modern day, dispatch autonomous Production Agents, run FlowDirector 1-click clip fixes, and deliver via a zero-login Screening Room link.',

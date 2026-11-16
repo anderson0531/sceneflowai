@@ -24,6 +24,7 @@ import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import {
   formatPortalCopy,
   getPortalLocaleLabel,
+  getPortalPrivacyConsentExtras,
   getSpeechLangForPortalLocale,
   resolveClientPortalLocale,
   SUPPORTED_CLIENT_PORTAL_LOCALES,
@@ -65,6 +66,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
   const [customerEmail, setCustomerEmail] = useState('')
   const [mediaRightsChecked, setMediaRightsChecked] = useState(false)
   const [zeroPrivityChecked, setZeroPrivityChecked] = useState(false)
+  const [voiceLocalizationChecked, setVoiceLocalizationChecked] = useState(false)
   const [consentSaving, setConsentSaving] = useState(false)
   const nameDictationBaseRef = React.useRef('')
   const {
@@ -175,6 +177,8 @@ export function ContinuityClientPortal({ token }: { token: string }) {
           customerEmail: customerEmail.trim() || undefined,
           attestedMediaRights: mediaRightsChecked,
           acknowledgedZeroPrivity: clientMode ? zeroPrivityChecked : true,
+          consentedVisualLikeness: mediaRightsChecked,
+          consentedVoiceLocalization: voiceLocalizationChecked,
           locale,
         }),
       })
@@ -719,6 +723,20 @@ export function ContinuityClientPortal({ token }: { token: string }) {
                 </span>
               </label>
             )}
+            <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-800/80 bg-slate-950/40 p-3.5">
+              <input
+                type="checkbox"
+                checked={voiceLocalizationChecked}
+                onChange={(e) => setVoiceLocalizationChecked(e.target.checked)}
+                className="mt-1 h-4 w-4"
+              />
+              <span className="text-xs text-slate-300 leading-relaxed">
+                {getPortalPrivacyConsentExtras(locale).voiceLocalizationLabel}
+              </span>
+            </label>
+            <p className="rounded-xl border border-emerald-500/20 bg-emerald-950/20 px-3.5 py-2.5 text-xs leading-relaxed text-emerald-200/90">
+              {getPortalPrivacyConsentExtras(locale).privacyHygieneNote}
+            </p>
             {brand.customTermsUrl && (
               <div className="text-xs">
                 <a

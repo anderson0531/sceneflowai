@@ -6,13 +6,18 @@ import { useLocale } from 'next-intl'
 import {
   ArrowDownRight,
   ArrowRight,
+  BookOpenCheck,
   Building2,
+  CheckCircle2,
   Globe2,
   GraduationCap,
+  Handshake,
   HeartHandshake,
   Info,
+  Lock,
   Megaphone,
   ShieldCheck,
+  SlidersHorizontal,
   Smartphone,
   Sparkles,
   TrendingUp,
@@ -35,9 +40,65 @@ const VERTICAL_ICONS = {
 
 const MONTHLY_VOLUME_OPTIONS = [4, 8, 15] as const
 const TIER_INDICES = [0, 1, 2] as const
+const PRO_PLAN_MONTHLY_USD = 149
+const PRO_INCLUDED_COMPUTE_USD = 150
 
 function formatUsd(amount: number): string {
   return `$${amount.toLocaleString('en-US')}`
+}
+
+export interface ServiceEconomicsResult {
+  computeUsd: number
+  operatorUsd: number
+  fullyLoadedCost: number
+  profitPerProject: number
+  monthlyGross: number
+  monthlySceneFlowBillUsd: number
+  monthlySaasOverheadUsd: number
+  monthlyNet: number
+  netMarginPct: number
+}
+
+export function computeServiceEconomics(input: {
+  clientPrice: number
+  baseComputeUsd: number
+  baseOperatorUsd: number
+  projectsPerMonth: number
+  conservativeRampUp: boolean
+}): ServiceEconomicsResult {
+  const computeUsd = input.conservativeRampUp
+    ? Math.round(input.baseComputeUsd * 1.3)
+    : input.baseComputeUsd
+  const operatorUsd = input.conservativeRampUp
+    ? Math.round(input.baseOperatorUsd * 1.6)
+    : input.baseOperatorUsd
+  const fullyLoadedCost = computeUsd + operatorUsd
+  const profitPerProject = Math.max(0, input.clientPrice - fullyLoadedCost)
+  const monthlyGross = input.clientPrice * input.projectsPerMonth
+  const monthlyRawCompute = computeUsd * input.projectsPerMonth
+
+  const monthlySaasOverheadUsd = input.conservativeRampUp
+    ? Math.max(0, PRO_PLAN_MONTHLY_USD - Math.min(PRO_INCLUDED_COMPUTE_USD, monthlyRawCompute))
+    : 0
+  const monthlySceneFlowBillUsd = monthlyRawCompute + monthlySaasOverheadUsd
+  const monthlyNet = Math.max(
+    0,
+    profitPerProject * input.projectsPerMonth - monthlySaasOverheadUsd
+  )
+  const netMarginPct =
+    monthlyGross > 0 ? Math.round((monthlyNet / monthlyGross) * 100) : 0
+
+  return {
+    computeUsd,
+    operatorUsd,
+    fullyLoadedCost,
+    profitPerProject,
+    monthlyGross,
+    monthlySceneFlowBillUsd,
+    monthlySaasOverheadUsd,
+    monthlyNet,
+    netMarginPct,
+  }
 }
 
 export function VideoServicesSpotlightSection() {
@@ -50,17 +111,41 @@ export function VideoServicesSpotlightSection() {
   >('memoir')
   const [selectedTierIdx, setSelectedTierIdx] = useState<0 | 1 | 2>(1)
   const [projectsPerMonth, setProjectsPerMonth] = useState<number>(8)
+  const [conservativeRampUp, setConservativeRampUp] = useState<boolean>(false)
 
   const activeVertical =
     copy.verticals.find((v) => v.id === selectedVerticalId) ?? copy.verticals[0]
 
   const clientPrice =
     activeVertical.priceTiersUsd[selectedTierIdx] ?? activeVertical.typicalRetailUsd
-  const fullyLoadedCost = activeVertical.estComputeUsd + activeVertical.estOperatorUsd
-  const profitPerProject = Math.max(0, clientPrice - fullyLoadedCost)
-  const monthlyGross = clientPrice * projectsPerMonth
-  const monthlyNet = profitPerProject * projectsPerMonth
-  const netMarginPct = Math.round((profitPerProject / clientPrice) * 100)
+  const baseComputeUsd =
+    activeVertical.computeTiersUsd?.[selectedTierIdx] ?? activeVertical.estComputeUsd
+  const baseOperatorUsd =
+    activeVertical.operatorTiersUsd?.[selectedTierIdx] ?? activeVertical.estOperatorUsd
+  const baseActiveTimeLabel =
+    activeVertical.activeTimeTiersLabels?.[selectedTierIdx] ?? activeVertical.activeMinutesLabel
+  const activeScopeLabel =
+    activeVertical.tierScopeLabels?.[selectedTierIdx] ?? activeVertical.title
+
+  const econ = computeServiceEconomics({
+    clientPrice,
+    baseComputeUsd,
+    baseOperatorUsd,
+    projectsPerMonth,
+    conservativeRampUp,
+  })
+  const {
+    computeUsd,
+    operatorUsd,
+    fullyLoadedCost,
+    profitPerProject,
+    monthlyGross,
+    monthlySceneFlowBillUsd,
+    monthlySaasOverheadUsd,
+    monthlyNet,
+    netMarginPct,
+  } = econ
+
   const marginFormulaHint = `${formatUsd(clientPrice)} (${copy.typicalFeeLabel}) − ~${formatUsd(fullyLoadedCost)} (${copy.fullyLoadedCostLabel}) = +${formatUsd(profitPerProject)} (${netMarginPct}% ${copy.marginBadgeSuffix})`
 
   return (
@@ -180,6 +265,18 @@ export function VideoServicesSpotlightSection() {
                     <span className="hidden w-full whitespace-normal break-words text-sm font-bold leading-snug min-[420px]:block sm:text-[15px]">
                       {vertical.tabLabel}
                     </span>
+                    <span
+                      className={cn(
+                        'hidden w-full whitespace-normal break-words text-[11px] font-semibold leading-tight min-[420px]:block',
+                        vertical.id === 'memoir'
+                          ? 'text-amber-300'
+                          : isActive
+                            ? 'text-emerald-200/90'
+                            : 'text-slate-400'
+                      )}
+                    >
+                      {vertical.roleTag}
+                    </span>
                   </button>
                 </VideoControlTooltip>
               )
@@ -199,9 +296,14 @@ export function VideoServicesSpotlightSection() {
                   locale={locale}
                 />
 
-                <span className="inline-block rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-                  {activeVertical.badge}
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-block rounded-full border border-amber-400/35 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
+                    {activeVertical.roleTag}
+                  </span>
+                  <span className="inline-block rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                    {activeVertical.badge}
+                  </span>
+                </div>
                 <h3 className="mt-3 text-xl font-bold leading-snug text-white sm:text-2xl">
                   {activeVertical.title}
                 </h3>
@@ -228,7 +330,16 @@ export function VideoServicesSpotlightSection() {
                     {activeVertical.clientBuyer}
                   </p>
                 </div>
-                <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/25 p-3.5 sm:p-4">
+                <div className="rounded-xl border border-cyan-500/25 bg-cyan-950/20 p-3.5 sm:p-4">
+                  <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-cyan-300">
+                    <Handshake className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
+                    <span>{copy.partnerChannelsLabel}</span>
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-cyan-50/90 sm:text-sm">
+                    {activeVertical.partnerChannels}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/25 p-3.5 sm:col-span-2 sm:p-4">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
                     {copy.marginAdvantageLabel}
                   </p>
@@ -262,8 +373,18 @@ export function VideoServicesSpotlightSection() {
                     const tierUsd = activeVertical.priceTiersUsd[tierIdx]
                     const tierName = copy.priceTierNames[tierIdx]
                     const selected = selectedTierIdx === tierIdx
-                    const tierProfit = Math.max(0, tierUsd - fullyLoadedCost)
-                    const tierTooltip = `${tierName}: ${formatUsd(tierUsd)} (+${formatUsd(tierProfit)} ${copy.perProjectProfitLabel.toLowerCase()})`
+                    const tierCompute =
+                      activeVertical.computeTiersUsd?.[tierIdx] ?? activeVertical.estComputeUsd
+                    const tierOp =
+                      activeVertical.operatorTiersUsd?.[tierIdx] ?? activeVertical.estOperatorUsd
+                    const tierEcon = computeServiceEconomics({
+                      clientPrice: tierUsd,
+                      baseComputeUsd: tierCompute,
+                      baseOperatorUsd: tierOp,
+                      projectsPerMonth,
+                      conservativeRampUp,
+                    })
+                    const tierTooltip = `${tierName}: ${formatUsd(tierUsd)} (+${formatUsd(tierEcon.profitPerProject)} ${copy.perProjectProfitLabel.toLowerCase()})`
                     return (
                       <VideoControlTooltip key={tierIdx} label={tierTooltip} side="top">
                         <button
@@ -288,6 +409,10 @@ export function VideoServicesSpotlightSection() {
                     )
                   })}
                 </div>
+                <p className="mt-2 rounded-lg border border-white/10 bg-slate-950/70 px-3 py-1.5 text-[11px] leading-snug text-emerald-100/90">
+                  <span className="font-semibold text-emerald-300">{copy.tierScopePrefix}</span>{' '}
+                  {activeScopeLabel}
+                </p>
               </div>
 
               {/* Monthly Volume Selector — stacked 2-line buttons so numbers & units never cram */}
@@ -296,8 +421,14 @@ export function VideoServicesSpotlightSection() {
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   {MONTHLY_VOLUME_OPTIONS.map((count) => {
                     const selected = projectsPerMonth === count
-                    const estNetForCount = profitPerProject * count
-                    const volumeTooltip = `${count} ${copy.projectsPerMonthSuffix} → ${formatUsd(estNetForCount)} ${copy.perMonthSuffix}`
+                    const countEcon = computeServiceEconomics({
+                      clientPrice,
+                      baseComputeUsd,
+                      baseOperatorUsd,
+                      projectsPerMonth: count,
+                      conservativeRampUp,
+                    })
+                    const volumeTooltip = `${count} ${copy.projectsPerMonthSuffix} → ${formatUsd(countEcon.monthlyNet)} ${copy.perMonthSuffix}`
                     return (
                       <VideoControlTooltip key={count} label={volumeTooltip} side="top">
                         <button
@@ -324,6 +455,47 @@ export function VideoServicesSpotlightSection() {
                 </div>
               </div>
 
+              {/* Optional Conservative Stress-Test Toggle (Month-1 Ramp-Up + Pro Plan $149/mo) */}
+              <div className="mt-3.5">
+                <VideoControlTooltip
+                  label={`${copy.stressTestToggleLabel} — ${copy.stressTestActiveNote}`}
+                  side="top"
+                >
+                  <button
+                    type="button"
+                    title={`${copy.stressTestToggleLabel} — ${copy.stressTestActiveNote}`}
+                    aria-pressed={conservativeRampUp}
+                    onClick={() => setConservativeRampUp((prev) => !prev)}
+                    className={cn(
+                      'flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-start text-xs font-semibold transition-all cursor-pointer',
+                      conservativeRampUp
+                        ? 'border-amber-400/60 bg-amber-500/15 text-amber-100'
+                        : 'border-slate-700/90 bg-slate-950/60 text-gray-300 hover:border-slate-600 hover:text-white'
+                    )}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
+                      <span>{copy.stressTestToggleLabel}</span>
+                    </span>
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                        conservativeRampUp
+                          ? 'bg-amber-400/25 text-amber-200'
+                          : 'bg-white/10 text-gray-400'
+                      )}
+                    >
+                      {conservativeRampUp ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+                </VideoControlTooltip>
+                {conservativeRampUp && (
+                  <p className="mt-1.5 rounded-lg border border-amber-400/25 bg-amber-950/25 px-3 py-1.5 text-[11px] leading-relaxed text-amber-100/90">
+                    {copy.stressTestActiveNote}
+                  </p>
+                )}
+              </div>
+
               {/* Transparent Per-Project Cost vs Market Rate Breakdown (1-col on 360px S23, 2-col on >=420px) */}
               <div className="mt-4 grid grid-cols-1 gap-2.5 rounded-xl border border-white/10 bg-slate-950/75 p-3 min-[420px]:grid-cols-2 sm:p-3.5">
                 <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
@@ -344,16 +516,16 @@ export function VideoServicesSpotlightSection() {
                     ~{formatUsd(fullyLoadedCost)}
                   </p>
                   <p className="mt-0.5 text-[10px] leading-snug text-gray-400">
-                    ~{formatUsd(activeVertical.estComputeUsd)} + ~{formatUsd(activeVertical.estOperatorUsd)} ({copy.costBreakdownSubLabel})
+                    ~{formatUsd(computeUsd)} + ~{formatUsd(operatorUsd)} ({copy.costBreakdownSubLabel})
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
                   <p className="text-[11px] text-gray-400">{copy.activeHandsOnLabel}</p>
                   <p className="mt-0.5 text-sm font-bold text-amber-200 sm:text-base">
-                    {activeVertical.activeMinutesLabel}
+                    {conservativeRampUp ? `${baseActiveTimeLabel} (×1.6)` : baseActiveTimeLabel}
                   </p>
                   <p className="mt-0.5 text-[10px] leading-snug text-gray-400">
-                    {copy.estComputeLabel}: ~{formatUsd(activeVertical.estComputeUsd)}
+                    {copy.estComputeLabel}: ~{formatUsd(computeUsd)}
                   </p>
                 </div>
               </div>
@@ -385,6 +557,16 @@ export function VideoServicesSpotlightSection() {
                   </span>
                 </div>
 
+                {conservativeRampUp && (
+                  <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-2 text-xs text-amber-200/90">
+                    <span>{copy.proPlanLineLabel}</span>
+                    <span className="font-semibold tabular-nums">
+                      −{formatUsd(monthlySceneFlowBillUsd)} {copy.perMonthSuffix}
+                      {monthlySaasOverheadUsd > 0 ? '' : ' (15k cr incl.)'}
+                    </span>
+                  </div>
+                )}
+
                 <div className="mt-3 border-t border-emerald-500/20 pt-3">
                   <p className="text-xs font-medium text-emerald-200">{copy.monthlyNetLabel}</p>
                   <p className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums text-emerald-300 sm:text-4xl">
@@ -409,7 +591,63 @@ export function VideoServicesSpotlightSection() {
                 <span className="whitespace-normal leading-tight">{copy.launchBusinessCta}</span>
                 <ArrowRight className="ms-2 h-4 w-4 shrink-0" aria-hidden />
               </Button>
-              <p className="mt-3 text-[11px] leading-relaxed text-gray-400">{copy.disclaimer}</p>
+              <p className="mt-2.5 text-xs leading-relaxed text-emerald-200/90">
+                {copy.launchBusinessSubnote}
+              </p>
+              <p className="mt-2 text-[11px] leading-relaxed text-gray-400">{copy.disclaimer}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 3-Pillar Enterprise Margin, Client Privacy & Commercial IP Shield */}
+        <div className="mt-8 rounded-2xl border border-cyan-500/25 bg-slate-900/75 p-5 sm:p-6">
+          <div className="flex items-center justify-center gap-2 text-center">
+            <Lock className="h-4 w-4 shrink-0 text-cyan-300" aria-hidden />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-300 sm:text-sm">
+              {copy.trustShieldHeading}
+            </h3>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-3">
+            {copy.trustShieldPillars.map((pillar) => (
+              <div
+                key={pillar.title}
+                className="rounded-xl border border-slate-800 bg-slate-950/75 p-4"
+              >
+                <p className="inline-flex items-center gap-2 text-sm font-bold text-white">
+                  <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-300" aria-hidden />
+                  <span>{pillar.title}</span>
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-gray-300">{pillar.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Service-in-a-Box Operator Playbooks & Partner Referral Kit */}
+        <div className="mt-6 rounded-2xl border border-amber-400/25 bg-gradient-to-r from-slate-900/90 via-emerald-950/25 to-slate-900/90 p-5 sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-xl">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/35 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
+                <BookOpenCheck className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
+                <span>{copy.playbooksBadge}</span>
+              </span>
+              <h3 className="mt-2.5 text-lg font-bold text-white sm:text-xl">
+                {copy.playbooksHeading}
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm">
+                {copy.playbooksSubtitle}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:max-w-2xl">
+              {copy.playbooksItems.map((item) => (
+                <div
+                  key={item}
+                  className="flex items-start gap-2 rounded-xl border border-white/10 bg-slate-950/75 px-3.5 py-2.5 text-xs leading-snug text-gray-200"
+                >
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" aria-hidden />
+                  <span>{item}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

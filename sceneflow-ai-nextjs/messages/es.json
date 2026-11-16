@@ -3992,91 +3992,145 @@
       "eyebrow": "Servicios de Entrega de Video · Operadores Independientes y Agencias",
       "title": "Entrega Valor de Producción de $1,500+ con un",
       "titleAccent": "50%–80% Menos Costo de Entrega",
-      "subtitle": "Los equipos de rodaje tradicionales y 30 horas de edición manual dejan fuera por precio al 90% de las familias, agentes inmobiliarios y comercios locales. SceneFlow reduce entre un 50% y un 80% tu costo total de entrega —créditos de cómputo más tiempo de gestión—, permitiéndote captar clientes con precios accesibles y conservar entre un 65% y un 85% de ganancia neta real.",
-      "commercialRightsBadge": "100% Propiedad Comercial · Entrega Masters a tus Clientes",
-      "costSavingsPillLabel": "50%–80% Menor Costo de Entrega · Enorme Demanda Global",
-      "verticalsHeading": "1. Elige un Servicio Global de Alta Demanda",
+      "subtitle": "Los equipos tradicionales y 30 horas de edición dejan fuera al 90% de las familias, inmobiliarias y comercios. Empieza con Video Memorias insignia mediante socios locales — y suma contratos mensuales recurrentes reduciendo tu costo total (cómputo + tiempo PM) entre un 50% y un 80%.",
+      "commercialRightsBadge": "100% Propiedad Comercial · Portales de Marca Blanca (Pro+)",
+      "costSavingsPillLabel": "Video Memorias Insignia + Contratos B2B Recurrentes",
+      "verticalsHeading": "1. Lidera con Nuestro Servicio Insignia — y Escala con Retainers Mensuales",
       "globalDemandLabel": "Oportunidad de Mercado Global",
       "whoBuysLabel": "Quiénes Compran Recurrentemente",
-      "marginAdvantageLabel": "Ventaja de Bajo Costo en SceneFlow",
-      "calculatorBadge": "Calculadora Transparente de Costo y Ganancia",
-      "calculatorTitle": "2. Compara Costo de Entrega y Ganancia Mensual",
-      "priceTierLabel": "Nivel de precio al cliente:",
+      "partnerChannelsLabel": "Aliados de Referidos sin Gasto en Anuncios",
+      "marginAdvantageLabel": "Ventaja de Margen y Alcance en SceneFlow",
+      "calculatorBadge": "Calculadora por Alcance de Costo y Ganancia",
+      "calculatorTitle": "2. Pon a Prueba Costo de Entrega y Ganancia Mensual",
+      "priceTierLabel": "Paquete para el cliente:",
       "priceTierNames": [
         "Accesible",
         "Estándar",
         "Boutique"
       ],
+      "tierScopePrefix": "Alcance del paquete:",
       "volumeLabel": "Entregas a clientes / mes:",
       "projectsPerMonthSuffix": "proyectos/mes",
       "projectsUnitLabel": "proyectos",
-      "perProjectProfitLabel": "Ganancia neta / proyecto",
+      "stressTestToggleLabel": "Prueba conservadora: Mes 1 de aprendizaje + Plan Pro ($149/mes)",
+      "stressTestActiveNote": "Modo conservador activo: +60% de tiempo PM inicial, +30% de margen extra en retomas y membresía Pro de $149/mes (incluye 15,000 créditos base/mes).",
+      "proPlanLineLabel": "Plan Pro ($149/mes) + cómputo extra",
+      "perProjectProfitLabel": "Ganancia del servicio / proyecto",
       "traditionalMarketLabel": "Tarifa tradicional del mercado",
       "typicalFeeLabel": "Tu precio al cliente",
-      "fullyLoadedCostLabel": "Costo total de entrega",
+      "fullyLoadedCostLabel": "Costo de entrega / proyecto",
       "costBreakdownSubLabel": "Créditos + tiempo PM",
-      "estComputeLabel": "Créditos SceneFlow",
-      "activeHandsOnLabel": "Tiempo operador / PM",
+      "estComputeLabel": "Cómputo (incl. 20% margen retomas)",
+      "activeHandsOnLabel": "Tiempo operador / PM (@$50/h)",
       "monthlyGrossLabel": "Facturación Mensual Estimada",
-      "monthlyNetLabel": "Ganancia Neta Mensual Est. (tras créditos y tiempo PM)",
+      "monthlyNetLabel": "Ganancia Mensual Est. del Servicio (tras cómputo y tiempo PM)",
       "perMonthSuffix": "/ mes",
-      "marginBadgeSuffix": "margen neto",
-      "disclaimer": "El costo total de entrega incluye créditos de cómputo en SceneFlow ($0.01/crédito adicional) más el tiempo estimado del operador/PM en entrevista, dirección y revisión en Screening Room. Tú defines tus precios.",
-      "launchBusinessCta": "Lanza tu Servicio de Video ($9)",
-      "workflowHeading": "Cómo Fluye un Proyecto de Cliente en 4 Pasos Simples",
+      "marginBadgeSuffix": "margen de servicio",
+      "disclaimer": "El costo por alcance incluye cómputo en SceneFlow ($0.01/crédito con 20% de margen de retomas) más tiempo PM valorado a $50/h. Activa la Prueba Conservadora para incluir curva de aprendizaje y Plan Pro ($149/mes); excluye captación comercial.",
+      "launchBusinessCta": "Crea tu Primer Filme de Muestra ($9)",
+      "launchBusinessSubnote": "Usa el plan Explorer de $9 para producir un portafolio sin marca de agua para aliados locales — y sube a Pro ($149/mes) para activar Portales 100% de Marca Blanca.",
+      "trustShieldHeading": "Escudo Empresarial de Margen, Privacidad e IP Comercial",
+      "trustShieldPillars": [
+        {
+          "title": "Portales de Marca Blanca sin Login (Pro+)",
+          "detail": "Tus clientes revisan bajo tu nombre, logo y colores sin crear cuenta en SceneFlow ni ver costos de créditos."
+        },
+        {
+          "title": "Cortafuegos Animatic y Límites de Rondas",
+          "detail": "El cliente aprueba Blueprint, Continuidad y Animatic narrado antes de renderizar video — con topes de rondas y créditos."
+        },
+        {
+          "title": "Nunca Entrenamos Modelos con Fotos del Cliente",
+          "detail": "Las fotos familiares y corporativas jamás entrenan modelos compartidos, eliminan GPS EXIF al subir y registran consentimiento."
+        }
+      ],
+      "playbooksBadge": "Kits Operativos «Servicio en Caja» Incluidos",
+      "playbooksHeading": "Playbooks por Vertical, Tarifarios y Guiones para Aliados",
+      "playbooksSubtitle": "Evita empezar desde cero con procedimientos comerciales probados integrados directamente en SceneFlow Studio:",
+      "playbooksItems": [
+        "Entrevistas IA de Biógrafo y B2B en 7 Idiomas",
+        "Tarifarios de 3 Niveles y Calculadora de Margen Mínimo",
+        "Plantilla de Comisión 20% para Residencias, Funerarias e Inmobiliarias",
+        "Registro Integrado de Consentimiento de Medios, Edades y Voz"
+      ],
+      "workflowHeading": "Cómo Fluye un Proyecto de Marca Blanca en 4 Pasos Simples",
       "stepPrefix": "Paso",
       "workflowSteps": [
         {
           "step": "01",
-          "title": "Entrevista Guiada con el Cliente",
-          "detail": "Conversa con tu cliente («Cuéntame tu historia») para capturar momentos emotivos y las personas clave de cada etapa."
+          "title": "Entrevista Guiada sin Registro",
+          "detail": "Envía un enlace /intake con tu marca y consentimiento de imagen para capturar momentos e individuos clave."
         },
         {
           "step": "02",
           "title": "Aprobación por Enlace de Blueprint",
-          "detail": "Valida con Audience Resonance y envía un enlace limpio de Blueprint para la firma del cliente antes de producir."
+          "detail": "Valida con Audience Resonance y asegura la firma del cliente en el Blueprint antes de gastar en video."
         },
         {
           "step": "03",
-          "title": "Producción Híbrida Fotos + IA",
-          "detail": "Combina fotografías reales del cliente con elenco multiedad, vestuario por escena y Audio Agent / Clips Agent."
+          "title": "Carga Móvil de Fotos y Continuidad",
+          "detail": "El cliente sube fotos desde su móvil (sin EXIF GPS) y aprueba Elenco multiedad, Vestuario y Sets con rondas limitadas."
         },
         {
           "step": "04",
           "title": "Entrega en Screening Room",
-          "detail": "Comparte un enlace privado de Screening Room para revisión cuadro por cuadro, exporta el máster 4K y cobra tu entrega."
+          "detail": "Comparte un Screening Room sin login, entrega másters 4K en 70+ idiomas y purga archivos crudos en 1 clic."
         }
       ],
       "verticals": [
         {
           "id": "memoir",
           "tabLabel": "Video Memorias",
-          "badge": "$300–$950 / filme · Mercado: $800–$3,500+",
+          "roleTag": "★ Servicio Insignia de Alto Margen",
+          "badge": "$349–$1,250 / filme · Mercado: $1,200–$4,500+",
           "title": "Historias de Vida, Homenajes y Biografías Familiares",
-          "description": "Combina fotografías familiares reales con recreaciones cinematográficas de época con IA y continuidad precisa por edades (17 → 32 → 62 años) narradas con voces cálidas y naturales.",
-          "globalMarketNeed": "Cientos de millones de padres mayores, bodas de oro y cumpleaños clave ocurren cada año en el mundo, pero más del 90% nunca se filma porque un equipo de $2,000+ es inaccesible.",
-          "clientBuyer": "Familias, aniversarios y cumpleaños clave, planificadores patrimoniales, residencias de mayores y casas conmemorativas",
-          "traditionalMarketRangeLabel": "$800–$3,500+",
-          "typicalRetailUsd": 499,
+          "description": "Combina fotografías familiares reales con recreaciones cinematográficas de época con IA, bloqueo de reliquias y continuidad precisa por edades (17 → 32 → 62 años) narradas con voces cálidas.",
+          "globalMarketNeed": "Cientos de millones de padres mayores, bodas de oro y homenajes de vida ocurren cada año en el mundo, pero más del 90% nunca se filma porque un equipo de $2,000+ es inaccesible.",
+          "clientBuyer": "Familias celebrando cumpleaños clave, bodas de oro, jubilaciones y homenajes familiares",
+          "partnerChannels": "Planificadores patrimoniales, residencias sénior, directores funerarios y organizadores de eventos (comisión del 15–20%)",
+          "traditionalMarketRangeLabel": "$1,200–$4,500+",
+          "typicalRetailUsd": 599,
           "priceTiersUsd": [
-            300,
-            499,
-            950
+            349,
+            599,
+            1250
           ],
-          "retailRangeLabel": "$300–$950",
-          "estComputeUsd": 22,
-          "estOperatorUsd": 78,
-          "activeMinutesLabel": "~1.5–2 h",
-          "keyAdvantage": "Entrega una memoria de nivel $1,500 por ~$100 de costo total (~$22 en créditos + ~$78 de tiempo PM) — cobrar $300–$500 conquista familias excluidas por las productoras tradicionales."
+          "tierScopeLabels": [
+            "Homenaje 5 min · 75% Fotos + Clips 1080p→4K · 1 Idioma",
+            "Memoria Familiar 12 min · Elenco Multiedad + Épocas · 2 Idiomas",
+            "Documental Legado 20 min · Épocas 4K + Reliquias · 4 Idiomas"
+          ],
+          "computeTiersUsd": [
+            18,
+            34,
+            72
+          ],
+          "operatorTiersUsd": [
+            62,
+            88,
+            150
+          ],
+          "activeTimeTiersLabels": [
+            "~1.25 h",
+            "~1.75 h",
+            "~3.0 h"
+          ],
+          "retailRangeLabel": "$349–$1,250",
+          "estComputeUsd": 34,
+          "estOperatorUsd": 88,
+          "activeMinutesLabel": "~1.75 h",
+          "keyAdvantage": "Nuestro nicho de mayor convicción: la continuidad multiedad entrega un filme de nivel $2,000 por ~$122 de costo total (~$34 cómputo + ~$88 tiempo PM)."
         },
         {
           "id": "realestate",
           "tabLabel": "Tours Inmobiliarios",
+          "roleTag": "↻ Retainer Mensual Inmobiliario",
           "badge": "$199–$549 / propiedad · Mercado: $450–$1,500+",
           "title": "Recorridos Narrados de Propiedades y Hoteles Boutique",
           "description": "Transforma fotos de propiedades y atractivos del vecindario en recorridos cinematográficos con música y locución — más versiones al instante en inglés, chino, árabe o portugués para compradores internacionales.",
           "globalMarketNeed": "Decenas de millones de propiedades residenciales, alquileres vacacionales y hoteles boutique compiten cada mes por compradores locales y extranjeros usando solo fotos fijas.",
           "clientBuyer": "Agentes inmobiliarios residenciales, agencias de lujo, alquileres vacacionales y hoteles boutique",
+          "partnerChannels": "Estudios de fotografía inmobiliaria, equipos de home staging, brókers de lujo y consultores hoteleros",
           "traditionalMarketRangeLabel": "$450–$1,500+",
           "typicalRetailUsd": 299,
           "priceTiersUsd": [
@@ -4084,20 +4138,42 @@
             299,
             549
           ],
+          "tierScopeLabels": [
+            "Tour Fotos MLS 90s · Cine 1080p + 1 Idioma",
+            "Recorrido Narrado 2 min · Escalado 4K + 2 Idiomas",
+            "Filme Propiedad de Lujo 3 min + Reels 9:16 · 4 Idiomas"
+          ],
+          "computeTiersUsd": [
+            10,
+            15,
+            28
+          ],
+          "operatorTiersUsd": [
+            38,
+            50,
+            88
+          ],
+          "activeTimeTiersLabels": [
+            "~45 min",
+            "~1.0 h",
+            "~1.75 h"
+          ],
           "retailRangeLabel": "$199–$549",
-          "estComputeUsd": 12,
-          "estOperatorUsd": 48,
-          "activeMinutesLabel": "~45–60 min",
-          "keyAdvantage": "Sin desplazamientos ni demoras por clima: convierte fotos inmobiliarias en recorridos narrados multilingües por ~$60 de costo total — más de 60% menos que un rodaje presencial."
+          "estComputeUsd": 15,
+          "estOperatorUsd": 50,
+          "activeMinutesLabel": "~1.0 h",
+          "keyAdvantage": "Alta repetición por agencia: un equipo con 4 captaciones al mes genera pedidos constantes sin viajes ni demoras por clima (~$65 de costo total)."
         },
         {
           "id": "training",
           "tabLabel": "Capacitación y SOPs",
+          "roleTag": "↻ Retainer Corporativo B2B",
           "badge": "$599–$1,800 / módulo · Mercado: $1,500–$5,000+",
           "title": "Inducción Corporativa, Seguridad y Cursos Multilingües",
           "description": "Bloquea un instructor consistente, uniformes y entornos de trabajo en tu Bóveda de Continuidad — y entrega módulos claros localizados al idioma nativo de cada empleado.",
           "globalMarketNeed": "Cada planta industrial, red de clínicas, restaurante y franquicia en el mundo enfrenta rotación de personal, normas de seguridad y equipos multilingües que requieren video SOP.",
           "clientBuyer": "Equipos de RR. HH. y formación, plantas industriales, clínicas médicas, restaurantes y franquicias",
+          "partnerChannels": "Consultores externos de RR. HH., auditores de seguridad laboral, integradores LMS y asociaciones de franquicias",
           "traditionalMarketRangeLabel": "$1,500–$5,000+",
           "typicalRetailUsd": 950,
           "priceTiersUsd": [
@@ -4105,20 +4181,42 @@
             950,
             1800
           ],
+          "tierScopeLabels": [
+            "Módulo SOP 5 min · Instructor Fijo + 1 Idioma",
+            "Curso Seguridad / Inducción 10 min · 3 Idiomas",
+            "Currículo Multi-Capítulo 20 min · 6+ Idiomas"
+          ],
+          "computeTiersUsd": [
+            24,
+            40,
+            78
+          ],
+          "operatorTiersUsd": [
+            88,
+            125,
+            210
+          ],
+          "activeTimeTiersLabels": [
+            "~1.75 h",
+            "~2.5 h",
+            "~4.2 h"
+          ],
           "retailRangeLabel": "$599–$1,800",
-          "estComputeUsd": 35,
-          "estOperatorUsd": 115,
-          "activeMinutesLabel": "~2–2.5 h",
-          "keyAdvantage": "70% menos costo de entrega (~$150 vs $3,000+ en vivo) — y cuando cambia una norma, actualizas una escena en minutos sin volver a grabar."
+          "estComputeUsd": 40,
+          "estOperatorUsd": 125,
+          "activeMinutesLabel": "~2.5 h",
+          "keyAdvantage": "Contratos B2B duraderos: 70%+ menos costo (~$165 vs $3,000+ en vivo) y cobras actualizaciones rápidas cada vez que cambia una norma."
         },
         {
           "id": "brand",
           "tabLabel": "Historias de Marca",
+          "roleTag": "↻ Paquete Recurrente PyME y Agencia",
           "badge": "$399–$1,200 / paquete · Mercado: $3,000–$8,000+",
           "title": "Historias de Fundadores, Videos para Clínicas y Anuncios",
           "description": "Produce historias de marca de alta conversión para sitios web junto con tráilers verticales 9:16 automáticos para Instagram, TikTok y YouTube Shorts — revisados con el cliente en Screening Room.",
           "globalMarketNeed": "Más de 30 millones de clínicas, despachos legales, restaurantes y comercios locales en el mundo necesitan videos web de confianza y anuncios 9:16, pero no pueden pagar $5,000+.",
-          "clientBuyer": "Consultorios médicos y dentales, despachos legales, PyMEs locales, agencias y marcas de comercio electrónico",
+          "clientBuyer": "Consultorios médicos y dentales, despachos legales, PyMEs locales, agencias web y comercio electrónico",
+          "partnerChannels": "Estudios de diseño web, agencias SEO/Ads, cámaras empresariales y consultores médicos/legales",
           "traditionalMarketRangeLabel": "$3,000–$8,000+",
           "typicalRetailUsd": 650,
           "priceTiersUsd": [
@@ -4126,11 +4224,31 @@
             650,
             1200
           ],
+          "tierScopeLabels": [
+            "Spot Confianza Clínica/PyME 60s + 1 Corte 9:16",
+            "Historia de Fundador 2 min + 2 Cortes Sociales 9:16",
+            "Filme de Marca + 4 Variaciones Multilingües de Anuncios"
+          ],
+          "computeTiersUsd": [
+            16,
+            28,
+            56
+          ],
+          "operatorTiersUsd": [
+            62,
+            88,
+            150
+          ],
+          "activeTimeTiersLabels": [
+            "~1.25 h",
+            "~1.75 h",
+            "~3.0 h"
+          ],
           "retailRangeLabel": "$399–$1,200",
-          "estComputeUsd": 22,
+          "estComputeUsd": 28,
           "estOperatorUsd": 88,
-          "activeMinutesLabel": "~1.5–2 h",
-          "keyAdvantage": "Abre el mercado de clínicas, restaurantes y despachos por ~$110 de costo total — incluyendo cortes verticales 9:16 automáticos."
+          "activeMinutesLabel": "~1.75 h",
+          "keyAdvantage": "Producción marca blanca para agencias web y clínicas locales (~$116 de costo total) con cortes verticales 9:16 automáticos."
         }
       ]
     },
@@ -4414,26 +4532,26 @@
       "startExplorerCta": "Comenzar con Explorer — $9"
     },
     "mobileCompanion": {
-      "eyebrow": "App Móvil Complementaria (PWA) · iOS y Android",
+      "eyebrow": "Enlaces sin Registro + PWA Móvil para Operadores · iOS y Android",
       "title": "Potencia de Estudio en Escritorio.",
-      "titleAccent": "Control Móvil para Equipos y Clientes.",
-      "subtitle": "Como la producción 4K multipista requiere pantalla de escritorio, SceneFlow combina tu Estudio con una PWA móvil de instalación instantánea—conectando equipos, Project Managers (PM) y clientes suscritos con alertas, estado de hitos, presupuesto de créditos y enlaces de revisión.",
-      "whyPwaBadge": "PWA Instantánea · Sin Fricción de App Store",
-      "whyPwaNote": "Instálala en un toque desde Safari o Chrome con alertas Web Push nativas—sin descargas pesadas ni esperas.",
-      "modeCustomerTab": "Ciclo Cliente y PM",
-      "modeTeamTab": "Equipo y Presupuesto",
-      "customerHeading": "Proyectos Iniciados por el Cliente con Soporte de PM",
-      "customerSubheading": "Los clientes suscritos inician su proyecto y Blueprint base desde el móvil, solicitan un PM e iteran mediante cuatro enlaces compartidos.",
+      "titleAccent": "Portales Móviles de Marca Blanca para Clientes y Equipos.",
+      "subtitle": "Tus clientes de pago nunca necesitan cuenta, descarga ni suscripción en SceneFlow: interactúan mediante tus enlaces móviles de marca blanca mientras tú y tus PMs reciben alertas y vigilan topes de créditos en la PWA móvil.",
+      "whyPwaBadge": "Cero Registro del Cliente · PWA Instantánea",
+      "whyPwaNote": "Los clientes abren enlaces limpios en Safari o Chrome bajo tu marca; operadores y PMs instalan la PWA en un toque con alertas Web Push.",
+      "modeCustomerTab": "Ciclo Cliente (Marca Blanca)",
+      "modeTeamTab": "Hub Operador y PM (PWA)",
+      "customerHeading": "Portales Móviles sin Inicio de Sesión Bajo tu Propia Marca",
+      "customerSubheading": "Tus clientes nunca ven tarifas de créditos de SceneFlow ni crean cuenta: cuentan su historia, suben fotos y aprueban su entrega en cuatro enlaces móviles.",
       "customerSteps": [
         {
           "step": "01",
-          "badge": "Inicio Móvil",
-          "title": "Suscribirse, Iniciar Proyecto y Solicitar PM",
-          "detail": "El cliente suscrito dicta o escribe su idea desde el teléfono para generar el Blueprint inicial y activa el soporte de Project Manager (PM).",
-          "linkLabel": "App Móvil · + Nuevo Proyecto",
+          "badge": "Entrevista sin Login",
+          "title": "Hablar o Escribir la Historia y Firmar Consentimiento",
+          "detail": "El cliente abre tu enlace /intake en su teléfono, acepta permisos de imagen y voz, y relata su historia sin crear cuenta.",
+          "linkLabel": "/intake · Entrevista de Marca Blanca",
           "phoneHeadline": "Memoria Familiar del Puerto",
-          "phoneStatus": "PM Asignado · Blueprint Listo",
-          "phoneMeta": "Iniciado en PWA Móvil · Límite: 2,500 cr"
+          "phoneStatus": "Consentimiento Registrado · Blueprint Listo",
+          "phoneMeta": "Sin cuenta del cliente · Tope productor: 2,500 cr"
         },
         {
           "step": "02",

@@ -22,6 +22,7 @@ import {
 import {
   formatPortalCopy,
   getPortalLocaleLabel,
+  getPortalPrivacyConsentExtras,
   getSpeechLangForPortalLocale,
   resolveClientPortalLocale,
   SUPPORTED_CLIENT_PORTAL_LOCALES,
@@ -68,6 +69,7 @@ export function ClientIntakeExperience({
   const [customerEmail, setCustomerEmail] = useState('')
   const [mediaRightsChecked, setMediaRightsChecked] = useState(false)
   const [zeroPrivityChecked, setZeroPrivityChecked] = useState(false)
+  const [voiceLocalizationChecked, setVoiceLocalizationChecked] = useState(false)
   const [consentSubmitting, setConsentSubmitting] = useState(false)
 
   // Phase 1: Customer Vision Statement + Clarification & Confirmation Gate
@@ -301,6 +303,8 @@ export function ClientIntakeExperience({
           customerEmail: customerEmail.trim() || undefined,
           attestedMediaRights: mediaRightsChecked,
           acknowledgedZeroPrivity: zeroPrivityChecked,
+          consentedVisualLikeness: mediaRightsChecked,
+          consentedVoiceLocalization: voiceLocalizationChecked,
           locale,
         }),
       })
@@ -717,6 +721,22 @@ export function ClientIntakeExperience({
                   })}
                 </span>
               </label>
+
+              <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-800/80 bg-slate-950/40 p-3.5">
+                <input
+                  type="checkbox"
+                  checked={voiceLocalizationChecked}
+                  onChange={(e) => setVoiceLocalizationChecked(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-slate-600"
+                />
+                <span className="text-xs text-slate-300 leading-relaxed">
+                  {getPortalPrivacyConsentExtras(locale).voiceLocalizationLabel}
+                </span>
+              </label>
+
+              <p className="rounded-xl border border-emerald-500/20 bg-emerald-950/20 px-3.5 py-2.5 text-xs leading-relaxed text-emerald-200/90">
+                {getPortalPrivacyConsentExtras(locale).privacyHygieneNote}
+              </p>
             </div>
 
             {brand.customTermsUrl && (
