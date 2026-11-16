@@ -33,6 +33,12 @@ export function useWhopCheckout() {
         return
       }
 
+      if (data.fallbackToPro) {
+        toast.message(
+          'Opening Pro White-Label Studio ($149/mo) checkout while Founding Charter seats are queued.'
+        )
+      }
+
       if (!data.sessionId && data.redirectUrl) {
         window.location.assign(data.redirectUrl)
         return

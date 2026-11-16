@@ -82,6 +82,7 @@ const SURFACE_RULES: SurfaceRule[] = [
   { prefix: '/trust-safety', mode: 'gt', reason: 'Legal text, read-only.' },
   { prefix: '/legal', mode: 'gt', reason: 'Legal text, read-only.' },
   { prefix: '/product-description', mode: 'gt', reason: 'Marketing copy, read-only.' },
+  { prefix: '/founding-operators', mode: 'gt', reason: 'Marketing charter page, read-mostly.' },
 
   // ── None ──
   {

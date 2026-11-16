@@ -23,6 +23,10 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { toast } from 'sonner'
+import {
+  ProducerOnboardingWizard,
+  type AppliedVerticalPreset,
+} from '@/components/producer/ProducerOnboardingWizard'
 
 interface ProducerProfileDto {
   id: string
@@ -108,6 +112,7 @@ export default function ProducerSettingsPage() {
   const { data: session } = useSession()
   const [loading, setLoading] = useState(true)
   const [savingProfile, setSavingProfile] = useState(false)
+  const [forceExpandOnboarding, setForceExpandOnboarding] = useState(false)
 
   // Section 1: Producer Profile & Addendum
   const [profile, setProfile] = useState<ProducerProfileDto | null>(null)
@@ -226,6 +231,30 @@ export default function ProducerSettingsPage() {
     loadAll()
   }, [loadAll])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const onboarding = params.get('onboarding')
+    const checkout = params.get('checkout')
+    if (onboarding === '1' || checkout === 'success') {
+      setForceExpandOnboarding(true)
+    }
+    if (checkout === 'success') {
+      toast.success(
+        'Founding Operator Pro Studio activated! Complete your 4-step launchpad below.'
+      )
+      params.delete('checkout')
+      const nextQuery = params.toString()
+      window.history.replaceState(
+        null,
+        '',
+        nextQuery
+          ? `/dashboard/settings/producer?${nextQuery}`
+          : '/dashboard/settings/producer'
+      )
+    }
+  }, [])
+
   const loadProjectSubmissions = useCallback(async (projectId: string) => {
     if (!projectId) {
       setSubmissions([])
@@ -260,7 +289,7 @@ export default function ProducerSettingsPage() {
     }
   }, [selectedProjectId, projects, loadProjectSubmissions])
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (): Promise<boolean> => {
     setSavingProfile(true)
     try {
       const res = await fetch('/api/producer/profile', {
@@ -284,11 +313,22 @@ export default function ProducerSettingsPage() {
       }
       setProfile(data.profile)
       toast.success('Producer profile & Commercial Addendum saved')
+      return true
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save profile')
+      return false
     } finally {
       setSavingProfile(false)
     }
+  }
+
+  const handleApplyVerticalPreset = (preset: AppliedVerticalPreset) => {
+    setIntakeVertical(preset.vertical)
+    setClientPriceUsd(String(preset.clientPriceUsd))
+    setCreditBudgetCap(String(preset.creditBudgetCap))
+    setMaxCustomerTurns(String(preset.maxCustomerTurns))
+    setIntakeMaxRounds(String(preset.intakeMaxRounds))
+    toast.success('Vertical pricing & credit ceiling preset applied to Client Intake')
   }
 
   const handleCreateIntakeLink = async () => {
@@ -506,6 +546,30 @@ export default function ProducerSettingsPage() {
           </Link>
         </div>
       </div>
+
+      {/* Guided 4-Step First-Run Producer Launchpad & Playbooks */}
+      <ProducerOnboardingWizard
+        defaultExpanded={forceExpandOnboarding || !addendumAccepted || !brandName.trim()}
+        brandName={brandName}
+        onBrandNameChange={setBrandName}
+        primaryColor={primaryColor}
+        onPrimaryColorChange={setPrimaryColor}
+        hideBranding={hideBranding}
+        onHideBrandingChange={setHideBranding}
+        addendumChecked={addendumChecked}
+        onAddendumCheckedChange={setAddendumChecked}
+        addendumAccepted={addendumAccepted}
+        whiteLabelEligible={profile?.whiteLabelEligible}
+        savingProfile={savingProfile}
+        onSaveProfile={handleSaveProfile}
+        currentIntakeVertical={intakeVertical}
+        onApplyVerticalPreset={handleApplyVerticalPreset}
+        creatingIntake={creatingIntake}
+        onCreateIntakeLink={handleCreateIntakeLink}
+        generatedIntake={generatedIntake}
+        onCopyText={copyToClipboard}
+        copiedKey={copiedKey}
+      />
 
       {/* SECTION 1: Commercial Addendum & White-Label Brand Profile */}
       <section className="rounded-xl border border-gray-700/60 bg-gray-800/60 p-6 space-y-5">

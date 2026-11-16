@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ensureWhopRuntimeConfig, getWhopClient } from '@/lib/billing/whopClient'
 import {
   ADDON_PACK_CATALOG,
+  CHARTER_OFFER_CATALOG,
   getAddonPackFromWhopPlanId,
+  getCharterOfferFromWhopPlanId,
   getTierNameFromWhopPlanId,
   isOneTimeTier,
   normalizeAddonPackId,
+  normalizeCharterOfferId,
   normalizeTierName,
 } from '@/lib/billing/tierCatalog'
 import {
@@ -28,12 +31,15 @@ function extractMetadata(event: WhopWebhookEvent): {
   userId?: string
   tierName?: string
   addonPack?: string
+  charterOffer?: string
   applicationId?: string
 } {
   const data = event.data || {}
-  const metadata =
+  const metadata: Record<string, unknown> =
     (data.metadata as Record<string, unknown> | undefined) ||
-    (data.checkout_configuration as Record<string, unknown> | undefined)?.metadata ||
+    ((data.checkout_configuration as Record<string, unknown> | undefined)?.metadata as
+      | Record<string, unknown>
+      | undefined) ||
     {}
 
   const userId =
@@ -51,11 +57,16 @@ function extractMetadata(event: WhopWebhookEvent): {
     (metadata.addonPack as string | undefined) ||
     (metadata.sceneflow_addon_pack as string | undefined)
 
+  const charterOffer =
+    (metadata.charter_offer as string | undefined) ||
+    (metadata.charterOffer as string | undefined) ||
+    (metadata.sceneflow_charter_offer as string | undefined)
+
   const applicationId =
     (metadata.application_id as string | undefined) ||
     (metadata.applicationId as string | undefined)
 
-  return { userId, tierName, addonPack, applicationId }
+  return { userId, tierName, addonPack, charterOffer, applicationId }
 }
 
 function extractBillingPeriodEnd(data: Record<string, unknown>): Date | undefined {
@@ -109,9 +120,16 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
     userId: metadataUserId,
     tierName: metadataTierName,
     addonPack: metadataAddonPack,
+    charterOffer: metadataCharterOffer,
     applicationId,
   } = extractMetadata(event)
   const planId = extractPlanId(event)
+  const normalizedMetaCharter = metadataCharterOffer
+    ? normalizeCharterOfferId(metadataCharterOffer)
+    : null
+  const resolvedCharterOffer =
+    (normalizedMetaCharter ? CHARTER_OFFER_CATALOG[normalizedMetaCharter] : null) ||
+    (planId ? getCharterOfferFromWhopPlanId(planId) : null)
   const resolvedTier =
     (metadataTierName ? normalizeTierName(metadataTierName) : null) ||
     (planId ? getTierNameFromWhopPlanId(planId) : null)
@@ -129,6 +147,7 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
     eventId: event.id,
     userId: metadataUserId,
     tier: resolvedTier,
+    charterOffer: resolvedCharterOffer?.id || null,
     addonPack: resolvedAddonPack?.id || null,
     planId,
     applicationId,
@@ -141,7 +160,17 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
         console.error('[Whop Webhook] Missing user_id in payment.succeeded')
         return
       }
-      if (resolvedAddonPack) {
+      if (resolvedCharterOffer) {
+        await SubscriptionService.activateCharterOffer(
+          metadataUserId,
+          resolvedCharterOffer.id,
+          {
+            whopMembershipId: membershipId,
+            whopUserId,
+            source: eventType,
+          }
+        )
+      } else if (resolvedAddonPack) {
         await SubscriptionService.purchaseAddonCredits(
           metadataUserId,
           resolvedAddonPack.credits,

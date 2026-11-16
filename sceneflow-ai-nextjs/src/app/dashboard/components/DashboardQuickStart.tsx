@@ -5,7 +5,7 @@ import {
   Plus,
   FileText,
   Library,
-  Sparkles,
+  Briefcase,
   Key,
   GraduationCap,
 } from 'lucide-react'
@@ -27,6 +27,14 @@ export function DashboardQuickStart({ onImportScript }: DashboardQuickStartProps
       icon: Plus,
       accent: 'indigo',
       primary: true,
+    },
+    {
+      id: 'producer-service',
+      label: 'White-Label Video Service',
+      description: 'Set up your brand, client intake link & 4 vertical playbooks',
+      href: '/dashboard/settings/producer?onboarding=1',
+      icon: Briefcase,
+      accent: 'emerald',
     },
     {
       id: 'import-script',

@@ -3,10 +3,12 @@
 ## Executive Summary
 
 **Company:** SceneFlow AI (Life Focus, LLC)  
-**Stage:** Pre-seed / Pre-Launch (On Track for January 2027 Commercial Launch)  
-**Industry:** AI-Powered Long-Form Video Production / Creator Economy & B2B Production Services  
-**Funding Sought:** Google for Startups Cloud Credits ($2K Start Tier → Partner / AI-First Track) + Program Support  
+**Product Category:** Multi-Tenant Generative AI Video SaaS Platform & Continuity Operating System *(100% Software Product — Not a Service Agency)*  
+**Stage:** Pre-Seed / Live Early Access SaaS (Public 1.0 Release January 2027)  
+**Industry:** Generative AI Media Software / Creator Economy & B2B2C SaaS Enablement  
+**Funding Sought:** Google for Startups Cloud Credits ($2K Start Tier → Scale AI-First Track) + Program Support  
 **Website:** https://sceneflowai.studio  
+**Founding Operator Charter:** https://sceneflowai.studio/founding-operators  
 **Primary Applicant & Billing Admin Email:** brian@sceneflowai.studio (Workspace Super Admin: admin@sceneflowai.studio; Support: support@sceneflowai.studio)  
 **GCP Billing Account ID:** `018BC7-19AC32-7CE0EE` (*SceneFlow Platform* — Active, USD, Single-Project Consolidated)  
 **GCP Project ID / Number:** `sceneflowai-2d3e6` (`809352734041`) — Linked to `018BC7-19AC32-7CE0EE` under `sceneflowai.studio` Organization
@@ -74,8 +76,8 @@ The global creator and digital video production economy is projected to reach $4
    Traditional screenwriters and indie directors upload `.fdx`, `.fountain`, or PDF scripts to generate a voiced, scored **Screening Room Pre-Vis Animatic** and **60–90s Promo Trailer** at ~95% lower cost than traditional $5,000–$25,000 pitch packages—sharing private `/s/` Screening Room links directly with financiers.
 5. **Character/Voice Cloning & Live Clip Illustration for Video Podcasters**  
    Showcased by *The Midnight Frequency* (`podcast`), narrative YouTube and Spotify Video podcasters can either use cloned voices/avatars or **upload live studio camera clips** and seamlessly intercut SceneFlow-generated historical/sci-fi reconstructions and a locked desk companion—eliminating 40 hours of weekly B-roll editing.
-6. **Turnkey Online Video Production Businesses (Video Memoirs, Real Estate, Bespoke Client Studios)**  
-   Showcased by *Letters Across the Water* (`memoir`) and our Real Estate Service Playbook, SceneFlow enables solo entrepreneurs and displaced workers in 2027 to launch high-margin video production agencies. Operators combine uploaded client interviews and vintage photos with age-locked period reenactments—delivering $1,500–$5,000 commissioned family legacy films, founder biographies, and multilingual property tours on $30–$60 of studio compute.
+6. **B2B2C SaaS Infrastructure Empowering Independent Video Businesses ("Shopify for AI Video Studios")**  
+   SceneFlow is a **pure multi-tenant SaaS platform** whose Pro ($149/mo) and Studio ($599/mo) subscriptions include white-label software portals (`/intake`, `/blueprint/share`, `/share/continuity` with automatic EXIF GPS sanitization & logged `customer_consents`, and `/share/screening-room`) plus a Mobile Companion PWA. Independent entrepreneurs, photographers, and corporate L&D teams subscribe to SceneFlow software to produce $349–$1,800+ Life Memoirs, Multilingual Training SOPs, and Luxury Property Tours on ~$15–$72 of self-serve Vertex AI compute—achieving 75%–84% gross margins while driving recurring SaaS MRR and 12-month credit pack expansion for SceneFlow.
 7. **Global Reach with a 7-Language UI & 70+ Delivery Languages**  
    SceneFlow ships a native interface across **7 major language markets** (**English, Spanish, Portuguese, Hindi, Simplified Chinese, Arabic, and Thai**) and supports **70+ dubbing/delivery languages**. Our 3-layer i18n architecture separates *Interface Locale*, *Story Locale* (authored natively by Gemini via `localeDirective()`), and *Delivery Locale*, while automatically normalizing machine prompts to English (`englishForModel()`) so Imagen and Veo never suffer non-English visual degradation.
 
@@ -170,6 +172,17 @@ Founder, SceneFlow AI (Life Focus, LLC)
 💳 GCP Billing Account: `018BC7-19AC32-7CE0EE` · GCP Project: `sceneflowai-2d3e6` (`809352734041`)  
 🌐 https://sceneflowai.studio  
 📍 Austin, Texas area
+
+---
+
+## Pre-Submission Checklist (Execute Immediately After Clearing Billing Balance)
+
+1. **Verify `$0.00` Balance Due:** Open `https://console.cloud.google.com/billing/018BC7-19AC32-7CE0EE/payment` and confirm **"Your balance"** reads `$0.00` (or credit) with zero past-due/payment-declined banners.
+2. **Authenticate With Custom Domain Email:** Log into the Google for Startups portal strictly as **`brian@sceneflowai.studio`** (never `@gmail.com`), matching both website domain `sceneflowai.studio` and `roles/billing.admin` on `018BC7-19AC32-7CE0EE`.
+3. **Business Model Classification:** Select **SaaS / B2B & B2C AI Software Platform** (never select Agency, Media Production House, or Consultancy).
+4. **Copy-Paste 100-Word Product Summary (Portal Form Field):**
+   > SceneFlow AI (sceneflowai.studio) is a multi-tenant generative AI video SaaS studio powered by Google Cloud Vertex AI (Gemini, Imagen 4, Veo 3.1) and Cloud Run. Unlike isolated 10-second clip tools, SceneFlow provides an integrated Continuity Operating System—Series Room, Blueprint Room with Audience Resonance™ pre-render QA, Continuity Vault (multi-age character & wardrobe locks), Autonomous Production Agents, and 70+ language dubbing across 7 native UI languages. Self-serve SaaS subscribers ($9 Explorer; $19–$599/mo tiers) use SceneFlow to direct episodic series and run independent white-label video memoir, corporate training, and property tour workflows.
+5. **Freeze Heavy Batch Renders During Review (5–10 Business Days):** Keep GCP spend near `$0` while the application is in review so no interim payment threshold triggers on `018BC7-19AC32-7CE0EE`.
 
 ---
 

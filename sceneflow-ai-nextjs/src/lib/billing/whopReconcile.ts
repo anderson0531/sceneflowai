@@ -1,11 +1,14 @@
 import { ensureWhopRuntimeConfig, getWhopClient, getWhopCompanyId } from './whopClient'
 import {
   ADDON_PACK_CATALOG,
+  CHARTER_OFFER_CATALOG,
   getAddonPackFromWhopPlanId,
+  getCharterOfferFromWhopPlanId,
   getTierNameFromWhopPlanId,
   isOneTimeTier,
   isWhopPaymentEnabled,
   normalizeAddonPackId,
+  normalizeCharterOfferId,
   normalizeTierName,
 } from './tierCatalog'
 import { isCheckoutConfigured } from './checkoutHelper'
@@ -92,6 +95,14 @@ export async function reconcileWhopUserPayments(
       if (await isWebhookEventProcessed(idempotencyKey)) continue
 
       const planId = payment.plan?.id
+      const metaCharter =
+        (metadata.charter_offer as string | undefined) ||
+        (metadata.sceneflow_charter_offer as string | undefined)
+      const normalizedCharter = metaCharter ? normalizeCharterOfferId(metaCharter) : null
+      const resolvedCharterOffer =
+        (normalizedCharter ? CHARTER_OFFER_CATALOG[normalizedCharter] : null) ||
+        (planId ? getCharterOfferFromWhopPlanId(planId) : null)
+
       const metaAddon =
         (metadata.addon_pack as string | undefined) ||
         (metadata.sceneflow_addon_pack as string | undefined)
@@ -107,7 +118,20 @@ export async function reconcileWhopUserPayments(
         (metaTier ? normalizeTierName(metaTier) : null) ||
         (planId ? getTierNameFromWhopPlanId(planId) : null)
 
-      if (resolvedAddonPack) {
+      if (resolvedCharterOffer) {
+        await SubscriptionService.activateCharterOffer(target.id, resolvedCharterOffer.id, {
+          whopMembershipId: payment.membership?.id || undefined,
+          whopUserId: payment.user?.id || target.whop_user_id || undefined,
+          source: 'whop_reconcile_charter',
+        })
+        await markWebhookEventProcessed(
+          'whop',
+          idempotencyKey,
+          'payment.succeeded.reconciled',
+          JSON.stringify({ paymentId: payment.id, charterOffer: resolvedCharterOffer.id })
+        )
+        fulfilledPayments.push(payment.id)
+      } else if (resolvedAddonPack) {
         await SubscriptionService.purchaseAddonCredits(
           target.id,
           resolvedAddonPack.credits,

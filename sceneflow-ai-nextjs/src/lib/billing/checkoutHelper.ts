@@ -1,14 +1,18 @@
 import {
   ADDON_PACK_CATALOG,
+  CHARTER_OFFER_CATALOG,
   CHECKOUT_TIER_NAMES,
   getCheckoutReturnUrl,
   getWhopAddonPlanId,
+  getWhopCharterPlanId,
   getWhopPlanId,
   isWhopPaymentEnabled,
   normalizeAddonPackId,
+  normalizeCharterOfferId,
   normalizeTierName,
   type AddonPackId,
   type BillingTierName,
+  type CharterOfferId,
 } from './tierCatalog'
 import { ensureWhopRuntimeConfig, getWhopClient, getWhopCompanyId } from './whopClient'
 import { SubscriptionService } from '@/services/SubscriptionService'
@@ -16,7 +20,7 @@ import { SubscriptionService } from '@/services/SubscriptionService'
 export interface CheckoutSessionResult {
   sessionId: string
   planId: string
-  tierName: BillingTierName | AddonPackId
+  tierName: BillingTierName | AddonPackId | CharterOfferId
   returnUrl: string
   purchaseUrl: string
 }
@@ -67,6 +71,69 @@ export function isValidCheckoutTier(tierName: string): tierName is BillingTierNa
 
 export function isValidAddonPack(packId: string): packId is AddonPackId {
   return normalizeAddonPackId(packId) !== null
+}
+
+export function isValidCharterOffer(offerId: string): offerId is CharterOfferId {
+  return normalizeCharterOfferId(offerId) !== null
+}
+
+export async function createWhopCharterCheckoutSession(
+  userId: string,
+  charterOfferId: string,
+  userEmail?: string | null,
+  extraMetadata?: Record<string, string | undefined>
+): Promise<CheckoutSessionResult> {
+  await ensureWhopRuntimeConfig()
+
+  const normalizedOffer = normalizeCharterOfferId(charterOfferId)
+  if (!normalizedOffer) {
+    throw new Error(`Invalid charter offer: ${charterOfferId}`)
+  }
+
+  const offer = CHARTER_OFFER_CATALOG[normalizedOffer]
+  const planId = getWhopCharterPlanId(normalizedOffer)
+  if (!planId) {
+    throw new Error(`Whop plan not configured for charter offer: ${normalizedOffer}`)
+  }
+
+  const client = getWhopClient()
+  const baseReturn = getCheckoutReturnUrl('success')
+  const producerReturn = baseReturn.replace(
+    '/dashboard/settings/billing',
+    '/dashboard/settings/producer?onboarding=1'
+  )
+  const returnUrl = producerReturn.replace('?onboarding=1?', '?onboarding=1&')
+  const whopRedirectUrl = resolveWhopApiRedirectUrl(returnUrl)
+
+  const checkoutConfig = await client.checkoutConfigurations.create({
+    plan_id: planId,
+    metadata: buildCleanMetadata({
+      user_id: userId,
+      charter_offer: normalizedOffer,
+      tier_name: offer.grantsTier,
+      charter_credits: String(offer.credits),
+      charter_duration_days: String(offer.durationDays),
+      user_email: userEmail || undefined,
+      ...extraMetadata,
+    }),
+    redirect_url: whopRedirectUrl,
+    source_url: whopRedirectUrl,
+  })
+
+  const sessionPlanId = checkoutConfig.plan?.id || planId
+  const purchaseUrl = buildWhopPurchaseUrl(
+    checkoutConfig.purchase_url,
+    checkoutConfig.id,
+    userEmail
+  )
+
+  return {
+    sessionId: checkoutConfig.id,
+    planId: sessionPlanId,
+    tierName: normalizedOffer,
+    returnUrl,
+    purchaseUrl,
+  }
 }
 
 export async function createWhopCheckoutSession(
@@ -193,6 +260,17 @@ export async function handleDemoCheckout(
   userId: string,
   tierOrPackName: string
 ): Promise<{ success: true; redirectUrl: string }> {
+  const normalizedCharter = normalizeCharterOfferId(tierOrPackName)
+  if (normalizedCharter) {
+    await SubscriptionService.activateCharterOffer(userId, normalizedCharter, {
+      source: 'demo_checkout',
+    })
+    return {
+      success: true,
+      redirectUrl: '/dashboard/settings/producer?onboarding=1&checkout=success',
+    }
+  }
+
   const normalizedPack = normalizeAddonPackId(tierOrPackName)
   if (normalizedPack) {
     const pack = ADDON_PACK_CATALOG[normalizedPack]

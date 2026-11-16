@@ -556,3 +556,65 @@ export function hasPurchasedExplorer(purchased: string[] | undefined | null): bo
   if (!purchased?.length) return false
   return purchased.includes('explorer') || purchased.includes('trial')
 }
+
+export type CharterOfferId = 'founding_operator'
+
+export interface CharterOfferDefinition {
+  id: CharterOfferId
+  displayName: string
+  priceUsd: number
+  credits: number
+  durationDays: number
+  grantsTier: BillingTierName
+  renewalMonthlyUsd: number
+  seatCap: number
+  whopPlanEnvKey: string
+  description: string
+}
+
+export const CHARTER_OFFER_CATALOG: Record<CharterOfferId, CharterOfferDefinition> = {
+  founding_operator: {
+    id: 'founding_operator',
+    displayName: 'Founding Operator 90-Day Launchpad',
+    priceUsd: 299,
+    credits: 18000,
+    durationDays: 90,
+    grantsTier: 'pro',
+    renewalMonthlyUsd: 119,
+    seatCap: 25,
+    whopPlanEnvKey: 'WHOP_PLAN_FOUNDING_OPERATOR',
+    description:
+      '90 days of Pro White-Label Studio access + 18,000 12-month production credits + all 4 Service-in-a-Box Playbooks (locks $119/mo post-charter Pro rate).',
+  },
+}
+
+export function normalizeCharterOfferId(raw?: string | null): CharterOfferId | null {
+  if (!raw) return null
+  const clean = raw.trim().toLowerCase().replace(/-/g, '_')
+  if (clean in CHARTER_OFFER_CATALOG) return clean as CharterOfferId
+  if (clean === 'founding_operators' || clean === 'charter') return 'founding_operator'
+  return null
+}
+
+export function getWhopCharterPlanId(offerId: string): string | undefined {
+  const normalized = normalizeCharterOfferId(offerId)
+  if (!normalized) return undefined
+  const offer = CHARTER_OFFER_CATALOG[normalized]
+  const envVal = (process.env[offer.whopPlanEnvKey] || '').replace(/\\n/g, '').trim()
+  return envVal || undefined
+}
+
+export function isCharterWhopPlanConfigured(offerId: CharterOfferId = 'founding_operator'): boolean {
+  return Boolean(getWhopCharterPlanId(offerId))
+}
+
+export function getCharterOfferFromWhopPlanId(planId: string): CharterOfferDefinition | null {
+  if (!planId) return null
+  for (const offer of Object.values(CHARTER_OFFER_CATALOG)) {
+    const envPlanId = (process.env[offer.whopPlanEnvKey] || '').replace(/\\n/g, '').trim()
+    if (envPlanId && envPlanId === planId) {
+      return offer
+    }
+  }
+  return null
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useLocale } from 'next-intl'
 import {
@@ -594,6 +595,16 @@ export function VideoServicesSpotlightSection() {
               <p className="mt-2.5 text-xs leading-relaxed text-emerald-200/90">
                 {copy.launchBusinessSubnote}
               </p>
+              <div className="mt-2">
+                <Link
+                  href="/founding-operators"
+                  title="Founding Video Service Operator 90-Day Pro Charter"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-amber-300 underline-offset-4 hover:text-amber-200 hover:underline"
+                >
+                  <span>Launching a client studio now? View the 25-Seat Founding Operator Charter</span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                </Link>
+              </div>
               <p className="mt-2 text-[11px] leading-relaxed text-gray-400">{copy.disclaimer}</p>
             </div>
           </div>

@@ -2,8 +2,10 @@ import { User, SubscriptionTier, CreditLedger, Project, sequelize } from '@/mode
 import { Op } from 'sequelize'
 import { resolveUser } from '@/lib/userHelper'
 import {
+  CHARTER_OFFER_CATALOG,
   getTierCredits,
   hasPurchasedExplorer,
+  normalizeCharterOfferId,
   normalizeTierName,
   TIER_CATALOG,
 } from '@/lib/billing/tierCatalog'
@@ -453,6 +455,38 @@ export class SubscriptionService {
 
       await user.save({ transaction: tx })
     })
+  }
+
+  /**
+   * Activate a time-boxed Founding Operator Charter bundle (e.g. 90-day Pro + 18,000 12-month pack credits).
+   * Reuses the existing `pro` SubscriptionTier row so zero Postgres enum migration is needed.
+   */
+  static async activateCharterOffer(
+    userId: string,
+    offerId: string,
+    options: {
+      whopMembershipId?: string
+      whopUserId?: string
+      source?: string
+    } = {}
+  ): Promise<void> {
+    const normalizedOffer = normalizeCharterOfferId(offerId)
+    if (!normalizedOffer) {
+      throw new Error(`Invalid charter offer: ${offerId}`)
+    }
+    const offer = CHARTER_OFFER_CATALOG[normalizedOffer]
+    const now = new Date()
+    const endDate = new Date(now.getTime() + offer.durationDays * 24 * 60 * 60 * 1000)
+
+    await this.activateSubscription(userId, offer.grantsTier, {
+      whopMembershipId: options.whopMembershipId,
+      whopUserId: options.whopUserId,
+      billingPeriodEnd: endDate,
+      source: options.source || `charter_${normalizedOffer}`,
+      grantCredits: false,
+    })
+
+    await this.purchaseAddonCredits(userId, offer.credits, offer.priceUsd)
   }
 
   /**

@@ -3,21 +3,29 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import {
   createWhopAddonCheckoutSession,
+  createWhopCharterCheckoutSession,
   createWhopCheckoutSession,
   handleDemoCheckout,
   isCheckoutConfigured,
   isValidAddonPack,
+  isValidCharterOffer,
   isValidCheckoutTier,
   shouldUseDemoCheckout,
 } from '@/lib/billing/checkoutHelper'
 import { ensureWhopRuntimeConfig } from '@/lib/billing/whopClient'
-import { CHECKOUT_TIER_NAMES, isWhopPaymentEnabled } from '@/lib/billing/tierCatalog'
+import {
+  CHECKOUT_TIER_NAMES,
+  isCharterWhopPlanConfigured,
+  isWhopPaymentEnabled,
+} from '@/lib/billing/tierCatalog'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions as any)
+    const session = (await getServerSession(authOptions as any)) as {
+      user?: { id?: string; email?: string | null }
+    } | null
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -25,10 +33,57 @@ export async function POST(req: NextRequest) {
     await ensureWhopRuntimeConfig()
 
     const body = await req.json()
-    const rawTarget = (body?.addonPack || body?.tierName || body?.tier) as string | undefined
+    const rawTarget = (body?.charterOffer ||
+      body?.addonPack ||
+      body?.tierName ||
+      body?.tier) as string | undefined
 
     const userId = session.user.id
     const userEmail = session.user.email
+
+    if (rawTarget && isValidCharterOffer(rawTarget)) {
+      if (!isWhopPaymentEnabled() || !isCheckoutConfigured()) {
+        if (shouldUseDemoCheckout()) {
+          const demo = await handleDemoCheckout(userId, rawTarget)
+          return NextResponse.json(demo)
+        }
+        return NextResponse.json(
+          {
+            error: 'Payment processing not configured',
+            message: 'Whop payment integration is not configured. Please contact support.',
+          },
+          { status: 500 }
+        )
+      }
+
+      // Graceful fallback to Pro ($149/mo) if WHOP_PLAN_FOUNDING_OPERATOR is not yet pasted into env
+      if (!isCharterWhopPlanConfigured('founding_operator')) {
+        const proFallback = await createWhopCheckoutSession(userId, 'pro', userEmail, {
+          requested_charter_offer: rawTarget,
+        })
+        return NextResponse.json({
+          success: true,
+          sessionId: proFallback.sessionId,
+          planId: proFallback.planId,
+          tierName: proFallback.tierName,
+          returnUrl: proFallback.returnUrl,
+          purchaseUrl: proFallback.purchaseUrl,
+          redirectUrl: proFallback.purchaseUrl,
+          fallbackToPro: true,
+        })
+      }
+
+      const charterCheckout = await createWhopCharterCheckoutSession(userId, rawTarget, userEmail)
+      return NextResponse.json({
+        success: true,
+        sessionId: charterCheckout.sessionId,
+        planId: charterCheckout.planId,
+        tierName: charterCheckout.tierName,
+        returnUrl: charterCheckout.returnUrl,
+        purchaseUrl: charterCheckout.purchaseUrl,
+        redirectUrl: charterCheckout.purchaseUrl,
+      })
+    }
 
     if (rawTarget && isValidAddonPack(rawTarget)) {
       if (!isWhopPaymentEnabled() || !isCheckoutConfigured()) {
