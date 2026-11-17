@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Globe2,
+  Loader2,
   Maximize,
   Minimize,
   Pause,
@@ -77,6 +78,7 @@ export function FeatureScreenshotFrame({
   const [nearViewport, setNearViewport] = useState(true)
   const [audioUnmuted, setAudioUnmuted] = useState(() => sessionFeatureAudioUnmuted)
   const [videoError, setVideoError] = useState(false)
+  const [isBuffering, setIsBuffering] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   const stageRef = useRef<HTMLDivElement | null>(null)
@@ -226,6 +228,11 @@ export function FeatureScreenshotFrame({
     vid.muted = !audioUnmuted
     const shouldPlay = isPlaying && (inViewport || isFullscreen)
     if (shouldPlay) {
+      // If chapter starts >0.25s into the suite and metadata hasn't arrived yet, wait for
+      // `onLoadedMetadata` to seek directly to `startSec` so byte-0 isn't fetched and aborted.
+      if (vid.readyState === 0 && (chapterInfo?.timing.startSec ?? 0) > 0.25) {
+        return
+      }
       const p = vid.play()
       if (p && typeof p.catch === 'function') {
         p.catch(() => {
@@ -239,9 +246,33 @@ export function FeatureScreenshotFrame({
     } else {
       vid.pause()
     }
-  }, [hasAnimaticVideo, inViewport, isFullscreen, isPlaying, audioUnmuted, animaticWebmSrc, resolvedIcon])
+  }, [
+    hasAnimaticVideo,
+    inViewport,
+    isFullscreen,
+    isPlaying,
+    audioUnmuted,
+    animaticWebmSrc,
+    resolvedIcon,
+    chapterInfo?.timing.startSec,
+  ])
 
   const handleTogglePlay = () => {
+    const vid = videoRef.current
+    if (vid && vid.paused) {
+      setIsPlaying(true)
+      if (vid.readyState === 0) {
+        setIsBuffering(true)
+        vid.load()
+      }
+      void vid.play().catch(() => undefined)
+      return
+    }
+    if (vid && !vid.paused) {
+      setIsPlaying(false)
+      vid.pause()
+      return
+    }
     setIsPlaying((prev) => !prev)
   }
 
@@ -255,6 +286,10 @@ export function FeatureScreenshotFrame({
       if (videoRef.current) {
         videoRef.current.muted = !next
         if (next) {
+          if (videoRef.current.readyState === 0) {
+            setIsBuffering(true)
+            videoRef.current.load()
+          }
           void videoRef.current.play().catch(() => undefined)
         }
       }
@@ -264,14 +299,33 @@ export function FeatureScreenshotFrame({
 
   const handleVideoSurfaceClick = () => {
     if (!hasAnimaticVideo) return
+    const vid = videoRef.current
     if (!audioUnmuted) {
       sessionFeatureAudioUnmuted = true
       setAudioUnmuted(true)
       setIsPlaying(true)
-      if (videoRef.current) {
-        videoRef.current.muted = false
-        void videoRef.current.play().catch(() => undefined)
+      if (vid) {
+        if (vid.readyState === 0) {
+          setIsBuffering(true)
+          vid.load()
+        }
+        vid.muted = false
+        void vid.play().catch(() => undefined)
       }
+      return
+    }
+    if (vid && vid.paused) {
+      setIsPlaying(true)
+      if (vid.readyState === 0) {
+        setIsBuffering(true)
+        vid.load()
+      }
+      void vid.play().catch(() => undefined)
+      return
+    }
+    if (vid && !vid.paused) {
+      setIsPlaying(false)
+      vid.pause()
       return
     }
     setIsPlaying((prev) => !prev)
@@ -333,6 +387,9 @@ export function FeatureScreenshotFrame({
 
   const handleSelectLanguage = (nextLocale: FeaturePanLocaleId) => {
     pendingBeatIndexRef.current = safeBeatIdx
+    if (nextLocale !== panLocale) {
+      setIsBuffering(true)
+    }
     setPanLocale(nextLocale)
     setIsPlaying(true)
     sessionFeatureAudioUnmuted = true
@@ -401,6 +458,27 @@ export function FeatureScreenshotFrame({
             aria-label={`${label} — ${uiCopy.animaticBadge}`}
             onClick={handleVideoSurfaceClick}
             onContextMenu={(e) => e.preventDefault()}
+            onLoadStart={() => setIsBuffering(true)}
+            onWaiting={() => setIsBuffering(true)}
+            onSeeking={() => setIsBuffering(true)}
+            onLoadedData={() => setIsBuffering(false)}
+            onCanPlay={() => setIsBuffering(false)}
+            onPlaying={() => {
+              setIsBuffering(false)
+              setIsPlaying(true)
+            }}
+            onSeeked={(e) => {
+              setIsBuffering(false)
+              if (isPlaying && (inViewport || isFullscreen) && e.currentTarget.paused) {
+                void e.currentTarget.play().catch(() => undefined)
+              }
+            }}
+            onPause={(e) => {
+              const vid = e.currentTarget
+              if (!vid.seeking && !vid.ended && (inViewport || isFullscreen) && vid.readyState > 0) {
+                setIsPlaying(false)
+              }
+            }}
             onLoadedMetadata={(e) => {
               const vid = e.currentTarget
               seekToChapterBeat(vid, pendingBeatIndexRef.current)
@@ -410,6 +488,10 @@ export function FeatureScreenshotFrame({
             }}
             onTimeUpdate={(e) => {
               const vid = e.currentTarget
+              if (vid.seeking) return
+              if (vid.readyState >= 2 && isBuffering) {
+                setIsBuffering(false)
+              }
               const { startSec, endSec, beatStartsSec } = chapterInfo.timing
               const span = Math.max(0.5, endSec - startSec)
               const t = vid.currentTime
@@ -451,14 +533,20 @@ export function FeatureScreenshotFrame({
                 void vid.play().catch(() => undefined)
               }
             }}
-            onError={() => setVideoError(true)}
+            onError={() => {
+              setIsBuffering(false)
+              setVideoError(true)
+            }}
             className="h-full w-full cursor-pointer bg-slate-950 object-contain"
           >
             <source src={animaticWebmSrc} type="video/webm" />
             <source
               src={animaticMp4Src}
               type="video/mp4"
-              onError={() => setVideoError(true)}
+              onError={() => {
+                setIsBuffering(false)
+                setVideoError(true)
+              }}
             />
           </video>
         ) : (
@@ -471,6 +559,15 @@ export function FeatureScreenshotFrame({
             className="pointer-events-none h-full w-full select-none object-contain bg-slate-950"
           />
         )}
+
+        {hasAnimaticVideo && isBuffering ? (
+          <div
+            className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center bg-slate-950/35"
+            aria-hidden
+          >
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-400/90" />
+          </div>
+        ) : null}
 
         {/* Compact icon-only bottom-left transport — never blocks the screen on mobile or desktop */}
         <div
@@ -617,6 +714,7 @@ export function FeatureScreenshotFrame({
                     type="button"
                     title={langTooltip}
                     aria-pressed={selected}
+                    aria-busy={selected && isBuffering}
                     onClick={() => handleSelectLanguage(opt.id)}
                     className={cn(
                       'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold transition-all cursor-pointer sm:px-2',
@@ -625,6 +723,9 @@ export function FeatureScreenshotFrame({
                         : 'border-emerald-500/35 bg-slate-900/80 text-emerald-200 hover:border-emerald-400/60 hover:text-white'
                     )}
                   >
+                    {selected && isBuffering ? (
+                      <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin text-emerald-300" aria-hidden />
+                    ) : null}
                     <span>{opt.shortLabel}</span>
                   </button>
                 )

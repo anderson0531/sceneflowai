@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Globe, Check, Search, ChevronDown } from 'lucide-react'
+import { useState, useSyncExternalStore } from 'react'
+import { Globe, Check, Search, ChevronDown, Loader2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +9,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
 import { useTranslations } from 'next-intl'
+import { TIER_A_LOCALES } from '@/i18n/locale'
+import {
+  getLocaleSwitchServerState,
+  getLocaleSwitchState,
+  subscribeLocaleSwitch,
+} from '@/i18n/localeSwitchStatus'
 import { useLandingLocale } from '@/i18n/useLandingLocale'
 
 const LANGUAGES = LANDING_TRANSLATE_LANGUAGES
@@ -20,10 +26,27 @@ type LanguageSelectorProps = {
 
 export function LanguageSelector({ variant = 'default' }: LanguageSelectorProps) {
   const t = useTranslations('nav')
-  const { locale: currentLang, switchLocale } = useLandingLocale()
+  const { locale: currentLang, switchLocale, prefetchLocale } = useLandingLocale()
+  const switchState = useSyncExternalStore(
+    subscribeLocaleSwitch,
+    getLocaleSwitchState,
+    getLocaleSwitchServerState
+  )
+  const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen)
+    if (nextOpen) {
+      prefetchLocale('en')
+      for (const tierLocale of TIER_A_LOCALES) {
+        prefetchLocale(tierLocale)
+      }
+    }
+  }
+
   const handleSelect = (code: string) => {
+    setOpen(false)
     switchLocale(code)
   }
 
@@ -48,21 +71,32 @@ export function LanguageSelector({ variant = 'default' }: LanguageSelectorProps)
   const isIcon = variant === 'icon'
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
+          title={currentLanguageName}
           aria-label={currentLanguageName}
+          aria-busy={switchState.pending}
           className={
             isIcon
               ? 'flex items-center justify-center p-2 text-gray-300 hover:text-white transition-colors cursor-pointer rounded-lg hover:bg-slate-800/50'
               : 'flex items-center gap-1.5 px-3 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50'
           }
         >
-          <Globe className={isIcon ? 'w-6 h-6' : 'w-4 h-4'} />
+          {switchState.pending ? (
+            <Loader2
+              className={`${isIcon ? 'w-6 h-6' : 'w-4 h-4'} animate-spin text-cyan-400`}
+              aria-hidden
+            />
+          ) : (
+            <Globe className={isIcon ? 'w-6 h-6' : 'w-4 h-4'} />
+          )}
           {!isIcon && (
             <>
-              <span className="hidden sm:inline uppercase text-sm">{currentLang}</span>
+              <span className="hidden sm:inline uppercase text-sm">
+                {switchState.pending ? switchState.locale : currentLang}
+              </span>
               <ChevronDown className="w-3 h-3 text-gray-500" />
             </>
           )}
@@ -90,8 +124,11 @@ export function LanguageSelector({ variant = 'default' }: LanguageSelectorProps)
                 {langs.map((lang) => (
                   <button
                     key={lang.code}
+                    type="button"
+                    onMouseEnter={() => prefetchLocale(lang.code)}
+                    onFocus={() => prefetchLocale(lang.code)}
                     onClick={() => handleSelect(lang.code)}
-                    className={`w-full flex items-center justify-between px-2 py-2 rounded-md text-sm transition-colors ${
+                    className={`w-full flex items-center justify-between px-2 py-2 rounded-md text-sm transition-colors cursor-pointer ${
                       currentLang === lang.code
                         ? 'bg-sf-primary/10 text-sf-primary font-medium'
                         : 'text-gray-300 hover:bg-slate-800 hover:text-white'

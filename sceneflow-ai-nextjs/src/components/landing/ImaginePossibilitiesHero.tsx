@@ -415,6 +415,7 @@ export function ImaginePossibilitiesHero() {
             <VideoGlobeLanguageSelector
               activeLocale={videoLocale}
               onSelectLocale={handleSelectVideoLocale}
+              isLoading={isBuffering}
               variant="hero"
               align="end"
               markAsHeroControl

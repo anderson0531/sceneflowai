@@ -8,6 +8,7 @@ import {
   Film,
   Images,
   Layers,
+  Loader2,
   Pause,
   Play,
   Sparkles,
@@ -105,6 +106,7 @@ export function StudioDoorWalkthroughModal({
   const [currentTime, setCurrentTime] = useState(0)
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
+  const [isBuffering, setIsBuffering] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const savedSeekRef = useRef<number>(0)
@@ -187,15 +189,22 @@ export function StudioDoorWalkthroughModal({
   const handleSelectRoom = useCallback((roomId: FeatureRoomId) => {
     savedSeekRef.current = 0
     setCurrentTime(0)
+    if (roomId !== activeRoomId) {
+      setIsBuffering(true)
+    }
     setActiveRoomId(roomId)
     setIsPlaying(true)
-  }, [])
+  }, [activeRoomId])
 
   const handleSelectLocale = useCallback((nextLocale: TrailerDubLocaleId) => {
     const currentPos = videoRef.current?.currentTime ?? 0
     savedSeekRef.current = currentPos
-    setActiveDubLocale(normalizeWalkthroughDubLocale(nextLocale))
-  }, [])
+    const normalized = normalizeWalkthroughDubLocale(nextLocale)
+    if (normalized !== activeDubLocale) {
+      setIsBuffering(true)
+    }
+    setActiveDubLocale(normalized)
+  }, [activeDubLocale])
 
   const handleJumpToBeat = useCallback((beatIndex: number) => {
     const targetSec = beatStarts[beatIndex] ?? 0
@@ -277,6 +286,7 @@ export function StudioDoorWalkthroughModal({
                 activeLocale={activeDubLocale}
                 availableLocales={TRAILER_DUB_LOCALE_IDS}
                 onSelectLocale={handleSelectLocale}
+                isLoading={isBuffering}
                 align="end"
                 variant="theater"
               />
@@ -405,7 +415,21 @@ export function StudioDoorWalkthroughModal({
                     })
                   }
                 }}
-                onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                onLoadStart={() => setIsBuffering(true)}
+                onWaiting={() => setIsBuffering(true)}
+                onLoadedData={() => setIsBuffering(false)}
+                onCanPlay={() => setIsBuffering(false)}
+                onPlaying={() => {
+                  setIsBuffering(false)
+                  setIsPlaying(true)
+                }}
+                onError={() => setIsBuffering(false)}
+                onTimeUpdate={(e) => {
+                  if (e.currentTarget.readyState >= 2 && isBuffering) {
+                    setIsBuffering(false)
+                  }
+                  setCurrentTime(e.currentTarget.currentTime)
+                }}
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
                 onEnded={() => {
@@ -422,6 +446,15 @@ export function StudioDoorWalkthroughModal({
                   <source key={source.src} src={source.src} type={source.type} />
                 ))}
               </video>
+
+              {mode === 'video' && isBuffering ? (
+                <div
+                  className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-slate-950/40"
+                  aria-hidden
+                >
+                  <Loader2 className="h-9 w-9 animate-spin text-cyan-400/90" />
+                </div>
+              ) : null}
 
               {mode === 'panned' && activeSlide ? (
                 <div

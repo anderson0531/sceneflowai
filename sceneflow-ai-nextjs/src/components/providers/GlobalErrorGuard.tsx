@@ -16,26 +16,69 @@ import { useEffect } from 'react'
  * 
  * Real application errors are NOT suppressed — they propagate to React error boundaries.
  */
+const CHUNK_RELOAD_GUARD_KEY = 'sf-chunk-reload-ts'
+const CHUNK_RELOAD_COOLDOWN_MS = 15_000
+
+export function isStaleChunkOrModuleError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const name = 'name' in error ? String((error as { name?: unknown }).name ?? '') : ''
+  const msg = 'message' in error ? String((error as { message?: unknown }).message ?? '') : ''
+  return (
+    name === 'ChunkLoadError' ||
+    msg.includes('ChunkLoadError') ||
+    msg.includes('Loading chunk') ||
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('Importing a module script failed') ||
+    msg.includes('error loading dynamically imported module')
+  )
+}
+
+export function attemptOneTimeChunkRecoveryReload(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    const prev = Number(window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY) ?? '0')
+    const now = Date.now()
+    if (Number.isFinite(prev) && prev > 0 && now - prev < CHUNK_RELOAD_COOLDOWN_MS) {
+      return false
+    }
+    window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, String(now))
+    window.location.reload()
+    return true
+  } catch {
+    return false
+  }
+}
+
 export function GlobalErrorGuard() {
   useEffect(() => {
     const handler = (event: PromiseRejectionEvent) => {
       const error = event.reason
 
-      // Only suppress known transient/network errors
+      // Auto-recover once when a Vercel deployment rollover invalidates lazy-loaded Next.js chunks
+      if (isStaleChunkOrModuleError(error)) {
+        event.preventDefault()
+        attemptOneTimeChunkRecoveryReload()
+        return
+      }
+
+      // Only suppress known transient/network/service-worker errors
       const isTransient =
         // AbortError from navigating away while fetch is in-flight
         error?.name === 'AbortError' ||
-        // Workbox service worker CustomFetchError when NetworkFirst times out
+        // Workbox/Serwist service worker transient errors
         error?.name === 'CustomFetchError' ||
-        // Generic fetch failures (offline, DNS, etc.)
-        (error?.message && (
-          error.message.includes('Failed to fetch') ||
-          error.message.includes('Load failed') ||
-          error.message.includes('NetworkError') ||
-          error.message.includes('The operation was aborted') ||
-          error.message.includes('network request failed') ||
-          error.message.includes('Unexpected Error')
-        ))
+        error?.name === 'WorkboxError' ||
+        error?.message === 'no-response' ||
+        // Generic fetch failures (offline, DNS, SW precache rollover, etc.)
+        (typeof error?.message === 'string' &&
+          (error.message.includes('Failed to fetch') ||
+            error.message.includes('Load failed') ||
+            error.message.includes('NetworkError') ||
+            error.message.includes('The operation was aborted') ||
+            error.message.includes('network request failed') ||
+            error.message.includes('no-response') ||
+            error.message.includes('bad-precaching-response') ||
+            error.message.includes('Unexpected Error')))
 
       if (isTransient) {
         // Prevent this from crashing the app

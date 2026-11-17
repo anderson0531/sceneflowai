@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Check, Globe } from 'lucide-react'
+import { Check, Globe, Loader2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import {
   DropdownMenu,
@@ -35,6 +35,7 @@ export type VideoGlobeLanguageSelectorProps = {
   activeLocale: TrailerDubLocaleId
   onSelectLocale: (locale: TrailerDubLocaleId) => void
   availableLocales?: readonly TrailerDubLocaleId[]
+  isLoading?: boolean
   align?: 'start' | 'end'
   variant?: 'hero' | 'card' | 'theater'
   markAsHeroControl?: boolean
@@ -49,6 +50,7 @@ export function VideoGlobeLanguageSelector({
   activeLocale,
   onSelectLocale,
   availableLocales = TRAILER_DUB_LOCALE_IDS,
+  isLoading = false,
   align = 'end',
   variant = 'hero',
   markAsHeroControl = false,
@@ -89,7 +91,9 @@ export function VideoGlobeLanguageSelector({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
+                  title={tooltipLabel}
                   aria-label={tooltipLabel}
+                  aria-busy={isLoading}
                   onPointerDown={stopPropagation}
                   onClick={stopPropagation}
                   className={cn(
@@ -97,7 +101,11 @@ export function VideoGlobeLanguageSelector({
                     variant === 'theater' ? 'h-9 w-9' : 'h-8 w-8'
                   )}
                 >
-                  <Globe className="h-4 w-4 shrink-0 text-cyan-400" aria-hidden />
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-cyan-300" aria-hidden />
+                  ) : (
+                    <Globe className="h-4 w-4 shrink-0 text-cyan-400" aria-hidden />
+                  )}
                 </button>
               </DropdownMenuTrigger>
             </TooltipTrigger>

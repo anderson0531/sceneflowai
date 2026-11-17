@@ -94,8 +94,24 @@ const staticAssetRuntimeCaching: RuntimeCaching[] = defaultCache.map((entry) => 
   matcher: wrapMatcher(entry.matcher),
 }))
 
+// Keep install-time precaching strictly limited to tiny PWA shell icons & manifest (<150 KB).
+// Precaching 500+ Next.js chunks and 86 MB of 5K landing screenshots at SW install time
+// starves initial video streams and causes deployment-skew ChunkLoadErrors on rollover.
+const rawManifest = self.__SW_MANIFEST ?? []
+const essentialPrecacheEntries = rawManifest.filter((entry) => {
+  const url = typeof entry === 'string' ? entry : entry.url
+  return (
+    url === '/manifest.json' ||
+    url === '/favicon-32.png' ||
+    url === '/apple-touch-icon.png' ||
+    url.startsWith('/icons/') ||
+    url.startsWith('/brand/')
+  )
+})
+
 const serwist = new Serwist({
-  precacheEntries: self.__SW_MANIFEST,
+  precacheEntries: essentialPrecacheEntries,
+  cleanupOutdatedCaches: true,
   // Activate immediately so old workers intercepting navigations/OAuth are replaced right away.
   skipWaiting: true,
   clientsClaim: true,
@@ -103,13 +119,26 @@ const serwist = new Serwist({
   runtimeCaching: staticAssetRuntimeCaching,
 })
 
+// If a prior SW registration left `navigationPreload` enabled on the browser registration,
+// settle `event.preloadResponse` via `waitUntil` whenever we bypass `respondWith()` so Chromium
+// never logs "The service worker navigation preload request was cancelled before 'preloadResponse' settled."
+self.addEventListener('fetch', (event) => {
+  if (event.preloadResponse) {
+    event.waitUntil(Promise.resolve(event.preloadResponse).catch(() => undefined))
+  }
+})
+
 serwist.addEventListeners()
 
 // A crashed Series Room tab keeps the old JavaScript until the document reloads.
-// When this worker takes control, reload that tab onto the current deployment.
+// When this worker takes control, disable any lingering navigationPreload on the registration,
+// purge stale media/route caches, and reload crashed Series Room tabs onto the current deployment.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
+      if (self.registration.navigationPreload) {
+        await self.registration.navigationPreload.disable().catch(() => undefined)
+      }
       await Promise.all(
         STALE_RUNTIME_CACHES.map((cacheName) => self.caches.delete(cacheName).catch(() => false))
       )

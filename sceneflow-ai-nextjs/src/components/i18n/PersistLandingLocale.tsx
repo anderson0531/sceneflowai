@@ -8,6 +8,7 @@ import {
   isLandingLocale,
   matchAcceptLanguage,
 } from '@/i18n/locale'
+import { endLocaleSwitch } from '@/i18n/localeSwitchStatus'
 import {
   hasExplicitLandingLocaleChoice,
   persistLandingLocale,
@@ -23,6 +24,7 @@ export function PersistLandingLocale() {
   const locale = useLocale()
 
   useEffect(() => {
+    endLocaleSwitch()
     if (!isLandingLocale(locale)) return
     const explicit = hasExplicitLandingLocaleChoice()
 

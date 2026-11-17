@@ -353,6 +353,7 @@ export function TrailerPlayer({
               <VideoGlobeLanguageSelector
                 activeLocale={activeLocale}
                 onSelectLocale={handleSelectLocale}
+                isLoading={isBuffering}
                 variant="card"
                 align="start"
               />
@@ -376,6 +377,7 @@ export function TrailerPlayer({
             <VideoGlobeLanguageSelector
               activeLocale={activeLocale}
               onSelectLocale={handleSelectLocale}
+              isLoading={isBuffering}
               variant="card"
               align="start"
             />

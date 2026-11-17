@@ -10,5 +10,13 @@ import { createSerwistRoute } from '@serwist/turbopack'
 export const { dynamic, dynamicParams, revalidate, generateStaticParams, GET } = createSerwistRoute({
   swSrc: 'src/sw.ts',
   useNativeEsbuild: true,
-  globIgnores: ['**/node_modules/**/*', '**/*.{mp4,webm,mov,avi,mkv}'],
+  globIgnores: [
+    '**/node_modules/**/*',
+    '**/*.{mp4,webm,mov,avi,mkv,map}',
+    '**/landing/**/*',
+    '**/images/**/*',
+    '**/screenshots/**/*',
+    '**/videos/**/*',
+    '**/companion-sw.js',
+  ],
 })

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Globe2,
+  Loader2,
   Maximize,
   Minimize,
   Pause,
@@ -69,6 +70,7 @@ export function VideoServiceOutputShowcase({
     () => sessionPromoAudioUnmuted
   )
   const [promoVideoError, setPromoVideoError] = useState(false)
+  const [isBuffering, setIsBuffering] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   const stageRef = useRef<HTMLDivElement | null>(null)
@@ -246,6 +248,21 @@ export function VideoServiceOutputShowcase({
   }, [hasPromoVideo, inViewport, isFullscreen, isPlaying, promoAudioUnmuted, promoWebmSrc])
 
   const handleTogglePlay = () => {
+    const vid = videoRef.current
+    if (vid && vid.paused) {
+      setIsPlaying(true)
+      if (vid.readyState === 0) {
+        setIsBuffering(true)
+        vid.load()
+      }
+      void vid.play().catch(() => undefined)
+      return
+    }
+    if (vid && !vid.paused) {
+      setIsPlaying(false)
+      vid.pause()
+      return
+    }
     setIsPlaying((prev) => !prev)
   }
 
@@ -259,6 +276,10 @@ export function VideoServiceOutputShowcase({
       if (videoRef.current) {
         videoRef.current.muted = !next
         if (next) {
+          if (videoRef.current.readyState === 0) {
+            setIsBuffering(true)
+            videoRef.current.load()
+          }
           void videoRef.current.play().catch(() => undefined)
         }
       }
@@ -268,14 +289,33 @@ export function VideoServiceOutputShowcase({
 
   const handleVideoSurfaceClick = () => {
     if (!hasPromoVideo) return
+    const vid = videoRef.current
     if (!promoAudioUnmuted) {
       sessionPromoAudioUnmuted = true
       setPromoAudioUnmuted(true)
       setIsPlaying(true)
-      if (videoRef.current) {
-        videoRef.current.muted = false
-        void videoRef.current.play().catch(() => undefined)
+      if (vid) {
+        if (vid.readyState === 0) {
+          setIsBuffering(true)
+          vid.load()
+        }
+        vid.muted = false
+        void vid.play().catch(() => undefined)
       }
+      return
+    }
+    if (vid && vid.paused) {
+      setIsPlaying(true)
+      if (vid.readyState === 0) {
+        setIsBuffering(true)
+        vid.load()
+      }
+      void vid.play().catch(() => undefined)
+      return
+    }
+    if (vid && !vid.paused) {
+      setIsPlaying(false)
+      vid.pause()
       return
     }
     setIsPlaying((prev) => !prev)
@@ -332,6 +372,9 @@ export function VideoServiceOutputShowcase({
     ) {
       pendingSeekRatioRef.current =
         videoRef.current.currentTime / videoRef.current.duration
+    }
+    if (nextLocale !== panLocale) {
+      setIsBuffering(true)
     }
     setPanLocale(nextLocale)
     setIsPlaying(true)
@@ -397,13 +440,30 @@ export function VideoServiceOutputShowcase({
             key={`${verticalId}-${availablePromoLocale}`}
             ref={videoRef}
             poster={promoPosterSrc}
+            autoPlay={isPlaying && (inViewport || isFullscreen)}
             loop
             muted={!promoAudioUnmuted}
             playsInline
-            preload={nearViewport ? 'metadata' : 'none'}
+            preload={nearViewport ? 'auto' : 'metadata'}
             aria-label={`${verticalTitle} — ${uiCopy.promoVideoBadge}`}
             onClick={handleVideoSurfaceClick}
             onContextMenu={(e) => e.preventDefault()}
+            onLoadStart={() => setIsBuffering(true)}
+            onWaiting={() => setIsBuffering(true)}
+            onSeeking={() => setIsBuffering(true)}
+            onLoadedData={() => setIsBuffering(false)}
+            onCanPlay={() => setIsBuffering(false)}
+            onSeeked={() => setIsBuffering(false)}
+            onPlaying={() => {
+              setIsBuffering(false)
+              setIsPlaying(true)
+            }}
+            onPause={(e) => {
+              const vid = e.currentTarget
+              if (!vid.seeking && !vid.ended && (inViewport || isFullscreen) && vid.readyState > 0) {
+                setIsPlaying(false)
+              }
+            }}
             onLoadedMetadata={(e) => {
               const vid = e.currentTarget
               if (vid.duration > 0 && pendingSeekRatioRef.current !== null) {
@@ -413,9 +473,15 @@ export function VideoServiceOutputShowcase({
                   vid.currentTime = ratio * vid.duration
                 }
               }
+              if (isPlaying && (inViewport || isFullscreen) && vid.paused) {
+                void vid.play().catch(() => undefined)
+              }
             }}
             onTimeUpdate={(e) => {
               const vid = e.currentTarget
+              if (vid.readyState >= 2 && isBuffering) {
+                setIsBuffering(false)
+              }
               if (vid.duration > 0) {
                 const overall = vid.currentTime / vid.duration
                 setBeatProgress(overall)
@@ -428,14 +494,24 @@ export function VideoServiceOutputShowcase({
                 }
               }
             }}
-            onError={() => setPromoVideoError(true)}
+            onError={() => {
+              setIsBuffering(false)
+              setPromoVideoError(true)
+            }}
             className={cn(
               'h-full w-full cursor-pointer bg-black',
               isFullscreen ? 'object-contain' : 'object-cover'
             )}
           >
             <source src={promoWebmSrc} type="video/webm" />
-            <source src={promoMp4Src} type="video/mp4" />
+            <source
+              src={promoMp4Src}
+              type="video/mp4"
+              onError={() => {
+                setIsBuffering(false)
+                setPromoVideoError(true)
+              }}
+            />
           </video>
         ) : (
           uniqueImages.map((src) => {
@@ -461,6 +537,15 @@ export function VideoServiceOutputShowcase({
             )
           })
         )}
+
+        {hasPromoVideo && isBuffering ? (
+          <div
+            className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center bg-slate-950/35"
+            aria-hidden
+          >
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-400/90" />
+          </div>
+        ) : null}
 
         {/* Subtle cinema vignettes only on 5K Stills so Promo Video stays completely unobstructed */}
         {!hasPromoVideo ? (
@@ -679,6 +764,7 @@ export function VideoServiceOutputShowcase({
                   type="button"
                   title={langTooltip}
                   aria-pressed={selected}
+                  aria-busy={selected && isBuffering}
                   onClick={() => handleSelectLanguage(opt.id)}
                   className={cn(
                     'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold transition-all cursor-pointer sm:px-2',
@@ -689,6 +775,9 @@ export function VideoServiceOutputShowcase({
                         : 'border-slate-800 bg-slate-900/70 text-gray-400 hover:border-slate-600 hover:text-white'
                   )}
                 >
+                  {selected && isBuffering ? (
+                    <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin text-emerald-300" aria-hidden />
+                  ) : null}
                   <span>{opt.shortLabel}</span>
                 </button>
               )

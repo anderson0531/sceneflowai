@@ -106,12 +106,22 @@ function MobileAccordion({
 export default function ProductionExamplesSection() {
   const t = useTranslations('productionShowcase')
   const cards = useMemo(() => t.raw('cards') as ProductionStyleCardData[], [t])
-  const [phoneHandset, setPhoneHandset] = useState(() => isPhoneHandset())
+  const [isMobileView, setIsMobileView] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return (
+      isPhoneHandset() ||
+      (typeof window.matchMedia === 'function' &&
+        Boolean(window.matchMedia('(max-width: 767px)')?.matches))
+    )
+  })
 
   useEffect(() => {
     const syncLayout = () => {
       if (document.fullscreenElement) return
-      setPhoneHandset(isPhoneHandset())
+      const narrow =
+        typeof window.matchMedia === 'function' &&
+        Boolean(window.matchMedia('(max-width: 767px)')?.matches)
+      setIsMobileView(isPhoneHandset() || narrow)
     }
     syncLayout()
     window.addEventListener('resize', syncLayout)
@@ -161,15 +171,19 @@ export default function ProductionExamplesSection() {
           <p className="mx-auto mt-3 max-w-2xl text-xs text-gray-400">{t('explorerHandoff')}</p>
         </motion.div>
 
-        {/* Desktop: 2-column grid */}
-        <div className={phoneHandset ? 'hidden' : 'hidden md:block'}>
-          <CardGrid cards={cards} t={t} />
-        </div>
+        {/* Desktop: 2-column grid (mount only active layout so hidden duplicate <video> tags never hog connections) */}
+        {!isMobileView ? (
+          <div className="hidden md:block">
+            <CardGrid cards={cards} t={t} />
+          </div>
+        ) : null}
 
         {/* Mobile: accordion — one card visible at a time */}
-        <div className={phoneHandset ? 'block' : 'md:hidden'}>
-          <MobileAccordion cards={cards} t={t} />
-        </div>
+        {isMobileView ? (
+          <div className="block md:hidden">
+            <MobileAccordion cards={cards} t={t} />
+          </div>
+        ) : null}
 
         <motion.div
           className="text-center"

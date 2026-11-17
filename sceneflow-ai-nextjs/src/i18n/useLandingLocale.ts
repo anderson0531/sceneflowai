@@ -8,16 +8,39 @@ import {
   getLandingLocalePath,
   isLandingLocale,
 } from '@/i18n/locale'
+import { beginLocaleSwitch, endLocaleSwitch } from '@/i18n/localeSwitchStatus'
 import { persistLandingLocale } from '@/i18n/persistLandingLocale'
 
-/** Switch landing UI locale while preserving hash. */
+let switchFallbackTimer: ReturnType<typeof setTimeout> | null = null
+
+/** Switch landing UI locale with instant processing overlay & route prefetching while preserving hash. */
 export function useLandingLocale() {
   const locale = useLocale()
   const router = useRouter()
 
+  const prefetchLocale = useCallback(
+    (targetLocale: string) => {
+      if (!isLandingLocale(targetLocale) || targetLocale === locale) return
+      try {
+        router.prefetch(getLandingLocalePath(targetLocale))
+      } catch {
+        // Ignore prefetch failures in test/offline environments
+      }
+    },
+    [locale, router]
+  )
+
   const switchLocale = useCallback(
     (nextLocale: string) => {
       if (!isLandingLocale(nextLocale) || nextLocale === locale) return
+
+      // Immediately show LocaleSwitchOverlay so the user sees instant visual confirmation
+      beginLocaleSwitch(nextLocale)
+      if (switchFallbackTimer) clearTimeout(switchFallbackTimer)
+      switchFallbackTimer = setTimeout(() => {
+        endLocaleSwitch()
+        switchFallbackTimer = null
+      }, 10_000)
 
       persistLandingLocale(nextLocale, { explicit: true })
 
@@ -32,5 +55,6 @@ export function useLandingLocale() {
   return {
     locale: isLandingLocale(locale) ? locale : DEFAULT_LANDING_LOCALE,
     switchLocale,
+    prefetchLocale,
   }
 }

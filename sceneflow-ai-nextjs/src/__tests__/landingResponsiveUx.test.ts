@@ -1229,4 +1229,88 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       window.requestAnimationFrame = prevRaf
     }
   })
+
+  it('prevents SW navigationPreload errors & 100MB precache storms, shows instant language-switch spinners, and plays paused videos on the first click', () => {
+    // 1. Service Worker settles preloadResponse, disables lingering navigationPreload, and avoids 100MB install-time precache
+    const swSrc = readSource('src/sw.ts')
+    const swRouteSrc = readSource('src/app/serwist/[path]/route.ts')
+    expect(swSrc).toContain('event.preloadResponse')
+    expect(swSrc).toContain('navigationPreload.disable()')
+    expect(swSrc).toContain('essentialPrecacheEntries')
+    expect(swRouteSrc).toContain("'**/landing/**/*'")
+
+    // 2. Root error boundary + GlobalErrorGuard auto-recover stale deployment chunks instead of crashing the landing page
+    expect(existsSync(path.join(ROOT, 'src/app/error.tsx'))).toBe(true)
+    expect(existsSync(path.join(ROOT, 'src/app/global-error.tsx'))).toBe(true)
+    const guardSrc = readSource('src/components/providers/GlobalErrorGuard.tsx')
+    expect(guardSrc).toContain('isStaleChunkOrModuleError')
+    expect(guardSrc).toContain('attemptOneTimeChunkRecoveryReload')
+
+    // 3. Landing UI language switcher activates LocaleSwitchOverlay immediately on selection and prefetches Tier-A locales
+    const landingLocaleHookSrc = readSource('src/i18n/useLandingLocale.ts')
+    const persistLocaleSrc = readSource('src/components/i18n/PersistLandingLocale.tsx')
+    const headerLangSelectorSrc = readSource('src/app/components/LanguageSelector.tsx')
+    expect(landingLocaleHookSrc).toContain('beginLocaleSwitch(nextLocale)')
+    expect(landingLocaleHookSrc).toContain('router.prefetch')
+    expect(persistLocaleSrc).toContain('endLocaleSwitch()')
+    expect(headerLangSelectorSrc).toContain('prefetchLocale')
+
+    // 4. First click ALWAYS plays a paused video (never requires 2 clicks) and language switch shows buffering indicator immediately
+    let playCallCount = 0
+    const origPlay = HTMLMediaElement.prototype.play
+    try {
+      Object.defineProperty(HTMLMediaElement.prototype, 'play', {
+        configurable: true,
+        value: () => {
+          playCallCount++
+          return Promise.resolve()
+        },
+      })
+
+      const fdMeta = getKeyFeatureScreenshot('scriptSupervisor')!
+      renderElement(
+        React.createElement(FeatureScreenshotFrame, {
+          src: keyFeatureScreenshotSrc(fdMeta),
+          variants: fdMeta.variants,
+          label: 'FlowDirector',
+          enterFullscreenLabel: 'Enter fullscreen',
+          exitFullscreenLabel: 'Exit fullscreen',
+          featureIcon: 'scriptSupervisor',
+          locale: 'en',
+        })
+      )
+
+      const stage = container?.querySelector('[data-testid="feature-animatic-stage"]')
+      const vid = stage?.querySelector('video') as HTMLVideoElement | null
+      expect(vid).toBeTruthy()
+
+      // Even though initial React `isPlaying` is true, `vid.paused` is true in DOM before playback starts:
+      // a SINGLE click on the Play/Pause button MUST invoke `vid.play()` immediately (not pause first!).
+      const beforeClickPlays = playCallCount
+      const playToggleBtn = Array.from(stage?.querySelectorAll('button') ?? []).find(
+        (btn) =>
+          btn.getAttribute('title') === FEATURE_ANIMATIC_UI_COPY.en.pauseLabel ||
+          btn.getAttribute('title') === FEATURE_ANIMATIC_UI_COPY.en.playLabel
+      )
+      expect(playToggleBtn).toBeTruthy()
+      clickElement(playToggleBtn!)
+      expect(playCallCount).toBeGreaterThan(beforeClickPlays)
+
+      // Selecting 'ES' immediately marks the 'ES' button aria-busy="true" with a spinner until media is ready
+      const esBtn = Array.from(stage?.querySelectorAll('button') ?? []).find(
+        (btn) => btn.textContent?.trim() === 'ES'
+      )
+      expect(esBtn).toBeTruthy()
+      clickElement(esBtn!)
+      const updatedEsBtn = Array.from(
+        container?.querySelectorAll('[data-testid="feature-pan-narrator-bar"] button') ?? []
+      ).find((btn) => btn.textContent?.trim() === 'ES')
+      expect(updatedEsBtn?.getAttribute('aria-busy')).toBe('true')
+    } finally {
+      Object.defineProperty(HTMLMediaElement.prototype, 'play', {
+        configurable: true,
+        value: origPlay,
+      })
+    }
+  })
 })
