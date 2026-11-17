@@ -171,6 +171,11 @@ export function TwoModesTheaterModal({
               onLoadedData={() => setIsBuffering(false)}
               onCanPlay={() => setIsBuffering(false)}
               onPlaying={() => setIsBuffering(false)}
+              onTimeUpdate={(event) => {
+                if (isBuffering && event.currentTarget.readyState >= 2) {
+                  setIsBuffering(false)
+                }
+              }}
               onError={() => setIsBuffering(false)}
             >
               {media.webmUrl ? <source src={media.webmUrl} type="video/webm" /> : null}

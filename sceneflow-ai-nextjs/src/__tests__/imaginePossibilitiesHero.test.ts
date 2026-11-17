@@ -342,5 +342,16 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
     expect(trailerPlayer).not.toContain('key={`${webm}-${mp4}`}')
     expect(trailerPlayer).toContain('video.load()')
     expect(theaterModal).toContain('video.load()')
+
+    // Hero never starts stuck in isBuffering=true across SSR hydration, clears buffering on timeupdate,
+    // and never injects full-file <link rel="prefetch" as="video"> downloads that starve playback.
+    expect(heroComponent).toContain('const [isBuffering, setIsBuffering] = useState(false)')
+    expect(heroComponent).toContain('onTimeUpdate')
+    expect(heroComponent).not.toContain('as="video"')
+
+    // Client SW registration disables persisted navigationPreload and bypasses HTTP cache on /sw.js updates
+    const appUpdateSrc = readSource('src/components/pwa/AppUpdatePrompt.tsx')
+    expect(appUpdateSrc).toContain("updateViaCache: 'none'")
+    expect(appUpdateSrc).toContain('navigationPreload?.disable()')
   })
 })

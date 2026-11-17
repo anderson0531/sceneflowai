@@ -120,11 +120,20 @@ const serwist = new Serwist({
 })
 
 // If a prior SW registration left `navigationPreload` enabled on the browser registration,
-// settle `event.preloadResponse` via `waitUntil` whenever we bypass `respondWith()` so Chromium
-// never logs "The service worker navigation preload request was cancelled before 'preloadResponse' settled."
+// settle `event.preloadResponse` via `waitUntil` on navigation requests whenever we bypass
+// `respondWith()` so Chromium never cancels an unsettled `preloadResponse`.
 self.addEventListener('fetch', (event) => {
-  if (event.preloadResponse) {
+  if (event.request.mode === 'navigate' && event.preloadResponse) {
     event.waitUntil(Promise.resolve(event.preloadResponse).catch(() => undefined))
+  }
+})
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    void self.skipWaiting()
+  }
+  if (event.data?.type === 'DISABLE_NAV_PRELOAD' && self.registration.navigationPreload) {
+    event.waitUntil(self.registration.navigationPreload.disable().catch(() => undefined))
   }
 })
 

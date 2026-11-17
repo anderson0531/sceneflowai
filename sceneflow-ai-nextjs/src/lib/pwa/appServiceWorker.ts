@@ -25,7 +25,10 @@ export async function appServiceWorkerRegistration(): Promise<ServiceWorkerRegis
     await navigator.serviceWorker.register(APP_SERVICE_WORKER_URL, {
       scope: '/',
       type: 'module',
+      updateViaCache: 'none',
     })
   }
-  return navigator.serviceWorker.ready
+  const ready = await navigator.serviceWorker.ready
+  await ready.navigationPreload?.disable().catch(() => undefined)
+  return ready
 }

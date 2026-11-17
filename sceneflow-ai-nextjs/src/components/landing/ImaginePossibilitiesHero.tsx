@@ -72,7 +72,7 @@ export function ImaginePossibilitiesHero() {
   const [isMuted, setIsMuted] = useState(true)
   const [isPlaying, setIsPlaying] = useState(!prefersReducedMotion)
   const [inViewport, setInViewport] = useState(true)
-  const [isBuffering, setIsBuffering] = useState(true)
+  const [isBuffering, setIsBuffering] = useState(false)
   const [isTheaterOpen, setIsTheaterOpen] = useState(false)
   const [videoPreload, setVideoPreload] = useState<VideoPreloadValue>('auto')
   const [userActivatedPlayback, setUserActivatedPlayback] = useState(false)
@@ -147,6 +147,9 @@ export function ImaginePossibilitiesHero() {
     const sourceKey = `${activeSources.webmSrc}|${activeSources.mp4Src}`
     if (prevSourceKeyRef.current === null) {
       prevSourceKeyRef.current = sourceKey
+      if (video.readyState >= 2 || (!video.paused && video.currentTime > 0)) {
+        setIsBuffering(false)
+      }
       return
     }
     if (prevSourceKeyRef.current === sourceKey) return
@@ -202,6 +205,8 @@ export function ImaginePossibilitiesHero() {
       setActiveId((prev) => {
         if (prev !== id) {
           setIsBuffering(true)
+        } else {
+          setIsBuffering(false)
         }
         return id
       })
@@ -355,8 +360,20 @@ export function ImaginePossibilitiesHero() {
                 setIsPlaying(false)
               }
             }}
-            onWaiting={() => setIsBuffering(true)}
+            onWaiting={(event) => {
+              if (userActivatedPlayback && event.currentTarget.readyState < 2) {
+                setIsBuffering(true)
+              }
+            }}
             onLoadedData={() => setIsBuffering(false)}
+            onSeeked={() => setIsBuffering(false)}
+            onCanPlayThrough={() => setIsBuffering(false)}
+            onTimeUpdate={(event) => {
+              const vid = event.currentTarget
+              if (isBuffering && (vid.readyState >= 2 || (!vid.paused && vid.currentTime > 0))) {
+                setIsBuffering(false)
+              }
+            }}
             onCanPlay={() => {
               setIsBuffering(false)
               if (
@@ -385,18 +402,13 @@ export function ImaginePossibilitiesHero() {
           <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/85 via-black/20 to-black/35" />
         </div>
 
-        {/* Warm poster images and hovered/next category trailer streams */}
+        {/* Warm only lightweight poster images (~40 KB); avoid full-file video prefetches that choke the playing Hero stream. */}
         {prefetchedIds
           .filter((id) => id !== activeScript.id)
           .map((id) => {
             const nextSources = getProductionTrailerSources(id, videoLocale)
             return (
-              <React.Fragment key={`prefetch-${id}`}>
-                <link rel="prefetch" as="image" href={nextSources.posterSrc} />
-                {!prefersReducedMotion && videoPreload === 'auto' ? (
-                  <link rel="prefetch" as="video" href={nextSources.webmSrc} type="video/webm" />
-                ) : null}
-              </React.Fragment>
+              <link key={`prefetch-${id}`} rel="prefetch" as="image" href={nextSources.posterSrc} />
             )
           })}
 

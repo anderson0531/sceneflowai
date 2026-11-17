@@ -33,7 +33,11 @@ export default function AppUpdatePrompt() {
     if (!('serviceWorker' in navigator)) return
 
     let cancelled = false
-    const serwist = new Serwist(APP_SERVICE_WORKER_URL, { scope: '/', type: 'module' })
+    const serwist = new Serwist(APP_SERVICE_WORKER_URL, {
+      scope: '/',
+      type: 'module',
+      updateViaCache: 'none',
+    })
     serwistRef.current = serwist
 
     const onWaiting = (_event: SerwistLifecycleWaitingEvent) => {
@@ -56,14 +60,27 @@ export default function AppUpdatePrompt() {
     serwist.addEventListener('controlling', onControlling)
 
     const start = async () => {
+      try {
+        const existing = await navigator.serviceWorker.getRegistration()
+        if (existing) {
+          await existing.navigationPreload?.disable().catch(() => undefined)
+        }
+      } catch {
+        // Ignore service worker lookup failures in restricted contexts.
+      }
       const controller = navigator.serviceWorker.controller
       if (isCompanionServiceWorker(controller?.scriptURL)) {
         await navigator.serviceWorker.register(APP_SERVICE_WORKER_URL, {
           scope: '/',
           type: 'module',
+          updateViaCache: 'none',
         })
       }
-      if (!cancelled) await serwist.register()
+      if (!cancelled) {
+        const reg = await serwist.register()
+        await reg?.navigationPreload?.disable().catch(() => undefined)
+        await reg?.update().catch(() => undefined)
+      }
     }
     void start()
 
