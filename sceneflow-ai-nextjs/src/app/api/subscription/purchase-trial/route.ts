@@ -9,6 +9,10 @@ import {
   shouldUseDemoCheckout,
 } from '@/lib/billing/checkoutHelper'
 import { ensureWhopRuntimeConfig } from '@/lib/billing/whopClient'
+import {
+  isPrelaunchAccessModeEnabled,
+  PRELAUNCH_CHECKOUT_BLOCKED_MESSAGE,
+} from '@/lib/billing/prelaunchAccess'
 
 /** @deprecated Use POST /api/billing/checkout with tierName=explorer */
 export async function POST(req: NextRequest) {
@@ -16,6 +20,17 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions as any)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (isPrelaunchAccessModeEnabled()) {
+      return NextResponse.json(
+        {
+          error: 'PRELAUNCH_ACCESS_ONLY',
+          prelaunchOnly: true,
+          message: PRELAUNCH_CHECKOUT_BLOCKED_MESSAGE,
+        },
+        { status: 403 }
+      )
     }
 
     await ensureWhopRuntimeConfig()

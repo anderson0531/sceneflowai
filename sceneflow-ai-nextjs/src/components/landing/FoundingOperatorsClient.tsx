@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
 import { CHARTER_OFFER_CATALOG, MOR_FOOTER_LINE_FALLBACK } from './foundingOperatorsConstants'
 
 export interface FoundingOperatorsClientProps {
@@ -76,6 +77,7 @@ export function FoundingOperatorsClient({
   const { data: session } = useSession()
   const isAuthenticated = Boolean(session?.user)
   const offer = CHARTER_OFFER_CATALOG.founding_operator
+  const prelaunchOnly = isPrelaunchAccessModeEnabled()
 
   const [reserveEmail, setReserveEmail] = useState('')
   const [reserving, setReserving] = useState(false)
@@ -97,17 +99,20 @@ export function FoundingOperatorsClient({
     setReserving(true)
     setReserveError(null)
     try {
-      const res = await fetch('/api/waitlist', {
+      const res = await fetch('/api/access-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: clean,
-          source: 'founding_operator_charter',
+          requestedTier: 'founding_operator',
+          requestedCredits: 18000,
+          useCase: 'memoir',
+          projectDetails: 'Founding Operator Charter pre-launch seat request (/founding-operators)',
         }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error(data.error || 'Unable to reserve seat right now.')
+        throw new Error(data.message || data.error || 'Unable to submit request right now.')
       }
       setReserveSuccess(true)
       setReserveEmail('')
@@ -135,11 +140,17 @@ export function FoundingOperatorsClient({
             <Button
               size="sm"
               onClick={() =>
-                triggerTierIntent(charterPlanConfigured ? 'founding_operator' : 'pro')
+                triggerTierIntent(
+                  prelaunchOnly || charterPlanConfigured ? 'founding_operator' : 'pro'
+                )
               }
               className="bg-emerald-500 font-semibold text-slate-950 hover:bg-emerald-400"
             >
-              {charterPlanConfigured ? 'Claim $299 Charter' : 'Start Pro Studio'}
+              {prelaunchOnly
+                ? 'Request Charter Access'
+                : charterPlanConfigured
+                  ? 'Claim $299 Charter'
+                  : 'Start Pro Studio'}
             </Button>
           </div>
         </div>
@@ -266,7 +277,21 @@ export function FoundingOperatorsClient({
               Saves $328 vs. 3 months of Pro ($447) + $180 in compute credits
             </p>
 
-            {charterPlanConfigured ? (
+            {prelaunchOnly ? (
+              <div className="mt-6 space-y-3">
+                <Button
+                  size="lg"
+                  onClick={() => triggerTierIntent('founding_operator')}
+                  className="w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 font-bold text-slate-950 hover:brightness-110"
+                >
+                  <span>Request Founding Charter Access</span>
+                  <ArrowRight className="ms-2 h-4 w-4 shrink-0" />
+                </Button>
+                <p className="text-center text-[11px] text-emerald-200/90">
+                  Pre-Launch Invite Mode: No payment collected today. Submit your studio profile for admin review and starting credit allocation.
+                </p>
+              </div>
+            ) : charterPlanConfigured ? (
               <div className="mt-6 space-y-3">
                 <Button
                   size="lg"

@@ -36,11 +36,11 @@ export function CreditsPaywallHost() {
       currentBalance={credits.total_credits}
       onTopUp={() => {
         dismissLowCreditWarning()
-        router.push('/dashboard/settings/billing?checkoutTier=explorer')
+        router.push('/dashboard/settings/billing?checkoutTier=explorer#prelaunch-access-request')
       }}
       onUpgrade={(planId) => {
         dismissLowCreditWarning()
-        router.push(`/dashboard/settings/billing?checkoutTier=${planId}`)
+        router.push(`/dashboard/settings/billing?checkoutTier=${planId}#prelaunch-access-request`)
       }}
     />
   )

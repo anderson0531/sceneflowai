@@ -13,6 +13,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { type NudgeRecommendation } from '@/lib/credits/nudgeRecommendation'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
 
 // =============================================================================
 // TYPES
@@ -150,9 +151,15 @@ export function LowCreditModal({
                       <Zap className="w-5 h-5" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold">{nudge.topUp.name}</div>
+                      <div className="font-semibold">
+                        {isPrelaunchAccessModeEnabled()
+                          ? 'Request Additional Pre-Launch Credits'
+                          : nudge.topUp.name}
+                      </div>
                       <div className="text-sm text-white/80">
-                        {nudge.topUp.credits.toLocaleString()} credits • ${nudge.topUp.price}
+                        {isPrelaunchAccessModeEnabled()
+                          ? 'No payment during pre-launch • Submit credit top-up request'
+                          : `${nudge.topUp.credits.toLocaleString()} credits • $${nudge.topUp.price}`}
                       </div>
                     </div>
                   </div>

@@ -22,6 +22,8 @@ import {
 } from '@/lib/billing/tierCatalog'
 import { hasActiveSubscriptionAccess } from '@/lib/billing/subscriptionAccess'
 import { isAdminEmail } from '@/lib/adminUtils'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
+import { PrelaunchAccessRequestCard } from '@/components/billing/PrelaunchAccessRequestCard'
 
 const CHECKOUT_PLANS = getCheckoutPlans()
 const ADDON_PACKS = Object.values(ADDON_PACK_CATALOG)
@@ -60,8 +62,10 @@ export default function BillingPage() {
   const [activatingPlan, setActivatingPlan] = useState(false)
   const [activationTimedOut, setActivationTimedOut] = useState(false)
   const [subscriptionRequiredNotice, setSubscriptionRequiredNotice] = useState(false)
+  const [selectedRequestTier, setSelectedRequestTier] = useState<string | null>(null)
   const checkoutStartedRef = useRef(false)
   const activationPollStartedRef = useRef(false)
+  const prelaunchOnly = isPrelaunchAccessModeEnabled()
   const { loading: checkoutLoading, checkout, startCheckout, closeCheckout } = useWhopCheckout()
 
   const fetchSubscriptionData = useCallback(async (reconcile = false): Promise<SubscriptionData | null> => {
@@ -177,13 +181,17 @@ export default function BillingPage() {
 
     if (checkoutTier && !checkoutStartedRef.current) {
       checkoutStartedRef.current = true
-      startCheckout(checkoutTier)
+      if (prelaunchOnly) {
+        setSelectedRequestTier(checkoutTier)
+      } else {
+        startCheckout(checkoutTier)
+      }
     }
 
     if (checkoutStatus || checkoutTier || reason) {
       window.history.replaceState(null, '', '/dashboard/settings/billing')
     }
-  }, [session, startCheckout, router, pollForActivation, fetchSubscriptionData])
+  }, [session, startCheckout, router, pollForActivation, fetchSubscriptionData, prelaunchOnly])
 
   const handleSwitchPlan = async (tierName: string): Promise<boolean> => {
     if (switchingPlan) return false
@@ -250,26 +258,39 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-6">
-      {(!hasActiveAccess || subscriptionRequiredNotice) && !activatingPlan && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-amber-500/40 bg-amber-950/30 text-amber-100">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-            <div className="text-sm">
-              <div className="font-semibold text-white">Active Subscription Required</div>
-              <p className="text-amber-200/90 mt-0.5">
-                A subscription or Explorer Pass is required to access SceneFlow AI Studio. Choose the $9 Explorer Pass or a monthly plan below to activate your workspace.
-              </p>
+      {prelaunchOnly ? (
+        <PrelaunchAccessRequestCard
+          hasActiveAccess={hasActiveAccess}
+          selectedTier={selectedRequestTier}
+          onSelectTierChange={setSelectedRequestTier}
+          userEmail={session?.user?.email}
+          userName={session?.user?.name}
+          isAdmin={isAdminEmail(session?.user?.email)}
+          onRefreshSubscription={fetchSubscriptionData}
+        />
+      ) : (
+        (!hasActiveAccess || subscriptionRequiredNotice) &&
+        !activatingPlan && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-amber-500/40 bg-amber-950/30 text-amber-100">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <div className="font-semibold text-white">Active Subscription Required</div>
+                <p className="text-amber-200/90 mt-0.5">
+                  A subscription or Explorer Pass is required to access SceneFlow AI Studio. Choose the $9 Explorer Pass or a monthly plan below to activate your workspace.
+                </p>
+              </div>
             </div>
+            {hasActiveAccess && (
+              <Button
+                onClick={() => router.push('/dashboard')}
+                className="bg-sf-primary hover:bg-sf-accent text-white shrink-0"
+              >
+                Go to Studio <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            )}
           </div>
-          {hasActiveAccess && (
-            <Button
-              onClick={() => router.push('/dashboard')}
-              className="bg-sf-primary hover:bg-sf-accent text-white shrink-0"
-            >
-              Go to Studio <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          )}
-        </div>
+        )
       )}
       {activatingPlan && (
         <div className="flex items-center gap-3 p-4 rounded-lg border border-blue-500/30 bg-blue-900/20 text-blue-100">
@@ -425,9 +446,13 @@ export default function BillingPage() {
                 <Crown className="w-5 h-5 text-sf-primary" />
               </div>
               <div>
-                <CardTitle className="text-xl font-semibold">Choose a Plan</CardTitle>
+                <CardTitle className="text-xl font-semibold">
+                  {prelaunchOnly ? 'Workspace Tiers (Pre-Launch Reference)' : 'Choose a Plan'}
+                </CardTitle>
                 <CardDescription className="text-gray-400">
-                  Subscribe or purchase Explorer to unlock credits
+                  {prelaunchOnly
+                    ? 'Self-serve payments are paused during pre-launch. Select any tier below to populate your Pre-Launch Access Request above.'
+                    : 'Subscribe or purchase Explorer to unlock credits'}
                 </CardDescription>
               </div>
             </div>
@@ -475,6 +500,23 @@ export default function BillingPage() {
                       <Button disabled className="w-full bg-green-600/20 text-green-400 border border-green-500/30">
                         <CheckCircle className="w-4 h-4 mr-1" />
                         Purchased
+                      </Button>
+                    ) : prelaunchOnly ? (
+                      <Button
+                        onClick={() => {
+                          setSelectedRequestTier(plan.name)
+                          document
+                            .getElementById('prelaunch-access-request')
+                            ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }}
+                        variant={selectedRequestTier === plan.name ? 'default' : 'outline'}
+                        className={
+                          selectedRequestTier === plan.name
+                            ? 'w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold'
+                            : 'w-full border-gray-700 text-gray-200 hover:bg-gray-800'
+                        }
+                      >
+                        {selectedRequestTier === plan.name ? 'Selected for Request' : 'Request This Tier'}
                       </Button>
                     ) : (
                       <Button
@@ -625,7 +667,8 @@ export default function BillingPage() {
         </motion.div>
       )}
 
-      {/* Billing Actions */}
+      {/* Billing Actions (Self-serve Whop mode only) */}
+      {!prelaunchOnly && (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -736,6 +779,7 @@ export default function BillingPage() {
           </CardContent>
         </Card>
       </motion.div>
+      )}
 
       {/* Subscription Details */}
       {subscription?.subscription?.tier && (

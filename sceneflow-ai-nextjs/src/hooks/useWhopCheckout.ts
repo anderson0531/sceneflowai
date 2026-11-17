@@ -2,6 +2,10 @@
 
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
+import {
+  isPrelaunchAccessModeEnabled,
+  PRELAUNCH_CHECKOUT_BLOCKED_MESSAGE,
+} from '@/lib/billing/prelaunchAccess'
 
 export interface CheckoutSession {
   sessionId: string
@@ -18,6 +22,15 @@ export function useWhopCheckout() {
   const startCheckout = useCallback(async (tierName: string) => {
     if (loading) return
 
+    if (isPrelaunchAccessModeEnabled()) {
+      toast.message(PRELAUNCH_CHECKOUT_BLOCKED_MESSAGE)
+      const requestForm = document.getElementById('prelaunch-access-request')
+      if (requestForm) {
+        requestForm.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+      return
+    }
+
     setLoading(tierName)
     try {
       const response = await fetch('/api/billing/checkout', {
@@ -29,6 +42,14 @@ export function useWhopCheckout() {
       const data = await response.json()
 
       if (!response.ok) {
+        if (data.prelaunchOnly || data.error === 'PRELAUNCH_ACCESS_ONLY') {
+          toast.message(data.message || PRELAUNCH_CHECKOUT_BLOCKED_MESSAGE)
+          const requestForm = document.getElementById('prelaunch-access-request')
+          if (requestForm) {
+            requestForm.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+          return
+        }
         toast.error(data.message || data.error || 'Checkout failed')
         return
       }

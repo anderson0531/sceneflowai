@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Settings, User, HelpCircle, LogOut } from 'lucide-react'
+import { Menu, X, Settings, User, HelpCircle, LogOut, ShieldCheck } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { CreditsBadge } from '../../components/credits/CreditsBadge'
 import { SceneFlowStudioBrand } from '../../components/layout/SceneFlowStudioBrand'
@@ -12,6 +12,7 @@ import { isSubscriptionExemptDashboardPath } from '@/lib/billing/subscriptionAcc
 import { getDashboardUrl, getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { HeaderLocaleSwitcher } from '@/components/i18n/HeaderLocaleSwitcher'
 import { openJitHelp } from '@/components/help/JitHelpDrawer'
+import { isAdminEmail } from '@/lib/adminUtils'
 import { useTranslations } from 'next-intl'
 
 declare global {
@@ -80,6 +81,17 @@ export function GlobalHeader() {
 
           {/* Right: Controls */}
           <div className="flex items-center gap-3 ms-auto">
+            {isSignedIn && isAdminEmail(session?.user?.email) && (
+              <button
+                type="button"
+                onClick={() => (window.location.href = '/admin/access')}
+                className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/40 bg-cyan-950/40 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-900/50 transition-colors"
+                title="Admin Pre-Launch Access & Credits Control"
+              >
+                <ShieldCheck size={14} className="text-cyan-400" />
+                <span className="hidden sm:inline">Admin Access</span>
+              </button>
+            )}
             {isSignedIn && <CreditsBadge className="hidden sm:flex" />}
             {isSignedIn && <HeaderLocaleSwitcher />}
             {/* Profile */}

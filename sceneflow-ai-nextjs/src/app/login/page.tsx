@@ -12,6 +12,7 @@ import { useAuthSuccessHandler } from '@/components/auth/useAuthSuccessHandler'
 import { Button } from '@/components/ui/Button'
 import { setPendingCheckoutTier } from '@/lib/billing/checkoutIntent'
 import { normalizeTierName, TIER_CATALOG } from '@/lib/billing/tierCatalog'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
 import {
   clearDashboardRedirectAttempts,
   getDashboardUrl,
@@ -28,16 +29,21 @@ function LoginPageContent() {
   const initialModeParam = searchParams.get('mode') === 'signup' ? 'signup' : 'login'
   const [authMode, setAuthMode] = useState<'login' | 'signup'>(initialModeParam)
   const handleSuccess = useAuthSuccessHandler(authMode)
+  const prelaunchOnly = isPrelaunchAccessModeEnabled()
 
   const rawCheckoutTier = searchParams.get('checkoutTier')
   const normalizedTier = rawCheckoutTier ? normalizeTierName(rawCheckoutTier) : null
   const selectedTierDef = normalizedTier ? TIER_CATALOG[normalizedTier] : null
 
   const selectedTierLabel = selectedTierDef
-    ? `${selectedTierDef.displayName.split('—')[0].trim()} ($${selectedTierDef.priceUsd}${selectedTierDef.isOneTime ? '' : '/mo'})`
+    ? prelaunchOnly
+      ? `${selectedTierDef.displayName.split('—')[0].trim()} (Pre-Launch Access Request)`
+      : `${selectedTierDef.displayName.split('—')[0].trim()} ($${selectedTierDef.priceUsd}${selectedTierDef.isOneTime ? '' : '/mo'})`
     : null
   const selectedTierSummary = selectedTierDef
-    ? `${selectedTierDef.displayName} — $${selectedTierDef.priceUsd}${selectedTierDef.isOneTime ? ' one-time' : '/mo'} (${selectedTierDef.credits.toLocaleString()} credits + ${selectedTierDef.storageGb} GB Vault)`
+    ? prelaunchOnly
+      ? `${selectedTierDef.displayName} (${selectedTierDef.credits.toLocaleString()} credits + ${selectedTierDef.storageGb} GB Vault — No payment required during pre-launch)`
+      : `${selectedTierDef.displayName} — $${selectedTierDef.priceUsd}${selectedTierDef.isOneTime ? ' one-time' : '/mo'} (${selectedTierDef.credits.toLocaleString()} credits + ${selectedTierDef.storageGb} GB Vault)`
     : null
 
   useEffect(() => {
@@ -140,7 +146,7 @@ function LoginPageContent() {
               <Sparkles className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-purple-300">
-                  Selected Plan • Step 1 of 2
+                  {prelaunchOnly ? 'Pre-Launch Invite • Step 1 of 2' : 'Selected Plan • Step 1 of 2'}
                 </p>
                 <p className="text-sm font-semibold text-white mt-0.5">
                   {selectedTierDef.displayName}
@@ -152,18 +158,28 @@ function LoginPageContent() {
               </div>
             </div>
             <div className="text-right shrink-0">
-              <span className="text-lg font-bold text-white">
-                ${selectedTierDef.priceUsd}
-              </span>
-              <span className="block text-[11px] text-gray-400">
-                {selectedTierDef.isOneTime ? 'one-time' : '/month'}
-              </span>
+              {prelaunchOnly ? (
+                <span className="inline-block rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+                  Invite Only
+                </span>
+              ) : (
+                <>
+                  <span className="text-lg font-bold text-white">
+                    ${selectedTierDef.priceUsd}
+                  </span>
+                  <span className="block text-[11px] text-gray-400">
+                    {selectedTierDef.isOneTime ? 'one-time' : '/month'}
+                  </span>
+                </>
+              )}
             </div>
           </div>
           <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center gap-1.5 text-[11px] text-gray-400">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <span>
-              Create your account or sign in below — secure Whop checkout opens immediately after.
+              {prelaunchOnly
+                ? 'No payment today — create your account or sign in below to submit your Pre-Launch Studio Access request.'
+                : 'Create your account or sign in below — secure Whop checkout opens immediately after.'}
             </span>
           </div>
         </div>

@@ -98,7 +98,7 @@ export function SubscriptionAccessGate({ children }: SubscriptionAccessGateProps
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-          <p className="text-sm text-gray-400">Verifying subscription access...</p>
+          <p className="text-sm text-gray-400">Verifying Studio access...</p>
         </div>
       </div>
     )

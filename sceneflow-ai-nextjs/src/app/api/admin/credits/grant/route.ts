@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isDemoMode } from '@/lib/env'
+import { isAdminEmail } from '@/lib/adminUtils'
 
 // Use relative import to avoid path alias issues in production builds
 import { CreditService } from '../../../../../services/CreditService'
@@ -21,16 +22,30 @@ export const dynamic = 'force-dynamic'
  */
 export async function POST(req: NextRequest) {
   try {
-    // Authenticate user (admin check - allow in dev/demo mode)
-    const session = await getServerSession(authOptions as any)
-    
-    // In demo mode or if no session, allow access (for testing)
-    // In production, you should add proper admin check here
-    if (!session && !isDemoMode()) {
-      return NextResponse.json({ 
-        error: 'Unauthorized',
-        message: 'Admin access required'
-      }, { status: 401 })
+    // Authenticate user — require whitelisted admin email unless running in explicit demo mode
+    const session = (await getServerSession(authOptions as any)) as {
+      user?: { email?: string | null }
+    } | null
+
+    if (!isDemoMode()) {
+      if (!session?.user?.email) {
+        return NextResponse.json(
+          {
+            error: 'Unauthorized',
+            message: 'Admin sign-in required',
+          },
+          { status: 401 }
+        )
+      }
+      if (!isAdminEmail(session.user.email)) {
+        return NextResponse.json(
+          {
+            error: 'Forbidden',
+            message: 'Admin access required',
+          },
+          { status: 403 }
+        )
+      }
     }
 
     // Parse request body

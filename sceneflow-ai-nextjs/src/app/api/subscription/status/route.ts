@@ -7,6 +7,7 @@ import { CreditService } from '../../../../services/CreditService'
 import { resolveUser } from '@/lib/userHelper'
 import { SANDBOX_CREDITS } from '@/lib/demo/uiSandboxProject'
 import { reconcileWhopUserPayments } from '@/lib/billing/whopReconcile'
+import { fulfillPendingApprovedGrantForUser } from '@/lib/admin/accessControlService'
 
 /**
  * GET /api/subscription/status
@@ -41,6 +42,19 @@ export async function GET(req: NextRequest) {
 
     let user = await resolveUser(userId)
 
+    // Auto-fulfill any pending pre-launch approval granted by an admin before signup/login
+    try {
+      const fulfilled = await fulfillPendingApprovedGrantForUser({
+        id: user.id,
+        email: user.email,
+      })
+      if (fulfilled) {
+        user = await resolveUser(userId)
+      }
+    } catch (fulfillErr) {
+      console.warn('[Subscription Status API] Prelaunch auto-fulfill warning:', fulfillErr)
+    }
+
     const shouldReconcile = req.nextUrl.searchParams.get('reconcile') === '1'
     if (shouldReconcile) {
       const reconciled = await reconcileWhopUserPayments({
@@ -55,11 +69,12 @@ export async function GET(req: NextRequest) {
 
     const subscription = await SubscriptionService.getUserSubscription(userId)
     const credits = await CreditService.getCreditBreakdown(userId)
+    const accountActive = user.is_active !== false
 
     return NextResponse.json({
       success: true,
       subscription: {
-        tier: subscription.tier ? {
+        tier: accountActive && subscription.tier ? {
           id: subscription.tier.id,
           name: subscription.tier.name,
           display_name: subscription.tier.display_name,
@@ -74,7 +89,7 @@ export async function GET(req: NextRequest) {
           collaboration_seats: subscription.tier.collaboration_seats,
           features: subscription.tier.features,
         } : null,
-        status: subscription.status,
+        status: accountActive ? subscription.status : 'cancelled',
         startDate: subscription.startDate,
         endDate: subscription.endDate,
         monthlyCredits: subscription.monthlyCredits,
@@ -87,7 +102,7 @@ export async function GET(req: NextRequest) {
         total_credits: credits.total_credits,
         pack_expires_at: credits.pack_expires_at,
       },
-      one_time_tiers_purchased: user.one_time_tiers_purchased || [],
+      one_time_tiers_purchased: accountActive ? (user.one_time_tiers_purchased || []) : [],
     })
   } catch (error) {
     console.error('[Subscription Status API] Error (serving Studio Pro sandbox fallback):', error)

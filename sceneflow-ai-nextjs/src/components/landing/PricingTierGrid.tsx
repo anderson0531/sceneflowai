@@ -1,11 +1,12 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, Gift, HardDrive, Zap } from 'lucide-react'
+import { ArrowRight, Check, Gift, HardDrive, ShieldCheck, Zap } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { getLandingPlans } from '@/lib/billing/tierCatalog'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
 
 const { explorer: explorerPlan, subscriptions: basePlans } = getLandingPlans()
 
@@ -22,6 +23,7 @@ export function PricingTierGrid({
 }: PricingTierGridProps) {
   const t = useTranslations('pricing.tierGrid')
   const tPlans = useTranslations('pricing.plans')
+  const prelaunchOnly = isPrelaunchAccessModeEnabled()
 
   const rawSubscriptions = (tPlans.raw('subscriptions') as Array<{
     id?: string
@@ -32,6 +34,16 @@ export function PricingTierGrid({
 
   return (
     <div className="space-y-12">
+      {prelaunchOnly && (
+        <div className="max-w-3xl mx-auto rounded-2xl border border-emerald-500/35 bg-emerald-950/25 px-5 py-3.5 text-center">
+          <p className="inline-flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-medium text-emerald-200">
+            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>
+              <strong className="text-white">Pre-Launch Invite Access:</strong> Self-serve checkout is paused. Select any tier below to request early Studio access and admin-allocated credits — no payment collected today.
+            </span>
+          </p>
+        </div>
+      )}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -63,7 +75,11 @@ export function PricingTierGrid({
                 disabled={disabled || loadingTier === 'explorer'}
                 className="w-full sm:w-auto justify-center bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6"
               >
-                {loadingTier === 'explorer' ? t('loading') : t('startTestFlight')}
+                {loadingTier === 'explorer'
+                  ? t('loading')
+                  : prelaunchOnly
+                    ? 'Request Pre-Launch Access'
+                    : t('startTestFlight')}
                 <ArrowRight className="w-4 h-4 ml-2 shrink-0" />
               </Button>
             </div>
@@ -175,7 +191,11 @@ export function PricingTierGrid({
                     : 'bg-gray-800 border border-gray-700 text-white hover:bg-gray-700'
                 )}
               >
-                {loadingTier === plan.id ? t('loading') : t('getStarted')}
+                {loadingTier === plan.id
+                  ? t('loading')
+                  : prelaunchOnly
+                    ? 'Request Pre-Launch Access'
+                    : t('getStarted')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </motion.div>

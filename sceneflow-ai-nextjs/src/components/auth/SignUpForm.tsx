@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, User, CheckCircle } from 'lucide-react'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
 
 interface SignUpFormProps {
   onSuccess: () => void
@@ -280,6 +281,10 @@ export function SignUpForm({
               {selectedTierSummary ? (
                 <>
                   <strong>Selected Plan:</strong> {selectedTierSummary}
+                </>
+              ) : isPrelaunchAccessModeEnabled() ? (
+                <>
+                  <strong>Pre-Launch Access:</strong> Create your free account, then submit your Studio access &amp; credit request for review — no payment required.
                 </>
               ) : (
                 <>

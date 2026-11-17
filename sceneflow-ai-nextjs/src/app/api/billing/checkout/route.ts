@@ -18,6 +18,10 @@ import {
   isCharterWhopPlanConfigured,
   isWhopPaymentEnabled,
 } from '@/lib/billing/tierCatalog'
+import {
+  isPrelaunchAccessModeEnabled,
+  PRELAUNCH_CHECKOUT_BLOCKED_MESSAGE,
+} from '@/lib/billing/prelaunchAccess'
 
 export const runtime = 'nodejs'
 
@@ -28,6 +32,17 @@ export async function POST(req: NextRequest) {
     } | null
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (isPrelaunchAccessModeEnabled()) {
+      return NextResponse.json(
+        {
+          error: 'PRELAUNCH_ACCESS_ONLY',
+          prelaunchOnly: true,
+          message: PRELAUNCH_CHECKOUT_BLOCKED_MESSAGE,
+        },
+        { status: 403 }
+      )
     }
 
     await ensureWhopRuntimeConfig()
