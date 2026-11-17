@@ -168,8 +168,8 @@ export function VideoServicesSpotlightSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
         >
-          <p className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
-            <TrendingUp className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden />
+          <p className="mb-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
+            <TrendingUp className="me-1.5 inline h-3.5 w-3.5 align-[-2px] text-emerald-400" aria-hidden />
             <span>{copy.eyebrow}</span>
           </p>
 

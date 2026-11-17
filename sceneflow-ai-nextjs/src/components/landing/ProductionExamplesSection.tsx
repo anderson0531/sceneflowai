@@ -147,8 +147,8 @@ export default function ProductionExamplesSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <p className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
-            <Clapperboard className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
+          <p className="mb-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+            <Clapperboard className="me-1.5 inline h-3.5 w-3.5 align-[-2px] text-cyan-400" />
             <span>{t('badge')}</span>
           </p>
 

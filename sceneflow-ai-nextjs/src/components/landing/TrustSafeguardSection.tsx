@@ -38,8 +38,8 @@ export function TrustSafeguardSection() {
           viewport={{ once: true }}
           className="relative text-center mb-8 sm:mb-12"
         >
-          <p className="inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300 mb-3">
-            <Shield className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300 mb-3">
+            <Shield className="me-1.5 inline w-3.5 h-3.5 align-[-2px] text-cyan-400" />
             <span>{t('badge')}</span>
           </p>
           <div className="flex items-center justify-center gap-3 mb-4">

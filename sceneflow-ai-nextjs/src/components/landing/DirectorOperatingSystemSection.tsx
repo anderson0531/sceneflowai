@@ -240,8 +240,8 @@ export function DirectorOperatingSystemSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
         >
-          <p className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">
-            <Sparkles className="h-3.5 w-3.5 shrink-0 text-indigo-400" aria-hidden />
+          <p className="mb-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">
+            <Sparkles className="me-1.5 inline h-3.5 w-3.5 align-[-2px] text-indigo-400" aria-hidden />
             <span>{copy.eyebrow}</span>
           </p>
 

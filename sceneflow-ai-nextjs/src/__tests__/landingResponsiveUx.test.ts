@@ -1378,7 +1378,7 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     const heroSrc = readSource('src/components/landing/ImaginePossibilitiesHero.tsx')
     expect(heroSrc).toContain('flex-nowrap')
     expect(heroSrc).toContain('overflow-x-auto')
-    expect(heroSrc).toContain('min-[340px]:grid-cols-2')
+    expect(heroSrc).toContain('min-[440px]:grid-cols-2')
     expect(heroSrc).toContain('isPrelaunchAccessModeEnabled')
 
     // Pillar 5: Thumb-friendly 32px (h-8 w-8) mobile video controls

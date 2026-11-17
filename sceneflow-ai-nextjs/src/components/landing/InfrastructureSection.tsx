@@ -32,8 +32,8 @@ export function InfrastructureSection() {
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          <p className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
-            <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+          <p className="mb-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
+            <Sparkles className="me-1.5 inline h-3.5 w-3.5 align-[-2px] text-emerald-400" />
             <span>{wave.eyebrow}</span>
           </p>
 
@@ -77,8 +77,8 @@ export function InfrastructureSection() {
           transition={{ duration: 0.6 }}
           className="pt-10 sm:pt-12 border-t border-slate-800/80 text-center"
         >
-          <p className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-blue-300">
-            <Shield className="h-3.5 w-3.5 shrink-0 text-blue-400" />
+          <p className="mb-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-blue-300">
+            <Shield className="me-1.5 inline h-3.5 w-3.5 align-[-2px] text-blue-400" />
             <span>{t('title')}</span>
           </p>
 

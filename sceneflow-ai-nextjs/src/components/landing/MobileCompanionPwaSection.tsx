@@ -61,8 +61,8 @@ export function MobileCompanionPwaSection() {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Top Section Header */}
         <div className="mx-auto max-w-3xl text-center">
-          <p className="inline-flex max-w-full items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">
-            <Smartphone className="h-3.5 w-3.5 shrink-0 text-cyan-400" aria-hidden />
+          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">
+            <Smartphone className="me-1.5 inline h-3.5 w-3.5 align-[-2px] text-cyan-400" aria-hidden />
             <span className="whitespace-normal break-words">{copy.eyebrow}</span>
           </p>
 
@@ -77,8 +77,8 @@ export function MobileCompanionPwaSection() {
 
           {/* Why-PWA Callout Strip — sleek left-accent note on mobile without nested stadium pills */}
           <div className="mx-auto mt-5 max-w-2xl border-l-2 border-emerald-400/60 pl-3.5 text-left text-xs leading-relaxed text-gray-300 sm:rounded-xl sm:border sm:border-white/10 sm:bg-slate-900/75 sm:px-4 sm:py-2.5 sm:text-center">
-            <span className="inline-flex items-center gap-1 font-bold text-emerald-300">
-              <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span className="font-bold text-emerald-300">
+              <ShieldCheck className="me-1 inline h-3.5 w-3.5 align-[-2px] text-emerald-400" aria-hidden />
               <span>{copy.whyPwaBadge}:</span>
             </span>{' '}
             <span>{copy.whyPwaNote}</span>
@@ -428,7 +428,7 @@ export function MobileCompanionPwaSection() {
                             title={stepPillTooltip}
                             onClick={() => setSelectedStepIdx(idx)}
                             className={cn(
-                              'rounded-lg border py-1.5 text-center text-[11px] font-bold tabular-nums transition-all cursor-pointer',
+                              'inline-flex min-h-[34px] items-center justify-center rounded-lg border py-1.5 text-center text-[11px] font-bold tabular-nums transition-all cursor-pointer',
                               active
                                 ? 'border-cyan-400/70 bg-cyan-500/20 text-white'
                                 : 'border-slate-800 bg-slate-900/70 text-gray-400 hover:text-white'

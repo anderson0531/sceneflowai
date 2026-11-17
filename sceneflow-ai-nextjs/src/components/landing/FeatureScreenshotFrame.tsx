@@ -686,7 +686,7 @@ export function FeatureScreenshotFrame({
                     aria-pressed={active}
                     onClick={() => handleSelectBeat(idx)}
                     className={cn(
-                      'rounded-lg border px-2 py-1 text-[11px] font-semibold tabular-nums transition-all cursor-pointer',
+                      'inline-flex min-h-[32px] min-w-[34px] items-center justify-center rounded-lg border px-2.5 py-1 text-[11px] font-semibold tabular-nums transition-all cursor-pointer',
                       active
                         ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-200'
                         : 'border-slate-800 bg-slate-900/80 text-gray-400 hover:border-slate-600 hover:text-white'

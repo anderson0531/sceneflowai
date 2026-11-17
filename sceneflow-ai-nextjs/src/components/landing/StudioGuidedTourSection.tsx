@@ -384,7 +384,7 @@ export function StudioGuidedTourSection() {
                   src={assets.heroSrc}
                   alt={`${activeRoom.tabLabel} — ${activeRoom.title}`}
                   className="h-full w-full object-cover"
-                  loading="lazy"
+                  decoding="async"
                 />
                 <div
                   className="pointer-events-none hidden sm:block absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/45"
@@ -462,7 +462,7 @@ export function StudioGuidedTourSection() {
                           src={thumbSrc}
                           alt={thumbLabel}
                           className="h-full w-full object-cover"
-                          loading="lazy"
+                          decoding="async"
                         />
                       </div>
                       <p

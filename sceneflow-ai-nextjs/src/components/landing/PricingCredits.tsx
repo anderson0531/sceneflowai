@@ -89,8 +89,8 @@ export function PricingCredits() {
           transition={{ duration: 0.6 }}
           className="text-center mb-10 md:mb-12"
         >
-          <p className="inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300 mb-3">
-            <Sparkles className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
+          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300 mb-3">
+            <Sparkles className="me-1.5 inline w-3.5 h-3.5 align-[-2px] text-indigo-400" />
             <span>{t('badge')}</span>
           </p>
 

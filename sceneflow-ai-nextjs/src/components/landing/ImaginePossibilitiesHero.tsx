@@ -556,14 +556,14 @@ export function ImaginePossibilitiesHero() {
                 <span className="whitespace-normal leading-tight">{primaryHeroCtaLabel}</span>
                 <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
               </button>
-              <div className="grid grid-cols-1 gap-2 min-[340px]:grid-cols-2 sm:contents">
+              <div className="grid grid-cols-1 gap-2 min-[440px]:grid-cols-2 sm:contents">
                 <button
                   type="button"
                   title={studioCopy.heroDock.businessCta}
                   onClick={() => {
                     document.getElementById('video-services')?.scrollIntoView({ behavior: 'smooth' })
                   }}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full border border-emerald-400/45 bg-emerald-950/60 px-3 py-2 text-[11px] min-[380px]:text-xs font-semibold text-emerald-200 backdrop-blur-md transition-colors hover:border-emerald-300/70 hover:bg-emerald-900/70 hover:text-white sm:px-4 sm:text-sm"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full border border-emerald-400/45 bg-emerald-950/60 px-4 py-2 text-xs font-semibold text-emerald-200 backdrop-blur-md transition-colors hover:border-emerald-300/70 hover:bg-emerald-900/70 hover:text-white sm:text-sm"
                 >
                   <Briefcase className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
                   <span className="whitespace-normal leading-tight">{studioCopy.heroDock.businessCta}</span>
@@ -574,7 +574,7 @@ export function ImaginePossibilitiesHero() {
                   onClick={() => {
                     document.getElementById('five-superpowers')?.scrollIntoView({ behavior: 'smooth' })
                   }}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full border border-white/25 bg-black/55 px-3 py-2 text-[11px] min-[380px]:text-xs font-medium text-gray-200 backdrop-blur-md transition-colors hover:border-white/45 hover:bg-black/75 hover:text-white sm:px-4 sm:text-sm"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full border border-white/25 bg-black/55 px-4 py-2 text-xs font-medium text-gray-200 backdrop-blur-md transition-colors hover:border-white/45 hover:bg-black/75 hover:text-white sm:text-sm"
                 >
                   <Compass className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
                   <span className="whitespace-normal leading-tight">{studioCopy.heroDock.howItWorksCta}</span>
