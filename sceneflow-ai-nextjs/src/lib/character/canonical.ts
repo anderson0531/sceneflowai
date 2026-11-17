@@ -48,14 +48,21 @@ export function toCanonicalName(input: string): string {
       if (!word) return word
       if (word.startsWith('(')) {
         const inner = word.slice(1)
-        return '(' + (inner ? inner.charAt(0).toUpperCase() + inner.slice(1) : '')
+        const casedInner = inner
+          .split('-')
+          .map((p) => (p ? p.charAt(0).toUpperCase() + p.slice(1) : ''))
+          .join('-')
+        return '(' + casedInner
       }
       // Handle special cases
       if (word === 'sr' || word === 'jr' || word === 'ii' || word === 'iii') {
         return word.charAt(0).toUpperCase() + word.slice(1)
       }
-      // Capitalize first letter
-      return word.charAt(0).toUpperCase() + word.slice(1)
+      // Capitalize first letter (and hyphenated segments like Ruiz-Morales or Mid-Thirties)
+      return word
+        .split('-')
+        .map((p) => (p ? p.charAt(0).toUpperCase() + p.slice(1) : ''))
+        .join('-')
     })
     .join(' ')
   
@@ -103,13 +110,13 @@ export function generateAliases(canonicalName: string, originalName?: string): s
         aliases.add(v)
         aliases.add(v.toUpperCase())
       }
-    } else if (ageStage.ageStageLabel) {
+    }
+    if (ageStage.ageStageLabel && ageStage.ageStageLabel !== `Age ${ageStage.numericAge}`) {
       const lbl = ageStage.ageStageLabel
       const eraVariants = [
         `${ageStage.baseName} (${lbl})`,
         `${first} (${lbl})`,
-        `${lbl} ${ageStage.baseName}`,
-        `${lbl} ${first}`,
+        ...(!/^Age\s+/i.test(lbl) ? [`${lbl} ${ageStage.baseName}`, `${lbl} ${first}`] : []),
       ]
       for (const v of eraVariants) {
         aliases.add(v)

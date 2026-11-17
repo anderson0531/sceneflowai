@@ -712,4 +712,188 @@ describe('Embeddable Client Intake Interview, Consent Shield & Blueprint Synthes
       expect(turn.completenessChecklist.closingImpactComplete).toBe(true)
     }
   })
+
+  it('uses generous 16k maxOutputTokens on Blueprint synthesis and backfills truncated multi-era characters & locations', async () => {
+    const updateProjectMock = vi.fn().mockResolvedValue(undefined)
+    const updateSessionMock = vi.fn().mockResolvedValue(undefined)
+
+    const interviewCharacters = [
+      { id: 'c1', name: 'Mateo Morales (Age 12)', role: 'Protagonist', eraOrAge: '1958 (Age 12)', impact: 'Boyhood in Oaxaca' },
+      { id: 'c2', name: 'Don Rafael Morales (Age 50)', role: 'Mentor', eraOrAge: '1958 (Age 50)', impact: 'Gifts cedar compass box' },
+      { id: 'c3', name: 'Mateo Morales (Early Twenties)', role: 'Protagonist', eraOrAge: '1966', impact: 'San Diego boatyard arrival' },
+      { id: 'c4', name: 'Hank Lindqvist (Age 58)', role: 'Mentor', eraOrAge: '1966', impact: 'Master shipwright' },
+      { id: 'c5', name: 'Mateo Morales (Age 26-30)', role: 'Protagonist', eraOrAge: '1972-1976', impact: 'Founds Morales Marine Joinery' },
+      { id: 'c6', name: 'Elena Ruiz Morales (Age 24-28)', role: 'Co-Founder & Spouse', eraOrAge: '1972-1976', impact: 'Heart of the shop' },
+      { id: 'c7', name: 'Marco Morales (Baby)', role: 'Son', eraOrAge: '1976', impact: 'Firstborn child' },
+      { id: 'c8', name: 'Mateo Morales (Age 45)', role: 'Protagonist', eraOrAge: '1991', impact: 'Rebuilds after shop fire' },
+      { id: 'c9', name: 'Elena Ruiz Morales (Age 43)', role: 'Co-Founder & Spouse', eraOrAge: '1991', impact: 'Rallies harbor families' },
+      { id: 'c10', name: 'Arthur Sato (Age 64)', role: 'Community Ally', eraOrAge: '1991', impact: 'Leads dawn harbor rebuild' },
+      { id: 'c11', name: 'Marco Morales (Age 15)', role: 'Son', eraOrAge: '1991', impact: 'Helps rebuild workshop' },
+      { id: 'c12', name: 'Mateo Morales (Age 80)', role: 'Protagonist / Honoree', eraOrAge: '2026', impact: 'Passes heirloom compass box' },
+      { id: 'c13', name: 'Sofia Morales (Age 26)', role: 'Narrator & Granddaughter', eraOrAge: '2026', impact: 'Receives cedar compass box' },
+      { id: 'c14', name: 'Marco Morales (Age 50)', role: 'Son', eraOrAge: '2026', impact: 'Toasts his father at 80' },
+    ]
+
+    findOneSessionMock.mockResolvedValue({
+      id: 'sess-mateo',
+      owner_user_id: 'producer-1',
+      project_id: 'proj-mateo',
+      status: 'active',
+      expires_at: null,
+      update: updateSessionMock,
+      payload: {
+        type: 'intake',
+        mode: 'single_project',
+        vertical: 'video_memoir',
+        locale: 'en',
+        maxCustomerTurns: 6,
+        customerTurnsUsed: 3,
+        maxFeedbackRounds: 2,
+        brandProfileSnapshot: { brandName: 'Legacy Films Co' },
+        visionProposal: {
+          clarifiedVision: 'A warm 12-minute 80th birthday memoir for Mateo Morales.',
+          intendedImpact: 'Celebrate resilience and intergenerational craft.',
+          targetAudience: '45 family members at San Diego harbor dinner',
+          toneAndStyle: '35mm Kodachrome + cinematic AI re-enactment',
+          deliverableScope: '12 minutes',
+          narrativeMode: 'biographical_memoir',
+          confirmed: true,
+        },
+        extractedCharacters: interviewCharacters,
+        turns: [
+          { role: 'customer', content: 'Full 5-era Mateo Morales family story...', createdAt: new Date().toISOString() },
+        ],
+      },
+    })
+    getConsentMock.mockResolvedValue({
+      id: 'consent-sofia',
+      customer_name: 'Sofia Morales',
+      customer_email: 'sofia@example.com',
+    })
+    ensureCreditsMock.mockResolvedValue(true)
+    chargeCreditsMock.mockResolvedValue(undefined)
+    findByPkProjectMock.mockResolvedValue({
+      id: 'proj-mateo',
+      user_id: 'producer-1',
+      title: 'Mateo Tribute',
+      description: '',
+      metadata: { clientOrder: { isClientProject: true } },
+      update: updateProjectMock,
+    })
+
+    // Simulate a response where characters 10-14 and locations were truncated out of character_descriptions,
+    // while beats (earlier in JSON) + props survived or were partially recovered:
+    generateTextMock.mockResolvedValue({
+      finishReason: 'MAX_TOKENS',
+      text: JSON.stringify({
+        title: 'The Cedar Compass: Mateo Morales at 80',
+        logline: 'Across seven decades from Oaxaca to San Diego, a master shipwright passes his scorched cedar compass box to the next generation.',
+        synopsis: 'Five chapters spanning 1958 to 2026.',
+        genre: 'Biographical Video Memoir',
+        beats: [
+          {
+            title: '1. Oaxaca Storm & Cedar Box',
+            eraOrAge: '1958 — Age 12',
+            characters: ['Mateo Morales (Age 12)', 'Don Rafael Morales (Age 50)'],
+            synopsis: 'At age 12, Mateo receives the hand-carved cedar compass box.',
+            minutes: 2,
+            settingHint: 'Puerto Ángel, Oaxaca Beachfront',
+            deliveryFormat: 'ai_reenactment',
+          },
+          {
+            title: '2. Shelter Island Tiller',
+            eraOrAge: '1966 — Early Twenties',
+            characters: ['Mateo Morales (Early Twenties)', 'Hank Lindqvist (Age 58)'],
+            synopsis: 'Mateo in his early twenties earns his place at Harbor Boatyard.',
+            minutes: 2,
+            settingHint: 'Shelter Island Harbor Boatyard (1966)',
+            deliveryFormat: 'ai_reenactment',
+          },
+          {
+            title: '3. Fiesta, Marriage & Joinery',
+            eraOrAge: '1972–1976 — Age 26-30',
+            characters: ['Mateo Morales (Age 26-30)', 'Elena Ruiz Morales (Age 24-28)', 'Marco Morales (Baby)'],
+            synopsis: 'Mateo and Elena marry and welcome baby Marco.',
+            minutes: 3,
+            settingHint: 'Morales Marine Joinery Workshop',
+            deliveryFormat: 'archival_photo',
+          },
+          {
+            title: '4. 1991 Fire & Dawn Rebuild',
+            eraOrAge: '1991 — Age 45',
+            characters: ['Mateo Morales (Age 45)', 'Elena Ruiz Morales (Age 43)', 'Arthur Sato (Age 64)', 'Marco Morales (Age 15)'],
+            synopsis: 'Neighbors led by Arthur Sato help 45-year-old Mateo and 15-year-old Marco rebuild.',
+            minutes: 3,
+            settingHint: 'Charred Joinery & Dawn Dock',
+            deliveryFormat: 'archival_photo',
+          },
+          {
+            title: '5. 80th Birthday Harbor Blessing',
+            eraOrAge: '2026 — Age 80',
+            characters: ['Mateo Morales (Age 80)', 'Sofia Morales (Age 26)', 'Marco Morales (Age 50)'],
+            synopsis: 'At his 80th birthday dinner, Mateo hands the scorched cedar compass box to Sofia.',
+            minutes: 2,
+            settingHint: 'San Diego Harbor Dining Room',
+            deliveryFormat: 'archival_photo',
+          },
+        ],
+        character_descriptions: [
+          { name: 'Mateo Morales (Age 12)', role: 'protagonist', age: '12', ethnicity: 'Mexican (Oaxacan)', description: 'Boy in Oaxaca', needsClientPhoto: false },
+          { name: 'Don Rafael Morales (Age 50)', role: 'supporting', age: '50', ethnicity: 'Mexican (Oaxacan)', description: 'Uncle', needsClientPhoto: false },
+          { name: 'Mateo Morales (Early Twenties)', role: 'protagonist', ethnicity: 'Mexican (Oaxacan)', description: 'Young boatbuilder', needsClientPhoto: false },
+          { name: 'Hank Lindqvist (Age 58)', role: 'supporting', age: '58', ethnicity: 'Scandinavian-American', description: 'Master shipwright', needsClientPhoto: false },
+          { name: 'Mateo Morales (Age 26-30)', role: 'protagonist', ethnicity: 'Mexican (Oaxacan)', description: 'Shop founder', needsClientPhoto: true },
+          { name: 'Elena Ruiz Morales (Age 24-28)', role: 'supporting', ethnicity: 'Mexican-American', description: 'Co-founder', needsClientPhoto: true },
+          { name: 'Marco Morales (Baby)', role: 'supporting', ethnicity: 'Mexican-American', description: 'Infant son', needsClientPhoto: true },
+          { name: 'Mateo Morales (Age 45)', role: 'protagonist', age: '45', ethnicity: 'Mexican (Oaxacan)', description: 'Midlife craftsman', needsClientPhoto: true },
+          { name: 'Elena Ruiz Morales (Age 43)', role: 'supporting', age: '43', ethnicity: 'Mexican-American', description: 'Shop co-owner', needsClientPhoto: true },
+          // Truncated right after #9!
+        ],
+        locations: [],
+        props: [
+          {
+            name: 'Hand-Carved Scorched Cedar Compass Box',
+            description: '1958 cedar compass box holding Elena’s 1972 embroidered handkerchief.',
+            needsClientPhoto: true,
+          },
+        ],
+      }),
+    })
+
+    const res = await completeClientIntakeToBlueprint({ token: 'tok-mateo' })
+    expect(res.ok).toBe(true)
+
+    // Verify 16,384 token budget + 512 thinking cap were passed to generateText
+    expect(generateTextMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        maxOutputTokens: 16384,
+        thinkingBudget: 512,
+      })
+    )
+
+    if (res.ok) {
+      const charNames = res.extracted.character_descriptions.map((c) => c.name)
+      // All 14 characters recovered (including #10-#14!)
+      expect(charNames).toContain('Arthur Sato (Age 64)')
+      expect(charNames).toContain('Marco Morales (Age 15)')
+      expect(charNames).toContain('Mateo Morales (Age 80)')
+      expect(charNames).toContain('Sofia Morales (Age 26)')
+      expect(charNames).toContain('Marco Morales (Age 50)')
+      expect(res.extracted.character_descriptions).toHaveLength(14)
+
+      // Locations recovered from beat settingHints instead of staying []
+      expect(res.extracted.locations.length).toBe(5)
+      expect(res.extracted.locations[0]!.name).toBe('Puerto Ángel, Oaxaca Beachfront')
+      expect(res.extracted.props[0]!.name).toContain('Cedar Compass Box')
+
+      // Beat 5 features 80-year-old Mateo (NEVER downgraded to Age 45!) and excludes Baby Marco
+      const beat5Chars = res.extracted.beats[4]!.characters || []
+      expect(beat5Chars).toContain('Mateo Morales (Age 80)')
+      expect(beat5Chars).not.toContain('Mateo Morales (Age 45)')
+      expect(beat5Chars).toContain('Marco Morales (Age 50)')
+      expect(beat5Chars).not.toContain('Marco Morales (Baby)')
+      expect(beat5Chars).toContain('Sofia Morales (Age 26)')
+    }
+  })
 })

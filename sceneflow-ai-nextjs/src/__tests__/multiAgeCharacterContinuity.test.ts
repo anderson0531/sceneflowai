@@ -8,6 +8,7 @@ import {
   detectMultiAgeStagesOnCharacter,
   buildAgeVariantCharacter,
   enforceSamePersonAgeStageConsistency,
+  enforceExclusiveMultiAgeBeatCharacters,
   sanitizeBlueprintCharactersAndBeats,
 } from '@/lib/character/ageStageContinuity'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
@@ -374,5 +375,175 @@ describe('Multi-Age Character Continuity & Individual-Only Cast Enforcement', ()
     expect(chars[0]!.ethnicity).toBe('African American')
     expect(chars[1]!.ethnicity).toBe('African American')
     expect(chars[2]!.ethnicity).toBe('Southeast Asian (Thai)')
+  })
+
+  it('recognizes age ranges, infant/toddler stages, and spelled-out decades in extractSamePersonAgeStage', () => {
+    // 1. Age ranges
+    expect(extractSamePersonAgeStage('Mateo Morales (Age 26-30)')).toMatchObject({
+      isAgeVariant: true,
+      baseName: 'Mateo Morales',
+      ageStageLabel: 'Age 26-30',
+      numericAge: 28,
+      numericAgeMin: 26,
+      numericAgeMax: 30,
+    })
+    expect(extractSamePersonAgeStage('Elena Ruiz Morales (Age 24-28)')).toMatchObject({
+      isAgeVariant: true,
+      baseName: 'Elena Ruiz Morales',
+      ageStageLabel: 'Age 24-28',
+      numericAge: 26,
+      numericAgeMin: 24,
+      numericAgeMax: 28,
+    })
+    expect(extractSamePersonAgeStage('Elena Ruiz Morales (Ages 24–28)')).toMatchObject({
+      isAgeVariant: true,
+      baseName: 'Elena Ruiz Morales',
+      ageStageLabel: 'Age 24-28',
+      numericAge: 26,
+    })
+
+    // 2. Infant / Toddler qualifiers
+    for (const label of ['Baby', 'Infant', 'Newborn']) {
+      expect(extractSamePersonAgeStage(`Marco Morales (${label})`)).toMatchObject({
+        isAgeVariant: true,
+        baseName: 'Marco Morales',
+        ageStageLabel: label,
+        numericAge: 1,
+      })
+    }
+    expect(extractSamePersonAgeStage('Marco Morales (Toddler)')).toMatchObject({
+      isAgeVariant: true,
+      baseName: 'Marco Morales',
+      ageStageLabel: 'Toddler',
+      numericAge: 2,
+    })
+    expect(extractSamePersonAgeStage('Baby Marco Morales')).toMatchObject({
+      isAgeVariant: true,
+      baseName: 'Marco Morales',
+      ageStageLabel: 'Baby',
+      numericAge: 1,
+    })
+
+    // 3. Spelled-out decades
+    expect(extractSamePersonAgeStage('Mateo Morales (Early Twenties)')).toMatchObject({
+      isAgeVariant: true,
+      baseName: 'Mateo Morales',
+      ageStageLabel: 'Early Twenties',
+      numericAge: 22,
+    })
+    expect(extractSamePersonAgeStage('Mateo Morales (Mid-Thirties)')).toMatchObject({
+      isAgeVariant: true,
+      baseName: 'Mateo Morales',
+      ageStageLabel: 'Mid-Thirties',
+      numericAge: 35,
+    })
+    expect(extractSamePersonAgeStage('Mateo Morales (Late Forties)')).toMatchObject({
+      isAgeVariant: true,
+      baseName: 'Mateo Morales',
+      ageStageLabel: 'Late Forties',
+      numericAge: 48,
+    })
+
+    // Aliases for Baby / Age-Range / Spelled-Decade variants must never collide on bare names
+    const babyAliases = generateAliases('Marco Morales (Baby)')
+    expect(babyAliases).toContain('Marco Morales (Baby)')
+    expect(babyAliases).toContain('Marco (Baby)')
+    expect(babyAliases).not.toContain('Marco')
+    expect(babyAliases).not.toContain('Marco Morales')
+  })
+
+  it('enforces longitudinal group IDs, beat-cast exclusivity for (Baby), and recovers missing (Age 80) honoree variants', () => {
+    // Simulates the Mateo Morales 5-era memoir edge cases:
+    // - Age ranges ("Age 26-30", "Age 24-28"), spelled decades ("Early Twenties"), and "(Baby)"
+    // - "Marco Morales (Baby)" co-tagged alongside Age 15 (1991) and Age 50 (2026)
+    // - "Mateo Morales (Age 80)" omitted from character_descriptions while referenced in Beat 5
+    const sanitized = sanitizeBlueprintCharactersAndBeats({
+      characters: [
+        { name: 'Mateo Morales (Age 12)', role: 'protagonist', ethnicity: 'Mexican (Oaxacan)', eyeColor: 'dark brown' },
+        { name: 'Mateo Morales (Early Twenties)', role: 'protagonist' },
+        { name: 'Mateo Morales (Age 26-30)', role: 'protagonist' },
+        { name: 'Mateo Morales (Age 45)', role: 'protagonist' },
+        // Note: Mateo Morales (Age 80) intentionally omitted from raw characters to test recovery!
+        { name: 'Elena Ruiz Morales (Age 24-28)', role: 'supporting', ethnicity: 'Mexican-American' },
+        { name: 'Elena Ruiz Morales (Age 43)', role: 'supporting', ethnicity: 'Mexican-American' },
+        { name: 'Marco Morales (Baby)', role: 'supporting' },
+        { name: 'Marco Morales (Age 15)', role: 'supporting' },
+        { name: 'Marco Morales (Age 50)', role: 'supporting' },
+        { name: 'Sofia Morales (Age 26)', role: 'supporting' },
+      ],
+      beats: [
+        {
+          title: '1. Oaxaca Cedar Skiff',
+          eraOrAge: '1958 — Age 12',
+          synopsis: 'At age 12 in Puerto Ángel, Mateo learns cedar joinery.',
+          characters: ['Mateo Morales (Age 12)'],
+        },
+        {
+          title: '2. Shelter Island Overnight Repair',
+          eraOrAge: '1966 — Early Twenties',
+          synopsis: 'Mateo in his early twenties repairs a splintered tiller in San Diego.',
+          characters: ['Mateo Morales (Early Twenties)'],
+        },
+        {
+          title: '3. Parish Fiesta & Morales Marine Joinery',
+          eraOrAge: '1972–1976 — Age 26-30',
+          synopsis: 'Mateo and Elena marry in 1972 and welcome baby Marco in 1976.',
+          characters: ['Mateo Morales (Age 26-30)', 'Elena Ruiz Morales (Age 24-28)', 'Marco Morales (Baby)'],
+        },
+        {
+          title: '4. October 1991 Workshop Fire & Rebuild',
+          eraOrAge: '1991 — Age 45',
+          synopsis: 'Mateo at age 45 and Elena (43) rebuild with 15-year-old Marco.',
+          characters: ['Mateo Morales (Age 45)', 'Elena Ruiz Morales (Age 43)', 'Marco Morales (Baby)', 'Marco Morales (Age 15)'],
+        },
+        {
+          title: '5. 80th Birthday Harbor Dinner',
+          eraOrAge: '2026 — Age 80',
+          synopsis: 'At his 80th birthday dinner, Mateo passes the cedar compass box to 26-year-old granddaughter Sofia beside 50-year-old Marco.',
+          characters: ['Mateo Morales (Age 80)', 'Marco Morales (Baby)', 'Marco Morales (Age 50)', 'Sofia Morales (Age 26)'],
+        },
+      ],
+    })
+
+    const byName = new Map(sanitized.characters.map((c: any) => [c.name, c]))
+
+    // 1. All 5 Mateo variants (including recovered Age 80), both Elena range/43 variants, and all 3 Marco variants share samePersonGroupId
+    expect(byName.get('Mateo Morales (Early Twenties)')?.samePersonGroupId).toBe('person-mateo-morales')
+    expect(byName.get('Mateo Morales (Age 26-30)')?.samePersonGroupId).toBe('person-mateo-morales')
+    expect(byName.get('Mateo Morales (Age 80)')?.samePersonGroupId).toBe('person-mateo-morales')
+    expect(byName.get('Mateo Morales (Age 80)')?.ethnicity).toBe('Mexican (Oaxacan)')
+
+    expect(byName.get('Elena Ruiz Morales (Age 24-28)')?.samePersonGroupId).toBe('person-elena-ruiz-morales')
+    expect(byName.get('Elena Ruiz Morales (Age 43)')?.samePersonGroupId).toBe('person-elena-ruiz-morales')
+
+    expect(byName.get('Marco Morales (Baby)')?.samePersonGroupId).toBe('person-marco-morales')
+    expect(byName.get('Marco Morales (Age 15)')?.samePersonGroupId).toBe('person-marco-morales')
+    expect(byName.get('Marco Morales (Age 50)')?.samePersonGroupId).toBe('person-marco-morales')
+
+    // 2. Beat 3 keeps Baby Marco; Beat 4 has ONLY Age 15 (no Baby!); Beat 5 has Mateo (Age 80) + Marco (Age 50) (never Mateo Age 45 or Marco Baby!)
+    expect(sanitized.beats[2].characters).toContain('Marco Morales (Baby)')
+
+    expect(sanitized.beats[3].characters).toContain('Marco Morales (Age 15)')
+    expect(sanitized.beats[3].characters).not.toContain('Marco Morales (Baby)')
+
+    expect(sanitized.beats[4].characters).toContain('Mateo Morales (Age 80)')
+    expect(sanitized.beats[4].characters).not.toContain('Mateo Morales (Age 45)')
+    expect(sanitized.beats[4].characters).toContain('Marco Morales (Age 50)')
+    expect(sanitized.beats[4].characters).not.toContain('Marco Morales (Baby)')
+    expect(sanitized.beats[4].characters).toContain('Sofia Morales (Age 26)')
+
+    // Direct check on enforceExclusiveMultiAgeBeatCharacters helper
+    const directExclusive = enforceExclusiveMultiAgeBeatCharacters({
+      characters: sanitized.characters,
+      beats: [
+        {
+          title: '1991 Rebuild',
+          eraOrAge: '1991',
+          synopsis: '15-year-old Marco sweeps charred cedar.',
+          characters: ['Marco Morales (Baby)', 'Marco Morales (Age 15)'],
+        },
+      ],
+    })
+    expect(directExclusive[0].characters).toEqual(['Marco Morales (Age 15)'])
   })
 })

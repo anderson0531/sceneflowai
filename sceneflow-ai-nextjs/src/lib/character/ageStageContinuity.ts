@@ -38,14 +38,113 @@ export interface ParsedAgeStageInfo {
   baseName: string
   ageStageLabel?: string
   numericAge?: number
+  numericAgeMin?: number
+  numericAgeMax?: number
+}
+
+const SPELLED_DECADE_MAP: Record<string, number> = {
+  teens: 10,
+  twenties: 20,
+  thirties: 30,
+  forties: 40,
+  fourties: 40,
+  fifties: 50,
+  sixties: 60,
+  seventies: 70,
+  eighties: 80,
+  nineties: 90,
+}
+
+function titleCaseQualifier(raw: string): string {
+  return raw
+    .trim()
+    .split(/\s+/)
+    .map((word) =>
+      word
+        .split('-')
+        .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : ''))
+        .join('-')
+    )
+    .join(' ')
+}
+
+function inferApproxAgeFromEraQualifier(
+  rawLabel: string
+): { numericAge: number; numericAgeMin: number; numericAgeMax: number } | undefined {
+  const norm = rawLabel
+    .toLowerCase()
+    .replace(/^in\s+(?:his|her|their)\s+/, '')
+    .replace(/[-\s]+/g, ' ')
+    .trim()
+
+  // 1. Numeric or spelled-out decades: "early 20s", "early twenties", "mid thirties", "late 40s", "twenties", "30s"
+  const decadeMatch = norm.match(
+    /^(?:(early|mid|late)\s+)?(?:([1-9])0s|(teens|twenties|thirties|forties|fourties|fifties|sixties|seventies|eighties|nineties))$/
+  )
+  if (decadeMatch) {
+    const mod = decadeMatch[1]
+    const decade = decadeMatch[2]
+      ? Number(decadeMatch[2]) * 10
+      : SPELLED_DECADE_MAP[decadeMatch[3]!]!
+    if (decade === 10) {
+      if (mod === 'early') return { numericAge: 14, numericAgeMin: 13, numericAgeMax: 15 }
+      if (mod === 'late') return { numericAge: 18, numericAgeMin: 17, numericAgeMax: 19 }
+      return { numericAge: 16, numericAgeMin: 13, numericAgeMax: 19 }
+    }
+    if (mod === 'early') return { numericAge: decade + 2, numericAgeMin: decade, numericAgeMax: decade + 3 }
+    if (mod === 'mid') return { numericAge: decade + 5, numericAgeMin: decade + 4, numericAgeMax: decade + 6 }
+    if (mod === 'late') return { numericAge: decade + 8, numericAgeMin: decade + 7, numericAgeMax: decade + 9 }
+    return { numericAge: decade + 5, numericAgeMin: decade, numericAgeMax: decade + 9 }
+  }
+
+  // 2. Infant / Toddler / Child / Teen / Adult / Senior life-stage labels
+  if (/^(?:newborn|infant|infancy|baby)$/.test(norm)) {
+    return { numericAge: 1, numericAgeMin: 0, numericAgeMax: 2 }
+  }
+  if (norm === 'toddler') {
+    return { numericAge: 2, numericAgeMin: 1, numericAgeMax: 3 }
+  }
+  if (/^(?:young child|little|little boy|little girl)$/.test(norm)) {
+    return { numericAge: 6, numericAgeMin: 4, numericAgeMax: 8 }
+  }
+  if (/^(?:child|childhood|kid|boy|girl)$/.test(norm)) {
+    return { numericAge: 8, numericAgeMin: 5, numericAgeMax: 12 }
+  }
+  if (/^(?:preteen|pre teen)$/.test(norm)) {
+    return { numericAge: 11, numericAgeMin: 10, numericAgeMax: 12 }
+  }
+  if (/^(?:teen|teenager|teenage|adolescent|youth)$/.test(norm)) {
+    return { numericAge: 16, numericAgeMin: 13, numericAgeMax: 19 }
+  }
+  if (/^(?:young adult|college|college age|young)$/.test(norm)) {
+    return { numericAge: 24, numericAgeMin: 20, numericAgeMax: 29 }
+  }
+  if (/^(?:adult|grown|grown up)$/.test(norm)) {
+    return { numericAge: 35, numericAgeMin: 25, numericAgeMax: 50 }
+  }
+  if (/^(?:middle aged|midlife)$/.test(norm)) {
+    return { numericAge: 48, numericAgeMin: 40, numericAgeMax: 58 }
+  }
+  if (norm === 'septuagenarian') {
+    return { numericAge: 75, numericAgeMin: 70, numericAgeMax: 79 }
+  }
+  if (norm === 'octogenarian') {
+    return { numericAge: 84, numericAgeMin: 80, numericAgeMax: 89 }
+  }
+  if (/^(?:elder|elderly|senior|older|retiree)$/.test(norm)) {
+    return { numericAge: 72, numericAgeMin: 65, numericAgeMax: 90 }
+  }
+
+  return undefined
 }
 
 /**
  * Detect whether a character name carries an age/era life-stage qualifier:
  * - `"John Miller (Age 16)"` -> `{ isAgeVariant: true, baseName: "John Miller", ageStageLabel: "Age 16", numericAge: 16 }`
- * - `"John Miller Age 32"` -> `{ isAgeVariant: true, baseName: "John Miller", ageStageLabel: "Age 32", numericAge: 32 }`
- * - `"John Miller (16)"` -> `{ isAgeVariant: true, baseName: "John Miller", ageStageLabel: "Age 16", numericAge: 16 }`
- * - `"Young John Miller"` -> `{ isAgeVariant: true, baseName: "John Miller", ageStageLabel: "Young" }`
+ * - `"Mateo Morales (Age 26-30)"` -> `{ isAgeVariant: true, baseName: "Mateo Morales", ageStageLabel: "Age 26-30", numericAge: 28, numericAgeMin: 26, numericAgeMax: 30 }`
+ * - `"Marco Morales (Baby)"` -> `{ isAgeVariant: true, baseName: "Marco Morales", ageStageLabel: "Baby", numericAge: 1 }`
+ * - `"Mateo Morales (Early Twenties)"` -> `{ isAgeVariant: true, baseName: "Mateo Morales", ageStageLabel: "Early Twenties", numericAge: 22 }`
+ * - `"Young John Miller"` -> `{ isAgeVariant: true, baseName: "John Miller", ageStageLabel: "Young", numericAge: 24 }`
  */
 export function extractSamePersonAgeStage(rawName: string): ParsedAgeStageInfo {
   const cleaned = stripScreenplayDeliveryAnnotations(rawName || '')
@@ -53,7 +152,55 @@ export function extractSamePersonAgeStage(rawName: string): ParsedAgeStageInfo {
     return { isAgeVariant: false, baseName: '' }
   }
 
-  // 1. Parenthetical `(Age 16)`, `(Aged 32)`, `(16 yrs)`, `(16)`
+  // 1a. Parenthetical age range `(Age 26-30)`, `(Ages 24–28)`, `(Aged 26 to 30)`, `(26-30 yrs)`, `(26-30)`
+  const parenAgeRangeMatch = cleaned.match(
+    /^(.*?)\s*\(\s*(?:ages?|aged)?\s*(\d{1,3})\s*(?:[-–—]|to)\s*(?:ages?|aged)?\s*(\d{1,3})(?:\s*(?:yo|yrs?|years?\s*old))?\s*\)\s*$/i
+  )
+  if (parenAgeRangeMatch) {
+    const base = parenAgeRangeMatch[1]!.trim()
+    const low = Number(parenAgeRangeMatch[2])
+    const high = Number(parenAgeRangeMatch[3])
+    if (base && low > 0 && high > 0 && low <= high && high < 120) {
+      if (low === high) {
+        return {
+          isAgeVariant: true,
+          baseName: base,
+          ageStageLabel: `Age ${low}`,
+          numericAge: low,
+        }
+      }
+      return {
+        isAgeVariant: true,
+        baseName: base,
+        ageStageLabel: `Age ${low}-${high}`,
+        numericAge: Math.round((low + high) / 2),
+        numericAgeMin: low,
+        numericAgeMax: high,
+      }
+    }
+  }
+
+  // 1b. Parenthetical infant month age `(6 months)`, `(9 mos old)`, `(Age 18 months)`
+  const parenMonthsMatch = cleaned.match(
+    /^(.*?)\s*\(\s*(?:age[d]?\s*)?(\d{1,2})\s*(?:mos?|months?)(?:\s*old)?\s*\)\s*$/i
+  )
+  if (parenMonthsMatch) {
+    const base = parenMonthsMatch[1]!.trim()
+    const months = Number(parenMonthsMatch[2])
+    if (base && months >= 0 && months <= 36) {
+      const approxYears = months >= 18 ? 2 : 1
+      return {
+        isAgeVariant: true,
+        baseName: base,
+        ageStageLabel: months >= 18 ? 'Toddler' : 'Infant',
+        numericAge: approxYears,
+        numericAgeMin: 0,
+        numericAgeMax: 2,
+      }
+    }
+  }
+
+  // 1c. Parenthetical single age `(Age 16)`, `(Aged 32)`, `(16 yrs)`, `(16)`
   const parenAgeMatch = cleaned.match(
     /^(.*?)\s*\(\s*(?:age[d]?\s*)?(\d{1,3})(?:\s*(?:yo|yrs?|years?\s*old))?\s*\)\s*$/i
   )
@@ -70,25 +217,52 @@ export function extractSamePersonAgeStage(rawName: string): ParsedAgeStageInfo {
     }
   }
 
-  // 2. Parenthetical era/life-stage `(1968)`, `(1970s)`, `(Young)`, `(Teen)`, `(Child)`, `(Elder)`, `(Early 20s)`
+  // 2. Parenthetical era/life-stage `(1968)`, `(1972-1976)`, `(Baby)`, `(Toddler)`, `(Early 20s)`, `(Early Twenties)`, `(Elder)`
   const parenEraMatch = cleaned.match(
-    /^(.*?)\s*\(\s*((?:18|19|20)\d{2}s?|(?:early|mid|late)[-\s]+\d0s|child|childhood|kid|boy|girl|teen|teenager|youth|young(?:\s+adult)?|middle[-\s]?aged|elder|elderly|senior|older|present(?:\s+day)?)\s*\)\s*$/i
+    /^(.*?)\s*\(\s*((?:(?:early|mid|late)[-\s]+)?(?:18|19|20)\d{2}(?:\s*[-–—]\s*(?:18|19|20)?\d{2})?s?|(?:(?:early|mid|late)[-\s]+)?(?:in\s+(?:his|her|their)\s+)?(?:[1-9]0s|teens|twenties|thirties|forties|fourties|fifties|sixties|seventies|eighties|nineties)|newborn|infant|infancy|baby|toddler|pre[-\s]?teen|young\s+child|little\s+(?:boy|girl)|child|childhood|kid|boy|girl|teen|teenager|teenage|adolescent|youth|young(?:\s+adult)?|college(?:\s+age)?|adult|grown(?:\s+up)?|middle[-\s]?aged|midlife|septuagenarian|octogenarian|elder|elderly|senior|older|retiree|present(?:\s+day)?)\s*\)\s*$/i
   )
   if (parenEraMatch && parenEraMatch[1]!.trim()) {
     const base = parenEraMatch[1]!.trim()
     const rawLabel = parenEraMatch[2]!.trim()
-    const titleLabel = rawLabel
-      .split(/\s+/)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ')
+    const titleLabel = titleCaseQualifier(rawLabel)
+    const approx = inferApproxAgeFromEraQualifier(rawLabel)
     return {
       isAgeVariant: true,
       baseName: base,
       ageStageLabel: titleLabel,
+      ...(approx ? approx : {}),
     }
   }
 
-  // 3. Trailing `"John Miller Age 16"` or `"John Miller, Age 16"` or `"John Miller - Age 16"`
+  // 3a. Trailing age range `"Mateo Morales, Age 26-30"` or `"Mateo Morales - Ages 24–28"`
+  const trailingAgeRangeMatch = cleaned.match(
+    /^(.*?)(?:\s*[,—–-]\s*|\s+)(?:ages?|aged)\s+(\d{1,3})\s*(?:[-–—]|to)\s*(\d{1,3})\s*$/i
+  )
+  if (trailingAgeRangeMatch) {
+    const base = trailingAgeRangeMatch[1]!.trim()
+    const low = Number(trailingAgeRangeMatch[2])
+    const high = Number(trailingAgeRangeMatch[3])
+    if (base && low > 0 && high > 0 && low <= high && high < 120) {
+      if (low === high) {
+        return {
+          isAgeVariant: true,
+          baseName: base,
+          ageStageLabel: `Age ${low}`,
+          numericAge: low,
+        }
+      }
+      return {
+        isAgeVariant: true,
+        baseName: base,
+        ageStageLabel: `Age ${low}-${high}`,
+        numericAge: Math.round((low + high) / 2),
+        numericAgeMin: low,
+        numericAgeMax: high,
+      }
+    }
+  }
+
+  // 3b. Trailing `"John Miller Age 16"` or `"John Miller, Age 16"` or `"John Miller - Age 16"`
   const trailingAgeMatch = cleaned.match(
     /^(.*?)(?:\s*[,—–-]\s*|\s+)age[d]?\s+(\d{1,3})\s*$/i
   )
@@ -124,17 +298,19 @@ export function extractSamePersonAgeStage(rawName: string): ParsedAgeStageInfo {
     }
   }
 
-  // 5. Leading `"Young John Miller"`, `"Teenage John Miller"`, `"Elder John Miller"`
+  // 5. Leading `"Baby Marco Morales"`, `"Young John Miller"`, `"Teenage John Miller"`, `"Elder John Miller"`
   const leadingStageMatch = cleaned.match(
-    /^(young|teen|teenage|child|little|elder|older|adult)\s+([A-Z][a-zA-Z'’-]+(?:\s+[A-Z][a-zA-Z'’-]+)*)$/i
+    /^(baby|infant|newborn|toddler|young|teen|teenage|child|little|elder|older|adult)\s+([A-Z][a-zA-Z'’-]+(?:\s+[A-Z][a-zA-Z'’-]+)*)$/i
   )
   if (leadingStageMatch && leadingStageMatch[2]!.trim()) {
     const rawStage = leadingStageMatch[1]!.trim()
-    const stageLabel = rawStage.charAt(0).toUpperCase() + rawStage.slice(1).toLowerCase()
+    const stageLabel = titleCaseQualifier(rawStage)
+    const approx = inferApproxAgeFromEraQualifier(rawStage)
     return {
       isAgeVariant: true,
       baseName: leadingStageMatch[2]!.trim(),
       ageStageLabel: stageLabel,
+      ...(approx ? approx : {}),
     }
   }
 
@@ -473,6 +649,8 @@ export function detectMultiAgeStagesOnCharacter(
 }
 
 function formatAgeBandLabel(age: number): string {
+  if (age <= 1) return `infant (${age})`
+  if (age <= 3) return `toddler (${age})`
   if (age < 13) return `child (${age})`
   if (age < 18) return `teenager (${age})`
   if (age < 20) return `late teens (${age})`
@@ -913,32 +1091,123 @@ export function enforceSamePersonAgeStageConsistency<T extends Record<string, an
   return out
 }
 
+export interface AgeVariantCandidate {
+  name: string
+  ageStageLabel?: string
+  numericAge?: number
+  numericAgeMin?: number
+  numericAgeMax?: number
+}
+
+function variantMatchesExplicitAge(v: AgeVariantCandidate, targetAge: number): boolean {
+  const min = v.numericAgeMin ?? v.numericAge
+  const max = v.numericAgeMax ?? v.numericAge
+  if (min === undefined || max === undefined) return false
+  return targetAge >= min && targetAge <= max
+}
+
+function extractExplicitAgesInText(text: string): number[] {
+  const out: number[] = []
+  const re =
+    /\b(?:age[d]?\s*(\d{1,3})|(\d{1,3})[-\s]*years?[-\s]*old|\((\d{1,3})\)|(\d{1,3})(?:st|nd|rd|th)\s+birthday)\b/gi
+  for (const m of text.matchAll(re)) {
+    const n = Number(m[1] || m[2] || m[3] || m[4])
+    if (n > 0 && n < 120 && !out.includes(n)) out.push(n)
+  }
+  return out
+}
+
+function pickClosestVariantToAge(variants: AgeVariantCandidate[], targetAge: number): string {
+  const inBounds = variants.find((v) => variantMatchesExplicitAge(v, targetAge))
+  if (inBounds) return inBounds.name
+
+  const withNumeric = variants.filter((v) => v.numericAge !== undefined)
+  if (withNumeric.length === 0) return variants[0]!.name
+  return [...withNumeric].sort(
+    (a, b) => Math.abs((a.numericAge ?? 40) - targetAge) - Math.abs((b.numericAge ?? 40) - targetAge)
+  )[0]!.name
+}
+
 function pickBestAgeVariantForBeat(
-  variants: Array<{ name: string; numericAge?: number }>,
+  variants: AgeVariantCandidate[],
   beat: Record<string, unknown>,
   beatIndex: number,
   totalBeats: number
 ): string {
   if (variants.length === 1) return variants[0]!.name
-  const beatText = `${String(beat?.title || '')} ${String(beat?.eraOrAge || '')} ${String(beat?.intent || '')} ${String(beat?.synopsis || '')}`
+
+  const baseName = extractSamePersonAgeStage(variants[0]!.name).baseName
+  const firstName = baseName.split(/\s+/)[0] || baseName
+  const escapedFirst = firstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+  const headerText = `${String(beat?.eraOrAge || '')} ${String(beat?.title || '')}`
+  const synopsisText = `${String(beat?.intent || '')} ${String(beat?.synopsis || '')}`
+  const beatText = `${headerText} ${synopsisText}`
   const lower = beatText.toLowerCase()
 
-  // 1. Exact age number match in beat text (e.g. "age 16", "(16)", "16-year-old")
+  // 1a. Character-proximate explicit age or stage cue (prevents "26-year-old granddaughter Sofia" from matching Mateo!)
+  if (firstName.length >= 2) {
+    const beforeOrAfterCharRe = new RegExp(
+      `(?:\\b(\\d{1,3})[-\\s]*years?[-\\s]*old(?:\\s+\\w+){0,2}\\s+${escapedFirst}\\b|\\b(baby|infant|newborn|toddler|young|teen(?:age|ager)?|child)\\s+${escapedFirst}\\b|\\b${escapedFirst}(?:\\s+[A-Z][a-zA-Z'’-]+){0,2}\\s*(?:\\(\\s*(?:age[d]?\\s*)?(\\d{1,3})\\s*\\)|[,—–-]?\\s*age[d]?\\s*(\\d{1,3})|\\s+at\\s+age\\s*(\\d{1,3})))`,
+      'gi'
+    )
+    for (const m of beatText.matchAll(beforeOrAfterCharRe)) {
+      const explicitNum = Number(m[1] || m[3] || m[4] || m[5])
+      if (explicitNum > 0 && explicitNum < 120) {
+        return pickClosestVariantToAge(variants, explicitNum)
+      }
+      const stageWord = m[2]
+      if (stageWord) {
+        const approx = inferApproxAgeFromEraQualifier(stageWord)
+        if (approx) return pickClosestVariantToAge(variants, approx.numericAge)
+      }
+    }
+  }
+
+  // 1b. Exact or in-range age match in beat header (`eraOrAge` + `title`), including ordinal birthdays ("80th birthday")
+  const headerAges = extractExplicitAgesInText(headerText)
+  for (const hAge of headerAges) {
+    const hit = variants.find((v) => variantMatchesExplicitAge(v, hAge))
+    if (hit) return hit.name
+  }
+
+  // 1c. Exact or in-range age match in beat body (only when unambiguous to one variant)
+  const bodyAges = extractExplicitAgesInText(synopsisText)
+  for (const bAge of bodyAges) {
+    const hit = variants.find((v) => variantMatchesExplicitAge(v, bAge))
+    if (hit) return hit.name
+  }
+
+  // 1d. Direct qualifier phrase match (e.g., "early twenties", "mid-30s", "baby", "toddler")
   for (const v of variants) {
-    if (!v.numericAge) continue
-    const ageRe = new RegExp(`\\b(?:age[d]?\\s*${v.numericAge}|${v.numericAge}[-\\s]*years?[-\\s]*old|\\(${v.numericAge}\\))\\b`, 'i')
-    if (ageRe.test(beatText)) return v.name
+    if (!v.ageStageLabel || /^Age\s+\d/i.test(v.ageStageLabel)) continue
+    const lblEscaped = v.ageStageLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/[-\s]+/g, '[-\\s]+')
+    if (new RegExp(`\\b${lblEscaped}\\b`, 'i').test(beatText)) {
+      return v.name
+    }
   }
 
   const sortedByAge = [...variants].sort(
     (a, b) => (a.numericAge ?? 40) - (b.numericAge ?? 40)
   )
 
-  // 2. Life-stage keyword cues in beat text
-  if (/\b(child|childhood|born|birth|elementary|schoolboy|schoolgirl|little|hometown|early\s+years|youth|teen|high\s+school|varsity|prom|graduation|first\s+job)\b/.test(lower)) {
+  // 2. Stage-aware keyword cues in beat text (distinguishing infant vs childhood vs teen vs young-adult vs senior)
+  if (/\b(newborn|infant|baby|toddler|cradle|crib)\b/.test(lower) && (sortedByAge[0]!.numericAge ?? 99) <= 3) {
+    return pickClosestVariantToAge(sortedByAge, 1)
+  }
+  if (/\b(child|childhood|elementary|schoolboy|schoolgirl|little\s+boy|little\s+girl)\b/.test(lower)) {
+    return pickClosestVariantToAge(sortedByAge, 10)
+  }
+  if (/\b(teen|teenage|teenager|adolescent|high\s+school|varsity|prom)\b/.test(lower)) {
+    return pickClosestVariantToAge(sortedByAge, 16)
+  }
+  if (/\b(early\s+twenties|in\s+(?:his|her|their)\s+twenties|early\s+20s|college|graduation|first\s+job)\b/.test(lower)) {
+    return pickClosestVariantToAge(sortedByAge, 22)
+  }
+  if (/\b(born|birth|hometown|early\s+years|youth)\b/.test(lower)) {
     return sortedByAge[0]!.name
   }
-  if (/\b(today|present|legacy|retirement|golden\s+anniversary|grandchildren|granddaughter|grandson|passing\s+the|closing|reflection|elder|final)\b/.test(lower)) {
+  if (/\b(today|present|legacy|retirement|golden\s+anniversary|grandchildren|granddaughter|grandson|passing\s+the|closing|reflection|elder|octogenarian|final)\b/.test(lower)) {
     return sortedByAge[sortedByAge.length - 1]!.name
   }
 
@@ -949,6 +1218,139 @@ function pickBestAgeVariantForBeat(
     Math.max(0, Math.round(ratio * (sortedByAge.length - 1)))
   )
   return sortedByAge[mappedIdx]!.name
+}
+
+/**
+ * Enforce that within any single beat, a multi-age character is represented by ONLY their single
+ * era-appropriate age variant — preventing `"Marco Morales (Baby)"` from co-occurring alongside
+ * `"Marco Morales (Age 15)"` in 1991 or alongside `"Marco Morales (Age 50)"` in 2026.
+ */
+export function enforceExclusiveMultiAgeBeatCharacters<
+  TChar extends Record<string, any>,
+  TBeat extends Record<string, any>,
+>(input: {
+  characters: TChar[]
+  beats: TBeat[]
+}): TBeat[] {
+  const { characters, beats } = input
+  if (!Array.isArray(beats) || beats.length === 0) return beats
+
+  const variantsByBase = new Map<string, AgeVariantCandidate[]>()
+  for (const ch of Array.isArray(characters) ? characters : []) {
+    const fullName = String(ch?.name || '').trim()
+    if (!fullName || String(ch?.role || '').toLowerCase() === 'narrator') continue
+    const stage = extractSamePersonAgeStage(fullName)
+    const baseKey = stage.baseName.toLowerCase().replace(/\s+/g, ' ').trim()
+    if (!baseKey) continue
+    const explicitAgeNum = /^\d{1,3}$/.test(String(ch?.age || '').trim())
+      ? Number(String(ch.age).trim())
+      : undefined
+    const numericAge = stage.numericAge ?? explicitAgeNum
+    const list = variantsByBase.get(baseKey) || []
+    list.push({
+      name: fullName,
+      ageStageLabel: stage.ageStageLabel,
+      numericAge,
+      numericAgeMin: stage.numericAgeMin ?? numericAge,
+      numericAgeMax: stage.numericAgeMax ?? numericAge,
+    })
+    variantsByBase.set(baseKey, list)
+  }
+
+  return beats.map((beat, beatIdx) => {
+    const rawChars = Array.isArray(beat?.characters) ? beat.characters : null
+    if (!rawChars || rawChars.length === 0) return beat
+
+    const groupedInBeat = new Map<string, string[]>()
+    for (const rawEntry of rawChars) {
+      const name = typeof rawEntry === 'string' ? rawEntry.trim() : String(rawEntry?.name || '').trim()
+      if (!name) continue
+      const baseKey = extractSamePersonAgeStage(name).baseName.toLowerCase().replace(/\s+/g, ' ').trim()
+      if (!baseKey) continue
+      const list = groupedInBeat.get(baseKey) || []
+      if (!list.some((x) => x.toLowerCase() === name.toLowerCase())) {
+        list.push(name)
+      }
+      groupedInBeat.set(baseKey, list)
+    }
+
+    const chosenForBase = new Map<string, string>()
+    for (const [baseKey, namesInBeat] of groupedInBeat.entries()) {
+      const castVariants = variantsByBase.get(baseKey)
+      if (!castVariants || castVariants.length <= 1) {
+        if (namesInBeat.length > 1) {
+          // Even if cast only had 1 card, never allow two age-variants of the same person on one beat
+          const adHocCandidates: AgeVariantCandidate[] = namesInBeat.map((n) => {
+            const st = extractSamePersonAgeStage(n)
+            return {
+              name: n,
+              ageStageLabel: st.ageStageLabel,
+              numericAge: st.numericAge,
+              numericAgeMin: st.numericAgeMin,
+              numericAgeMax: st.numericAgeMax,
+            }
+          })
+          chosenForBase.set(baseKey, pickBestAgeVariantForBeat(adHocCandidates, beat, beatIdx, beats.length))
+        }
+        continue
+      }
+
+      if (namesInBeat.length >= 2) {
+        chosenForBase.set(baseKey, pickBestAgeVariantForBeat(castVariants, beat, beatIdx, beats.length))
+      } else if (namesInBeat.length === 1) {
+        // Guard against an out-of-era variant (e.g., "Marco Morales (Baby)" placed alone on a 1991 Age-15 beat)
+        const currentName = namesInBeat[0]!
+        const bestForBeat = pickBestAgeVariantForBeat(castVariants, beat, beatIdx, beats.length)
+        if (bestForBeat.toLowerCase() !== currentName.toLowerCase()) {
+          const curStage = extractSamePersonAgeStage(currentName)
+          const bestStage = extractSamePersonAgeStage(bestForBeat)
+          const beatProse = `${String(beat?.eraOrAge || '')} ${String(beat?.title || '')} ${String(beat?.synopsis || '')}`
+          const bestExplicitlyConfirmed =
+            (bestStage.numericAge !== undefined &&
+              extractExplicitAgesInText(beatProse).some((a) =>
+                variantMatchesExplicitAge(
+                  {
+                    name: bestForBeat,
+                    numericAge: bestStage.numericAge,
+                    numericAgeMin: bestStage.numericAgeMin,
+                    numericAgeMax: bestStage.numericAgeMax,
+                  },
+                  a
+                )
+              )) ||
+            ((curStage.numericAge ?? 50) <= 3 &&
+              !/\b(newborn|infant|baby|toddler|born|birth)\b/i.test(beatProse))
+          if (bestExplicitlyConfirmed) {
+            chosenForBase.set(baseKey, bestForBeat)
+          }
+        }
+      }
+    }
+
+    if (chosenForBase.size === 0) return beat
+
+    const emittedBases = new Set<string>()
+    const cleanedBeatChars: string[] = []
+    for (const rawEntry of rawChars) {
+      const name = typeof rawEntry === 'string' ? rawEntry.trim() : String(rawEntry?.name || '').trim()
+      if (!name) continue
+      const baseKey = extractSamePersonAgeStage(name).baseName.toLowerCase().replace(/\s+/g, ' ').trim()
+      if (chosenForBase.has(baseKey)) {
+        if (emittedBases.has(baseKey)) continue
+        emittedBases.add(baseKey)
+        cleanedBeatChars.push(chosenForBase.get(baseKey)!)
+      } else {
+        if (!cleanedBeatChars.some((x) => x.toLowerCase() === name.toLowerCase())) {
+          cleanedBeatChars.push(name)
+        }
+      }
+    }
+
+    return {
+      ...beat,
+      characters: cleanedBeatChars,
+    }
+  })
 }
 
 /**
@@ -1034,11 +1436,84 @@ export function sanitizeBlueprintCharactersAndBeats<
     dedupedChars.push(ch)
   }
 
+  // Step 2b: Recover any explicit `(Age NN)` character referenced in `beats[].characters` that was
+  // omitted or truncated out of `character_descriptions` (prevents Beat 5 `"Mateo Morales (Age 80)"`
+  // from being coerced down to `"Mateo Morales (Age 45)"` when `character_descriptions` hit a limit).
+  const existingByBaseForRecovery = new Map<string, TChar[]>()
+  for (const ch of dedupedChars) {
+    const st = extractSamePersonAgeStage(String(ch.name || ''))
+    const bk = st.baseName.toLowerCase().replace(/\s+/g, ' ').trim()
+    if (!bk) continue
+    const arr = existingByBaseForRecovery.get(bk) || []
+    arr.push(ch)
+    existingByBaseForRecovery.set(bk, arr)
+  }
+
+  for (const beat of rawBeats) {
+    const rawBeatChars = Array.isArray(beat?.characters)
+      ? beat.characters
+      : Array.isArray(beat?.keyCharacters)
+        ? beat.keyCharacters
+        : []
+    for (const rawEntry of rawBeatChars) {
+      const candidateStr =
+        typeof rawEntry === 'string' ? rawEntry.trim() : String(rawEntry?.name || '').trim()
+      if (!candidateStr) continue
+      for (const single of splitCompoundIndividualNames(candidateStr)) {
+        const normKey = stripScreenplayDeliveryAnnotations(single)
+          .toLowerCase()
+          .replace(/\s+/g, ' ')
+          .trim()
+        if (!normKey || seenKeys.has(normKey)) continue
+        const stage = extractSamePersonAgeStage(single)
+        if (!stage.isAgeVariant || stage.numericAge === undefined) continue
+        const baseKey = stage.baseName.toLowerCase().replace(/\s+/g, ' ').trim()
+        const siblings = existingByBaseForRecovery.get(baseKey)
+        if (!siblings || siblings.length === 0) continue
+
+        const hasNearbySibling = siblings.some((sib) => {
+          const sibStage = extractSamePersonAgeStage(String(sib.name || ''))
+          const sibMin =
+            sibStage.numericAgeMin ??
+            sibStage.numericAge ??
+            (/^\d{1,3}$/.test(String(sib.age || '').trim()) ? Number(String(sib.age).trim()) : undefined)
+          const sibMax = sibStage.numericAgeMax ?? sibMin
+          if (sibMin === undefined || sibMax === undefined) return false
+          if (stage.numericAge! >= sibMin && stage.numericAge! <= sibMax) return true
+          return Math.min(Math.abs(stage.numericAge! - sibMin), Math.abs(stage.numericAge! - sibMax)) <= 7
+        })
+
+        if (!hasNearbySibling) {
+          const groupId = `person-${baseKey.replace(/[^a-z0-9]+/g, '-')}`
+          const synthesized = buildAgeVariantCharacter(siblings[siblings.length - 1]!, {
+            targetAge: stage.numericAge,
+            eraLabel: String(beat?.eraOrAge || '').trim() || undefined,
+            samePersonGroupId: groupId,
+          })
+          // Preserve exact non-numeric label formatting if e.g. "(Baby)" or "(Early Twenties)"
+          if (stage.ageStageLabel && !/^Age\s+\d+$/i.test(stage.ageStageLabel)) {
+            ;(synthesized as Record<string, any>).name = `${stage.baseName} (${stage.ageStageLabel})`
+            ;(synthesized as Record<string, any>).subject = `${stage.baseName} (${stage.ageStageLabel})`
+          }
+          const synthKey = stripScreenplayDeliveryAnnotations(String(synthesized.name || ''))
+            .toLowerCase()
+            .replace(/\s+/g, ' ')
+            .trim()
+          if (synthKey && !seenKeys.has(synthKey)) {
+            seenKeys.add(synthKey)
+            dedupedChars.push(synthesized)
+            siblings.push(synthesized)
+          }
+        }
+      }
+    }
+  }
+
   // Step 3: Enforce same-person longitudinal genetic consistency across age variants
   const consistentChars = enforceSamePersonAgeStageConsistency(dedupedChars)
 
   // Build lookup index by exact canonical name and by baseName -> age variants
-  const variantsByBase = new Map<string, Array<{ name: string; numericAge?: number }>>()
+  const variantsByBase = new Map<string, AgeVariantCandidate[]>()
   const exactNameMap = new Map<string, string>()
   const firstNameToBase = new Map<string, string>()
 
@@ -1052,7 +1527,13 @@ export function sanitizeBlueprintCharactersAndBeats<
     const parsedNum =
       stage.numericAge ??
       (/^\d{1,3}$/.test(String(ch.age || '').trim()) ? Number(String(ch.age).trim()) : undefined)
-    list.push({ name: fullName, numericAge: parsedNum })
+    list.push({
+      name: fullName,
+      ageStageLabel: stage.ageStageLabel,
+      numericAge: parsedNum,
+      numericAgeMin: stage.numericAgeMin ?? parsedNum,
+      numericAgeMax: stage.numericAgeMax ?? parsedNum,
+    })
     variantsByBase.set(baseKey, list)
 
     const firstToken = stage.baseName.split(/\s+/)[0]?.toLowerCase()
@@ -1066,7 +1547,7 @@ export function sanitizeBlueprintCharactersAndBeats<
   }
 
   // Step 4: Resolve and highlight individual `characters` on every beat
-  const enrichedBeats = rawBeats.map((beat, beatIdx) => {
+  const resolvedBeats = rawBeats.map((beat, beatIdx) => {
     const resolvedNames: string[] = []
     const addResolved = (name: string) => {
       if (!name || isCollectiveOrGroupCharacterName(name)) return
@@ -1134,6 +1615,12 @@ export function sanitizeBlueprintCharactersAndBeats<
       ...beat,
       ...(resolvedNames.length > 0 ? { characters: resolvedNames } : {}),
     }
+  })
+
+  // Step 5: Enforce strict per-beat same-person age exclusivity (never co-cast e.g. Baby + Age 15 in one beat)
+  const enrichedBeats = enforceExclusiveMultiAgeBeatCharacters({
+    characters: consistentChars,
+    beats: resolvedBeats,
   })
 
   return {

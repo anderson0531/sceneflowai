@@ -40,6 +40,8 @@ import {
   type IntakeVisionProposal,
 } from './intakePlaybooks'
 import {
+  extractSamePersonAgeStage,
+  formatAgeVariantCharacterName,
   isCollectiveOrGroupCharacterName,
   sanitizeBlueprintCharactersAndBeats,
   splitCompoundIndividualNames,
@@ -107,28 +109,46 @@ function sanitizeExtractedCharacters(rawChars: unknown): IntakeExtractedCharacte
 
     for (const single of split) {
       if (!single || isCollectiveOrGroupCharacterName(single)) continue
+      const candidateStage = extractSamePersonAgeStage(single)
+      let candidateName = single
       const existingIdx = cleaned.findIndex(
-        (c) => c.name.toLowerCase() === single.toLowerCase()
+        (c) => c.name.toLowerCase() === candidateName.toLowerCase()
       )
       if (existingIdx >= 0) {
-        if (role && (!cleaned[existingIdx].role || cleaned[existingIdx].role === 'Key Subject')) {
-          cleaned[existingIdx].role = role
+        const prev = cleaned[existingIdx]!
+        const prevEra = (prev.eraOrAge || '').trim()
+        // If two entries share a bare name with distinct `eraOrAge` life stages, qualify both rather than dropping the second!
+        if (
+          !candidateStage.isAgeVariant &&
+          eraOrAge &&
+          prevEra &&
+          eraOrAge.toLowerCase() !== prevEra.toLowerCase()
+        ) {
+          prev.name = formatAgeVariantCharacterName(prev.name, prevEra)
+          candidateName = formatAgeVariantCharacterName(single, eraOrAge)
+        } else {
+          if (role && (!prev.role || prev.role === 'Key Subject')) {
+            prev.role = role
+          }
+          if (impact && !prev.impact) {
+            prev.impact = impact
+          }
+          continue
         }
-        if (impact && !cleaned[existingIdx].impact) {
-          cleaned[existingIdx].impact = impact
-        }
+      }
+      if (cleaned.some((c) => c.name.toLowerCase() === candidateName.toLowerCase())) {
         continue
       }
       cleaned.push({
         id: String(obj.id || `char-${idx + 1}-${cleaned.length + 1}`),
-        name: single,
+        name: candidateName,
         ...(eraOrAge ? { eraOrAge } : {}),
         role: role || 'Key Subject',
         impact,
       })
     }
   })
-  return cleaned.slice(0, 16)
+  return cleaned.slice(0, 24)
 }
 
 function sanitizeResonatingBeats(rawBeats: unknown): IntakeResonatingBeat[] {
@@ -748,8 +768,9 @@ export async function confirmCustomerIntakeVision(input: {
       const llmRes = await generateText(kickoffPrompt, {
         model: getGeminiProductModel('blueprint'),
         temperature: 0.4,
-        maxOutputTokens: 500,
-        thinkingLevel: 'low',
+        maxOutputTokens: 1200,
+        thinkingLevel: 'minimal',
+        thinkingBudget: 0,
         responseMimeType: 'application/json',
         timeoutMs: 20_000,
         maxRetries: 1,
@@ -972,10 +993,11 @@ export async function submitCustomerIntakeTurn(input: {
     const llmRes = await generateText(prompt, {
       model: getGeminiProductModel('blueprint'),
       temperature: 0.4,
-      maxOutputTokens: 2400,
+      maxOutputTokens: 6144,
       thinkingLevel: 'low',
+      thinkingBudget: 512,
       responseMimeType: 'application/json',
-      timeoutMs: 30_000,
+      timeoutMs: 45_000,
       maxRetries: 1,
     })
 
@@ -1236,6 +1258,164 @@ function buildFallbackBlueprint(
   }
 }
 
+/**
+ * Defense-in-depth recovery when an LLM Blueprint synthesis response omits or truncates
+ * characters, locations, or props that were already captured during the intake interview
+ * or referenced inside `beats[]`.
+ */
+export function backfillTruncatedIntakeBlueprintAssets(input: {
+  extracted: ExtractedBlueprintFromIntake
+  interviewCharacters?: IntakeExtractedCharacter[]
+  interviewBeats?: IntakeResonatingBeat[]
+  defaultNeedsClientPhoto: boolean
+}): ExtractedBlueprintFromIntake {
+  const { extracted, interviewCharacters = [], interviewBeats = [], defaultNeedsClientPhoto } = input
+  const nextChars = [...(Array.isArray(extracted.character_descriptions) ? extracted.character_descriptions : [])]
+  const seenExact = new Set(nextChars.map((c) => String(c.name || '').trim().toLowerCase()).filter(Boolean))
+
+  const getSiblingsByBase = (baseKey: string) =>
+    nextChars.filter(
+      (c) => extractSamePersonAgeStage(String(c.name || '')).baseName.trim().toLowerCase() === baseKey
+    )
+
+  const inferBeatPhotoNeed = (charName: string): boolean => {
+    const lower = charName.toLowerCase()
+    const matchingBeats = (extracted.beats || []).filter((b) =>
+      Array.isArray(b.characters) && b.characters.some((bc) => String(bc || '').toLowerCase() === lower)
+    )
+    if (
+      matchingBeats.length > 0 &&
+      matchingBeats.every((b) => b.deliveryFormat === 'ai_reenactment')
+    ) {
+      return false
+    }
+    return defaultNeedsClientPhoto
+  }
+
+  const maybeRestoreCharacter = (candidate: {
+    name: string
+    role?: string
+    impact?: string
+    eraOrAge?: string
+  }) => {
+    for (const single of splitCompoundIndividualNames(candidate.name)) {
+      if (!single || isCollectiveOrGroupCharacterName(single)) continue
+      const lowerName = single.toLowerCase()
+      if (seenExact.has(lowerName)) continue
+
+      const stage = extractSamePersonAgeStage(single)
+      const baseKey = stage.baseName.trim().toLowerCase()
+      if (!baseKey) continue
+      const siblings = getSiblingsByBase(baseKey)
+
+      if (!stage.isAgeVariant) {
+        // Bare name already represented by one or more `(Age NN)` cards in the cast
+        if (siblings.length > 0) continue
+      } else if (siblings.length > 0) {
+        const alreadyCovered = siblings.some((sib) => {
+          const sibStage = extractSamePersonAgeStage(String(sib.name || ''))
+          if (
+            stage.ageStageLabel &&
+            sibStage.ageStageLabel &&
+            stage.ageStageLabel.toLowerCase() === sibStage.ageStageLabel.toLowerCase()
+          ) {
+            return true
+          }
+          const sibMin =
+            sibStage.numericAgeMin ??
+            sibStage.numericAge ??
+            (/^\d{1,3}$/.test(String(sib.age || '').trim()) ? Number(String(sib.age).trim()) : undefined)
+          const sibMax = sibStage.numericAgeMax ?? sibMin
+          if (stage.numericAge !== undefined && sibMin !== undefined && sibMax !== undefined) {
+            if (stage.numericAge >= sibMin && stage.numericAge <= sibMax) return true
+            return Math.min(Math.abs(stage.numericAge - sibMin), Math.abs(stage.numericAge - sibMax)) <= 6
+          }
+          return false
+        })
+        if (alreadyCovered) continue
+      }
+
+      const donor = siblings[0]
+      seenExact.add(lowerName)
+      nextChars.push({
+        name: single,
+        role: candidate.role || donor?.role || 'supporting',
+        ...(candidate.impact ? { impact: candidate.impact } : {}),
+        ...(stage.numericAge !== undefined
+          ? { age: String(stage.numericAge) }
+          : candidate.eraOrAge
+            ? { age: candidate.eraOrAge }
+            : {}),
+        ...(donor?.ethnicity ? { ethnicity: donor.ethnicity } : {}),
+        description:
+          candidate.impact ||
+          donor?.description ||
+          `${candidate.role || 'Featured individual'} in the story.`,
+        needsClientPhoto: inferBeatPhotoNeed(single),
+      })
+    }
+  }
+
+  for (const ic of interviewCharacters) {
+    if (!ic?.name) continue
+    maybeRestoreCharacter({
+      name: ic.name,
+      role: ic.role,
+      impact: ic.impact,
+      eraOrAge: ic.eraOrAge,
+    })
+  }
+
+  for (const beat of extracted.beats || []) {
+    for (const bc of beat.characters || []) {
+      const nameStr = String(bc || '').trim()
+      if (!nameStr) continue
+      const interviewMatch = interviewCharacters.find(
+        (ic) => ic.name.trim().toLowerCase() === nameStr.toLowerCase()
+      )
+      maybeRestoreCharacter({
+        name: nameStr,
+        role: interviewMatch?.role || 'supporting',
+        impact: interviewMatch?.impact || beat.impact || beat.synopsis,
+        eraOrAge: interviewMatch?.eraOrAge || beat.eraOrAge,
+      })
+    }
+  }
+
+  let nextLocations = Array.isArray(extracted.locations) ? [...extracted.locations] : []
+  if (nextLocations.length === 0) {
+    const seenLocs = new Set<string>()
+    for (const hint of [
+      ...(extracted.beats || []).map((b) => ({
+        name: String(b.settingHint || '').trim(),
+        desc: String(b.synopsis || '').trim(),
+        aiOnly: b.deliveryFormat === 'ai_reenactment',
+      })),
+      ...interviewBeats.map((b) => ({
+        name: String(b.settingHint || '').trim(),
+        desc: String(b.summary || '').trim(),
+        aiOnly: b.deliveryFormatHint === 'ai_reenactment',
+      })),
+    ]) {
+      if (!hint.name) continue
+      const key = hint.name.toLowerCase()
+      if (seenLocs.has(key)) continue
+      seenLocs.add(key)
+      nextLocations.push({
+        name: hint.name,
+        description: hint.desc || `Featured story location (${hint.name}).`,
+        needsClientPhoto: hint.aiOnly ? false : defaultNeedsClientPhoto,
+      })
+    }
+  }
+
+  return {
+    ...extracted,
+    character_descriptions: nextChars,
+    locations: nextLocations,
+  }
+}
+
 export async function completeClientIntakeToBlueprint(input: {
   token: string
   locale?: string
@@ -1311,12 +1491,19 @@ export async function completeClientIntakeToBlueprint(input: {
     const llmRes = await generateText(prompt, {
       model: getGeminiProductModel('blueprint'),
       temperature: 0.3,
-      maxOutputTokens: 4096,
+      maxOutputTokens: 16384,
       thinkingLevel: 'low',
+      thinkingBudget: 512,
       responseMimeType: 'application/json',
-      timeoutMs: 45_000,
+      timeoutMs: 75_000,
       maxRetries: 1,
     })
+
+    if (llmRes.finishReason && llmRes.finishReason !== 'STOP') {
+      console.warn(
+        `[intakeService] Blueprint synthesis finishReason=${llmRes.finishReason} (len=${(llmRes.text || '').length})`
+      )
+    }
 
     const parsed = safeParseJsonFromText(llmRes.text || '{}') as Partial<ExtractedBlueprintFromIntake>
     if (parsed.title && parsed.synopsis) {
@@ -1366,6 +1553,13 @@ export async function completeClientIntakeToBlueprint(input: {
       confirmedVision,
       payload.extractedCharacters
     )
+  } else {
+    extracted = backfillTruncatedIntakeBlueprintAssets({
+      extracted,
+      interviewCharacters: payload.extractedCharacters,
+      interviewBeats: payload.resonatingBeats,
+      defaultNeedsClientPhoto: !isFictionalSynthesis,
+    })
   }
 
   // Enforce individual-only cast, split multi-decade age spans into separate `(Age NN)` characters,
