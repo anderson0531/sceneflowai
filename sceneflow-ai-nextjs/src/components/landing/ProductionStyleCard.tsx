@@ -237,7 +237,7 @@ export function ProductionStyleCard({
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-black/35" />
         <div
-          className={`pointer-events-none absolute top-3 right-3 z-20 flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-md ${style.badge}`}
+          className={`pointer-events-none absolute top-3 right-3 z-20 hidden sm:flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold backdrop-blur-md ${style.badge}`}
         >
           <Sparkles className="h-3 w-3" />
           {card.badge}

@@ -7,12 +7,14 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { NotifyCapture } from '@/components/landing/NotifyCapture'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
 
 export function FinalCTA() {
   const t = useTranslations('finalCta')
+  const prelaunchOnly = isPrelaunchAccessModeEnabled()
 
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="py-14 sm:py-24 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-purple-500/5 to-gray-950"></div>
 
       <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl"></div>
@@ -35,7 +37,7 @@ export function FinalCTA() {
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href={getSignupUrlForTier('explorer')} className="w-full sm:w-auto">
               <Button size="lg" className="w-full sm:w-auto">
-                {t('cta')}
+                {prelaunchOnly ? 'Request Pre-Launch Access' : t('cta')}
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

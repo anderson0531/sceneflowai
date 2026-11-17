@@ -29,19 +29,19 @@ export function TrustSafeguardSection() {
   return (
     <section
       id={SECTION_ID}
-      className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-20 sm:py-24 scroll-mt-20"
+      className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-14 sm:py-24 scroll-mt-20"
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="relative text-center mb-12"
+          className="relative text-center mb-8 sm:mb-12"
         >
-          <div className="inline-flex items-center px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full mb-4">
-            <Shield className="w-4 h-4 text-cyan-400 mr-2" />
-            <span className="text-cyan-300 text-sm font-medium">{t('badge')}</span>
-          </div>
+          <p className="inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300 mb-3">
+            <Shield className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+            <span>{t('badge')}</span>
+          </p>
           <div className="flex items-center justify-center gap-3 mb-4">
             <h2 className="text-3xl sm:text-4xl font-bold text-white">
               {t('title')}{' '}
@@ -50,21 +50,21 @@ export function TrustSafeguardSection() {
               </span>
             </h2>
           </div>
-          <p className="text-gray-400 max-w-3xl mx-auto text-lg leading-relaxed">{t('subtitle')}</p>
+          <p className="text-gray-400 max-w-3xl mx-auto text-base sm:text-lg leading-relaxed">{t('subtitle')}</p>
         </motion.div>
 
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-10">
           {flowSteps.map((step, index) => (
             <div
               key={step.label}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-sm"
+              className="flex flex-col justify-between rounded-xl bg-slate-900/80 border border-slate-800 p-3 sm:p-3.5 text-left"
             >
-              <span className="text-cyan-400 font-semibold">{step.label}</span>
-              <span className="text-gray-400 hidden sm:inline">→</span>
-              <span className="text-gray-300">{step.detail}</span>
-              {index < flowSteps.length - 1 && (
-                <span className="text-gray-600 ml-1 hidden md:inline">|</span>
-              )}
+              <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-300">
+                0{index + 1} · {step.label}
+              </span>
+              <span className="mt-1 text-xs sm:text-sm font-medium leading-snug text-gray-200">
+                {step.detail}
+              </span>
             </div>
           ))}
         </div>

@@ -54,19 +54,19 @@ export function MobileCompanionPwaSection() {
   return (
     <section
       id={MOBILE_COMPANION_SECTION_ID}
-      className="relative py-16 sm:py-24 overflow-hidden border-t border-cyan-500/15 bg-gradient-to-b from-slate-950 via-cyan-950/10 to-slate-950 scroll-mt-24"
+      className="relative py-14 sm:py-24 overflow-hidden border-t border-cyan-500/15 bg-gradient-to-b from-slate-950 via-cyan-950/10 to-slate-950 scroll-mt-24"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(6,182,212,0.10),transparent_60%)]" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Top Section Header */}
         <div className="mx-auto max-w-3xl text-center">
-          <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-300">
-            <Smartphone className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <p className="inline-flex max-w-full items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">
+            <Smartphone className="h-3.5 w-3.5 shrink-0 text-cyan-400" aria-hidden />
             <span className="whitespace-normal break-words">{copy.eyebrow}</span>
-          </div>
+          </p>
 
-          <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
             {copy.title}{' '}
             <span className="bg-gradient-to-r from-cyan-300 via-teal-200 to-emerald-300 bg-clip-text text-transparent">
               {copy.titleAccent}
@@ -75,13 +75,13 @@ export function MobileCompanionPwaSection() {
 
           <p className="mt-4 text-base leading-relaxed text-gray-300 sm:text-lg">{copy.subtitle}</p>
 
-          {/* Why-PWA Callout Strip */}
-          <div className="mt-5 inline-flex max-w-2xl flex-wrap items-center justify-center gap-2 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-2.5 text-xs text-gray-300 shadow-inner">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2.5 py-0.5 font-bold text-emerald-200">
+          {/* Why-PWA Callout Strip — sleek left-accent note on mobile without nested stadium pills */}
+          <div className="mx-auto mt-5 max-w-2xl border-l-2 border-emerald-400/60 pl-3.5 text-left text-xs leading-relaxed text-gray-300 sm:rounded-xl sm:border sm:border-white/10 sm:bg-slate-900/75 sm:px-4 sm:py-2.5 sm:text-center">
+            <span className="inline-flex items-center gap-1 font-bold text-emerald-300">
               <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span>{copy.whyPwaBadge}</span>
-            </span>
-            <span className="leading-relaxed text-gray-300">{copy.whyPwaNote}</span>
+              <span>{copy.whyPwaBadge}:</span>
+            </span>{' '}
+            <span>{copy.whyPwaNote}</span>
           </div>
         </div>
 
@@ -171,44 +171,37 @@ export function MobileCompanionPwaSection() {
                               : 'border-slate-800 bg-slate-950/50 hover:border-slate-700 hover:bg-slate-900/80'
                           )}
                         >
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2.5">
-                              <span
-                                className={cn(
-                                  'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-xs font-bold tabular-nums',
-                                  isSelected
-                                    ? 'border-cyan-400/60 bg-cyan-500/20 text-cyan-200'
-                                    : 'border-slate-700 bg-slate-900 text-gray-400'
-                                )}
-                              >
-                                {item.step}
-                              </span>
-                              <span
-                                className={cn(
-                                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold',
-                                  isSelected
-                                    ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-200'
-                                    : 'border-slate-700/80 bg-slate-900/80 text-gray-300'
-                                )}
-                              >
-                                <StepIcon className="h-3 w-3 shrink-0" aria-hidden />
-                                <span className="whitespace-normal break-words">{item.badge}</span>
-                              </span>
-                            </div>
-
-                            <span className="inline-flex items-center gap-1 rounded-md bg-white/5 px-2 py-0.5 text-[11px] font-medium text-cyan-200/90">
-                              <Link2 className="h-3 w-3 shrink-0" aria-hidden />
-                              <span className="whitespace-normal break-words">
-                                {item.linkLabel}
-                              </span>
+                          <div className="flex items-center gap-2.5">
+                            <span
+                              className={cn(
+                                'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold tabular-nums',
+                                isSelected
+                                  ? 'border-cyan-400/60 bg-cyan-500/20 text-cyan-200'
+                                  : 'border-slate-700 bg-slate-900 text-gray-400'
+                              )}
+                            >
+                              {item.step}
+                            </span>
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider',
+                                isSelected ? 'text-emerald-300' : 'text-gray-400'
+                              )}
+                            >
+                              <StepIcon className="h-3 w-3 shrink-0" aria-hidden />
+                              <span className="whitespace-normal break-words">{item.badge}</span>
                             </span>
                           </div>
 
-                          <p className="mt-2.5 text-sm font-bold leading-snug text-white sm:text-base">
+                          <p className="mt-2 text-sm font-bold leading-snug text-white sm:text-base">
                             {item.title}
                           </p>
                           <p className="mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm">
                             {item.detail}
+                          </p>
+                          <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-cyan-300/85">
+                            <Link2 className="h-3 w-3 shrink-0" aria-hidden />
+                            <span className="whitespace-normal break-words">{item.linkLabel}</span>
                           </p>
                         </button>
                       </VideoControlTooltip>

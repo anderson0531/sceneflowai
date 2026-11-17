@@ -6,13 +6,32 @@ import { ArrowRight, X, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent';
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess';
 
 const SIGNUP_URL = getSignupUrlForTier('explorer');
 
 export default function FloatingCTA() {
   const t = useTranslations('floatingCta');
+  const prelaunchOnly = isPrelaunchAccessModeEnabled();
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [cookieBannerOpen, setCookieBannerOpen] = useState(false);
+
+  useEffect(() => {
+    const syncCookieBannerState = () => {
+      const hasStoredConsent = Boolean(window.localStorage?.getItem('sceneflow-cookie-consent'));
+      const isDomOpen = Boolean(document.querySelector('[data-cookie-banner-open="true"]'));
+      setCookieBannerOpen(!hasStoredConsent || isDomOpen);
+    };
+
+    syncCookieBannerState();
+    window.addEventListener('sceneflow:cookie-consent-updated', syncCookieBannerState);
+    window.addEventListener('storage', syncCookieBannerState);
+    return () => {
+      window.removeEventListener('sceneflow:cookie-consent-updated', syncCookieBannerState);
+      window.removeEventListener('storage', syncCookieBannerState);
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,14 +55,14 @@ export default function FloatingCTA() {
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {isVisible && !cookieBannerOpen && (
         <>
           <motion.div
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="md:hidden fixed bottom-0 left-0 right-0 z-50 p-3 bg-gradient-to-t from-slate-950 via-slate-950/98 to-slate-950/90 border-t border-slate-800/50 backdrop-blur-sm"
+            className="md:hidden fixed bottom-0 left-0 right-0 z-50 p-2.5 bg-gradient-to-t from-slate-950 via-slate-950/98 to-slate-950/90 border-t border-slate-800/50 backdrop-blur-sm"
           >
             <div className="flex items-center gap-2 max-w-md mx-auto">
               <button
@@ -52,7 +71,7 @@ export default function FloatingCTA() {
                 onClick={() => {
                   document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2.5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 font-semibold rounded-xl transition-all"
+                className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2.5 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 font-semibold rounded-xl transition-all"
               >
                 <DollarSign className="w-4 h-4 shrink-0" />
                 <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
@@ -62,10 +81,10 @@ export default function FloatingCTA() {
               <Link
                 href={SIGNUP_URL}
                 title={t('tryNine')}
-                className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2.5 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all"
+                className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2.5 py-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all"
               >
                 <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
-                  {t('tryNine')}
+                  {prelaunchOnly ? 'Request Access' : t('tryNine')}
                 </span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
               </Link>
@@ -84,7 +103,7 @@ export default function FloatingCTA() {
             className="group relative inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:via-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-2xl shadow-indigo-500/30 transition-all duration-300 hover:scale-105"
           >
             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity -z-10" />
-            <span className="mr-2">{t('tryForNine')}</span>
+            <span className="mr-2">{prelaunchOnly ? 'Request Pre-Launch Access' : t('tryForNine')}</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
           

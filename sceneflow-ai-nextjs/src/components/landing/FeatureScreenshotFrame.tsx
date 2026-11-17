@@ -569,10 +569,10 @@ export function FeatureScreenshotFrame({
           </div>
         ) : null}
 
-        {/* Compact icon-only bottom-left transport — never blocks the screen on mobile or desktop */}
+        {/* Thumb-friendly icon-only bottom-left transport — never blocks the screen on mobile or desktop */}
         <div
           dir="ltr"
-          className="pointer-events-auto absolute bottom-2 left-2 z-10 flex items-center gap-1 sm:bottom-2.5 sm:left-3 sm:gap-1.5"
+          className="pointer-events-auto absolute bottom-2 left-2 z-10 flex items-center gap-1.5 sm:bottom-2.5 sm:left-3"
         >
           {hasAnimaticVideo ? (
             <>
@@ -583,12 +583,12 @@ export function FeatureScreenshotFrame({
                   aria-label={playToggleLabel}
                   aria-pressed={isPlaying}
                   onClick={handleTogglePlay}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
                 >
                   {isPlaying ? (
-                    <Pause className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                    <Pause className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   ) : (
-                    <Play className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                    <Play className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   )}
                 </button>
               </VideoControlTooltip>
@@ -601,16 +601,16 @@ export function FeatureScreenshotFrame({
                   aria-pressed={audioUnmuted}
                   onClick={handleToggleAudio}
                   className={cn(
-                    'inline-flex h-6 w-6 items-center justify-center rounded-full border backdrop-blur-md transition-all sm:h-7 sm:w-7 cursor-pointer',
+                    'inline-flex h-8 w-8 items-center justify-center rounded-full border backdrop-blur-md transition-all sm:h-7 sm:w-7 cursor-pointer',
                     audioUnmuted
                       ? 'border-emerald-400/70 bg-emerald-500/25 text-emerald-200 shadow-sm shadow-emerald-500/20 hover:bg-emerald-500/35'
                       : 'border-amber-400/70 bg-slate-950/75 text-amber-300 shadow-sm shadow-amber-500/15 hover:border-amber-300 hover:bg-slate-900 hover:text-amber-200'
                   )}
                 >
                   {audioUnmuted ? (
-                    <Volume2 className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                    <Volume2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   ) : (
-                    <VolumeX className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                    <VolumeX className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   )}
                 </button>
               </VideoControlTooltip>
@@ -621,9 +621,9 @@ export function FeatureScreenshotFrame({
                   title={uiCopy.restartLabel}
                   aria-label={uiCopy.restartLabel}
                   onClick={handleRestartChapter}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
                 >
-                  <RotateCcw className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                  <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden />
                 </button>
               </VideoControlTooltip>
             </>
@@ -635,12 +635,12 @@ export function FeatureScreenshotFrame({
               title={fsToggleLabel}
               aria-label={fsToggleLabel}
               onClick={() => void handleToggleFullscreen()}
-              className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
             >
               {isFullscreen ? (
-                <Minimize className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                <Minimize className="h-3.5 w-3.5 shrink-0" aria-hidden />
               ) : (
-                <Maximize className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                <Maximize className="h-3.5 w-3.5 shrink-0" aria-hidden />
               )}
             </button>
           </VideoControlTooltip>

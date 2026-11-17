@@ -216,7 +216,7 @@ export function DirectorOperatingSystemSection() {
   return (
     <section
       id={FIVE_SUPERPOWERS_SECTION_ID}
-      className="relative scroll-mt-20 overflow-hidden bg-slate-950 py-20 sm:py-28"
+      className="relative scroll-mt-20 overflow-hidden bg-slate-950 py-14 sm:py-28"
     >
       {SUPERPOWER_HASH_ALIASES.map((alias) => (
         <span
@@ -234,18 +234,16 @@ export function DirectorOperatingSystemSection() {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="mx-auto mb-14 max-w-3xl text-center"
+          className="mx-auto mb-10 sm:mb-14 max-w-3xl text-center"
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-500/25 bg-indigo-500/10 px-4 py-1.5">
-            <Sparkles className="h-4 w-4 text-indigo-400" aria-hidden />
-            <span className="text-xs font-semibold uppercase tracking-wider text-indigo-300">
-              {copy.eyebrow}
-            </span>
-          </div>
+          <p className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-indigo-400" aria-hidden />
+            <span>{copy.eyebrow}</span>
+          </p>
 
           <h2 className="text-balance text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
             {copy.title}{' '}
@@ -292,9 +290,9 @@ export function DirectorOperatingSystemSection() {
                       <button
                         type="button"
                         onClick={() => openClip(pillar.videoClipKey!, pillar.title)}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold text-gray-200 transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/15 hover:text-white"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-gray-200 transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/15 hover:text-white"
                       >
-                        <Play className="h-3 w-3 fill-current text-cyan-300" aria-hidden />
+                        <Play className="h-3 w-3 shrink-0 fill-current text-cyan-300" aria-hidden />
                         <span>{copy.watchClipLabel}</span>
                       </button>
                     ) : null}

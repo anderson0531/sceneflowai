@@ -87,21 +87,21 @@ export function ForFilmmakersSection() {
   return (
     <section
       id={FOR_FILMMAKERS_SECTION_ID}
-      className="bg-gradient-to-b from-slate-950 via-indigo-950/20 to-slate-950 py-20 sm:py-24 scroll-mt-20"
+      className="bg-gradient-to-b from-slate-950 via-indigo-950/20 to-slate-950 py-14 sm:py-24 scroll-mt-20"
     >
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-10"
+          className="text-center mb-8 sm:mb-10"
         >
-          <div className="mb-4 inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2">
-            <Clapperboard className="mr-2 h-4 w-4 text-cyan-400" />
-            <span className="text-sm font-medium text-cyan-300">{t('badge')}</span>
-          </div>
+          <p className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+            <Clapperboard className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
+            <span>{t('badge')}</span>
+          </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">{t('heading')}</h2>
-          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-gray-400">{t('subtitle')}</p>
+          <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-gray-400">{t('subtitle')}</p>
           <p className="mt-3 text-sm text-gray-500">{t('closedNote')}</p>
         </motion.div>
 

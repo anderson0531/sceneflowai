@@ -152,7 +152,7 @@ export function VideoServicesSpotlightSection() {
   return (
     <section
       id={VIDEO_SERVICES_SECTION_ID}
-      className="relative scroll-mt-20 overflow-hidden border-y border-emerald-500/20 bg-gradient-to-b from-slate-950 via-emerald-950/20 to-slate-950 py-20 sm:py-28"
+      className="relative scroll-mt-20 overflow-hidden border-y border-emerald-500/20 bg-gradient-to-b from-slate-950 via-emerald-950/20 to-slate-950 py-14 sm:py-28"
     >
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.12),transparent_55%),radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.08),transparent_55%)]"
@@ -162,18 +162,16 @@ export function VideoServicesSpotlightSection() {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          className="mx-auto mb-10 sm:mb-12 max-w-4xl text-center"
+          className="mx-auto mb-8 sm:mb-12 max-w-4xl text-center"
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1.5">
-            <TrendingUp className="h-4 w-4 shrink-0 text-emerald-300" aria-hidden />
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-200">
-              {copy.eyebrow}
-            </span>
-          </div>
+          <p className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
+            <TrendingUp className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden />
+            <span>{copy.eyebrow}</span>
+          </p>
 
           <h2 className="text-balance text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
             {copy.title}{' '}
@@ -186,13 +184,13 @@ export function VideoServicesSpotlightSection() {
             {copy.subtitle}
           </p>
 
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3.5 py-1.5 text-xs font-semibold text-emerald-200">
-              <ArrowDownRight className="h-4 w-4 shrink-0 text-emerald-300" aria-hidden />
+          <div className="mx-auto mt-4 flex max-w-3xl flex-col items-start justify-center gap-2 border-l-2 border-emerald-400/50 pl-3.5 text-left text-xs font-medium sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2 sm:border-l-0 sm:pl-0 sm:text-center">
+            <div className="inline-flex items-start sm:items-center gap-1.5 text-emerald-200">
+              <ArrowDownRight className="mt-0.5 sm:mt-0 h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden />
               <span>{copy.costSavingsPillLabel}</span>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-500/10 px-3.5 py-1.5 text-xs font-semibold text-amber-200">
-              <ShieldCheck className="h-4 w-4 shrink-0 text-amber-300" aria-hidden />
+            <div className="inline-flex items-start sm:items-center gap-1.5 text-amber-200/95">
+              <ShieldCheck className="mt-0.5 sm:mt-0 h-3.5 w-3.5 shrink-0 text-amber-400" aria-hidden />
               <span>{copy.commercialRightsBadge}</span>
             </div>
           </div>
@@ -297,11 +295,11 @@ export function VideoServicesSpotlightSection() {
                   locale={locale}
                 />
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-block rounded-full border border-amber-400/35 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber-300">
                     {activeVertical.roleTag}
                   </span>
-                  <span className="inline-block rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                  <span className="inline-block rounded-md border border-emerald-400/25 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-300">
                     {activeVertical.badge}
                   </span>
                 </div>
@@ -638,11 +636,11 @@ export function VideoServicesSpotlightSection() {
         <div className="mt-6 rounded-2xl border border-amber-400/25 bg-gradient-to-r from-slate-900/90 via-emerald-950/25 to-slate-900/90 p-5 sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-xl">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/35 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
+              <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-amber-300">
                 <BookOpenCheck className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
                 <span>{copy.playbooksBadge}</span>
-              </span>
-              <h3 className="mt-2.5 text-lg font-bold text-white sm:text-xl">
+              </p>
+              <h3 className="mt-2 text-lg font-bold text-white sm:text-xl">
                 {copy.playbooksHeading}
               </h3>
               <p className="mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm">
@@ -687,7 +685,7 @@ export function VideoServicesSpotlightSection() {
             <a
               href="#mobile-app"
               title={`${mobileCopy.eyebrow} — ${mobileCopy.modeCustomerTab}`}
-              className="inline-flex items-center gap-2 rounded-full border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-200 transition-colors hover:border-cyan-300/60 hover:bg-cyan-500/20 hover:text-white"
+              className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-950/35 px-3.5 py-2 text-xs font-semibold text-cyan-200 transition-colors hover:border-cyan-300/60 hover:bg-cyan-500/20 hover:text-white"
             >
               <Smartphone className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
               <span className="whitespace-normal break-words">{mobileCopy.eyebrow}</span>

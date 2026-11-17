@@ -1313,4 +1313,81 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       })
     }
   })
+
+  it('enforces the 5-pillar Mobile Landing Responsive Audit (borderless eyebrows, de-badged cards, 0% mobile 16:9 occlusion, 0px header overflow, slim cookie bar, and 32px+ video controls)', () => {
+    // Pillar 1 & 2: Borderless typographic eyebrows & de-badged card headers / flow strips
+    const gatewaySrc = readSource('src/components/landing/CreatorAndBusinessGatewaySection.tsx')
+    expect(gatewaySrc).not.toContain('rounded-full')
+    expect(gatewaySrc).toContain('py-14 sm:py-24')
+
+    const superpowersSrc = readSource('src/components/landing/DirectorOperatingSystemSection.tsx')
+    expect(superpowersSrc).not.toContain('rounded-full border border-indigo-500/25')
+    expect(superpowersSrc).toContain('tracking-[0.18em]')
+
+    const videoServicesSrc = readSource('src/components/landing/VideoServicesSpotlightSection.tsx')
+    expect(videoServicesSrc).not.toContain('rounded-full border border-emerald-400/30')
+    expect(videoServicesSrc).not.toContain('rounded-full border border-amber-400/35')
+    expect(videoServicesSrc).toContain('border-l-2 border-emerald-400/50')
+
+    const pwaSrc = readSource('src/components/landing/MobileCompanionPwaSection.tsx')
+    expect(pwaSrc).not.toContain('rounded-full border border-cyan-400/30')
+    expect(pwaSrc).not.toContain('rounded-full border px-2.5')
+    expect(pwaSrc).toContain('border-l-2 border-emerald-400/60')
+
+    const prodExamplesSrc = readSource('src/components/landing/ProductionExamplesSection.tsx')
+    expect(prodExamplesSrc).not.toContain('rounded-full border border-cyan-500/20')
+    expect(prodExamplesSrc).not.toContain('rounded-full border border-cyan-400/30')
+    expect(prodExamplesSrc).toContain('border-l-2 border-cyan-400/50')
+
+    const pricingCreditsSrc = readSource('src/components/landing/PricingCredits.tsx')
+    expect(pricingCreditsSrc).not.toContain('rounded-full')
+
+    const infraSrc = readSource('src/components/landing/InfrastructureSection.tsx')
+    expect(infraSrc).not.toContain('rounded-full')
+
+    const trustSrc = readSource('src/components/landing/TrustSafeguardSection.tsx')
+    expect(trustSrc).not.toContain('rounded-full')
+    expect(trustSrc).toContain('grid-cols-2 lg:grid-cols-4')
+
+    const filmmakersSrc = readSource('src/components/landing/ForFilmmakersSection.tsx')
+    expect(filmmakersSrc).not.toContain('rounded-full border border-cyan-500/20')
+
+    // Pillar 3: Zero mobile text-badge occlusion over 16:9 media frames
+    const guidedTourSrc = readSource('src/components/landing/StudioGuidedTourSection.tsx')
+    expect(guidedTourSrc).toContain('hidden sm:flex absolute top-3')
+    expect(guidedTourSrc).toContain('hidden sm:flex absolute inset-x-3 bottom-3')
+    expect(guidedTourSrc).toContain('sm:hidden')
+
+    const prodStyleCardSrc = readSource('src/components/landing/ProductionStyleCard.tsx')
+    expect(prodStyleCardSrc).toContain('hidden sm:flex items-center gap-1 rounded-md')
+
+    // Pillar 4: 0px mobile header overflow, slim CookieConsent + FloatingCTA mutual exclusion, swipeable Hero rail
+    const headerSrc = readSource('src/app/components/Header.tsx')
+    expect(headerSrc).not.toContain('variant="landing"')
+    expect(headerSrc).toContain('px-3 sm:px-6')
+
+    const cookieSrc = readSource('src/components/ui/CookieConsent.tsx')
+    expect(cookieSrc).toContain('data-cookie-banner-open="true"')
+    expect(cookieSrc).toContain('sceneflow:cookie-consent-updated')
+    expect(cookieSrc).toContain('grid-cols-3 md:flex')
+
+    const floatingCtaSrc = readSource('src/components/landing/FloatingCTA.tsx')
+    expect(floatingCtaSrc).toContain('!cookieBannerOpen')
+    expect(floatingCtaSrc).toContain('isPrelaunchAccessModeEnabled')
+
+    const heroSrc = readSource('src/components/landing/ImaginePossibilitiesHero.tsx')
+    expect(heroSrc).toContain('flex-nowrap')
+    expect(heroSrc).toContain('overflow-x-auto')
+    expect(heroSrc).toContain('min-[340px]:grid-cols-2')
+    expect(heroSrc).toContain('isPrelaunchAccessModeEnabled')
+
+    // Pillar 5: Thumb-friendly 32px (h-8 w-8) mobile video controls
+    const showcaseSrc = readSource('src/components/landing/VideoServiceOutputShowcase.tsx')
+    expect(showcaseSrc).not.toContain('h-6 w-6')
+    expect(showcaseSrc).toContain('h-8 w-8')
+
+    const featureFrameSrc = readSource('src/components/landing/FeatureScreenshotFrame.tsx')
+    expect(featureFrameSrc).not.toContain('h-6 w-6')
+    expect(featureFrameSrc).toContain('h-8 w-8')
+  })
 })

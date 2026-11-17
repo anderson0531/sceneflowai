@@ -137,20 +137,20 @@ export default function ProductionExamplesSection() {
   return (
     <section
       id={PRODUCTION_EXAMPLES_SECTION_ID}
-      className="scroll-mt-20 overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-20 md:py-28"
+      className="scroll-mt-20 overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-14 md:py-28"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="mb-12 text-center"
+          className="mb-8 md:mb-12 text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2">
-            <Clapperboard className="h-4 w-4 text-cyan-400" />
-            <span className="text-sm font-medium text-cyan-300">{t('badge')}</span>
-          </div>
+          <p className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+            <Clapperboard className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
+            <span>{t('badge')}</span>
+          </p>
 
           <h2 className="mx-auto mb-4 max-w-4xl text-balance text-3xl font-bold text-white md:text-4xl lg:text-5xl">
             {t('title')}{' '}
@@ -159,16 +159,12 @@ export default function ProductionExamplesSection() {
             </span>
           </h2>
 
-          <p className="mx-auto max-w-3xl text-lg text-gray-300">{t('subtitle')}</p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-            <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-1 text-sm font-semibold text-white">
-              {t('subtitleTagline')}
-            </span>
-            <span className="inline-flex max-w-2xl items-center rounded-2xl border border-white/10 bg-slate-900/80 px-3.5 py-1.5 text-center text-xs font-medium leading-relaxed text-cyan-200 sm:rounded-full sm:py-1">
-              {t('languagesBanner')}
-            </span>
+          <p className="mx-auto max-w-3xl text-base sm:text-lg text-gray-300">{t('subtitle')}</p>
+          <div className="mx-auto mt-4 max-w-2xl space-y-1 border-l-2 border-cyan-400/50 pl-3.5 text-left sm:border-l-0 sm:pl-0 sm:text-center">
+            <p className="text-xs sm:text-sm font-semibold text-cyan-200">{t('subtitleTagline')}</p>
+            <p className="text-xs leading-relaxed text-gray-300">{t('languagesBanner')}</p>
           </div>
-          <p className="mx-auto mt-3 max-w-2xl text-xs text-gray-400">{t('explorerHandoff')}</p>
+          <p className="mx-auto mt-2.5 max-w-2xl text-xs text-gray-400">{t('explorerHandoff')}</p>
         </motion.div>
 
         {/* Desktop: 2-column grid (mount only active layout so hidden duplicate <video> tags never hog connections) */}

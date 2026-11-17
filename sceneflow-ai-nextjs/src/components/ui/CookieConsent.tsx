@@ -43,12 +43,21 @@ export function CookieConsent() {
     }
   }, [])
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('sceneflow:cookie-consent-updated'))
+    }
+  }, [showBanner])
+
   const saveConsent = (prefs: CookiePreferences) => {
     const withDate = { ...prefs, consentDate: new Date().toISOString() }
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(withDate))
     setPreferences(withDate)
     setShowBanner(false)
     setShowSettings(false)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('sceneflow:cookie-consent-updated'))
+    }
   }
 
   const handleAcceptAll = () => {
@@ -86,11 +95,14 @@ export function CookieConsent() {
       )}
 
       {/* Main Banner */}
-      <div className="fixed bottom-0 left-0 right-0 z-[9999] p-4">
+      <div
+        data-cookie-banner-open="true"
+        className="fixed bottom-0 left-0 right-0 z-[9999] p-2.5 md:p-4"
+      >
         <div className="max-w-4xl mx-auto">
           {showSettings ? (
             /* Detailed Settings Panel */
-            <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+            <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden max-h-[85dvh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -180,40 +192,46 @@ export function CookieConsent() {
               </div>
             </div>
           ) : (
-            /* Simple Banner */
-            <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl p-6">
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-                <div className="flex items-center gap-3 flex-shrink-0">
+            /* Simple Banner — compact bar on mobile (< md), rich horizontal strip on desktop */
+            <div className="bg-gray-900/95 backdrop-blur-md border border-gray-700/80 rounded-xl shadow-2xl p-3.5 md:p-6">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-2.5 md:gap-4">
+                <div className="hidden md:flex items-center gap-3 flex-shrink-0">
                   <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
                     <Cookie className="w-5 h-5 text-purple-400" />
                   </div>
                 </div>
-                
-                <div className="flex-1">
-                  <h3 className="text-white font-medium mb-1">We value your privacy</h3>
-                  <p className="text-gray-400 text-sm">
-                    We use cookies to enhance your browsing experience, analyze site traffic, and personalize content. 
-                    By clicking &quot;Accept All&quot;, you consent to our use of cookies. 
-                    <Link href="/privacy" className="text-purple-400 hover:underline ml-1">Learn more</Link>
+
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-white text-xs md:text-base font-semibold md:font-medium mb-0.5 md:mb-1">
+                    We value your privacy
+                  </h3>
+                  <p className="text-gray-300 md:text-gray-400 text-[11px] md:text-sm leading-snug md:leading-normal">
+                    We use cookies to enhance browsing, analyze traffic, and personalize content.
+                    <span className="hidden sm:inline">
+                      {' '}By clicking &quot;Accept All&quot;, you consent to our use of cookies.
+                    </span>
+                    <Link href="/privacy" className="text-purple-400 hover:underline ml-1 whitespace-nowrap">
+                      Learn more
+                    </Link>
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                <div className="grid grid-cols-3 md:flex md:flex-wrap gap-1.5 md:gap-2 w-full md:w-auto">
                   <button
                     onClick={() => setShowSettings(true)}
-                    className="flex-1 md:flex-none px-4 py-2 border border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 rounded-lg text-sm font-medium transition-colors"
+                    className="px-2.5 py-1.5 md:px-4 md:py-2 border border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 rounded-lg text-xs md:text-sm font-medium transition-colors"
                   >
                     Customize
                   </button>
                   <button
                     onClick={handleEssentialOnly}
-                    className="flex-1 md:flex-none px-4 py-2 border border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 rounded-lg text-sm font-medium transition-colors"
+                    className="px-2.5 py-1.5 md:px-4 md:py-2 border border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 rounded-lg text-xs md:text-sm font-medium transition-colors"
                   >
-                    Essential Only
+                    Essential
                   </button>
                   <button
                     onClick={handleAcceptAll}
-                    className="flex-1 md:flex-none px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    className="px-2.5 py-1.5 md:px-4 md:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs md:text-sm font-semibold md:font-medium transition-colors"
                   >
                     Accept All
                   </button>

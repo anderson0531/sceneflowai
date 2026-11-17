@@ -573,11 +573,11 @@ export function VideoServiceOutputShowcase({
           </>
         ) : null}
 
-        {/* Bottom-of-Player Controls: Compact icon-only transport on bottom-left (keeps top of frame & bottom-right SceneFlow Studio watermark 100% clear) */}
+        {/* Bottom-of-Player Controls: Thumb-friendly icon-only transport on bottom-left (keeps top of frame & bottom-right SceneFlow Studio watermark 100% clear) */}
         {hasPromoVideo ? (
           <div
             dir="ltr"
-            className="pointer-events-auto absolute bottom-2 left-2 z-10 flex items-center gap-1 sm:bottom-2.5 sm:left-3 sm:gap-1.5"
+            className="pointer-events-auto absolute bottom-2 left-2 z-10 flex items-center gap-1.5 sm:bottom-2.5 sm:left-3"
           >
             <VideoControlTooltip label={playToggleLabel} side="top">
               <button
@@ -586,12 +586,12 @@ export function VideoServiceOutputShowcase({
                 aria-label={playToggleLabel}
                 aria-pressed={isPlaying}
                 onClick={handleTogglePlay}
-                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
               >
                 {isPlaying ? (
-                  <Pause className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                  <Pause className="h-3.5 w-3.5 shrink-0" aria-hidden />
                 ) : (
-                  <Play className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                  <Play className="h-3.5 w-3.5 shrink-0" aria-hidden />
                 )}
               </button>
             </VideoControlTooltip>
@@ -604,16 +604,16 @@ export function VideoServiceOutputShowcase({
                 aria-pressed={promoAudioUnmuted}
                 onClick={handleTogglePromoAudio}
                 className={cn(
-                  'inline-flex h-6 w-6 items-center justify-center rounded-full border backdrop-blur-md transition-all sm:h-7 sm:w-7 cursor-pointer',
+                  'inline-flex h-8 w-8 items-center justify-center rounded-full border backdrop-blur-md transition-all sm:h-7 sm:w-7 cursor-pointer',
                   promoAudioUnmuted
                     ? 'border-emerald-400/70 bg-emerald-500/25 text-emerald-200 shadow-sm shadow-emerald-500/20 hover:bg-emerald-500/35'
                     : 'border-amber-400/70 bg-slate-950/75 text-amber-300 shadow-sm shadow-amber-500/15 hover:border-amber-300 hover:bg-slate-900 hover:text-amber-200'
                 )}
               >
                 {promoAudioUnmuted ? (
-                  <Volume2 className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                  <Volume2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
                 ) : (
-                  <VolumeX className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                  <VolumeX className="h-3.5 w-3.5 shrink-0" aria-hidden />
                 )}
               </button>
             </VideoControlTooltip>
@@ -624,9 +624,9 @@ export function VideoServiceOutputShowcase({
                 title={uiCopy.restartLabel}
                 aria-label={uiCopy.restartLabel}
                 onClick={handleRestartFromBeginning}
-                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
               >
-                <RotateCcw className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden />
               </button>
             </VideoControlTooltip>
 
@@ -636,12 +636,12 @@ export function VideoServiceOutputShowcase({
                 title={fsToggleLabel}
                 aria-label={fsToggleLabel}
                 onClick={() => void handleToggleFullscreen()}
-                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
               >
                 {isFullscreen ? (
-                  <Minimize className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                  <Minimize className="h-3.5 w-3.5 shrink-0" aria-hidden />
                 ) : (
-                  <Maximize className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                  <Maximize className="h-3.5 w-3.5 shrink-0" aria-hidden />
                 )}
               </button>
             </VideoControlTooltip>
@@ -656,7 +656,7 @@ export function VideoServiceOutputShowcase({
               <span>{currentBeat.sceneTag[panLocale]}</span>
             </span>
 
-            <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5">
+            <div className="pointer-events-auto flex items-center gap-1.5">
               <VideoControlTooltip label={playToggleLabel} side="top">
                 <button
                   type="button"
@@ -664,12 +664,12 @@ export function VideoServiceOutputShowcase({
                   aria-label={playToggleLabel}
                   aria-pressed={isPlaying}
                   onClick={handleTogglePlay}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
                 >
                   {isPlaying ? (
-                    <Pause className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                    <Pause className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   ) : (
-                    <Play className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                    <Play className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   )}
                 </button>
               </VideoControlTooltip>
@@ -680,12 +680,12 @@ export function VideoServiceOutputShowcase({
                   title={fsToggleLabel}
                   aria-label={fsToggleLabel}
                   onClick={() => void handleToggleFullscreen()}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 text-white backdrop-blur-md transition-colors hover:border-emerald-400/60 hover:bg-slate-900 sm:h-7 sm:w-7 cursor-pointer"
                 >
                   {isFullscreen ? (
-                    <Minimize className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                    <Minimize className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   ) : (
-                    <Maximize className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" aria-hidden />
+                    <Maximize className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   )}
                 </button>
               </VideoControlTooltip>

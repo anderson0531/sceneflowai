@@ -21,9 +21,9 @@ export function InfrastructureSection() {
   return (
     <section
       id={INFRASTRUCTURE_SECTION_ID}
-      className="scroll-mt-20 border-y border-blue-500/10 bg-gradient-to-b from-slate-900 to-slate-950 py-16 sm:py-24"
+      className="scroll-mt-20 border-y border-blue-500/10 bg-gradient-to-b from-slate-900 to-slate-950 py-14 sm:py-24"
     >
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-16">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16">
         {/* Ride the AI -> SI Wave Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -32,12 +32,10 @@ export function InfrastructureSection() {
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-4 py-1.5">
-            <Sparkles className="h-4 w-4 text-emerald-400" />
-            <span className="text-xs sm:text-sm font-semibold text-emerald-300">
-              {wave.eyebrow}
-            </span>
-          </div>
+          <p className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+            <span>{wave.eyebrow}</span>
+          </p>
 
           <h2 className="mb-4 text-2xl font-bold text-white sm:text-3xl lg:text-4xl max-w-3xl mx-auto leading-tight">
             {wave.headline}
@@ -77,30 +75,30 @@ export function InfrastructureSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="pt-12 border-t border-slate-800/80 text-center"
+          className="pt-10 sm:pt-12 border-t border-slate-800/80 text-center"
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-800/50 px-4 py-1.5">
-            <Shield className="h-4 w-4 text-blue-400" />
-            <span className="text-xs sm:text-sm font-medium text-gray-300">{t('title')}</span>
-          </div>
+          <p className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-blue-300">
+            <Shield className="h-3.5 w-3.5 shrink-0 text-blue-400" />
+            <span>{t('title')}</span>
+          </p>
 
-          <p className="mx-auto mb-6 max-w-2xl text-sm text-gray-400 sm:text-base">
+          <p className="mx-auto mb-5 max-w-2xl text-sm text-gray-400 sm:text-base">
             {t('description')}
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-slate-800/60 px-5 py-2.5">
+          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4">
+            <div className="inline-flex items-center gap-2.5 rounded-xl border border-white/10 bg-slate-800/60 px-3.5 py-2">
               <Image
                 src="/images/google-cloud-logo.png"
                 alt={t('badges.googleCloud')}
-                width={24}
-                height={24}
+                width={20}
+                height={20}
               />
-              <span className="text-sm font-medium text-white">{t('badges.googleCloud')}</span>
+              <span className="text-xs sm:text-sm font-medium text-white">{t('badges.googleCloud')}</span>
             </div>
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-slate-800/60 px-5 py-2.5">
-              <Cpu className="h-4 w-4 text-green-400" />
-              <span className="text-sm font-medium text-white">{t('badges.vertexAi')}</span>
+            <div className="inline-flex items-center gap-2.5 rounded-xl border border-white/10 bg-slate-800/60 px-3.5 py-2">
+              <Cpu className="h-4 w-4 shrink-0 text-green-400" />
+              <span className="text-xs sm:text-sm font-medium text-white">{t('badges.vertexAi')}</span>
             </div>
           </div>
         </motion.div>

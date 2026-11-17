@@ -142,7 +142,7 @@ export function StudioGuidedTourSection() {
   return (
     <section
       id={STUDIO_GUIDED_TOUR_SECTION_ID}
-      className="relative scroll-mt-20 overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-20 sm:py-28"
+      className="relative scroll-mt-20 overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-14 sm:py-28"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -257,14 +257,14 @@ export function StudioGuidedTourSection() {
         </div>
 
         {/* Active Room Story + Sandbox Visual Stage */}
-        <div className="grid grid-cols-1 gap-8 rounded-3xl border border-white/10 bg-slate-900/75 p-6 shadow-2xl backdrop-blur-sm sm:p-8 lg:grid-cols-12 lg:items-center">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 rounded-3xl border border-white/10 bg-slate-900/75 p-4 shadow-2xl backdrop-blur-sm sm:p-8 lg:grid-cols-12 lg:items-center">
           {/* Left: Non-Technical Narrative + 3 Callouts */}
           <div className="lg:col-span-5">
-            <span className="inline-block rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
+            <p className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.15em] text-cyan-300">
               {activeRoom.stepNumber} · {activeRoom.badge}
-            </span>
+            </p>
 
-            <h3 className="mt-3 text-2xl font-bold leading-snug text-white sm:text-3xl">
+            <h3 className="mt-2.5 text-2xl font-bold leading-snug text-white sm:text-3xl">
               {activeRoom.title}
             </h3>
             <p className="mt-3 text-sm leading-relaxed text-gray-300 sm:text-base">
@@ -322,24 +322,24 @@ export function StudioGuidedTourSection() {
           <div className="lg:col-span-7">
             <div className="overflow-hidden rounded-2xl border border-white/15 bg-slate-950 shadow-xl">
               {/* Top Window Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 bg-slate-900/95 px-4 py-3">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 bg-slate-900/95 px-3 py-2.5 sm:px-4 sm:py-3">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-rose-500/70" />
                   <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
-                  <span className="ms-2 text-xs font-semibold text-gray-200">
+                  <span className="ms-1.5 text-xs font-semibold text-gray-200">
                     SceneFlow Studio · {activeRoom.tabLabel}
                   </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                   {hasRoomVideo ? (
                     <>
                       <button
                         type="button"
                         title={`${copy.watchRoomVideoLabel} (${walkthroughCopy.interimBadge})`}
                         onClick={() => openRoomWalkthrough('video')}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-500/15 px-2.5 py-1.5 text-xs font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/25 hover:text-white cursor-pointer"
+                        className="inline-flex items-center gap-1 rounded-lg border border-cyan-400/40 bg-cyan-500/15 px-2 py-1 text-[11px] font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/25 hover:text-white sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs cursor-pointer"
                       >
                         <Play className="h-3 w-3 shrink-0 fill-current" aria-hidden />
                         <span className="whitespace-normal leading-tight">{copy.watchRoomVideoLabel}</span>
@@ -349,7 +349,7 @@ export function StudioGuidedTourSection() {
                         type="button"
                         title={`${walkthroughCopy.modePannedScreens} · ${walkthroughCopy.doorButtonHint}`}
                         onClick={() => openRoomWalkthrough('panned')}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-purple-400/35 bg-purple-500/15 px-2.5 py-1.5 text-xs font-semibold text-purple-200 transition-colors hover:bg-purple-500/25 hover:text-white cursor-pointer"
+                        className="inline-flex items-center gap-1 rounded-lg border border-purple-400/35 bg-purple-500/15 px-2 py-1 text-[11px] font-semibold text-purple-200 transition-colors hover:bg-purple-500/25 hover:text-white sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs cursor-pointer"
                       >
                         <Images className="h-3 w-3 shrink-0" aria-hidden />
                         <span className="whitespace-normal leading-tight">
@@ -368,7 +368,7 @@ export function StudioGuidedTourSection() {
                         alt: `${activeRoom.tabLabel} — ${copy.inspectFullScreenLabel}`,
                       })
                     }
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-gray-200 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white cursor-pointer"
+                    className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-medium text-gray-200 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs cursor-pointer"
                   >
                     <Maximize2 className="h-3 w-3 shrink-0" aria-hidden />
                     <span className="whitespace-normal leading-tight">
@@ -378,7 +378,7 @@ export function StudioGuidedTourSection() {
                 </div>
               </div>
 
-              {/* Hero Sandbox Frame */}
+              {/* Hero Sandbox Frame — 100% unobstructed on mobile (< sm); overlays appear on spacious sm+ screens */}
               <div className="relative aspect-video w-full overflow-hidden bg-black">
                 <img
                   src={assets.heroSrc}
@@ -387,20 +387,20 @@ export function StudioGuidedTourSection() {
                   loading="lazy"
                 />
                 <div
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/45"
+                  className="pointer-events-none hidden sm:block absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/45"
                   aria-hidden
                 />
 
-                {/* Top Status Pill */}
-                <div className="absolute top-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-slate-950/80 px-3 py-1 text-[11px] font-semibold text-emerald-300 backdrop-blur-md">
+                {/* Desktop/Tablet Top Status Pill */}
+                <div className="hidden sm:flex absolute top-3 left-3 right-3 flex-wrap items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-400/40 bg-slate-950/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 backdrop-blur-md">
                     <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
                     {visuals.topBadge}
                   </span>
                 </div>
 
-                {/* Bottom Continuity / Action Overlay */}
-                <div className="absolute inset-x-3 bottom-3 flex flex-wrap items-center justify-between gap-2">
+                {/* Desktop/Tablet Bottom Continuity / Action Overlay */}
+                <div className="hidden sm:flex absolute inset-x-3 bottom-3 flex-wrap items-center justify-between gap-2">
                   <span className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-1.5 text-xs font-medium text-gray-100 backdrop-blur-md">
                     {visuals.bottomBadge}
                   </span>
@@ -420,6 +420,31 @@ export function StudioGuidedTourSection() {
                     </button>
                   ) : null}
                 </div>
+              </div>
+
+              {/* Mobile Below-Frame Status Caption Bar (< sm) — zero occlusion over 16:9 artwork */}
+              <div className="border-t border-slate-800/90 bg-slate-900/95 px-3 py-2.5 space-y-1.5 sm:hidden">
+                <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-300">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span>{visuals.topBadge}</span>
+                </p>
+                <p className="text-[11px] leading-snug text-gray-200">
+                  {visuals.bottomBadge}
+                </p>
+                {activeRoom.id === 'screening-room' ? (
+                  <button
+                    type="button"
+                    title={`${copy.openLiveScreeningLabel} (${walkthroughCopy.interimBadge})`}
+                    onClick={() => openRoomWalkthrough('video', 'screening-room')}
+                    className="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-400/50 bg-amber-500/20 px-3 py-1.5 text-xs font-bold text-amber-100 transition-colors hover:bg-amber-500/35 hover:text-white cursor-pointer"
+                  >
+                    <Share2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <span className="whitespace-normal leading-tight">
+                      {copy.openLiveScreeningLabel}
+                    </span>
+                    <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
+                  </button>
+                ) : null}
               </div>
 
               {/* 4 Connected Continuity / Shot Cards Strip */}

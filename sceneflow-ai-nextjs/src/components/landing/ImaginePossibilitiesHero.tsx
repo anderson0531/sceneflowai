@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { ArrowRight, Briefcase, Compass, Loader2, Maximize2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
 import {
   openTwoModesOnPhoneOrTheater,
   TwoModesTheaterModal,
@@ -39,6 +40,10 @@ export const IMAGINE_POSSIBILITIES_SECTION_ID = 'imagine-possibilities'
 export function ImaginePossibilitiesHero() {
   const locale = useLocale()
   const studioCopy = useStudioLandingCopy()
+  const prelaunchOnly = isPrelaunchAccessModeEnabled()
+  const primaryHeroCtaLabel = prelaunchOnly
+    ? 'Request Pre-Launch Access'
+    : studioCopy.heroDock.primaryCta
   const tPossibilities = useTranslations('imaginePossibilities')
   const tHero = useTranslations('hero')
   const tCommon = useTranslations('common')
@@ -471,8 +476,8 @@ export function ImaginePossibilitiesHero() {
         </div>
 
         {/* Text Overlay: "Imagine the Possibilities" + "with SceneFlow Studio" + Compact Category Pills */}
-        <div className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-end px-4 pt-36 pb-16 text-center sm:pb-20 lg:pt-40">
-          <div className="mx-auto max-w-4xl">
+        <div className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-end px-4 pt-32 pb-12 text-center sm:pt-36 sm:pb-20 lg:pt-40">
+          <div className="mx-auto w-full max-w-4xl">
             <motion.h2
               className="bg-gradient-to-r from-white via-gray-200 to-cyan-200 bg-clip-text text-3xl font-bold leading-tight tracking-tighter text-transparent drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)] sm:text-4xl md:text-5xl lg:text-6xl"
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 20 }}
@@ -483,7 +488,7 @@ export function ImaginePossibilitiesHero() {
             </motion.h2>
 
             <motion.p
-              className="mt-3 text-lg font-medium tracking-wide text-gray-100 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] sm:text-xl md:text-2xl"
+              className="mt-2 sm:mt-3 text-base font-medium tracking-wide text-gray-100 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] sm:text-xl md:text-2xl"
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.2 }}
@@ -494,7 +499,7 @@ export function ImaginePossibilitiesHero() {
             <motion.div
               role="tablist"
               aria-label={categoriesAriaLabel}
-              className="mt-7 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5"
+              className="mt-5 sm:mt-7 flex w-full max-w-full flex-nowrap items-center justify-start gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:justify-center sm:gap-2.5 sm:overflow-visible sm:px-0 sm:pb-0"
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.28 }}
@@ -513,7 +518,7 @@ export function ImaginePossibilitiesHero() {
                     onMouseEnter={() => prefetchCategory(script.id)}
                     onFocus={() => prefetchCategory(script.id)}
                     onClick={() => selectCategory(script.id)}
-                    className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold backdrop-blur-md transition-all sm:px-4 sm:text-sm ${
+                    className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold backdrop-blur-md transition-all sm:px-4 sm:text-sm ${
                       isSelected
                         ? 'border-cyan-400/70 bg-cyan-500/25 text-white shadow-lg shadow-cyan-500/20'
                         : 'border-white/20 bg-black/50 text-gray-200 hover:border-white/40 hover:bg-black/70 hover:text-white'
@@ -526,7 +531,7 @@ export function ImaginePossibilitiesHero() {
             </motion.div>
 
             <motion.p
-              className="mx-auto mt-5 max-w-2xl text-xs leading-relaxed text-gray-200/95 drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)] sm:text-sm"
+              className="mx-auto mt-4 sm:mt-5 max-w-2xl text-xs leading-relaxed text-gray-200/95 drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)] sm:text-sm"
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.7, delay: prefersReducedMotion ? 0 : 0.34 }}
@@ -542,23 +547,23 @@ export function ImaginePossibilitiesHero() {
             >
               <button
                 type="button"
-                title={studioCopy.heroDock.primaryCta}
+                title={primaryHeroCtaLabel}
                 onClick={() => {
                   window.location.href = getSignupUrlForTier('explorer')
                 }}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:brightness-110 sm:w-auto sm:text-sm"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl sm:rounded-full bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:brightness-110 sm:w-auto sm:text-sm"
               >
-                <span className="whitespace-normal leading-tight">{studioCopy.heroDock.primaryCta}</span>
+                <span className="whitespace-normal leading-tight">{primaryHeroCtaLabel}</span>
                 <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
               </button>
-              <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2 sm:contents">
+              <div className="grid grid-cols-1 gap-2 min-[340px]:grid-cols-2 sm:contents">
                 <button
                   type="button"
                   title={studioCopy.heroDock.businessCta}
                   onClick={() => {
                     document.getElementById('video-services')?.scrollIntoView({ behavior: 'smooth' })
                   }}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-full border border-emerald-400/45 bg-emerald-950/60 px-4 py-2 text-xs font-semibold text-emerald-200 backdrop-blur-md transition-colors hover:border-emerald-300/70 hover:bg-emerald-900/70 hover:text-white sm:text-sm"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full border border-emerald-400/45 bg-emerald-950/60 px-3 py-2 text-[11px] min-[380px]:text-xs font-semibold text-emerald-200 backdrop-blur-md transition-colors hover:border-emerald-300/70 hover:bg-emerald-900/70 hover:text-white sm:px-4 sm:text-sm"
                 >
                   <Briefcase className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
                   <span className="whitespace-normal leading-tight">{studioCopy.heroDock.businessCta}</span>
@@ -569,7 +574,7 @@ export function ImaginePossibilitiesHero() {
                   onClick={() => {
                     document.getElementById('five-superpowers')?.scrollIntoView({ behavior: 'smooth' })
                   }}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/25 bg-black/55 px-4 py-2 text-xs font-medium text-gray-200 backdrop-blur-md transition-colors hover:border-white/45 hover:bg-black/75 hover:text-white sm:text-sm"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full border border-white/25 bg-black/55 px-3 py-2 text-[11px] min-[380px]:text-xs font-medium text-gray-200 backdrop-blur-md transition-colors hover:border-white/45 hover:bg-black/75 hover:text-white sm:px-4 sm:text-sm"
                 >
                   <Compass className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
                   <span className="whitespace-normal leading-tight">{studioCopy.heroDock.howItWorksCta}</span>

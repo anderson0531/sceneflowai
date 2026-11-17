@@ -137,7 +137,7 @@ export function Header() {
           />
         </div>
         
-        <div className="mx-auto max-w-7xl xl:max-w-[90rem] 2xl:max-w-[96rem] px-4 sm:px-6 xl:px-6 2xl:px-8">
+        <div className="mx-auto max-w-7xl xl:max-w-[90rem] 2xl:max-w-[96rem] px-3 sm:px-6 xl:px-6 2xl:px-8">
           {/* Desktop Header (xl+ single-row flex layout; nav clips/scrolls cleanly in center track so CTAs never overlap) */}
           <div className="hidden xl:flex items-center justify-between gap-2.5 2xl:gap-4 h-20">
             <div className="shrink-0">
@@ -294,14 +294,16 @@ export function Header() {
           {/* Mobile & Tablet Header (< xl) */}
           <div className="xl:hidden">
             {/* Top Line - Logo, language globe, and menu button */}
-            <div className="flex justify-between items-center h-16">
-              <SceneFlowStudioBrand
-                href={homeHref}
-                variant="landing"
-                nameClassName="text-white"
-              />
+            <div className="flex justify-between items-center h-16 gap-2">
+              <div className="min-w-0 shrink">
+                <SceneFlowStudioBrand
+                  href={homeHref}
+                  variant="app"
+                  nameClassName="text-white"
+                />
+              </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex shrink-0 items-center gap-0.5">
                 <LanguageSelector variant="icon" />
                 <button
                   type="button"
