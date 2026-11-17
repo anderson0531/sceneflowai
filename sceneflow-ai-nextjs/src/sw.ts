@@ -28,15 +28,46 @@ const SOCIAL_OAUTH_PATHS = new Set([
   '/api/publish/tiktok/callback',
 ])
 
+const STALE_RUNTIME_CACHES = [
+  'static-video-assets',
+  'static-audio-assets',
+  'others',
+  'pages',
+  'pages-rsc',
+  'pages-rsc-prefetch',
+  'cross-origin',
+]
+
 function shouldBypassServiceWorker(options: RouteMatchCallbackOptions): boolean {
-  const { request, url } = options
+  const { request, url, sameOrigin } = options
   if (SOCIAL_OAUTH_PATHS.has(url.pathname)) return true
-  // Never intercept document navigations (prevents Serwist `no-response` crashes on
-  // OAuth 302/307 redirects and dynamic `/dashboard/workflow/vision/[id]` SSR loads).
+  // Never intercept document navigations or HTML document loads (prevents Serwist `no-response`
+  // crashes on OAuth 302/307 redirects, hash URLs like `/#key-features`, and dynamic SSR loads).
   if (request.mode === 'navigate') return true
+  if (request.destination === 'document') return true
   // Never intercept API routes or Next.js App Router RSC flight payloads.
   if (url.pathname.startsWith('/api/')) return true
   if (url.searchParams.has('_rsc') || request.headers.get('RSC') === '1') return true
+  // Never intercept streaming video/audio or HTTP 206 byte-range requests (prevents stale
+  // CacheFirst media and RangeRequestsPlugin stream failures on `.webm` / `.mp4` animatics).
+  if (
+    request.destination === 'video' ||
+    request.destination === 'audio' ||
+    request.headers.has('range') ||
+    /\.(?:mp4|webm|mov|m4v|mp3|wav|ogg)$/i.test(url.pathname)
+  ) {
+    return true
+  }
+  // Never run NetworkFirst('others') on extensionless route paths like `/` or `/#key-features`.
+  if (sameOrigin && !/\.[a-z0-9]{1,8}$/i.test(url.pathname)) return true
+  // Only allow cross-origin runtime caching for Google Fonts; let Blob CDN & external hosts stream directly.
+  if (
+    !sameOrigin &&
+    url.hostname !== 'fonts.googleapis.com' &&
+    url.hostname !== 'fonts.gstatic.com'
+  ) {
+    return true
+  }
   return false
 }
 
@@ -79,6 +110,9 @@ serwist.addEventListeners()
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
+      await Promise.all(
+        STALE_RUNTIME_CACHES.map((cacheName) => self.caches.delete(cacheName).catch(() => false))
+      )
       await self.clients.claim()
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
       await Promise.all(

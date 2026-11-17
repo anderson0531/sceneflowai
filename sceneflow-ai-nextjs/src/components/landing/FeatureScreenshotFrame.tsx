@@ -378,7 +378,7 @@ export function FeatureScreenshotFrame({
       dir={isRtl ? 'rtl' : 'ltr'}
       data-testid="feature-animatic-stage"
       className={cn(
-        'mt-4 overflow-hidden rounded-2xl border border-emerald-400/30 bg-slate-950 shadow-2xl shadow-black/50',
+        'mt-4 w-full overflow-hidden rounded-2xl border border-emerald-400/30 bg-slate-950 shadow-2xl shadow-black/50',
         isFullscreen && 'mt-0 flex h-full w-full flex-col justify-center bg-black p-4 sm:p-8'
       )}
     >
@@ -393,15 +393,20 @@ export function FeatureScreenshotFrame({
           <video
             key={`${chapterInfo.suiteId}-${panLocale}`}
             ref={videoRef}
-            poster={animaticPosterSrc}
+            poster={fallbackImageSrc || animaticPosterSrc}
+            autoPlay={isPlaying && (inViewport || isFullscreen)}
             muted={!audioUnmuted}
             playsInline
-            preload={nearViewport ? 'metadata' : 'none'}
+            preload={nearViewport ? 'auto' : 'metadata'}
             aria-label={`${label} — ${uiCopy.animaticBadge}`}
             onClick={handleVideoSurfaceClick}
             onContextMenu={(e) => e.preventDefault()}
             onLoadedMetadata={(e) => {
-              seekToChapterBeat(e.currentTarget, pendingBeatIndexRef.current)
+              const vid = e.currentTarget
+              seekToChapterBeat(vid, pendingBeatIndexRef.current)
+              if (isPlaying && (inViewport || isFullscreen) && vid.paused) {
+                void vid.play().catch(() => undefined)
+              }
             }}
             onTimeUpdate={(e) => {
               const vid = e.currentTarget
@@ -450,7 +455,11 @@ export function FeatureScreenshotFrame({
             className="h-full w-full cursor-pointer bg-slate-950 object-contain"
           >
             <source src={animaticWebmSrc} type="video/webm" />
-            <source src={animaticMp4Src} type="video/mp4" />
+            <source
+              src={animaticMp4Src}
+              type="video/mp4"
+              onError={() => setVideoError(true)}
+            />
           </video>
         ) : (
           <img

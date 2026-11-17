@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import {
+  canShowInstallPrompt,
   shouldShowInstallOffer,
   type InstallSurface,
 } from '@/lib/pwa/installPromptVisibility'
@@ -49,6 +50,11 @@ export function AppInstallCard({
   const [neverAsk, setNeverAsk] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
+  const canCaptureInstallPrompt =
+    surface === 'phone-sign-in' ||
+    surface === 'phone-companion' ||
+    canShowInstallPrompt(authStatus, pathname)
+
   useEffect(() => {
     const isStandaloneDisplay =
       window.matchMedia('(display-mode: standalone)').matches ||
@@ -58,13 +64,18 @@ export function AppInstallCard({
     setNeverAsk(readNeverAsk())
     setDismissed(readRecentlyDismissed())
 
+    if (!canCaptureInstallPrompt) {
+      setDeferredPrompt(null)
+      return
+    }
+
     const handler = (event: Event) => {
       event.preventDefault()
       setDeferredPrompt(event as BeforeInstallPromptEvent)
     }
     window.addEventListener('beforeinstallprompt', handler)
     return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [])
+  }, [canCaptureInstallPrompt])
 
   const visible = shouldShowInstallOffer({
     surface,

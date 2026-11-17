@@ -53,6 +53,8 @@ const nextConfig = {
       "./public/videos/**",
       "public/landing/video-services/videos/**",
       "./public/landing/video-services/videos/**",
+      "public/landing/key-features/animatics/**",
+      "./public/landing/key-features/animatics/**",
       "**/*.mp4",
       "**/*.webm",
     ],

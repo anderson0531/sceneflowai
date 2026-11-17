@@ -1148,5 +1148,85 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     // Room mode shows narrated feature animatic immediately without requiring a second toggle
     const roomAnimatic = container?.querySelector('[data-testid="feature-animatic-stage"]')
     expect(roomAnimatic).toBeTruthy()
+
+    // 6. Desktop (>= 1024px) regression check: when #key-features sits 5,400px down the landing page,
+    // the video player wrapper MUST compute container-relative alignment (never document.body offsetTop!)
+    expect(keyFeaturesSrc).not.toContain('.offsetTop')
+    const prevMatchMedia = window.matchMedia
+    const prevRaf = window.requestAnimationFrame
+    try {
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        writable: true,
+        value: (query: string) => ({
+          matches: query.includes('1024px'),
+          media: query,
+          onchange: null,
+          addListener: () => {},
+          removeListener: () => {},
+          addEventListener: () => {},
+          removeEventListener: () => {},
+          dispatchEvent: () => false,
+        }),
+      })
+      window.requestAnimationFrame = ((cb: FrameRequestCallback) => {
+        cb(0)
+        return 1
+      }) as typeof window.requestAnimationFrame
+
+      renderElement(
+        React.createElement(
+          NextIntlClientProvider,
+          { key: 'kf-desktop-offset', locale: 'en', messages: enMessages },
+          React.createElement(KeyFeaturesSection)
+        )
+      )
+
+      const stageGrid = container?.querySelector('#key-features-feature-stage') as HTMLElement | null
+      expect(stageGrid).toBeTruthy()
+      const listCol = stageGrid?.firstElementChild as HTMLElement | null
+      const detailWrapper = stageGrid?.lastElementChild as HTMLElement | null
+      expect(listCol).toBeTruthy()
+      expect(detailWrapper).toBeTruthy()
+      expect(detailWrapper?.querySelector('video')).toBeTruthy()
+
+      // Simulate #key-features sitting 5,400px down the landing page with an 800px feature list and 500px detail card
+      listCol!.getBoundingClientRect = () =>
+        ({ top: 5400, bottom: 6200, left: 0, right: 320, width: 320, height: 800, x: 0, y: 5400, toJSON: () => ({}) }) as DOMRect
+      Object.defineProperty(detailWrapper!, 'offsetHeight', { configurable: true, value: 500 })
+
+      const featureBtns = Array.from(listCol?.querySelectorAll('button') ?? [])
+      featureBtns.forEach((btn, idx) => {
+        btn.getBoundingClientRect = () =>
+          ({
+            top: 5400 + idx * 60,
+            bottom: 5452 + idx * 60,
+            left: 0,
+            right: 320,
+            width: 320,
+            height: 52,
+            x: 0,
+            y: 5400 + idx * 60,
+            toJSON: () => ({}),
+          }) as DOMRect
+      })
+
+      act(() => {
+        window.dispatchEvent(new Event('resize'))
+      })
+      // Item 0 sits at the top of the list => 0px marginTop (no inline marginTop pushing it 5,400px off-screen!)
+      expect(detailWrapper?.style.marginTop || '0px').toBe('0px')
+
+      // Clicking item 4 (relative top = 240px, maxOffset = 800 - 500 = 300px) => 240px marginTop (never 5,640px!)
+      clickElement(featureBtns[4]!)
+      expect(detailWrapper?.style.marginTop).toBe('240px')
+    } finally {
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        writable: true,
+        value: prevMatchMedia,
+      })
+      window.requestAnimationFrame = prevRaf
+    }
   })
 })

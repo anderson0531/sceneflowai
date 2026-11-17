@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocale, useTranslations } from 'next-intl'
 import { Sparkles, ChevronDown, ChevronRight, ImageIcon, Briefcase, Layers } from 'lucide-react'
@@ -66,73 +66,14 @@ type FeaturePane = {
   features: FeatureData[]
 }
 
-/** Mobile flex order: each row, then the open detail right beneath it (inline accordion). Desktop resets with lg:order-none. */
-const FEATURE_ROW_ORDER = [
-  'order-1',
-  'order-3',
-  'order-5',
-  'order-7',
-  'order-9',
-  'order-11',
-  'order-[13]',
-  'order-[15]',
-  'order-[17]',
-  'order-[19]',
-  'order-[21]',
-  'order-[23]',
-  'order-[25]',
-  'order-[27]',
-  'order-[29]',
-  'order-[31]',
-  'order-[33]',
-  'order-[35]',
-  'order-[37]',
-  'order-[39]',
-]
-const FEATURE_DETAIL_ORDER = [
-  'order-2',
-  'order-4',
-  'order-6',
-  'order-8',
-  'order-10',
-  'order-12',
-  'order-[14]',
-  'order-[16]',
-  'order-[18]',
-  'order-[20]',
-  'order-[22]',
-  'order-[24]',
-  'order-[26]',
-  'order-[28]',
-  'order-[30]',
-  'order-[32]',
-  'order-[34]',
-  'order-[36]',
-  'order-[38]',
-  'order-[40]',
-]
-const FEATURE_ROW_START = [
-  'lg:row-start-1',
-  'lg:row-start-2',
-  'lg:row-start-3',
-  'lg:row-start-4',
-  'lg:row-start-5',
-  'lg:row-start-6',
-  'lg:row-start-7',
-  'lg:row-start-8',
-  'lg:row-start-9',
-  'lg:row-start-10',
-  'lg:row-start-[11]',
-  'lg:row-start-[12]',
-  'lg:row-start-[13]',
-  'lg:row-start-[14]',
-  'lg:row-start-[15]',
-  'lg:row-start-[16]',
-  'lg:row-start-[17]',
-  'lg:row-start-[18]',
-  'lg:row-start-[19]',
-  'lg:row-start-[20]',
-]
+const DESKTOP_MEDIA_QUERY = '(min-width: 1024px)'
+
+function readIsDesktopViewport(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false
+  }
+  return Boolean(window.matchMedia(DESKTOP_MEDIA_QUERY)?.matches)
+}
 
 const ROOM_GRADIENTS: Record<string, string> = {
   'series-desk': 'from-indigo-500 to-violet-600',
@@ -328,7 +269,7 @@ function FeatureDetail({
   exitFullscreenLabel: string
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800/90 bg-slate-900/60 p-4 shadow-xl sm:p-6">
+    <div className="w-full rounded-2xl border border-slate-800/90 bg-slate-900/60 p-4 shadow-xl sm:p-6">
       <h3 className="text-lg font-semibold text-white sm:text-xl">{feature.title}</h3>
       <p className="mt-1.5 text-sm leading-relaxed text-gray-300">{feature.description}</p>
 
@@ -379,11 +320,31 @@ export default function KeyFeaturesSection() {
   const [activeGroupId, setActiveGroupId] = useState('spend')
   const [selectedIcon, setSelectedIcon] = useState<string | null>('producerLaunchpad')
   const [expandedFeature, setExpandedFeature] = useState<string | null>(null)
+  const [isDesktop, setIsDesktop] = useState<boolean>(() => readIsDesktopViewport())
   const [desktopDetailOffsetPx, setDesktopDetailOffsetPx] = useState<number>(0)
 
   const stageGridRef = useRef<HTMLDivElement | null>(null)
+  const featureListRef = useRef<HTMLDivElement | null>(null)
   const detailWrapperRef = useRef<HTMLDivElement | null>(null)
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+    const mql = window.matchMedia(DESKTOP_MEDIA_QUERY)
+    if (!mql) return
+    const syncViewport = () => {
+      const matches = Boolean(mql.matches)
+      setIsDesktop(matches)
+      if (!matches) setDesktopDetailOffsetPx(0)
+    }
+    syncViewport()
+    if (typeof mql.addEventListener === 'function') {
+      mql.addEventListener('change', syncViewport)
+      return () => mql.removeEventListener('change', syncViewport)
+    }
+    mql.addListener?.(syncViewport)
+    return () => mql.removeListener?.(syncViewport)
+  }, [])
 
   useEffect(() => {
     const applyFocus = (payload?: FocusKeyFeaturePayload | null) => {
@@ -465,10 +426,6 @@ export default function KeyFeaturesSection() {
   const visibleFeatures = browseMode === 'use-case' ? useCaseFeatures : roomVisibleFeatures
   const selected =
     visibleFeatures.find((feature) => feature.icon === selectedIcon) ?? visibleFeatures[0]
-  const selectedIndex = Math.max(
-    0,
-    visibleFeatures.findIndex((feature) => feature.icon === selected?.icon)
-  )
   const selectedRoomMeta = selected ? featureCatalogByIcon.get(selected.icon) : undefined
   const gradient =
     browseMode === 'use-case'
@@ -477,30 +434,31 @@ export default function KeyFeaturesSection() {
       : ROOM_GRADIENTS[activeRoom?.id ?? 'series-desk']
 
   // On desktop (`lg+`), align the video player card vertically with the selected feature item
-  // (clamped to `[0, listHeight - detailHeight]`), while CSS `lg:sticky lg:top-24` also keeps it in viewport on scroll.
+  // using container-relative bounding rects (never raw `offsetTop` against `document.body`),
+  // clamped to `[0, listHeight - detailHeight]` while CSS `lg:sticky lg:top-24` keeps it in viewport on scroll.
   useEffect(() => {
-    if (typeof window === 'undefined' || !selected) return
+    if (typeof window === 'undefined' || !selected || !isDesktop) {
+      setDesktopDetailOffsetPx(0)
+      return
+    }
     const computeAlignment = () => {
-      if (
-        typeof window.matchMedia !== 'function' ||
-        !window.matchMedia('(min-width: 1024px)').matches
-      ) {
+      if (!readIsDesktopViewport()) {
         setDesktopDetailOffsetPx(0)
         return
       }
-      const gridEl = stageGridRef.current
+      const listEl = featureListRef.current ?? stageGridRef.current
       const detailEl = detailWrapperRef.current
       const btnEl = buttonRefs.current[selected.icon]
-      if (!gridEl || !detailEl || !btnEl) {
+      if (!listEl || !detailEl || !btnEl) {
         setDesktopDetailOffsetPx(0)
         return
       }
-      const lastFeature = visibleFeatures[visibleFeatures.length - 1]
-      const lastBtn = lastFeature ? buttonRefs.current[lastFeature.icon] : null
-      const listBottom = lastBtn ? lastBtn.offsetTop + lastBtn.offsetHeight : gridEl.offsetHeight
+      const listRect = listEl.getBoundingClientRect()
+      const btnRect = btnEl.getBoundingClientRect()
       const detailHeight = detailEl.offsetHeight
-      const maxOffset = Math.max(0, listBottom - detailHeight)
-      const desiredOffset = Math.max(0, Math.min(maxOffset, btnEl.offsetTop))
+      const relBtnTop = Math.max(0, btnRect.top - listRect.top)
+      const maxOffset = Math.max(0, listRect.height - detailHeight)
+      const desiredOffset = Math.round(Math.max(0, Math.min(maxOffset, relBtnTop)))
       setDesktopDetailOffsetPx(desiredOffset)
     }
 
@@ -510,7 +468,16 @@ export default function KeyFeaturesSection() {
       window.cancelAnimationFrame(raf)
       window.removeEventListener('resize', computeAlignment)
     }
-  }, [selected, visibleFeatures, browseMode, activeTrackId, activeRoomId, activeGroupId, expandedFeature])
+  }, [
+    isDesktop,
+    selected,
+    visibleFeatures,
+    browseMode,
+    activeTrackId,
+    activeRoomId,
+    activeGroupId,
+    expandedFeature,
+  ])
 
   const selectTrack = (trackId: string) => {
     setActiveTrackId(trackId)
@@ -736,98 +703,163 @@ export default function KeyFeaturesSection() {
 
         {/* Unified Narrated Capabilities Stage:
             - Mobile (< lg): Inline Accordion (player opens directly below tapped feature)
-            - Desktop (lg+): Aligned + Sticky Master-Detail (player tracks selected feature & viewport) */}
-        <div
-          ref={stageGridRef}
-          id="key-features-feature-stage"
-          className="scroll-mt-24 flex flex-col gap-1.5 lg:grid lg:grid-cols-[minmax(17rem,21rem)_minmax(0,1fr)] lg:items-start lg:gap-x-8 lg:gap-y-1.5"
-        >
-          {visibleFeatures.map((feature, index) => {
-            const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
-            const isSelected = feature.icon === selected.icon
-            const itemRoomMeta = featureCatalogByIcon.get(feature.icon)
-            const itemGradient =
-              ROOM_GRADIENTS[itemRoomMeta?.roomId ?? 'series-desk'] ?? gradient
-
-            return (
-              <button
-                key={feature.icon}
-                ref={(el) => {
-                  buttonRefs.current[feature.icon] = el
-                }}
-                type="button"
-                title={feature.title}
-                aria-pressed={isSelected}
-                onClick={() => {
-                  setSelectedIcon(feature.icon)
-                  setExpandedFeature(null)
-                }}
-                className={cn(
-                  'group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-all lg:col-start-1 lg:order-none cursor-pointer',
-                  FEATURE_ROW_ORDER[index] ?? 'order-[39]',
-                  FEATURE_ROW_START[index] ?? 'lg:row-start-[20]',
-                  isSelected
-                    ? 'border-emerald-400/50 bg-slate-800/95 text-white shadow-md shadow-black/30'
-                    : 'border-transparent bg-slate-900/35 text-gray-400 hover:border-slate-800 hover:bg-slate-800/60 hover:text-white'
-                )}
-              >
-                <span
-                  className={cn(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
-                    itemGradient
-                  )}
-                >
-                  <Icon className="h-4 w-4 text-white" />
-                </span>
-                <span className="min-w-0 flex-1 whitespace-normal break-words font-medium leading-snug">
-                  {feature.title}
-                </span>
-                <ChevronRight
-                  className={cn(
-                    'hidden h-4 w-4 shrink-0 transition-transform lg:block',
-                    isSelected
-                      ? 'translate-x-0.5 text-emerald-300'
-                      : 'text-slate-600 group-hover:text-slate-400'
-                  )}
-                  aria-hidden
-                />
-                <ChevronDown
-                  className={cn(
-                    'h-4 w-4 shrink-0 transition-transform lg:hidden',
-                    isSelected ? 'rotate-180 text-emerald-300' : 'text-slate-500'
-                  )}
-                  aria-hidden
-                />
-              </button>
-            )
-          })}
-
+            - Desktop (lg+): Independent 2-column Master-Detail (tight feature stack + sticky/aligned player) */}
+        {isDesktop ? (
           <div
-            ref={detailWrapperRef}
-            style={
-              desktopDetailOffsetPx > 0
-                ? { marginTop: `${desktopDetailOffsetPx}px` }
-                : undefined
-            }
-            className={cn(
-              'my-1 lg:my-0 lg:col-start-2 lg:row-start-1 lg:row-end-[21] lg:self-start lg:sticky lg:top-24 lg:order-none lg:transition-[margin-top] lg:duration-300 lg:ease-out',
-              FEATURE_DETAIL_ORDER[selectedIndex] ?? 'order-[40]'
-            )}
+            ref={stageGridRef}
+            id="key-features-feature-stage"
+            className="relative scroll-mt-24 grid grid-cols-[minmax(17rem,21rem)_minmax(0,1fr)] items-start gap-x-8"
           >
-            <FeatureDetail
-              feature={selected}
-              locale={locale}
-              gradient={gradient}
-              expanded={expandedFeature === selected.icon}
-              onToggle={toggleSelectedLearnMore}
-              screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
-              screenshotVariants={screenshot?.variants}
-              enterFullscreenLabel={t('enterFullscreenOverview')}
-              exitFullscreenLabel={t('exitFullscreenOverview')}
-              {...detailLabels}
-            />
+            <div ref={featureListRef} className="flex flex-col gap-1.5">
+              {visibleFeatures.map((feature) => {
+                const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
+                const isSelected = feature.icon === selected.icon
+                const itemRoomMeta = featureCatalogByIcon.get(feature.icon)
+                const itemGradient =
+                  ROOM_GRADIENTS[itemRoomMeta?.roomId ?? 'series-desk'] ?? gradient
+
+                return (
+                  <button
+                    key={feature.icon}
+                    ref={(el) => {
+                      buttonRefs.current[feature.icon] = el
+                    }}
+                    type="button"
+                    title={feature.title}
+                    aria-pressed={isSelected}
+                    onClick={() => {
+                      setSelectedIcon(feature.icon)
+                      setExpandedFeature(null)
+                    }}
+                    className={cn(
+                      'group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-all cursor-pointer',
+                      isSelected
+                        ? 'border-emerald-400/50 bg-slate-800/95 text-white shadow-md shadow-black/30'
+                        : 'border-transparent bg-slate-900/35 text-gray-400 hover:border-slate-800 hover:bg-slate-800/60 hover:text-white'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
+                        itemGradient
+                      )}
+                    >
+                      <Icon className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="min-w-0 flex-1 whitespace-normal break-words font-medium leading-snug">
+                      {feature.title}
+                    </span>
+                    <ChevronRight
+                      className={cn(
+                        'h-4 w-4 shrink-0 transition-transform',
+                        isSelected
+                          ? 'translate-x-0.5 text-emerald-300'
+                          : 'text-slate-600 group-hover:text-slate-400'
+                      )}
+                      aria-hidden
+                    />
+                  </button>
+                )
+              })}
+            </div>
+
+            <div
+              ref={detailWrapperRef}
+              style={
+                desktopDetailOffsetPx > 0
+                  ? { marginTop: `${desktopDetailOffsetPx}px` }
+                  : undefined
+              }
+              className="sticky top-24 lg:sticky lg:top-24 w-full min-w-0 self-start transition-[margin-top] duration-300 ease-out"
+            >
+              <FeatureDetail
+                feature={selected}
+                locale={locale}
+                gradient={gradient}
+                expanded={expandedFeature === selected.icon}
+                onToggle={toggleSelectedLearnMore}
+                screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
+                screenshotVariants={screenshot?.variants}
+                enterFullscreenLabel={t('enterFullscreenOverview')}
+                exitFullscreenLabel={t('exitFullscreenOverview')}
+                {...detailLabels}
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div
+            ref={stageGridRef}
+            id="key-features-feature-stage"
+            className="relative scroll-mt-24 flex flex-col gap-1.5"
+          >
+            {visibleFeatures.map((feature) => {
+              const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
+              const isSelected = feature.icon === selected.icon
+              const itemRoomMeta = featureCatalogByIcon.get(feature.icon)
+              const itemGradient =
+                ROOM_GRADIENTS[itemRoomMeta?.roomId ?? 'series-desk'] ?? gradient
+
+              return (
+                <Fragment key={feature.icon}>
+                  <button
+                    ref={(el) => {
+                      buttonRefs.current[feature.icon] = el
+                    }}
+                    type="button"
+                    title={feature.title}
+                    aria-pressed={isSelected}
+                    onClick={() => {
+                      setSelectedIcon(feature.icon)
+                      setExpandedFeature(null)
+                    }}
+                    className={cn(
+                      'group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-all cursor-pointer',
+                      isSelected
+                        ? 'border-emerald-400/50 bg-slate-800/95 text-white shadow-md shadow-black/30'
+                        : 'border-transparent bg-slate-900/35 text-gray-400 hover:border-slate-800 hover:bg-slate-800/60 hover:text-white'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
+                        itemGradient
+                      )}
+                    >
+                      <Icon className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="min-w-0 flex-1 whitespace-normal break-words font-medium leading-snug">
+                      {feature.title}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        'h-4 w-4 shrink-0 transition-transform',
+                        isSelected ? 'rotate-180 text-emerald-300' : 'text-slate-500'
+                      )}
+                      aria-hidden
+                    />
+                  </button>
+
+                  {isSelected ? (
+                    <div ref={detailWrapperRef} className="my-1 w-full min-w-0">
+                      <FeatureDetail
+                        feature={selected}
+                        locale={locale}
+                        gradient={gradient}
+                        expanded={expandedFeature === selected.icon}
+                        onToggle={toggleSelectedLearnMore}
+                        screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
+                        screenshotVariants={screenshot?.variants}
+                        enterFullscreenLabel={t('enterFullscreenOverview')}
+                        exitFullscreenLabel={t('exitFullscreenOverview')}
+                        {...detailLabels}
+                      />
+                    </div>
+                  ) : null}
+                </Fragment>
+              )
+            })}
+          </div>
+        )}
       </div>
     </section>
   )
