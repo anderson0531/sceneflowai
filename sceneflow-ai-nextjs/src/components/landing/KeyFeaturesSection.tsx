@@ -1,35 +1,20 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocale, useTranslations } from 'next-intl'
-import {
-  Sparkles,
-  ChevronDown,
-  ChevronUp,
-  ImageIcon,
-  Briefcase,
-  Layers,
-  Clapperboard,
-  Bot,
-} from 'lucide-react'
+import { Sparkles, ChevronDown, ChevronRight, ImageIcon, Briefcase, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FEATURE_ICONS } from './keyFeatureIcons'
-import { FeatureRoomOverview } from '@/components/landing/FeatureRoomOverview'
 import { FeatureScreenshotFrame } from '@/components/landing/FeatureScreenshotFrame'
 import type { FocusKeyFeaturePayload } from '@/components/landing/FullStudioDirectoryDrawer'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
-import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import {
   getKeyFeatureScreenshot,
   keyFeatureScreenshotSrc,
   type KeyFeatureScreenshotVariant,
 } from '@/config/landing/keyFeatureScreenshots'
 import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
-import { standaloneDemoKey } from '@/config/landing/keyFeatureChapterMap'
-import { getKeyFeatureVideoLocales } from '@/config/landing/keyFeatureVideos'
-import { useLandingVideoLocale } from '@/i18n/useLandingVideoLocale'
-import type { VideoLocaleId } from '@/config/landing/videoLocales'
 
 const SECTION_ID = 'key-features'
 
@@ -81,7 +66,7 @@ type FeaturePane = {
   features: FeatureData[]
 }
 
-/** Mobile flex order: each row, then the open detail. Desktop resets with lg:order-none. */
+/** Mobile flex order: each row, then the open detail right beneath it (inline accordion). Desktop resets with lg:order-none. */
 const FEATURE_ROW_ORDER = [
   'order-1',
   'order-3',
@@ -97,6 +82,12 @@ const FEATURE_ROW_ORDER = [
   'order-[23]',
   'order-[25]',
   'order-[27]',
+  'order-[29]',
+  'order-[31]',
+  'order-[33]',
+  'order-[35]',
+  'order-[37]',
+  'order-[39]',
 ]
 const FEATURE_DETAIL_ORDER = [
   'order-2',
@@ -113,6 +104,12 @@ const FEATURE_DETAIL_ORDER = [
   'order-[24]',
   'order-[26]',
   'order-[28]',
+  'order-[30]',
+  'order-[32]',
+  'order-[34]',
+  'order-[36]',
+  'order-[38]',
+  'order-[40]',
 ]
 const FEATURE_ROW_START = [
   'lg:row-start-1',
@@ -129,6 +126,12 @@ const FEATURE_ROW_START = [
   'lg:row-start-[12]',
   'lg:row-start-[13]',
   'lg:row-start-[14]',
+  'lg:row-start-[15]',
+  'lg:row-start-[16]',
+  'lg:row-start-[17]',
+  'lg:row-start-[18]',
+  'lg:row-start-[19]',
+  'lg:row-start-[20]',
 ]
 
 const ROOM_GRADIENTS: Record<string, string> = {
@@ -172,13 +175,13 @@ function featuresForRoom(room: RoomData, paneId: string): FeatureData[] {
 function LandingUiLanguagesBlock({ label }: { label: string }) {
   return (
     <div className="border-t border-slate-800 pt-4">
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
         {label}
       </p>
       <div className="space-y-3">
         {Object.entries(LANDING_UI_LANGUAGES_BY_REGION).map(([region, names]) => (
           <div key={region}>
-            <p className="text-[11px] font-medium text-emerald-400/90 mb-1.5">{region}</p>
+            <p className="mb-1.5 text-[11px] font-medium text-emerald-400/90">{region}</p>
             <div className="flex flex-wrap gap-1.5">
               {names.map((name) => (
                 <span
@@ -214,10 +217,10 @@ function LearnMoreRow({
         )}
       />
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">
           {label}
         </div>
-        <p className="text-gray-300 text-sm leading-relaxed">{text}</p>
+        <p className="text-sm leading-relaxed text-gray-300">{text}</p>
       </div>
     </div>
   )
@@ -246,11 +249,12 @@ function FeatureLearnMore({
     <div className="pt-4">
       <button
         type="button"
+        title={expanded ? showLessLabel : learnMoreLabel}
         onClick={onToggle}
         aria-expanded={expanded}
         aria-controls={panelId}
         className={cn(
-          'inline-flex items-center gap-1.5 text-sm font-medium bg-gradient-to-r bg-clip-text text-transparent transition-opacity hover:opacity-80',
+          'inline-flex items-center gap-1.5 bg-gradient-to-r bg-clip-text text-sm font-medium text-transparent transition-opacity hover:opacity-80 cursor-pointer',
           gradient
         )}
       >
@@ -304,7 +308,6 @@ function FeatureDetail({
   showLessLabel,
   screenshotLabel,
   landingUiLanguagesLabel,
-  videoSoonLabel,
   screenshotSrc,
   screenshotVariants,
   enterFullscreenLabel,
@@ -319,44 +322,15 @@ function FeatureDetail({
   showLessLabel: string
   screenshotLabel: string
   landingUiLanguagesLabel: string
-  videoSoonLabel: string
   screenshotSrc: string
   screenshotVariants?: readonly KeyFeatureScreenshotVariant[]
   enterFullscreenLabel: string
   exitFullscreenLabel: string
 }) {
-  const demoKey = standaloneDemoKey(feature.icon)
-  const videoLocales = useMemo(
-    () => (demoKey ? getKeyFeatureVideoLocales(demoKey) : []),
-    [demoKey]
-  )
-  const syncedLocaleId = useLandingVideoLocale(videoLocales)
-  const [demoLocaleId, setDemoLocaleId] = useState<VideoLocaleId>(syncedLocaleId)
-  const producedLocales = videoLocales.filter((locale) => locale.available && locale.src)
-  const activeDemo =
-    producedLocales.find((locale) => locale.id === demoLocaleId) ?? producedLocales[0]
-  const demoSrc = activeDemo?.src ?? ''
-
-  useEffect(() => {
-    setDemoLocaleId(syncedLocaleId)
-  }, [syncedLocaleId, feature.icon])
-
-  const learnMore = (
-    <FeatureLearnMore
-      feature={feature}
-      gradient={gradient}
-      expanded={expanded}
-      onToggle={onToggle}
-      learnMoreLabel={learnMoreLabel}
-      showLessLabel={showLessLabel}
-      landingUiLanguagesLabel={landingUiLanguagesLabel}
-    />
-  )
-
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
-      <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+    <div className="rounded-2xl border border-slate-800/90 bg-slate-900/60 p-4 shadow-xl sm:p-6">
+      <h3 className="text-lg font-semibold text-white sm:text-xl">{feature.title}</h3>
+      <p className="mt-1.5 text-sm leading-relaxed text-gray-300">{feature.description}</p>
 
       {screenshotSrc ? (
         <FeatureScreenshotFrame
@@ -370,48 +344,25 @@ function FeatureDetail({
         />
       ) : (
         <div className="relative mt-4 aspect-video overflow-hidden rounded-xl border border-dashed border-slate-700 bg-slate-950/70">
-          {demoSrc ? (
-            <>
-              <video
-                key={demoSrc}
-                src={demoSrc}
-                className="absolute inset-0 h-full w-full object-contain bg-black"
-                autoPlay
-                muted
-                controls
-                playsInline
-                preload="metadata"
-                controlsList="nodownload"
-                onContextMenu={(event) => event.preventDefault()}
-                aria-label={feature.title}
-              />
-              {producedLocales.length > 1 ? (
-                <VideoLanguageControl
-                  locales={videoLocales}
-                  activeLocaleId={activeDemo?.id ?? demoLocaleId}
-                  onSelect={(id) => {
-                    if (!producedLocales.some((locale) => locale.id === id)) return
-                    setDemoLocaleId(id)
-                  }}
-                  soonLabel={videoSoonLabel}
-                  variant="overlay"
-                  align="start"
-                />
-              ) : null}
-            </>
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
-              <ImageIcon className="h-5 w-5 text-slate-600" aria-hidden="true" />
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                {screenshotLabel}
-              </p>
-              <p className="text-xs leading-relaxed text-slate-400">{feature.screenshot}</p>
-            </div>
-          )}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
+            <ImageIcon className="h-5 w-5 text-slate-600" aria-hidden="true" />
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              {screenshotLabel}
+            </p>
+            <p className="text-xs leading-relaxed text-slate-400">{feature.screenshot}</p>
+          </div>
         </div>
       )}
 
-      {learnMore}
+      <FeatureLearnMore
+        feature={feature}
+        gradient={gradient}
+        expanded={expanded}
+        onToggle={onToggle}
+        learnMoreLabel={learnMoreLabel}
+        showLessLabel={showLessLabel}
+        landingUiLanguagesLabel={landingUiLanguagesLabel}
+      />
     </div>
   )
 }
@@ -421,15 +372,18 @@ export default function KeyFeaturesSection() {
   const locale = useLocale()
   const landingCopy = useStudioLandingCopy()
   const useCaseCopy = landingCopy.useCaseDirectory
-  const automationCopy = landingCopy.directoryDrawer
   const rooms = useMemo(() => t.raw('rooms') as RoomData[], [t])
   const [browseMode, setBrowseMode] = useState<'use-case' | 'room'>('use-case')
   const [activeTrackId, setActiveTrackId] = useState<string>('commercial-training')
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null)
   const [activeGroupId, setActiveGroupId] = useState('spend')
-  const [selectedIcon, setSelectedIcon] = useState<string | null>('scriptSupervisor')
+  const [selectedIcon, setSelectedIcon] = useState<string | null>('producerLaunchpad')
   const [expandedFeature, setExpandedFeature] = useState<string | null>(null)
-  const [showFeaturesList, setShowFeaturesList] = useState(false)
+  const [desktopDetailOffsetPx, setDesktopDetailOffsetPx] = useState<number>(0)
+
+  const stageGridRef = useRef<HTMLDivElement | null>(null)
+  const detailWrapperRef = useRef<HTMLDivElement | null>(null)
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({})
 
   useEffect(() => {
     const applyFocus = (payload?: FocusKeyFeaturePayload | null) => {
@@ -511,6 +465,10 @@ export default function KeyFeaturesSection() {
   const visibleFeatures = browseMode === 'use-case' ? useCaseFeatures : roomVisibleFeatures
   const selected =
     visibleFeatures.find((feature) => feature.icon === selectedIcon) ?? visibleFeatures[0]
+  const selectedIndex = Math.max(
+    0,
+    visibleFeatures.findIndex((feature) => feature.icon === selected?.icon)
+  )
   const selectedRoomMeta = selected ? featureCatalogByIcon.get(selected.icon) : undefined
   const gradient =
     browseMode === 'use-case'
@@ -518,10 +476,47 @@ export default function KeyFeaturesSection() {
         ROOM_GRADIENTS['series-desk'])
       : ROOM_GRADIENTS[activeRoom?.id ?? 'series-desk']
 
+  // On desktop (`lg+`), align the video player card vertically with the selected feature item
+  // (clamped to `[0, listHeight - detailHeight]`), while CSS `lg:sticky lg:top-24` also keeps it in viewport on scroll.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !selected) return
+    const computeAlignment = () => {
+      if (
+        typeof window.matchMedia !== 'function' ||
+        !window.matchMedia('(min-width: 1024px)').matches
+      ) {
+        setDesktopDetailOffsetPx(0)
+        return
+      }
+      const gridEl = stageGridRef.current
+      const detailEl = detailWrapperRef.current
+      const btnEl = buttonRefs.current[selected.icon]
+      if (!gridEl || !detailEl || !btnEl) {
+        setDesktopDetailOffsetPx(0)
+        return
+      }
+      const lastFeature = visibleFeatures[visibleFeatures.length - 1]
+      const lastBtn = lastFeature ? buttonRefs.current[lastFeature.icon] : null
+      const listBottom = lastBtn ? lastBtn.offsetTop + lastBtn.offsetHeight : gridEl.offsetHeight
+      const detailHeight = detailEl.offsetHeight
+      const maxOffset = Math.max(0, listBottom - detailHeight)
+      const desiredOffset = Math.max(0, Math.min(maxOffset, btnEl.offsetTop))
+      setDesktopDetailOffsetPx(desiredOffset)
+    }
+
+    const raf = window.requestAnimationFrame(computeAlignment)
+    window.addEventListener('resize', computeAlignment)
+    return () => {
+      window.cancelAnimationFrame(raf)
+      window.removeEventListener('resize', computeAlignment)
+    }
+  }, [selected, visibleFeatures, browseMode, activeTrackId, activeRoomId, activeGroupId, expandedFeature])
+
   const selectTrack = (trackId: string) => {
     setActiveTrackId(trackId)
     setSelectedIcon(null)
     setExpandedFeature(null)
+    setDesktopDetailOffsetPx(0)
   }
 
   const selectRoom = (id: string) => {
@@ -530,6 +525,7 @@ export default function KeyFeaturesSection() {
     setActiveGroupId('spend')
     setSelectedIcon(null)
     setExpandedFeature(null)
+    setDesktopDetailOffsetPx(0)
     const nextHash = `#${id}`
     if (window.location.hash !== nextHash) {
       window.history.replaceState(null, '', nextHash)
@@ -540,23 +536,18 @@ export default function KeyFeaturesSection() {
     setActiveGroupId(id)
     setSelectedIcon(null)
     setExpandedFeature(null)
+    setDesktopDetailOffsetPx(0)
   }
 
   if (!activeRoom || !selected) return null
 
-  const demoKey = standaloneDemoKey(selected.icon)
-  const demoSrc =
-    demoKey && !getKeyFeatureScreenshot(selected.icon)
-      ? (getKeyFeatureVideoLocales(demoKey).find((locale) => locale.available && locale.src)?.src ?? '')
-      : ''
-  const screenshot = demoSrc ? null : getKeyFeatureScreenshot(selected.icon)
+  const screenshot = getKeyFeatureScreenshot(selected.icon)
 
   const detailLabels = {
     learnMoreLabel: t('learnMoreLabel'),
     showLessLabel: t('showLessLabel'),
     screenshotLabel: t('screenshotLabel'),
     landingUiLanguagesLabel: t('landingUiLanguagesLabel'),
-    videoSoonLabel: t('videoSoon'),
   }
   const toggleSelectedLearnMore = () =>
     setExpandedFeature((current) => (current === selected.icon ? null : selected.icon))
@@ -564,88 +555,26 @@ export default function KeyFeaturesSection() {
   return (
     <section
       id={SECTION_ID}
-      className="scroll-mt-20 bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 py-20 md:py-28 overflow-hidden"
+      className="scroll-mt-20 overflow-x-clip bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 py-16 md:py-24"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Clean, Focused Header — Zero Redundant Oval Badges or Callout Clutter */}
         <motion.div
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: 20 }}
+          className="mb-8 text-center"
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full mb-6">
-            <Sparkles className="w-4 h-4 text-indigo-400" />
-            <span className="text-indigo-300 text-sm font-medium">{t('badge')}</span>
-          </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
             {t('title')}
           </h2>
-          <p className="text-gray-400 max-w-2xl mx-auto text-lg">{t('subtitle')}</p>
+          <p className="mx-auto mt-3 max-w-2xl text-base text-gray-400 sm:text-lg">
+            {t('subtitle')}
+          </p>
 
-          {/* Workflow Automation & FlowDirector 20-Project Scale Callout */}
-          <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-emerald-500/30 bg-slate-900/80 p-4 text-left sm:p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-3xl">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
-                  {automationCopy.automationEyebrow}
-                </p>
-                <h3 className="mt-1 text-base font-bold text-white sm:text-lg">
-                  {automationCopy.automationTitle}
-                </h3>
-                <p className="mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm">
-                  {automationCopy.automationSubtitle}
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
-                <button
-                  type="button"
-                  title={automationCopy.spotlightFlowDirectorLabel}
-                  onClick={() => {
-                    setBrowseMode('use-case')
-                    setActiveTrackId('commercial-training')
-                    setSelectedIcon('scriptSupervisor')
-                    setExpandedFeature(null)
-                  }}
-                  className={cn(
-                    'inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all',
-                    selected.icon === 'scriptSupervisor'
-                      ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-100 shadow-sm'
-                      : 'border-slate-700 bg-slate-800/80 text-gray-200 hover:border-emerald-400/50 hover:text-white'
-                  )}
-                >
-                  <Clapperboard className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
-                  <span className="whitespace-normal text-left leading-snug">
-                    {automationCopy.spotlightFlowDirectorLabel}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  title={automationCopy.spotlightAgentsLabel}
-                  onClick={() => {
-                    setBrowseMode('use-case')
-                    setActiveTrackId('commercial-training')
-                    setSelectedIcon('productionAgent')
-                    setExpandedFeature(null)
-                  }}
-                  className={cn(
-                    'inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all',
-                    selected.icon === 'productionAgent'
-                      ? 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 shadow-sm'
-                      : 'border-slate-700 bg-slate-800/80 text-gray-200 hover:border-cyan-400/50 hover:text-white'
-                  )}
-                >
-                  <Bot className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
-                  <span className="whitespace-normal text-left leading-snug">
-                    {automationCopy.spotlightAgentsLabel}
-                  </span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Browse Mode Switcher: By Use Case (Default) vs By Studio Room */}
-          <div className="mt-6 flex w-full flex-col items-stretch justify-center gap-1.5 rounded-2xl border border-slate-700/70 bg-slate-900/90 p-1.5 sm:inline-flex sm:w-auto sm:flex-row sm:items-center">
+          {/* Clean 2-Mode Switcher: Browse by Use Case vs Browse by Studio Room */}
+          <div className="mt-6 flex w-full flex-col items-stretch justify-center gap-1.5 rounded-2xl border border-slate-800 bg-slate-900/90 p-1.5 sm:inline-flex sm:w-auto sm:flex-row sm:items-center">
             <button
               type="button"
               title={useCaseCopy.viewByUseCaseLabel}
@@ -653,16 +582,19 @@ export default function KeyFeaturesSection() {
                 setBrowseMode('use-case')
                 setSelectedIcon(null)
                 setExpandedFeature(null)
+                setDesktopDetailOffsetPx(0)
               }}
               className={cn(
-                'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:w-auto sm:text-sm',
+                'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:w-auto sm:text-sm cursor-pointer',
                 browseMode === 'use-case'
                   ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 shadow'
                   : 'text-gray-300 hover:bg-slate-800 hover:text-white'
               )}
             >
               <Briefcase className="h-4 w-4 shrink-0" aria-hidden />
-              <span className="whitespace-normal leading-tight">{useCaseCopy.viewByUseCaseLabel}</span>
+              <span className="whitespace-normal leading-tight">
+                {useCaseCopy.viewByUseCaseLabel}
+              </span>
             </button>
             <button
               type="button"
@@ -671,9 +603,10 @@ export default function KeyFeaturesSection() {
                 setBrowseMode('room')
                 setSelectedIcon(null)
                 setExpandedFeature(null)
+                setDesktopDetailOffsetPx(0)
               }}
               className={cn(
-                'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:w-auto sm:text-sm',
+                'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:w-auto sm:text-sm cursor-pointer',
                 browseMode === 'room'
                   ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow'
                   : 'text-gray-300 hover:bg-slate-800 hover:text-white'
@@ -686,12 +619,12 @@ export default function KeyFeaturesSection() {
         </motion.div>
 
         {browseMode === 'use-case' ? (
-          <div>
-            {/* 5 Curated Use-Case Track Tabs — wraps cleanly on S23 & desktop with full tooltips */}
+          <>
+            {/* 5 Use-Case Track Tabs */}
             <div
               role="tablist"
               aria-label={useCaseCopy.viewByUseCaseLabel}
-              className="mb-6 grid grid-cols-1 gap-1.5 rounded-2xl border border-slate-700/60 bg-slate-900/75 p-1.5 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-center"
+              className="mb-5 grid grid-cols-1 gap-1.5 rounded-2xl border border-slate-800 bg-slate-900/70 p-1.5 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-center"
             >
               {useCaseCopy.tracks.map((track) => {
                 const isActive = track.id === activeTrack.id
@@ -704,9 +637,9 @@ export default function KeyFeaturesSection() {
                     aria-selected={isActive}
                     onClick={() => selectTrack(track.id)}
                     className={cn(
-                      'rounded-xl px-3.5 py-2.5 text-left text-xs font-semibold leading-snug transition-all sm:text-sm lg:text-center',
+                      'rounded-xl px-3.5 py-2.5 text-left text-xs font-semibold leading-snug transition-all sm:text-sm lg:text-center cursor-pointer',
                       isActive
-                        ? 'bg-gradient-to-r from-emerald-500/25 via-cyan-500/20 to-indigo-500/25 border border-emerald-400/50 text-white shadow-md'
+                        ? 'border border-emerald-400/50 bg-emerald-500/15 text-white shadow-sm'
                         : 'border border-transparent text-gray-400 hover:bg-slate-800/70 hover:text-white'
                     )}
                   >
@@ -716,102 +649,23 @@ export default function KeyFeaturesSection() {
               })}
             </div>
 
-            {/* Active Use-Case Banner */}
-            <div className="mb-6 rounded-2xl border border-emerald-500/25 bg-slate-900/65 p-5 sm:p-6">
-              <span className="inline-block rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-                {activeTrack.badge}
-              </span>
-              <h3 className="mt-2.5 text-xl font-bold text-white sm:text-2xl">
+            {/* Clean Context Lead — No Oval Pill Badge, No Heavy Nested Card */}
+            <div className="mb-6 border-l-2 border-emerald-400/60 pl-4">
+              <h3 className="text-base font-semibold text-white sm:text-lg">
                 {activeTrack.headline}
               </h3>
-              <p className="mt-1.5 max-w-4xl text-sm leading-relaxed text-gray-300 sm:text-base">
+              <p className="mt-1 max-w-4xl text-xs leading-relaxed text-gray-400 sm:text-sm">
                 {activeTrack.description}
               </p>
             </div>
-
-            {/* Curated Features List + Full 5K Detail Panel */}
-            <div
-              id="key-features-feature-stage"
-              className="scroll-mt-24 flex flex-col gap-1 lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6 lg:gap-y-1"
-            >
-              {visibleFeatures.map((feature, index) => {
-                const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
-                const isSelected = feature.icon === selected.icon
-                const itemRoomMeta = featureCatalogByIcon.get(feature.icon)
-                const itemGradient =
-                  ROOM_GRADIENTS[itemRoomMeta?.roomId ?? 'series-desk'] ?? gradient
-                return (
-                  <button
-                    key={feature.icon}
-                    type="button"
-                    title={feature.title}
-                    aria-pressed={isSelected}
-                    onClick={() => {
-                      setSelectedIcon(feature.icon)
-                      setExpandedFeature(null)
-                    }}
-                    className={cn(
-                      'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors lg:col-start-1 lg:order-none',
-                      FEATURE_ROW_ORDER[index],
-                      FEATURE_ROW_START[index],
-                      isSelected
-                        ? 'bg-slate-800 text-white shadow-sm'
-                        : 'text-gray-400 hover:bg-slate-800/60 hover:text-white'
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
-                        itemGradient
-                      )}
-                    >
-                      <Icon className="h-4 w-4 text-white" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block whitespace-normal break-words font-medium leading-snug">
-                        {feature.title}
-                      </span>
-                      {itemRoomMeta?.roomLabel ? (
-                        <span className="block whitespace-normal break-words text-[11px] text-gray-400">
-                          {itemRoomMeta.roomLabel}
-                        </span>
-                      ) : null}
-                    </span>
-                  </button>
-                )
-              })}
-              <div
-                className={cn(
-                  'lg:col-start-2 lg:row-span-[14] lg:row-start-1 lg:order-none',
-                  FEATURE_DETAIL_ORDER[
-                    Math.max(
-                      0,
-                      visibleFeatures.findIndex((feature) => feature.icon === selected.icon)
-                    )
-                  ]
-                )}
-              >
-                <FeatureDetail
-                  feature={selected}
-                  locale={locale}
-                  gradient={gradient}
-                  expanded={expandedFeature === selected.icon}
-                  onToggle={toggleSelectedLearnMore}
-                  screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
-                  screenshotVariants={screenshot?.variants}
-                  enterFullscreenLabel={t('enterFullscreenOverview')}
-                  exitFullscreenLabel={t('exitFullscreenOverview')}
-                  {...detailLabels}
-                />
-              </div>
-            </div>
-          </div>
+          </>
         ) : (
           <>
+            {/* 4 Studio Room Tabs — Responsive 2x2 on Mobile, 4-Column on Desktop */}
             <div
               role="tablist"
               aria-label={t('title')}
-              className="mb-6 flex gap-1 overflow-x-auto rounded-2xl border border-slate-700/50 bg-slate-800/50 p-1.5"
+              className="mb-4 grid grid-cols-2 gap-1.5 rounded-2xl border border-slate-800 bg-slate-900/70 p-1.5 sm:grid-cols-4"
             >
               {rooms.map((room) => {
                 const isActive = room.id === activeRoom.id
@@ -823,172 +677,157 @@ export default function KeyFeaturesSection() {
                     role="tab"
                     title={room.label}
                     aria-selected={isActive}
-                    aria-controls="key-features-panel"
+                    aria-controls="key-features-feature-stage"
                     onClick={() => selectRoom(room.id)}
                     className={cn(
-                      'shrink-0 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300',
+                      'rounded-xl px-3 py-2.5 text-center text-xs font-semibold leading-snug transition-all sm:text-sm cursor-pointer',
                       isActive
-                        ? `bg-gradient-to-r ${ROOM_GRADIENTS[room.id] ?? gradient} text-white shadow-lg`
-                        : 'text-gray-400 hover:bg-slate-700/50 hover:text-white'
+                        ? `bg-gradient-to-r ${ROOM_GRADIENTS[room.id] ?? gradient} text-white shadow-md`
+                        : 'text-gray-400 hover:bg-slate-800/70 hover:text-white'
                     )}
                   >
-                    {room.label}
+                    <span className="whitespace-normal break-words">{room.label}</span>
                   </button>
                 )
               })}
             </div>
 
-            <div id="key-features-panel" role="tabpanel" aria-labelledby={activeRoom.id}>
-              <FeatureRoomOverview
-                roomId={activeRoom.id}
-                title={activeRoom.label}
-                headline={activeRoom.headline}
-                promise={activeRoom.promise}
-                comingSoonLabel={t('overviewComingSoon')}
-                pauseLabel={t('pauseOverview')}
-                playLabel={t('playOverview')}
-                muteLabel={t('muteOverview')}
-                unmuteLabel={t('unmuteOverview')}
-                enterFullscreenLabel={t('enterFullscreenOverview')}
-                exitFullscreenLabel={t('exitFullscreenOverview')}
-                watchLongformHref={
-                  activeRoom.id === 'screening-room' ? '#production-examples' : undefined
-                }
-                watchLongformLabel={
-                  activeRoom.id === 'screening-room' ? t('watchLongformLabel') : undefined
-                }
-              />
-
-              <div className="mb-5 flex items-center justify-center sm:justify-start">
-                <button
-                  type="button"
-                  onClick={() => setShowFeaturesList((prev) => !prev)}
-                  aria-expanded={showFeaturesList}
-                  aria-controls="key-features-detail-list"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-900/80 px-4 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400/40 hover:bg-slate-800 hover:text-white sm:text-sm"
-                >
-                  <span>
-                    {t.has('featuresListLabel') ? t('featuresListLabel') : 'Features List'}
-                  </span>
-                  {showFeaturesList ? (
-                    <ChevronUp className="h-4 w-4 text-cyan-300" aria-hidden />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-cyan-300" aria-hidden />
-                  )}
-                </button>
-              </div>
-
-              {showFeaturesList ? (
-                <div id="key-features-detail-list">
-                  {panes.length > 0 ? (
-                    <div
-                      role="tablist"
-                      aria-label={activeRoom.label}
-                      className="mb-5 flex gap-1 overflow-x-auto"
-                    >
-                      {panes.map((pane) => {
-                        const isActive = pane.id === (activePane?.id ?? panes[0].id)
-                        return (
-                          <button
-                            key={pane.id}
-                            id={`key-feature-group-${pane.id}`}
-                            type="button"
-                            role="tab"
-                            aria-selected={isActive}
-                            onClick={() => selectGroup(pane.id)}
-                            className={cn(
-                              'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition-colors',
-                              isActive
-                                ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-200'
-                                : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
-                            )}
-                          >
-                            {pane.label}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ) : null}
-
-                  {activePane && (activePane.headline || activePane.description) ? (
-                    <div className="mb-5 rounded-2xl border border-slate-800/80 bg-slate-900/30 px-4 py-3.5 sm:px-5">
-                      {activePane.headline ? (
-                        <p className="text-sm font-semibold text-white sm:text-base">
-                          {activePane.headline}
-                        </p>
-                      ) : null}
-                      {activePane.description ? (
-                        <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-400 sm:text-sm">
-                          {activePane.description}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  <div className="flex flex-col gap-1 lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6 lg:gap-y-1">
-                    {visibleFeatures.map((feature, index) => {
-                      const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
-                      const isSelected = feature.icon === selected.icon
-                      return (
-                        <button
-                          key={feature.icon}
-                          type="button"
-                          title={feature.title}
-                          aria-pressed={isSelected}
-                          onClick={() => {
-                            setSelectedIcon(feature.icon)
-                            setExpandedFeature(null)
-                          }}
-                          className={cn(
-                            'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors lg:col-start-1 lg:order-none',
-                            FEATURE_ROW_ORDER[index],
-                            FEATURE_ROW_START[index],
-                            isSelected
-                              ? 'bg-slate-800 text-white'
-                              : 'text-gray-400 hover:bg-slate-800/60 hover:text-white'
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
-                              gradient
-                            )}
-                          >
-                            <Icon className="h-4 w-4 text-white" />
-                          </span>
-                          <span className="min-w-0 whitespace-normal break-words font-medium leading-snug">
-                            {feature.title}
-                          </span>
-                        </button>
-                      )
-                    })}
-                    <div
+            {panes.length > 1 ? (
+              <div
+                role="tablist"
+                aria-label={activeRoom.label}
+                className="mb-5 flex flex-wrap gap-1.5"
+              >
+                {panes.map((pane) => {
+                  const isActive = pane.id === (activePane?.id ?? panes[0].id)
+                  return (
+                    <button
+                      key={pane.id}
+                      id={`key-feature-group-${pane.id}`}
+                      type="button"
+                      role="tab"
+                      title={pane.label}
+                      aria-selected={isActive}
+                      onClick={() => selectGroup(pane.id)}
                       className={cn(
-                        'lg:col-start-2 lg:row-span-[14] lg:row-start-1 lg:order-none',
-                        FEATURE_DETAIL_ORDER[
-                          visibleFeatures.findIndex((feature) => feature.icon === selected.icon)
-                        ]
+                        'rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer',
+                        isActive
+                          ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-100'
+                          : 'border-slate-800 bg-slate-900/60 text-gray-400 hover:border-slate-700 hover:text-white'
                       )}
                     >
-                      <FeatureDetail
-                        feature={selected}
-                        locale={locale}
-                        gradient={gradient}
-                        expanded={expandedFeature === selected.icon}
-                        onToggle={toggleSelectedLearnMore}
-                        screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
-                        screenshotVariants={screenshot?.variants}
-                        enterFullscreenLabel={t('enterFullscreenOverview')}
-                        exitFullscreenLabel={t('exitFullscreenOverview')}
-                        {...detailLabels}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : null}
+                      <span className="whitespace-normal break-words">{pane.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : null}
+
+            <div className="mb-6 border-l-2 border-indigo-400/60 pl-4">
+              <h3 className="text-base font-semibold text-white sm:text-lg">
+                {activePane?.headline || activeRoom.headline || activeRoom.label}
+              </h3>
+              <p className="mt-1 max-w-4xl text-xs leading-relaxed text-gray-400 sm:text-sm">
+                {activePane?.description || activeRoom.promise}
+              </p>
             </div>
           </>
         )}
+
+        {/* Unified Narrated Capabilities Stage:
+            - Mobile (< lg): Inline Accordion (player opens directly below tapped feature)
+            - Desktop (lg+): Aligned + Sticky Master-Detail (player tracks selected feature & viewport) */}
+        <div
+          ref={stageGridRef}
+          id="key-features-feature-stage"
+          className="scroll-mt-24 flex flex-col gap-1.5 lg:grid lg:grid-cols-[minmax(17rem,21rem)_minmax(0,1fr)] lg:items-start lg:gap-x-8 lg:gap-y-1.5"
+        >
+          {visibleFeatures.map((feature, index) => {
+            const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
+            const isSelected = feature.icon === selected.icon
+            const itemRoomMeta = featureCatalogByIcon.get(feature.icon)
+            const itemGradient =
+              ROOM_GRADIENTS[itemRoomMeta?.roomId ?? 'series-desk'] ?? gradient
+
+            return (
+              <button
+                key={feature.icon}
+                ref={(el) => {
+                  buttonRefs.current[feature.icon] = el
+                }}
+                type="button"
+                title={feature.title}
+                aria-pressed={isSelected}
+                onClick={() => {
+                  setSelectedIcon(feature.icon)
+                  setExpandedFeature(null)
+                }}
+                className={cn(
+                  'group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-all lg:col-start-1 lg:order-none cursor-pointer',
+                  FEATURE_ROW_ORDER[index] ?? 'order-[39]',
+                  FEATURE_ROW_START[index] ?? 'lg:row-start-[20]',
+                  isSelected
+                    ? 'border-emerald-400/50 bg-slate-800/95 text-white shadow-md shadow-black/30'
+                    : 'border-transparent bg-slate-900/35 text-gray-400 hover:border-slate-800 hover:bg-slate-800/60 hover:text-white'
+                )}
+              >
+                <span
+                  className={cn(
+                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
+                    itemGradient
+                  )}
+                >
+                  <Icon className="h-4 w-4 text-white" />
+                </span>
+                <span className="min-w-0 flex-1 whitespace-normal break-words font-medium leading-snug">
+                  {feature.title}
+                </span>
+                <ChevronRight
+                  className={cn(
+                    'hidden h-4 w-4 shrink-0 transition-transform lg:block',
+                    isSelected
+                      ? 'translate-x-0.5 text-emerald-300'
+                      : 'text-slate-600 group-hover:text-slate-400'
+                  )}
+                  aria-hidden
+                />
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 shrink-0 transition-transform lg:hidden',
+                    isSelected ? 'rotate-180 text-emerald-300' : 'text-slate-500'
+                  )}
+                  aria-hidden
+                />
+              </button>
+            )
+          })}
+
+          <div
+            ref={detailWrapperRef}
+            style={
+              desktopDetailOffsetPx > 0
+                ? { marginTop: `${desktopDetailOffsetPx}px` }
+                : undefined
+            }
+            className={cn(
+              'my-1 lg:my-0 lg:col-start-2 lg:row-start-1 lg:row-end-[21] lg:self-start lg:sticky lg:top-24 lg:order-none lg:transition-[margin-top] lg:duration-300 lg:ease-out',
+              FEATURE_DETAIL_ORDER[selectedIndex] ?? 'order-[40]'
+            )}
+          >
+            <FeatureDetail
+              feature={selected}
+              locale={locale}
+              gradient={gradient}
+              expanded={expandedFeature === selected.icon}
+              onToggle={toggleSelectedLearnMore}
+              screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
+              screenshotVariants={screenshot?.variants}
+              enterFullscreenLabel={t('enterFullscreenOverview')}
+              exitFullscreenLabel={t('exitFullscreenOverview')}
+              {...detailLabels}
+            />
+          </div>
+        </div>
       </div>
     </section>
   )

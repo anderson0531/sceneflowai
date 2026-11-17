@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Bot,
@@ -16,9 +16,15 @@ import {
 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { TwoModesTheaterModal } from '@/components/landing/TwoModesTheaterModal'
+import { VideoGlobeLanguageSelector } from '@/components/landing/VideoGlobeLanguageSelector'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import type { SuperpowerMicroVisualsCopy } from '@/config/landing/worldClassLandingCopy'
 import { getPrimaryValueMedia } from '@/config/landing/primaryValueMedia'
+import {
+  TRAILER_DUB_LOCALE_IDS,
+  resolveTrailerDubLocale,
+  type TrailerDubLocaleId,
+} from '@/config/landing/productionPipelineDemo'
 import { getTwoModesMedia, type TwoModesMediaEntry } from '@/config/landing/twoModesMedia'
 import { cn } from '@/lib/utils'
 
@@ -180,21 +186,30 @@ const PILLAR_ICONS = {
 } as const
 
 export function DirectorOperatingSystemSection() {
-  const locale = useLocale()
+  const pageLocale = useLocale()
   const tCommon = useTranslations('common')
   const copy = useStudioLandingCopy().superpowers
+  const [clipLocale, setClipLocale] = useState<TrailerDubLocaleId>(() =>
+    resolveTrailerDubLocale(pageLocale)
+  )
   const [activeClip, setActiveClip] = useState<{
+    key: ClipKey
     title: string
-    media: TwoModesMediaEntry
   } | null>(null)
 
+  useEffect(() => {
+    setClipLocale(resolveTrailerDubLocale(pageLocale))
+  }, [pageLocale])
+
+  const resolveClipMedia = (key: ClipKey, locale: string): TwoModesMediaEntry =>
+    key === 'comparison'
+      ? getTwoModesMedia('comparison', locale)
+      : getPrimaryValueMedia(key, locale)
+
   const openClip = (key: ClipKey, title: string) => {
-    const media =
-      key === 'comparison'
-        ? getTwoModesMedia('comparison', locale)
-        : getPrimaryValueMedia(key, locale)
+    const media = resolveClipMedia(key, clipLocale)
     if (media.webmUrl || media.mp4Url) {
-      setActiveClip({ title, media })
+      setActiveClip({ key, title })
     }
   }
 
@@ -324,12 +339,21 @@ export function DirectorOperatingSystemSection() {
         <TwoModesTheaterModal
           open={Boolean(activeClip)}
           onClose={() => setActiveClip(null)}
-          media={activeClip.media}
+          media={resolveClipMedia(activeClip.key, clipLocale)}
           caption={activeClip.title}
           pauseLabel={tCommon('pause')}
           playLabel={tCommon('play')}
           muteLabel={tCommon('mute')}
           unmuteLabel={tCommon('unmute')}
+          languageControl={
+            <VideoGlobeLanguageSelector
+              activeLocale={clipLocale}
+              availableLocales={TRAILER_DUB_LOCALE_IDS}
+              onSelectLocale={setClipLocale}
+              variant="theater"
+              align="start"
+            />
+          }
         />
       ) : null}
     </section>

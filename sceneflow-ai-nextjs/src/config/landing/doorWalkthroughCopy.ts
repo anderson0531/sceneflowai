@@ -157,7 +157,7 @@ export type DoorWalkthroughLocaleCopy = {
 
 export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocaleCopy> = {
   en: {
-    interimBadge: '7-Language Narrated Tour · Live Shared Link Coming Soon',
+    interimBadge: '7-Language Narrated Studio Tour',
     narratedPreviewTag: 'Narrated Walkthrough',
     modeScreenVideo: 'Narrated Video',
     modePannedScreens: 'Panned 5K Screens',
@@ -168,7 +168,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     pauseLabel: 'Pause narration',
     muteLabel: 'Mute audio',
     unmuteLabel: 'Unmute audio',
-    doorButtonHint: 'Watch 7-language narrated room walkthrough (live project link coming soon)',
+    doorButtonHint: 'Watch 7-language narrated room walkthrough',
     rooms: {
       'series-desk': 'Series Room',
       'blueprint-board': 'Blueprint Room',
@@ -177,7 +177,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     },
   },
   es: {
-    interimBadge: 'Recorrido Narrado en 7 Idiomas · Enlace Compartido en Vivo Próximamente',
+    interimBadge: 'Recorrido de Estudio Narrado en 7 Idiomas',
     narratedPreviewTag: 'Recorrido Narrado',
     modeScreenVideo: 'Video Narrado',
     modePannedScreens: 'Pantallas 5K en Paneo',
@@ -188,7 +188,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     pauseLabel: 'Pausar narración',
     muteLabel: 'Silenciar audio',
     unmuteLabel: 'Activar audio',
-    doorButtonHint: 'Ver recorrido narrado en 7 idiomas (enlace compartido en vivo próximamente)',
+    doorButtonHint: 'Ver recorrido de sala narrado en 7 idiomas',
     rooms: {
       'series-desk': 'Sala de Series',
       'blueprint-board': 'Sala Blueprint',
@@ -197,7 +197,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     },
   },
   pt: {
-    interimBadge: 'Tour Narrado em 7 Idiomas · Link Compartilhado ao Vivo em Breve',
+    interimBadge: 'Tour de Estúdio Narrado em 7 Idiomas',
     narratedPreviewTag: 'Tour Narrado',
     modeScreenVideo: 'Vídeo Narrado',
     modePannedScreens: 'Telas 5K em Panorâmica',
@@ -208,7 +208,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     pauseLabel: 'Pausar narração',
     muteLabel: 'Silenciar áudio',
     unmuteLabel: 'Ativar áudio',
-    doorButtonHint: 'Assistir ao tour narrado em 7 idiomas (link ao vivo em breve)',
+    doorButtonHint: 'Assistir ao tour da sala narrado em 7 idiomas',
     rooms: {
       'series-desk': 'Sala de Séries',
       'blueprint-board': 'Sala Blueprint',
@@ -217,7 +217,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     },
   },
   hi: {
-    interimBadge: '7 भाषाओं में वॉइसओवर टूर · लाइव शेयर लिंक जल्द आ रहा है',
+    interimBadge: '7 भाषाओं में नैरेटेड स्टूडियो टूर',
     narratedPreviewTag: 'वॉइसओवर टूर',
     modeScreenVideo: 'नैरेटेड वीडियो',
     modePannedScreens: '5K पैन स्क्रीन',
@@ -228,7 +228,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     pauseLabel: 'नैरेशन रोकें',
     muteLabel: 'ऑडियो म्यूट करें',
     unmuteLabel: 'ऑडियो चालू करें',
-    doorButtonHint: '7 भाषाओं में नैरेटेड स्टूडियो टूर देखें (लाइव लिंक जल्द आ रहा है)',
+    doorButtonHint: '7 भाषाओं में नैरेटेड रूम टूर देखें',
     rooms: {
       'series-desk': 'सीरीज़ रूम',
       'blueprint-board': 'ब्लूप्रिंट रूम',
@@ -237,7 +237,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     },
   },
   zh: {
-    interimBadge: '7 语种配音导览 · 实时共享项目链接即将上线',
+    interimBadge: '7 语种工作室配音导览',
     narratedPreviewTag: '配音导览',
     modeScreenVideo: '配音录屏导览',
     modePannedScreens: '5K 全景平移画面',
@@ -248,7 +248,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     pauseLabel: '暂停解说',
     muteLabel: '静音',
     unmuteLabel: '开启声音',
-    doorButtonHint: '观看 7 语种配音工作室导览（实时共享链接即将推出）',
+    doorButtonHint: '观看 7 语种工作室配音导览',
     rooms: {
       'series-desk': '剧集室',
       'blueprint-board': '蓝图室',
@@ -257,7 +257,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     },
   },
   ar: {
-    interimBadge: 'جولة صوتية بـ 7 لغات · رابط المشاركة المباشر قريباً',
+    interimBadge: 'جولة استوديو صوتية بـ 7 لغات',
     narratedPreviewTag: 'جولة صوتية',
     modeScreenVideo: 'فيديو مُعلَّق صوتياً',
     modePannedScreens: 'شاشات 5K متحركة',
@@ -268,7 +268,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     pauseLabel: 'إيقاف مؤقت',
     muteLabel: 'كتم الصوت',
     unmuteLabel: 'تشغيل الصوت',
-    doorButtonHint: 'شاهد الجولة الصوتية بـ 7 لغات (رابط المشروع المباشر قريباً)',
+    doorButtonHint: 'شاهد جولة الغرفة الصوتية بـ 7 لغات',
     rooms: {
       'series-desk': 'غرفة المسلسلات',
       'blueprint-board': 'غرفة المخطط',
@@ -277,7 +277,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     },
   },
   th: {
-    interimBadge: 'ทัวร์พากย์เสียง 7 ภาษา · ลิงก์แชร์โปรเจกต์จริงเร็วๆ นี้',
+    interimBadge: 'ทัวร์สตูดิโอพากย์เสียง 7 ภาษา',
     narratedPreviewTag: 'ทัวร์พากย์เสียง',
     modeScreenVideo: 'วิดีโอพากย์เสียง',
     modePannedScreens: 'ภาพหน้าจอ 5K แพนอัตโนมัติ',
@@ -288,7 +288,7 @@ export const DOOR_WALKTHROUGH_COPY: Record<HeroDubLocaleId, DoorWalkthroughLocal
     pauseLabel: 'หยุดชั่วคราว',
     muteLabel: 'ปิดเสียง',
     unmuteLabel: 'เปิดเสียง',
-    doorButtonHint: 'ชมทัวร์ห้องสตูดิโอพากย์เสียง 7 ภาษา (ลิงก์แชร์จริงเร็วๆ นี้)',
+    doorButtonHint: 'ชมทัวร์ห้องสตูดิโอพากย์เสียง 7 ภาษา',
     rooms: {
       'series-desk': 'ห้องซีรีส์',
       'blueprint-board': 'ห้องบลูพรินต์',

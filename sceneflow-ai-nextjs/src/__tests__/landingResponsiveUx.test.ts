@@ -15,6 +15,13 @@ import { VideoServicesSpotlightSection } from '@/components/landing/VideoService
 import { MobileCompanionPwaSection } from '@/components/landing/MobileCompanionPwaSection'
 import { StudioDoorWalkthroughModal } from '@/components/landing/StudioDoorWalkthroughModal'
 import { FeatureScreenshotFrame } from '@/components/landing/FeatureScreenshotFrame'
+import KeyFeaturesSection from '@/components/landing/KeyFeaturesSection'
+import {
+  FullStudioDirectoryDrawer,
+  requestFocusKeyFeature,
+} from '@/components/landing/FullStudioDirectoryDrawer'
+import { StudioAcademyGuaranteeStrip } from '@/components/landing/StudioAcademyGuaranteeStrip'
+import { DEFAULT_EXPANDED_LANDING_SECTION_IDS } from '@/config/landing/landingSectionCollapseCopy'
 import {
   DOOR_WALKTHROUGH_COPY,
   ROOM_PANNED_SLIDES,
@@ -1039,5 +1046,107 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     expect(captionAfterVertical?.textContent).toContain(
       VIDEO_SERVICES_NARRATED_PAN.brand[1].narration.ar
     )
+  })
+
+  it('presents a clean, badge-free KeyFeaturesSection & standalone StudioAcademyGuaranteeStrip with zero Coming Soon badges in 7 languages', () => {
+    // 1. Key features is expanded by default and FullStudioDirectoryDrawer renders children directly (no confusing Hide/Explore gatekeeper)
+    expect(DEFAULT_EXPANDED_LANDING_SECTION_IDS).toContain('key-features')
+    const drawerSrc = readSource('src/components/landing/FullStudioDirectoryDrawer.tsx')
+    expect(drawerSrc).not.toContain('collapseCta')
+    expect(drawerSrc).not.toContain('expandCta')
+    expect(drawerSrc).not.toContain('SectionCollapseBody')
+
+    // 2. Sticky desktop + inline mobile accordion prerequisites (overflow-x-clip instead of overflow-hidden)
+    const landingClientSrc = readSource('src/app/LandingPageClient.tsx')
+    const keyFeaturesSrc = readSource('src/components/landing/KeyFeaturesSection.tsx')
+    expect(landingClientSrc).toContain('overflow-x-clip')
+    expect(keyFeaturesSrc).toContain('overflow-x-clip')
+    expect(keyFeaturesSrc).toContain('lg:sticky lg:top-24')
+    expect(keyFeaturesSrc).not.toContain('activeTrack.badge')
+    expect(keyFeaturesSrc).not.toContain('automationTitle')
+    expect(keyFeaturesSrc).not.toContain('FeatureRoomOverview')
+    expect(keyFeaturesSrc).not.toContain('showFeaturesList')
+
+    // 3. Zero "Coming Soon" / "próximamente" / "em breve" / "जल्द" / "即将" / "قريباً" / "เร็วๆ นี้" in DOOR_WALKTHROUGH_COPY across all 7 languages
+    const comingSoonPatterns = [
+      /coming soon/i,
+      /próximamente/i,
+      /em breve/i,
+      /जल्द आ रहा/,
+      /即将上线|即将推出/,
+      /قريباً/,
+      /เร็วๆ นี้/,
+    ]
+    for (const loc of DUB_LOCALES) {
+      const copy = DOOR_WALKTHROUGH_COPY[loc]
+      for (const re of comingSoonPatterns) {
+        expect(copy.interimBadge, `[${loc}] interimBadge`).not.toMatch(re)
+        expect(copy.doorButtonHint, `[${loc}] doorButtonHint`).not.toMatch(re)
+      }
+    }
+
+    // 4. Render FullStudioDirectoryDrawer + KeyFeaturesSection across all 7 priority languages
+    for (const locale of PRIORITY_LOCALES) {
+      const messages = loadMessages(locale)
+      const studioCopy = resolveLocalizedStudioLandingCopy(locale)
+
+      renderElement(
+        React.createElement(
+          NextIntlClientProvider,
+          { key: `kf-${locale}`, locale, messages },
+          React.createElement(
+            FullStudioDirectoryDrawer,
+            null,
+            React.createElement(KeyFeaturesSection),
+            React.createElement(StudioAcademyGuaranteeStrip)
+          )
+        )
+      )
+
+      const kfSection = container?.querySelector('#key-features')
+      const academySection = container?.querySelector('#studio-academy')
+      expect(kfSection, `[${locale}] #key-features visible immediately`).toBeTruthy()
+      expect(academySection, `[${locale}] #studio-academy standalone section`).toBeTruthy()
+
+      // Redundant oval badges & misplaced automation callout are absent
+      expect(kfSection?.textContent).not.toContain(studioCopy.directoryDrawer.collapseCta)
+      expect(kfSection?.textContent).not.toContain(studioCopy.directoryDrawer.expandCta)
+      expect(kfSection?.textContent).not.toContain(studioCopy.directoryDrawer.automationTitle)
+      for (const track of studioCopy.useCaseDirectory.tracks) {
+        expect(kfSection?.textContent).not.toContain(track.badge)
+      }
+
+      // Narrated feature animatic stage is immediately visible in Use-Case mode
+      const animaticStage = kfSection?.querySelector('[data-testid="feature-animatic-stage"]')
+      expect(animaticStage, `[${locale}] narrated animatic visible immediately`).toBeTruthy()
+    }
+
+    // 5. Interactive check: switching to "Browse by Studio Room" immediately displays narrated feature screenshots (not hidden behind a Features List toggle)
+    const enMessages = loadMessages('en')
+    renderElement(
+      React.createElement(
+        NextIntlClientProvider,
+        { key: 'kf-interactive', locale: 'en', messages: enMessages },
+        React.createElement(KeyFeaturesSection)
+      )
+    )
+
+    // FlowDirector & Production Agent appear naturally as menu items and focus cleanly
+    act(() => {
+      requestFocusKeyFeature({ trackId: 'commercial-training', icon: 'scriptSupervisor' })
+    })
+    expect(container?.querySelector('#key-features')?.textContent).toContain('FlowDirector')
+
+    const byRoomBtn = Array.from(container?.querySelectorAll('button') ?? []).find(
+      (btn) =>
+        btn.getAttribute('title') ===
+        resolveLocalizedStudioLandingCopy('en').useCaseDirectory.viewByRoomLabel
+    )
+    expect(byRoomBtn).toBeTruthy()
+    clickElement(byRoomBtn!)
+
+    // Room mode shows narrated feature animatic immediately without requiring a second toggle
+    const roomAnimatic = container?.querySelector('[data-testid="feature-animatic-stage"]')
+    expect(roomAnimatic).toBeTruthy()
   })
 })

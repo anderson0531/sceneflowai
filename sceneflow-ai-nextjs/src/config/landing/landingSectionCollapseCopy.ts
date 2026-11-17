@@ -19,6 +19,7 @@ export type CollapsibleLandingSectionId = (typeof COLLAPSIBLE_LANDING_SECTION_ID
  * while auto-expanding whenever `#key-features` or any room hash is visited.
  */
 export const DEFAULT_EXPANDED_LANDING_SECTION_IDS: readonly CollapsibleLandingSectionId[] = [
+  'key-features',
   'pricing',
   'trust-safety',
 ]

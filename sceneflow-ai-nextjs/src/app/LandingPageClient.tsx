@@ -48,7 +48,7 @@ const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPop
 
 export default function LandingPageClient() {
   return (
-    <div id="main-content" className="min-h-screen bg-gray-950 text-white overflow-x-hidden">
+    <div id="main-content" className="min-h-screen bg-gray-950 text-white overflow-x-clip">
       <PersistLandingLocale />
       <Header />
       <FloatingCTA />

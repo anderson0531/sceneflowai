@@ -2,16 +2,23 @@
 /**
  * Stage 2 (100% Local / Sandbox-Safe):
  * Builds all 8 Studio Suite Animatic Films across 7 languages (`56` `.webm` + `56` `.mp4`
- * + `8` `-poster.webp` in `public/landing/key-features/animatics/`) and writes the exact
- * frame-accurate (`24 fps`) chapter & beat timestamp manifest to
+ * + `8` `-poster.webp` in `public/landing/key-features/animatics/`) at **1920×1080, 30 fps**
+ * using a 4-ROI cubic ease-in-out pan + zoom camera choreography:
+ *
+ *   Hold ROI 1 (>=3.0s) -> Cubic Ease-In-Out Pan+Zoom (1.5s)
+ *   -> Hold ROI 2 (>=3.0s) -> Cubic Ease-In-Out Pan+Zoom (1.5s)
+ *   -> Hold ROI 3 (>=3.0s) -> Cubic Ease-In-Out Pan+Zoom (1.5s)
+ *   -> Hold ROI 4 (>=3.0s)
+ *
+ * Writes the frame-accurate (`30 fps`) chapter & beat timestamp manifest to
  * `src/config/landing/keyFeatureAnimaticsManifest.ts`.
  *
  * Usage:
- *   npx tsx scripts/build-feature-animatics.ts
- *   npx tsx scripts/build-feature-animatics.ts --suite keyframes-clips-flowdirector --locale en
+ *   npx tsx scripts/build-feature-animatics.ts --force
+ *   npx tsx scripts/build-feature-animatics.ts --suite keyframes-clips-flowdirector --locale en --force
  */
 
-import { spawnSync } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import {
   existsSync,
   mkdirSync,
@@ -42,7 +49,6 @@ import {
   MULTILANGUAGE_UI_PT_SCREENSHOT_WEBP,
   MULTILANGUAGE_UI_TH_SCREENSHOT_WEBP,
   MULTILANGUAGE_UI_ZH_SCREENSHOT_WEBP,
-  SCRIPT_SUPERVISOR_PICKUPS_SCREENSHOT_WEBP,
   SCRIPT_SUPERVISOR_SCREENSHOT_WEBP,
   keyFeatureScreenshotSrc,
 } from '../src/config/landing/keyFeatureScreenshots'
@@ -61,10 +67,16 @@ const ALL_LOCALES: readonly FeaturePanLocaleId[] = [
   'th',
 ] as const
 
-const W = 1280
-const H = 720
-const FPS = 4
+const W = 1920
+const H = 1080
+const FPS = 30
 const SR = 48000
+
+const MIN_HOLD_SEC = 3.0
+const TRANS_SEC = 1.5
+const TRANS_FRAMES = Math.round(TRANS_SEC * FPS) // 45 frames @ 30fps
+const HOLD_CHUNK_3S_FRAMES = 90 // 3.0s self-contained GOP chunk (1 keyframe per 3s!)
+const HOLD_CHUNK_1S_FRAMES = 30 // 1.0s self-contained GOP chunk for fine duration matching
 
 const LEAD_IN_SEC = 0.4
 const TAIL_PAD_SEC = 0.55
@@ -80,6 +92,29 @@ interface StereoPcm {
   durationSec: number
 }
 
+/** Normalized Region of Interest `[cxFrac, cyFrac, widthFrac]` in `[0..1]` source coords. */
+interface NormalizedRoi {
+  cxFrac: number
+  cyFrac: number
+  widthFrac: number
+}
+
+interface CameraState {
+  cx: number
+  cy: number
+  scale: number
+}
+
+interface CachedFeatureSegments {
+  posterPng: string
+  hold3sMp4: [string, string, string, string]
+  hold1sMp4: [string, string, string, string]
+  hold3sWebm: [string, string, string, string]
+  hold1sWebm: [string, string, string, string]
+  transMp4: [string, string, string]
+  transWebm: [string, string, string]
+}
+
 function parseArgs(argv: string[]) {
   const get = (flag: string) => {
     const idx = argv.indexOf(flag)
@@ -91,12 +126,16 @@ function parseArgs(argv: string[]) {
     ? KEY_FEATURE_SUITES.filter((s) => suiteArg.split(',').includes(s.id))
     : [...KEY_FEATURE_SUITES]
   const locales = localeArg
-    ? (localeArg.split(',').map((s) => s.trim()).filter(Boolean) as FeaturePanLocaleId[])
+    ? (localeArg
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean) as FeaturePanLocaleId[])
     : [...ALL_LOCALES]
   return {
     suites,
     locales,
     force: argv.includes('--force'),
+    regenOutputs: argv.includes('--force') || argv.includes('--regen-outputs'),
   }
 }
 
@@ -106,6 +145,498 @@ function runFfmpeg(args: string[], label: string) {
     throw new Error(`FFmpeg failed (${label}):\n${(res.stderr || '').slice(-1800)}`)
   }
   return res
+}
+
+function cubicEaseInOut(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+}
+
+/**
+ * Defines 4 Rectangular Regions of Interest (ROIs) tailored to each screenshot's
+ * aspect ratio and UI panel layout so every ROI fills the 1920×1080 16:9 frame
+ * with large, crisp, legible typography.
+ */
+function getFourRoisForFeature(
+  icon: string,
+  srcW: number,
+  srcH: number
+): [NormalizedRoi, NormalizedRoi, NormalizedRoi, NormalizedRoi] {
+  if (icon === 'blueprintResonance') {
+    // Tall page with right-hand Audience Resonance drawer (94/100 + Score Breakdown) + left Cast/Locations
+    return [
+      { cxFrac: 0.78, cyFrac: 0.13, widthFrac: 0.44 },
+      { cxFrac: 0.78, cyFrac: 0.31, widthFrac: 0.44 },
+      { cxFrac: 0.37, cyFrac: 0.2, widthFrac: 0.52 },
+      { cxFrac: 0.37, cyFrac: 0.58, widthFrac: 0.52 },
+    ]
+  }
+
+  if (icon === 'scriptSupervisor') {
+    // FlowDirector (5120x3967): AR 86 + Director 81 -> Perspective Breakdown -> Shot-by-Shot Compliance -> 1-Click Pickups
+    return [
+      { cxFrac: 0.34, cyFrac: 0.24, widthFrac: 0.64 },
+      { cxFrac: 0.68, cyFrac: 0.24, widthFrac: 0.62 },
+      { cxFrac: 0.64, cyFrac: 0.56, widthFrac: 0.66 },
+      { cxFrac: 0.5, cyFrac: 0.86, widthFrac: 0.72 },
+    ]
+  }
+
+  const aspectHOverW = srcH / srcW
+  if (aspectHOverW > 1.05) {
+    // Tall centered-column pages (`blueprint-beats.webp`, `blueprint-cast.webp`, `startEpisode` if tall)
+    return [
+      { cxFrac: 0.5, cyFrac: 0.15, widthFrac: 0.54 },
+      { cxFrac: 0.5, cyFrac: 0.38, widthFrac: 0.54 },
+      { cxFrac: 0.5, cyFrac: 0.62, widthFrac: 0.54 },
+      { cxFrac: 0.5, cyFrac: 0.85, widthFrac: 0.54 },
+    ]
+  }
+
+  // Standard 16:9 / wide 2-column Studio screens (5120x2880, 5120x2936, 2560x1440):
+  // Section 1 (Top-Left) -> Section 2 (Bottom-Left) -> Section 3 (Top-Right) -> Section 4 (Bottom-Right)
+  return [
+    { cxFrac: 0.29, cyFrac: 0.33, widthFrac: 0.56 },
+    { cxFrac: 0.29, cyFrac: 0.69, widthFrac: 0.56 },
+    { cxFrac: 0.71, cyFrac: 0.35, widthFrac: 0.56 },
+    { cxFrac: 0.71, cyFrac: 0.7, widthFrac: 0.56 },
+  ]
+}
+
+function resolveCameraState(roi: NormalizedRoi, srcW: number, srcH: number): CameraState {
+  const desiredW = Math.min(srcW, Math.max(W * 0.4, roi.widthFrac * srcW))
+  const clampedH = Math.min(srcH, desiredW * (H / W))
+  const finalW = clampedH * (W / H)
+  const scale = W / finalW
+  const halfW = finalW * 0.5
+  const halfH = clampedH * 0.5
+  const cx = Math.max(halfW, Math.min(srcW - halfW, roi.cxFrac * srcW))
+  const cy = Math.max(halfH, Math.min(srcH - halfH, roi.cyFrac * srcH))
+  return { cx, cy, scale }
+}
+
+/**
+ * Sub-pixel floating-point bilinear sampler into `1920×1080` RGB24 buffer.
+ * Precomputing horizontal weights reduces inner-loop math so each 1080p frame renders in ~10ms.
+ */
+function sampleFrameBilinear(
+  srcRgb: Buffer,
+  srcW: number,
+  srcH: number,
+  cx: number,
+  cy: number,
+  scale: number,
+  outBuf: Buffer
+) {
+  const invScale = 1 / scale
+  const halfW = W * 0.5
+  const halfH = H * 0.5
+  const maxX = srcW - 1.001
+  const maxY = srcH - 1.001
+
+  const x0Arr = new Int32Array(W)
+  const wxArr = new Float32Array(W)
+  for (let ox = 0; ox < W; ox++) {
+    let sx = cx + (ox - halfW + 0.5) * invScale - 0.5
+    if (sx < 0) sx = 0
+    else if (sx > maxX) sx = maxX
+    const ix = sx | 0
+    x0Arr[ox] = ix * 3
+    wxArr[ox] = sx - ix
+  }
+
+  const rowStride = srcW * 3
+  let outOffset = 0
+  for (let oy = 0; oy < H; oy++) {
+    let sy = cy + (oy - halfH + 0.5) * invScale - 0.5
+    if (sy < 0) sy = 0
+    else if (sy > maxY) sy = maxY
+    const iy = sy | 0
+    const wy = sy - iy
+    const wy0 = 1 - wy
+    const r0 = iy * rowStride
+    const r1 = r0 + rowStride
+
+    for (let ox = 0; ox < W; ox++) {
+      const c0 = x0Arr[ox]!
+      const wx = wxArr[ox]!
+      const wx0 = 1 - wx
+
+      const w00 = wx0 * wy0
+      const w10 = wx * wy0
+      const w01 = wx0 * wy
+      const w11 = wx * wy
+
+      const i00 = r0 + c0
+      const i10 = i00 + 3
+      const i01 = r1 + c0
+      const i11 = i01 + 3
+
+      outBuf[outOffset] =
+        srcRgb[i00]! * w00 + srcRgb[i10]! * w10 + srcRgb[i01]! * w01 + srcRgb[i11]! * w11
+      outBuf[outOffset + 1] =
+        srcRgb[i00 + 1]! * w00 +
+        srcRgb[i10 + 1]! * w10 +
+        srcRgb[i01 + 1]! * w01 +
+        srcRgb[i11 + 1]! * w11
+      outBuf[outOffset + 2] =
+        srcRgb[i00 + 2]! * w00 +
+        srcRgb[i10 + 2]! * w10 +
+        srcRgb[i01 + 2]! * w01 +
+        srcRgb[i11 + 2]! * w11
+      outOffset += 3
+    }
+  }
+}
+
+interface WatermarkPatch {
+  left: number
+  top: number
+  width: number
+  height: number
+  rgba: Buffer
+}
+
+let cachedWatermarkPatch: WatermarkPatch | null = null
+
+async function getWatermarkPatch(): Promise<WatermarkPatch> {
+  if (cachedWatermarkPatch) return cachedWatermarkPatch
+  const pw = 236
+  const ph = 42
+  const svg = Buffer.from(
+    `<svg width="${pw}" height="${ph}" viewBox="0 0 ${pw} ${ph}" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="2" width="${pw - 4}" height="${ph - 4}" rx="19" fill="#020617" fill-opacity="0.82" stroke="#334155" stroke-width="1.5"/>
+      <circle cx="24" cy="${ph / 2}" r="5.5" fill="#10b981"/>
+      <text x="38" y="${ph / 2 + 5}" fill="#f1f5f9" font-family="-apple-system, BlinkMacSystemFont, Inter, sans-serif" font-size="15.5" font-weight="700">SceneFlow Studio</text>
+    </svg>`
+  )
+  const { data } = await sharp(svg).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+  cachedWatermarkPatch = {
+    left: W - pw - 22,
+    top: H - ph - 18,
+    width: pw,
+    height: ph,
+    rgba: data,
+  }
+  return cachedWatermarkPatch
+}
+
+function blendWatermarkInPlace(rgbFrame: Buffer, patch: WatermarkPatch) {
+  const { left, top, width, height, rgba } = patch
+  for (let py = 0; py < height; py++) {
+    const dstY = top + py
+    if (dstY < 0 || dstY >= H) continue
+    let srcIdx = py * width * 4
+    let dstIdx = (dstY * W + left) * 3
+    for (let px = 0; px < width; px++) {
+      const a = rgba[srcIdx + 3]! / 255
+      if (a > 0) {
+        const invA = 1 - a
+        rgbFrame[dstIdx] = rgba[srcIdx]! * a + rgbFrame[dstIdx]! * invA
+        rgbFrame[dstIdx + 1] = rgba[srcIdx + 1]! * a + rgbFrame[dstIdx + 1]! * invA
+        rgbFrame[dstIdx + 2] = rgba[srcIdx + 2]! * a + rgbFrame[dstIdx + 2]! * invA
+      }
+      srcIdx += 4
+      dstIdx += 3
+    }
+  }
+}
+
+function encodeRawFramesToVideo(
+  frames: Buffer[],
+  outPath: string,
+  codecArgs: string[]
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(
+      FFMPEG,
+      [
+        '-y',
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-f',
+        'rawvideo',
+        '-pix_fmt',
+        'rgb24',
+        '-s',
+        `${W}x${H}`,
+        '-r',
+        String(FPS),
+        '-i',
+        'pipe:0',
+        ...codecArgs,
+        outPath,
+      ],
+      { stdio: ['pipe', 'ignore', 'pipe'] }
+    )
+    let errText = ''
+    proc.stderr?.on('data', (chunk) => {
+      errText += String(chunk)
+    })
+    proc.on('exit', (code) => {
+      if (code === 0) resolve()
+      else reject(new Error(`FFmpeg raw encode failed (${outPath}): ${errText.slice(-1200)}`))
+    })
+    ;(async () => {
+      for (const frame of frames) {
+        if (!proc.stdin.write(frame)) {
+          await new Promise<void>((res) => proc.stdin.once('drain', res))
+        }
+      }
+      proc.stdin.end()
+    })().catch(reject)
+  })
+}
+
+function mp4EncodeArgs(gopFrames: number, stillTune: boolean): string[] {
+  return [
+    '-c:v',
+    'libx264',
+    '-preset',
+    'fast',
+    ...(stillTune ? ['-tune', 'stillimage'] : []),
+    '-crf',
+    '25',
+    '-bf',
+    '0',
+    '-g',
+    String(gopFrames),
+    '-keyint_min',
+    String(gopFrames),
+    '-sc_threshold',
+    '0',
+    '-video_track_timescale',
+    '30000',
+    '-pix_fmt',
+    'yuv420p',
+    '-r',
+    String(FPS),
+  ]
+}
+
+function webmEncodeArgs(gopFrames: number): string[] {
+  return [
+    '-c:v',
+    'libvpx-vp9',
+    '-b:v',
+    '0',
+    '-crf',
+    '35',
+    '-deadline',
+    'good',
+    '-cpu-used',
+    '5',
+    '-row-mt',
+    '1',
+    '-g',
+    String(gopFrames),
+    '-keyint_min',
+    String(gopFrames),
+    '-pix_fmt',
+    'yuv420p',
+    '-r',
+    String(FPS),
+  ]
+}
+
+function resolvePublicImageDiskPath(webUrl: string, tmpDir: string): string {
+  const cleanRel = webUrl.split('?')[0]!.replace(/^\//, '')
+  const fullPath = join(ROOT, 'public', cleanRel)
+  if (!existsSync(fullPath)) {
+    throw new Error(`Missing screenshot asset on disk: ${fullPath}`)
+  }
+  if (fullPath.endsWith('.webm')) {
+    const extractedPng = join(tmpDir, 'new-series-extracted.png')
+    if (!existsSync(extractedPng)) {
+      mkdirSync(dirname(extractedPng), { recursive: true })
+      runFfmpeg(
+        [
+          '-y',
+          '-hide_banner',
+          '-loglevel',
+          'error',
+          '-i',
+          fullPath,
+          '-frames:v',
+          '1',
+          extractedPng,
+        ],
+        'extract new-series.webm still'
+      )
+    }
+    return extractedPng
+  }
+  return fullPath
+}
+
+function resolveFeatureScreenshotUrl(icon: string, locale: FeaturePanLocaleId): string {
+  if (icon === 'scriptSupervisor') {
+    return SCRIPT_SUPERVISOR_SCREENSHOT_WEBP
+  }
+  if (icon === 'multilanguageUi') {
+    if (locale === 'es') return MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP
+    if (locale === 'pt') return MULTILANGUAGE_UI_PT_SCREENSHOT_WEBP
+    if (locale === 'zh') return MULTILANGUAGE_UI_ZH_SCREENSHOT_WEBP
+    if (locale === 'hi') return MULTILANGUAGE_UI_HI_SCREENSHOT_WEBP
+    if (locale === 'ar') return MULTILANGUAGE_UI_AR_SCREENSHOT_WEBP
+    if (locale === 'th') return MULTILANGUAGE_UI_TH_SCREENSHOT_WEBP
+    return MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP
+  }
+  const entry = KEY_FEATURE_SCREENSHOTS[icon]
+  if (!entry) {
+    throw new Error(`Missing KEY_FEATURE_SCREENSHOTS entry for "${icon}"`)
+  }
+  return keyFeatureScreenshotSrc(entry)
+}
+
+/**
+ * Builds (or reuses cached) 1920×1080 @ 30fps GOP-aligned hold & 1.5s cubic ease-in-out
+ * transition segments for a `(icon, visualKey)` screenshot source.
+ */
+async function ensureFeatureVisualSegments(args: {
+  icon: string
+  locale: FeaturePanLocaleId
+  segDir: string
+  tmpDir: string
+  force: boolean
+}): Promise<CachedFeatureSegments> {
+  const { icon, locale, segDir, tmpDir, force } = args
+  const visualKey = icon === 'multilanguageUi' ? `${icon}-${locale}` : icon
+  const featureDir = join(segDir, visualKey)
+  mkdirSync(featureDir, { recursive: true })
+
+  const posterPng = join(featureDir, 'roi0.png')
+  const hold3sMp4 = [0, 1, 2, 3].map((i) => join(featureDir, `hold3s_${i}.mp4`)) as [
+    string,
+    string,
+    string,
+    string,
+  ]
+  const hold1sMp4 = [0, 1, 2, 3].map((i) => join(featureDir, `hold1s_${i}.mp4`)) as [
+    string,
+    string,
+    string,
+    string,
+  ]
+  const hold3sWebm = [0, 1, 2, 3].map((i) => join(featureDir, `hold3s_${i}.webm`)) as [
+    string,
+    string,
+    string,
+    string,
+  ]
+  const hold1sWebm = [0, 1, 2, 3].map((i) => join(featureDir, `hold1s_${i}.webm`)) as [
+    string,
+    string,
+    string,
+    string,
+  ]
+  const transMp4 = [0, 1, 2].map((i) => join(featureDir, `trans${i}.mp4`)) as [
+    string,
+    string,
+    string,
+  ]
+  const transWebm = [0, 1, 2].map((i) => join(featureDir, `trans${i}.webm`)) as [
+    string,
+    string,
+    string,
+  ]
+
+  const allFiles = [
+    posterPng,
+    ...hold3sMp4,
+    ...hold1sMp4,
+    ...hold3sWebm,
+    ...hold1sWebm,
+    ...transMp4,
+    ...transWebm,
+  ]
+  if (!force && allFiles.every((f) => existsSync(f) && statSync(f).size > 1_000)) {
+    return {
+      posterPng,
+      hold3sMp4,
+      hold1sMp4,
+      hold3sWebm,
+      hold1sWebm,
+      transMp4,
+      transWebm,
+    }
+  }
+
+  const srcUrl = resolveFeatureScreenshotUrl(icon, locale)
+  const diskSrc = resolvePublicImageDiskPath(srcUrl, tmpDir)
+  const meta = await sharp(diskSrc).metadata()
+  const rawW = meta.width || 2560
+  const rawH = meta.height || 1440
+
+  const roisNorm = getFourRoisForFeature(icon, rawW, rawH)
+  const minWidthFrac = Math.min(...roisNorm.map((r) => r.widthFrac))
+
+  // Pre-filter with Lanczos-3 so pixels inside the tightest ROI map ~1.08:1 to 1920px:
+  // crisp anti-aliased UI typography + zero bilinear shimmer during slow pans!
+  const targetMasterW = Math.min(5120, Math.max(W, Math.round((W / minWidthFrac) * 1.08)))
+  const targetMasterH = Math.max(H, Math.round((rawH * targetMasterW) / rawW))
+
+  const { data: srcRgb, info } = await sharp(diskSrc)
+    .resize(targetMasterW, targetMasterH, { kernel: 'lanczos3' })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+
+  const srcW = info.width
+  const srcH = info.height
+  const cams = roisNorm.map((r) => resolveCameraState(r, srcW, srcH))
+  const wmPatch = await getWatermarkPatch()
+
+  // 1. Render & encode 4 self-contained 3.0s (90f) + 1.0s (30f) single-GOP hold chunks
+  for (let s = 0; s < 4; s++) {
+    const cam = cams[s]!
+    const holdFrame = Buffer.allocUnsafe(W * H * 3)
+    sampleFrameBilinear(srcRgb, srcW, srcH, cam.cx, cam.cy, cam.scale, holdFrame)
+    blendWatermarkInPlace(holdFrame, wmPatch)
+
+    const roiPng = join(featureDir, `roi${s}.png`)
+    await sharp(holdFrame, { raw: { width: W, height: H, channels: 3 } })
+      .png({ compressionLevel: 4 })
+      .toFile(roiPng)
+
+    const frames3s = Array.from({ length: HOLD_CHUNK_3S_FRAMES }, () => holdFrame)
+    const frames1s = Array.from({ length: HOLD_CHUNK_1S_FRAMES }, () => holdFrame)
+    await encodeRawFramesToVideo(frames3s, hold3sMp4[s]!, mp4EncodeArgs(HOLD_CHUNK_3S_FRAMES, true))
+    await encodeRawFramesToVideo(frames1s, hold1sMp4[s]!, mp4EncodeArgs(HOLD_CHUNK_1S_FRAMES, true))
+    await encodeRawFramesToVideo(frames3s, hold3sWebm[s]!, webmEncodeArgs(HOLD_CHUNK_3S_FRAMES))
+    await encodeRawFramesToVideo(frames1s, hold1sWebm[s]!, webmEncodeArgs(HOLD_CHUNK_1S_FRAMES))
+  }
+
+  // 2. Render & encode 3 cubic ease-in-out pan+zoom transitions (1.5s = 45 frames @ 30fps)
+  for (let s = 0; s < 3; s++) {
+    const cur = cams[s]!
+    const nxt = cams[s + 1]!
+    const frames: Buffer[] = []
+    for (let f = 1; f <= TRANS_FRAMES; f++) {
+      const e = cubicEaseInOut(f / (TRANS_FRAMES + 1))
+      const cx = cur.cx + (nxt.cx - cur.cx) * e
+      const cy = cur.cy + (nxt.cy - cur.cy) * e
+      const sc = cur.scale + (nxt.scale - cur.scale) * e
+      const buf = Buffer.allocUnsafe(W * H * 3)
+      sampleFrameBilinear(srcRgb, srcW, srcH, cx, cy, sc, buf)
+      blendWatermarkInPlace(buf, wmPatch)
+      frames.push(buf)
+    }
+
+    await encodeRawFramesToVideo(frames, transMp4[s]!, mp4EncodeArgs(TRANS_FRAMES, false))
+    await encodeRawFramesToVideo(frames, transWebm[s]!, webmEncodeArgs(TRANS_FRAMES))
+  }
+
+  console.log(`  [segments] ${visualKey} (4 ROIs @ 1920x1080 30fps ready)`)
+  return {
+    posterPng,
+    hold3sMp4,
+    hold1sMp4,
+    hold3sWebm,
+    hold1sWebm,
+    transMp4,
+    transWebm,
+  }
 }
 
 function findWavDataChunk(buf: Buffer): { offset: number; byteLength: number } {
@@ -263,10 +794,6 @@ function countWeight(text: string): number {
   return Math.max(8, Array.from(text.replace(/\s+/g, '')).length)
 }
 
-/**
- * Finds the natural inter-sentence silence pauses inside a trimmed VO PCM
- * corresponding to the boundaries between Beat 0, Beat 1, ..., Beat k-1.
- */
 function detectBeatOffsetsInChapter(
   voPcm: StereoPcm,
   beatTexts: readonly string[],
@@ -279,7 +806,6 @@ function detectBeatOffsetsInChapter(
   const totalW = weights.reduce((a, b) => a + b, 0)
   const voDur = voPcm.durationSec
 
-  // Precompute 40ms RMS envelope
   const hop = Math.floor(SR * 0.04)
   const numFrames = Math.max(1, Math.floor(voPcm.L.length / hop))
   const rmsEnv = new Float64Array(numFrames)
@@ -310,7 +836,6 @@ function detectBeatOffsetsInChapter(
       const fEnd = Math.min(numFrames - 1, Math.ceil(maxSearchVoSec / 0.04))
       let minScore = Number.POSITIVE_INFINITY
       for (let f = fStart; f <= fEnd; f++) {
-        // 3-frame smoothed RMS + mild distance penalty from expectedVoSec
         const rPrev = rmsEnv[Math.max(0, f - 1)]!
         const rCur = rmsEnv[f]!
         const rNext = rmsEnv[Math.min(numFrames - 1, f + 1)]!
@@ -333,203 +858,23 @@ function detectBeatOffsetsInChapter(
   return offsets
 }
 
-function resolvePublicImageDiskPath(webUrl: string, tmpDir: string): string {
-  const cleanRel = webUrl.split('?')[0]!.replace(/^\//, '')
-  const fullPath = join(ROOT, 'public', cleanRel)
-  if (!existsSync(fullPath)) {
-    throw new Error(`Missing screenshot asset on disk: ${fullPath}`)
-  }
-  if (fullPath.endsWith('.webm')) {
-    const extractedPng = join(tmpDir, 'new-series-extracted.png')
-    if (!existsSync(extractedPng)) {
-      mkdirSync(dirname(extractedPng), { recursive: true })
-      runFfmpeg(
-        [
-          '-y',
-          '-hide_banner',
-          '-loglevel',
-          'error',
-          '-i',
-          fullPath,
-          '-frames:v',
-          '1',
-          extractedPng,
-        ],
-        'extract new-series.webm still'
-      )
-    }
-    return extractedPng
-  }
-  return fullPath
-}
-
-function watermarkOverlaySvg(): Buffer {
-  return Buffer.from(
-    `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-      <rect x="${W - 196}" y="${H - 42}" width="180" height="28" rx="14" fill="#020617" fill-opacity="0.76" stroke="#334155" stroke-width="1"/>
-      <circle cx="${W - 178}" cy="${H - 28}" r="4.5" fill="#10b981"/>
-      <text x="${W - 166}" y="${H - 23}" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, Inter, sans-serif" font-size="12.5" font-weight="700">SceneFlow Studio</text>
-    </svg>`
-  )
-}
-
 /**
- * Generates crisp 1280x720 PNG beat plates for a `(icon, locale)` chapter:
- * - Standard 16:9 / wide UI screenshots: Beat 0 = full crisp 16:9 framing, Beat 1 = subtle left/top detail crop, Beat 2 = subtle right/bottom detail crop (calm, 100% readable, zero dizzying motion).
- * - Tall full-page UI captures (`height / width > 0.78`): Beat 0 = top section, Beat 1 = middle section, Beat 2 = bottom section.
- * - `scriptSupervisor`: Beats 0..2 from `script-supervisor.webp` (top, middle, bottom), Beat 3 from `script-supervisor-pickups.webp`.
- * - `multilanguageUi`: Uses matching localized UI screenshot (`es`, `pt`, `zh`, `hi`, `ar`, `th`), or cycles `es -> zh -> ar` for `en`.
+ * Computes the 4 GOP-aligned (`0.5s` step) hold durations `[h0, h1, h2, h3]`
+ * (each guaranteed `>= 3.0s` and `<= HOLD_MASTER_MAX_SEC`) so that
+ * `h0 + h1 + h2 + h3 + 3 * 1.5s` covers the full narration chapter cleanly.
  */
-async function buildBeatPlatesForFeature(args: {
-  icon: string
-  locale: FeaturePanLocaleId
-  numBeats: number
-  platesDir: string
-  tmpDir: string
-}): Promise<string[]> {
-  const { icon, locale, numBeats, platesDir, tmpDir } = args
-  mkdirSync(platesDir, { recursive: true })
+function computeFourHoldDurationsSec(rawChapterSec: number): [number, number, number, number] {
+  const minTotalHoldSec = 4 * MIN_HOLD_SEC // 12.0s
+  const totalWholeSec = Math.max(minTotalHoldSec, Math.ceil(rawChapterSec - 3 * TRANS_SEC))
+  const baseSec = Math.floor(totalWholeSec / 4)
+  const remSec = totalWholeSec - baseSec * 4
 
-  const resolveBeatSourceUrl = (beatIdx: number): string => {
-    if (icon === 'scriptSupervisor') {
-      return beatIdx >= 3
-        ? SCRIPT_SUPERVISOR_PICKUPS_SCREENSHOT_WEBP
-        : SCRIPT_SUPERVISOR_SCREENSHOT_WEBP
-    }
-    if (icon === 'multilanguageUi') {
-      if (locale === 'es') return MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP
-      if (locale === 'pt') return MULTILANGUAGE_UI_PT_SCREENSHOT_WEBP
-      if (locale === 'zh') return MULTILANGUAGE_UI_ZH_SCREENSHOT_WEBP
-      if (locale === 'hi') return MULTILANGUAGE_UI_HI_SCREENSHOT_WEBP
-      if (locale === 'ar') return MULTILANGUAGE_UI_AR_SCREENSHOT_WEBP
-      if (locale === 'th') return MULTILANGUAGE_UI_TH_SCREENSHOT_WEBP
-      const cycle = [
-        MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP,
-        MULTILANGUAGE_UI_ZH_SCREENSHOT_WEBP,
-        MULTILANGUAGE_UI_AR_SCREENSHOT_WEBP,
-      ]
-      return cycle[beatIdx % cycle.length]!
-    }
-    const entry = KEY_FEATURE_SCREENSHOTS[icon]
-    if (!entry) {
-      throw new Error(`Missing KEY_FEATURE_SCREENSHOTS entry for "${icon}"`)
-    }
-    return keyFeatureScreenshotSrc(entry)
-  }
-
-  const platePaths: string[] = []
-  const wmSvg = watermarkOverlaySvg()
-
-  for (let b = 0; b < numBeats; b++) {
-    const srcUrl = resolveBeatSourceUrl(b)
-    const localeKey = icon === 'multilanguageUi' ? locale : 'shared'
-    const outPng = join(platesDir, `${icon}-${localeKey}-b${b}.png`)
-    if (existsSync(outPng) && statSync(outPng).size > 15_000) {
-      platePaths.push(outPng)
-      continue
-    }
-
-    const diskSrc = resolvePublicImageDiskPath(srcUrl, tmpDir)
-    const meta = await sharp(diskSrc).metadata()
-    const srcW = meta.width || 2560
-    const srcH = meta.height || 1440
-    const aspect = srcH / srcW
-
-    let baseBuf: Buffer
-    if (aspect > 0.78) {
-      // Tall full-page screenshot: resize width to 1216px inside 1280px dark canvas and step cleanly top -> mid -> bottom
-      const targetW = 1216
-      const scaledH = Math.max(H, Math.round((srcH * targetW) / srcW))
-      const resized = await sharp(diskSrc)
-        .resize(targetW, scaledH, { kernel: 'lanczos3' })
-        .png()
-        .toBuffer()
-
-      const effectiveBeats = icon === 'scriptSupervisor' && b < 3 ? 3 : numBeats
-      const effectiveIdx = icon === 'scriptSupervisor' && b >= 3 ? 0 : b
-      const frac =
-        effectiveBeats <= 1 ? 0 : Math.min(1, effectiveIdx / (effectiveBeats - 1))
-      const maxTop = Math.max(0, scaledH - (H - 24))
-      const cropTop = Math.round(frac * maxTop)
-      const cropH = Math.min(H - 24, scaledH - cropTop)
-
-      const cropped = await sharp(resized)
-        .extract({ left: 0, top: cropTop, width: targetW, height: cropH })
-        .png()
-        .toBuffer()
-
-      baseBuf = await sharp({
-        create: {
-          width: W,
-          height: H,
-          channels: 4,
-          background: { r: 2, g: 6, b: 23, alpha: 1 },
-        },
-      })
-        .composite([
-          {
-            input: cropped,
-            left: Math.round((W - targetW) / 2),
-            top: Math.round((H - cropH) / 2),
-          },
-          { input: wmSvg, left: 0, top: 0 },
-        ])
-        .png()
-        .toBuffer()
-    } else {
-      // Wide / 16:9 UI screenshot: Beat 0 = crisp full-screen overview; Beat 1 & Beat 2 = calm, readable ~1.08x focus crops
-      if (b === 0) {
-        const fitted = await sharp(diskSrc)
-          .resize(W - 24, H - 20, {
-            fit: 'contain',
-            background: { r: 2, g: 6, b: 23, alpha: 1 },
-            kernel: 'lanczos3',
-          })
-          .png()
-          .toBuffer()
-
-        baseBuf = await sharp({
-          create: {
-            width: W,
-            height: H,
-            channels: 4,
-            background: { r: 2, g: 6, b: 23, alpha: 1 },
-          },
-        })
-          .composite([
-            { input: fitted, left: 12, top: 10 },
-            { input: wmSvg, left: 0, top: 0 },
-          ])
-          .png()
-          .toBuffer()
-      } else {
-        // Gentle 1.12x focus framing (left-bias on Beat 1, right-bias on Beat 2) so UI cards are crystal-clear without motion blur
-        const zoomFactor = 1.12
-        const cropW = Math.min(srcW, Math.round(srcW / zoomFactor))
-        const cropH = Math.min(srcH, Math.round(cropW * (H / W)))
-        const maxLeft = Math.max(0, srcW - cropW)
-        const maxTop = Math.max(0, srcH - cropH)
-        const left = b === 1 ? Math.round(maxLeft * 0.12) : Math.round(maxLeft * 0.88)
-        const top = b === 1 ? Math.round(maxTop * 0.2) : Math.round(maxTop * 0.78)
-
-        const focused = await sharp(diskSrc)
-          .extract({ left, top, width: cropW, height: cropH })
-          .resize(W, H, { fit: 'cover', kernel: 'lanczos3' })
-          .png()
-          .toBuffer()
-
-        baseBuf = await sharp(focused)
-          .composite([{ input: wmSvg, left: 0, top: 0 }])
-          .png()
-          .toBuffer()
-      }
-    }
-
-    writeFileSync(outPng, baseBuf)
-    platePaths.push(outPng)
-  }
-
-  return platePaths
+  return [0, 1, 2, 3].map((idx) => baseSec + (idx < remSec ? 1 : 0)) as [
+    number,
+    number,
+    number,
+    number,
+  ]
 }
 
 async function runPool<T>(items: T[], concurrency: number, worker: (item: T) => Promise<void>) {
@@ -547,15 +892,15 @@ async function runPool<T>(items: T[], concurrency: number, worker: (item: T) => 
 }
 
 async function main() {
-  const { suites, locales, force } = parseArgs(process.argv.slice(2))
+  const { suites, locales, force, regenOutputs } = parseArgs(process.argv.slice(2))
 
   const buildRoot = join(ROOT, 'tmp', 'feature-animatics-build')
   const voRoot = join(buildRoot, 'vo')
-  const platesDir = join(buildRoot, 'plates')
-  const tmpDir = join(buildRoot, 'scratch')
+  const segDir = join(buildRoot, 'segments-1080p30')
+  const tmpDir = join(buildRoot, 'scratch-1080p30')
   const outAnimaticsDir = join(ROOT, 'public', 'landing', 'key-features', 'animatics')
 
-  mkdirSync(platesDir, { recursive: true })
+  mkdirSync(segDir, { recursive: true })
   mkdirSync(tmpDir, { recursive: true })
   mkdirSync(outAnimaticsDir, { recursive: true })
 
@@ -567,6 +912,37 @@ async function main() {
   const musicBed = decodeAudioToStereoPcm(musicMp3, join(tmpDir, 'music-bed.wav'))
   normalizePcmActiveRms(musicBed, TARGET_MUSIC_BED_RMS)
 
+  // Stage A: Pre-render 1920x1080 @ 30fps 4-ROI hold & cubic ease-in-out transition segments
+  const visualTasks: Array<{ icon: string; locale: FeaturePanLocaleId }> = []
+  for (const suite of suites) {
+    for (const icon of suite.featureIcons) {
+      if (icon === 'multilanguageUi') {
+        for (const loc of locales) {
+          visualTasks.push({ icon, locale: loc })
+        }
+      } else {
+        visualTasks.push({ icon, locale: 'en' })
+      }
+    }
+  }
+
+  console.log(
+    `\nStage A: Preparing ${visualTasks.length} 1920x1080 @ 30fps 4-ROI visual segment sets...`
+  )
+  const segmentMap = new Map<string, CachedFeatureSegments>()
+  await runPool(visualTasks, 3, async (task) => {
+    const key = task.icon === 'multilanguageUi' ? `${task.icon}-${task.locale}` : task.icon
+    const segs = await ensureFeatureVisualSegments({
+      icon: task.icon,
+      locale: task.locale,
+      segDir,
+      tmpDir,
+      force,
+    })
+    segmentMap.set(key, segs)
+  })
+
+  // Load existing manifest so partial `--suite` / `--locale` runs preserve other suites cleanly
   const manifestTsPath = join(
     ROOT,
     'src',
@@ -574,59 +950,54 @@ async function main() {
     'landing',
     'keyFeatureAnimaticsManifest.ts'
   )
-  const fullManifest: Partial<Record<KeyFeatureSuiteId, FeatureAnimaticSuiteManifest>> = {}
+  let existingManifest: Partial<Record<KeyFeatureSuiteId, FeatureAnimaticSuiteManifest>> = {}
+  if (existsSync(manifestTsPath)) {
+    try {
+      const mod = await import(manifestTsPath)
+      if (mod?.KEY_FEATURE_ANIMATICS_MANIFEST) {
+        existingManifest = { ...mod.KEY_FEATURE_ANIMATICS_MANIFEST }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const fullManifest: Partial<Record<KeyFeatureSuiteId, FeatureAnimaticSuiteManifest>> = {
+    ...existingManifest,
+  }
 
   for (const suite of suites) {
     console.log(`\n======================================================`)
-    console.log(`Building Suite [${suite.id}] (${suite.featureIcons.length} chapters)`)
+    console.log(`Stage B: Muxing Suite [${suite.id}] (${suite.featureIcons.length} chapters)`)
     console.log(`======================================================`)
 
+    const prevSuite = existingManifest[suite.id]
     const suiteEntry: FeatureAnimaticSuiteManifest = {
       suiteId: suite.id,
-      locales: {} as FeatureAnimaticSuiteManifest['locales'],
-    }
-
-    // Pre-generate shared & localized plates sequentially per suite so sharp cache is warm
-    for (const icon of suite.featureIcons) {
-      const spec = KEY_FEATURE_NARRATED_PAN[icon]!
-      const locsForPlates: readonly FeaturePanLocaleId[] =
-        icon === 'multilanguageUi' ? locales : ['en']
-      for (const pLoc of locsForPlates) {
-        await buildBeatPlatesForFeature({
-          icon,
-          locale: pLoc,
-          numBeats: spec.beats.length,
-          platesDir,
-          tmpDir,
-        })
-      }
+      locales: { ...(prevSuite?.locales ?? {}) } as FeatureAnimaticSuiteManifest['locales'],
     }
 
     const firstIcon = suite.featureIcons[0]!
-    const firstSpec = KEY_FEATURE_NARRATED_PAN[firstIcon]!
-    const posterPlates = await buildBeatPlatesForFeature({
-      icon: firstIcon,
-      locale: 'en',
-      numBeats: firstSpec.beats.length,
-      platesDir,
-      tmpDir,
-    })
+    const firstKey = firstIcon === 'multilanguageUi' ? `${firstIcon}-en` : firstIcon
+    const firstSegs = segmentMap.get(firstKey)!
     const posterOut = join(outAnimaticsDir, `${suite.id}-poster.webp`)
-    if (force || !existsSync(posterOut) || statSync(posterOut).size < 5_000) {
-      await sharp(posterPlates[0]!).webp({ quality: 86, effort: 5 }).toFile(posterOut)
-      console.log(`  [poster] ${suite.id}-poster.webp`)
+    if (regenOutputs || !existsSync(posterOut) || statSync(posterOut).size < 5_000) {
+      await sharp(firstSegs.posterPng).webp({ quality: 86, effort: 5 }).toFile(posterOut)
+      console.log(`  [poster] ${suite.id}-poster.webp (1920x1080)`)
     }
 
     await runPool([...locales], 3, async (locale) => {
       const chaptersMap: Record<string, FeatureAnimaticChapterTiming> = {}
-      const ffconcatEntries: Array<{ pngPath: string; durSec: number }> = []
+      const mp4ConcatLines = ['ffconcat version 1.0']
+      const webmConcatLines = ['ffconcat version 1.0']
+
       const chapterVoPlacements: Array<{
         voPcm: StereoPcm
         voStartSample: number
         voEndSample: number
       }> = []
 
-      let cursorFrames = 0
+      let cursorSec = 0
 
       for (const icon of suite.featureIcons) {
         const voMp3 = join(voRoot, locale, `${icon}.mp3`)
@@ -641,9 +1012,10 @@ async function main() {
         normalizePcmActiveRms(voPcm, TARGET_VO_RMS)
 
         const rawChapterSec = LEAD_IN_SEC + voPcm.durationSec + TAIL_PAD_SEC
-        const chapterFrames = Math.max(FPS * 4, Math.ceil(rawChapterSec * FPS))
-        const chapterDurSec = chapterFrames / FPS
-        const chapterStartSec = cursorFrames / FPS
+        const holdsSec = computeFourHoldDurationsSec(rawChapterSec)
+        const chapterDurSec =
+          holdsSec[0] + holdsSec[1] + holdsSec[2] + holdsSec[3] + 3 * TRANS_SEC
+        const chapterStartSec = Number(cursorSec.toFixed(4))
 
         const spec = KEY_FEATURE_NARRATED_PAN[icon]!
         const beatTexts = spec.beats.map((b) => b.narration[locale])
@@ -652,40 +1024,41 @@ async function main() {
           beatTexts,
           chapterDurSec
         )
+        const absBeatStartsSec = relBeatOffsets.map((rel) =>
+          Number((chapterStartSec + rel).toFixed(4))
+        )
 
-        const plates = await buildBeatPlatesForFeature({
-          icon,
-          locale,
-          numBeats: spec.beats.length,
-          platesDir,
-          tmpDir,
-        })
+        const segKey = icon === 'multilanguageUi' ? `${icon}-${locale}` : icon
+        const segs = segmentMap.get(segKey)!
 
-        const relBeatFrames = relBeatOffsets.map((sec) => Math.round(sec * FPS))
-        const absBeatStartsSec: number[] = []
-        let actualRenderedChapterFrames = 0
+        for (let s = 0; s < 4; s++) {
+          const hSec = Math.max(3, Math.round(holdsSec[s]!))
+          const count3s = Math.floor(hSec / 3)
+          const count1s = hSec % 3
+          const esc3sMp4 = segs.hold3sMp4[s]!.replace(/'/g, "'\\''")
+          const esc1sMp4 = segs.hold1sMp4[s]!.replace(/'/g, "'\\''")
+          const esc3sWebm = segs.hold3sWebm[s]!.replace(/'/g, "'\\''")
+          const esc1sWebm = segs.hold1sWebm[s]!.replace(/'/g, "'\\''")
 
-        for (let b = 0; b < spec.beats.length; b++) {
-          const bStartFrame = relBeatFrames[b]!
-          const bEndFrame =
-            b + 1 < spec.beats.length ? relBeatFrames[b + 1]! : chapterFrames
-          const bFrames = Math.max(4, bEndFrame - bStartFrame)
-          absBeatStartsSec.push(
-            Number(((cursorFrames + actualRenderedChapterFrames) / FPS).toFixed(4))
-          )
-          ffconcatEntries.push({
-            pngPath: plates[b]!,
-            durSec: bFrames / FPS,
-          })
-          actualRenderedChapterFrames += bFrames
+          for (let r = 0; r < count3s; r++) {
+            mp4ConcatLines.push(`file '${esc3sMp4}'`)
+            webmConcatLines.push(`file '${esc3sWebm}'`)
+          }
+          for (let r = 0; r < count1s; r++) {
+            mp4ConcatLines.push(`file '${esc1sMp4}'`)
+            webmConcatLines.push(`file '${esc1sWebm}'`)
+          }
+
+          if (s < 3) {
+            mp4ConcatLines.push(`file '${segs.transMp4[s]!.replace(/'/g, "'\\''")}'`)
+            webmConcatLines.push(`file '${segs.transWebm[s]!.replace(/'/g, "'\\''")}'`)
+          }
         }
 
-        const actualChapterEndSec =
-          (cursorFrames + actualRenderedChapterFrames) / FPS
-
+        const chapterEndSec = Number((chapterStartSec + chapterDurSec).toFixed(4))
         chaptersMap[icon] = {
-          startSec: Number(chapterStartSec.toFixed(4)),
-          endSec: Number(actualChapterEndSec.toFixed(4)),
+          startSec: chapterStartSec,
+          endSec: chapterEndSec,
           beatStartsSec: absBeatStartsSec,
         }
 
@@ -696,12 +1069,12 @@ async function main() {
           voEndSample: voStartSample + voPcm.L.length,
         })
 
-        cursorFrames += actualRenderedChapterFrames
+        cursorSec += chapterDurSec
       }
 
-      const totalSuiteSec = cursorFrames / FPS
+      const totalSuiteSec = Number(cursorSec.toFixed(4))
       suiteEntry.locales[locale] = {
-        totalDurationSec: Number(totalSuiteSec.toFixed(4)),
+        totalDurationSec: totalSuiteSec,
         chapters: chaptersMap,
       }
 
@@ -709,20 +1082,18 @@ async function main() {
       const outMp4 = join(outAnimaticsDir, `${suite.id}-${locale}.mp4`)
 
       if (
-        !force &&
+        !regenOutputs &&
         existsSync(outWebm) &&
         existsSync(outMp4) &&
         statSync(outWebm).size > 80_000 &&
         statSync(outMp4).size > 80_000
       ) {
-        console.log(
-          `  [cached] ${suite.id}-${locale} (${totalSuiteSec.toFixed(1)}s)`
-        )
+        console.log(`  [cached] ${suite.id}-${locale} (${totalSuiteSec.toFixed(1)}s)`)
         return
       }
 
       // 1. Mix full suite stereo 48kHz audio (VO + ducked underscore + loudnorm)
-      const totalSamples = Math.ceil(totalSuiteSec * SR)
+      const totalSamples = Math.round(totalSuiteSec * SR)
       const mixL = new Float64Array(totalSamples)
       const mixR = new Float64Array(totalSamples)
       const duckEnv = new Float64Array(totalSamples).fill(MUSIC_GAIN_IDLE)
@@ -795,22 +1166,12 @@ async function main() {
         `loudnorm ${suite.id}-${locale}`
       )
 
-      // 2. Write ffconcat PNG timeline directly (zero intermediate H.264 re-decode overhead!)
-      const concatTxt = join(tmpDir, `${suite.id}-${locale}-ffconcat.txt`)
-      const lines = ['ffconcat version 1.0']
-      for (const item of ffconcatEntries) {
-        const escaped = item.pngPath.replace(/'/g, "'\\''")
-        lines.push(`file '${escaped}'`)
-        lines.push(`duration ${item.durSec.toFixed(6)}`)
-      }
-      if (ffconcatEntries.length > 0) {
-        const lastEscaped =
-          ffconcatEntries[ffconcatEntries.length - 1]!.pngPath.replace(/'/g, "'\\''")
-        lines.push(`file '${lastEscaped}'`)
-      }
-      writeFileSync(concatTxt, lines.join('\n') + '\n')
+      // 2. Write ffconcat lists and mux with `-c:v copy` into `.webm` & `.mp4`
+      const mp4ConcatTxt = join(tmpDir, `${suite.id}-${locale}-mp4.txt`)
+      const webmConcatTxt = join(tmpDir, `${suite.id}-${locale}-webm.txt`)
+      writeFileSync(mp4ConcatTxt, mp4ConcatLines.join('\n') + '\n', 'utf8')
+      writeFileSync(webmConcatTxt, webmConcatLines.join('\n') + '\n', 'utf8')
 
-      // 3. Encode compact H.264 + AAC `.mp4` (`+faststart`)
       runFfmpeg(
         [
           '-y',
@@ -822,135 +1183,114 @@ async function main() {
           '-safe',
           '0',
           '-i',
-          concatTxt,
+          webmConcatTxt,
           '-i',
           normMixWav,
           '-map',
           '0:v:0',
           '-map',
           '1:a:0',
-          '-vf',
-          `fps=${FPS},format=yuv420p`,
           '-c:v',
-          'libx264',
-          '-preset',
-          'veryfast',
-          '-tune',
-          'stillimage',
-          '-crf',
-          '25',
-          '-g',
-          String(FPS * 4),
-          '-keyint_min',
-          String(FPS),
-          '-c:a',
-          'aac',
-          '-b:a',
-          '80k',
-          '-ar',
-          String(SR),
-          '-movflags',
-          '+faststart',
-          '-shortest',
-          outMp4,
-        ],
-        `encode mp4 ${suite.id}-${locale}`
-      )
-
-      // 4. Encode compact VP9 + Opus `.webm` (`-cues_to_front 1`)
-      runFfmpeg(
-        [
-          '-y',
-          '-hide_banner',
-          '-loglevel',
-          'error',
-          '-f',
-          'concat',
-          '-safe',
-          '0',
-          '-i',
-          concatTxt,
-          '-i',
-          normMixWav,
-          '-map',
-          '0:v:0',
-          '-map',
-          '1:a:0',
-          '-vf',
-          `fps=${FPS},format=yuv420p`,
-          '-c:v',
-          'libvpx-vp9',
-          '-b:v',
-          '0',
-          '-crf',
-          '35',
-          '-deadline',
-          'good',
-          '-cpu-used',
-          '5',
-          '-row-mt',
-          '1',
-          '-g',
-          String(FPS * 4),
-          '-keyint_min',
-          String(FPS),
+          'copy',
           '-c:a',
           'libopus',
           '-b:a',
-          '56k',
+          '96k',
+          '-ar',
+          String(SR),
+          '-ac',
+          '2',
+          '-t',
+          totalSuiteSec.toFixed(4),
           '-cues_to_front',
           '1',
-          '-shortest',
           outWebm,
         ],
-        `encode webm ${suite.id}-${locale}`
+        `mux webm ${suite.id}-${locale}`
       )
 
-      try {
-        unlinkSync(rawMixWav)
-        unlinkSync(normMixWav)
-        unlinkSync(concatTxt)
-      } catch {
-        // ignore
+      runFfmpeg(
+        [
+          '-y',
+          '-hide_banner',
+          '-loglevel',
+          'error',
+          '-f',
+          'concat',
+          '-safe',
+          '0',
+          '-i',
+          mp4ConcatTxt,
+          '-i',
+          normMixWav,
+          '-map',
+          '0:v:0',
+          '-map',
+          '1:a:0',
+          '-c:v',
+          'copy',
+          '-c:a',
+          'aac',
+          '-b:a',
+          '128k',
+          '-ar',
+          String(SR),
+          '-ac',
+          '2',
+          '-t',
+          totalSuiteSec.toFixed(4),
+          '-movflags',
+          '+faststart',
+          outMp4,
+        ],
+        `mux mp4 ${suite.id}-${locale}`
+      )
+
+      for (const f of [rawMixWav, normMixWav, mp4ConcatTxt, webmConcatTxt]) {
+        try {
+          unlinkSync(f)
+        } catch {
+          // ignore
+        }
       }
 
-      const webmKb = (statSync(outWebm).size / 1024).toFixed(0)
-      const mp4Kb = (statSync(outMp4).size / 1024).toFixed(0)
+      const webmMb = (statSync(outWebm).size / 1_048_576).toFixed(2)
+      const mp4Mb = (statSync(outMp4).size / 1_048_576).toFixed(2)
       console.log(
-        `  [encoded] ${suite.id}-${locale} (${totalSuiteSec.toFixed(1)}s) -> WebM ${webmKb} KB | MP4 ${mp4Kb} KB`
+        `  [done] ${suite.id}-${locale} (${totalSuiteSec.toFixed(1)}s @ 1920x1080 30fps) -> webm=${webmMb}MB, mp4=${mp4Mb}MB`
       )
     })
 
-    // Re-order locales deterministically in manifest
-    const orderedLocales = {} as FeatureAnimaticSuiteManifest['locales']
-    for (const loc of ALL_LOCALES) {
-      if (suiteEntry.locales[loc]) {
-        orderedLocales[loc] = suiteEntry.locales[loc]
-      }
-    }
-    suiteEntry.locales = orderedLocales
     fullManifest[suite.id] = suiteEntry
   }
 
-  // Write TypeScript manifest when all 8 suites & 7 locales are built
-  if (suites.length === KEY_FEATURE_SUITES.length && locales.length === ALL_LOCALES.length) {
-    const tsContent = `import type { FeatureAnimaticSuiteManifest, KeyFeatureSuiteId } from './keyFeatureAnimatics'
-
-/**
- * Auto-generated by \`scripts/build-feature-animatics.ts\`.
- * Frame-exact (\`24 fps\`) chapter \`[startSec, endSec]\` and per-beat timestamps
- * across all 8 Studio Suite Animatics and all 7 languages.
- */
-export const KEY_FEATURE_ANIMATICS_MANIFEST: Partial<
-  Record<KeyFeatureSuiteId, FeatureAnimaticSuiteManifest>
-> = ${JSON.stringify(fullManifest, null, 2)}
-`
-    writeFileSync(manifestTsPath, tsContent)
-    console.log(`\n✓ Wrote ${manifestTsPath.replace(`${ROOT}/`, '')}`)
+  // Write TypeScript chapter timing manifest when all 8 suites have complete 7-locale entries
+  if (
+    KEY_FEATURE_SUITES.every(
+      (s) =>
+        fullManifest[s.id] &&
+        ALL_LOCALES.every((loc) => Boolean(fullManifest[s.id]?.locales?.[loc]))
+    )
+  ) {
+    const tsBody = [
+      '/**',
+      ' * AUTO-GENERATED by `scripts/build-feature-animatics.ts` — DO NOT EDIT MANUALLY.',
+      ' * Frame-accurate (1920x1080 @ 30 fps) 4-ROI cubic ease-in-out chapter & beat timing manifest',
+      ' * across all 8 Studio Animatic Suites and 7 priority languages.',
+      ' */',
+      "import type { FeatureAnimaticSuiteManifest, KeyFeatureSuiteId } from './keyFeatureAnimatics'",
+      '',
+      'export const KEY_FEATURE_ANIMATICS_MANIFEST: Record<KeyFeatureSuiteId, FeatureAnimaticSuiteManifest> = ' +
+        JSON.stringify(fullManifest, null, 2) +
+        ' as const',
+      '',
+    ].join('\n')
+    writeFileSync(manifestTsPath, tsBody, 'utf8')
+    console.log(`\nUpdated manifest -> ${manifestTsPath}`)
   }
 }
 
 main().catch((err) => {
-  console.error('\n[build-feature-animatics] Fatal error:', err)
+  console.error(err)
   process.exit(1)
 })

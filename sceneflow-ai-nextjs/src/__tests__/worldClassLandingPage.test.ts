@@ -275,8 +275,11 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
     }
 
     const drawer = readSource('src/components/landing/FullStudioDirectoryDrawer.tsx')
-    expect(drawer).toContain('SectionCollapseBody')
-    expect(drawer).toContain("'key-features'")
+    expect(drawer).toContain('requestFocusKeyFeature')
+    expect(drawer).not.toContain('SectionCollapseBody')
+
+    const collapseCopy = readSource('src/config/landing/landingSectionCollapseCopy.ts')
+    expect(collapseCopy).toContain("'key-features'")
   })
 
   it('ships complete native translations across all 7 priority locales (en, es, pt, hi, zh-CN, ar, th) and message catalogs', () => {
