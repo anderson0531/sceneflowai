@@ -259,6 +259,11 @@
     "watchLongformLabel": "Watch the longform",
     "screenshotLabel": "Screenshot",
     "landingUiLanguagesLabel": "Deliver true in-scene language sync, stem-separated audio, and regenerated dialogue & signage clips in 70+ languages. Full Studio UI and this site ship in English plus our 6 core global AI markets (7 UI languages total):",
+    "uiRegions": {
+      "americas": "Americas",
+      "asiaPacific": "Asia Pacific",
+      "middleEastAfrica": "Middle East & Africa"
+    },
     "rooms": [
       {
         "id": "series-desk",
@@ -1543,7 +1548,10 @@
     "goToDashboard": "Go to Dashboard",
     "userFallback": "User",
     "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "noLanguagesFound": "No languages found",
+    "primaryNavigation": "Primary navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "floatingNav": {
     "whoItsFor": "Paths",
@@ -1748,8 +1756,11 @@
       "projectsPerMonthSuffix": "projects/mo",
       "projectsUnitLabel": "projects",
       "stressTestToggleLabel": "Stress-test: Month-1 Ramp-Up + Pro Plan ($149/mo)",
+      "stressTestOnBadge": "ON",
+      "stressTestOffBadge": "OFF",
       "stressTestActiveNote": "Conservative ramp-up active: +60% beginner PM hours, +30% extra retake compute buffer, and $149/mo Pro membership (includes 15,000 base credits/mo).",
       "proPlanLineLabel": "Pro plan ($149/mo) + extra compute",
+      "proPlanCreditsIncludedNote": " (15k cr incl.)",
       "perProjectProfitLabel": "Service profit / project",
       "traditionalMarketLabel": "Typical market rate",
       "typicalFeeLabel": "Your client price",
@@ -1764,6 +1775,8 @@
       "disclaimer": "Scope-matched delivery cost includes SceneFlow compute ($0.01/credit add-on rate with 20% retake buffer) plus operator/PM time valued at $50/hr. Toggle Stress-Test above to include beginner ramp-up time and Pro ($149/mo) membership; excludes local sales/marketing.",
       "launchBusinessCta": "Build Your First Sample Film ($9)",
       "launchBusinessSubnote": "Use the $9 Explorer test flight to produce a watermark-free portfolio sample for local partners—then upgrade to Pro ($149/mo) for 100% White-Label Client Portals.",
+      "foundingCharterCta": "Launching a client studio now? View the 25-Seat Founding Operator Charter",
+      "foundingCharterTitle": "Founding Video Service Operator 90-Day Pro Charter",
       "trustShieldHeading": "Enterprise-Grade Margin, Privacy & Commercial IP Shield",
       "trustShieldPillars": [
         {
@@ -2356,6 +2369,14 @@
       "phoneHeaderBrand": "SceneFlow Companion",
       "phoneCreditsPill": "14,250 cr",
       "phonePmBadge": "PM Connected",
+      "phoneVoiceBriefPill": "Voice / Brief",
+      "phoneContinuitySlots": [
+        "Cast ✓",
+        "Wardrobe ✓",
+        "Locations ✓",
+        "Props ✓"
+      ],
+      "phoneMasterLabel": "4K Master",
       "phoneStageBarLabels": [
         "Blueprint",
         "Resonance",
@@ -2457,6 +2478,9 @@
       }
     },
     "soon": "Soon",
+    "languageSelectTooltip": "Language ({language})",
+    "inSceneSync": "In-Scene Sync",
+    "requestPreLaunchAccess": "Request Pre-Launch Access",
     "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
   },
   "twoModes": {
@@ -3289,6 +3313,7 @@
     "hideDetail": "Hide detail",
     "featuredPlayer": "Featured Player",
     "openPlayer": "Open Player",
+    "productionReviewAria": "Production review",
     "featureModes": [
       "Pre-Vis",
       "Clips",
@@ -4566,6 +4591,7 @@
       "productionTestFlight": "30-Day Studio Test Flight",
       "getStarted": "Get Started",
       "startTestFlight": "Start Test Flight",
+      "requestPreLaunchAccess": "Request Pre-Launch Access",
       "loading": "Loading...",
       "mostPopular": "Most Popular",
       "creditsPerMonth": "Credits/mo",
@@ -4718,6 +4744,7 @@
     "title": "Built for the stories that have to hold.",
     "subtitle": "Start directing or delivering client films today from the $9 Explorer plan — or leave your email for January 2027 1.0 release news.",
     "cta": "Explore plans",
+    "requestPreLaunchAccess": "Request Pre-Launch Access",
     "ctaSecondary": "See how it works",
     "ctaSecondaryHref": "#two-modes"
   },
@@ -4749,6 +4776,8 @@
     "seePricing": "See Pricing",
     "tryNine": "Try $9",
     "tryForNine": "Try for $9",
+    "requestAccess": "Request Access",
+    "requestPreLaunchAccess": "Request Pre-Launch Access",
     "dismiss": "Dismiss"
   },
   "common": {

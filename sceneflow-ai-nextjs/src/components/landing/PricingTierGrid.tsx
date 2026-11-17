@@ -23,7 +23,11 @@ export function PricingTierGrid({
 }: PricingTierGridProps) {
   const t = useTranslations('pricing.tierGrid')
   const tPlans = useTranslations('pricing.plans')
+  const tTopUps = useTranslations('pricing.creditTopUps')
   const prelaunchOnly = isPrelaunchAccessModeEnabled()
+  const requestAccessLabel = t.has('requestPreLaunchAccess')
+    ? t('requestPreLaunchAccess')
+    : 'Request Pre-Launch Access'
 
   const rawSubscriptions = (tPlans.raw('subscriptions') as Array<{
     id?: string
@@ -67,7 +71,10 @@ export function PricingTierGrid({
               <div className="text-left sm:text-right">
                 <div className="text-3xl font-bold text-white">${explorerPlan.price}</div>
                 <div className="text-sm text-amber-400">
-                  {explorerPlan.includedCredits} {t('creditsPerMonth').replace('/mo', '')}
+                  {explorerPlan.includedCredits}{' '}
+                  {tTopUps.has('creditsUnit')
+                    ? tTopUps('creditsUnit')
+                    : t('creditsPerMonth').replace('/mo', '')}
                 </div>
               </div>
               <Button
@@ -78,7 +85,7 @@ export function PricingTierGrid({
                 {loadingTier === 'explorer'
                   ? t('loading')
                   : prelaunchOnly
-                    ? 'Request Pre-Launch Access'
+                    ? requestAccessLabel
                     : t('startTestFlight')}
                 <ArrowRight className="w-4 h-4 ml-2 shrink-0" />
               </Button>
@@ -194,7 +201,7 @@ export function PricingTierGrid({
                 {loadingTier === plan.id
                   ? t('loading')
                   : prelaunchOnly
-                    ? 'Request Pre-Launch Access'
+                    ? requestAccessLabel
                     : t('getStarted')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>

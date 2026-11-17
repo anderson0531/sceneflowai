@@ -244,6 +244,7 @@ export const FINAL_CTA_COPY = {
   subtitle:
     'Start directing or delivering client films today from the $9 Explorer plan — or leave your email for January 2027 1.0 release news.',
   cta: 'Explore plans',
+  requestPreLaunchAccess: 'Request Pre-Launch Access',
   ctaSecondary: 'See how it works',
   ctaSecondaryHref: '#two-modes',
 } as const

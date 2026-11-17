@@ -195,9 +195,12 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     projectsPerMonthSuffix: 'projects/mo',
     projectsUnitLabel: 'projects',
     stressTestToggleLabel: 'Stress-test: Month-1 Ramp-Up + Pro Plan ($149/mo)',
+    stressTestOnBadge: 'ON',
+    stressTestOffBadge: 'OFF',
     stressTestActiveNote:
       'Conservative ramp-up active: +60% beginner PM hours, +30% extra retake compute buffer, and $149/mo Pro membership (includes 15,000 base credits/mo).',
     proPlanLineLabel: 'Pro plan ($149/mo) + extra compute',
+    proPlanCreditsIncludedNote: ' (15k cr incl.)',
     perProjectProfitLabel: 'Service profit / project',
     traditionalMarketLabel: 'Typical market rate',
     typicalFeeLabel: 'Your client price',
@@ -214,6 +217,9 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     launchBusinessCta: 'Build Your First Sample Film ($9)',
     launchBusinessSubnote:
       'Use the $9 Explorer test flight to produce a watermark-free portfolio sample for local partners—then upgrade to Pro ($149/mo) for 100% White-Label Client Portals.',
+    foundingCharterCta:
+      'Launching a client studio now? View the 25-Seat Founding Operator Charter',
+    foundingCharterTitle: 'Founding Video Service Operator 90-Day Pro Charter',
     trustShieldHeading: 'Enterprise-Grade Margin, Privacy & Commercial IP Shield',
     trustShieldPillars: [
       {

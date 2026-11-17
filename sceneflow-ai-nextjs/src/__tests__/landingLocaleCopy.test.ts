@@ -4,6 +4,9 @@ import { describe, it, expect } from 'vitest'
 import enMessages from '../../messages/en.json'
 import zhCNMessages from '../../messages/zh-CN.json'
 import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
+import { WORLD_CLASS_LANDING_TRANSLATIONS } from '@/config/landing/worldClassLandingCopy'
+import { icuArgumentsMatch } from '@/lib/i18n/glossary'
+import { flattenMessages, shouldSkipTranslation } from '../../scripts/lib/landingMessageTranslate'
 
 const ROOT = join(process.cwd(), 'messages')
 
@@ -194,6 +197,66 @@ describe('landing locale copy', () => {
       expect(footer.legal, `${code} footer.legal`).toBeTruthy()
       expect(footer.links?.trustSafety, `${code} footer.links.trustSafety`).toBeTruthy()
       expect(footer.legal).toBe(footer.links?.trustSafety)
+    })
+
+    it(`enforces zero missing keys, structural parity, ICU validity, and zero SFAI leaks for ${code}`, () => {
+      const enFlat = flattenMessages(enMessages)
+      const localeMessages = JSON.parse(
+        readFileSync(join(ROOT, `${code}.json`), 'utf8')
+      ) as Record<string, unknown>
+      const locFlat = flattenMessages(localeMessages)
+
+      // 1. Zero missing keys vs en.json
+      const missingKeys = Object.keys(enFlat).filter((k) => locFlat[k] === undefined)
+      expect(missingKeys, `${code} missing keys vs en.json`).toEqual([])
+
+      // 2. Structural leaves (IDs, hrefs, hashes, icons) match en.json byte-for-byte
+      const structuralMismatches: string[] = []
+      const icuMismatches: string[] = []
+      const sfaiLeaks: string[] = []
+      const leakRe = /sfa[ia][a-z0-9_]|sfa[a-z_]*term|\bSFAI\b|एसएफएआई|مصطلح غرفة الفحص|ข้อกำหนดห้องพัก/i
+
+      for (const [k, enVal] of Object.entries(enFlat)) {
+        const locVal = locFlat[k]
+        if (shouldSkipTranslation(k, enVal)) {
+          if (locVal !== enVal) {
+            structuralMismatches.push(`${k}: expected "${enVal}", got "${locVal}"`)
+          }
+          continue
+        }
+        if (k === 'hero.videoLanguageCount') {
+          if (!locVal.startsWith('{count, plural,') || !locVal.includes('other {')) {
+            icuMismatches.push(`${k}: "${locVal}"`)
+          }
+        } else if (!icuArgumentsMatch(enVal, locVal)) {
+          icuMismatches.push(`${k}: en="${enVal}" vs ${code}="${locVal}"`)
+        }
+        if (leakRe.test(locVal)) {
+          sfaiLeaks.push(`${k}: "${locVal}"`)
+        }
+      }
+
+      expect(structuralMismatches, `${code} structural mismatches`).toEqual([])
+      expect(icuMismatches, `${code} ICU mismatches`).toEqual([])
+      expect(sfaiLeaks, `${code} SFAI glossary leaks`).toEqual([])
+
+      // 3. Pricing tier subscription IDs and feature counts align with PricingTierGrid
+      const subs = getAtPath(localeMessages, 'pricing.plans.subscriptions') as Array<{
+        id: string
+        features: string[]
+      }>
+      expect(subs.map((s) => s.id)).toEqual(['hobbyist', 'starter', 'pro', 'studio'])
+      expect(subs[2].features.length).toBe(9)
+      expect(getAtPath(localeMessages, 'trustSafeguard.ctaPolicyHref')).toBe('/trust-safety')
+
+      // 4. Canonical TypeScript studioLanding copy mirrors JSON catalog 100%
+      const tsStudioKey = code as keyof typeof WORLD_CLASS_LANDING_TRANSLATIONS
+      if (tsStudioKey in WORLD_CLASS_LANDING_TRANSLATIONS) {
+        const tsFlat = flattenMessages({ studioLanding: WORLD_CLASS_LANDING_TRANSLATIONS[tsStudioKey] })
+        for (const [sk, sv] of Object.entries(tsFlat)) {
+          expect(locFlat[sk], `${code} ${sk}`).toBe(sv)
+        }
+      }
     })
   }
 })

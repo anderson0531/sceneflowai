@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "SceneFlow Studio - AI-Powered Video Creation",
+    "title": "SceneFlow Studio - AI-पावर्ड वीडियो क्रिएशन",
     "description": "AI-संचालित वर्कफ़्लो ऑटोमेशन के साथ अपने विचारों को पेशेवर वीडियो में बदलें"
   },
   "nav": {
@@ -11,22 +11,22 @@
     "startProject": "प्रोजेक्ट शुरू करें"
   },
   "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
+    "badge": "क्रिएटिव डिसीजन इंजन",
+    "title": "प्री-विज़ुअलाइज़ेशन इंजन (Pre-Vis)",
     "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
-    "narrative": "In the film industry, a storyboard is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "narrative": "फ़िल्म इंडस्ट्री में, स्टोरीबोर्ड वह चीज़ है जो आप क्रू को देते हैं। Pre-vis वह चीज़ है जिसे आप स्टूडियो अधिकारियों, निवेशकों और प्रोड्यूसर को दिखाते हैं ताकि प्रोजेक्ट को मंज़ूरी मिल सके। SceneFlow प्रोडक्शन को आम क्रिएटर टूल से ऊपर उठाकर एंटरप्राइज़-लेवल के पाइपलाइन एसेट का दर्जा देता है।",
     "pillars": [
       {
-        "title": "The Ultimate Pitch Deck",
-        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+        "title": "बेहतरीन पिच डेक",
+        "description": "एक स्क्रिप्ट अपलोड करें और पिच मीटिंग में पूरी तरह से वॉइस-ओवर, म्यूज़िक और कई भाषाओं वाले प्री-विज़ुअलाइज़ेशन के साथ-साथ Audience Resonance से मिले ठोस डेटा के साथ जाएँ। क्रिएटर्स को उनकी फ़िल्में बनाने के लिए डेटा पर आधारित, ऑडियो-विज़ुअल 'चीट कोड' दें।"
       },
       {
-        "title": "Fail-Fast Pre-Production",
-        "description": "Traditional pre-vis requires 3D animators, storyboard artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+        "title": "फेल-फास्ट प्री-प्रोडक्शन",
+        "description": "पारंपरिक प्री-विज़ुअलाइज़ेशन (pre-vis) के लिए हफ़्तों तक 3D एनिमेटर, स्टोरीबोर्ड आर्टिस्ट और वॉइस एक्टर की ज़रूरत होती है। अगर कोई सीन ठीक से काम नहीं करता, तो हज़ारों डॉलर बर्बाद हो जाते हैं। कैमरा क्रू के किसी भी सदस्य को हायर करने से पहले ही 15 मिनट में बदलाव करके देख लें।"
       },
       {
-        "title": "Financier Analytics",
-        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+        "title": "फाइनेंशियर एनालिटिक्स",
+        "description": "अपलोड के समय Audience Resonance इंडस्ट्री के सबसे ज़्यादा जोखिम से बचने वाले हिस्से, यानी फाइनेंसरों को आकर्षित करता है। प्रोडक्शन पर एक भी डॉलर खर्च करने से पहले यह दिखाएं कि पेसिंग, टोन और डायलॉग कैसे टारगेट ऑडियंस के हिसाब से हैं।"
       }
     ],
     "workflow": {
@@ -38,8 +38,8 @@
         "Share for stakeholder review before final video spend"
       ]
     },
-    "cta": "Start with Script Upload",
-    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
+    "cta": "स्क्रिप्ट अपलोड करने से शुरुआत करें",
+    "ctaSubtext": "पारंपरिक फ़िल्म-निर्माण और जेनरेटिव AI के बीच की दूरी को पाटें"
   },
   "imaginePossibilities": {
     "headline": "संभावनाओं की कल्पना करें",

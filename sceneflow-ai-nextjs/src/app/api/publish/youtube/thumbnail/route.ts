@@ -4,6 +4,7 @@ import { put } from '@vercel/blob'
 import sharp from 'sharp'
 import { authOptions } from '@/lib/auth'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -36,16 +37,26 @@ export async function POST(request: NextRequest) {
       referenceImageUrl?: string
     }
 
+    const { storyLocale, properNouns } = await resolveRequestStoryLocale(request, {
+      explicit: body.language,
+      projectId: body.projectId,
+      userIdOrEmail: session?.user?.id || session?.user?.email,
+    })
+
     const aspect: '16:9' | '9:16' = body.aspectRatio === '9:16' ? '9:16' : '16:9'
     const title = (body.videoTitle || body.projectTitle || 'Untitled Film').trim()
     const synopsis = (body.synopsis || '').trim()
     const genre = (body.genre || 'cinematic drama').trim()
 
-    const prompt = body.customPrompt?.trim()
-      ? body.customPrompt.trim()
+    const normalizedCustomPrompt = body.customPrompt?.trim()
+      ? await englishForModel(body.customPrompt.trim(), storyLocale, properNouns)
+      : ''
+
+    const prompt = normalizedCustomPrompt
+      ? normalizedCustomPrompt
       : [
           `Create a bold, high-contrast, cinematic YouTube thumbnail (${aspect}) for "${title}".`,
-          synopsis ? `Story context: ${synopsis.slice(0, 350)}` : '',
+          synopsis ? `Story context: ${(await englishForModel(synopsis.slice(0, 350), storyLocale, properNouns)).trim()}` : '',
           `Genre & mood: ${genre}.`,
           `Composition: Dramatic focal subject with expressive emotion, rich rim lighting, shallow depth of field, vivid color separation, clean negative space, zero watermarks, no cluttered small text, theatrical film poster quality.`,
         ]

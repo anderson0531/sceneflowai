@@ -484,7 +484,7 @@ export function VideoServicesSpotlightSection() {
                           : 'bg-white/10 text-gray-400'
                       )}
                     >
-                      {conservativeRampUp ? 'ON' : 'OFF'}
+                      {conservativeRampUp ? copy.stressTestOnBadge : copy.stressTestOffBadge}
                     </span>
                   </button>
                 </VideoControlTooltip>
@@ -561,7 +561,7 @@ export function VideoServicesSpotlightSection() {
                     <span>{copy.proPlanLineLabel}</span>
                     <span className="font-semibold tabular-nums">
                       −{formatUsd(monthlySceneFlowBillUsd)} {copy.perMonthSuffix}
-                      {monthlySaasOverheadUsd > 0 ? '' : ' (15k cr incl.)'}
+                      {monthlySaasOverheadUsd > 0 ? '' : copy.proPlanCreditsIncludedNote}
                     </span>
                   </div>
                 )}
@@ -596,10 +596,10 @@ export function VideoServicesSpotlightSection() {
               <div className="mt-2">
                 <Link
                   href="/founding-operators"
-                  title="Founding Video Service Operator 90-Day Pro Charter"
+                  title={copy.foundingCharterTitle}
                   className="inline-flex items-center gap-1 text-xs font-semibold text-amber-300 underline-offset-4 hover:text-amber-200 hover:underline"
                 >
-                  <span>Launching a client studio now? View the 25-Seat Founding Operator Charter</span>
+                  <span>{copy.foundingCharterCta}</span>
                   <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
                 </Link>
               </div>

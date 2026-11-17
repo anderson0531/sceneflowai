@@ -12,7 +12,7 @@
     "opening": "开放 Production Stage",
     "openingShort": "开放制作",
     "backToBlueprint": "返回 Blueprint",
-    "blueprintShort": "SFAI蓝图条款",
+    "blueprintShort": "Blueprint",
     "productionLabel": "生产",
     "viewsAriaLabel": "Production Stage 视图",
     "viewStudio": "Stage",
@@ -1650,7 +1650,7 @@
     "productionType": "生产类型",
     "fullVideo": "完整视频",
     "fullVideoHint": "AI视频生成",
-    "animatic": "SFAIA动画术语",
+    "animatic": "动态分镜预演 (Animatic)",
     "animaticHint": "帧+音频（预览）",
     "animaticModeTitle": "Animatic 模式：",
     "animaticModeBody": "使用带有音频的静止帧。非常适合预览、客户预览或播客视频。信贷成本显着降低。",
@@ -1682,7 +1682,7 @@
     "available": "可用的",
     "toPurchase": "购买",
     "videoProduction": "视频制作",
-    "animaticProduction": "SFAIA动画术语生产",
+    "animaticProduction": "动态预演制作",
     "minutesApprox": "~{minutes} 分钟",
     "languagesCount": "{count} 语言",
     "setAsProjectBudget": "设置为项目预算（{credits} 学分）",
@@ -1754,7 +1754,7 @@
     "recommended": "受到推崇的",
     "methods": {
       "animatic_first": {
-        "name": "SFAIA动画术语第一",
+        "name": "动态预演优先 (Animatic-First)",
         "hint": "仅限 Pre-vis 帧。在使用视频积分之前，请先在 Screening Room 中进行验证。"
       },
       "draft_production": {

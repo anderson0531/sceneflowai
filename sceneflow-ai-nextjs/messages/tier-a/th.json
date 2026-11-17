@@ -18,10 +18,10 @@
     "twoModes": "Director กับ Go"
   },
   "hero": {
-    "ctaSupportingLine": "",
+    "ctaSupportingLine": "สตูดิโอแบบครบวงจรสำหรับการสร้างสรรค์ ส่งออก และเผยแพร่เรื่องราวของคุณ คุณสามารถดาวน์โหลดไฟล์ต้นฉบับ (Master) เพื่อนำไปใช้งานต่อได้ทุกที่ หรือจะเผยแพร่ฉบับเต็มและแบ่งเป็นตอนต่างๆ ไปยัง {longForm} พร้อมทั้งโปรโมตตัวอย่างวิดีโอ (Trailer) บน {shorts} ก็ได้เช่นกัน",
     "languagePrompt": "ฟัง Hero ในภาษาของคุณ — ไปป์ไลน์เดียวกัน ตลาดใหม่",
     "multilangHint": "Hero พากย์ 7 ภาษา — ไปป์ไลน์เต็มรูปแบบรองรับ 70+ ภาษาใน Production Stage",
-    "videoLanguageCount": "{count, plural, =1 {# ภาษา} other {# ภาษา}}"
+    "videoLanguageCount": "{count, plural, other {# ภาษา}}"
   },
   "pricing": {
     "title": "เริ่มต้นด้วย Explorer — $9"

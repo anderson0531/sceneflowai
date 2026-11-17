@@ -11,22 +11,22 @@
     "startProject": "开始项目"
   },
   "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
+    "badge": "创意决策引擎",
+    "title": "前视预演引擎（Pre-Visualization Engine）",
     "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
-    "narrative": "In the film industry, a storyboard is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "narrative": "在电影行业，分镜脚本是交付给摄制组的资料；而 Pre-vis 则是展示给制片厂高管、投资人和制片人以争取项目获批的演示内容。SceneFlow 将制作流程从面向消费级创作者的工具，提升为企业级的管线资产。",
     "pillars": [
       {
-        "title": "The Ultimate Pitch Deck",
-        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+        "title": "终极融资演示文稿",
+        "description": "只需上传剧本，你就能带着包含完整配音、配乐及多语言支持的预演（pre-vis）内容，以及来自 Audience Resonance 的硬核数据，自信地走进提案会议。这相当于为创作者提供了一份基于数据的“视听通关秘籍”，助其顺利将电影项目变为现实。"
       },
       {
-        "title": "Fail-Fast Pre-Production",
-        "description": "Traditional pre-vis requires 3D animators, storyboard artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+        "title": "快速失败预生产",
+        "description": "传统的预演（pre-vis）流程需要3D动画师、分镜师和配音演员投入数周时间；一旦场景效果不理想，便意味着数万美元的浪费。而在聘请任何摄影团队成员之前，你就能在15分钟内完成方案迭代。"
       },
       {
-        "title": "Financier Analytics",
-        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+        "title": "金融分析",
+        "description": "在上传阶段展示受众共鸣度，能够吸引业内最规避风险的群体——即投资方。在投入一分钱进行制作之前，即可直观呈现作品的节奏、基调和对白如何契合目标受众群体。"
       }
     ],
     "workflow": {
@@ -38,8 +38,8 @@
         "Share for stakeholder review before final video spend"
       ]
     },
-    "cta": "Start with Script Upload",
-    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
+    "cta": "从上传脚本开始",
+    "ctaSubtext": "连接传统电影制作与生成式 AI"
   },
   "imaginePossibilities": {
     "headline": "想象无限可能",

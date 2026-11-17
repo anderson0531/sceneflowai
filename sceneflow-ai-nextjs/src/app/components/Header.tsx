@@ -150,7 +150,7 @@ export function Header() {
             
             {/* Navigation Links - Center (safe auto-margins center when spacious & scroll from 0 without clipping when narrow) */}
             <nav
-              aria-label="Primary navigation"
+              aria-label={t.has('primaryNavigation') ? t('primaryNavigation') : 'Primary navigation'}
               className="flex flex-1 min-w-0 items-center gap-0.5 2xl:gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto"
             >
               <button
@@ -309,7 +309,11 @@ export function Header() {
                   type="button"
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   className="p-2 text-gray-300 hover:text-white transition-colors"
-                  aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+                  aria-label={
+                    isMobileMenuOpen
+                      ? (t.has('closeMenu') ? t('closeMenu') : 'Close menu')
+                      : (t.has('openMenu') ? t('openMenu') : 'Open menu')
+                  }
                 >
                   {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>

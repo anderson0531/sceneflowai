@@ -41,12 +41,12 @@ export function ImaginePossibilitiesHero() {
   const locale = useLocale()
   const studioCopy = useStudioLandingCopy()
   const prelaunchOnly = isPrelaunchAccessModeEnabled()
-  const primaryHeroCtaLabel = prelaunchOnly
-    ? 'Request Pre-Launch Access'
-    : studioCopy.heroDock.primaryCta
   const tPossibilities = useTranslations('imaginePossibilities')
   const tHero = useTranslations('hero')
   const tCommon = useTranslations('common')
+  const primaryHeroCtaLabel = prelaunchOnly
+    ? (tHero.has('requestPreLaunchAccess') ? tHero('requestPreLaunchAccess') : 'Request Pre-Launch Access')
+    : studioCopy.heroDock.primaryCta
   const prefersReducedMotion = useReducedMotion()
   const sectionRef = useRef<HTMLElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)

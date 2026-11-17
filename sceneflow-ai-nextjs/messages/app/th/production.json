@@ -1650,9 +1650,9 @@
     "productionType": "ประเภทการผลิต",
     "fullVideo": "วิดีโอฉบับเต็ม",
     "fullVideoHint": "การสร้างวิดีโอ AI",
-    "animatic": "SFANIMATICTERM",
+    "animatic": "Animatic",
     "animaticHint": "เฟรม + เสียง (ตัวอย่าง)",
-    "animaticModeTitle": "โหมด SFAANIMATICTERM:",
+    "animaticModeTitle": "โหมด Animatic:",
     "animaticModeBody": "ใช้เฟรมภาพนิ่งพร้อมเสียง เหมาะสำหรับก่อนเข้าชม ตัวอย่างลูกค้า หรือวิดีโอพอดแคสต์ ต้นทุนเครดิตลดลงอย่างมาก",
     "languageVersions": "เวอร์ชันภาษา",
     "numberOfLanguages": "จำนวนภาษา",
@@ -1754,7 +1754,7 @@
     "recommended": "ที่แนะนำ",
     "methods": {
       "animatic_first": {
-        "name": "SFAANIMATICTERM ก่อน",
+        "name": "Animatic ก่อน",
         "hint": "Pre-vis เฟรมเท่านั้น ตรวจสอบใน Screening Room ก่อนใช้เครดิตวิดีโอ"
       },
       "draft_production": {

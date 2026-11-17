@@ -11,22 +11,22 @@
     "startProject": "ابدأ مشروعًا"
   },
   "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
+    "badge": "محرك القرارات الإبداعية",
+    "title": "محرك التصور المسبق (Pre-Visualization)",
     "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
-    "narrative": "In the film industry, a storyboard is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "narrative": "في صناعة الأفلام، يُعد \"القصص المصور\" (Storyboard) أداةً تُسلَّم لطاقم العمل، في حين أن Pre-vis هو ما تعرضه على مسؤولي الاستوديوهات والمستثمرين والمنتجين للحصول على الموافقة على المشروع. كما يرتقي SceneFlow بعملية الإنتاج من مجرد أداة للمبدعين الأفراد إلى أصلٍ احترافي ضمن سير العمل المؤسسي.",
     "pillars": [
       {
-        "title": "The Ultimate Pitch Deck",
-        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+        "title": "العرض التقديمي المثالي للمستثمرين",
+        "description": "ارفع النص السينمائي وتوجه إلى اجتماع عرض المشروع ومعك نموذج تصوري أولي (pre-vis) متكامل يضم تعليقاً صوتياً وموسيقى تصويرية ودعماً للغات متعددة، إلى جانب بيانات دقيقة وموثوقة حول صدى العمل لدى الجمهور. امنح صنّاع الأفلام \"مفتاح نجاح\" (أو اختصاراً ذكياً) يجمع بين العناصر السمعية والبصرية والبيانات الواقعية لضمان تنفيذ مشاريعهم السينمائية."
       },
       {
-        "title": "Fail-Fast Pre-Production",
-        "description": "Traditional pre-vis requires 3D animators, storyboard artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+        "title": "مرحلة ما قبل الإنتاج القائمة على مبدأ \"الفشل السريع\"",
+        "description": "تتطلب عمليات التصور المسبق التقليدية الاستعانة بمحترفي الرسوم المتحركة ثلاثية الأبعاد، ورسامي لوحات القصة المصورة (الستوري بورد)، والمؤدين الصوتيين لأسابيع؛ فإذا لم ينجح أحد المشاهد، تضيع عشرات الآلاف من الدولارات. أما الآن، فيمكنك إجراء التعديلات والتطوير في غضون 15 دقيقة، وذلك قبل التعاقد مع أي فرد من طاقم التصوير."
       },
       {
-        "title": "Financier Analytics",
-        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+        "title": "تحليلات فينانسيير",
+        "description": "إن إثبات مدى صدى العمل لدى الجمهور (Audience Resonance) عند مرحلة الرفع الأولي يجذب الفئة الأكثر حذراً وتجنباً للمخاطر في هذا المجال: الممولين. إذ يتيح ذلك توضيح مدى توافق الإيقاع والنبرة والحوار مع الفئات السكانية المستهدفة، وذلك قبل إنفاق دولار واحد على الإنتاج الفعلي."
       }
     ],
     "workflow": {
@@ -38,8 +38,8 @@
         "Share for stakeholder review before final video spend"
       ]
     },
-    "cta": "Start with Script Upload",
-    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
+    "cta": "ابدأ برفع النص",
+    "ctaSubtext": "الربط بين صناعة الأفلام التقليدية والذكاء الاصطناعي التوليدي"
   },
   "imaginePossibilities": {
     "headline": "تخيل الإمكانيات",

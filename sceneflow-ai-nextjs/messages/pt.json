@@ -250,10 +250,10 @@
     "videoComingSoon": "Novo recurso em breve",
     "videoSoon": "Pouco tempo depois",
     "overviewComingSoon": "Visão geral em breve",
-    "pauseOverview": "Visão geral da pausa",
-    "playOverview": "Visão geral do jogo",
-    "muteOverview": "Visão geral do modo silencioso",
-    "unmuteOverview": "Visão geral da reativação do som",
+    "pauseOverview": "Pausar visão geral",
+    "playOverview": "Reproduzir visão geral",
+    "muteOverview": "Silenciar visão geral",
+    "unmuteOverview": "Ativar som da visão geral",
     "enterFullscreenOverview": "Tela cheia",
     "exitFullscreenOverview": "Sair da tela cheia",
     "watchLongformLabel": "Assista ao conteúdo de formato longo",
@@ -264,7 +264,7 @@
         "id": "series-desk",
         "label": "Series Room",
         "headline": "Construa um universo uma vez. Produza episódios para sempre.",
-        "promise": "Desenvolva uma temporada de vários episódios com uma Bíblia criativa compartilhada. Seu elenco, locações, tramas da história e DNA visual são transferidos automaticamente para cada episódio que você inicia. Produzindo um filme independente? Vá direto para Blueprint Room.",
+        "promise": "Desenvolva um drama multiepisódio, animação, documentário, canal de podcast ou currículo de treinamento a partir de uma Bíblia da Série compartilhada. Seu elenco travado, perfis de voz, locações, objetos e DNA visual seguem automaticamente para cada episódio — ou pule direto para a Blueprint Room em um filme independente ou memória de cliente.",
         "features": [
           {
             "icon": "newSeries",
@@ -312,7 +312,7 @@
                   "description": "Retratos do elenco, perfis de voz, guarda-roupas, locais e acessórios exclusivos são incluídos automaticamente em cada episódio que você produz."
                 },
                 {
-                  "title": "Gerenciamento centralizado de cânones",
+                  "title": "Gestão centralizada do cânone da história",
                   "description": "Atualize a aparência de um personagem, placa de localização ou acessório uma vez na Bíblia da série para propagar a mudança em episódios futuros."
                 }
               ]
@@ -392,7 +392,7 @@
             "learnMore": {
               "items": [
                 {
-                  "title": "Transferência instantânea de Blueprint",
+                  "title": "Transferência instantânea para o Blueprint",
                   "description": "Inicie qualquer episódio aprovado diretamente no Blueprint Room com um único clique para iniciar o trabalho detalhado de batida e roteiro."
                 },
                 {
@@ -412,7 +412,7 @@
         "id": "blueprint-board",
         "label": "Blueprint Room",
         "headline": "Bloqueie a história e a aparência antes da renderização de um único quadro.",
-        "promise": "Esteja você lançando um episódio do Series Room ou iniciando um recurso independente, o Blueprint Room é onde seu DNA criativo se fixa. Aperfeiçoe a folha de ritmo, o elenco, os locais e o estilo visual aqui - para que o Production Stage crie o roteiro certo na primeira passagem.",
+        "promise": "Capture histórias de clientes por portais sem login em 7 idiomas, traga um episódio da Series Room, descreva uma ideia em linguagem natural ou importe um roteiro existente (PDF, FDX, Fountain). Trave a escaleta de beats, o elenco multigeracional, a nota de Audience Resonance™, o aceite do cliente e sua margem líquida antes de gastar créditos de vídeo.",
         "features": [
           {
             "icon": "clientIntake",
@@ -432,6 +432,10 @@
                 {
                   "title": "Registro assinado de imagem, múltiplas idades e voz",
                   "description": "Registra autorização com data e hora para fotos reais e síntese vocal, sem nunca treinar modelos compartilhados."
+                },
+                {
+                  "title": "Portão de Completude e Proposta de Visão Clarificada",
+                  "description": "Sintetiza uma Proposta de Visão Clarificada que o cliente confirma em um clique para estruturar automaticamente seu Blueprint e seu Cofre de Continuidade."
                 }
               ]
             }
@@ -439,7 +443,7 @@
           {
             "icon": "startBlueprint",
             "title": "Inicie o Blueprint",
-            "description": "Traga um episódio da sua série com esboço, elenco e mundo pré-carregados ou lance um novo conceito de filme independente do zero e deixe a IA validar, aprimorar e estruturar o tratamento fundamental.",
+            "description": "Traga um episódio pré-conectado da Series Room, apresente um filme independente ou memória de cliente em linguagem simples, ou importe um roteiro existente (PDF, FDX, Fountain) para extrair personagens, beats e tom automaticamente.",
             "screenshot": "Episódio da série já conhecido ou inicie seu projeto - pretenda, valide e aprimore com IA, gere Blueprint",
             "learnMore": {
               "items": [
@@ -448,8 +452,8 @@
                   "description": "Os episódios da série chegam com esboço, sinopse, história, elenco recorrente e locações já anexados."
                 },
                 {
-                  "title": "Filme independente ou curta",
-                  "description": "Apresente um novo conceito de filme em linguagem simples, refine-o com validação de IA e gere um tratamento completo do filme."
+                  "title": "Ideia em linguagem simples ou importação de roteiro",
+                  "description": "Apresente um novo conceito em palavras simples ou importe um roteiro PDF, FDX ou Fountain para gerar um tratamento estruturado."
                 },
                 {
                   "title": "Visão geral narrada do tratamento",
@@ -508,7 +512,7 @@
           },
           {
             "icon": "blueprintDirector",
-            "title": "O Diretor do Blueprint",
+            "title": "O Blueprint Director",
             "description": "Fale ou digite suas notas de história para revisar batidas, motivações de personagens ou detalhes do mundo sem engenharia imediata. Visualize uma revisão equilibrada lado a lado com raciocínio criativo – nada muda em seu tratamento até que você aprove o corte.",
             "screenshot": "Blueprint Director – direção, foco, visualização, Aplicar revisão",
             "learnMore": {
@@ -575,7 +579,7 @@
           {
             "icon": "goToProduction",
             "title": "Luz verde para produção",
-            "description": "Quando o tratamento, a planilha de batimentos e o elenco estiverem bloqueados, entre no Production Stage. SceneFlow compila seu roteiro completo de vários capítulos diretamente de seu Blueprint aprovado - mapeando cada batida em um capítulo de produção com elenco e continuidade pré-configurados.",
+            "description": "Quando o tratamento, a escaleta de beats e o elenco estiverem travados, avance para o Production Stage. O SceneFlow compila seu roteiro completo de vários capítulos diretamente do Blueprint aprovado — mapeando cada beat em um capítulo com elenco e continuidade conectados.",
             "screenshot": "Vá para Production Stage – enredo, batidas e elenco já definidos",
             "learnMore": {
               "items": [
@@ -588,7 +592,7 @@
                   "description": "Seu enredo, estrutura de capítulo a capítulo, perfis de elenco e locais chegam prontos para cena e direção de filmagem."
                 },
                 {
-                  "title": "Revisão compartilhável do Blueprint",
+                  "title": "Revisão compartilhável de Blueprint",
                   "description": "Compartilhe o Blueprint bloqueado com cocriadores ou partes executivas para aprovação antes de iniciar a produção."
                 }
               ]
@@ -600,24 +604,24 @@
         "id": "production-stage",
         "label": "Production Stage",
         "headline": "Do roteiro ao master, tudo em uma sala.",
-        "promise": "O Blueprint está bloqueado. Seu elenco está lançado. Agora, entre no Production Stage. Cada capítulo, cena e cena são organizados em um fluxo de trabalho linear. Você direciona a intenção; agentes inteligentes executam a geração.",
+        "promise": "O Blueprint está travado. Seu elenco está escolhido. Agora entre no Production Stage: cada capítulo, cena e plano é organizado em um fluxo linear em tela cheia — de Direction, Audio, Music, Continuity, Stills e Clips passando pelo FlowDirector até o Mixer e Streams Multilíngues. Você dirige a intenção; agentes inteligentes executam a geração.",
         "groups": [
           {
             "id": "direct-control",
             "label": "Direto e Controle",
             "headline": "Fale a linguagem do filme, não a sintaxe das instruções.",
-            "description": "Não perca tempo digitando palavras-chave entre colchetes. O Production Stage entende a direção natural, aplicando sua visão em toda a cena ou até a cena específica.",
+            "description": "Não perca tempo digitando palavras-chave entre colchetes. Entre no Estúdio de Produção de Cenas em Tela Cheia, onde a direção natural governa lentes, marcação de cena, âncoras de continuidade e orçamento na cena inteira ou em cada tomada.",
             "features": [
               {
                 "icon": "sceneWorkflow",
                 "title": "Fluxo de Produção de Cena (Tela Cheia)",
-                "description": "Abra o Estúdio de Produção de Cena em tela cheia para dirigir cada etapa a partir de uma barra linear de 8 abas (Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams). Reordene planos no trilho esquerdo com indicadores de prontidão ao vivo, inspecione o palco 16:9 ao lado de cartões estruturados de câmera, marcação, emoção e iluminação e acompanhe a conclusão da cena de ponta a ponta.",
-                "screenshot": "Fluxo de trabalho de produção de cena (tela cheia) — estúdio linear de 8 guias, Shot Rail classificável e bancada de trabalho de direção de cena estruturada",
+                "description": "Abra o Estúdio de Produção de Cenas em Tela Cheia para dirigir cada etapa em uma barra unificada de 9 abas (`Direction · Audio · Music · Continuity · Stills · Clips · FlowDirector · Mixer · Streams`). Reordene tomadas no Trilho de Planos com indicadores em tempo real, inspecione o palco 16:9 ao lado de cartões estruturados de câmera, marcação, emoção e luz, e acompanhe a conclusão da cena sem perder contexto.",
+                "screenshot": "Fluxo de Produção de Cenas (Tela Cheia) — estúdio linear de 9 abas, Trilho de Planos ordenável e Bancada de Direção",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Estúdio linear em tela cheia de 8 guias",
-                      "description": "Mova-se perfeitamente entre Direção, Áudio, Música, Continuidade, Fotos, Clipes, Mixer e Streams em um espaço de trabalho em tela cheia sem distrações."
+                      "title": "Estúdio linear de 9 abas em tela cheia",
+                      "description": "Navegue com fluidez entre Direction, Audio, Music, Continuity, Stills, Clips, FlowDirector, Mixer e Streams em um espaço sem distrações."
                     },
                     {
                       "title": "Shot Rail classificável e emblemas ao vivo",
@@ -637,7 +641,7 @@
               {
                 "icon": "directShot",
                 "title": "O diretor de cena e filmagem",
-                "description": "Digite ou fale sua direção em linguagem simples. Diga ao agente quem está no quadro, onde a câmera se move e qual é o ritmo emocional. O Shot Director grava automaticamente os complexos prompts subjacentes para suas fotos e clipes enquanto sincroniza a lente da câmera, a distância focal, o bloqueio de talentos e a iluminação em toda a cena.",
+                "description": "Digite ou fale sua direção em linguagem natural — agora com modo Realismo Físico, Modo Seguro do Shot Director e Seleção Exata de Figurino por Tomada. Diga quem está no quadro, qual roupa veste naquela tomada, como a câmera se move e qual é a emoção enquanto o Shot Director compila os prompts.",
                 "screenshot": "The Scene & Shot Director – direção em linguagem simples para fotos e clipes",
                 "learnMore": {
                   "items": [
@@ -646,15 +650,15 @@
                       "description": "Digite ou fale quem está no quadro, onde a câmera se move e qual é a batida emocional sem escrever a sintaxe de prompt entre colchetes."
                     },
                     {
-                      "title": "Precisão em toda a cena ou por cena",
-                      "description": "Aplique a direção atmosférica em toda a cena ou aprofunde-se no enquadramento, lente, bloqueio e iluminação de uma cena individual."
+                      "title": "Seleção de figurino por tomada",
+                      "description": "Troque o traje de qualquer personagem tomada por tomada diretamente no Shot Director — vinculando automaticamente a composição PiP de figurino aos stills e clipes de 10s."
                     },
                     {
                       "title": "Compilação automática de prompt",
                       "description": "O Shot Director grava e sincroniza automaticamente o quadro-chave subjacente e os prompts de movimento para suas fotos e clipes."
                     },
                     {
-                      "title": "Intelligent Assistant Director (IAD)",
+                      "title": "Diretor Assistente Inteligente (IAD)",
                       "description": "Solicite revisões cirúrgicas nos ângulos da câmera, na postura do personagem ou na tensão da cena em linguagem simples, mantendo intactas as batidas não relacionadas."
                     }
                   ]
@@ -678,6 +682,10 @@
                     {
                       "title": "Pareamento multimodal Retrato-Voz",
                       "description": "Calibra timbre e ritmo de fala automaticamente com base na idade e papel do personagem em mais de 70 idiomas."
+                    },
+                    {
+                      "title": "Sincronização em 1 clique a partir do roteiro",
+                      "description": "Ressincronize figurinos do elenco, visuais de época e objetos marcantes diretamente das cenas atualizadas do roteiro em um clique."
                     }
                   ]
                 }
@@ -770,6 +778,10 @@
                     {
                       "title": "Permissões RBAC e limites mensais para PMs",
                       "description": "Gerencie mais de 20 projetos ativos com cotas mensais por gerente e exclusão de arquivos brutos em 1 clique."
+                    },
+                    {
+                      "title": "Remoção de EXIF, zero treino de IA e exclusão em 1 clique",
+                      "description": "Remove automaticamente dados EXIF GPS no upload, nunca treina modelos compartilhados com acervos de clientes e apaga os arquivos brutos em um clique após a entrega."
                     }
                   ]
                 }
@@ -802,7 +814,7 @@
             "id": "generate-audit",
             "label": "Gerar e auditar",
             "headline": "Prove o corte antes de gastar o cálculo.",
-            "description": "Não adivinhe como uma cena será reproduzida. SceneFlow separa a geração de áudio e imagem estática da cara renderização de movimento, permitindo que você audite primeiro o ritmo da edição.",
+            "description": "Não adivinhe como uma cena vai funcionar. O SceneFlow separa a geração de vozes, SFX, trilha musical e keyframes da renderização cara de movimento — oferecendo bancadas em tela cheia de Audio, Music, Stills, Clips e FlowDirector para auditar o ritmo e a continuidade do corte.",
             "features": [
               {
                 "icon": "audioAgent",
@@ -828,14 +840,14 @@
               },
               {
                 "icon": "musicScore",
-                "title": "Bancada de Diálogo, SFX e Trilha Musical",
-                "description": "Abra as abas Audio e Music em tela cheia para dirigir cada camada sonora da cena. Modele interpretações vocais com tags de entrega emocional e qualidade Hi-Fi Studio, extraia áudio embutido de clipes de vídeo, ajuste predefinições de duração de SFX (Auto, 3s, 8s, 15s) e componha deixas musicais Lyria para múltiplos planos com fade de entrada.",
-                "screenshot": "Dialogue, SFX & Musical Score Workbench — Guias de áudio e música em tela cheia com dicas de partitura, transmissão de voz e predefinições de duração de SFX",
+                "title": "Bancada de Diálogo, Narração, SFX e Trilha Sonora",
+                "description": "Abra as abas `Audio` e `Music` em tela cheia para dirigir cada camada sonora. Modele atuações vocais com tags emocionais (`[obsessive, muttered]`) e qualidade Hi-Fi Studio, crie blocos de narração alinhados aos planos, defina durações de SFX (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`) e componha trilhas Lyria para múltiplos planos.",
+                "screenshot": "Bancada de Diálogo, Narração, SFX e Música — narração alinhada por plano, trilha Lyria, vozes e presets de SFX",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Dicas de partituras musicais multi-shot",
-                      "description": "Componha sugestões de partituras musicais Lyria personalizadas que abrangem intervalos de tomadas específicos com fades de introdução configuráveis e metadados de redução automática."
+                      "title": "Narração alinhada por tomada e faixas musicais Lyria",
+                      "description": "Vincule blocos de narração e trilhas musicais Lyria a intervalos exatos de tomadas com fades de entrada configuráveis e redução automática sob a fala."
                     },
                     {
                       "title": "Diretor de desempenho e tags de entrega",
@@ -902,7 +914,7 @@
               },
               {
                 "icon": "animatic",
-                "title": "O TERMO Pré-Vis SFAIANIMATIC",
+                "title": "O Animatic Pre-Vis",
                 "description": "Observe a cena respirar. Revise um animatic totalmente montado – fotos costuradas, movimento de Ken Burns e áudio bloqueado – no Screening Room. Audite o ritmo, compartilhe comentários e garanta que o corte funcione antes de enviar o vídeo.",
                 "screenshot": "The Pre-Vis Animatic – fotos costuradas, movimento de Ken Burns e áudio bloqueado",
                 "learnMore": {
@@ -924,18 +936,18 @@
               },
               {
                 "icon": "videoAgent",
-                "title": "O Clips Agent",
-                "description": "Depois que o Pre-Vis é aprovado, o Clips Agent assume o controle, renderizando clipes de movimento de alta fidelidade que aderem estritamente às suas fotos aprovadas, âncoras de início e fim de quadro a vídeo e referências de continuidade - apoiadas por verificações automatizadas de segurança pré-voo.",
-                "screenshot": "O Clips Agent — clipes de movimento de alta fidelidade de fotos aprovadas",
+                "title": "O Clips Agent (Omni 1.2 Flash 10s e F2V)",
+                "description": "Assim que o Pre-Vis é aprovado, o Clips Agent renderiza clipes em movimento de alta fidelidade — incluindo clipes multimodais Reference-to-Video com Google Omni 1.2 Flash (10s) que vinculam tokens discretos `person [N]`, `location [N]` e `prop [N]` com dípticos PiP de figurino, além de âncoras Frame-to-Video (`F2V`) e checagem preventiva de segurança.",
+                "screenshot": "O Clips Agent — Google Omni 1.2 Flash 10s Reference-to-Video multimodal e clipes em movimento F2V",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Acionado após aprovação Pré-Vis",
-                      "description": "O Clips Agent renderiza o movimento somente depois que a animação pré-visualização e os tempos de filmagem forem aprovados."
+                      "title": "Google Omni 1.2 Flash (10s) — Referência para Vídeo",
+                      "description": "Vincula imagens exatas de referência de pessoa, locação e objeto mais dípticos PiP de figurino por tomada em blocos contínuos de cinema de 10 segundos."
                     },
                     {
-                      "title": "Quadro-chave estrito e aderência F2V",
-                      "description": "Os clipes de movimento de alta fidelidade seguem estritamente as imagens estáticas de início e fim aprovadas e as referências de continuidade."
+                      "title": "Frame-to-Video e extensões contínuas de cena",
+                      "description": "Encadeie extensões contínuas de diálogo em vários planos e âncoras estritas de quadro inicial e final para que cenas longas fluam sem saltos visuais."
                     },
                     {
                       "title": "Pré-vôo de segurança automatizado",
@@ -1029,29 +1041,29 @@
               {
                 "icon": "mixer",
                 "title": "O Mixer (Console Broadcast)",
-                "description": "Um editor de cenas e console de costura de padrão broadcast integrado ao estúdio. Visualize seu corte em um Monitor de Referência 16:9 com medidor estéreo VU / Peak em tempo real (-14 LUFS), inspecione cortes com a Lupa de Continuidade Match-Cut, ajuste sobreposições J-Cut e L-Cut (-0.3s / +0.3s), escolha modos de retenção óptica (Push 103% Ken Burns ou Ping-Pong Tail), mixe em 6 faixas (V1, A0 Stem, A1 Diálogo, A2 VO, A3 SFX, A4 Trilha) com Auto-Ducking de -8 dB e renderize masters EBU R128 na nuvem.",
-                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
+                "description": "Um editor de cenas e console de montagem intuitivo e sem jargão técnico integrado diretamente ao estúdio. Pré-visualize seu corte em um monitor 16:9 compacto e redimensionável (`S / M / L / XL`, botões `- / +`, alça de arraste e `Tela cheia`) para que a Faixa de Sequência de Planos e a Linha do Tempo de 6 Faixas (`Vídeo`, `Áudio do Clipe`, `Diálogo`, `Narração`, `Efeitos Sonoros`, `Música`) caibam inteiras em uma única tela sem rolagem. Inspecione transições lado a lado, ajuste sobreposições `Entrada de Áudio (-0.3s)` e `Saída de Áudio (+0.3s)`, escolha `Zoom Lento Final` ou `Loop no Final`, ative `Reduzir música sob a fala` e exporte `MP4 Padrão` (`1080p Full HD` ou `4K`) normalizado para `Web e Redes (-14 LUFS)` ou `TV Broadcast (-24 LKFS)`.",
+                "screenshot": "O Mixer — Monitor 16:9 redimensionável, Prévia de Corte lado a lado, Faixa de Planos, linha do tempo de 6 faixas com redução automática de música e presets intuitivos",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
-                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
+                      "title": "Player 16:9 compacto redimensionável e layout em tela única",
+                      "description": "Redimensione o monitor 16:9 com presets S / M / L / XL, botões - / + ou arrastando o canto — ou abra em Tela Cheia — mantendo a sequência de planos e as 6 faixas visíveis sem rolar."
                     },
                     {
-                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
-                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                      "title": "Prévia de corte lado a lado e entrada/saída de áudio",
+                      "description": "Passe o mouse em qualquer transição para comparar o fim do Plano N com o início do Plano N+1 lado a lado enquanto ajusta entradas de áudio de -0.3s (J-cut) e saídas de +0.3s (L-cut)."
                     },
                     {
-                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
-                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                      "title": "Linha do tempo de 6 faixas com redução automática de música sob a fala",
+                      "description": "Misture Vídeo, Áudio do Clipe (SFX e ambiência sem fala), Diálogo, Narração, Efeitos Sonoros e Música com redução automática de -8 dB durante a fala."
                     },
                     {
-                      "title": "Optical Hold Modes & elastic dub alignment",
-                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                      "title": "Zoom lento final, loop de cauda e encaixe natural de dublagens longas",
+                      "description": "Substitua quadros congelados estáticos por um Zoom Lento ou Loop Final e desacelere clipes suavemente para que diálogos traduzidos mais longos se encaixem com naturalidade."
                     },
                     {
-                      "title": "1-click watermark crop, text overlays & EBU R128 export",
-                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
+                      "title": "Presets intuitivos de exportação com especificações broadcast em dicas",
+                      "description": "Escolha presets claros como Volume: Web e Redes (-14 LUFS), TV Broadcast (-24 LKFS) e MP4 Padrão 1080p Full HD (H.264 / AAC) com especificações técnicas completas ao passar o mouse."
                     }
                   ]
                 }
@@ -1098,8 +1110,8 @@
                       "description": "Alterne toda a interface do SceneFlow Studio—Sala de Séries, Sala de Blueprint, Palco de Produção e Sala de Exibição—entre inglês, espanhol, português, chinês simplificado, hindi, árabe e tailandês."
                     },
                     {
-                      "title": "Controles localizados de direção, câmera, bloqueio e continuidade",
-                      "description": "Cada guia, trilho de cena, seletor de lente de câmera, bloqueio de continuidade e controle de mixer são renderizados nativamente no idioma selecionado para que diretores e editores globais trabalhem a toda velocidade."
+                      "title": "Localização em 3 camadas com proteção de prompts do modelo",
+                      "description": "Escreva histórias e dirija tomadas no seu idioma nativo enquanto o SceneFlow normaliza automaticamente os prompts técnicos de imagem e vídeo para o inglês, garantindo fidelidade visual máxima."
                     },
                     {
                       "title": "Colaboração internacional em um único projeto compartilhado",
@@ -1242,7 +1254,12 @@
           }
         ]
       }
-    ]
+    ],
+    "uiRegions": {
+      "americas": "Américas",
+      "asiaPacific": "Ásia-Pacífico",
+      "middleEastAfrica": "Oriente Médio e África"
+    }
   },
   "productionAgent": {
     "eyebrow": "Agente de Produção • Construtor Autônomo de Estúdio",
@@ -1346,7 +1363,7 @@
       },
       {
         "id": "animatic-first-savings",
-        "title": "Animatic-First Filmmaking (economize 70% dos créditos)",
+        "title": "Cinema Animatic-First (Economize 70% dos Créditos)",
         "totalDuration": "5 minutos"
       },
       {
@@ -1360,7 +1377,7 @@
       "title": "Clique em qualquer espaço de trabalho e pino numerado (1–4) para inspecionar os controles do Studio",
       "coachPrefix": "Treinador JIT:",
       "autoDetected": "● Detectado automaticamente",
-      "checklistTitle": "Lista de verificação guiada de 60 segundos",
+      "checklistTitle": "Checklist Guiado de 60 Segundos",
       "screens": {
         "blueprint": {
           "tabLabel": "1. Blueprint e mais de 80 ressonâncias",
@@ -1404,19 +1421,19 @@
               "number": "1",
               "title": "Bloqueie primeiro retratos, vozes e locais do elenco",
               "description": "Gere e aprove retratos de personagens, vozes neurais e referências de localização no Reference Library.",
-              "creditBadge": "10–15 cr/ref"
+              "creditBadge": "10–15 cr / ref"
             },
             {
               "number": "2",
               "title": "Sintetize diálogo, SFX e partitura musical",
               "description": "Atribua vozes a cada personagem e gere diálogos e atmosferas de cena para que o tempo da sua linha do tempo seja bloqueado.",
-              "creditBadge": "5–15 cr/cena"
+              "creditBadge": "5–15 cr / cena"
             },
             {
               "number": "3",
               "title": "Renderizar quadros-chave de início/fim e visualização Animatic",
               "description": "Gere quadros-chave com referência bloqueada para cada segmento e assista ao filme completo no Screening Room como um Animatic.",
-              "creditBadge": "10–15 cr/quadro"
+              "creditBadge": "10–15 cr / quadro"
             },
             {
               "number": "4",
@@ -1442,7 +1459,7 @@
               "number": "2",
               "title": "Bloquear personagens e locais recorrentes",
               "description": "Aprove os retratos de referência e as atribuições de voz na Bíblia da Série para que cada episódio os herde automaticamente.",
-              "creditBadge": "10–15 cr/retrato"
+              "creditBadge": "10–15 cr / retrato"
             },
             {
               "number": "3",
@@ -1473,7 +1490,7 @@
               "number": "3",
               "title": "Exportar MP4 Master e dublagens multilíngues",
               "description": "Renderize seu master MP4 1080p/4K final e fluxos de áudio/legendas localizados opcionais.",
-              "creditBadge": "Renderização de 20–50 cr"
+              "creditBadge": "20–50 cr renderização"
             }
           ]
         }
@@ -1497,7 +1514,7 @@
       },
       {
         "block": "Bloco 02 (0:10–0:20)",
-        "title": "Lista de verificação de 60 segundos e proteções de crédito",
+        "title": "Checklist de 60 Segundos e Proteção de Créditos",
         "narration": "Siga uma lista de verificação de 60 segundos com ações de estúdio com um clique, enquanto as proteções de crédito integradas bloqueiam a narração, a música e os quadros animados antes de gastar em movimento.",
         "visual": "Foto em close-médio de Ana e do painel de vidro flutuante enquanto três nós de lista de verificação acendem do ciano ao verde esmeralda, bloqueando a linha do tempo animada com voz antes da renderização pesada do vídeo."
       },
@@ -1518,11 +1535,11 @@
     "overview": "Visão geral",
     "plansPricing": "Planos e preços",
     "productionExamples": "Exemplos",
-    "keyFeatures": "Características",
+    "keyFeatures": "Recursos",
     "trustSafety": "Confiança e Segurança",
     "signIn": "Entrar",
     "startProject": "Iniciar um projeto",
-    "dashboard": "Painel de controlo para acompanhamento da evolução dos indicadores;",
+    "dashboard": "Painel",
     "adminPanel": "Painel de Administração",
     "signOut": "Sair",
     "goToDashboard": "Ir para o Painel",
@@ -1532,8 +1549,11 @@
     "workflow": "O fluxo de trabalho",
     "platformWalkthrough": "Tour da plataforma",
     "videoServices": "Negócio de Vídeo",
-    "studioTour": "Roteiro",
-    "mobileApp": "App Móvel"
+    "studioTour": "Tour do Estúdio",
+    "mobileApp": "App Móvel",
+    "primaryNavigation": "Navegação principal",
+    "openMenu": "Abrir menu",
+    "closeMenu": "Fechar menu"
   },
   "floatingNav": {
     "productionExamples": "Exemplos",
@@ -1637,7 +1657,10 @@
       }
     },
     "soon": "Em breve",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+    "videoLanguageCount": "{count, plural, =1 {# idioma} other {# idiomas}}",
+    "languageSelectTooltip": "Idioma ({language})",
+    "inSceneSync": "Sincronia em Cena",
+    "requestPreLaunchAccess": "Solicitar Acesso Antecipado"
   },
   "twoModes": {
     "eyebrow": "O atrito que eliminamos",
@@ -1760,9 +1783,9 @@
     },
     "paths": [
       {
-        "id": "criador",
-        "hash": "criador de casos de uso",
-        "icon": "vídeo",
+        "id": "creator",
+        "hash": "use-cases-creator",
+        "icon": "video",
         "label": "Criador",
         "outcome": "Entregue no prazo — pare de refazer o trabalho em cada ferramenta",
         "narrative": "Você tem a história, mas cada episódio exige reexportar ativos, inserir comandos novamente em novas abas e torcer para que a continuidade se mantenha. O SceneFlow conecta o Series Room, o Blueprint Room e o Production Stage em um único estúdio — permitindo que você aprove o visual na pré-visualização, gere o conteúdo cena a cena e entregue episódios consistentes dentro do prazo, em vez de reconstruir tudo do zero.",
@@ -1784,9 +1807,9 @@
         }
       },
       {
-        "id": "equipe",
-        "hash": "equipe de casos de uso",
-        "icon": "edifício",
+        "id": "team",
+        "hash": "use-cases-team",
+        "icon": "building",
         "label": "Equipe interna",
         "outcome": "Substitua ciclos lentos de fornecedores — controle a marca e o orçamento",
         "narrative": "Solicitações internas de vídeo se acumulam enquanto orçamentos de agências prolongam os prazos e as diretrizes da marca se perdem a cada rodada de revisão. O SceneFlow reúne as áreas de Treinamento e Desenvolvimento (T&D), Comunicação e vídeos explicativos de produtos em um único fluxo de trabalho guiado — permitindo que sua equipe controle o roteiro, a pré-visualização e o arquivo final, sem precisar alugar estúdios ou depender de fornecedores externos.",
@@ -1807,9 +1830,9 @@
         }
       },
       {
-        "id": "oficina de produção",
-        "hash": "casos-de-uso-oficina-de-produção",
-        "icon": "filme",
+        "id": "productionShop",
+        "hash": "use-cases-production-shop",
+        "icon": "film",
         "label": "Oficina de produção",
         "outcome": "Transforme um nicho em produto com um fluxo repetível de entrada e entrega.",
         "narrative": "A produção de vídeos personalizados é lucrativa até que cada cliente se torne um caso isolado — exigindo novas ferramentas, novos fluxos de entrega e margens que desaparecem com o retrabalho. O SceneFlow transforma seu nicho em um produto: processo de admissão padronizado, modelos *white-label*, narração com clonagem de voz e um caminho claro do *briefing* até a entrega do arquivo MP4.",
@@ -1830,9 +1853,9 @@
         }
       },
       {
-        "id": "agência",
-        "hash": "casos-de-uso-agencia",
-        "icon": "pasta",
+        "id": "agency",
+        "hash": "use-cases-agency",
+        "icon": "briefcase",
         "label": "Agência",
         "outcome": "Apresentações mais rápidas e entrega escalável aos clientes",
         "narrative": "Vencer uma concorrência exige apresentar a ideia — e não apenas descrevê-la —, mas as etapas de pré-visualização e localização costumam consumir a margem de lucro antes mesmo da assinatura do contrato. O SceneFlow permite apresentar rapidamente aos stakeholders pré-visualizações prontas para o cliente e, em seguida, escalar a entrega entre campanhas e mais de 70 idiomas, sem a necessidade de reestruturar o fluxo de trabalho para cada conta.",
@@ -1853,9 +1876,9 @@
         }
       },
       {
-        "id": "Produção cinematográfica",
-        "hash": "casos-de-uso-producao-cinematografica",
-        "icon": "claquete",
+        "id": "filmProduction",
+        "hash": "use-cases-film-production",
+        "icon": "clapperboard",
         "label": "Produção cinematográfica",
         "outcome": "Roteiro para um animatic interativo que você pode exibir e testar antes de filmar",
         "narrative": "A pré-visualização e os testes com o público costumavam envolver semanas de storyboards, locuções provisórias e suposições dispendiosas antes mesmo de as câmeras começarem a rodar. O SceneFlow transforma seu roteiro em um animatic interativo com o Pre-vis Agent — otimize com o Audience Resonance, exiba o conteúdo na Screening Room e aloque o orçamento apenas quando a história realmente funcionar.",
@@ -1922,19 +1945,19 @@
     "subtitle": "Segurança nativa do Google em todas as gerações, Serviços Criativos Estendidos com mecanismos de proteção (guardrails) quando limites de política se aplicam, além de moderação e mitigação de riscos adicionais em todo o seu fluxo de trabalho no Studio.",
     "tiers": [
       {
-        "id": "nativo do Google",
+        "id": "google-native",
         "title": "Segurança nativa do Google",
         "description": "Cada geração de imagem e vídeo passa pelos filtros de segurança do Google, com limites ajustados para fluxos de trabalho criativos profissionais — e não para padrões de uso comum.",
         "highlights": [
           "IA Responsável do Vertex na geração com Veo, Imagen e Gemini",
           "Limiares de nocividade ajustados à produção para conteúdo cinematográfico",
-          "Seus ativos criativos não são usados para treinar modelos compartilhados."
+          "Fotos, vozes e histórias de clientes nunca treinam modelos de IA compartilhados (EXIF GPS removido)"
         ],
         "badge": "Vertex IA Responsável"
       },
       {
-        "id": "barreiras de proteção estendidas",
-        "title": "Diretrizes de proteção estendidas",
+        "id": "extended-guardrails",
+        "title": "Salvaguardas Estendidas",
         "description": "Quando o caminho principal é bloqueado por políticas, o Extended Creative Services with Guardrails pode concluir a entrega — mas apenas após uma etapa adicional de revisão de conteúdo antes do armazenamento.",
         "highlights": [
           "Ajuste de prompt e novas tentativas de método no caminho principal do Google",
@@ -1944,13 +1967,13 @@
         "badge": "Fallback protegido"
       },
       {
-        "id": "proveniência da validação",
+        "id": "validation-provenance",
         "title": "Validação e Proveniência",
         "description": "Recursos adicionais de moderação e mitigação de riscos estão disponíveis para Blueprint, roteiro, pré-visualização e vídeos de segmentos, utilizando o mesmo modelo de créditos de outras ferramentas do Studio. Os clipes bem-sucedidos recebem registros assinados de procedência de conteúdo.",
         "highlights": [
           "Sinais de validação de conteúdo antes de gastos elevados com renderização",
-          "Hash de conteúdo assinado e metadados de procedência no segmento de vídeo",
-          "Logs de auditoria, rastreamento de violações e denúncia de abusos para proteção da plataforma"
+          "Hash de conteúdo assinado, metadados de procedência e registro de consentimento de imagem do cliente",
+          "Logs de auditoria, quarentena isolada de uploads de clientes e exclusão em 1 clique pós-entrega"
         ],
         "badge": "Validação de conteúdo"
       }
@@ -1969,13 +1992,13 @@
         "detail": "Moderação e mitigação de riscos"
       },
       {
-        "label": "Forense",
+        "label": "Proveniência",
         "detail": "Proveniência assinada"
       }
     ],
     "morNote": "A SceneFlow atua em um modelo de responsabilidade compartilhada com nosso *Merchant of Record*: segurança em escala de provedor oferecida pelo Google, além de mecanismos de proteção e trilhas de auditoria da SceneFlow — reduzindo riscos tanto para os criadores quanto para a plataforma.",
     "ctaPolicy": "Leia a Política de Confiança e Segurança",
-    "ctaPolicyHref": "/confiança-e-segurança",
+    "ctaPolicyHref": "/trust-safety",
     "ctaStudio": "Explorar no Studio"
   },
   "extendedScenes": {
@@ -2044,7 +2067,7 @@
       "popularBadge": "Populares",
       "items": [
         {
-          "id": "fotorrealista",
+          "id": "photorealistic",
           "name": "Live-action cinematográfico",
           "displayTitle": "Fotorrealismo",
           "description": "Iluminação fotorrealista e cinematográfica",
@@ -2054,15 +2077,15 @@
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
-          "id": "anime dos anos 90",
+          "id": "cinematic-3d",
           "name": "3D / CGI cinematográfico",
           "displayTitle": "3D / CGI cinematográfico",
           "description": "Visual de longa-metragem em 3D renderizado",
           "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
-          "id": "Pixar",
+          "id": "pixar",
           "name": "Animação 3D (estilo Pixar)",
           "displayTitle": "Cinematográfico em 3D / Inspirado na Pixar",
           "description": "Longa-metragem de animação 3D estilizado",
@@ -2072,17 +2095,17 @@
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
-          "id": "arte conceitual",
+          "id": "anime-90s",
           "name": "Anime",
           "displayTitle": "Anime",
           "description": "Estilo de anime com sombreamento cel-shading",
           "tagline": "Arcos narrativos serializados",
           "marketingBody": "O sombreamento estilo *cel shading* típico de animes gera um forte engajamento dos fãs em webséries de múltiplos episódios e arcos narrativos extensos. Motores generativos treinados nesse estilo produzem traços nítidos e enquadramentos previsíveis — características ideais para a produção seriada em larga escala.",
           "featured": true,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
-          "id": "Ghibli",
+          "id": "ghibli",
           "name": "Ao estilo Ghibli",
           "displayTitle": "Desenhado à mão / Estilo Ghibli",
           "description": "Animação desenhada à mão com estilo pictórico",
@@ -2092,7 +2115,7 @@
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
-          "id": "história em quadrinhos",
+          "id": "comic-book",
           "name": "História em quadrinhos",
           "displayTitle": "História em quadrinhos",
           "description": "Traço marcante, visual de graphic novel",
@@ -2101,16 +2124,16 @@
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
-          "id": "pintura a óleo",
+          "id": "concept-art",
           "name": "Arte conceitual",
           "displayTitle": "Arte conceitual",
           "description": "Arte conceitual cinematográfica de jogo ou filme",
           "tagline": "Keyframes de pré-visualização para filmes e séries, com iluminação atmosférica e pronta para a produção.",
           "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
-          "id": "arte digital",
+          "id": "flat-vector",
           "name": "Vetor Flat / Motion Graphics",
           "displayTitle": "Vetor Flat / Motion Graphics",
           "description": "Visual vetorial limpo para vídeos explicativos",
@@ -2118,21 +2141,21 @@
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
-          "id": "aquarela",
+          "id": "storyboard",
           "name": "Storyboard / Animatic",
           "displayTitle": "Storyboard / Animatic",
           "description": "Quadros de storyboard preliminares em tons de cinza",
           "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
-          "id": "esboço",
+          "id": "digital-art",
           "name": "Arte Digital",
           "displayTitle": "Arte Digital",
           "description": "Ilustração digital moderna",
           "tagline": "Ilustração estilizada para documentário em animação e série episódica de vídeos explicativos.",
           "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
           "id": "watercolor",
@@ -2169,7 +2192,7 @@
       "resolutionFootnote": "Definido em Blueprint; o roteiro e a direção de cena baseiam-se neste enquadramento. Exporte em 720p ou 1080p, caso o seu projeto ofereça suporte a essas resoluções.",
       "items": [
         {
-          "id": "16:9",
+          "id": "16x9",
           "label": "Widescreen 16:9",
           "ratio": "16:9",
           "description": "YouTube (plataforma principal), Connected TV e séries episódicas — Blueprint elabora a direção de cena em formato widescreen e a movimentação de elenco para uma encenação cinematográfica."
@@ -2292,7 +2315,7 @@
     "explorerCta": "Comece com Explorer — US$ 9",
     "phases": [
       {
-        "id": "série",
+        "id": "series",
         "stepLabel": "Series Room",
         "subtitle": "Continuidade entre múltiplos episódios",
         "description": "Defina seu universo uma única vez e gere arcos coesos que abrangem múltiplos episódios. O uso compartilhado de Reference Library mantém personagens e tom alinhados ao longo da temporada.",
@@ -2310,7 +2333,7 @@
         "optional": true
       },
       {
-        "id": "projeto",
+        "id": "blueprint",
         "stepLabel": "Blueprint Room",
         "subtitle": "Desenvolvimento da história",
         "description": "Transforme conceitos em tratamentos estruturados, incluindo logline, batidas, personagens e tom. Execute o Audience Resonance e colabore antes da renderização pesada.",
@@ -2328,7 +2351,7 @@
         "optional": false
       },
       {
-        "id": "produção",
+        "id": "production",
         "stepLabel": "Production Stage",
         "subtitle": "Direção por meio de fluxos",
         "description": "Direção, roteiro, música, referências e imagens estáticas otimizam o roteiro com base na ressonância com o público e na revisão de pré-visualização. Clipes, mixer e fluxos geram o vídeo para cada tomada. A sala de exibição gerencia a pré-visualização, a montagem e a publicação.",
@@ -2349,7 +2372,7 @@
         "optional": false
       },
       {
-        "id": "sala de exibição",
+        "id": "screening-room",
         "stepLabel": "Screening Room",
         "subtitle": "Visualizar · Montar · Publicar",
         "description": "Um ambiente de finalização integrado ao Production: visualize vídeos de cenas, combine transmissões em um arquivo MP4 mestre, realize exibições compartilháveis com análise de dados e publique no YouTube ou exporte pacotes de arquivos.",
@@ -2381,40 +2404,40 @@
     "explorerCta": "Comece com Explorer — US$ 9",
     "steps": [
       {
-        "id": "conceito",
+        "id": "concept",
         "stepLabel": "Comece com seu conceito ou roteiro existente.",
         "shortDescription": "Comece com um conceito em linguagem natural ou importe seu roteiro — Fountain, Final Draft — ou cole o texto do roteiro.",
         "detailedDescription": "O SceneFlow aceita ideias em linguagem simples ou em formatos de roteiro estruturados. A IA ajuda a expandir conceitos em tratamentos e pode importar roteiros existentes, para que você nunca precise começar do zero.",
-        "media": "captura de tela",
+        "media": "screenshot",
         "screenshotSlot": "Inserir captura de tela: Caixa de diálogo para inserção de conceito de novo projeto ou importação de roteiro"
       },
       {
-        "id": "projeto",
+        "id": "blueprint",
         "stepLabel": "Otimize seu conceito com Blueprint Room",
         "shortDescription": "Transforme ideias em um tratamento estruturado — logline, pontos-chave, personagens e tom — antes da renderização pesada.",
         "detailedDescription": "O Blueprint cria automaticamente um esboço abrangente da história. Refine arcos de personagens, pontos-chave da trama e o tom narrativo com sugestões inteligentes. Links de compartilhamento para colaboradores permitem que as partes interessadas façam revisões antes da fase Production Stage.",
-        "media": "vídeo"
+        "media": "video"
       },
       {
-        "id": "ressonância com o público",
+        "id": "audience-resonance",
         "stepLabel": "Otimize seu script com Audience Resonance",
         "shortDescription": "Avalie a adequação do seu roteiro ao público-alvo e aplique recomendações cena a cena com correções em um clique.",
         "detailedDescription": "O Audience Resonance (AR) analisa criticamente seu roteiro com base no público que você define. Obtenha pontuações por seção, recomendações práticas e Edições Guiadas — aplique correções automaticamente por cena ou faça alterações globais no roteiro a partir da caixa de diálogo do AR.",
-        "media": "vídeo"
+        "media": "video"
       },
       {
-        "id": "pré-visualização",
+        "id": "pre-vis",
         "stepLabel": "Visualize e teste com a pré-visualização",
         "shortDescription": "Gere o áudio dos diálogos e os quadros-chave (shot frames) cena a cena. Compartilhe os animatics para aprovação antes de realizar o investimento final no vídeo.",
         "detailedDescription": "O Pre-Vis Studio gera diretrizes de direção, áudio e quadros-chave (*shot frames*) para cada cena — pontos de controle que minimizam retrabalhos dispendiosos caso haja mudanças de personagens ou de tom. Compartilhe o player para colaborar; o animatic completo pode servir como a entrega final em muitos projetos.",
-        "media": "player de pré-visualização"
+        "media": "previs-player"
       },
       {
-        "id": "atirar",
+        "id": "shoot",
         "stepLabel": "Grave sua produção",
         "shortDescription": "Gere cada tomada em Clips, faça a mixagem de áudio no Mixer e exporte as versões de idioma em Streams.",
         "detailedDescription": "Os clipes geram o vídeo de cada tomada a partir de imagens estáticas aprovadas. O Mixer define o tempo, as marcas d'água e o áudio. Os fluxos (streams) são as versões da cena em diferentes idiomas.",
-        "media": "vídeo",
+        "media": "video",
         "subPoints": [
           "Clipes — vídeos gravados a partir de imagens estáticas aprovadas",
           "Mixer — marca-d'água, sobreposição de texto e temporização de áudio por cena",
@@ -2422,18 +2445,18 @@
         ]
       },
       {
-        "id": "sala de exibição",
+        "id": "screening-room",
         "stepLabel": "Teste sua produção com o Screening Room",
         "shortDescription": "Visualize vídeos de cenas em sequência, monte um MP4 master e realize exibições compartilháveis com feedback estruturado.",
         "detailedDescription": "O Screening Room replica a experiência de usuário (UX) do player de pré-visualização, mas reproduz fluxos de cenas renderizadas. Selecione Animatic ou vídeo por cena, monte um master, compartilhe links de revisão e faça a triagem de feedbacks com marcação de tempo antes da publicação.",
-        "media": "vídeo"
+        "media": "video"
       },
       {
-        "id": "publicar",
+        "id": "publish",
         "stepLabel": "Publicar",
         "shortDescription": "Distribua seu master para o YouTube, exporte cortes de formato curto e acompanhe insights de audiência a partir de uma única interface de finalização.",
         "detailedDescription": "A partir do Screening Room, execute o assistente de publicação no YouTube, crie exportações de vídeos curtos para redes sociais e baixe pacotes de distribuição. Dados analíticos e comentários dos revisores ficam centralizados em um único local — sem necessidade de transferir tarefas para ferramentas separadas.",
-        "media": "vídeo"
+        "media": "video"
       }
     ],
     "ui": {
@@ -2451,8 +2474,8 @@
     "titleAccent": "em ação",
     "subtitle": "Experimente histórias de vários minutos com personagens consistentes e verdadeira sincronização de idioma em cena em 7 idiomas globais — cada uma estruturada como uma produção completa, da Bíblia da Série e Blueprint até o Palco de Produção e a Sala de Exibição.",
     "subtitleTagline": "Produções de longa duração. Não clipes.",
-    "screeningRoomInstruction": "Abra Screening Room primeiro para experimentar a produção da mesma forma que um revisor faria - alternando entre Pré-Vis, Clipes, Cenas, Capítulos, Master e Promo - e então inspecione Series Room, Blueprint Room e Production Stage abaixo.",
-    "trailerLabel": "Reboque",
+    "screeningRoomInstruction": "Pré-visualize o pipeline de 4 salas do Estúdio (Series Room, Blueprint Room, Production Stage e Screening Room) — as salas interativas completas de revisão serão liberadas após o lançamento.",
+    "trailerLabel": "Trailer",
     "watchLongform": "Assista ao conteúdo de formato longo",
     "seriesDoor": "Series Room",
     "blueprintDoor": "Blueprint Room",
@@ -2467,8 +2490,8 @@
     "exitFullscreen": "Sair da tela cheia",
     "showDetail": "Mostrar mais detalhes",
     "hideDetail": "Ocultar detalhes",
-    "featuredPlayer": "Jogador em destaque",
-    "openPlayer": "Abrir jogador",
+    "featuredPlayer": "Reprodutor em Destaque",
+    "openPlayer": "Abrir Reprodutor",
     "featureModes": [
       "Pré-Vis",
       "Clipes",
@@ -2506,12 +2529,12 @@
             {
               "name": "Gideão Croft",
               "role": "Protagonista · Ficha de personagem bloqueada",
-              "descriptor": "Ex-Arquivista de Infraestrutura Municipal (54). Bata de arquivista de lã de carvão desgastada, óculos de aro metálico, barba grisalha, mãos calejadas de desenhista; iluminado por tungstênio quente de 3200K contra ardósia fria do túnel."
+              "descriptor": "Ex-Arquivista de Infraestrutura Municipal (58). Homem afro-americano no final dos 50 anos, cabelos e barba curta grisalhos, olhar inteligente; jaleco de lã cinza-carvão desgastado, óculos de aro metálico e mãos calejadas de desenhista; iluminado por tungstênio quente 3200K contra a ardósia fria do túnel."
             },
             {
               "name": "Piper Hayes",
               "role": "Co-líder · Ficha de personagem bloqueada",
-              "descriptor": "Repórter investigativo de energia na lista negra (31). Parka de campo de oliveiras coberta de neve, bolsa de lona com acionamento criptografado e cilindro de cifra de latão, intensa intensidade cinética sob derramamento de indução violeta-azulado."
+              "descriptor": "Repórter Investigativa de Energia na Lista Negra (32). Mulher asiático-americana na casa dos 30 anos; parka verde-oliva coberta de neve, bolsa de lona com drive criptografado e cilindro de cifra em latão, intensidade ágil sob reflexos violeta-azulados de inducción."
             },
             {
               "name": "Julian Ward",
@@ -2521,7 +2544,7 @@
             {
               "name": "Dra. Clara Vance-Croft",
               "role": "Âncora de arquivo e memória · Ficha de personagem bloqueada",
-              "descriptor": "Físico de Ressonância Tardia (48). Jaleco de ardósia, equipamento de calibração 1893 enrolado em cobre, placas de flashback âmbar quente e reflexões esquemáticas holográficas."
+              "descriptor": "Física de Ressonância Falecida (52). Mulher asiático-americana na casa dos 50 anos; jaleco cinza-ardósia, equipamento de calibração em cobre de 1893, flashbacks em âmbar quente e reflexos de esquemas holográficos."
             }
           ],
           "episode1Synopsis": {
@@ -2841,7 +2864,7 @@
               "descriptor": "Engenheiro Telegráfico Acústico Norueguês (48). Casaco de pele de carneiro incrustado de gelo, fones de ouvido de baquelite, barba com bordas de gelo iluminada pelo brilho de uma lanterna de querosene."
             },
             {
-              "name": "Dra.",
+              "name": "Dra. Astrid Solberg",
               "role": "Co-líder histórico · Elenco sismólogo de 1928",
               "descriptor": "Geofísico de Expedição (34). Suéter pesado de lã tricotado, galvanômetro de diapasão de latão, diário de bordo de couro manchado de tinta na cabana de escuta de 1928."
             }
@@ -3000,7 +3023,7 @@
             "title": "Consistência Visual e de Personagem",
             "frictionHeadline": "Desvio de Personagem e Cenários Instáveis.",
             "friction": "Modelos generativos são reiniciados a cada tomada, fazendo com que os rostos dos personagens, os figurinos e a iluminação se transformem continuamente entre os cortes da cena.",
-            "solutionHeadline": "Ativo Bloqueado Blueprints.",
+            "solutionHeadline": "Blueprints de Ativos Travados.",
             "solution": "Defina previamente os perfis mestres de personagens, ambientes e estilos visuais em Blueprint Room. O SceneFlow assegura a identidade visual em todas as renderizações para preservar a imersão narrativa."
           },
           {
@@ -3111,7 +3134,7 @@
             "title": "Consistência de Instrutor e Ambiente",
             "frictionHeadline": "Um professor diferente a cada módulo.",
             "friction": "Clipes gerados redefinem o rosto, o figurino e a sala de aula do instrutor entre as lições, fazendo com que o curso pareça um amontoado de vídeos desconexos.",
-            "solutionHeadline": "Termos do Blueprint SFAI do Instrutor (Bloqueado)",
+            "solutionHeadline": "Blueprints de Instrutor Travados.",
             "solution": "Defina o instrutor, o cenário e o sistema visual uma única vez em Blueprint Room. O SceneFlow mantém essa identidade fixa em todos os módulos."
           },
           {
@@ -3162,7 +3185,7 @@
             "title": "Estimulação automatizada e evidências visuais",
             "frictionHeadline": "Montagem manual da linha do tempo.",
             "friction": "Sincronizar documentos desclassificados, mapas, efeitos sonoros e músicas dramáticas em um programa semanal de 30 minutos cria gargalos de edição insustentáveis.",
-            "solutionHeadline": "FlowDirector e automação de mixagem.",
+            "solutionHeadline": "Automação com FlowDirector e Mixer.",
             "solution": "FlowDirector aprimora a continuidade visual em cada corte enquanto Mixer e Streams equilibram voz, SFX atmosférico e pontuação automaticamente."
           },
           {
@@ -3212,7 +3235,8 @@
         ],
         "screeningRoomPreview": "Cartas através da água — Screening Room"
       }
-    ]
+    ],
+    "productionReviewAria": "Revisão da produção"
   },
   "platformWalkthrough": {
     "badge": "Nos bastidores",
@@ -3225,12 +3249,12 @@
     "underTheHoodLabel": "Nos bastidores",
     "chapters": [
       {
-        "id": "comece-aqui",
+        "id": "start-here",
         "label": "Comece por aqui — planejamento, continuidade e adequação ao público",
         "defaultExpanded": false
       },
       {
-        "id": "produzir e publicar",
+        "id": "produce-publish",
         "label": "Produzir e publicar — Clipes para Screening Room",
         "defaultExpanded": false
       }
@@ -3390,7 +3414,7 @@
     "subtitle": "Arquitetura amigável para startups, com componentes Google Cloud que dão suporte à segurança, à escalabilidade e à entrega prática em produção.",
     "pillars": [
       {
-        "id": "arquitetura",
+        "id": "architecture",
         "title": "Arquitetura Corporativa",
         "description": "Construído sobre a infraestrutura Google Cloud, com orquestração escalável para cargas de trabalho de produção e equipes em crescimento.",
         "highlights": [
@@ -3401,7 +3425,7 @@
         ]
       },
       {
-        "id": "segurança",
+        "id": "security",
         "title": "Segurança e Privacidade",
         "description": "Os ativos criativos permanecem protegidos com criptografia em repouso, controles de acesso e um tratamento que prioriza a privacidade.",
         "highlights": [
@@ -3412,7 +3436,7 @@
         ]
       },
       {
-        "id": "escala",
+        "id": "scale",
         "title": "Escalabilidade e Confiabilidade",
         "description": "A entrega global via nuvem viabiliza pipelines de renderização e revisão confiáveis à medida que o seu volume aumenta.",
         "highlights": [
@@ -3443,7 +3467,7 @@
     ],
     "vertexSection": {
       "title": "Por que o Google Vertex AI?",
-      "subtitle": "O fosso técnico que importa",
+      "subtitle": "Inteligência exclusiva do Google — geração opcional com Google ou Kling",
       "cards": [
         {
           "title": "Privacidade de dados",
@@ -3494,7 +3518,7 @@
     "express": {
       "badge": "Produção Inteligente",
       "title": "SceneFlow Agents",
-      "description": "Os agentes SFAIAUDIO, SFAISTILLS e SFAIVIDEO elaboram prompts especializados com base nas diretrizes de cada batida, anexam as referências adequadas e realizam a geração em paralelo. Uma cena pode levar vários minutos, pois o agente executa um trabalho especializado — e você aprova os quadros da cena (SFAISHOT_FRAMES) antes de investir na produção do vídeo em movimento.",
+      "description": "Audio Agent, Stills Agent e Video Agent elaboram prompts especializados com base na direção de cada beat, anexam as referências certas e geram em paralelo. Uma cena pode levar alguns minutos porque o agente executa trabalho especializado — e você aprova os Shot Frames antes de investir no vídeo em movimento.",
       "items": [
         {
           "title": "Pre-vis Agent",
@@ -3507,7 +3531,7 @@
           "time": "Aprovar e, em seguida, renderizar"
         },
         {
-          "title": "Termos do Agente de Entrega SFAI",
+          "title": "Delivery Agent",
           "desc": "Monte o master ProRes 4K e publique automaticamente no YouTube ou baixe o pacote.",
           "time": "Envie o corte"
         }
@@ -3516,8 +3540,8 @@
     }
   },
   "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
+    "badge": "Motor de Decisão Criativa",
+    "title": "Motor de Pré-Visualização (Pre-Vis)",
     "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
     "narrative": "Na indústria cinematográfica, um storyboard é algo que se entrega à equipe de produção. O Pre-vis é o que se apresenta a executivos de estúdio, investidores e produtores para obter a aprovação de um projeto. O SceneFlow eleva a produção de uma ferramenta para criadores comuns a um ativo de pipeline de nível corporativo.",
     "pillars": [
@@ -3612,10 +3636,10 @@
         },
         {
           "id": "hybrid",
-          "badge": "Cineastas e Negócios de Produção • $149–$599/mês",
-          "title": "Pacotes de financiamento de produção e filmagens híbridas",
-          "description": "Envie roteiros (PDF, FDX, Fountain) para gerar um Animatic Pre-Vis independente na Screening Room e um trailer promocional para captação de recursos — ou lance um negócio de produção de vídeo online de alta margem (Memórias em Vídeo, Tours Imobiliários, Biografias de Clientes) combinando entrevistas ao vivo com recriações em IA 4K.",
-          "recommendedPlan": "Pro/Studio + complementos"
+          "badge": "Operadores de Vídeo, Agências e Cineastas • $149–$599/mês",
+          "title": "Produtoras de Vídeo White-Label e Carteiras de Produção",
+          "description": "Crie um filme de portfólio sem marca d’água no Explorer ($9), lance uma produtora solo no Pro ($149/mês — Portais 100% White-Label de Entrevista, Continuidade e Screening Room + 15.000 créditos/mês), ou escale uma agência multi-PM no Studio ($599/mês — 10 vagas, tetos por PM e BYOK). Ideal também para Pre-Vis de investidores e filmagens híbridas.",
+          "recommendedPlan": "Pro ($149/mês) / Studio ($599/mês) + Pacotes Add-On"
         }
       ]
     },
@@ -3637,7 +3661,7 @@
     "teamCta": {
       "title": "Equipe interna ou instituição?",
       "description": "Agende uma demonstração do fluxo de trabalho para as equipes de comunicação, T&D e marketing.",
-      "button": "Guia do Livro"
+      "button": "Agendar demonstração"
     },
     "agencyCta": {
       "title": "Agência ou produtora?",
@@ -3680,17 +3704,17 @@
         {
           "label": "Adicional de US$ 25",
           "credits": "2.000 créditos",
-          "description": "2.000 créditos (US$ 0,0125/cr) — ideal para terminar um capítulo de 5 a 15 minutos ou um trailer promocional."
+          "description": "2.000 créditos ($0.0125/cr) — ideal para finalizar um capítulo de 5–15 min ou Trailer Promocional."
         },
         {
           "label": "Adicional de US$ 100",
           "credits": "9.000 créditos",
-          "description": "9.000 créditos (US$ 0,0111/cr) — ideal para séries de vários capítulos ou pacotes de pitch pré-vis."
+          "description": "9.000 créditos ($0.0111/cr) — ideal para temporadas de múltiplos capítulos ou pacotes de pitch Pre-Vis."
         },
         {
           "label": "Adicional de US$ 250",
           "credits": "25.000 créditos",
-          "description": "25.000 créditos (US$ 0,0100/cr) – construídos para produções híbridas de US$ 500 a US$ 5.000 e listas de longas-metragens."
+          "description": "25.000 créditos ($0.0100/cr) — criado para produções híbridas de $500–$5,000 e projetos de longa-metragem."
         }
       ],
       "subscriberNote": "Requer uma assinatura mensal ativa (Hobbyist, Starter, Pro ou Studio) para comprar e manter o armazenamento do Continuity Vault.",
@@ -3717,7 +3741,7 @@
       "totalEstimate": "Estimativa total",
       "withTopUps": "com recargas",
       "creditSavings": "Economia de créditos SceneFlow",
-      "savePercent": "Você economiza {percent}% em créditos SceneFlow.",
+      "savePercent": "Você economiza {percent}% em créditos SceneFlow",
       "transparency": "Transparência total: você acompanha o uso de créditos em tempo real enquanto trabalha. Sem surpresas — ajuste o escopo do seu projeto a qualquer momento.",
       "transparencyHighlight": "Transparência total:",
       "byokDisclaimer": "Observação: a taxa da plataforma aplica-se apenas a gerações de referência, imagens estáticas e clipes executadas com a sua chave. As tarifas para modelos hospedados pela plataforma podem ser inferiores às de uma conta individual.",
@@ -3750,7 +3774,8 @@
       "mostPopular": "Mais populares",
       "creditsPerMonth": "Créditos/mês",
       "storage": "Cofre de Continuidade",
-      "perMonth": "/mês"
+      "perMonth": "/mês",
+      "requestPreLaunchAccess": "Solicitar Acesso Antecipado"
     },
     "trust": {
       "cancelAnytime": "Cancele a qualquer momento",
@@ -3772,7 +3797,7 @@
       },
       "subscriptions": [
         {
-          "id": "starter",
+          "id": "hobbyist",
           "name": "Hobbyist - contador de histórias e cofre",
           "description": "Contadores de histórias e visionários criativos – expresse sua visão sem a necessidade de nenhuma habilidade técnica de filmagem e mantenha seu Cofre de Continuidade ativo entre as filmagens",
           "features": [
@@ -3781,13 +3806,13 @@
             "Créditos mensais não utilizados expiram ao final do período.",
             "Cofre de Continuidade Ativa de 10 GB (mantém elenco, guarda-roupas e conjuntos)",
             "Desbloqueia pacotes de créditos complementares de assinante de 12 meses",
-            "Ideal para visões pessoais, histórias de família e animações pré-visuais",
+            "Ideal para visões pessoais, histórias de família e animatics Pre-Vis",
             "Visualização e exportação do script de produção (PDF, FDX, Fountain)",
             "Exportação de MP4 e narração AI (mais de 70 idiomas)"
           ]
         },
         {
-          "id": "pro",
+          "id": "starter",
           "name": "Starter - Capítulo e Pré-Vis",
           "description": "A estratégia de publicação de capítulos - para lançamentos de capítulos episódicos de 5 a 15 minutos e cineastas tradicionais construindo pacotes de financiamento de produção",
           "features": [
@@ -3802,18 +3827,19 @@
           ]
         },
         {
-          "id": "studio",
+          "id": "pro",
           "name": "Pro – Série e Híbrido",
-          "description": "Série Monetizada e Cineasta Híbrido — para canais sociais com personagens recorrentes e cineastas experientes que combinam ação ao vivo com produção de IA em 4K",
+          "description": "Séries Monetizadas, Operadores de Serviços de Vídeo e Cineastas Híbridos — portais de entrega white-label, personagens recorrentes e produção IA em 4K",
           "features": [
-            "Tudo no Starter, mais:",
+            "Tudo do plano Starter, mais:",
             "15.000 créditos/mês incluídos",
-            "Créditos mensais não utilizados expiram ao final do período.",
-            "Cofre de continuidade ativa de 100 GB + mecanismo de consistência de caracteres",
-            "Acesso de qualidade Veo 3.1 (4K) e ação ao vivo híbrida + fluxo de trabalho de IA",
-            "5 clones de voz personalizados para elenco de séries recorrentes",
-            "BYOK (Traga sua própria chave) para faturamento direto do provedor",
-            "3 assentos de equipe e suporte prioritário"
+            "Os créditos mensais não utilizados expiram ao final do período",
+            "Cofre de Continuidade Ativa de 100 GB + Motor de Consistência de Personagens",
+            "Portais de Cliente White-Label (oculte a marca SceneFlow nos links de clientes)",
+            "Acesso ao Veo 3.1 Quality (4K) e fluxo híbrido live-action + IA",
+            "5 clones de voz personalizados para elenco recorrente e memórias localizadas",
+            "BYOK (Traga sua própria chave API) para faturamento direto no provedor",
+            "3 vagas de equipe e suporte prioritário"
           ]
         },
         {
@@ -3824,7 +3850,7 @@
             "Tudo no Pro, mais:",
             "75.000 créditos/mês incluídos (menor taxa por crédito)",
             "Os créditos mensais não utilizados expiram no final do período",
-            "Cofre de continuidade ativa de 500 GB + consistência de caracteres ilimitada",
+            "Cofre de Continuidade Ativa de 500 GB + Consistência Ilimitada de Personagens",
             "Veo 3.1 4K Priority Queue e 25 clones de voz personalizados",
             "Screening Room de marca branca e exportações + acesso API e BYOK",
             "10 vagas de equipe e gerente de conta dedicado",
@@ -3839,19 +3865,19 @@
     "collapseSection": "Ocultar seção"
   },
   "notify": {
-    "heading": "Receba notícias sobre o lançamento",
-    "description": "Deixe seu e-mail e avisaremos quando fizermos o anúncio. Nada além disso.",
+    "heading": "Estúdio Aberto Agora ($9) · Novidades da Versão 1.0 (Janeiro 2027)",
+    "description": "Comece a dirigir ou atender clientes pagantes hoje mesmo — ou deixe seu e-mail para o lançamento 1.0 de janeiro de 2027 e novas vitrines da Screening Room. Nada mais.",
     "placeholder": "voce@studio.com",
     "submit": "Notifique-me",
     "submitting": "Enviando…",
     "successTitle": "Verifique sua caixa de entrada.",
-    "successBody": "Enviamos um link de confirmação. Clique nele para entrar na lista de lançamento. Nada mais.",
+    "successBody": "Enviamos um link de confirmação. Clique nele para entrar na lista da versão 1.0 de janeiro de 2027. Nada mais.",
     "errorEmpty": "Insira seu e-mail para que possamos entrar em contato com você.",
     "errorInvalid": "Esse e-mail não parece correto. Verifique-o e tente novamente.",
     "errorGeneric": "Algo deu errado. Tente novamente em instantes.",
-    "privacy": "Primeiro, enviamos um link de confirmação por e-mail. Após a confirmação, enviamos apenas um aviso de lançamento. Nada de spam.",
+    "privacy": "Enviamos um link de confirmação primeiro. Apenas um aviso para janeiro de 2027 após confirmar. Sem spam.",
     "confirmTitle": "Você está na lista.",
-    "confirmBody": "Enviaremos um e-mail quando fizermos o anúncio. Nada além disso.",
+    "confirmBody": "Enviaremos um e-mail no lançamento 1.0 de janeiro de 2027. Nada além disso.",
     "confirmExpiredTitle": "Aquele link expirou.",
     "confirmExpiredBody": "Envie seu e-mail na landing page novamente e enviaremos um novo link de confirmação.",
     "confirmInvalidTitle": "Esse link não é válido.",
@@ -3895,10 +3921,11 @@
   },
   "finalCta": {
     "title": "Feito para as histórias que precisam perdurar.",
-    "subtitle": "Deixe seu e-mail para receber novidades sobre o lançamento — ou comece a direcionar agora mesmo com o plano Explorer de US$ 9.",
+    "subtitle": "Comece a dirigir ou entregar filmes para clientes hoje a partir do plano Explorer de $9 — ou deixe seu e-mail para as novidades da versão 1.0 em janeiro de 2027.",
     "cta": "Explore planos",
     "ctaSecondary": "Veja como funciona",
-    "ctaSecondaryHref": "#two-modes"
+    "ctaSecondaryHref": "#two-modes",
+    "requestPreLaunchAccess": "Solicitar Acesso Antecipado"
   },
   "footer": {
     "description": "Produção de vídeo automatizada de ponta a ponta — do conceito ao master pronto para publicação. Um estúdio guiado: Series Room → Blueprint Room → Production Stage → Screening Room.",
@@ -3906,7 +3933,7 @@
     "resources": "Recursos",
     "legal": "Confiança e Segurança",
     "links": {
-      "features": "Características",
+      "features": "Recursos",
       "pricing": "Preços",
       "howItWorks": "Como funciona",
       "gettingStarted": "Começar",
@@ -3914,7 +3941,7 @@
       "terms": "Termos de Serviço",
       "trustSafety": "Confiança e Segurança",
       "refunds": "Política de Reembolso",
-      "contact": "Contacte-nos"
+      "contact": "Fale conosco"
     },
     "tagline": "Feito com ❤️ para criadores",
     "taglineSub": "Da ideia ao vídeo publicado",
@@ -3922,13 +3949,15 @@
     "morLine": "Pagamentos seguros, cálculo de impostos e conformidade são tratados pela Whop, nosso Comerciante Registrado, em nome da LifeFocus, LLC.",
     "copyright": "© 2026 SceneFlow Studio. Todos os direitos reservados.",
     "address": "LifeFocus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, Estados Unidos • Contato: support@sceneflowai.studio",
-    "poweredBy": "Inteligência com tecnologia Google · Orquestrado em Google Cloud"
+    "poweredBy": "Inteligência impulsionada pelo Google · Orquestrado no Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "Veja os preços",
-    "tryNine": "Experimente $ 9",
-    "tryForNine": "Experimente por $ 9",
-    "dismiss": "Dispensar"
+    "seePricing": "Ver preços",
+    "tryNine": "Testar $9",
+    "tryForNine": "Experimentar por $9",
+    "dismiss": "Fechar",
+    "requestAccess": "Solicitar Acesso",
+    "requestPreLaunchAccess": "Solicitar Acesso Antecipado"
   },
   "common": {
     "watermark": "SceneFlow Studio",
@@ -3957,9 +3986,9 @@
           "title": "Negócios de Serviços de Vídeo",
           "description": "Entregue Memórias de Vida, Tours Imobiliários, Treinamentos Corporativos e Filmes de Marca para clientes pagantes em horas em vez de semanas — com propriedade comercial total.",
           "highlights": [
-            "Entrevista guiada focada na história e continuidade de elenco em várias idades",
-            "Links compartilháveis de Blueprint, Continuidade e Screening Room para aprovação",
-            "Modo híbrido com fotos reais + cenas IA em 4K mantém margens elevadas"
+            "Portais white-label sem login para Entrevista, Blueprint, Continuidade e Exibição",
+            "Animatic Pre-vis narrado e tetos de rodadas evitam refações caras",
+            "Fotos reais do cliente + cenas IA de cinema protegem margens de 65–85%"
           ],
           "ctaLabel": "Explorar Modelos de Negócio e Margens",
           "targetAnchor": "video-services"
@@ -4123,8 +4152,11 @@
       "projectsPerMonthSuffix": "projetos/mês",
       "projectsUnitLabel": "projetos",
       "stressTestToggleLabel": "Teste conservador: 1º Mês de Ramp-Up + Plano Pro ($149/mês)",
+      "stressTestOnBadge": "ATIVO",
+      "stressTestOffBadge": "INATIVO",
       "stressTestActiveNote": "Modo conservador ativo: +60% de tempo PM inicial, +30% de reserva extra para refações e assinatura Pro de $149/mês (inclui 15.000 créditos base/mês).",
       "proPlanLineLabel": "Plano Pro ($149/mês) + processamento extra",
+      "proPlanCreditsIncludedNote": " (15k cr incl.)",
       "perProjectProfitLabel": "Lucro do serviço / projeto",
       "traditionalMarketLabel": "Preço tradicional de mercado",
       "typicalFeeLabel": "Seu preço ao cliente",
@@ -4139,6 +4171,8 @@
       "disclaimer": "O custo por escopo inclui créditos SceneFlow ($0.01/crédito com 20% de reserva) mais tempo PM avaliado a $50/h. Ative o Teste Conservador para incluir curva de aprendizado e Plano Pro ($149/mês); exclui vendas locais.",
       "launchBusinessCta": "Crie Seu Primeiro Filme de Amostra ($9)",
       "launchBusinessSubnote": "Use o plano Explorer de $9 para criar uma amostra sem marca d’água para parceiros locais — e faça upgrade para o Pro ($149/mês) para Portais 100% White-Label.",
+      "foundingCharterCta": "Lançando um estúdio para clientes agora? Veja a Carta de 25 Vagas para Operadores Fundadores",
+      "foundingCharterTitle": "Carta Pro de 90 Dias para Operadores Fundadores de Vídeo",
       "trustShieldHeading": "Escudo Empresarial de Margem, Privacidade e IP Comercial",
       "trustShieldPillars": [
         {
@@ -4460,7 +4494,7 @@
           "creatorExampleTitle": "Cena 1: Cofre Subterrâneo · Anamórfico 4K",
           "creatorExampleNote": "Troque o figurino de Elara por tomada, dirija enquadramentos por voz ou texto, mixe diálogos/SFX/trilha no Production Mixer e dispare os Production Agents.",
           "serviceExampleTitle": "Fotos Reais do Cliente + Reconstituições Cinematográficas",
-          "serviceExampleNote": "Intercale fotografias reais com movimento Ken Burns e reconstituições IA em 4K para memórias sem foto — mantendo um filme de 15 minutos abaixo de ~$75 em processamento.",
+          "serviceExampleNote": "Intercale fotografias reais com movimento Ken Burns e reconstituições IA em 4K para memórias sem foto — mantendo uma memória de 12 min em ~$34 de créditos (e filmes legado de 20 min em 4K abaixo de ~$75).",
           "callouts": [
             {
               "label": "Figurino por Tomada e Shot Director por Voz/Texto",
@@ -4531,7 +4565,7 @@
         {
           "id": "memoir-services",
           "tabLabel": "Vídeo Memórias e Legado Familiar",
-          "badge": "Serviço de Alta Margem · $300–$950/Filme",
+          "badge": "Serviço Carro-Chefe · $349–$1,250/Filme",
           "headline": "Transforme Entrevistas de Família e Fotos de Acervo em Cinema de Legado",
           "description": "Capture uma história de vida por entrevista inteligente, trave retratos em várias idades dos anos 70 até hoje, acione Production Agents autônomos, recrie clipes em 1 clique no FlowDirector e entregue por link privado da Screening Room.",
           "featureIcons": [
@@ -4573,7 +4607,7 @@
           "tabLabel": "Séries Episódicas e Animação 3D",
           "badge": "IP Multiepisódio · Arte e Elenco Travados",
           "headline": "Comande uma Bíblia Completa de Showrunner do Episódio 1 ao Final da Temporada",
-          "description": "Construa arcos de temporada multiepisódio, congele direção de arte fotorrealista ou animação 3D estilizada em cada episódio, dirija batidas e quadros-chave e renderize clipes de cinema.",
+          "description": "Construa arcos de temporada multiepisódio, congele direção de arte fotorrealista ou animação 3D estilizada em cada episódio, dirija batidas e quadros-chave e renderize clipes de cinema de 10s com Omni 1.2 Flash.",
           "featureIcons": [
             "newSeries",
             "seriesReview",
@@ -4672,32 +4706,32 @@
         {
           "step": "02",
           "badge": "Blueprint e Ressonância",
-          "title": "Iterar em Blueprint e Audience Resonance",
-          "detail": "O PM refina a estrutura e a pontuação de Audience Resonance no desktop e compartilha o link para revisão e aprovação.",
-          "linkLabel": "/blueprint/share · /share/script-resonance",
-          "phoneHeadline": "Revisão de Blueprint e Ressonância",
+          "title": "Aprovar Beats da História Antes do Gasto em Render",
+          "detail": "Refine o ritmo com Audience Resonance no desktop e envie um link Blueprint white-label para feedback e aprovação móvel do cliente.",
+          "linkLabel": "/blueprint/share · Aprovação Pré-Gasto",
+          "phoneHeadline": "Revisão de Blueprint e Beats",
           "phoneStatus": "94 / 100 Audience Resonance · Aprovado",
-          "phoneMeta": "2 ajustes alinhados com o PM · Pronto para Continuidade"
+          "phoneMeta": "Rodada 1 de 2 usada · Pronto para Continuidade"
         },
         {
           "step": "03",
           "badge": "Link de Continuidade",
-          "title": "Enviar Fotos pelo Celular e Aprovar Continuidade",
-          "detail": "O PM envia um link dedicado de Continuidade para o cliente subir fotos da galeria ou câmera e aprovar Elenco, Figurinos, Locações e Objetos.",
+          "title": "Enviar Fotos pelo Celular (Sem EXIF) e Travar Elenco",
+          "detail": "O cliente abre seu link de Continuidade para subir fotos reais da galeria ou câmera e aprovar Elenco, Figurinos, Locações e Objetos.",
           "linkLabel": "/share/continuity · Galeria e Câmera",
           "phoneHeadline": "Continuidade e Envio de Fotos",
-          "phoneStatus": "6 Fotos Enviadas · Elenco e Cenários Travados",
-          "phoneMeta": "Redimensionamento automático sem EXIF · Promoção em 1 clique"
+          "phoneStatus": "6 Fotos do Cliente · Elenco e Cenários Travados",
+          "phoneMeta": "EXIF GPS removido automaticamente · Zero treino de IA"
         },
         {
           "step": "04",
           "badge": "Screening Room",
-          "title": "Revisão Móvel no Screening Room e Aprovação Final",
-          "detail": "Assista ao animatic narrado e cortes 4K no celular, deixe notas por segundo e aprove o master final.",
+          "title": "Exibição Móvel Quadro a Quadro e Entrega Final",
+          "detail": "Assista ao animatic narrado e cortes 4K no celular sem login, deixe notas por segundo e aprove o master final.",
           "linkLabel": "/share/screening-room · Aprovação Final",
           "phoneHeadline": "Screening Room de Estreia",
           "phoneStatus": "Master 4K Final Aprovado ✓",
-          "phoneMeta": "Versões multilíngues liberadas para entrega"
+          "phoneMeta": "Streams multilíngues entregues · Uploads brutos apagáveis"
         }
       ],
       "teamHeading": "Comando em Tempo Real para Produtores, Diretores e PMs",
@@ -4731,12 +4765,20 @@
       "phoneHeaderBrand": "SceneFlow Companion",
       "phoneCreditsPill": "14.250 cr",
       "phonePmBadge": "PM Conectado",
+      "phoneVoiceBriefPill": "Voz / Briefing",
+      "phoneContinuitySlots": [
+        "Elenco ✓",
+        "Figurino ✓",
+        "Locações ✓",
+        "Objetos ✓"
+      ],
+      "phoneMasterLabel": "Master 4K",
       "phoneStageBarLabels": [
         "Blueprint",
         "Ressonância",
         "Continuidade",
         "Produção",
-        "Screening"
+        "Exibição"
       ],
       "phoneTeamAlertTitle": "Novas Fotos de Continuidade",
       "phoneTeamAlertBody": "Elena enviou 6 fotos de arquivo · Toque para revisar e promover",

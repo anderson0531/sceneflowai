@@ -361,7 +361,7 @@ export function MobileCompanionPwaSection() {
                         <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-slate-800 pt-2.5 text-[10px]">
                           <span className="inline-flex items-center gap-1 rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-cyan-200">
                             <Mic className="h-3 w-3 shrink-0" aria-hidden />
-                            Voice / Brief
+                            {copy.phoneVoiceBriefPill}
                           </span>
                           <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-200">
                             <Users className="h-3 w-3 shrink-0" aria-hidden />
@@ -384,7 +384,7 @@ export function MobileCompanionPwaSection() {
 
                       {safeStepIdx === 2 && (
                         <div className="mt-2.5 grid grid-cols-2 gap-1.5 border-t border-slate-800 pt-2.5 text-[10px]">
-                          {['Cast ✓', 'Wardrobe ✓', 'Locations ✓', 'Props ✓'].map((slot) => (
+                          {copy.phoneContinuitySlots.map((slot) => (
                             <span
                               key={slot}
                               className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-center font-semibold text-emerald-200"
@@ -400,7 +400,7 @@ export function MobileCompanionPwaSection() {
                           <div className="flex items-center justify-between text-[10px] text-gray-300">
                             <span className="inline-flex items-center gap-1 font-semibold text-emerald-300">
                               <Film className="h-3 w-3 shrink-0" aria-hidden />
-                              4K Master
+                              {copy.phoneMasterLabel}
                             </span>
                             <span className="tabular-nums text-gray-400">01:14 / 02:30</span>
                           </div>

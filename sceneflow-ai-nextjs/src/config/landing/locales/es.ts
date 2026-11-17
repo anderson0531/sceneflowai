@@ -23,9 +23,9 @@ export const STUDIO_LANDING_COPY_ES = {
         description:
           'Entrega Memorias de Vida, Recorridos Inmobiliarios, Capacitación Corporativa y Videos de Marca para clientes en horas en lugar de semanas — con propiedad comercial total.',
         highlights: [
-          'Entrevista guiada centrada en la historia y continuidad de elenco por edades',
-          'Enlaces compartidos de Blueprint, Continuidad y Screening Room para aprobación',
-          'Modo híbrido con fotos reales + escenas IA en 4K para altos márgenes',
+          'Portales marca blanca sin login para Entrevista, Blueprint, Continuidad y Proyección',
+          'Animatic Pre-vis narrado y límites de rondas evitan costosas retomas',
+          'Fotos reales del cliente + escenas IA de cine protegen márgenes del 65–85%',
         ],
         ctaLabel: 'Ver Modelos de Negocio y Márgenes',
         targetAnchor: 'video-services',
@@ -178,9 +178,12 @@ export const STUDIO_LANDING_COPY_ES = {
     projectsPerMonthSuffix: 'proyectos/mes',
     projectsUnitLabel: 'proyectos',
     stressTestToggleLabel: 'Prueba conservadora: Mes 1 de aprendizaje + Plan Pro ($149/mes)',
+    stressTestOnBadge: 'ACTIVO',
+    stressTestOffBadge: 'INACTIVO',
     stressTestActiveNote:
       'Modo conservador activo: +60% de tiempo PM inicial, +30% de margen extra en retomas y membresía Pro de $149/mes (incluye 15,000 créditos base/mes).',
     proPlanLineLabel: 'Plan Pro ($149/mes) + cómputo extra',
+    proPlanCreditsIncludedNote: ' (15k cr incl.)',
     perProjectProfitLabel: 'Ganancia del servicio / proyecto',
     traditionalMarketLabel: 'Tarifa tradicional del mercado',
     typicalFeeLabel: 'Tu precio al cliente',
@@ -197,6 +200,9 @@ export const STUDIO_LANDING_COPY_ES = {
     launchBusinessCta: 'Crea tu Primer Filme de Muestra ($9)',
     launchBusinessSubnote:
       'Usa el plan Explorer de $9 para producir un portafolio sin marca de agua para aliados locales — y sube a Pro ($149/mes) para activar Portales 100% de Marca Blanca.',
+    foundingCharterCta:
+      '¿Lanzas un estudio para clientes hoy? Mira la Carta de 25 Plazas para Operadores Fundadores',
+    foundingCharterTitle: 'Carta Pro de 90 Días para Operadores Fundadores de Video',
     trustShieldHeading: 'Escudo Empresarial de Margen, Privacidad e IP Comercial',
     trustShieldPillars: [
       {
@@ -499,7 +505,7 @@ export const STUDIO_LANDING_COPY_ES = {
           'Cambia el vestuario de Elara por plano, dirige encuadres por voz o texto, mezcla diálogo/SFX/música en Production Mixer y lanza los Production Agents.',
         serviceExampleTitle: 'Fotos Reales del Cliente + Recreaciones Cinematográficas',
         serviceExampleNote:
-          'Combina fotografías reales con efecto Ken Burns y recreaciones IA en 4K para recuerdos no fotografiados — manteniendo una memoria de 15 minutos por debajo de ~$75 en cómputo.',
+          'Combina fotografías reales con efecto Ken Burns y recreaciones IA en 4K para recuerdos no fotografiados — manteniendo una memoria de 12 min en ~$34 de cómputo (y filmes legado de 20 min en 4K bajo ~$75).',
         callouts: [
           {
             label: 'Vestuario por Plano y Shot Director por Voz/Texto',
@@ -579,7 +585,7 @@ export const STUDIO_LANDING_COPY_ES = {
       {
         id: 'memoir-services',
         tabLabel: 'Video Memorias y Legado Familiar',
-        badge: 'Servicio de Alto Margen · $300–$950/Filme',
+        badge: 'Servicio Insignia · $349–$1,250/Filme',
         headline: 'Transforma Entrevistas Familiares y Fotos Antiguas en Cine Conmemorativo',
         description:
           'Captura una historia de vida con entrevista inteligente, bloquea retratos multiedad desde los años 70 hasta hoy, ejecuta Production Agents autónomos, recrea clips en 1 clic con FlowDirector y entrega por enlace privado de Screening Room.',
@@ -624,7 +630,7 @@ export const STUDIO_LANDING_COPY_ES = {
         badge: 'IP Multiepisodio · Arte y Elenco Bloqueados',
         headline: 'Dirige una Biblia de Showrunner Completa desde el Piloto hasta el Final de Temporada',
         description:
-          'Construye arcos de temporada multiepisodio, congela dirección de arte fotorrealista o animación 3D estilizada en cada entrega, dirige beats y fotogramas clave y renderiza clips de cine.',
+          'Construye arcos de temporada multiepisodio, congela dirección de arte fotorrealista o animación 3D estilizada en cada entrega, dirige beats y fotogramas clave y renderiza clips de cine de 10s con Omni 1.2 Flash.',
         featureIcons: [
           'newSeries',
           'seriesReview',

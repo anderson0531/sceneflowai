@@ -23,9 +23,9 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         description:
           '在数小时而非数周内，为付费客户交付人生传记电影、房产导览、企业培训与品牌短片 — 享有 100% 商业版权归属。',
         highlights: [
-          '故事优先的引导式客户访谈与分年龄段角色连续性锁定',
-          '通过分享链接轻松完成 Blueprint、角色连续性与 Screening Room 客户签收',
-          '客户真实照片 + 4K AI 电影重现混合模式，兼顾质感与高利润',
+          '免登录白标门户涵盖访谈采集、Blueprint、连续性与审片室',
+          '有声 Pre-vis 动态预演与轮次上限彻底杜绝高昂返工成本',
+          '客户实拍老照片 + 4K AI 电影重现稳守 65–85% 服务毛利',
         ],
         ctaLabel: '查看商业模式与收益测算',
         targetAnchor: 'video-services',
@@ -178,9 +178,12 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
     projectsPerMonthSuffix: '单/月',
     projectsUnitLabel: '个项目',
     stressTestToggleLabel: '保守压力测试：首月磨合期 + Pro 会员 ($149/月)',
+    stressTestOnBadge: '已开启',
+    stressTestOffBadge: '未开启',
     stressTestActiveNote:
       '保守模式已开启：计入 +60% 新手统筹工时、+30% 额外重生成算力缓冲，以及 $149/月 Pro 订阅费（含每月 15,000 基础积分）。',
     proPlanLineLabel: 'Pro 订阅 ($149/月) + 超额算力',
+    proPlanCreditsIncludedNote: '（含 15k 基础积分）',
     perProjectProfitLabel: '单项目服务毛利',
     traditionalMarketLabel: '传统市场均价',
     typicalFeeLabel: '您的客户报价',
@@ -197,6 +200,9 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
     launchBusinessCta: '花 $9 制作您的首部样片',
     launchBusinessSubnote:
       '先用 $9 Explorer 制作无水印作品集样片拿去谈本地渠道合作 — 接单后升级至 Pro ($149/月) 解锁 100% 白标客户交付门户。',
+    foundingCharterCta:
+      '正在启动客户定制工作室？查看限额 25 席的创始服务商 Pro 计划章程',
+    foundingCharterTitle: '创始视频服务商 90 天 Pro 扶持计划章程',
     trustShieldHeading: '企业级利润护栏、隐私保护与商业版权盾牌',
     trustShieldPillars: [
       {
@@ -493,7 +499,7 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
           '按镜头切换艾拉拉的服装，用语音或文字微调景别构图，在 Production Mixer 混音并派发 Production Agents。',
         serviceExampleTitle: '客户真实老照片 + 4K 电影级时代重现',
         serviceExampleNote:
-          '为珍贵照片匹配 Ken Burns 运镜，为未留影像的记忆生成 4K AI 电影重现 — 将 15 分钟传记大片算力控制在约 $75 以内。',
+          '为珍贵照片匹配 Ken Burns 运镜，为未留影像的记忆生成 4K AI 电影重现 — 将 12 分钟传记片算力控制在约 $34（20 分钟 4K 传世纪录片控制在约 $75 以内）。',
         callouts: [
           {
             label: '逐镜头服装选择与语音/文字 Shot Director',
@@ -567,7 +573,7 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
       {
         id: 'memoir-services',
         tabLabel: '人生传记电影与家族传承',
-        badge: '高利润定制服务 · $300–$950/部',
+        badge: '王牌客户定制服务 · $349–$1,250/部',
         headline: '将家庭深度访谈与珍藏老照片转化为传世电影',
         description:
           '通过智能故事访谈采集人生历程，锁定从 70 年代青年时期到晚年的分龄人物肖像，调度全自动 Production Agents，由 FlowDirector 一键修复镜头，并通过免登录 Screening Room 链接交付。',
@@ -612,7 +618,7 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
         badge: '多集原创 IP · 锁定美术与角色连续性',
         headline: '从第 1 集试播集到季终集全程统御剧集主创圣经',
         description:
-          '搭建多集整季故事弧线，跨集冻结写实电影感或风格化 3D 美术设定，精准执导故事板节拍与关键帧，并渲染院线级视频镜头。',
+          '搭建多集整季故事弧线，跨集冻结写实电影感或风格化 3D 美术设定，精准执导故事板节拍与关键帧，并渲染 Omni 1.2 Flash 10 秒院线级视频镜头。',
         featureIcons: [
           'newSeries',
           'seriesReview',

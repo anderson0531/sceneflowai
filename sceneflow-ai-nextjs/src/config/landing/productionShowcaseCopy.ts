@@ -27,6 +27,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
   hideDetail: 'Hide detail',
   featuredPlayer: 'Featured Player',
   openPlayer: 'Open Player',
+  productionReviewAria: 'Production review',
   featureModes: ['Pre-Vis', 'Clips', 'Scenes', 'Chapters', 'Master', 'Promo'],
   seriesPanel: {
     headerLabel: 'Production Dossier & Story Bible',

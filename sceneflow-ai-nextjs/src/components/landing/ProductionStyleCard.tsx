@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import {
   ArrowRight,
   ChevronDown,
@@ -172,6 +172,7 @@ export function ProductionStyleCard({
   featureModes?: readonly string[]
 }) {
   const locale = useLocale()
+  const tShowcase = useTranslations('productionShowcase')
   const [videoLocale, setVideoLocale] = useState<TrailerDubLocaleId>(() =>
     resolveTrailerDubLocale(locale)
   )
@@ -247,7 +248,7 @@ export function ProductionStyleCard({
       <div className="pointer-events-none relative z-10 flex flex-1 flex-col bg-gradient-to-b from-slate-950/95 via-slate-950 to-slate-950 p-4 sm:p-6">
         {/* Interactive 7-language narrated Studio Door walkthroughs (interim placeholder for live shared links) */}
         <nav
-          aria-label="Production review"
+          aria-label={tShowcase.has('productionReviewAria') ? tShowcase('productionReviewAria') : 'Production review'}
           title={screeningRoomInstruction}
           className="pointer-events-auto mb-4 space-y-2"
         >

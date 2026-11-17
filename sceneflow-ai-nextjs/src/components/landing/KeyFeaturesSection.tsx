@@ -113,28 +113,39 @@ function featuresForRoom(room: RoomData, paneId: string): FeatureData[] {
   return panes.find((pane) => pane.id === paneId)?.features ?? panes[0].features
 }
 
+const REGION_KEY_MAP: Record<string, string> = {
+  Americas: 'uiRegions.americas',
+  'Asia Pacific': 'uiRegions.asiaPacific',
+  'Middle East & Africa': 'uiRegions.middleEastAfrica',
+}
+
 function LandingUiLanguagesBlock({ label }: { label: string }) {
+  const t = useTranslations('keyFeatures')
   return (
     <div className="border-t border-slate-800 pt-4">
       <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
         {label}
       </p>
       <div className="space-y-3">
-        {Object.entries(LANDING_UI_LANGUAGES_BY_REGION).map(([region, names]) => (
-          <div key={region}>
-            <p className="mb-1.5 text-[11px] font-medium text-emerald-400/90">{region}</p>
-            <div className="flex flex-wrap gap-1.5">
-              {names.map((name) => (
-                <span
-                  key={name}
-                  className="rounded-md border border-slate-700/80 bg-slate-800/60 px-2 py-0.5 text-xs text-gray-300"
-                >
-                  {name}
-                </span>
-              ))}
+        {Object.entries(LANDING_UI_LANGUAGES_BY_REGION).map(([region, names]) => {
+          const regionKey = REGION_KEY_MAP[region]
+          const localizedRegion = regionKey && t.has(regionKey) ? t(regionKey) : region
+          return (
+            <div key={region}>
+              <p className="mb-1.5 text-[11px] font-medium text-emerald-400/90">{localizedRegion}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {names.map((name) => (
+                  <span
+                    key={name}
+                    className="rounded-md border border-slate-700/80 bg-slate-800/60 px-2 py-0.5 text-xs text-gray-300"
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

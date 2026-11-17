@@ -259,6 +259,11 @@
     "watchLongformLabel": "Watch the longform",
     "screenshotLabel": "Screenshot",
     "landingUiLanguagesLabel": "Deliver true in-scene language sync, stem-separated audio, and regenerated dialogue & signage clips in 70+ languages. Full Studio UI and this site ship in English plus our 6 core global AI markets (7 UI languages total):",
+    "uiRegions": {
+      "americas": "Americas",
+      "asiaPacific": "Asia Pacific",
+      "middleEastAfrica": "Middle East & Africa"
+    },
     "rooms": [
       {
         "id": "series-desk",

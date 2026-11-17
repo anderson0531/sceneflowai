@@ -171,7 +171,6 @@ const STRUCTURAL_LEAVES = new Set([
   'targetAnchor',
   'videoClipKey',
   'stepNumber',
-  'step',
 ])
 
 export function shouldSkipTranslation(path: string, value: string): boolean {
@@ -179,9 +178,11 @@ export function shouldSkipTranslation(path: string, value: string): boolean {
   if (path.includes('.featureIcons.')) return true
   const leaf = path.split('.').pop() ?? ''
   if (STRUCTURAL_LEAVES.has(leaf)) return true
-  if (leaf.endsWith('Href') || leaf === 'href') return true
+  if (leaf === 'step' && /^\d+$/.test(value.trim())) return true
+  if (leaf.endsWith('Href') || leaf === 'href' || leaf.endsWith('ImageUrl') || leaf === 'imageUrl') return true
   if (/^https?:\/\//.test(value)) return true
-  if (value.startsWith('#') || value.startsWith('/')) return true
+  if (value.startsWith('#')) return true
+  if (/^\/[a-z0-9/_.-]*$/i.test(value) && value !== '/month') return true
   return false
 }
 
@@ -568,6 +569,7 @@ export async function translateFlatMessages(
 }
 
 export const LANDING_NAMESPACES = [
+  'metadata',
   'nav',
   'imaginePossibilities',
   'studioLanding',
@@ -581,10 +583,13 @@ export const LANDING_NAMESPACES = [
   'useCasesShowcase',
   'pricing',
   'exitIntent',
+  'landingSections',
+  'notify',
   'finalCta',
   'floatingCta',
   'floatingNav',
   'footer',
+  'common',
   'valueProp',
   'productionShowcase',
   'keyFeatures',
@@ -595,6 +600,7 @@ export const LANDING_NAMESPACES = [
 ] as const
 
 export const PRIORITY_LANDING_NAMESPACES = [
+  'metadata',
   'nav',
   'imaginePossibilities',
   'studioLanding',
@@ -606,10 +612,13 @@ export const PRIORITY_LANDING_NAMESPACES = [
   'useCasesShowcase',
   'pricing',
   'exitIntent',
+  'landingSections',
+  'notify',
   'finalCta',
   'floatingCta',
   'floatingNav',
   'footer',
+  'common',
 ] as const
 
 export const CRITICAL_LANDING_PATHS = [

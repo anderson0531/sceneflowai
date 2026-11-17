@@ -11,22 +11,22 @@
     "startProject": "Iniciar um projeto"
   },
   "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
+    "badge": "Motor de Decisão Criativa",
+    "title": "Motor de Pré-Visualização (Pre-Vis)",
     "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
-    "narrative": "In the film industry, a storyboard is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "narrative": "Na indústria cinematográfica, um storyboard é algo que se entrega à equipe de produção. O Pre-vis é o que se apresenta a executivos de estúdio, investidores e produtores para obter a aprovação de um projeto. O SceneFlow eleva a produção de uma ferramenta para criadores comuns a um ativo de pipeline de nível corporativo.",
     "pillars": [
       {
-        "title": "The Ultimate Pitch Deck",
-        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+        "title": "O Pitch Deck Definitivo",
+        "description": "Faça o upload de um roteiro e chegue a uma reunião de apresentação com uma pré-visualização completa — incluindo vozes, trilha sonora e múltiplos idiomas — além de dados concretos sobre a ressonância com o público. Ofereça aos criadores um \"atalho\" audiovisual embasado em dados para viabilizar a produção de seus filmes."
       },
       {
-        "title": "Fail-Fast Pre-Production",
-        "description": "Traditional pre-vis requires 3D animators, storyboard artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+        "title": "Pré-produção com falha rápida",
+        "description": "A pré-visualização tradicional exige animadores 3D, artistas de storyboard e dubladores por semanas. Se uma cena não funciona, desperdiçam-se dezenas de milhares de dólares. Faça iterações em 15 minutos, antes mesmo de contratar um único membro da equipe de câmera."
       },
       {
-        "title": "Financier Analytics",
-        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+        "title": "Análise Financeira",
+        "description": "A ressonância com o público atrai o segmento da indústria mais avesso a riscos: os financiadores. Demonstre como o ritmo, o tom e os diálogos se alinham ao público-alvo antes mesmo de se gastar um único dólar na produção."
       }
     ],
     "workflow": {
@@ -38,8 +38,8 @@
         "Share for stakeholder review before final video spend"
       ]
     },
-    "cta": "Start with Script Upload",
-    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
+    "cta": "Comece fazendo o upload do script",
+    "ctaSubtext": "Unir o cinema tradicional à IA generativa"
   },
   "imaginePossibilities": {
     "headline": "Imagine as possibilidades",

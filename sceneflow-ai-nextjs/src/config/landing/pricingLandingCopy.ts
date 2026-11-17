@@ -186,6 +186,7 @@ export const PRICING_LANDING_COPY = {
     productionTestFlight: '30-Day Studio Test Flight',
     getStarted: 'Get Started',
     startTestFlight: 'Start Test Flight',
+    requestPreLaunchAccess: 'Request Pre-Launch Access',
     loading: 'Loading...',
     mostPopular: 'Most Popular',
     creditsPerMonth: 'Credits/mo',

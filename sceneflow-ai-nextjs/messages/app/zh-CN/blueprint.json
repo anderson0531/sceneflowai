@@ -227,7 +227,7 @@
   },
   "resonance": {
     "run": "运行{feature}",
-    "chipLabel": "SFAI蓝图术语AR",
+    "chipLabel": "Blueprint AR",
     "targetSuffix": "→ target {target} +",
     "pointsToTarget": "{points} PTS",
     "improveWeakest": "改善最弱"

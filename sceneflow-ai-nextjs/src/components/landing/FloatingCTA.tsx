@@ -84,7 +84,9 @@ export default function FloatingCTA() {
                 className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2.5 py-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all"
               >
                 <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
-                  {prelaunchOnly ? 'Request Access' : t('tryNine')}
+                  {prelaunchOnly
+                    ? (t.has('requestAccess') ? t('requestAccess') : 'Request Access')
+                    : t('tryNine')}
                 </span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
               </Link>
@@ -103,7 +105,11 @@ export default function FloatingCTA() {
             className="group relative inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:via-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-2xl shadow-indigo-500/30 transition-all duration-300 hover:scale-105"
           >
             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity -z-10" />
-            <span className="mr-2">{prelaunchOnly ? 'Request Pre-Launch Access' : t('tryForNine')}</span>
+            <span className="mr-2">
+              {prelaunchOnly
+                ? (t.has('requestPreLaunchAccess') ? t('requestPreLaunchAccess') : 'Request Pre-Launch Access')
+                : t('tryForNine')}
+            </span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
           

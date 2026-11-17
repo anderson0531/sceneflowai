@@ -75,7 +75,10 @@ export function VideoGlobeLanguageSelector({
 
   const soonLabel = tHero.has('soon') ? tHero('soon') : 'Soon'
   const activeNativeLabel = getNativeLabel(activeLocale)
-  const tooltipLabel = `Language (${activeNativeLabel})`
+  const tooltipLabel = tHero.has('languageSelectTooltip')
+    ? tHero('languageSelectTooltip', { language: activeNativeLabel })
+    : `Language (${activeNativeLabel})`
+  const inSceneSyncLabel = tHero.has('inSceneSync') ? tHero('inSceneSync') : 'In-Scene Sync'
 
   return (
     <div
@@ -127,7 +130,7 @@ export function VideoGlobeLanguageSelector({
         >
           <div className="mb-1 flex items-center gap-1.5 border-b border-slate-800 px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-cyan-300">
             <Globe className="h-3 w-3 shrink-0 text-cyan-400" aria-hidden />
-            <span>In-Scene Sync</span>
+            <span>{inSceneSyncLabel}</span>
           </div>
 
           <div className="space-y-0.5">

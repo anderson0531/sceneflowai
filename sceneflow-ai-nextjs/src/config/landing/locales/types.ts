@@ -149,6 +149,9 @@ export type MobileCompanionPwaCopy = {
   phoneHeaderBrand: string
   phoneCreditsPill: string
   phonePmBadge: string
+  phoneVoiceBriefPill: string
+  phoneContinuitySlots: readonly [string, string, string, string]
+  phoneMasterLabel: string
   phoneStageBarLabels: readonly [string, string, string, string, string]
   phoneTeamAlertTitle: string
   phoneTeamAlertBody: string
@@ -236,8 +239,11 @@ export type StudioLandingCopy = {
     projectsPerMonthSuffix: string
     projectsUnitLabel: string
     stressTestToggleLabel: string
+    stressTestOnBadge: string
+    stressTestOffBadge: string
     stressTestActiveNote: string
     proPlanLineLabel: string
+    proPlanCreditsIncludedNote: string
     perProjectProfitLabel: string
     traditionalMarketLabel: string
     typicalFeeLabel: string
@@ -252,6 +258,8 @@ export type StudioLandingCopy = {
     disclaimer: string
     launchBusinessCta: string
     launchBusinessSubnote: string
+    foundingCharterCta: string
+    foundingCharterTitle: string
     trustShieldHeading: string
     trustShieldPillars: readonly [
       ServiceTrustPillarCopy,

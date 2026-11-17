@@ -1251,7 +1251,7 @@
     "productionType": "Type de fabrication",
     "fullVideo": "Vidéo complète",
     "fullVideoHint": "Génération de vidéo IA",
-    "animatic": "SFAIANIMATIQUETERME",
+    "animatic": "Animatique",
     "animaticHint": "Images + audio (aperçu)",
     "animaticModeTitle": "Mode Animatic :",
     "animaticModeBody": "Utilise des images fixes avec de l'audio. Parfait pour les prévisualisations, les aperçus clients ou les vidéos podcast. Coût du crédit nettement inférieur.",
@@ -1355,7 +1355,7 @@
     "recommended": "Recommandé",
     "methods": {
       "animatic_first": {
-        "name": "SFAIANIMATIQUETERME Premier",
+        "name": "Animatique d’abord",
         "hint": "Trames Pre-vis uniquement. Validez dans Screening Room avant de dépenser des crédits vidéo."
       },
       "draft_production": {

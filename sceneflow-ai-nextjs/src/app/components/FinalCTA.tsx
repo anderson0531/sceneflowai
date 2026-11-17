@@ -37,7 +37,9 @@ export function FinalCTA() {
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href={getSignupUrlForTier('explorer')} className="w-full sm:w-auto">
               <Button size="lg" className="w-full sm:w-auto">
-                {prelaunchOnly ? 'Request Pre-Launch Access' : t('cta')}
+                {prelaunchOnly
+                  ? (t.has('requestPreLaunchAccess') ? t('requestPreLaunchAccess') : 'Request Pre-Launch Access')
+                  : t('cta')}
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

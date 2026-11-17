@@ -94,6 +94,9 @@ export function buildEnMessages() {
       userFallback: 'User',
       searchLanguages: 'Search languages...',
       noLanguagesFound: 'No languages found',
+      primaryNavigation: 'Primary navigation',
+      openMenu: 'Open menu',
+      closeMenu: 'Close menu',
     },
     floatingNav: {
       whoItsFor: 'Paths',
@@ -135,6 +138,9 @@ export function buildEnMessages() {
         HERO_VIDEO_LOCALES.map((l) => [l.id, { label: l.label, nativeLabel: l.nativeLabel }])
       ),
       soon: 'Soon',
+      languageSelectTooltip: 'Language ({language})',
+      inSceneSync: 'In-Scene Sync',
+      requestPreLaunchAccess: 'Request Pre-Launch Access',
       videoLanguageCount: '{count, plural, =1 {# language} other {# languages}}',
     },
     twoModes: TWO_MODES_COPY,
@@ -324,6 +330,8 @@ export function buildEnMessages() {
       seePricing: 'See Pricing',
       tryNine: 'Try $9',
       tryForNine: 'Try for $9',
+      requestAccess: 'Request Access',
+      requestPreLaunchAccess: 'Request Pre-Launch Access',
       dismiss: 'Dismiss',
     },
     common: {
