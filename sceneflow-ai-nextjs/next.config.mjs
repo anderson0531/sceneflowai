@@ -43,9 +43,9 @@ const nextConfig = {
     "/api/tts/google/voice-clone": ["./node_modules/ffmpeg-static/ffmpeg"],
     "/api/export/previs-stitch": ["./node_modules/ffmpeg-static/ffmpeg"],
   },
-  // Hero MP4/WebM in public/ (or leftover local encodes) must not land in
-  // serverless NFT. Tracing the whole project with those files produced a
-  // 618MB function and failed the 250MB uncompressed limit.
+  // Static public/ assets, docs/, tests, and local encodes must never land in
+  // serverless NFT bundles (outputFileTracingRoot is repoRoot = parent of
+  // sceneflow-ai-nextjs, so match both app-relative and repoRoot-relative globs).
   outputFileTracingExcludes: {
     "*": [
       "public/videos/**/*.mp4",
@@ -55,18 +55,65 @@ const nextConfig = {
       "./public/landing/video-services/videos/**",
       "public/landing/key-features/animatics/**",
       "./public/landing/key-features/animatics/**",
+      "public/**",
+      "./public/**",
+      "sceneflow-ai-nextjs/public/**",
+      "./sceneflow-ai-nextjs/public/**",
+      "docs/**",
+      "./docs/**",
+      "sceneflow-ai-nextjs/docs/**",
+      "./sceneflow-ai-nextjs/docs/**",
+      "scripts/**",
+      "./scripts/**",
+      "sceneflow-ai-nextjs/scripts/**",
+      "./sceneflow-ai-nextjs/scripts/**",
+      "src/__tests__/**",
+      "./src/__tests__/**",
+      "sceneflow-ai-nextjs/src/__tests__/**",
+      "./sceneflow-ai-nextjs/src/__tests__/**",
       "**/*.mp4",
       "**/*.webm",
+      "**/*.mov",
+      "**/*.pdf",
+    ],
+    // Video generation & TTS routes run against cloud APIs and must never ship
+    // the 75MB ffmpeg-static / ffprobe-static binaries.
+    "/api/scenes/[sceneId]/beats/[beatId]/generate-continuous": [
+      "node_modules/ffmpeg-static/**",
+      "./node_modules/ffmpeg-static/**",
+      "sceneflow-ai-nextjs/node_modules/ffmpeg-static/**",
+      "**/ffmpeg-static/**",
+      "**/ffprobe-static/**",
+    ],
+    "/api/scenes/[sceneId]/beats/[beatId]/generate-longtake": [
+      "node_modules/ffmpeg-static/**",
+      "./node_modules/ffmpeg-static/**",
+      "sceneflow-ai-nextjs/node_modules/ffmpeg-static/**",
+      "**/ffmpeg-static/**",
+      "**/ffprobe-static/**",
+    ],
+    "/api/segments/[segmentId]/generate-asset": [
+      "node_modules/ffmpeg-static/**",
+      "./node_modules/ffmpeg-static/**",
+      "sceneflow-ai-nextjs/node_modules/ffmpeg-static/**",
+      "**/ffmpeg-static/**",
+      "**/ffprobe-static/**",
     ],
     // Scene dialogue is already at the function size ceiling. Designed voices
     // return WAV, so this route must not ship the ffmpeg binary.
     "/api/vision/generate-scene-audio": [
       "node_modules/ffmpeg-static/**",
       "./node_modules/ffmpeg-static/**",
+      "sceneflow-ai-nextjs/node_modules/ffmpeg-static/**",
+      "**/ffmpeg-static/**",
+      "**/ffprobe-static/**",
     ],
     "/api/tts/google": [
       "node_modules/ffmpeg-static/**",
       "./node_modules/ffmpeg-static/**",
+      "sceneflow-ai-nextjs/node_modules/ffmpeg-static/**",
+      "**/ffmpeg-static/**",
+      "**/ffprobe-static/**",
     ],
   },
   typescript: {

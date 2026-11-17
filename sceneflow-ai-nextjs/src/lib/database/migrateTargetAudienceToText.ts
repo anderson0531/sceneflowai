@@ -5,8 +5,30 @@
 
 import { sequelize } from '@/config/database'
 import { QueryTypes } from 'sequelize'
-import fs from 'fs'
-import path from 'path'
+
+const WIDEN_TARGET_AUDIENCE_SQL = `
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'series'
+          AND column_name = 'target_audience'
+          AND data_type = 'character varying'
+    ) THEN
+        ALTER TABLE series ALTER COLUMN target_audience TYPE TEXT;
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'projects'
+          AND column_name = 'target_audience'
+          AND data_type = 'character varying'
+    ) THEN
+        ALTER TABLE projects ALTER COLUMN target_audience TYPE TEXT;
+    END IF;
+END
+$$;
+`
 
 export async function migrateTargetAudienceToText(): Promise<{
   success: boolean
@@ -17,12 +39,7 @@ export async function migrateTargetAudienceToText(): Promise<{
   const errors: string[] = []
 
   try {
-    const sqlPath = path.join(
-      process.cwd(),
-      'scripts/migrations/widen_target_audience_to_text.sql'
-    )
-    const sql = fs.readFileSync(sqlPath, 'utf8')
-    await sequelize.query(sql)
+    await sequelize.query(WIDEN_TARGET_AUDIENCE_SQL)
     actions.push('Ran widen_target_audience_to_text.sql')
 
     const columns = (await sequelize.query(

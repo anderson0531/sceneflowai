@@ -38,120 +38,112 @@ export async function getAudioDurationFromBuffer(
     return fromContainer
   }
 
-  const tempPath = join(tmpdir(), `audio-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`)
-  
-  try {
-    if (process.env.VERCEL) {
-      throw new Error('ffprobe unavailable on Vercel')
-    }
-    writeFileSync(tempPath, buffer)
-    const duration = await getAudioDurationWithFFprobe(tempPath)
-    console.log('[Audio Duration] FFprobe duration:', duration.toFixed(2), 'seconds')
-    return duration
-  } catch (error) {
-    console.log(
-      '[Audio Duration] Falling back to bitrate estimate:',
-      error instanceof Error ? error.message : error
+  if (!process.env.VERCEL) {
+    const tempPath = join(
+      /* turbopackIgnore: true */ tmpdir(),
+      `audio-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`
     )
-    
-    // PRIMARY FALLBACK: Estimate from buffer size (works for ALL languages!)
-    // This is the most reliable method when ffprobe is unavailable (e.g., Vercel serverless).
-    
-    // Bitrate heuristics:
-    // ElevenLabs:
-    // - English: ~128kbps (16,000 bytes/s)
-    // - High Quality: ~192kbps (24,000 bytes/s)
-    // Google TTS:
-    // - Studio/Journey: ~48kbps (~6,000 bytes/s)
-    // - Neural2/Standard: ~96kbps-128kbps (~12,000-16,000 bytes/s)
-    
-    const isGoogle = voiceId && (voiceId.includes('-') || voiceId.startsWith('gemini-'))
-    const isStudioOrJourney = voiceId && (voiceId.includes('Studio') || voiceId.includes('Journey'))
-    
-    let bytesPerSecond = 16000 // Default to 128kbps
-    
-    if (isGoogle) {
-      if (isStudioOrJourney) {
-        bytesPerSecond = 6000 // ~48kbps
-      } else {
-        bytesPerSecond = 12000 // ~96kbps
-      }
-    } else {
-      // ElevenLabs or other
-      const isHighQualityLanguage = NON_SPACE_LANGUAGES.includes(language) || (language !== 'en')
-      bytesPerSecond = isHighQualityLanguage ? 24000 : 16000
-    }
-    
-    const bufferBasedDuration = buffer.length / bytesPerSecond
-    
-    console.log('[Audio Duration] Buffer-based estimate:', {
-      bufferBytes: buffer.length,
-      bytesPerSecond,
-      duration: bufferBasedDuration.toFixed(2),
-      language
-    })
-    
-    // Validate the estimate is reasonable (at least 0.5 seconds)
-    if (bufferBasedDuration >= 0.5) {
-      return bufferBasedDuration
-    }
-    
-    // SECONDARY FALLBACK: Word count (ONLY for space-delimited languages like English)
-    if (!NON_SPACE_LANGUAGES.includes(language) && estimatedWordCount && estimatedWordCount > 5) {
-      // ~150 words per minute = 2.5 words per second
-      const wordBasedDuration = estimatedWordCount / 2.5
-      console.log('[Audio Duration] Word-based fallback:', wordBasedDuration.toFixed(2), 'seconds')
-      return wordBasedDuration
-    }
-    
-    // LAST RESORT: Minimum 1 second or buffer-based
-    return Math.max(1, buffer.length / (16 * 1024))
-  } finally {
-    // Clean up temp file
     try {
-      unlinkSync(tempPath)
-    } catch {
-      // Ignore cleanup errors
+      writeFileSync(/* turbopackIgnore: true */ tempPath, buffer)
+      const duration = await getAudioDurationWithFFprobe(tempPath)
+      console.log('[Audio Duration] FFprobe duration:', duration.toFixed(2), 'seconds')
+      return duration
+    } catch (error) {
+      console.log(
+        '[Audio Duration] Falling back to bitrate estimate:',
+        error instanceof Error ? error.message : error
+      )
+    } finally {
+      try {
+        unlinkSync(/* turbopackIgnore: true */ tempPath)
+      } catch {
+        // Ignore cleanup errors
+      }
     }
   }
+
+  // PRIMARY FALLBACK: Estimate from buffer size (works for ALL languages!)
+  // This is the most reliable method when ffprobe is unavailable (e.g., Vercel serverless).
+
+  // Bitrate heuristics:
+  // ElevenLabs:
+  // - English: ~128kbps (16,000 bytes/s)
+  // - High Quality: ~192kbps (24,000 bytes/s)
+  // Google TTS:
+  // - Studio/Journey: ~48kbps (~6,000 bytes/s)
+  // - Neural2/Standard: ~96kbps-128kbps (~12,000-16,000 bytes/s)
+
+  const isGoogle = voiceId && (voiceId.includes('-') || voiceId.startsWith('gemini-'))
+  const isStudioOrJourney = voiceId && (voiceId.includes('Studio') || voiceId.includes('Journey'))
+
+  let bytesPerSecond = 16000 // Default to 128kbps
+
+  if (isGoogle) {
+    if (isStudioOrJourney) {
+      bytesPerSecond = 6000 // ~48kbps
+    } else {
+      bytesPerSecond = 12000 // ~96kbps
+    }
+  } else {
+    // ElevenLabs or other
+    const isHighQualityLanguage = NON_SPACE_LANGUAGES.includes(language) || language !== 'en'
+    bytesPerSecond = isHighQualityLanguage ? 24000 : 16000
+  }
+
+  const bufferBasedDuration = buffer.length / bytesPerSecond
+
+  console.log('[Audio Duration] Buffer-based estimate:', {
+    bufferBytes: buffer.length,
+    bytesPerSecond,
+    duration: bufferBasedDuration.toFixed(2),
+    language,
+  })
+
+  // Validate the estimate is reasonable (at least 0.5 seconds)
+  if (bufferBasedDuration >= 0.5) {
+    return bufferBasedDuration
+  }
+
+  // SECONDARY FALLBACK: Word count (ONLY for space-delimited languages like English)
+  if (!NON_SPACE_LANGUAGES.includes(language) && estimatedWordCount && estimatedWordCount > 5) {
+    // ~150 words per minute = 2.5 words per second
+    const wordBasedDuration = estimatedWordCount / 2.5
+    console.log('[Audio Duration] Word-based fallback:', wordBasedDuration.toFixed(2), 'seconds')
+    return wordBasedDuration
+  }
+
+  // LAST RESORT: Minimum 1 second or buffer-based
+  return Math.max(1, buffer.length / (16 * 1024))
 }
 
 /**
- * Get audio duration using ffprobe
+ * Get audio duration using local system ffprobe (avoid dynamic eval-based requires,
+ * which cause Turbopack NFT to trace the entire repository root into serverless functions).
  */
 async function getAudioDurationWithFFprobe(filePath: string): Promise<number> {
   return new Promise((resolve, reject) => {
-    // Try to use ffprobe-static first
-    let ffprobePath = 'ffprobe'
-    try {
-      // Use eval('require') to prevent bundlers from tracing ffprobe-static
-      // It is marked as a serverExternalPackage in next.config.mjs
-      const ffprobeStatic = eval('require')('ffprobe-static')
-      ffprobePath = ffprobeStatic.path
-    } catch {
-      // Use system ffprobe
-    }
+    const ffprobePath = process.env.FFPROBE_BIN?.trim() || 'ffprobe'
 
     const args = [
       '-v', 'error',
       '-show_entries', 'format=duration',
       '-of', 'default=noprint_wrappers=1:nokey=1',
-      filePath
+      filePath,
     ]
 
-    const process = spawn(ffprobePath, args)
+    const proc = spawn(/* turbopackIgnore: true */ ffprobePath, args)
     let stdout = ''
     let stderr = ''
 
-    process.stdout.on('data', (data) => {
+    proc.stdout.on('data', (data) => {
       stdout += data.toString()
     })
 
-    process.stderr.on('data', (data) => {
+    proc.stderr.on('data', (data) => {
       stderr += data.toString()
     })
 
-    process.on('close', (code) => {
+    proc.on('close', (code) => {
       if (code !== 0) {
         reject(new Error(`ffprobe exited with code ${code}: ${stderr}`))
         return
@@ -166,13 +158,13 @@ async function getAudioDurationWithFFprobe(filePath: string): Promise<number> {
       resolve(duration)
     })
 
-    process.on('error', (error) => {
+    proc.on('error', (error) => {
       reject(error)
     })
 
     // Timeout after 10 seconds
     setTimeout(() => {
-      process.kill()
+      proc.kill()
       reject(new Error('ffprobe timed out'))
     }, 10000)
   })

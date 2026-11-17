@@ -21,6 +21,9 @@ let ffmpegAvailable: boolean | null = null
  * Check if FFmpeg is available in the system
  */
 export async function checkFFmpegAvailable(): Promise<boolean> {
+  if (process.env.VERCEL) {
+    return false
+  }
   if (ffmpegAvailable !== null) {
     return ffmpegAvailable
   }
@@ -61,10 +64,10 @@ export async function extractAndStoreLastFrame(
   let tmpDir: string | null = null
   try {
     // Create temporary directory for processing
-    tmpDir = path.join('/tmp', `frames_${segmentId}_${Date.now()}`)
-    await fs.promises.mkdir(tmpDir, { recursive: true })
+    tmpDir = path.join(/* turbopackIgnore: true */ '/tmp', `frames_${segmentId}_${Date.now()}`)
+    await fs.promises.mkdir(/* turbopackIgnore: true */ tmpDir, { recursive: true })
 
-    const outputPath = path.join(tmpDir, `last_frame_${segmentId}.jpg`)
+    const outputPath = path.join(/* turbopackIgnore: true */ tmpDir, `last_frame_${segmentId}.jpg`)
 
     // Use FFmpeg to extract a frame near the end of the video
     // -sseof -1 seeks to 1 second before the end of the file
@@ -95,12 +98,12 @@ export async function extractAndStoreLastFrame(
     }
 
     // Check if file was created
-    if (!fs.existsSync(outputPath)) {
+    if (!fs.existsSync(/* turbopackIgnore: true */ outputPath)) {
       throw new Error('Frame extraction failed: output file not created')
     }
 
     // Read the image file and convert to base64
-    const imageBuffer = await fs.promises.readFile(outputPath)
+    const imageBuffer = await fs.promises.readFile(/* turbopackIgnore: true */ outputPath)
     const base64Image = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`
 
     // Upload to cloud storage

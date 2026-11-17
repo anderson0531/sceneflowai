@@ -43,8 +43,7 @@
       "maxDuration": 120
     },
     "src/app/api/treatment/generate-visual/route.ts": {
-      "maxDuration": 300,
-      "memory": 3009
+      "maxDuration": 300
     },
     "src/app/api/v2/blueprint/analyze/route.ts": {
       "maxDuration": 300
@@ -134,8 +133,7 @@
       "maxDuration": 300
     },
     "src/app/api/sfx/extract-clip-audio/route.ts": {
-      "maxDuration": 300,
-      "memory": 3009
+      "maxDuration": 300
     }
   },
   "crons": [
