@@ -17,6 +17,7 @@ import {
   Info,
   Lock,
   Megaphone,
+  Play,
   ShieldCheck,
   SlidersHorizontal,
   Smartphone,
@@ -26,6 +27,14 @@ import {
 import { Button } from '@/components/ui/Button'
 import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { VideoServiceOutputShowcase } from '@/components/landing/VideoServiceOutputShowcase'
+import {
+  CUSTOMER_PORTAL_ANIMATIC_ID,
+  CustomerPortalExperienceAnimatic,
+} from '@/components/landing/CustomerPortalExperienceAnimatic'
+import {
+  CUSTOMER_PORTAL_ANIMATIC_COPY,
+  normalizeFeaturePanLocale,
+} from '@/config/landing/customerPortalAnimaticCopy'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { cn } from '@/lib/utils'
@@ -107,6 +116,9 @@ export function VideoServicesSpotlightSection() {
   const studioCopy = useStudioLandingCopy()
   const copy = studioCopy.videoServices
   const mobileCopy = studioCopy.mobileCompanion
+  const portalAnimaticCopy =
+    CUSTOMER_PORTAL_ANIMATIC_COPY[normalizeFeaturePanLocale(locale)] ??
+    CUSTOMER_PORTAL_ANIMATIC_COPY.en
   const [selectedVerticalId, setSelectedVerticalId] = useState<
     'memoir' | 'realestate' | 'training' | 'brand'
   >('memoir')
@@ -198,9 +210,18 @@ export function VideoServicesSpotlightSection() {
 
         {/* Full-Width 4-Service Selector Bar — spacious on both 360px Galaxy S23 & 1440px Desktop with tooltips */}
         <div className="mb-6 rounded-2xl border border-white/10 bg-slate-900/75 p-4 backdrop-blur-sm sm:p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
-            {copy.verticalsHeading}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
+              {copy.verticalsHeading}
+            </p>
+            <a
+              href={`#${CUSTOMER_PORTAL_ANIMATIC_ID}`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/45 bg-emerald-500/15 px-3 py-1 text-[11px] font-bold text-emerald-200 transition-colors hover:border-emerald-300 hover:bg-emerald-500/25 hover:text-white"
+            >
+              <Play className="h-3 w-3 shrink-0 fill-current text-emerald-300" aria-hidden />
+              <span>{portalAnimaticCopy.jumpButtonLabel}</span>
+            </a>
+          </div>
 
           <div
             role="tablist"
@@ -660,6 +681,9 @@ export function VideoServicesSpotlightSection() {
             </div>
           </div>
         </div>
+
+        {/* Narrated White-Label Customer Portal Experience Animatic (8 Stages · 7 Languages) */}
+        <CustomerPortalExperienceAnimatic locale={locale} />
 
         {/* 4-Step Client Project Delivery Strip */}
         <div className="mt-10 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-7">

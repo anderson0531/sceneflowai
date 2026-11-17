@@ -69,6 +69,8 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
         payload.readyToComplete || payload.customerTurnsUsed >= payload.maxCustomerTurns
       ),
       completed: Boolean(payload.completedAt || session.status === 'closed'),
+      blueprintShareToken: payload.blueprintShareToken || null,
+      blueprintShareUrl: payload.blueprintShareUrl || null,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to load intake session'

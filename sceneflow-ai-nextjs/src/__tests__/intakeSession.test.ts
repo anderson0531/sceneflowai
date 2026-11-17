@@ -58,6 +58,26 @@ vi.mock('@/lib/vertexai/gemini', () => ({
 
 vi.mock('@/lib/config/modelConfig', () => ({
   getGeminiProductModel: () => 'gemini-2.5-flash',
+  getGeminiTextModel: () => 'gemini-2.5-flash',
+}))
+
+vi.mock('@/lib/gemini/imageClient', () => ({
+  generateImageWithGemini: vi.fn().mockResolvedValue('data:image/png;base64,iVBORw0KGgo='),
+}))
+
+vi.mock('@/lib/storage/blob', () => ({
+  uploadImageToBlob: vi.fn().mockResolvedValue('https://blob.vercel-storage.com/beat-still.png'),
+}))
+
+vi.mock('@/lib/email/resendClient', () => ({
+  getAppBaseUrl: () => 'https://sceneflowai.studio',
+  getBrandBadgeUrl: () => 'https://sceneflowai.studio/brand/sf-badge.png',
+  sendEmail: vi.fn().mockResolvedValue({ from: 'SceneFlow Studio <support@sceneflowai.studio>', usedFallback: false }),
+}))
+
+vi.mock('@/lib/tts/geminiFlashTts', () => ({
+  DEFAULT_BLUEPRINT_GEMINI_VOICE: 'Kore',
+  isGeminiTtsConfigured: () => false,
 }))
 
 vi.mock('@/lib/jobs/jobService', () => ({
@@ -269,12 +289,16 @@ describe('Embeddable Client Intake Interview, Consent Shield & Blueprint Synthes
     expect(completed.ok).toBe(true)
     if (completed.ok) {
       expect(completed.projectId).toBe('proj-draft-1')
+      expect(typeof completed.blueprintShareToken).toBe('string')
+      expect(completed.blueprintShareUrl).toContain('/blueprint/share/')
     }
 
     expect(updateProjectMock).toHaveBeenCalledTimes(1)
     const savedArgs = updateProjectMock.mock.calls[0][0]
     expect(savedArgs.title).toBe('Harbor Books: Arthur & Clara')
-    expect(savedArgs.metadata.clientOrder.actionState).toBe('action_required')
+    expect(savedArgs.metadata.clientOrder.stage).toBe('blueprint_client_iteration')
+    expect(savedArgs.metadata.clientOrder.actionState).toBe('waiting_on_client')
+    expect(savedArgs.metadata.clientOrder.blueprintShareUrl).toContain('/blueprint/share/')
     expect(savedArgs.metadata.clientOrder.continuityChecklist.characters).toHaveLength(2)
     expect(notifyUserMock).toHaveBeenCalledWith(
       expect.objectContaining({

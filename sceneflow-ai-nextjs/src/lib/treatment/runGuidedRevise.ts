@@ -489,6 +489,28 @@ export function finalizeGuidedRevise(
   }
 }
 
+/**
+ * Execute the complete Blueprint Director guided-revise pipeline in-process
+ * (planner -> consolidated rewrite with sequential per-section fallback -> finalize).
+ */
+export async function executeGuidedRevise(
+  payload: GuidedRevisePayload,
+  logHeap: HeapLogger = noopHeap
+): Promise<GuidedReviseResult> {
+  const plan = await runPlannerStep(payload, logHeap)
+  let patch: Record<string, unknown>
+  try {
+    patch = await runConsolidatedRewrite(payload, plan, logHeap)
+  } catch (err) {
+    if (err instanceof GuidedReviseTruncatedError) {
+      patch = await runSequentialSectionRewrites(payload, plan, logHeap)
+    } else {
+      throw err
+    }
+  }
+  return finalizeGuidedRevise(payload, plan, patch)
+}
+
 /** Build payload from request body fields (after strip). */
 export function buildGuidedRevisePayload(input: {
   incomingVariant: Record<string, unknown>

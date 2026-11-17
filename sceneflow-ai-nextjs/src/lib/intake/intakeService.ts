@@ -46,6 +46,13 @@ import {
   sanitizeBlueprintCharactersAndBeats,
   splitCompoundIndividualNames,
 } from '@/lib/character/ageStageContinuity'
+import {
+  DEFAULT_CLIENT_BLUEPRINT_DEPOSIT_USD,
+  DEFAULT_MAX_AUTOMATED_AR_ITERATIONS,
+  DEFAULT_MAX_AUTOMATED_BLUEPRINT_REVISIONS,
+  provisionAutomatedBlueprintShareFromIntake,
+  sendAutomatedClientPortalEmail,
+} from './automatedClientBlueprint'
 
 export type IntakeAccessMode = 'single_project' | 'public_lead'
 
@@ -62,6 +69,11 @@ export interface IntakeSessionPayload {
   maxCustomerTurns: number
   customerTurnsUsed: number
   maxFeedbackRounds: number
+  maxBlueprintRevisions?: number
+  maxArIterations?: number
+  blueprintDepositUsd?: number
+  autoPublishBlueprintShare?: boolean
+  customerEmail?: string
   clientPriceUsd?: number
   creditBudgetCap?: number
   customerLabel?: string
@@ -73,6 +85,8 @@ export interface IntakeSessionPayload {
   readyToComplete?: boolean
   completedAt?: string
   resultProjectId?: string
+  blueprintShareToken?: string
+  blueprintShareUrl?: string
   publicCreditsSpentToday?: number
   publicCreditsDayKey?: string
 }
@@ -319,6 +333,11 @@ export async function createClientIntakeLink(input: {
   locale?: string
   maxCustomerTurns?: number
   maxFeedbackRounds?: number
+  maxBlueprintRevisions?: number
+  maxArIterations?: number
+  blueprintDepositUsd?: number
+  autoPublishBlueprintShare?: boolean
+  customerEmail?: string
   clientPriceUsd?: number
   creditBudgetCap?: number
   customerLabel?: string
@@ -410,6 +429,17 @@ export async function createClientIntakeLink(input: {
     maxCustomerTurns,
     customerTurnsUsed: 0,
     maxFeedbackRounds,
+    maxBlueprintRevisions: Math.min(
+      8,
+      Math.max(1, Math.round(input.maxBlueprintRevisions ?? DEFAULT_MAX_AUTOMATED_BLUEPRINT_REVISIONS))
+    ),
+    maxArIterations: Math.min(
+      5,
+      Math.max(1, Math.round(input.maxArIterations ?? DEFAULT_MAX_AUTOMATED_AR_ITERATIONS))
+    ),
+    blueprintDepositUsd: input.blueprintDepositUsd ?? DEFAULT_CLIENT_BLUEPRINT_DEPOSIT_USD,
+    autoPublishBlueprintShare: input.autoPublishBlueprintShare !== false,
+    customerEmail: input.customerEmail?.trim() || undefined,
     clientPriceUsd: input.clientPriceUsd,
     creditBudgetCap: input.creditBudgetCap,
     customerLabel: input.customerLabel?.trim() || undefined,
@@ -435,6 +465,22 @@ export async function createClientIntakeLink(input: {
   const hostedUrl = `${input.origin}/intake/${token}?lang=${encodeURIComponent(locale)}`
   const embedUrl = `${input.origin}/embed/intake/${token}?lang=${encodeURIComponent(locale)}`
   const iframeSnippet = `<iframe src="${embedUrl}" width="100%" height="680" style="border:0;border-radius:16px;overflow:hidden;" allow="microphone; clipboard-write" loading="lazy" title="${brandSnapshot.brandName} Story Intake"></iframe>`
+
+  if (input.customerEmail?.trim()) {
+    await sendAutomatedClientPortalEmail({
+      toEmail: input.customerEmail.trim(),
+      customerName: input.customerLabel?.trim() || 'Client',
+      brandName: brandSnapshot.brandName,
+      subject: `${brandSnapshot.brandName} — Start Your Guided Storyboard Blueprint Intake`,
+      heading: `Welcome to ${brandSnapshot.brandName}`,
+      paragraphs: [
+        `Your Storyboard Blueprint pass ($${input.blueprintDepositUsd ?? DEFAULT_CLIENT_BLUEPRINT_DEPOSIT_USD}) is active.`,
+        `Click below to start your guided vision & story interview by voice or text. Within minutes of finishing, you will automatically receive your Illustrated & Narrated Storyboard Blueprint with up to ${payload.maxBlueprintRevisions} AI-guided iterations.`,
+      ],
+      ctaLabel: 'Start My Guided Story Intake',
+      ctaUrl: hostedUrl,
+    })
+  }
 
   return {
     token,
@@ -1419,12 +1465,15 @@ export function backfillTruncatedIntakeBlueprintAssets(input: {
 export async function completeClientIntakeToBlueprint(input: {
   token: string
   locale?: string
+  origin?: string
 }): Promise<
   | {
       ok: true
       projectId: string
       title: string
       extracted: ExtractedBlueprintFromIntake
+      blueprintShareToken?: string
+      blueprintShareUrl?: string
     }
   | {
       ok: false
@@ -1689,13 +1738,44 @@ export async function completeClientIntakeToBlueprint(input: {
   const prevMeta = ((targetProject.metadata || {}) as Record<string, unknown>)
   const prevOrder = ((prevMeta.clientOrder || {}) as Record<string, unknown>)
 
+  let finalTreatmentVariant: Record<string, any> = filmTreatmentVariant
+  let blueprintShareToken: string | undefined
+  let blueprintShareUrl: string | undefined
+
+  if (payload.autoPublishBlueprintShare !== false) {
+    try {
+      const provisioned = await provisionAutomatedBlueprintShareFromIntake({
+        ownerUserId: session.owner_user_id,
+        projectId: targetProject.id,
+        variantId,
+        treatment: filmTreatmentVariant,
+        locale: activeLocale,
+        customerName: consent.customer_name,
+        customerEmail: consent.customer_email || payload.customerEmail,
+        targetAudience: extracted.target_audience,
+        brandProfileSnapshot: payload.brandProfileSnapshot,
+        maxBlueprintRevisions:
+          payload.maxBlueprintRevisions ?? DEFAULT_MAX_AUTOMATED_BLUEPRINT_REVISIONS,
+        maxArIterations: payload.maxArIterations ?? DEFAULT_MAX_AUTOMATED_AR_ITERATIONS,
+        blueprintDepositUsd:
+          payload.blueprintDepositUsd ?? DEFAULT_CLIENT_BLUEPRINT_DEPOSIT_USD,
+        origin: input.origin,
+      })
+      finalTreatmentVariant = provisioned.treatment
+      blueprintShareToken = provisioned.shareToken
+      blueprintShareUrl = provisioned.shareUrl
+    } catch (provErr) {
+      console.warn('[intakeService] Automated Blueprint Share provisioning warning:', provErr)
+    }
+  }
+
   const nextMeta: Record<string, unknown> = {
     ...prevMeta,
     storyLocale: activeLocale === 'zh-CN' ? 'zh' : activeLocale,
     blueprintPrimeInput: transcriptPrimeText,
     selectedVariantId: variantId,
-    filmTreatmentVariant,
-    variants: [filmTreatmentVariant],
+    filmTreatmentVariant: finalTreatmentVariant,
+    variants: [finalTreatmentVariant],
     visionPhase: {
       ...((prevMeta.visionPhase as Record<string, unknown>) || {}),
       characters: extracted.character_descriptions.map((c, i) => ({
@@ -1728,13 +1808,19 @@ export async function completeClientIntakeToBlueprint(input: {
       isClientProject: true,
       vertical: payload.vertical,
       locale: activeLocale,
-      stage: 'blueprint_review_ready',
-      actionState: 'action_required',
+      stage: blueprintShareToken ? 'blueprint_client_iteration' : 'blueprint_review_ready',
+      actionState: blueprintShareToken ? 'waiting_on_client' : 'action_required',
       customerName: consent.customer_name,
       customerEmail: consent.customer_email,
       customerConsentId: consent.id,
       intakeCompletedAt: new Date().toISOString(),
       maxFeedbackRounds: payload.maxFeedbackRounds,
+      maxBlueprintRevisions:
+        payload.maxBlueprintRevisions ?? DEFAULT_MAX_AUTOMATED_BLUEPRINT_REVISIONS,
+      maxArIterations: payload.maxArIterations ?? DEFAULT_MAX_AUTOMATED_AR_ITERATIONS,
+      blueprintDepositUsd:
+        payload.blueprintDepositUsd ?? DEFAULT_CLIENT_BLUEPRINT_DEPOSIT_USD,
+      ...(blueprintShareToken ? { blueprintShareToken, blueprintShareUrl } : {}),
       ...(confirmedVision
         ? {
             confirmedVision: {
@@ -1767,6 +1853,7 @@ export async function completeClientIntakeToBlueprint(input: {
         phase: 'completed',
         completedAt: new Date().toISOString(),
         resultProjectId: targetProject.id,
+        ...(blueprintShareToken ? { blueprintShareToken, blueprintShareUrl } : {}),
       } as unknown as Record<string, unknown>,
     })
   }
@@ -1810,5 +1897,7 @@ export async function completeClientIntakeToBlueprint(input: {
     projectId: targetProject.id,
     title: extracted.title,
     extracted,
+    blueprintShareToken,
+    blueprintShareUrl,
   }
 }

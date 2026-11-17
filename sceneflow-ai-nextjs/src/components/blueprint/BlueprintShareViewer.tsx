@@ -14,6 +14,7 @@ import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import type {
   BlueprintBeatAudioByLanguage,
   BlueprintBeatTranslationsByLanguage,
+  BlueprintClientClarificationDraft,
   BlueprintFeedbackSection,
   BlueprintFeedbackSections,
   BlueprintSectionAudioMap,
@@ -54,6 +55,7 @@ import {
 } from '@/lib/intake/clientPortalCopy'
 import type { SharedBlueprintARSnapshot } from '@/lib/blueprint/sanitizeShareAR'
 import { BlueprintShareResonancePanel } from './BlueprintShareResonancePanel'
+import { ClientAutoRevisePanel } from './ClientAutoRevisePanel'
 import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
 import { isPipelinePlaceholderToken } from '@/config/landing/productionPipelineDemo'
 import type { BlueprintSectionAudioEntry } from '@/lib/blueprint/shareTypes'
@@ -139,6 +141,8 @@ export function BlueprintShareViewer({ token }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [shareSettings, setShareSettings] = useState<BlueprintShareSettings | null>(null)
+  const [pendingClarification, setPendingClarification] =
+    useState<BlueprintClientClarificationDraft | null>(null)
   const [approvingBlueprint, setApprovingBlueprint] = useState(false)
   const [audioPollStale, setAudioPollStale] = useState(false)
   const audioPollCountRef = useRef(0)
@@ -159,6 +163,7 @@ export function BlueprintShareViewer({ token }: Props) {
     )
     setOwnerName(data.payload?.ownerDisplayName || 'Owner')
     setShareSettings(data.payload?.shareSettings || null)
+    setPendingClarification(data.payload?.pendingClientClarification || null)
     setAllowTts(data.payload?.shareSettings?.allowTts !== false)
     setAllowFeedback(isBlueprintFeedbackAllowed(data.payload?.shareSettings))
     setArSnapshot(data.payload?.blueprintAudienceResonance ?? null)
@@ -650,6 +655,15 @@ export function BlueprintShareViewer({ token }: Props) {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-8 pb-36">
+        {shareSettings?.clientAutoReviseMode && !isApproved && (
+          <ClientAutoRevisePanel
+            token={token}
+            locale={portalLocale}
+            shareSettings={shareSettings}
+            initialClarification={pendingClarification}
+            onBlueprintUpdated={loadShare}
+          />
+        )}
         {shareSettings?.clientMode && isApproved && (
           <div className="rounded-2xl border border-emerald-500/35 bg-gradient-to-r from-emerald-950/60 via-slate-900/90 to-slate-900/90 p-4 space-y-1.5 shadow-lg">
             <div className="text-sm font-semibold text-emerald-200">

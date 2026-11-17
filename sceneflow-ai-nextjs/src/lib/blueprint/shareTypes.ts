@@ -56,6 +56,15 @@ export type BlueprintApprovalStatus =
   | 'changes_requested'
   | 'approved'
 
+export type BlueprintClientClarificationDraft = {
+  id: string
+  rawFeedback: string
+  clarifiedSummary: string
+  proposedChanges: string[]
+  targetSections: BlueprintFixSection[]
+  createdAt: string
+}
+
 export type BlueprintShareSettings = {
   expiresAt?: string
   allowTts?: boolean
@@ -66,12 +75,21 @@ export type BlueprintShareSettings = {
   neverExpires?: boolean
   /** Service Provider client-mode review settings. */
   clientMode?: boolean
+  /** Enables self-serve AI-filtered Blueprint Director revisions (up to maxFeedbackRounds, default 4) + automated Audience Resonance passes (up to maxArIterations, default 3). */
+  clientAutoReviseMode?: boolean
   /** Strips Audience Resonance from client share view (Producer-only control). */
   hideAudienceResonance?: boolean
   /** Maximum customer revision rounds allowed on this link. */
   maxFeedbackRounds?: number
   /** Customer revision rounds consumed so far. */
   roundsUsed?: number
+  /** Maximum automated Audience Resonance passes allowed on this link (default 3). */
+  maxArIterations?: number
+  /** Automated Audience Resonance passes consumed so far. */
+  arIterationsUsed?: number
+  customerEmail?: string
+  customerName?: string
+  blueprintDepositUsd?: number
   approvalStatus?: BlueprintApprovalStatus
   approvedByName?: string
   approvedAt?: string
@@ -108,6 +126,8 @@ export type BlueprintSessionPayload = {
   sectionAudioStartedAt?: string
   /** Snapshot of Blueprint AR at share-create time (listen-only and review). */
   blueprintAudienceResonance?: SharedBlueprintARSnapshot | null
+  /** Pending AI-filtered customer feedback awaiting client confirmation before routing to Blueprint Director. */
+  pendingClientClarification?: BlueprintClientClarificationDraft | null
   resonanceAudioByLanguage?: Record<string, BlueprintSectionAudioEntry>
   resonanceTranslations?: Record<string, string>
 }

@@ -92,6 +92,7 @@ export function ClientIntakeExperience({
   const [sending, setSending] = useState(false)
   const [completing, setCompleting] = useState(false)
   const [completed, setCompleted] = useState(false)
+  const [blueprintShareUrl, setBlueprintShareUrl] = useState<string | null>(null)
 
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTarget, setRecordingTarget] = useState<
@@ -161,6 +162,9 @@ export function ClientIntakeExperience({
         setTurnsUsed(Number(data.customerTurnsUsed || 0))
         setMaxTurns(Number(data.maxCustomerTurns || 10))
         setCompleted(Boolean(data.completed))
+        if (typeof data.blueprintShareUrl === 'string' && data.blueprintShareUrl) {
+          setBlueprintShareUrl(data.blueprintShareUrl)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to load interview')
       } finally {
@@ -474,8 +478,15 @@ export function ClientIntakeExperience({
         setError(data.error || 'Unable to finalize story blueprint')
         return
       }
+      if (typeof data.blueprintShareUrl === 'string' && data.blueprintShareUrl) {
+        setBlueprintShareUrl(data.blueprintShareUrl)
+      }
       setCompleted(true)
-      postEmbedEvent('completed', { projectId: data.projectId, title: data.title })
+      postEmbedEvent('completed', {
+        projectId: data.projectId,
+        title: data.title,
+        blueprintShareUrl: data.blueprintShareUrl,
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error')
     } finally {
@@ -560,7 +571,7 @@ export function ClientIntakeExperience({
         )}
 
         {completed ? (
-          <div className="my-auto rounded-2xl border border-emerald-500/30 bg-slate-900/90 p-8 text-center space-y-4">
+          <div className="my-auto rounded-2xl border border-emerald-500/30 bg-slate-900/90 p-8 text-center space-y-5">
             <CheckCircle2 className="w-14 h-14 text-emerald-400 mx-auto" />
             <h1 className="text-2xl font-bold text-white">
               {formatPortalCopy(locale, 'interviewCompletedTitle')}
@@ -570,6 +581,17 @@ export function ClientIntakeExperience({
                 brand: brand.brandName,
               })}
             </p>
+            {blueprintShareUrl && (
+              <div className="pt-2">
+                <a
+                  href={blueprintShareUrl}
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-3 text-sm font-extrabold text-slate-950 shadow-lg transition"
+                >
+                  <span>{formatPortalCopy(locale, 'blueprintReviewHeading')}</span>
+                  <span aria-hidden>→</span>
+                </a>
+              </div>
+            )}
           </div>
         ) : !consentAccepted ? (
           /* Mandatory Customer Clickwrap Release (Multilanguage + Dictation + Zero-Privity) */

@@ -11,7 +11,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const { token } = await ctx.params
     const body = await req.json().catch(() => ({}))
     const locale = body?.locale ? String(body.locale) : undefined
-    const result = await completeClientIntakeToBlueprint({ token, locale })
+    const origin = new URL(req.url).origin
+    const result = await completeClientIntakeToBlueprint({ token, locale, origin })
     if (!result.ok) {
       return NextResponse.json({ success: false, error: result.error }, { status: result.status })
     }
@@ -20,6 +21,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       success: true,
       projectId: result.projectId,
       title: result.title,
+      blueprintShareToken: result.blueprintShareToken,
+      blueprintShareUrl: result.blueprintShareUrl,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to complete intake'
