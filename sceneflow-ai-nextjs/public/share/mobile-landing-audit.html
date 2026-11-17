@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SceneFlow Studio — Mobile Landing Responsive Audit &amp; Design Proposal</title>
+  <style>
+    :root {
+      --bg: #050814;
+      --surface: #0d1425;
+      --surface-2: #131c33;
+      --border: rgba(148, 163, 184, 0.18);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --cyan: #22d3ee;
+      --emerald: #34d399;
+      --amber: #fbbf24;
+      --rose: #fb7185;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(ellipse at top, #0f1b38 0%, var(--bg) 55%);
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(5, 8, 20, 0.88);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+    }
+    .topbar-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+    .brand img { height: 28px; width: auto; }
+    .brand span.sub { color: var(--muted); font-weight: 500; font-size: 13px; }
+    .top-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 9px;
+      font-size: 12.5px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      transition: all 0.15s ease;
+    }
+    .btn:hover { border-color: rgba(34, 211, 238, 0.5); background: #192544; }
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      color: #041019;
+      border: none;
+      font-weight: 700;
+    }
+    .btn-primary:hover { filter: brightness(1.08); }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 72px;
+    }
+    .hero-head {
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: clamp(24px, 4vw, 38px);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+    .meta-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .meta-strip strong { color: #e2e8f0; }
+
+    .root-cause {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(16, 185, 129, 0.06));
+      border: 1px solid rgba(34, 211, 238, 0.32);
+      border-left: 4px solid var(--cyan);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 24px;
+      font-size: 14.5px;
+      color: #e2e8f0;
+    }
+    .root-cause strong { color: #ffffff; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.88em;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      padding: 1px 6px;
+      border-radius: 5px;
+      color: #67e8f9;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+    .kpi-val {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+    .kpi-val.rose { color: var(--rose); }
+    .kpi-val.amber { color: var(--amber); }
+    .kpi-val.emerald { color: var(--emerald); }
+    .kpi-lbl { font-size: 12.5px; color: var(--muted); }
+
+    section { margin-bottom: 44px; }
+    h2 {
+      font-size: clamp(19px, 2.6vw, 24px);
+      font-weight: 800;
+      letter-spacing: -0.015em;
+      margin-bottom: 6px;
+    }
+    .sec-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    /* Screenshot Grid */
+    .shot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .shot-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+      cursor: zoom-in;
+    }
+    .shot-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(34, 211, 238, 0.45);
+    }
+    .shot-frame {
+      background: #02040a;
+      height: 360px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .shot-frame img {
+      max-height: 100%;
+      max-width: 100%;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+    .sev-pill {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+    .sev-Critical { background: rgba(244, 63, 94, 0.22); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.5); }
+    .sev-High { background: rgba(245, 158, 11, 0.2); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.45); }
+    .sev-Medium { background: rgba(56, 189, 248, 0.18); color: #bae6fd; border: 1px solid rgba(56, 189, 248, 0.4); }
+    .shot-info { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; }
+    .shot-tag { font-size: 11px; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.06em; }
+    .shot-title { font-size: 15px; font-weight: 700; margin-top: 3px; color: #fff; }
+    .shot-dim { font-size: 12px; font-weight: 600; color: var(--rose); margin-top: 3px; }
+    .shot-desc { font-size: 12.8px; color: var(--muted); margin-top: 6px; }
+
+    /* Interactive Before / After Simulator */
+    .sim-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    .phone-sim {
+      background: #070b16;
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      padding: 18px;
+    }
+    .phone-sim.bad { border-color: rgba(251, 113, 133, 0.45); }
+    .phone-sim.good { border-color: rgba(52, 211, 153, 0.5); }
+    .sim-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+    .phone-sim.bad .sim-badge { background: rgba(244, 63, 94, 0.15); color: #fda4af; }
+    .phone-sim.good .sim-badge { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
+
+    .blimp-demo {
+      border: 1px solid rgba(34, 211, 238, 0.35);
+      background: rgba(6, 182, 212, 0.1);
+      border-radius: 9999px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: #67e8f9;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .blimp-stack {
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      background: rgba(245, 158, 11, 0.1);
+      border-radius: 9999px;
+      padding: 12px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fde68a;
+      text-align: center;
+      margin-top: 12px;
+    }
+    .clean-eyebrow-demo {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 6px;
+    }
+    .sim-h3 { font-size: 21px; font-weight: 800; line-height: 1.2; color: #fff; }
+    .sim-p { font-size: 13px; color: var(--muted); margin-top: 8px; }
+    .clean-inline-checks {
+      margin-top: 12px;
+      border-left: 2px solid var(--emerald);
+      padding-left: 12px;
+      font-size: 12.5px;
+      color: #d1fae5;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* Table */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 680px;
+    }
+    th {
+      background: #080d1a;
+      color: #cbd5e1;
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      color: #e2e8f0;
+    }
+    tr:last-child td { border-bottom: none; }
+    .dim-cell { color: var(--rose); font-weight: 700; white-space: nowrap; }
+
+    /* Pillars */
+    .pillars { display: grid; gap: 14px; }
+    .pillar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--emerald);
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+    .pillar-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .pillar-title { font-size: 16px; font-weight: 800; color: #fff; }
+    .pillar-gain {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #6ee7b7;
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 2px 10px;
+      border-radius: 99px;
+    }
+    .pillar p, .pillar li { font-size: 13.8px; color: #cbd5e1; }
+    .pillar ul { padding-left: 18px; margin-top: 6px; display: grid; gap: 4px; }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(2, 4, 10, 0.92);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-height: 90vh;
+      max-width: 92vw;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+    }
+
+    @media print {
+      .topbar { position: static; background: #050814; }
+      .btn { display: none; }
+      body { background: #050814; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img src="/brand/sf-badge@2x.png" alt="SceneFlow" />
+        <span>SceneFlow Studio</span>
+        <span class="sub">· Mobile Responsive UX Audit</span>
+      </div>
+      <div class="top-actions">
+        <a href="#evidence" class="btn">Visual Evidence</a>
+        <a href="#measurements" class="btn">Measurements</a>
+        <a href="#proposal" class="btn">Clean Design System</a>
+        <a href="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/SceneFlow_Mobile_Landing_Responsive_Audit-8bsdN1Ai2f9Mnsimq43dweoUIIp6CX.pdf" target="_blank" rel="noopener" class="btn btn-primary">Download PDF Report ↗</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="hero-head">
+      <div class="eyebrow">Live Production Responsive Audit &amp; Design Recommendation</div>
+      <h1>Mobile Landing Page Badge &amp; Layout Optimization</h1>
+      <div class="meta-strip">
+        <span><strong>Audited Site:</strong> sceneflowai.studio (EN &amp; ES)</span>
+        <span><strong>Mobile Viewports:</strong> 360×800 (Galaxy S23) · 390×844 (iPhone 15)</span>
+        <span><strong>Baseline:</strong> 1440×900 Desktop</span>
+      </div>
+    </div>
+
+    <div class="root-cause">
+      <strong>Core Root Cause:</strong> Across 11 of 15 landing sections, <code>rounded-full</code> (<code>border-radius: 9999px</code>) bordered capsules with left-aligned icons are used to wrap <strong>8-to-28-word marketing sentences</strong> instead of 1-to-3-word micro-labels. On <code>360px–390px</code> phones, these pills wrap onto 2–5 lines and balloon into <strong>64px–139px tall "stadium blimps"</strong> with stranded icons, stacked oval clutter, and <strong>65% artwork occlusion</strong> inside <code>16:9</code> preview stages.
+    </div>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi-val rose">33 Pills</div>
+        <div class="kpi-lbl">Oversized multi-line badges (&ge;42px–139px tall) on 360×800</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val rose">65% Hidden</div>
+        <div class="kpi-lbl">16:9 Studio Tour preview covered by top &amp; bottom pills (98/151px)</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val amber">+6px / 55%</div>
+        <div class="kpi-lbl">Header right overflow (366px) + 55% first-visit Cookie modal</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val emerald">-15% Scroll</div>
+        <div class="kpi-lbl">Projected reduction from 65 mobile screens (51,976px)</div>
+      </div>
+    </div>
+
+    <section id="evidence">
+      <h2>1. Live 360×800 Mobile Visual Evidence</h2>
+      <p class="sec-sub">Captured directly from live production (tap or click any mobile screen to inspect full size).</p>
+      <div class="shot-grid">
+        
+          <article class="shot-card" onclick="openLightbox('https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-03-video-services-pills-SKrcdB3rHL7Ki9XIUkrHQH3RDhil4i.jpg', 'Stacked Stadium Capsules (75px + 105px)')">
+            <div class="shot-frame">
+              <span class="sev-pill sev-High">High</span>
+              <img src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-03-video-services-pills-SKrcdB3rHL7Ki9XIUkrHQH3RDhil4i.jpg" alt="Stacked Stadium Capsules (75px + 105px)" loading="lazy" />
+            </div>
+            <div class="shot-info">
+              <div class="shot-tag">Finding A1 · #video-services</div>
+              <div class="shot-title">Stacked Stadium Capsules (75px + 105px)</div>
+              <div class="shot-dim">325×75px + 325×105px (180px total)</div>
+              <p class="shot-desc">Two rounded-full pills wrap across 2–3 lines directly above the 66px sticky bottom CTA bar—stacking 4 pill borders in a single 360px screen.</p>
+            </div>
+          </article>
+          <article class="shot-card" onclick="openLightbox('https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-04-mobile-pwa-blimps-i1e5ThIWxi3TceaxQmQokiWNZl2eQy.jpg', '3-Line Eyebrow Blimp (105px EN / 135px ES)')">
+            <div class="shot-frame">
+              <span class="sev-pill sev-High">High</span>
+              <img src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-04-mobile-pwa-blimps-i1e5ThIWxi3TceaxQmQokiWNZl2eQy.jpg" alt="3-Line Eyebrow Blimp (105px EN / 135px ES)" loading="lazy" />
+            </div>
+            <div class="shot-info">
+              <div class="shot-tag">Finding A2 · #mobile-app</div>
+              <div class="shot-title">3-Line Eyebrow Blimp (105px EN / 135px ES)</div>
+              <div class="shot-dim">325×105px (EN) · 325×135px (ES)</div>
+              <p class="shot-desc">ALL-CAPS section eyebrow wrapped in rounded-full turns into a bloated 3–4 line stadium oval with a tiny phone icon stranded on the left.</p>
+            </div>
+          </article>
+          <article class="shot-card" onclick="openLightbox('https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-06-guided-tour-stage-Q4PYiyyrVjLnBIfUs8woYXVs6bR6IC.jpg', '65% Media Frame Occlusion')">
+            <div class="shot-frame">
+              <span class="sev-pill sev-Critical">Critical</span>
+              <img src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-06-guided-tour-stage-Q4PYiyyrVjLnBIfUs8woYXVs6bR6IC.jpg" alt="65% Media Frame Occlusion" loading="lazy" />
+            </div>
+            <div class="shot-info">
+              <div class="shot-tag">Finding B1 · #studio-tour</div>
+              <div class="shot-title">65% Media Frame Occlusion</div>
+              <div class="shot-dim">98px covered out of 151px frame height</div>
+              <p class="shot-desc">Top (48px) and bottom (50px) overlay badges cover 65% of the 16:9 Studio preview image on 360px phones, leaving only a 26px horizontal slit of artwork.</p>
+            </div>
+          </article>
+          <article class="shot-card" onclick="openLightbox('https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-08-trust-safety-pills-NcRbJBQ6K65L9CO8U490feNqXr6uiH.jpg', 'Lopsided Multi-Line Flow Bubbles')">
+            <div class="shot-frame">
+              <span class="sev-pill sev-Medium">Medium</span>
+              <img src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-08-trust-safety-pills-NcRbJBQ6K65L9CO8U490feNqXr6uiH.jpg" alt="Lopsided Multi-Line Flow Bubbles" loading="lazy" />
+            </div>
+            <div class="shot-info">
+              <div class="shot-tag">Finding A3 · #trust-safety</div>
+              <div class="shot-title">Lopsided Multi-Line Flow Bubbles</div>
+              <div class="shot-dim">325×75px ("Extended") vs 45px siblings</div>
+              <p class="shot-desc">Using rounded-full on 4 variable-length safety stages makes "Extended" balloon to 75px tall (and 3 of 4 bloat to 75px in Spanish).</p>
+            </div>
+          </article>
+          <article class="shot-card" onclick="openLightbox('https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-07-production-examples-cqyOmnzN9N7u5kLdPCV5THziI0VX6C.jpg', '5-Line Callout Stack Before Videos')">
+            <div class="shot-frame">
+              <span class="sev-pill sev-High">High</span>
+              <img src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-07-production-examples-cqyOmnzN9N7u5kLdPCV5THziI0VX6C.jpg" alt="5-Line Callout Stack Before Videos" loading="lazy" />
+            </div>
+            <div class="shot-info">
+              <div class="shot-tag">Finding A4 · #production-examples</div>
+              <div class="shot-title">5-Line Callout Stack Before Videos</div>
+              <div class="shot-dim">42px pill + 38px pill + 325×127px box</div>
+              <p class="shot-desc">Three stacked badges/boxes (including a 188-character languages banner) push the first playable Production Example completely below the fold.</p>
+            </div>
+          </article>
+          <article class="shot-card" onclick="openLightbox('https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-05-mobile-pwa-steps-jJ9B2WYRRfTXhXujhQTALDpWKCXT55.jpg', 'Triple-Badge Step Header Clutter')">
+            <div class="shot-frame">
+              <span class="sev-pill sev-Medium">Medium</span>
+              <img src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-05-mobile-pwa-steps-jJ9B2WYRRfTXhXujhQTALDpWKCXT55.jpg" alt="Triple-Badge Step Header Clutter" loading="lazy" />
+            </div>
+            <div class="shot-info">
+              <div class="shot-tag">Finding A5 · #mobile-app steps</div>
+              <div class="shot-title">Triple-Badge Step Header Clutter</div>
+              <div class="shot-dim">213×66px pill on Steps 02–04</div>
+              <p class="shot-desc">Every step card renders [01] + rounded-full badge + 2-line /intake box before the user even reaches the step heading.</p>
+            </div>
+          </article>
+          <article class="shot-card" onclick="openLightbox('https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-02-gateway-card-9iK4IHkX59p2kVOaLGTgX9A57fIbPD.jpg', 'Cramped Card Header Pill')">
+            <div class="shot-frame">
+              <span class="sev-pill sev-Medium">Medium</span>
+              <img src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/audit-clean-02-gateway-card-9iK4IHkX59p2kVOaLGTgX9A57fIbPD.jpg" alt="Cramped Card Header Pill" loading="lazy" />
+            </div>
+            <div class="shot-info">
+              <div class="shot-tag">Finding A6 · #who-its-for</div>
+              <div class="shot-title">Cramped Card Header Pill</div>
+              <div class="shot-dim">213×48px pill beside 40×40px icon</div>
+              <p class="shot-desc">Multi-word margin badge wraps to 2 lines next to the card icon box, contrasting sharply with the section’s clean borderless top eyebrow.</p>
+            </div>
+          </article>
+          <article class="shot-card" onclick="openLightbox('https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/mobile-audit-01-hero-JUBvTD1digkupsSVikB5Ie8MRyQ8Yi.jpg', '55% Viewport Cookie Modal Chokehold')">
+            <div class="shot-frame">
+              <span class="sev-pill sev-Critical">Critical</span>
+              <img src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/reports/mobile-audit/mobile-audit-01-hero-JUBvTD1digkupsSVikB5Ie8MRyQ8Yi.jpg" alt="55% Viewport Cookie Modal Chokehold" loading="lazy" />
+            </div>
+            <div class="shot-info">
+              <div class="shot-tag">Finding C2 · First-Visit Arrival</div>
+              <div class="shot-title">55% Viewport Cookie Modal Chokehold</div>
+              <div class="shot-dim">~440px tall modal on 800px screen</div>
+              <p class="shot-desc">On first mobile visit, CookieConsent covers 55% of the screen directly over the Hero genre tabs and the sticky bottom CTA bar.</p>
+            </div>
+          </article>
+      </div>
+    </section>
+
+    <section id="measurements">
+      <h2>2. Quantitative Pixel Measurements Across Viewports</h2>
+      <p class="sec-sub">A clean mobile pill badge measures 24px–30px tall (1 line). Below are the largest measured multi-line anomalies on 360×800 (EN &amp; ES).</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Section &amp; Component</th>
+              <th>Current Element / Badge</th>
+              <th>Measured 360px (EN / ES)</th>
+              <th>Mobile UX Anomaly</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>#video-services</code><br/>VideoServicesSpotlightSection</td>
+              <td>Bottom <code>#mobile-app</code> jump pill (<code>rounded-full</code>)</td>
+              <td class="dim-cell">279 × 139px</td>
+              <td>Wraps 4–5 lines inside a 9999px capsule; renders like a tall circle.</td>
+            </tr>
+            <tr>
+              <td><code>#production-examples</code><br/>ProductionExamplesSection</td>
+              <td><code>subtitleTagline</code> pill + 188-char <code>languagesBanner</code></td>
+              <td class="dim-cell">325 × 127px (+55px ES)</td>
+              <td>3 stacked badges/boxes precede the first video card, pushing examples off-screen.</td>
+            </tr>
+            <tr>
+              <td><code>#mobile-app</code><br/>MobileCompanionPwaSection</td>
+              <td>Top eyebrow <code>rounded-full</code> (<code>ZERO-LOGIN CLIENT...</code>)</td>
+              <td class="dim-cell">325 × 105px / 135px ES</td>
+              <td>3–4 line ALL-CAPS stadium blimp with tiny icon stranded on the left.</td>
+            </tr>
+            <tr>
+              <td><code>#video-services</code><br/>VideoServicesSpotlightSection</td>
+              <td><code>costSavingsPill</code> + <code>commercialRightsBadge</code></td>
+              <td class="dim-cell">325×75px + 325×105px</td>
+              <td>180px combined oval stack right above the 66px sticky bottom CTA bar.</td>
+            </tr>
+            <tr>
+              <td><code>#studio-tour</code><br/>StudioGuidedTourSection</td>
+              <td><code>topBadge</code> (48px) + <code>bottomBadge</code> (50px) inside 151px 16:9 stage</td>
+              <td class="dim-cell">98px / 151px (65%)</td>
+              <td>Covers character faces and torsos; leaves only a 26px visible horizontal slit.</td>
+            </tr>
+            <tr>
+              <td><code>#trust-safety</code><br/>TrustSafeguardSection</td>
+              <td>4 <code>flowSteps</code> <code>rounded-full</code> pills</td>
+              <td class="dim-cell">325 × 75px vs 45px</td>
+              <td>Uneven bubble heights (3 of 4 bloat to 75px in Spanish).</td>
+            </tr>
+            <tr>
+              <td><code>#mobile-app</code><br/>Customer Step Cards 01–04</td>
+              <td><code>[01]</code> + <code>rounded-full</code> badge + <code>/intake</code> chip</td>
+              <td class="dim-cell">213 × 66px per step</td>
+              <td>3 competing badge containers precede every step heading.</td>
+            </tr>
+            <tr>
+              <td><code>#who-its-for</code><br/>CreatorAndBusinessGateway</td>
+              <td>Card top-right <code>rounded-full</code> margin badge</td>
+              <td class="dim-cell">213 × 48px</td>
+              <td>Squeezes 2-line oval next to 40×40px icon box on all 3 audience cards.</td>
+            </tr>
+            <tr>
+              <td><code>header</code> + <code>CookieConsent</code></td>
+              <td>Mobile brand <code>variant="landing"</code> + Cookie modal</td>
+              <td class="dim-cell">366px width / 440px modal</td>
+              <td>6px right overflow on 360px phones; Cookie card blocks 55% of first screen.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="proposal">
+      <h2>3. Recommended Clean &amp; Professional Responsive Design</h2>
+      <p class="sec-sub">Inspired by the clean borderless eyebrows already working in <code>#who-its-for</code> and <code>#key-features</code>—preserving full desktop richness while making mobile sharp, calm, and executive.</p>
+
+      <div class="sim-grid">
+        <div class="phone-sim bad">
+          <span class="sim-badge">Current Mobile Pattern (Bloated Blimps)</span>
+          <div class="blimp-demo">
+            <span>📱</span>
+            <span>ZERO-LOGIN CLIENT LINKS + OPERATOR MOBILE PWA · IOS &amp; ANDROID</span>
+          </div>
+          <div class="sim-h3">Desktop Studio Power.</div>
+          <p class="sim-p">Multi-sentence pills compete with headlines for visual hierarchy.</p>
+          <div class="blimp-stack">🛡️ 100% Commercial Ownership · White-Label Client Portals (Pro+)</div>
+        </div>
+
+        <div class="phone-sim good">
+          <span class="sim-badge">Recommended Clean Studio Pattern</span>
+          <div class="clean-eyebrow-demo">MOBILE PORTALS &amp; OPERATOR PWA</div>
+          <div class="sim-h3">Desktop Studio Power.</div>
+          <p class="sim-p">Clean typographic hierarchy lets headlines and cinema visuals lead.</p>
+          <div class="clean-inline-checks">
+            <span>✓ Zero client login · Safari &amp; Chrome white-label links</span>
+            <span>✓ 100% commercial ownership &amp; instant operator PWA</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pillars">
+        <div class="pillar">
+          <div class="pillar-top">
+            <span class="pillar-title">Pillar 1 — Standardize All Section Headers on Borderless Typographic Eyebrows</span>
+            <span class="pillar-gain">Eliminates 8 header blimps (~550px saved)</span>
+          </div>
+          <p>Replace bordered <code>rounded-full</code> eyebrow capsules in <code>DirectorOperatingSystemSection</code>, <code>VideoServicesSpotlightSection</code>, <code>MobileCompanionPwaSection</code>, <code>ProductionExamplesSection</code>, <code>PricingCredits</code>, <code>InfrastructureSection</code>, <code>TrustSafeguardSection</code>, and <code>ForFilmmakersSection</code> with the clean borderless eyebrow (<code>text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em]</code>).</p>
+        </div>
+
+        <div class="pillar">
+          <div class="pillar-top">
+            <span class="pillar-title">Pillar 2 — Replace Multi-Clause Callout Pills with Clean Checklists &amp; Even Grids</span>
+            <span class="pillar-gain">Zero multi-line rounded-full wraps</span>
+          </div>
+          <ul>
+            <li><strong>Gateway &amp; Mobile Step Cards:</strong> Render card badges as clean borderless accent kickers above titles; simplify Mobile Step cards from 3 badges down to <code>[01]</code> + Title + subtle bottom <code>/intake</code> metadata.</li>
+            <li><strong>Video Services, Production Examples &amp; Trust:</strong> Convert stacked <code>75px+105px</code> pills into compact <code>✓</code> inline rows, condense <code>languagesBanner</code> (<code>127px</code>) into a crisp 1-line locale strip, and lay out Trust <code>flowSteps</code> in a symmetrical <code>grid-cols-2 sm:grid-cols-4</code> <code>rounded-xl</code> step grid.</li>
+          </ul>
+        </div>
+
+        <div class="pillar">
+          <div class="pillar-top">
+            <span class="pillar-title">Pillar 3 — Unobstructed 16:9 Media Frames on Mobile (0% Text-Badge Occlusion)</span>
+            <span class="pillar-gain">65% &rarr; 0% artwork occlusion</span>
+          </div>
+          <p>Move <code>StudioGuidedTourSection</code> <code>topBadge</code> and <code>bottomBadge</code> outside the <code>16:9</code> frame on <code>&lt; sm</code> into a sleek caption bar below the artwork (keeping <code>sm:absolute</code> on larger screens), condense the 3 window-bar buttons into compact single-row controls, and hide the duplicate top-right <code>card.badge</code> inside mobile <code>ProductionStyleCard</code> video frames.</p>
+        </div>
+
+        <div class="pillar">
+          <div class="pillar-top">
+            <span class="pillar-title">Pillar 4 — Fix 360px Header Overflow, Slim Mobile Cookie Bar &amp; Sync Pre-Launch CTAs</span>
+            <span class="pillar-gain">0px overflow · 55% &rarr; 14% cookie bar</span>
+          </div>
+          <p>Switch mobile <code>Header.tsx</code> brand to <code>variant="app"</code> with <code>px-3 sm:px-6</code> (fixing the <code>366px</code> overflow), slim <code>CookieConsent.tsx</code> on <code>&lt; md</code> to a compact 2-line bottom bar while suppressing <code>FloatingCTA</code> until dismissed, refine the Hero genre selector, and sync remaining <code>$9</code> buttons to <strong>Request Pre-Launch Access</strong>.</p>
+        </div>
+
+        <div class="pillar">
+          <div class="pillar-top">
+            <span class="pillar-title">Pillar 5 — Thumb-Friendly 36px Video Controls &amp; Tighter Mobile Spacing</span>
+            <span class="pillar-gain">36×36px tap targets · -6,000px dead scroll</span>
+          </div>
+          <p>Increase mobile video control hit-areas in <code>VideoServiceOutputShowcase</code> and <code>FeatureScreenshotFrame</code> from <code>26×26px</code> to <code>36×36px</code> (<code>h-8 w-8 sm:h-7 sm:w-7</code>) and tighten mobile vertical section padding to <code>py-14 sm:py-24</code>.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="" />
+  </div>
+
+  <script>
+    function openLightbox(src, alt) {
+      var lb = document.getElementById('lightbox');
+      var img = document.getElementById('lightbox-img');
+      img.src = src;
+      img.alt = alt || '';
+      lb.classList.add('open');
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeLightbox();
+    });
+  </script>
+</body>
+</html>
