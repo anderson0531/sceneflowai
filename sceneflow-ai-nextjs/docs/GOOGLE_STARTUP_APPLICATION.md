@@ -47,7 +47,7 @@
 
 Walkthrough manifest: [`public/demo/WALKTHROUGH_VIDEO_MANIFEST.md`](../public/demo/WALKTHROUGH_VIDEO_MANIFEST.md)  
 Production Examples & Nov 3 Rollout Plan: [`production-examples-landing.plan.md`](../production-examples-landing.plan.md)  
-2027–2029 Financial Models: [`docs/sceneflow_financial_model_2027_12month.csv`](./sceneflow_financial_model_2027_12month.csv) · [`docs/sceneflow_financial_model_2027_2029_3year.csv`](./sceneflow_financial_model_2027_2029_3year.csv)
+2027–2029 Financial Models (`50 → 500 → 5,000` Video Service Businesses + Creator SaaS): [`docs/SCENEFLOW_FINANCIAL_BUSINESS_MODEL.md`](./SCENEFLOW_FINANCIAL_BUSINESS_MODEL.md) · [`docs/sceneflow_financial_model_2027_12month.csv`](./sceneflow_financial_model_2027_12month.csv) · [`docs/sceneflow_financial_model_2027_2029_3year.csv`](./sceneflow_financial_model_2027_2029_3year.csv)
 
 ---
 

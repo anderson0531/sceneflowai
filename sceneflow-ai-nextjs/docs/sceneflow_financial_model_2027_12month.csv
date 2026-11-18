@@ -1,71 +1,87 @@
 Category,Line Item,Jan 2027,Feb 2027,Mar 2027,Apr 2027,May 2027,Jun 2027,Jul 2027,Aug 2027,Sep 2027,Oct 2027,Nov 2027,Dec 2027,FY 2027 Total / Exit,Notes & Basis
+MODEL DEFLATION & PRICING,Founding Operator 90-Day Charter ($),299.00,299.00,299.00,299.00,299.00,299.00,299.00,299.00,299.00,299.00,299.00,299.00,299.00,"25-seat Q1 Launchpad (/founding-operators): 90d White-Label Pro + 18,000 cr + Playbooks (locks $119/mo post-Day-90)"
 MODEL DEFLATION & PRICING,Explorer One-Time Price ($),9.00,9.00,9.00,9.00,9.00,9.00,9.00,9.00,9.00,9.00,9.00,9.00,9.00,One-time 30-Day Studio Test Flight (750 credits)
-MODEL DEFLATION & PRICING,Hobbyist Monthly Price ($),19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,"Democratized Everyday Storyteller tier (1,500 cr + 10 GB Vault)"
-MODEL DEFLATION & PRICING,Starter Monthly Price ($),49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,"Publish Chapter & Pre-Vis Filmmaker Pitch tier (4,500 cr + 25 GB Vault + 1 Voice Clone)"
-MODEL DEFLATION & PRICING,Pro Monthly Price ($),149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,"Video Memoir Entrepreneurs, Podcasters & 7-Language Series tier (15,000 cr + 100 GB Vault + 4K + BYOK)"
-MODEL DEFLATION & PRICING,Studio Monthly Price ($),599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,"Video Production Businesses, Real Estate Agencies & Corporate L&D tier (75,000 cr + 500 GB Vault + 25 Voice Clones + BYOK)"
-MODEL DEFLATION & PRICING,Cumulative AI Model Price Drop vs Jan 2027,0.0%,0.0%,0.0%,-25.0%,-25.0%,-25.0%,-40.0%,-40.0%,-40.0%,-55.0%,-55.0%,-55.0%,-55.0%,"Veo, Imagen, Gemini, Kling & TTS inference deflation across 2027"
-MODEL DEFLATION & PRICING,Cost to Deliver 10-Min Multi-Language Episode ($),42.00,42.00,42.00,31.50,31.50,31.50,25.20,25.20,25.20,18.90,18.90,18.90,18.90,Falling delivery cost unlocks mass adoption across EN/ES/PT/HI/ZH/AR/TH
-MODEL DEFLATION & PRICING,GCP / Vertex AI Compute COGS (% of Rev),25.0%,25.0%,25.0%,20.0%,20.0%,20.0%,16.0%,16.0%,16.0%,12.5%,12.5%,12.5%,14.8%,Drops from 25.0% in Q1 to 12.5% in Q4 as model inference costs fall
-MODEL DEFLATION & PRICING,Third-Party API COGS (% of Rev),9.0%,9.0%,9.0%,7.5%,7.5%,7.5%,6.2%,6.2%,6.2%,5.0%,5.0%,5.0%,5.8%,Drops from 9.0% in Q1 to 5.0% in Q4 (ElevenLabs/Kling/Topaz/Hive)
-MODEL DEFLATION & PRICING,Whop Merchant of Record Fee (% of Rev),3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,Blended 2.7% + $0.30 fixed fee + 0.5% global tax compliance
+MODEL DEFLATION & PRICING,Hobbyist Monthly Price ($),19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,19.00,"Everyday Storyteller Continuity Vault tier (1,500 cr + 10 GB Vault)"
+MODEL DEFLATION & PRICING,Starter Monthly Price ($),49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,49.00,"Publish Chapter & Filmmaker Pre-Vis Pitch tier (4,500 cr + 25 GB Vault + 1 Voice Clone)"
+MODEL DEFLATION & PRICING,Pro Monthly Price ($),149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,149.00,"White-Label Solo Video Service Operators, Podcasters & Series (15,000 cr + 100 GB Vault + 4K + BYOK)"
+MODEL DEFLATION & PRICING,Studio Monthly Price ($),599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,599.00,"Multi-Seat Video Service Agencies, Brokerages & Corporate L&D (75,000 cr + 500 GB Vault + 10 Seats + BYOK)"
+MODEL DEFLATION & PRICING,Cumulative AI Model Price Drop vs Jan 2027,0.0%,0.0%,0.0%,-25.0%,-25.0%,-25.0%,-40.0%,-40.0%,-40.0%,-55.0%,-55.0%,-55.0%,-55.0%,"Veo 3.1, Imagen 4, Gemini, Kling & TTS inference deflation across 2027"
+MODEL DEFLATION & PRICING,Cost to Deliver 10-Min Multi-Language Episode ($),42.00,42.00,42.00,31.50,31.50,31.50,25.20,25.20,25.20,18.90,18.90,18.90,18.90,Falling delivery cost unlocks higher operator & creator margins across EN/ES/PT/HI/ZH/AR/TH
+MODEL DEFLATION & PRICING,GCP / Vertex AI Compute COGS (% of Rev),25.0%,25.0%,25.0%,20.0%,20.0%,20.0%,16.0%,16.0%,16.0%,12.5%,12.5%,12.5%,16.3%,Drops from 25.0% in Q1 to 12.5% in Q4 as model inference costs deflate
+MODEL DEFLATION & PRICING,Third-Party API COGS (% of Rev),9.0%,9.0%,9.0%,7.5%,7.5%,7.5%,6.2%,6.2%,6.2%,5.0%,5.0%,5.0%,6.3%,Drops from 9.0% in Q1 to 5.0% in Q4 (ElevenLabs/Kling/Topaz/Hive)
+MODEL DEFLATION & PRICING,Whop Merchant of Record Fee (% of Rev),3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,3.8%,Blended 2.7% + $0.30 fixed fee + 0.5% global tax compliance across 7 markets
 ,,,,,,,,,,,,,,,
-SUBSCRIBERS (7 GLOBAL MARKETS),New $9 Explorer Buyers (Monthly Cohort),2600,3800,5400,7500,9800,12500,15500,18800,22400,26200,30200,35300,190000,"Cumulative FY 2027 Explorer buyers across EN, ES, PT, HI, ZH, AR, TH = 190,000"
-SUBSCRIBERS (7 GLOBAL MARKETS),Active Hobbyist Subscribers ($19/mo),390,800,1280,1900,2680,3600,4720,6000,7440,9020,10750,12600,12600,Democratized non-technical storytellers (45.0% of Dec 2027 active base)
-SUBSCRIBERS (7 GLOBAL MARKETS),Active Starter Subscribers ($49/mo),240,490,790,1180,1660,2240,2950,3760,4680,5700,6800,8000,8000,Publish Chapter creators & Pre-Vis pitch filmmakers (28.6% of Dec 2027 base)
-SUBSCRIBERS (7 GLOBAL MARKETS),Active Pro Subscribers ($149/mo),140,295,500,780,1150,1620,2200,2860,3580,4340,5120,5900,5900,"Solo Video Memoir producers, Video Podcasters & 7-language series (21.1% of Dec 2027 base)"
-SUBSCRIBERS (7 GLOBAL MARKETS),Active Studio Subscribers ($599/mo),20,45,85,140,220,330,470,640,830,1040,1260,1500,1500,"Multi-client Video Memoir studios, Real Estate brokerages & agencies (5.4% of Dec 2027 base)"
-SUBSCRIBERS (7 GLOBAL MARKETS),Total Active Monthly Subscribers,790,1630,2655,4000,5710,7790,10340,13260,16530,20100,23930,28000,28000,"Dec 2027 exit total active subscribers = 28,000 across 7 language markets"
-SUBSCRIBERS (7 GLOBAL MARKETS),Net Monthly Subscriber Additions,790,840,1025,1345,1710,2080,2550,2920,3270,3570,3830,4070,28000,Accelerating net additions driven by 7-language UI + viral B2B Production Business campaigns
+VIDEO SERVICE BUSINESSES (B2B2C),Founding Operator $299 Charter Seats Sold (25-Seat Cap),10,9,6,0,0,0,0,0,0,0,0,0,25,25 Charter studios onboarded in Q1 2027 seeding the initial White-Label Operator cohort
+VIDEO SERVICE BUSINESSES (B2B2C),Active White-Label Pro Operators ($149/mo),6,11,16,20,23,26,29,31,33,35,37,38,38,"Solo Video Memoir, Property Tour, Training & Brand Story operators (76% of Dec 2027 B2B2C base)"
+VIDEO SERVICE BUSINESSES (B2B2C),Active White-Label Studio Agencies ($599/mo),2,3,4,5,6,7,8,9,10,10,11,12,12,"Multi-PM Video Agencies, Real Estate Brokerages & Corporate L&D houses (24% of Dec 2027 B2B2C base)"
+VIDEO SERVICE BUSINESSES (B2B2C),Total Active Global Video Service Businesses,8,14,20,25,29,33,37,40,43,45,48,50,50,"Year 1 milestone exit = 50 active Global Video Service Businesses (scales -> 500 in FY28 -> 5,000 in FY29)"
+VIDEO SERVICE BUSINESSES (B2B2C),Memo: Operator Ecosystem Client GMV Enabled ($),42686,74875,110361,148842,180967,214974,253622,284018,315473,338450,364921,386476,2715665,"Dec 2027 run-rate = $4.64M/yr client GMV enabled across $29 Blueprint Passes & $299-$1,800 client films"
 ,,,,,,,,,,,,,,,
-MARKET BREAKDOWN (7 UI LANGUAGES),1. English Market Active Subs (`en` - 29.0%),229,473,770,1160,1656,2259,2999,3845,4794,5829,6940,8120,8120,"US, UK, Canada, Australia & Global B2B Production Studios"
-MARKET BREAKDOWN (7 UI LANGUAGES),2. Spanish Market Active Subs (`es` - 16.5%),130,269,438,660,942,1285,1706,2188,2727,3317,3948,4620,4620,"US Hispanic, Mexico, Spain, Colombia, Argentina (Family Memoirs & Podcasts)"
-MARKET BREAKDOWN (7 UI LANGUAGES),3. Chinese Market Active Subs (`zh-CN` - 15.5%),122,253,412,620,885,1207,1603,2055,2562,3116,3709,4340,4340,"Bilibili UP 主, Douyin vertical dramas, Taiwan, Singapore & Diaspora"
-MARKET BREAKDOWN (7 UI LANGUAGES),4. Hindi Market Active Subs (`hi` - 14.5%),115,236,385,580,828,1130,1499,1923,2397,2915,3470,4060,4060,"India YouTube (#1 global market), Wedding/Family Legacy Films, Podcasts & EdTech"
-MARKET BREAKDOWN (7 UI LANGUAGES),5. Portuguese Market Active Subs (`pt` - 11.0%),87,179,292,440,628,857,1137,1459,1818,2211,2632,3080,3080,"Brazil & Portugal YouTube, Podcasts, Telenovela/Series & Client Agencies"
-MARKET BREAKDOWN (7 UI LANGUAGES),6. Arabic Market Active Subs (`ar` - 8.5%),67,139,226,340,485,662,879,1127,1405,1709,2034,2380,2380,"Saudi Arabia, UAE, Egypt & MENA Family Biographies, Real Estate & Docs"
-MARKET BREAKDOWN (7 UI LANGUAGES),7. Thai & SEA Market Active Subs (`th` - 5.0%),40,81,132,200,286,390,517,663,827,1003,1197,1400,1400,"Thailand & Southeast Asia creator podcasts, micro-dramas & boutique video agencies"
+SELF-SERVE CREATORS (B2C),New $9 Explorer Buyers (Monthly Cohort),350,480,620,760,900,1020,1120,1220,1300,1360,1410,1460,12000,"12,000 cumulative FY 2027 Explorer Test Flight buyers across EN, ES, PT, HI, ZH, AR, TH"
+SELF-SERVE CREATORS (B2C),Active Hobbyist Subscribers ($19/mo),90,155,225,300,380,460,540,615,680,735,780,820,820,Everyday non-technical storytellers & personal Continuity Vaults
+SELF-SERVE CREATORS (B2C),Active Starter Subscribers ($49/mo),50,88,130,175,220,265,310,350,390,420,448,470,470,Publish Chapter creators & indie filmmaker Pre-Vis pitch packages
+SELF-SERVE CREATORS (B2C),Active Creator Pro Subscribers ($149/mo - Series & Podcasts),16,28,42,58,74,90,106,120,132,143,152,160,160,Monetized episodic series creators & hybrid video podcasters (non-agency)
+SELF-SERVE CREATORS (B2C),Total Active Self-Serve Creator Subscribers,156,271,397,533,674,815,956,1085,1202,1298,1380,1450,1450,"Dec 2027 exit = 1,450 active self-serve Creator/Filmmaker subscribers"
+CONSOLIDATED SUBSCRIBERS,Total Active Monthly Subscribers (B2B2C + B2C),164,285,417,558,703,848,993,1125,1245,1343,1428,1500,1500,"Dec 2027 exit = 1,500 active subscribers (50 Video Service Businesses + 1,450 Self-Serve Creators)"
+CONSOLIDATED SUBSCRIBERS,Net Monthly Subscriber Additions,164,121,132,141,145,145,145,132,120,98,85,72,1500,Disciplined organic + partner-led Year 1 ramp across 7 language markets
 ,,,,,,,,,,,,,,,
-REVENUE (USD),$9 Explorer One-Time Revenue,23400,34200,48600,67500,88200,112500,139500,169200,201600,235800,271800,317700,1710000,"190,000 Explorer buyers * $9"
-REVENUE (USD),Hobbyist Subscription MRR ($19),7410,15200,24320,36100,50920,68400,89680,114000,141360,171380,204250,239400,1162420,Active Hobbyist * $19
-REVENUE (USD),Starter Subscription MRR ($49),11760,24010,38710,57820,81340,109760,144550,184240,229320,279300,333200,392000,1886010,Active Starter * $49 (Chapter creators + Filmmaker Pre-Vis)
-REVENUE (USD),Pro Subscription MRR ($149),20860,43955,74500,116220,171350,241380,327800,426140,533420,646660,762880,879100,4244265,Active Pro * $149 (Solo Video Memoir businesses + Video Podcasters + Series)
-REVENUE (USD),Studio Subscription MRR ($599),11980,26955,50915,83860,131780,197670,281530,383360,497170,622960,754740,898500,3941420,"Active Studio * $599 (Video Production Agencies, Memoir Studios & Real Estate)"
-REVENUE (USD),Total Base Subscription MRR,52010,110120,188445,294000,435390,617210,843560,1107740,1401270,1720300,2055070,2409000,11234115,Sum of monthly recurring subscription plans
-REVENUE (USD),Annualized Subscription ARR (MRR * 12),624120,1321440,2261340,3528000,5224680,7406520,10122720,13292880,16815240,20643600,24660840,28908000,28908000,Dec 2027 exit Subscription ARR = $28.91M
-REVENUE (USD),12-Month Add-On Packs ($25/$100/$250) & BYOK Fees,11442,24226,41458,73500,108848,154303,236197,310167,392356,550496,657622,770880,3331495,Scales from 22% of Base MRR in Q1 to 32% in Q4 as B2B Memoir/Agency operators buy client packs
-REVENUE (USD),Total Recognized Gross Revenue,86852,168546,278503,435000,632438,884013,1219257,1587107,1995226,2506596,2984492,3497580,16275610,Dec 2027 total annualized revenue run-rate = $41.97M (FY27 Total = $16.28M)
-REVENUE (USD),Memo: Revenue from Production Businesses & Pro/Studio Creators,41422,89080,156509,255205,384766,554777,786478,1042125,1324857,1682492,2010837,2355760,10684308,#1 Revenue Generator (Pro + Studio + 75% of Add-Ons = 65.6% FY27 / 67.4% Dec 2027 share)
-REVENUE (USD),Memo: Production Business & Pro/Studio Share of Revenue (%),47.7%,52.9%,56.2%,58.7%,60.8%,62.8%,64.5%,65.7%,66.4%,67.1%,67.4%,67.4%,65.6%,Validates thesis: B2B Video Production Services & Pro Creators drive majority of revenue
+MARKET BREAKDOWN (7 UI LANGUAGES),1. English (`en` - 30.0%),49,85,125,168,211,254,298,337,374,403,428,450,450,Active combined subscribers in en market (30% global share)
+MARKET BREAKDOWN (7 UI LANGUAGES),2. Spanish (`es` - 16.0%),26,46,67,89,113,136,159,180,199,215,229,240,240,Active combined subscribers in es market (16% global share)
+MARKET BREAKDOWN (7 UI LANGUAGES),3. Chinese (`zh-CN` - 15.0%),25,43,63,84,106,127,149,169,187,201,214,225,225,Active combined subscribers in zh-CN market (15% global share)
+MARKET BREAKDOWN (7 UI LANGUAGES),4. Hindi (`hi` - 14.0%),23,40,58,78,98,119,139,158,174,188,200,210,210,Active combined subscribers in hi market (14% global share)
+MARKET BREAKDOWN (7 UI LANGUAGES),5. Portuguese (`pt` - 11.0%),18,31,46,61,77,93,109,124,137,148,157,165,165,Active combined subscribers in pt market (11% global share)
+MARKET BREAKDOWN (7 UI LANGUAGES),6. Arabic (`ar` - 9.0%),15,26,37,50,63,76,89,101,112,121,129,135,135,Active combined subscribers in ar market (9% global share)
+MARKET BREAKDOWN (7 UI LANGUAGES),7. Thai & SEA (`th` - 5.0%),8,14,21,28,35,43,50,56,62,67,71,75,75,Active combined subscribers in th market (5% global share)
 ,,,,,,,,,,,,,,,
-COGS & CREDITS (USD),Un-Subsidized GCP / Vertex AI COGS,21713,42137,69626,87000,126488,176803,195081,253937,319236,313325,373062,437198,2415606,Drops from 25% of rev in Q1 -> 20% Q2 -> 16% Q3 -> 12.5% Q4
-COGS & CREDITS (USD),Cash 3P API COGS (ElevenLabs/Kling/Topaz/Hive),7817,15169,25065,32625,47433,66301,75594,98401,123704,125330,149225,174879,941543,Drops from 9.0% of rev in Q1 -> 7.5% Q2 -> 6.2% Q3 -> 5.0% Q4
-COGS & CREDITS (USD),Whop Merchant of Record Fees (3.8%),3300,6405,10583,16530,24033,33592,46332,60310,75819,95251,113411,132908,618474,Payment processing & global tax compliance across 7 language markets
-COGS & CREDITS (USD),Total Un-Subsidized GAAP COGS,32830,63711,105274,136155,197954,276696,317007,412648,518759,533906,635698,744985,3975623,Drops from 37.8% of rev in Q1 to 21.3% in Q4
-COGS & CREDITS (USD),GAAP Gross Profit (Un-Subsidized),54022,104835,173229,298845,434484,607317,902250,1174459,1476467,1972690,2348794,2752595,12299987,Total Gross Revenue minus Total GAAP COGS
-COGS & CREDITS (USD),GAAP Gross Margin %,62.2%,62.2%,62.2%,68.7%,68.7%,68.7%,74.0%,74.0%,74.0%,78.7%,78.7%,78.7%,75.6%,Expands +16.5 percentage points across 2027 due to AI model deflation
+REVENUE — VIDEO SERVICE B2B2C (USD),Founding Operator $299 Charter Launchpad Revenue,2990,2691,1794,0,0,0,0,0,0,0,0,0,7475,25 Founding Operator Charter packages * $299 in Q1 2027
+REVENUE — VIDEO SERVICE B2B2C (USD),Video Service Pro Subscription MRR ($149),894,1639,2384,2980,3427,3874,4321,4619,4917,5215,5513,5662,45445,Active White-Label Pro Operators * $149/mo
+REVENUE — VIDEO SERVICE B2B2C (USD),Video Service Studio Subscription MRR ($599),1198,1797,2396,2995,3594,4193,4792,5391,5990,5990,6589,7188,52113,Active White-Label Studio Agencies * $599/mo
+REVENUE — VIDEO SERVICE B2B2C (USD),Video Service Base Subscription MRR,2092,3436,4780,5975,7021,8067,9113,10010,10907,11205,12102,12850,97558,"Dec 2027 Video Service Base SaaS MRR = $12,850/mo ($154,200 Base SaaS ARR)"
+REVENUE — VIDEO SERVICE B2B2C (USD),Video Service 12-Mo Add-On Credit Packs ($100/$250),986,1775,2645,3567,4314,5104,6003,6679,7378,7975,8555,8990,63971,"Funds $29 Client Blueprint Passes (~$3.90 max compute) + $299-$1,800 client film deliveries"
+REVENUE — VIDEO SERVICE B2B2C (USD),Video Service BYOK 20% Orchestration Fees,167,289,423,570,695,828,979,1101,1227,1310,1417,1508,10514,20% platform orchestration fee on high-volume Pro/Studio BYOK renders
+REVENUE — VIDEO SERVICE B2B2C (USD),Subtotal: Video Service Business Segment Revenue,6235,8191,9642,10112,12030,13999,16095,17790,19512,20490,22074,23348,179518,"Dec 2027 exit run-rate = $23,348/mo ($280,176/yr across 50 active Video Service Businesses)"
 ,,,,,,,,,,,,,,,
-START TRACK: $2K CREDITS,"Google Startups $2K Start Tier Credit Offset ($750 Pre-Launch + $1,250 Jan)",1250,0,0,0,0,0,0,0,0,0,0,0,1250,"$2,000 Start Tier funds Nov-Dec 2026 6-vertical showcase ($750) + $1,250 Jan 2027 launch offset"
-START TRACK: $2K CREDITS,Net Cash Flow (EBITDA w/ $2K Start Tier Credits Only),14272,41335,70229,135845,196484,274317,453250,594459,751467,1086690,1290794,1512095,6421237,"Self-sustaining & cash-flow positive from Month 1 ($14,272 Jan cash EBITDA) with $2K Start Tier alone"
+REVENUE — SELF-SERVE CREATOR B2C (USD),$9 Explorer Test Flight One-Time Revenue,3150,4320,5580,6840,8100,9180,10080,10980,11700,12240,12690,13140,108000,"12,000 Explorer Test Flight buyers * $9"
+REVENUE — SELF-SERVE CREATOR B2C (USD),Hobbyist Subscription MRR ($19),1710,2945,4275,5700,7220,8740,10260,11685,12920,13965,14820,15580,109820,Active Hobbyist * $19/mo
+REVENUE — SELF-SERVE CREATOR B2C (USD),Starter Subscription MRR ($49),2450,4312,6370,8575,10780,12985,15190,17150,19110,20580,21952,23030,162484,Active Starter * $49/mo
+REVENUE — SELF-SERVE CREATOR B2C (USD),Creator Pro Subscription MRR ($149),2384,4172,6258,8642,11026,13410,15794,17880,19668,21307,22648,23840,167029,Active Indie Series & Video Podcaster Pro * $149/mo
+REVENUE — SELF-SERVE CREATOR B2C (USD),Creator Base Subscription MRR,6544,11429,16903,22917,29026,35135,41244,46715,51698,55852,59420,62450,439333,"Dec 2027 Creator Base SaaS MRR = $62,450/mo ($749,400 Base SaaS ARR)"
+REVENUE — SELF-SERVE CREATOR B2C (USD),Creator Add-On Credit Packs & BYOK Fees,1059,1850,2741,4186,5306,6427,7959,9015,9969,11331,12055,12671,84569,12-month chapter completion packs ($25/$100) + indie Pro BYOK orchestration
+REVENUE — SELF-SERVE CREATOR B2C (USD),Subtotal: Self-Serve Creator Segment Revenue,10753,17599,25224,33943,42432,50742,59283,66710,73367,79423,84165,88261,631902,"Dec 2027 exit run-rate = $88,261/mo ($1,059,132/yr across 1,450 active Creators + Explorer funnel)"
 ,,,,,,,,,,,,,,,
-TRACK A: $100K CREDITS,GCP Credit Offset Applied ($100k Partner Track),21713,42137,36150,0,0,0,0,0,0,0,0,0,100000,Follow-on Partner Tier upgrade covers Jan-Feb GCP COGS + 65% of Mar GCP COGS
-TRACK A: $100K CREDITS,Remaining $100k GCP Credit Balance,78287,36150,0,0,0,0,0,0,0,0,0,0,0,Fully utilized in Month 3 as ARR crosses $2.15M
-TRACK A: $100K CREDITS,Cash Gross Profit (w/ $100k Credit Track),75735,146972,209379,298845,434484,607317,902250,1174459,1476467,1972690,2348794,2752595,12399987,GAAP Gross Profit + $100k GCP Credit Offset
-TRACK A: $100K CREDITS,Cash Gross Margin % (w/ $100k Credit Track),87.2%,87.2%,75.2%,68.7%,68.7%,68.7%,74.0%,74.0%,74.0%,78.7%,78.7%,78.7%,76.2%,Blended FY 2027 Cash Gross Margin w/ $100k Credit Track
+CONSOLIDATED REVENUE (USD),Total Base Subscription MRR (B2B2C + B2C),8636,14865,21683,28892,36047,43202,50357,56725,62605,67057,71522,75300,536891,"Dec 2027 exit Base MRR = $75,300/mo ($12,850 Video Service + $62,450 Creator)"
+CONSOLIDATED REVENUE (USD),Annualized Base Subscription ARR (MRR * 12),103632,178380,260196,346704,432564,518424,604284,680700,751260,804684,858264,903600,903600,"Dec 2027 exit Base Subscription ARR = $903,600"
+CONSOLIDATED REVENUE (USD),Total Recognized Gross Revenue (All Streams),16988,25790,34866,44055,54462,64741,75378,84500,92879,99913,106239,111609,811420,"Dec 2027 annualized total revenue run-rate = $1,339,308 ($111,609/mo * 12); FY27 Recognized Total = $811,420"
+CONSOLIDATED REVENUE (USD),Memo: Video Service B2B2C Share of Total Revenue (%),36.7%,31.8%,27.7%,23.0%,22.1%,21.6%,21.4%,21.1%,21.0%,20.5%,20.8%,20.9%,22.1%,"Rises as 50 -> 500 -> 5,000 high-ARPU Video Service Studios scale to >43% FY29 / >52% Dec 2029 recurring+compute"
 ,,,,,,,,,,,,,,,
-TRACK B: $250K CREDITS,GCP Credit Offset Applied ($250k AI-First Yr-1 Track),21713,42137,69626,87000,29524,0,0,0,0,0,0,0,250000,Covers 100% of Jan-Apr GCP COGS + 52% of May GCP COGS
-TRACK B: $250K CREDITS,Remaining $250k GCP Credit Balance,228287,186150,116524,29524,0,0,0,0,0,0,0,0,0,Fully utilized in Month 5 as ARR crosses $5.25M
-TRACK B: $250K CREDITS,Cash Gross Profit (w/ $250k AI-First Track),75735,146972,242855,385845,464008,607317,902250,1174459,1476467,1972690,2348794,2752595,12549987,GAAP Gross Profit + $250k GCP Credit Offset
-TRACK B: $250K CREDITS,Cash Gross Margin % (w/ $250k AI-First Track),87.2%,87.2%,87.2%,88.7%,73.4%,68.7%,74.0%,74.0%,74.0%,78.7%,78.7%,78.7%,77.1%,Blended FY 2027 Cash Gross Margin w/ $250k AI-First Track
+COGS & CREDITS (USD),Un-Subsidized GCP / Vertex AI COGS,4247,6448,8717,8811,10892,12948,12060,13520,14861,12489,13280,13951,132224,Drops from 25.0% of rev in Q1 -> 20.0% Q2 -> 16.0% Q3 -> 12.5% Q4
+COGS & CREDITS (USD),Cash 3P API COGS (ElevenLabs/Kling/Topaz/Hive),1529,2321,3138,3304,4085,4856,4673,5239,5758,4996,5312,5580,50791,Drops from 9.0% of rev in Q1 -> 7.5% Q2 -> 6.2% Q3 -> 5.0% Q4
+COGS & CREDITS (USD),Whop Merchant of Record Fees (3.8%),646,980,1325,1674,2070,2460,2864,3211,3529,3797,4037,4241,30834,Payment processing & global tax compliance across 7 language markets
+COGS & CREDITS (USD),Total Un-Subsidized GAAP COGS,6422,9749,13180,13789,17047,20264,19597,21970,24148,21282,22629,23772,213849,Drops from 37.8% of rev in Q1 to 21.3% in Q4
+COGS & CREDITS (USD),GAAP Gross Profit (Un-Subsidized),10566,16041,21686,30266,37415,44477,55781,62530,68731,78631,83610,87837,597571,Total Gross Revenue minus Total GAAP COGS
+COGS & CREDITS (USD),GAAP Gross Margin %,62.2%,62.2%,62.2%,68.7%,68.7%,68.7%,74.0%,74.0%,74.0%,78.7%,78.7%,78.7%,73.6%,Expands +16.5 percentage points across 2027 from AI model deflation + high-margin Vault/BYOK mix
 ,,,,,,,,,,,,,,,
-OPEX & VIRAL B2B MARKETING,R&D / Engineering & Product,16000,22000,34000,52000,74000,102000,135000,172000,212000,255000,300000,346000,1720000,"Scales with revenue (10.6% of FY27 rev): AI agents, 7-language i18n, Podcast & Memoir workflows"
-OPEX & VIRAL B2B MARKETING,"S&M — Creator, Podcaster & 7-Language Explorer Funnel",12000,19000,30000,46000,65000,88000,116000,148000,184000,224000,268000,315000,1515000,"9.3% of FY27 rev: funds 190k Explorer buyers, Podcaster & Filmmaker Pre-Vis acquisition"
-OPEX & VIRAL B2B MARKETING,S&M — Reinvestment in Viral Video Production Business Campaigns,8000,15000,28000,48000,75000,110000,154000,204000,260000,324000,392000,467000,2085000,12.8% of FY27 rev: scales from $8k/mo in Jan to $467k/mo in Dec to drive global B2B Memoir/Agency virality
-OPEX & VIRAL B2B MARKETING,Total Sales & Marketing (S&M),20000,34000,58000,94000,140000,198000,270000,352000,444000,548000,660000,782000,3600000,22.1% of FY27 rev ($3.60M total; 58% dedicated to High-ARPU Video Production Business campaigns)
-OPEX & VIRAL B2B MARKETING,G&A (Global Legal / Compliance / 7-Market Localization Ops),5000,7500,11000,17000,24000,33000,44000,56000,69000,83000,98000,112500,560000,3.4% of FY27 rev: corporate ops & multi-region compliance
-OPEX & VIRAL B2B MARKETING,Total Operating Expenses (OpEx),41000,63500,103000,163000,238000,333000,449000,580000,725000,886000,1058000,1240500,5880000,Funded organically out of monthly gross profit as revenue scales
-OPEX & VIRAL B2B MARKETING,GAAP Operating Income (EBITDA - Un-Subsidized),13022,41335,70229,135845,196484,274317,453250,594459,751467,1086690,1290794,1512095,6419987,Positive GAAP EBITDA from Month 1 ($6.42M FY27 GAAP EBITDA = 39.4% margin)
-OPEX & VIRAL B2B MARKETING,Net Cash Flow (EBITDA w/ $100k Credit Track),34735,83472,106379,135845,196484,274317,453250,594459,751467,1086690,1290794,1512095,6519987,40.1% FY27 Cash EBITDA margin ($100k credit track)
-OPEX & VIRAL B2B MARKETING,Cumulative Cash Generated (w/ $100k Credit Track),34735,118207,224586,360431,556915,831232,1284482,1878941,2630408,3717098,5007892,6519987,6519987,$6.52M cumulative net cash generated in FY 2027 ($100k track)
-OPEX & VIRAL B2B MARKETING,Net Cash Flow (EBITDA w/ $250k AI-First Track),34735,83472,139855,222845,226008,274317,453250,594459,751467,1086690,1290794,1512095,6669987,41.0% FY27 Cash EBITDA margin ($250k AI-First credit track)
-OPEX & VIRAL B2B MARKETING,Cumulative Cash Generated (w/ $250k AI-First Track),34735,118207,258062,480907,706915,981232,1434482,2028941,2780408,3867098,5157892,6669987,6669987,$6.67M cumulative net cash generated in FY 2027 ($250k track)
+START TRACK: $2K CREDITS,"Google Startups $2K Start Tier Credit Offset ($750 Pre-Launch + $1,250 Jan)",1250,0,0,0,0,0,0,0,0,0,0,0,1250,"$2,000 Start Tier funds Nov-Dec 2026 showcase renders ($750) + $1,250 Jan 2027 GCP offset"
+START TRACK: $2K CREDITS,Net Cash Flow (EBITDA w/ $2K Start Tier Credits Only),2416,3341,4986,9066,11415,13577,19581,21130,22131,26631,26310,25237,185821,Cash-flow positive from Month 1 even on $2K Start Tier credits alone
+,,,,,,,,,,,,,,,
+TRACK A: $100K CREDITS,GCP Credit Offset Applied ($100k Partner Track),4247,6448,8717,8811,10892,12948,12060,13520,14861,7496,0,0,100000,Offsets 75.6% of full-year FY 2027 GCP/Vertex AI compute across Jan-Oct 2027
+TRACK A: $100K CREDITS,Remaining $100k GCP Credit Balance,95753,89305,80588,71777,60885,47937,35877,22357,7496,0,0,0,0,Extends runway all the way into Q4 2027 as ARR approaches $900K+
+TRACK A: $100K CREDITS,Cash Gross Profit (w/ $100k Credit Track),14813,22489,30403,39077,48307,57425,67841,76050,83592,86127,83610,87837,697571,GAAP Gross Profit + $100k GCP Credit Offset
+TRACK A: $100K CREDITS,Cash Gross Margin % (w/ $100k Credit Track),87.2%,87.2%,87.2%,88.7%,88.7%,88.7%,90.0%,90.0%,90.0%,86.2%,78.7%,78.7%,86.0%,Blended FY 2027 Cash Gross Margin w/ $100k Credit Track
+,,,,,,,,,,,,,,,
+TRACK B: $250K CREDITS,GCP Credit Offset Applied ($250k AI-First Yr-1 Track),4247,6448,8717,8811,10892,12948,12060,13520,14861,12489,13280,13951,132224,Covers 100% of FY 2027 GCP/Vertex AI compute with remaining balance carrying into FY 2028
+TRACK B: $250K CREDITS,Remaining $250k GCP Credit Balance,245753,239305,230588,221777,210885,197937,185877,172357,157496,145007,131727,117776,117776,Remaining Year-1 credit balance rolls into H1 2028 as Video Service studios scale 50 -> 500
+TRACK B: $250K CREDITS,Cash Gross Profit (w/ $250k AI-First Track),14813,22489,30403,39077,48307,57425,67841,76050,83592,91120,96890,101788,729795,GAAP Gross Profit + 100% FY27 GCP Credit Offset
+TRACK B: $250K CREDITS,Cash Gross Margin % (w/ $250k AI-First Track),87.2%,87.2%,87.2%,88.7%,88.7%,88.7%,90.0%,90.0%,90.0%,91.2%,91.2%,91.2%,89.9%,Blended FY 2027 Cash Gross Margin w/ $250k AI-First Track
+,,,,,,,,,,,,,,,
+OPEX & B2B2C GROWTH,R&D / Engineering & Product,3200,4200,5500,7000,8500,10000,11800,13500,15200,17000,18800,20500,135200,"Founder-led engineering + contract AI/UI specialists (Autonomous Agents, 7-lang portals, Veo/Kling)"
+OPEX & B2B2C GROWTH,"S&M — Creator, Podcaster & 7-Language Explorer Funnel",2400,3200,4200,5200,6300,7400,8500,9600,10600,11600,12500,13500,95000,"Acquires 12,000 $9 Explorer Test Flights & self-serve Creators across 7 language markets"
+OPEX & B2B2C GROWTH,S&M — Video Service Operator Charter & Partner Channel Growth,2600,3800,5200,6800,8600,10500,12500,14500,16600,18800,21000,23100,144000,"Onboards 50 White-Label Video Service Businesses via senior living, real estate & L&D channels"
+OPEX & B2B2C GROWTH,Total Sales & Marketing (S&M),5000,7000,9400,12000,14900,17900,21000,24100,27200,30400,33500,36600,239000,"59% of S&M dedicated to high-ARPU, low-churn Video Service Business acquisition"
+OPEX & B2B2C GROWTH,G&A (Legal / Compliance / 7-Market Ops),1200,1500,1800,2200,2600,3000,3400,3800,4200,4600,5000,5500,38800,"Lean corporate ops, privacy/consent compliance & multi-region administration"
+OPEX & B2B2C GROWTH,Total Operating Expenses (OpEx),9400,12700,16700,21200,26000,30900,36200,41400,46600,52000,57300,62600,413000,100% funded organically out of monthly operating gross profit
+OPEX & B2B2C GROWTH,GAAP Operating Income (EBITDA - Un-Subsidized),1166,3341,4986,9066,11415,13577,19581,21130,22131,26631,26310,25237,184571,Positive GAAP EBITDA across FY 2027 (22.7% GAAP EBITDA margin)
+OPEX & B2B2C GROWTH,Net Cash Flow (EBITDA w/ $100k Credit Track),5413,9789,13703,17877,22307,26525,31641,34650,36992,34127,26310,25237,284571,35.1% FY27 Cash EBITDA margin ($100k credit track)
+OPEX & B2B2C GROWTH,Cumulative Cash Generated (w/ $100k Credit Track),5413,15202,28905,46782,69089,95614,127255,161905,198897,233024,259334,284571,284571,Cumulative operating cash generated across FY 2027 ($100k track)
+OPEX & B2B2C GROWTH,Net Cash Flow (EBITDA w/ $250k AI-First Track),5413,9789,13703,17877,22307,26525,31641,34650,36992,39120,39590,39188,316795,39.0% FY27 Cash EBITDA margin ($250k AI-First track)
+OPEX & B2B2C GROWTH,Cumulative Cash Generated (w/ $250k AI-First Track),5413,15202,28905,46782,69089,95614,127255,161905,198897,238017,277607,316795,316795,Cumulative operating cash generated across FY 2027 ($250k track)
