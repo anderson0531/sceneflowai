@@ -47,7 +47,7 @@
 
 Walkthrough manifest: [`public/demo/WALKTHROUGH_VIDEO_MANIFEST.md`](../public/demo/WALKTHROUGH_VIDEO_MANIFEST.md)  
 Production Examples & Nov 3 Rollout Plan: [`production-examples-landing.plan.md`](../production-examples-landing.plan.md)  
-2027–2029 Financial Models (`50 → 500 → 5,000` Video Service Businesses + Creator SaaS): [`docs/SCENEFLOW_FINANCIAL_BUSINESS_MODEL.md`](./SCENEFLOW_FINANCIAL_BUSINESS_MODEL.md) · [`docs/sceneflow_financial_model_2027_12month.csv`](./sceneflow_financial_model_2027_12month.csv) · [`docs/sceneflow_financial_model_2027_2029_3year.csv`](./sceneflow_financial_model_2027_2029_3year.csv)
+2027–2029 Financial Models (`500 → 5,000 → 50,000` Video Service Businesses + Creator SaaS): [`docs/SCENEFLOW_FINANCIAL_BUSINESS_MODEL.md`](./SCENEFLOW_FINANCIAL_BUSINESS_MODEL.md) · [`docs/sceneflow_financial_model_2027_12month.csv`](./sceneflow_financial_model_2027_12month.csv) · [`docs/sceneflow_financial_model_2027_2029_3year.csv`](./sceneflow_financial_model_2027_2029_3year.csv)
 
 ---
 
@@ -154,7 +154,7 @@ SERIES ROOM → BLUEPRINT ROOM → PRODUCTION STAGE → FINAL CUT → SCREENING 
 
 **1. Cloud Credits ($2K Start Tier → Partner / AI-First Track)**  
 - **Immediate Use (Nov–Dec 2026 Pre-Launch):** With all 6 flagship verticals already live in Pre-Vis Animatic and 7-language Trailer form, we will deploy the $2,000 Start Tier grant directly into Vertex AI **Veo 3.1 + EXT** and **Cloud Run FFmpeg** to render the complete multi-chapter **Episode 1 / Chapter 1 Motion Video Masters (179.5 minutes across all 6 verticals in 7 languages)** and run pre-launch creator & B2B production agency test flights ahead of our **January 2027 commercial launch**.
-- **2027 Scale Track ($100K–$250K):** Scale Vertex AI (Gemini, Imagen 4, Veo 3.1) and Cloud Run compute across 7 global language markets as revenue reinvests into viral B2B "Video Production Business-in-a-Box" marketing campaigns.
+- **2027 Scale Track ($100K–$250K):** Scale stateless Vertex AI (Gemini, Imagen 4, Veo 3.1) and Cloud Run compute from `500` (FY27) → `5,000` (FY28) → `50,000` (FY29) White-Label Video Service Businesses as early gross profit reinvests into `18–35` side/primary hustle operator acquisition across **English, Spanish, Portuguese, Hindi, Chinese, and Arabic** markets serving Baby Boomer Video Memoir, Real Estate, Training, and SMB Brand demand.
 
 **2. Technical Mentorship**  
 Vertex AI Veo 3.1 + EXT throughput optimization, context caching at scale, and production safety tuning.

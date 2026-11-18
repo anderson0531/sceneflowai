@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 /**
  * Deterministic generator for SceneFlow AI's 2027–2029 Financial & Business Model
- * anchored on 50 (FY27 Exit) -> 500 (FY28 Exit) -> 5,000 (FY29 Exit) Global
- * White-Label Video Service Businesses alongside proportionally calibrated
- * Self-Serve Creator / Filmmaker / Podcaster SaaS tiers across 7 UI languages.
+ * anchored on 500 (FY27 Exit) -> 5,000 (FY28 Exit) -> 50,000 (FY29 Exit) Global
+ * White-Label Video Service Businesses (side-hustle & primary-hustle operators
+ * aged 18–35 serving massive Baby Boomer Video Memoir, Real Estate, Training &
+ * SMB Brand demand) powered by early-revenue marketing reinvestment across
+ * English, Spanish, Portuguese, Hindi, Chinese, and Arabic markets (+ Thai/SEA),
+ * alongside Self-Serve Creator / Filmmaker / Podcaster SaaS tiers.
  *
  * Outputs:
  *   - docs/sceneflow_financial_model_2027_12month.csv
@@ -44,20 +47,22 @@ const PRICE = {
   charter: 299, // 25-seat Founding Operator 90-Day Pro Launchpad
 }
 
-// Steady-state monthly expansion per active Video Service Business
-// Pro Operator ($149/mo, 15,000 cr included): ~12 $29 Blueprint Passes + 8 client films/mo (~28,200 cr) -> $145/mo Add-On Packs + $16/mo BYOK fee = $310/mo ARPU
-// Studio Agency ($599/mo, 75,000 cr included): ~35 $29 Blueprint Passes + 24 client films/mo (~104,050 cr) -> $290/mo Add-On Packs + $75/mo BYOK fee = $964/mo ARPU
+// Steady-state monthly unit economics per active Video Service Business (85% Pro / 15% Studio):
+// - Pro Operator ($149/mo, 15,000 cr incl., 85% of base — blends 18-35 side-hustlers @ 3-4 films/mo & primary-hustlers @ 8-10 films/mo):
+//   Blended 9 $29 Blueprint Passes + 6 commissioned client films/mo (~22,110 cr) -> $85/mo Add-On Packs + $12/mo BYOK fee = $246/mo SceneFlow ARPU ($3,687/mo operator GMV)
+// - Studio Agency ($599/mo, 75,000 cr incl., 15% of base — scaled primary hustlers & multi-seat local agencies):
+//   Blended 30 $29 Blueprint Passes + 20 commissioned client films/mo (~86,700 cr) -> $240/mo Add-On Packs + $60/mo BYOK fee = $899/mo SceneFlow ARPU ($13,890/mo operator GMV)
 const B2B_STEADY = {
-  proAddOnMonthly: 145,
-  proByokMonthly: 16,
-  proFilmsPerMo: 8,
-  proBlueprintsPerMo: 12,
-  proClientGmvPerMo: 4916, // 8 * $600 avg film + 4 non-converting $29 passes
-  studioAddOnMonthly: 290,
-  studioByokMonthly: 75,
-  studioFilmsPerMo: 24,
-  studioBlueprintsPerMo: 35,
-  studioClientGmvPerMo: 16639, // 24 * $680 avg film + 11 non-converting $29 passes
+  proAddOnMonthly: 85,
+  proByokMonthly: 12,
+  proFilmsPerMo: 6,
+  proBlueprintsPerMo: 9,
+  proClientGmvPerMo: 3687, // 6 * $600 avg film (Baby Boomer Video Memoirs, Property & Brand) + 3 non-converting $29 passes
+  studioAddOnMonthly: 240,
+  studioByokMonthly: 60,
+  studioFilmsPerMo: 20,
+  studioBlueprintsPerMo: 30,
+  studioClientGmvPerMo: 13890, // 20 * $680 avg film + 10 non-converting $29 passes
 }
 
 function csvCell(v) {
@@ -91,39 +96,39 @@ function fmtNum(n) {
 }
 
 // ============================================================================
-// 1. MONTHLY FY 2027 TRAJECTORY (Exits Dec 2027 at 50 Video Service Businesses)
+// 1. MONTHLY FY 2027 TRAJECTORY (Exits Dec 2027 at 500 Video Service Businesses)
 // ============================================================================
-const charterSeatsSold2027 = [10, 9, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0] // 25 Charter seats in Q1
-const b2bProSubs2027 = [6, 11, 16, 20, 23, 26, 29, 31, 33, 35, 37, 38] // Dec = 38
-const b2bStudioSubs2027 = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 12] // Dec = 12
-const b2bTotalSubs2027 = b2bProSubs2027.map((p, i) => p + b2bStudioSubs2027[i]) // [8..50]
+const charterSeatsSold2027 = [12, 8, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0] // 25 Charter seats in Q1
+const b2bProSubs2027 = [15, 32, 55, 85, 120, 160, 205, 250, 295, 340, 385, 425] // Dec = 425 (85%)
+const b2bStudioSubs2027 = [3, 6, 10, 15, 21, 28, 36, 44, 52, 60, 68, 75] // Dec = 75 (15%)
+const b2bTotalSubs2027 = b2bProSubs2027.map((p, i) => p + b2bStudioSubs2027[i]) // [18..500]
 
-// Client volume ramp factor across Q1..Q4 2027 (hits 1.00 steady-state in Q4 / Dec 2027)
+// Client volume ramp factor across Q1..Q4 2027 as newly onboarded 18-35 operators ramp monthly memoir/client fulfillment
 const b2bRampFactor2027 = [0.68, 0.72, 0.76, 0.82, 0.85, 0.88, 0.92, 0.94, 0.96, 1.0, 1.0, 1.0]
 
-// Proportionally calibrated Self-Serve Creator / Filmmaker / Podcaster B2C Funnel
-const explorerBuyers2027 = [350, 480, 620, 760, 900, 1020, 1120, 1220, 1300, 1360, 1410, 1460] // Sum = 12,000
-const hobbyistSubs2027 = [90, 155, 225, 300, 380, 460, 540, 615, 680, 735, 780, 820] // Dec = 820
-const starterSubs2027 = [50, 88, 130, 175, 220, 265, 310, 350, 390, 420, 448, 470] // Dec = 470
-const creatorProSubs2027 = [16, 28, 42, 58, 74, 90, 106, 120, 132, 143, 152, 160] // Dec = 160
+// Self-Serve Creator / Filmmaker / Podcaster & $9 Explorer Funnel (boosted by 18-35 multi-market acquisition)
+const explorerBuyers2027 = [600, 900, 1250, 1650, 2100, 2550, 3000, 3450, 3900, 4300, 4600, 4900] // Sum = 33,200
+const hobbyistSubs2027 = [140, 250, 380, 520, 670, 825, 980, 1125, 1250, 1360, 1440, 1500] // Dec = 1,500
+const starterSubs2027 = [70, 125, 190, 260, 335, 410, 485, 555, 620, 670, 710, 740] // Dec = 740
+const creatorProSubs2027 = [24, 42, 65, 90, 118, 145, 172, 198, 220, 238, 250, 260] // Dec = 260
 const creatorTotalSubs2027 = hobbyistSubs2027.map(
   (h, i) => h + starterSubs2027[i] + creatorProSubs2027[i]
-) // Dec = 1,450
+) // Dec = 2,500
 
-const totalActiveSubs2027 = b2bTotalSubs2027.map((b, i) => b + creatorTotalSubs2027[i]) // Dec = 1,500
+const totalActiveSubs2027 = b2bTotalSubs2027.map((b, i) => b + creatorTotalSubs2027[i]) // Dec = 3,000
 const netSubAdds2027 = totalActiveSubs2027.map((tot, i) =>
   i === 0 ? tot : tot - totalActiveSubs2027[i - 1]
 )
 
-// 7-Language Market Shares (en 30%, es 16%, zh-CN 15%, hi 14%, pt 11%, ar 9%, th 5% = 100%)
+// 7-Language Market Shares — 97% concentrated across the 6 paid 18-35 marketing markets (EN, ES, HI, ZH, PT, AR) + 3% organic TH/SEA
 const MARKET_SHARES = [
   { code: 'en', label: '1. English (`en` - 30.0%)', share: 0.3 },
-  { code: 'es', label: '2. Spanish (`es` - 16.0%)', share: 0.16 },
-  { code: 'zh-CN', label: '3. Chinese (`zh-CN` - 15.0%)', share: 0.15 },
-  { code: 'hi', label: '4. Hindi (`hi` - 14.0%)', share: 0.14 },
-  { code: 'pt', label: '5. Portuguese (`pt` - 11.0%)', share: 0.11 },
-  { code: 'ar', label: '6. Arabic (`ar` - 9.0%)', share: 0.09 },
-  { code: 'th', label: '7. Thai & SEA (`th` - 5.0%)', share: 0.05 },
+  { code: 'es', label: '2. Spanish (`es` - 17.0%)', share: 0.17 },
+  { code: 'hi', label: '3. Hindi (`hi` - 16.0%)', share: 0.16 },
+  { code: 'zh-CN', label: '4. Chinese (`zh-CN` - 14.0%)', share: 0.14 },
+  { code: 'pt', label: '5. Portuguese (`pt` - 12.0%)', share: 0.12 },
+  { code: 'ar', label: '6. Arabic (`ar` - 8.0%)', share: 0.08 },
+  { code: 'th', label: '7. Thai & SEA (`th` - 3.0% Organic)', share: 0.03 },
 ]
 
 function allocateExactByShare(total, shares) {
@@ -255,16 +260,16 @@ const track2k = computeCreditTrack(gcpCogs2027, 1250) // $750 pre-launch + $1,25
 const track100k = computeCreditTrack(gcpCogs2027, 100000)
 const track250k = computeCreditTrack(gcpCogs2027, 250000)
 
-// Lean Founder-Led FY 2027 OpEx (scales organically with gross profit; positive cash EBITDA from Q1)
-const rdOpex2027 = [3200, 4200, 5500, 7000, 8500, 10000, 11800, 13500, 15200, 17000, 18800, 20500]
+// FY 2027 OpEx — Aggressive, Self-Funded Early-Revenue Reinvestment into 18–35 Marketing across EN/ES/PT/HI/ZH/AR
+const rdOpex2027 = [3800, 5200, 7000, 9500, 12500, 15500, 18500, 21500, 24500, 27500, 30500, 33500]
 const smCreatorOpex2027 = [
-  2400, 3200, 4200, 5200, 6300, 7400, 8500, 9600, 10600, 11600, 12500, 13500,
+  3000, 4800, 7200, 10000, 13500, 17000, 20500, 24000, 27500, 31000, 34500, 38000,
 ]
 const smB2bOpex2027 = [
-  2600, 3800, 5200, 6800, 8600, 10500, 12500, 14500, 16600, 18800, 21000, 23100,
+  5200, 9500, 15000, 22000, 30000, 39000, 49000, 59000, 69000, 79000, 89000, 99000,
 ]
 const smTotalOpex2027 = smCreatorOpex2027.map((c, i) => c + smB2bOpex2027[i])
-const gaOpex2027 = [1200, 1500, 1800, 2200, 2600, 3000, 3400, 3800, 4200, 4600, 5000, 5500]
+const gaOpex2027 = [1400, 1900, 2500, 3300, 4200, 5200, 6200, 7200, 8200, 9200, 10200, 11200]
 const totalOpex2027 = rdOpex2027.map((r, i) => r + smTotalOpex2027[i] + gaOpex2027[i])
 
 const gaapEbitda2027 = gaapGrossProfit2027.map((gp, i) => gp - totalOpex2027[i])
@@ -287,15 +292,15 @@ const cumCash250k2027 = cumulative(cashEbitda250k2027)
 // FY 2027 Totals
 const fy27 = {
   charterSeats: sum(charterSeatsSold2027),
-  b2bProExit: b2bProSubs2027[11],
-  b2bStudioExit: b2bStudioSubs2027[11],
-  b2bTotalExit: b2bTotalSubs2027[11], // 50
-  explorerBuyers: sum(explorerBuyers2027), // 12,000
-  hobbyistExit: hobbyistSubs2027[11], // 820
-  starterExit: starterSubs2027[11], // 470
-  creatorProExit: creatorProSubs2027[11], // 160
-  creatorTotalExit: creatorTotalSubs2027[11], // 1,450
-  totalSubsExit: totalActiveSubs2027[11], // 1,500
+  b2bProExit: b2bProSubs2027[11], // 425
+  b2bStudioExit: b2bStudioSubs2027[11], // 75
+  b2bTotalExit: b2bTotalSubs2027[11], // 500
+  explorerBuyers: sum(explorerBuyers2027), // 33,200
+  hobbyistExit: hobbyistSubs2027[11], // 1,500
+  starterExit: starterSubs2027[11], // 740
+  creatorProExit: creatorProSubs2027[11], // 260
+  creatorTotalExit: creatorTotalSubs2027[11], // 2,500
+  totalSubsExit: totalActiveSubs2027[11], // 3,000
   b2bCharterRev: sum(b2bCharterRev2027),
   b2bProMrrSum: sum(b2bProMrr2027),
   b2bStudioMrrSum: sum(b2bStudioMrr2027),
@@ -344,7 +349,7 @@ const fy27 = {
 }
 
 // ============================================================================
-// 2. SIDE-BY-SIDE 50 / 500 / 5,000 VIDEO SERVICE BUSINESS COHORT RUN-RATE TABLE
+// 2. SIDE-BY-SIDE 500 / 5,000 / 50,000 VIDEO SERVICE BUSINESS COHORT RUN-RATE
 // ============================================================================
 function buildB2bMilestoneCohort(totalStudios, proCount, studioCount) {
   const proSaasMrr = proCount * PRICE.pro
@@ -369,8 +374,8 @@ function buildB2bMilestoneCohort(totalStudios, proCount, studioCount) {
     proCount * B2B_STEADY.proClientGmvPerMo + studioCount * B2B_STEADY.studioClientGmvPerMo
   const annualOperatorGmv = monthlyOperatorGmv * 12
 
-  // Steady-state segment COGS (post-deflation: ~11.0% GCP + 4.5% 3P Audio/Video + 3.8% Whop = 19.3% COGS -> 80.7% Gross Margin)
-  const cogsPct = totalStudios === 50 ? 0.213 : totalStudios === 500 ? 0.198 : 0.185
+  // Steady-state segment COGS (Q4 2027: 21.3% -> FY28: 19.8% -> FY29: 18.2%)
+  const cogsPct = totalStudios === 500 ? 0.213 : totalStudios === 5000 ? 0.198 : 0.182
   const annualCogs = Math.round(totalAnnualRev * cogsPct)
   const annualGrossProfit = totalAnnualRev - annualCogs
   const grossMarginPct = pct(annualGrossProfit, totalAnnualRev)
@@ -403,72 +408,85 @@ function buildB2bMilestoneCohort(totalStudios, proCount, studioCount) {
   }
 }
 
-const cohort50 = buildB2bMilestoneCohort(50, 38, 12)
-const cohort500 = buildB2bMilestoneCohort(500, 375, 125)
-const cohort5000 = buildB2bMilestoneCohort(5000, 3700, 1300)
+const cohort500 = buildB2bMilestoneCohort(500, 425, 75)
+const cohort5000 = buildB2bMilestoneCohort(5000, 4250, 750)
+const cohort50000 = buildB2bMilestoneCohort(50000, 42500, 7500)
+
+// Blended single-studio averages (85% Pro / 15% Studio)
+const BLENDED_STUDIO = {
+  baseSaas: 0.85 * PRICE.pro + 0.15 * PRICE.studio, // $216.50
+  passesPerMo: 0.85 * B2B_STEADY.proBlueprintsPerMo + 0.15 * B2B_STEADY.studioBlueprintsPerMo, // 12.15
+  filmsPerMo: 0.85 * B2B_STEADY.proFilmsPerMo + 0.15 * B2B_STEADY.studioFilmsPerMo, // 8.10
+  addOnMonthly: 0.85 * B2B_STEADY.proAddOnMonthly + 0.15 * B2B_STEADY.studioAddOnMonthly, // $108.25
+  byokMonthly: 0.85 * B2B_STEADY.proByokMonthly + 0.15 * B2B_STEADY.studioByokMonthly, // $19.20
+  arpuMonthly: cohort5000.blendedMonthlyArpu, // $343.95
+  clientGmvMonthly:
+    0.85 * B2B_STEADY.proClientGmvPerMo + 0.15 * B2B_STEADY.studioClientGmvPerMo, // $5,217.45
+}
 
 // ============================================================================
-// 3. FY 2028 (Exit: 500 Studios) & FY 2029 (Exit: 5,000 Studios) FULL-YEAR P&L
+// 3. FY 2028 (Exit: 5,000 Studios) & FY 2029 (Exit: 50,000 Studios) FULL-YEAR P&L
 // ============================================================================
-// Full-year recognized revenue integrates the monthly ramp from prior year exit to year-end exit.
-// FY28 ramps from 50 -> 500 Video Service Businesses (avg ~245 active across 12 mos) & 1,450 -> 9,500 Creators (avg ~5,100)
-// FY29 ramps from 500 -> 5,000 Video Service Businesses (avg ~2,420 active across 12 mos) & 9,500 -> 40,000 Creators (avg ~23,200)
+// Full-year recognized revenue integrates the 12-month ramp from prior year exit to year-end exit:
+// - FY28 ramps 500 -> 5,000 Video Service Businesses (avg ~2,550 active across 12 mos) & 2,500 -> 18,000 Creators (avg ~9,600)
+// - FY29 ramps 5,000 -> 50,000 Video Service Businesses (avg ~24,800 active across 12 mos) & 18,000 -> 90,000 Creators (avg ~51,000)
 const fy28 = (() => {
-  const b2bProExit = 375
-  const b2bStudioExit = 125
-  const b2bTotalExit = 500
-  const hobbyistExit = 5300
-  const starterExit = 3100
-  const creatorProExit = 1100
-  const creatorTotalExit = hobbyistExit + starterExit + creatorProExit // 9,500
-  const totalSubsExit = b2bTotalExit + creatorTotalExit // 10,000
-  const explorerBuyers = 65000
+  const b2bProExit = 4250
+  const b2bStudioExit = 750
+  const b2bTotalExit = 5000
+  const hobbyistExit = 10400
+  const starterExit = 5500
+  const creatorProExit = 2100
+  const creatorTotalExit = hobbyistExit + starterExit + creatorProExit // 18,000
+  const totalSubsExit = b2bTotalExit + creatorTotalExit // 23,000
+  const explorerBuyers = 160000
 
   // Exit MRR / ARR (Dec 2028)
-  const exitB2bBaseMrr = cohort500.baseSaasMrr // $130,750
+  const exitB2bBaseMrr = cohort5000.baseSaasMrr // $1,082,500
   const exitCreatorBaseMrr =
-    hobbyistExit * PRICE.hobbyist + starterExit * PRICE.starter + creatorProExit * PRICE.pro // $416,500
-  const exitBaseMrr = exitB2bBaseMrr + exitCreatorBaseMrr // $547,250
-  const exitBaseArr = exitBaseMrr * 12 // $6,567,000
+    hobbyistExit * PRICE.hobbyist + starterExit * PRICE.starter + creatorProExit * PRICE.pro // $780,000
+  const exitBaseMrr = exitB2bBaseMrr + exitCreatorBaseMrr // $1,862,500
+  const exitBaseArr = exitBaseMrr * 12 // $22,350,000
 
-  // Full-Year Recognized Revenue (FY 2028)
-  const b2bBaseSubRev = 768000 // Avg ~245 active businesses across 12 months
-  const b2bAddOnRev = 532000
-  const b2bByokRev = 90000
-  const b2bTotalRev = b2bBaseSubRev + b2bAddOnRev + b2bByokRev // $1,390,000
-  const b2bOperatorGmv = 23050000 // ~$23.05M full-year client GMV ($47.08M exit run-rate)
+  // Full-Year Recognized Revenue (FY 2028 — avg ~2,550 active studios across 12 months)
+  const b2bBaseSubRev = 6625000
+  const b2bAddOnRev = 3312000
+  const b2bByokRev = 588000
+  const b2bTotalRev = b2bBaseSubRev + b2bAddOnRev + b2bByokRev // $10,525,000
+  const b2bOperatorGmv = 159650000 // ~$159.7M full-year client GMV ($313.0M exit run-rate)
 
-  const creatorBaseSubRev = 2712000
-  const creatorAddOnRev = 515000
-  const creatorExplorerRev = explorerBuyers * PRICE.explorer // $585,000
-  const creatorByokRev = 68000
-  const watchNetworkRev = 120000 // SceneFlow Network Watch $4.99/mo SVOD initial rollout
+  const creatorBaseSubRev = 4980000
+  const creatorAddOnRev = 946000
+  const creatorExplorerRev = explorerBuyers * PRICE.explorer // $1,440,000
+  const creatorByokRev = 134000
+  const watchNetworkRev = 275000 // SceneFlow Network Watch $4.99/mo SVOD catalog across 7 languages
   const creatorTotalRev =
-    creatorBaseSubRev + creatorAddOnRev + creatorExplorerRev + creatorByokRev + watchNetworkRev // $4,000,000
+    creatorBaseSubRev + creatorAddOnRev + creatorExplorerRev + creatorByokRev + watchNetworkRev // $7,775,000
 
-  const totalBaseSubRev = b2bBaseSubRev + creatorBaseSubRev // $3,480,000
-  const totalAddOnRev = b2bAddOnRev + creatorAddOnRev // $1,047,000
-  const totalByokRev = b2bByokRev + creatorByokRev // $158,000
-  const totalGrossRev = b2bTotalRev + creatorTotalRev // $5,390,000
+  const totalBaseSubRev = b2bBaseSubRev + creatorBaseSubRev // $11,605,000
+  const totalAddOnRev = b2bAddOnRev + creatorAddOnRev // $4,258,000
+  const totalByokRev = b2bByokRev + creatorByokRev // $722,000
+  const totalGrossRev = b2bTotalRev + creatorTotalRev // $18,300,000
 
-  const gcpCogs = Math.round(totalGrossRev * 0.112) // $603,680
-  const api3pCogs = Math.round(totalGrossRev * 0.048) // $258,720
-  const whopFees = Math.round(totalGrossRev * whopFeePct) // $204,820
-  const totalGaapCogs = gcpCogs + api3pCogs + whopFees // $1,067,220
-  const gaapGrossProfit = totalGrossRev - totalGaapCogs // $4,322,780 (80.2% GM)
+  const gcpCogs = Math.round(totalGrossRev * 0.112) // $2,049,600
+  const api3pCogs = Math.round(totalGrossRev * 0.048) // $878,400
+  const whopFees = Math.round(totalGrossRev * whopFeePct) // $695,400
+  const totalGaapCogs = gcpCogs + api3pCogs + whopFees // $3,623,400
+  const gaapGrossProfit = totalGrossRev - totalGaapCogs // $14,676,600 (80.2% GM)
 
-  // Startup Credit Offsets in FY 2028 ($100k Year-2 Partner Track; or Year-1 carryover + $100k Year-2 on AI-First Track)
+  // Startup Credit Offsets in FY 2028 ($100k Year-2 Partner Track; or remaining Year-1 pool + $100k Year-2 on AI-First Track)
   const credit100kUsed = 100000
-  const credit250kUsed = fy27.credit250kCarryoverTo2028 + 100000 // Remaining Year-1 $250k pool + $100k Year-2
+  const credit250kUsed = fy27.credit250kCarryoverTo2028 + 100000
 
-  const rdOpex = 650000
-  const smCreatorOpex = 480000
-  const smB2bOpex = 760000
-  const smTotalOpex = smCreatorOpex + smB2bOpex // $1,240,000
-  const gaOpex = 280000
-  const totalOpex = rdOpex + smTotalOpex + gaOpex // $2,170,000
+  // High-velocity revenue reinvestment into 18-35 multi-market performance acquisition (EN, ES, PT, HI, ZH, AR)
+  const rdOpex = 1650000
+  const smCreatorOpex = 1750000
+  const smB2bOpex = 4350000 // Reinvests ~33.3% total S&M to scale 500 -> 5,000 Video Service Operators across 6 markets
+  const smTotalOpex = smCreatorOpex + smB2bOpex // $6,100,000
+  const gaOpex = 780000
+  const totalOpex = rdOpex + smTotalOpex + gaOpex // $8,530,000
 
-  const gaapEbitda = gaapGrossProfit - totalOpex // $2,152,780 (39.9% EBITDA margin)
+  const gaapEbitda = gaapGrossProfit - totalOpex // $6,146,600 (33.6% GAAP EBITDA margin)
   const cashGp100k = gaapGrossProfit + credit100kUsed
   const cashGp250k = gaapGrossProfit + credit250kUsed
   const cashEbitda100k = gaapEbitda + credit100kUsed
@@ -527,57 +545,58 @@ const fy28 = (() => {
 })()
 
 const fy29 = (() => {
-  const b2bProExit = 3700
-  const b2bStudioExit = 1300
-  const b2bTotalExit = 5000
-  const hobbyistExit = 22000
-  const starterExit = 13200
-  const creatorProExit = 4800
-  const creatorTotalExit = hobbyistExit + starterExit + creatorProExit // 40,000
-  const totalSubsExit = b2bTotalExit + creatorTotalExit // 45,000
-  const explorerBuyers = 240000
+  const b2bProExit = 42500
+  const b2bStudioExit = 7500
+  const b2bTotalExit = 50000
+  const hobbyistExit = 52000
+  const starterExit = 27500
+  const creatorProExit = 10500
+  const creatorTotalExit = hobbyistExit + starterExit + creatorProExit // 90,000
+  const totalSubsExit = b2bTotalExit + creatorTotalExit // 140,000
+  const explorerBuyers = 750000
 
   // Exit MRR / ARR (Dec 2029)
-  const exitB2bBaseMrr = cohort5000.baseSaasMrr // $1,330,000
+  const exitB2bBaseMrr = cohort50000.baseSaasMrr // $10,825,000
   const exitCreatorBaseMrr =
-    hobbyistExit * PRICE.hobbyist + starterExit * PRICE.starter + creatorProExit * PRICE.pro // $1,780,000
-  const exitBaseMrr = exitB2bBaseMrr + exitCreatorBaseMrr // $3,110,000
-  const exitBaseArr = exitBaseMrr * 12 // $37,320,000
+    hobbyistExit * PRICE.hobbyist + starterExit * PRICE.starter + creatorProExit * PRICE.pro // $3,900,000
+  const exitBaseMrr = exitB2bBaseMrr + exitCreatorBaseMrr // $14,725,000
+  const exitBaseArr = exitBaseMrr * 12 // $176,700,000
 
-  // Full-Year Recognized Revenue (FY 2029)
-  const b2bBaseSubRev = 7740000 // Avg ~2,420 active businesses across 12 months
-  const b2bAddOnRev = 5315000
-  const b2bByokRev = 912000
-  const b2bTotalRev = b2bBaseSubRev + b2bAddOnRev + b2bByokRev // $13,967,000
-  const b2bOperatorGmv = 231500000 // ~$231.5M full-year client GMV ($477.8M exit run-rate)
+  // Full-Year Recognized Revenue (FY 2029 — avg ~24,800 active studios across 12 months)
+  const b2bBaseSubRev = 64430000
+  const b2bAddOnRev = 32215000
+  const b2bByokRev = 5715000
+  const b2bTotalRev = b2bBaseSubRev + b2bAddOnRev + b2bByokRev // $102,360,000
+  const b2bOperatorGmv = 1552700000 // ~$1.55B full-year client GMV ($3.13B Dec 2029 exit run-rate)
 
-  const creatorBaseSubRev = 12360000
-  const creatorAddOnRev = 2595000
-  const creatorExplorerRev = explorerBuyers * PRICE.explorer // $2,160,000
-  const creatorByokRev = 428000
-  const watchNetworkRev = 990000 // SceneFlow Network Watch SVOD across 7 languages
+  const creatorBaseSubRev = 26400000
+  const creatorAddOnRev = 5280000
+  const creatorExplorerRev = explorerBuyers * PRICE.explorer // $6,750,000
+  const creatorByokRev = 810000
+  const watchNetworkRev = 2400000 // SceneFlow Network Watch SVOD across 7 languages
   const creatorTotalRev =
-    creatorBaseSubRev + creatorAddOnRev + creatorExplorerRev + creatorByokRev + watchNetworkRev // $18,533,000
+    creatorBaseSubRev + creatorAddOnRev + creatorExplorerRev + creatorByokRev + watchNetworkRev // $41,640,000
 
-  const totalBaseSubRev = b2bBaseSubRev + creatorBaseSubRev // $20,100,000
-  const totalAddOnRev = b2bAddOnRev + creatorAddOnRev // $7,910,000
-  const totalByokRev = b2bByokRev + creatorByokRev // $1,340,000
-  const totalGrossRev = b2bTotalRev + creatorTotalRev // $32,500,000
+  const totalBaseSubRev = b2bBaseSubRev + creatorBaseSubRev // $90,830,000
+  const totalAddOnRev = b2bAddOnRev + creatorAddOnRev // $37,495,000
+  const totalByokRev = b2bByokRev + creatorByokRev // $6,525,000
+  const totalGrossRev = b2bTotalRev + creatorTotalRev // $144,000,000
 
-  const gcpCogs = Math.round(totalGrossRev * 0.095) // $3,087,500
-  const api3pCogs = Math.round(totalGrossRev * 0.042) // $1,365,000
-  const whopFees = Math.round(totalGrossRev * whopFeePct) // $1,235,000
-  const totalGaapCogs = gcpCogs + api3pCogs + whopFees // $5,687,500
-  const gaapGrossProfit = totalGrossRev - totalGaapCogs // $26,812,500 (82.5% GM)
+  const gcpCogs = Math.round(totalGrossRev * 0.095) // $13,680,000
+  const api3pCogs = Math.round(totalGrossRev * 0.042) // $6,048,000
+  const whopFees = Math.round(totalGrossRev * whopFeePct) // $5,472,000
+  const totalGaapCogs = gcpCogs + api3pCogs + whopFees // $25,200,000
+  const gaapGrossProfit = totalGrossRev - totalGaapCogs // $118,800,000 (82.5% GM)
 
-  const rdOpex = 3400000
-  const smCreatorOpex = 2350000
-  const smB2bOpex = 4450000
-  const smTotalOpex = smCreatorOpex + smB2bOpex // $6,800,000
-  const gaOpex = 1550000
-  const totalOpex = rdOpex + smTotalOpex + gaOpex // $11,750,000
+  // Stateless serverless platform operating leverage + sustained 6-language 18-35 marketing engine
+  const rdOpex = 11200000
+  const smCreatorOpex = 9400000
+  const smB2bOpex = 31600000 // Scales 5,000 -> 50,000 Video Service Operators across EN, ES, PT, HI, ZH, AR
+  const smTotalOpex = smCreatorOpex + smB2bOpex // $41,000,000 (28.5% of revenue)
+  const gaOpex = 5400000
+  const totalOpex = rdOpex + smTotalOpex + gaOpex // $57,600,000
 
-  const gaapEbitda = gaapGrossProfit - totalOpex // $15,062,500 (46.3% EBITDA margin)
+  const gaapEbitda = gaapGrossProfit - totalOpex // $61,200,000 (42.5% GAAP EBITDA margin)
 
   return {
     b2bProExit,
@@ -631,6 +650,14 @@ const fy29 = (() => {
   }
 })()
 
+// Dec 2029 B2B2C share of total recurring + compute run-rate
+const dec2029CreatorRunRate =
+  (fy29.exitCreatorBaseMrr + Math.round(fy29.exitCreatorBaseMrr * 0.2) + Math.round(fy29.creatorProExit * PRICE.pro * 0.06)) * 12
+const dec2029B2bShareRunRatePct = pct(
+  cohort50000.totalAnnualRev,
+  cohort50000.totalAnnualRev + dec2029CreatorRunRate
+)
+
 // ============================================================================
 // BUILD CSV 1: docs/sceneflow_financial_model_2027_12month.csv
 // ============================================================================
@@ -655,7 +682,7 @@ const csv12Rows = [
     'Explorer One-Time Price ($)',
     ...Array(12).fill('9.00'),
     '9.00',
-    'One-time 30-Day Studio Test Flight (750 credits)',
+    'One-time 30-Day Studio Test Flight (750 credits) — primary low-friction entry for 18-35 prospective side-hustle operators & creators',
   ],
   [
     'MODEL DEFLATION & PRICING',
@@ -676,14 +703,14 @@ const csv12Rows = [
     'Pro Monthly Price ($)',
     ...Array(12).fill('149.00'),
     '149.00',
-    'White-Label Solo Video Service Operators, Podcasters & Series (15,000 cr + 100 GB Vault + 4K + BYOK)',
+    'White-Label Side-Hustle & Primary-Hustle Video Service Operators (18-35), Podcasters & Series (15,000 cr + 100 GB Vault + 4K + BYOK)',
   ],
   [
     'MODEL DEFLATION & PRICING',
     'Studio Monthly Price ($)',
     ...Array(12).fill('599.00'),
     '599.00',
-    'Multi-Seat Video Service Agencies, Brokerages & Corporate L&D (75,000 cr + 500 GB Vault + 10 Seats + BYOK)',
+    'Scaled Multi-Seat Video Service Agencies, Brokerages & Corporate L&D (75,000 cr + 500 GB Vault + 10 Seats + BYOK)',
   ],
   [
     'MODEL DEFLATION & PRICING',
@@ -697,7 +724,7 @@ const csv12Rows = [
     'Cost to Deliver 10-Min Multi-Language Episode ($)',
     ...ep10MinCost2027,
     '18.90',
-    'Falling delivery cost unlocks higher operator & creator margins across EN/ES/PT/HI/ZH/AR/TH',
+    'Falling delivery cost unlocks 80%+ operator margins on Baby Boomer Video Memoirs across EN/ES/PT/HI/ZH/AR',
   ],
   [
     'MODEL DEFLATION & PRICING',
@@ -718,7 +745,7 @@ const csv12Rows = [
     'Whop Merchant of Record Fee (% of Rev)',
     ...Array(12).fill('3.8%'),
     '3.8%',
-    'Blended 2.7% + $0.30 fixed fee + 0.5% global tax compliance across 7 markets',
+    'Blended 2.7% + $0.30 fixed fee + 0.5% global tax compliance across all language markets',
   ],
   blankRow12,
   [
@@ -726,35 +753,35 @@ const csv12Rows = [
     'Founding Operator $299 Charter Seats Sold (25-Seat Cap)',
     ...charterSeatsSold2027,
     fy27.charterSeats,
-    '25 Charter studios onboarded in Q1 2027 seeding the initial White-Label Operator cohort',
+    '25 Charter studios onboarded in Q1 2027 seeding proof-of-income case studies for 18-35 operator marketing',
   ],
   [
     'VIDEO SERVICE BUSINESSES (B2B2C)',
-    'Active White-Label Pro Operators ($149/mo)',
+    'Active White-Label Pro Operators ($149/mo - Side & Primary Hustle)',
     ...b2bProSubs2027,
     fy27.b2bProExit,
-    'Solo Video Memoir, Property Tour, Training & Brand Story operators (76% of Dec 2027 B2B2C base)',
+    '18-35 side-hustle & primary-hustle operators serving Baby Boomer Video Memoirs, Property Tours & SMBs (85% of Dec 2027 B2B2C base)',
   ],
   [
     'VIDEO SERVICE BUSINESSES (B2B2C)',
-    'Active White-Label Studio Agencies ($599/mo)',
+    'Active White-Label Studio Agencies ($599/mo - Scaled Multi-Seat)',
     ...b2bStudioSubs2027,
     fy27.b2bStudioExit,
-    'Multi-PM Video Agencies, Real Estate Brokerages & Corporate L&D houses (24% of Dec 2027 B2B2C base)',
+    'Scaled full-time operators, real estate media teams & L&D agencies (15% of Dec 2027 B2B2C base)',
   ],
   [
     'VIDEO SERVICE BUSINESSES (B2B2C)',
     'Total Active Global Video Service Businesses',
     ...b2bTotalSubs2027,
     fy27.b2bTotalExit,
-    'Year 1 milestone exit = 50 active Global Video Service Businesses (scales -> 500 in FY28 -> 5,000 in FY29)',
+    'Year 1 milestone exit = 500 active Global Video Service Businesses (scales -> 5,000 in FY28 -> 50,000 in FY29)',
   ],
   [
     'VIDEO SERVICE BUSINESSES (B2B2C)',
     'Memo: Operator Ecosystem Client GMV Enabled ($)',
     ...b2bOperatorGmv2027,
     fy27.b2bOperatorGmv,
-    'Dec 2027 run-rate = $4.64M/yr client GMV enabled across $29 Blueprint Passes & $299-$1,800 client films',
+    `Dec 2027 run-rate = ${fmtUsd(b2bOperatorGmv2027[11] * 12)}/yr client GMV enabled across $29 Blueprint Passes & $299-$1,800 client films`,
   ],
   blankRow12,
   [
@@ -762,7 +789,7 @@ const csv12Rows = [
     'New $9 Explorer Buyers (Monthly Cohort)',
     ...explorerBuyers2027,
     fy27.explorerBuyers,
-    '12,000 cumulative FY 2027 Explorer Test Flight buyers across EN, ES, PT, HI, ZH, AR, TH',
+    '33,200 cumulative FY 2027 Explorer Test Flight buyers across EN, ES, PT, HI, ZH, AR (+ TH organic)',
   ],
   [
     'SELF-SERVE CREATORS (B2C)',
@@ -790,25 +817,25 @@ const csv12Rows = [
     'Total Active Self-Serve Creator Subscribers',
     ...creatorTotalSubs2027,
     fy27.creatorTotalExit,
-    'Dec 2027 exit = 1,450 active self-serve Creator/Filmmaker subscribers',
+    'Dec 2027 exit = 2,500 active self-serve Creator/Filmmaker subscribers',
   ],
   [
     'CONSOLIDATED SUBSCRIBERS',
     'Total Active Monthly Subscribers (B2B2C + B2C)',
     ...totalActiveSubs2027,
     fy27.totalSubsExit,
-    'Dec 2027 exit = 1,500 active subscribers (50 Video Service Businesses + 1,450 Self-Serve Creators)',
+    'Dec 2027 exit = 3,000 active subscribers (500 Video Service Businesses + 2,500 Self-Serve Creators)',
   ],
   [
     'CONSOLIDATED SUBSCRIBERS',
     'Net Monthly Subscriber Additions',
     ...netSubAdds2027,
     fy27.totalSubsExit,
-    'Disciplined organic + partner-led Year 1 ramp across 7 language markets',
+    'Accelerating revenue-reinvested acquisition targeting ages 18-35 across EN, ES, PT, HI, ZH, AR',
   ],
   blankRow12,
   ...MARKET_SHARES.map((m, idx) => [
-    'MARKET BREAKDOWN (7 UI LANGUAGES)',
+    'MARKET BREAKDOWN (UI LANGUAGES)',
     m.label,
     ...marketSubs2027ByLang[idx],
     marketSubs2027ByLang[idx][11],
@@ -841,14 +868,14 @@ const csv12Rows = [
     'Video Service Base Subscription MRR',
     ...b2bBaseMrr2027,
     fy27.b2bBaseMrrSum,
-    'Dec 2027 Video Service Base SaaS MRR = $12,850/mo ($154,200 Base SaaS ARR)',
+    `Dec 2027 Video Service Base SaaS MRR = ${fmtUsd(b2bBaseMrr2027[11])}/mo (${fmtUsd(b2bBaseMrr2027[11] * 12)} Base SaaS ARR)`,
   ],
   [
     'REVENUE — VIDEO SERVICE B2B2C (USD)',
     'Video Service 12-Mo Add-On Credit Packs ($100/$250)',
     ...b2bAddOnRev2027,
     fy27.b2bAddOnRev,
-    'Funds $29 Client Blueprint Passes (~$3.90 max compute) + $299-$1,800 client film deliveries',
+    'Funds $29 Client Blueprint Passes (~$3.90 max compute) + $299-$1,800 Baby Boomer Video Memoirs & client films',
   ],
   [
     'REVENUE — VIDEO SERVICE B2B2C (USD)',
@@ -862,7 +889,7 @@ const csv12Rows = [
     'Subtotal: Video Service Business Segment Revenue',
     ...b2bTotalRev2027,
     fy27.b2bTotalRev,
-    'Dec 2027 exit run-rate = $23,348/mo ($280,176/yr across 50 active Video Service Businesses)',
+    `Dec 2027 exit run-rate = ${fmtUsd(b2bTotalRev2027[11])}/mo (${fmtUsd(b2bTotalRev2027[11] * 12)}/yr across 500 active Video Service Businesses)`,
   ],
   blankRow12,
   [
@@ -870,7 +897,7 @@ const csv12Rows = [
     '$9 Explorer Test Flight One-Time Revenue',
     ...creatorExplorerRev2027,
     fy27.creatorExplorerRev,
-    '12,000 Explorer Test Flight buyers * $9',
+    '33,200 Explorer Test Flight buyers * $9',
   ],
   [
     'REVENUE — SELF-SERVE CREATOR B2C (USD)',
@@ -898,7 +925,7 @@ const csv12Rows = [
     'Creator Base Subscription MRR',
     ...creatorBaseMrr2027,
     fy27.creatorBaseMrrSum,
-    'Dec 2027 Creator Base SaaS MRR = $62,450/mo ($749,400 Base SaaS ARR)',
+    `Dec 2027 Creator Base SaaS MRR = ${fmtUsd(creatorBaseMrr2027[11])}/mo (${fmtUsd(creatorBaseMrr2027[11] * 12)} Base SaaS ARR)`,
   ],
   [
     'REVENUE — SELF-SERVE CREATOR B2C (USD)',
@@ -912,7 +939,7 @@ const csv12Rows = [
     'Subtotal: Self-Serve Creator Segment Revenue',
     ...creatorTotalRev2027,
     fy27.creatorTotalRev,
-    `Dec 2027 exit run-rate = ${fmtUsd(creatorTotalRev2027[11])}/mo (${fmtUsd(creatorTotalRev2027[11] * 12)}/yr across 1,450 active Creators + Explorer funnel)`,
+    `Dec 2027 exit run-rate = ${fmtUsd(creatorTotalRev2027[11])}/mo (${fmtUsd(creatorTotalRev2027[11] * 12)}/yr across 2,500 active Creators + Explorer funnel)`,
   ],
   blankRow12,
   [
@@ -941,7 +968,7 @@ const csv12Rows = [
     'Memo: Video Service B2B2C Share of Total Revenue (%)',
     ...b2bSharePct2027,
     pct(fy27.b2bTotalRev, fy27.totalGrossRev),
-    'Rises as 50 -> 500 -> 5,000 high-ARPU Video Service Studios scale to >43% FY29 / >52% Dec 2029 recurring+compute',
+    `Rises from ${pct(fy27.b2bTotalRev, fy27.totalGrossRev)} in FY27 to ${pct(fy29.b2bTotalRev, fy29.totalGrossRev)} in FY29 (${dec2029B2bShareRunRatePct} of Dec 2029 recurring+compute) as 500 -> 5,000 -> 50,000 Studios scale`,
   ],
   blankRow12,
   [
@@ -963,7 +990,7 @@ const csv12Rows = [
     'Whop Merchant of Record Fees (3.8%)',
     ...whopFees2027,
     fy27.whopFees,
-    'Payment processing & global tax compliance across 7 language markets',
+    'Payment processing & global tax compliance across all language markets',
   ],
   [
     'COGS & CREDITS (USD)',
@@ -999,7 +1026,7 @@ const csv12Rows = [
     'Net Cash Flow (EBITDA w/ $2K Start Tier Credits Only)',
     ...cashEbitda2k2027,
     fy27.cashEbitda2k,
-    'Cash-flow positive from Month 1 even on $2K Start Tier credits alone',
+    'Cash-flow positive from Month 1 even after reinvesting early revenue into 6-language 18-35 marketing',
   ],
   blankRow12,
   [
@@ -1007,14 +1034,14 @@ const csv12Rows = [
     'GCP Credit Offset Applied ($100k Partner Track)',
     ...track100k.applied,
     fy27.credit100kUsed,
-    `Offsets ${pct(fy27.credit100kUsed, fy27.gcpCogs)} of full-year FY 2027 GCP/Vertex AI compute across Jan-Oct 2027`,
+    `100% deployed in FY 2027 (offsets ${pct(fy27.credit100kUsed, fy27.gcpCogs)} of Year 1 GCP compute), freeing $100K cash for 18-35 operator marketing`,
   ],
   [
     'TRACK A: $100K CREDITS',
     'Remaining $100k GCP Credit Balance',
     ...track100k.balances,
     track100k.endingPool,
-    'Extends runway all the way into Q4 2027 as ARR approaches $900K+',
+    'Fully utilized inside Year 1 as studio ramp accelerates toward 500 active businesses',
   ],
   [
     'TRACK A: $100K CREDITS',
@@ -1036,21 +1063,23 @@ const csv12Rows = [
     'GCP Credit Offset Applied ($250k AI-First Yr-1 Track)',
     ...track250k.applied,
     fy27.credit250kUsed,
-    'Covers 100% of FY 2027 GCP/Vertex AI compute with remaining balance carrying into FY 2028',
+    `Offsets ${pct(fy27.credit250kUsed, fy27.gcpCogs)} of FY 2027 GCP/Vertex AI compute across the 500-studio Year 1 ramp`,
   ],
   [
     'TRACK B: $250K CREDITS',
     'Remaining $250k GCP Credit Balance',
     ...track250k.balances,
     track250k.endingPool,
-    'Remaining Year-1 credit balance rolls into H1 2028 as Video Service studios scale 50 -> 500',
+    track250k.endingPool > 0
+      ? 'Remaining Year-1 credit balance rolls into Q1 2028 as Video Service studios scale 500 -> 5,000'
+      : '100% utilized inside FY 2027 driving >$2.0M Year-2 Vertex AI compute consumption',
   ],
   [
     'TRACK B: $250K CREDITS',
     'Cash Gross Profit (w/ $250k AI-First Track)',
     ...cashGp250k2027,
     fy27.cashGp250k,
-    'GAAP Gross Profit + 100% FY27 GCP Credit Offset',
+    'GAAP Gross Profit + $250k AI-First GCP Credit Offset',
   ],
   [
     'TRACK B: $250K CREDITS',
@@ -1061,77 +1090,77 @@ const csv12Rows = [
   ],
   blankRow12,
   [
-    'OPEX & B2B2C GROWTH',
+    'OPEX & 6-MARKET REINVESTMENT',
     'R&D / Engineering & Product',
     ...rdOpex2027,
     fy27.rdOpex,
-    'Founder-led engineering + contract AI/UI specialists (Autonomous Agents, 7-lang portals, Veo/Kling)',
+    'Stateless multi-tenant scaling, Autonomous Agents, 7-lang white-label portals & Veo/Kling orchestration',
   ],
   [
-    'OPEX & B2B2C GROWTH',
-    'S&M — Creator, Podcaster & 7-Language Explorer Funnel',
+    'OPEX & 6-MARKET REINVESTMENT',
+    'S&M — 18-35 Creator, Podcaster & $9 Explorer Funnel (EN/ES/PT/HI/ZH/AR)',
     ...smCreatorOpex2027,
     fy27.smCreatorOpex,
-    'Acquires 12,000 $9 Explorer Test Flights & self-serve Creators across 7 language markets',
+    'Short-form social & creator ads driving 33,200 $9 Explorer Test Flights across EN, ES, PT, HI, ZH, AR',
   ],
   [
-    'OPEX & B2B2C GROWTH',
-    'S&M — Video Service Operator Charter & Partner Channel Growth',
+    'OPEX & 6-MARKET REINVESTMENT',
+    'S&M — 18-35 Side/Primary Hustle Video Business Acquisition (EN/ES/PT/HI/ZH/AR)',
     ...smB2bOpex2027,
     fy27.smB2bOpex,
-    'Onboards 50 White-Label Video Service Businesses via senior living, real estate & L&D channels',
+    'Reinvests early revenue into TikTok/Reels/Shorts proof-of-margin ads targeting 18-35 operators serving Baby Boomer Video Memoirs',
   ],
   [
-    'OPEX & B2B2C GROWTH',
-    'Total Sales & Marketing (S&M)',
+    'OPEX & 6-MARKET REINVESTMENT',
+    'Total Sales & Marketing Reinvestment (S&M)',
     ...smTotalOpex2027,
     fy27.smTotalOpex,
-    '59% of S&M dedicated to high-ARPU, low-churn Video Service Business acquisition',
+    `${pct(fy27.smTotalOpex, fy27.totalGrossRev)} of FY27 revenue reinvested directly into 6-market growth (71% dedicated to 500 Video Service Operators)`,
   ],
   [
-    'OPEX & B2B2C GROWTH',
-    'G&A (Legal / Compliance / 7-Market Ops)',
+    'OPEX & 6-MARKET REINVESTMENT',
+    'G&A (Legal / Compliance / Multi-Region Ops)',
     ...gaOpex2027,
     fy27.gaOpex,
     'Lean corporate ops, privacy/consent compliance & multi-region administration',
   ],
   [
-    'OPEX & B2B2C GROWTH',
+    'OPEX & 6-MARKET REINVESTMENT',
     'Total Operating Expenses (OpEx)',
     ...totalOpex2027,
     fy27.totalOpex,
     '100% funded organically out of monthly operating gross profit',
   ],
   [
-    'OPEX & B2B2C GROWTH',
+    'OPEX & 6-MARKET REINVESTMENT',
     'GAAP Operating Income (EBITDA - Un-Subsidized)',
     ...gaapEbitda2027,
     fy27.gaapEbitda,
-    `Positive GAAP EBITDA across FY 2027 (${pct(fy27.gaapEbitda, fy27.totalGrossRev)} GAAP EBITDA margin)`,
+    `Positive GAAP EBITDA every month of FY 2027 (${pct(fy27.gaapEbitda, fy27.totalGrossRev)} GAAP EBITDA margin)`,
   ],
   [
-    'OPEX & B2B2C GROWTH',
+    'OPEX & 6-MARKET REINVESTMENT',
     'Net Cash Flow (EBITDA w/ $100k Credit Track)',
     ...cashEbitda100k2027,
     fy27.cashEbitda100k,
     `${pct(fy27.cashEbitda100k, fy27.totalGrossRev)} FY27 Cash EBITDA margin ($100k credit track)`,
   ],
   [
-    'OPEX & B2B2C GROWTH',
+    'OPEX & 6-MARKET REINVESTMENT',
     'Cumulative Cash Generated (w/ $100k Credit Track)',
     ...cumCash100k2027,
     cumCash100k2027[11],
     'Cumulative operating cash generated across FY 2027 ($100k track)',
   ],
   [
-    'OPEX & B2B2C GROWTH',
+    'OPEX & 6-MARKET REINVESTMENT',
     'Net Cash Flow (EBITDA w/ $250k AI-First Track)',
     ...cashEbitda250k2027,
     fy27.cashEbitda250k,
     `${pct(fy27.cashEbitda250k, fy27.totalGrossRev)} FY27 Cash EBITDA margin ($250k AI-First track)`,
   ],
   [
-    'OPEX & B2B2C GROWTH',
+    'OPEX & 6-MARKET REINVESTMENT',
     'Cumulative Cash Generated (w/ $250k AI-First Track)',
     ...cumCash250k2027,
     cumCash250k2027[11],
@@ -1159,23 +1188,23 @@ const csv3YrRows = [
     fy27.b2bTotalExit,
     fy28.b2bTotalExit,
     fy29.b2bTotalExit,
-    'Core B2B2C growth spine: 50 (FY27) -> 500 (FY28, 10x) -> 5,000 (FY29, 10x) across 7 language markets',
+    'Core B2B2C growth spine: 500 (FY27) -> 5,000 (FY28, 10x) -> 50,000 (FY29, 10x) driven by 18-35 side/primary hustlers + Boomer Video Memoir demand',
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
-    '  - White-Label Pro Video Service Operators ($149/mo)',
+    '  - White-Label Pro Video Service Operators ($149/mo - Side & Primary Hustle)',
     fy27.b2bProExit,
     fy28.b2bProExit,
     fy29.b2bProExit,
-    'Solo Video Memoir, Real Estate Tour, Training SOP & Brand Story operators (74%-76% of B2B2C base)',
+    '18-35 side-hustle & full-time operators offering Baby Boomer Video Memoirs, Real Estate Tours & Brand Packs (85% of B2B2C base)',
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
-    '  - White-Label Studio Multi-Seat Agencies ($599/mo)',
+    '  - White-Label Studio Multi-Seat Agencies ($599/mo - Scaled Operators)',
     fy27.b2bStudioExit,
     fy28.b2bStudioExit,
     fy29.b2bStudioExit,
-    'Multi-PM agencies, real estate brokerages & corporate L&D teams (24%-26% of B2B2C base)',
+    'Scaled multi-seat agencies, real estate brokerages & corporate L&D teams (15% of B2B2C base)',
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
@@ -1191,7 +1220,7 @@ const csv3YrRows = [
     fy27.totalSubsExit,
     fy28.totalSubsExit,
     fy29.totalSubsExit,
-    '1,500 (Dec 2027) -> 10,000 (Dec 2028) -> 45,000 (Dec 2029)',
+    '3,000 (Dec 2027) -> 23,000 (Dec 2028) -> 140,000 (Dec 2029)',
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
@@ -1199,7 +1228,7 @@ const csv3YrRows = [
     fy27.explorerBuyers,
     fy28.explorerBuyers,
     fy29.explorerBuyers,
-    'Self-liquidating 30-day Studio Test Flight onboarding wedge across 7 native UI languages',
+    'Self-liquidating 30-day Studio Test Flight onboarding wedge for 18-35 prospective operators & creators',
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
@@ -1207,7 +1236,7 @@ const csv3YrRows = [
     fy27.b2bOperatorGmv,
     fy28.b2bOperatorGmv,
     fy29.b2bOperatorGmv,
-    'Exit client GMV run-rate: $4.64M/yr (50 studios) -> $47.08M/yr (500 studios) -> $477.8M/yr (5,000 studios)',
+    `Exit client GMV run-rate: ${fmtUsd(cohort500.annualOperatorGmv)}/yr (500 studios) -> ${fmtUsd(cohort5000.annualOperatorGmv)}/yr (5,000 studios) -> ${fmtUsd(cohort50000.annualOperatorGmv)}/yr (50,000 studios)`,
   ],
   // Exit MRR & ARR
   [
@@ -1216,7 +1245,7 @@ const csv3YrRows = [
     b2bBaseMrr2027[11],
     fy28.exitB2bBaseMrr,
     fy29.exitB2bBaseMrr,
-    'Pure base SaaS MRR from 50 / 500 / 5,000 Video Service Businesses (excludes Credit Packs & BYOK)',
+    'Pure base SaaS MRR from 500 / 5,000 / 50,000 Video Service Businesses (excludes Credit Packs & BYOK)',
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
@@ -1232,7 +1261,7 @@ const csv3YrRows = [
     fy27.exitBaseMrr,
     fy28.exitBaseMrr,
     fy29.exitBaseMrr,
-    'Combined Dec Base Subscription MRR ($75.3K -> $547.3K -> $3.11M)',
+    `Combined Dec Base Subscription MRR (${fmtUsd(fy27.exitBaseMrr)} -> ${fmtUsd(fy28.exitBaseMrr)} -> ${fmtUsd(fy29.exitBaseMrr)})`,
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
@@ -1240,15 +1269,15 @@ const csv3YrRows = [
     fy27.exitBaseArr,
     fy28.exitBaseArr,
     fy29.exitBaseArr,
-    'Dec Base MRR * 12 ($903.6K -> $6.57M -> $37.32M; excludes high-velocity Credit Packs & BYOK)',
+    `Dec Base MRR * 12 (${fmtUsd(fy27.exitBaseArr)} -> ${fmtUsd(fy28.exitBaseArr)} -> ${fmtUsd(fy29.exitBaseArr)}; excludes high-velocity Credit Packs & BYOK)`,
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
     'Exit Total Annualized Revenue Run-Rate — Video Service B2B2C (USD)',
-    cohort50.totalAnnualRev,
     cohort500.totalAnnualRev,
     cohort5000.totalAnnualRev,
-    '50 studios = $280.2K/yr -> 500 studios = $2.84M/yr -> 5,000 studios = $28.80M/yr (SaaS + Packs + BYOK)',
+    cohort50000.totalAnnualRev,
+    '500 studios = $2.06M/yr -> 5,000 studios = $20.64M/yr -> 50,000 studios = $206.37M/yr (SaaS + Packs + BYOK)',
   ],
   // Recognized Full-Year Revenue Breakdown
   [
@@ -1281,7 +1310,7 @@ const csv3YrRows = [
     fy27.b2bTotalRev,
     fy28.b2bTotalRev,
     fy29.b2bTotalRev,
-    `Share of Total Revenue: ${pct(fy27.b2bTotalRev, fy27.totalGrossRev)} (FY27) -> ${pct(fy28.b2bTotalRev, fy28.totalGrossRev)} (FY28) -> ${pct(fy29.b2bTotalRev, fy29.totalGrossRev)} (FY29; 52.5% of Dec 2029 recurring+compute)`,
+    `Share of Total Revenue: ${pct(fy27.b2bTotalRev, fy27.totalGrossRev)} (FY27) -> ${pct(fy28.b2bTotalRev, fy28.totalGrossRev)} (FY28) -> ${pct(fy29.b2bTotalRev, fy29.totalGrossRev)} (FY29; ${dec2029B2bShareRunRatePct} of Dec 2029 recurring+compute)`,
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
@@ -1354,7 +1383,7 @@ const csv3YrRows = [
     fy27.whopFees,
     fy28.whopFees,
     fy29.whopFees,
-    '3.8% blended payment processing & global tax compliance across 7 markets',
+    '3.8% blended payment processing & global tax compliance across all markets',
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
@@ -1394,7 +1423,7 @@ const csv3YrRows = [
     fy27.credit100kUsed,
     fy28.credit100kUsed,
     0,
-    `$100k Year 1 (covers ${pct(fy27.credit100kUsed, fy27.gcpCogs)} of FY27 GCP compute) + $100k Year 2 credit offset`,
+    `$100k Year 1 (100% deployed inside FY27 covering ${pct(fy27.credit100kUsed, fy27.gcpCogs)} of Year-1 GCP compute) + $100k Year 2 offset`,
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
@@ -1402,7 +1431,7 @@ const csv3YrRows = [
     fy27.credit250kUsed,
     fy28.credit250kUsed,
     0,
-    'Covers 100% of FY27 GCP compute + remaining Yr-1 balance & $100k Yr-2 applied in FY28',
+    `Offsets ${pct(fy27.credit250kUsed, fy27.gcpCogs)} of FY27 GCP compute + ${fmtUsd(fy28.credit250kUsed)} applied in FY28 as GCP compute scales >$2.0M/yr`,
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
@@ -1427,27 +1456,27 @@ const csv3YrRows = [
     fy27.rdOpex,
     fy28.rdOpex,
     fy29.rdOpex,
-    `${pct(fy27.rdOpex, fy27.totalGrossRev)} of rev in FY27 -> ${pct(fy28.rdOpex, fy28.totalGrossRev)} in FY28 -> ${pct(fy29.rdOpex, fy29.totalGrossRev)} in FY29`,
+    `${pct(fy27.rdOpex, fy27.totalGrossRev)} of rev in FY27 -> ${pct(fy28.rdOpex, fy28.totalGrossRev)} in FY28 -> ${pct(fy29.rdOpex, fy29.totalGrossRev)} in FY29 (stateless multi-tenant cloud leverage)`,
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
-    'S&M — Creator, Podcaster & 7-Language Explorer Funnel (USD)',
+    'S&M — 18-35 Creator, Podcaster & Explorer Funnel across EN/ES/PT/HI/ZH/AR (USD)',
     fy27.smCreatorOpex,
     fy28.smCreatorOpex,
     fy29.smCreatorOpex,
-    'Self-serve creator & podcaster acquisition across 7 language markets',
+    'Self-serve creator & $9 Explorer acquisition across EN, ES, PT, HI, ZH, AR (+ TH organic)',
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
-    'S&M — Global Video Service Operator & Partner Channel Growth (USD)',
+    'S&M — 18-35 Side/Primary Hustle Video Business Marketing across EN/ES/PT/HI/ZH/AR (USD)',
     fy27.smB2bOpex,
     fy28.smB2bOpex,
     fy29.smB2bOpex,
-    'Scales White-Label Video Service Businesses from 50 -> 500 -> 5,000 globally',
+    'Reinvests early revenue to scale White-Label Video Service Businesses 500 -> 5,000 -> 50,000 across 6 core language markets',
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
-    'Total Sales & Marketing OpEx (USD)',
+    'Total Sales & Marketing Reinvestment OpEx (USD)',
     fy27.smTotalOpex,
     fy28.smTotalOpex,
     fy29.smTotalOpex,
@@ -1467,7 +1496,7 @@ const csv3YrRows = [
     fy27.totalOpex,
     fy28.totalOpex,
     fy29.totalOpex,
-    '100% funded organically from operating gross profit',
+    '100% funded organically from operating gross profit via revenue reinvestment flywheel',
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
@@ -1483,7 +1512,7 @@ const csv3YrRows = [
     fy27.cashEbitda2k,
     fy28.gaapEbitda,
     fy29.gaapEbitda,
-    'Self-sustaining profitability from Year 1 even with initial $2K Start Tier credits alone',
+    'Self-sustaining profitability from Month 1 even with initial $2K Start Tier credits alone',
   ],
   [
     '3-YEAR P&L & KPI FORECAST',
@@ -1503,141 +1532,141 @@ const csv3YrRows = [
   ],
   blankRow6,
   blankRow6,
-  // TABLE 2: SIDE-BY-SIDE 50 / 500 / 5,000 VIDEO SERVICE BUSINESS STEADY-STATE RUN-RATE TABLE
+  // TABLE 2: SIDE-BY-SIDE 500 / 5,000 / 50,000 VIDEO SERVICE BUSINESS STEADY-STATE RUN-RATE TABLE
   [
     'VIDEO SERVICE COHORT SCALE',
     'Steady-State Video Service Milestone Metric',
-    '50 Businesses (FY27 Exit)',
-    '500 Businesses (FY28 Exit)',
-    '5,000 Businesses (FY29 Exit)',
-    'Unit Basis & White-Label Portal Assumptions',
+    '500 Businesses (FY27 Exit)',
+    '5,000 Businesses (FY28 Exit)',
+    '50,000 Businesses (FY29 Exit)',
+    'Unit Basis & White-Label Portal Assumptions (85% Side/Primary Hustle Pro · 15% Studio)',
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
-    'Active White-Label Pro Operators ($149/mo)',
-    cohort50.proCount,
+    'Active White-Label Pro Operators ($149/mo - Side & Primary Hustle)',
     cohort500.proCount,
     cohort5000.proCount,
-    'Solo Video Memoir, Property Tour, Training SOP & Brand Story studios (15,000 cr/mo included)',
+    cohort50000.proCount,
+    '18-35 side-hustle & full-time Video Memoir, Property Tour & Brand Story operators (15,000 cr/mo included)',
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
-    'Active White-Label Studio Agencies ($599/mo)',
-    cohort50.studioCount,
+    'Active White-Label Studio Agencies ($599/mo - Scaled Multi-Seat)',
     cohort500.studioCount,
     cohort5000.studioCount,
-    'Multi-PM agencies, brokerages & corporate L&D teams (75,000 cr/mo + 10 seats + RBAC caps)',
+    cohort50000.studioCount,
+    'Scaled multi-PM agencies, brokerages & corporate L&D teams (75,000 cr/mo + 10 seats + RBAC caps)',
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
     'Monthly Paid $29 Client Blueprint Passes Processed',
-    cohort50.monthlyBlueprints,
     cohort500.monthlyBlueprints,
     cohort5000.monthlyBlueprints,
-    '12 passes/mo per Pro + 35 passes/mo per Studio (~$3.90 max AI compute -> 83% self-funding discovery margin)',
+    cohort50000.monthlyBlueprints,
+    '9 passes/mo per Pro + 30 passes/mo per Studio (~$3.90 max AI compute -> 83% self-funding discovery margin)',
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
     'Monthly Full Client Productions Delivered',
-    cohort50.monthlyFilms,
     cohort500.monthlyFilms,
     cohort5000.monthlyFilms,
-    '8 films/mo per Pro + 24 films/mo per Studio across Memoirs, Real Estate, Training & Brand',
+    cohort50000.monthlyFilms,
+    '6 films/mo per Pro (side + primary hustle blend) + 20 films/mo per Studio across Baby Boomer Memoirs, Real Estate, Training & Brand',
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
     'Annualized Client Productions Delivered',
-    cohort50.annualFilms,
     cohort500.annualFilms,
     cohort5000.annualFilms,
-    '7,104 -> 72,000 -> 729,600 commissioned client films/year rendered on SceneFlow',
+    cohort50000.annualFilms,
+    '48,600 -> 486,000 -> 4,860,000 commissioned client films/year rendered on SceneFlow (<0.3% global Boomer + SMB TAM)',
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
     'Annualized Operator Ecosystem Client GMV (USD)',
-    cohort50.annualOperatorGmv,
     cohort500.annualOperatorGmv,
     cohort5000.annualOperatorGmv,
-    '$4.64M -> $47.08M -> $477.8M annual client billings earned by operators (~78-83% operator net margin)',
+    cohort50000.annualOperatorGmv,
+    '$31.30M -> $312.99M -> $3.13B annual client billings earned by operators (~78-83% operator net margin)',
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
     'SceneFlow Base SaaS MRR from Video Service Businesses (USD)',
-    cohort50.baseSaasMrr,
     cohort500.baseSaasMrr,
     cohort5000.baseSaasMrr,
-    'Pro * $149 + Studio * $599 ($12,850/mo -> $130,750/mo -> $1,330,000/mo)',
+    cohort50000.baseSaasMrr,
+    'Pro * $149 + Studio * $599 ($108,250/mo -> $1,082,500/mo -> $10,825,000/mo)',
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
     'SceneFlow Monthly 12-Mo Add-On Credit Packs (USD)',
-    cohort50.addOnMonthly,
     cohort500.addOnMonthly,
     cohort5000.addOnMonthly,
-    '$145/mo per Pro + $290/mo per Studio ($100/$250 packs funding client volume above base credits)',
+    cohort50000.addOnMonthly,
+    '$85/mo per Pro + $240/mo per Studio ($100/$250 packs funding client volume above base credits)',
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
     'SceneFlow Monthly BYOK 20% Orchestration Fees (USD)',
-    cohort50.byokMonthly,
     cohort500.byokMonthly,
     cohort5000.byokMonthly,
-    '$16/mo per Pro + $75/mo per Studio (~95% gross margin platform orchestration fee)',
+    cohort50000.byokMonthly,
+    '$12/mo per Pro + $60/mo per Studio (~95% gross margin platform orchestration fee)',
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
     'Total SceneFlow Monthly Run-Rate — Video Service Segment (USD)',
-    cohort50.totalMonthlyRev,
     cohort500.totalMonthlyRev,
     cohort5000.totalMonthlyRev,
-    `Blended SceneFlow ARPU: $${cohort50.blendedMonthlyArpu.toFixed(2)}/mo -> $${cohort500.blendedMonthlyArpu.toFixed(2)}/mo -> $${cohort5000.blendedMonthlyArpu.toFixed(2)}/mo per business`,
+    cohort50000.totalMonthlyRev,
+    `Blended SceneFlow ARPU: $${cohort500.blendedMonthlyArpu.toFixed(2)}/mo ($${(cohort500.blendedMonthlyArpu * 12).toFixed(0)}/yr) per active Video Service Business`,
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
     'Total SceneFlow Annualized Revenue Run-Rate — Video Service Segment (USD)',
-    cohort50.totalAnnualRev,
     cohort500.totalAnnualRev,
     cohort5000.totalAnnualRev,
-    `Effective SceneFlow software+compute take-rate = ${cohort500.takeRateOfGmvPct} of Operator Client GMV`,
+    cohort50000.totalAnnualRev,
+    `Effective SceneFlow software+compute take-rate = ${cohort5000.takeRateOfGmvPct} of Operator Client GMV`,
   ],
   [
     'VIDEO SERVICE COHORT SCALE',
     'Standalone Video Service Segment Gross Profit Run-Rate (USD)',
-    cohort50.annualGrossProfit,
     cohort500.annualGrossProfit,
     cohort5000.annualGrossProfit,
-    `Segment GAAP Gross Margin: ${cohort50.grossMarginPct} (50) -> ${cohort500.grossMarginPct} (500) -> ${cohort5000.grossMarginPct} (5,000)`,
+    cohort50000.annualGrossProfit,
+    `Segment GAAP Gross Margin: ${cohort500.grossMarginPct} (500) -> ${cohort5000.grossMarginPct} (5,000) -> ${cohort50000.grossMarginPct} (50,000)`,
   ],
   blankRow6,
   blankRow6,
-  // TABLE 3: 7-MARKET VIDEO SERVICE BUSINESS & TOTAL SUBSCRIBER MIX
+  // TABLE 3: 6 PAID 18-35 MARKETING MARKETS + ORGANIC THAI/SEA MIX
   [
-    '7-MARKET VIDEO SERVICE MIX',
-    'Global Language Market',
-    '50 Studios (FY27 Exit)',
-    '500 Studios (FY28 Exit)',
-    '5,000 Studios (FY29 Exit)',
-    'Total Combined Subscribers (FY27 / FY28 / FY29) & Regional B2B2C Drivers',
+    'GLOBAL MARKET MIX (6 PAID + 1 ORGANIC)',
+    'Language Market & 18-35 Marketing Focus',
+    '500 Studios (FY27 Exit)',
+    '5,000 Studios (FY28 Exit)',
+    '50,000 Studios (FY29 Exit)',
+    'Total Combined Subscribers (FY27 / FY28 / FY29) & Regional Supply/Demand Drivers',
   ],
   ...MARKET_SHARES.map((m, idx) => {
     const s27 = allocateExactByShare(fy27.totalSubsExit, MARKET_SHARES)[idx]
     const s28 = allocateExactByShare(fy28.totalSubsExit, MARKET_SHARES)[idx]
     const s29 = allocateExactByShare(fy29.totalSubsExit, MARKET_SHARES)[idx]
     const regionalDrivers = {
-      en: 'US, UK, Canada, Australia — Senior-living Life Memoirs, Luxury Real Estate & Franchise SOPs',
-      es: 'US Hispanic, Mexico, Spain, LATAM — Multi-generational Family Memoirs, Property Tours & SMB Ads',
-      'zh-CN': 'Taiwan, Singapore, Diaspora & Cross-Border E-Commerce / Multilingual Property Walkthroughs',
-      hi: 'India & Global Diaspora — Milestone Anniversary/Wedding Legacy Films, EdTech & Corporate Training',
-      pt: 'Brazil & Portugal — Family Biographies, Boutique Real Estate Agencies & Creator/SMB Brand Studios',
-      ar: 'UAE, Saudi Arabia, Egypt & MENA — Luxury Villa/Hospitality Tours, Family Heritage Films & L&D',
-      th: 'Thailand & Southeast Asia — Boutique Hospitality/Resort Tours, SMB Social Packs & Creator Studios',
+      en: 'Paid 18-35 Reinvestment (US, UK, CA, AU) — 70M+ Baby Boomer Legacy Video Memoirs, Real Estate & SMB Packs',
+      es: 'Paid 18-35 Reinvestment (US Hispanic, Mexico, Spain, LATAM) — Multi-generational Abuelos Memoirs, Property & SMBs',
+      hi: 'Paid 18-35 Reinvestment (India & Global Diaspora) — Parents Milestone/Anniversary Legacy Films, EdTech & Corporate SOPs',
+      'zh-CN': 'Paid 18-35 Reinvestment (Taiwan, Singapore & Global Diaspora) — Family Heritage Biographies & Cross-Border Commerce/Property',
+      pt: 'Paid 18-35 Reinvestment (Brazil & Portugal) — High-velocity Youth Side-Hustle Creators, Family Memoirs & Boutique Agencies',
+      ar: 'Paid 18-35 Reinvestment (UAE, Saudi Arabia & MENA) — Family Heritage Tributes, Luxury Villa/Hospitality Tours & L&D',
+      th: 'Organic Native UI Adoption (Thailand & SEA) — Boutique Resort/Hospitality Walkthroughs & Creator Studios',
     }[m.code]
     return [
-      '7-MARKET VIDEO SERVICE MIX',
+      'GLOBAL MARKET MIX (6 PAID + 1 ORGANIC)',
       m.label,
-      cohort50.byLang[idx],
       cohort500.byLang[idx],
       cohort5000.byLang[idx],
+      cohort50000.byLang[idx],
       `Total Subs: ${s27.toLocaleString('en-US')} / ${s28.toLocaleString('en-US')} / ${s29.toLocaleString('en-US')} — ${regionalDrivers}`,
     ]
   }),
@@ -1658,7 +1687,7 @@ const csv3YrRows = [
     '299.00',
     '18000',
     '56.2% -> 76.0%',
-    '25-seat Launchpad: 1st $599 client memoir nets operator +$300 cash & pays back entire Charter',
+    '25-seat Launchpad: 1st $599 Baby Boomer memoir nets operator +$300 cash & pays back entire Charter on Order #1',
   ],
   [
     'TIER & WORKFLOW UNIT ECONOMICS',
@@ -1666,7 +1695,7 @@ const csv3YrRows = [
     '29.00',
     '390',
     '80.5% -> 86.5%',
-    'Operator collects $29 client deposit on <=$3.90 max SceneFlow compute (83%+ operator discovery margin)',
+    'Zero-PM-time automated paid discovery: client pays $29 on <=$3.90 max SceneFlow compute (83%+ operator discovery margin)',
   ],
   [
     'TIER & WORKFLOW UNIT ECONOMICS',
@@ -1674,7 +1703,7 @@ const csv3YrRows = [
     '9.00',
     '750',
     '65.6% -> 79.8%',
-    'Self-liquidating creator & prospective operator onboarding wedge',
+    'Self-liquidating 18-35 prospective side-hustle operator & creator onboarding wedge',
   ],
   [
     'TIER & WORKFLOW UNIT ECONOMICS',
@@ -1694,11 +1723,11 @@ const csv3YrRows = [
   ],
   [
     'TIER & WORKFLOW UNIT ECONOMICS',
-    'Pro (Monthly White-Label Operator & Series)',
+    'Pro (Monthly Side/Primary Hustle Operator & Series)',
     '149.00',
     '15000',
     '58.1% -> 76.8%',
-    'White-label client portals (/intake, /blueprint/share, /screening-room) + 100 GB Vault + 4K + BYOK',
+    '90%-automated white-label portals (/intake, /blueprint/share, /screening-room) + 100 GB Vault + 4K + BYOK',
   ],
   [
     'TIER & WORKFLOW UNIT ECONOMICS',
@@ -1714,7 +1743,7 @@ const csv3YrRows = [
     '100.00 / 250.00',
     '9000 / 25000',
     '56.2% -> 76.4%',
-    'Primary expansion vehicle as Video Service Studios scale from 4 to 24+ client films/month',
+    'Primary expansion vehicle as side-hustlers scale into full-time 8-20+ film/month primary businesses',
   ],
   blankRow6,
   blankRow6,
@@ -1748,27 +1777,27 @@ const csv3YrRows = [
   ],
   [
     'SCENARIO SENSITIVITY',
-    'Conservative (25 -> 175 -> 1,250 Studios)',
-    '9850000',
-    '11200000',
-    '3950000',
-    'Slower partner channel rollout; strong profitability maintained via 80%+ gross margins',
+    'Conservative (150 -> 1,500 -> 15,000 Studios)',
+    '48500000',
+    '58200000',
+    '19800000',
+    'Slower paid social ramp; 80%+ gross margins still sustain ~41% EBITDA margin at 15,000 studios',
   ],
   [
     'SCENARIO SENSITIVITY',
-    'Base Case (50 -> 500 -> 5,000 Studios)',
+    'Base Case (500 -> 5,000 -> 50,000 Studios)',
     String(fy29.totalGrossRev),
     String(fy29.exitBaseArr),
     String(fy29.gaapEbitda),
-    'Core plan: 50 -> 500 -> 5,000 Video Service Businesses ($28.80M B2B2C run-rate) + 40,000 Creators',
+    'Core plan: 18-35 side/primary hustle surge + Baby Boomer Video Memoirs + 6-language revenue reinvestment ($206.4M B2B2C run-rate)',
   ],
   [
     'SCENARIO SENSITIVITY',
-    'Bull Case (100 -> 1,200 -> 12,000 Studios)',
-    '74600000',
-    '86400000',
-    '36500000',
-    'Accelerated adoption across senior-living, real estate MLS & SMB marketing networks in 7 languages',
+    'Bull Case (1,000 -> 10,000 -> 100,000 Studios)',
+    '278000000',
+    '342000000',
+    '124000000',
+    'Viral TikTok/Reels/Shorts operator breakout + senior-living, estate-planning & MLS partnerships across EN/ES/PT/HI/ZH/AR',
   ],
 ]
 
@@ -1776,7 +1805,7 @@ const csv3YrRows = [
 // BUILD MARKDOWN SUMMARY: docs/SCENEFLOW_FINANCIAL_BUSINESS_MODEL.md
 // ============================================================================
 const mdContent = `# SceneFlow AI — Financial & Business Model (2027–2029)
-**Global White-Label Video Service Business Scale (\`50\` → \`500\` → \`5,000\` Studios) + Self-Serve Creator SaaS Across 7 Native UI Languages**
+**Global White-Label Video Service Business Scale (\`500\` → \`5,000\` → \`50,000\` Studios) + Self-Serve Creator SaaS Powered by 6-Market \`18–35\` Operator Acquisition**
 
 - **12-Month FY 2027 Monthly Model (CSV):** [\`docs/sceneflow_financial_model_2027_12month.csv\`](./sceneflow_financial_model_2027_12month.csv)
 - **3-Year FY 2027–2029 Forecast & Cohort Model (CSV):** [\`docs/sceneflow_financial_model_2027_2029_3year.csv\`](./sceneflow_financial_model_2027_2029_3year.csv)
@@ -1784,79 +1813,85 @@ const mdContent = `# SceneFlow AI — Financial & Business Model (2027–2029)
 
 ---
 
-## 1. Executive Thesis: "Shopify for AI Video Studios" + Global Creator Studio
+## 1. Executive Thesis: Two-Sided Demographic Wave ("Easy-Button" \`18–35\` Hustle × Baby Boomer Legacy Memoirs)
 
-SceneFlow AI combines two mutually reinforcing SaaS growth engines on one shared Google Cloud Vertex AI + Continuity Vault infrastructure across **7 native UI languages** (\`EN\`, \`ES\`, \`PT\`, \`HI\`, \`ZH\`, \`AR\`, \`TH\`) and **70+ dubbing locales**:
+SceneFlow AI sits at the intersection of two massive global demographic trends—running on a stateless, infinitely scalable Google Cloud Vertex AI + Cloud Run multi-tenant architecture across **7 native UI languages** and **70+ dubbing locales**:
 
-1. **White-Label Video Service Businesses (\`B2B2C\` — \`50\` → \`500\` → \`5,000\` Global Studios):**  
-   Independent entrepreneurs, photographers, senior-living/estate partners, real estate media teams, corporate L&D consultants, and local agencies subscribe to **Pro (\`$149/mo\`)** and **Studio (\`$599/mo\`)** to run turnkey white-label video businesses. Operators embed SceneFlow's zero-login client portals (\`/intake\`, \`/blueprint/share\` with the self-funding **\`$29\` Storyboard Blueprint Pass**, \`/share/continuity\`, and \`/share/screening-room\`), earning **78%–85% net margins** on \`$299–$1,800+\` client deliverables while driving high-retention SaaS MRR, 12-month Add-On Credit Packs (\`$100\` / \`$250\`), and 20% BYOK orchestration fees for SceneFlow.
-2. **Self-Serve Creators, Filmmakers & Video Podcasters (\`B2C\` — \`1,450\` → \`9,500\` → \`40,000\` Active Subscribers):**  
-   Everyday storytellers, episodic series creators, indie filmmakers building Pre-Vis funding packages, and hybrid video podcasters enter through the self-liquidating **\`$9\` Explorer Studio Test Flight** and subscribe to **Hobbyist (\`$19/mo\`)**, **Starter (\`$49/mo\`)**, and **Pro (\`$149/mo\`)** Continuity Vault plans.
+1. **Supply-Side Operator Surge (\`18–35\` Side-Hustle & Primary-Hustle Entrepreneurs):**  
+   Millions of digitally native **\`18–35\` year olds** across **English (\`EN\`), Spanish (\`ES\`), Portuguese (\`PT\`), Hindi (\`HI\`), Chinese (\`ZH\`), and Arabic (\`AR\`)** markets are actively searching for high-margin, turnkey AI side hustles and primary businesses with "easy-button" fulfillment. SceneFlow's white-label portals (\`/intake\`, \`/blueprint/share\` with the self-funding **\`$29\` Storyboard Blueprint Pass**, \`/share/continuity\`, and \`/share/screening-room\`) automate **90% of client intake, storyboarding, revisions, and delivery**—requiring zero camera crews, zero cold calls, and only ~60–90 active minutes per film.
+2. **Demand-Side Client Wave (Baby Boomer Legacy Video Memoirs + Local SMBs):**  
+   Over **70 million Baby Boomers** in North America and **hundreds of millions of aging parents and multi-generational families worldwide** want affordable, cinema-grade **Video Memoirs & Family Legacy Films** (\`$349–$950\` vs. \`$2,500–$10,000\` traditional crews), alongside realtors, corporate training teams, and SMBs needing localized video. A single \`$599–$649\` Video Memoir nets the operator **\`+$477–$530\` profit (\`80%–82%\` margin)**—paying back a \`$149/mo\` **Pro** subscription more than **\`3×\` on Order #1**.
+3. **Self-Funding 6-Language Marketing Reinvestment Flywheel (\`500\` → \`5,000\` → \`50,000\` Studios):**  
+   Because every \`$9\` Explorer Test Flight, \`$299\` Founding Charter, \`$149/mo\` Pro plan, and \`$100/$250\` credit pack is gross-margin positive from Day 1 (\`${pct(fy27.gaapGrossProfit, fy27.totalGrossRev)}\` FY27 → \`${pct(fy29.gaapGrossProfit, fy29.totalGrossRev)}\` FY29 GAAP Gross Margin), SceneFlow reinvests **28.5%–37.7% of gross revenue** directly into short-form proof-of-income social campaigns (TikTok, Instagram Reels, YouTube Shorts, and creator business affiliates) targeting the **\`18–35\` demographic across \`EN\`, \`ES\`, \`PT\`, \`HI\`, \`ZH\`, and \`AR\`** (+ organic \`TH\`/SEA)—scaling active White-Label Video Service Businesses from **\`500\` (FY27 Exit)** → **\`5,000\` (FY28 Exit)** → **\`50,000\` (FY29 Exit)** alongside **\`2,500\` → \`18,000\` → \`90,000\`** Self-Serve Creators.
 
-By **December 2029 (\`5,000\` Video Service Businesses)**, the B2B2C Video Service segment alone generates **\`${fmtUsd(cohort5000.totalAnnualRev)}/yr\`** in annualized SceneFlow revenue (**52.5%** of platform recurring + compute run-rate) while enabling **\`${fmtUsd(cohort5000.annualOperatorGmv)}/yr\`** in operator client billings—at an effective SceneFlow software + compute take-rate of just **\`${cohort5000.takeRateOfGmvPct}\` of operator GMV**.
+By **December 2029 (\`50,000\` Video Service Businesses)**, the B2B2C Video Service segment alone generates **\`${fmtUsd(cohort50000.totalAnnualRev)}/yr\`** in annualized SceneFlow revenue (**\`${dec2029B2bShareRunRatePct}\`** of platform recurring + compute run-rate) while enabling **\`${fmtUsd(cohort50000.annualOperatorGmv)}/yr\`** in operator client billings—at an effective SceneFlow software + compute take-rate of just **\`${cohort50000.takeRateOfGmvPct}\` of operator GMV**.
 
 ---
 
-## 2. Unit Economics per Active Video Service Business
+## 2. Unit Economics per Active Video Service Business (Side-Hustle + Primary-Hustle Blend)
 
 ### A. The Self-Funding \`$29\` Client Doorway & 4 Turnkey Verticals
 
 | Deliverable / Stage | Typical Client Price | SceneFlow Retail Credits | Provider AI COGS (Q4 2027) | Operator Net Margin | SceneFlow Gross Margin |
 |---|---:|---:|---:|---:|---:|
 | **Paid Discovery: \`$29\` Storyboard Blueprint Pass** *(Intake + 6 Stills + VO + up to 4 AI Revisions + 3 AR Passes)* | \`$29\` *(100% credited to order)* | \`<=$3.90\` (\`390 cr\`) | \`~$0.82\` | **83%+** (\`+$23.96\` net) | **79.0%** |
-| **1. Video Memoirs & Family Biographies** *(12-min multi-era film, 2 langs)* | \`$599 – $649\` | \`$34.00\` (\`3,400 cr\`) | \`~$7.20\` | **80%–82%** (\`+$477–$530\`) | **78.8%** |
+| **1. Baby Boomer Video Memoirs & Family Biographies** *(12-min multi-era film, 2 langs)* | \`$599 – $649\` | \`$34.00\` (\`3,400 cr\`) | \`~$7.20\` | **80%–82%** (\`+$477–$530\`) | **78.8%** |
 | **2. Real Estate & Hospitality Cinema Tours** *(2-min 4K tour, 2 langs)* | \`$299\` | \`$15.00\` (\`1,500 cr\`) | \`~$3.15\` | **78%** (\`+$234\`) | **79.0%** |
 | **3. Corporate Onboarding & Safety SOPs** *(10-min module, 3 workforce langs)* | \`$950\` | \`$40.00\` (\`4,000 cr\`) | \`~$8.40\` | **83%** (\`+$785\`) | **79.0%** |
 | **4. Founder Origin & SMB Brand Packs** *(2-min film + two 9:16 social ads)* | \`$650\` | \`$28.00\` (\`2,800 cr\`) | \`~$5.90\` | **82%** (\`+$534\`) | **78.9%** |
 
-### B. Monthly SceneFlow ARPU per Active Video Service Business
+### B. Monthly SceneFlow ARPU per Active Video Service Business (\`85%\` Pro / \`15%\` Studio Mix)
+
+*Reflects a realistic mix of \`18–35\` part-time side-hustlers (\`3–4\` films/mo earning \`~$1.8K–$2.4K/mo\`), full-time primary-hustlers (\`8–12\` films/mo earning \`~$5.0K–$7.5K/mo\`), and scaled multi-seat agencies (\`20\` films/mo):*
 
 | Operator Archetype | Mix Share | Base SaaS Plan | Monthly Client Output | Add-On Credit Packs / Mo | BYOK Fees / Mo | **Total SceneFlow ARPU / Mo** | **Operator Client GMV / Mo** |
 |---|---:|---:|---|---:|---:|---:|---:|
-| **Solo White-Label Pro Operator** | ~75% | \`$149/mo\` *(15,000 cr incl.)* | \`12\` \`$29\` Passes → \`8\` Films/mo | \`$145/mo\` | \`$16/mo\` | **\`$310 / mo\`** (\`$3,720/yr\`) | \`$4,916 / mo\` (\`$59.0K/yr\`) |
-| **Multi-Seat Studio Agency** | ~25% | \`$599/mo\` *(75,000 cr incl.)* | \`35\` \`$29\` Passes → \`24\` Films/mo | \`$290/mo\` | \`$75/mo\` | **\`$964 / mo\`** (\`$11,568/yr\`) | \`$16,639 / mo\` (\`$199.7K/yr\`) |
-| **Blended Video Service Business** | **100%** | **\`$261.50/mo\`** | **\`17.8\` Passes → \`12.0\` Films/mo** | **\`$181.25/mo\`** | **\`$30.75/mo\`** | **\`$473.50 / mo\`** (\`$5,682/yr\`) | **\`$7,847 / mo\`** (\`$94.2K/yr\`) |
+| **White-Label Pro Operator** *(Side + Primary Hustle Blend)* | **85%** | \`$149/mo\` *(15,000 cr incl.)* | \`9\` \`$29\` Passes → \`6\` Films/mo | \`$85/mo\` | \`$12/mo\` | **\`$246.00 / mo\`** (\`$2,952/yr\`) | \`$3,687 / mo\` (\`$44.2K/yr\`) |
+| **Multi-Seat Studio Agency** *(Scaled Operators & Teams)* | **15%** | \`$599/mo\` *(75,000 cr incl.)* | \`30\` \`$29\` Passes → \`20\` Films/mo | \`$240/mo\` | \`$60/mo\` | **\`$899.00 / mo\`** (\`$10,788/yr\`) | \`$13,890 / mo\` (\`$166.7K/yr\`) |
+| **Blended Video Service Business** | **100%** | **\`$${BLENDED_STUDIO.baseSaas.toFixed(2)}/mo\`** | **\`${BLENDED_STUDIO.passesPerMo.toFixed(1)}\` Passes → \`${BLENDED_STUDIO.filmsPerMo.toFixed(1)}\` Films/mo** | **\`$${BLENDED_STUDIO.addOnMonthly.toFixed(2)}/mo\`** | **\`$${BLENDED_STUDIO.byokMonthly.toFixed(2)}/mo\`** | **\`$${BLENDED_STUDIO.arpuMonthly.toFixed(2)} / mo\`** (\`$${Math.round(BLENDED_STUDIO.arpuMonthly * 12).toLocaleString('en-US')}/yr\`) | **\`$${Math.round(BLENDED_STUDIO.clientGmvMonthly).toLocaleString('en-US')} / mo\`** (\`$${(BLENDED_STUDIO.clientGmvMonthly * 12 / 1000).toFixed(1)}K/yr\`) |
 
 ---
 
-## 3. Side-by-Side Steady-State Run-Rate: \`50\` vs. \`500\` vs. \`5,000\` Global Video Service Businesses
+## 3. Side-by-Side Steady-State Run-Rate: \`500\` vs. \`5,000\` vs. \`50,000\` Global Video Service Businesses
 
-*Standalone B2B2C Video Service segment run-rate at each global scale milestone (before counting self-serve Creator B2C revenue):*
+*Standalone B2B2C Video Service segment run-rate at each year-end milestone (before counting self-serve Creator B2C revenue):*
 
-| Video Service Segment Metric | **50 Businesses** *(FY 2027 Exit)* | **500 Businesses** *(FY 2028 Exit)* | **5,000 Businesses** *(FY 2029 Exit)* |
+| Video Service Segment Metric | **500 Businesses** *(FY 2027 Exit)* | **5,000 Businesses** *(FY 2028 Exit)* | **50,000 Businesses** *(FY 2029 Exit)* |
 |---|---:|---:|---:|
-| **Active White-Label Pro Operators (\`$149/mo\`)** | \`38\` | \`375\` | \`3,700\` |
-| **Active White-Label Studio Agencies (\`$599/mo\`)** | \`12\` | \`125\` | \`1,300\` |
-| **Paid \`$29\` Blueprint Passes / Month** | \`876 / mo\` | \`8,875 / mo\` | \`89,900 / mo\` |
-| **Commissioned Client Films Delivered / Year** | \`7,104 / yr\` | \`72,000 / yr\` | \`729,600 / yr\` |
-| **Operator Ecosystem Client GMV / Year** | **\`${fmtUsd(cohort50.annualOperatorGmv)}\`** | **\`${fmtUsd(cohort500.annualOperatorGmv)}\`** | **\`${fmtUsd(cohort5000.annualOperatorGmv)}\`** |
-| SceneFlow Base SaaS MRR (\`Pro\` + \`Studio\`) | \`${fmtUsd(cohort50.baseSaasMrr)} / mo\` | \`${fmtUsd(cohort500.baseSaasMrr)} / mo\` | \`${fmtUsd(cohort5000.baseSaasMrr)} / mo\` |
-| SceneFlow 12-Mo Add-On Credit Packs / Mo | \`${fmtUsd(cohort50.addOnMonthly)} / mo\` | \`${fmtUsd(cohort500.addOnMonthly)} / mo\` | \`${fmtUsd(cohort5000.addOnMonthly)} / mo\` |
-| SceneFlow BYOK 20% Orchestration Fees / Mo | \`${fmtUsd(cohort50.byokMonthly)} / mo\` | \`${fmtUsd(cohort500.byokMonthly)} / mo\` | \`${fmtUsd(cohort5000.byokMonthly)} / mo\` |
-| **Total Video Service Monthly Revenue Run-Rate** | **\`${fmtUsd(cohort50.totalMonthlyRev)} / mo\`** | **\`${fmtUsd(cohort500.totalMonthlyRev)} / mo\`** | **\`${fmtUsd(cohort5000.totalMonthlyRev)} / mo\`** |
-| **Total Video Service Annualized Revenue Run-Rate** | **\`${fmtUsd(cohort50.totalAnnualRev)} / yr\`** | **\`${fmtUsd(cohort500.totalAnnualRev)} / yr\`** | **\`${fmtUsd(cohort5000.totalAnnualRev)} / yr\`** |
-| **Video Service Segment Gross Profit Run-Rate** | **\`${fmtUsd(cohort50.annualGrossProfit)} / yr\`** (\`${cohort50.grossMarginPct}\`) | **\`${fmtUsd(cohort500.annualGrossProfit)} / yr\`** (\`${cohort500.grossMarginPct}\`) | **\`${fmtUsd(cohort5000.annualGrossProfit)} / yr\`** (\`${cohort5000.grossMarginPct}\`) |
+| **Active White-Label Pro Operators (\`$149/mo\`)** | \`${fmtNum(cohort500.proCount)}\` | \`${fmtNum(cohort5000.proCount)}\` | \`${fmtNum(cohort50000.proCount)}\` |
+| **Active White-Label Studio Agencies (\`$599/mo\`)** | \`${fmtNum(cohort500.studioCount)}\` | \`${fmtNum(cohort5000.studioCount)}\` | \`${fmtNum(cohort50000.studioCount)}\` |
+| **Paid \`$29\` Blueprint Passes / Month** | \`${fmtNum(cohort500.monthlyBlueprints)} / mo\` | \`${fmtNum(cohort5000.monthlyBlueprints)} / mo\` | \`${fmtNum(cohort50000.monthlyBlueprints)} / mo\` |
+| **Commissioned Client Films Delivered / Year** | \`${fmtNum(cohort500.annualFilms)} / yr\` | \`${fmtNum(cohort5000.annualFilms)} / yr\` | \`${fmtNum(cohort50000.annualFilms)} / yr\` |
+| **Operator Ecosystem Client GMV / Year** | **\`${fmtUsd(cohort500.annualOperatorGmv)}\`** | **\`${fmtUsd(cohort5000.annualOperatorGmv)}\`** | **\`${fmtUsd(cohort50000.annualOperatorGmv)}\`** |
+| SceneFlow Base SaaS MRR (\`Pro\` + \`Studio\`) | \`${fmtUsd(cohort500.baseSaasMrr)} / mo\` | \`${fmtUsd(cohort5000.baseSaasMrr)} / mo\` | \`${fmtUsd(cohort50000.baseSaasMrr)} / mo\` |
+| SceneFlow 12-Mo Add-On Credit Packs / Mo | \`${fmtUsd(cohort500.addOnMonthly)} / mo\` | \`${fmtUsd(cohort5000.addOnMonthly)} / mo\` | \`${fmtUsd(cohort50000.addOnMonthly)} / mo\` |
+| SceneFlow BYOK 20% Orchestration Fees / Mo | \`${fmtUsd(cohort500.byokMonthly)} / mo\` | \`${fmtUsd(cohort5000.byokMonthly)} / mo\` | \`${fmtUsd(cohort50000.byokMonthly)} / mo\` |
+| **Total Video Service Monthly Revenue Run-Rate** | **\`${fmtUsd(cohort500.totalMonthlyRev)} / mo\`** | **\`${fmtUsd(cohort5000.totalMonthlyRev)} / mo\`** | **\`${fmtUsd(cohort50000.totalMonthlyRev)} / mo\`** |
+| **Total Video Service Annualized Revenue Run-Rate** | **\`${fmtUsd(cohort500.totalAnnualRev)} / yr\`** | **\`${fmtUsd(cohort5000.totalAnnualRev)} / yr\`** | **\`${fmtUsd(cohort50000.totalAnnualRev)} / yr\`** |
+| **Video Service Segment Gross Profit Run-Rate** | **\`${fmtUsd(cohort500.annualGrossProfit)} / yr\`** (\`${cohort500.grossMarginPct}\`) | **\`${fmtUsd(cohort5000.annualGrossProfit)} / yr\`** (\`${cohort5000.grossMarginPct}\`) | **\`${fmtUsd(cohort50000.annualGrossProfit)} / yr\`** (\`${cohort50000.grossMarginPct}\`) |
 
-### Geographic Distribution of the \`50\` → \`500\` → \`5,000\` Video Service Businesses (7 UI Locales)
+### Geographic Distribution: 6 Priority \`18–35\` Paid Marketing Markets + Organic SEA
 
-| Native UI Market | Global Share | **50 Studios** *(FY27)* | **500 Studios** *(FY28)* | **5,000 Studios** *(FY29)* | Primary Local White-Label Service Demand |
+*97% of paid marketing reinvestment targets ages \`18–35\` across **English, Spanish, Hindi, Chinese, Portuguese, and Arabic** markets, complemented by organic adoption in **Thai & SEA**:*
+
+| Language Market | Global Share | **500 Studios** *(FY27)* | **5,000 Studios** *(FY28)* | **50,000 Studios** *(FY29)* | \`18–35\` Operator Acquisition & Local Client Demand |
 |---|---:|---:|---:|---:|---|
-| **1. English (\`en\`)** | 30% | \`${cohort50.byLang[0]}\` | \`${cohort500.byLang[0]}\` | \`${fmtNum(cohort5000.byLang[0])}\` | US, UK, Canada, AU — Senior-living Life Memoirs, Luxury Real Estate & Franchise SOPs |
-| **2. Spanish (\`es\`)** | 16% | \`${cohort50.byLang[1]}\` | \`${cohort500.byLang[1]}\` | \`${fmtNum(cohort5000.byLang[1])}\` | US Hispanic, Mexico, Spain, LATAM — Multi-generational Family Memoirs & SMB Brand Packs |
-| **3. Chinese (\`zh-CN\`)** | 15% | \`${cohort50.byLang[2]}\` | \`${cohort500.byLang[2]}\` | \`${fmtNum(cohort5000.byLang[2])}\` | Taiwan, Singapore & Global Diaspora — Family Heritage Films & Cross-Border Property Tours |
-| **4. Hindi (\`hi\`)** | 14% | \`${cohort50.byLang[3]}\` | \`${cohort500.byLang[3]}\` | \`${fmtNum(cohort5000.byLang[3])}\` | India & Diaspora — Milestone Anniversary/Wedding Legacy Films, EdTech & Workforce Training |
-| **5. Portuguese (\`pt\`)** | 11% | \`${cohort50.byLang[4]}\` | \`${cohort500.byLang[4]}\` | \`${fmtNum(cohort5000.byLang[4])}\` | Brazil & Portugal — Family Biographies, Boutique Real Estate & Local Agency Fulfillment |
-| **6. Arabic (\`ar\`)** | 9% | \`${cohort50.byLang[5]}\` | \`${cohort500.byLang[5]}\` | \`${fmtNum(cohort5000.byLang[5])}\` | UAE, Saudi Arabia & MENA — Luxury Villa/Hospitality Tours & Family Heritage Biographies |
-| **7. Thai & SEA (\`th\`)** | 5% | \`${cohort50.byLang[6]}\` | \`${cohort500.byLang[6]}\` | \`${fmtNum(cohort5000.byLang[6])}\` | Thailand & SEA — Boutique Resort/Hospitality Walkthroughs & SMB Social Video Packs |
-| **Total Global Studios** | **100%** | **\`50\`** | **\`500\`** | **\`5,000\`** | **7 Native UI Locales + 70+ Synced Delivery Languages** |
+| **1. English (\`en\` — Paid Focus)** | 30% | \`${fmtNum(cohort500.byLang[0])}\` | \`${fmtNum(cohort5000.byLang[0])}\` | \`${fmtNum(cohort50000.byLang[0])}\` | US, UK, Canada, AU — \`70M+\` Baby Boomer Legacy Memoirs, Real Estate & SMB Video |
+| **2. Spanish (\`es\` — Paid Focus)** | 17% | \`${fmtNum(cohort500.byLang[1])}\` | \`${fmtNum(cohort5000.byLang[1])}\` | \`${fmtNum(cohort50000.byLang[1])}\` | US Hispanic, Mexico, Spain, LATAM — Multi-generational *Abuelos* Memoirs & SMB Packs |
+| **3. Hindi (\`hi\` — Paid Focus)** | 16% | \`${fmtNum(cohort500.byLang[2])}\` | \`${fmtNum(cohort5000.byLang[2])}\` | \`${fmtNum(cohort50000.byLang[2])}\` | India & Diaspora — Parents Milestone/Anniversary Legacy Films, EdTech & Training |
+| **4. Chinese (\`zh-CN\` — Paid Focus)** | 14% | \`${fmtNum(cohort500.byLang[3])}\` | \`${fmtNum(cohort5000.byLang[3])}\` | \`${fmtNum(cohort50000.byLang[3])}\` | Taiwan, Singapore & Global Diaspora — Family Heritage Films & Cross-Border Property |
+| **5. Portuguese (\`pt\` — Paid Focus)** | 12% | \`${fmtNum(cohort500.byLang[4])}\` | \`${fmtNum(cohort5000.byLang[4])}\` | \`${fmtNum(cohort50000.byLang[4])}\` | Brazil & Portugal — High-velocity Youth Side-Hustle Creators, Memoirs & Local Agencies |
+| **6. Arabic (\`ar\` — Paid Focus)** | 8% | \`${fmtNum(cohort500.byLang[5])}\` | \`${fmtNum(cohort5000.byLang[5])}\` | \`${fmtNum(cohort50000.byLang[5])}\` | UAE, Saudi Arabia & MENA — Family Heritage Biographies & Luxury Villa/Hospitality Tours |
+| **7. Thai & SEA (\`th\` — Organic UI)** | 3% | \`${fmtNum(cohort500.byLang[6])}\` | \`${fmtNum(cohort5000.byLang[6])}\` | \`${fmtNum(cohort50000.byLang[6])}\` | Thailand & SEA — Organic Boutique Resort/Hospitality Walkthroughs & Creator Studios |
+| **Total Global Studios** | **100%** | **\`500\`** | **\`5,000\`** | **\`50,000\`** | **6 Paid \`18–35\` Acquisition Markets + Organic SEA · 70+ Synced Delivery Languages** |
 
 ---
 
 ## 4. Consolidated 3-Year Financial Forecast (\`FY 2027\` – \`FY 2029\`)
 
-*Combines the \`50 → 500 → 5,000\` Video Service Business (\`B2B2C\`) growth spine with proportionally calibrated Self-Serve Creators (\`B2C\`: \`1,450 → 9,500 → 40,000\` active subscribers):*
+*Combines the \`500 → 5,000 → 50,000\` Video Service Business (\`B2B2C\`) growth spine with Self-Serve Creators (\`B2C\`: \`2,500 → 18,000 → 90,000\` active subscribers) and explicit marketing reinvestment:*
 
-| Metric / P&L Line Item | **FY 2027** *(\`50\` Studios)* | **FY 2028** *(\`500\` Studios)* | **FY 2029** *(\`5,000\` Studios)* |
+| Metric / P&L Line Item | **FY 2027** *(\`500\` Studios)* | **FY 2028** *(\`5,000\` Studios)* | **FY 2029** *(\`50,000\` Studios)* |
 |---|---:|---:|---:|
 | **Ending Active Video Service Businesses (\`B2B2C\`)** | **\`${fmtNum(fy27.b2bTotalExit)}\`** | **\`${fmtNum(fy28.b2bTotalExit)}\`** | **\`${fmtNum(fy29.b2bTotalExit)}\`** |
 | **Ending Active Self-Serve Creators (\`B2C\`)** | \`${fmtNum(fy27.creatorTotalExit)}\` | \`${fmtNum(fy28.creatorTotalExit)}\` | \`${fmtNum(fy29.creatorTotalExit)}\` |
@@ -1868,6 +1903,7 @@ By **December 2029 (\`5,000\` Video Service Businesses)**, the B2B2C Video Servi
 | **Total Recognized Gross Revenue** | **\`${fmtUsd(fy27.totalGrossRev)}\`** | **\`${fmtUsd(fy28.totalGrossRev)}\`** | **\`${fmtUsd(fy29.totalGrossRev)}\`** |
 | Total Un-Subsidized GAAP COGS *(GCP + 3P APIs + Whop 3.8%)* | \`${fmtUsd(fy27.totalGaapCogs)}\` | \`${fmtUsd(fy28.totalGaapCogs)}\` | \`${fmtUsd(fy29.totalGaapCogs)}\` |
 | **GAAP Gross Profit (Un-Subsidized)** | **\`${fmtUsd(fy27.gaapGrossProfit)}\`** (\`${pct(fy27.gaapGrossProfit, fy27.totalGrossRev)}\`) | **\`${fmtUsd(fy28.gaapGrossProfit)}\`** (\`${pct(fy28.gaapGrossProfit, fy28.totalGrossRev)}\`) | **\`${fmtUsd(fy29.gaapGrossProfit)}\`** (\`${pct(fy29.gaapGrossProfit, fy29.totalGrossRev)}\`) |
+| Sales & Marketing Reinvestment *(6-Lang \`18–35\` Growth)* | \`${fmtUsd(fy27.smTotalOpex)}\` (\`${pct(fy27.smTotalOpex, fy27.totalGrossRev)}\`) | \`${fmtUsd(fy28.smTotalOpex)}\` (\`${pct(fy28.smTotalOpex, fy28.totalGrossRev)}\`) | \`${fmtUsd(fy29.smTotalOpex)}\` (\`${pct(fy29.smTotalOpex, fy29.totalGrossRev)}\`) |
 | Total Operating Expenses *(R&D + S&M + G&A)* | \`${fmtUsd(fy27.totalOpex)}\` | \`${fmtUsd(fy28.totalOpex)}\` | \`${fmtUsd(fy29.totalOpex)}\` |
 | **GAAP Operating Income (EBITDA)** | **\`${fmtUsd(fy27.gaapEbitda)}\`** (\`${pct(fy27.gaapEbitda, fy27.totalGrossRev)}\`) | **\`${fmtUsd(fy28.gaapEbitda)}\`** (\`${pct(fy28.gaapEbitda, fy28.totalGrossRev)}\`) | **\`${fmtUsd(fy29.gaapEbitda)}\`** (\`${pct(fy29.gaapEbitda, fy29.totalGrossRev)}\`) |
 | **Cash EBITDA (w/ \`$100K\` Startup Credit Track)** | **\`${fmtUsd(fy27.cashEbitda100k)}\`** (\`${pct(fy27.cashEbitda100k, fy27.totalGrossRev)}\`) | **\`${fmtUsd(fy28.cashEbitda100k)}\`** (\`${pct(fy28.cashEbitda100k, fy28.totalGrossRev)}\`) | **\`${fmtUsd(fy29.cashEbitda100k)}\`** (\`${pct(fy29.cashEbitda100k, fy29.totalGrossRev)}\`) |
@@ -1875,10 +1911,11 @@ By **December 2029 (\`5,000\` Video Service Businesses)**, the B2B2C Video Servi
 
 ---
 
-## 5. Why Cloud & Ecosystem Startup Grants Have Maximum Leverage Under This Model
+## 5. Cloud Scalability & Why Startup Credits Directly Fuel the \`500 → 5,000 → 50,000\` Flywheel
 
-- **Capital-Efficient Year 1 Ramp (\`25\` Founding Charter Studios → \`50\` Global Studios):** Full-year FY 2027 Google Cloud / Vertex AI compute COGS is **\`${fmtUsd(fy27.gcpCogs)}\`**. A \`$100,000\` Partner Credit grant offsets **\`${pct(fy27.credit100kUsed, fy27.gcpCogs)}\`** of Year 1 GCP compute (stretching into Q4 2027), while the \`$250,000\` AI-First track covers **100% of Year 1 GCP compute** and carries **\`${fmtUsd(fy27.credit250kCarryoverTo2028)}\`** forward into FY 2028 as Video Service studios scale \`10×\` from \`50\` to \`500\`.
-- **Self-Sustaining From Month 1:** Even on the initial \`$2,000\` Start Tier alone, SceneFlow generates positive monthly operating cash flow from **January 2027 (\`${fmtUsd(cashEbitda2k2027[0])}\`)** through **December 2027 (\`${fmtUsd(cashEbitda2k2027[11])}\`, \`${fmtUsd(fy27.cashEbitda2k)}\` full-year)** because every \`$299\` Founding Charter, \`$29\` Blueprint Pass compute pack, and \`$9\` Explorer Test Flight is gross-margin positive on Day 1.
+- **Zero-Bottleneck Stateless Cloud Scale:** Because client intake, Storyboard Blueprint generation, AI-filtered revisions, Continuity Vault storage, and Cloud Run FFmpeg assembly are **100% automated and stateless**, scaling from \`500\` to \`50,000\` operators requires zero SceneFlow human production staff—growing Google Cloud / Vertex AI consumption from **\`${fmtUsd(fy27.gcpCogs)}\` (FY27)** → **\`${fmtUsd(fy28.gcpCogs)}\` (FY28)** → **\`${fmtUsd(fy29.gcpCogs)}\` (FY29)**.
+- **Startup Credits Unlock Immediate \`18–35\` Marketing Reinvestment:** Full-year FY 2027 GCP compute COGS is **\`${fmtUsd(fy27.gcpCogs)}\`**. Both the **\`$100,000\` Partner Track** (\`${pct(fy27.credit100kUsed, fy27.gcpCogs)}\` of FY27 GCP compute) and the **\`$250,000\` AI-First Year-1 Track** (\`${pct(fy27.credit250kUsed, fy27.gcpCogs)}\` of FY27 GCP compute) are **deployed inside Year 1**—freeing up to \`$250,000\` in operating cash to reinvest directly into \`18–35\` customer acquisition across \`EN\`, \`ES\`, \`PT\`, \`HI\`, \`ZH\`, and \`AR\`.
+- **Self-Sustaining From Month 1:** Even on the initial \`$2,000\` Start Tier alone—and *after* funding **\`${fmtUsd(fy27.smTotalOpex)}\`** in Year-1 marketing reinvestment—SceneFlow generates positive monthly cash flow from **January 2027 (\`${fmtUsd(cashEbitda2k2027[0])}\`)** through **December 2027 (\`${fmtUsd(cashEbitda2k2027[11])}\`, \`${fmtUsd(fy27.cashEbitda2k)}\` full-year)**.
 `
 
 csv12Rows.forEach((row, idx) => {
@@ -1896,14 +1933,15 @@ writeFileSync(join(DOCS_DIR, 'sceneflow_financial_model_2027_12month.csv'), toCs
 writeFileSync(join(DOCS_DIR, 'sceneflow_financial_model_2027_2029_3year.csv'), toCsv(csv3YrRows), 'utf8')
 writeFileSync(join(DOCS_DIR, 'SCENEFLOW_FINANCIAL_BUSINESS_MODEL.md'), mdContent, 'utf8')
 
-console.log('=== Generated SceneFlow Financial Models ===')
+console.log('=== Generated SceneFlow Financial Models (500 -> 5,000 -> 50,000 Studios) ===')
 console.log(`FY27 Exit Subs: ${fy27.totalSubsExit} (${fy27.b2bTotalExit} B2B2C Studios + ${fy27.creatorTotalExit} Creators)`)
 console.log(`FY27 Gross Rev: ${fmtUsd(fy27.totalGrossRev)} (B2B2C: ${fmtUsd(fy27.b2bTotalRev)} | Creator: ${fmtUsd(fy27.creatorTotalRev)})`)
 console.log(`FY27 Dec Exit Base ARR: ${fmtUsd(fy27.exitBaseArr)} | Dec Total Run-Rate: ${fmtUsd(totalGrossRev2027[11] * 12)}`)
-console.log(`FY27 GCP COGS: ${fmtUsd(fy27.gcpCogs)} | GAAP GP: ${fmtUsd(fy27.gaapGrossProfit)} (${pct(fy27.gaapGrossProfit, fy27.totalGrossRev)}) | GAAP EBITDA: ${fmtUsd(fy27.gaapEbitda)} (${pct(fy27.gaapEbitda, fy27.totalGrossRev)})`)
+console.log(`FY27 GCP COGS: ${fmtUsd(fy27.gcpCogs)} | GAAP GP: ${fmtUsd(fy27.gaapGrossProfit)} (${pct(fy27.gaapGrossProfit, fy27.totalGrossRev)}) | S&M Reinvested: ${fmtUsd(fy27.smTotalOpex)} (${pct(fy27.smTotalOpex, fy27.totalGrossRev)}) | GAAP EBITDA: ${fmtUsd(fy27.gaapEbitda)} (${pct(fy27.gaapEbitda, fy27.totalGrossRev)})`)
+console.log(`Monthly 2027 GAAP EBITDA: [${gaapEbitda2027.join(', ')}]`)
 console.log(`Jan 2027 GAAP EBITDA: ${fmtUsd(gaapEbitda2027[0])} | Jan 2027 $2K Cash EBITDA: ${fmtUsd(cashEbitda2k2027[0])}`)
-console.log(`Cohort 50 Run-Rate: ${fmtUsd(cohort50.totalAnnualRev)}/yr (GMV: ${fmtUsd(cohort50.annualOperatorGmv)}/yr)`)
 console.log(`Cohort 500 Run-Rate: ${fmtUsd(cohort500.totalAnnualRev)}/yr (GMV: ${fmtUsd(cohort500.annualOperatorGmv)}/yr)`)
 console.log(`Cohort 5,000 Run-Rate: ${fmtUsd(cohort5000.totalAnnualRev)}/yr (GMV: ${fmtUsd(cohort5000.annualOperatorGmv)}/yr)`)
-console.log(`FY28 Gross Rev: ${fmtUsd(fy28.totalGrossRev)} | Exit Base ARR: ${fmtUsd(fy28.exitBaseArr)} | GAAP EBITDA: ${fmtUsd(fy28.gaapEbitda)} (${pct(fy28.gaapEbitda, fy28.totalGrossRev)})`)
-console.log(`FY29 Gross Rev: ${fmtUsd(fy29.totalGrossRev)} | Exit Base ARR: ${fmtUsd(fy29.exitBaseArr)} | GAAP EBITDA: ${fmtUsd(fy29.gaapEbitda)} (${pct(fy29.gaapEbitda, fy29.totalGrossRev)})`)
+console.log(`Cohort 50,000 Run-Rate: ${fmtUsd(cohort50000.totalAnnualRev)}/yr (GMV: ${fmtUsd(cohort50000.annualOperatorGmv)}/yr)`)
+console.log(`FY28 Gross Rev: ${fmtUsd(fy28.totalGrossRev)} | Exit Base ARR: ${fmtUsd(fy28.exitBaseArr)} | S&M: ${fmtUsd(fy28.smTotalOpex)} | GAAP EBITDA: ${fmtUsd(fy28.gaapEbitda)} (${pct(fy28.gaapEbitda, fy28.totalGrossRev)})`)
+console.log(`FY29 Gross Rev: ${fmtUsd(fy29.totalGrossRev)} | Exit Base ARR: ${fmtUsd(fy29.exitBaseArr)} | S&M: ${fmtUsd(fy29.smTotalOpex)} | GAAP EBITDA: ${fmtUsd(fy29.gaapEbitda)} (${pct(fy29.gaapEbitda, fy29.totalGrossRev)})`)
