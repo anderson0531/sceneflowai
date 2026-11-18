@@ -567,14 +567,20 @@ function cubicEaseInOut(t: number): number {
  * for one 2560x1440 application UI screenshot plate (`1.0s` hold -> `7.0s` cubic glide -> `4.0s` hold).
  */
 async function ensureMasterScreenPanMp4(args: {
+  locale: FeaturePanLocaleId
   screenSlug: string
   platePngPath: string
   fromRoi: ScreenRoiSpec
   toRoi: ScreenRoiSpec
   scratchDir: string
 }): Promise<string> {
-  const outMp4Path = join(args.scratchDir, `master-screen-${args.screenSlug}.mp4`)
-  if (existsSync(outMp4Path) && statSync(outMp4Path).size > 40_000) {
+  const outMp4Path = join(args.scratchDir, `master-screen-${args.locale}-${args.screenSlug}.mp4`)
+  const plateMtime = statSync(args.platePngPath).mtimeMs
+  if (
+    existsSync(outMp4Path) &&
+    statSync(outMp4Path).size > 40_000 &&
+    statSync(outMp4Path).mtimeMs >= plateMtime
+  ) {
     return outMp4Path
   }
 
@@ -657,7 +663,7 @@ async function ensureMasterScreenPanMp4(args: {
     })
   })
 
-  console.log(`  [screen-master] Rendered 12.0s QHD pan master: ${args.screenSlug}`)
+  console.log(`  [screen-master:${args.locale}] Rendered 12.0s QHD pan master: ${args.screenSlug}`)
   return outMp4Path
 }
 
@@ -808,23 +814,6 @@ async function main() {
   const musicBed = resolveMusicBed(buildRoot, scratchDir)
   mkdirSync(outDir, { recursive: true })
 
-  // Pre-render all 8 shared QHD UI pan master MP4s once
-  console.log('\n=== Pre-rendering 8 QHD Application UI Pan Masters (12.0s @ 24fps) ===')
-  const screenMasterMap = new Map<string, string>()
-  for (const spec of CUSTOMER_PORTAL_FILM_BEATS) {
-    if (spec.kind === 'app_screen' && spec.screenSlug) {
-      const platePngPath = join(screensDir, `${spec.screenSlug}.png`)
-      const masterMp4 = await ensureMasterScreenPanMp4({
-        screenSlug: spec.screenSlug,
-        platePngPath,
-        fromRoi: spec.fromRoi ?? { cxFrac: 0.45, cyFrac: 0.5, widthFrac: 0.85 },
-        toRoi: spec.toRoi ?? { cxFrac: 0.6, cyFrac: 0.52, widthFrac: 0.68 },
-        scratchDir,
-      })
-      screenMasterMap.set(spec.screenSlug, masterMp4)
-    }
-  }
-
   // Extract poster WebP from Beat 01 (~2.0s frame)
   const posterPath = join(outDir, 'portal-poster.webp')
   runFfmpeg(
@@ -918,7 +907,7 @@ async function main() {
       const sourceVideoPath =
         spec.kind === 'story_clip'
           ? clipPaths[(spec.clipNumber ?? 1) - 1]!
-          : screenMasterMap.get(spec.screenSlug!)!
+          : join(scratchDir, `master-screen-${locale}-${spec.screenSlug!}.mp4`)
       const rawSourceDur =
         spec.kind === 'story_clip'
           ? rawClipDurations[(spec.clipNumber ?? 1) - 1]!
@@ -977,6 +966,23 @@ async function main() {
         `  ✓ [cached] [${locale}] -> portal-${locale}.mp4 + portal-${locale}.webm (${timelineCursorSec.toFixed(1)}s)`
       )
       return
+    }
+
+    for (const spec of CUSTOMER_PORTAL_FILM_BEATS) {
+      if (spec.kind === 'app_screen' && spec.screenSlug) {
+        const localizedPlate = join(buildRoot, 'screens', locale, `${spec.screenSlug}.png`)
+        const platePngPath = existsSync(localizedPlate)
+          ? localizedPlate
+          : join(screensDir, `${spec.screenSlug}.png`)
+        await ensureMasterScreenPanMp4({
+          locale,
+          screenSlug: spec.screenSlug,
+          platePngPath,
+          fromRoi: spec.fromRoi ?? { cxFrac: 0.45, cyFrac: 0.5, widthFrac: 0.85 },
+          toRoi: spec.toRoi ?? { cxFrac: 0.6, cyFrac: 0.52, widthFrac: 0.68 },
+          scratchDir,
+        })
+      }
     }
 
     for (const plan of beatPlans) {

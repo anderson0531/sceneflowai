@@ -116,6 +116,10 @@ describe('Customer Portal Narrated Animatic (7 Locales) & Automated Client Bluep
       expect(locCopy.beats).toHaveLength(8)
       expect(locCopy.mockUi.services).toHaveLength(4)
       expect(locCopy.mockUi.blueprintPassPrice).toBe('$29')
+      expect(locCopy.eyebrow.toLowerCase()).not.toContain('animatic')
+      expect(locCopy.jumpButtonLabel.toLowerCase()).not.toContain('animatic')
+      expect(locCopy.animaticBadge.toLowerCase()).not.toContain('animatic')
+      expect(locCopy.runtimeBadge.toLowerCase()).not.toContain('animatic')
 
       if (opt.id !== 'en') {
         expect(locCopy.title).not.toBe(enCopy.title)
