@@ -115,12 +115,23 @@ describe('Customer Portal Narrated Animatic (7 Locales) & Automated Client Bluep
     expect(enCopy.mockUi.services).toHaveLength(4)
     expect(enCopy.mockUi.blueprintPassPrice).toBe('$29')
 
+    const expectedPassPrices: Record<string, string> = {
+      en: '$29',
+      es: 'MX$547',
+      pt: 'R$170',
+      hi: '₹2,720',
+      zh: '¥193',
+      ar: '108 ر.س',
+      th: '฿985',
+    }
+
     for (const opt of FEATURE_PAN_LOCALE_OPTIONS) {
       const locCopy = CUSTOMER_PORTAL_ANIMATIC_COPY[opt.id]
       expect(locCopy, `missing locale ${opt.id}`).toBeDefined()
       expect(locCopy.beats).toHaveLength(8)
       expect(locCopy.mockUi.services).toHaveLength(4)
-      expect(locCopy.mockUi.blueprintPassPrice).toBe('$29')
+      expect(locCopy.mockUi.blueprintPassPrice).toBe(expectedPassPrices[opt.id])
+      expect(locCopy.beats[0]!.shortTabLabel).toContain(expectedPassPrices[opt.id]!)
       expect(locCopy.eyebrow.toLowerCase()).not.toContain('animatic')
       expect(locCopy.jumpButtonLabel.toLowerCase()).not.toContain('animatic')
       expect(locCopy.animaticBadge.toLowerCase()).not.toContain('animatic')
@@ -129,6 +140,8 @@ describe('Customer Portal Narrated Animatic (7 Locales) & Automated Client Bluep
       if (opt.id !== 'en') {
         expect(locCopy.title).not.toBe(enCopy.title)
         expect(locCopy.subtitle).not.toBe(enCopy.subtitle)
+        expect(locCopy.mockUi.services[0]!.price).not.toContain('$349')
+        expect(locCopy.beats[7]!.economicsChip).not.toContain('$4,240')
         expect(locCopy.beats[0]!.headline).not.toBe(enCopy.beats[0]!.headline)
         expect(locCopy.beats[0]!.narration).not.toBe(enCopy.beats[0]!.narration)
         expect(locCopy.beats[3]!.narration).not.toBe(enCopy.beats[3]!.narration)

@@ -35,8 +35,13 @@ function esc(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+  // Prevent Thonburi / SF Pro negative kerning collision between ฿ and a following digit
+  out = out.replace(/฿\s*(?=\d)/g, '฿\u2005')
   if (ARABIC_RE.test(out)) {
-    out = out.replace(/([+\-~]?\$[\d,.]+|\b\d+K\b|\b\d+:\d+\b)/g, '\u2066$1\u2069')
+    out = out.replace(
+      /(\b\d+K\b|\b\d+:\d+\b|[+\-−~]?(?:MX\$|R\$|[$₹¥฿])?[\d,.]+(?:\s*[–-]\s*[+\-−~]?(?:MX\$|R\$|[$₹¥฿])?[\d,.]+)?%?)/g,
+      '\u2066$1\u2069'
+    )
     out = `\u202B${out}\u200F\u202C`
   }
   return out
@@ -118,6 +123,7 @@ const SCREEN_I18N = {
       passTag: 'SELF-FUNDING DISCOVERY',
       passTitle: 'Storyboard Blueprint Pass',
       passSub: 'See & hear your custom film Blueprint before committing to production.',
+      passPriceHero: '$29',
       passCredit: '100% Credited Toward Production',
       passCompute: 'Max AI compute ~$3.90 → +$23.96 net (83% margin)',
       passZero: 'Zero Unpaid Sales Calls · Zero Tire-Kickers',
@@ -239,8 +245,11 @@ const SCREEN_I18N = {
         '☑ 60-Second Vertical & Landscape Family Reunion Trailer',
       ],
       pkgPriceLabel: 'Heirloom Memoir Package Price:',
+      pkgPriceVal: '$649.00',
       creditLabel: 'Less Paid Storyboard Blueprint Pass Credit:',
+      creditVal: '− $29.00',
       dueLabel: 'Net Production Balance Due:',
+      dueVal: '$620.00',
       sendBtn: 'Send Stripe / Whop Checkout Link ($620) →',
       sendFoot: 'Auto-launches 30-Min Optimized Script + Continuity Upload Link upon payment',
     },
@@ -328,20 +337,21 @@ const SCREEN_I18N = {
       pill: 'ETAPA 01 · PORTAL',
       title: 'Harborlight Video Studio — Portal Marca Blanca',
       domain: 'portal.harborlightfilms.com · 100% Marca Blanca',
-      badge: 'Descubrimiento $29 · 83% Margen',
+      badge: 'Descubrimiento MX$547 · 83% Margen',
       agencySub: 'Producción de Cine a Medida · Previsualiza tu Blueprint Ilustrado en Minutos',
       poweredBy: 'Impulsado Invisiblemente por SceneFlow',
       services: [
-        ['Memorias y Tributos en Video', '$349 – $1,250', 'Biografías Familiares Multi-Época · Seleccionado ✓'],
-        ['Tours de Cine Inmobiliario', '$199 – $599', 'Propiedades Arquitectónicas en 48 Horas'],
-        ['Educación y Capacitación SOP', '$399 – $1,499', 'Módulos Laborales en 70+ Idiomas'],
-        ['Historias de Marca y Fundadores', '$499 – $1,999', 'Películas Comerciales de Alta Conversión'],
+        ['Memorias y Tributos en Video', 'MX$6,590 – MX$23,600', 'Biografías Familiares Multi-Época · Seleccionado ✓'],
+        ['Tours de Cine Inmobiliario', 'MX$3,750 – MX$11,300', 'Propiedades Arquitectónicas en 48 Horas'],
+        ['Educación y Capacitación SOP', 'MX$7,530 – MX$28,280', 'Módulos Laborales en 70+ Idiomas'],
+        ['Historias de Marca y Fundadores', 'MX$9,410 – MX$37,700', 'Películas Comerciales de Alta Conversión'],
       ],
       passTag: 'DESCUBRIMIENTO AUTOFINANCIADO',
-      passTitle: 'Pase de Blueprint ($29)',
+      passTitle: 'Pase de Blueprint (MX$547)',
       passSub: 'Mira y escucha el Blueprint de tu película antes de contratar la producción.',
+      passPriceHero: 'MX$547',
       passCredit: '100% Acreditado a tu Producción',
-      passCompute: 'Cómputo IA máx ~$3.90 → +$23.96 neto (83% margen)',
+      passCompute: 'Cómputo IA máx ~MX$74 → +MX$452 neto (83%)',
       passZero: 'Cero Llamadas Gratis · Solo Compradores Reales',
       bullets: [
         '✓ Correo automático con enlace mágico a la Entrevista IA',
@@ -349,19 +359,19 @@ const SCREEN_I18N = {
         '✓ Hasta 4 Revisiones Filtradas por IA con Blueprint Director',
         '✓ Hasta 3 Análisis Audience Resonance enviados por correo',
       ],
-      cta: 'Iniciar Mi Blueprint con Storyboard — $29 →',
+      cta: 'Iniciar Mi Blueprint con Storyboard — MX$547 →',
       payNote: 'Apple Pay · Stripe · Whop · Enlace Automático al Instante',
     },
     s2: {
       pill: 'ETAPA 02 · ADMISIÓN IA',
       title: 'Correo con Enlace Mágico → Visión y Entrevista de 4 Turnos',
       badge: '0 Min PM · 24/7 por Voz o Texto',
-      inboxTag: 'BANDEJA DEL CLIENTE · ENVIADO AL INSTANTE TRAS PAGAR $29',
+      inboxTag: 'BANDEJA DEL CLIENTE · ENVIADO AL INSTANTE TRAS PAGAR MX$547',
       inboxTitle: 'Entrega Automática con Enlace Mágico',
       fromLine: 'De: Harborlight Video Studio <concierge@harborlightfilms.com>',
       toLine: 'Para: Elena Morales <elena.morales@email.com> · Entregado en 2s',
       emailHeading: '¡Bienvenida Elena! Inicia tu entrevista de 5 minutos',
-      emailBody1: 'Tu Pase de Blueprint de $29 está activo y acreditado a tu película.',
+      emailBody1: 'Tu Pase de Blueprint de MX$547 está activo y acreditado a tu película.',
       emailBody2: 'Habla con naturalidad o escribe en 7 idiomas, sin contraseñas.',
       emailBtn: 'Abrir Entrevista Guiada de Visión e Historia →',
       emailFoot: 'Incluye 4 Iteraciones de Blueprint + 3 Pases Audience Resonance',
@@ -371,7 +381,7 @@ const SCREEN_I18N = {
         '• Cuarentena aislada por cliente protege la cuenta del Productor',
         '• 7 Idiomas Nativos: EN · ES · PT · HI · ZH · AR · TH',
       ],
-      computeTitle: 'CÓMPUTO DE ETAPA: ~$0.55 · TIEMPO DEL PRODUCTOR: 0 MIN',
+      computeTitle: 'CÓMPUTO DE ETAPA: ~MX$10 · TIEMPO DEL PRODUCTOR: 0 MIN',
       computeSub: 'Visión confirmada en 2 pasos + entrevista de 4 turnos completada a las 9:42 PM',
       rightTag: 'VISIÓN GUIADA Y ENTREVISTA DE 4 TURNOS · 96% COMPLETADO',
       rightTitle: '“Memoria del Puerto — 80 Años de Mateo”',
@@ -404,7 +414,7 @@ const SCREEN_I18N = {
       ],
       voReady: '▶ Voz en Off Lista',
       botTitle: 'Entregado Automáticamente por Correo con tu Marca en ~3 Minutos',
-      botLine1: '6 Cuadros Storyboard (60 cr) + Narración de Voz (40 cr) + Pase AR 1/3 (25 cr) = ~$1.25 Cómputo',
+      botLine1: '6 Cuadros Storyboard (60 cr) + Narración de Voz (40 cr) + Pase AR 1/3 (25 cr) = ~MX$24 Cómputo',
       botLine2: 'El cliente dispone de hasta 4 Revisiones de Blueprint + 3 Pases Audience Resonance—o clic en Aprobar.',
       botBtn: 'Refinar o Aprobar Blueprint →',
     },
@@ -434,7 +444,7 @@ const SCREEN_I18N = {
       zeroPmNote: 'Tiempo Invertido por el Productor: 0 Minutos',
       lockTitle: '¿Lista para Aprobar el Blueprint y Solicitar Cotización?',
       lockLine1: 'Al aprobar se bloquean tus 6 beats ilustrados, épocas y lista de utilería,',
-      lockLine2: 'y se notifica al Productor para enviarte el enlace con tus $29 acreditados.',
+      lockLine2: 'y se notifica al Productor para enviarte el enlace con tus MX$547 acreditados.',
       rightBtn: '✓ Aprobar Blueprint y Solicitar Enlace de Pago',
     },
     s5: {
@@ -445,13 +455,13 @@ const SCREEN_I18N = {
       estTitle: 'Estimador Automático de Costos y Alcance SceneFlow',
       estSub: 'Memoria Familiar de 12 Min · 6 Capítulos · 24 Escenas · Máster 4K + Tráiler 60s',
       rows: [
-        ['Guion Multi-Escena Optimizado (30 Min) + Voces de Estudio', '$4.80 (480 cr)'],
-        ['Identidad Multi-Edad + 48 Cuadros Clave de Escena', '$5.40 (540 cr)'],
-        ['Compuerta Pre-Vis + Generación de Video Cine + Escalado 4K', '$24.00 (2,400 cr)'],
-        ['Colaboración Activa y Pulido del Productor (~75 Min)', '~$62.00 eq. hora'],
+        ['Guion Multi-Escena Optimizado (30 Min) + Voces de Estudio', 'MX$91 (480 cr)'],
+        ['Identidad Multi-Edad + 48 Cuadros Clave de Escena', 'MX$102 (540 cr)'],
+        ['Compuerta Pre-Vis + Generación de Video Cine + Escalado 4K', 'MX$453 (2,400 cr)'],
+        ['Colaboración Activa y Pulido del Productor (~75 Min)', '~MX$1,170 eq. hora'],
       ],
-      totalCompute: 'Total Créditos de Cómputo SceneFlow: $34.20 (3,420 cr)',
-      netProfit: 'Ganancia Neta Proyectada (Paquete $649): +$530.10 (82% Margen)',
+      totalCompute: 'Total Créditos de Cómputo SceneFlow: MX$646 (3,420 cr)',
+      netProfit: 'Ganancia Neta (Paquete MX$12,240): +MX$10,010 (82% Margen)',
       rightTag: 'ENTREGABLES DEL PAQUETE Y ENLACE DE COBRO',
       rightTitle: 'Enviar Pago de Producción en 1 Clic',
       checks: [
@@ -461,9 +471,12 @@ const SCREEN_I18N = {
         '☑ Tráiler Familiar de 60 Segundos (Horizontal y Vertical)',
       ],
       pkgPriceLabel: 'Precio del Paquete Memoria Familiar:',
+      pkgPriceVal: 'MX$12,240',
       creditLabel: 'Menos Crédito Pagado del Pase Blueprint:',
+      creditVal: '− MX$547',
       dueLabel: 'Saldo Neto de Producción a Pagar:',
-      sendBtn: 'Enviar Enlace Stripe / Whop ($620) →',
+      dueVal: 'MX$11,693',
+      sendBtn: 'Enviar Enlace Stripe / Whop (MX$11,693) →',
       sendFoot: 'Inicia automáticamente el Guion en 30 Min + Enlace de Fotos tras el pago',
     },
     s6: {
@@ -524,7 +537,7 @@ const SCREEN_I18N = {
     s8: {
       pill: 'ETAPA 08 · ENTREGA Y ROI',
       title: 'Descarga 4K Desbloqueada + Rentabilidad de tu Estudio',
-      badge: '+$530 Neto / Film · 82% Margen',
+      badge: '+MX$10,010 Neto / Film · 82% Margen',
       leftTag: 'LO QUE RECIBE TU CLIENTE · ENTREGA DE LUJO',
       leftTitle: 'Máster 4K y Tráiler Desbloqueados ✓',
       deliv1: '✓ Máster de Archivo 4K UHD de 12 Minutos (MP4 + ProRes)',
@@ -534,12 +547,12 @@ const SCREEN_I18N = {
       rightTag: 'LO QUE TÚ GANAS · ECONOMÍA AUTOMATIZADA',
       rightTitle: '90% Automatizado · Escala 8–15 Films / Mes',
       cards: [
-        ['1. Pase Blueprint Autofinanciado ($29)', '83% Margen', '~$3.90 cómputo máx · 0 min PM · Sin curiosos'],
-        ['2. Orden Completa de Memoria ($649)', '+$530 Neto', '$34.20 cómputo SceneFlow · 82% margen neto'],
+        ['1. Pase Blueprint Autofinanciado (MX$547)', '83% Margen', '~MX$74 cómputo máx · 0 min PM · Sin curiosos'],
+        ['2. Orden Completa Memoria (MX$12,240)', '+MX$10,010', 'MX$646 cómputo SceneFlow · 82% margen neto'],
         ['3. Tiempo Activo por Película', '~75 Min', '3 min cotización + aprobación guiada en Sala'],
       ],
       runRateTag: 'GANANCIA MENSUAL DE UN OPERADOR (4 VERTICALES)',
-      runRateVal: '$4,240 – $7,950 / mes',
+      runRateVal: 'MX$80,158 – MX$149,943 / mes',
       runRateSub1: '8 a 15 Películas / Mes · ~12–18 Horas Activas Totales',
       runRateSub2: 'Memorias · Inmobiliaria · Capacitación · Historias de Marca',
     },
@@ -550,20 +563,21 @@ const SCREEN_I18N = {
       pill: 'ETAPA 01 · PORTAL',
       title: 'Harborlight Video Studio — Portal White-Label',
       domain: 'portal.harborlightfilms.com · 100% White-Label',
-      badge: 'Descoberta $29 · 83% Margem',
+      badge: 'Descoberta R$170 · 83% Margem',
       agencySub: 'Produção de Cinema Sob Medida · Veja seu Blueprint Ilustrado em Minutos',
       poweredBy: 'Operado Invisivelmente pelo SceneFlow',
       services: [
-        ['Memórias e Tributos em Vídeo', '$349 – $1,250', 'Biografias Familiares Multi-Época · Selecionado ✓'],
-        ['Tours Imobiliários de Cinema', '$199 – $599', 'Filmes de Imóveis em 48 Horas'],
-        ['Educação e Treinamento SOP', '$399 – $1,499', 'Módulos Corporativos em 70+ Idiomas'],
-        ['Histórias de Marca e Fundadores', '$499 – $1,999', 'Filmes Comerciais de Alta Conversão'],
+        ['Memórias e Tributos em Vídeo', 'R$2,050 – R$7,340', 'Biografias Familiares Multi-Época · Selecionado ✓'],
+        ['Tours Imobiliários de Cinema', 'R$1,170 – R$3,520', 'Filmes de Imóveis em 48 Horas'],
+        ['Educação e Treinamento SOP', 'R$2,340 – R$8,805', 'Módulos Corporativos em 70+ Idiomas'],
+        ['Histórias de Marca e Fundadores', 'R$2,930 – R$11,740', 'Filmes Comerciais de Alta Conversão'],
       ],
       passTag: 'DESCOBERTA AUTOFINANCIADA',
-      passTitle: 'Passe de Blueprint ($29)',
+      passTitle: 'Passe de Blueprint (R$170)',
       passSub: 'Veja e ouça o Blueprint do seu filme antes de contratar a produção.',
+      passPriceHero: 'R$170',
       passCredit: '100% Abatido na Produção Final',
-      passCompute: 'Cómputo IA máx ~$3.90 → +$23.96 líquido (83% margem)',
+      passCompute: 'Computação IA máx ~R$23 → +R$141 líquido (83%)',
       passZero: 'Zero Reuniões Grátis · Apenas Compradores Reais',
       bullets: [
         '✓ E-mail automático com link mágico para Entrevista IA',
@@ -571,19 +585,19 @@ const SCREEN_I18N = {
         '✓ Até 4 Revisões Filtradas por IA no Blueprint Director',
         '✓ Até 3 Análises Audience Resonance enviadas por e-mail',
       ],
-      cta: 'Iniciar Meu Blueprint com Storyboard — $29 →',
+      cta: 'Iniciar Meu Blueprint com Storyboard — R$170 →',
       payNote: 'Apple Pay · Stripe · Whop · Link Automático Instantâneo',
     },
     s2: {
       pill: 'ETAPA 02 · ENTREVISTA IA',
       title: 'E-mail com Link Mágico → Visão e Entrevista de 4 Etapas',
       badge: '0 Min PM · 24/7 por Voz ou Texto',
-      inboxTag: 'CAIXA DO CLIENTE · ENVIADO INSTANTANEAMENTE APÓS $29',
+      inboxTag: 'CAIXA DO CLIENTE · ENVIADO INSTANTANEAMENTE APÓS R$170',
       inboxTitle: 'Entrega Automática com Link Mágico',
       fromLine: 'De: Harborlight Video Studio <concierge@harborlightfilms.com>',
       toLine: 'Para: Elena Morales <elena.morales@email.com> · Entregue em 2s',
       emailHeading: 'Bem-vinda Elena! Inicie sua entrevista de 5 minutos',
-      emailBody1: 'Seu Passe de Blueprint de $29 está ativo e creditado ao seu filme.',
+      emailBody1: 'Seu Passe de Blueprint de R$170 está ativo e creditado ao seu filme.',
       emailBody2: 'Fale naturalmente ou digite em 7 idiomas — sem precisar de senha.',
       emailBtn: 'Abrir Entrevista Guiada de Visão e História →',
       emailFoot: 'Inclui 4 Iterações de Blueprint + 3 Passes Audience Resonance',
@@ -593,7 +607,7 @@ const SCREEN_I18N = {
         '• Quarentena isolada protege a conta do Produtor',
         '• 7 Idiomas Nativos: EN · ES · PT · HI · ZH · AR · TH',
       ],
-      computeTitle: 'CUSTO DE COMPUTAÇÃO: ~$0.55 · TEMPO DO PRODUTOR: 0 MIN',
+      computeTitle: 'CUSTO DE COMPUTAÇÃO: ~R$3.20 · TEMPO DO PRODUTOR: 0 MIN',
       computeSub: 'Visão confirmada em 2 etapas + entrevista de 4 turnos concluída às 21:42',
       rightTag: 'VISÃO GUIADA E ENTREVISTA DE 4 ETAPAS · 96% CONCLUÍDO',
       rightTitle: '“Memória do Porto — 80 Anos de Mateo”',
@@ -626,7 +640,7 @@ const SCREEN_I18N = {
       ],
       voReady: '▶ Narração Pronta',
       botTitle: 'Entregue Automaticamente por E-mail com Sua Marca em ~3 Minutos',
-      botLine1: '6 Quadros Storyboard (60 cr) + Narração em Áudio (40 cr) + Passe AR 1/3 (25 cr) = ~$1.25 Computação',
+      botLine1: '6 Quadros Storyboard (60 cr) + Narração em Áudio (40 cr) + Passe AR 1/3 (25 cr) = ~R$7.35 Computação',
       botLine2: 'O cliente pode refinar até 4 Revisões de Blueprint + 3 Passes Audience Resonance — ou clicar em Aprovar.',
       botBtn: 'Refinar ou Aprovar Blueprint →',
     },
@@ -656,7 +670,7 @@ const SCREEN_I18N = {
       zeroPmNote: 'Tempo Gasto pelo Produtor Até Aqui: 0 Minutos',
       lockTitle: 'Pronta para Travar o Blueprint e Pedir Orçamento?',
       lockLine1: 'Aprovar trava seus 6 beats ilustrados, épocas do elenco e objetos,',
-      lockLine2: 'e avisa seu Produtor Harborlight para enviar o link com $29 abatidos.',
+      lockLine2: 'e avisa seu Produtor Harborlight para enviar o link com R$170 abatidos.',
       rightBtn: '✓ Aprovar Blueprint e Solicitar Link de Produção',
     },
     s5: {
@@ -667,13 +681,13 @@ const SCREEN_I18N = {
       estTitle: 'Estimador Automático de Custos e Escopo SceneFlow',
       estSub: 'Memória Familiar de 12 Min · 6 Capítulos · 24 Cenas · Master 4K + Trailer 60s',
       rows: [
-        ['Roteiro Multi-Cena Otimizado (30 Min) + Vozes de Estúdio', '$4.80 (480 cr)'],
-        ['Semelhança Multi-Idade + 48 Quadros-Chave de Cena', '$5.40 (540 cr)'],
-        ['Gate Pre-Vis + Geração de Vídeo Cinema + Upscale 4K', '$24.00 (2,400 cr)'],
-        ['Colaboração Ativa e Refinamento do Produtor (~75 Min)', '~$62.00 eq. hora'],
+        ['Roteiro Multi-Cena Otimizado (30 Min) + Vozes de Estúdio', 'R$28 (480 cr)'],
+        ['Semelhança Multi-Idade + 48 Quadros-Chave de Cena', 'R$32 (540 cr)'],
+        ['Gate Pre-Vis + Geração de Vídeo Cinema + Upscale 4K', 'R$141 (2,400 cr)'],
+        ['Colaboração Ativa e Refinamento do Produtor (~75 Min)', '~R$364 eq. hora'],
       ],
-      totalCompute: 'Total de Créditos de Computação SceneFlow: $34.20 (3,420 cr)',
-      netProfit: 'Lucro Líquido Projetado (Pacote $649): +$530.10 (82% Margem)',
+      totalCompute: 'Total de Créditos de Computação SceneFlow: R$201 (3,420 cr)',
+      netProfit: 'Lucro Líquido Projetado (Pacote R$3,812): +R$3,113 (82% Margem)',
       rightTag: 'ENTREGÁVEIS DO PACOTE E LINK DE PAGAMENTO',
       rightTitle: 'Enviar Checkout de Produção em 1 Clique',
       checks: [
@@ -683,9 +697,12 @@ const SCREEN_I18N = {
         '☑ Trailer Familiar de 60 Segundos (Horizontal e Vertical)',
       ],
       pkgPriceLabel: 'Preço do Pacote Memória de Família:',
+      pkgPriceVal: 'R$3,812',
       creditLabel: 'Menos Crédito Pago do Passe Blueprint:',
+      creditVal: '− R$170',
       dueLabel: 'Saldo Líquido de Produção:',
-      sendBtn: 'Enviar Link Stripe / Whop ($620) →',
+      dueVal: 'R$3,642',
+      sendBtn: 'Enviar Link Stripe / Whop (R$3,642) →',
       sendFoot: 'Inicia automaticamente o Roteiro em 30 Min + Link de Fotos após pagamento',
     },
     s6: {
@@ -746,7 +763,7 @@ const SCREEN_I18N = {
     s8: {
       pill: 'ETAPA 08 · ENTREGA E ROI',
       title: 'Download 4K Liberado + Retorno Financeiro do Estúdio',
-      badge: '+$530 Líquido / Filme · 82% Margem',
+      badge: '+R$3,113 Líquido / Filme · 82% Margem',
       leftTag: 'O QUE SEU CLIENTE VÊ · ENTREGA DE LUXO',
       leftTitle: 'Master 4K e Trailer Liberados ✓',
       deliv1: '✓ Master de Arquivo 4K UHD de 12 Minutos (MP4 + ProRes)',
@@ -756,12 +773,12 @@ const SCREEN_I18N = {
       rightTag: 'O QUE VOCÊ GANHA · ECONOMIA AUTOMATIZADA',
       rightTitle: '90% Automatizado · Escale 8–15 Filmes / Mês',
       cards: [
-        ['1. Passe Blueprint Autofinanciado ($29)', '83% Margem', '~$3.90 computação máx · 0 min PM · Sem curiosos'],
-        ['2. Pedido Completo de Memória ($649)', '+$530 Líquido', '$34.20 computação SceneFlow · 82% margem líquida'],
+        ['1. Passe Blueprint Autofinanciado (R$170)', '83% Margem', '~R$23 computação máx · 0 min PM · Sem curiosos'],
+        ['2. Pedido Completo de Memória (R$3,812)', '+R$3,113', 'R$201 computação SceneFlow · 82% margem líquida'],
         ['3. Tempo Ativo por Filme', '~75 Min', '3 min cotação + aprovação guiada na Sala'],
       ],
       runRateTag: 'LUCRO MENSAL DE UM OPERADOR SOLO (4 VERTICAIS)',
-      runRateVal: '$4,240 – $7,950 / mês',
+      runRateVal: 'R$24,906 – R$46,699 / mês',
       runRateSub1: '8 a 15 Filmes / Mês · ~12–18 Horas Ativas Totais',
       runRateSub2: 'Memórias · Imóveis · Treinamento · Histórias de Marca',
     },
@@ -772,20 +789,21 @@ const SCREEN_I18N = {
       pill: 'चरण 01 · बिज़नेस पोर्टल',
       title: 'Harborlight Video Studio — व्हाइट-लेबल स्टोरफ़्रंट',
       domain: 'portal.harborlightfilms.com · 100% व्हाइट-लेबल',
-      badge: '$29 पेड डिस्कवरी · 83% शुद्ध मार्जिन',
+      badge: '₹2,720 पेड डिस्कवरी · 83% शुद्ध मार्जिन',
       agencySub: 'कस्टम सिनेमा प्रोडक्शन · मिनटों में अपनी फ़िल्म का सचित्र Blueprint देखें और सुनें',
       poweredBy: 'SceneFlow द्वारा अदृश्य रूप से संचालित',
       services: [
-        ['वीडियो मेमॉयर और श्रद्धांजलि', '$349 – $1,250', 'बहु-दशक पारिवारिक जीवनियाँ · चयनित ✓'],
-        ['रियल एस्टेट सिनेमा टूर', '$199 – $599', '48-घंटे प्रॉपर्टी लिस्टिंग फ़िल्में'],
-        ['शिक्षा और SOP प्रशिक्षण', '$399 – $1,499', '70+ भाषाओं में प्रशिक्षण मॉड्यूल'],
-        ['फ़ाउंडर और ब्रांड स्टोरीज़', '$499 – $1,999', 'उच्च-कन्वर्ज़न कमर्शियल फ़िल्में'],
+        ['वीडियो मेमॉयर और श्रद्धांजलि', '₹32,610 – ₹116,810', 'बहु-दशक पारिवारिक जीवनियाँ · चयनित ✓'],
+        ['रियल एस्टेट सिनेमा टूर', '₹18,600 – ₹55,980', '48-घंटे प्रॉपर्टी लिस्टिंग फ़िल्में'],
+        ['शिक्षा और SOP प्रशिक्षण', '₹37,290 – ₹140,080', '70+ भाषाओं में प्रशिक्षण मॉड्यूल'],
+        ['फ़ाउंडर और ब्रांड स्टोरीज़', '₹46,630 – ₹186,810', 'उच्च-कन्वर्ज़न कमर्शियल फ़िल्में'],
       ],
       passTag: 'स्व-वित्तपोषित डिस्कवरी',
       passTitle: 'स्टोरीबोर्ड Blueprint पास',
       passSub: 'प्रोडक्शन बुक करने से पहले अपनी कस्टम फ़िल्म का Blueprint देखें व सुनें।',
+      passPriceHero: '₹2,720',
       passCredit: 'अंतिम प्रोडक्शन में 100% समायोजित',
-      passCompute: 'अधिकतम AI कम्प्यूट ~$3.90 → +$23.96 शुद्ध (83% मार्जिन)',
+      passCompute: 'अधिकतम AI कम्प्यूट ~₹365 → +₹2,240 शुद्ध (83%)',
       passZero: 'शून्य मुफ़्त सेल्स कॉल · केवल गंभीर ग्राहक',
       bullets: [
         '✓ गाइडेड AI स्टोरी इनटेक हेतु स्वचालित मैजिक-लिंक ईमेल',
@@ -793,19 +811,19 @@ const SCREEN_I18N = {
         '✓ Blueprint Director द्वारा 4 AI-फ़िल्टर्ड संशोधन शामिल',
         '✓ 3 स्वचालित Audience Resonance स्कोर ईमेल पास',
       ],
-      cta: 'मेरा स्टोरीबोर्ड Blueprint शुरू करें — $29 →',
+      cta: 'मेरा स्टोरीबोर्ड Blueprint शुरू करें — ₹2,720 →',
       payNote: 'Apple Pay · Stripe · Whop · तुरंत स्वचालित ईमेल लिंक',
     },
     s2: {
       pill: 'चरण 02 · ऑटो इनटेक',
       title: 'स्वचालित मैजिक-लिंक ईमेल → विज़न और 4-टर्न स्टोरी इंटरव्यू',
       badge: '0 PM मिनट · 24/7 वॉइस या टेक्स्ट',
-      inboxTag: 'क्लाइंट इनबॉक्स · $29 भुगतान पर तुरंत भेजा गया',
+      inboxTag: 'क्लाइंट इनबॉक्स · ₹2,720 भुगतान पर तुरंत भेजा गया',
       inboxTitle: 'स्वचालित मैजिक-लिंक डिलीवरी',
       fromLine: 'प्रेषक: Harborlight Video Studio <concierge@harborlightfilms.com>',
       toLine: 'प्रति: Elena Morales <elena.morales@email.com> · 2 सेकंड में प्राप्त',
       emailHeading: 'स्वागत है एलेना! अपना 5-मिनट स्टोरी इनटेक शुरू करें',
-      emailBody1: 'आपका $29 Blueprint पास सक्रिय है और आपकी फ़िल्म में क्रेडिट होगा।',
+      emailBody1: 'आपका ₹2,720 Blueprint पास सक्रिय है और आपकी फ़िल्म में क्रेडिट होगा।',
       emailBody2: '7 भाषाओं में सहज रूप से बोलें या टाइप करें—पासवर्ड आवश्यक नहीं।',
       emailBtn: 'गाइडेड विज़न और स्टोरी इंटरव्यू खोलें →',
       emailFoot: '4 Blueprint संशोधन + 3 Audience Resonance पास शामिल',
@@ -815,7 +833,7 @@ const SCREEN_I18N = {
         '• पृथक क्लाइंट क्वारंटीन प्रोड्यूसर अकाउंट की सुरक्षा करता है',
         '• 7 भाषाएँ उपलब्ध: EN · ES · PT · HI · ZH · AR · TH',
       ],
-      computeTitle: 'चरण कम्प्यूट लागत: ~$0.55 · ऑपरेटर समय: 0 मिनट',
+      computeTitle: 'चरण कम्प्यूट लागत: ~₹51 · ऑपरेटर समय: 0 मिनट',
       computeSub: '2 चरणों में विज़न पुष्टि + 4-टर्न इंटरव्यू रात 9:42 पर पूर्ण',
       rightTag: 'गाइडेड विज़न और 4-टर्न इंटरव्यू · 96% पूर्ण',
       rightTitle: '“मातेओ के 80वें जन्मदिन का हार्बर मेमॉयर”',
@@ -848,7 +866,7 @@ const SCREEN_I18N = {
       ],
       voReady: '▶ बीट वॉइसओवर तैयार',
       botTitle: '~3 मिनट में ब्रांडेड ईमेल द्वारा स्वचालित रूप से डिलीवर',
-      botLine1: '6 स्टोरीबोर्ड चित्र (60 cr) + ऑडियो नैरेशन (40 cr) + AR पास 1/3 (25 cr) = ~$1.25 कम्प्यूट',
+      botLine1: '6 स्टोरीबोर्ड चित्र (60 cr) + ऑडियो नैरेशन (40 cr) + AR पास 1/3 (25 cr) = ~₹117 कम्प्यूट',
       botLine2: 'ग्राहक स्वयं 4 Blueprint संशोधन + 3 Audience Resonance पास कर सकते हैं—या अप्रूव दबाएँ।',
       botBtn: 'Blueprint सुधारें या अप्रूव करें →',
     },
@@ -878,7 +896,7 @@ const SCREEN_I18N = {
       zeroPmNote: 'अब तक लगा प्रोड्यूसर समय: शून्य मिनट',
       lockTitle: 'Blueprint लॉक करें और प्रोडक्शन कोटेशन मँगाएँ?',
       lockLine1: 'अप्रूव करने पर आपके 6 सचित्र बीट्स, पात्र और प्रॉप सूची लॉक हो जाती है,',
-      lockLine2: 'और प्रोड्यूसर को $29 क्रेडिट घटाकर भुगतान लिंक भेजने की सूचना मिलती है।',
+      lockLine2: 'और प्रोड्यूसर को ₹2,720 क्रेडिट घटाकर भुगतान लिंक भेजने की सूचना मिलती है।',
       rightBtn: '✓ Blueprint अप्रूव करें और प्रोडक्शन लिंक माँगें',
     },
     s5: {
@@ -889,13 +907,13 @@ const SCREEN_I18N = {
       estTitle: 'SceneFlow स्वचालित लागत और स्कोप अनुमानक',
       estSub: '12-मिनट पारिवारिक वीडियो मेमॉयर · 6 चैप्टर्स · 24 सीन · 4K मास्टर + 60s ट्रेलर',
       rows: [
-        ['30-मिनट AR-अनुकूलित स्क्रिप्ट + स्टूडियो वॉइस', '$4.80 (480 cr)'],
-        ['बहु-उम्र रेफ़रेंस समानता + 48 सीन कीफ़्रेम', '$5.40 (540 cr)'],
-        ['Pre-Vis गेट + सिनेमा वीडियो रेंडर + 4K अपस्केल', '$24.00 (2,400 cr)'],
-        ['अनुमानित सक्रिय प्रोड्यूसर सहयोग व पॉलिश (~75 मिनट)', '~$62.00 श्रम समतुल्य'],
+        ['30-मिनट AR-अनुकूलित स्क्रिप्ट + स्टूडियो वॉइस', '₹449 (480 cr)'],
+        ['बहु-उम्र रेफ़रेंस समानता + 48 सीन कीफ़्रेम', '₹505 (540 cr)'],
+        ['Pre-Vis गेट + सिनेमा वीडियो रेंडर + 4K अपस्केल', '₹2,242 (2,400 cr)'],
+        ['अनुमानित सक्रिय प्रोड्यूसर सहयोग व पॉलिश (~75 मिनट)', '~₹5,794 श्रम समतुल्य'],
       ],
-      totalCompute: 'कुल SceneFlow कम्प्यूट क्रेडिट: $34.20 (3,420 cr)',
-      netProfit: '$649 पैकेज पर अनुमानित शुद्ध लाभ: +$530.10 (82% मार्जिन)',
+      totalCompute: 'कुल SceneFlow कम्प्यूट क्रेडिट: ₹3,196 (3,420 cr)',
+      netProfit: '₹60,650 पैकेज पर अनुमानित शुद्ध लाभ: +₹49,529 (82% मार्जिन)',
       rightTag: 'पैकेज्ड डिलीवरेबल्स और भुगतान लिंक',
       rightTitle: '1 क्लिक में प्रोडक्शन भुगतान लिंक भेजें',
       checks: [
@@ -905,9 +923,12 @@ const SCREEN_I18N = {
         '☑ 60-सेकंड वर्टिकल और लैंडस्केप पारिवारिक ट्रेलर',
       ],
       pkgPriceLabel: 'हेयरलूम मेमॉयर पैकेज मूल्य:',
+      pkgPriceVal: '₹60,650',
       creditLabel: 'घटाएँ भुगतान किया गया Blueprint पास क्रेडिट:',
+      creditVal: '− ₹2,720',
       dueLabel: 'देय शुद्ध प्रोडक्शन शेष राशि:',
-      sendBtn: 'Stripe / Whop भुगतान लिंक भेजें ($620) →',
+      dueVal: '₹57,930',
+      sendBtn: 'Stripe / Whop भुगतान लिंक भेजें (₹57,930) →',
       sendFoot: 'भुगतान होते ही 30-मिनट स्क्रिप्ट + कंटिन्यूटी अपलोड लिंक स्वतः शुरू',
     },
     s6: {
@@ -968,7 +989,7 @@ const SCREEN_I18N = {
     s8: {
       pill: 'चरण 08 · डिलीवरी व ROI',
       title: 'क्लाइंट 4K डाउनलोड अनलॉक + स्टूडियो शुद्ध लाभ',
-      badge: '+$530 शुद्ध / फ़िल्म · 82% मार्जिन',
+      badge: '+₹49,529 शुद्ध / फ़िल्म · 82% मार्जिन',
       leftTag: 'आपके ग्राहक का अनुभव · प्रीमियम डिलीवरी',
       leftTitle: '4K मास्टर और ट्रेलर अनलॉक ✓',
       deliv1: '✓ 12-मिनट 4K UHD आर्काइवल मास्टर (MP4 + ProRes)',
@@ -978,12 +999,12 @@ const SCREEN_I18N = {
       rightTag: 'आपकी कमाई · स्वचालित स्टूडियो अर्थशास्त्र',
       rightTitle: '90% स्वचालित · 8–15 फ़िल्में / माह स्केल करें',
       cards: [
-        ['1. स्व-वित्तपोषित $29 Blueprint पास', '83% मार्जिन', '~$3.90 अधिकतम कम्प्यूट · 0 PM मिनट'],
-        ['2. पूर्ण मेमॉयर ऑर्डर ($649 पैकेज)', '+$530 शुद्ध', '$34.20 SceneFlow कम्प्यूट · 82% शुद्ध लाभ'],
+        ['1. स्व-वित्तपोषित ₹2,720 Blueprint पास', '83% मार्जिन', '~₹365 अधिकतम कम्प्यूट · 0 PM मिनट'],
+        ['2. पूर्ण मेमॉयर ऑर्डर (₹60,650 पैकेज)', '+₹49,529', '₹3,196 SceneFlow कम्प्यूट · 82% शुद्ध लाभ'],
         ['3. प्रति फ़िल्म सक्रिय समय', '~75 मिनट', '3 मि. कोटेशन + गाइडेड स्क्रीनिंग साइन-ऑफ़'],
       ],
       runRateTag: 'एकल ऑपरेटर मासिक शुद्ध लाभ (4 सेवाओं में)',
-      runRateVal: '$4,240 – $7,950 / माह',
+      runRateVal: '₹396,228 – ₹742,928 / माह',
       runRateSub1: '8 से 15 क्लाइंट फ़िल्में / माह · कुल ~12–18 सक्रिय घंटे',
       runRateSub2: 'मेमॉयर · रियल एस्टेट · प्रशिक्षण · ब्रांड स्टोरीज़',
     },
@@ -994,20 +1015,21 @@ const SCREEN_I18N = {
       pill: '阶段 01 · 品牌门户',
       title: 'Harborlight Video Studio — 白标商业门户',
       domain: 'portal.harborlightfilms.com · 100% 纯白标门户',
-      badge: '$29 付费立项 · 83% 净毛利',
+      badge: '¥193 付费立项 · 83% 净毛利',
       agencySub: '高定电影级视频制作 · 数分钟内在线预览您的专属图文配音分镜蓝图',
       poweredBy: '由 SceneFlow 幕后隐形驱动',
       services: [
-        ['人物传记与家族回忆录', '$349 – $1,250', '跨年代家族致敬大片 · 已选择 ✓'],
-        ['高端房产电影导览', '$199 – $599', '48 小时极速交付房源大片'],
-        ['企业培训与标准 SOP', '$399 – $1,499', '支持 70+ 语种员工培训课程'],
-        ['创始人与品牌故事大片', '$499 – $1,999', '高转化商业广告与品牌纪录片'],
+        ['人物传记与家族回忆录', '¥2,327 – ¥8,335', '跨年代家族致敬大片 · 已选择 ✓'],
+        ['高端房产电影导览', '¥1,327 – ¥3,994', '48 小时极速交付房源大片'],
+        ['企业培训与标准 SOP', '¥2,660 – ¥9,995', '支持 70+ 语种员工培训课程'],
+        ['创始人与品牌故事大片', '¥3,327 – ¥13,329', '高转化商业广告与品牌纪录片'],
       ],
       passTag: '自负盈亏立项筛选',
-      passTitle: '分镜蓝图通行证 ($29)',
+      passTitle: '分镜蓝图通行证 (¥193)',
       passSub: '在决定正式投产前，先直观看到并听到您的专属影片分镜蓝图。',
+      passPriceHero: '¥193',
       passCredit: '100% 全额抵扣正式成片制作费',
-      passCompute: '最高 AI 算力 ~$3.90 → 净赚 +$23.96 (83% 毛利)',
+      passCompute: '最高 AI 算力 ~¥26 → 净赚 +¥160 (83% 毛利)',
       passZero: '零免费陪聊电话 · 自动精准筛选高意向客户',
       bullets: [
         '✓ 自动发送品牌专属邮件链接进入 AI 引导访谈',
@@ -1015,19 +1037,19 @@ const SCREEN_I18N = {
         '✓ 含最多 4 次 AI 提炼 Blueprint Director 自助改稿',
         '✓ 含最多 3 次 Audience Resonance 受众共鸣评分邮件',
       ],
-      cta: '立即开启我的分镜蓝图 — $29 →',
+      cta: '立即开启我的分镜蓝图 — ¥193 →',
       payNote: 'Apple Pay · Stripe · Whop · 付款即刻自动发送邮件链接',
     },
     s2: {
       pill: '阶段 02 · 自动访谈',
       title: '自动专属链接邮件 → 愿景确认与四轮 AI 故事访谈',
       badge: '0 制片人工 · 24/7 语音或文字',
-      inboxTag: '客户收件箱 · $29 付款后秒级自动送达',
+      inboxTag: '客户收件箱 · ¥193 付款后秒级自动送达',
       inboxTitle: '自动发送专属免登录访谈链接',
       fromLine: '发件人: Harborlight Video Studio <concierge@harborlightfilms.com>',
       toLine: '收件人: Elena Morales <elena.morales@email.com> · 2 秒内送达',
       emailHeading: '欢迎您 Elena！点击开启 5 分钟故事访谈',
-      emailBody1: '您的 $29 分镜蓝图通行证已激活，可全额抵扣后续成片费用。',
+      emailBody1: '您的 ¥193 分镜蓝图通行证已激活，可全额抵扣后续成片费用。',
       emailBody2: '支持 7 种语言自然语音口述或打字输入——无需注册密码。',
       emailBtn: '开启 AI 引导愿景确认与故事访谈 →',
       emailFoot: '包含 4 次分镜蓝图自助修改 + 3 次受众共鸣评估',
@@ -1037,7 +1059,7 @@ const SCREEN_I18N = {
         '• 独立客户安全沙箱隔离机制，保护制片方账号信誉',
         '• 原生支持 7 大语种：EN · ES · PT · HI · ZH · AR · TH',
       ],
-      computeTitle: '本阶段算力成本：~$0.55 · 制片人工耗时：0 分钟',
+      computeTitle: '本阶段算力成本：~¥3.7 · 制片人工耗时：0 分钟',
       computeSub: '两轮愿景确认 + 四轮故事访谈已于 21:42 自动完成',
       rightTag: 'AI 愿景确认与四轮故事访谈 · 完成度 96%',
       rightTitle: '《父亲 Mateo 八十寿辰海港回忆录》',
@@ -1070,7 +1092,7 @@ const SCREEN_I18N = {
       ],
       voReady: '▶ 分镜配音已就绪',
       botTitle: '约 3 分钟通过您的品牌专属邮件全自动交付客户',
-      botLine1: '6 幅分镜插图 (60 cr) + 章节语音导览 (40 cr) + 受众共鸣评估 1/3 (25 cr) = 算力仅 ~$1.25',
+      botLine1: '6 幅分镜插图 (60 cr) + 章节语音导览 (40 cr) + 受众共鸣评估 1/3 (25 cr) = 算力仅 ~¥8.3',
       botLine2: '客户可自助发起最多 4 次分镜修改 + 3 次受众共鸣重评——或直接点击批准立项。',
       botBtn: '自助修改或批准分镜蓝图 →',
     },
@@ -1100,7 +1122,7 @@ const SCREEN_I18N = {
       zeroPmNote: '截至目前制片人投入时间：依然为 0 分钟',
       lockTitle: '确认锁定分镜蓝图并获取正式制作报价？',
       lockLine1: '点击批准将锁定 6 幅分镜、跨年代选角与道具清单，',
-      lockLine2: '并通知制片人向您发送已抵扣 $29 定金的正式付款链接。',
+      lockLine2: '并通知制片人向您发送已抵扣 ¥193 定金的正式付款链接。',
       rightBtn: '✓ 批准分镜蓝图并获取正式付款链接',
     },
     s5: {
@@ -1111,13 +1133,13 @@ const SCREEN_I18N = {
       estTitle: 'SceneFlow 自动算力成本与交付范围测算器',
       estSub: '12 分钟跨年代家族视频回忆录 · 6 章节 · 24 场戏 · 4K 母带 + 60 秒预告片',
       rows: [
-        ['30 分钟受众共鸣优化多场剧本 + 角色配音合成', '$4.80 (480 cr)'],
-        ['跨年龄容貌一致性锁定 + 48 张场次关键帧', '$5.40 (540 cr)'],
-        ['Pre-Vis 动态预演把关 + 电影视频生成 + 4K 超分', '$24.00 (2,400 cr)'],
-        ['制片人有效协同与精修预估耗时（约 75 分钟）', '~$62.00 人工折算'],
+        ['30 分钟受众共鸣优化多场剧本 + 角色配音合成', '¥32 (480 cr)'],
+        ['跨年龄容貌一致性锁定 + 48 张场次关键帧', '¥36 (540 cr)'],
+        ['Pre-Vis 动态预演把关 + 电影视频生成 + 4K 超分', '¥160 (2,400 cr)'],
+        ['制片人有效协同与精修预估耗时（约 75 分钟）', '~¥413 人工折算'],
       ],
-      totalCompute: 'SceneFlow 预计总算力消耗：$34.20 (3,420 cr)',
-      netProfit: '$649 客户套餐预计净利润：+$530.10（82% 净毛利率）',
+      totalCompute: 'SceneFlow 预计总算力消耗：¥228 (3,420 cr)',
+      netProfit: '¥4,327 客户套餐预计净利润：+¥3,534（82% 净毛利率）',
       rightTag: '打包交付内容与一键收款链接',
       rightTitle: '一键发送正式制作收款链接',
       checks: [
@@ -1127,9 +1149,12 @@ const SCREEN_I18N = {
         '☑ 60 秒横竖屏双版本家族聚会精华预告片',
       ],
       pkgPriceLabel: '传家回忆录定制套餐总价：',
+      pkgPriceVal: '¥4,327',
       creditLabel: '抵扣已付分镜蓝图通行证定金：',
+      creditVal: '− ¥193',
       dueLabel: '本次应付正式制作尾款：',
-      sendBtn: '一键发送 Stripe / Whop 收款链接 ($620) →',
+      dueVal: '¥4,134',
+      sendBtn: '一键发送 Stripe / Whop 收款链接 (¥4,134) →',
       sendFoot: '客户付款后系统自动启动 30 分钟剧本生成并发送资产上传链接',
     },
     s6: {
@@ -1190,7 +1215,7 @@ const SCREEN_I18N = {
     s8: {
       pill: '阶段 08 · 交付与净利',
       title: '客户 4K 母带自动解锁 + 工作室单人规模收益看板',
-      badge: '单部净赚 +$530 · 82% 净毛利',
+      badge: '单部净赚 +¥3,534 · 82% 净毛利',
       leftTag: '客户侧看到的画面 · 尊享电影级交付',
       leftTitle: '4K 母带与预告片下载已解锁 ✓',
       deliv1: '✓ 12 分钟 4K UHD 典藏级母带（MP4 + ProRes）',
@@ -1200,12 +1225,12 @@ const SCREEN_I18N = {
       rightTag: '运营者侧收益看板 · 自动化工作室商业模型',
       rightTitle: '90% 流程自动化 · 单人月产 8–15 部大片',
       cards: [
-        ['1. 自负盈亏 $29 蓝图通行证', '83% 毛利', '最高 ~$3.90 算力 · 0 制片人工 · 零废单损耗'],
-        ['2. 家族回忆录正式订单 ($649)', '净赚 +$530', '$34.20 SceneFlow 算力 · 82% 净利润率'],
+        ['1. 自负盈亏 ¥193 蓝图通行证', '83% 毛利', '最高 ~¥26 算力 · 0 制片人工 · 零废单损耗'],
+        ['2. 家族回忆录正式订单 (¥4,327)', '净赚 +¥3,534', '¥228 SceneFlow 算力 · 82% 净利润率'],
         ['3. 单部影片制片人有效投入', '~75 分钟', '3 分钟核价 + 预演与审片室引导签收'],
       ],
       runRateTag: '单人运营工作室月度净利润测算（覆盖四大高毛利垂类）',
-      runRateVal: '$4,240 – $7,950 / 月',
+      runRateVal: '¥28,271 – ¥53,008 / 月',
       runRateSub1: '每月稳健交付 8 至 15 部客户影片 · 每月仅需约 12–18 小时有效投入',
       runRateSub2: '人物回忆录 · 房产导览 · 企业培训 SOP · 品牌故事大片',
     },
@@ -1216,20 +1241,21 @@ const SCREEN_I18N = {
       pill: 'المرحلة 01 · البوابة',
       title: 'Harborlight Video Studio — بوابة الأعمال بعلامتك الخاصة',
       domain: 'portal.harborlightfilms.com · علامة بيضاء 100%',
-      badge: 'اكتشاف مدفوع $29 · هامش 83%',
+      badge: 'اكتشاف مدفوع 108 ر.س · هامش 83%',
       agencySub: 'إنتاج سينمائي مخصص · شاهد واستمع إلى مخطط فيلمك المصوّر خلال دقائق',
       poweredBy: 'مدعوم في الخفاء بواسطة SceneFlow',
       services: [
-        ['أفلام السيرة والذكريات العائلية', '$349 – $1,250', 'وثائقيات عائلية عبر العقود · مختار ✓'],
-        ['جولات العقارات السينمائية', '$199 – $599', 'أفلام عقارية احترافية خلال 48 ساعة'],
-        ['التعليم والتدريب المؤسسي', '$399 – $1,499', 'وحدات تدريبية بأكثر من 70 لغة'],
-        ['قصص العلامات والمؤسسين', '$499 – $1,999', 'أفلام إعلانية عالية التحويل'],
+        ['أفلام السيرة والذكريات العائلية', '1,310 – 4,690 ر.س', 'وثائقيات عائلية عبر العقود · مختار ✓'],
+        ['جولات العقارات السينمائية', '747 – 2,248 ر.س', 'أفلام عقارية احترافية خلال 48 ساعة'],
+        ['التعليم والتدريب المؤسسي', '1,497 – 5,625 ر.س', 'وحدات تدريبية بأكثر من 70 لغة'],
+        ['قصص العلامات والمؤسسين', '1,872 – 7,500 ر.س', 'أفلام إعلانية عالية التحويل'],
       ],
       passTag: 'اكتشاف يموّل نفسه ذاتياً',
-      passTitle: 'باقة مخطط القصة المصوّر ($29)',
+      passTitle: 'باقة مخطط القصة المصوّر (108 ر.س)',
       passSub: 'شاهد واستمع إلى مخطط فيلمك المخصص قبل الالتزام بالإنتاج الكامل.',
+      passPriceHero: '108 ر.س',
       passCredit: 'تُخصم 100% من تكلفة الإنتاج النهائي',
-      passCompute: 'أقصى حوسبة ذكية ~$3.90 ← صافي +$23.96 (هامش 83%)',
+      passCompute: 'أقصى حوسبة ~14.6 ر.س ← صافي +90 ر.س (هامش 83%)',
       passZero: 'صفر مكالمات مجانية · تصفية المشترين الجادين فقط',
       bullets: [
         '✓ بريد تلقائي برابط ذكي لبدء مقابلة القصة بالذكاء الاصطناعي',
@@ -1237,19 +1263,19 @@ const SCREEN_I18N = {
         '✓ حتى 4 مراجعات مفلترة ذكياً عبر Blueprint Director',
         '✓ حتى 3 تقييمات Audience Resonance مرسلة بالبريد',
       ],
-      cta: 'ابدأ مخطط القصة المصوّر الآن — $29 ←',
+      cta: 'ابدأ مخطط القصة المصوّر الآن — 108 ر.س ←',
       payNote: 'Apple Pay · Stripe · Whop · رابط بريد إلكتروني فوري تلقائياً',
     },
     s2: {
       pill: 'المرحلة 02 · المقابلة الذكية',
       title: 'بريد الرابط الذكي التلقائي ← توضيح الرؤية ومقابلة من 4 جولات',
       badge: '0 دقيقة إدارة · 24/7 صوت أو نص',
-      inboxTag: 'بريد العميل · يُرسل فوراً عند دفع $29',
+      inboxTag: 'بريد العميل · يُرسل فوراً عند دفع 108 ر.س',
       inboxTitle: 'تسليم تلقائي عبر الرابط الذكي',
       fromLine: 'من: Harborlight Video Studio <concierge@harborlightfilms.com>',
       toLine: 'إلى: Elena Morales <elena.morales@email.com> · وصل خلال ثانيتين',
       emailHeading: 'أهلاً إيلينا! ابدئي مقابلة القصة خلال 5 دقائق',
-      emailBody1: 'باقة الـ Blueprint بقيمة $29 مفعّلة ومخصومة من قيمة فيلمك.',
+      emailBody1: 'باقة الـ Blueprint بقيمة 108 ر.س مفعّلة ومخصومة من قيمة فيلمك.',
       emailBody2: 'تحدّثي بعفوية أو اكتبي بأي من اللغات السبع دون كلمة مرور.',
       emailBtn: 'افتحي مقابلة الرؤية والقصة الموجّهة ←',
       emailFoot: 'تشمل 4 تعديلات Blueprint + 3 جولات Audience Resonance',
@@ -1259,7 +1285,7 @@ const SCREEN_I18N = {
         '• عزل آمن لكل عميل يحمي حساب المنتج التجاري',
         '• 7 لغات أصلية: EN · ES · PT · HI · ZH · AR · TH',
       ],
-      computeTitle: 'تكلفة حوسبة المرحلة: ~$0.55 · وقت المنتج: 0 دقيقة',
+      computeTitle: 'تكلفة حوسبة المرحلة: ~2.1 ر.س · وقت المنتج: 0 دقيقة',
       computeSub: 'تأكيد الرؤية في جولتين + إتمام المقابلة الساعة 9:42 مساءً',
       rightTag: 'توضيح الرؤية ومقابلة القصة من 4 جولات · مكتمل 96%',
       rightTitle: '«فيلم ذكريات الميناء — عيد ميلاد ماتيو الثمانين»',
@@ -1292,7 +1318,7 @@ const SCREEN_I18N = {
       ],
       voReady: '▶ التعليق الصوتي جاهز',
       botTitle: 'يُسلَّم تلقائياً عبر بريد يحمل علامتك التجارية خلال ~3 دقائق',
-      botLine1: '6 لوحات مصوّرة (60 cr) + تعليق صوتي (40 cr) + تقييم صدى الجمهور 1/3 (25 cr) = ~$1.25 حوسبة',
+      botLine1: '6 لوحات مصوّرة (60 cr) + تعليق صوتي (40 cr) + تقييم صدى الجمهور 1/3 (25 cr) = ~4.7 ر.س حوسبة',
       botLine2: 'يمكن للعميل إجراء 4 تعديلات ذاتية + 3 جولات Audience Resonance — أو الضغط على اعتماد.',
       botBtn: 'تعديل أو اعتماد الـ Blueprint ←',
     },
@@ -1322,7 +1348,7 @@ const SCREEN_I18N = {
       zeroPmNote: 'وقت المنتج المستغرق حتى الآن: صفر دقيقة',
       lockTitle: 'هل أنتِ مستعدة لتثبيت المخطط وطلب عرض السعر؟',
       lockLine1: 'يؤدي الاعتماد إلى تثبيت المشاهد الستة والعصور وقائمة الدعائم،',
-      lockLine2: 'وإشعار المنتج لإرسال رابط الدفع مخصوماً منه رصيد الـ $29.',
+      lockLine2: 'وإشعار المنتج لإرسال رابط الدفع مخصوماً منه رصيد الـ 108 ر.س.',
       rightBtn: '✓ اعتماد المخطط وطلب رابط الإنتاج',
     },
     s5: {
@@ -1333,13 +1359,13 @@ const SCREEN_I18N = {
       estTitle: 'مُقدِّر التكلفة والنطاق التلقائي من SceneFlow',
       estSub: 'فيلم ذكريات عائلي 12 دقيقة · 6 فصول · 24 مشهداً · نسخة 4K + إعلان 60 ثانية',
       rows: [
-        ['سيناريو محسّن في 30 دقيقة + أصوات استوديو للشخصيات', '$4.80 (480 cr)'],
-        ['تطابق الملامح عبر الأعمار + 48 إطاراً مرجعياً للمشاهد', '$5.40 (540 cr)'],
-        ['بوابة Pre-Vis + توليد فيديو سينمائي + ترقية 4K', '$24.00 (2,400 cr)'],
-        ['وقت التعاون واللمسات الإخراجية للمنتج (~75 دقيقة)', '~$62.00 قيمة جهد'],
+        ['سيناريو محسّن في 30 دقيقة + أصوات استوديو للشخصيات', '18 ر.س (480 cr)'],
+        ['تطابق الملامح عبر الأعمار + 48 إطاراً مرجعياً للمشاهد', '20 ر.س (540 cr)'],
+        ['بوابة Pre-Vis + توليد فيديو سينمائي + ترقية 4K', '90 ر.س (2,400 cr)'],
+        ['وقت التعاون واللمسات الإخراجية للمنتج (~75 دقيقة)', '~233 ر.س قيمة جهد'],
       ],
-      totalCompute: 'إجمالي رصيد حوسبة SceneFlow المقدّر: $34.20 (3,420 cr)',
-      netProfit: 'صافي الربح المتوقع لباقة $649: +$530.10 (هامش ربح صافي 82%)',
+      totalCompute: 'إجمالي رصيد حوسبة SceneFlow المقدّر: 128 ر.س (3,420 cr)',
+      netProfit: 'صافي الربح المتوقع لباقة 2,435 ر.س: +1,989 ر.س (هامش صافي 82%)',
       rightTag: 'المخرجات المجمّعة ورابط الدفع',
       rightTitle: 'أرسل رابط دفع الإنتاج بنقرة واحدة',
       checks: [
@@ -1349,9 +1375,12 @@ const SCREEN_I18N = {
         '☑ إعلان عائلي مدته 60 ثانية بالوضعين الأفقي والعمودي',
       ],
       pkgPriceLabel: 'سعر باقة فيلم الذكريات العائلي:',
+      pkgPriceVal: '2,435 ر.س',
       creditLabel: 'ناقص رصيد باقة الـ Blueprint المدفوع:',
+      creditVal: '− 108 ر.س',
       dueLabel: 'صافي الرصيد المستحق للإنتاج:',
-      sendBtn: 'إرسال رابط دفع Stripe / Whop ($620) ←',
+      dueVal: '2,327 ر.س',
+      sendBtn: 'إرسال رابط دفع Stripe / Whop (2,327 ر.س) ←',
       sendFoot: 'يبدأ تلقائياً توليد السيناريو في 30 دقيقة وإرسال رابط رفع الصور فور الدفع',
     },
     s6: {
@@ -1412,7 +1441,7 @@ const SCREEN_I18N = {
     s8: {
       pill: 'المرحلة 08 · التسليم والعائد',
       title: 'فتح تحميل 4K للعميل + عائد الربح الصافي للاستوديو',
-      badge: '+$530 صافي / فيلم · هامش 82%',
+      badge: '+1,989 ر.س صافي / فيلم · هامش 82%',
       leftTag: 'ما يراه عميلك · تسليم فاخر بعلامتك',
       leftTitle: 'تم فتح النسخة الرئيسية 4K والإعلان ✓',
       deliv1: '✓ نسخة أرشيفية 4K UHD مدتها 12 دقيقة (MP4 + ProRes)',
@@ -1422,12 +1451,12 @@ const SCREEN_I18N = {
       rightTag: 'ما تحققه أنت · اقتصاديات الاستوديو المؤتمتة',
       rightTitle: 'أتمتة 90% · أنتج 8–15 فيلماً شهرياً',
       cards: [
-        ['1. باقة Blueprint مموّلة ذاتياً ($29)', 'هامش 83%', 'أقصى حوسبة ~$3.90 · 0 دقيقة إدارة'],
-        ['2. طلب فيلم الذكريات الكامل ($649)', '+$530 صافي', 'حوسبة SceneFlow بـ $34.20 · صافي هامش 82%'],
+        ['1. باقة Blueprint مموّلة ذاتياً (108 ر.س)', 'هامش 83%', 'أقصى حوسبة ~14.6 ر.س · 0 دقيقة إدارة'],
+        ['2. طلب فيلم الذكريات الكامل (2,435 ر.س)', '+1,989 ر.س', 'حوسبة SceneFlow بـ 128 ر.س · صافي هامش 82%'],
         ['3. وقت المنتج الفعلي لكل فيلم', '~75 دقيقة', '3 دقائق تسعير + اعتماد موجّه في غرفة العرض'],
       ],
       runRateTag: 'صافي الربح الشهري لمشغّل منفرد (عبر 4 قطاعات)',
-      runRateVal: '$4,240 – $7,950 / شهرياً',
+      runRateVal: '15,909 – 29,830 ر.س / شهرياً',
       runRateSub1: '8 إلى 15 فيلماً شهرياً · ~12–18 ساعة عمل فعلية إجمالاً',
       runRateSub2: 'أفلام الذكريات · العقارات · التدريب · قصص العلامات',
     },
@@ -1438,20 +1467,21 @@ const SCREEN_I18N = {
       pill: 'ขั้นที่ 01 · พอร์ทัลธุรกิจ',
       title: 'Harborlight Video Studio — หน้าเว็บ White-Label ของคุณ',
       domain: 'portal.harborlightfilms.com · White-Label 100%',
-      badge: 'มัดจำ $29 · กำไรสุทธิ 83%',
+      badge: 'มัดจำ ฿985 · กำไรสุทธิ 83%',
       agencySub: 'บริการผลิตภาพยนตร์เฉพาะบุคคล · ชมและฟัง Storyboard Blueprint ของคุณได้ในไม่กี่นาที',
       poweredBy: 'ขับเคลื่อนเบื้องหลังโดย SceneFlow',
       services: [
-        ['วิดีโอชีวประวัติและรำลึกครอบครัว', '$349 – $1,250', 'สารคดีครอบครัวข้ามยุคสมัย · เลือกอยู่ ✓'],
-        ['ทัวร์อสังหาริมทรัพย์ระดับภาพยนตร์', '$199 – $599', 'วิดีโอพรีเซนต์โครงการภายใน 48 ชั่วโมง'],
-        ['สื่อการสอนและอบรมพนักงาน SOP', '$399 – $1,499', 'บทเรียนองค์กรรองรับกว่า 70+ ภาษา'],
-        ['วิดีโอผู้ก่อตั้งและแบรนด์สตอรี่', '$499 – $1,999', 'ภาพยนตร์โฆษณาสร้างยอดขายสูง'],
+        ['วิดีโอชีวประวัติและรำลึกครอบครัว', '฿11,860 – ฿42,480', 'สารคดีครอบครัวข้ามยุคสมัย · เลือกอยู่ ✓'],
+        ['ทัวร์อสังหาริมทรัพย์ระดับภาพยนตร์', '฿6,760 – ฿20,350', 'วิดีโอพรีเซนต์โครงการภายใน 48 ชั่วโมง'],
+        ['สื่อการสอนและอบรมพนักงาน SOP', '฿13,560 – ฿50,940', 'บทเรียนองค์กรรองรับกว่า 70+ ภาษา'],
+        ['วิดีโอผู้ก่อตั้งและแบรนด์สตอรี่', '฿16,960 – ฿67,930', 'ภาพยนตร์โฆษณาสร้างยอดขายสูง'],
       ],
       passTag: 'คัดกรองลูกค้าจริงแบบคุ้มทุนตัวเอง',
-      passTitle: 'แพ็กเกจ Storyboard Blueprint ($29)',
+      passTitle: 'แพ็กเกจ Storyboard Blueprint (฿985)',
       passSub: 'ชมภาพและฟังเสียงบรรยายโครงเรื่องก่อนตัดสินใจสั่งผลิตจริง',
+      passPriceHero: '฿985',
       passCredit: 'นำมาหักส่วนลดค่าผลิตจริงได้เต็ม 100%',
-      passCompute: 'ค่าคอมพิวต์สูงสุด ~$3.90 → กำไรสุทธิ +$23.96 (83%)',
+      passCompute: 'ค่าคอมพิวต์สูงสุด ~฿133 → กำไรสุทธิ +฿814 (83%)',
       passZero: 'ไม่ต้องคุยงานฟรี · คัดกรองเฉพาะลูกค้าที่พร้อมซื้อจริง',
       bullets: [
         '✓ ส่งอีเมลเมจิกลิงก์เข้าสู่บทสัมภาษณ์ AI อัตโนมัติทันที',
@@ -1459,19 +1489,19 @@ const SCREEN_I18N = {
         '✓ ปรับแก้ผ่าน AI Blueprint Director ได้สูงสุด 4 รอบ',
         '✓ ประเมินคะแนน Audience Resonance ส่งทางอีเมล 3 รอบ',
       ],
-      cta: 'เริ่มสร้าง Storyboard Blueprint — $29 →',
+      cta: 'เริ่มสร้าง Storyboard Blueprint — ฿985 →',
       payNote: 'Apple Pay · Stripe · Whop · รับลิงก์ทางอีเมลอัตโนมัติทันที',
     },
     s2: {
       pill: 'ขั้นที่ 02 · สัมภาษณ์ AI',
       title: 'อีเมลเมจิกลิงก์อัตโนมัติ → ยืนยันวิสัยทัศน์และสัมภาษณ์ 4 รอบ',
       badge: 'PM 0 นาที · พูดหรือพิมพ์ได้ 24 ชม.',
-      inboxTag: 'กล่องจดหมายลูกค้า · ส่งทันทีหลังชำระ $29',
+      inboxTag: 'กล่องจดหมายลูกค้า · ส่งทันทีหลังชำระ ฿985',
       inboxTitle: 'ส่งเมจิกลิงก์อัตโนมัติภายใต้แบรนด์คุณ',
       fromLine: 'จาก: Harborlight Video Studio <concierge@harborlightfilms.com>',
       toLine: 'ถึง: Elena Morales <elena.morales@email.com> · ส่งถึงใน 2 วินาที',
       emailHeading: 'ยินดีต้อนรับ Elena! เริ่มเล่าเรื่องราว 5 นาทีได้เลย',
-      emailBody1: 'แพ็กเกจ Blueprint $29 ของคุณพร้อมใช้งานและใช้ลดค่าผลิตจริงได้เต็มจำนวน',
+      emailBody1: 'แพ็กเกจ Blueprint ฿985 ของคุณพร้อมใช้งานและใช้ลดค่าผลิตจริงได้เต็มจำนวน',
       emailBody2: 'พูดเล่าอย่างเป็นธรรมชาติหรือพิมพ์ได้ 7 ภาษา โดยไม่ต้องตั้งรหัสผ่าน',
       emailBtn: 'เปิดหน้าสัมภาษณ์วิสัยทัศน์และเรื่องราว →',
       emailFoot: 'รวมสิทธิ์ปรับแก้ Blueprint 4 รอบ + วิเคราะห์ Audience Resonance 3 รอบ',
@@ -1481,7 +1511,7 @@ const SCREEN_I18N = {
         '• ระบบแยกพื้นที่ปลอดภัยรายลูกค้า ปกป้องบัญชีโปรดิวเซอร์',
         '• รองรับ 7 ภาษาหลัก: EN · ES · PT · HI · ZH · AR · TH',
       ],
-      computeTitle: 'ต้นทุนคอมพิวต์ขั้นนี้: ~$0.55 · เวลาโปรดิวเซอร์: 0 นาที',
+      computeTitle: 'ต้นทุนคอมพิวต์ขั้นนี้: ~฿19 · เวลาโปรดิวเซอร์: 0 นาที',
       computeSub: 'ยืนยันวิสัยทัศน์ 2 รอบ + สัมภาษณ์ 4 รอบเสร็จสิ้นเวลา 21:42 น.',
       rightTag: 'สรุปวิสัยทัศน์และบทสัมภาษณ์ 4 รอบ · ครบ 96%',
       rightTitle: '“ภาพยนตร์รำลึกท่าเรือ — ฉลอง 80 ปี คุณพ่อ Mateo”',
@@ -1514,7 +1544,7 @@ const SCREEN_I18N = {
       ],
       voReady: '▶ เสียงบรรยายพร้อมฟัง',
       botTitle: 'ส่งถึงลูกค้าอัตโนมัติทางอีเมลแบรนด์ของคุณภายใน ~3 นาที',
-      botLine1: 'ภาพสตอรี่บอร์ด 6 บีต (60 cr) + เสียงบรรยาย (40 cr) + คะแนน AR รอบ 1/3 (25 cr) = ต้นทุน ~$1.25',
+      botLine1: 'ภาพสตอรี่บอร์ด 6 บีต (60 cr) + เสียงบรรยาย (40 cr) + คะแนน AR รอบ 1/3 (25 cr) = ต้นทุน ~฿42',
       botLine2: 'ลูกค้าปรับแก้ Blueprint เองได้ 4 รอบ + วิเคราะห์ Audience Resonance 3 รอบ หรือกดอนุมัติทันที',
       botBtn: 'ปรับแก้หรือกดอนุมัติ Blueprint →',
     },
@@ -1544,7 +1574,7 @@ const SCREEN_I18N = {
       zeroPmNote: 'เวลาที่โปรดิวเซอร์ใช้ไปจนถึงตอนนี้: 0 นาที',
       lockTitle: 'พร้อมล็อก Blueprint และขอใบเสนอราคาผลิตจริงหรือยัง?',
       lockLine1: 'การกดอนุมัติจะล็อกสตอรี่บอร์ดทั้ง 6 บีต ช่วงวัยนักแสดง และรายการพร็อพ',
-      lockLine2: 'พร้อมแจ้งโปรดิวเซอร์ให้ส่งลิงก์ชำระเงินที่หักส่วนลด $29 ให้คุณทันที',
+      lockLine2: 'พร้อมแจ้งโปรดิวเซอร์ให้ส่งลิงก์ชำระเงินที่หักส่วนลด ฿985 ให้คุณทันที',
       rightBtn: '✓ อนุมัติ Blueprint และขอลิงก์ชำระเงิน',
     },
     s5: {
@@ -1555,13 +1585,13 @@ const SCREEN_I18N = {
       estTitle: 'ระบบคำนวณต้นทุนคอมพิวต์และขอบเขตงานอัตโนมัติ',
       estSub: 'ภาพยนตร์ชีวประวัติครอบครัว 12 นาที · 6 บท · 24 ซีน · 4K Master + เทรลเลอร์ 60 วิ',
       rows: [
-        ['บทภาพยนตร์ปรับจูน AR ใน 30 นาที + เสียงพากย์สตูดิโอ', '$4.80 (480 cr)'],
-        ['ล็อกใบหน้าหลายช่วงวัย + ภาพคีย์เฟรม 48 ซีน', '$5.40 (540 cr)'],
-        ['ด่านตรวจ Pre-Vis + เรนเดอร์วิดีโอภาพยนตร์ + อัปสเกล 4K', '$24.00 (2,400 cr)'],
-        ['เวลาดูแลและขัดเกลาโดยโปรดิวเซอร์ (~75 นาที)', '~$62.00 เทียบค่าแรง'],
+        ['บทภาพยนตร์ปรับจูน AR ใน 30 นาที + เสียงพากย์สตูดิโอ', '฿163 (480 cr)'],
+        ['ล็อกใบหน้าหลายช่วงวัย + ภาพคีย์เฟรม 48 ซีน', '฿184 (540 cr)'],
+        ['ด่านตรวจ Pre-Vis + เรนเดอร์วิดีโอภาพยนตร์ + อัปสเกล 4K', '฿815 (2,400 cr)'],
+        ['เวลาดูแลและขัดเกลาโดยโปรดิวเซอร์ (~75 นาที)', '~฿2,107 เทียบค่าแรง'],
       ],
-      totalCompute: 'เครดิตคอมพิวต์ SceneFlow รวมทั้งหมด: $34.20 (3,420 cr)',
-      netProfit: 'กำไรสุทธิคาดการณ์จากแพ็กเกจ $649: +$530.10 (อัตรากำไร 82%)',
+      totalCompute: 'เครดิตคอมพิวต์ SceneFlow รวมทั้งหมด: ฿1,162 (3,420 cr)',
+      netProfit: 'กำไรสุทธิคาดการณ์จากแพ็กเกจ ฿22,055: +฿18,011 (อัตรากำไร 82%)',
       rightTag: 'ชุดผลงานส่งมอบและลิงก์ชำระเงิน',
       rightTitle: 'ส่งลิงก์ชำระเงินผลิตจริงในคลิกเดียว',
       checks: [
@@ -1571,9 +1601,12 @@ const SCREEN_I18N = {
         '☑ เทรลเลอร์ครอบครัว 60 วินาที (ทั้งแนวนอนและแนวตั้ง)',
       ],
       pkgPriceLabel: 'ราคาแพ็กเกจภาพยนตร์มรดกครอบครัว:',
+      pkgPriceVal: '฿22,055',
       creditLabel: 'หักส่วนลดแพ็กเกจ Blueprint ที่ชำระแล้ว:',
+      creditVal: '− ฿985',
       dueLabel: 'ยอดชำระค่าผลิตสุทธิคงเหลือ:',
-      sendBtn: 'ส่งลิงก์ชำระเงิน Stripe / Whop ($620) →',
+      dueVal: '฿21,070',
+      sendBtn: 'ส่งลิงก์ชำระเงิน Stripe / Whop (฿21,070) →',
       sendFoot: 'เริ่มสร้างบท 30 นาที + ส่งลิงก์อัปโหลดรูปอ้างอิงอัตโนมัติทันทีหลังชำระเงิน',
     },
     s6: {
@@ -1634,7 +1667,7 @@ const SCREEN_I18N = {
     s8: {
       pill: 'ขั้นที่ 08 · ส่งมอบ & กำไร',
       title: 'ปลดล็อกดาวน์โหลด 4K ให้ลูกค้า + สรุปกำไรสุทธิสตูดิโอ',
-      badge: 'กำไร +$530 / เรื่อง · มาร์จิ้น 82%',
+      badge: 'กำไร +฿18,011 / เรื่อง · มาร์จิ้น 82%',
       leftTag: 'สิ่งที่ลูกค้าของคุณได้รับ · ประสบการณ์ส่งมอบระดับหรู',
       leftTitle: 'ปลดล็อกไฟล์ 4K Master และเทรลเลอร์แล้ว ✓',
       deliv1: '✓ ภาพยนตร์ 4K UHD Master ความยาว 12 นาที (MP4 + ProRes)',
@@ -1644,12 +1677,12 @@ const SCREEN_I18N = {
       rightTag: 'สิ่งที่คุณได้รับ · โมเดลรายได้สตูดิโออัตโนมัติ',
       rightTitle: 'อัตโนมัติ 90% · ขยายสู่ 8–15 เรื่อง / เดือน',
       cards: [
-        ['1. แพ็กเกจ Blueprint คุ้มทุนตัวเอง ($29)', 'กำไร 83%', 'คอมพิวต์สูงสุด ~$3.90 · PM 0 นาที'],
-        ['2. แพ็กเกจภาพยนตร์ชีวประวัติ ($649)', 'สุทธิ +$530', 'คอมพิวต์ SceneFlow $34.20 · กำไรสุทธิ 82%'],
+        ['1. แพ็กเกจ Blueprint คุ้มทุนตัวเอง (฿985)', 'กำไร 83%', 'คอมพิวต์สูงสุด ~฿133 · PM 0 นาที'],
+        ['2. แพ็กเกจภาพยนตร์ชีวประวัติ (฿22,055)', '+฿18,011', 'คอมพิวต์ SceneFlow ฿1,162 · กำไรสุทธิ 82%'],
         ['3. เวลาทำงานจริงต่อเรื่อง', '~75 นาที', 'ออกใบเสนอราคา 3 นาที + ดูแลตรวจรับงาน'],
       ],
       runRateTag: 'กำไรสุทธิรายเดือนสำหรับผู้ดูแลคนเดียว (ครบ 4 บริการ)',
-      runRateVal: '$4,240 – $7,950 / เดือน',
+      runRateVal: '฿144,091 – ฿270,172 / เดือน',
       runRateSub1: 'ส่งมอบ 8 ถึง 15 เรื่อง / เดือน · ใช้เวลาทำงานจริงรวมเพียง ~12–18 ชม.',
       runRateSub2: 'ชีวประวัติ · อสังหาริมทรัพย์ · สื่อฝึกอบรม · แบรนด์สตอรี่',
     },
@@ -1658,6 +1691,16 @@ const SCREEN_I18N = {
 
 function buildScreensForLocale(t, imgs) {
   const { imgMemoir1, imgMemoir2, imgRealEstate, imgTraining, imgBrand1, imgBrand2, imgCharOlder, imgCharYoung, imgPropCompass } = imgs
+  const heroPrice = t.s1.passPriceHero || '$29'
+  const effHeroLen = heroPrice.includes('฿') ? heroPrice.length + 1 : heroPrice.length
+  const heroFontSize = effHeroLen <= 3 ? 82 : effHeroLen <= 4 ? 66 : effHeroLen <= 5 ? 58 : 50
+  const heroRightX = effHeroLen <= 3 ? 1868 : effHeroLen <= 4 ? 1884 : effHeroLen <= 5 ? 1908 : 1924
+  const heroCreditFontSize = heroRightX >= 1910 ? 21 : 23
+  const heroSubFontSize = heroRightX >= 1910 ? 17.5 : 19
+  const s5NetProfitFontSize = t.s5.netProfit.length > 52 ? 25 : 29
+  const s5DueFontSize = (t.s5.dueVal || '').length > 8 ? 38 : 42
+  const s8RunRateFontSize = t.s8.runRateVal.length > 26 ? 52 : t.s8.runRateVal.length > 21 ? 58 : 72
+
   return [
     {
       slug: '01-business-portal',
@@ -1682,14 +1725,18 @@ function buildScreensForLocale(t, imgs) {
             { x: 844, y: 856, img: imgBrand1, s: t.s1.services[3], active: false },
           ]
             .map(
-              (c) => `
+              (c) => {
+                const svcTitleFs = c.s[0].length > 26 ? 22 : c.s[0].length > 22 ? 24 : 26
+                const svcPriceFs = c.s[1].length > 16 ? 20 : c.s[1].length > 13 ? 22 : 24
+                return `
             <rect x="${c.x}" y="${c.y}" width="728" height="512" rx="24" fill="url(#cardDark)" stroke="${c.active ? '#10b981' : '#1e293b'}" stroke-width="${c.active ? '4' : '2'}"/>
             <clipPath id="cp-${c.x}-${c.y}"><rect x="${c.x + 18}" y="${c.y + 18}" width="692" height="330" rx="16"/></clipPath>
             <image href="${c.img}" x="${c.x + 18}" y="${c.y + 18}" width="692" height="330" preserveAspectRatio="xMidYMid slice" clip-path="url(#cp-${c.x}-${c.y})"/>
-            <text x="${c.x + 32}" y="${c.y + 398}" fill="#ffffff" font-size="26" font-weight="800">${esc(c.s[0])}</text>
-            <text x="${c.x + 696}" y="${c.y + 398}" fill="#34d399" font-size="24" font-weight="800" text-anchor="end">${esc(c.s[1])}</text>
+            <text x="${c.x + 32}" y="${c.y + 398}" fill="#ffffff" font-size="${svcTitleFs}" font-weight="800">${esc(c.s[0])}</text>
+            <text x="${c.x + 696}" y="${c.y + 398}" fill="#34d399" font-size="${svcPriceFs}" font-weight="800" text-anchor="end">${esc(c.s[1])}</text>
             <text x="${c.x + 32}" y="${c.y + 442}" fill="${c.active ? '#6ee7b7' : '#94a3b8'}" font-size="20" font-weight="600">${esc(c.s[2])}</text>
           `
+              }
             )
             .join('')}
 
@@ -1701,10 +1748,10 @@ function buildScreensForLocale(t, imgs) {
           <text x="1652" y="518" fill="#a7f3d0" font-size="21">${esc(t.s1.passSub)}</text>
 
           <rect x="1652" y="556" width="772" height="176" rx="22" fill="#021713" stroke="#10b981" stroke-width="2"/>
-          <text x="1688" y="658" fill="#ffffff" font-size="82" font-weight="900">$29</text>
-          <text x="1868" y="624" fill="#34d399" font-size="23" font-weight="800">${esc(t.s1.passCredit)}</text>
-          <text x="1868" y="666" fill="#94a3b8" font-size="19">${esc(t.s1.passCompute)}</text>
-          <text x="1868" y="704" fill="#fbbf24" font-size="19" font-weight="700">${esc(t.s1.passZero)}</text>
+          <text x="1682" y="658" fill="#ffffff" font-size="${heroFontSize}" font-weight="900">${esc(heroPrice)}</text>
+          <text x="${heroRightX}" y="624" fill="#34d399" font-size="${heroCreditFontSize}" font-weight="800">${esc(t.s1.passCredit)}</text>
+          <text x="${heroRightX}" y="666" fill="#94a3b8" font-size="${heroSubFontSize}">${esc(t.s1.passCompute)}</text>
+          <text x="${heroRightX}" y="704" fill="#fbbf24" font-size="${heroSubFontSize}" font-weight="700">${esc(t.s1.passZero)}</text>
 
           ${t.s1.bullets
             .map(
@@ -1914,7 +1961,7 @@ function buildScreensForLocale(t, imgs) {
 
           <rect x="136" y="844" width="1144" height="176" rx="22" fill="#052e2b" fill-opacity="0.55" stroke="#10b981" stroke-width="2"/>
           <text x="176" y="908" fill="#a7f3d0" font-size="22" font-weight="700">${esc(t.s5.totalCompute)}</text>
-          <text x="176" y="964" fill="#ffffff" font-size="29" font-weight="900">${esc(t.s5.netProfit)}</text>
+          <text x="176" y="964" fill="#ffffff" font-size="${s5NetProfitFontSize}" font-weight="900">${esc(t.s5.netProfit)}</text>
 
           <rect x="1364" y="162" width="1108" height="1202" rx="24" fill="#0f172a" stroke="#f59e0b" stroke-width="3"/>
           <text x="1412" y="226" fill="#fbbf24" font-size="19" font-weight="800">${esc(t.s5.rightTag)}</text>
@@ -1931,12 +1978,12 @@ function buildScreensForLocale(t, imgs) {
 
           <rect x="1412" y="750" width="1012" height="250" rx="22" fill="#1c1917" stroke="#f59e0b" stroke-width="2"/>
           <text x="1456" y="814" fill="#cbd5e1" font-size="23">${esc(t.s5.pkgPriceLabel)}</text>
-          <text x="2380" y="814" fill="#ffffff" font-size="28" font-weight="800" text-anchor="end">$649.00</text>
+          <text x="2380" y="814" fill="#ffffff" font-size="28" font-weight="800" text-anchor="end">${esc(t.s5.pkgPriceVal)}</text>
           <text x="1456" y="868" fill="#34d399" font-size="23">${esc(t.s5.creditLabel)}</text>
-          <text x="2380" y="868" fill="#34d399" font-size="28" font-weight="800" text-anchor="end">− $29.00</text>
+          <text x="2380" y="868" fill="#34d399" font-size="28" font-weight="800" text-anchor="end">${esc(t.s5.creditVal)}</text>
           <line x1="1456" y1="898" x2="2380" y2="898" stroke="#44403c" stroke-width="2"/>
           <text x="1456" y="958" fill="#fbbf24" font-size="29" font-weight="900">${esc(t.s5.dueLabel)}</text>
-          <text x="2380" y="958" fill="#fbbf24" font-size="42" font-weight="900" text-anchor="end">$620.00</text>
+          <text x="2380" y="958" fill="#fbbf24" font-size="${s5DueFontSize}" font-weight="900" text-anchor="end">${esc(t.s5.dueVal)}</text>
 
           <rect x="1412" y="1056" width="1012" height="108" rx="24" fill="url(#amberGrad)"/>
           <text x="1918" y="1122" fill="#0f172a" font-size="28" font-weight="900" text-anchor="middle">${esc(t.s5.sendBtn)}</text>
@@ -2094,11 +2141,12 @@ function buildScreensForLocale(t, imgs) {
             .map(
               (card, idx) => {
                 const y = 332 + idx * 188
+                const cardStatFs = card[1].length > 11 ? 33 : card[1].length > 8 ? 37 : 42
                 return `
             <rect x="1296" y="${y}" width="1124" height="162" rx="22" fill="#021713" stroke="#10b981" stroke-width="2"/>
             <text x="1336" y="${y + 66}" fill="#ffffff" font-size="26" font-weight="800">${esc(card[0])}</text>
             <text x="1336" y="${y + 116}" fill="#a7f3d0" font-size="20">${esc(card[2])}</text>
-            <text x="2376" y="${y + 96}" fill="#34d399" font-size="42" font-weight="900" text-anchor="end">${esc(card[1])}</text>
+            <text x="2376" y="${y + 96}" fill="#34d399" font-size="${cardStatFs}" font-weight="900" text-anchor="end">${esc(card[1])}</text>
           `
               }
             )
@@ -2106,7 +2154,7 @@ function buildScreensForLocale(t, imgs) {
 
           <rect x="1296" y="914" width="1124" height="390" rx="24" fill="#0f172a" stroke="#fbbf24" stroke-width="3"/>
           <text x="1858" y="986" fill="#fde68a" font-size="22" font-weight="800" text-anchor="middle">${esc(t.s8.runRateTag)}</text>
-          <text x="1858" y="1096" fill="#ffffff" font-size="72" font-weight="900" text-anchor="middle">${esc(t.s8.runRateVal)}</text>
+          <text x="1858" y="1096" fill="#ffffff" font-size="${s8RunRateFontSize}" font-weight="900" text-anchor="middle">${esc(t.s8.runRateVal)}</text>
           <text x="1858" y="1164" fill="#34d399" font-size="23" font-weight="800" text-anchor="middle">${esc(t.s8.runRateSub1)}</text>
           <text x="1858" y="1226" fill="#94a3b8" font-size="20" text-anchor="middle">${esc(t.s8.runRateSub2)}</text>
         `,

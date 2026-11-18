@@ -139,13 +139,13 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 2,
-        "title": "App 1 · Portal de Negocio: 4 Servicios y Pase Autofinanciado de $29",
+        "title": "App 1 · Portal de Negocio: 4 Servicios y Pase Autofinanciado de MX$547",
         "startSec": 11.33,
         "endSec": 27.54
       },
       {
         "beatNumber": 3,
-        "title": "Historia: Elena Compra el Pase de $29 y Relata los Recuerdos de su Padre",
+        "title": "Historia: Elena Compra el Pase de MX$547 y Relata los Recuerdos de su Padre",
         "startSec": 27.54,
         "endSec": 37.46
       },
@@ -217,7 +217,7 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 15,
-        "title": "App 8 · Descarga 4K y Rentabilidad (+$530 Neto / Film · 82% Margen)",
+        "title": "App 8 · Descarga 4K y Rentabilidad (+MX$10,010 Neto / Film · 82% Margen)",
         "startSec": 165.04,
         "endSec": 175.96
       },
@@ -243,13 +243,13 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 2,
-        "title": "App 1 · Portal de Negócios: 4 Serviços e Passe Autofinanciado de $29",
+        "title": "App 1 · Portal de Negócios: 4 Serviços e Passe Autofinanciado de R$170",
         "startSec": 12,
         "endSec": 28.17
       },
       {
         "beatNumber": 3,
-        "title": "História: Elena Compra o Passe de $29 e Conta as Memórias do Pai",
+        "title": "História: Elena Compra o Passe de R$170 e Conta as Memórias do Pai",
         "startSec": 28.17,
         "endSec": 38.63
       },
@@ -321,7 +321,7 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 15,
-        "title": "App 8 · Download 4K e Retorno (+$530 Líquido / Filme · 82% Margem)",
+        "title": "App 8 · Download 4K e Retorno (+R$3,113 Líquido / Filme · 82% Margem)",
         "startSec": 181.13,
         "endSec": 193
       },
@@ -347,13 +347,13 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 2,
-        "title": "ऐप 1 · बिज़नेस पोर्टल: 4 सेवाएँ और स्व-वित्तपोषित $29 ब्लूप्रिंट पास",
+        "title": "ऐप 1 · बिज़नेस पोर्टल: 4 सेवाएँ और स्व-वित्तपोषित ₹2,720 ब्लूप्रिंट पास",
         "startSec": 13.25,
         "endSec": 31.79
       },
       {
         "beatNumber": 3,
-        "title": "कहानी: एलेना ने $29 पास लिया और पिता की यादें साझा कीं",
+        "title": "कहानी: एलेना ने ₹2,720 पास लिया और पिता की यादें साझा कीं",
         "startSec": 31.79,
         "endSec": 45.46
       },
@@ -425,7 +425,7 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 15,
-        "title": "ऐप 8 · 4K डाउनलोड अनलॉक और स्टूडियो ROI (+$530 शुद्ध लाभ · 82% मार्जिन)",
+        "title": "ऐप 8 · 4K डाउनलोड अनलॉक और स्टूडियो ROI (+₹49,529 शुद्ध लाभ · 82% मार्जिन)",
         "startSec": 211.25,
         "endSec": 226.17
       },
@@ -451,13 +451,13 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 2,
-        "title": "应用 1 · 品牌门户：四大视频服务与 29 美元蓝图通行证",
+        "title": "应用 1 · 品牌门户：四大视频服务与 ¥193 蓝图通行证",
         "startSec": 14.75,
         "endSec": 37.83
       },
       {
         "beatNumber": 3,
-        "title": "故事：Elena 支付 29 美元并语音讲述父亲往事",
+        "title": "故事：Elena 支付 ¥193 并语音讲述父亲往事",
         "startSec": 37.83,
         "endSec": 49.58
       },
@@ -529,7 +529,7 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 15,
-        "title": "应用 8 · 四K母带解锁与工作室收益看板（单部净赚 530 美元 · 82% 毛利）",
+        "title": "应用 8 · 四K母带解锁与工作室收益看板（单部净赚 +¥3,534 · 82% 毛利）",
         "startSec": 223.92,
         "endSec": 239.21
       },
@@ -555,13 +555,13 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 2,
-        "title": "التطبيق 1 · بوابة الأعمال: أربع خدمات وباقة المخطط الممولة ذاتياً بـ 29 دولاراً",
+        "title": "التطبيق 1 · بوابة الأعمال: أربع خدمات وباقة المخطط الممولة ذاتياً بـ 108 ر.س",
         "startSec": 19.38,
         "endSec": 42.5
       },
       {
         "beatNumber": 3,
-        "title": "القصة: إيلينا تشتري باقة 29 دولاراً وتروي ذكريات والدها",
+        "title": "القصة: إيلينا تشتري باقة 108 ر.س وتروي ذكريات والدها",
         "startSec": 42.5,
         "endSec": 55.79
       },
@@ -633,7 +633,7 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 15,
-        "title": "التطبيق 8 · فتح تحميل 4K وعائد الاستوديو (+530 دولاراً صافي ربح · 82% هامش)",
+        "title": "التطبيق 8 · فتح تحميل 4K وعائد الاستوديو (+1,989 ر.س صافي ربح · 82% هامش)",
         "startSec": 254.67,
         "endSec": 277.25
       },
@@ -659,13 +659,13 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 2,
-        "title": "แอป 1 · พอร์ทัลธุรกิจ: 4 บริการวิดีโอและแพ็กเกจ Blueprint $29",
+        "title": "แอป 1 · พอร์ทัลธุรกิจ: 4 บริการวิดีโอและแพ็กเกจ Blueprint ฿985",
         "startSec": 12.92,
         "endSec": 35
       },
       {
         "beatNumber": 3,
-        "title": "เรื่องราว: เอเลน่าซื้อแพ็กเกจ $29 และเล่าความทรงจำของคุณพ่อ",
+        "title": "เรื่องราว: เอเลน่าซื้อแพ็กเกจ ฿985 และเล่าความทรงจำของคุณพ่อ",
         "startSec": 35,
         "endSec": 49.63
       },
@@ -737,7 +737,7 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
       },
       {
         "beatNumber": 15,
-        "title": "แอป 8 · ปลดล็อกไฟล์ 4K และสรุปกำไรสตูดิโอ (+$530 สุทธิ/เรื่อง · กำไร 82%)",
+        "title": "แอป 8 · ปลดล็อกไฟล์ 4K และสรุปกำไรสตูดิโอ (+฿18,011 สุทธิ/เรื่อง · กำไร 82%)",
         "startSec": 217.75,
         "endSec": 232.33
       },
