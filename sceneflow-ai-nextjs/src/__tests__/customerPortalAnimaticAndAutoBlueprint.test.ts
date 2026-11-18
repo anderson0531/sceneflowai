@@ -80,7 +80,12 @@ import {
   CUSTOMER_PORTAL_VIDEO_MANIFEST,
   resolveCustomerPortalVideoLocale,
 } from '@/config/landing/customerPortalVideoManifest'
-import { CustomerPortalExperienceAnimatic } from '@/components/landing/CustomerPortalExperienceAnimatic'
+import {
+  CustomerPortalExperienceAnimatic,
+  FILM_BEAT_TO_STAGE_IDX,
+  PORTAL_STAGE_START_FILM_BEAT_IDX,
+  formatPortalWorkflowStepTooltip,
+} from '@/components/landing/CustomerPortalExperienceAnimatic'
 import {
   DEFAULT_CLIENT_BLUEPRINT_DEPOSIT_USD,
   DEFAULT_MAX_AUTOMATED_AR_ITERATIONS,
@@ -391,6 +396,31 @@ describe('Customer Portal Narrated Animatic (7 Locales) & Automated Client Bluep
       expect(entry!.durationSec).toBeGreaterThan(150)
       expect(entry!.webmSrc).toBe(`/landing/video-services/videos/portal-${opt.id}.webm`)
       expect(entry!.mp4Src).toBe(`/landing/video-services/videos/portal-${opt.id}.mp4`)
+    }
+  })
+
+  it('maps all 8 workflow step bookmarks (01..08) to valid film chapters and localized tooltips', () => {
+    expect(PORTAL_STAGE_START_FILM_BEAT_IDX).toHaveLength(8)
+    expect(FILM_BEAT_TO_STAGE_IDX).toHaveLength(16)
+
+    for (let stageIdx = 0; stageIdx < PORTAL_STAGE_START_FILM_BEAT_IDX.length; stageIdx++) {
+      const startBeatIdx = PORTAL_STAGE_START_FILM_BEAT_IDX[stageIdx]!
+      expect(FILM_BEAT_TO_STAGE_IDX[startBeatIdx]).toBe(stageIdx)
+      if (stageIdx > 0) {
+        expect(startBeatIdx).toBeGreaterThan(PORTAL_STAGE_START_FILM_BEAT_IDX[stageIdx - 1]!)
+      }
+    }
+
+    for (const opt of FEATURE_PAN_LOCALE_OPTIONS) {
+      const locBeats = CUSTOMER_PORTAL_ANIMATIC_COPY[opt.id].beats
+      expect(locBeats).toHaveLength(8)
+      locBeats.forEach((beat, idx) => {
+        const expectedStepNum = String(idx + 1).padStart(2, '0')
+        expect(beat.stepNumber).toBe(expectedStepNum)
+        const tooltip = formatPortalWorkflowStepTooltip(beat)
+        expect(tooltip.startsWith(`${expectedStepNum}: `)).toBe(true)
+        expect(tooltip).toContain(beat.headline)
+      })
     }
   })
 })

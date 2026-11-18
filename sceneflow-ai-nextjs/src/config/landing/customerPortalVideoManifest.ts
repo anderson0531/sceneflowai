@@ -337,103 +337,103 @@ export const CUSTOMER_PORTAL_VIDEO_MANIFEST: Partial<
     "webmSrc": "/landing/video-services/videos/portal-hi.webm",
     "mp4Src": "/landing/video-services/videos/portal-hi.mp4",
     "posterSrc": "/landing/video-services/videos/portal-poster.webp",
-    "durationSec": 239.5,
+    "durationSec": 240.58,
     "chapters": [
       {
         "beatNumber": 1,
         "title": "कहानी: माया ने लॉन्च किया अपना व्हाइट-लेबल वीडियो स्टूडियो",
         "startSec": 0,
-        "endSec": 12.75
+        "endSec": 13.25
       },
       {
         "beatNumber": 2,
         "title": "ऐप 1 · बिज़नेस पोर्टल: 4 सेवाएँ और स्व-वित्तपोषित $29 ब्लूप्रिंट पास",
-        "startSec": 12.75,
-        "endSec": 30.08
+        "startSec": 13.25,
+        "endSec": 31.79
       },
       {
         "beatNumber": 3,
         "title": "कहानी: एलेना ने $29 पास लिया और पिता की यादें साझा कीं",
-        "startSec": 30.08,
-        "endSec": 42.92
+        "startSec": 31.79,
+        "endSec": 45.46
       },
       {
         "beatNumber": 4,
         "title": "ऐप 2 · ऑटो इनटेक ईमेल → विज़न पुष्टि और 4-टर्न AI इंटरव्यू",
-        "startSec": 42.92,
-        "endSec": 60.83
+        "startSec": 45.46,
+        "endSec": 63.83
       },
       {
         "beatNumber": 5,
         "title": "कहानी: कुछ ही मिनटों बाद एलेना देखती और सुनती हैं पिता का ब्लूप्रिंट",
-        "startSec": 60.83,
-        "endSec": 73.79
+        "startSec": 63.83,
+        "endSec": 78.17
       },
       {
         "beatNumber": 6,
         "title": "ऐप 3 · शेयर्ड ब्लूप्रिंट: 6 सचित्र बीट स्टोरीबोर्ड और ऑडियो नैरेशन",
-        "startSec": 73.79,
-        "endSec": 89.08
+        "startSec": 78.17,
+        "endSec": 93.92
       },
       {
         "beatNumber": 7,
         "title": "ऐप 4 · 4 AI-फ़िल्टर्ड ब्लूप्रिंट संशोधन और 3 ऑडियंस रेज़ोनेंस पास",
-        "startSec": 89.08,
-        "endSec": 106.33
+        "startSec": 93.92,
+        "endSec": 112.25
       },
       {
         "beatNumber": 8,
         "title": "कहानी: ब्लूप्रिंट लॉक होने पर ही माया सिर्फ़ 3 मिनट जुड़ती हैं",
-        "startSec": 106.33,
-        "endSec": 118.42
+        "startSec": 112.25,
+        "endSec": 124.54
       },
       {
         "beatNumber": 9,
         "title": "ऐप 5 · प्रोड्यूसर कंसोल: लागत अनुमान और Stripe / Whop भुगतान लिंक",
-        "startSec": 118.42,
-        "endSec": 134.67
+        "startSec": 124.54,
+        "endSec": 139.71
       },
       {
         "beatNumber": 10,
         "title": "कहानी: एलेना ने फ़ोन से लीं पिता और सीडर कंपास बॉक्स की तस्वीरें",
-        "startSec": 134.67,
-        "endSec": 147.79
+        "startSec": 139.71,
+        "endSec": 150.92
       },
       {
         "beatNumber": 11,
         "title": "ऐप 6 · 30-मिनट AR स्क्रिप्ट + शेयर्ड कॉन्टिन्यूटी लाइब्रेरी मंज़ूरी",
-        "startSec": 147.79,
-        "endSec": 163.71
+        "startSec": 150.92,
+        "endSec": 165.29
       },
       {
         "beatNumber": 12,
         "title": "कहानी: माया ने Pre-Vis जाँचा और 1972 बोटशॉप के 4K दृश्य तैयार किए",
-        "startSec": 163.71,
-        "endSec": 179.08
+        "startSec": 165.29,
+        "endSec": 179.67
       },
       {
         "beatNumber": 13,
         "title": "ऐप 7 · शेयर्ड स्क्रीनिंग रूम: Pre-Vis, क्लिप्स, चैप्टर्स, मास्टर व ट्रेलर",
-        "startSec": 179.08,
-        "endSec": 194.29
+        "startSec": 179.67,
+        "endSec": 194
       },
       {
         "beatNumber": 14,
         "title": "कहानी: मातेओ के 80वें जन्मदिन पर भावुक 4K परिवार प्रीमियर",
-        "startSec": 194.29,
-        "endSec": 210.04
+        "startSec": 194,
+        "endSec": 211.25
       },
       {
         "beatNumber": 15,
         "title": "ऐप 8 · 4K डाउनलोड अनलॉक और स्टूडियो ROI (+$530 शुद्ध लाभ · 82% मार्जिन)",
-        "startSec": 210.04,
-        "endSec": 223.75
+        "startSec": 211.25,
+        "endSec": 226.17
       },
       {
         "beatNumber": 16,
         "title": "कहानी: बाहर लक्ज़री क्लाइंट पोर्टल · भीतर 90% ऑटोमेटेड स्केल",
-        "startSec": 223.75,
-        "endSec": 239.5
+        "startSec": 226.17,
+        "endSec": 240.58
       }
     ]
   },

@@ -67,9 +67,19 @@ const CONTINUITY_THUMBS = [
 ] as const
 
 /** Maps each of the 16 hybrid film beats (0..15) to its corresponding 8-stage portal phase (0..7). */
-const FILM_BEAT_TO_STAGE_IDX: readonly number[] = [
+export const FILM_BEAT_TO_STAGE_IDX: readonly number[] = [
   0, 0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6, 7, 7, 7,
 ] as const
+
+/** Maps each of the 8 portal workflow stages (0..7) to its starting 16-beat film chapter index. */
+export const PORTAL_STAGE_START_FILM_BEAT_IDX: readonly number[] = [
+  0, 2, 4, 6, 7, 9, 11, 13,
+] as const
+
+export function formatPortalWorkflowStepTooltip(beat: CustomerPortalAnimaticBeatCopy): string {
+  const cleanShort = beat.shortTabLabel.replace(/^[0-9\u0660-\u0669]+\.\s*/, '').trim()
+  return `${beat.stepNumber}: ${cleanShort} — ${beat.headline}`
+}
 
 let sessionPortalAudioUnmuted = false
 
@@ -766,6 +776,49 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
     if (!isPlaying) setIsPlaying(true)
   }
 
+  const handleSelectStage = (targetStageIdx: number) => {
+    const clampedStage = Math.max(0, Math.min(beats.length - 1, targetStageIdx))
+    setIsPlaying(true)
+
+    if (hasStitchedVideo && localeVideo) {
+      const targetFilmBeatIdx =
+        PORTAL_STAGE_START_FILM_BEAT_IDX[clampedStage] ??
+        Math.max(0, FILM_BEAT_TO_STAGE_IDX.indexOf(clampedStage))
+      const chapter = localeVideo.chapters[targetFilmBeatIdx]
+      setBeatIdx(targetFilmBeatIdx)
+      if (chapter) {
+        const vid = videoRef.current
+        const duration = vid && vid.duration > 0 ? vid.duration : localeVideo.durationSec
+        setElapsedSec(chapter.startSec)
+        if (duration > 0) {
+          setOverallProgress(Math.max(0, Math.min(1, chapter.startSec / duration)))
+        }
+        if (vid) {
+          if (vid.readyState >= 1) {
+            vid.currentTime = chapter.startSec + 0.02
+            if (vid.paused) {
+              void vid.play().catch(() => undefined)
+            }
+          } else {
+            pendingSeekBeatRef.current = targetFilmBeatIdx
+            setIsBuffering(true)
+            vid.load()
+            void vid.play().catch(() => undefined)
+          }
+        }
+      }
+      return
+    }
+
+    setBeatIdx(clampedStage)
+    setOverallProgress(clampedStage / Math.max(1, beats.length))
+    if (audioRef.current && localeAudio?.beats[clampedStage]) {
+      const targetSec = localeAudio.beats[clampedStage]!.startSec
+      audioRef.current.currentTime = targetSec + 0.02
+      setElapsedSec(targetSec)
+    }
+  }
+
   const handleSelectLanguage = (nextLocale: FeaturePanLocaleId) => {
     if (hasStitchedVideo && safeIdx > 0) {
       pendingSeekBeatRef.current = safeIdx
@@ -1098,14 +1151,12 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
           </div>
         </div>
 
-        {/* Synchronized Caption + Compact 7-Language Pill Bar (matching VideoServiceOutputShowcase, zero bookmarks) */}
+        {/* Synchronized Caption + Workflow Step Bookmarks & Compact 7-Language Pill Bar (matching VideoServiceOutputShowcase) */}
         <div className="border-t border-white/10 bg-slate-950/95 p-3 sm:p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-bold text-white sm:text-sm">
               <span className="me-1.5 inline-block rounded bg-emerald-500/20 px-1.5 py-0.5 text-[11px] font-extrabold text-emerald-300 tabular-nums">
-                {hasStitchedVideo
-                  ? String(currentFilmBeat.beatNumber).padStart(2, '0')
-                  : currentBeat.stepNumber}
+                {currentBeat.stepNumber}
               </span>
               {hasStitchedVideo ? currentFilmBeat.title[panLocale] : currentBeat.headline}
             </p>
@@ -1118,7 +1169,34 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
             {hasStitchedVideo ? currentFilmBeat.narrationVo[panLocale] : currentBeat.caption}
           </p>
 
-          <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-slate-800/90 pt-2.5">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/90 pt-2.5">
+            {/* 8-Stage Workflow Step Bookmark Pills with Tooltips */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {beats.map((stageBeat, idx) => {
+                const active = idx === stageIdx
+                const stepTooltip = formatPortalWorkflowStepTooltip(stageBeat)
+                return (
+                  <VideoControlTooltip key={stageBeat.id} label={stepTooltip} side="top">
+                    <button
+                      type="button"
+                      title={stepTooltip}
+                      aria-label={stepTooltip}
+                      aria-pressed={active}
+                      onClick={() => handleSelectStage(idx)}
+                      className={cn(
+                        'inline-flex min-h-[32px] min-w-[34px] items-center justify-center rounded-lg border px-2.5 py-1 text-[11px] font-semibold tabular-nums transition-all cursor-pointer',
+                        active
+                          ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-200'
+                          : 'border-slate-800 bg-slate-900/80 text-gray-400 hover:border-slate-600 hover:text-white'
+                      )}
+                    >
+                      {stageBeat.stepNumber}
+                    </button>
+                  </VideoControlTooltip>
+                )
+              })}
+            </div>
+
             {/* 7-Language Switcher Pills (identical to VideoServiceOutputShowcase) */}
             <div className="flex flex-wrap items-center gap-1" aria-label={copy.languageLabel}>
               <Globe2 className="me-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300/80" aria-hidden />
@@ -1127,30 +1205,31 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
                 const hasNativeVideo = Boolean(CUSTOMER_PORTAL_VIDEO_MANIFEST[opt.id])
                 const langTooltip = `${opt.nativeName} (${opt.shortLabel}) — ${copy.languageLabel}`
                 return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    title={langTooltip}
-                    aria-pressed={selected}
-                    aria-busy={selected && isBuffering}
-                    onClick={() => handleSelectLanguage(opt.id)}
-                    className={cn(
-                      'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold transition-all cursor-pointer sm:px-2',
-                      selected
-                        ? 'border-emerald-400/70 bg-emerald-500/25 text-emerald-100'
-                        : hasNativeVideo
-                          ? 'border-emerald-500/35 bg-slate-900/80 text-emerald-200 hover:border-emerald-400/60 hover:text-white'
-                          : 'border-slate-800 bg-slate-900/70 text-gray-400 hover:border-slate-600 hover:text-white'
-                    )}
-                  >
-                    {selected && isBuffering ? (
-                      <Loader2
-                        className="h-2.5 w-2.5 shrink-0 animate-spin text-emerald-300"
-                        aria-hidden
-                      />
-                    ) : null}
-                    <span>{opt.shortLabel}</span>
-                  </button>
+                  <VideoControlTooltip key={opt.id} label={langTooltip} side="top">
+                    <button
+                      type="button"
+                      title={langTooltip}
+                      aria-pressed={selected}
+                      aria-busy={selected && isBuffering}
+                      onClick={() => handleSelectLanguage(opt.id)}
+                      className={cn(
+                        'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold transition-all cursor-pointer sm:px-2',
+                        selected
+                          ? 'border-emerald-400/70 bg-emerald-500/25 text-emerald-100'
+                          : hasNativeVideo
+                            ? 'border-emerald-500/35 bg-slate-900/80 text-emerald-200 hover:border-emerald-400/60 hover:text-white'
+                            : 'border-slate-800 bg-slate-900/70 text-gray-400 hover:border-slate-600 hover:text-white'
+                      )}
+                    >
+                      {selected && isBuffering ? (
+                        <Loader2
+                          className="h-2.5 w-2.5 shrink-0 animate-spin text-emerald-300"
+                          aria-hidden
+                        />
+                      ) : null}
+                      <span>{opt.shortLabel}</span>
+                    </button>
+                  </VideoControlTooltip>
                 )
               })}
             </div>

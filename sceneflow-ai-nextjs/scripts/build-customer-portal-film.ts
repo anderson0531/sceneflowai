@@ -103,6 +103,13 @@ const VERIFIED_RAW_CUT_SECS: Partial<
       163.34, 175.84, 186.98,
     ],
   },
+  hi: {
+    expectedRawDurSec: 234.68,
+    cutsSec: [
+      12.83, 31.26, 44.76, 62.63, 76.43, 91.61, 109.42, 121.83, 136.4, 147.38, 161.31, 175.29,
+      189.16, 205.99, 220.92,
+    ],
+  },
   zh: {
     expectedRawDurSec: 249.48,
     cutsSec: [
@@ -125,35 +132,6 @@ const VERIFIED_RAW_CUT_SECS: Partial<
     ],
   },
 }
-
-/**
- * Deterministic lossless splice map for Hindi (`hi.wav` + `hi-patch.wav`):
- * - Excises the duplicate second reading of Beat 05 (`72.12s..85.00s`) in `hi.wav`
- * - Uses lossless `hi-patch.wav` (`134.86s..178.37s`) for Beats 09..11 where `hi.wav` glitched
- * - Uses `hi.wav` (`143.53s..217.12s`) for Beats 12..16
- */
-const VERIFIED_HINDI_COMPOSITE_WINDOWS: ReadonlyArray<{
-  source: 'main' | 'patch'
-  startSec: number
-  endSec: number
-}> = [
-  { source: 'main', startSec: 0.0, endSec: 12.45 }, // Beat 01
-  { source: 'main', startSec: 12.45, endSec: 29.54 }, // Beat 02
-  { source: 'main', startSec: 29.54, endSec: 42.03 }, // Beat 03
-  { source: 'main', startSec: 42.03, endSec: 59.56 }, // Beat 04
-  { source: 'main', startSec: 59.56, endSec: 72.12 }, // Beat 05 (skips 72.12..85.00 duplicate)
-  { source: 'main', startSec: 85.0, endSec: 99.69 }, // Beat 06
-  { source: 'main', startSec: 99.69, endSec: 116.39 }, // Beat 07
-  { source: 'main', startSec: 116.39, endSec: 127.91 }, // Beat 08
-  { source: 'patch', startSec: 134.86, endSec: 150.49 }, // Beat 09
-  { source: 'patch', startSec: 150.49, endSec: 162.99 }, // Beat 10
-  { source: 'patch', startSec: 162.99, endSec: 178.37 }, // Beat 11
-  { source: 'main', startSec: 143.53, endSec: 158.55 }, // Beat 12
-  { source: 'main', startSec: 158.55, endSec: 173.25 }, // Beat 13
-  { source: 'main', startSec: 173.25, endSec: 188.88 }, // Beat 14
-  { source: 'main', startSec: 188.88, endSec: 201.91 }, // Beat 15
-  { source: 'main', startSec: 201.91, endSec: 217.12 }, // Beat 16
-]
 
 interface StereoPcm {
   L: Float64Array
@@ -848,30 +826,6 @@ async function main() {
       voSegments = voSource.files.map((f, idx) =>
         trimAndNormalizeSpeech(decodeToStereoPcm(f, scratchDir, `${locale}-vo-${idx + 1}`))
       )
-    } else if (locale === 'hi' && existsSync(join(voRoot, 'hi-patch.wav'))) {
-      const mainPcm = decodeToStereoPcm(voSource.file, scratchDir, 'hi-vo-main')
-      const patchPcm = decodeToStereoPcm(join(voRoot, 'hi-patch.wav'), scratchDir, 'hi-vo-patch')
-      if (
-        Math.abs(mainPcm.durationSec - 217.12) <= 0.6 &&
-        Math.abs(patchPcm.durationSec - 315.44) <= 0.6
-      ) {
-        voSegments = VERIFIED_HINDI_COMPOSITE_WINDOWS.map((win) => {
-          const src = win.source === 'main' ? mainPcm : patchPcm
-          const s = Math.max(0, Math.min(src.L.length, Math.round(win.startSec * SR)))
-          const e = Math.max(s + 1, Math.min(src.L.length, Math.round(win.endSec * SR)))
-          return trimAndNormalizeSpeech({
-            L: src.L.slice(s, e),
-            R: src.R.slice(s, e),
-            durationSec: (e - s) / SR,
-          })
-        })
-        console.log(
-          `  [${locale}] Spliced 16 verified lossless Charon beats (${voSegments.map((s) => s.durationSec.toFixed(1)).join(', ')}s)`
-        )
-      } else {
-        const { segments } = splitCombinedNarrationIntoBeats(mainPcm, narrationTexts, locale)
-        voSegments = segments
-      }
     } else {
       const { segments, cutReport } = splitCombinedNarrationIntoBeats(
         decodeToStereoPcm(voSource.file, scratchDir, `${locale}-vo-full`),

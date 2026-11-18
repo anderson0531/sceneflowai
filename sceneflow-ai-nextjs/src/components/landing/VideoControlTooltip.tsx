@@ -25,7 +25,7 @@ export function VideoControlTooltip({
         <TooltipTrigger asChild>{children}</TooltipTrigger>
         <TooltipContent
           side={side}
-          className="z-[120] border border-white/15 bg-slate-900/95 px-2.5 py-1 text-xs font-medium text-white shadow-lg backdrop-blur-md"
+          className="z-[120] max-w-xs sm:max-w-sm border border-white/15 bg-slate-900/95 px-2.5 py-1 text-xs font-medium text-white shadow-lg backdrop-blur-md text-balance"
         >
           {label}
         </TooltipContent>

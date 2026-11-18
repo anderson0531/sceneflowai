@@ -354,6 +354,27 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       expect(container?.textContent).not.toContain('true margin')
       expect(container?.textContent).toContain(copy.perProjectProfitLabel)
       expect(container?.textContent).toContain(`80% ${copy.marginBadgeSuffix}`)
+
+      // 4. Customer Portal Walkthrough renders 01..08 workflow step bookmark buttons with localized tooltips & interactive stage jumping
+      const portalRoot = container?.querySelector('#customer-portal-animatic')
+      expect(portalRoot, `[${locale}] #customer-portal-animatic rendered`).toBeTruthy()
+      const portalButtons = Array.from(portalRoot?.querySelectorAll('button') ?? [])
+      const stepButtons = ['01', '02', '03', '04', '05', '06', '07', '08'].map((stepNum) => {
+        const found = portalButtons.find(
+          (btn) =>
+            btn.textContent?.trim() === stepNum &&
+            btn.getAttribute('title')?.startsWith(`${stepNum}: `)
+        )
+        expect(found, `[${locale}] portal bookmark ${stepNum} with tooltip`).toBeTruthy()
+        return found!
+      })
+      expect(stepButtons[0]!.getAttribute('aria-pressed')).toBe('true')
+      clickElement(stepButtons[4]!)
+      expect(stepButtons[4]!.getAttribute('aria-pressed')).toBe('true')
+      expect(stepButtons[0]!.getAttribute('aria-pressed')).toBe('false')
+      clickElement(stepButtons[0]!)
+      expect(stepButtons[0]!.getAttribute('aria-pressed')).toBe('true')
+      expect(stepButtons[4]!.getAttribute('aria-pressed')).toBe('false')
     }
   })
 
