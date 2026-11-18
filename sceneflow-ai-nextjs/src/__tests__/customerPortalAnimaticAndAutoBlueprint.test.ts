@@ -75,6 +75,11 @@ import {
   CUSTOMER_PORTAL_ANIMATIC_COPY,
   FEATURE_PAN_LOCALE_OPTIONS,
 } from '@/config/landing/customerPortalAnimaticCopy'
+import { CUSTOMER_PORTAL_FILM_BEATS } from '@/config/landing/customerPortalFilmScript'
+import {
+  CUSTOMER_PORTAL_VIDEO_MANIFEST,
+  resolveCustomerPortalVideoLocale,
+} from '@/config/landing/customerPortalVideoManifest'
 import { CustomerPortalExperienceAnimatic } from '@/components/landing/CustomerPortalExperienceAnimatic'
 import {
   DEFAULT_CLIENT_BLUEPRINT_DEPOSIT_USD,
@@ -144,7 +149,7 @@ describe('Customer Portal Narrated Animatic (7 Locales) & Automated Client Bluep
         ],
       }),
     })
-    createSessionMock.mockImplementation(async (row: any) => ({
+    createSessionMock.mockImplementation(async (row: Record<string, unknown>) => ({
       id: 'share-sess-1',
       ...row,
     }))
@@ -185,7 +190,13 @@ describe('Customer Portal Narrated Animatic (7 Locales) & Automated Client Bluep
   })
 
   it('filters & confirms customer feedback, routes confirmed revisions through Blueprint Director (capped at 4), and caps standalone AR at 3 passes', async () => {
-    let storedPayload: any = {
+    let storedPayload: {
+      type: string
+      projectId: string
+      variantId: string
+      treatment: Record<string, unknown>
+      shareSettings: Record<string, unknown>
+    } = {
       type: 'blueprint',
       projectId: 'proj-1',
       variantId: 'var-1',
@@ -234,10 +245,12 @@ describe('Customer Portal Narrated Animatic (7 Locales) & Automated Client Bluep
       expires_at: null,
       payload: storedPayload,
     }))
-    updateSessionStaticMock.mockImplementation(async (vals: any) => {
-      if (vals?.payload) storedPayload = vals.payload
-      return [1]
-    })
+    updateSessionStaticMock.mockImplementation(
+      async (vals: { payload?: typeof storedPayload }) => {
+        if (vals?.payload) storedPayload = vals.payload
+        return [1]
+      }
+    )
     findByPkProjectMock.mockResolvedValue({
       id: 'proj-1',
       title: 'The Cedar Compass',
@@ -351,6 +364,29 @@ describe('Customer Portal Narrated Animatic (7 Locales) & Automated Client Bluep
     if (!fifthRevision.ok) {
       expect(fifthRevision.status).toBe(409)
       expect(fifthRevision.error).toContain('ROUND_LIMIT_REACHED')
+    }
+  })
+
+  it('ships complete 16-beat Hybrid Customer Portal Film script & 7-locale video manifest', () => {
+    expect(CUSTOMER_PORTAL_FILM_BEATS).toHaveLength(16)
+    expect(CUSTOMER_PORTAL_FILM_BEATS.filter((b) => b.kind === 'story_clip')).toHaveLength(8)
+    expect(CUSTOMER_PORTAL_FILM_BEATS.filter((b) => b.kind === 'app_screen')).toHaveLength(8)
+
+    for (const opt of FEATURE_PAN_LOCALE_OPTIONS) {
+      for (const beat of CUSTOMER_PORTAL_FILM_BEATS) {
+        expect(beat.shortTabLabel[opt.id].length).toBeGreaterThan(2)
+        expect(beat.title[opt.id].length).toBeGreaterThan(5)
+        expect(beat.narrationVo[opt.id].length).toBeGreaterThan(15)
+      }
+
+      const resolved = resolveCustomerPortalVideoLocale(opt.id)
+      expect(resolved).toBe(opt.id)
+      const entry = CUSTOMER_PORTAL_VIDEO_MANIFEST[opt.id]
+      expect(entry, `missing stitched video manifest for ${opt.id}`).toBeDefined()
+      expect(entry!.chapters).toHaveLength(16)
+      expect(entry!.durationSec).toBeGreaterThan(150)
+      expect(entry!.webmSrc).toBe(`/landing/video-services/videos/portal-${opt.id}.webm`)
+      expect(entry!.mp4Src).toBe(`/landing/video-services/videos/portal-${opt.id}.mp4`)
     }
   })
 })

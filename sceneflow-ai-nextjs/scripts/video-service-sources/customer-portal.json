@@ -1,0 +1,49 @@
+{
+  "musicUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Cinematic%20Documentary%20Score%20Composition.mp3",
+  "storyClips": {
+    "1": {
+      "beatNumber": 1,
+      "url": "https://flow.google.com/shared/video/1f35556c-afee-4db6-b4aa-8e8b3c2c11de"
+    },
+    "2": {
+      "beatNumber": 3,
+      "url": "https://flow.google.com/shared/video/ebb52bfa-72df-4582-baf8-9ede9d00a242"
+    },
+    "3": {
+      "beatNumber": 5,
+      "url": "https://flow.google.com/shared/video/5a59152b-5ab3-4c15-bab2-80905e921d18"
+    },
+    "4": {
+      "beatNumber": 8,
+      "url": "https://flow.google.com/shared/video/bc336881-dfbb-4c8c-9f1b-281597242839"
+    },
+    "5": {
+      "beatNumber": 10,
+      "url": "https://flow.google.com/shared/video/ad934d07-cac8-4dc5-867c-a9a478393d21"
+    },
+    "6": {
+      "beatNumber": 12,
+      "url": "https://flow.google.com/shared/video/ec78ce67-0796-4a6e-93ac-0b0767c55ff0"
+    },
+    "7": {
+      "beatNumber": 14,
+      "url": "https://flow.google.com/shared/video/7bc20a48-864c-489e-9318-50df46c96339"
+    },
+    "8": {
+      "beatNumber": 16,
+      "url": "https://flow.google.com/shared/video/c9af6958-23ab-4761-9807-5779acfecfd4"
+    }
+  },
+  "narrationWavByLocale": {
+    "en": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Generated%20Audio%20November%2018%2C%202026%20-%2012_06PM.wav",
+    "es": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Generated%20Audio%20November%2018%2C%202026%20-%2012_09PM.wav",
+    "pt": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Generated%20Audio%20November%2018%2C%202026%20-%2012_11PM.wav",
+    "hi": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Generated%20Audio%20November%2018%2C%202026%20-%201_03PM.wav",
+    "zh": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Generated%20Audio%20November%2018%2C%202026%20-%2012_21PM.wav",
+    "ar": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Generated%20Audio%20November%2018%2C%202026%20-%2012_24PM.wav",
+    "th": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Generated%20Audio%20November%2018%2C%202026%20-%2012_26PM.wav"
+  },
+  "narrationPatchWavByLocale": {
+    "hi": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Generated%20Audio%20November%2018%2C%202026%20-%2012_17PM.wav"
+  }
+}

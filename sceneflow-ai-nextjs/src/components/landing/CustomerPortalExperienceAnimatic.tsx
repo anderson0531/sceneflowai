@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   CheckCircle2,
   CreditCard,
@@ -32,6 +32,12 @@ import {
   type CustomerPortalMockUiStrings,
   type FeaturePanLocaleId,
 } from '@/config/landing/customerPortalAnimaticCopy'
+import { CUSTOMER_PORTAL_AUDIO_MANIFEST } from '@/config/landing/customerPortalAudioManifest'
+import { CUSTOMER_PORTAL_FILM_BEATS } from '@/config/landing/customerPortalFilmScript'
+import {
+  CUSTOMER_PORTAL_VIDEO_MANIFEST,
+  resolveCustomerPortalVideoLocale,
+} from '@/config/landing/customerPortalVideoManifest'
 
 export const CUSTOMER_PORTAL_ANIMATIC_ID = 'customer-portal-animatic'
 
@@ -53,6 +59,16 @@ const CONTINUITY_THUMBS = [
   '/images/sandbox/glass-ledger/loc-observation-deck.jpg',
   '/images/sandbox/glass-ledger/prop-chrono-key.jpg',
 ] as const
+
+/** Maps each of the 16 hybrid film beats (0..15) to its corresponding 8-stage portal phase (0..7). */
+const FILM_BEAT_TO_STAGE_IDX: readonly number[] = [
+  0, 0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6, 7, 7, 7,
+] as const
+
+function formatTimecodeSec(sec: number): string {
+  const whole = Math.max(0, Math.floor(sec))
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`
+}
 
 type FullscreenCapableElement = HTMLElement & {
   webkitRequestFullscreen?: () => Promise<void> | void
@@ -416,24 +432,36 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const canvasRef = useRef<HTMLDivElement | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const pendingSeekBeatRef = useRef<number | null>(null)
 
   useEffect(() => {
     setPanLocale(normalizeFeaturePanLocale(locale))
   }, [locale])
 
   const copy = CUSTOMER_PORTAL_ANIMATIC_COPY[panLocale] ?? CUSTOMER_PORTAL_ANIMATIC_COPY.en
+  const resolvedVideoLocale = resolveCustomerPortalVideoLocale(panLocale)
+  const localeVideo = resolvedVideoLocale
+    ? CUSTOMER_PORTAL_VIDEO_MANIFEST[resolvedVideoLocale] ?? null
+    : null
+  const hasStitchedVideo = Boolean(localeVideo)
+
   const beats = copy.beats
-  const safeIdx = beatIdx < beats.length ? beatIdx : 0
-  const currentBeat = beats[safeIdx]!
+  const totalStepCount = hasStitchedVideo ? CUSTOMER_PORTAL_FILM_BEATS.length : beats.length
+  const safeIdx = beatIdx < totalStepCount ? beatIdx : 0
+  const stageIdx = hasStitchedVideo
+    ? FILM_BEAT_TO_STAGE_IDX[safeIdx] ?? beats.length - 1
+    : Math.min(safeIdx, beats.length - 1)
+  const currentBeat = beats[Math.min(stageIdx, beats.length - 1)]!
+  const currentFilmBeat =
+    CUSTOMER_PORTAL_FILM_BEATS[Math.min(safeIdx, CUSTOMER_PORTAL_FILM_BEATS.length - 1)]!
+  const currentChapter = hasStitchedVideo ? localeVideo?.chapters[safeIdx] ?? null : null
   const isRtl = panLocale === 'ar'
+  const localeAudio = CUSTOMER_PORTAL_AUDIO_MANIFEST[panLocale] ?? null
+  const isStudioAudioActive = Boolean(!hasStitchedVideo && localeAudio && voiceoverEnabled)
 
-  const activeSpeechLang = useMemo(
-    () =>
-      FEATURE_PAN_LOCALE_OPTIONS.find((opt) => opt.id === panLocale)?.speechLang ?? 'en-US',
-    [panLocale]
-  )
-
-  // Pause animation & speech when scrolled off-screen
+  // Pause animation & studio audio when scrolled off-screen
   useEffect(() => {
     const el = containerRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
@@ -462,48 +490,129 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
   }, [])
 
   const applyCameraMotion = useCallback(
-    (progress01: number) => {
+    (progress01: number, beatOverride?: CustomerPortalAnimaticBeatCopy) => {
       const el = canvasRef.current
       if (!el) return
+      const targetBeat = beatOverride ?? currentBeat
       const clamped = Math.max(0, Math.min(1, progress01))
       const eased = 0.5 - 0.5 * Math.cos(Math.PI * clamped)
       const scale =
-        currentBeat.fromScale + (currentBeat.toScale - currentBeat.fromScale) * eased
-      el.style.transformOrigin = `${currentBeat.originX}% ${currentBeat.originY}%`
+        targetBeat.fromScale + (targetBeat.toScale - targetBeat.fromScale) * eased
+      el.style.transformOrigin = `${targetBeat.originX}% ${targetBeat.originY}%`
       el.style.transform = `scale(${scale.toFixed(4)})`
     },
     [currentBeat]
   )
 
-  // Speak localized narration when voiceoverEnabled is active
+  // Synchronize studio MP3 narration (`Charon` + ducked score) with 60fps camera & beat progression
   useEffect(() => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-    window.speechSynthesis.cancel()
+    const audioEl = audioRef.current
+    if (!audioEl || !localeAudio) return
 
     if (!voiceoverEnabled || !isPlaying || (!inViewport && !isFullscreen)) {
+      audioEl.pause()
       return
     }
 
-    const utterance = new SpeechSynthesisUtterance(currentBeat.narration)
-    utterance.lang = activeSpeechLang
-    utterance.rate = 1.02
-    window.speechSynthesis.speak(utterance)
+    const currentWindow = localeAudio.beats[safeIdx]
+    if (
+      currentWindow &&
+      (audioEl.currentTime < currentWindow.startSec - 0.25 ||
+        audioEl.currentTime > currentWindow.endSec + 0.35)
+    ) {
+      audioEl.currentTime = currentWindow.startSec
+    }
 
+    void audioEl.play().catch(() => {
+      setVoiceoverEnabled(false)
+    })
+
+    let rafId = 0
+    let cancelled = false
+
+    const syncFromAudio = () => {
+      if (cancelled) return
+      const t = audioEl.currentTime
+      let matchedIdx = localeAudio.beats.findIndex(
+        (w, i) =>
+          t >= w.startSec &&
+          (t < w.endSec || i === localeAudio.beats.length - 1)
+      )
+      if (matchedIdx < 0) matchedIdx = 0
+      const win = localeAudio.beats[matchedIdx]!
+      const span = Math.max(0.25, win.endSec - win.startSec)
+      const prog = Math.max(0, Math.min(1, (t - win.startSec) / span))
+
+      setBeatIdx((prev) => (prev === matchedIdx ? prev : matchedIdx))
+      setBeatProgress(prog)
+      const matchedBeat = beats[matchedIdx] ?? currentBeat
+      applyCameraMotion(prog, matchedBeat)
+
+      rafId = window.requestAnimationFrame(syncFromAudio)
+    }
+
+    rafId = window.requestAnimationFrame(syncFromAudio)
     return () => {
-      window.speechSynthesis.cancel()
+      cancelled = true
+      window.cancelAnimationFrame(rafId)
+      audioEl.pause()
     }
   }, [
-    activeSpeechLang,
-    currentBeat.narration,
+    applyCameraMotion,
+    beats,
+    currentBeat,
     inViewport,
     isFullscreen,
     isPlaying,
+    localeAudio,
     safeIdx,
     voiceoverEnabled,
   ])
 
-  // 60fps camera choreography & beat progression
+  // Synchronize stitched 10-beat cinema `<video>` playback & chapter progression when present
   useEffect(() => {
+    const vid = videoRef.current
+    if (!vid || !localeVideo) return
+
+    vid.muted = !voiceoverEnabled
+    if (!isPlaying || (!inViewport && !isFullscreen)) {
+      vid.pause()
+      return
+    }
+
+    void vid.play().catch(() => undefined)
+
+    let rafId = 0
+    let cancelled = false
+
+    const syncFromVideo = () => {
+      if (cancelled) return
+      const t = vid.currentTime
+      let matched = localeVideo.chapters.findIndex(
+        (ch, i) =>
+          t >= ch.startSec &&
+          (t < ch.endSec || i === localeVideo.chapters.length - 1)
+      )
+      if (matched < 0) matched = 0
+      const ch = localeVideo.chapters[matched]!
+      const span = Math.max(0.25, ch.endSec - ch.startSec)
+      const prog = Math.max(0, Math.min(1, (t - ch.startSec) / span))
+      setBeatIdx((prev) => (prev === matched ? prev : matched))
+      setBeatProgress(prog)
+      rafId = window.requestAnimationFrame(syncFromVideo)
+    }
+
+    rafId = window.requestAnimationFrame(syncFromVideo)
+    return () => {
+      cancelled = true
+      window.cancelAnimationFrame(rafId)
+      vid.pause()
+    }
+  }, [inViewport, isFullscreen, isPlaying, localeVideo, voiceoverEnabled])
+
+  // Silent 60fps camera choreography & beat progression when studio audio/video is off or unavailable
+  useEffect(() => {
+    if (hasStitchedVideo || isStudioAudioActive) return
     applyCameraMotion(0)
     if (!isPlaying || (!inViewport && !isFullscreen)) return
     if (typeof window === 'undefined') return
@@ -536,9 +645,11 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
     applyCameraMotion,
     beats.length,
     currentBeat.durationSec,
+    hasStitchedVideo,
     inViewport,
     isFullscreen,
     isPlaying,
+    isStudioAudioActive,
     safeIdx,
   ])
 
@@ -559,15 +670,29 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
   const handleSelectBeat = (idx: number) => {
     setBeatIdx(idx)
     setBeatProgress(0)
+    if (videoRef.current && localeVideo?.chapters[idx]) {
+      videoRef.current.currentTime = localeVideo.chapters[idx]!.startSec + 0.02
+      return
+    }
+    if (audioRef.current && localeAudio?.beats[idx]) {
+      audioRef.current.currentTime = localeAudio.beats[idx]!.startSec + 0.02
+    }
   }
 
   const handleRestart = () => {
     setBeatIdx(0)
     setBeatProgress(0)
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0
+    }
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0
+    }
     setIsPlaying(true)
   }
 
   const handleToggleVoiceover = () => {
+    if (!hasStitchedVideo && !localeAudio) return
     setVoiceoverEnabled((prev) => {
       const next = !prev
       if (next && !isPlaying) setIsPlaying(true)
@@ -643,51 +768,80 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
               {currentBeat.phaseBadge}
             </span>
             <span className="rounded-md bg-white/5 px-2 py-0.5 text-[10px] font-mono text-slate-300 tabular-nums">
-              {currentBeat.timecode}
+              {currentChapter
+                ? `${formatTimecodeSec(currentChapter.startSec)}–${formatTimecodeSec(currentChapter.endSec)}`
+                : currentBeat.timecode}
             </span>
           </div>
         </div>
 
-        {/* Animated Camera Viewport */}
-        <div className="relative overflow-hidden bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.12),transparent_60%)] px-3.5 py-4 sm:px-6 sm:py-6">
-          <div
-            ref={canvasRef}
-            className="transition-transform duration-150 ease-out will-change-transform"
-          >
-            {/* White-Label Agency Subheader inside Mockup */}
-            <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/80 px-3.5 py-2">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 text-xs font-black text-slate-950">
-                  HV
-                </span>
-                <span className="text-xs sm:text-sm font-bold text-white">
-                  {copy.mockUi.agencyName}
+        {/* Video / Animated Camera Viewport */}
+        {hasStitchedVideo && localeVideo ? (
+          <div className="relative aspect-video w-full overflow-hidden bg-black">
+            <video
+              key={`${resolvedVideoLocale}-${localeVideo.webmSrc}`}
+              ref={videoRef}
+              poster={localeVideo.posterSrc}
+              muted={!voiceoverEnabled}
+              playsInline
+              loop
+              preload="metadata"
+              onLoadedMetadata={(e) => {
+                const targetBeat = pendingSeekBeatRef.current
+                if (targetBeat !== null && localeVideo.chapters[targetBeat]) {
+                  e.currentTarget.currentTime = localeVideo.chapters[targetBeat]!.startSec + 0.02
+                  pendingSeekBeatRef.current = null
+                }
+              }}
+              className="h-full w-full object-cover"
+            >
+              <source src={localeVideo.webmSrc} type="video/webm" />
+              <source src={localeVideo.mp4Src} type="video/mp4" />
+            </video>
+          </div>
+        ) : (
+          <div className="relative overflow-hidden bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.12),transparent_60%)] px-3.5 py-4 sm:px-6 sm:py-6">
+            <div
+              ref={canvasRef}
+              className="transition-transform duration-150 ease-out will-change-transform"
+            >
+              {/* White-Label Agency Subheader inside Mockup */}
+              <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/80 px-3.5 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 text-xs font-black text-slate-950">
+                    HV
+                  </span>
+                  <span className="text-xs sm:text-sm font-bold text-white">
+                    {copy.mockUi.agencyName}
+                  </span>
+                </div>
+                <span className="rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-200">
+                  {currentBeat.economicsChip}
                 </span>
               </div>
-              <span className="rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-200">
-                {currentBeat.economicsChip}
-              </span>
-            </div>
 
-            <PortalScreenMockup beat={currentBeat} mockUi={copy.mockUi} />
+              <PortalScreenMockup beat={currentBeat} mockUi={copy.mockUi} />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Synchronized Narrated Caption & Headline Bar */}
         <div className="border-t border-slate-800/90 bg-slate-900/90 px-4 py-3.5 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-bold text-white sm:text-base">
               <span className="me-2 inline-block rounded bg-emerald-500/20 px-1.5 py-0.5 text-xs font-extrabold text-emerald-300 tabular-nums">
-                {currentBeat.stepNumber}
+                {hasStitchedVideo
+                  ? String(currentFilmBeat.beatNumber).padStart(2, '0')
+                  : currentBeat.stepNumber}
               </span>
-              {currentBeat.headline}
+              {hasStitchedVideo ? currentFilmBeat.title[panLocale] : currentBeat.headline}
             </p>
             <span className="text-[11px] font-semibold text-amber-300">
-              {currentBeat.calloutBadge}
+              {hasStitchedVideo ? currentBeat.economicsChip : currentBeat.calloutBadge}
             </span>
           </div>
           <p className="mt-1.5 text-xs leading-relaxed text-slate-200 sm:text-sm">
-            {currentBeat.caption}
+            {hasStitchedVideo ? currentFilmBeat.narrationVo[panLocale] : currentBeat.caption}
           </p>
 
           {/* Live Beat Progress Bar */}
@@ -699,7 +853,7 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
           </div>
         </div>
 
-        {/* Interactive Player Controls + 7-Locale Selector + 8-Step Scrubber */}
+        {/* Interactive Player Controls + 7-Locale Selector + Stepper */}
         <div className="border-t border-slate-800 bg-slate-950 px-3.5 py-3 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             <div className="flex flex-wrap items-center gap-2">
@@ -735,30 +889,41 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
                 </button>
               </VideoControlTooltip>
 
-              <VideoControlTooltip
-                label={voiceoverEnabled ? copy.narrateOnLabel : copy.narrateOffLabel}
-                side="top"
-              >
-                <button
-                  type="button"
-                  title={voiceoverEnabled ? copy.narrateOnLabel : copy.narrateOffLabel}
-                  onClick={handleToggleVoiceover}
-                  aria-pressed={voiceoverEnabled}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer',
-                    voiceoverEnabled
-                      ? 'border-amber-400/60 bg-amber-500/20 text-amber-100'
-                      : 'border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-500 hover:text-white'
-                  )}
+              {hasStitchedVideo || localeAudio ? (
+                <VideoControlTooltip
+                  label={voiceoverEnabled ? copy.narrateOnLabel : copy.narrateOffLabel}
+                  side="top"
                 >
-                  {voiceoverEnabled ? (
-                    <Volume2 className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
-                  ) : (
-                    <VolumeX className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
-                  )}
-                  <span>{voiceoverEnabled ? copy.narrateOnLabel : copy.narrateOffLabel}</span>
-                </button>
-              </VideoControlTooltip>
+                  <button
+                    type="button"
+                    title={voiceoverEnabled ? copy.narrateOnLabel : copy.narrateOffLabel}
+                    onClick={handleToggleVoiceover}
+                    aria-pressed={voiceoverEnabled}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer',
+                      voiceoverEnabled
+                        ? 'border-amber-400/60 bg-amber-500/20 text-amber-100'
+                        : 'border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-500 hover:text-white'
+                    )}
+                  >
+                    {voiceoverEnabled ? (
+                      <Volume2 className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
+                    ) : (
+                      <VolumeX className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
+                    )}
+                    <span>{voiceoverEnabled ? copy.narrateOnLabel : copy.narrateOffLabel}</span>
+                  </button>
+                </VideoControlTooltip>
+              ) : null}
+              {!hasStitchedVideo && localeAudio ? (
+                <audio
+                  ref={audioRef}
+                  src={localeAudio.audioSrc}
+                  preload="metadata"
+                  loop
+                  className="hidden"
+                />
+              ) : null}
             </div>
 
             <div className="flex items-center gap-2">
@@ -768,7 +933,13 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
                   aria-label={copy.languageLabel}
                   title={copy.languageLabel}
                   value={panLocale}
-                  onChange={(e) => setPanLocale(e.target.value as FeaturePanLocaleId)}
+                  onChange={(e) => {
+                    const nextLoc = e.target.value as FeaturePanLocaleId
+                    if (hasStitchedVideo && safeIdx > 0) {
+                      pendingSeekBeatRef.current = safeIdx
+                    }
+                    setPanLocale(nextLoc)
+                  }}
                   className="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer"
                 >
                   {FEATURE_PAN_LOCALE_OPTIONS.map((opt) => (
@@ -800,27 +971,49 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
             </div>
           </div>
 
-          {/* 8-Beat Clickable Storyboard Stepper */}
+          {/* Clickable Storyboard Stepper (16 Beats [2x8] when Hybrid Video Live, 8 Beats in UI Mockup Mode) */}
           <div className="mt-3 grid grid-cols-2 gap-1.5 min-[480px]:grid-cols-4 lg:grid-cols-8">
-            {beats.map((b, idx) => {
-              const active = idx === safeIdx
-              return (
-                <button
-                  key={b.id}
-                  type="button"
-                  title={`${b.shortTabLabel} — ${b.headline}`}
-                  onClick={() => handleSelectBeat(idx)}
-                  className={cn(
-                    'rounded-lg border px-2 py-1.5 text-start text-[11px] font-semibold leading-tight transition-all cursor-pointer',
-                    active
-                      ? 'border-emerald-400/70 bg-emerald-500/20 text-white shadow-sm'
-                      : 'border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-                  )}
-                >
-                  <span className="block whitespace-normal break-words">{b.shortTabLabel}</span>
-                </button>
-              )
-            })}
+            {hasStitchedVideo
+              ? CUSTOMER_PORTAL_FILM_BEATS.map((fb, idx) => {
+                  const active = idx === safeIdx
+                  const shortLabel = fb.shortTabLabel[panLocale]
+                  const fullTitle = fb.title[panLocale]
+                  return (
+                    <button
+                      key={fb.id}
+                      type="button"
+                      title={`${shortLabel} — ${fullTitle}`}
+                      onClick={() => handleSelectBeat(idx)}
+                      className={cn(
+                        'rounded-lg border px-2 py-1.5 text-start text-[11px] font-semibold leading-tight transition-all cursor-pointer',
+                        active
+                          ? 'border-emerald-400/70 bg-emerald-500/20 text-white shadow-sm'
+                          : 'border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                      )}
+                    >
+                      <span className="block whitespace-normal break-words">{shortLabel}</span>
+                    </button>
+                  )
+                })
+              : beats.map((b, idx) => {
+                  const active = idx === safeIdx
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      title={`${b.shortTabLabel} — ${b.headline}`}
+                      onClick={() => handleSelectBeat(idx)}
+                      className={cn(
+                        'rounded-lg border px-2 py-1.5 text-start text-[11px] font-semibold leading-tight transition-all cursor-pointer',
+                        active
+                          ? 'border-emerald-400/70 bg-emerald-500/20 text-white shadow-sm'
+                          : 'border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                      )}
+                    >
+                      <span className="block whitespace-normal break-words">{b.shortTabLabel}</span>
+                    </button>
+                  )
+                })}
           </div>
         </div>
       </div>
