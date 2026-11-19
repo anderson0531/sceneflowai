@@ -26,6 +26,7 @@ import {
   ExpressSceneConfirmDialog,
   type ExpressSceneConfirmOptions,
 } from './ExpressSceneConfirmDialog'
+import { openProductionBuilder } from '@/lib/production/openProductionBuilder'
 import { SceneImageFrame, type SceneImageFrameProps } from './SceneImageFrame'
 import { GenerationErrorCard } from './GenerationErrorCard'
 import {
@@ -1128,7 +1129,15 @@ export function SceneStoryboardFrameViewer({
       toast.error(sceneExpressPreflight.errors[0])
       return
     }
-    setExpressSceneDialogOpen(true)
+    openProductionBuilder({
+      scopeMode: 'custom',
+      sceneIndices: [Math.max(0, (scene?.sceneNumber ?? 1) - 1)],
+      stages: ['previs'],
+      previsIncludeAudio: false,
+      previsIncludeStills: true,
+      missingOnly: true,
+      contextLabel: `Scene ${scene?.sceneNumber ?? 1} · Stills`,
+    })
   }, [expressGateBlocked, expressPreflightBlocks, onExpressGateBlocked, sceneExpressPreflight])
 
   const sceneExpressRunning =

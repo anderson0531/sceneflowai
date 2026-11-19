@@ -126,6 +126,7 @@ import {
   type VideoAgentConfirmOptions,
   type VideoAgentBeatOption,
 } from '@/components/vision/VideoAgentConfirmDialog'
+import { openProductionBuilder } from '@/lib/production/openProductionBuilder'
 import {
   applyVideoGenerationToConfig,
   resolveVideoGeneration,
@@ -2215,8 +2216,14 @@ export function DirectorConsoleRoot({
 
   const handleOpenVideoAgent = useCallback(() => {
     if (queue.length === 0) return
-    setVideoAgentDialogOpen(true)
-  }, [queue.length])
+    openProductionBuilder({
+      scopeMode: 'custom',
+      sceneIndices: [Math.max(0, (sceneNumber ?? 1) - 1)],
+      stages: ['clips'],
+      missingOnly: true,
+      contextLabel: `Scene ${sceneNumber ?? 1} · Clips`,
+    })
+  }, [queue.length, sceneNumber])
 
   // === Text Overlay Handlers ===
   

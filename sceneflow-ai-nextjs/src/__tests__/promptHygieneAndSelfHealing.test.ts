@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import { buildOmniInteractionInput } from '@/lib/gemini/omniVideoInteractions'
@@ -8,6 +8,13 @@ import { buildSceneStateLedger } from '@/lib/scene/sceneStateLedger'
 import { lintShotPromptConsistency } from '@/lib/vision/lintShotPromptConsistency'
 import { buildDeterministicShotInvestigation } from '@/lib/errors/shotErrorInvestigator'
 import { IDENTITY_ANTI_LIKENESS_DIRECTIVES } from '@/lib/character/characterReferencePrompts'
+import {
+  estimateProductionAgentRun,
+  runProductionAgent,
+  type ProductionAgentDeps,
+  type ProductionBuilderOptions,
+  type ProductionSceneReadinessSummary,
+} from '@/lib/production/runProductionAgent'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 describe('Phase 1 — Prompt Hygiene, Scale Anchors & Continuity Fixes', () => {
@@ -227,5 +234,106 @@ describe('Phase 2 — Self-Healing [Investigate] Diagnostic Engine', () => {
     expect(IDENTITY_ANTI_LIKENESS_DIRECTIVES.toLowerCase()).toContain('ordinary everyday')
     expect(IDENTITY_ANTI_LIKENESS_DIRECTIVES.toLowerCase()).toContain('natural facial asymmetry')
     expect(IDENTITY_ANTI_LIKENESS_DIRECTIVES.toLowerCase()).toContain('never resemble a movie star')
+  })
+})
+
+describe('Phase 3C — Unified Production Agent Pre-Vis Granularity', () => {
+  const sampleSummary: ProductionSceneReadinessSummary = {
+    sceneIndex: 0,
+    sceneId: 'scene-1',
+    sceneNumber: 1,
+    heading: 'INT. HARBOR WORKSHOP - NIGHT',
+    hasDirection: true,
+    hasAudio: false,
+    beatCount: 3,
+    missingStillsCount: 3,
+    totalStillsCount: 3,
+    completedClipsCount: 0,
+    totalClipsCount: 3,
+    policyBlockedClipsCount: 0,
+    hasRenderedSceneMp4: false,
+  }
+
+  const baseOptions: ProductionBuilderOptions = {
+    scopeMode: 'custom',
+    selectedSceneIndices: [0],
+    stages: ['previs'],
+    quality: 'draft',
+    language: 'en',
+    missingOnly: true,
+    optimizeShotDirection: true,
+    autoRerunFailedShots: true,
+    creativeClipPolicyFallback: true,
+    checkpointMode: 'autonomous',
+    notificationFrequency: 'completion_only',
+    mintScreeningLink: false,
+  }
+
+  function makeDeps(): ProductionAgentDeps {
+    return {
+      projectId: 'proj-1',
+      projectTitle: 'Test Film',
+      ensureSceneDirection: vi.fn(async () => {}),
+      ensureSceneReferences: vi.fn(async () => {}),
+      runSceneAudio: vi.fn(async () => 2),
+      runSceneStills: vi.fn(async () => 3),
+      ensureSceneSegments: vi.fn(async () => []),
+      optimizeShotDirection: vi.fn(async () => {}),
+      generateSegmentClip: vi.fn(async () => {}),
+      renderSceneMp4: vi.fn(async () => undefined),
+      assembleMasterStream: vi.fn(async () => undefined),
+      mintScreeningLink: vi.fn(async () => undefined),
+      runPromoStage: vi.fn(async () => undefined),
+      onNotify: vi.fn(async () => {}),
+      onProgress: vi.fn(),
+    }
+  }
+
+  it('zeros out stills or audio in estimateProductionAgentRun when sub-toggles are disabled', () => {
+    const audioOnly = estimateProductionAgentRun([sampleSummary], {
+      ...baseOptions,
+      previsIncludeAudio: true,
+      previsIncludeStills: false,
+    })
+    expect(audioOnly.audioScenesToGenerate).toBe(1)
+    expect(audioOnly.stillsToGenerate).toBe(0)
+
+    const stillsOnly = estimateProductionAgentRun([sampleSummary], {
+      ...baseOptions,
+      previsIncludeAudio: false,
+      previsIncludeStills: true,
+    })
+    expect(stillsOnly.audioScenesToGenerate).toBe(0)
+    expect(stillsOnly.stillsToGenerate).toBe(3)
+  })
+
+  it('skips references and stills when previsIncludeStills is false (Audio-only launch)', async () => {
+    const deps = makeDeps()
+    await runProductionAgent(
+      {
+        ...baseOptions,
+        previsIncludeAudio: true,
+        previsIncludeStills: false,
+      },
+      deps
+    )
+    expect(deps.runSceneAudio).toHaveBeenCalledTimes(1)
+    expect(deps.ensureSceneReferences).not.toHaveBeenCalled()
+    expect(deps.runSceneStills).not.toHaveBeenCalled()
+  })
+
+  it('skips audio when previsIncludeAudio is false (Stills-only launch)', async () => {
+    const deps = makeDeps()
+    await runProductionAgent(
+      {
+        ...baseOptions,
+        previsIncludeAudio: false,
+        previsIncludeStills: true,
+      },
+      deps
+    )
+    expect(deps.runSceneAudio).not.toHaveBeenCalled()
+    expect(deps.ensureSceneReferences).toHaveBeenCalledTimes(1)
+    expect(deps.runSceneStills).toHaveBeenCalledTimes(1)
   })
 })

@@ -32,6 +32,7 @@ import {
   ExpressConfirmDialog,
   type ExpressConfirmOptions,
 } from './ExpressConfirmDialog'
+import { openProductionBuilder } from '@/lib/production/openProductionBuilder'
 import {
   Dialog,
   DialogContent,
@@ -575,11 +576,21 @@ export function SceneGallery({
                       return
                     }
                     if (scenesNeedingExpress === 0) {
-                      toast.info('All scenes complete — open Run All Agents and enable Regenerate to redo.')
-                      setExpressDialogOpen(true)
+                      toast.info('All scenes complete — disable "Missing Only" in Production Agent to regenerate.')
+                      openProductionBuilder({
+                        scopeMode: 'all',
+                        stages: ['previs'],
+                        missingOnly: false,
+                        contextLabel: 'All Scenes · Pre-Vis',
+                      })
                       return
                     }
-                    setExpressDialogOpen(true)
+                    openProductionBuilder({
+                      scopeMode: 'all',
+                      stages: ['previs'],
+                      missingOnly: true,
+                      contextLabel: 'All Scenes · Pre-Vis',
+                    })
                   }}
                   disabled={isExpressRunning}
                   className="relative flex items-center gap-2 overflow-hidden border-gray-600/60 text-gray-300 hover:border-indigo-500/40 hover:text-indigo-200"

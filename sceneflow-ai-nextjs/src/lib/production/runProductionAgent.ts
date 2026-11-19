@@ -71,6 +71,10 @@ export interface ProductionBuilderOptions {
   notificationFrequency: ProductionNotificationFrequency
   /** Automatically mint a Screening Room (/s/) link for review at Pre-Vis / Master completion */
   mintScreeningLink: boolean
+  /** Optional granular sub-toggle for Stage 1 Pre-Vis (defaults to true) */
+  previsIncludeAudio?: boolean
+  /** Optional granular sub-toggle for Stage 1 Pre-Vis (defaults to true) */
+  previsIncludeStills?: boolean
 }
 
 export interface ProductionSceneReadinessSummary {
@@ -506,17 +510,22 @@ export function estimateProductionAgentRun(
   const sceneCount = chosen.length
   const totalBeats = chosen.reduce((sum, s) => sum + s.beatCount, 0)
 
-  const stillsToGenerate = stages.has('previs')
-    ? chosen.reduce(
-        (sum, s) =>
-          sum + (options.missingOnly ? s.missingStillsCount : s.totalStillsCount),
-        0
-      )
-    : 0
+  const includeStills = options.previsIncludeStills !== false
+  const includeAudio = options.previsIncludeAudio !== false
 
-  const audioScenesToGenerate = stages.has('previs')
-    ? chosen.filter((s) => (options.missingOnly ? !s.hasAudio : true)).length
-    : 0
+  const stillsToGenerate =
+    stages.has('previs') && includeStills
+      ? chosen.reduce(
+          (sum, s) =>
+            sum + (options.missingOnly ? s.missingStillsCount : s.totalStillsCount),
+          0
+        )
+      : 0
+
+  const audioScenesToGenerate =
+    stages.has('previs') && includeAudio
+      ? chosen.filter((s) => (options.missingOnly ? !s.hasAudio : true)).length
+      : 0
 
   const clipsToGenerate = stages.has('clips')
     ? chosen.reduce(
@@ -661,29 +670,40 @@ export async function runProductionAgent(
       })
 
       try {
-        await deps.ensureSceneDirection(sceneIndex)
-        checkAborted()
+        const wantAudio = options.previsIncludeAudio !== false
+        const wantStills = options.previsIncludeStills !== false
 
-        await deps.ensureSceneReferences(sceneIndex)
-        checkAborted()
+        if (wantStills) {
+          await deps.ensureSceneDirection(sceneIndex)
+          checkAborted()
 
-        const audioCount = await deps.runSceneAudio(sceneIndex, {
-          language: options.language,
-          missingOnly: options.missingOnly,
-        })
-        telemetry.audioTracksGenerated += audioCount
-        checkAborted()
+          await deps.ensureSceneReferences(sceneIndex)
+          checkAborted()
+        }
 
         const includeEndFrames =
           orderedStages.includes('clips') || options.creativeClipPolicyFallback
-        const stillCount = await deps.runSceneStills(sceneIndex, {
-          language: options.language,
-          quality: options.quality,
-          includeEndFrames,
-          missingOnly: options.missingOnly,
-          generationMode: 'standard',
-        })
+
+        const [audioCount, stillCount] = await Promise.all([
+          wantAudio
+            ? deps.runSceneAudio(sceneIndex, {
+                language: options.language,
+                missingOnly: options.missingOnly,
+              })
+            : Promise.resolve(0),
+          wantStills
+            ? deps.runSceneStills(sceneIndex, {
+                language: options.language,
+                quality: options.quality,
+                includeEndFrames,
+                missingOnly: options.missingOnly,
+                generationMode: 'standard',
+              })
+            : Promise.resolve(0),
+        ])
+        telemetry.audioTracksGenerated += audioCount
         telemetry.stillsGenerated += stillCount
+        checkAborted()
 
         completedSteps += 1
         deps.onProgress({

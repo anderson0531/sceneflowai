@@ -50,6 +50,7 @@ import {
   ExpressGenerateAllConfirmDialog,
   type ExpressGenerateAllConfirmOptions,
 } from '@/components/vision/ExpressGenerateAllConfirmDialog'
+import { openProductionBuilder } from '@/lib/production/openProductionBuilder'
 import type { ExpressSceneConfirmOptions } from '@/components/vision/ExpressSceneConfirmDialog'
 import type { StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
 import type {
@@ -7390,7 +7391,17 @@ function SceneCard({
                           disabled={isDisabled}
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (canOpen) setExpressGenerateAllDialogOpen(true)
+                            if (canOpen) {
+                              openProductionBuilder({
+                                scopeMode: 'custom',
+                                sceneIndices: [sceneIdx],
+                                stages: ['previs'],
+                                previsIncludeAudio: true,
+                                previsIncludeStills: true,
+                                missingOnly: true,
+                                contextLabel: `Scene ${sceneNumber} · Audio + Stills`,
+                              })
+                            }
                           }}
                           className={`${sceneToolbarControl} font-medium bg-sky-600 text-white hover:bg-sky-500`}
                         >
@@ -8402,7 +8413,17 @@ function SceneCard({
                       setBeatListFilters={setBeatListFilters}
                       beatFacts={beatFacts}
                       productionReadiness={productionReadiness}
-                      onOpenAudioAgent={() => setExpressAudioDialogOpen(true)}
+                      onOpenAudioAgent={() =>
+                        openProductionBuilder({
+                          scopeMode: 'custom',
+                          sceneIndices: [sceneIdx],
+                          stages: ['previs'],
+                          previsIncludeAudio: true,
+                          previsIncludeStills: false,
+                          missingOnly: true,
+                          contextLabel: `Scene ${sceneNumber} · Audio`,
+                        })
+                      }
                       hasSelectableActionBeats={hasSelectableActionBeats}
                       sceneMusicCues={sceneMusicCues}
                       musicCueByBeatId={musicCueByBeatId}
