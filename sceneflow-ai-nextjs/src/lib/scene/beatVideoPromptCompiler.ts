@@ -18,6 +18,7 @@ import {
   isPhotorealisticArtStyle,
 } from '@/lib/artStyle/globalArtStyle'
 import { getArtStyleNegativeTerms, getArtStyleVideoPromptSuffix } from '@/lib/vision/artStyle'
+import { lintShotPromptConsistency } from '@/lib/vision/lintShotPromptConsistency'
 import { affirmativeStartFrameState } from '@/lib/vision/locationStateAnalysis'
 
 export { affirmativeStartFrameState }
@@ -393,8 +394,16 @@ export function resolveBeatClipDirection(
       undefined
   )
 
+  const rawEndFrameCandidate = direction?.endFrame?.trim()
+    ? direction.endFrame
+    : direction?.frozenMoment &&
+        (!startFrame ||
+          stripLeadingTimeLabel(direction.frozenMoment).toLowerCase() !==
+            stripLeadingTimeLabel(startFrame).toLowerCase())
+      ? direction.frozenMoment
+      : undefined
   const endFrame = sanitizeReferenceEndFrame(
-    cleanSingle(direction?.endFrame || direction?.frozenMoment),
+    cleanSingle(rawEndFrameCandidate),
     rawClipAction
   )
 
@@ -736,8 +745,11 @@ function incomingContinuityClause(
   const prevProps = Array.isArray(prev.beatDirection?.keyProps)
     ? prev.beatDirection.keyProps.map((name) => name.trim()).filter(Boolean)
     : []
-  const sharedProps =
-    Array.isArray(currentProps) && currentProps.length === 0 ? [] : prevProps
+  const sharedProps = Array.isArray(currentProps)
+    ? prevProps.filter((name) =>
+        currentProps.some((curr) => curr.trim().toLowerCase() === name.toLowerCase())
+      )
+    : prevProps
   if (sharedProps.length) parts.push(`props remain: ${sharedProps.join(', ')}`)
   if (ledgerClause) parts.push(ledgerClause)
   return parts.join('. ')
@@ -794,10 +806,14 @@ function finishVideoPrompt(args: {
     : rawStyle
   const rawPrompt =
     style && !tokenAlreadyInPrompt(style, core) ? normalizePromptJoin(core, style) : core
+  const lintedPrompt = lintShotPromptConsistency({
+    prompt: rawPrompt,
+    assetKind: 'clip',
+  }).sanitizedPrompt
   const prompt =
     args.beat.beatDirection?.policyCompliance === true
-      ? applyBeatVideoPolicyCompliance(rawPrompt, args.beat)
-      : rawPrompt
+      ? applyBeatVideoPolicyCompliance(lintedPrompt, args.beat)
+      : lintedPrompt
   return {
     prompt,
     negativePrompt: videoNegatives(args.beat, args.styleNegative),

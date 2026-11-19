@@ -1478,15 +1478,7 @@ function cleanSceneForVisuals(action: string, visualDesc: string): string {
     })
   }
   
-  // Remove montage descriptions - keep only the LAST distinct scene
-  // Split on "Then," or "Then the" patterns which often signal the main scene after montage
-  const thenMatch = cleaned.match(/\bThen,?\s+(the\s+)?(.+)$/is)
-  if (thenMatch && thenMatch[2] && thenMatch[2].length > 100) {
-    // Use the part after "Then" as it's likely the main scene
-    cleaned = thenMatch[2]
-  }
-  
-  // If still very long (> 1000 chars), look for the last major scene description
+  // If very long (> 1000 chars), look for the last major scene description
   if (cleaned.length > 1000) {
     // Find the last paragraph/sentence that describes the actual scene (not montage cuts)
     const paragraphs = cleaned.split(/\n\n+/)
@@ -1506,14 +1498,9 @@ function cleanSceneForVisuals(action: string, visualDesc: string): string {
   cleaned = cleaned.replace(/\b(hears?|listens?\s+to|sounds?\s+like)[^.!?]*[.!?]/gi, '')
   
   // ===== STATIC FRAME CONVERSION =====
-  // Convert video/action directions into static image descriptions
-  // The model generates text when it sees abstract concepts or sequences
-  
-  // Remove SEQUENTIAL ACTIONS (video-specific, can't be shown in one frame)
-  // "stops mid-stride, listens, then resumes pacing" -> just show the pose
-  cleaned = cleaned.replace(/,?\s*then\s+\w+\s+\w+/gi, '') // "then resumes pacing"
+  // Convert video/action directions into static image descriptions without corrupting
+  // ordinary clauses (only remove explicit multi-step "and then ..." tail clauses).
   cleaned = cleaned.replace(/,?\s*and\s+then\s+[^,;.]+/gi, '') // "and then walks away"
-  cleaned = cleaned.replace(/\b(stops|pauses|listens|turns|resumes|begins|starts|continues)\s+(to\s+)?\w+/gi, '') // action verbs
   
   // Remove ABSTRACT META-DESCRIPTIONS that models can't visualize
   // BUT PRESERVE emotional tone/mood - these ARE important for still images!

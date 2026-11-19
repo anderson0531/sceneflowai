@@ -333,14 +333,45 @@ function inferOmniVideoTask(options: OmniInteractionBuildOptions): string {
   return 'text_to_video'
 }
 
+function buildRefPositiveGuardrails(prompt: string, negativePrompt?: string): string {
+  const neg = (negativePrompt || '').toLowerCase()
+  if (!neg) return ''
+  const lowerPrompt = prompt.toLowerCase()
+  const clauses: string[] = []
+  if (
+    (/\blip\s*sync\b|\btalking\b|\bdialogue\b/.test(neg)) &&
+    !/\bmouth(?:s)?\s+remain(?:s)?\s+closed\b|\bno\s+lip[- ]?sync\b/.test(lowerPrompt)
+  ) {
+    clauses.push('Silent visual action only; mouths remain closed with no lip-sync')
+  }
+  if (
+    /\bover-the-shoulder foreground person\b|\bback of second person head\b/.test(neg) &&
+    !/\bno foreground silhouette\b|\bno extra people\b/.test(lowerPrompt)
+  ) {
+    clauses.push('Keep frame clear of any unreferenced foreground person or second head')
+  }
+  if (
+    /\bteleport|floating|morphing|extra fingers|gravity\b/.test(neg) &&
+    !/\brigid object permanence\b/.test(lowerPrompt)
+  ) {
+    clauses.push('Maintain rigid object permanence, natural gravity, and consistent spatial scale')
+  }
+  return clauses.join('. ')
+}
+
 /** Build multimodal input array for the Interactions API */
 export async function buildOmniInteractionInput(
   prompt: string,
   options: OmniInteractionBuildOptions = {}
 ): Promise<OmniInteractionInput> {
   const hasReferenceImages = (options.referenceImages?.length ?? 0) > 0
+  const refGuardrails = hasReferenceImages
+    ? buildRefPositiveGuardrails(prompt, options.negativePrompt)
+    : ''
   const textPrompt = hasReferenceImages
-    ? prompt.trim()
+    ? refGuardrails
+      ? `${prompt.trim().replace(/\.+$/, '')}. ${refGuardrails}.`
+      : prompt.trim()
     : appendNegativePrompt(prompt, options.negativePrompt)
   const cinematicPrompt = options.omniMultiShot
     ? `${textPrompt.trim()}\n\nCinematic multi-shot sequence: vary coverage with smooth transitions between distinct shots in one continuous clip.`

@@ -189,6 +189,10 @@ interface BeatVideoGalleryProps {
   generationMode?: 'standard' | 'creative'
   /** Update per-shot clip duration directly without opening a legacy dialog. */
   onChangeDuration?: (segment: SceneSegment, seconds: number) => void
+  /** Switch a policy-blocked clip to Creative (Kling AI F2V) and retry. */
+  onSwitchCreative?: (segment: SceneSegment) => void
+  /** Retry an FTV-blocked clip using Start Frame only (I2V). */
+  onRetryI2V?: (segment: SceneSegment) => void
 }
 
 export function BeatVideoGallery({
@@ -208,6 +212,8 @@ export function BeatVideoGallery({
   onGenerateClip,
   onDirectBeat,
   onRestoreTake,
+  onSwitchCreative,
+  onRetryI2V,
   onOpenPreVis,
   generatingClipId,
   selectedBeatId = null,
@@ -1339,6 +1345,16 @@ export function BeatVideoGallery({
                                 preview.beatId!,
                                 previewPolicy ? { safety: true } : undefined
                               )
+                          : undefined
+                      }
+                      onSwitchCreative={
+                        previewSegment && onSwitchCreative
+                          ? () => onSwitchCreative(previewSegment)
+                          : undefined
+                      }
+                      onRetryI2V={
+                        previewSegment && onRetryI2V
+                          ? () => onRetryI2V(previewSegment)
                           : undefined
                       }
                       supportContext={{

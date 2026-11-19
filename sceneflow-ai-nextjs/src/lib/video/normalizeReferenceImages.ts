@@ -90,6 +90,10 @@ export type VeoReferenceImage = {
   subjectOrdinal?: number
   wardrobeDescription?: string
   identityTraits?: string
+  dimensions?: string
+  description?: string
+  canonicalScale?: string
+  currentSetState?: string
 }
 
 export type VeoReferenceImageInput = {
@@ -105,6 +109,10 @@ export type VeoReferenceImageInput = {
   subjectOrdinal?: number
   wardrobeDescription?: string
   identityTraits?: string
+  dimensions?: string
+  description?: string
+  canonicalScale?: string
+  currentSetState?: string
 }
 
 const VALID_PRIORITY_ROLES = new Set<PrioritizedReferenceImage['role']>([
@@ -163,6 +171,10 @@ export function normalizeReferenceImages(
         subjectOrdinal: item.subjectOrdinal,
         wardrobeDescription: item.wardrobeDescription,
         identityTraits: item.identityTraits,
+        ...(item.dimensions?.trim() ? { dimensions: item.dimensions.trim() } : {}),
+        ...(item.description?.trim() ? { description: item.description.trim() } : {}),
+        ...(item.canonicalScale?.trim() ? { canonicalScale: item.canonicalScale.trim() } : {}),
+        ...(item.currentSetState?.trim() ? { currentSetState: item.currentSetState.trim() } : {}),
       }
     })
     .filter((item): item is VeoReferenceImage => item !== null)
@@ -195,7 +207,10 @@ export function veoRefsToPrioritized(
       subjectOrdinal: ref.subjectOrdinal,
       wardrobeDescription: ref.wardrobeDescription,
       identityTraits: ref.identityTraits,
-    }
+      ...(ref.dimensions?.trim() ? { dimensions: ref.dimensions.trim() } : {}),
+      ...(ref.canonicalScale?.trim() ? { canonicalScale: ref.canonicalScale.trim() } : {}),
+      ...(ref.currentSetState?.trim() ? { currentSetState: ref.currentSetState.trim() } : {}),
+    } as PrioritizedReferenceImage
   })
 }
 

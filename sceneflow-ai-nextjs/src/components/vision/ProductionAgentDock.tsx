@@ -13,10 +13,14 @@ import {
   Square,
   Sparkles,
   ShieldCheck,
+  Search,
+  ChevronDown,
+  ChevronUp,
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { GenerationErrorCard } from '@/components/vision/GenerationErrorCard'
 import type {
   ProductionAgentTelemetry,
   ProductionCheckpointGate,
@@ -319,19 +323,54 @@ export function ProductionAgentDock({
           </div>
         )}
 
-        {/* Error summary if any */}
-        {state.finished && telemetry.errors.length > 0 && (
-          <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-[11px] text-amber-200">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-            <span className="line-clamp-2">
-              {telemetry.errors[0]}
-              {telemetry.errors.length > 1
-                ? ` (+${telemetry.errors.length - 1} more)`
-                : ''}
-            </span>
-          </div>
+        {/* Actionable Needs-Attention Error Tray with Self-Healing [Investigate] */}
+        {telemetry.errors.length > 0 && (
+          <ProductionAgentErrorTray errors={telemetry.errors} />
         )}
       </div>
+    </div>
+  )
+}
+
+function ProductionAgentErrorTray({ errors }: { errors: string[] }) {
+  const [expanded, setExpanded] = useState(false)
+  return (
+    <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-2.5 py-2 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0 text-[11px] font-semibold text-amber-200">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span className="truncate">
+            Needs Attention ({errors.length})
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="inline-flex items-center gap-1 rounded-md border border-cyan-500/40 bg-cyan-950/50 hover:bg-cyan-900/60 px-2 py-0.5 text-[10px] font-semibold text-cyan-200 shrink-0"
+        >
+          <Search className="w-3 h-3" />
+          <span>{expanded ? 'Hide' : 'Investigate'}</span>
+          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        </button>
+      </div>
+      {!expanded ? (
+        <p className="text-[11px] text-amber-100/85 line-clamp-2">
+          {errors[0]}
+          {errors.length > 1 ? ` (+${errors.length - 1} more)` : ''}
+        </p>
+      ) : (
+        <div className="max-h-64 overflow-y-auto space-y-2 pr-0.5">
+          {errors.slice(0, 6).map((errText, idx) => (
+            <GenerationErrorCard
+              key={`${idx}-${errText.slice(0, 32)}`}
+              mediaType={/still|frame|image/i.test(errText) ? 'still' : 'clip'}
+              rawError={errText}
+              technicalDetails={errText}
+              className="text-left"
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

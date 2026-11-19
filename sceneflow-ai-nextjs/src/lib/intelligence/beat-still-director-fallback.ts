@@ -128,6 +128,7 @@ export interface StillDirectorPatch {
 export interface StillDirectorBoundWardrobe {
   characterName: string
   name?: string
+  wardrobeName?: string
   description?: string
   accessories?: string
   appearanceNotes?: string

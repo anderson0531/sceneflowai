@@ -36,7 +36,14 @@ const REF_CONFLICT_PHRASES: Record<string, string> = {
 /** Possessive proper-noun → the subject (e.g. "Elara's hands" → "the subject's hands"). */
 const POSSESSIVE_NAME_PATTERN = /\b[A-Z][a-zA-Z]*(?:'|\u2019)s\b/g
 
-/** Body-part re-description when refs carry identity. */
+/** Place/venue nouns that follow a proper-noun possessive (e.g. "Gideon's Workshop", "St. Mary's Hall"). */
+const POSSESSIVE_LOCATION_FOLLOW_RE =
+  /^\s+(?:Workshop|Hall|Office|House|Shop|Room|Bar|Cafe|Caf[eé]|Tavern|Church|Cathedral|Hospital|Studio|Boatshop|Boatyard|Garage|Kitchen|Library|Lab|Laboratory|Gallery|Square|Park|Street|Avenue|Road|Lane|Harbor|Harbour|Dock|Pier|Bridge|Tower|Manor|Estate|Apartment|Cabin|Barn|Farm|Garden|Clinic|Ward|Court|Theater|Theatre|Cinema|Museum|Hotel|Inn|Lodge|Camp|Place|Market|Store|Bakery|Diner|Pub|Club|Lounge|Factory|Mill|Foundry|Archive|Vault|Chamber|Cellar|Attic|Porch|Deck|Yard)\b/i
+
+/** Title prefixes indicating a named place/saint rather than a character possessive. */
+const POSSESSIVE_PLACE_PREFIX_RE = /\b(?:St\.|Saint|Mt\.|Mount|Ft\.|Fort)\s*$/i
+
+/** Body-part re-description when a single reference carries identity. */
 const PRONOUN_BODY_PATTERN =
   /\b(Her|His)\s+(eyes|hands|face|temple|temples|arm|arms|body|hair|skin|cheek|cheeks|forehead|lips)\b/gi
 
@@ -72,8 +79,14 @@ const SPOKEN_QUOTE_SPAN_RE =
  * Neutralize scene prompt text before Omni REF assembly.
  * Idempotent-friendly; safe to run on already-softened text.
  */
-export function neutralizeReferenceConflictPrompt(scenePrompt: string): string {
+export function neutralizeReferenceConflictPrompt(
+  scenePrompt: string,
+  options?: { multiCharacter?: boolean }
+): string {
   if (!scenePrompt?.trim()) return scenePrompt
+
+  const isMultiCharacter =
+    options?.multiCharacter === true || /\bperson\s*\[[2-9]\]/i.test(scenePrompt)
 
   const preservedQuotes: string[] = []
   const maskedInput = scenePrompt.replace(SPOKEN_QUOTE_SPAN_RE, (match) => {
@@ -97,14 +110,25 @@ export function neutralizeReferenceConflictPrompt(scenePrompt: string): string {
     text = text.replace(pattern, '')
   }
 
-  text = text.replace(POSSESSIVE_NAME_PATTERN, (match) => {
-    if (/^The\b/i.test(match)) return match
-    return "the subject's"
-  })
-  text = text.replace(PRONOUN_BODY_PATTERN, (_, _pronoun, bodyPart) => {
-    const part = typeof bodyPart === 'string' ? bodyPart.toLowerCase() : 'body'
-    return `The subject's ${part}`
-  })
+  if (!isMultiCharacter) {
+    text = text.replace(POSSESSIVE_NAME_PATTERN, (match, offset: number, full: string) => {
+      if (/^The\b/i.test(match)) return match
+      const before = full.slice(Math.max(0, offset - 12), offset)
+      const after = full.slice(offset + match.length, offset + match.length + 32)
+      if (POSSESSIVE_PLACE_PREFIX_RE.test(before) || POSSESSIVE_LOCATION_FOLLOW_RE.test(after)) {
+        return match
+      }
+      return "the subject's"
+    })
+    text = text.replace(PRONOUN_BODY_PATTERN, (_, pronoun, bodyPart) => {
+      const part = typeof bodyPart === 'string' ? bodyPart.toLowerCase() : 'body'
+      const lead =
+        typeof pronoun === 'string' && pronoun[0] === pronoun[0].toUpperCase()
+          ? "The subject's"
+          : "the subject's"
+      return `${lead} ${part}`
+    })
+  }
 
   if (preservedQuotes.length > 0) {
     text = text.replace(/__SF_SPOKEN_QUOTE_(\d+)__/g, (_m, rawIdx) => {

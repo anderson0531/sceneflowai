@@ -26,6 +26,10 @@ export interface ReferenceImageBinding {
   wardrobeDescription?: string
   /** Portrait-verified permanent facial traits (skin, hair, facial hair, age) to lock likeness. */
   identityTraits?: string
+  /** Physical scale / dimensions anchor for props or locations (e.g. "palm-sized 10cm", "10m room"). */
+  scaleNote?: string
+  /** Current set/environment state note for location continuity (e.g. "storm-darkened interior"). */
+  setStateNote?: string
 }
 
 export const OPENING_FRAME_CAPTION = 'The next image is the opening frame.'
@@ -170,14 +174,22 @@ export function formatImagesAboveBinding(bindings: ReferenceImageBinding[]): str
   }
   for (const binding of locations) {
     const token = binding.token!.replace(/\s+/g, ' ').trim()
+    const extras = [
+      binding.scaleNote?.trim() ? `True scale: ${binding.scaleNote.trim()}` : '',
+      binding.setStateNote?.trim() ? `Set state: ${binding.setStateNote.trim()}` : '',
+    ].filter(Boolean)
+    const suffix = extras.length > 0 ? ` (${extras.join('; ')})` : ''
     lines.push(
-      `${subjectLabel(token, binding.name)} is the place in the location image of ${token}.`
+      `${subjectLabel(token, binding.name)} is the place in the location image of ${token}${suffix}.`
     )
   }
   for (const binding of props) {
     const token = binding.token!.replace(/\s+/g, ' ').trim()
+    const scaleSuffix = binding.scaleNote?.trim()
+      ? ` (True physical scale: ${binding.scaleNote.trim()})`
+      : ''
     lines.push(
-      `${subjectLabel(token, binding.name)} is the object in the prop image of ${token}.`
+      `${subjectLabel(token, binding.name)} is the object in the prop image of ${token}${scaleSuffix}.`
     )
   }
   if (lines.length === 0) return ''
@@ -272,6 +284,9 @@ export function bindingsFromReferenceRecords(
     subjectOrdinal?: number
     wardrobeDescription?: string
     identityTraits?: string
+    dimensions?: string
+    canonicalScale?: string
+    currentSetState?: string
   }>
 ): ReferenceImageBinding[] {
   const personByName = new Map<string, string>()
@@ -281,6 +296,8 @@ export function bindingsFromReferenceRecords(
 
   const bindings: ReferenceImageBinding[] = []
   for (const ref of refs) {
+    const scaleNote = ref.dimensions?.trim() || ref.canonicalScale?.trim() || undefined
+    const setStateNote = ref.currentSetState?.trim() || undefined
     const fromCaption = bindingFromCaption(ref.name)
     if (fromCaption?.token || fromCaption?.role === 'opening-frame') {
       bindings.push({
@@ -292,6 +309,8 @@ export function bindingsFromReferenceRecords(
         ...(ref.identityTraits?.trim()
           ? { identityTraits: ref.identityTraits.trim() }
           : {}),
+        ...(scaleNote ? { scaleNote } : {}),
+        ...(setStateNote ? { setStateNote } : {}),
       })
       continue
     }
@@ -374,13 +393,24 @@ export function bindingsFromReferenceRecords(
 
     if (isProp) {
       const token = libraryToken(ref.promptToken, 'prop') || `prop [${nextProp++}]`
-      bindings.push({ role: 'prop', token, name: propName })
+      bindings.push({
+        role: 'prop',
+        token,
+        name: propName,
+        ...(scaleNote ? { scaleNote } : {}),
+      })
       continue
     }
 
     if (isLocation) {
       const token = libraryToken(ref.promptToken, 'location') || `location [${nextLocation++}]`
-      bindings.push({ role: 'location', token, name: locationName })
+      bindings.push({
+        role: 'location',
+        token,
+        name: locationName,
+        ...(scaleNote ? { scaleNote } : {}),
+        ...(setStateNote ? { setStateNote } : {}),
+      })
     }
   }
   return bindings

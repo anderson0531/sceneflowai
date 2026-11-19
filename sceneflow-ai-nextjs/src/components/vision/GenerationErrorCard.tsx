@@ -4,11 +4,15 @@ import React, { useState } from 'react'
 import {
   AlertCircle,
   AlertTriangle,
+  Check,
   Clapperboard,
   LifeBuoy,
+  Loader2,
   RefreshCw,
+  Search,
   Sparkles,
   X,
+  Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -18,6 +22,12 @@ import {
   type GenerationMediaType,
   type GenerationRecoveryAction,
 } from '@/lib/errors/generationErrorIntelligence'
+import {
+  buildDeterministicShotInvestigation,
+  type ShotErrorInvestigationResult,
+  type ShotErrorReferenceSummary,
+  type ShotErrorResolution,
+} from '@/lib/errors/shotErrorInvestigator'
 import type { SupportReportContext } from '@/lib/support/generationErrorReport'
 import {
   ReportGenerationErrorDialog,
@@ -36,6 +46,7 @@ export interface GenerationErrorCardProps {
   hasStartFrame?: boolean
   isFTVRelated?: boolean
   prompt?: string
+  referenceImages?: ShotErrorReferenceSummary[]
   suggestedWording?: string[]
   vertexRaiDetails?: string
   supportContext?: SupportReportContext
@@ -45,6 +56,8 @@ export interface GenerationErrorCardProps {
   onOpenDirector?: () => void
   onSwitchCreative?: () => void
   onOpenReferences?: () => void
+  onApplyRevisedPrompt?: (revisedPrompt: string) => void | Promise<void>
+  onRegeneratePortrait?: (refName?: string, guidance?: string) => void | Promise<void>
   onDismiss?: () => void
   onReportToSupport?: (payload: SupportErrorReportPayload) => void
   className?: string
@@ -62,6 +75,7 @@ export function GenerationErrorCard({
   hasStartFrame,
   isFTVRelated,
   prompt,
+  referenceImages,
   suggestedWording,
   vertexRaiDetails,
   supportContext,
@@ -71,11 +85,17 @@ export function GenerationErrorCard({
   onOpenDirector,
   onSwitchCreative,
   onOpenReferences,
+  onApplyRevisedPrompt,
+  onRegeneratePortrait,
   onDismiss,
   onReportToSupport,
   className,
 }: GenerationErrorCardProps) {
   const [localReportOpen, setLocalReportOpen] = useState(false)
+  const [investigating, setInvestigating] = useState(false)
+  const [investigation, setInvestigation] = useState<ShotErrorInvestigationResult | null>(null)
+  const [applyingResolutionId, setApplyingResolutionId] = useState<string | null>(null)
+  const [appliedResolutionIds, setAppliedResolutionIds] = useState<Record<string, boolean>>({})
 
   const evaluated =
     userGuidance ??
@@ -337,33 +357,219 @@ export function GenerationErrorCard({
             </Button>
           )}
 
-          {evaluated.canReportToSupport && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleOpenSupport}
-              className={cn(
-                'h-7 text-[11px]',
-                evaluated.recommendSupportEscalation
-                  ? 'border-cyan-500/50 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50'
-                  : 'border-slate-600/80 bg-slate-900/50 text-slate-300 hover:bg-slate-800'
-              )}
-            >
-              <LifeBuoy className="h-3.5 w-3.5 mr-1" />
-              Report to Support
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isBusy || investigating}
+            onClick={async () => {
+              setInvestigating(true)
+              const payload = {
+                mediaType,
+                rawError:
+                  typeof rawError === 'string'
+                    ? rawError
+                    : rawError instanceof Error
+                      ? rawError.message
+                      : undefined,
+                technicalDetails,
+                vertexRaiDetails,
+                errorCode,
+                statusCode,
+                provider,
+                generationMethod,
+                hasStartFrame,
+                isFTVRelated,
+                prompt,
+                referenceImages,
+                shotLabel: supportContext?.shotLabel,
+              }
+              try {
+                const res = await fetch('/api/production/investigate-shot-error', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload),
+                })
+                if (res.ok) {
+                  const data = (await res.json()) as ShotErrorInvestigationResult
+                  setInvestigation(data)
+                } else {
+                  setInvestigation(buildDeterministicShotInvestigation(payload))
+                }
+              } catch {
+                setInvestigation(buildDeterministicShotInvestigation(payload))
+              } finally {
+                setInvestigating(false)
+              }
+            }}
+            className="h-7 border-cyan-500/50 bg-cyan-950/40 text-[11px] text-cyan-200 hover:bg-cyan-900/50"
+          >
+            {investigating ? (
+              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+            ) : (
+              <Search className="h-3.5 w-3.5 mr-1" />
+            )}
+            {investigating ? 'Investigating...' : 'Investigate'}
+          </Button>
         </div>
 
-        {showTechnicalToggle && (
+        {investigation && (
+          <div className="space-y-2 rounded-lg border border-cyan-500/35 bg-slate-950/80 p-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-1.5 min-w-0">
+                <Zap className="h-3.5 w-3.5 shrink-0 text-cyan-400 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-cyan-200">
+                    Self-Healing Diagnosis
+                  </p>
+                  <p className="text-[11px] leading-snug text-slate-300">
+                    {investigation.summary}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInvestigation(null)}
+                className="text-slate-500 hover:text-slate-300"
+                aria-label="Close investigation"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              {investigation.resolutions.map((res: ShotErrorResolution) => {
+                const isApplying = applyingResolutionId === res.id
+                const isApplied = Boolean(appliedResolutionIds[res.id])
+                const handleApplyResolution = async () => {
+                  setApplyingResolutionId(res.id)
+                  try {
+                    switch (res.actionType) {
+                      case 'switch_creative_kling_f2v':
+                        if (onSwitchCreative) onSwitchCreative()
+                        else if (onRerun) onRerun()
+                        break
+                      case 'downgrade_ftv_to_i2v':
+                        if (onRetryI2V) onRetryI2V()
+                        else if (onRerun) onRerun()
+                        break
+                      case 'apply_sanitized_prompt_and_retry':
+                      case 'mitigate_likeness_and_retry':
+                        if (res.patch?.revisedPrompt && onApplyRevisedPrompt) {
+                          await onApplyRevisedPrompt(res.patch.revisedPrompt)
+                        } else if (onOpenDirector) {
+                          onOpenDirector()
+                        } else if (onRerun) {
+                          onRerun()
+                        }
+                        break
+                      case 'regenerate_non_celebrity_portrait':
+                        if (onRegeneratePortrait) {
+                          await onRegeneratePortrait(
+                            res.patch?.flaggedReferenceName,
+                            res.patch?.portraitRewriteGuidance
+                          )
+                        } else if (onOpenReferences) {
+                          onOpenReferences()
+                        }
+                        break
+                      case 'open_director_rewrite':
+                        if (onOpenDirector) onOpenDirector()
+                        break
+                      case 'open_references':
+                        if (onOpenReferences) onOpenReferences()
+                        break
+                      case 'retry_after_cooldown':
+                      case 'rerun':
+                      default:
+                        if (onRerun) onRerun()
+                        break
+                    }
+                    setAppliedResolutionIds((prev) => ({ ...prev, [res.id]: true }))
+                  } finally {
+                    setApplyingResolutionId(null)
+                  }
+                }
+
+                return (
+                  <div
+                    key={res.id}
+                    className="rounded-md border border-slate-800 bg-slate-900/70 p-2 space-y-1.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[11px] font-semibold text-white">
+                            {res.title}
+                          </span>
+                          {res.recommended && (
+                            <span className="rounded bg-cyan-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300">
+                              Recommended
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400">
+                          {res.reason}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={isBusy || isApplying}
+                        onClick={handleApplyResolution}
+                        className={cn(
+                          'h-6 shrink-0 px-2.5 text-[10px] font-semibold',
+                          isApplied
+                            ? 'bg-emerald-600 hover:bg-emerald-600 text-white'
+                            : res.recommended
+                              ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                              : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                        )}
+                      >
+                        {isApplying ? (
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        ) : isApplied ? (
+                          <Check className="h-3 w-3 mr-1" />
+                        ) : (
+                          <Zap className="h-3 w-3 mr-1" />
+                        )}
+                        {isApplying ? 'Applying...' : isApplied ? 'Applied' : res.ctaLabel}
+                      </Button>
+                    </div>
+                    {res.patch?.revisedPrompt && (
+                      <p className="rounded bg-black/40 px-2 py-1 text-[10px] text-slate-300/90 line-clamp-2">
+                        {res.patch.revisedPrompt}
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {(showTechnicalToggle || evaluated.canReportToSupport) && (
           <details className="rounded border border-slate-800/80 bg-black/30 px-2.5 py-1">
             <summary className="cursor-pointer select-none text-[10px] text-slate-400 hover:text-slate-200">
               Technical details
             </summary>
-            <pre className="mt-1.5 max-h-36 overflow-y-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-snug text-slate-300/90">
-              {rawDiag}
-            </pre>
+            {rawDiag && (
+              <pre className="mt-1.5 max-h-36 overflow-y-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-snug text-slate-300/90">
+                {rawDiag}
+              </pre>
+            )}
+            {evaluated.canReportToSupport && (
+              <div className="mt-1.5 flex justify-end border-t border-slate-800/70 pt-1.5">
+                <button
+                  type="button"
+                  onClick={handleOpenSupport}
+                  className="inline-flex items-center gap-1 text-[10px] text-slate-400 hover:text-slate-200 underline-offset-2 hover:underline"
+                >
+                  <LifeBuoy className="h-3 w-3" />
+                  Still stuck? Report platform bug
+                </button>
+              </div>
+            )}
           </details>
         )}
       </div>

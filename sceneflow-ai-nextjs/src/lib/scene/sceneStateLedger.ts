@@ -46,8 +46,14 @@ export interface PrecedingShotContinuityAnchor {
   promptContinuityDirective: string
 }
 
+/**
+ * Genuine persistent costume/wardrobe state transitions only.
+ * Transient hand-held prop verbs ("holding", "carries", "picks up", "sets down", "wears")
+ * are intentionally excluded so they do not stick as permanent carryover state and contradict
+ * subsequent beat actions (e.g., "already holding open jar" vs "picks up and opens the jar").
+ */
 const WARDROBE_MUTATION_REGEX =
-  /\b(?:puts? on|takes? off(?!\s+(?:running|sprinting|bolting|down|into|across|toward|through)\b)|removes?|unbuttons?|buttons?|zips?|unzips?|drapes?|wraps?(?!\s+(?:up|around)\b)|wears?|holding(?!\s+(?:(?:his|her|their|its|my|your)\s+)?(?:ground|breath|gaze|eye\s+contact|steady|back|still|firm|pose|posture|position|silence|court|focus|line|hands?)\b)|carries(?!\s+(?:himself|herself|themselves|on|weight|a\s+tune)\b)|clutches(?!\s+(?:at\s+straws)\b)|picks? up(?!\s+(?:speed|pace|steam|momentum|where)\b)|sets? down)\s+([^.,;]+)/i
+  /\b(?:puts? on|takes? off(?!\s+(?:running|sprinting|bolting|down|into|across|toward|through)\b)|removes?|unbuttons?|buttons?|zips?|unzips?|drapes?|wraps?(?!\s+(?:up|around)\b))\s+([^.,;]+)/i
 
 const ENVIRONMENT_MUTATION_REGEX =
   /\b(?:lights?\s+(?:flicker|dim|turn\s+\w+|go\s+out)|rain\s+(?:starts|intensifies|stops)|alarms?\s+flash|smoke\s+fills|door\s+(?:opens|slams\s+shut))\b[^.,;]*/i

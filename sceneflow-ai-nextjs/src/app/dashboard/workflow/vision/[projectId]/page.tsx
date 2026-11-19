@@ -21141,6 +21141,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ensureSceneReferences: async (sceneIndex) => {
             try {
               await handleExpressSceneReferences(sceneIndex)
+              await referenceExpressJob.waitUntilSettled()
+              await refreshReferencesFromServer()
             } catch {
               // Non-fatal if references already exist
             }
@@ -21152,6 +21154,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             if (!scene) return 0
             let generatedCount = 0
 
+            const audioTasks: Array<() => Promise<void>> = []
+
             const hasNarration =
               Boolean(scene?.narration) &&
               (!missingOnly ||
@@ -21160,24 +21164,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   (lang === 'en' && scene?.narrationAudioUrl)
                 ))
             if (hasNarration) {
-              try {
+              audioTasks.push(async () => {
                 await handleGenerateSceneAudio(sceneIndex, 'narration', undefined, undefined, lang)
                 generatedCount += 1
-              } catch {}
+              })
             }
 
             const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
             const dialogueAudio = scene?.dialogueAudio?.[lang] || []
             for (let dIdx = 0; dIdx < dialogue.length; dIdx++) {
-              if (abortController.signal.aborted) break
               const existingUrl = dialogueAudio[dIdx]?.audioUrl
               if (missingOnly && existingUrl) continue
               const speaker = dialogue[dIdx]?.character
-              try {
+              audioTasks.push(async () => {
                 await handleGenerateSceneAudio(sceneIndex, 'dialogue', speaker, dIdx, lang)
                 generatedCount += 1
-              } catch {}
+              })
             }
+
+            // Execute TTS audio lines with bounded concurrency (6x) instead of 1x serial
+            const AUDIO_CONCURRENCY = 6
+            let cursor = 0
+            await Promise.all(
+              Array.from({ length: Math.min(AUDIO_CONCURRENCY, audioTasks.length) }, async () => {
+                while (cursor < audioTasks.length && !abortController.signal.aborted) {
+                  const task = audioTasks[cursor++]
+                  if (!task) break
+                  try {
+                    await task()
+                  } catch {
+                    // Individual line failure does not abort remaining scene audio
+                  }
+                }
+              })
+            )
             return generatedCount
           },
           runSceneStills: async (
@@ -21208,10 +21228,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const beats = getSceneBeats(scene)
             let segments = sceneProductionStateRef.current[sceneId]?.segments ?? []
 
-            if (segments.length === 0 && beats.length > 0) {
-              const firstBeatId = beats[0]?.beatId
-              if (firstBeatId) {
-                await ensurePromoShotSegment(sceneId, firstBeatId, 5)
+            if (beats.length > 0) {
+              const existingBeatIds = new Set(
+                segments
+                  .map((s: any) => s?.beatId)
+                  .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+              )
+              const missingBeats = beats.filter((b) => b?.beatId && !existingBeatIds.has(b.beatId))
+              for (const missingBeat of missingBeats) {
+                if (abortController.signal.aborted) break
+                await ensurePromoShotSegment(
+                  sceneId,
+                  missingBeat.beatId,
+                  missingBeat.durationSeconds || 8
+                )
+              }
+              if (missingBeats.length > 0) {
                 segments = sceneProductionStateRef.current[sceneId]?.segments ?? []
               }
             }
@@ -21285,11 +21317,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     ? 'I2V'
                     : 'T2V'
                 : 'REF'
+            const existingSeg = (sceneProductionStateRef.current[sceneId]?.segments ?? []).find(
+              (s: any) => s?.segmentId === segmentId
+            )
+            const resolvedPrompt =
+              existingSeg?.userEditedPrompt?.trim() ||
+              existingSeg?.generatedPrompt?.trim() ||
+              undefined
+            const resolvedRefImages = Array.isArray(existingSeg?.references?.referenceImages)
+              ? existingSeg.references.referenceImages
+              : undefined
             await handleSegmentGenerate(
               sceneId,
               segmentId,
               genMethod === 'FTV' || genMethod === 'I2V' ? 'I2V' : 'T2V',
               {
+                ...(resolvedPrompt ? { prompt: resolvedPrompt } : {}),
+                ...(resolvedRefImages?.length ? { referenceImages: resolvedRefImages } : {}),
                 videoProvider: policy.videoProvider,
                 klingModel: policy.klingModel,
                 klingQuality: policy.klingQuality,
