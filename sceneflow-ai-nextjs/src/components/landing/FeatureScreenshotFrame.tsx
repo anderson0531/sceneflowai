@@ -32,6 +32,7 @@ import {
   getKeyFeatureAnimaticWebmPath,
   getKeyFeatureChapterTiming,
 } from '@/config/landing/keyFeatureAnimatics'
+import { keyFeatureScreenshotSrcForLocale } from '@/config/landing/keyFeatureScreenshots'
 
 type FullscreenCapableElement = HTMLElement & {
   webkitRequestFullscreen?: () => Promise<void> | void
@@ -130,7 +131,9 @@ export function FeatureScreenshotFrame({
     return variants.find((v) => v.id === locVariantId) ?? variants[0]
   }, [variants, currentBeat?.variantId, panLocale])
 
-  const fallbackImageSrc = activeVariant?.imageUrl || src
+  const fallbackImageSrc = activeVariant?.imageUrl
+    ? keyFeatureScreenshotSrcForLocale({ imageUrl: activeVariant.imageUrl }, panLocale)
+    : src
 
   // Sync language when page locale changes
   useEffect(() => {

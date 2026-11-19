@@ -41,6 +41,9 @@ export const NEW_SERIES_SCREENSHOT_WEBM =
 export const SERIES_REVIEW_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/series-review.webp'
 
+export const SERIES_CONSISTENCY_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/series-consistency.webp'
+
 export const SERIES_RESONANCE_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/series-resonance.webp'
 
@@ -184,7 +187,21 @@ export type KeyFeatureScreenshot = {
 
 export const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   newSeries: { webmUrl: NEW_SERIES_SCREENSHOT_WEBM },
-  seriesReview: { imageUrl: SERIES_REVIEW_SCREENSHOT_WEBP },
+  seriesReview: {
+    imageUrl: SERIES_REVIEW_SCREENSHOT_WEBP,
+    variants: [
+      {
+        id: 'bible',
+        label: '1 · Season Bible & Continuity',
+        imageUrl: SERIES_REVIEW_SCREENSHOT_WEBP,
+      },
+      {
+        id: 'consistency',
+        label: '2 · Series Consistency',
+        imageUrl: SERIES_CONSISTENCY_SCREENSHOT_WEBP,
+      },
+    ],
+  },
   seriesResonance: { imageUrl: SERIES_RESONANCE_SCREENSHOT_WEBP },
   seriesDirector: { imageUrl: SERIES_DIRECTOR_SCREENSHOT_WEBP },
   directEpisode: { imageUrl: DIRECT_EPISODE_SCREENSHOT_WEBP },
@@ -264,6 +281,12 @@ const LOCALIZED_SCREENSHOT_LOCALES = new Set(['es', 'pt', 'hi', 'zh', 'ar', 'th'
  * Add stems here as additional live-app screenshots are captured across locales.
  */
 export const LOCALIZED_SCREENSHOT_STEMS = new Set([
+  'series-review',
+  'series-consistency',
+  'series-resonance',
+  'series-director',
+  'episode-director',
+  'series-start-project',
   'client-intake-portal',
   'blueprint-share-estimator',
   'character-selfie-studio',
