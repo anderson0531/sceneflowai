@@ -4,7 +4,18 @@
     "description": "Planifica un arco de varios episodios una vez, luego produce cada episodio en su contra",
     "newSeries": "Nueva serie",
     "empty": "Aún no hay series",
-    "emptyHint": "Una serie mantiene los personajes, las ubicaciones y la continuidad consistentes en todos los episodios."
+    "emptyHint": "Una serie mantiene los personajes, las ubicaciones y la continuidad consistentes en todos los episodios.",
+    "searchPlaceholder": "Buscar series por título, sinopsis o género...",
+    "statusAll": "Activas y borradores",
+    "statusDraft": "Borrador",
+    "statusActive": "Activa",
+    "statusCompleted": "Completada",
+    "statusArchived": "Archivada",
+    "sortRecent": "Actualizadas recientemente",
+    "sortAlphabetical": "Título (A–Z)",
+    "sortEpisodes": "Número de episodios",
+    "seriesCount": "{count} series",
+    "noMatchingSeries": "No hay series que coincidan"
   },
   "detail": {
     "episodes": "Episodios",

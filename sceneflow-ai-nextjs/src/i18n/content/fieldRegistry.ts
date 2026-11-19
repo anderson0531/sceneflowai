@@ -39,6 +39,14 @@ export const CONTENT_FIELDS: Record<string, FieldKind> = {
   genre: 'display',
   style: 'display',
 
+  // ── Dashboard lists (projects & series summaries) ───────────────────────
+  'projects[].title': 'display',
+  'projects[].description': 'display',
+  'projects[].genre': 'display',
+  'series[].title': 'display',
+  'series[].logline': 'display',
+  'series[].genre': 'display',
+
   // ── Blueprint: ProductionGuide (src/types/productionGuide.ts) ───────────
   filmTreatment: 'display',
   fullScriptText: 'display',

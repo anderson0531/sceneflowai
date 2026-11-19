@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ArrowRight, Plus, Library, FolderOpen, Sparkles } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { ArrowRight, Plus, Library, FolderOpen } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import {
   formatRelativeTime,
@@ -12,8 +13,8 @@ import {
   type DashboardSeries,
 } from '@/hooks/useDashboardData'
 import { getResumeRouteForStep } from '@/constants/workflowRoutes'
-import { DEMO_PROJECT_ID } from '@/lib/demo/uiSandboxProject'
-import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
+import { useContentTranslation } from '@/i18n/content/useContentTranslation'
+import { EMPTY_ENTITY_I18N } from '@/i18n/content/entityI18n'
 import { cn } from '@/lib/utils'
 
 interface RecentProjectsPanelProps {
@@ -41,13 +42,37 @@ export function RecentProjectsPanel({
   series = [],
   featuredProjectId,
 }: RecentProjectsPanelProps) {
+  const t = useTranslations('dashboard.recent')
+  const tProj = useTranslations('dashboard.projects')
   const [activeTab, setActiveTab] = useState<'projects' | 'series'>(() =>
     projects.length === 0 && series.length > 0 ? 'series' : 'projects'
   )
 
-  const listProjects = featuredProjectId
-    ? projects.filter((p) => p.id !== featuredProjectId).slice(0, 5)
-    : projects.slice(0, 6)
+  const listProjects = useMemo(
+    () =>
+      featuredProjectId
+        ? projects.filter((p) => p.id !== featuredProjectId).slice(0, 5)
+        : projects.slice(0, 6),
+    [projects, featuredProjectId]
+  )
+
+  const contentFields = useMemo(() => {
+    const out: Record<string, string | undefined> = {}
+    listProjects.forEach((p, idx) => {
+      out[`projects[${idx}].title`] = p.title
+    })
+    series.forEach((s, idx) => {
+      out[`series[${idx}].title`] = s.title
+      if (s.genre) out[`series[${idx}].genre`] = s.genre
+    })
+    return out
+  }, [listProjects, series])
+
+  const { resolve: resolveContent } = useContentTranslation({
+    fields: contentFields,
+    i18n: EMPTY_ENTITY_I18N,
+    enabled: listProjects.length > 0 || series.length > 0,
+  })
 
   const hasSingleFeaturedOnly = projects.length === 1 && listProjects.length === 0
 
@@ -61,8 +86,8 @@ export function RecentProjectsPanel({
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-700/60">
         <div className="flex items-center gap-3">
           <div>
-            <h2 className="text-base font-semibold text-white">Recent Work</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Jump back into films or multi-episode series</p>
+            <h2 className="text-base font-semibold text-white">{t('title')}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">{t('subtitle')}</p>
           </div>
         </div>
 
@@ -80,7 +105,7 @@ export function RecentProjectsPanel({
               )}
             >
               <FolderOpen className="w-3.5 h-3.5" />
-              Projects
+              {t('tabProjects')}
               <span className="text-[10px] opacity-80">({projects.length})</span>
             </button>
             <button
@@ -94,7 +119,7 @@ export function RecentProjectsPanel({
               )}
             >
               <Library className="w-3.5 h-3.5" />
-              {STUDIO_DISPLAY_NAMES.series}
+              {t('tabSeries')}
               <span className="text-[10px] opacity-80">({series.length})</span>
             </button>
           </div>
@@ -103,7 +128,7 @@ export function RecentProjectsPanel({
             href={activeTab === 'projects' ? '/dashboard/projects' : '/dashboard/series'}
             className="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1"
           >
-            View all
+            {t('viewAll')}
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -115,32 +140,31 @@ export function RecentProjectsPanel({
             {hasSingleFeaturedOnly ? (
               <>
                 <p className="text-gray-300 text-sm font-medium mb-1">
-                  Your active project is featured above
+                  {t('featuredAboveTitle')}
                 </p>
                 <p className="text-gray-400 text-xs mb-5 max-w-sm">
-                  Start another standalone film or switch to the{' '}
-                  {STUDIO_DISPLAY_NAMES.series} tab for multi-episode stories.
+                  {t('featuredAboveHint')}
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2.5">
                   <Link href="/dashboard/studio/new-project">
                     <Button size="sm" variant="primary">
                       <Plus className="w-4 h-4 mr-1.5" />
-                      New Project
+                      {tProj('newProject')}
                     </Button>
                   </Link>
                 </div>
               </>
             ) : (
               <>
-                <p className="text-gray-300 text-sm font-medium mb-1">No projects yet</p>
+                <p className="text-gray-300 text-sm font-medium mb-1">{tProj('empty')}</p>
                 <p className="text-gray-400 text-xs mb-5 max-w-sm">
-                  Start your first production from a 1-sentence concept or script import.
+                  {t('emptyProjectsHint')}
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2.5">
                   <Link href="/dashboard/studio/new-project">
                     <Button size="sm" variant="primary">
                       <Plus className="w-4 h-4 mr-1.5" />
-                      New Project
+                      {tProj('newProject')}
                     </Button>
                   </Link>
                 </div>
@@ -149,10 +173,11 @@ export function RecentProjectsPanel({
           </div>
         ) : (
           <ul className="divide-y divide-gray-700/50">
-            {listProjects.map((project) => {
+            {listProjects.map((project, idx) => {
               const thumb = getThumbnail(project)
               const phase = getPhaseDisplayName(project.currentStep)
               const resumeUrl = getResumeRouteForStep(project.id, project.currentStep)
+              const displayTitle = resolveContent(`projects[${idx}].title`).text || project.title
 
               return (
                 <li key={project.id}>
@@ -171,13 +196,13 @@ export function RecentProjectsPanel({
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={thumb} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="font-semibold">{project.title.charAt(0).toUpperCase()}</span>
+                        <span className="font-semibold">{displayTitle.charAt(0).toUpperCase()}</span>
                       )}
                     </motion.div>
 
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate group-hover:text-indigo-300 transition-colors">
-                        {project.title}
+                        {displayTitle}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         {phase} · {project.progress}% · {formatRelativeTime(project.updatedAt)}
@@ -192,7 +217,7 @@ export function RecentProjectsPanel({
                         />
                       </div>
                       <span className="text-xs font-medium text-indigo-400 opacity-85 sm:opacity-75 group-hover:opacity-100 transition-opacity">
-                        Resume
+                        {t('resume')}
                       </span>
                       <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-indigo-400 transition-colors" />
                     </div>
@@ -204,22 +229,26 @@ export function RecentProjectsPanel({
         )
       ) : series.length === 0 ? (
         <div className="px-5 py-9 text-center flex-1 flex flex-col items-center justify-center">
-          <p className="text-gray-300 text-sm font-medium mb-1">No series bibles yet</p>
+          <p className="text-gray-300 text-sm font-medium mb-1">{t('emptySeriesTitle')}</p>
           <p className="text-gray-400 text-xs mb-5 max-w-sm">
-            Plan a multi-episode arc once in {STUDIO_DISPLAY_NAMES.series} so characters and locations stay locked across episodes.
+            {t('emptySeriesHint')}
           </p>
           <Link href="/dashboard/series">
             <Button size="sm" variant="primary">
               <Plus className="w-4 h-4 mr-1.5" />
-              Open {STUDIO_DISPLAY_NAMES.series}
+              {t('openSeriesRoom')}
             </Button>
           </Link>
         </div>
       ) : (
         <ul className="divide-y divide-gray-700/50">
-          {series.map((item) => {
+          {series.map((item, idx) => {
             const epTotal = item.episodeCount || item.maxEpisodes || 0
             const epStarted = item.startedCount || 0
+            const displaySeriesTitle = resolveContent(`series[${idx}].title`).text || item.title
+            const displayGenre = item.genre
+              ? resolveContent(`series[${idx}].genre`).text || item.genre
+              : ''
             return (
               <li key={item.id}>
                 <Link
@@ -231,18 +260,18 @@ export function RecentProjectsPanel({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate group-hover:text-cyan-300 transition-colors">
-                      {item.title}
+                      {displaySeriesTitle}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5 truncate">
-                      {epTotal} {epTotal === 1 ? 'episode' : 'episodes'}
-                      {epStarted > 0 ? ` · ${epStarted} started` : ''}
-                      {item.genre ? ` · ${item.genre}` : ''}
+                      {epTotal} {epTotal === 1 ? t('episodeSingular') : t('episodePlural')}
+                      {epStarted > 0 ? ` · ${t('started', { count: epStarted })}` : ''}
+                      {displayGenre ? ` · ${displayGenre}` : ''}
                       {item.updatedAt ? ` · ${formatRelativeTime(item.updatedAt)}` : ''}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs font-medium text-cyan-400 opacity-85 sm:opacity-75 group-hover:opacity-100 transition-opacity">
-                      Open Series
+                      {t('openSeries')}
                     </span>
                     <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-cyan-400 transition-colors" />
                   </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   Clapperboard,
@@ -39,6 +39,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { SeriesResponse, EpisodeBlueprintResponse } from '@/types/series'
 import { toast } from 'sonner'
+import { useContentTranslation } from '@/i18n/content/useContentTranslation'
+import { EMPTY_ENTITY_I18N, readEntityI18n } from '@/i18n/content/entityI18n'
 
 interface SeriesCardProps {
   series: SeriesResponse
@@ -118,6 +120,25 @@ export function SeriesCard({
   }, [series.id, series.metadata])
   
   const statusStyle = STATUS_STYLES[series.status] || STATUS_STYLES.draft
+  const entityI18n = useMemo(
+    () => (series.metadata ? readEntityI18n({ metadata: series.metadata }) : EMPTY_ENTITY_I18N),
+    [series.metadata]
+  )
+  const contentFields = useMemo(
+    () => ({
+      title: series.title,
+      logline: series.logline ?? undefined,
+      genre: series.genre ?? undefined,
+    }),
+    [series.title, series.logline, series.genre]
+  )
+  const { resolve: resolveContent } = useContentTranslation({
+    fields: contentFields,
+    i18n: entityI18n,
+  })
+  const displayTitle = resolveContent('title').text || series.title
+  const displayLogline = series.logline ? resolveContent('logline').text || series.logline : undefined
+  const displayGenre = series.genre ? resolveContent('genre').text || series.genre : undefined
   const characterCount = series.productionBible?.characters?.length || 0
   const locationCount = series.productionBible?.locations?.length || 0
   const inProgressCount = Math.max(0, (series.startedCount || 0) - (series.completedCount || 0))
@@ -266,12 +287,12 @@ export function SeriesCard({
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <Link href={`/dashboard/series/${series.id}`} className="min-w-0">
                   <h3 className="text-base font-semibold text-white group-hover:text-amber-300 transition-colors truncate">
-                    {series.title}
+                    {displayTitle}
                   </h3>
                 </Link>
-                {series.genre ? (
+                {displayGenre ? (
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 border border-gray-700">
-                    {series.genre}
+                    {displayGenre}
                   </span>
                 ) : null}
                 {typeof resonanceScore === 'number' ? (
@@ -280,8 +301,8 @@ export function SeriesCard({
                   </span>
                 ) : null}
               </div>
-              {series.logline ? (
-                <p className="text-xs text-gray-400 line-clamp-1 mb-2.5">{series.logline}</p>
+              {displayLogline ? (
+                <p className="text-xs text-gray-400 line-clamp-1 mb-2.5">{displayLogline}</p>
               ) : null}
               <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400">
                 <span className="inline-flex items-center gap-1">
@@ -422,19 +443,19 @@ export function SeriesCard({
                   <TooltipTrigger asChild>
                     <Link href={`/dashboard/series/${series.id}`}>
                       <h3 className="text-sm font-semibold text-white group-hover:text-amber-300 transition-colors cursor-pointer line-clamp-1">
-                        {series.title}
+                        {displayTitle}
                       </h3>
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="bg-gray-900 border-gray-700 text-white max-w-xs p-3">
-                    <p className="font-medium text-sm">{series.title}</p>
-                    {series.logline && (
-                      <p className="text-xs text-gray-400 mt-1.5">{series.logline}</p>
+                    <p className="font-medium text-sm">{displayTitle}</p>
+                    {displayLogline && (
+                      <p className="text-xs text-gray-400 mt-1.5">{displayLogline}</p>
                     )}
                   </TooltipContent>
                 </Tooltip>
-                {series.genre && (
-                  <span className="text-xs text-gray-400">{series.genre}</span>
+                {displayGenre && (
+                  <span className="text-xs text-gray-400">{displayGenre}</span>
                 )}
               </div>
             </div>
@@ -443,13 +464,13 @@ export function SeriesCard({
           </div>
           
           {/* Logline with Tooltip */}
-          {series.logline && (
+          {displayLogline && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <p className="text-xs text-gray-400 mb-3 line-clamp-2 cursor-help">{series.logline}</p>
+                <p className="text-xs text-gray-400 mb-3 line-clamp-2 cursor-help">{displayLogline}</p>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="bg-gray-900 border-gray-700 text-white max-w-sm p-3">
-                <p className="text-sm">{series.logline}</p>
+                <p className="text-sm">{displayLogline}</p>
               </TooltipContent>
             </Tooltip>
           )}

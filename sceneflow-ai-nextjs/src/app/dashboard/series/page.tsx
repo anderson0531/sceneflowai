@@ -38,15 +38,16 @@ import {
 } from '@/config/series/productionFormats'
 import { DEFAULT_ART_STYLE } from '@/lib/treatment/blueprintFoundation'
 import { ProductPageShell, ProductPageHeader, ProductEmptyState } from '@/components/product'
-import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { useSeriesList, useEpisode } from '@/hooks/useSeries'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
 const EPISODE_COUNT_OPTIONS = [3, 5, 8, 10, 12]
 
 export default function SeriesPage() {
+  const tStudio = useTranslations('series.studio')
   const { data: session } = useSession()
   const userId = session?.user?.id || null
   const router = useRouter()
@@ -225,13 +226,13 @@ export default function SeriesPage() {
     <ProductPageShell>
         <ProductPageHeader
           icon={<Clapperboard className="h-6 w-6" />}
-          title={STUDIO_DISPLAY_NAMES.series}
-          subtitle="Plan a multi-episode arc once, then produce each episode against it. Continuity holds across the whole series."
+          title={tStudio('title')}
+          subtitle={tStudio('description')}
           accent="series"
           primaryAction={
             <Button variant="primary" onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              New Series
+              {tStudio('newSeries')}
             </Button>
           }
         />
@@ -247,7 +248,7 @@ export default function SeriesPage() {
             <div className="relative flex-1 min-w-[200px] md:max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
               <Input
-                placeholder="Search series by title, logline, or genre..."
+                placeholder={tStudio('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 bg-gray-900 border-gray-800 text-white"
@@ -261,11 +262,11 @@ export default function SeriesPage() {
                 onChange={(event) => setStatusFilter(event.target.value)}
                 className="h-10 w-40 appearance-none rounded-lg border border-gray-800 bg-gray-900 pl-9 pr-3 text-sm text-gray-200 hover:bg-gray-800/80 transition-colors"
               >
-                <option value="all">All Active & Drafts</option>
-                <option value="draft">Draft</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="archived">Archived</option>
+                <option value="all">{tStudio('statusAll')}</option>
+                <option value="draft">{tStudio('statusDraft')}</option>
+                <option value="active">{tStudio('statusActive')}</option>
+                <option value="completed">{tStudio('statusCompleted')}</option>
+                <option value="archived">{tStudio('statusArchived')}</option>
               </select>
             </label>
             <label className="relative">
@@ -276,15 +277,15 @@ export default function SeriesPage() {
                 onChange={(event) => setSortBy(event.target.value as 'recent' | 'alphabetical' | 'episodes')}
                 className="h-10 w-44 appearance-none rounded-lg border border-gray-800 bg-gray-900 pl-9 pr-3 text-sm text-gray-200 hover:bg-gray-800/80 transition-colors"
               >
-                <option value="recent">Recently Updated</option>
-                <option value="alphabetical">Title (A–Z)</option>
-                <option value="episodes">Episode Count</option>
+                <option value="recent">{tStudio('sortRecent')}</option>
+                <option value="alphabetical">{tStudio('sortAlphabetical')}</option>
+                <option value="episodes">{tStudio('sortEpisodes')}</option>
               </select>
             </label>
           </div>
           
           <div className="flex items-center justify-end gap-2">
-            <span className="text-sm text-gray-500">{filteredSeries.length} series</span>
+            <span className="text-sm text-gray-500">{tStudio('seriesCount', { count: filteredSeries.length })}</span>
             <div className="flex items-center border border-gray-800 bg-gray-900 rounded-lg p-1">
               <Button
                 variant="ghost"

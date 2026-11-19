@@ -4,7 +4,18 @@
     "description": "Plan a multi-episode arc once, then produce each episode against it",
     "newSeries": "New Series",
     "empty": "No series yet",
-    "emptyHint": "A series keeps characters, locations, and continuity consistent across episodes."
+    "emptyHint": "A series keeps characters, locations, and continuity consistent across episodes.",
+    "searchPlaceholder": "Search series by title, logline, or genre...",
+    "statusAll": "All Active & Drafts",
+    "statusDraft": "Draft",
+    "statusActive": "Active",
+    "statusCompleted": "Completed",
+    "statusArchived": "Archived",
+    "sortRecent": "Recently Updated",
+    "sortAlphabetical": "Title (A–Z)",
+    "sortEpisodes": "Episode Count",
+    "seriesCount": "{count} series",
+    "noMatchingSeries": "No matching series"
   },
   "detail": {
     "episodes": "Episodes",

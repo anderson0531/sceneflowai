@@ -20,12 +20,15 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { AdjustCreditsUsedDialog } from '@/components/credits/AdjustCreditsUsedDialog'
+import { useContentTranslation } from '@/i18n/content/useContentTranslation'
+import { EMPTY_ENTITY_I18N, readEntityI18n } from '@/i18n/content/entityI18n'
 
 interface NextStep {
   name: string
@@ -73,13 +76,15 @@ interface ActiveProjectCardProps {
 }
 
 function NextStepPanel({ nextStep }: { nextStep: NextStep }) {
+  const t = useTranslations('dashboard.activeCard')
+
   if (nextStep.isComplete) {
     return (
       <div className="bg-emerald-950/30 border border-emerald-700/40 rounded-lg p-3.5 flex flex-col justify-between h-full">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span className="text-emerald-300 font-semibold text-sm">Production Complete</span>
+            <span className="text-emerald-300 font-semibold text-sm">{t('productionComplete')}</span>
           </div>
           <p className="text-xs text-gray-300 mb-3 leading-relaxed">{nextStep.description}</p>
         </div>
@@ -102,7 +107,10 @@ function NextStepPanel({ nextStep }: { nextStep: NextStep }) {
         </div>
         <p className="text-xs text-gray-300 mb-2 line-clamp-2 leading-relaxed">{nextStep.description}</p>
         <p className="text-[11px] text-gray-400 mb-3">
-          Est. remaining: <span className="text-gray-200 font-medium">{nextStep.estimatedCredits.toLocaleString()} credits</span>
+          {t('estRemaining')}{' '}
+          <span className="text-gray-200 font-medium">
+            {t('creditsUnit', { credits: nextStep.estimatedCredits.toLocaleString() })}
+          </span>
         </p>
       </div>
       <Link href={nextStep.actionUrl}>
@@ -140,12 +148,33 @@ export function ActiveProjectCard({
   onThumbnailUpdated,
   onBudgetUpdated,
 }: ActiveProjectCardProps) {
+  const t = useTranslations('dashboard.activeCard')
   const [tipDismissed, setTipDismissed] = useState(false)
   const [expandedImageOpen, setExpandedImageOpen] = useState(false)
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [adjustCreditsOpen, setAdjustCreditsOpen] = useState(false)
   const [displayCreditsUsed, setDisplayCreditsUsed] = useState(creditsUsedProp)
+
+  const entityI18n = useMemo(
+    () => (metadata ? readEntityI18n({ metadata }) : EMPTY_ENTITY_I18N),
+    [metadata]
+  )
+  const contentFields = useMemo(
+    () => ({
+      title,
+      description,
+      genre,
+    }),
+    [title, description, genre]
+  )
+  const { resolve: resolveContent } = useContentTranslation({
+    fields: contentFields,
+    i18n: entityI18n,
+  })
+  const displayTitle = resolveContent('title').text || title
+  const displayDescription = description ? resolveContent('description').text || description : undefined
+  const displayGenre = genre ? resolveContent('genre').text || genre : undefined
 
   useEffect(() => {
     setDisplayCreditsUsed(creditsUsedProp)
@@ -154,11 +183,11 @@ export function ActiveProjectCard({
   const getBudgetBadge = () => {
     switch (budgetStatus) {
       case 'on-track':
-        return { label: 'On track', dot: 'bg-emerald-400', className: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30' }
+        return { label: t('budgetOnTrack'), dot: 'bg-emerald-400', className: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30' }
       case 'near-limit':
-        return { label: 'Near limit', dot: 'bg-amber-400', className: 'text-amber-300 bg-amber-500/15 border-amber-500/30' }
+        return { label: t('budgetNearLimit'), dot: 'bg-amber-400', className: 'text-amber-300 bg-amber-500/15 border-amber-500/30' }
       case 'over-budget':
-        return { label: 'Over budget', dot: 'bg-red-400', className: 'text-red-300 bg-red-500/15 border-red-500/30' }
+        return { label: t('budgetOverBudget'), dot: 'bg-red-400', className: 'text-red-300 bg-red-500/15 border-red-500/30' }
     }
   }
 
@@ -197,14 +226,14 @@ export function ActiveProjectCard({
               <div className="w-12 h-12 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center mb-2">
                 <Film className="w-6 h-6 text-indigo-400" />
               </div>
-              <p className="text-xs text-gray-400">No billboard artwork yet</p>
+              <p className="text-xs text-gray-400">{t('noBillboard')}</p>
               <button
                 type="button"
                 onClick={() => setGenerateDialogOpen(true)}
                 className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-xs font-medium text-indigo-200 transition-colors"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                Generate Billboard
+                {t('generateBillboard')}
               </button>
             </div>
           )}
@@ -215,15 +244,15 @@ export function ActiveProjectCard({
           {/* Top Left Badges: Stage + Starred */}
           <div className="absolute top-3 left-3 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-900/85 backdrop-blur-md text-indigo-300 border border-indigo-500/40 shadow-sm">
-              Stage {currentStep}/{totalSteps} · {phaseName}
+              {t('stageBadge', { current: currentStep, total: totalSteps, phase: phaseName })}
             </span>
             {isStarred && (
               <span
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium bg-yellow-500/20 backdrop-blur-md text-yellow-300 border border-yellow-500/40"
-                title="Pinned as current project on Projects page"
+                title={t('pinnedTitle')}
               >
                 <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                Pinned
+                {t('pinned')}
               </span>
             )}
           </div>
@@ -235,8 +264,8 @@ export function ActiveProjectCard({
                 type="button"
                 onClick={() => setExpandedImageOpen(true)}
                 className="p-2 bg-gray-900/80 backdrop-blur-md rounded-lg border border-white/15 text-gray-200 hover:text-white hover:bg-gray-900 transition-colors"
-                title="View full image"
-                aria-label="View full image"
+                title={t('viewFullImage')}
+                aria-label={t('viewFullImage')}
               >
                 <Maximize2 className="w-4 h-4" />
               </button>
@@ -245,8 +274,8 @@ export function ActiveProjectCard({
               type="button"
               onClick={() => setGenerateDialogOpen(true)}
               className="p-2 bg-indigo-600/85 backdrop-blur-md rounded-lg border border-indigo-400/30 text-white hover:bg-indigo-500 transition-colors"
-              title="Generate billboard image"
-              aria-label="Generate billboard image"
+              title={t('generateBillboardAria')}
+              aria-label={t('generateBillboardAria')}
             >
               <Sparkles className="w-4 h-4" />
             </button>
@@ -255,8 +284,8 @@ export function ActiveProjectCard({
                 type="button"
                 onClick={() => setEditDialogOpen(true)}
                 className="p-2 bg-purple-600/85 backdrop-blur-md rounded-lg border border-purple-400/30 text-white hover:bg-purple-500 transition-colors"
-                title="Edit billboard image"
-                aria-label="Edit billboard image"
+                title={t('editBillboardAria')}
+                aria-label={t('editBillboardAria')}
               >
                 <Edit3 className="w-4 h-4" />
               </button>
@@ -273,16 +302,16 @@ export function ActiveProjectCard({
               {sceneCount > 0 && (
                 <span className="inline-flex items-center gap-1">
                   <Layers className="w-3.5 h-3.5 text-gray-400" />
-                  {sceneCount} {sceneCount === 1 ? 'scene' : 'scenes'}
+                  {sceneCount} {sceneCount === 1 ? t('sceneSingular') : t('scenePlural')}
                 </span>
               )}
               {collaborators ? (
-                <span>· {collaborators} collaborators</span>
+                <span>· {t('collaborators', { count: collaborators })}</span>
               ) : null}
             </div>
-            {genre && (
+            {displayGenre && (
               <span className="px-2.5 py-1 rounded-md bg-gray-900/80 backdrop-blur-md border border-gray-700/60 text-gray-300 font-medium">
-                {genre}
+                {displayGenre}
               </span>
             )}
           </div>
@@ -296,16 +325,16 @@ export function ActiveProjectCard({
               <div className="min-w-0 flex-1">
                 <Link href={nextStep.actionUrl} className="group/title inline-block">
                   <h3 className="text-xl font-bold text-white group-hover/title:text-indigo-300 transition-colors truncate">
-                    {title}
+                    {displayTitle}
                   </h3>
                 </Link>
-                {description && (
-                  <p className="text-sm text-gray-400 line-clamp-1 mt-0.5">{description}</p>
+                {displayDescription && (
+                  <p className="text-sm text-gray-400 line-clamp-1 mt-0.5">{displayDescription}</p>
                 )}
               </div>
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${budgetBadge.className}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${budgetBadge.dot}`} />
-                Budget: {budgetBadge.label}
+                {t('budgetLabel', { status: budgetBadge.label })}
               </span>
             </div>
 
@@ -313,9 +342,9 @@ export function ActiveProjectCard({
             <div className="mt-3">
               <div className="flex items-center justify-between text-xs mb-1.5">
                 <span className="text-gray-400">
-                  Current phase: <strong className="text-gray-200 font-medium">{phaseName}</strong>
+                  {t('currentPhase')} <strong className="text-gray-200 font-medium">{phaseName}</strong>
                 </span>
-                <span className="text-indigo-300 font-medium">{clampedProgress}% complete</span>
+                <span className="text-indigo-300 font-medium">{t('percentComplete', { percent: clampedProgress })}</span>
               </div>
               <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
                 <div
@@ -332,20 +361,20 @@ export function ActiveProjectCard({
             <div className="bg-gray-950/60 border border-gray-800 rounded-lg p-3.5 flex flex-col justify-between">
               <div>
                 <h4 className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-2.5">
-                  Project Budget
+                  {t('projectBudget')}
                 </h4>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-400">Used</span>
+                    <span className="text-gray-400">{t('used')}</span>
                     <span className="text-white font-semibold inline-flex items-center gap-1">
                       <Coins className="w-3.5 h-3.5 text-indigo-400" />
                       {creditsUsed.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-400">Target</span>
+                    <span className="text-gray-400">{t('target')}</span>
                     <span className="text-gray-200 font-medium">
-                      {hasBudgetTarget ? creditsBudget.toLocaleString() : 'Not set'}
+                      {hasBudgetTarget ? creditsBudget.toLocaleString() : t('notSet')}
                     </span>
                   </div>
                   {hasBudgetTarget ? (
@@ -363,13 +392,13 @@ export function ActiveProjectCard({
                         />
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-gray-400">
-                        <span>{budgetUtilizationPercent}% used</span>
-                        <span>{remainingCredits?.toLocaleString()} left</span>
+                        <span>{t('percentUsed', { percent: budgetUtilizationPercent ?? 0 })}</span>
+                        <span>{t('left', { count: (remainingCredits ?? 0).toLocaleString() })}</span>
                       </div>
                     </>
                   ) : (
                     <p className="text-[11px] text-gray-500 leading-snug">
-                      Est. {estimatedCredits.toLocaleString()} credits to finish
+                      {t('estCreditsToFinish', { credits: estimatedCredits.toLocaleString() })}
                     </p>
                   )}
                 </div>
@@ -379,14 +408,14 @@ export function ActiveProjectCard({
                 onClick={() => setAdjustCreditsOpen(true)}
                 className="mt-2.5 text-left text-[11px] text-indigo-400 hover:text-indigo-300 underline-offset-2 hover:underline"
               >
-                Adjust used credits
+                {t('adjustUsedCredits')}
               </button>
             </div>
 
             {/* Column 2: Audience Resonance (Truthful state) */}
             <div className="bg-gray-950/60 border border-gray-800 rounded-lg p-3.5 flex flex-col justify-between">
               <h4 className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-2">
-                Audience Resonance
+                {t('audienceResonance')}
               </h4>
               {audienceResonanceScore !== null ? (
                 <div className="flex flex-col items-center justify-center my-auto py-1">
@@ -409,10 +438,10 @@ export function ActiveProjectCard({
                   </div>
                   <p className="text-[11px] text-gray-400 mt-2">
                     {audienceResonanceScore >= 85
-                      ? '🟢 Greenlight Ready (85+)'
+                      ? t('greenlightReady')
                       : audienceResonanceScore >= 75
-                        ? '🟡 Solid Foundation'
-                        : '🔴 Needs Refinement'}
+                        ? t('solidFoundation')
+                        : t('needsRefinement')}
                   </p>
                 </div>
               ) : (
@@ -420,17 +449,17 @@ export function ActiveProjectCard({
                   <div className="flex items-center gap-2 text-gray-400 my-1">
                     <Users className="w-5 h-5 text-gray-600 shrink-0" />
                     <span className="text-xs text-gray-400 leading-snug">
-                      Not analyzed yet
+                      {t('notAnalyzedYet')}
                     </span>
                   </div>
                   <p className="text-[11px] text-gray-500 mb-2.5 leading-snug">
-                    Score your treatment in Blueprint Room before generating scenes.
+                    {t('scoreTreatmentHint')}
                   </p>
                   <Link
                     href={`/dashboard/studio/${id}`}
                     className="text-[11px] font-medium text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1"
                   >
-                    Run Resonance Analysis
+                    {t('runResonance')}
                     <ChevronRight className="w-3 h-3" />
                   </Link>
                 </div>

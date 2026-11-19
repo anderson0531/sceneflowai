@@ -1,11 +1,12 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { useTranslations } from 'next-intl'
 import { ActiveProjectCard } from './ActiveProjectCard'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
-import { formatRelativeTime, getPhaseDisplayName, getStepNumber, getTotalSteps } from '@/hooks/useDashboardData'
+import { formatRelativeTime, getStepNumber, getTotalSteps } from '@/hooks/useDashboardData'
 import {
   getProjectAudienceResonanceScore,
   getProjectBudgetStatus,
@@ -16,7 +17,6 @@ import {
 } from '@/lib/credits/projectBudgetShared'
 import { getResumeRouteForStep } from '@/constants/workflowRoutes'
 import { normalizeWorkflowStep } from '@/constants/workflowSteps'
-import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 // Types for project data from API
 interface DashboardProject {
@@ -40,11 +40,17 @@ interface ActiveProjectsContainerProps {
 }
 
 // Transform API project to ActiveProjectCard props
-function transformProject(project: DashboardProject, index: number, selectedProjectId?: string | null) {
+function transformProject(
+  project: DashboardProject,
+  index: number,
+  t: (key: string) => string,
+  selectedProjectId?: string | null
+) {
   const currentStep = getStepNumber(project.currentStep)
   const totalSteps = getTotalSteps()
-  const phaseName = getPhaseDisplayName(project.currentStep)
   const normalizedStep = normalizeWorkflowStep(project.currentStep)
+  const phaseName =
+    normalizedStep === 'blueprint' ? t('blueprintRoom') : t('productionStage')
 
   const visionPhase = project.metadata?.visionPhase
   const scenes = getProjectScenesList(project.metadata)
@@ -73,10 +79,10 @@ function transformProject(project: DashboardProject, index: number, selectedProj
 
     if (isComplete) {
       return {
-        name: 'Screening Room',
-        description: 'Screen, export, and publish your completed production',
+        name: t('screeningRoom'),
+        description: t('screeningRoomDesc'),
         estimatedCredits: 0,
-        actionLabel: 'Open Screening Room',
+        actionLabel: t('openScreeningRoom'),
         actionUrl: screeningRoomUrl,
         isComplete: true,
       }
@@ -84,20 +90,20 @@ function transformProject(project: DashboardProject, index: number, selectedProj
 
     if (normalizedStep === 'blueprint') {
       return {
-        name: STUDIO_DISPLAY_NAMES.blueprint,
-        description: 'Develop treatment, target audience resonance, and story bible',
+        name: t('blueprintRoom'),
+        description: t('blueprintRoomDesc'),
         estimatedCredits: estimatedRemaining,
-        actionLabel: `Resume ${STUDIO_DISPLAY_NAMES.blueprint}`,
+        actionLabel: t('resumeBlueprint'),
         actionUrl: resumeUrl,
         isComplete: false,
       }
     }
 
     return {
-      name: STUDIO_DISPLAY_NAMES.production,
-      description: 'Continue script direction, frames, audio, and video streams',
+      name: t('productionStage'),
+      description: t('productionStageDesc'),
       estimatedCredits: estimatedRemaining,
-      actionLabel: `Resume ${STUDIO_DISPLAY_NAMES.production}`,
+      actionLabel: t('resumeProduction'),
       actionUrl: resumeUrl,
       isComplete: false,
     }
@@ -134,6 +140,7 @@ export function ActiveProjectsContainer({
   selectedProjectId,
   onProjectUpdated,
 }: ActiveProjectsContainerProps) {
+  const t = useTranslations('dashboard.activeCard')
   const displayProjects = projects.length > 0 ? projects : []
 
   return (
@@ -146,7 +153,7 @@ export function ActiveProjectsContainer({
       {displayProjects.map((project, index) => (
         <ActiveProjectCard
           key={project.id}
-          {...transformProject(project, index, selectedProjectId)}
+          {...transformProject(project, index, t, selectedProjectId)}
           onThumbnailUpdated={() => onProjectUpdated?.()}
           onBudgetUpdated={() => onProjectUpdated?.()}
         />
@@ -157,20 +164,20 @@ export function ActiveProjectsContainer({
           <div className="w-12 h-12 bg-indigo-500/15 border border-indigo-500/30 rounded-full flex items-center justify-center mx-auto mb-3">
             <Plus className="w-6 h-6 text-indigo-400" />
           </div>
-          <h3 className="text-base font-semibold text-white mb-1">No Active Productions Yet</h3>
+          <h3 className="text-base font-semibold text-white mb-1">{t('noActiveTitle')}</h3>
           <p className="text-sm text-gray-400 mb-5 max-w-md mx-auto">
-            Create your first film blueprint, start a multi-episode series bible, or import an existing screenplay.
+            {t('noActiveDesc')}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link href="/dashboard/studio/new-project">
               <Button variant="primary">
                 <Plus className="w-4 h-4 mr-2" />
-                Create First Project
+                {t('createFirstProject')}
               </Button>
             </Link>
             <Link href="/dashboard/series">
               <Button variant="outline" className="border-gray-700 text-gray-300 hover:text-white">
-                Explore {STUDIO_DISPLAY_NAMES.series}
+                {t('exploreSeriesRoom')}
               </Button>
             </Link>
           </div>

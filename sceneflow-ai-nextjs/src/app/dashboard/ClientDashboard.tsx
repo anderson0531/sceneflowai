@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import { CueCommandBar } from './components/CueCommandBar'
 import { BudgetHealthWidget } from './components/BudgetHealthWidget'
 import { ActiveProjectsContainer } from './components/ActiveProjectsContainer'
@@ -20,9 +21,9 @@ import { ProductPageShell, ProductSection } from '@/components/product'
 import { motion } from 'framer-motion'
 import { AlertCircle } from 'lucide-react'
 
-function DashboardLoadingSkeleton() {
+function DashboardLoadingSkeleton({ ariaLabel }: { ariaLabel: string }) {
   return (
-    <div className="space-y-6 animate-pulse" aria-busy="true" aria-label="Loading dashboard data">
+    <div className="space-y-6 animate-pulse" aria-busy="true" aria-label={ariaLabel}>
       <div className="h-32 rounded-xl bg-gray-900/80 border border-gray-800" />
       <div className="h-64 rounded-2xl bg-gray-900/80 border border-gray-800" />
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -34,6 +35,7 @@ function DashboardLoadingSkeleton() {
 }
 
 export default function ClientDashboard() {
+  const tHome = useTranslations('dashboard.home')
   const {
     credits,
     subscription,
@@ -91,12 +93,12 @@ export default function ClientDashboard() {
         {error && (
           <div className="flex items-center gap-2 text-amber-400 text-sm bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>Some data could not be loaded. Showing available information.</span>
+            <span>{tHome('partialDataWarning')}</span>
           </div>
         )}
 
         {isLoading ? (
-          <DashboardLoadingSkeleton />
+          <DashboardLoadingSkeleton ariaLabel={tHome('loadingAria')} />
         ) : (
           <>
             <DashboardOverviewStats
@@ -109,8 +111,8 @@ export default function ClientDashboard() {
               <ProductSection
                 label={
                   selectedProjectId && featuredProject.id === selectedProjectId
-                    ? 'Continue working · Pinned project'
-                    : 'Continue working'
+                    ? tHome('continueWorkingPinned')
+                    : tHome('continueWorking')
                 }
               >
                 <ActiveProjectsContainer

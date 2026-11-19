@@ -4,7 +4,18 @@
     "description": "خطط لقوس متعدد الحلقات مرة واحدة، ثم قم بإنتاج كل حلقة ضده",
     "newSeries": "سلسلة جديدة",
     "empty": "لا توجد سلسلة حتى الآن",
-    "emptyHint": "تحافظ السلسلة على اتساق الشخصيات والمواقع والاستمرارية عبر الحلقات."
+    "emptyHint": "تحافظ السلسلة على اتساق الشخصيات والمواقع والاستمرارية عبر الحلقات.",
+    "searchPlaceholder": "ابحث في المسلسلات بالعنوان أو الملخص أو النوع...",
+    "statusAll": "كل النشطة والمسودات",
+    "statusDraft": "مسودة",
+    "statusActive": "نشط",
+    "statusCompleted": "مكتمل",
+    "statusArchived": "مؤرشف",
+    "sortRecent": "المحدّثة مؤخرًا",
+    "sortAlphabetical": "العنوان (A–Z)",
+    "sortEpisodes": "عدد الحلقات",
+    "seriesCount": "{count} مسلسلات",
+    "noMatchingSeries": "لا توجد مسلسلات مطابقة"
   },
   "detail": {
     "episodes": "الحلقات",

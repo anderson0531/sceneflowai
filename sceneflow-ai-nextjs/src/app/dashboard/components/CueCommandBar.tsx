@@ -3,16 +3,16 @@
 import React, { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { Plus, Library, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
-function getTimeAwareGreeting(): string {
+function getTimeAwareGreetingKey(): 'morning' | 'afternoon' | 'evening' {
   const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning'
-  if (hour < 17) return 'Good afternoon'
-  return 'Good evening'
+  if (hour < 12) return 'morning'
+  if (hour < 17) return 'afternoon'
+  return 'evening'
 }
 
 export interface CueCommandBarProps {
@@ -24,6 +24,7 @@ export interface CueCommandBarProps {
  */
 export function CueCommandBar({ onImportScript }: CueCommandBarProps = {}) {
   const { data: session } = useSession()
+  const t = useTranslations('dashboard.greeting')
 
   const userName = useMemo(() => {
     const name = session?.user?.name
@@ -47,10 +48,11 @@ export function CueCommandBar({ onImportScript }: CueCommandBarProps = {}) {
       return name.split(' ')[0]
     }
 
-    return 'there'
-  }, [session?.user?.name, session?.user?.email])
+    return t('fallbackName')
+  }, [session?.user?.name, session?.user?.email, t])
 
-  const greeting = useMemo(() => getTimeAwareGreeting(), [])
+  const greetingKey = useMemo(() => getTimeAwareGreetingKey(), [])
+  const greeting = t(greetingKey)
   const userInitial = userName.charAt(0).toUpperCase()
 
   return (
@@ -97,7 +99,7 @@ export function CueCommandBar({ onImportScript }: CueCommandBarProps = {}) {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="mt-1 max-w-xl text-sm text-gray-300 sm:text-base"
             >
-              Start a standalone film blueprint, build a multi-episode series bible, or resume production.
+              {t('subtitle')}
             </motion.p>
           </div>
         </div>
@@ -116,7 +118,7 @@ export function CueCommandBar({ onImportScript }: CueCommandBarProps = {}) {
               className="border-gray-600/80 text-gray-200 hover:bg-gray-800 hover:text-white"
             >
               <FileText className="mr-2 h-4 w-4 text-cyan-400" />
-              Import Script
+              {t('importScript')}
             </Button>
           )}
           <Link href="/dashboard/series">
@@ -125,13 +127,13 @@ export function CueCommandBar({ onImportScript }: CueCommandBarProps = {}) {
               className="border-indigo-500/40 bg-indigo-500/10 text-indigo-200 hover:bg-indigo-500/20 hover:text-white"
             >
               <Library className="mr-2 h-4 w-4 text-indigo-300" />
-              {STUDIO_DISPLAY_NAMES.series}
+              {t('seriesRoom')}
             </Button>
           </Link>
           <Link href="/dashboard/studio/new-project">
             <Button variant="primary" className="shadow-md shadow-indigo-500/20">
               <Plus className="mr-2 h-4 w-4" />
-              New Project
+              {t('newProject')}
             </Button>
           </Link>
         </motion.div>

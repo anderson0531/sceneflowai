@@ -4,7 +4,18 @@
     "description": "Planen Sie einmal einen Bogen mit mehreren Episoden und produzieren Sie dann jede Episode dagegen",
     "newSeries": "Neue Serie",
     "empty": "Noch keine Serie",
-    "emptyHint": "Eine Serie hält Charaktere, Orte und Kontinuität über Episoden hinweg konsistent."
+    "emptyHint": "Eine Serie hält Charaktere, Orte und Kontinuität über Episoden hinweg konsistent.",
+    "searchPlaceholder": "Serien nach Titel, Logline oder Genre suchen...",
+    "statusAll": "Aktive & Entwürfe",
+    "statusDraft": "Entwurf",
+    "statusActive": "Aktiv",
+    "statusCompleted": "Abgeschlossen",
+    "statusArchived": "Archiviert",
+    "sortRecent": "Zuletzt aktualisiert",
+    "sortAlphabetical": "Titel (A–Z)",
+    "sortEpisodes": "Episodenanzahl",
+    "seriesCount": "{count} Serien",
+    "noMatchingSeries": "Keine passenden Serien"
   },
   "detail": {
     "episodes": "Episoden",

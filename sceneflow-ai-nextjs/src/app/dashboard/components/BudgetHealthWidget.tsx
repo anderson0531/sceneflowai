@@ -5,6 +5,7 @@ import { CreditCard, Key, Lightbulb, X, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { DashboardCard } from '@/components/dashboard/ui/DashboardCard'
 import { StatCard, StatCardGrid } from '@/components/dashboard/ui/StatCard'
 
@@ -32,6 +33,7 @@ export function BudgetHealthWidget({
   addonCredits = 0,
   usageTrend = []
 }: BudgetHealthWidgetProps) {
+  const t = useTranslations('dashboard.budget')
   const [tipDismissed, setTipDismissed] = useState(false)
   
   const percentageUsed = monthlyCredits > 0 
@@ -58,8 +60,8 @@ export function BudgetHealthWidget({
     <div className="flex flex-col lg:flex-row gap-4">
       {/* Main Budget Health Card */}
       <DashboardCard
-        title="Budget & Credit Forecast"
-        subtitle="Monthly allowance, active burn, and estimated credits to finish active productions"
+        title={t('title')}
+        subtitle={t('subtitle')}
         icon={<CreditCard className="w-5 h-5" />}
         iconColor="indigo"
         delay={2}
@@ -74,7 +76,7 @@ export function BudgetHealthWidget({
                 className="border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 hover:bg-gray-700/50 text-xs"
               >
                 <Key className="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
-                BYOK Keys
+                {t('byokKeys')}
               </Button>
             </Link>
             <Link href="/dashboard/settings/billing">
@@ -82,7 +84,7 @@ export function BudgetHealthWidget({
                 size="sm"
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md text-xs"
               >
-                Manage Plan & Top-Up
+                {t('managePlan')}
               </Button>
             </Link>
           </div>
@@ -91,7 +93,7 @@ export function BudgetHealthWidget({
         <StatCardGrid columns={4} className="mb-3">
           <StatCard
             value={availableCredits.toLocaleString()}
-            label="Available Credits"
+            label={t('availableCredits')}
             status={
               availableCredits < 100
                 ? 'critical'
@@ -112,21 +114,21 @@ export function BudgetHealthWidget({
           
           <StatCard
             value={usedCredits.toLocaleString()}
-            label={`Monthly Used (${percentageUsed}%)`}
+            label={t('monthlyUsed', { percent: percentageUsed })}
             status={status === 'critical' ? 'critical' : status === 'warning' ? 'warning' : 'healthy'}
             compact
           />
           
           <StatCard
             value={projectedRequired.toLocaleString()}
-            label="Est. Credits to Finish"
+            label={t('estToFinish')}
             status={projectedRequired > availableCredits ? 'warning' : 'neutral'}
             compact
           />
           
           <StatCard
             value={`$${estimatedCostUSD}`}
-            label="Est. Pipeline Value"
+            label={t('estPipelineValue')}
             status="healthy"
             compact
             icon={<Zap className="w-3.5 h-3.5" />}
@@ -145,12 +147,12 @@ export function BudgetHealthWidget({
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2 mt-1.5">
             <p className="text-xs text-gray-400">
-              {percentageUsed}% of monthly allowance used
+              {t('monthlyAllowanceUsed', { percent: percentageUsed })}
               {subscriptionTier ? ` (${subscriptionTier})` : ''}
             </p>
             {addonCredits > 0 && (
               <p className="text-xs text-emerald-400 font-medium">
-                +{addonCredits.toLocaleString()} top-up vault credits
+                {t('topUpVaultCredits', { credits: addonCredits.toLocaleString() })}
               </p>
             )}
           </div>
@@ -169,23 +171,25 @@ export function BudgetHealthWidget({
             <div className="flex items-center justify-between mb-2">
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-300">
                 <Lightbulb className="w-3.5 h-3.5 text-indigo-400" />
-                Budget Advisory
+                {t('advisoryTitle')}
               </span>
               <button 
                 onClick={() => setTipDismissed(true)}
                 className="text-gray-500 hover:text-gray-300 transition-colors"
-                aria-label="Dismiss budget tip"
+                aria-label={t('advisoryDismiss')}
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
             <p className="text-xs text-indigo-200/80 leading-relaxed">
-              {projectsNearLimit} active project{projectsNearLimit > 1 ? 's are' : ' is'} above 75% of target budget.
+              {projectsNearLimit > 1
+                ? t('advisoryBodyPlural', { count: projectsNearLimit })
+                : t('advisoryBodySingular', { count: projectsNearLimit })}
             </p>
           </div>
           <Link href="/dashboard/settings/billing" className="mt-3" prefetch={false}>
             <Button size="sm" variant="outline" className="w-full text-xs border-indigo-600/50 text-indigo-300 hover:text-white hover:bg-indigo-600/20">
-              Review Credits
+              {t('reviewCredits')}
             </Button>
           </Link>
         </motion.div>

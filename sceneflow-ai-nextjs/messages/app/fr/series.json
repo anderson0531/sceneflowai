@@ -4,7 +4,18 @@
     "description": "Planifiez un arc multi-épisode une fois, puis produisez chaque épisode contre lui",
     "newSeries": "Nouvelle série",
     "empty": "Pas encore de série",
-    "emptyHint": "Une série assure la cohérence des personnages, des lieux et de la continuité entre les épisodes."
+    "emptyHint": "Une série assure la cohérence des personnages, des lieux et de la continuité entre les épisodes.",
+    "searchPlaceholder": "Rechercher par titre, pitch ou genre...",
+    "statusAll": "Actives et brouillons",
+    "statusDraft": "Brouillon",
+    "statusActive": "Active",
+    "statusCompleted": "Terminée",
+    "statusArchived": "Archivée",
+    "sortRecent": "Récemment mises à jour",
+    "sortAlphabetical": "Titre (A–Z)",
+    "sortEpisodes": "Nombre d’épisodes",
+    "seriesCount": "{count} séries",
+    "noMatchingSeries": "Aucune série correspondante"
   },
   "detail": {
     "episodes": "Épisodes",
