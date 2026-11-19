@@ -378,7 +378,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2, Clapperboard, Layers, Film, Bot, AlertTriangle, RefreshCw } from 'lucide-react'
-import { ProductionBuilderDialog } from '@/components/vision/ProductionBuilderDialog'
+import {
+  ProductionBuilderDialog,
+  type ProductionBuilderLaunchContext,
+} from '@/components/vision/ProductionBuilderDialog'
+import {
+  saveProductionAgentCheckpoint,
+  loadProductionAgentCheckpoint,
+  clearProductionAgentCheckpoint,
+} from '@/lib/production/productionAgentPersistence'
 import {
   ProductionAgentDock,
   type ProductionAgentDockState,
@@ -20996,19 +21004,51 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Production Agent ("Production Builder") state & orchestrator
   const [productionBuilderOpen, setProductionBuilderOpen] = useState(false)
+  const [productionBuilderLaunchContext, setProductionBuilderLaunchContext] =
+    useState<ProductionBuilderLaunchContext | null>(null)
   const [productionAgentState, setProductionAgentState] =
     useState<ProductionAgentDockState | null>(null)
   const productionAgentAbortRef = useRef<AbortController | null>(null)
   const productionCheckpointResolverRef = useRef<((approved: boolean) => void) | null>(
     null
   )
+  const resumableProductionOptionsRef = useRef<ProductionBuilderOptions | null>(null)
 
   useEffect(() => {
-    const onOpenBuilderEvent = () => setProductionBuilderOpen(true)
+    const onOpenBuilderEvent = (ev: Event) => {
+      const detail = (ev as CustomEvent<ProductionBuilderLaunchContext | undefined>)?.detail
+      setProductionBuilderLaunchContext(detail ?? null)
+      setProductionBuilderOpen(true)
+    }
     window.addEventListener('sceneflow:open-production-builder', onOpenBuilderEvent)
     return () =>
       window.removeEventListener('sceneflow:open-production-builder', onOpenBuilderEvent)
   }, [])
+
+  // Restore any interrupted Production Agent run checkpoint after page reload
+  useEffect(() => {
+    if (!projectId) return
+    const saved = loadProductionAgentCheckpoint(projectId)
+    if (!saved) return
+    if (saved.status === 'interrupted' || (saved.status === 'failed' && saved.telemetry.errors.length > 0)) {
+      resumableProductionOptionsRef.current = { ...saved.options, missingOnly: true }
+      setProductionAgentState({
+        visible: true,
+        running: false,
+        finished: saved.status === 'failed',
+        interrupted: saved.status === 'interrupted',
+        startedAt: saved.startedAt,
+        stage: saved.stage,
+        subtitle:
+          saved.status === 'interrupted'
+            ? `Interrupted during ${saved.stage} (${saved.progressPct}%)`
+            : saved.subtitle,
+        progressPct: saved.progressPct,
+        telemetry: saved.telemetry,
+        checkpointGate: null,
+      })
+    }
+  }, [projectId])
 
   const handleStartProductionAgent = useCallback(
     async (options: ProductionBuilderOptions) => {
@@ -21355,6 +21395,66 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               scene?.id || scene?.sceneId || `scene-${sceneIndex}`
             )
             const prod = sceneProductionStateRef.current[sceneId]
+            if (prod?.renderedSceneUrl && options.missingOnly) {
+              return prod.renderedSceneUrl
+            }
+            const readySegments = (prod?.segments ?? [])
+              .filter((s: any) => Boolean(s?.activeAssetUrl || s?.videoUrl))
+              .map((s: any, idx: number) => ({
+                segmentId: s.segmentId,
+                sequenceIndex: typeof s.sequenceIndex === 'number' ? s.sequenceIndex : idx,
+                videoUrl: s.activeAssetUrl || s.videoUrl,
+                startTime: s.startTime ?? idx * 8,
+                endTime: s.endTime ?? (idx + 1) * 8,
+                duration: s.duration ?? 8,
+              }))
+            if (readySegments.length === 0) {
+              return prod?.renderedSceneUrl || undefined
+            }
+            try {
+              const res = await fetch(`/api/scene/${sceneId}/render`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  projectId: project.id,
+                  sceneId,
+                  sceneNumber: sceneIndex + 1,
+                  resolution: options.quality === 'final' ? '1080p' : '720p',
+                  audioConfig: {
+                    includeNarration: true,
+                    includeDialogue: true,
+                    includeMusic: true,
+                    includeSfx: true,
+                    includeSegmentAudio: true,
+                    language: options.language || 'en',
+                  },
+                  segments: readySegments,
+                }),
+              })
+              if (!res.ok) return prod?.renderedSceneUrl || undefined
+              const queued = await res.json().catch(() => null)
+              if (queued?.downloadUrl || queued?.outputUrl) {
+                return queued.downloadUrl || queued.outputUrl
+              }
+              const jobId = queued?.jobId
+              if (!jobId) return prod?.renderedSceneUrl || undefined
+              // Poll up to 4 minutes for Cloud Run scene MP4 render completion
+              for (let poll = 0; poll < 48; poll++) {
+                if (abortController.signal.aborted) break
+                await new Promise((r) => setTimeout(r, 5000))
+                const statusRes = await fetch(`/api/scene/${sceneId}/render?jobId=${encodeURIComponent(jobId)}`)
+                if (!statusRes.ok) continue
+                const statusData = await statusRes.json().catch(() => null)
+                if (statusData?.status === 'completed' || statusData?.status === 'COMPLETED') {
+                  return statusData.downloadUrl || statusData.outputUrl || prod?.renderedSceneUrl || undefined
+                }
+                if (statusData?.status === 'failed' || statusData?.status === 'FAILED') {
+                  break
+                }
+              }
+            } catch {
+              // Non-fatal; return any previously rendered URL
+            }
             return prod?.renderedSceneUrl || undefined
           },
           assembleMasterStream: async ({ language: lang, streamType }) => {
@@ -21469,10 +21569,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           },
           onProgress: (update) => {
+            saveProductionAgentCheckpoint({
+              projectId: project.id,
+              status: 'running',
+              options,
+              stage: update.stage,
+              subtitle: update.subtitle,
+              progressPct: update.progressPct,
+              telemetry: update.telemetry,
+              startedAt: Date.now(),
+              updatedAt: Date.now(),
+            })
             setProductionAgentState((prev) =>
               prev
                 ? {
                     ...prev,
+                    interrupted: false,
                     stage: update.stage,
                     subtitle: update.subtitle,
                     progressPct: update.progressPct,
@@ -21490,12 +21602,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }),
         })
 
+        clearProductionAgentCheckpoint(project.id)
         setProductionAgentState((prev) =>
           prev
             ? {
                 ...prev,
                 running: false,
                 finished: true,
+                interrupted: false,
                 progressPct: 100,
                 checkpointGate: null,
                 subtitle:
@@ -21508,6 +21622,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         )
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Production Agent stopped'
+        saveProductionAgentCheckpoint({
+          projectId: project.id,
+          status: 'failed',
+          options,
+          stage: options.stages[0] || 'previs',
+          subtitle: msg,
+          progressPct: 100,
+          telemetry: {
+            ...initialTelemetry,
+            errors: [msg],
+          },
+          startedAt: Date.now(),
+          updatedAt: Date.now(),
+        })
         setProductionAgentState((prev) =>
           prev
             ? {
@@ -22272,12 +22400,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       <ProductionBuilderDialog
         open={productionBuilderOpen}
-        onOpenChange={setProductionBuilderOpen}
+        onOpenChange={(nextOpen) => {
+          setProductionBuilderOpen(nextOpen)
+          if (!nextOpen) setProductionBuilderLaunchContext(null)
+        }}
         scenes={script?.script?.scenes || []}
         sceneProductionState={sceneProductionState}
         language="en"
         isRunning={Boolean(productionAgentState?.running)}
+        launchContext={productionBuilderLaunchContext}
         onStartProduction={(opts) => {
+          resumableProductionOptionsRef.current = opts
           void handleStartProductionAgent(opts)
         }}
       />
@@ -22893,6 +23026,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         {productionAgentState?.visible && (
           <ProductionAgentDock
             state={productionAgentState}
+            onResume={() => {
+              const opts = resumableProductionOptionsRef.current
+              if (opts) {
+                void handleStartProductionAgent({ ...opts, missingOnly: true })
+              } else {
+                setProductionBuilderOpen(true)
+              }
+            }}
             onApproveCheckpoint={() => {
               const resolver = productionCheckpointResolverRef.current
               productionCheckpointResolverRef.current = null
@@ -22926,7 +23067,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               productionCheckpointResolverRef.current = null
               resolver?.(false)
             }}
-            onClose={() => setProductionAgentState(null)}
+            onClose={() => {
+              if (projectId) clearProductionAgentCheckpoint(projectId)
+              setProductionAgentState(null)
+            }}
             onOpenScreeningView={() => setProductionViewWithUrl('screening')}
           />
         )}

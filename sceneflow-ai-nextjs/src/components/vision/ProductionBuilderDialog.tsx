@@ -44,6 +44,14 @@ import {
 } from '@/lib/production/runProductionAgent'
 import type { VideoGenerationQuality } from '@/lib/video/videoGenerationPolicy'
 
+export interface ProductionBuilderLaunchContext {
+  scopeMode?: ProductionSceneScopeMode
+  sceneIndices?: number[]
+  stages?: ProductionStageId[]
+  missingOnly?: boolean
+  contextLabel?: string
+}
+
 interface ProductionBuilderDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -51,6 +59,7 @@ interface ProductionBuilderDialogProps {
   sceneProductionState?: Record<string, any>
   language?: string
   isRunning?: boolean
+  launchContext?: ProductionBuilderLaunchContext | null
   onStartProduction: (options: ProductionBuilderOptions) => void
 }
 
@@ -175,6 +184,7 @@ export function ProductionBuilderDialog({
   sceneProductionState = {},
   language = 'en',
   isRunning = false,
+  launchContext = null,
   onStartProduction,
 }: ProductionBuilderDialogProps) {
   const [scopeMode, setScopeMode] = useState<ProductionSceneScopeMode>('all')
@@ -204,6 +214,24 @@ export function ProductionBuilderDialog({
     () => summarizeProductionScenes(scenes, sceneProductionState, language),
     [scenes, sceneProductionState, language]
   )
+
+  // Apply contextual smart defaults when opened from a specific scene or stage button
+  useEffect(() => {
+    if (!open || !launchContext) return
+    if (launchContext.scopeMode) {
+      setScopeMode(launchContext.scopeMode)
+    }
+    if (Array.isArray(launchContext.sceneIndices) && launchContext.sceneIndices.length > 0) {
+      setScopeMode('custom')
+      setSelectedSceneIndices(launchContext.sceneIndices)
+    }
+    if (Array.isArray(launchContext.stages) && launchContext.stages.length > 0) {
+      setStages(normalizeProductionStages(launchContext.stages))
+    }
+    if (typeof launchContext.missingOnly === 'boolean') {
+      setMissingOnly(launchContext.missingOnly)
+    }
+  }, [open, launchContext])
 
   // Initialize scene selection when dialog opens or scope changes
   useEffect(() => {

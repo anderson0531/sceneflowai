@@ -49,8 +49,8 @@ export const IDENTITY_PHOTO_REALISM_DIRECTIVES = [
 ].join('\n')
 
 export const IDENTITY_ANTI_LIKENESS_DIRECTIVES = [
-  'Subject is an original fictional adult — not a celebrity, politician, or public figure.',
-  'Do not depict or resemble any known actor or recognizable likeness.',
+  'Subject is an ordinary everyday fictional adult — subtle natural facial asymmetry, unretouched authentic skin texture, and realistic lived-in features.',
+  'Never resemble a movie star, Hollywood leading actor, fashion model, celebrity, politician, or recognizable public figure.',
 ].join('\n')
 
 export const ENHANCE_IDENTITY_REFERENCE_PREFIX =

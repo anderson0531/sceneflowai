@@ -7,6 +7,7 @@ import { buildOmniVideoReferencePrompt } from '@/lib/gemini/buildOmniVideoRefere
 import { buildSceneStateLedger } from '@/lib/scene/sceneStateLedger'
 import { lintShotPromptConsistency } from '@/lib/vision/lintShotPromptConsistency'
 import { buildDeterministicShotInvestigation } from '@/lib/errors/shotErrorInvestigator'
+import { IDENTITY_ANTI_LIKENESS_DIRECTIVES } from '@/lib/character/characterReferencePrompts'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 describe('Phase 1 — Prompt Hygiene, Scale Anchors & Continuity Fixes', () => {
@@ -220,5 +221,11 @@ describe('Phase 2 — Self-Healing [Investigate] Diagnostic Engine', () => {
     expect(result.diagnosedCause).toBe('rate_limit_429')
     expect(result.resolutions[0]?.actionType).toBe('retry_after_cooldown')
     expect(result.resolutions.some((r) => r.actionType === 'switch_creative_kling_f2v')).toBe(true)
+  })
+
+  it('anchors character portrait generation to ordinary non-celebrity documentary realism', () => {
+    expect(IDENTITY_ANTI_LIKENESS_DIRECTIVES.toLowerCase()).toContain('ordinary everyday')
+    expect(IDENTITY_ANTI_LIKENESS_DIRECTIVES.toLowerCase()).toContain('natural facial asymmetry')
+    expect(IDENTITY_ANTI_LIKENESS_DIRECTIVES.toLowerCase()).toContain('never resemble a movie star')
   })
 })

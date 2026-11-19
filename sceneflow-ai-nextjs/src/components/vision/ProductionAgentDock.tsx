@@ -31,6 +31,7 @@ export interface ProductionAgentDockState {
   visible: boolean
   running: boolean
   finished: boolean
+  interrupted?: boolean
   startedAt: number | null
   stage: ProductionStageId
   subtitle: string
@@ -43,6 +44,7 @@ interface ProductionAgentDockProps {
   state: ProductionAgentDockState | null
   onApproveCheckpoint?: () => void
   onStopCheckpoint?: () => void
+  onResume?: () => void
   onCancel?: () => void
   onClose?: () => void
   onOpenScreeningView?: () => void
@@ -70,6 +72,7 @@ export function ProductionAgentDock({
   state,
   onApproveCheckpoint,
   onStopCheckpoint,
+  onResume,
   onCancel,
   onClose,
   onOpenScreeningView,
@@ -320,6 +323,28 @@ export function ProductionAgentDock({
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>
+          </div>
+        )}
+
+        {/* Interrupted Run Restore Banner (survives page reload) */}
+        {state.interrupted && !state.running && onResume && (
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-3 py-2">
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-cyan-200">
+                Previous Run Interrupted
+              </div>
+              <p className="text-[10px] text-slate-300 leading-snug">
+                Resume from remaining missing shots without re-running completed assets.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onResume}
+              className="inline-flex items-center gap-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 px-2.5 py-1.5 text-[11px] font-bold text-slate-950 shrink-0"
+            >
+              <Play className="w-3 h-3 fill-current" />
+              <span>Resume</span>
+            </button>
           </div>
         )}
 
