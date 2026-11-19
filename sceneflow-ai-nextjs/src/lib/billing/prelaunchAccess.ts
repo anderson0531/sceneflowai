@@ -57,22 +57,22 @@ export const PRELAUNCH_TIER_PRESETS: readonly PrelaunchTierPreset[] = [
   {
     id: 'hobbyist',
     dbTierName: 'hobbyist',
-    label: 'Hobbyist Creator (1,500 cr)',
-    defaultCredits: 1500,
+    label: 'Creator & Vault (2,000 cr)',
+    defaultCredits: 2000,
     defaultDurationDays: 30,
   },
   {
     id: 'starter',
     dbTierName: 'starter',
-    label: 'Starter Producer (4,500 cr)',
+    label: 'Filmmaker & Pre-Vis (4,500 cr)',
     defaultCredits: 4500,
     defaultDurationDays: 30,
   },
   {
     id: 'pro',
     dbTierName: 'pro',
-    label: 'Pro White-Label Studio (15,000 cr)',
-    defaultCredits: 15000,
+    label: 'Operator Pro White-Label Studio (10,000 cr)',
+    defaultCredits: 10000,
     defaultDurationDays: 30,
   },
   {
@@ -85,8 +85,8 @@ export const PRELAUNCH_TIER_PRESETS: readonly PrelaunchTierPreset[] = [
   {
     id: 'studio',
     dbTierName: 'studio',
-    label: 'Studio Agency (75,000 cr)',
-    defaultCredits: 75000,
+    label: 'Agency Scale Multi-PM Studio (45,000 cr)',
+    defaultCredits: 45000,
     defaultDurationDays: 30,
   },
   {

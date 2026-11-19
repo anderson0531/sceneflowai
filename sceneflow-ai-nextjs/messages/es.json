@@ -3624,7 +3624,7 @@
           "id": "chapter",
           "badge": "Creadores nuevos e independientes • $49/mes",
           "title": "La estrategia del capítulo de publicación",
-          "description": "Evite la barrera del costo y el tiempo que supone presentar una función de 90 minutos por adelantado. Publique su historia en escenas de 5 a 15 minutos o capítulos episódicos para administrar su presupuesto informático mensual mientras aumenta constantemente su audiencia.",
+          "description": "Opera cientos de proyectos simultáneos en Agency Scale ($599/mes — 750 GB de Bóveda de Clientes, portales ilimitados, 10 asientos PM/QA con selector de espacio, Delegación de Series, Kanban SLA, CRM de Clientes y Scorecard de PM, Enrutamiento por Idioma, Purga en 1 Clic y 45,000 créditos/mes).",
           "recommendedPlan": "Inicial ($49/mes)"
         },
         {
@@ -3842,7 +3842,7 @@
             "Portales 100% Marca Blanca (Intake, Blueprint, Continuidad y Sala)",
             "PWA móvil + eliminación EXIF GPS y registro de consentimiento",
             "Veo 3.1 4K, 5 clones de voz y orquestación BYOK",
-            "3 puestos de equipo y soporte prioritario"
+            "3 asientos de equipo (Kanban SLA, CRM de Clientes, Revisor QA) y soporte prioritario"
           ]
         },
         {
@@ -3854,9 +3854,9 @@
             "45,000 créditos/mes incluidos y mejores tarifas por volumen",
             "Los créditos mensuales no usados vencen al fin del periodo",
             "750 GB de Bóveda de Clientes (portales ilimitados)",
-            "Dominio personalizado + RBAC para PM y topes de crédito mensuales",
-            "Cola prioritaria Veo 3.1 4K, 25 clones de voz y API/BYOK",
-            "10 puestos de equipo y gerente de cuenta dedicado",
+            "Portales con dominio propio + RBAC Multi-PM, Enrutamiento por Idioma y Scorecard CRM",
+            "Cola Prioritaria Veo 3.1 4K, 25 clones de voz, Delegación de Series y Purga en 1 Clic",
+            "10 asientos de equipo (Selector de Espacio y Revisores QA) + Gerente dedicado",
             "SLA empresarial disponible bajo solicitud"
           ]
         }
@@ -4157,9 +4157,9 @@
       "stressTestToggleLabel": "Prueba conservadora: Mes 1 de aprendizaje + Plan Pro ($149/mes)",
       "stressTestOnBadge": "ACTIVO",
       "stressTestOffBadge": "INACTIVO",
-      "stressTestActiveNote": "Modo conservador activo: +60% de tiempo PM inicial, +30% de margen extra en retomas y membresía Pro de $149/mes (incluye 15,000 créditos base/mes).",
+      "stressTestActiveNote": "Modo conservador activo: +60% de tiempo PM inicial, +30% de margen extra en retomas y membresía Operator Pro de $149/mes (incluye 10,000 créditos base/mes + 150 GB Vault).",
       "proPlanLineLabel": "Plan Pro ($149/mes) + cómputo extra",
-      "proPlanCreditsIncludedNote": " (15k cr incl.)",
+      "proPlanCreditsIncludedNote": " (10k cr incl.)",
       "perProjectProfitLabel": "Ganancia del servicio / proyecto",
       "traditionalMarketLabel": "Tarifa tradicional del mercado",
       "typicalFeeLabel": "Tu precio al cliente",
@@ -4200,6 +4200,29 @@
         "Plantilla de Comisión 20% para Residencias, Funerarias e Inmobiliarias",
         "Registro Integrado de Consentimiento de Medios, Edades y Voz"
       ],
+      "agencyScaleOps": {
+        "badge": "Escala Multi-PM · Cientos de Proyectos de Clientes",
+        "title": "Centro de Operaciones de Agencia Integrado en el Estudio",
+        "subtitle": "Escala de operador individual a agencia global con múltiples PM sin hojas de cálculo, fuga de márgenes ni exceso de almacenamiento.",
+        "pillars": [
+          {
+            "title": "Pipeline Kanban y Alertas SLA",
+            "detail": "Sigue cada pedido desde Intake hasta Entregado con fechas objetivo en línea, alertas de vencimiento y avisos >48 h esperando cliente."
+          },
+          {
+            "title": "CRM de Clientes y Scorecard de PM",
+            "detail": "Agrupa clientes recurrentes automáticamente, monitorea consumo de créditos y entregas por PM y verifica el margen bruto al instante."
+          },
+          {
+            "title": "Aislamiento Multi-PM y Enrutamiento por Idioma",
+            "detail": "Delega Biblias de Serie completas, aísla espacios con invitaciones firmadas, asigna Revisores QA de 0 créditos y enruta intakes según idioma."
+          },
+          {
+            "title": "Escala Ilimitada y Purga en 1 Clic",
+            "detail": "Búsqueda en servidor y acciones masivas sobre cientos de proyectos más Archivar y Purgar Borradores preservando másteres y Biblias."
+          }
+        ]
+      },
       "workflowHeading": "Cómo Fluye un Proyecto de Marca Blanca en 4 Pasos Simples",
       "stepPrefix": "Paso",
       "workflowSteps": [

@@ -46,7 +46,7 @@ const INCLUDED_PILLARS = [
   {
     title: 'Locked $119/mo Post-Charter Rate (vs. $149/mo Public)',
     detail:
-      'Keep an optional $119/mo Founding Operator renewal rate after Day 90 (includes 15,000 monthly base credits + 100 GB Continuity Vault + 4K + BYOK).',
+      'Keep an optional $119/mo Founding Operator renewal rate after Day 90 (includes 10,000 monthly base credits + 150 GB Continuity Vault + 3 team seats + 4K + BYOK).',
   },
 ] as const
 
@@ -381,9 +381,9 @@ export function FoundingOperatorsClient({
                   className="flex w-full items-center justify-between rounded-xl border border-slate-700/90 bg-slate-950/75 px-3.5 py-2.5 text-left text-xs text-gray-200 transition hover:border-emerald-400/50 hover:text-white cursor-pointer"
                 >
                   <span>
-                    <strong className="text-white">Monthly Pro Operator — $149/mo</strong>
+                    <strong className="text-white">Monthly Operator Pro — $149/mo</strong>
                     <span className="block text-[11px] text-gray-400">
-                      15,000 credits/mo + 100% White-Label Client Portals · Cancel anytime
+                      10,000 credits/mo + 150 GB Client Vault + 100% White-Label Portals · Cancel anytime
                     </span>
                   </span>
                   <ArrowRight className="h-4 w-4 shrink-0 text-emerald-300" />

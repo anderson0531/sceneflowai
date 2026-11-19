@@ -270,6 +270,17 @@ export type StudioLandingCopy = {
     playbooksHeading: string
     playbooksSubtitle: string
     playbooksItems: readonly [string, string, string, string]
+    agencyScaleOps: {
+      badge: string
+      title: string
+      subtitle: string
+      pillars: readonly [
+        ServiceTrustPillarCopy,
+        ServiceTrustPillarCopy,
+        ServiceTrustPillarCopy,
+        ServiceTrustPillarCopy,
+      ]
+    }
     workflowHeading: string
     stepPrefix: string
     workflowSteps: readonly [ClientStepCopy, ClientStepCopy, ClientStepCopy, ClientStepCopy]

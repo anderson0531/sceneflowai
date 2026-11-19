@@ -181,9 +181,9 @@ export const STUDIO_LANDING_COPY_PT = {
     stressTestOnBadge: 'ATIVO',
     stressTestOffBadge: 'INATIVO',
     stressTestActiveNote:
-      'Modo conservador ativo: +60% de tempo PM inicial, +30% de reserva extra para refações e assinatura Pro de $149/mês (inclui 15.000 créditos base/mês).',
+      'Modo conservador ativo: +60% de tempo PM inicial, +30% de reserva extra para refações e assinatura Operator Pro de $149/mês (inclui 10.000 créditos base/mês + 150 GB Vault).',
     proPlanLineLabel: 'Plano Pro ($149/mês) + processamento extra',
-    proPlanCreditsIncludedNote: ' (15k cr incl.)',
+    proPlanCreditsIncludedNote: ' (10k cr incl.)',
     perProjectProfitLabel: 'Lucro do serviço / projeto',
     traditionalMarketLabel: 'Preço tradicional de mercado',
     typicalFeeLabel: 'Seu preço ao cliente',
@@ -231,6 +231,34 @@ export const STUDIO_LANDING_COPY_PT = {
       'Roteiro de Comissão de 20% para Residenciais Sênior, Memoriais e Imobiliárias',
       'Registro Integrado de Consentimento de Mídia, Idades e Voz',
     ],
+    agencyScaleOps: {
+      badge: 'Escala Multi-PM · Centenas de Projetos de Clientes',
+      title: 'Central de Operações de Agência Integrada ao Estúdio',
+      subtitle:
+        'Escale de operador solo para agência global multi-PM sem planilhas, perda de margem ou excesso de armazenamento.',
+      pillars: [
+        {
+          title: 'Pipeline Kanban e Alertas SLA',
+          detail:
+            'Acompanhe cada pedido do Intake até Entregue com prazos em linha, alertas de atraso e avisos >48h aguardando cliente.',
+        },
+        {
+          title: 'CRM de Clientes e Scorecard de PM',
+          detail:
+            'Agrupe clientes recorrentes automaticamente, acompanhe consumo de créditos e prazos por PM e valide a margem bruta em tempo real.',
+        },
+        {
+          title: 'Isolamento Multi-PM e Roteamento por Idioma',
+          detail:
+            'Delegue Bíblias de Série inteiras, isole workspaces com convites assinados, atribua Revisores QA (0 créditos) e roteie intakes por idioma.',
+        },
+        {
+          title: 'Escala Ilimitada e Limpeza em 1 Clique',
+          detail:
+            'Busca no servidor e ações em lote para centenas de projetos mais Arquivar e Limpar Rascunhos mantendo masters e Bíblias intactos.',
+        },
+      ],
+    },
     workflowHeading: 'Como um Projeto White-Label Flui em 4 Etapas Simples',
     stepPrefix: 'Etapa',
     workflowSteps: [

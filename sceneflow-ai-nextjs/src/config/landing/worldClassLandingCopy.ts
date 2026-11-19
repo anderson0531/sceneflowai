@@ -198,9 +198,9 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     stressTestOnBadge: 'ON',
     stressTestOffBadge: 'OFF',
     stressTestActiveNote:
-      'Conservative ramp-up active: +60% beginner PM hours, +30% extra retake compute buffer, and $149/mo Pro membership (includes 15,000 base credits/mo).',
+      'Conservative ramp-up active: +60% beginner PM hours, +30% extra retake compute buffer, and $149/mo Operator Pro membership (includes 10,000 base credits/mo + 150 GB Vault).',
     proPlanLineLabel: 'Pro plan ($149/mo) + extra compute',
-    proPlanCreditsIncludedNote: ' (15k cr incl.)',
+    proPlanCreditsIncludedNote: ' (10k cr incl.)',
     perProjectProfitLabel: 'Service profit / project',
     traditionalMarketLabel: 'Typical market rate',
     typicalFeeLabel: 'Your client price',
@@ -248,6 +248,34 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
       '20% Referral Partner Pitch Sheet (Senior Living, Funeral Homes & Realtors)',
       'Built-In Clickwrap Media, Multi-Age Likeness & Voice Consent Ledger',
     ],
+    agencyScaleOps: {
+      badge: 'Multi-PM Agency Scale · 100s of Client Projects',
+      title: 'Agency Operations Command Center, Built Right Into the Studio',
+      subtitle:
+        'Scale from solo operator to a global multi-PM video agency without spreadsheets, leaked margins, or bloated storage.',
+      pillars: [
+        {
+          title: 'Kanban Pipeline & SLA Alerts',
+          detail:
+            'Track every order from Intake to Delivered with inline target delivery dates, overdue alerts, and >48h waiting-on-client nudges.',
+        },
+        {
+          title: 'Client CRM & PM Margin Scorecard',
+          detail:
+            'Group repeat clients automatically, monitor per-PM credit burn & turnaround times, and verify real-time gross margin.',
+        },
+        {
+          title: 'Multi-PM Isolation & Locale Auto-Routing',
+          detail:
+            'Delegate entire Series Bibles, isolate workspaces with signed PM invites, assign 0-credit QA Reviewers, and auto-route global intakes by language.',
+        },
+        {
+          title: 'Unlimited Scale & 1-Click Draft Purge',
+          detail:
+            'Server-side search & bulk PM actions across 100s of projects plus 1-click Archive & Purge Draft Intermediates keeping final masters intact.',
+        },
+      ],
+    },
     workflowHeading: 'How a White-Label Client Project Flows in 4 Effortless Steps',
     stepPrefix: 'Step',
     workflowSteps: [

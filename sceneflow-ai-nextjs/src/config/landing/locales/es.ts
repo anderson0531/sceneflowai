@@ -181,9 +181,9 @@ export const STUDIO_LANDING_COPY_ES = {
     stressTestOnBadge: 'ACTIVO',
     stressTestOffBadge: 'INACTIVO',
     stressTestActiveNote:
-      'Modo conservador activo: +60% de tiempo PM inicial, +30% de margen extra en retomas y membresía Pro de $149/mes (incluye 15,000 créditos base/mes).',
+      'Modo conservador activo: +60% de tiempo PM inicial, +30% de margen extra en retomas y membresía Operator Pro de $149/mes (incluye 10,000 créditos base/mes + 150 GB Vault).',
     proPlanLineLabel: 'Plan Pro ($149/mes) + cómputo extra',
-    proPlanCreditsIncludedNote: ' (15k cr incl.)',
+    proPlanCreditsIncludedNote: ' (10k cr incl.)',
     perProjectProfitLabel: 'Ganancia del servicio / proyecto',
     traditionalMarketLabel: 'Tarifa tradicional del mercado',
     typicalFeeLabel: 'Tu precio al cliente',
@@ -231,6 +231,34 @@ export const STUDIO_LANDING_COPY_ES = {
       'Plantilla de Comisión 20% para Residencias, Funerarias e Inmobiliarias',
       'Registro Integrado de Consentimiento de Medios, Edades y Voz',
     ],
+    agencyScaleOps: {
+      badge: 'Escala Multi-PM · Cientos de Proyectos de Clientes',
+      title: 'Centro de Operaciones de Agencia Integrado en el Estudio',
+      subtitle:
+        'Escala de operador individual a agencia global con múltiples PM sin hojas de cálculo, fuga de márgenes ni exceso de almacenamiento.',
+      pillars: [
+        {
+          title: 'Pipeline Kanban y Alertas SLA',
+          detail:
+            'Sigue cada pedido desde Intake hasta Entregado con fechas objetivo en línea, alertas de vencimiento y avisos >48 h esperando cliente.',
+        },
+        {
+          title: 'CRM de Clientes y Scorecard de PM',
+          detail:
+            'Agrupa clientes recurrentes automáticamente, monitorea consumo de créditos y entregas por PM y verifica el margen bruto al instante.',
+        },
+        {
+          title: 'Aislamiento Multi-PM y Enrutamiento por Idioma',
+          detail:
+            'Delega Biblias de Serie completas, aísla espacios con invitaciones firmadas, asigna Revisores QA de 0 créditos y enruta intakes según idioma.',
+        },
+        {
+          title: 'Escala Ilimitada y Purga en 1 Clic',
+          detail:
+            'Búsqueda en servidor y acciones masivas sobre cientos de proyectos más Archivar y Purgar Borradores preservando másteres y Biblias.',
+        },
+      ],
+    },
     workflowHeading: 'Cómo Fluye un Proyecto de Marca Blanca en 4 Pasos Simples',
     stepPrefix: 'Paso',
     workflowSteps: [

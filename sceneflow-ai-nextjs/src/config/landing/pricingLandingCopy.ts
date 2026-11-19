@@ -40,7 +40,7 @@ export const PRICING_LANDING_COPY = {
         badge: 'Multi-PM Agencies & Production Slates • $599/mo',
         title: 'Multi-PM Agencies & Corporate L&D Teams',
         description:
-          'Run 10+ concurrent client slates on Agency Scale ($599/mo — 750 GB Client Vault, unlimited branded client portals, Custom Domain, 10 PM seats with monthly credit caps, 45,000 credits/mo, API & BYOK orchestration).',
+          'Run 100s of concurrent client slates on Agency Scale ($599/mo — 750 GB Client Vault, unlimited branded portals, 10 PM/QA seats with Workspace Switcher, Series Delegation, Kanban SLA pipeline, Client CRM & PM Margin Scorecard, Locale Auto-Routing, 1-Click Draft Purge & 45,000 credits/mo).',
         recommendedPlan: 'Agency Scale ($599/mo · $5,990/yr)',
       },
       {

@@ -181,9 +181,9 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
     stressTestOnBadge: '已开启',
     stressTestOffBadge: '未开启',
     stressTestActiveNote:
-      '保守模式已开启：计入 +60% 新手统筹工时、+30% 额外重生成算力缓冲，以及 $149/月 Pro 订阅费（含每月 15,000 基础积分）。',
+      '保守模式已开启：计入 +60% 新手统筹工时、+30% 额外重生成算力缓冲，以及 $149/月 Operator Pro 订阅费（含每月 10,000 基础积分 + 150 GB 资产库）。',
     proPlanLineLabel: 'Pro 订阅 ($149/月) + 超额算力',
-    proPlanCreditsIncludedNote: '（含 15k 基础积分）',
+    proPlanCreditsIncludedNote: '（含 10k 基础积分）',
     perProjectProfitLabel: '单项目服务毛利',
     traditionalMarketLabel: '传统市场均价',
     typicalFeeLabel: '您的客户报价',
@@ -231,6 +231,34 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
       '康养社区、纪念礼仪机构与豪宅经纪 20% 返佣合作方案',
       '内置点击签署的素材版权、跨年龄肖像与多语言音色授权台账',
     ],
+    agencyScaleOps: {
+      badge: '多 PM 代理商规模 · 数百个客户项目并发',
+      title: '内置于工作室的代理商运营指挥中心',
+      subtitle:
+        '无需表格、不漏毛利、不爆存储，从个人服务商顺滑升级为跨语种多 PM 视频制作代理商。',
+      pillars: [
+        {
+          title: '看板流水线与 SLA 超期预警',
+          detail:
+            '从客户立项到成片交付全程 6 阶段看板追踪，内置目标交付日、逾期提醒及超过 48 小时待客户反馈提醒。',
+        },
+        {
+          title: '客户 CRM 与 PM 毛利记分卡',
+          detail:
+            '自动按客户归集复购订单，实时查看每位 PM 的月度积分消耗、平均交付周期与预估毛利率。',
+        },
+        {
+          title: '多 PM 空间隔离与语种自动派单',
+          detail:
+            '一键委派整套剧集设定集，支持签名邀请入驻、工作空间切换、零积分 QA 审片员与按语种自动分配 PM。',
+        },
+        {
+          title: '无限项目检索与一键草稿清理',
+          detail:
+            '服务端全文检索与批量派单覆盖数百个项目；一键归档并清理冗余候选片段，完好保留终版母带与设定集。',
+        },
+      ],
+    },
     workflowHeading: '白标客户定制项目如何通过 4 个步骤轻松闭环',
     stepPrefix: '步骤',
     workflowSteps: [

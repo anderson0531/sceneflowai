@@ -1758,9 +1758,9 @@
       "stressTestToggleLabel": "Stress-test: Month-1 Ramp-Up + Pro Plan ($149/mo)",
       "stressTestOnBadge": "ON",
       "stressTestOffBadge": "OFF",
-      "stressTestActiveNote": "Conservative ramp-up active: +60% beginner PM hours, +30% extra retake compute buffer, and $149/mo Pro membership (includes 15,000 base credits/mo).",
+      "stressTestActiveNote": "Conservative ramp-up active: +60% beginner PM hours, +30% extra retake compute buffer, and $149/mo Operator Pro membership (includes 10,000 base credits/mo + 150 GB Vault).",
       "proPlanLineLabel": "Pro plan ($149/mo) + extra compute",
-      "proPlanCreditsIncludedNote": " (15k cr incl.)",
+      "proPlanCreditsIncludedNote": " (10k cr incl.)",
       "perProjectProfitLabel": "Service profit / project",
       "traditionalMarketLabel": "Typical market rate",
       "typicalFeeLabel": "Your client price",
@@ -1801,6 +1801,29 @@
         "20% Referral Partner Pitch Sheet (Senior Living, Funeral Homes & Realtors)",
         "Built-In Clickwrap Media, Multi-Age Likeness & Voice Consent Ledger"
       ],
+      "agencyScaleOps": {
+        "badge": "Multi-PM Agency Scale · 100s of Client Projects",
+        "title": "Agency Operations Command Center, Built Right Into the Studio",
+        "subtitle": "Scale from solo operator to a global multi-PM video agency without spreadsheets, leaked margins, or bloated storage.",
+        "pillars": [
+          {
+            "title": "Kanban Pipeline & SLA Alerts",
+            "detail": "Track every order from Intake to Delivered with inline target delivery dates, overdue alerts, and >48h waiting-on-client nudges."
+          },
+          {
+            "title": "Client CRM & PM Margin Scorecard",
+            "detail": "Group repeat clients automatically, monitor per-PM credit burn & turnaround times, and verify real-time gross margin."
+          },
+          {
+            "title": "Multi-PM Isolation & Locale Auto-Routing",
+            "detail": "Delegate entire Series Bibles, isolate workspaces with signed PM invites, assign 0-credit QA Reviewers, and auto-route global intakes by language."
+          },
+          {
+            "title": "Unlimited Scale & 1-Click Draft Purge",
+            "detail": "Server-side search & bulk PM actions across 100s of projects plus 1-click Archive & Purge Draft Intermediates keeping final masters intact."
+          }
+        ]
+      },
       "workflowHeading": "How a White-Label Client Project Flows in 4 Effortless Steps",
       "stepPrefix": "Step",
       "workflowSteps": [
@@ -4445,7 +4468,7 @@
           "id": "chapter",
           "badge": "New & Indie Creators • $49/mo",
           "title": "The Publish Chapter Strategy",
-          "description": "Skip the cost and time barrier of rendering a 90-minute feature upfront. Publish your story in 5–15 minute scenes or episodic chapters to manage your monthly compute budget while steadily growing your audience.",
+          "description": "Run 100s of concurrent client slates on Agency Scale ($599/mo — 750 GB Client Vault, unlimited branded portals, 10 PM/QA seats with Workspace Switcher, Series Delegation, Kanban SLA pipeline, Client CRM & PM Margin Scorecard, Locale Auto-Routing, 1-Click Draft Purge & 45,000 credits/mo).",
           "recommendedPlan": "Starter ($49/mo)"
         },
         {
@@ -4663,7 +4686,7 @@
             "100% White-Label Intake, Blueprint Pass, Continuity & Screening Room",
             "Mobile Companion PWA + automatic EXIF GPS stripping & consent ledger",
             "Veo 3.1 Quality (4K), 5 custom voice clones & BYOK orchestration",
-            "3 team seats & Priority support"
+            "3 team seats (Kanban SLA, Client CRM, QA Reviewer) & Priority support"
           ]
         },
         {
@@ -4675,9 +4698,9 @@
             "45,000 credits/month included + lowest bulk Add-On rates",
             "Unused monthly credits expire at period end",
             "750 GB Active Client & Continuity Vault (unlimited client portals)",
-            "Custom Domain white-label hosting + PM RBAC & monthly credit caps",
-            "Veo 3.1 4K Priority Queue, 25 custom voice clones & API/BYOK access",
-            "10 team seats & Dedicated account manager",
+            "Custom Domain portals + Multi-PM RBAC, Locale Auto-Routing & Client CRM Scorecard",
+            "Veo 3.1 4K Priority Queue, 25 voice clones, Series Delegation & 1-Click Draft Purge",
+            "10 team seats (Workspace Switcher & QA Reviewers) + Dedicated account manager",
             "Enterprise SLA available on request"
           ]
         }

@@ -7,12 +7,15 @@ import { useLocale } from 'next-intl'
 import {
   ArrowDownRight,
   ArrowRight,
+  BarChart3,
   BookOpenCheck,
   Building2,
   CheckCircle2,
+  Columns3,
   Globe2,
   GraduationCap,
   Handshake,
+  HardDrive,
   HeartHandshake,
   Info,
   Lock,
@@ -23,6 +26,7 @@ import {
   Smartphone,
   Sparkles,
   TrendingUp,
+  Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
@@ -52,7 +56,9 @@ const VERTICAL_ICONS = {
 const MONTHLY_VOLUME_OPTIONS = [4, 8, 15] as const
 const TIER_INDICES = [0, 1, 2] as const
 const PRO_PLAN_MONTHLY_USD = 149
-const PRO_INCLUDED_COMPUTE_USD = 150
+const PRO_INCLUDED_COMPUTE_USD = 100
+
+const AGENCY_OPS_ICONS = [Columns3, BarChart3, Users, HardDrive] as const
 
 export interface ServiceEconomicsResult {
   computeUsd: number
@@ -645,6 +651,45 @@ export function VideoServicesSpotlightSection() {
             iOS &amp; Android PWA
           </span>
         </div>
+
+        {/* Multi-PM Agency Scale Operations Strip (Kanban SLA, CRM Scorecard, Locale Routing & Storage Purge) */}
+        {copy.agencyScaleOps && (
+          <div className="mt-6 rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-slate-900/90 via-indigo-950/25 to-slate-900/90 p-5 sm:p-6">
+            <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="!mb-0 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-indigo-300">
+                  <Users className="h-3.5 w-3.5 shrink-0 text-indigo-300" aria-hidden />
+                  <span>{copy.agencyScaleOps.badge}</span>
+                </p>
+                <h3 className="mt-1.5 text-lg font-bold text-white sm:text-xl">
+                  {copy.agencyScaleOps.title}
+                </h3>
+                <p className="!mb-0 mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm max-w-3xl">
+                  {copy.agencyScaleOps.subtitle}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {copy.agencyScaleOps.pillars.map((pillar, idx) => {
+                const Icon = AGENCY_OPS_ICONS[idx % AGENCY_OPS_ICONS.length]
+                return (
+                  <div
+                    key={pillar.title}
+                    className="rounded-xl border border-white/10 bg-slate-950/75 p-4"
+                  >
+                    <div className="flex items-center gap-2 text-sm font-bold text-white">
+                      <Icon className="h-4 w-4 shrink-0 text-cyan-300" aria-hidden />
+                      <span>{pillar.title}</span>
+                    </div>
+                    <p className="!mb-0 mt-1.5 text-xs leading-relaxed text-gray-300">
+                      {pillar.detail}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Progressive Disclosure: Full Agency Operating Kit, White-Label Portal & Delivery Workflow */}
         <details className="group mt-6 rounded-2xl border border-slate-800 bg-slate-900/50">
