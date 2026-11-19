@@ -2,9 +2,10 @@
 
 import { useId, useState, type FormEvent } from 'react'
 import { CheckCircle2, Loader2, Mail } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -19,6 +20,7 @@ export function NotifyCapture({
   className?: string
   align?: 'center' | 'start'
 }) {
+  const locale = useLocale()
   const t = useTranslations('notify')
   const inputId = useId()
   const [email, setEmail] = useState('')
@@ -91,9 +93,9 @@ export function NotifyCapture({
   return (
     <div className={cn('flex flex-col gap-2', alignment, className)}>
       <label htmlFor={inputId} className="text-sm font-semibold text-white">
-        {t('heading')}
+        {localizeUsdText(t('heading'), locale)}
       </label>
-      <p className="max-w-md text-sm text-gray-400">{t('description')}</p>
+      <p className="max-w-md text-sm text-gray-400">{localizeUsdText(t('description'), locale)}</p>
       <form
         onSubmit={onSubmit}
         noValidate

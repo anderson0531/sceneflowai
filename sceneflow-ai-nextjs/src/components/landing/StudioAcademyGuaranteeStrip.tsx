@@ -15,6 +15,7 @@ import {
 } from '@/config/landing/productionPipelineDemo'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
+import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 
 export const STUDIO_ACADEMY_STRIP_ID = 'studio-academy'
 
@@ -87,10 +88,10 @@ export function StudioAcademyGuaranteeStrip() {
 
               <Link
                 href={getSignupUrlForTier('explorer')}
-                title={prelaunchOnly ? 'Request Pre-Launch Access' : copy.startExplorerCta}
+                title={prelaunchOnly ? 'Request Pre-Launch Access' : localizeUsdText(copy.startExplorerCta, locale)}
                 className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition-all hover:brightness-110"
               >
-                <span>{prelaunchOnly ? 'Request Pre-Launch Access' : copy.startExplorerCta}</span>
+                <span>{prelaunchOnly ? 'Request Pre-Launch Access' : localizeUsdText(copy.startExplorerCta, locale)}</span>
                 <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
               </Link>
             </div>

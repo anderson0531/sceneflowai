@@ -7,6 +7,7 @@ import { ArrowRight, Briefcase, Compass, Loader2, Maximize2, Pause, Play, Volume
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
+import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 import {
   openTwoModesOnPhoneOrTheater,
   TwoModesTheaterModal,
@@ -46,7 +47,7 @@ export function ImaginePossibilitiesHero() {
   const tCommon = useTranslations('common')
   const primaryHeroCtaLabel = prelaunchOnly
     ? (tHero.has('requestPreLaunchAccess') ? tHero('requestPreLaunchAccess') : 'Request Pre-Launch Access')
-    : studioCopy.heroDock.primaryCta
+    : localizeUsdText(studioCopy.heroDock.primaryCta, locale)
   const prefersReducedMotion = useReducedMotion()
   const sectionRef = useRef<HTMLElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)

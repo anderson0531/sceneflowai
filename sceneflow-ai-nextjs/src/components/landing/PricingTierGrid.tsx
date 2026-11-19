@@ -2,11 +2,12 @@
 
 import { motion } from 'framer-motion'
 import { ArrowRight, Check, Gift, HardDrive, ShieldCheck, Zap } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { getLandingPlans } from '@/lib/billing/tierCatalog'
 import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
+import { formatLandingCurrency, localizeUsdText } from '@/lib/i18n/landingCurrency'
 
 const { explorer: explorerPlan, subscriptions: basePlans } = getLandingPlans()
 
@@ -21,6 +22,7 @@ export function PricingTierGrid({
   disabled = false,
   loadingTier = null,
 }: PricingTierGridProps) {
+  const locale = useLocale()
   const t = useTranslations('pricing.tierGrid')
   const tPlans = useTranslations('pricing.plans')
   const tTopUps = useTranslations('pricing.creditTopUps')
@@ -69,7 +71,9 @@ export function PricingTierGrid({
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 shrink-0">
               <div className="text-left sm:text-right">
-                <div className="text-3xl font-bold text-white">${explorerPlan.price}</div>
+                <div className="text-3xl font-bold text-white tabular-nums">
+                  {formatLandingCurrency(explorerPlan.price, locale)}
+                </div>
                 <div className="text-sm text-amber-400">
                   {explorerPlan.includedCredits}{' '}
                   {tTopUps.has('creditsUnit')
@@ -86,7 +90,7 @@ export function PricingTierGrid({
                   ? t('loading')
                   : prelaunchOnly
                     ? requestAccessLabel
-                    : t('startTestFlight')}
+                    : localizeUsdText(t('startTestFlight'), locale)}
                 <ArrowRight className="w-4 h-4 ml-2 shrink-0" />
               </Button>
             </div>
@@ -145,7 +149,9 @@ export function PricingTierGrid({
 
               <div className="mb-5">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-4xl font-bold text-white">${plan.price}</span>
+                  <span className="text-3xl sm:text-4xl font-bold text-white tabular-nums">
+                    {formatLandingCurrency(plan.price, locale)}
+                  </span>
                   <span className="text-sm text-gray-400">{t('perMonth')}</span>
                 </div>
               </div>

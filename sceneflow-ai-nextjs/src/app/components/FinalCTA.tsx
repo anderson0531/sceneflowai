@@ -3,12 +3,14 @@
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { NotifyCapture } from '@/components/landing/NotifyCapture'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
+import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 
 export function FinalCTA() {
+  const locale = useLocale()
   const t = useTranslations('finalCta')
   const prelaunchOnly = isPrelaunchAccessModeEnabled()
 
@@ -36,7 +38,7 @@ export function FinalCTA() {
             >
               {prelaunchOnly
                 ? (t.has('requestPreLaunchAccess') ? t('requestPreLaunchAccess') : 'Request Pre-Launch Access')
-                : t('cta')}
+                : localizeUsdText(t('cta'), locale)}
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
             <Link

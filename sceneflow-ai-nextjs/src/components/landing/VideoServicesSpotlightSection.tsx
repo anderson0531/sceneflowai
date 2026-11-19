@@ -37,6 +37,7 @@ import {
 } from '@/config/landing/customerPortalAnimaticCopy'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { formatLandingCurrency, localizeUsdText } from '@/lib/i18n/landingCurrency'
 import { cn } from '@/lib/utils'
 
 export const VIDEO_SERVICES_SECTION_ID = 'video-services'
@@ -52,10 +53,6 @@ const MONTHLY_VOLUME_OPTIONS = [4, 8, 15] as const
 const TIER_INDICES = [0, 1, 2] as const
 const PRO_PLAN_MONTHLY_USD = 149
 const PRO_INCLUDED_COMPUTE_USD = 150
-
-function formatUsd(amount: number): string {
-  return `$${amount.toLocaleString('en-US')}`
-}
 
 export interface ServiceEconomicsResult {
   computeUsd: number
@@ -113,6 +110,8 @@ export function computeServiceEconomics(input: {
 
 export function VideoServicesSpotlightSection() {
   const locale = useLocale()
+  const formatMoney = (amountUsd: number) => formatLandingCurrency(amountUsd, locale)
+  const localizeMoneyText = (text: string) => localizeUsdText(text, locale)
   const studioCopy = useStudioLandingCopy()
   const copy = studioCopy.videoServices
   const mobileCopy = studioCopy.mobileCompanion
@@ -159,7 +158,7 @@ export function VideoServicesSpotlightSection() {
     netMarginPct,
   } = econ
 
-  const marginFormulaHint = `${formatUsd(clientPrice)} (${copy.typicalFeeLabel}) − ~${formatUsd(fullyLoadedCost)} (${copy.fullyLoadedCostLabel}) = +${formatUsd(profitPerProject)} (${netMarginPct}% ${copy.marginBadgeSuffix})`
+  const marginFormulaHint = `${formatMoney(clientPrice)} (${copy.typicalFeeLabel}) − ~${formatMoney(fullyLoadedCost)} (${copy.fullyLoadedCostLabel}) = +${formatMoney(profitPerProject)} (${netMarginPct}% ${copy.marginBadgeSuffix})`
 
   return (
     <section
@@ -269,7 +268,7 @@ export function VideoServicesSpotlightSection() {
                             : 'bg-white/5 text-slate-400'
                         )}
                       >
-                        {vertical.retailRangeLabel}
+                        {localizeMoneyText(vertical.retailRangeLabel)}
                       </span>
                     </div>
                     <span
@@ -280,7 +279,7 @@ export function VideoServicesSpotlightSection() {
                           : 'bg-white/5 text-slate-400'
                       )}
                     >
-                      {vertical.retailRangeLabel}
+                      {localizeMoneyText(vertical.retailRangeLabel)}
                     </span>
                     <span className="hidden w-full whitespace-normal break-words text-sm font-bold leading-snug min-[420px]:block sm:text-[15px]">
                       {vertical.tabLabel}
@@ -404,7 +403,7 @@ export function VideoServicesSpotlightSection() {
                       projectsPerMonth,
                       conservativeRampUp,
                     })
-                    const tierTooltip = `${tierName}: ${formatUsd(tierUsd)} (+${formatUsd(tierEcon.profitPerProject)} ${copy.perProjectProfitLabel.toLowerCase()})`
+                    const tierTooltip = `${tierName}: ${formatMoney(tierUsd)} (+${formatMoney(tierEcon.profitPerProject)} ${copy.perProjectProfitLabel.toLowerCase()})`
                     return (
                       <VideoControlTooltip key={tierIdx} label={tierTooltip} side="top">
                         <button
@@ -422,7 +421,7 @@ export function VideoServicesSpotlightSection() {
                             {tierName}
                           </span>
                           <span className="mt-1 text-xs font-extrabold tabular-nums text-emerald-300 sm:text-sm">
-                            {formatUsd(tierUsd)}
+                            {formatMoney(tierUsd)}
                           </span>
                         </button>
                       </VideoControlTooltip>
@@ -448,7 +447,7 @@ export function VideoServicesSpotlightSection() {
                       projectsPerMonth: count,
                       conservativeRampUp,
                     })
-                    const volumeTooltip = `${count} ${copy.projectsPerMonthSuffix} → ${formatUsd(countEcon.monthlyNet)} ${copy.perMonthSuffix}`
+                    const volumeTooltip = `${count} ${copy.projectsPerMonthSuffix} → ${formatMoney(countEcon.monthlyNet)} ${copy.perMonthSuffix}`
                     return (
                       <VideoControlTooltip key={count} label={volumeTooltip} side="top">
                         <button
@@ -478,12 +477,12 @@ export function VideoServicesSpotlightSection() {
               {/* Optional Conservative Stress-Test Toggle (Month-1 Ramp-Up + Pro Plan $149/mo) */}
               <div className="mt-3.5">
                 <VideoControlTooltip
-                  label={`${copy.stressTestToggleLabel} — ${copy.stressTestActiveNote}`}
+                  label={`${localizeMoneyText(copy.stressTestToggleLabel)} — ${localizeMoneyText(copy.stressTestActiveNote)}`}
                   side="top"
                 >
                   <button
                     type="button"
-                    title={`${copy.stressTestToggleLabel} — ${copy.stressTestActiveNote}`}
+                    title={`${localizeMoneyText(copy.stressTestToggleLabel)} — ${localizeMoneyText(copy.stressTestActiveNote)}`}
                     aria-pressed={conservativeRampUp}
                     onClick={() => setConservativeRampUp((prev) => !prev)}
                     className={cn(
@@ -495,7 +494,7 @@ export function VideoServicesSpotlightSection() {
                   >
                     <span className="inline-flex items-center gap-2">
                       <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
-                      <span>{copy.stressTestToggleLabel}</span>
+                      <span>{localizeMoneyText(copy.stressTestToggleLabel)}</span>
                     </span>
                     <span
                       className={cn(
@@ -511,7 +510,7 @@ export function VideoServicesSpotlightSection() {
                 </VideoControlTooltip>
                 {conservativeRampUp && (
                   <p className="mt-1.5 rounded-lg border border-amber-400/25 bg-amber-950/25 px-3 py-1.5 text-[11px] leading-relaxed text-amber-100/90">
-                    {copy.stressTestActiveNote}
+                    {localizeMoneyText(copy.stressTestActiveNote)}
                   </p>
                 )}
               </div>
@@ -521,31 +520,31 @@ export function VideoServicesSpotlightSection() {
                 <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
                   <p className="text-[11px] text-gray-400">{copy.traditionalMarketLabel}</p>
                   <p className="mt-1 text-sm font-semibold text-gray-400 line-through decoration-rose-400/60 sm:text-base">
-                    {activeVertical.traditionalMarketRangeLabel}
+                    {localizeMoneyText(activeVertical.traditionalMarketRangeLabel)}
                   </p>
                 </div>
                 <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/25 p-2.5">
                   <p className="text-[11px] text-emerald-200">{copy.typicalFeeLabel}</p>
                   <p className="mt-1 text-sm font-bold text-white sm:text-base">
-                    {formatUsd(clientPrice)}
+                    {formatMoney(clientPrice)}
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
                   <p className="text-[11px] text-gray-400">{copy.fullyLoadedCostLabel}</p>
                   <p className="mt-0.5 text-sm font-bold text-cyan-300 sm:text-base">
-                    ~{formatUsd(fullyLoadedCost)}
+                    ~{formatMoney(fullyLoadedCost)}
                   </p>
                   <p className="mt-0.5 text-[10px] leading-snug text-gray-400">
-                    ~{formatUsd(computeUsd)} + ~{formatUsd(operatorUsd)} ({copy.costBreakdownSubLabel})
+                    ~{formatMoney(computeUsd)} + ~{formatMoney(operatorUsd)} ({copy.costBreakdownSubLabel})
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
-                  <p className="text-[11px] text-gray-400">{copy.activeHandsOnLabel}</p>
+                  <p className="text-[11px] text-gray-400">{localizeMoneyText(copy.activeHandsOnLabel)}</p>
                   <p className="mt-0.5 text-sm font-bold text-amber-200 sm:text-base">
                     {conservativeRampUp ? `${baseActiveTimeLabel} (×1.6)` : baseActiveTimeLabel}
                   </p>
                   <p className="mt-0.5 text-[10px] leading-snug text-gray-400">
-                    {copy.estComputeLabel}: ~{formatUsd(computeUsd)}
+                    {copy.estComputeLabel}: ~{formatMoney(computeUsd)}
                   </p>
                 </div>
               </div>
@@ -562,7 +561,7 @@ export function VideoServicesSpotlightSection() {
                       <Info className="h-3.5 w-3.5 shrink-0 text-emerald-300/80" aria-hidden />
                     </span>
                     <span className="inline-flex flex-wrap items-center gap-1.5 font-bold text-emerald-200">
-                      <span className="tabular-nums text-white">+{formatUsd(profitPerProject)}</span>
+                      <span className="tabular-nums text-white">+{formatMoney(profitPerProject)}</span>
                       <span className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2 py-0.5 text-[11px] font-bold text-emerald-200">
                         {netMarginPct}% {copy.marginBadgeSuffix}
                       </span>
@@ -573,16 +572,16 @@ export function VideoServicesSpotlightSection() {
                 <div className="mt-2.5 flex flex-wrap items-baseline justify-between gap-2 text-xs text-gray-300">
                   <span>{copy.monthlyGrossLabel}</span>
                   <span className="font-semibold tabular-nums text-white">
-                    {formatUsd(monthlyGross)} {copy.perMonthSuffix}
+                    {formatMoney(monthlyGross)} {copy.perMonthSuffix}
                   </span>
                 </div>
 
                 {conservativeRampUp && (
                   <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-2 text-xs text-amber-200/90">
-                    <span>{copy.proPlanLineLabel}</span>
+                    <span>{localizeMoneyText(copy.proPlanLineLabel)}</span>
                     <span className="font-semibold tabular-nums">
-                      −{formatUsd(monthlySceneFlowBillUsd)} {copy.perMonthSuffix}
-                      {monthlySaasOverheadUsd > 0 ? '' : copy.proPlanCreditsIncludedNote}
+                      −{formatMoney(monthlySceneFlowBillUsd)} {copy.perMonthSuffix}
+                      {monthlySaasOverheadUsd > 0 ? '' : localizeMoneyText(copy.proPlanCreditsIncludedNote)}
                     </span>
                   </div>
                 )}
@@ -590,7 +589,7 @@ export function VideoServicesSpotlightSection() {
                 <div className="mt-3 border-t border-emerald-500/20 pt-3">
                   <p className="text-xs font-medium text-emerald-200">{copy.monthlyNetLabel}</p>
                   <p className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums text-emerald-300 sm:text-4xl">
-                    {formatUsd(monthlyNet)}
+                    {formatMoney(monthlyNet)}
                     <span className="ms-1.5 text-sm font-semibold text-emerald-200/80">
                       {copy.perMonthSuffix}
                     </span>
@@ -602,17 +601,17 @@ export function VideoServicesSpotlightSection() {
             <div className="mt-6">
               <Button
                 size="lg"
-                title={copy.launchBusinessCta}
+                title={localizeMoneyText(copy.launchBusinessCta)}
                 onClick={() => {
                   window.location.href = getSignupUrlForTier('explorer')
                 }}
                 className="w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 font-semibold text-slate-950 hover:brightness-110"
               >
-                <span className="whitespace-normal leading-tight">{copy.launchBusinessCta}</span>
+                <span className="whitespace-normal leading-tight">{localizeMoneyText(copy.launchBusinessCta)}</span>
                 <ArrowRight className="ms-2 h-4 w-4 shrink-0" aria-hidden />
               </Button>
               <p className="mt-2.5 text-xs leading-relaxed text-emerald-200/90">
-                {copy.launchBusinessSubnote}
+                {localizeMoneyText(copy.launchBusinessSubnote)}
               </p>
               <div className="mt-2">
                 <Link
@@ -624,7 +623,7 @@ export function VideoServicesSpotlightSection() {
                   <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
                 </Link>
               </div>
-              <p className="mt-2 text-[11px] leading-relaxed text-gray-400">{copy.disclaimer}</p>
+              <p className="mt-2 text-[11px] leading-relaxed text-gray-400">{localizeMoneyText(copy.disclaimer)}</p>
             </div>
           </div>
         </div>

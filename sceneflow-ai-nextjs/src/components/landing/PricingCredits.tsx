@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 import { useSession } from 'next-auth/react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
 import {
   Sparkles,
@@ -24,6 +24,7 @@ import { getBillingUrl } from '@/lib/billing/billingUrls'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { PricingTierGrid } from '@/components/landing/PricingTierGrid'
 import { PRICING_LANDING_COPY } from '@/config/landing/pricingLandingCopy'
+import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 
 const SECTION_ID = 'pricing'
 
@@ -31,8 +32,8 @@ const TRUST_ICONS = [Cloud, Shield, CheckCircle2, Clock] as const
 const PERSPECTIVE_ICONS = [Film, Layers, Tv, Clapperboard] as const
 
 export function PricingCredits() {
+  const locale = useLocale()
   const t = useTranslations('pricing')
-  const tFooter = useTranslations('footer')
   const { data: session } = useSession()
 
   const handlePlanClick = useCallback(
@@ -100,20 +101,22 @@ export function PricingCredits() {
 
           <p className="text-base sm:text-lg text-gray-400 max-w-3xl mx-auto mb-3">{t('subtitle')}</p>
           <p className="text-sm text-indigo-300/80 max-w-2xl mx-auto mb-6">
-            {t('explorerHighlight')}
+            {localizeUsdText(t('explorerHighlight'), locale)}
           </p>
 
           {/* Value Anchor Strip */}
           <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-1.5 rounded-xl border border-indigo-500/20 bg-slate-900/80 px-4 py-3 text-xs sm:inline-flex sm:max-w-none sm:flex-row sm:flex-wrap sm:gap-4 sm:rounded-2xl sm:px-5 sm:text-sm">
             <div className="flex flex-wrap items-center justify-center gap-1.5 text-gray-400">
               <span className="line-through text-gray-500 font-semibold">
-                {valueAnchor.traditionalCost}
+                {localizeUsdText(valueAnchor.traditionalCost, locale)}
               </span>
               <span>{valueAnchor.traditionalLabel}</span>
             </div>
             <span className="text-gray-600 font-medium hidden sm:inline">{valueAnchor.vs}</span>
             <div className="flex flex-wrap items-center justify-center gap-1.5 text-white">
-              <span className="font-bold text-emerald-400">{valueAnchor.sceneFlowCost}</span>
+              <span className="font-bold text-emerald-400">
+                {localizeUsdText(valueAnchor.sceneFlowCost, locale)}
+              </span>
               <span className="text-gray-300">{valueAnchor.sceneFlowLabel}</span>
               <span className="rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
                 {valueAnchor.saveBadge}
@@ -172,7 +175,7 @@ export function PricingCredits() {
                       {perspectives.recommendedPathLabel ?? 'Recommended path:'}
                     </span>
                     <span className="text-sm font-semibold text-emerald-400">
-                      {card.recommendedPlan}
+                      {localizeUsdText(card.recommendedPlan, locale)}
                     </span>
                   </div>
                 </div>
@@ -231,13 +234,17 @@ export function PricingCredits() {
                     className="rounded-xl border border-emerald-500/25 bg-gradient-to-br from-emerald-950/20 via-slate-950 to-slate-950 p-4 flex flex-col justify-between"
                   >
                     <div>
-                      <div className="text-base font-bold text-white mb-1">{pack.label}</div>
+                      <div className="text-base font-bold text-white mb-1">
+                        {localizeUsdText(pack.label, locale)}
+                      </div>
                       {'credits' in pack && pack.credits && (
                         <div className="text-xs font-semibold text-emerald-400 mb-2">
                           {pack.credits}
                         </div>
                       )}
-                      <p className="text-xs text-gray-400 leading-relaxed">{pack.description}</p>
+                      <p className="text-xs text-gray-400 leading-relaxed">
+                        {localizeUsdText(pack.description, locale)}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -282,7 +289,7 @@ export function PricingCredits() {
                   className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3"
                 >
                   <Icon className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span className="text-sm text-gray-300">{badge}</span>
+                  <span className="text-sm text-gray-300">{localizeUsdText(badge, locale)}</span>
                 </div>
               )
             })}
