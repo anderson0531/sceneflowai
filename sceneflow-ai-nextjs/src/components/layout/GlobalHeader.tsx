@@ -13,6 +13,7 @@ import { getDashboardUrl, getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { HeaderLocaleSwitcher } from '@/components/i18n/HeaderLocaleSwitcher'
 import { openJitHelp } from '@/components/help/JitHelpDrawer'
 import { isAdminEmail } from '@/lib/adminUtils'
+import { WorkspaceSwitcher } from '@/components/layout/WorkspaceSwitcher'
 import { useTranslations } from 'next-intl'
 
 declare global {
@@ -74,6 +75,7 @@ export function GlobalHeader() {
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <SceneFlowStudioBrand href="/dashboard" />
+            {isSignedIn && <WorkspaceSwitcher />}
           </div>
 
           {/* Center: reserved flex spacer to keep left/right balanced */}

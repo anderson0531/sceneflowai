@@ -9,6 +9,7 @@ import {
   CUSTOMER_CONSENT_VERSION,
   ensureProducerPlatformSchema,
 } from '@/lib/database/migrateProducerPlatform'
+import { normalizeLocalePmRouting, type LocalePmRoutingMap } from '@/lib/producer/teamGovernance'
 
 export const WHITE_LABEL_ELIGIBLE_TIERS: readonly BillingTierName[] = [
   'pro',
@@ -97,6 +98,7 @@ export async function upsertProducerProfile(
     acceptCommercialAddendum?: boolean
     acceptedIp?: string | null
     whiteLabelEligibleOverride?: boolean
+    localePmRouting?: LocalePmRoutingMap
   }
 ): Promise<ProducerProfile> {
   const profile = await getOrCreateProducerProfile(userId)
@@ -144,6 +146,9 @@ export async function upsertProducerProfile(
     updates.commercial_addendum_accepted_at = new Date()
     updates.commercial_addendum_version = COMMERCIAL_ADDENDUM_VERSION
     updates.accepted_ip = input.acceptedIp ? String(input.acceptedIp).slice(0, 96) : null
+  }
+  if (input.localePmRouting !== undefined) {
+    updates.locale_pm_routing = normalizeLocalePmRouting(input.localePmRouting)
   }
 
   if (Object.keys(updates).length > 0) {

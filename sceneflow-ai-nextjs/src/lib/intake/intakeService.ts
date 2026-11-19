@@ -396,6 +396,7 @@ export async function createClientIntakeLink(input: {
         clientOrder: {
           isClientProject: true,
           vertical: input.vertical,
+          locale,
           stage: 'awaiting_intake',
           actionState: 'waiting_on_client',
           customerLabel: label || undefined,
@@ -410,6 +411,14 @@ export async function createClientIntakeLink(input: {
           : {}),
       },
     } as any)
+
+    // Auto-route newly created client intake project to the workspace's locale PM
+    const { autoAssignProjectByLocale } = await import('@/lib/producer/workspaceAccess')
+    await autoAssignProjectByLocale({
+      ownerUserId: input.ownerUserId,
+      projectId: targetProject.id,
+      locale,
+    })
   }
 
   const token = crypto.randomBytes(24).toString('base64url')
@@ -1733,6 +1742,18 @@ export async function completeClientIntakeToBlueprint(input: {
       step_statuses: { ideation: 'in_progress' },
       metadata: {},
     } as any)
+  }
+
+  // Ensure locale-based PM auto-routing runs using the finalized client intake locale
+  try {
+    const { autoAssignProjectByLocale } = await import('@/lib/producer/workspaceAccess')
+    await autoAssignProjectByLocale({
+      ownerUserId: session.owner_user_id,
+      projectId: targetProject.id,
+      locale: activeLocale,
+    })
+  } catch (routeErr) {
+    console.warn('[intakeService] Locale PM auto-routing skipped:', routeErr)
   }
 
   const prevMeta = ((targetProject.metadata || {}) as Record<string, unknown>)

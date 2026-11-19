@@ -10,6 +10,7 @@ const PRODUCER_TABLES = [
   'client_asset_submissions',
   'workspace_members',
   'project_assignments',
+  'series_assignments',
 ] as const
 
 let schemaInProgress = false
@@ -38,6 +39,13 @@ export async function ensureProducerPlatformSchema(): Promise<void> {
         ALTER TABLE customer_consents
           ADD COLUMN IF NOT EXISTS consented_visual_likeness BOOLEAN NOT NULL DEFAULT true,
           ADD COLUMN IF NOT EXISTS consented_voice_localization BOOLEAN NOT NULL DEFAULT false;
+        ALTER TABLE workspace_members
+          ADD COLUMN IF NOT EXISTS invite_token VARCHAR(128),
+          ADD COLUMN IF NOT EXISTS invite_expires_at TIMESTAMPTZ;
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_workspace_members_invite_token
+          ON workspace_members(invite_token) WHERE invite_token IS NOT NULL;
+        ALTER TABLE producer_profiles
+          ADD COLUMN IF NOT EXISTS locale_pm_routing JSONB NOT NULL DEFAULT '{}'::jsonb;
       `)
       schemaCompleted = true
       return
@@ -58,6 +66,7 @@ export async function ensureProducerPlatformSchema(): Promise<void> {
         commercial_addendum_accepted_at TIMESTAMPTZ,
         commercial_addendum_version VARCHAR(32),
         accepted_ip VARCHAR(96),
+        locale_pm_routing JSONB NOT NULL DEFAULT '{}'::jsonb,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
@@ -112,6 +121,8 @@ export async function ensureProducerPlatformSchema(): Promise<void> {
         monthly_credit_limit INTEGER,
         credits_used_month INTEGER NOT NULL DEFAULT 0,
         credits_period_key VARCHAR(16),
+        invite_token VARCHAR(128),
+        invite_expires_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         UNIQUE (owner_user_id, member_email)
@@ -126,11 +137,28 @@ export async function ensureProducerPlatformSchema(): Promise<void> {
         UNIQUE (project_id, member_user_id)
       );
 
+      CREATE TABLE IF NOT EXISTS series_assignments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        series_id UUID NOT NULL,
+        owner_user_id UUID NOT NULL,
+        member_user_id UUID NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (series_id, member_user_id)
+      );
+
+      ALTER TABLE workspace_members
+        ADD COLUMN IF NOT EXISTS invite_token VARCHAR(128),
+        ADD COLUMN IF NOT EXISTS invite_expires_at TIMESTAMPTZ;
+      ALTER TABLE producer_profiles
+        ADD COLUMN IF NOT EXISTS locale_pm_routing JSONB NOT NULL DEFAULT '{}'::jsonb;
+
       CREATE INDEX IF NOT EXISTS idx_customer_consents_session ON customer_consents(collab_session_id);
       CREATE INDEX IF NOT EXISTS idx_client_assets_session ON client_asset_submissions(collab_session_id, project_id);
       CREATE INDEX IF NOT EXISTS idx_workspace_members_member ON workspace_members(member_user_id, status);
       CREATE INDEX IF NOT EXISTS idx_workspace_members_owner ON workspace_members(owner_user_id, status);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_workspace_members_invite_token ON workspace_members(invite_token) WHERE invite_token IS NOT NULL;
       CREATE INDEX IF NOT EXISTS idx_project_assignments_lookup ON project_assignments(project_id, member_user_id);
+      CREATE INDEX IF NOT EXISTS idx_series_assignments_lookup ON series_assignments(series_id, member_user_id);
     `)
 
     schemaCompleted = true

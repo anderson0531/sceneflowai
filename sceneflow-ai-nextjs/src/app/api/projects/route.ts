@@ -19,6 +19,7 @@ import {
   parseProjectListParams,
   type ProjectFacetCounts,
 } from '@/lib/projects/projectListQuery'
+import { buildAccessibleProjectsScope } from '@/lib/producer/workspaceProjectsQuery'
 import {
   getAllUiSandboxProjectSummaries,
   getUiSandboxProject,
@@ -138,45 +139,13 @@ export async function GET(request: NextRequest) {
 
     console.log(`[${timestamp}] [GET /api/projects] Fetching projects for userId:`, resolvedUserId)
     
-    let baseAccessWhere: any = { user_id: resolvedUserId }
-    const accessibleOwnerIds = new Set<string>([resolvedUserId])
-    const selfAssignedProjectIds: string[] = []
-    try {
-      await ensureProducerPlatformSchema()
-      const memberships = await WorkspaceMember.findAll({
-        where: { member_user_id: resolvedUserId, status: 'active' },
-      })
-      if (memberships.length > 0) {
-        const orClauses: any[] = [{ user_id: resolvedUserId }]
-        const pmOwnerIds: string[] = []
-        for (const m of memberships) {
-          if (m.role === 'admin' || m.access_all_projects) {
-            orClauses.push({ user_id: m.owner_user_id })
-            accessibleOwnerIds.add(m.owner_user_id)
-          } else {
-            pmOwnerIds.push(m.owner_user_id)
-          }
-        }
-        if (pmOwnerIds.length > 0) {
-          const assignments = await ProjectAssignment.findAll({
-            where: {
-              member_user_id: resolvedUserId,
-              owner_user_id: { [Op.in]: pmOwnerIds },
-            },
-          })
-          const assignedIds = Array.from(new Set(assignments.map((a) => a.project_id)))
-          selfAssignedProjectIds.push(...assignedIds)
-          if (assignedIds.length > 0) {
-            orClauses.push({ id: { [Op.in]: assignedIds } })
-          }
-        }
-        if (orClauses.length > 1) {
-          baseAccessWhere = { [Op.or]: orClauses }
-        }
-      }
-    } catch (teamErr) {
-      console.warn(`[${timestamp}] [GET /api/projects] Workspace team lookup skipped:`, teamErr)
-    }
+    const workspaceOwnerId = searchParams.get('workspaceOwnerId') || undefined
+    const scope = await buildAccessibleProjectsScope(resolvedUserId, {
+      activeWorkspaceOwnerId: workspaceOwnerId,
+    })
+    const baseAccessWhere = scope.where
+    const accessibleOwnerIds = scope.accessibleOwnerIds
+    const selfAssignedProjectIds = scope.selfAssignedProjectIds
 
     // Resolve PM assignment filters when requested or when computing unassigned facet
     let assignedProjectIdsForPm: string[] | null = null

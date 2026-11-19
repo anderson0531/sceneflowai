@@ -50,6 +50,10 @@ import { useSession } from 'next-auth/react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { isDemoProjectId } from '@/lib/demo/uiSandboxProject'
 import type { ProjectFacetCounts } from '@/lib/projects/projectListQuery'
+import {
+  getActiveWorkspaceOwnerId,
+  subscribeActiveWorkspace,
+} from '@/lib/producer/activeWorkspaceClient'
 import { toast } from 'sonner'
 
 export const dynamic = 'force-dynamic'
@@ -135,6 +139,7 @@ export default function ProjectsPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(24)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [activeWorkspaceOwnerId, setActiveWorkspaceOwnerIdState] = useState<string>('all')
 
   // Team members for PM filter + inline & bulk PM assignment
   const [teamMembers, setTeamMembers] = useState<TeamMemberOption[]>([])
@@ -159,6 +164,16 @@ export default function ProjectsPage() {
   // Selected project for dashboard display
   const selectedProjectId = useEnhancedStore((s: any) => s.selectedProjectId)
   const setSelectedProjectId = useEnhancedStore((s: any) => s.setSelectedProjectId)
+
+  // Sync active workspace scope from header WorkspaceSwitcher
+  useEffect(() => {
+    setActiveWorkspaceOwnerIdState(getActiveWorkspaceOwnerId())
+    return subscribeActiveWorkspace((nextScope) => {
+      setActiveWorkspaceOwnerIdState(nextScope)
+      setPage(1)
+      setSelectedIds(new Set())
+    })
+  }, [])
 
   // Debounce search input (250ms) and reset to page 1
   useEffect(() => {
@@ -273,6 +288,9 @@ export default function ProjectsPage() {
       if (debouncedQuery) {
         qs.set('q', debouncedQuery)
       }
+      if (activeWorkspaceOwnerId && activeWorkspaceOwnerId !== 'all') {
+        qs.set('workspaceOwnerId', activeWorkspaceOwnerId)
+      }
 
       const res = await fetch(`/api/projects?${qs.toString()}`, {
         signal: controller.signal,
@@ -362,6 +380,7 @@ export default function ProjectsPage() {
     verticalFilter,
     sortBy,
     debouncedQuery,
+    activeWorkspaceOwnerId,
     selectedProjectId,
     setSelectedProjectId,
   ])

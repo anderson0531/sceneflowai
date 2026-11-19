@@ -15,6 +15,7 @@ export interface ProducerProfileAttributes {
   commercial_addendum_accepted_at: Date | null
   commercial_addendum_version: string | null
   accepted_ip: string | null
+  locale_pm_routing: Record<string, string>
   created_at: Date
   updated_at: Date
 }
@@ -33,6 +34,7 @@ export interface ProducerProfileCreationAttributes
     | 'commercial_addendum_accepted_at'
     | 'commercial_addendum_version'
     | 'accepted_ip'
+    | 'locale_pm_routing'
     | 'created_at'
     | 'updated_at'
   > {}
@@ -54,6 +56,7 @@ export class ProducerProfile
   declare commercial_addendum_accepted_at: Date | null
   declare commercial_addendum_version: string | null
   declare accepted_ip: string | null
+  declare locale_pm_routing: Record<string, string>
   declare created_at: Date
   declare updated_at: Date
 }
@@ -73,6 +76,7 @@ ProducerProfile.init(
     commercial_addendum_accepted_at: { type: DataTypes.DATE, allowNull: true },
     commercial_addendum_version: { type: DataTypes.STRING(32), allowNull: true },
     accepted_ip: { type: DataTypes.STRING(96), allowNull: true },
+    locale_pm_routing: { type: DataTypes.JSONB, allowNull: false, defaultValue: {} },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   },

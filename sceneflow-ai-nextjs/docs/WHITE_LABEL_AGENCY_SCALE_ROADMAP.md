@@ -32,18 +32,23 @@
 
 ---
 
-## Sprint 2 — Multi-PM Team Isolation, Series Delegation & Guardrails (**NEXT — P0**)
+## Sprint 2 — Multi-PM Team Isolation, Series Delegation & Guardrails (**COMPLETE**)
 
-1. **Series-Level PM Assignments (`series_assignments` table)**:
-   - Allow assigning a PM to an entire Series (e.g., a 6-episode Retiree Life-Series) so the PM automatically inherits access to the Series Room Bible (`referenceLibrary`, character portraits, locations) and all child episode projects.
-2. **Real Invite Flow + Workspace Switcher**:
-   - Send signed email invite links (`/invite/[token]`) when adding a PM in Team settings; auto-link `member_user_id` upon signup/login.
-   - Add a header **Workspace Switcher** (`Personal Workspace` vs `Agency: LifeFocus Stories`) so PMs working across workspaces never mix credits or projects.
-3. **Seat Caps & Role Guardrails**:
-   - Enforce plan seat caps from `tierCatalog.ts` (`Operator Pro = 3 seats`, `Agency Scale = 10 seats`, `Enterprise = custom`).
-   - Add `qa_reviewer` role (view/comment/approve without spending video generation credits) and `canDeleteProjects: false` guardrail for `project_manager` roles.
-4. **Locale-Based Auto-Routing on `/intake`**:
-   - Allow owners to map a default PM per language locale (e.g., `es -> PM Maria`, `pt -> PM Lucas`) so incoming multilingual client intakes auto-create a `ProjectAssignment`.
+### Shipped Deliverables
+1. **Series-Level PM Delegation (`series_assignments` table)** (`src/models/SeriesAssignment.ts`, `src/lib/database/migrateProducerPlatform.ts`, `src/lib/producer/workspaceAccess.ts`, `src/lib/producer/workspaceProjectsQuery.ts`):
+   - Assigning a PM or QA Reviewer to a Series automatically grants access to the Series Room Bible (`/api/series`, `/api/series/[seriesId]`) AND inherits access to every child episode project across `/api/projects`, Mobile Companion PWA, and stakeholder notifications.
+2. **Signed `/invite/[token]` Onboarding + Branded Invite Emails** (`src/app/api/workspace/members/route.ts`, `src/app/api/workspace/invite/[token]/route.ts`, `src/app/invite/[token]/page.tsx`):
+   - Generates single-use 14-day signed invite tokens (`invite_token`, `invite_expires_at`), dispatches branded email invites via Resend (`sendEmail`), and exposes 1-click **Copy Invite** & **Resend** actions in Producer Hub.
+   - Public `/invite/[token]` acceptance screen guides new PMs through Sign Up / Sign In and binds their seat automatically.
+3. **Workspace Switcher & Context Isolation** (`src/app/api/workspace/contexts/route.ts`, `src/lib/producer/activeWorkspaceClient.ts`, `src/components/layout/WorkspaceSwitcher.tsx`, `src/components/layout/GlobalHeader.tsx`):
+   - Header **Workspace Switcher** (auto-hidden for solo creators) lets PMs switch between `All Workspaces`, `Personal Workspace`, and specific Agency Workspaces, isolating `/dashboard/projects` and `/dashboard/series` via `workspaceOwnerId`.
+4. **Seat Caps, `qa_reviewer` Role & Delete Guardrails** (`src/lib/producer/teamGovernance.ts`, `src/app/api/projects/[id]/route.ts`, `src/app/api/series/[seriesId]/route.ts`):
+   - Enforces canonical seat caps from `tierCatalog.ts` (`Creator/Filmmaker = 1`, `Operator Pro = 3`, `Agency Scale = 10`, `Enterprise = Unlimited`).
+   - Adds `qa_reviewer` role (view/review/approve with `0` credit spend and no Series Bible edit access) and blocks `project_manager` / `qa_reviewer` from permanently deleting projects or series (`403`).
+5. **Locale-Based PM Auto-Routing on `/intake`** (`src/models/ProducerProfile.ts`, `src/lib/producer/producerProfileService.ts`, `src/lib/intake/intakeService.ts`, `src/app/dashboard/settings/producer/page.tsx`):
+   - Owners map locales (`Default Fallback`, `EN`, `ES`, `PT`, `FR`, `DE`, `HI`, `ZH`, `AR`, `TH`) to active PMs in Producer Hub; incoming client intakes automatically create a `ProjectAssignment` for the matching-language PM.
+6. **Unit Test Suite** (`src/__tests__/teamGovernanceSprint2.test.ts`):
+   - Covers role capabilities, delete/spend guardrails, tier seat caps, locale routing resolution, signed token expiry, and Sprint 2 architectural contracts.
 
 ---
 

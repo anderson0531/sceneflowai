@@ -1,5 +1,5 @@
 import { QueryTypes } from 'sequelize'
-import { sequelize } from '@/models'
+import { sequelize } from '@/config/database'
 
 /**
  * Cheap "is the schema already current?" checks for the lazy migrations.

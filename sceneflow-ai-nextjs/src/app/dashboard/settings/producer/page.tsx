@@ -19,6 +19,9 @@ import {
   Sparkles,
   CheckCircle2,
   RefreshCw,
+  Globe,
+  Library,
+  Mail,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -42,19 +45,51 @@ interface ProducerProfileDto {
   dailyPublicIntakeCreditCap: number
   commercialAddendumAcceptedAt: string | null
   commercialAddendumVersion: string | null
+  localePmRouting?: Record<string, string>
+}
+
+interface SeatUsageDto {
+  tierName: string
+  totalSeats: number
+  maxInvitedMembers: number
+  usedSeats: number
+  remainingSeats: number
+  unlimited: boolean
 }
 
 interface WorkspaceMemberDto {
   id: string
   memberUserId: string | null
   memberEmail: string
-  role: 'admin' | 'project_manager'
+  role: 'admin' | 'project_manager' | 'qa_reviewer'
   status: 'invited' | 'active' | 'revoked'
   accessAllProjects: boolean
   monthlyCreditLimit: number | null
   creditsUsedMonth: number
   assignedProjectIds: string[]
+  assignedSeriesIds?: string[]
+  inviteUrl?: string | null
+  inviteExpiresAt?: string | null
 }
+
+interface SeriesSummaryItem {
+  id: string
+  title: string
+  episodeCount?: number
+}
+
+const ROUTING_LOCALE_ROWS = [
+  { code: 'default', label: 'Default Fallback (All Other Locales)' },
+  { code: 'en', label: 'English (EN)' },
+  { code: 'es', label: 'Español (ES)' },
+  { code: 'pt', label: 'Português (PT)' },
+  { code: 'fr', label: 'Français (FR)' },
+  { code: 'de', label: 'Deutsch (DE)' },
+  { code: 'hi', label: 'हिन्दी (HI)' },
+  { code: 'zh-CN', label: '简体中文 (ZH)' },
+  { code: 'ar', label: 'العربية (AR)' },
+  { code: 'th', label: 'ไทย (TH)' },
+] as const
 
 interface ProjectSummaryItem {
   id: string
@@ -157,14 +192,22 @@ export default function ProducerSettingsPage() {
   const [promotingId, setPromotingId] = useState<string | null>(null)
   const [purgingUploads, setPurgingUploads] = useState(false)
 
-  // Section 4: Universal Team Accounts
+  // Section 4: Universal Team Accounts, Series Delegation & Locale Auto-Routing
   const [members, setMembers] = useState<WorkspaceMemberDto[]>([])
+  const [seatUsage, setSeatUsage] = useState<SeatUsageDto | null>(null)
+  const [seriesList, setSeriesList] = useState<SeriesSummaryItem[]>([])
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<'project_manager' | 'admin'>('project_manager')
+  const [inviteRole, setInviteRole] = useState<'project_manager' | 'admin' | 'qa_reviewer'>(
+    'project_manager'
+  )
   const [inviteCreditLimit, setInviteCreditLimit] = useState('1500')
   const [inviteAllProjects, setInviteAllProjects] = useState(false)
   const [inviteProjectIds, setInviteProjectIds] = useState<string[]>([])
+  const [inviteSeriesIds, setInviteSeriesIds] = useState<string[]>([])
   const [invitingMember, setInvitingMember] = useState(false)
+  const [resendingMemberId, setResendingMemberId] = useState<string | null>(null)
+  const [localePmRouting, setLocalePmRouting] = useState<Record<string, string>>({})
+  const [savingRouting, setSavingRouting] = useState(false)
 
   const copyToClipboard = async (key: string, value: string) => {
     try {
@@ -197,18 +240,23 @@ export default function ProducerSettingsPage() {
         setDefaultMaxRounds(Number(p.defaultMaxRounds || 2))
         setDailyPublicCap(Number(p.dailyPublicIntakeCreditCap || 200))
         setAddendumChecked(Boolean(p.commercialAddendumAcceptedAt))
+        setLocalePmRouting(p.localePmRouting || {})
       }
 
       const memJson = await memRes.json().catch(() => ({}))
       if (memJson.success && Array.isArray(memJson.members)) {
         setMembers(memJson.members)
       }
+      if (memJson.success && memJson.seatUsage) {
+        setSeatUsage(memJson.seatUsage)
+      }
 
       const userKey = session?.user?.email || (session?.user as { id?: string })?.id
       if (userKey) {
-        const projRes = await fetch(
-          `/api/projects?userId=${encodeURIComponent(userKey)}&summary=1&pageSize=50`
-        )
+        const [projRes, serRes] = await Promise.all([
+          fetch(`/api/projects?userId=${encodeURIComponent(userKey)}&summary=1&pageSize=100`),
+          fetch(`/api/series?userId=${encodeURIComponent(userKey)}&pageSize=100`),
+        ])
         const projJson = await projRes.json().catch(() => ({}))
         if (projJson.success && Array.isArray(projJson.projects)) {
           const list = projJson.projects.filter(
@@ -218,6 +266,12 @@ export default function ProducerSettingsPage() {
           if (list.length > 0 && !selectedProjectId) {
             setSelectedProjectId(list[0].id)
           }
+        }
+        const serJson = await serRes.json().catch(() => ({}))
+        if (serJson.success && Array.isArray(serJson.series)) {
+          setSeriesList(
+            serJson.series.filter((s: SeriesSummaryItem) => s.id && !s.id.startsWith('demo-'))
+          )
         }
       }
     } catch (err) {
@@ -464,8 +518,14 @@ export default function ProducerSettingsPage() {
           email: inviteEmail.trim(),
           role: inviteRole,
           accessAllProjects: inviteRole === 'admin' ? true : inviteAllProjects,
-          monthlyCreditLimit: Number(inviteCreditLimit) > 0 ? Number(inviteCreditLimit) : null,
+          monthlyCreditLimit:
+            inviteRole === 'qa_reviewer'
+              ? 0
+              : Number(inviteCreditLimit) > 0
+                ? Number(inviteCreditLimit)
+                : null,
           projectIds: inviteProjectIds,
+          seriesIds: inviteSeriesIds,
         }),
       })
       const data = await res.json()
@@ -474,12 +534,62 @@ export default function ProducerSettingsPage() {
       }
       setInviteEmail('')
       setInviteProjectIds([])
-      toast.success('Team member access saved')
+      setInviteSeriesIds([])
+      toast.success(
+        data.emailSent
+          ? 'Team invitation sent via email & invite link ready'
+          : 'Team member saved — copy their invite link below to onboard'
+      )
       loadAll()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to invite member')
     } finally {
       setInvitingMember(false)
+    }
+  }
+
+  const handleResendInvite = async (memberId: string) => {
+    setResendingMemberId(memberId)
+    try {
+      const res = await fetch('/api/workspace/members', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId, resendInvite: true }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to resend invite')
+      }
+      toast.success(
+        data.emailSent
+          ? 'Fresh invitation email sent!'
+          : 'Fresh invite link generated — copy it below'
+      )
+      loadAll()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not resend invitation')
+    } finally {
+      setResendingMemberId(null)
+    }
+  }
+
+  const handleSaveLocaleRouting = async () => {
+    setSavingRouting(true)
+    try {
+      const res = await fetch('/api/producer/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ localePmRouting }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to save locale routing')
+      }
+      toast.success('Locale PM auto-routing rules saved')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save locale routing')
+    } finally {
+      setSavingRouting(false)
     }
   }
 
@@ -502,6 +612,12 @@ export default function ProducerSettingsPage() {
   const toggleProjectAssignmentSelection = (projectId: string) => {
     setInviteProjectIds((prev) =>
       prev.includes(projectId) ? prev.filter((id) => id !== projectId) : [...prev, projectId]
+    )
+  }
+
+  const toggleSeriesAssignmentSelection = (seriesId: string) => {
+    setInviteSeriesIds((prev) =>
+      prev.includes(seriesId) ? prev.filter((id) => id !== seriesId) : [...prev, seriesId]
     )
   }
 
@@ -1161,22 +1277,40 @@ export default function ProducerSettingsPage() {
         </div>
       </section>
 
-      {/* SECTION 4: Universal Team Accounts (Admins & Customer Project Managers) */}
+      {/* SECTION 4: Universal Team Accounts (Admins, Customer PMs, QA Reviewers & Locale Routing) */}
       <section className="rounded-xl border border-gray-700/60 bg-gray-800/60 p-6 space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-400">
-            <Users className="w-5 h-5" />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-400">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">
+                4. Universal Team Access, Series Delegation &amp; Locale Routing
+              </h2>
+              <p className="text-xs text-gray-400">
+                Invite Project Managers, Workspace Admins, or read-only QA Reviewers with signed
+                invite links, Series delegation, monthly credit caps, and delete guardrails.
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-white">
-              4. Universal Team Access & Customer Project Managers
-            </h2>
-            <p className="text-xs text-gray-400">
-              Assign Project Managers to specific Customer projects with monthly credit spend caps.
-              Generation charges draw from your workspace pool while billing & BYOK settings stay
-              owner-locked.
-            </p>
-          </div>
+
+          {seatUsage && (
+            <div
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
+                seatUsage.remainingSeats === 0 && !seatUsage.unlimited
+                  ? 'border-amber-500/40 bg-amber-950/40 text-amber-200'
+                  : 'border-indigo-500/35 bg-indigo-950/40 text-indigo-200'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>
+                {seatUsage.unlimited
+                  ? `${seatUsage.usedSeats} active seats (Unlimited)`
+                  : `${seatUsage.usedSeats} / ${seatUsage.totalSeats} seats used`}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1195,12 +1329,16 @@ export default function ProducerSettingsPage() {
             <label className="block text-xs font-medium text-gray-300 mb-1">Role</label>
             <select
               value={inviteRole}
-              onChange={(e) =>
-                setInviteRole(e.target.value === 'admin' ? 'admin' : 'project_manager')
-              }
+              onChange={(e) => {
+                const v = e.target.value
+                setInviteRole(
+                  v === 'admin' ? 'admin' : v === 'qa_reviewer' ? 'qa_reviewer' : 'project_manager'
+                )
+              }}
               className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white"
             >
-              <option value="project_manager">Customer Project Manager</option>
+              <option value="project_manager">Customer Project Manager (No Delete)</option>
+              <option value="qa_reviewer">QA Reviewer (View &amp; Approve · 0 Credits)</option>
               <option value="admin">Workspace Admin (All Projects)</option>
             </select>
           </div>
@@ -1211,16 +1349,17 @@ export default function ProducerSettingsPage() {
             <Input
               type="number"
               min={0}
-              value={inviteCreditLimit}
+              disabled={inviteRole === 'qa_reviewer'}
+              value={inviteRole === 'qa_reviewer' ? '0' : inviteCreditLimit}
               onChange={(e) => setInviteCreditLimit(e.target.value)}
               placeholder="1500"
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-gray-900 border-gray-700 text-white disabled:opacity-50"
             />
           </div>
         </div>
 
-        {inviteRole === 'project_manager' && (
-          <div className="rounded-lg border border-gray-700 bg-gray-900/60 p-3 space-y-2">
+        {inviteRole !== 'admin' && (
+          <div className="rounded-lg border border-gray-700 bg-gray-900/60 p-3 space-y-3">
             <label className="inline-flex items-center gap-2 text-xs text-gray-200 cursor-pointer">
               <input
                 type="checkbox"
@@ -1228,12 +1367,12 @@ export default function ProducerSettingsPage() {
                 onChange={(e) => setInviteAllProjects(e.target.checked)}
                 className="rounded border-gray-600 bg-gray-800 text-cyan-500"
               />
-              Grant access to all workspace projects
+              Grant access to all workspace projects &amp; series
             </label>
             {!inviteAllProjects && projects.length > 0 && (
               <div className="pt-1">
                 <p className="text-[11px] text-gray-400 mb-1.5">
-                  Or select specific assigned projects:
+                  Assign specific standalone projects:
                 </p>
                 <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto">
                   {projects.map((p) => {
@@ -1250,6 +1389,34 @@ export default function ProducerSettingsPage() {
                         }`}
                       >
                         {p.title}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+            {!inviteAllProjects && seriesList.length > 0 && (
+              <div className="pt-1 border-t border-gray-800">
+                <p className="text-[11px] text-gray-400 mb-1.5 inline-flex items-center gap-1.5">
+                  <Library className="w-3.5 h-3.5 text-cyan-400" />
+                  Delegate full Series (inherits Series Bible + all child episodes):
+                </p>
+                <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto">
+                  {seriesList.map((s) => {
+                    const checked = inviteSeriesIds.includes(s.id)
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => toggleSeriesAssignmentSelection(s.id)}
+                        className={`rounded-full px-2.5 py-1 text-xs border transition-colors ${
+                          checked
+                            ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200'
+                            : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-gray-200'
+                        }`}
+                      >
+                        {s.title}
+                        {typeof s.episodeCount === 'number' ? ` (${s.episodeCount} ep)` : ''}
                       </button>
                     )
                   })}
@@ -1279,10 +1446,14 @@ export default function ProducerSettingsPage() {
                 className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-700 bg-gray-900/80 px-4 py-3"
               >
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-medium text-white">{m.memberEmail}</span>
                     <span className="rounded-full bg-indigo-500/15 border border-indigo-500/30 px-2 py-0.5 text-[11px] text-indigo-300">
-                      {m.role === 'admin' ? 'Admin' : 'Project Manager'}
+                      {m.role === 'admin'
+                        ? 'Admin'
+                        : m.role === 'qa_reviewer'
+                          ? 'QA Reviewer'
+                          : 'Project Manager'}
                     </span>
                     <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[11px] text-gray-300 capitalize">
                       {m.status}
@@ -1290,22 +1461,116 @@ export default function ProducerSettingsPage() {
                   </div>
                   <div className="text-xs text-gray-400 mt-0.5">
                     {m.accessAllProjects
-                      ? 'All Projects'
-                      : `${m.assignedProjectIds.length} assigned project(s)`}{' '}
+                      ? 'All Projects & Series'
+                      : `${m.assignedProjectIds.length} project(s) · ${m.assignedSeriesIds?.length || 0} series`}{' '}
                     · Credits this month: {m.creditsUsedMonth.toLocaleString()}
-                    {m.monthlyCreditLimit ? ` / ${m.monthlyCreditLimit.toLocaleString()}` : ' (No cap)'}
+                    {m.role === 'qa_reviewer'
+                      ? ' (Review Only · 0 cr)'
+                      : m.monthlyCreditLimit
+                        ? ` / ${m.monthlyCreditLimit.toLocaleString()}`
+                        : ' (No cap)'}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleRevokeMember(m.id)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-red-500/30 bg-red-950/30 px-2.5 py-1.5 text-xs text-red-300 hover:bg-red-900/40"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Revoke
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {m.inviteUrl && (
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(`invite-${m.id}`, m.inviteUrl || '')}
+                      className="inline-flex items-center gap-1 rounded-lg border border-cyan-500/30 bg-cyan-950/30 px-2.5 py-1.5 text-xs text-cyan-200 hover:bg-cyan-900/40"
+                    >
+                      {copiedKey === `invite-${m.id}` ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                      Copy Invite
+                    </button>
+                  )}
+                  {m.status === 'invited' && (
+                    <button
+                      type="button"
+                      disabled={resendingMemberId === m.id}
+                      onClick={() => handleResendInvite(m.id)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-indigo-500/30 bg-indigo-950/30 px-2.5 py-1.5 text-xs text-indigo-200 hover:bg-indigo-900/40 disabled:opacity-50"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      {resendingMemberId === m.id ? 'Sending…' : 'Resend'}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleRevokeMember(m.id)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-red-500/30 bg-red-950/30 px-2.5 py-1.5 text-xs text-red-300 hover:bg-red-900/40"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Revoke
+                  </button>
+                </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Locale-Based PM Auto-Routing for Global Multilingual Client Intakes */}
+        {members.some((m) => m.status === 'active' && m.memberUserId) && (
+          <div className="pt-4 border-t border-gray-700/70 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-cyan-400" />
+                <div>
+                  <h3 className="text-sm font-semibold text-white">
+                    Locale Auto-Routing for Client Intakes
+                  </h3>
+                  <p className="text-[11px] text-gray-400">
+                    Automatically assign new client intake orders to the right-language PM based on
+                    intake locale.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={savingRouting}
+                onClick={handleSaveLocaleRouting}
+                className="border border-gray-700 text-xs"
+              >
+                {savingRouting ? 'Saving…' : 'Save Locale Routing'}
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {ROUTING_LOCALE_ROWS.map((row) => (
+                <div
+                  key={row.code}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-gray-700/70 bg-gray-900/70 px-3 py-2"
+                >
+                  <span className="text-xs text-gray-200 truncate">{row.label}</span>
+                  <select
+                    aria-label={`Auto-assign PM for ${row.label}`}
+                    value={localePmRouting[row.code] || '__none__'}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setLocalePmRouting((prev) => {
+                        const next = { ...prev }
+                        if (!val || val === '__none__') delete next[row.code]
+                        else next[row.code] = val
+                        return next
+                      })
+                    }}
+                    className="bg-gray-950 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 max-w-[155px] truncate"
+                  >
+                    <option value="__none__">Unassigned</option>
+                    {members
+                      .filter((m) => m.status === 'active' && m.memberUserId)
+                      .map((m) => (
+                        <option key={m.id} value={m.memberUserId || ''}>
+                          {m.memberEmail}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </section>

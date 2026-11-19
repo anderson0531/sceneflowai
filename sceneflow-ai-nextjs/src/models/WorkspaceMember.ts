@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize'
 import { sequelize } from '../config/database'
 
-export type WorkspaceMemberRole = 'admin' | 'project_manager'
+export type WorkspaceMemberRole = 'admin' | 'project_manager' | 'qa_reviewer'
 export type WorkspaceMemberStatus = 'invited' | 'active' | 'revoked'
 
 export interface WorkspaceMemberAttributes {
@@ -15,6 +15,8 @@ export interface WorkspaceMemberAttributes {
   monthly_credit_limit: number | null
   credits_used_month: number
   credits_period_key: string | null
+  invite_token: string | null
+  invite_expires_at: Date | null
   created_at: Date
   updated_at: Date
 }
@@ -30,6 +32,8 @@ export interface WorkspaceMemberCreationAttributes
     | 'monthly_credit_limit'
     | 'credits_used_month'
     | 'credits_period_key'
+    | 'invite_token'
+    | 'invite_expires_at'
     | 'created_at'
     | 'updated_at'
   > {}
@@ -48,6 +52,8 @@ export class WorkspaceMember
   declare monthly_credit_limit: number | null
   declare credits_used_month: number
   declare credits_period_key: string | null
+  declare invite_token: string | null
+  declare invite_expires_at: Date | null
   declare created_at: Date
   declare updated_at: Date
 }
@@ -64,6 +70,8 @@ WorkspaceMember.init(
     monthly_credit_limit: { type: DataTypes.INTEGER, allowNull: true },
     credits_used_month: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     credits_period_key: { type: DataTypes.STRING(16), allowNull: true },
+    invite_token: { type: DataTypes.STRING(128), allowNull: true },
+    invite_expires_at: { type: DataTypes.DATE, allowNull: true },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   },

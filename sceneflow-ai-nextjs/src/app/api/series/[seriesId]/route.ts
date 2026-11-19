@@ -12,6 +12,10 @@ import {
   serializeArtStyleValue,
 } from '@/lib/artStyle/globalArtStyle'
 import { getUiSandboxSeries, isDemoSeriesId } from '@/lib/demo/uiSandboxSeries'
+import { getAuthenticatedUserId } from '@/lib/projectAccess'
+import { checkWorkspaceSeriesAccess } from '@/lib/producer/workspaceAccess'
+import { canRoleDeleteProject, canRoleEditProject } from '@/lib/producer/teamGovernance'
+import SeriesAssignment from '@/models/SeriesAssignment'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -43,6 +47,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const series = await Series.findByPk(seriesId)
     if (!series) {
       return NextResponse.json({ success: false, error: 'Series not found' }, { status: 404 })
+    }
+
+    const actorUserId = await getAuthenticatedUserId(request)
+    if (actorUserId && series.user_id && series.user_id !== actorUserId) {
+      const access = await checkWorkspaceSeriesAccess(series.user_id, actorUserId, series.id)
+      if (!access.allowed) {
+        return NextResponse.json(
+          { success: false, error: 'You do not have permission to view this series' },
+          { status: 403 }
+        )
+      }
     }
     
     // Get episode project data (exclude multi-MB script/production blobs)
@@ -148,6 +163,23 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const series = await Series.findByPk(seriesId)
     if (!series) {
       return NextResponse.json({ success: false, error: 'Series not found' }, { status: 404 })
+    }
+
+    const actorUserId = await getAuthenticatedUserId(request)
+    if (actorUserId && series.user_id && series.user_id !== actorUserId) {
+      const access = await checkWorkspaceSeriesAccess(series.user_id, actorUserId, series.id)
+      if (!access.allowed || !canRoleEditProject(access.role)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              access.role === 'qa_reviewer'
+                ? 'QA Reviewers have read & approval access only and cannot modify Series Bibles.'
+                : 'You do not have permission to modify this series',
+          },
+          { status: 403 }
+        )
+      }
     }
     
     const body = await request.json()
@@ -354,6 +386,23 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (!series) {
       return NextResponse.json({ success: false, error: 'Series not found' }, { status: 404 })
     }
+
+    const actorUserId = await getAuthenticatedUserId(request)
+    if (actorUserId && series.user_id && series.user_id !== actorUserId) {
+      const access = await checkWorkspaceSeriesAccess(series.user_id, actorUserId, series.id)
+      if (!access.allowed || !canRoleDeleteProject(access.role)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'Only the Workspace Owner or a Workspace Admin can permanently delete a series.',
+          },
+          { status: 403 }
+        )
+      }
+    }
+
+    await SeriesAssignment.destroy({ where: { series_id: seriesId } }).catch(() => null)
     
     // Unlink any projects from this series
     await Project.update(

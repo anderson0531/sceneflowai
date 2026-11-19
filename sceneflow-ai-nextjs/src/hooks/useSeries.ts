@@ -14,6 +14,10 @@ import type {
 } from '@/types/series'
 import type { ReferenceTransferCatalog } from '@/lib/series/referenceTransfer'
 import type { ReferenceTransferDiff } from '@/lib/series/referenceTransfer'
+import {
+  getActiveWorkspaceOwnerId,
+  subscribeActiveWorkspace,
+} from '@/lib/producer/activeWorkspaceClient'
 
 const API_BASE = '/api/series'
 
@@ -26,6 +30,15 @@ export function useSeriesList(userId: string | null) {
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [activeWorkspaceOwnerId, setActiveWorkspaceOwnerId] = useState<string>('all')
+
+  useEffect(() => {
+    setActiveWorkspaceOwnerId(getActiveWorkspaceOwnerId())
+    return subscribeActiveWorkspace((nextScope) => {
+      setActiveWorkspaceOwnerId(nextScope)
+      setPage(1)
+    })
+  }, [])
 
   const fetchSeries = useCallback(async (pageNum: number = 1, status?: string) => {
     if (!userId) return
@@ -37,9 +50,12 @@ export function useSeriesList(userId: string | null) {
       const params = new URLSearchParams({
         userId,
         page: String(pageNum),
-        pageSize: '20'
+        pageSize: '24'
       })
       if (status) params.set('status', status)
+      if (activeWorkspaceOwnerId && activeWorkspaceOwnerId !== 'all') {
+        params.set('workspaceOwnerId', activeWorkspaceOwnerId)
+      }
       
       const response = await fetch(`${API_BASE}?${params}`)
       const data = await response.json()
@@ -56,7 +72,7 @@ export function useSeriesList(userId: string | null) {
     } finally {
       setIsLoading(false)
     }
-  }, [userId])
+  }, [userId, activeWorkspaceOwnerId])
 
   useEffect(() => {
     fetchSeries()

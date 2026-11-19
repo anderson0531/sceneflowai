@@ -39,6 +39,7 @@ import CustomerConsent from './CustomerConsent'
 import ClientAssetSubmission from './ClientAssetSubmission'
 import WorkspaceMember from './WorkspaceMember'
 import ProjectAssignment from './ProjectAssignment'
+import SeriesAssignment from './SeriesAssignment'
 
 // Define model associations
 User.hasMany(Project, {
@@ -241,6 +242,7 @@ export {
   ClientAssetSubmission,
   WorkspaceMember,
   ProjectAssignment,
+  SeriesAssignment,
 }
 
 // Export default for convenience
@@ -286,4 +288,5 @@ export default {
   ClientAssetSubmission,
   WorkspaceMember,
   ProjectAssignment,
+  SeriesAssignment,
 }

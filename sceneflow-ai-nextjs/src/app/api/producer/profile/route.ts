@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
         dailyPublicIntakeCreditCap: profile.daily_public_intake_credit_cap,
         commercialAddendumAcceptedAt: profile.commercial_addendum_accepted_at,
         commercialAddendumVersion: profile.commercial_addendum_version,
+        localePmRouting: profile.locale_pm_routing || {},
       },
     })
   } catch (err: unknown) {
@@ -61,6 +62,7 @@ export async function GET(req: NextRequest) {
         dailyPublicIntakeCreditCap: 1500,
         commercialAddendumAcceptedAt: '2026-11-01T10:00:00.000Z',
         commercialAddendumVersion: '2026-11',
+        localePmRouting: {},
       },
       demoFallback: true,
     })
@@ -90,6 +92,7 @@ export async function PUT(req: NextRequest) {
       acceptCommercialAddendum: body.acceptCommercialAddendum === true,
       acceptedIp: getRequestIp(req),
       whiteLabelEligibleOverride: eligibility.eligible,
+      localePmRouting: body.localePmRouting,
     })
 
     return NextResponse.json({
@@ -108,6 +111,7 @@ export async function PUT(req: NextRequest) {
         dailyPublicIntakeCreditCap: profile.daily_public_intake_credit_cap,
         commercialAddendumAcceptedAt: profile.commercial_addendum_accepted_at,
         commercialAddendumVersion: profile.commercial_addendum_version,
+        localePmRouting: profile.locale_pm_routing || {},
       },
     })
   } catch (err: unknown) {

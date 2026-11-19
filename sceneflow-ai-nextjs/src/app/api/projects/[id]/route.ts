@@ -37,6 +37,9 @@ import {
   scenesAfterUnconfirmedShrinkGuard,
 } from '@/lib/script/scriptShrinkGuard'
 import { getUiSandboxProject, isDemoProjectId } from '@/lib/demo/uiSandboxProject'
+import { assertProjectAccess, getAuthenticatedUserId } from '@/lib/projectAccess'
+import { canRoleDeleteProject } from '@/lib/producer/teamGovernance'
+import ProjectAssignment from '@/models/ProjectAssignment'
 
 // Increase timeout for large project updates
 export const maxDuration = 60 // 60 seconds timeout
@@ -847,6 +850,30 @@ export async function DELETE(
     }
     
     console.log(`[${timestamp}] [DELETE /api/projects/[id]] Attempting to delete project:`, id)
+
+    // Enforce RBAC guardrail: Project Managers & QA Reviewers cannot permanently delete projects
+    const actorUserId = await getAuthenticatedUserId(request)
+    if (actorUserId) {
+      const access = await assertProjectAccess(id, actorUserId)
+      if (!access.ok) {
+        return NextResponse.json(
+          { success: false, error: access.error },
+          { status: access.status }
+        )
+      }
+      if (!canRoleDeleteProject(access.accessRole)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'Only the Workspace Owner or a Workspace Admin can permanently delete projects. Use Archive instead.',
+          },
+          { status: 403 }
+        )
+      }
+    }
+
+    await ProjectAssignment.destroy({ where: { project_id: id } }).catch(() => null)
 
     const deleted = await deleteProjectWithDependents(id, projectDeleteDeps())
     console.log(`[${timestamp}] [DELETE /api/projects/[id]] Deleted count:`, deleted)

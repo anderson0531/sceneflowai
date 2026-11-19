@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models' // Import all models to register associations
+import { Op } from 'sequelize'
 import { Series, DEFAULT_MAX_EPISODES } from '@/models/Series'
 import { Project } from '@/models/Project'
+import SeriesAssignment from '@/models/SeriesAssignment'
+import WorkspaceMember from '@/models/WorkspaceMember'
 import { sequelize } from '@/config/database'
 import { resolveUser } from '@/lib/userHelper'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
+import { buildAccessibleSeriesWhere } from '@/lib/producer/workspaceProjectsQuery'
 import {
   getAllUiSandboxSeries,
   getUiSandboxSeries,
@@ -102,14 +106,18 @@ export async function GET(request: NextRequest) {
     }
     
     const page = Math.max(1, Number(searchParams.get('page') || '1'))
-    const pageSize = Math.min(50, Math.max(1, Number(searchParams.get('pageSize') || '20')))
+    const pageSize = Math.min(100, Math.max(1, Number(searchParams.get('pageSize') || '20')))
     const offset = (page - 1) * pageSize
     const status = searchParams.get('status')
-    
-    const where: any = { user_id: resolvedUserId }
-    if (status && ['draft', 'active', 'completed', 'archived'].includes(status)) {
-      where.status = status
-    }
+    const workspaceOwnerId = searchParams.get('workspaceOwnerId') || undefined
+
+    const baseAccessWhere = await buildAccessibleSeriesWhere(resolvedUserId, {
+      activeWorkspaceOwnerId: workspaceOwnerId,
+    })
+    const where: any =
+      status && ['draft', 'active', 'completed', 'archived'].includes(status)
+        ? { [Op.and]: [baseAccessWhere, { status }] }
+        : baseAccessWhere
     
     const { rows, count } = await Series.findAndCountAll({
       where,
@@ -117,8 +125,60 @@ export async function GET(request: NextRequest) {
       limit: pageSize,
       offset
     })
+
+    // Batch-hydrate assigned PMs for returned series
+    const assignedMembersBySeries = new Map<
+      string,
+      Array<{ memberUserId: string; memberEmail: string; role: string }>
+    >()
+    const seriesIds = rows.map((s) => s.id)
+    if (seriesIds.length > 0) {
+      try {
+        const pageAssignments = await SeriesAssignment.findAll({
+          where: { series_id: { [Op.in]: seriesIds } },
+          attributes: ['series_id', 'member_user_id', 'owner_user_id'],
+        })
+        if (pageAssignments.length > 0) {
+          const memberUserIds = Array.from(new Set(pageAssignments.map((a) => a.member_user_id)))
+          const ownerIds = Array.from(new Set(pageAssignments.map((a) => a.owner_user_id)))
+          const memberRows = await WorkspaceMember.findAll({
+            where: {
+              owner_user_id: { [Op.in]: ownerIds },
+              member_user_id: { [Op.in]: memberUserIds },
+              status: 'active',
+            },
+            attributes: ['owner_user_id', 'member_user_id', 'member_email', 'role'],
+          })
+          const infoMap = new Map<string, { memberEmail: string; role: string }>()
+          for (const mr of memberRows) {
+            if (mr.member_user_id) {
+              infoMap.set(`${mr.owner_user_id}:${mr.member_user_id}`, {
+                memberEmail: mr.member_email,
+                role: mr.role,
+              })
+            }
+          }
+          for (const sa of pageAssignments) {
+            const info = infoMap.get(`${sa.owner_user_id}:${sa.member_user_id}`)
+            if (!info) continue
+            const list = assignedMembersBySeries.get(sa.series_id) || []
+            list.push({
+              memberUserId: sa.member_user_id,
+              memberEmail: info.memberEmail,
+              role: info.role,
+            })
+            assignedMembersBySeries.set(sa.series_id, list)
+          }
+        }
+      } catch (hydrateErr) {
+        console.warn(`[${timestamp}] [GET /api/series] PM hydration skipped:`, hydrateErr)
+      }
+    }
     
-    const seriesList = rows.map(s => formatSeriesResponse(s))
+    const seriesList = rows.map((s) => ({
+      ...formatSeriesResponse(s),
+      assignedMembers: assignedMembersBySeries.get(s.id) || [],
+    }))
     const includeSandbox = searchParams.get('includeSandbox') === '1'
     const mergedSeries =
       includeSandbox && page === 1 && !seriesList.some((s) => isDemoSeriesId(s.id))
