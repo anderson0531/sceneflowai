@@ -13,6 +13,13 @@ import { resolveUserId } from '@/lib/userHelper'
 import { normalizeWorkflowStep } from '@/constants/workflowSteps'
 import { slimProjectResponseMetadata } from '@/lib/projects/slimProjectPutPayload'
 import {
+  BLUEPRINT_RAW_STEPS,
+  buildProjectListOrder,
+  buildProjectListWhere,
+  parseProjectListParams,
+  type ProjectFacetCounts,
+} from '@/lib/projects/projectListQuery'
+import {
   getAllUiSandboxProjectSummaries,
   getUiSandboxProject,
   isDemoProjectId,
@@ -54,10 +61,11 @@ export async function GET(request: NextRequest) {
     
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
-    const isSummary = searchParams.get('summary') === '1' || searchParams.get('summary') === 'true'
+    const listParams = parseProjectListParams(searchParams)
+    const { isSummary, includeFacets, page, pageSize } = listParams
     let userIdParam = searchParams.get('userId') || request.headers.get('x-user-id') || undefined
     
-    console.log(`[${timestamp}] [GET /api/projects] Query params:`, { id, userId: userIdParam, isSummary })
+    console.log(`[${timestamp}] [GET /api/projects] Query params:`, { id, userId: userIdParam, ...listParams })
     
     if (id) {
       console.log(`[${timestamp}] [GET /api/projects] Fetching single project by id:`, id)
@@ -130,7 +138,9 @@ export async function GET(request: NextRequest) {
 
     console.log(`[${timestamp}] [GET /api/projects] Fetching projects for userId:`, resolvedUserId)
     
-    let where: any = { user_id: resolvedUserId }
+    let baseAccessWhere: any = { user_id: resolvedUserId }
+    const accessibleOwnerIds = new Set<string>([resolvedUserId])
+    const selfAssignedProjectIds: string[] = []
     try {
       await ensureProducerPlatformSchema()
       const memberships = await WorkspaceMember.findAll({
@@ -142,6 +152,7 @@ export async function GET(request: NextRequest) {
         for (const m of memberships) {
           if (m.role === 'admin' || m.access_all_projects) {
             orClauses.push({ user_id: m.owner_user_id })
+            accessibleOwnerIds.add(m.owner_user_id)
           } else {
             pmOwnerIds.push(m.owner_user_id)
           }
@@ -154,46 +165,235 @@ export async function GET(request: NextRequest) {
             },
           })
           const assignedIds = Array.from(new Set(assignments.map((a) => a.project_id)))
+          selfAssignedProjectIds.push(...assignedIds)
           if (assignedIds.length > 0) {
             orClauses.push({ id: { [Op.in]: assignedIds } })
           }
         }
         if (orClauses.length > 1) {
-          where = { [Op.or]: orClauses }
+          baseAccessWhere = { [Op.or]: orClauses }
         }
       }
     } catch (teamErr) {
       console.warn(`[${timestamp}] [GET /api/projects] Workspace team lookup skipped:`, teamErr)
     }
 
-    const page = Math.max(1, Number(searchParams.get('page') || '1'))
-    const pageSize = Math.min(50, Math.max(1, Number(searchParams.get('pageSize') || '20')))
+    // Resolve PM assignment filters when requested or when computing unassigned facet
+    let assignedProjectIdsForPm: string[] | null = null
+    let allAssignedProjectIds: string[] | null = null
+    if (listParams.assignedPm !== 'all' || includeFacets) {
+      try {
+        const ownerIdsList = Array.from(accessibleOwnerIds)
+        const allWsAssignments = await ProjectAssignment.findAll({
+          where: { owner_user_id: { [Op.in]: ownerIdsList } },
+          attributes: ['project_id', 'member_user_id'],
+        })
+        allAssignedProjectIds = Array.from(
+          new Set([
+            ...allWsAssignments.map((a) => a.project_id),
+            ...selfAssignedProjectIds,
+          ])
+        )
+        if (listParams.assignedPm !== 'all' && listParams.assignedPm !== 'unassigned') {
+          const matchedIds = allWsAssignments
+            .filter((a) => a.member_user_id === listParams.assignedPm)
+            .map((a) => a.project_id)
+          if (listParams.assignedPm === resolvedUserId) {
+            matchedIds.push(...selfAssignedProjectIds)
+          }
+          assignedProjectIdsForPm = Array.from(new Set(matchedIds))
+        }
+      } catch (assignErr) {
+        console.warn(`[${timestamp}] [GET /api/projects] Assignment filter lookup skipped:`, assignErr)
+      }
+    }
+
+    const where = buildProjectListWhere({
+      baseAccessWhere,
+      params: listParams,
+      assignedProjectIdsForPm,
+      allAssignedProjectIds,
+    })
+    const order = buildProjectListOrder(listParams.sort)
     const offset = (page - 1) * pageSize
 
-    console.log(`[${timestamp}] [GET /api/projects] Query options:`, { where, page, pageSize, offset, isSummary })
+    console.log(`[${timestamp}] [GET /api/projects] Query options:`, {
+      page,
+      pageSize,
+      offset,
+      isSummary,
+      includeFacets,
+      status: listParams.status,
+      stage: listParams.stage,
+      clientAction: listParams.clientAction,
+      assignedPm: listParams.assignedPm,
+      q: listParams.q ? '[redacted]' : '',
+    })
 
     const metadataProjection = isSummary ? SUMMARY_METADATA_SQL : LITE_LIST_METADATA_SQL
 
-    const { rows, count } = await Project.findAndCountAll({
-      where,
-      attributes: [
-        'id',
-        'user_id',
-        'series_id',
-        'episode_number',
-        'title',
-        'description',
-        'current_step',
-        'step_progress',
-        'status',
-        'created_at',
-        'updated_at',
-        [sequelize.literal(metadataProjection), 'metadata'],
-      ],
-      order: [['updated_at', 'DESC']],
-      limit: pageSize,
-      offset
-    })
+    const [{ rows, count }, facets] = await Promise.all([
+      Project.findAndCountAll({
+        where,
+        attributes: [
+          'id',
+          'user_id',
+          'series_id',
+          'episode_number',
+          'title',
+          'description',
+          'genre',
+          'current_step',
+          'step_progress',
+          'status',
+          'created_at',
+          'updated_at',
+          [sequelize.literal(metadataProjection), 'metadata'],
+        ],
+        order,
+        limit: pageSize,
+        offset,
+      }),
+      includeFacets
+        ? (async (): Promise<ProjectFacetCounts> => {
+            const bpList = BLUEPRINT_RAW_STEPS.map((s) => `'${s}'`).join(', ')
+            const facetRow: any = await Project.findOne({
+              where: baseAccessWhere,
+              attributes: [
+                [sequelize.literal(`COUNT(*) FILTER (WHERE status <> 'archived')`), 'totalNonArchived'],
+                [
+                  sequelize.literal(
+                    `COUNT(*) FILTER (WHERE status <> 'archived' AND (current_step IS NULL OR current_step IN (${bpList})))`
+                  ),
+                  'blueprintCount',
+                ],
+                [
+                  sequelize.literal(
+                    `COUNT(*) FILTER (WHERE status <> 'archived' AND current_step IS NOT NULL AND current_step NOT IN (${bpList}))`
+                  ),
+                  'productionCount',
+                ],
+                [
+                  sequelize.literal(
+                    `COUNT(*) FILTER (WHERE status <> 'archived' AND (status::text IN ('in_progress', 'in-progress', 'active', 'draft')))`
+                  ),
+                  'activeCount',
+                ],
+                [
+                  sequelize.literal(
+                    `COUNT(*) FILTER (WHERE status <> 'archived' AND (status = 'completed' OR (CASE WHEN (step_progress->>'overall') ~ '^[0-9]+(\\.[0-9]+)?$' THEN (step_progress->>'overall')::numeric ELSE 0 END) >= 100))`
+                  ),
+                  'completedCount',
+                ],
+                [sequelize.literal(`COUNT(*) FILTER (WHERE status = 'archived')`), 'archivedCount'],
+                [
+                  sequelize.literal(
+                    `COUNT(*) FILTER (WHERE status <> 'archived' AND LOWER(COALESCE(metadata->'clientOrder'->>'isClientProject', 'false')) = 'true')`
+                  ),
+                  'clientTotal',
+                ],
+                [
+                  sequelize.literal(
+                    `COUNT(*) FILTER (WHERE status <> 'archived' AND LOWER(COALESCE(metadata->'clientOrder'->>'isClientProject', 'false')) = 'true' AND metadata->'clientOrder'->>'actionState' = 'action_required')`
+                  ),
+                  'actionRequiredCount',
+                ],
+                [
+                  sequelize.literal(
+                    `COUNT(*) FILTER (WHERE status <> 'archived' AND LOWER(COALESCE(metadata->'clientOrder'->>'isClientProject', 'false')) = 'true' AND metadata->'clientOrder'->>'actionState' = 'waiting_on_client')`
+                  ),
+                  'waitingOnClientCount',
+                ],
+                [
+                  sequelize.literal(
+                    `COUNT(*) FILTER (WHERE status <> 'archived' AND LOWER(COALESCE(metadata->'clientOrder'->>'isClientProject', 'false')) = 'true' AND metadata->'clientOrder'->>'actionState' = 'client_approved')`
+                  ),
+                  'clientApprovedCount',
+                ],
+              ],
+              raw: true,
+            })
+            const totalNonArchived = Number(facetRow?.totalNonArchived || 0)
+            const assignedSet = new Set(allAssignedProjectIds || [])
+            // Approximate unassigned non-archived count cleanly via DB when assignments exist
+            let unassignedCount = totalNonArchived
+            if (assignedSet.size > 0) {
+              const assignedNonArchived = await Project.count({
+                where: {
+                  [Op.and]: [
+                    baseAccessWhere,
+                    { status: { [Op.ne]: 'archived' } },
+                    { id: { [Op.in]: Array.from(assignedSet) } },
+                  ],
+                },
+              })
+              unassignedCount = Math.max(0, totalNonArchived - assignedNonArchived)
+            }
+            return {
+              totalNonArchived,
+              blueprintCount: Number(facetRow?.blueprintCount || 0),
+              productionCount: Number(facetRow?.productionCount || 0),
+              activeCount: Number(facetRow?.activeCount || 0),
+              completedCount: Number(facetRow?.completedCount || 0),
+              archivedCount: Number(facetRow?.archivedCount || 0),
+              clientTotal: Number(facetRow?.clientTotal || 0),
+              actionRequiredCount: Number(facetRow?.actionRequiredCount || 0),
+              waitingOnClientCount: Number(facetRow?.waitingOnClientCount || 0),
+              clientApprovedCount: Number(facetRow?.clientApprovedCount || 0),
+              unassignedCount,
+            }
+          })()
+        : Promise.resolve(null),
+    ])
+
+    // Batch-hydrate assigned PM details for the returned page
+    const assignedMembersByProject = new Map<
+      string,
+      Array<{ memberUserId: string; memberEmail: string; role: string }>
+    >()
+    const pageProjectIds = rows.map((p: any) => p.id)
+    if (pageProjectIds.length > 0) {
+      try {
+        const pageAssignments = await ProjectAssignment.findAll({
+          where: { project_id: { [Op.in]: pageProjectIds } },
+          attributes: ['project_id', 'member_user_id', 'owner_user_id'],
+        })
+        if (pageAssignments.length > 0) {
+          const memberUserIds = Array.from(new Set(pageAssignments.map((a) => a.member_user_id)))
+          const ownerIds = Array.from(new Set(pageAssignments.map((a) => a.owner_user_id)))
+          const memberRows = await WorkspaceMember.findAll({
+            where: {
+              owner_user_id: { [Op.in]: ownerIds },
+              member_user_id: { [Op.in]: memberUserIds },
+              status: 'active',
+            },
+            attributes: ['owner_user_id', 'member_user_id', 'member_email', 'role'],
+          })
+          const memberInfoMap = new Map<string, { memberEmail: string; role: string }>()
+          for (const mr of memberRows) {
+            if (mr.member_user_id) {
+              memberInfoMap.set(`${mr.owner_user_id}:${mr.member_user_id}`, {
+                memberEmail: mr.member_email,
+                role: mr.role,
+              })
+            }
+          }
+          for (const pa of pageAssignments) {
+            const info = memberInfoMap.get(`${pa.owner_user_id}:${pa.member_user_id}`)
+            if (!info) continue
+            const list = assignedMembersByProject.get(pa.project_id) || []
+            list.push({
+              memberUserId: pa.member_user_id,
+              memberEmail: info.memberEmail,
+              role: info.role,
+            })
+            assignedMembersByProject.set(pa.project_id, list)
+          }
+        }
+      } catch (hydrateErr) {
+        console.warn(`[${timestamp}] [GET /api/projects] PM hydration skipped:`, hydrateErr)
+      }
+    }
 
     console.log(`[${timestamp}] [GET /api/projects] Database returned ${rows.length} rows, total count: ${count}`)
 
@@ -201,6 +401,7 @@ export async function GET(request: NextRequest) {
       id: p.id,
       title: p.title,
       description: p.description || '',
+      genre: p.genre || p.metadata?.genre || undefined,
       series_id: p.series_id || p.metadata?.seriesId || null,
       seriesId: p.series_id || p.metadata?.seriesId || null,
       episode_number: p.episode_number ?? p.metadata?.episodeNumber ?? null,
@@ -211,6 +412,7 @@ export async function GET(request: NextRequest) {
       createdAt: p.created_at,
       updatedAt: p.updated_at,
       completedSteps: Object.entries((p.step_progress as any) || {}).filter(([_, v]) => (v as number) === 100).map(([k]) => k),
+      assignedMembers: assignedMembersByProject.get(p.id) || [],
       metadata: isSummary ? (p.metadata || {}) : slimProjectResponseMetadata(p.metadata || {})
     }))
 
@@ -220,13 +422,18 @@ export async function GET(request: NextRequest) {
         ? [...getAllUiSandboxProjectSummaries(), ...projects]
         : projects
 
-    console.log(`[${timestamp}] [GET /api/projects] Sending response with ${projectsWithDemo.length} projects`)
+    const total = count + (projectsWithDemo.length - projects.length)
+    const totalPages = Math.max(1, Math.ceil(total / pageSize))
+
+    console.log(`[${timestamp}] [GET /api/projects] Sending response with ${projectsWithDemo.length} projects (total=${total}, page=${page}/${totalPages})`)
     const response = NextResponse.json({
       success: true,
       projects: projectsWithDemo,
       page,
       pageSize,
-      total: count + (projectsWithDemo.length - projects.length),
+      total,
+      totalPages,
+      ...(facets ? { facets } : {}),
     })
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
     response.headers.set('Pragma', 'no-cache')
