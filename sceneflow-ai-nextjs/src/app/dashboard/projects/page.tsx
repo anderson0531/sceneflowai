@@ -35,6 +35,8 @@ import {
   Square,
   Globe,
   UserCheck,
+  Columns3,
+  BarChart3,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -54,6 +56,8 @@ import {
   getActiveWorkspaceOwnerId,
   subscribeActiveWorkspace,
 } from '@/lib/producer/activeWorkspaceClient'
+import { ProjectsKanbanBoard } from '@/components/projects/ProjectsKanbanBoard'
+import type { KanbanStageId } from '@/lib/producer/agencyOps'
 import { toast } from 'sonner'
 
 export const dynamic = 'force-dynamic'
@@ -138,7 +142,7 @@ export default function ProjectsPage() {
   const [sortBy, setSortBy] = useState('recent')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(24)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'kanban'>('grid')
   const [activeWorkspaceOwnerId, setActiveWorkspaceOwnerIdState] = useState<string>('all')
 
   // Team members for PM filter + inline & bulk PM assignment
@@ -413,9 +417,14 @@ export default function ProjectsPage() {
 
   // Bulk operation runner
   const runBulkAction = async (
-    action: 'archive' | 'unarchive' | 'status' | 'assign_pm',
+    action: 'archive' | 'unarchive' | 'status' | 'assign_pm' | 'kanban_move' | 'set_sla',
     projectIds: string[],
-    extra?: { status?: string; memberUserId?: string | null }
+    extra?: {
+      status?: string
+      memberUserId?: string | null
+      targetStage?: KanbanStageId
+      targetDeliveryDate?: string | null
+    }
   ) => {
     const cleanIds = projectIds.filter((id) => !isDemoProjectId(id))
     if (cleanIds.length === 0) return
@@ -449,6 +458,12 @@ export default function ProjectsPage() {
           extra?.memberUserId
             ? `Assigned PM to ${data.updatedCount} project${data.updatedCount === 1 ? '' : 's'}`
             : `Cleared PM assignment on ${data.updatedCount} project${data.updatedCount === 1 ? '' : 's'}`
+        )
+      } else if (action === 'kanban_move') {
+        toast.success(`Moved project to ${String(extra?.targetStage || '').replace('_', ' ')}`)
+      } else if (action === 'set_sla') {
+        toast.success(
+          extra?.targetDeliveryDate ? 'Target delivery date updated' : 'Target delivery date cleared'
         )
       }
       setSelectedIds(new Set())
@@ -658,6 +673,12 @@ export default function ProjectsPage() {
         accent="product"
         primaryAction={
           <div className="flex flex-wrap items-center gap-2">
+            <Link href="/dashboard/clients">
+              <Button variant="secondary" className="flex items-center gap-2 border border-gray-700">
+                <BarChart3 className="w-4 h-4 text-indigo-400" />
+                Clients &amp; Ops
+              </Button>
+            </Link>
             <Link href="/dashboard/settings/producer">
               <Button variant="secondary" className="flex items-center gap-2 border border-gray-700">
                 <Briefcase className="w-4 h-4 text-cyan-400" />
@@ -914,6 +935,19 @@ export default function ProjectsPage() {
               >
                 <List className="w-4 h-4" />
               </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('kanban')}
+                className={`p-1.5 rounded-md transition-colors ${
+                  viewMode === 'kanban'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+                title="Kanban pipeline view"
+                aria-label="Kanban pipeline view"
+              >
+                <Columns3 className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -1118,6 +1152,19 @@ export default function ProjectsPage() {
               : () => router.push('/dashboard/studio/new-project')
           }
         />
+      ) : viewMode === 'kanban' ? (
+        <div className={isFetching ? 'opacity-70 transition-opacity' : ''}>
+          <ProjectsKanbanBoard
+            projects={projects}
+            busy={bulkBusy}
+            onMoveStage={(projectId, targetStage) =>
+              void runBulkAction('kanban_move', [projectId], { targetStage })
+            }
+            onUpdateDueDate={(projectId, targetDeliveryDate) =>
+              void runBulkAction('set_sla', [projectId], { targetDeliveryDate })
+            }
+          />
+        </div>
       ) : (
         <div
           className={`${

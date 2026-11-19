@@ -216,7 +216,7 @@ describe('Sprint 1 scale architecture contracts', () => {
   it('enforces owner or workspace admin RBAC on POST /api/projects/bulk', () => {
     const bulkSrc = readFileSync(path.join(root, 'src/app/api/projects/bulk/route.ts'), 'utf8')
     expect(bulkSrc).toContain('getAuthenticatedUserId')
-    expect(bulkSrc).toContain("role: 'admin'")
+    expect(bulkSrc).toContain("m.role === 'admin'")
     expect(bulkSrc).toContain('MAX_BULK_IDS = 100')
     expect(bulkSrc).toContain("action === 'archive'")
     expect(bulkSrc).toContain('ProjectAssignment')

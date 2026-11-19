@@ -655,11 +655,18 @@ export default function ProducerSettingsPage() {
               uploads, and round-capped client approvals.
             </p>
           </div>
-          <Link href="/dashboard/projects">
-            <Button variant="secondary" className="shrink-0 border border-gray-700">
-              Open Client Triage →
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Link href="/dashboard/clients">
+              <Button variant="secondary" className="border border-indigo-500/40 text-indigo-200 hover:bg-indigo-950/60">
+                Clients &amp; Agency Ops →
+              </Button>
+            </Link>
+            <Link href="/dashboard/projects">
+              <Button variant="secondary" className="border border-gray-700">
+                Open Client Triage →
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 

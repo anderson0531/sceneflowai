@@ -52,14 +52,20 @@
 
 ---
 
-## Sprint 3 — Agency Ops Pipeline, Client Directory & Storage Hygiene (**P1**)
+## Sprint 3 — Agency Ops Pipeline, Client Directory & Storage Hygiene (**COMPLETE**)
 
-1. **Kanban Production Pipeline & SLA Tracking**:
-   - Toggle between Grid / List / Kanban columns (`Intake -> Blueprint -> Storyboard -> Production -> Client Review -> Delivered`) on `/dashboard/projects`.
-   - Persist `targetDeliveryDate` and `revisionCount` on `metadata.clientOrder`, surfacing overdue and `> 48h waiting on client` SLA badges.
-2. **Client CRM Directory (`/dashboard/clients`)**:
-   - Group multi-project repeat clients by `customerEmail` / `clientId` showing active projects, completed vault links, total credits spent, and language locale.
-3. **Owner PM Workload & Margin Scorecard**:
-   - Per-PM active project count, overdue count, monthly credit burn vs `monthly_credit_limit`, and average turnaround time (Intake → Approved).
-4. **Per-Project Storage Accounting & 1-Click Purge**:
-   - Track `storageBytes` per project against plan storage limits (`150 GB` Pro / `750 GB` Agency Scale) and provide a 1-click **"Archive & Purge Draft Intermediates"** action that keeps final masters + Blueprint JSON while reclaiming unused candidate clips.
+### Shipped Deliverables
+1. **Pure Agency Ops, SLA, CRM, Scorecard & Storage Engine** (`src/lib/producer/agencyOps.ts`):
+   - `resolveKanbanStage` & `buildKanbanMovePatch`: 6-stage Kanban pipeline (`Intake -> Blueprint -> Storyboard -> Production -> Client Review -> Delivered`).
+   - `evaluateProjectSla`: tracks `targetDeliveryDate`, `revisionCount`, overdue days, 48h due-soon warnings, and `> 48h waiting on client` stale alerts.
+   - `buildClientDirectory`: groups repeat client orders by normalized email with gross margin (`revenue - credits * $0.010`), active/completed/overdue counts, and Screening Room links.
+   - `buildPmScorecard`: computes per-PM workload (including series-inherited episodes), overdue & action-required counts, monthly credit utilization %, revenue/margin, and average turnaround days.
+   - `collectPurgeableDraftMedia` & `estimateProjectStorage`: deterministic Continuity Vault accounting plus safe draft intermediate purger preserving active masters, Blueprint JSON, and Continuity Bible.
+2. **Kanban View & SLA Inline Editing on `/dashboard/projects`** (`src/components/projects/ProjectsKanbanBoard.tsx`, `src/app/dashboard/projects/page.tsx`, `src/app/api/projects/bulk/route.ts`):
+   - Added 3rd view toggle (`Grid | List | Kanban`) with inline target delivery date pickers, SLA aging badges, PM pills, and 1-click stage transitions (`kanban_move` & `set_sla` actions).
+3. **Clients & Agency Operations Command Center (`/dashboard/clients`)** (`src/app/dashboard/clients/page.tsx`, `src/app/api/producer/ops/route.ts`):
+   - Full-workspace Client CRM Directory, PM Workload & Margin Scorecard, and Storage Hygiene Vault Dashboard scoped live to the Header Workspace Switcher.
+4. **1-Click Archive & Purge Draft Intermediates** (`src/app/api/projects/[id]/purge-drafts/route.ts`):
+   - Owner/Admin RBAC-enforced endpoint that strips superseded candidate takes & old storyboard image versions, best-effort deletes unreferenced Vercel Blob files, optionally clears raw client staging uploads and archives the project, and stamps updated `storageBytes` & `storagePurgedAt`.
+5. **Unit Test Suite** (`src/__tests__/agencyOpsSprint3.test.ts`):
+   - Covers Kanban classification/transitions, SLA aging, Client CRM margin grouping, PM Scorecard (with series inheritance), storage accounting & draft purge safety, and Sprint 3 API/UI contracts.
