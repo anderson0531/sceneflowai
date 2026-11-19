@@ -12,6 +12,7 @@ import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import {
   getKeyFeatureScreenshot,
   keyFeatureScreenshotSrc,
+  keyFeatureScreenshotSrcForLocale,
   type KeyFeatureScreenshotVariant,
 } from '@/config/landing/keyFeatureScreenshots'
 import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
@@ -790,7 +791,9 @@ export default function KeyFeaturesSection() {
                 gradient={gradient}
                 expanded={expandedFeature === selected.icon}
                 onToggle={toggleSelectedLearnMore}
-                screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
+                screenshotSrc={
+                  screenshot ? keyFeatureScreenshotSrcForLocale(screenshot, locale, true) : ''
+                }
                 screenshotVariants={screenshot?.variants}
                 enterFullscreenLabel={t('enterFullscreenOverview')}
                 exitFullscreenLabel={t('exitFullscreenOverview')}
@@ -864,7 +867,11 @@ export default function KeyFeaturesSection() {
                         gradient={gradient}
                         expanded={expandedFeature === selected.icon}
                         onToggle={toggleSelectedLearnMore}
-                        screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
+                        screenshotSrc={
+                          screenshot
+                            ? keyFeatureScreenshotSrcForLocale(screenshot, locale, true)
+                            : ''
+                        }
                         screenshotVariants={screenshot?.variants}
                         enterFullscreenLabel={t('enterFullscreenOverview')}
                         exitFullscreenLabel={t('exitFullscreenOverview')}

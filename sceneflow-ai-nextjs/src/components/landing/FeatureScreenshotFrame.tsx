@@ -103,9 +103,15 @@ export function FeatureScreenshotFrame({
   const animaticMp4Src = chapterInfo
     ? getKeyFeatureAnimaticMp4Path(chapterInfo.suiteId, panLocale)
     : null
-  const animaticPosterSrc = chapterInfo
-    ? getKeyFeatureAnimaticPosterPath(chapterInfo.suiteId)
-    : src
+  const isLocalizedStaticSrc =
+    panLocale !== 'en' &&
+    Boolean(src && (src.includes('/screenshots/locales/') || src.includes('multilanguage-ui-')))
+  const animaticPosterSrc =
+    isLocalizedStaticSrc
+      ? src
+      : chapterInfo
+        ? getKeyFeatureAnimaticPosterPath(chapterInfo.suiteId)
+        : src
 
   const beats = panSpec?.beats ?? []
   const safeBeatIdx = beats.length > 0 && beatIndex < beats.length ? beatIndex : 0

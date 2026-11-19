@@ -259,18 +259,31 @@ export function keyFeatureScreenshotSrc(entry: KeyFeatureScreenshot): string {
 const LOCALIZED_SCREENSHOT_LOCALES = new Set(['es', 'pt', 'hi', 'zh', 'ar', 'th'])
 
 /**
+ * Screenshot stems that currently have localized WebP assets generated under
+ * `public/landing/key-features/screenshots/locales/<locale>/<stem>.webp`.
+ * Add stems here as additional live-app screenshots are captured across locales.
+ */
+export const LOCALIZED_SCREENSHOT_STEMS = new Set([
+  'client-intake-portal',
+  'blueprint-share-estimator',
+  'character-selfie-studio',
+  'producer-whitelabel-launchpad',
+  'streams-inventory-explorer',
+])
+
+/**
  * Returns the localized screenshot path under
  * `/landing/key-features/screenshots/locales/<locale>/<stem>.webp` for the 6
- * non-English landing locales when `useLocalized` is enabled, or the English
- * baseline path otherwise.
+ * non-English landing locales when a localized asset exists, or the English
+ * baseline path otherwise (preventing 404s for un-captured screens).
  */
 export function keyFeatureScreenshotSrcForLocale(
   entry: KeyFeatureScreenshot,
   locale?: string | null,
-  hasLocalizedAsset = false
+  hasLocalizedAsset?: boolean
 ): string {
   const base = keyFeatureScreenshotSrc(entry)
-  if (!hasLocalizedAsset || !base || !locale) return base
+  if (!base || !locale) return base
   const lower = locale.trim().toLowerCase()
   const norm = lower.startsWith('zh') ? 'zh' : lower.split(/[-_]/)[0]
   if (!norm || norm === 'en' || !LOCALIZED_SCREENSHOT_LOCALES.has(norm)) return base
@@ -281,5 +294,10 @@ export function keyFeatureScreenshotSrcForLocale(
   }
   const stem = filePart.replace(/\.(webp|webm|png|jpg|jpeg)$/i, '')
   if (!stem) return base
+  const isAvailable =
+    typeof hasLocalizedAsset === 'boolean'
+      ? hasLocalizedAsset && LOCALIZED_SCREENSHOT_STEMS.has(stem)
+      : LOCALIZED_SCREENSHOT_STEMS.has(stem)
+  if (!isAvailable) return base
   return `/landing/key-features/screenshots/locales/${norm}/${stem}.webp`
 }
