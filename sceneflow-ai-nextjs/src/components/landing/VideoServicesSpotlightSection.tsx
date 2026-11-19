@@ -629,94 +629,118 @@ export function VideoServicesSpotlightSection() {
           </div>
         </div>
 
-        {/* 3-Pillar Enterprise Margin, Client Privacy & Commercial IP Shield */}
-        <div className="mt-8 rounded-2xl border border-cyan-500/25 bg-slate-900/75 p-5 sm:p-6">
-          <div className="flex items-center justify-center gap-2 text-center">
-            <Lock className="h-4 w-4 shrink-0 text-cyan-300" aria-hidden />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-300 sm:text-sm">
-              {copy.trustShieldHeading}
-            </h3>
-          </div>
-          <div className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-3">
-            {copy.trustShieldPillars.map((pillar) => (
-              <div
-                key={pillar.title}
-                className="rounded-xl border border-slate-800 bg-slate-950/75 p-4"
-              >
-                <p className="inline-flex items-center gap-2 text-sm font-bold text-white">
-                  <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-300" aria-hidden />
-                  <span>{pillar.title}</span>
-                </p>
-                <p className="mt-1.5 text-xs leading-relaxed text-gray-300">{pillar.detail}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Service-in-a-Box Operator Playbooks & Partner Referral Kit */}
-        <div className="mt-6 rounded-2xl border border-amber-400/25 bg-gradient-to-r from-slate-900/90 via-emerald-950/25 to-slate-900/90 p-5 sm:p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-xl">
-              <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-amber-300">
-                <BookOpenCheck className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
-                <span>{copy.playbooksBadge}</span>
-              </p>
-              <h3 className="mt-2 text-lg font-bold text-white sm:text-xl">
-                {copy.playbooksHeading}
-              </h3>
-              <p className="mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm">
-                {copy.playbooksSubtitle}
+        {/* Compact Mobile Companion PWA Callout (folded from standalone section) */}
+        <div className="mt-6 flex flex-col items-start justify-between gap-3 rounded-2xl border border-cyan-500/25 bg-slate-900/75 px-5 py-4 sm:flex-row sm:items-center">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-400/35 bg-cyan-500/15 text-cyan-300">
+              <Smartphone className="h-4 w-4" aria-hidden />
+            </div>
+            <div>
+              <p className="!mb-0 text-sm font-bold text-white">{mobileCopy.eyebrow}</p>
+              <p className="!mb-0 mt-0.5 text-xs leading-relaxed text-gray-300">
+                {mobileCopy.subtitle}
               </p>
             </div>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:max-w-2xl">
-              {copy.playbooksItems.map((item) => (
-                <div
-                  key={item}
-                  className="flex items-start gap-2 rounded-xl border border-white/10 bg-slate-950/75 px-3.5 py-2.5 text-xs leading-snug text-gray-200"
-                >
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" aria-hidden />
-                  <span>{item}</span>
+          </div>
+          <span className="shrink-0 rounded-full border border-cyan-400/30 bg-cyan-950/50 px-3 py-1 text-[11px] font-semibold text-cyan-200">
+            iOS &amp; Android PWA
+          </span>
+        </div>
+
+        {/* Progressive Disclosure: Full Agency Operating Kit, White-Label Portal & Delivery Workflow */}
+        <details className="group mt-6 rounded-2xl border border-slate-800 bg-slate-900/50">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-semibold text-cyan-200 hover:text-white transition-colors [&::-webkit-details-marker]:hidden">
+            <span className="inline-flex items-center gap-2">
+              <BookOpenCheck className="h-4 w-4 shrink-0 text-emerald-300" aria-hidden />
+              <span>{copy.playbooksHeading} · {copy.workflowHeading}</span>
+            </span>
+            <span className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-medium text-gray-300 group-open:hidden">
+              Expand
+            </span>
+            <span className="hidden rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-medium text-gray-300 group-open:inline">
+              Collapse
+            </span>
+          </summary>
+
+          <div className="border-t border-slate-800/80 px-5 pb-6 pt-2">
+            {/* 3-Pillar Enterprise Margin, Client Privacy & Commercial IP Shield */}
+            <div className="mt-4 rounded-2xl border border-cyan-500/25 bg-slate-900/75 p-5 sm:p-6">
+              <div className="flex items-center justify-center gap-2 text-center">
+                <Lock className="h-4 w-4 shrink-0 text-cyan-300" aria-hidden />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-300 sm:text-sm">
+                  {copy.trustShieldHeading}
+                </h3>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-3">
+                {copy.trustShieldPillars.map((pillar) => (
+                  <div
+                    key={pillar.title}
+                    className="rounded-xl border border-slate-800 bg-slate-950/75 p-4"
+                  >
+                    <p className="inline-flex items-center gap-2 text-sm font-bold text-white">
+                      <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-300" aria-hidden />
+                      <span>{pillar.title}</span>
+                    </p>
+                    <p className="mt-1.5 text-xs leading-relaxed text-gray-300">{pillar.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Service-in-a-Box Operator Playbooks & Partner Referral Kit */}
+            <div className="mt-6 rounded-2xl border border-amber-400/25 bg-gradient-to-r from-slate-900/90 via-emerald-950/25 to-slate-900/90 p-5 sm:p-6">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="max-w-xl">
+                  <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-amber-300">
+                    <BookOpenCheck className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
+                    <span>{copy.playbooksBadge}</span>
+                  </p>
+                  <h3 className="mt-2 text-lg font-bold text-white sm:text-xl">
+                    {copy.playbooksHeading}
+                  </h3>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm">
+                    {copy.playbooksSubtitle}
+                  </p>
                 </div>
-              ))}
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:max-w-2xl">
+                  {copy.playbooksItems.map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-start gap-2 rounded-xl border border-white/10 bg-slate-950/75 px-3.5 py-2.5 text-xs leading-snug text-gray-200"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" aria-hidden />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Narrated White-Label Customer Portal Experience Animatic (8 Stages · 7 Languages) */}
+            <CustomerPortalExperienceAnimatic locale={locale} />
+
+            {/* 4-Step Client Project Delivery Strip */}
+            <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-7">
+              <h3 className="text-center text-sm font-bold uppercase tracking-wider text-emerald-300">
+                {copy.workflowHeading}
+              </h3>
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {copy.workflowSteps.map((ws) => (
+                  <div
+                    key={ws.step}
+                    className="rounded-xl border border-slate-800/90 bg-slate-950/70 p-4"
+                  >
+                    <span className="inline-block rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-300">
+                      {copy.stepPrefix} {ws.step}
+                    </span>
+                    <p className="mt-2 text-sm font-bold text-white">{ws.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-300">{ws.detail}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Narrated White-Label Customer Portal Experience Animatic (8 Stages · 7 Languages) */}
-        <CustomerPortalExperienceAnimatic locale={locale} />
-
-        {/* 4-Step Client Project Delivery Strip */}
-        <div className="mt-10 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-7">
-          <h3 className="text-center text-sm font-bold uppercase tracking-wider text-emerald-300">
-            {copy.workflowHeading}
-          </h3>
-          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {copy.workflowSteps.map((ws) => (
-              <div
-                key={ws.step}
-                className="rounded-xl border border-slate-800/90 bg-slate-950/70 p-4"
-              >
-                <span className="inline-block rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-300">
-                  {copy.stepPrefix} {ws.step}
-                </span>
-                <p className="mt-2 text-sm font-bold text-white">{ws.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-gray-300">{ws.detail}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-5 flex justify-center">
-            <a
-              href="#mobile-app"
-              title={`${mobileCopy.eyebrow} — ${mobileCopy.modeCustomerTab}`}
-              className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-950/35 px-3.5 py-2 text-xs font-semibold text-cyan-200 transition-colors hover:border-cyan-300/60 hover:bg-cyan-500/20 hover:text-white"
-            >
-              <Smartphone className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
-              <span className="whitespace-normal break-words">{mobileCopy.eyebrow}</span>
-              <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            </a>
-          </div>
-        </div>
+        </details>
       </div>
     </section>
   )

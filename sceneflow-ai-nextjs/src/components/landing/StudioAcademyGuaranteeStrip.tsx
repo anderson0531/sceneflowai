@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { ArrowRight, CheckCircle2, GraduationCap, Play } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { Button } from '@/components/ui/Button'
 import { TwoModesTheaterModal } from '@/components/landing/TwoModesTheaterModal'
 import { VideoGlobeLanguageSelector } from '@/components/landing/VideoGlobeLanguageSelector'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
@@ -14,6 +14,7 @@ import {
   type TrailerDubLocaleId,
 } from '@/config/landing/productionPipelineDemo'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
 
 export const STUDIO_ACADEMY_STRIP_ID = 'studio-academy'
 
@@ -21,6 +22,7 @@ export function StudioAcademyGuaranteeStrip() {
   const locale = useLocale()
   const tCommon = useTranslations('common')
   const copy = useStudioLandingCopy().academyStrip
+  const prelaunchOnly = isPrelaunchAccessModeEnabled()
   const [theaterOpen, setTheaterOpen] = useState(false)
   const [videoLocale, setVideoLocale] = useState<TrailerDubLocaleId>(() =>
     resolveTrailerDubLocale(locale)
@@ -70,29 +72,27 @@ export function StudioAcademyGuaranteeStrip() {
               </ul>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row lg:col-span-4 lg:flex-col lg:items-end">
+            <div className="flex flex-col gap-3 sm:flex-row lg:col-span-4 lg:flex-col">
               {hasVideo ? (
                 <button
                   type="button"
                   title={copy.watchAcademyCta}
                   onClick={() => setTheaterOpen(true)}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-4 py-3 text-sm font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/25 hover:text-white lg:w-auto cursor-pointer"
+                  className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-4 py-3 text-sm font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/25 hover:text-white cursor-pointer"
                 >
                   <Play className="h-4 w-4 shrink-0 fill-current" aria-hidden />
                   <span className="whitespace-normal leading-snug">{copy.watchAcademyCta}</span>
                 </button>
               ) : null}
 
-              <Button
-                title={copy.startExplorerCta}
-                onClick={() => {
-                  window.location.href = getSignupUrlForTier('explorer')
-                }}
-                className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-95 lg:w-auto"
+              <Link
+                href={getSignupUrlForTier('explorer')}
+                title={prelaunchOnly ? 'Request Pre-Launch Access' : copy.startExplorerCta}
+                className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition-all hover:brightness-110"
               >
-                <span>{copy.startExplorerCta}</span>
-                <ArrowRight className="ms-2 h-4 w-4 shrink-0" aria-hidden />
-              </Button>
+                <span>{prelaunchOnly ? 'Request Pre-Launch Access' : copy.startExplorerCta}</span>
+                <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+              </Link>
             </div>
           </div>
         </div>

@@ -465,7 +465,9 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     const floatingCta = readSource('src/components/landing/FloatingCTA.tsx')
     expect(floatingCta).not.toContain('truncate')
     expect(floatingCta).toContain("title={t('seePricing')}")
-    expect(floatingCta).toContain("title={t('tryNine')}")
+    expect(floatingCta).toContain("t('tryNine')")
+    expect(floatingCta).toContain('env(safe-area-inset-bottom)')
+    expect(floatingCta).toContain('sessionStorage')
 
     const pricingGrid = readSource('src/components/landing/PricingTierGrid.tsx')
     expect(pricingGrid).not.toContain('truncate')
@@ -1235,12 +1237,13 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
       act(() => {
         window.dispatchEvent(new Event('resize'))
       })
-      // Item 0 sits at the top of the list => 0px marginTop (no inline marginTop pushing it 5,400px off-screen!)
+      // Desktop detail panel relies on pure CSS lg:sticky lg:top-24 without jumpy inline marginTop offsets
+      expect(detailWrapper?.className).toContain('lg:sticky')
+      expect(detailWrapper?.className).toContain('lg:top-24')
       expect(detailWrapper?.style.marginTop || '0px').toBe('0px')
 
-      // Clicking item 4 (relative top = 240px, maxOffset = 800 - 500 = 300px) => 240px marginTop (never 5,640px!)
       clickElement(featureBtns[4]!)
-      expect(detailWrapper?.style.marginTop).toBe('240px')
+      expect(detailWrapper?.style.marginTop || '0px').toBe('0px')
     } finally {
       Object.defineProperty(window, 'matchMedia', {
         configurable: true,
@@ -1358,7 +1361,17 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     const prodExamplesSrc = readSource('src/components/landing/ProductionExamplesSection.tsx')
     expect(prodExamplesSrc).not.toContain('rounded-full border border-cyan-500/20')
     expect(prodExamplesSrc).not.toContain('rounded-full border border-cyan-400/30')
-    expect(prodExamplesSrc).toContain('border-l-2 border-cyan-400/50')
+    // Must not wrap conditional mobile/desktop layouts in conflicting hidden md:block / block md:hidden (prevents landscape-phone blank screen)
+    expect(prodExamplesSrc).not.toContain('hidden md:block')
+    expect(prodExamplesSrc).not.toContain('block md:hidden')
+
+    // Streamlined 8-section landing architecture: redundant sections pruned & SSR enabled for core content
+    const landingClientSrc = readSource('src/app/LandingPageClient.tsx')
+    expect(landingClientSrc).not.toContain('DirectorOperatingSystemSection')
+    expect(landingClientSrc).not.toContain('CreatorAndBusinessGatewaySection')
+    expect(landingClientSrc).not.toContain('InfrastructureSection')
+    expect(landingClientSrc).not.toContain('FloatingNav')
+    expect(landingClientSrc).not.toContain('LandingSectionCollapseProvider')
 
     const pricingCreditsSrc = readSource('src/components/landing/PricingCredits.tsx')
     expect(pricingCreditsSrc).not.toContain('rounded-full')
@@ -1399,7 +1412,8 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     const heroSrc = readSource('src/components/landing/ImaginePossibilitiesHero.tsx')
     expect(heroSrc).toContain('flex-nowrap')
     expect(heroSrc).toContain('overflow-x-auto')
-    expect(heroSrc).toContain('min-[440px]:grid-cols-2')
+    expect(heroSrc).toContain('<motion.h1')
+    expect(heroSrc).toContain('min-h-[44px]')
     expect(heroSrc).toContain('isPrelaunchAccessModeEnabled')
 
     // Pillar 5: Thumb-friendly 32px (h-8 w-8) mobile video controls

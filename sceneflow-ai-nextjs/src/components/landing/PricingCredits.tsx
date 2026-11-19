@@ -122,6 +122,11 @@ export function PricingCredits() {
           </div>
         </motion.div>
 
+        {/* Tier Grid directly beneath the Value Anchor Strip so pricing is immediately visible */}
+        <div className="mb-14">
+          <PricingTierGrid onSelectTier={handlePlanClick} />
+        </div>
+
         {/* 4 Filmmaker Perspectives & Production Strategies */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -138,7 +143,7 @@ export function PricingCredits() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {perspectives.cards.map((card, idx) => {
               const Icon = PERSPECTIVE_ICONS[idx] ?? Film
               return (
@@ -175,10 +180,6 @@ export function PricingCredits() {
             })}
           </div>
         </motion.div>
-
-        <div className="mb-14">
-          <PricingTierGrid onSelectTier={handlePlanClick} />
-        </div>
 
         {/* Studio Membership + Continuity Vault & Subscriber Add-On Packs */}
         <motion.div
@@ -271,7 +272,6 @@ export function PricingCredits() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-12"
         >
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
             {trustBadges.map((badge, index) => {
@@ -287,29 +287,6 @@ export function PricingCredits() {
               )
             })}
           </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center"
-        >
-          <div className="inline-flex flex-wrap justify-center gap-6 text-sm text-gray-400">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-emerald-400" />
-              <span>{t('trust.cancelAnytime')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-cyan-400" />
-              <span>{t('trust.moneyBack')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-amber-400" />
-              <span>{t('trust.creditsNeverExpire')}</span>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-6 max-w-md mx-auto">{tFooter('morLine')}</p>
         </motion.div>
       </div>
     </section>

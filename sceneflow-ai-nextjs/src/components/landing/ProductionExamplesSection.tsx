@@ -106,14 +106,7 @@ function MobileAccordion({
 export default function ProductionExamplesSection() {
   const t = useTranslations('productionShowcase')
   const cards = useMemo(() => t.raw('cards') as ProductionStyleCardData[], [t])
-  const [isMobileView, setIsMobileView] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return (
-      isPhoneHandset() ||
-      (typeof window.matchMedia === 'function' &&
-        Boolean(window.matchMedia('(max-width: 767px)')?.matches))
-    )
-  })
+  const [isMobileView, setIsMobileView] = useState(false)
 
   useEffect(() => {
     const syncLayout = () => {
@@ -160,26 +153,17 @@ export default function ProductionExamplesSection() {
           </h2>
 
           <p className="mx-auto max-w-3xl text-base sm:text-lg text-gray-300">{t('subtitle')}</p>
-          <div className="mx-auto mt-4 max-w-2xl space-y-1 border-l-2 border-cyan-400/50 pl-3.5 text-left sm:border-l-0 sm:pl-0 sm:text-center">
-            <p className="text-xs sm:text-sm font-semibold text-cyan-200">{t('subtitleTagline')}</p>
-            <p className="text-xs leading-relaxed text-gray-300">{t('languagesBanner')}</p>
-          </div>
-          <p className="mx-auto mt-2.5 max-w-2xl text-xs text-gray-400">{t('explorerHandoff')}</p>
+          <p className="mx-auto mt-2.5 max-w-2xl text-xs sm:text-sm font-medium text-cyan-200/90">
+            {t('subtitleTagline')} · {t('languagesBanner')}
+          </p>
         </motion.div>
 
-        {/* Desktop: 2-column grid (mount only active layout so hidden duplicate <video> tags never hog connections) */}
-        {!isMobileView ? (
-          <div className="hidden md:block">
-            <CardGrid cards={cards} t={t} />
-          </div>
-        ) : null}
-
-        {/* Mobile: accordion — one card visible at a time */}
+        {/* Mount only the active layout so hidden duplicate <video> tags never hog connections and landscape phones (>=768px) never go blank */}
         {isMobileView ? (
-          <div className="block md:hidden">
-            <MobileAccordion cards={cards} t={t} />
-          </div>
-        ) : null}
+          <MobileAccordion cards={cards} t={t} />
+        ) : (
+          <CardGrid cards={cards} t={t} />
+        )}
 
         <motion.div
           className="text-center"

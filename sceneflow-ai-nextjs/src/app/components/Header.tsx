@@ -57,6 +57,10 @@ export function Header() {
 
   const [isAdmin, setIsAdmin] = useState(false)
   useEffect(() => {
+    if (!isAuthenticated) {
+      setIsAdmin(false)
+      return
+    }
     let cancelled = false
     ;(async () => {
       try {
@@ -66,7 +70,7 @@ export function Header() {
       } catch { if (!cancelled) setIsAdmin(false) }
     })()
     return () => { cancelled = true }
-  }, [user?.email])
+  }, [isAuthenticated, user?.email])
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -120,7 +124,7 @@ export function Header() {
     <>
       <motion.header 
         className={`landing-header fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled 
+          isScrolled || isMobileMenuOpen
             ? 'bg-sf-brand-navy/95 backdrop-blur-md shadow-lg shadow-black/20' 
             : 'bg-transparent backdrop-blur-sm'
         }`}
@@ -155,27 +159,9 @@ export function Header() {
             >
               <button
                 type="button"
-                title={t('overview')}
-                onClick={scrollToTop}
-                className="flex shrink-0 items-center whitespace-nowrap px-1.5 2xl:px-2.5 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
-              >
-                <span>{t('overview')}</span>
-              </button>
-
-              <button
-                type="button"
-                title={t.has('videoServices') ? t('videoServices') : 'Video Business'}
-                onClick={() => scrollToSection('video-services')}
-                className="flex shrink-0 items-center whitespace-nowrap px-1.5 2xl:px-2.5 py-1.5 text-xs 2xl:text-[13px] text-emerald-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-emerald-500/10"
-              >
-                <span>{t.has('videoServices') ? t('videoServices') : 'Video Business'}</span>
-              </button>
-
-              <button
-                type="button"
                 title={t.has('studioTour') ? t('studioTour') : 'Studio Tour'}
                 onClick={() => scrollToSection('studio-tour')}
-                className="flex shrink-0 items-center whitespace-nowrap px-1.5 2xl:px-2.5 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex shrink-0 items-center whitespace-nowrap px-2 2xl:px-3 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <span>{t.has('studioTour') ? t('studioTour') : 'Studio Tour'}</span>
               </button>
@@ -184,16 +170,25 @@ export function Header() {
                 type="button"
                 title={t('productionExamples')}
                 onClick={() => scrollToSection('production-examples')}
-                className="flex shrink-0 items-center whitespace-nowrap px-1.5 2xl:px-2.5 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex shrink-0 items-center whitespace-nowrap px-2 2xl:px-3 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <span>{t('productionExamples')}</span>
               </button>
 
               <button
                 type="button"
+                title={t.has('videoServices') ? t('videoServices') : 'Video Business'}
+                onClick={() => scrollToSection('video-services')}
+                className="flex shrink-0 items-center whitespace-nowrap px-2 2xl:px-3 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+              >
+                <span>{t.has('videoServices') ? t('videoServices') : 'Video Business'}</span>
+              </button>
+
+              <button
+                type="button"
                 title={t('keyFeatures')}
                 onClick={() => scrollToSection('key-features')}
-                className="flex shrink-0 items-center whitespace-nowrap px-1.5 2xl:px-2.5 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex shrink-0 items-center whitespace-nowrap px-2 2xl:px-3 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <span>{t('keyFeatures')}</span>
               </button>
@@ -202,7 +197,7 @@ export function Header() {
                 type="button"
                 title={t('plansPricing')}
                 onClick={() => scrollToSection('pricing')}
-                className="flex shrink-0 items-center whitespace-nowrap px-1.5 2xl:px-2.5 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex shrink-0 items-center whitespace-nowrap px-2 2xl:px-3 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <span>{t('plansPricing')}</span>
               </button>
@@ -211,7 +206,7 @@ export function Header() {
                 type="button"
                 title={t('trustSafety')}
                 onClick={() => scrollToSection('trust-safety')}
-                className="flex shrink-0 items-center whitespace-nowrap px-1.5 2xl:px-2.5 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+                className="flex shrink-0 items-center whitespace-nowrap px-2 2xl:px-3 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <span>{t('trustSafety')}</span>
               </button>
@@ -303,12 +298,27 @@ export function Header() {
                 />
               </div>
 
-              <div className="flex shrink-0 items-center gap-0.5">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <LanguageSelector variant="icon" />
+                {!isAuthenticated ? (
+                  <Button
+                    onClick={goToSignup}
+                    className="hidden md:inline-flex px-3.5 py-1.5 text-xs bg-sf-primary hover:bg-sf-accent text-sf-background font-semibold rounded-lg"
+                  >
+                    {t('startProject')}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => navigateToDashboard()}
+                    className="hidden md:inline-flex px-3.5 py-1.5 text-xs bg-sf-primary hover:bg-sf-accent text-sf-background font-semibold rounded-lg"
+                  >
+                    {t('goToDashboard')}
+                  </Button>
+                )}
                 <button
                   type="button"
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2 text-gray-300 hover:text-white transition-colors"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-300 hover:text-white transition-colors rounded-lg"
                   aria-label={
                     isMobileMenuOpen
                       ? (t.has('closeMenu') ? t('closeMenu') : 'Close menu')
@@ -322,37 +332,29 @@ export function Header() {
             
             {/* Mobile Menu Dropdown */}
             {isMobileMenuOpen && (
-              <div className="xl:hidden pb-4 border-t border-gray-800/50">
-                <nav className="flex flex-col space-y-1 pt-4">
-                  <button onClick={scrollToTop} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    <Compass className="w-4 h-4 text-sf-primary" />
-                    {t('overview')}
-                  </button>
-                  <button onClick={() => scrollToSection('video-services')} className="flex items-center gap-2 text-emerald-300 hover:text-white hover:bg-emerald-500/10 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    <Briefcase className="w-4 h-4 text-emerald-400" />
-                    {t.has('videoServices') ? t('videoServices') : 'Video Business'}
-                  </button>
-                  <button onClick={() => scrollToSection('mobile-app')} className="flex items-center gap-2 text-cyan-300 hover:text-white hover:bg-cyan-500/10 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    <Smartphone className="w-4 h-4 text-cyan-400" />
-                    {t.has('mobileApp') ? t('mobileApp') : 'Mobile App'}
-                  </button>
-                  <button onClick={() => scrollToSection('studio-tour')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+              <div className="xl:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto pb-5 border-t border-gray-800/70 bg-sf-brand-navy/98">
+                <nav className="flex flex-col space-y-1 pt-3">
+                  <button type="button" onClick={() => scrollToSection('studio-tour')} className="flex items-center gap-2 text-gray-200 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Layers className="w-4 h-4 text-sf-primary" />
                     {t.has('studioTour') ? t('studioTour') : 'Studio Tour'}
                   </button>
-                  <button onClick={() => scrollToSection('production-examples')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                  <button type="button" onClick={() => scrollToSection('production-examples')} className="flex items-center gap-2 text-gray-200 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Clapperboard className="w-4 h-4 text-sf-primary" />
                     {t('productionExamples')}
                   </button>
-                  <button onClick={() => scrollToSection('key-features')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                  <button type="button" onClick={() => scrollToSection('video-services')} className="flex items-center gap-2 text-gray-200 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Briefcase className="w-4 h-4 text-sf-primary" />
+                    {t.has('videoServices') ? t('videoServices') : 'Video Business'}
+                  </button>
+                  <button type="button" onClick={() => scrollToSection('key-features')} className="flex items-center gap-2 text-gray-200 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Sparkles className="w-4 h-4 text-sf-primary" />
                     {t('keyFeatures')}
                   </button>
-                  <button onClick={() => scrollToSection('pricing')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                  <button type="button" onClick={() => scrollToSection('pricing')} className="flex items-center gap-2 text-gray-200 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <CreditCard className="w-4 h-4 text-sf-primary" />
                     {t('plansPricing')}
                   </button>
-                  <button onClick={() => scrollToSection('trust-safety')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                  <button type="button" onClick={() => scrollToSection('trust-safety')} className="flex items-center gap-2 text-gray-200 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Shield className="w-4 h-4 text-sf-primary" />
                     {t('trustSafety')}
                   </button>

@@ -1,10 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Shield, CheckCircle2, ArrowRight, FileSearch } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
 
 const SECTION_ID = 'trust-safety'
 
@@ -16,14 +18,20 @@ const TIER_GRADIENTS = [
 
 export function TrustSafeguardSection() {
   const t = useTranslations('trustSafeguard')
-  const tiers = t.raw('tiers') as Array<{
+  const rawTiers = t.raw('tiers')
+  const tiers = (Array.isArray(rawTiers) ? rawTiers : []) as Array<{
     id: string
     title: string
     description: string
     highlights: string[]
     badge: string
   }>
-  const flowSteps = t.raw('flowSteps') as Array<{ label: string; detail: string }>
+  const rawFlowSteps = t.raw('flowSteps')
+  const flowSteps = (Array.isArray(rawFlowSteps) ? rawFlowSteps : []) as Array<{
+    label: string
+    detail: string
+  }>
+  const prelaunchOnly = isPrelaunchAccessModeEnabled()
   const signupUrl = getSignupUrlForTier('explorer')
 
   return (
@@ -96,25 +104,36 @@ export function TrustSafeguardSection() {
           ))}
         </div>
 
-        <p className="text-center text-gray-500 text-sm max-w-3xl mx-auto mb-8 leading-relaxed">
-          {t('morNote')}
-        </p>
+        {/* Enterprise Cloud & AI Infrastructure Strip (consolidated from InfrastructureSection) */}
+        <div className="mb-8 flex flex-wrap items-center justify-center gap-3 rounded-xl border border-slate-800/80 bg-slate-900/60 px-4 py-3 text-xs text-gray-300">
+          <span className="font-semibold uppercase tracking-wider text-gray-400">
+            Enterprise Infrastructure:
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-950/70 px-2.5 py-1 font-medium text-gray-200">
+            <Image src="/images/google-cloud-logo.svg" alt="Google Cloud" width={16} height={16} />
+            Google Cloud
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-950/70 px-2.5 py-1 font-medium text-gray-200">
+            <Image src="/images/vertex-ai-logo.svg" alt="Vertex AI" width={16} height={16} />
+            Vertex AI
+          </span>
+        </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href={t('ctaPolicyHref')}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-800 border border-slate-600 text-white font-medium hover:bg-slate-700 transition-colors"
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-800 border border-slate-600 text-white font-medium hover:bg-slate-700 transition-colors"
           >
             <FileSearch className="w-4 h-4" />
             {t('ctaPolicy')}
           </Link>
-          <a
+          <Link
             href={signupUrl}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-medium shadow-lg shadow-indigo-500/25 hover:opacity-90 transition-opacity"
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 text-slate-950 font-semibold shadow-lg shadow-cyan-500/25 hover:brightness-110 transition-all"
           >
-            {t('ctaStudio')}
+            {prelaunchOnly ? 'Request Pre-Launch Access' : t('ctaStudio')}
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </Link>
         </div>
       </div>
     </section>

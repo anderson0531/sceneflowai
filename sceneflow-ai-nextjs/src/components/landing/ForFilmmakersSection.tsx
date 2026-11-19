@@ -29,6 +29,7 @@ export function ForFilmmakersSection() {
   const [logline, setLogline] = useState('')
   const [audienceUrl, setAudienceUrl] = useState('')
   const [exclusivePremiere, setExclusivePremiere] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
 
@@ -87,37 +88,47 @@ export function ForFilmmakersSection() {
   return (
     <section
       id={FOR_FILMMAKERS_SECTION_ID}
-      className="bg-gradient-to-b from-slate-950 via-indigo-950/20 to-slate-950 py-14 sm:py-24 scroll-mt-20"
+      className="bg-gradient-to-b from-slate-950 via-indigo-950/20 to-slate-950 py-10 sm:py-16 scroll-mt-20"
     >
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-8 sm:mb-10"
-        >
-          <p className="mb-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
-            <Clapperboard className="me-1.5 inline h-3.5 w-3.5 align-[-2px] text-cyan-400" />
-            <span>{t('badge')}</span>
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">{t('heading')}</h2>
-          <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-gray-400">{t('subtitle')}</p>
-          <p className="mt-3 text-sm text-gray-500">{t('closedNote')}</p>
-        </motion.div>
-
-        {status === 'success' ? (
-          <div
-            role="status"
-            className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-6 py-8 text-center"
-          >
-            <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-200">
-              <CheckCircle2 className="h-4 w-4" aria-hidden />
-              {t('successTitle')}
-            </p>
-            <p className="mt-2 text-sm text-emerald-100/80">{t('successBody')}</p>
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="rounded-2xl border border-indigo-500/25 bg-slate-900/70 p-6 sm:p-8">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <p className="!mb-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+                <Clapperboard className="me-1.5 inline h-3.5 w-3.5 align-[-2px] text-cyan-400" />
+                <span>{t('badge')}</span>
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">{t('heading')}</h2>
+              <p className="!mb-0 mt-1.5 max-w-2xl text-sm sm:text-base leading-relaxed text-gray-300">
+                {t('subtitle')}
+              </p>
+              <p className="!mb-0 mt-1.5 text-xs text-gray-500">{t('closedNote')}</p>
+            </div>
+            {status !== 'success' ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsFormOpen((prev) => !prev)}
+                className="shrink-0 w-full sm:w-auto border-cyan-400/40 text-cyan-200 hover:bg-cyan-500/15 hover:text-white"
+              >
+                {isFormOpen ? 'Hide Application' : t('submit')}
+              </Button>
+            ) : null}
           </div>
-        ) : (
-          <form
+
+          {status === 'success' ? (
+            <div
+              role="status"
+              className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-6 py-6 text-center"
+            >
+              <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-200">
+                <CheckCircle2 className="h-4 w-4" aria-hidden />
+                {t('successTitle')}
+              </p>
+              <p className="!mb-0 mt-2 text-sm text-emerald-100/80">{t('successBody')}</p>
+            </div>
+          ) : isFormOpen ? (
+            <form
             onSubmit={onSubmit}
             className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-6 sm:p-8"
           >
@@ -197,7 +208,7 @@ export function ForFilmmakersSection() {
                 {error}
               </p>
             ) : null}
-            <Button type="submit" disabled={status === 'submitting'} className="w-full sm:w-auto">
+            <Button type="submit" variant="primary" disabled={status === 'submitting'} className="w-full sm:w-auto">
               {status === 'submitting' ? (
                 <>
                   <Loader2 className={cn('mr-2 h-4 w-4 animate-spin')} />
@@ -209,7 +220,8 @@ export function ForFilmmakersSection() {
             </Button>
             <p className="text-xs text-gray-500">{t('privacy')}</p>
           </form>
-        )}
+          ) : null}
+        </div>
       </div>
     </section>
   )

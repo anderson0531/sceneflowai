@@ -333,6 +333,7 @@ export default function KeyFeaturesSection() {
   const [expandedFeature, setExpandedFeature] = useState<string | null>(null)
   const [isDesktop, setIsDesktop] = useState<boolean>(() => readIsDesktopViewport())
   const [desktopDetailOffsetPx, setDesktopDetailOffsetPx] = useState<number>(0)
+  const [mobileCollapsed, setMobileCollapsed] = useState<boolean>(false)
 
   const stageGridRef = useRef<HTMLDivElement | null>(null)
   const featureListRef = useRef<HTMLDivElement | null>(null)
@@ -776,12 +777,7 @@ export default function KeyFeaturesSection() {
 
             <div
               ref={detailWrapperRef}
-              style={
-                desktopDetailOffsetPx > 0
-                  ? { marginTop: `${desktopDetailOffsetPx}px` }
-                  : undefined
-              }
-              className="sticky top-24 lg:sticky lg:top-24 w-full min-w-0 self-start transition-[margin-top] duration-300 ease-out"
+              className="lg:sticky lg:top-24 w-full min-w-0 self-start"
             >
               <FeatureDetail
                 feature={selected}
@@ -805,7 +801,7 @@ export default function KeyFeaturesSection() {
           >
             {visibleFeatures.map((feature) => {
               const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
-              const isSelected = feature.icon === selected.icon
+              const isSelected = feature.icon === selected.icon && !mobileCollapsed
               const itemRoomMeta = featureCatalogByIcon.get(feature.icon)
               const itemGradient =
                 ROOM_GRADIENTS[itemRoomMeta?.roomId ?? 'series-desk'] ?? gradient
@@ -818,9 +814,14 @@ export default function KeyFeaturesSection() {
                     }}
                     type="button"
                     title={feature.title}
-                    aria-pressed={isSelected}
+                    aria-expanded={isSelected}
                     onClick={() => {
-                      setSelectedIcon(feature.icon)
+                      if (feature.icon === selected.icon && !mobileCollapsed) {
+                        setMobileCollapsed(true)
+                      } else {
+                        setSelectedIcon(feature.icon)
+                        setMobileCollapsed(false)
+                      }
                       setExpandedFeature(null)
                     }}
                     className={cn(

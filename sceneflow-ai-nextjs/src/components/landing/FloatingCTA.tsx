@@ -9,6 +9,7 @@ import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent';
 import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess';
 
 const SIGNUP_URL = getSignupUrlForTier('explorer');
+const DISMISS_STORAGE_KEY = 'sceneflow-floating-cta-dismissed';
 
 export default function FloatingCTA() {
   const t = useTranslations('floatingCta');
@@ -16,6 +17,16 @@ export default function FloatingCTA() {
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [cookieBannerOpen, setCookieBannerOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (window.sessionStorage?.getItem(DISMISS_STORAGE_KEY) === '1') {
+        setIsDismissed(true);
+      }
+    } catch {
+      // ignore storage access errors
+    }
+  }, []);
 
   useEffect(() => {
     const syncCookieBannerState = () => {
@@ -38,7 +49,8 @@ export default function FloatingCTA() {
       const scrollY = window.scrollY;
       const docHeight = document.documentElement.scrollHeight;
       const windowHeight = window.innerHeight;
-      const scrollPercent = scrollY / (docHeight - windowHeight);
+      const denom = Math.max(1, docHeight - windowHeight);
+      const scrollPercent = scrollY / denom;
       const shouldShow = scrollY > 800 && scrollPercent < 0.85;
       setIsVisible(shouldShow && !isDismissed);
     };
@@ -50,78 +62,59 @@ export default function FloatingCTA() {
 
   const handleDismiss = () => {
     setIsDismissed(true);
-    setTimeout(() => setIsDismissed(false), 60000);
+    try {
+      window.sessionStorage?.setItem(DISMISS_STORAGE_KEY, '1');
+    } catch {
+      // ignore storage access errors
+    }
   };
 
   return (
     <AnimatePresence>
       {isVisible && !cookieBannerOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 100 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="md:hidden fixed bottom-0 left-0 right-0 z-50 p-2.5 bg-gradient-to-t from-slate-950 via-slate-950/98 to-slate-950/90 border-t border-slate-800/50 backdrop-blur-sm"
-          >
-            <div className="flex items-center gap-2 max-w-md mx-auto">
-              <button
-                type="button"
-                title={t('seePricing')}
-                onClick={() => {
-                  document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2.5 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 font-semibold rounded-xl transition-all"
-              >
-                <DollarSign className="w-4 h-4 shrink-0" />
-                <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
-                  {t('seePricing')}
-                </span>
-              </button>
-              <Link
-                href={SIGNUP_URL}
-                title={t('tryNine')}
-                className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2.5 py-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all"
-              >
-                <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
-                  {prelaunchOnly
-                    ? (t.has('requestAccess') ? t('requestAccess') : 'Request Access')
-                    : t('tryNine')}
-                </span>
-                <ArrowRight className="w-4 h-4 shrink-0" />
-              </Link>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 100, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 100, scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="hidden md:flex fixed bottom-6 right-6 z-50 items-center gap-2"
-          >
-          <Link
-            href={SIGNUP_URL}
-            className="group relative inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:via-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-2xl shadow-indigo-500/30 transition-all duration-300 hover:scale-105"
-          >
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity -z-10" />
-            <span className="mr-2">
-              {prelaunchOnly
-                ? (t.has('requestPreLaunchAccess') ? t('requestPreLaunchAccess') : 'Request Pre-Launch Access')
-                : t('tryForNine')}
-            </span>
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
-          
-          <button
-            onClick={handleDismiss}
-            className="p-2 rounded-full bg-gray-800/80 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white transition-all duration-200 backdrop-blur-sm"
-            aria-label={t('dismiss')}
-          >
-            <X className="w-4 h-4" />
-          </button>
+        <motion.div
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 100 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className="xl:hidden fixed bottom-0 left-0 right-0 z-50 px-2.5 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-slate-950 via-slate-950/98 to-slate-950/92 border-t border-slate-800/60 backdrop-blur-md"
+        >
+          <div className="flex items-center gap-2 max-w-md mx-auto">
+            <button
+              type="button"
+              title={t('seePricing')}
+              onClick={() => {
+                document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="flex-1 min-w-0 min-h-[44px] flex items-center justify-center gap-1.5 px-2.5 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-semibold rounded-xl transition-all"
+            >
+              <DollarSign className="w-4 h-4 shrink-0" />
+              <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
+                {t('seePricing')}
+              </span>
+            </button>
+            <Link
+              href={SIGNUP_URL}
+              title={prelaunchOnly ? (t.has('requestAccess') ? t('requestAccess') : 'Request Access') : t('tryNine')}
+              className="flex-1 min-w-0 min-h-[44px] flex items-center justify-center gap-1.5 px-2.5 py-2 bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 text-slate-950 font-semibold rounded-xl shadow-lg shadow-cyan-500/25 transition-all"
+            >
+              <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
+                {prelaunchOnly
+                  ? (t.has('requestAccess') ? t('requestAccess') : 'Request Access')
+                  : t('tryNine')}
+              </span>
+              <ArrowRight className="w-4 h-4 shrink-0" />
+            </Link>
+            <button
+              type="button"
+              onClick={handleDismiss}
+              className="min-h-[44px] min-w-[44px] shrink-0 flex items-center justify-center rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-white transition-colors"
+              aria-label={t('dismiss')}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </motion.div>
-        </>
       )}
     </AnimatePresence>
   );

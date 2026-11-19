@@ -3,99 +3,57 @@
 import dynamic from 'next/dynamic'
 import { Header } from './components/Header'
 import { ImaginePossibilitiesHero } from '@/components/landing/ImaginePossibilitiesHero'
-import { CreatorAndBusinessGatewaySection } from '@/components/landing/CreatorAndBusinessGatewaySection'
-import { DirectorOperatingSystemSection } from '@/components/landing/DirectorOperatingSystemSection'
+import StudioGuidedTourSection from '@/components/landing/StudioGuidedTourSection'
+import ProductionExamplesSection from '@/components/landing/ProductionExamplesSection'
 import { VideoServicesSpotlightSection } from '@/components/landing/VideoServicesSpotlightSection'
-import { MobileCompanionPwaSection } from '@/components/landing/MobileCompanionPwaSection'
-import { LandingSectionCollapseProvider } from '@/components/landing/LandingSectionCollapse'
-import { FullStudioDirectoryDrawer } from '@/components/landing/FullStudioDirectoryDrawer'
+import KeyFeaturesSection from '@/components/landing/KeyFeaturesSection'
+import StudioAcademyGuaranteeStrip from '@/components/landing/StudioAcademyGuaranteeStrip'
+import PricingCredits from '@/components/landing/PricingCredits'
+import { TrustSafeguardSection } from '@/components/landing/TrustSafeguardSection'
+import { ForFilmmakersSection } from '@/components/landing/ForFilmmakersSection'
 import { PersistLandingLocale } from '@/components/i18n/PersistLandingLocale'
 import { FinalCTA } from './components/FinalCTA'
 import { Footer } from './components/Footer'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
 
-const ProductionExamplesSection = dynamic(
-  () => import('@/components/landing/ProductionExamplesSection'),
-  { ssr: false }
-)
-const StudioGuidedTourSection = dynamic(
-  () => import('@/components/landing/StudioGuidedTourSection'),
-  { ssr: false }
-)
-const KeyFeaturesSection = dynamic(
-  () => import('@/components/landing/KeyFeaturesSection'),
-  { ssr: false }
-)
-const StudioAcademyGuaranteeStrip = dynamic(
-  () => import('@/components/landing/StudioAcademyGuaranteeStrip'),
-  { ssr: false }
-)
-const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
-const InfrastructureSection = dynamic(
-  () => import('@/components/landing/InfrastructureSection'),
-  { ssr: false }
-)
-const TrustSafeguardSection = dynamic(
-  () => import('@/components/landing/TrustSafeguardSection').then((m) => m.TrustSafeguardSection),
-  { ssr: false }
-)
-const ForFilmmakersSection = dynamic(
-  () => import('@/components/landing/ForFilmmakersSection').then((m) => m.ForFilmmakersSection),
-  { ssr: false }
-)
-const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
 const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPopup'), { ssr: false })
 
 export default function LandingPageClient() {
+  const prelaunchOnly = isPrelaunchAccessModeEnabled()
+
   return (
     <div id="main-content" className="min-h-screen bg-gray-950 text-white overflow-x-clip">
       <PersistLandingLocale />
       <Header />
       <FloatingCTA />
-      <ExitIntentPopup />
+      {prelaunchOnly ? <ExitIntentPopup /> : null}
 
-      {/* 1. Top Cinematic 6-Genre Dubbed Trailer Showcase */}
+      {/* 1. Full-Bleed Cinematic 6-Genre Dubbed Trailer Showcase */}
       <ImaginePossibilitiesHero />
 
-      {/* 2. Dual-Audience Gateway: Video Service Businesses + Creators & Filmmakers */}
-      <CreatorAndBusinessGatewaySection />
+      {/* 2. Guided 4-Room Studio Visual Tour (Creator / Business Lens) */}
+      <StudioGuidedTourSection />
 
-      {/* 3. The 5 Studio Superpowers Interactive Bento (+ 30s Host Clips on Demand) */}
-      <DirectorOperatingSystemSection />
+      {/* 3. Playable Production Examples Across 6 Genres */}
+      <ProductionExamplesSection />
 
-      {/* 4. Dedicated Video Services Business Engine & Monthly Income Estimator */}
+      {/* 4. Video Business Engine & Monthly Profit Estimator */}
       <VideoServicesSpotlightSection />
 
-      {/* 4b. Mobile Companion PWA: Customer-Initiated Projects, PM Loop, Shared Continuity & Alerts */}
-      <MobileCompanionPwaSection />
+      {/* 5. Curated Studio Capabilities Explorer */}
+      <KeyFeaturesSection />
 
-      <LandingSectionCollapseProvider>
-        <FloatingNav />
+      {/* 6. Zero-Learning-Curve Studio Academy Onboarding + Pricing */}
+      <StudioAcademyGuaranteeStrip />
+      <PricingCredits />
 
-        {/* 5. Guided 4-Room Sandbox Visual Tour (teaches the 4 live Studio doors before examples) */}
-        <StudioGuidedTourSection />
-
-        {/* 6. Playable Production Examples Across 6 Genres (with the 4 live Studio doors) */}
-        <ProductionExamplesSection />
-
-        {/* 7. Progressive 30-Feature Directory (Organized by Use Case or Studio Room) */}
-        <FullStudioDirectoryDrawer>
-          <KeyFeaturesSection />
-        </FullStudioDirectoryDrawer>
-
-        {/* 7. Zero-Learning-Curve Studio Academy Guarantee */}
-        <StudioAcademyGuaranteeStrip />
-
-        {/* 8. Membership, Continuity Vault, Pricing & Trust */}
-        <PricingCredits />
-        <InfrastructureSection />
-        <TrustSafeguardSection />
-      </LandingSectionCollapseProvider>
-
+      {/* 7. Trust, IP Safeguard & Google Cloud Infrastructure + Originals Seed */}
+      <TrustSafeguardSection />
       <ForFilmmakersSection />
 
+      {/* 8. High-Contrast Final CTA & Footer */}
       <FinalCTA />
-
       <Footer />
     </div>
   )

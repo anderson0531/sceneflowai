@@ -32,11 +32,12 @@ function resolveSiteUrl(): string {
   if (fromEnv) return fromEnv.replace(/\/$/, '')
   const vercel = process.env.VERCEL_URL?.trim()
   if (vercel) return `https://${vercel.replace(/^\/+/, '')}`
-  return 'https://sceneflowai.com'
+  return 'https://sceneflowai.studio'
 }
 
 const SITE_URL = resolveSiteUrl()
-const SITE_DESCRIPTION = 'Transform your ideas into professional videos with AI-powered workflow automation'
+const SITE_DESCRIPTION =
+  'Direct feature-length AI films, multi-episode series, documentaries, and client productions with locked character continuity and 70+ language dubbing.'
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -44,8 +45,7 @@ const structuredData = {
   name: 'SceneFlow Studio',
   applicationCategory: 'MultimediaApplication',
   operatingSystem: 'Web',
-  description:
-    'Transform your ideas into professional videos with AI-powered workflow automation. Create scripts, characters, and videos in one integrated platform.',
+  description: SITE_DESCRIPTION,
   url: 'https://sceneflowai.studio',
   image: `${SITE_URL}/brand/sf-logo-lockup.png`,
   author: {
@@ -56,39 +56,39 @@ const structuredData = {
     {
       '@type': 'Offer',
       name: 'Explorer',
-      price: '9.99',
+      price: '9.00',
       priceCurrency: 'USD',
-      description: 'One-time purchase: 3,000 credits to test drive the platform',
+      description: 'One-time purchase: 750 credits to test drive the studio',
+    },
+    {
+      '@type': 'Offer',
+      name: 'Hobbyist',
+      price: '19.00',
+      priceCurrency: 'USD',
+      description: 'Monthly membership: 1,500 credits and Continuity Vault storage',
     },
     {
       '@type': 'Offer',
       name: 'Starter',
       price: '49.00',
       priceCurrency: 'USD',
-      description: 'Monthly subscription: 4,500 credits for hobbyists',
+      description: 'Monthly membership: 4,500 credits for active solo creators',
     },
     {
       '@type': 'Offer',
       name: 'Pro',
       price: '149.00',
       priceCurrency: 'USD',
-      description: 'Monthly subscription: 15,000 credits for freelancers',
+      description: 'Monthly membership: 15,000 credits for series creators and freelancers',
     },
     {
       '@type': 'Offer',
       name: 'Studio',
       price: '599.00',
       priceCurrency: 'USD',
-      description: 'Monthly subscription: 75,000 credits for agencies',
+      description: 'Monthly membership: 75,000 credits for agencies and production teams',
     },
   ],
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.8',
-    ratingCount: '150',
-    bestRating: '5',
-    worstRating: '1',
-  },
 }
 
 const organizationStructuredData = {
@@ -172,7 +172,7 @@ export const metadata: Metadata = {
     images: ['/brand/sf-logo-lockup.png'],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'SceneFlow Studio',
     description: SITE_DESCRIPTION,
     creator: '@sceneflowai',

@@ -9,7 +9,6 @@ import {
   Clapperboard,
   ExternalLink,
   Film,
-  Images,
   Layers,
   Maximize2,
   Play,
@@ -18,7 +17,6 @@ import {
 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal'
-import { useExpandLandingSection } from '@/components/landing/LandingSectionCollapse'
 import {
   StudioDoorWalkthroughModal,
   type WalkthroughDisplayMode,
@@ -105,16 +103,13 @@ export function StudioGuidedTourSection() {
   const locale = useLocale()
   const tCommon = useTranslations('common')
   const copy = useStudioLandingCopy().guidedTour
-  const expandSection = useExpandLandingSection()
 
   const scrollToExamples = () => {
-    expandSection('production-examples')
-    requestAnimationFrame(() => {
-      document.getElementById('production-examples')?.scrollIntoView({ behavior: 'smooth' })
-    })
+    document.getElementById('production-examples')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const [activeRoomId, setActiveRoomId] = useState<RoomId>('series-desk')
+  const [selectedThumbIdx, setSelectedThumbIdx] = useState<number | null>(null)
   const [lens, setLens] = useState<'creator' | 'service'>('creator')
   const [expandedScreenshot, setExpandedScreenshot] = useState<{
     src: string
@@ -219,7 +214,10 @@ export function StudioGuidedTourSection() {
                   role="tab"
                   title={fullRoomTitle}
                   aria-selected={isSelected}
-                  onClick={() => setActiveRoomId(room.id)}
+                  onClick={() => {
+                    setActiveRoomId(room.id)
+                    setSelectedThumbIdx(null)
+                  }}
                   className={cn(
                     'flex flex-col items-start gap-2 rounded-2xl border p-3 text-start transition-all sm:flex-row sm:items-center sm:gap-3 sm:p-4 cursor-pointer',
                     isSelected
@@ -332,31 +330,17 @@ export function StudioGuidedTourSection() {
                   </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {hasRoomVideo ? (
-                    <>
-                      <button
-                        type="button"
-                        title={`${copy.watchRoomVideoLabel} (${walkthroughCopy.interimBadge})`}
-                        onClick={() => openRoomWalkthrough('video')}
-                        className="inline-flex items-center gap-1 rounded-lg border border-cyan-400/40 bg-cyan-500/15 px-2 py-1 text-[11px] font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/25 hover:text-white sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs cursor-pointer"
-                      >
-                        <Play className="h-3 w-3 shrink-0 fill-current" aria-hidden />
-                        <span className="whitespace-normal leading-tight">{copy.watchRoomVideoLabel}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        title={`${walkthroughCopy.modePannedScreens} · ${walkthroughCopy.doorButtonHint}`}
-                        onClick={() => openRoomWalkthrough('panned')}
-                        className="inline-flex items-center gap-1 rounded-lg border border-purple-400/35 bg-purple-500/15 px-2 py-1 text-[11px] font-semibold text-purple-200 transition-colors hover:bg-purple-500/25 hover:text-white sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs cursor-pointer"
-                      >
-                        <Images className="h-3 w-3 shrink-0" aria-hidden />
-                        <span className="whitespace-normal leading-tight">
-                          {walkthroughCopy.modePannedScreens}
-                        </span>
-                      </button>
-                    </>
+                    <button
+                      type="button"
+                      title={`${copy.watchRoomVideoLabel} (${walkthroughCopy.interimBadge})`}
+                      onClick={() => openRoomWalkthrough('video')}
+                      className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-cyan-400/45 bg-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/25 hover:text-white cursor-pointer"
+                    >
+                      <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden />
+                      <span className="whitespace-normal leading-tight">{copy.watchRoomVideoLabel}</span>
+                    </button>
                   ) : null}
 
                   <button
@@ -364,13 +348,16 @@ export function StudioGuidedTourSection() {
                     title={copy.inspectFullScreenLabel}
                     onClick={() =>
                       setExpandedScreenshot({
-                        src: ROOM_FULL_SCREENSHOTS[activeRoom.id],
+                        src:
+                          selectedThumbIdx !== null
+                            ? assets.thumbSrcs[selectedThumbIdx] ?? ROOM_FULL_SCREENSHOTS[activeRoom.id]
+                            : ROOM_FULL_SCREENSHOTS[activeRoom.id],
                         alt: `${activeRoom.tabLabel} — ${copy.inspectFullScreenLabel}`,
                       })
                     }
-                    className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-medium text-gray-200 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs cursor-pointer"
+                    className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-200 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white cursor-pointer"
                   >
-                    <Maximize2 className="h-3 w-3 shrink-0" aria-hidden />
+                    <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
                     <span className="whitespace-normal leading-tight">
                       {copy.inspectFullScreenLabel}
                     </span>
@@ -381,7 +368,11 @@ export function StudioGuidedTourSection() {
               {/* Hero Sandbox Frame — 100% unobstructed on mobile (< sm); overlays appear on spacious sm+ screens */}
               <div className="relative aspect-video w-full overflow-hidden bg-black">
                 <img
-                  src={assets.heroSrc}
+                  src={
+                    selectedThumbIdx !== null
+                      ? assets.thumbSrcs[selectedThumbIdx] ?? assets.heroSrc
+                      : assets.heroSrc
+                  }
                   alt={`${activeRoom.tabLabel} — ${activeRoom.title}`}
                   className="h-full w-full object-cover"
                   decoding="async"
@@ -447,15 +438,23 @@ export function StudioGuidedTourSection() {
                 ) : null}
               </div>
 
-              {/* 4 Connected Continuity / Shot Cards Strip */}
+              {/* 4 Interactive Continuity / Shot Preview Cards */}
               <div className="grid grid-cols-2 gap-2.5 border-t border-slate-800 bg-slate-950 p-3.5 sm:grid-cols-4">
                 {assets.thumbSrcs.map((thumbSrc, idx) => {
                   const thumbLabel = visuals.thumbLabels[idx] ?? ''
+                  const isThumbActive = selectedThumbIdx === idx
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={`${activeRoom.id}-${idx}`}
                       title={thumbLabel}
-                      className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/90"
+                      aria-pressed={isThumbActive}
+                      onClick={() => setSelectedThumbIdx((prev) => (prev === idx ? null : idx))}
+                      className={`overflow-hidden rounded-xl border text-left transition-all cursor-pointer ${
+                        isThumbActive
+                          ? 'border-cyan-400/80 bg-cyan-950/30 ring-1 ring-cyan-400/50'
+                          : 'border-slate-800 bg-slate-900/90 hover:border-slate-600'
+                      }`}
                     >
                       <div className="aspect-[16/10] w-full overflow-hidden bg-black">
                         <img
@@ -467,11 +466,11 @@ export function StudioGuidedTourSection() {
                       </div>
                       <p
                         title={thumbLabel}
-                        className="line-clamp-2 px-2.5 py-1.5 text-[11px] font-medium leading-tight text-gray-200"
+                        className="!mb-0 line-clamp-2 px-2.5 py-1.5 text-[11px] font-medium leading-tight text-gray-200"
                       >
                         {thumbLabel}
                       </p>
-                    </div>
+                    </button>
                   )
                 })}
               </div>

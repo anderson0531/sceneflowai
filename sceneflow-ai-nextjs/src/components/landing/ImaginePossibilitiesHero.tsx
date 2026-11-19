@@ -53,12 +53,12 @@ export function ImaginePossibilitiesHero() {
   const prevSourceKeyRef = useRef<string | null>(null)
   const isReloadingSourceRef = useRef(false)
 
-  const headline = tPossibilities.has('headline')
-    ? tPossibilities('headline')
-    : IMAGINE_POSSIBILITIES_COPY.headline
-  const subheadline = tPossibilities.has('subheadline')
-    ? tPossibilities('subheadline')
-    : IMAGINE_POSSIBILITIES_COPY.subheadline
+  const heroEyebrow = tHero.has('eyebrow') ? tHero('eyebrow') : ''
+  const headline = tHero.has('headline')
+    ? tHero('headline')
+    : tPossibilities.has('headline')
+      ? tPossibilities('headline')
+      : IMAGINE_POSSIBILITIES_COPY.headline
   const categoriesAriaLabel = tPossibilities.has('categoriesAriaLabel')
     ? tPossibilities('categoriesAriaLabel')
     : IMAGINE_POSSIBILITIES_COPY.categoriesAriaLabel
@@ -79,7 +79,7 @@ export function ImaginePossibilitiesHero() {
   const [inViewport, setInViewport] = useState(true)
   const [isBuffering, setIsBuffering] = useState(false)
   const [isTheaterOpen, setIsTheaterOpen] = useState(false)
-  const [videoPreload, setVideoPreload] = useState<VideoPreloadValue>('auto')
+  const [videoPreload, setVideoPreload] = useState<VideoPreloadValue>('metadata')
   const [userActivatedPlayback, setUserActivatedPlayback] = useState(false)
   const [prefetchedIds, setPrefetchedIds] = useState<ProductionWalkId[]>([])
   const pendingSeekRef = useRef<{ time: number; duration: number } | null>(null)
@@ -323,12 +323,12 @@ export function ImaginePossibilitiesHero() {
         aria-label={headline}
         className="relative min-h-[100dvh] w-full overflow-hidden bg-gray-950 text-white"
       >
-        {/* Background Video Layer — mirrors HeroSection.tsx & HeroVideoBackground.tsx */}
-        <div className="absolute inset-x-0 bottom-0 top-16 overflow-hidden lg:inset-0">
+        {/* Background Video Layer — full-bleed cinematic framing */}
+        <div className="absolute inset-x-0 bottom-0 top-16 overflow-hidden xl:inset-0">
           <video
             ref={videoRef}
             poster={activePoster}
-            className="absolute inset-0 z-0 h-full w-full bg-black object-cover object-top lg:object-contain lg:object-center"
+            className="absolute inset-0 z-0 h-full w-full bg-black object-cover object-center"
             autoPlay={!prefersReducedMotion}
             muted={isMuted || isTheaterOpen}
             playsInline
@@ -427,8 +427,8 @@ export function ImaginePossibilitiesHero() {
         )}
 
         {/* Top-Right Background Video Controls */}
-        <div className="absolute inset-x-0 top-16 z-20 flex items-center justify-end bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8 lg:top-20">
-          <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="absolute inset-x-0 top-16 z-20 flex items-center justify-end bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8 xl:top-20">
+          <div className="flex items-center gap-2">
             <VideoGlobeLanguageSelector
               activeLocale={videoLocale}
               onSelectLocale={handleSelectVideoLocale}
@@ -444,7 +444,7 @@ export function ImaginePossibilitiesHero() {
                 type="button"
                 data-hero-control
                 onClick={togglePlay}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-cyan-300"
+                className="flex h-10 w-10 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-cyan-300"
                 aria-label={isPlaying ? tHero('pauseBackgroundVideo') : tHero('playBackgroundVideo')}
               >
                 {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -455,7 +455,7 @@ export function ImaginePossibilitiesHero() {
                 type="button"
                 data-hero-control
                 onClick={toggleMute}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-cyan-300"
+                className="flex h-10 w-10 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-cyan-300"
                 aria-label={isMuted ? tCommon('unmute') : tCommon('mute')}
               >
                 {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
@@ -466,84 +466,92 @@ export function ImaginePossibilitiesHero() {
                 type="button"
                 data-hero-control
                 onClick={openTheater}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-gray-200 backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-white"
+                className="flex h-10 w-10 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/65 text-gray-200 backdrop-blur-sm transition-colors hover:border-cyan-400/50 hover:bg-black/85 hover:text-white"
                 aria-label={tHero('fullscreen')}
               >
-                <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <Maximize2 className="h-4 w-4 shrink-0" aria-hidden />
               </button>
             </VideoControlTooltip>
           </div>
         </div>
 
-        {/* Text Overlay: "Imagine the Possibilities" + "with SceneFlow Studio" + Compact Category Pills */}
-        <div className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-end px-4 pt-32 pb-12 text-center sm:pt-36 sm:pb-20 lg:pt-40">
+        {/* Cinematic Bottom Dock: Category-Defining H1 + Concise Value Prop + 6 Genre Pills + 2 Crisp CTAs */}
+        <div className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-end px-4 pt-32 pb-10 text-center sm:pt-36 sm:pb-16 lg:pt-40">
           <div className="mx-auto w-full max-w-4xl">
-            <motion.h2
-              className="bg-gradient-to-r from-white via-gray-200 to-cyan-200 bg-clip-text text-3xl font-bold leading-tight tracking-tighter text-transparent drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)] sm:text-4xl md:text-5xl lg:text-6xl"
+            {heroEyebrow ? (
+              <motion.p
+                className="mb-2.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300 drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]"
+                initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.6 }}
+              >
+                {heroEyebrow}
+              </motion.p>
+            ) : null}
+
+            <motion.h1
+              className="bg-gradient-to-r from-white via-gray-100 to-cyan-200 bg-clip-text text-balance text-3xl font-bold leading-[1.12] tracking-tight text-transparent drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)] sm:text-5xl md:text-6xl lg:text-7xl"
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.1 }}
             >
               {headline}
-            </motion.h2>
+            </motion.h1>
 
             <motion.p
-              className="mt-2 sm:mt-3 text-base font-medium tracking-wide text-gray-100 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] sm:text-xl md:text-2xl"
-              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.2 }}
-            >
-              {subheadline}
-            </motion.p>
-
-            <motion.div
-              role="tablist"
-              aria-label={categoriesAriaLabel}
-              className="mt-5 sm:mt-7 flex w-full max-w-full flex-nowrap items-center justify-start gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:justify-center sm:gap-2.5 sm:overflow-visible sm:px-0 sm:pb-0"
+              className="mx-auto mt-3 sm:mt-4 max-w-2xl text-sm leading-relaxed text-gray-100/95 drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] sm:text-base md:text-lg"
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.28 }}
-            >
-              {EXAMPLE_TRAILER_SCRIPTS.map((script) => {
-                const isSelected = script.id === activeScript.id
-                const categoryLabel = getCategoryLabel(script)
-                return (
-                  <button
-                    key={script.id}
-                    type="button"
-                    role="tab"
-                    title={categoryLabel}
-                    aria-selected={isSelected}
-                    data-category-id={script.id}
-                    onMouseEnter={() => prefetchCategory(script.id)}
-                    onFocus={() => prefetchCategory(script.id)}
-                    onClick={() => selectCategory(script.id)}
-                    className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold backdrop-blur-md transition-all sm:px-4 sm:text-sm ${
-                      isSelected
-                        ? 'border-cyan-400/70 bg-cyan-500/25 text-white shadow-lg shadow-cyan-500/20'
-                        : 'border-white/20 bg-black/50 text-gray-200 hover:border-white/40 hover:bg-black/70 hover:text-white'
-                    }`}
-                  >
-                    {categoryLabel}
-                  </button>
-                )
-              })}
-            </motion.div>
-
-            <motion.p
-              className="mx-auto mt-4 sm:mt-5 max-w-2xl text-xs leading-relaxed text-gray-200/95 drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)] sm:text-sm"
-              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.7, delay: prefersReducedMotion ? 0 : 0.34 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.7, delay: prefersReducedMotion ? 0 : 0.2 }}
             >
               {studioCopy.heroDock.tagline}
             </motion.p>
 
+            <div className="relative mt-5 sm:mt-6">
+              <motion.div
+                role="tablist"
+                aria-label={categoriesAriaLabel}
+                className="flex w-full max-w-full flex-nowrap items-center justify-start gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:justify-center sm:gap-2.5 sm:overflow-visible sm:px-0 sm:pb-0"
+                initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.7, delay: prefersReducedMotion ? 0 : 0.28 }}
+              >
+                {EXAMPLE_TRAILER_SCRIPTS.map((script) => {
+                  const isSelected = script.id === activeScript.id
+                  const categoryLabel = getCategoryLabel(script)
+                  return (
+                    <button
+                      key={script.id}
+                      type="button"
+                      role="tab"
+                      title={categoryLabel}
+                      aria-selected={isSelected}
+                      data-category-id={script.id}
+                      onMouseEnter={() => prefetchCategory(script.id)}
+                      onFocus={() => prefetchCategory(script.id)}
+                      onClick={() => selectCategory(script.id)}
+                      className={`shrink-0 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold backdrop-blur-md transition-all sm:px-4 sm:py-1.5 sm:text-sm ${
+                        isSelected
+                          ? 'border-cyan-400/80 bg-cyan-500/25 text-white shadow-lg shadow-cyan-500/25'
+                          : 'border-white/20 bg-black/55 text-gray-200 hover:border-white/40 hover:bg-black/75 hover:text-white'
+                      }`}
+                    >
+                      {categoryLabel}
+                    </button>
+                  )
+                })}
+              </motion.div>
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-gray-950/90 to-transparent sm:hidden"
+              />
+            </div>
+
             <motion.div
-              className="mx-auto mt-4 flex w-full max-w-md flex-col items-stretch justify-center gap-2 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
+              className="mx-auto mt-5 flex w-full max-w-md flex-col items-stretch justify-center gap-2.5 sm:max-w-none sm:flex-row sm:items-center sm:gap-3.5"
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.7, delay: prefersReducedMotion ? 0 : 0.4 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.7, delay: prefersReducedMotion ? 0 : 0.36 }}
             >
               <button
                 type="button"
@@ -551,35 +559,22 @@ export function ImaginePossibilitiesHero() {
                 onClick={() => {
                   window.location.href = getSignupUrlForTier('explorer')
                 }}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl sm:rounded-full bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:brightness-110 sm:w-auto sm:text-sm"
+                className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl sm:rounded-full bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition-all hover:brightness-110 sm:w-auto sm:text-base"
               >
                 <span className="whitespace-normal leading-tight">{primaryHeroCtaLabel}</span>
                 <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
               </button>
-              <div className="grid grid-cols-1 gap-2 min-[440px]:grid-cols-2 sm:contents">
-                <button
-                  type="button"
-                  title={studioCopy.heroDock.businessCta}
-                  onClick={() => {
-                    document.getElementById('video-services')?.scrollIntoView({ behavior: 'smooth' })
-                  }}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full border border-emerald-400/45 bg-emerald-950/60 px-4 py-2 text-xs font-semibold text-emerald-200 backdrop-blur-md transition-colors hover:border-emerald-300/70 hover:bg-emerald-900/70 hover:text-white sm:text-sm"
-                >
-                  <Briefcase className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
-                  <span className="whitespace-normal leading-tight">{studioCopy.heroDock.businessCta}</span>
-                </button>
-                <button
-                  type="button"
-                  title={studioCopy.heroDock.howItWorksCta}
-                  onClick={() => {
-                    document.getElementById('five-superpowers')?.scrollIntoView({ behavior: 'smooth' })
-                  }}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full border border-white/25 bg-black/55 px-4 py-2 text-xs font-medium text-gray-200 backdrop-blur-md transition-colors hover:border-white/45 hover:bg-black/75 hover:text-white sm:text-sm"
-                >
-                  <Compass className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
-                  <span className="whitespace-normal leading-tight">{studioCopy.heroDock.howItWorksCta}</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                title={studioCopy.heroDock.howItWorksCta}
+                onClick={() => {
+                  document.getElementById('studio-tour')?.scrollIntoView({ behavior: 'smooth' })
+                }}
+                className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl sm:rounded-full border border-white/25 bg-black/60 px-6 py-3 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:border-cyan-400/50 hover:bg-black/80 sm:w-auto sm:text-base"
+              >
+                <Compass className="h-4 w-4 shrink-0 text-cyan-300" aria-hidden />
+                <span className="whitespace-normal leading-tight">{studioCopy.heroDock.howItWorksCta}</span>
+              </button>
             </motion.div>
           </div>
         </div>

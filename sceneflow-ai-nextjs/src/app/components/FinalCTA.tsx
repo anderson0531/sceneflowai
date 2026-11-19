@@ -1,7 +1,6 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/Button'
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -30,24 +29,26 @@ export function FinalCTA() {
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6">{t('title')}</h2>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">{t('subtitle')}</p>
 
-          <div className="flex justify-center">
-            <NotifyCapture source="final-cta" />
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href={getSignupUrlForTier('explorer')}
+              className="inline-flex items-center justify-center w-full sm:w-auto rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 px-8 py-3.5 text-base font-semibold text-slate-950 shadow-lg shadow-cyan-500/25 hover:brightness-110 transition-all"
+            >
+              {prelaunchOnly
+                ? (t.has('requestPreLaunchAccess') ? t('requestPreLaunchAccess') : 'Request Pre-Launch Access')
+                : t('cta')}
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Link>
+            <Link
+              href="#studio-tour"
+              className="inline-flex items-center justify-center w-full sm:w-auto rounded-xl border border-purple-500/40 px-8 py-3.5 text-base font-semibold text-purple-200 hover:bg-purple-500/10 transition-colors"
+            >
+              {t('ctaSecondary')}
+            </Link>
           </div>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href={getSignupUrlForTier('explorer')} className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto">
-                {prelaunchOnly
-                  ? (t.has('requestPreLaunchAccess') ? t('requestPreLaunchAccess') : 'Request Pre-Launch Access')
-                  : t('cta')}
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-            <Link href={t('ctaSecondaryHref')} className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto border-purple-500/40 text-purple-300 hover:bg-purple-500/10">
-                {t('ctaSecondary')}
-              </Button>
-            </Link>
+          <div className="mt-10 pt-8 border-t border-slate-800/70 flex justify-center">
+            <NotifyCapture source="final-cta" />
           </div>
         </motion.div>
       </div>

@@ -1,6 +1,7 @@
 'use client'
 
-import { Mail, ExternalLink, Youtube } from 'lucide-react'
+import { Mail, Youtube } from 'lucide-react'
+import Link from 'next/link'
 import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 import { useTranslations } from 'next-intl'
 import { useLocale } from 'next-intl'
@@ -15,15 +16,15 @@ export function Footer() {
 
   const footerLinks = {
     product: [
+      { name: tNav.has('studioTour') ? tNav('studioTour') : 'Studio Tour', href: '#studio-tour' },
       { name: tNav('productionExamples'), href: '#production-examples' },
       { name: t('links.features'), href: '#key-features' },
-      { name: t('links.howItWorks'), href: '#two-modes' },
       { name: t('links.pricing'), href: '#pricing' },
     ],
     resources: [
-      { name: t('links.gettingStarted'), href: '#two-modes' },
+      { name: tNav.has('videoServices') ? tNav('videoServices') : 'Video Business', href: '#video-services' },
       { name: tFilmmakers('badge'), href: '#for-filmmakers' },
-      { name: t('links.pricing'), href: '#pricing' },
+      { name: tNav('trustSafety'), href: '#trust-safety' },
     ],
     legal: [
       { name: t('links.privacy'), href: '/privacy' },
@@ -53,8 +54,8 @@ export function Footer() {
   return (
     <footer className="border-t border-gray-800 py-16 bg-gray-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
-          <div className="col-span-1 lg:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+          <div className="col-span-1 md:col-span-2 lg:col-span-2">
             <div className="mb-6">
               <SceneFlowStudioBrand
                 href={getLandingLocalePath(locale)}
@@ -71,11 +72,12 @@ export function Footer() {
                   <a
                     key={social.name}
                     href={social.href}
-                    className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-200"
+                    aria-label={social.name}
+                    className="w-11 h-11 bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-200"
                     target={social.href.startsWith('http') ? '_blank' : undefined}
                     rel={social.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                   >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-5 h-5" aria-hidden />
                   </a>
                 )
               })}
@@ -84,15 +86,19 @@ export function Footer() {
 
           <div>
             <h3 className="text-lg font-semibold mb-4">{t('product')}</h3>
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {footerLinks.product.map((link) => (
-                <li key={link.name}>
-                  <button
-                    onClick={() => scrollToSection(link.href.slice(1))}
-                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                <li key={link.name} className="!mb-0">
+                  <a
+                    href={link.href}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      scrollToSection(link.href.slice(1))
+                    }}
+                    className="inline-block py-1.5 text-gray-400 hover:text-white transition-colors text-sm"
                   >
                     {link.name}
-                  </button>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -100,15 +106,19 @@ export function Footer() {
 
           <div>
             <h3 className="text-lg font-semibold mb-4">{t('resources')}</h3>
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {footerLinks.resources.map((link) => (
-                <li key={link.name}>
-                  <button
-                    onClick={() => scrollToSection(link.href.slice(1))}
-                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                <li key={link.name} className="!mb-0">
+                  <a
+                    href={link.href}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      scrollToSection(link.href.slice(1))
+                    }}
+                    className="inline-block py-1.5 text-gray-400 hover:text-white transition-colors text-sm"
                   >
                     {link.name}
-                  </button>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -116,12 +126,12 @@ export function Footer() {
 
           <div>
             <h3 className="text-lg font-semibold mb-4">{t('legal')}</h3>
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {footerLinks.legal.map((link) => (
-                <li key={link.name}>
-                  <a href={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
+                <li key={link.name} className="!mb-0">
+                  <Link href={link.href} className="inline-block py-1.5 text-gray-400 hover:text-white transition-colors text-sm">
                     {link.name}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
