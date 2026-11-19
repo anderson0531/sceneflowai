@@ -1,3 +1,5 @@
+> **ARCHIVED / SUPERSEDED (DO NOT USE FOR 2026–2027 SUBMISSIONS):** This legacy 2025 outline contains outdated pricing (`$29/$79/$299`), domain (`sceneflow.ai`), and dates (`Q1 2025`). Use [`docs/SceneFlow_AI_Pitch_Deck_2027.pdf`](./SceneFlow_AI_Pitch_Deck_2027.pdf) instead.
+
 # SceneFlow AI - Investor Pitch Deck Outline
 
 ## Overview

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Shield, CheckCircle2, ArrowRight, FileSearch } from 'lucide-react'
+import { Shield, CheckCircle2, ArrowRight, FileSearch, Volume2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
@@ -107,7 +107,7 @@ export function TrustSafeguardSection() {
         {/* Enterprise Cloud & AI Infrastructure Strip (consolidated from InfrastructureSection) */}
         <div className="mb-8 flex flex-wrap items-center justify-center gap-3 rounded-xl border border-slate-800/80 bg-slate-900/60 px-4 py-3 text-xs text-gray-300">
           <span className="font-semibold uppercase tracking-wider text-gray-400">
-            Enterprise Infrastructure:
+            SaaS Cloud &amp; AI Infrastructure:
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-950/70 px-2.5 py-1 font-medium text-gray-200">
             <Image src="/images/google-cloud-logo.svg" alt="Google Cloud" width={16} height={16} />
@@ -116,6 +116,10 @@ export function TrustSafeguardSection() {
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-950/70 px-2.5 py-1 font-medium text-gray-200">
             <Image src="/images/vertex-ai-logo.svg" alt="Vertex AI" width={16} height={16} />
             Vertex AI
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-950/70 px-2.5 py-1 font-medium text-gray-200">
+            <Volume2 className="h-3.5 w-3.5 text-emerald-400" aria-hidden />
+            ElevenLabs Neural Audio
           </span>
         </div>
 

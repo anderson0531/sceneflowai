@@ -542,6 +542,7 @@ export default function KeyFeaturesSection() {
       id={SECTION_ID}
       className="scroll-mt-20 overflow-x-clip bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 py-16 md:py-24"
     >
+      <span id="production-agent" className="block h-0 w-0 scroll-mt-24" aria-hidden />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Clean, Focused Header — Zero Redundant Oval Badges or Callout Clutter */}
         <motion.div

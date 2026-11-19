@@ -1,189 +1,107 @@
-# SceneFlow AI - Google for Startups Application
+# SceneFlow AI — Google for Startups Cloud Program Application
+
+> **Option A Entity Placeholders (Fill Immediately Upon Dec 4–7 LLC Approval):**
+> - **Legal Entity Name:** `[NEW_LLC_NAME: SceneFlow AI LLC]` *(Formed Dec 2026 — `< 24 months` old for clean `$2,000` Start Tier + 5-year Scale AI track eligibility)*
+> - **EIN / Registration #:** `[NEW_LLC_EIN]`
+> - **GCP Billing Account ID:** `018BC7-19AC32-7CE0EE` *(verify `$0.00` balance due + updated legal profile, or fresh billing account linked to `sceneflowai-2d3e6` under `sceneflowai.studio` org)*
+
+---
 
 ## Executive Summary
 
-**Company:** SceneFlow AI (Life Focus, LLC)  
-**Product Category:** Multi-Tenant Generative AI Video SaaS Platform & Continuity Operating System *(100% Software Product — Not a Service Agency)*  
-**Stage:** Pre-Seed / Live Early Access SaaS (Public 1.0 Release January 2027)  
-**Industry:** Generative AI Media Software / Creator Economy & B2B2C SaaS Enablement  
-**Funding Sought:** Google for Startups Cloud Credits ($2K Start Tier → Scale AI-First Track) + Program Support  
+**Company:** SceneFlow AI (`[NEW_LLC_NAME: SceneFlow AI LLC]`)  
+**Product Category:** Multi-Tenant Generative AI Video SaaS Platform & Continuity Operating System *(100% Self-Serve Software Product — Not an Agency, Production House, or Consultancy)*  
+**Stage:** Pre-Seed / Live Early Access SaaS (Public 1.0 Self-Serve Release January 2027)  
+**Industry:** Generative AI Media Software / Creator Economy & B2B2C SaaS  
+**Program Track:** Google for Startups Cloud Program — **Start Tier (`$2,000`)** → **Scale / AI-First Partner Track** *(via NVIDIA Inception partner pathway & 2027 Seed milestone)*  
 **Website:** https://sceneflowai.studio  
 **Founding Operator Charter:** https://sceneflowai.studio/founding-operators  
-**Primary Applicant & Billing Admin Email:** brian@sceneflowai.studio (Workspace Super Admin: admin@sceneflowai.studio; Support: support@sceneflowai.studio)  
-**GCP Billing Account ID:** `018BC7-19AC32-7CE0EE` (*SceneFlow Platform* — Active, USD, Single-Project Consolidated)  
-**GCP Project ID / Number:** `sceneflowai-2d3e6` (`809352734041`) — Linked to `018BC7-19AC32-7CE0EE` under `sceneflowai.studio` Organization
+**Primary Applicant & Billing Admin Email:** `brian@sceneflowai.studio` (Workspace Super Admin: `admin@sceneflowai.studio`; Support: `support@sceneflowai.studio`)  
+**GCP Billing Account ID:** `018BC7-19AC32-7CE0EE` (*SceneFlow Platform* — Active, USD, `$0.00` Balance Due)  
+**GCP Project ID / Number:** `sceneflowai-2d3e6` (`809352734041`) — Under `sceneflowai.studio` Organization  
 
 ---
 
-## Architecture (internal + external consistency)
+## Portal Copy-Paste: 100-Word Product Summary
 
-| Layer | Stack | Notes |
-|-------|-------|-------|
-| **Intelligence** | Google Vertex AI (Gemini) exclusive | Series Bibles, Blueprint treatments, scriptwriting, Audience Resonance™ scoring, Autonomous Production Agent, and 7-language native story authoring |
-| **Frame & video generation** | Google (Imagen 4 / Gemini Pro Image / Veo 3.1 + EXT) or Kling optional | Creator choice; SceneFlow orchestrates either path with English-normalized machine prompts (`englishForModel`) |
-| **Platform & Delivery** | Google Cloud | Cloud Run FFmpeg stream assembly, GCS Continuity Vault & media storage, Cloud Transcoder / Media CDN, trust & provenance |
+> SceneFlow AI (`https://sceneflowai.studio`) is a multi-tenant generative AI video SaaS studio built natively on Google Cloud Vertex AI (Gemini, Imagen 4, Veo 3.1 + EXT), Cloud Run, GCS, and Cloud SQL. Unlike isolated 10-second clip tools, SceneFlow provides an integrated Continuity Operating System—Series Room, Blueprint Room with Audience Resonance™ pre-render QA, Continuity Vault (multi-age character & wardrobe locks), Autonomous Production Agent, and 70+ language dubbing across 7 native UI languages. Self-serve SaaS subscribers (`$9` Explorer; `$19–$599/mo` tiers) use SceneFlow software to direct long-form episodic series, podcasts, training curricula, and white-label client video workflows.
 
 ---
 
-## Demo URLs for reviewers
+## Architecture — 100% Google Cloud Native Managed Core
+
+| Layer | Google Cloud Service | Role in SceneFlow AI |
+|-------|----------------------|----------------------|
+| **Story, AR & Agent Intelligence** | **Vertex AI (Gemini)** — 100% exclusive | Series Bibles, Blueprint treatments, scriptwriting, Audience Resonance™ beat-by-beat QA, Autonomous Production Agent, FlowDirector video QA, and 7-language native story authoring (`localeDirective`) |
+| **Visual Continuity & Keyframes** | **Vertex AI (Imagen 4 / Gemini Image)** | Multi-age Continuity Vault character turnarounds, wardrobe/prop locks, and Clip-First bookend keyframes (`englishForModel` normalized) |
+| **Motion Video & Dialogue Extension** | **Vertex AI (Veo 3.1 + EXT)** | Native managed video generation and continuous multi-shot `EXT` dialogue chains *(enterprise subscribers may also configure optional BYOK keys for secondary providers)* |
+| **Video Rendering & Assembly** | **Google Cloud Run** | Stateless serverless FFmpeg 4K stream stitching, audio ducking, and multi-language muxing |
+| **Storage, Database & Delivery** | **GCS + Cloud SQL Postgres + Media CDN** | Continuity Vault media storage, credit ledgers, `content_translations` i18n cache, consent audit logs, and 7-language stream delivery |
+
+**Every approved beat rendered on SceneFlow's managed tiers drives direct, recurring Google Cloud consumption across Vertex AI, Cloud Run, GCS, and Cloud SQL.**
+
+---
+
+## Reviewer Demo URLs (Verify All in Incognito on Dec 3 After GCP Restore)
 
 | Resource | URL |
 |----------|-----|
-| Long-Form Production Examples (6 Flagship Verticals in 7 Languages) | https://sceneflowai.studio/#production-examples |
+| Main Studio Landing & 7-Language Hero Trailers | https://sceneflowai.studio |
+| 6 Playable Production Verticals (7 Languages) | https://sceneflowai.studio/#production-examples |
+| Interactive Studio Capabilities & Production Agent | https://sceneflowai.studio/#key-features |
+| White-Label B2B2C SaaS Engine & Margin Calculator | https://sceneflowai.studio/#video-services |
+| Continuity Vault SaaS Pricing & Tiers | https://sceneflowai.studio/#pricing |
+| Trust, IP Safeguard & Google Cloud Infrastructure | https://sceneflowai.studio/#trust-safety |
 | Flagship Drama — Screening Room (*The White City Current*) | https://sceneflowai.studio/TheWhiteCityCurrent |
 | Flagship Drama — Series Room Bible | https://sceneflowai.studio/s/series/cb7cc9e663a87a074e37c62636ef8c00 |
-| Flagship Drama — Blueprint Room | https://sceneflowai.studio/blueprint/share/5GDScu72NC7SWo1ioPMwzUxTg9KM2joz |
-| Flagship Drama — Production Stage (Audience Resonance) | https://sceneflowai.studio/share/script-resonance/_uHqaPHdsD0ZfdJoEwtnHBi4DiAJBW9s |
-| Autonomous Production Agent showcase | https://sceneflowai.studio/#production-agent |
-| Platform walkthrough & Key Features | https://sceneflowai.studio/#key-features |
-| Studio Membership & Continuity Vault Pricing | https://sceneflowai.studio/#pricing |
-| Trust & Safety (landing section) | https://sceneflowai.studio/#trust-safety |
-| Legal hub | https://sceneflowai.studio/legal |
-| Privacy Policy | https://sceneflowai.studio/privacy |
-| Terms of Service | https://sceneflowai.studio/terms |
-| Trust & Safety Policy | https://sceneflowai.studio/trust-safety |
-| Refund Policy | https://sceneflowai.studio/refunds |
-| Contact Us | https://sceneflowai.studio/contact |
-
-Walkthrough manifest: [`public/demo/WALKTHROUGH_VIDEO_MANIFEST.md`](../public/demo/WALKTHROUGH_VIDEO_MANIFEST.md)  
-Production Examples & Nov 3 Rollout Plan: [`production-examples-landing.plan.md`](../production-examples-landing.plan.md)  
-2027–2029 Financial Models (`500 → 5,000 → 50,000` Video Service Businesses + Creator SaaS): [`docs/SCENEFLOW_FINANCIAL_BUSINESS_MODEL.md`](./SCENEFLOW_FINANCIAL_BUSINESS_MODEL.md) · [`docs/sceneflow_financial_model_2027_12month.csv`](./sceneflow_financial_model_2027_12month.csv) · [`docs/sceneflow_financial_model_2027_2029_3year.csv`](./sceneflow_financial_model_2027_2029_3year.csv)
+| Flagship Drama — Blueprint Room Share | https://sceneflowai.studio/blueprint/share/5GDScu72NC7SWo1ioPMwzUxTg9KM2joz |
+| Flagship Drama — Script Audience Resonance | https://sceneflowai.studio/share/script-resonance/_uHqaPHdsD0ZfdJoEwtnHBi4DiAJBW9s |
+| Legal Hub, Privacy, Terms, Trust & Refunds | https://sceneflowai.studio/legal · `/privacy` · `/terms` · `/trust-safety` · `/refunds` · `/contact` |
 
 ---
 
-## The Opportunity & 7 Market Problems Uniquely Solved
+## Market Problem & Differentiated SaaS Solution
 
-### Market Problem
+**247 million creators and millions of SMBs need long-form narrative and commercial video—while first-generation AI video tools remain stuck in disconnected 5–10 second clips or static slide-avatars.**
 
-**247 million creators and millions of small businesses compete for attention—while existing AI video tools remain trapped in 10-second isolated clips or static corporate slide-readers.**
+SceneFlow solves four structural bottlenecks in one multi-tenant SaaS studio (`Series Room → Blueprint Room → Production Stage → Final Cut → Screening Room`):
 
-The global creator and digital video production economy is projected to reach $480 billion by 2027, alongside a massive wave of professionals seeking AI-native self-employment to offset job displacement from automation. Yet long-form narrative and commercial video production remains bottlenecked by four barriers:
-
-- **The 10-Second Clip Trap:** Prompting 200–300 disconnected clips results in character drift, wobbly sets, and weeks of manual timeline editing.
-- **Upfront Compute Waste:** Creators discover pacing and script flaws *after* burning hundreds of dollars in video inference.
-- **Skill Polarity:** Tools are either rigid "one-click templates" that strip creative direction or complex node graphs inaccessible to new storytellers.
-- **Localization Degradation:** Typing non-English prompts directly into image/video models degrades visual output and breaks character continuity.
-
-### How SceneFlow Uniquely Solves 7 High-Value Market Problems
-
-1. **Long-Form Video Creation via Audience Resonance™ & Autonomous Agent Automation**  
-   Vertex AI Gemini evaluates scripts beat-by-beat with **Audience Resonance (AR)** *before* pixels are rendered. Once locked, the **Autonomous Production Agent** walks every scene—locking Reference Library cast/props, generating Beat Frames, chaining native Veo `EXT` extensions for continuous dialogue, mixing audio, and auto-retrying policy edge cases.
-2. **Full Direction Control for Experienced Creators**  
-   Veteran directors retain frame-accurate control over camera lenses, lighting, spatial blocking, start/end keyframes, motion intensity, and multi-track audio—backed by **Bring Your Own Key (BYOK)** orchestration on Pro and Studio tiers.
-3. **Automated Series, Blueprint & Script Pipeline for New Creators**  
-   Everyday storytellers with zero filmmaking or prompting experience turn a plain-language concept into a multi-episode **Series Bible**, locked cast turnarounds, structured **Blueprint** beats, and voiced scenes—entering via a $9 Explorer Test Flight or $19/mo Hobbyist Continuity Vault.
-4. **Standalone Script Upload & Screening Room Pre-Vis for Filmmakers Seeking Funding**  
-   Traditional screenwriters and indie directors upload `.fdx`, `.fountain`, or PDF scripts to generate a voiced, scored **Screening Room Pre-Vis Animatic** and **60–90s Promo Trailer** at ~95% lower cost than traditional $5,000–$25,000 pitch packages—sharing private `/s/` Screening Room links directly with financiers.
-5. **Character/Voice Cloning & Live Clip Illustration for Video Podcasters**  
-   Showcased by *The Midnight Frequency* (`podcast`), narrative YouTube and Spotify Video podcasters can either use cloned voices/avatars or **upload live studio camera clips** and seamlessly intercut SceneFlow-generated historical/sci-fi reconstructions and a locked desk companion—eliminating 40 hours of weekly B-roll editing.
-6. **B2B2C SaaS Infrastructure Empowering Independent Video Businesses ("Shopify for AI Video Studios")**  
-   SceneFlow is a **pure multi-tenant SaaS platform** whose Pro ($149/mo) and Studio ($599/mo) subscriptions include white-label software portals (`/intake`, `/blueprint/share`, `/share/continuity` with automatic EXIF GPS sanitization & logged `customer_consents`, and `/share/screening-room`) plus a Mobile Companion PWA. Independent entrepreneurs, photographers, and corporate L&D teams subscribe to SceneFlow software to produce $349–$1,800+ Life Memoirs, Multilingual Training SOPs, and Luxury Property Tours on ~$15–$72 of self-serve Vertex AI compute—achieving 75%–84% gross margins while driving recurring SaaS MRR and 12-month credit pack expansion for SceneFlow.
-7. **Global Reach with a 7-Language UI & 70+ Delivery Languages**  
-   SceneFlow ships a native interface across **7 major language markets** (**English, Spanish, Portuguese, Hindi, Simplified Chinese, Arabic, and Thai**) and supports **70+ dubbing/delivery languages**. Our 3-layer i18n architecture separates *Interface Locale*, *Story Locale* (authored natively by Gemini via `localeDirective()`), and *Delivery Locale*, while automatically normalizing machine prompts to English (`englishForModel()`) so Imagen and Veo never suffer non-English visual degradation.
+1. **Audience Resonance™ Pre-Render QA Firewall:** Vertex AI Gemini scores narrative pacing, character depth, and commercial viability beat-by-beat *before* GPU video spend—preventing 70%+ of wasted clip regenerations.
+2. **Continuity Vault + Bookend Keyframe Director:** Locks multi-age cast turnarounds, wardrobes, props, and start/end keyframes (`t=0s → t=T`) across 15-to-45-minute episodes.
+3. **Unified Autonomous Production Agent + Granular Direct Control:** New storytellers generate full scenes with one click, while experienced directors retain frame-accurate camera, lens, lighting, and audio control (with BYOK support on Pro/Studio).
+4. **3-Layer Global Localization (7 Native UI Languages + 70+ Delivery Languages):** Separates Interface Locale (`EN, ES, PT, HI, ZH, AR, TH`), Story Locale (authored natively in Gemini), and English-normalized machine prompts (`englishForModel`) so Imagen and Veo never suffer non-English visual degradation.
 
 ---
 
-## Our Solution & The 6 Flagship Production Verticals
+## Commercial Business Model & 12-Month GCP Spend Forecast
 
-### SceneFlow AI: One Studio from Idea to Publish-Ready Master
+- **Live Early Access SaaS with Whop Merchant of Record Integrated** (opening public self-serve checkout in **January 2027**):
+  - **Explorer Test Flight:** `$9` one-time (`750` credits)
+  - **Continuity Vault Subscriptions:** `$19/mo` Hobbyist · `$49/mo` Starter · `$149/mo` Pro (White-Label Portals + BYOK) · `$599/mo` Studio (Team RBAC + 25 voice clones)
+  - **12-Month Subscriber Credit Packs:** `$25–$250` high-margin compute top-ups
 
-```
-SERIES ROOM → BLUEPRINT ROOM → PRODUCTION STAGE → FINAL CUT → SCREENING ROOM
-     │              │                 │               │              │
- multi-episode   structure      Direct Control    assemble      Pre-Vis, Clips,
- bible & cast   + AR scoring    or Auto Agent     master MP4   Master & Promo
-```
+### Grounded 12-Month Google Cloud Consumption Trajectory
 
-### Six Flagship Showcase Productions on `#production-examples`
-
-| # | Vertical (`walkId`) | Flagship Title | Format & Core Capability Demonstrated |
-|---|---------------------|----------------|---------------------------------------|
-| 1 | **Cinematic Drama** (`drama`) | *The White City Current* | 6-Episode Sci-Fi Thriller (42.5m Pilot) · Anamorphic photorealism, 4 locked cast sheets, subterranean & lakefront continuity |
-| 2 | **Animated Series** (`animation`) | *Hart House* | 5-Episode 2D Sitcom (22m Pilot) · Locked 2D flat-cel art style, 5 family character sheets, zero off-model drift |
-| 3 | **Historical Documentary** (`documentary`) | *The Long Thought* | 5-Part Global Archival Series (40m Ep 1) · Multi-era witness aging (1956 16mm → 1989 CRT → 4K), transcript-synced B-roll |
-| 4 | **Training Series** (`training`) | *Five Plates* | 5-Module Culinary Curriculum (15m Mod 1) · 1 locked instructor (Chef Lila Mensah), 3-camera instructional rig (A/B/C-Cam) |
-| 5 | **Creator & Podcasts** (`podcast`) | *The Midnight Frequency* | 6-Episode Video Podcast (32m Ep 1) · Uploaded live studio host camera + locked brass owl co-host + 1928 Arctic AI reconstructions |
-| 6 | **Video Memoirs** (`memoir`) | *Letters Across the Water* | 5-Chapter Commissioned Legacy Film (28m) · Uploaded living-room interview of 82-year-old matriarch + age-locked 1966 harbor reenactments |
-
----
-
-## Why Google Cloud?
-
-### Technical Architecture Alignment
-
-| Component | Google Cloud Service | Why It Matters |
-|-----------|---------------------|----------------|
-| **Text, AR & Agent intelligence** | Vertex AI (Gemini) | Series Bibles, Blueprints, Audience Resonance, Autonomous Production Agent, and 7-language native authoring |
-| **Image & Reference generation** | Vertex AI (Imagen 4 / Gemini Pro Image) | Continuity Vault character turnarounds, prop/set locks, and Beat Frames |
-| **Video generation** | Vertex AI (Veo 3.1 + EXT) | Segment motion video + native `EXT` extension chains for continuous dialogue |
-| **Video rendering & assembly** | Cloud Run | Pay-per-render serverless FFmpeg stream stitching and multi-language muxing |
-| **Media storage & delivery** | Google Cloud Storage + Media CDN | Continuity Vault assets, segment video, signed provenance, and 7-language trailer streams |
-| **User auth / state** | Firebase / Cloud SQL Postgres | Accounts, credit ledgers, Continuity Vault metadata, and moderation audit logs |
-
-**Every approved beat we render validates Google Cloud orchestration—with intelligence that stays 100% Google-exclusive.**
-
----
-
-## Traction, Validation & January 2027 Launch Trajectory
-
-### Development Progress & Live 6-Vertical Showcase (Complete)
-
-- ✅ End-to-end pipeline live: Series Room → Blueprint Room → Production Stage → Final Cut → Screening Room
-- ✅ Vertex AI integration: Gemini (AR + Agent), Imagen 4 / Gemini Pro Image (Continuity Vault), Veo 3.1 + EXT chains
-- ✅ Dual workflow modes: Granular **Direct Control** for experienced directors + one-click **Autonomous Production Agent**
-- ✅ Hybrid upload pipeline: Script import (`.fdx`, `.fountain`, PDF) for Pre-Vis pitch packages + live camera clip uploads for Podcasters and Video Memoir producers
-- ✅ **6 Flagship Production Examples in 7 Languages (`en`, `es`, `pt`, `hi`, `zh-CN`, `ar`, `th`):** Complete Series Bibles, Blueprints, Audience Resonance™ script analyses, **voiced & scored Pre-Vis Animatics**, and **localized Promo Trailers** across all 6 verticals (*Cinematic Drama*, *Animated Series*, *Historical Documentary*, *Instructional Training*, *Creator & Video Podcasts*, and *Video Memoirs*), plus flagship motion video in *The White City Current*
-- ✅ Merchant of Record billing live via Whop ($9 Explorer Test Flight, $19 Hobbyist, $49 Starter, $149 Pro, $599 Studio + 12-month Add-On packs)
-
----
-
-## Competitive Landscape
-
-| Competitor | Their Approach | SceneFlow AI Advantage |
-|-----------|---------------|------------------------|
-| **Runway / Sora / Kling** | Isolated 5–10s clip generators | Full narrative studio: Audience Resonance script QA, Continuity Vault locks, Autonomous Agent, and 45-min episode assembly |
-| **Synthesia / HeyGen** | Static corporate avatars over slides | Multi-camera physical craft demonstrations (*Five Plates*), hybrid podcast cutaways, and cinematic drama |
-| **Descript / Riverside** | Podcast audio/video trimming | Generates cinema-grade historical/sci-fi visual reconstructions and recurring 3D/photoreal co-hosts from podcast transcripts |
-| **Traditional Production Agencies** | $5,000–$50,000+ crews & weeks of post | Empowers solo operators to run high-margin Video Memoir, Real Estate, and Pre-Vis pitch businesses at >80% gross margin |
+| Milestone Window | Active Paid Workspaces (Target) | Primary GCP Workloads | Projected Monthly GCP Spend |
+| :--- | :---: | :--- | :---: |
+| **Dec 2026 (Pre-Launch QA)** | 15–25 Founding Operators (Early Access) | Vertex AI Veo 3.1 + EXT flagship 6-vertical renders, end-to-end 7-language QA, Cloud Run FFmpeg | **~$2,000** *(covered by Start Tier grant)* |
+| **Q1 2027 (1.0 Launch Waves)** | 75 → 200 | Vertex AI Gemini + Imagen 4 + Veo 3.1, Cloud SQL, GCS Continuity Vault | **$3,500 – $7,500 / mo** |
+| **Q2–Q3 2027 (Global Ramp)** | 300 → 600 | Multi-episode series production, 70+ language Cloud Run renders, Media CDN | **$10,000 – $18,000 / mo** |
+| **Q4 2027 (Scale Track)** | 800 – 1,200+ | High-concurrency Vertex AI batch + Cloud Run + GCS petabyte archive | **$22,000 – $35,000+ / mo** |
 
 ---
 
 ## The Ask
 
-### From Google for Startups
-
-**1. Cloud Credits ($2K Start Tier → Partner / AI-First Track)**  
-- **Immediate Use (Nov–Dec 2026 Pre-Launch):** With all 6 flagship verticals already live in Pre-Vis Animatic and 7-language Trailer form, we will deploy the $2,000 Start Tier grant directly into Vertex AI **Veo 3.1 + EXT** and **Cloud Run FFmpeg** to render the complete multi-chapter **Episode 1 / Chapter 1 Motion Video Masters (179.5 minutes across all 6 verticals in 7 languages)** and run pre-launch creator & B2B production agency test flights ahead of our **January 2027 commercial launch**.
-- **2027 Scale Track ($100K–$250K):** Scale stateless Vertex AI (Gemini, Imagen 4, Veo 3.1) and Cloud Run compute from `500` (FY27) → `5,000` (FY28) → `50,000` (FY29) White-Label Video Service Businesses as early gross profit reinvests into `18–35` side/primary hustle operator acquisition across **English, Spanish, Portuguese, Hindi, Chinese, and Arabic** markets serving Baby Boomer Video Memoir, Real Estate, Training, and SMB Brand demand.
-
-**2. Technical Mentorship**  
-Vertex AI Veo 3.1 + EXT throughput optimization, context caching at scale, and production safety tuning.
-
-**3. Go-to-Market Support**  
-Google Cloud showcase co-marketing highlighting how Vertex AI powers new solo video production businesses (Video Memoirs, Podcasts, Indie Studios) globally.
+1. **Start Tier (`$2,000` Cloud Credits — Immediate Pre-Launch Need):** Directly funds December 2026 end-to-end production QA, Veo 3.1 + EXT flagship vertical verification, and initial Founding Operator onboarding ahead of our January 2027 commercial release.
+2. **Scale / AI-First Partner Pathway (2027):** Upon NVIDIA Inception approval and Q1 2027 commercial traction / Seed fundraising, expand onto the Google for Startups Scale AI track to scale Vertex AI and Cloud Run compute across 7 global language markets.
+3. **Technical Guidance:** Best practices for Vertex AI Veo 3.1 throughput quotas, Gemini context caching, and Cloud Run media transcoding efficiency.
 
 ---
 
-## Contact
+## Pre-Submission Verification (Execute Dec 4–7 After Clearing Balance & Forming New LLC)
 
-**Brian Anderson**  
-Founder, SceneFlow AI (Life Focus, LLC)  
-📧 brian@sceneflowai.studio | admin@sceneflowai.studio | support@sceneflowai.studio  
-💳 GCP Billing Account: `018BC7-19AC32-7CE0EE` · GCP Project: `sceneflowai-2d3e6` (`809352734041`)  
-🌐 https://sceneflowai.studio  
-📍 Austin, Texas area
-
----
-
-## Pre-Submission Checklist (Execute Immediately After Clearing Billing Balance)
-
-1. **Verify `$0.00` Balance Due:** Open `https://console.cloud.google.com/billing/018BC7-19AC32-7CE0EE/payment` and confirm **"Your balance"** reads `$0.00` (or credit) with zero past-due/payment-declined banners.
-2. **Authenticate With Custom Domain Email:** Log into the Google for Startups portal strictly as **`brian@sceneflowai.studio`** (never `@gmail.com`), matching both website domain `sceneflowai.studio` and `roles/billing.admin` on `018BC7-19AC32-7CE0EE`.
-3. **Business Model Classification:** Select **SaaS / B2B & B2C AI Software Platform** (never select Agency, Media Production House, or Consultancy).
-4. **Copy-Paste 100-Word Product Summary (Portal Form Field):**
-   > SceneFlow AI (sceneflowai.studio) is a multi-tenant generative AI video SaaS studio powered by Google Cloud Vertex AI (Gemini, Imagen 4, Veo 3.1) and Cloud Run. Unlike isolated 10-second clip tools, SceneFlow provides an integrated Continuity Operating System—Series Room, Blueprint Room with Audience Resonance™ pre-render QA, Continuity Vault (multi-age character & wardrobe locks), Autonomous Production Agents, and 70+ language dubbing across 7 native UI languages. Self-serve SaaS subscribers ($9 Explorer; $19–$599/mo tiers) use SceneFlow to direct episodic series and run independent white-label video memoir, corporate training, and property tour workflows.
-5. **Freeze Heavy Batch Renders During Review (5–10 Business Days):** Keep GCP spend near `$0` while the application is in review so no interim payment threshold triggers on `018BC7-19AC32-7CE0EE`.
-
----
-
-*SceneFlow AI: From idea to publish-ready long-form video—in 7 UI languages across 6 production verticals.*
+1. Confirm **`$0.00` balance due** on `018BC7-19AC32-7CE0EE` (or new LLC billing account linked to `sceneflowai-2d3e6`).
+2. Authenticate strictly with **`brian@sceneflowai.studio`** (matching `sceneflowai.studio` domain and `roles/billing.admin`).
+3. Classify strictly as **SaaS / B2B & B2C AI Software Platform** (never Agency / Production House).
+4. Keep GCP spend near `$0` during the 5–10 business day review so no billing threshold triggers mid-review.
