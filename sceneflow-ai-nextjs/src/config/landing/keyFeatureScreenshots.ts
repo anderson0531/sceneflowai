@@ -255,3 +255,31 @@ export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | nu
 export function keyFeatureScreenshotSrc(entry: KeyFeatureScreenshot): string {
   return entry.imageUrl || entry.webmUrl || ''
 }
+
+const LOCALIZED_SCREENSHOT_LOCALES = new Set(['es', 'pt', 'hi', 'zh', 'ar', 'th'])
+
+/**
+ * Returns the localized screenshot path under
+ * `/landing/key-features/screenshots/locales/<locale>/<stem>.webp` for the 6
+ * non-English landing locales when `useLocalized` is enabled, or the English
+ * baseline path otherwise.
+ */
+export function keyFeatureScreenshotSrcForLocale(
+  entry: KeyFeatureScreenshot,
+  locale?: string | null,
+  hasLocalizedAsset = false
+): string {
+  const base = keyFeatureScreenshotSrc(entry)
+  if (!hasLocalizedAsset || !base || !locale) return base
+  const lower = locale.trim().toLowerCase()
+  const norm = lower.startsWith('zh') ? 'zh' : lower.split(/[-_]/)[0]
+  if (!norm || norm === 'en' || !LOCALIZED_SCREENSHOT_LOCALES.has(norm)) return base
+  const clean = base.split('?')[0] || ''
+  const filePart = clean.split('/').pop() || ''
+  if (filePart.startsWith('multilanguage-ui-')) {
+    return `/landing/key-features/screenshots/multilanguage-ui-${norm}.webp`
+  }
+  const stem = filePart.replace(/\.(webp|webm|png|jpg|jpeg)$/i, '')
+  if (!stem) return base
+  return `/landing/key-features/screenshots/locales/${norm}/${stem}.webp`
+}

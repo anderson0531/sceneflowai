@@ -67,6 +67,8 @@ type FeaturePane = {
 }
 
 const DESKTOP_MEDIA_QUERY = '(min-width: 1024px)'
+/** Retired standalone agents unified into the Production Agent */
+const RETIRED_FEATURE_ICONS = new Set(['audioAgent', 'stillsAgent', 'videoAgent'])
 
 function readIsDesktopViewport(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -423,6 +425,7 @@ export default function KeyFeaturesSection() {
   const useCaseFeatures = useMemo(
     () =>
       activeTrack.featureIcons
+        .filter((icon) => !RETIRED_FEATURE_ICONS.has(icon))
         .map((icon) => featureCatalogByIcon.get(icon)?.feature)
         .filter((f): f is FeatureData => Boolean(f)),
     [activeTrack, featureCatalogByIcon]
@@ -432,7 +435,9 @@ export default function KeyFeaturesSection() {
   const panes = activeRoom ? panesForRoom(activeRoom) : []
   const activePane = panes.find((pane) => pane.id === activeGroupId) ?? panes[0]
   const roomVisibleFeatures = activeRoom
-    ? featuresForRoom(activeRoom, activePane?.id ?? 'spend')
+    ? featuresForRoom(activeRoom, activePane?.id ?? 'spend').filter(
+        (f) => !RETIRED_FEATURE_ICONS.has(f.icon)
+      )
     : []
 
   const visibleFeatures = browseMode === 'use-case' ? useCaseFeatures : roomVisibleFeatures

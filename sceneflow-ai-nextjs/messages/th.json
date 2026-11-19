@@ -4595,13 +4595,13 @@
           "featureIcons": [
             "producerLaunchpad",
             "blueprintShare",
-            "scriptSupervisor",
             "productionAgent",
+            "scriptSupervisor",
             "budget",
             "castLocations",
-            "audioAgent",
-            "stillsAgent",
-            "videoAgent",
+            "musicScore",
+            "stillsWorkbench",
+            "clipsWorkbench",
             "multilanguageUi",
             "screeningPlayer"
           ]
@@ -4618,8 +4618,8 @@
             "seriesDirector",
             "directEpisode",
             "startEpisode",
+            "productionAgent",
             "stillsWorkbench",
-            "videoAgent",
             "clipsWorkbench"
           ]
         },

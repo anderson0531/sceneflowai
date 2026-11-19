@@ -469,9 +469,29 @@ function resolvePublicImageDiskPath(webUrl: string, tmpDir: string): string {
   return fullPath
 }
 
+function resolveLocalizedScreenshotUrlIfPresent(
+  baseUrl: string,
+  locale: FeaturePanLocaleId
+): string | null {
+  if (locale === 'en') return null
+  const clean = baseUrl.split('?')[0] || ''
+  const filePart = clean.split('/').pop() || ''
+  const stem = filePart.replace(/\.(webp|webm|png|jpg|jpeg)$/i, '')
+  if (!stem) return null
+  const rel = `/landing/key-features/screenshots/locales/${locale}/${stem}.webp`
+  const disk = join(ROOT, 'public', rel.replace(/^\//, ''))
+  if (existsSync(disk) && statSync(disk).size > 5_000) {
+    return rel
+  }
+  return null
+}
+
 function resolveFeatureScreenshotUrl(icon: string, locale: FeaturePanLocaleId): string {
   if (icon === 'scriptSupervisor') {
-    return SCRIPT_SUPERVISOR_SCREENSHOT_WEBP
+    return (
+      resolveLocalizedScreenshotUrlIfPresent(SCRIPT_SUPERVISOR_SCREENSHOT_WEBP, locale) ??
+      SCRIPT_SUPERVISOR_SCREENSHOT_WEBP
+    )
   }
   if (icon === 'multilanguageUi') {
     if (locale === 'es') return MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP
@@ -486,7 +506,16 @@ function resolveFeatureScreenshotUrl(icon: string, locale: FeaturePanLocaleId): 
   if (!entry) {
     throw new Error(`Missing KEY_FEATURE_SCREENSHOTS entry for "${icon}"`)
   }
-  return keyFeatureScreenshotSrc(entry)
+  const baseUrl = keyFeatureScreenshotSrc(entry)
+  return resolveLocalizedScreenshotUrlIfPresent(baseUrl, locale) ?? baseUrl
+}
+
+function getFeatureVisualKey(icon: string, locale: FeaturePanLocaleId): string {
+  if (icon === 'multilanguageUi') return `${icon}-${locale}`
+  if (locale === 'en') return icon
+  const enUrl = resolveFeatureScreenshotUrl(icon, 'en')
+  const locUrl = resolveFeatureScreenshotUrl(icon, locale)
+  return locUrl !== enUrl ? `${icon}-${locale}` : icon
 }
 
 /**
@@ -501,7 +530,7 @@ async function ensureFeatureVisualSegments(args: {
   force: boolean
 }): Promise<CachedFeatureSegments> {
   const { icon, locale, segDir, tmpDir, force } = args
-  const visualKey = icon === 'multilanguageUi' ? `${icon}-${locale}` : icon
+  const visualKey = getFeatureVisualKey(icon, locale)
   const featureDir = join(segDir, visualKey)
   mkdirSync(featureDir, { recursive: true })
 
@@ -913,15 +942,22 @@ async function main() {
   normalizePcmActiveRms(musicBed, TARGET_MUSIC_BED_RMS)
 
   // Stage A: Pre-render 1920x1080 @ 30fps 4-ROI hold & cubic ease-in-out transition segments
-  const visualTasks: Array<{ icon: string; locale: FeaturePanLocaleId }> = []
+  const visualTasks: Array<{ icon: string; locale: FeaturePanLocaleId; key: string }> = []
+  const seenVisualKeys = new Set<string>()
   for (const suite of suites) {
     for (const icon of suite.featureIcons) {
-      if (icon === 'multilanguageUi') {
-        for (const loc of locales) {
-          visualTasks.push({ icon, locale: loc })
+      for (const loc of locales) {
+        const key = getFeatureVisualKey(icon, loc)
+        if (!seenVisualKeys.has(key)) {
+          seenVisualKeys.add(key)
+          visualTasks.push({ icon, locale: loc, key })
         }
-      } else {
-        visualTasks.push({ icon, locale: 'en' })
+      }
+      // Always ensure poster baseline key is present for firstIcon
+      const enKey = getFeatureVisualKey(icon, 'en')
+      if (!seenVisualKeys.has(enKey)) {
+        seenVisualKeys.add(enKey)
+        visualTasks.push({ icon, locale: 'en', key: enKey })
       }
     }
   }
@@ -931,7 +967,6 @@ async function main() {
   )
   const segmentMap = new Map<string, CachedFeatureSegments>()
   await runPool(visualTasks, 3, async (task) => {
-    const key = task.icon === 'multilanguageUi' ? `${task.icon}-${task.locale}` : task.icon
     const segs = await ensureFeatureVisualSegments({
       icon: task.icon,
       locale: task.locale,
@@ -939,7 +974,7 @@ async function main() {
       tmpDir,
       force,
     })
-    segmentMap.set(key, segs)
+    segmentMap.set(task.key, segs)
   })
 
   // Load existing manifest so partial `--suite` / `--locale` runs preserve other suites cleanly
@@ -978,7 +1013,7 @@ async function main() {
     }
 
     const firstIcon = suite.featureIcons[0]!
-    const firstKey = firstIcon === 'multilanguageUi' ? `${firstIcon}-en` : firstIcon
+    const firstKey = getFeatureVisualKey(firstIcon, 'en')
     const firstSegs = segmentMap.get(firstKey)!
     const posterOut = join(outAnimaticsDir, `${suite.id}-poster.webp`)
     if (regenOutputs || !existsSync(posterOut) || statSync(posterOut).size < 5_000) {
@@ -1028,7 +1063,7 @@ async function main() {
           Number((chapterStartSec + rel).toFixed(4))
         )
 
-        const segKey = icon === 'multilanguageUi' ? `${icon}-${locale}` : icon
+        const segKey = getFeatureVisualKey(icon, locale)
         const segs = segmentMap.get(segKey)!
 
         for (let s = 0; s < 4; s++) {

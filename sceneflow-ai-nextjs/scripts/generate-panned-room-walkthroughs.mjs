@@ -141,9 +141,17 @@ function resolveAudioSource(roomId, locale) {
   return null
 }
 
-function renderRoomVisualMaster(ffmpegBin, roomId, spec, fps, dryRun) {
-  const roomTmpDir = join(TMP_WORK_DIR, roomId)
-  const masterMp4 = join(roomTmpDir, `${roomId}-panned-visual-master.mp4`)
+function resolveScreenshotPathForLocale(file, locale) {
+  if (locale && locale !== 'en') {
+    const localized = join(SCREENSHOTS_DIR, 'locales', locale, file)
+    if (existsSync(localized)) return localized
+  }
+  return join(SCREENSHOTS_DIR, file)
+}
+
+function renderRoomVisualMaster(ffmpegBin, roomId, locale, spec, fps, dryRun) {
+  const roomTmpDir = join(TMP_WORK_DIR, `${roomId}-${locale}`)
+  const masterMp4 = join(roomTmpDir, `${roomId}-${locale}-panned-visual-master.mp4`)
 
   const segmentDurations = spec.beatStartSeconds.map((startSec, idx) => {
     const prevBoundary = idx === 0 ? 0 : startSec
@@ -162,7 +170,7 @@ function renderRoomVisualMaster(ffmpegBin, roomId, spec, fps, dryRun) {
   const segmentPaths = []
 
   spec.slides.forEach((slide, idx) => {
-    const screenshotPath = join(SCREENSHOTS_DIR, slide.file)
+    const screenshotPath = resolveScreenshotPathForLocale(slide.file, locale)
     if (!existsSync(screenshotPath)) {
       throw new Error(`Missing screenshot: ${screenshotPath}`)
     }
@@ -320,22 +328,22 @@ function main() {
       }
     }
 
-    const { masterMp4, segmentDurations } = renderRoomVisualMaster(
-      ffmpegBin,
-      roomId,
-      spec,
-      opts.fps,
-      opts.dryRun
-    )
-    console.log(
-      `  ✓ [${roomId}] ${spec.slides.length} panned 5K beats (${segmentDurations.reduce((a, b) => a + b, 0).toFixed(1)}s)`
-    )
-
     for (const locale of opts.locales) {
       const audioSrc = resolveAudioSource(roomId, locale)
       if (!audioSrc) {
         throw new Error(`[${roomId}] Missing localized audio source for locale "${locale}" in ${ROOMS_MEDIA_DIR}`)
       }
+      const { masterMp4, segmentDurations } = renderRoomVisualMaster(
+        ffmpegBin,
+        roomId,
+        locale,
+        spec,
+        opts.fps,
+        opts.dryRun
+      )
+      console.log(
+        `  ✓ [${roomId}/${locale}] ${spec.slides.length} panned beats (${segmentDurations.reduce((a, b) => a + b, 0).toFixed(1)}s)`
+      )
       const { outMp4, outWebm } = muxLocalizedOutputs(
         ffmpegBin,
         roomId,

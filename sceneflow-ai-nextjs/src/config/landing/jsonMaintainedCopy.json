@@ -963,22 +963,22 @@
               },
               {
                 "icon": "clipsWorkbench",
-                "title": "Multi-Take Clips & Retake Studio",
-                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes with Reference-vs-Frame prompt optimization, toggle localized clip captions on or off, and manage per-stream localized video takes for dialogue and signage shots.",
-                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
+                "title": "Multi-Take Clips, Self-Healing [Investigate] & Retake Studio",
+                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), enforce real-world physical scale and pre-flight consistency linting before rendering, click `[Investigate]` on any failed or policy-blocked shot for multimodal root-cause diagnosis with 1-click resolution cards (including switching intense action beats to Creative `Kling AI F2V` or regenerating non-celebrity Cast portraits), and manage per-stream localized video takes.",
+                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, Self-Healing [Investigate] diagnostics, Creative Kling AI F2V fallback, and localized stream takes",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Non-destructive Multi-Take Vault",
-                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
+                      "title": "Self-Healing [Investigate] with 1-Click Fixes",
+                      "description": "Click [Investigate] on any 429 quota hit or content-policy rejection to diagnose the exact root cause (action intensity, celebrity-likeness portrait, or prompt wording) and apply a 1-click fix—such as switching to Creative (Kling AI F2V) or regenerating a realistic non-celebrity Cast portrait."
                     },
                     {
-                      "title": "IAD Smart Retake & Reference-vs-Frame optimization",
-                      "description": "Refine camera motion, subject physics, or facial performance with Reference-vs-Frame prompt sanitization, Direct Video pre-flight controls, and guided error recovery."
+                      "title": "Pre-flight consistency & physics linting",
+                      "description": "Automatically strips contradictory state transitions and anchors real-world prop/location scale dimensions on every Reference-to-Video render so first-take accuracy stays high."
                     },
                     {
-                      "title": "Per-stream localized shot takes & caption toggle",
-                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream, with instant caption overlay toggle."
+                      "title": "Non-destructive Multi-Take Vault & localized takes",
+                      "description": "Compare Take 1, Take 2, and Take 3 live, toggle localized clip captions on or off, and manage per-stream regenerated clips for spoken dialogue and in-scene signage."
                     },
                     {
                       "title": "Dialogue-free stem readiness",
@@ -1015,22 +1015,22 @@
               },
               {
                 "icon": "productionAgent",
-                "title": "The Production Agent",
-                "description": "Skip prompting 300+ shots by hand and let the autonomous studio builder produce all 27 scenes or a single chapter while you walk away. Select Pre-Vis, Clips, Scenes, Master, and Promo in one dialog, set Director Checkpoints and notification frequency, and let the Agent automatically optimize shot direction, rerun failed shots, escalate persistent policy blocks to Creative Clips, and deliver a private `/s/` Screening Room link.",
-                "screenshot": "The Production Agent — Autonomous Studio Builder across 27 scenes and 384 shots with Creative Clips policy fallback and walk-away Screening Room notifications",
+                "title": "The Unified Production Agent",
+                "description": "One context-aware autonomous studio builder replaces fragmented Audio, Stills, and Clips agents. Launch directly from any scene or across all 27 scenes—toggle Pre-Vis Audio & Keyframe Stills (built in parallel), Motion Clips, Stage 3 MP4 Scene Renders, Master Cut, and Promo Trailer in a single dialog. Survives browser refreshes with 1-click Resumable Checkpoints, resolves failed shots inline via the `Needs Attention` `[Investigate]` tray (with 1-click Creative `Kling AI F2V` fallback), and delivers a private `/s/` Screening Room link.",
+                "screenshot": "The Unified Production Agent — Context-aware 5-stage autonomous studio builder with parallel Pre-Vis, resumable checkpoints, and inline [Investigate] self-healing",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "5-stage walk-away orchestration",
-                      "description": "Select Pre-Vis, Clips, Scenes, Master, and Promo across all scenes or a single chapter to automate over 300 manual prompts in one run."
+                      "title": "Replaces fragmented Audio, Stills & Clips agents",
+                      "description": "Launch pre-scoped to the active scene or entire project with granular Pre-Vis Audio and Keyframe Stills sub-toggles running in parallel for faster turnaround."
                     },
                     {
-                      "title": "Self-healing direction & Creative Clips fallback",
-                      "description": "Automatically optimizes shot direction, reruns failed takes, and switches persistent Google content-policy blocks to Creative Clips so your batch never stalls."
+                      "title": "Resumable checkpoints & inline [Investigate] self-healing",
+                      "description": "Progress persists across reloads with 1-click Resume, while any quota or content-policy block surfaces in the dock's Needs Attention tray with 1-click Creative (Kling AI F2V) and Cast portrait remediation."
                     },
                     {
-                      "title": "Director Checkpoints & Screening Room alerts",
-                      "description": "Run 100% autonomously or pause after Pre-Vis or each scene and receive notifications with a direct `/s/` Screening Room review link."
+                      "title": "End-to-end Stage 3 MP4 renders & Screening Room alerts",
+                      "description": "Automatically renders per-scene multitrack MP4s, stitches the Master Cut, and sends notifications with a direct `/s/` Screening Room review link."
                     }
                   ]
                 }
