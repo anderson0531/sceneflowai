@@ -17,65 +17,70 @@ export const PRICING_LANDING_COPY = {
     traditionalCost: '$5,000–$50,000+',
     traditionalLabel: 'Traditional pre-vis & production',
     vs: 'vs',
-    sceneFlowCost: '$19–$599/mo + Add-Ons',
-    sceneFlowLabel: 'SceneFlow Studio & Continuity Vault',
+    sceneFlowCost: '$29–$599/mo + Add-Ons',
+    sceneFlowLabel: 'SceneFlow Studio & Client Vault Hosting',
     saveBadge: 'Save 90%+ per production',
   },
   filmmakerPerspectives: {
-    heading: 'One Studio Pipeline. Built for Every Storyteller & Filmmaker.',
+    heading: 'One Studio Platform. Built for White-Label Operators & Creators.',
     subheading:
-      'You do not need film school or technical skills to express your vision. Whether you are bringing a personal story to life for the first time, publishing a series chapter by chapter, pitching financiers, or running a hybrid shoot, your plan scales with how you create.',
+      'Whether you are launching a high-margin White-Label Video Service Business, publishing episodic chapters, pitching financiers, or scaling a multi-PM agency, your monthly base covers platform access and Continuity Vault hosting while Add-On packs scale on demand.',
     recommendedPathLabel: 'Recommended path:',
     cards: [
       {
-        id: 'hobbyist',
-        badge: 'No Film Experience Needed • $19/mo',
-        title: 'Storytellers & Creative Visionaries',
+        id: 'hybrid',
+        badge: 'Flagship • White-Label Video Business • $149/mo',
+        title: 'White-Label Video Service Providers',
         description:
-          'Have a story, book concept, or family history you want to see on screen? Describe your vision in plain words to create voiced Pre-Vis animatics and selective video clips—while keeping your characters, wardrobes, and sets saved in your Continuity Vault.',
-        recommendedPlan: 'Hobbyist ($19/mo)',
-      },
-      {
-        id: 'chapter',
-        badge: 'New & Indie Creators • $49/mo',
-        title: 'The Publish Chapter Strategy',
-        description:
-          'Skip the cost and time barrier of rendering a 90-minute feature upfront. Publish your story in 5–15 minute scenes or episodic chapters to manage your monthly compute budget while steadily growing your audience.',
-        recommendedPlan: 'Starter ($49/mo)',
+          'Launch a solo Life Memoir, Real Estate Tour, or Corporate Training business under your own brand on Operator Pro ($149/mo — 100% White-Label Intake, Blueprint Pass, Continuity & Screening Room Portals, 150 GB Client Vault, 10,000 credits/mo & $250 bulk add-on access). Pays for itself 3x on Client Order #1.',
+        recommendedPlan: 'Operator Pro ($149/mo · $1,490/yr)',
       },
       {
         id: 'series',
-        badge: 'Monetized Channels & Podcasters • $149/mo',
-        title: 'Character and Setting Continuity for Series',
+        badge: 'Multi-PM Agencies & Production Slates • $599/mo',
+        title: 'Multi-PM Agencies & Corporate L&D Teams',
         description:
-          'Audiences subscribe when they connect with familiar hosts, characters, and worlds. Preserve cast faces, voice clones, and sets across every episode—or upload live podcast camera clips with SceneFlow-generated reconstructions across 7 UI languages and 70+ dubbing languages.',
-        recommendedPlan: 'Pro ($149/mo)',
+          'Run 10+ concurrent client slates on Agency Scale ($599/mo — 750 GB Client Vault, unlimited branded client portals, Custom Domain, 10 PM seats with monthly credit caps, 45,000 credits/mo, API & BYOK orchestration).',
+        recommendedPlan: 'Agency Scale ($599/mo · $5,990/yr)',
       },
       {
-        id: 'hybrid',
-        badge: 'Service Operators, Agencies & Filmmakers • $149–$599/mo',
-        title: 'White-Label Video Businesses & Production Slates',
+        id: 'chapter',
+        badge: 'Indie Creators, Podcasters & Pre-Vis • $59/mo',
+        title: 'Chapter Creators & Production Funding Packages',
         description:
-          'Build a watermark-free portfolio sample on Explorer ($9), launch a solo client business on Pro ($149/mo — 100% White-Label Intake, Continuity & Screening Room Portals + 15,000 credits/mo), or scale a multi-PM agency on Studio ($599/mo — 10 seats, PM credit caps & BYOK). Also ideal for investor Pre-Vis & hybrid shoots.',
-        recommendedPlan: 'Pro ($149/mo) / Studio ($599/mo) + Add-Ons',
+          'Skip rendering a 90-minute feature upfront. Publish 5–15 minute episodic chapters, intercut live studio podcast clips, or deliver voiced Pre-Vis pitch packages with 50 GB Vault hosting and 4,500 credits/mo.',
+        recommendedPlan: 'Filmmaker & Pre-Vis ($59/mo · $590/yr)',
+      },
+      {
+        id: 'hobbyist',
+        badge: 'Solo Storytellers & Vault Hosting • $29/mo',
+        title: 'Storytellers & Personal Continuity Vaults',
+        description:
+          'Bring personal stories, books, or family histories to life with zero filmmaking skills required—while keeping characters, voice clones, and Screening Room links hosted in a 25 GB Active Continuity Vault.',
+        recommendedPlan: 'Creator & Vault ($29/mo · $290/yr)',
       },
     ],
   },
   membershipModel: {
-    badge: 'Predictable Base + Flexible Compute',
-    title: 'Start Your Project Today. Scale With Add-Ons as You Produce.',
+    badge: 'Predictable Platform & Vault Hosting + On-Demand Compute',
+    title: 'Monthly Platform & Client Vault Hosting. Scale Compute With Add-Ons.',
     description:
-      'SceneFlow separates recurring studio & Continuity Vault hosting from burst production compute—so your characters and world stay locked year-round, and you can top up credits whenever you are ready to finish a chapter or feature.',
+      'SceneFlow separates predictable recurring platform access, white-label client portal hosting, and media storage from burst video generation—protecting your margins and keeping client Screening Room links live year-round.',
     pillars: [
       {
-        title: '1. Base Membership Retains Your Continuity Vault',
+        title: '1. Monthly Platform & Active Client Vault Hosting ($29–$599/mo)',
         description:
-          'An active monthly plan ($19–$599/mo) maintains your studio access, Screening Room links, and Active Continuity Vault—preserving your recurring cast faces, wardrobes, custom voice clones, locations, and Series Bibles across seasons, plus monthly base credits.',
+          'An active monthly (or 2-months-free annual) plan covers studio access, white-label client portals, and relative media/project storage (25 GB to 750 GB)—preserving cast faces, voice clones, and live client Screening Room links, plus starter monthly credits.',
       },
       {
-        title: '2. Finish Any Project on Demand with 12-Month Add-On Packs',
+        title: '2. Finish Client Slates on Demand With 12-Month Add-On Packs',
         description:
-          'Once your story is in motion, active monthly members can purchase $25, $100, or $250 Add-On credit packs anytime to complete a chapter, multi-episode season, or hybrid feature shoot. Add-On packs last 12 months while your membership remains active.',
+          'Active monthly subscribers purchase $25 (2,000 cr) or $100 (9,000 cr) packs anytime—and Operator Pro & Agency Scale unlock the $250 Bulk Pack (25,000 cr at $0.010/cr). Add-On packs last 12 months while your membership stays active.',
+      },
+      {
+        title: '3. Elastic Vault Expansion (+$15/mo per 100 GB) & $19/mo Pause-to-Vault',
+        description:
+          'Growing client archives expand smoothly at +$15/mo per extra 100 GB. Need a quiet month? Switch to $19/mo Pause-to-Vault Hosting so every existing client Screening Room link and Continuity Vault stays online with zero broken deliveries.',
       },
     ],
   },
@@ -136,13 +141,13 @@ export const PRICING_LANDING_COPY = {
         description: '9,000 credits ($0.0111/cr) — ideal for multi-chapter series bursts or Pre-Vis pitch packages.',
       },
       {
-        label: '$250 Add-on',
+        label: '$250 Operator Bulk',
         credits: '25,000 credits',
-        description: '25,000 credits ($0.0100/cr) — built for $500–$5,000 hybrid productions and feature slates.',
+        description: '25,000 credits ($0.0100/cr) — exclusive to Operator Pro & Agency Scale for client slates.',
       },
     ],
     subscriberNote:
-      'Requires an active monthly membership (Hobbyist, Starter, Pro, or Studio) to purchase and retain Continuity Vault storage.',
+      'Requires an active monthly membership (Creator, Filmmaker, Operator Pro, or Agency Scale) to purchase packs and retain Client & Continuity Vault storage.',
     creditsUnit: 'credits',
   },
   calculator: {

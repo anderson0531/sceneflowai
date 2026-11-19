@@ -3604,8 +3604,8 @@
       "traditionalCost": "$5,000–$50,000+",
       "traditionalLabel": "Previsualización y producción tradicionales",
       "vs": "contra",
-      "sceneFlowCost": "$19–$599/mes + complementos",
-      "sceneFlowLabel": "SceneFlow Studio y bóveda de continuidad",
+      "sceneFlowCost": "$29–$599/mes + Paquetes",
+      "sceneFlowLabel": "SceneFlow Studio y Bóveda de Clientes",
       "saveBadge": "Ahorre más del 90 % por producción"
     },
     "filmmakerPerspectives": {
@@ -3655,6 +3655,10 @@
         {
           "title": "2. Termine cualquier proyecto a pedido con paquetes complementarios de 12 meses",
           "description": "Una vez que su historia esté en movimiento, los miembros mensuales activos pueden comprar paquetes de crédito adicional de $25, $100 o $250 en cualquier momento para completar un capítulo, una temporada de varios episodios o una sesión fotográfica híbrida. Los paquetes complementarios duran 12 meses mientras su membresía permanece activa."
+        },
+        {
+          "title": "3. Expansión de Bóveda (+$15/mes por 100 GB) y Pausa en Bóveda ($19/mes)",
+          "description": "Amplía tus archivos de clientes por +$15/mes cada 100 GB adicionales. ¿Un mes tranquilo? Cambia a Pausa en Bóveda ($19/mes) para mantener en línea todos los enlaces de Sala de Proyección de tus clientes."
         }
       ]
     },
@@ -3798,63 +3802,62 @@
       "subscriptions": [
         {
           "id": "hobbyist",
-          "name": "Aficionado: narrador y bóveda",
-          "description": "Narradores y visionarios creativos: expresa tu visión sin necesidad de habilidades técnicas cinematográficas y mantén activa tu Continuity Vault entre tomas.",
+          "name": "Creator & Vault",
+          "description": "Narradores y alojamiento en Bóveda — crea sin experiencia técnica manteniendo personajes, voces y enlaces activos todo el año",
           "features": [
-            "Membresía de Active Studio y retención de Continuity Vault",
-            "1.500 créditos/mes incluidos",
-            "Los créditos mensuales no utilizados vencen al finalizar el periodo.",
-            "Bóveda de continuidad activa de 10 GB (retiene el elenco, los vestuarios y los decorados)",
-            "Desbloquea paquetes de crédito complementarios para suscriptores de 12 meses",
-            "Ideal para visiones personales, historias familiares y animatics Pre-Vis",
-            "Vista previa y exportación del guión de producción (PDF, FDX, Fountain)",
-            "Exportación de MP4 y voz en off de IA (más de 70 idiomas)"
+            "Plataforma Studio y alojamiento de Bóveda de Continuidad",
+            "2,000 créditos/mes incluidos",
+            "Los créditos mensuales no usados vencen al fin del periodo",
+            "25 GB de Bóveda de Continuidad activa (reparto, vestuario y sets)",
+            "1 clon de voz personalizado y doblaje en 70+ idiomas",
+            "Desbloquea paquetes adicionales de $25 y $100 (12 meses)",
+            "Exportación de guion (PDF, FDX, Fountain) y MP4",
+            "Amplía +100 GB por $15/mes o Pausa en Bóveda ($19/mes)"
           ]
         },
         {
           "id": "starter",
-          "name": "Inicio: capítulo y vista previa",
-          "description": "La estrategia de publicación de capítulos: para lanzamientos de capítulos episódicos de 5 a 15 minutos y cineastas tradicionales que crean paquetes de financiación de producción.",
+          "name": "Filmmaker & Pre-Vis",
+          "description": "Capítulos, podcasters y Pre-Vis para inversores — publica episodios de 5–15 min y combina clips reales con cine IA",
           "features": [
-            "Todo en Hobbyist, más:",
-            "4500 créditos/mes incluidos (3x cálculo de aficionado)",
-            "Los créditos mensuales no utilizados vencen al finalizar el periodo.",
-            "Bóveda de continuidad activa de 25 GB para continuidad de personajes y escenarios",
-            "Creado para lanzamientos de capítulos de 5 a 15 minutos y paquetes de financiación previos a Vis",
-            "Cargue escenas de acción en vivo y combínelas con clips de IA en Mixer",
-            "1 clon de voz personalizado y doblaje de más de 70 idiomas",
-            "Soporte por correo electrónico"
+            "Todo en Creator & Vault, más:",
+            "4,500 créditos/mes incluidos",
+            "Los créditos mensuales no usados vencen al fin del periodo",
+            "50 GB de Bóveda de Continuidad para series por capítulos",
+            "Sube clips de cámara real y mézclalos con escenas IA",
+            "2 clones de voz personalizados y doblaje en 70+ idiomas",
+            "Soporte prioritario por correo",
+            "Exportación de guion (PDF, FDX, Fountain) y MP4"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro: Serie e híbrido",
-          "description": "Series Monetizadas, Operadores de Servicios de Video y Cineastas Híbridos — portales de entrega marca blanca, personajes recurrentes y producción IA en 4K",
+          "name": "Operator Pro — Negocio Marca Blanca",
+          "description": "Plan insignia para servicios de video marca blanca — opera Memorias, Bienes Raíces o Capacitación bajo tu marca con 150 GB y 4K",
           "features": [
-            "Todo lo incluido en Starter, más:",
-            "15.000 créditos/mes incluidos",
-            "Los créditos mensuales no utilizados vencen al finalizar el período",
-            "Bóveda de Continuidad Activa de 100 GB + Motor de Consistencia de Personajes",
-            "Portales de Cliente Marca Blanca (oculta la marca SceneFlow en enlaces de cliente)",
-            "Acceso a Veo 3.1 Quality (4K) y flujo híbrido de acción real + IA",
-            "5 clones de voz personalizados para elenco recurrente y memorias localizadas",
-            "BYOK (Trae tu propia clave API) para facturación directa con el proveedor",
+            "Todo en Filmmaker & Pre-Vis, más:",
+            "10,000 créditos/mes + acceso al paquete de $250 ($0.010/cr)",
+            "Los créditos mensuales no usados vencen al fin del periodo",
+            "150 GB de Bóveda de Clientes (25 portales con tu marca)",
+            "Portales 100% Marca Blanca (Intake, Blueprint, Continuidad y Sala)",
+            "PWA móvil + eliminación EXIF GPS y registro de consentimiento",
+            "Veo 3.1 4K, 5 clones de voz y orquestación BYOK",
             "3 puestos de equipo y soporte prioritario"
           ]
         },
         {
           "id": "studio",
-          "name": "Estudio - Casa de producción",
-          "description": "Production House & Feature Slate: una cartera de producción completa de entre $500 y $5000 para cineastas experimentados, agencias y estudios de series múltiples",
+          "name": "Agency Scale — Estudio Multi-PM",
+          "description": "Agencias marca blanca y equipos corporativos L&D — dominio propio, 10 puestos PM con límites de crédito y 750 GB",
           "features": [
-            "Todo en Pro, más:",
-            "75.000 créditos/mes incluidos (tarifa más baja por crédito)",
-            "Los créditos mensuales no utilizados vencen al final del período",
-            "Bóveda de Continuidad Activa de 500 GB + Consistencia de Personajes Ilimitada",
-            "Veo 3.1 4K Priority Queue y 25 clones de voz personalizados",
-            "Marca blanca Screening Room y exportaciones + acceso API y BYOK",
-            "10 puestos de equipo y administrador de cuentas dedicado",
-            "SLA empresarial disponible bajo petición"
+            "Todo en Operator Pro, más:",
+            "45,000 créditos/mes incluidos y mejores tarifas por volumen",
+            "Los créditos mensuales no usados vencen al fin del periodo",
+            "750 GB de Bóveda de Clientes (portales ilimitados)",
+            "Dominio personalizado + RBAC para PM y topes de crédito mensuales",
+            "Cola prioritaria Veo 3.1 4K, 25 clones de voz y API/BYOK",
+            "10 puestos de equipo y gerente de cuenta dedicado",
+            "SLA empresarial disponible bajo solicitud"
           ]
         }
       ]

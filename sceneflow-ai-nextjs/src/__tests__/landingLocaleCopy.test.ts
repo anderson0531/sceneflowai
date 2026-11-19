@@ -246,7 +246,7 @@ describe('landing locale copy', () => {
         features: string[]
       }>
       expect(subs.map((s) => s.id)).toEqual(['hobbyist', 'starter', 'pro', 'studio'])
-      expect(subs[2].features.length).toBe(9)
+      expect(subs[2].features.length).toBe(8)
       expect(getAtPath(localeMessages, 'trustSafeguard.ctaPolicyHref')).toBe('/trust-safety')
 
       // 4. Canonical TypeScript studioLanding copy mirrors JSON catalog 100%

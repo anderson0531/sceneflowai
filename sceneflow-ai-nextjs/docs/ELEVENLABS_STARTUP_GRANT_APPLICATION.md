@@ -50,7 +50,7 @@ Most generative video tools treat audio as an afterthought—forcing creators to
 
 ## 3. Monetization Strategy & How the 33M-Character Grant Accelerates Scale
 
-- **Commercial SaaS Monetization (Whop Merchant of Record Integrated):** SceneFlow is a long-term multi-tenant software platform in Early Access opening full self-serve checkout for our **January 2027 1.0 launch**: `$9` Explorer Test Flight, `$19/mo` Hobbyist, `$49/mo` Starter, `$149/mo` Pro (with white-label client review portals), `$599/mo` Studio, plus `$25–$250` 12-month subscriber credit packs.
+- **Commercial SaaS Monetization (Whop Merchant of Record Integrated):** SceneFlow is a long-term multi-tenant software platform in Early Access opening full self-serve checkout for our **January 2027 1.0 launch**: `$9` Explorer Test Flight, `$29/mo` Creator & Vault, `$59/mo` Filmmaker & Pre-Vis, `$149/mo` Operator Pro (flagship white-label portals + 150 GB Client Vault), `$599/mo` Agency Scale, plus `$25–$250` 12-month subscriber credit packs and 2-months-free annual billing.
 - **Why the 33M-Character Grant Drives Sustained Post-Grant ElevenLabs Volume:** Because our **Voiced Pre-Vis Animatic** is the mandatory first "aha!" moment for every `$9` Explorer trialist and Pro subscriber, the 12-month `33,000,000`-character grant lets us onboard thousands of early creators and commercial studio subscribers to iterate freely on multi-character scripts and 70+ language dubs during our Q1 2027 ramp—converting them into high-retention recurring SaaS subscribers driving durable commercial ElevenLabs usage well beyond Year 1.
 
 ---

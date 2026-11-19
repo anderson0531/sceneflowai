@@ -70,4 +70,4 @@ As SceneFlow transitions from Early Access to commercial 1.0 scale in Q1 2027 ac
 
 - **Live Multi-Language Showcase:** `https://sceneflowai.studio/#production-examples` (7-language dubbed trailers + 4-Room interactive Studio walkthroughs live on Edge CDN)
 - **Studio Capabilities & FlowDirector QA:** `https://sceneflowai.studio/#key-features`
-- **Monetization:** Live Early Access SaaS with Whop Merchant of Record integration (`$9` Explorer Test Flight, `$19–$599/mo` Continuity Vault subscriptions, 12-month credit packs, and BYOK enterprise routing) opening full self-serve billing for our January 2027 1.0 release.
+- **Monetization:** Live Early Access SaaS with Whop Merchant of Record integration (`$9` Explorer Test Flight, `$29–$599/mo` Continuity & Client Vault subscriptions with 2-months-free annual billing, 12-month credit packs, and BYOK enterprise routing) opening full self-serve billing for our January 2027 1.0 release.

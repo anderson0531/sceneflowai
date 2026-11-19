@@ -63,17 +63,17 @@ describe('Whop Catalog & Launch Tier Configuration', () => {
     expect(TIER_CATALOG.explorer.credits).toBe(750)
     expect(TIER_CATALOG.explorer.isOneTime).toBe(true)
 
-    expect(TIER_CATALOG.hobbyist.priceUsd).toBe(19)
-    expect(TIER_CATALOG.hobbyist.credits).toBe(1500)
+    expect(TIER_CATALOG.hobbyist.priceUsd).toBe(29)
+    expect(TIER_CATALOG.hobbyist.credits).toBe(2000)
 
-    expect(TIER_CATALOG.starter.priceUsd).toBe(49)
+    expect(TIER_CATALOG.starter.priceUsd).toBe(59)
     expect(TIER_CATALOG.starter.credits).toBe(4500)
 
     expect(TIER_CATALOG.pro.priceUsd).toBe(149)
-    expect(TIER_CATALOG.pro.credits).toBe(15000)
+    expect(TIER_CATALOG.pro.credits).toBe(10000)
 
     expect(TIER_CATALOG.studio.priceUsd).toBe(599)
-    expect(TIER_CATALOG.studio.credits).toBe(75000)
+    expect(TIER_CATALOG.studio.credits).toBe(45000)
   })
 
   it('maps all 3 Subscriber Add-On Credit Packs ($25 / $100 / $250) to live Whop plan IDs', () => {

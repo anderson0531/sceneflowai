@@ -3604,8 +3604,8 @@
       "traditionalCost": "US$ 5.000–US$ 50.000 +",
       "traditionalLabel": "Pré-visualização e produção tradicional",
       "vs": "vs.",
-      "sceneFlowCost": "$ 19– $ 599/mês + complementos",
-      "sceneFlowLabel": "SceneFlow Studio e cofre de continuidade",
+      "sceneFlowCost": "$29–$599/mês + Pacotes",
+      "sceneFlowLabel": "SceneFlow Studio e Cofre de Clientes",
       "saveBadge": "Economize mais de 90% por produção"
     },
     "filmmakerPerspectives": {
@@ -3655,6 +3655,10 @@
         {
           "title": "2. Conclua qualquer projeto sob demanda com pacotes complementares de 12 meses",
           "description": "Assim que sua história estiver em andamento, os membros mensais ativos podem comprar pacotes de créditos complementares de US$ 25, US$ 100 ou US$ 250 a qualquer momento para concluir um capítulo, uma temporada de vários episódios ou uma filmagem híbrida. Os pacotes complementares duram 12 meses enquanto sua assinatura permanece ativa."
+        },
+        {
+          "title": "3. Expansão do Cofre (+$15/mês por 100 GB) e Pausa no Cofre ($19/mês)",
+          "description": "Expanda arquivos de clientes por +$15/mês a cada 100 GB extras. Mês tranquilo? Mude para Pausa no Cofre ($19/mês) para manter todos os links da Sala de Exibição dos clientes sempre no ar."
         }
       ]
     },
@@ -3798,63 +3802,62 @@
       "subscriptions": [
         {
           "id": "hobbyist",
-          "name": "Hobbyist - contador de histórias e cofre",
-          "description": "Contadores de histórias e visionários criativos – expresse sua visão sem a necessidade de nenhuma habilidade técnica de filmagem e mantenha seu Cofre de Continuidade ativo entre as filmagens",
+          "name": "Creator & Vault",
+          "description": "Contadores de histórias e hospedagem no Cofre — crie sem equipe técnica mantendo elenco, vozes e links sempre ativos",
           "features": [
-            "Assinatura ativa do Studio e retenção do Continuity Vault",
-            "1.500 créditos/mês incluídos",
-            "Créditos mensais não utilizados expiram ao final do período.",
-            "Cofre de Continuidade Ativa de 10 GB (mantém elenco, guarda-roupas e conjuntos)",
-            "Desbloqueia pacotes de créditos complementares de assinante de 12 meses",
-            "Ideal para visões pessoais, histórias de família e animatics Pre-Vis",
-            "Visualização e exportação do script de produção (PDF, FDX, Fountain)",
-            "Exportação de MP4 e narração AI (mais de 70 idiomas)"
+            "Acesso à plataforma Studio e Cofre de Continuidade ativo",
+            "2.000 créditos/mês incluídos",
+            "Créditos mensais não usados expiram no fim do ciclo",
+            "25 GB de Cofre de Continuidade ativo",
+            "1 clone de voz personalizado e dublagem em 70+ idiomas",
+            "Libera pacotes adicionais de $25 e $100 (12 meses)",
+            "Expanda +100 GB por $15/mês ou Pausa no Cofre ($19/mês)",
+            "Exportação de roteiro (PDF, FDX, Fountain) e MP4"
           ]
         },
         {
           "id": "starter",
-          "name": "Starter - Capítulo e Pré-Vis",
-          "description": "A estratégia de publicação de capítulos - para lançamentos de capítulos episódicos de 5 a 15 minutos e cineastas tradicionais construindo pacotes de financiamento de produção",
+          "name": "Filmmaker & Pre-Vis",
+          "description": "Episódios por capítulo, podcasters e Pre-Vis — publique capítulos de 5–15 min e misture vídeos reais com IA",
           "features": [
-            "Tudo no Hobbyist, mais:",
-            "4.500 créditos/mês incluídos (3x computação Hobbyist)",
-            "Créditos mensais não utilizados expiram ao final do período.",
-            "Cofre de continuidade ativa de 25 GB para continuidade de personagens e configurações",
-            "Criado para lançamentos de capítulos de 5 a 15 minutos e pacotes de financiamento pré-visualização",
-            "Carregue cenas de ação ao vivo e combine com clipes de IA no Mixer",
-            "1 clone de voz personalizado e dublagem em mais de 70 idiomas",
-            "Suporte por e-mail"
+            "Tudo do Creator & Vault, mais:",
+            "4.500 créditos/mês incluídos",
+            "Créditos mensais não usados expiram no fim do ciclo",
+            "50 GB de Cofre de Continuidade ativo",
+            "Envie gravações reais e combine com cenas de IA",
+            "2 clones de voz personalizados e dublagem em 70+ idiomas",
+            "Suporte prioritário por e-mail",
+            "Exportação de roteiro (PDF, FDX, Fountain) e MP4"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro – Série e Híbrido",
-          "description": "Séries Monetizadas, Operadores de Serviços de Vídeo e Cineastas Híbridos — portais de entrega white-label, personagens recorrentes e produção IA em 4K",
+          "name": "Operator Pro — Negócio White-Label",
+          "description": "Plano principal para serviços de vídeo White-Label — opere Memórias, Imóveis ou Treinamentos sob sua marca com 150 GB e 4K",
           "features": [
-            "Tudo do plano Starter, mais:",
-            "15.000 créditos/mês incluídos",
-            "Os créditos mensais não utilizados expiram ao final do período",
-            "Cofre de Continuidade Ativa de 100 GB + Motor de Consistência de Personagens",
-            "Portais de Cliente White-Label (oculte a marca SceneFlow nos links de clientes)",
-            "Acesso ao Veo 3.1 Quality (4K) e fluxo híbrido live-action + IA",
-            "5 clones de voz personalizados para elenco recorrente e memórias localizadas",
-            "BYOK (Traga sua própria chave API) para faturamento direto no provedor",
-            "3 vagas de equipe e suporte prioritário"
+            "Tudo do Filmmaker & Pre-Vis, mais:",
+            "10.000 créditos/mês + pacote em volume de $250 ($0,010/cr)",
+            "Créditos mensais não usados expiram no fim do ciclo",
+            "150 GB de Cofre de Clientes (25 portais com sua marca)",
+            "Portais 100% White-Label (Intake, Blueprint, Continuidade e Sala)",
+            "PWA móvel + limpeza de GPS EXIF e registro de consentimento",
+            "Veo 3.1 4K, 5 clones de voz e suporte BYOK",
+            "3 assentos de equipe e suporte prioritário"
           ]
         },
         {
           "id": "studio",
-          "name": "Estúdio — Casa de Produção",
-          "description": "Production House & Feature Slate – um pipeline de produção completa de US$ 500 a US$ 5.000 para cineastas experientes, agências e estúdios de múltiplas séries",
+          "name": "Agency Scale — Estúdio Multi-PM",
+          "description": "Agências White-Label e equipes corporativas — domínio próprio, 10 assentos PM com limites de crédito e 750 GB",
           "features": [
-            "Tudo no Pro, mais:",
-            "75.000 créditos/mês incluídos (menor taxa por crédito)",
-            "Os créditos mensais não utilizados expiram no final do período",
-            "Cofre de Continuidade Ativa de 500 GB + Consistência Ilimitada de Personagens",
-            "Veo 3.1 4K Priority Queue e 25 clones de voz personalizados",
-            "Screening Room de marca branca e exportações + acesso API e BYOK",
-            "10 vagas de equipe e gerente de conta dedicado",
-            "SLA empresarial disponível mediante solicitação"
+            "Tudo do Operator Pro, mais:",
+            "45.000 créditos/mês incluídos",
+            "Créditos mensais não usados expiram no fim do ciclo",
+            "750 GB de Cofre de Clientes (portais ilimitados)",
+            "Domínio personalizado + RBAC para PM e limites mensais",
+            "Fila prioritária Veo 3.1 4K, 25 clones de voz e API/BYOK",
+            "10 assentos e gerente de conta dedicado",
+            "SLA empresarial disponível sob consulta"
           ]
         }
       ]

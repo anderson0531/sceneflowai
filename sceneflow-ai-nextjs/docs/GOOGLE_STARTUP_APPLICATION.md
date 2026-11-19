@@ -24,7 +24,7 @@
 
 ## Portal Copy-Paste: 100-Word Product Summary
 
-> SceneFlow AI (`https://sceneflowai.studio`) is a multi-tenant generative AI video SaaS studio built natively on Google Cloud Vertex AI (Gemini, Imagen 4, Veo 3.1 + EXT), Cloud Run, GCS, and Cloud SQL. Unlike isolated 10-second clip tools, SceneFlow provides an integrated Continuity Operating System—Series Room, Blueprint Room with Audience Resonance™ pre-render QA, Continuity Vault (multi-age character & wardrobe locks), Autonomous Production Agent, and 70+ language dubbing across 7 native UI languages. Self-serve SaaS subscribers (`$9` Explorer; `$19–$599/mo` tiers) use SceneFlow software to direct long-form episodic series, podcasts, training curricula, and white-label client video workflows.
+> SceneFlow AI (`https://sceneflowai.studio`) is a multi-tenant generative AI video SaaS studio built natively on Google Cloud Vertex AI (Gemini, Imagen 4, Veo 3.1 + EXT), Cloud Run, GCS, and Cloud SQL. Unlike isolated 10-second clip tools, SceneFlow provides an integrated Continuity Operating System—Series Room, Blueprint Room with Audience Resonance™ pre-render QA, Continuity Vault (multi-age character & wardrobe locks), Autonomous Production Agent, and 70+ language dubbing across 7 native UI languages. Self-serve SaaS subscribers (`$9` Explorer; `$29–$599/mo` tiers) use SceneFlow software to direct long-form episodic series, podcasts, training curricula, and white-label client video workflows.
 
 ---
 
@@ -77,7 +77,7 @@ SceneFlow solves four structural bottlenecks in one multi-tenant SaaS studio (`S
 
 - **Live Early Access SaaS with Whop Merchant of Record Integrated** (opening public self-serve checkout in **January 2027**):
   - **Explorer Test Flight:** `$9` one-time (`750` credits)
-  - **Continuity Vault Subscriptions:** `$19/mo` Hobbyist · `$49/mo` Starter · `$149/mo` Pro (White-Label Portals + BYOK) · `$599/mo` Studio (Team RBAC + 25 voice clones)
+  - **Continuity & Client Vault Subscriptions:** `$29/mo` Creator & Vault · `$59/mo` Filmmaker & Pre-Vis · `$149/mo` Operator Pro (Flagship White-Label Portals + 150 GB Vault + BYOK) · `$599/mo` Agency Scale (10 PM seats + Custom Domain + 750 GB Vault) *(2 months free on annual prepaid; `+$15/mo` per `+100 GB` Vault storage; `$19/mo` Pause-to-Vault Hosting)*
   - **12-Month Subscriber Credit Packs:** `$25–$250` high-margin compute top-ups
 
 ### Grounded 12-Month Google Cloud Consumption Trajectory

@@ -4425,8 +4425,8 @@
       "traditionalCost": "$5,000–$50,000+",
       "traditionalLabel": "Traditional pre-vis & production",
       "vs": "vs",
-      "sceneFlowCost": "$19–$599/mo + Add-Ons",
-      "sceneFlowLabel": "SceneFlow Studio & Continuity Vault",
+      "sceneFlowCost": "$29–$599/mo + Add-Ons",
+      "sceneFlowLabel": "SceneFlow Studio & Client Vault Hosting",
       "saveBadge": "Save 90%+ per production"
     },
     "filmmakerPerspectives": {
@@ -4465,17 +4465,21 @@
       ]
     },
     "membershipModel": {
-      "badge": "Predictable Base + Flexible Compute",
-      "title": "Start Your Project Today. Scale With Add-Ons as You Produce.",
-      "description": "SceneFlow separates recurring studio & Continuity Vault hosting from burst production compute—so your characters and world stay locked year-round, and you can top up credits whenever you are ready to finish a chapter or feature.",
+      "badge": "Predictable Platform & Vault Hosting + On-Demand Compute",
+      "title": "Monthly Platform & Client Vault Hosting. Scale Compute With Add-Ons.",
+      "description": "SceneFlow separates predictable recurring platform access, white-label client portal hosting, and media storage from burst video generation—protecting your margins and keeping client Screening Room links live year-round.",
       "pillars": [
         {
-          "title": "1. Base Membership Retains Your Continuity Vault",
-          "description": "An active monthly plan ($19–$599/mo) maintains your studio access, Screening Room links, and Active Continuity Vault—preserving your recurring cast faces, wardrobes, custom voice clones, locations, and Series Bibles across seasons, plus monthly base credits."
+          "title": "1. Monthly Platform & Active Client Vault Hosting ($29–$599/mo)",
+          "description": "An active monthly (or 2-months-free annual) plan covers studio access, white-label client portals, and relative media/project storage (25 GB to 750 GB)—preserving cast faces, voice clones, and live client Screening Room links, plus starter monthly credits."
         },
         {
-          "title": "2. Finish Any Project on Demand with 12-Month Add-On Packs",
-          "description": "Once your story is in motion, active monthly members can purchase $25, $100, or $250 Add-On credit packs anytime to complete a chapter, multi-episode season, or hybrid feature shoot. Add-On packs last 12 months while your membership remains active."
+          "title": "2. Finish Client Slates on Demand With 12-Month Add-On Packs",
+          "description": "Active monthly subscribers purchase $25 (2,000 cr) or $100 (9,000 cr) packs anytime—and Operator Pro & Agency Scale unlock the $250 Bulk Pack (25,000 cr at $0.010/cr). Add-On packs last 12 months while your membership stays active."
+        },
+        {
+          "title": "3. Elastic Vault Expansion (+$15/mo per 100 GB) & $19/mo Pause-to-Vault",
+          "description": "Growing client archives expand smoothly at +$15/mo per extra 100 GB. Need a quiet month? Switch to $19/mo Pause-to-Vault Hosting so every existing client Screening Room link and Continuity Vault stays online with zero broken deliveries."
         }
       ]
     },
@@ -4619,61 +4623,60 @@
       "subscriptions": [
         {
           "id": "hobbyist",
-          "name": "Hobbyist — Storyteller & Vault",
-          "description": "Storytellers & Creative Visionaries — express your vision with zero technical filmmaking skills required, and keep your Continuity Vault active between shoots",
+          "name": "Creator & Vault",
+          "description": "Solo Storytellers & Vault Hosting — express your vision with zero filmmaking skills required while keeping characters, voice clones, and Screening Room links hosted year-round",
           "features": [
-            "Active Studio Membership & Continuity Vault retention",
-            "1,500 credits/month included",
+            "Active Studio Platform & Continuity Vault hosting",
+            "2,000 credits/month included",
             "Unused monthly credits expire at period end",
-            "10 GB Active Continuity Vault (retains cast, wardrobes & sets)",
-            "Unlocks 12-month Subscriber Add-On credit packs",
-            "Ideal for personal visions, family stories & Pre-Vis animatics",
-            "Production Script preview & export (PDF, FDX, Fountain)",
-            "MP4 export & AI voiceover (70+ languages)"
+            "25 GB Active Continuity Vault (retains cast, wardrobes & sets)",
+            "1 custom voice clone & 70+ language AI dubbing",
+            "Unlocks $25 & $100 12-month Subscriber Add-On packs",
+            "Production Script export (PDF, FDX, Fountain) & MP4 export",
+            "Expand Vault anytime (+$15/mo per 100 GB) or Pause-to-Vault ($19/mo)"
           ]
         },
         {
           "id": "starter",
-          "name": "Starter — Chapter & Pre-Vis",
-          "description": "The Publish Chapter Strategy — for 5–15 min episodic chapter releases and traditional filmmakers building Production Funding Packages",
+          "name": "Filmmaker & Pre-Vis",
+          "description": "Chapter Releases, Podcasters & Investor Pre-Vis — publish 5–15 min episodes, intercut live studio clips, and ship pitch packages without upfront studio overhead",
           "features": [
-            "Everything in Hobbyist, plus:",
-            "4,500 credits/month included (3x Hobbyist compute)",
+            "Everything in Creator & Vault, plus:",
+            "4,500 credits/month included (2.25x Creator compute)",
             "Unused monthly credits expire at period end",
-            "25 GB Active Continuity Vault for character & setting continuity",
-            "Built for 5–15 min chapter releases & Pre-Vis funding packages",
-            "Upload live-action scenes & combine with AI clips in Mixer",
-            "1 custom voice clone & 70+ language dubbing",
-            "Email support"
+            "50 GB Active Continuity Vault for multi-chapter cast & set locks",
+            "Upload live-action studio clips & mix with AI cinema scenes",
+            "Built for 5–15 min episodic chapters & Pre-Vis funding packages",
+            "2 custom voice clones & 70+ language stem-separated dubbing",
+            "Priority email support"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro — Series & Hybrid",
-          "description": "Monetized Series, Solo Video Service Operators & Hybrid Filmmakers — white-label client delivery portals, recurring characters, and 4K AI production",
+          "name": "Operator Pro — White-Label Business",
+          "description": "Flagship White-Label Video Service Business — run a high-margin Life Memoir, Real Estate, or Corporate Training studio under your own brand with 150 GB client hosting & 4K AI production",
           "features": [
-            "Everything in Starter, plus:",
-            "15,000 credits/month included",
+            "Everything in Filmmaker & Pre-Vis, plus:",
+            "10,000 credits/month included + $250 Bulk Pack rate ($0.010/cr)",
             "Unused monthly credits expire at period end",
-            "100 GB Active Continuity Vault + Character Consistency Engine",
-            "White-label Client Portals (hide SceneFlow branding on client links)",
-            "Veo 3.1 Quality (4K) access & hybrid live-action + AI workflow",
-            "5 custom voice clones for recurring series cast & localized memoirs",
-            "BYOK (Bring Your Own Key) for direct provider billing",
+            "150 GB Active Client & Continuity Vault (25 branded client portals)",
+            "100% White-Label Intake, Blueprint Pass, Continuity & Screening Room",
+            "Mobile Companion PWA + automatic EXIF GPS stripping & consent ledger",
+            "Veo 3.1 Quality (4K), 5 custom voice clones & BYOK orchestration",
             "3 team seats & Priority support"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio — Production House",
-          "description": "Production House & Feature Slate — a $500–$5,000 full-production pipeline for experienced filmmakers, agencies, and multi-series studios",
+          "name": "Agency Scale — Multi-PM Studio",
+          "description": "Multi-PM White-Label Agencies, Corporate L&D Teams & Feature Slates — custom domain branding, 10 PM seats with credit guardrails, 750 GB vault storage, and priority 4K scale",
           "features": [
-            "Everything in Pro, plus:",
-            "75,000 credits/month included (lowest per-credit rate)",
+            "Everything in Operator Pro, plus:",
+            "45,000 credits/month included + lowest bulk Add-On rates",
             "Unused monthly credits expire at period end",
-            "500 GB Active Continuity Vault + Unlimited Character Consistency",
-            "Veo 3.1 4K Priority Queue & 25 custom voice clones",
-            "White-label Screening Room & exports + API & BYOK access",
+            "750 GB Active Client & Continuity Vault (unlimited client portals)",
+            "Custom Domain white-label hosting + PM RBAC & monthly credit caps",
+            "Veo 3.1 4K Priority Queue, 25 custom voice clones & API/BYOK access",
             "10 team seats & Dedicated account manager",
             "Enterprise SLA available on request"
           ]

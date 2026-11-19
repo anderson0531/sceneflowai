@@ -267,21 +267,27 @@ describe('published pricing copy', () => {
     expect(terms).not.toContain('never expire')
   })
 
-  it('includes the $19/mo Hobbyist tier, Continuity Vault retention, and 4 filmmaker perspectives', () => {
-    expect(TIER_CATALOG.hobbyist.priceUsd).toBe(19)
-    expect(TIER_CATALOG.hobbyist.credits).toBe(1500)
-    expect(TIER_CATALOG.hobbyist.storageGb).toBe(10)
+  it('includes the $29/mo Creator & Vault tier, Operator Pro white-label flagship, and 3-pillar vault hosting model', () => {
+    expect(TIER_CATALOG.hobbyist.priceUsd).toBe(29)
+    expect(TIER_CATALOG.hobbyist.credits).toBe(2000)
+    expect(TIER_CATALOG.hobbyist.storageGb).toBe(25)
     expect(TIER_CATALOG.hobbyist.isOneTime).toBe(false)
     expect(TIER_CATALOG.hobbyist.marketingFeatures.join('\n')).toContain('expire at period end')
+    expect(TIER_CATALOG.pro.priceUsd).toBe(149)
+    expect(TIER_CATALOG.pro.credits).toBe(10000)
+    expect(TIER_CATALOG.pro.storageGb).toBe(150)
+    expect(TIER_CATALOG.studio.priceUsd).toBe(599)
+    expect(TIER_CATALOG.studio.credits).toBe(45000)
+    expect(TIER_CATALOG.studio.storageGb).toBe(750)
     expect(PRICING_LANDING_COPY.filmmakerPerspectives.cards).toHaveLength(4)
     expect(PRICING_LANDING_COPY.filmmakerPerspectives.cards.map((c) => c.title)).toEqual([
-      'Storytellers & Creative Visionaries',
-      'The Publish Chapter Strategy',
-      'Character and Setting Continuity for Series',
-      'Production Funding Packages & Hybrid Shoots',
+      'White-Label Video Service Providers',
+      'Multi-PM Agencies & Corporate L&D Teams',
+      'Chapter Creators & Production Funding Packages',
+      'Storytellers & Personal Continuity Vaults',
     ])
     expect(JSON.stringify(PRICING_LANDING_COPY)).not.toContain('Sticky')
-    expect(PRICING_LANDING_COPY.membershipModel.pillars).toHaveLength(2)
+    expect(PRICING_LANDING_COPY.membershipModel.pillars).toHaveLength(3)
     expect(PRICING_LANDING_COPY.creditTopUps.subscriberNote).toContain('active monthly membership')
   })
 })

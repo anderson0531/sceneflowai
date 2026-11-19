@@ -154,6 +154,11 @@ export function PricingTierGrid({
                   </span>
                   <span className="text-sm text-gray-400">{t('perMonth')}</span>
                 </div>
+                {typeof plan.annualPrice === 'number' && plan.annualPrice > 0 && (
+                  <p className="mt-1 text-[11px] font-medium text-emerald-300/90 tabular-nums">
+                    {formatLandingCurrency(plan.annualPrice, locale)}/yr · 2 months free
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2.5 mb-5">
