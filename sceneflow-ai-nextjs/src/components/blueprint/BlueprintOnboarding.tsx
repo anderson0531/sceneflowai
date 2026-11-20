@@ -91,11 +91,32 @@ export function BlueprintOnboarding({ onComplete, className }: BlueprintOnboardi
     onComplete?.()
   }, [onComplete])
 
+  useEffect(() => {
+    if (!isVisible) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleSkip()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isVisible, handleSkip])
+
+  useEffect(() => {
+    const onReplay = () => {
+      setCurrentStep(0)
+      setIsVisible(true)
+    }
+    window.addEventListener('sceneflow:replay-blueprint-tour', onReplay)
+    return () => window.removeEventListener('sceneflow:replay-blueprint-tour', onReplay)
+  }, [])
+
   if (!isVisible) return null
 
   return (
     <AnimatePresence>
       <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t(`steps.${step.id}.title`)}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}

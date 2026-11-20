@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useLocale } from 'next-intl'
 import {
   HelpCircle,
   X,
@@ -21,10 +22,14 @@ import {
   Lightbulb,
   AlertCircle,
   GraduationCap,
+  Film,
+  LifeBuoy,
+  RotateCcw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   JIT_CONTEXT_GUIDES,
+  JIT_CONTEXT_TO_FEATURE_ROOM,
   INTERACTIVE_TUTORIALS,
   HELP_KNOWLEDGE_ARTICLES,
   getJitContextIdForPath,
@@ -33,6 +38,8 @@ import {
   type JitQuickStep,
 } from '@/config/help/helpAcademyConfig'
 import { AnnotatedStudioScreenshot } from './AnnotatedStudioScreenshot'
+import { InsetRoomTourPlayer } from '@/components/landing/InsetRoomTourPlayer'
+import { openSupportErrorReport } from '@/components/vision/ReportGenerationErrorDialog'
 
 export const JIT_HELP_OPEN_EVENT = 'sceneflow:open-jit-help'
 export const ACADEMY_PROGRESS_STORAGE_KEY = 'sceneflow-academy-completed-steps-v1'
@@ -55,7 +62,11 @@ export function openJitHelp(detail: OpenJitHelpDetail = {}) {
 export function JitHelpDrawer() {
   const pathname = usePathname()
   const router = useRouter()
+  const locale = useLocale()
   const [locationSearch, setLocationSearch] = useState('')
+  const [visualMode, setVisualMode] = useState<'map' | 'video'>(() =>
+    locale && !locale.toLowerCase().startsWith('en') ? 'video' : 'map'
+  )
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -460,26 +471,93 @@ export function JitHelpDrawer() {
                     </p>
                   </div>
 
-                  {/* Interactive Annotated Screenshot with Hotspot Pins */}
+                  {/* Interactive Visual Screen Map OR 7-Language Narrated Video Tour */}
                   <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center justify-between">
-                      <span>Interactive Visual Screen Map</span>
-                      <span className="text-cyan-400 font-normal">
-                        Click pins 1–{activeGuide.hotspots.length} to highlight UI controls
-                      </span>
-                    </h4>
-                    <AnnotatedStudioScreenshot
-                      key={`${activeGuide.id}-${focusedHotspotNumber ?? 'default'}`}
-                      screenshotSrc={activeGuide.screenshotSrc}
-                      screenshotAlt={activeGuide.screenshotAlt}
-                      hotspots={activeGuide.hotspots}
-                      initialHotspotNumber={focusedHotspotNumber}
-                      compact
-                      onActionEvent={(eventName) =>
-                        dispatchOrNavigateAction(eventName, activeGuide.id)
-                      }
-                      onActionTriggered={() => setIsOpen(false)}
-                    />
+                    {(() => {
+                      const roomVideoId = JIT_CONTEXT_TO_FEATURE_ROOM[activeGuide.id]
+                      const showVideo = Boolean(roomVideoId && visualMode === 'video')
+                      return (
+                        <>
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                              {showVideo ? '7-Language Narrated Room Tour' : 'Interactive Visual Screen Map'}
+                            </h4>
+                            <div className="flex items-center gap-1.5">
+                              {roomVideoId && (
+                                <div className="inline-flex rounded-lg border border-slate-700 bg-slate-900 p-0.5 text-[11px]">
+                                  <button
+                                    type="button"
+                                    onClick={() => setVisualMode('map')}
+                                    className={cn(
+                                      'px-2 py-0.5 rounded-md font-semibold transition-colors',
+                                      visualMode === 'map'
+                                        ? 'bg-cyan-500/20 text-cyan-300'
+                                        : 'text-slate-400 hover:text-white'
+                                    )}
+                                  >
+                                    Screen Map
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setVisualMode('video')}
+                                    className={cn(
+                                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-semibold transition-colors',
+                                      visualMode === 'video'
+                                        ? 'bg-cyan-500/20 text-cyan-300'
+                                        : 'text-slate-400 hover:text-white'
+                                    )}
+                                  >
+                                    <Film className="w-3 h-3" />
+                                    <span>7-Lang Video</span>
+                                  </button>
+                                </div>
+                              )}
+                              {(detectedContextId === 'blueprint' || detectedContextId === 'production') && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    window.dispatchEvent(
+                                      new CustomEvent(
+                                        detectedContextId === 'blueprint'
+                                          ? 'sceneflow:replay-blueprint-tour'
+                                          : 'sceneflow:replay-production-tour'
+                                      )
+                                    )
+                                    setIsOpen(false)
+                                  }}
+                                  className="inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] font-medium text-slate-300 hover:border-cyan-500/50 hover:text-white transition-colors"
+                                  title="Replay the first-time onboarding walkthrough for this room"
+                                >
+                                  <RotateCcw className="w-3 h-3" />
+                                  <span>Replay Tour</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {showVideo && roomVideoId ? (
+                            <InsetRoomTourPlayer
+                              roomId={roomVideoId}
+                              roomLabel={activeGuide.shortTitle}
+                              initialLocale={locale}
+                            />
+                          ) : (
+                            <AnnotatedStudioScreenshot
+                              key={`${activeGuide.id}-${focusedHotspotNumber ?? 'default'}`}
+                              screenshotSrc={activeGuide.screenshotSrc}
+                              screenshotAlt={activeGuide.screenshotAlt}
+                              hotspots={activeGuide.hotspots}
+                              initialHotspotNumber={focusedHotspotNumber}
+                              compact
+                              onActionEvent={(eventName) =>
+                                dispatchOrNavigateAction(eventName, activeGuide.id)
+                              }
+                              onActionTriggered={() => setIsOpen(false)}
+                            />
+                          )}
+                        </>
+                      )
+                    })()}
                   </div>
 
                   {/* 60-Second Action Checklist ("What to Do Next") */}
@@ -1020,14 +1098,32 @@ export function JitHelpDrawer() {
                   </button>
                 )}
               </div>
-              <Link
-                href="/dashboard/help"
-                onClick={() => setIsOpen(false)}
-                className="font-semibold text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
-              >
-                <span>Open Studio Academy</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false)
+                    openSupportErrorReport({
+                      mediaType: 'general',
+                      title: `Support Request (${activeGuide.shortTitle})`,
+                      explanation: 'Tell us what you need help with or describe the issue you encountered.',
+                    })
+                  }}
+                  className="inline-flex items-center gap-1 font-medium text-slate-300 hover:text-white transition-colors"
+                >
+                  <LifeBuoy className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Report Issue</span>
+                </button>
+                <span className="text-slate-700">|</span>
+                <Link
+                  href="/dashboard/help"
+                  onClick={() => setIsOpen(false)}
+                  className="font-semibold text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
+                >
+                  <span>Open Studio Academy</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
           </aside>
         </div>

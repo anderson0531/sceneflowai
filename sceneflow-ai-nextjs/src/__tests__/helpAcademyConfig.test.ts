@@ -3,6 +3,7 @@ import { join } from 'path'
 import { describe, it, expect } from 'vitest'
 import {
   JIT_CONTEXT_GUIDES,
+  JIT_CONTEXT_TO_FEATURE_ROOM,
   INTERACTIVE_TUTORIALS,
   CREATOR_PLAYBOOKS,
   HELP_KNOWLEDGE_ARTICLES,
@@ -191,8 +192,22 @@ describe('helpAcademyConfig — Route-Aware JIT Help, Pricing Parity & Dead-Even
     expect(existsSync(join(root, 'src/app/api/cue/respond-dol-integrated/route.ts'))).toBe(false)
   })
 
-  it('includes role-based creator playbooks and searchable knowledge base articles', () => {
+  it('includes role-based creator playbooks, 7-language room video mappings, and Agency/PWA/FlowDirector KB coverage', () => {
     expect(CREATOR_PLAYBOOKS.length).toBe(4)
-    expect(HELP_KNOWLEDGE_ARTICLES.length).toBeGreaterThanOrEqual(6)
+    expect(INTERACTIVE_TUTORIALS.length).toBeGreaterThanOrEqual(5)
+    expect(INTERACTIVE_TUTORIALS.some((c) => c.id === 'white-label-agency-scale')).toBe(true)
+
+    expect(HELP_KNOWLEDGE_ARTICLES.length).toBeGreaterThanOrEqual(11)
+    const kbIds = HELP_KNOWLEDGE_ARTICLES.map((a) => a.id)
+    expect(kbIds).toContain('kb-agency-scale-ops')
+    expect(kbIds).toContain('kb-flowdirector-qa')
+    expect(kbIds).toContain('kb-white-label-portals')
+    expect(kbIds).toContain('kb-mobile-companion-pwa')
+
+    expect(JIT_CONTEXT_TO_FEATURE_ROOM.series).toBe('series-desk')
+    expect(JIT_CONTEXT_TO_FEATURE_ROOM.blueprint).toBe('blueprint-board')
+    expect(JIT_CONTEXT_TO_FEATURE_ROOM.production).toBe('production-stage')
+    expect(JIT_CONTEXT_TO_FEATURE_ROOM['final-cut']).toBe('screening-room')
+    expect(JIT_CONTEXT_TO_FEATURE_ROOM.premiere).toBe('screening-room')
   })
 })

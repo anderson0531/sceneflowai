@@ -26,6 +26,7 @@ import {
   CreditCard,
   Coins,
   Library,
+  GraduationCap,
   PanelLeftClose,
   PanelLeft,
   // Icons for sections
@@ -340,6 +341,18 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                   <span>{tNav(item.labelKey)}</span>
                 </Link>
               ))}
+              <Link
+                href="/dashboard/help"
+                className={cn(
+                  'flex items-center gap-2 py-2 text-sm font-medium rounded-lg transition-colors',
+                  pathname?.startsWith('/dashboard/help')
+                    ? 'bg-sf-primary/15 text-gray-900 dark:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                )}
+              >
+                <GraduationCap className="w-4 h-4 text-emerald-500" />
+                <span>{tNav.has('studioAcademy') ? tNav('studioAcademy') : 'Studio Academy'}</span>
+              </Link>
             </nav>
           </div>
 

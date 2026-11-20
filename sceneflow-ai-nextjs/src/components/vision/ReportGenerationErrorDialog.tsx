@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Check, CheckCircle2, Copy, LifeBuoy, Loader2, Send } from 'lucide-react'
+import { AlertTriangle, Check, CheckCircle2, Copy, LifeBuoy, Loader2, Mail, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
@@ -10,10 +10,14 @@ import {
   evaluateGenerationError,
   type GenerationMediaType,
 } from '@/lib/errors/generationErrorIntelligence'
-import type { SupportReportContext } from '@/lib/support/generationErrorReport'
+import {
+  getSupportMediaLabel,
+  type SupportReportContext,
+  type SupportReportMediaType,
+} from '@/lib/support/generationErrorReport'
 
 export interface SupportErrorReportPayload {
-  mediaType: GenerationMediaType
+  mediaType: SupportReportMediaType
   rawError?: string
   technicalDetails?: string
   statusCode?: number
@@ -24,6 +28,16 @@ export interface SupportErrorReportPayload {
   prompt?: string
   context?: SupportReportContext
 }
+
+const SUPPORT_CATEGORY_OPTIONS: Array<{ value: SupportReportMediaType; label: string }> = [
+  { value: 'general', label: 'General Studio Support' },
+  { value: 'still', label: 'Shot Still Generation' },
+  { value: 'clip', label: 'Video Clip Generation' },
+  { value: 'audio', label: 'Audio, Voices & Dubbing' },
+  { value: 'export', label: 'Export & Production Streams' },
+  { value: 'billing', label: 'Billing, Credits & BYOK' },
+  { value: 'agency', label: 'White-Label & Agency Ops' },
+]
 
 const SUPPORT_REPORT_EVENT = 'sceneflow:open-support-error-report'
 
@@ -48,22 +62,36 @@ export function ReportGenerationErrorDialog({
   payload,
 }: ReportGenerationErrorDialogProps) {
   const [userNote, setUserNote] = useState('')
+  const [selectedMediaType, setSelectedMediaType] = useState<SupportReportMediaType>('general')
   const [submitting, setSubmitting] = useState(false)
   const [submittedTicketId, setSubmittedTicketId] = useState<string | null>(null)
+  const [emailDelivered, setEmailDelivered] = useState<boolean>(true)
+  const [confirmationSent, setConfirmationSent] = useState<boolean>(false)
+  const [supportEmailAddress, setSupportEmailAddress] = useState<string>('support@sceneflowai.studio')
   const [copiedTicket, setCopiedTicket] = useState(false)
 
   useEffect(() => {
     if (open) {
       setUserNote('')
+      setSelectedMediaType(payload?.mediaType || 'general')
       setSubmittedTicketId(null)
+      setEmailDelivered(true)
+      setConfirmationSent(false)
       setCopiedTicket(false)
     }
   }, [open, payload])
 
   if (!payload) return null
 
+  const isGeneralMode =
+    payload.mediaType === 'general' ||
+    payload.mediaType === 'billing' ||
+    payload.mediaType === 'agency' ||
+    payload.mediaType === 'audio' ||
+    payload.mediaType === 'export'
+  const evalMediaType: GenerationMediaType = selectedMediaType === 'still' ? 'still' : 'clip'
   const evaluated = evaluateGenerationError({
-    mediaType: payload.mediaType,
+    mediaType: evalMediaType,
     rawError: payload.technicalDetails || payload.rawError || payload.explanation,
     statusCode: payload.statusCode,
     errorCode: payload.errorCode,
@@ -74,7 +102,7 @@ export function ReportGenerationErrorDialog({
   const title = payload.title || evaluated.title
   const explanation = payload.explanation || evaluated.explanation
   const technical = (payload.technicalDetails || payload.rawError || '').trim()
-  const mediaLabel = payload.mediaType === 'clip' ? 'Video Clip' : 'Shot Still'
+  const mediaLabel = getSupportMediaLabel(selectedMediaType)
   const locationBadges = [
     payload.context?.sceneNumber != null ? `Scene ${payload.context.sceneNumber}` : undefined,
     payload.context?.shotNumber != null ? `Shot ${payload.context.shotNumber}` : undefined,
@@ -91,7 +119,7 @@ export function ReportGenerationErrorDialog({
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          mediaType: payload.mediaType,
+          mediaType: selectedMediaType,
           rawError: payload.rawError,
           technicalDetails: technical || undefined,
           statusCode: payload.statusCode,
@@ -112,7 +140,10 @@ export function ReportGenerationErrorDialog({
         throw new Error(data.error || 'Could not send report to SceneFlow Support')
       }
       setSubmittedTicketId(data.ticketId || 'SF-REPORTED')
-      toast.success(`Reported to SceneFlow Support (${data.ticketId})`)
+      setEmailDelivered(Boolean(data.emailSent))
+      setConfirmationSent(Boolean(data.confirmationEmailSent))
+      if (data.supportEmail) setSupportEmailAddress(String(data.supportEmail))
+      toast.success(`Support ticket logged (${data.ticketId})`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to send report')
     } finally {
@@ -143,15 +174,45 @@ export function ReportGenerationErrorDialog({
 
         {submittedTicketId ? (
           <div className="space-y-4 py-2">
-            <div className="rounded-lg border border-emerald-500/40 bg-emerald-950/30 p-4 space-y-2">
-              <div className="flex items-center gap-2 text-emerald-300 font-medium text-sm">
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-                Escalated to SceneFlow Customer Support
+            <div
+              className={`rounded-lg border p-4 space-y-2 ${
+                emailDelivered
+                  ? 'border-emerald-500/40 bg-emerald-950/30'
+                  : 'border-amber-500/40 bg-amber-950/30'
+              }`}
+            >
+              <div
+                className={`flex items-center gap-2 font-medium text-sm ${
+                  emailDelivered ? 'text-emerald-300' : 'text-amber-300'
+                }`}
+              >
+                {emailDelivered ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                )}
+                {emailDelivered
+                  ? 'Escalated to SceneFlow Customer Support'
+                  : 'Ticket Saved — Email Relay Unavailable'}
               </div>
               <p className="text-xs leading-relaxed text-slate-300">
-                Our engineering and support team received the shot diagnostics and raw error log so
-                this can be quickly investigated and resolved.
+                {emailDelivered
+                  ? confirmationSent
+                    ? 'Our engineering and support team received your diagnostics, and we emailed a confirmation receipt with your ticket ID.'
+                    : 'Our engineering and support team received the diagnostics and error log so this can be quickly investigated and resolved.'
+                  : `Your diagnostic ticket was logged in our admin queue, but automated email delivery is currently offline. For urgent help, email ${supportEmailAddress} with your ticket ID below.`}
               </p>
+              {!emailDelivered && (
+                <a
+                  href={`mailto:${supportEmailAddress}?subject=${encodeURIComponent(
+                    `SceneFlow Support Ticket ${submittedTicketId}`
+                  )}`}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-200 hover:text-white underline"
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  <span>Email {supportEmailAddress} with Ticket ID</span>
+                </a>
+              )}
               <div className="flex items-center justify-between gap-2 rounded bg-slate-950/70 border border-slate-800 px-3 py-2">
                 <div>
                   <span className="text-[10px] uppercase tracking-wide text-slate-400 block">
@@ -208,18 +269,47 @@ export function ReportGenerationErrorDialog({
               <p className="text-xs text-slate-400 leading-relaxed">{explanation}</p>
             </div>
 
+            {isGeneralMode && (
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="support-report-category"
+                  className="block text-xs font-medium text-slate-300"
+                >
+                  Topic / Studio Area
+                </label>
+                <select
+                  id="support-report-category"
+                  value={selectedMediaType}
+                  onChange={(e) => setSelectedMediaType(e.target.value as SupportReportMediaType)}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-cyan-500 focus:outline-none"
+                >
+                  {SUPPORT_CATEGORY_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label
                 htmlFor="support-report-note"
                 className="block text-xs font-medium text-slate-300"
               >
-                Add context for our support team (optional)
+                {isGeneralMode
+                  ? 'Describe the issue or question'
+                  : 'Add context for our support team (optional)'}
               </label>
               <Textarea
                 id="support-report-note"
                 value={userNote}
                 onChange={(e) => setUserNote(e.target.value)}
-                placeholder="e.g., Tried rerunning twice on Shot 4 and got the same error..."
+                placeholder={
+                  isGeneralMode
+                    ? 'Tell us what you were doing, what happened, and any steps to reproduce...'
+                    : 'e.g., Tried rerunning twice on Shot 4 and got the same error...'
+                }
                 rows={3}
                 className="bg-slate-950 border-slate-700 text-xs text-slate-100 placeholder:text-slate-500"
               />

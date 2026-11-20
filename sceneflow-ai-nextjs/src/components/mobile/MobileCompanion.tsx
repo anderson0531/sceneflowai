@@ -10,6 +10,7 @@ import {
   Check,
   CreditCard,
   ExternalLink,
+  HelpCircle,
   Link2,
   Loader2,
   LogOut,
@@ -570,6 +571,14 @@ export function MobileCompanion() {
           >
             <CreditCard className="h-3.5 w-3.5 shrink-0" />
             <span className="hidden min-[380px]:inline">Billing</span>
+          </Link>
+          <Link
+            href="/dashboard/help"
+            title="Studio Academy & Help"
+            aria-label="Studio Academy & Help"
+            className="inline-flex items-center justify-center rounded-full border border-slate-700 bg-slate-900 p-1.5 text-xs font-medium text-emerald-300 hover:bg-slate-800"
+          >
+            <HelpCircle className="h-4 w-4 shrink-0" />
           </Link>
           <button
             type="button"

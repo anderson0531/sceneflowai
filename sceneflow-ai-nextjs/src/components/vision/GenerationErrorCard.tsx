@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   Check,
   Clapperboard,
+  HelpCircle,
   LifeBuoy,
   Loader2,
   RefreshCw,
@@ -33,6 +34,7 @@ import {
   ReportGenerationErrorDialog,
   type SupportErrorReportPayload,
 } from '@/components/vision/ReportGenerationErrorDialog'
+import { openJitHelp } from '@/components/help/JitHelpDrawer'
 
 export interface GenerationErrorCardProps {
   mediaType: GenerationMediaType
@@ -558,8 +560,16 @@ export function GenerationErrorCard({
                 {rawDiag}
               </pre>
             )}
-            {evaluated.canReportToSupport && (
-              <div className="mt-1.5 flex justify-end border-t border-slate-800/70 pt-1.5">
+            <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/70 pt-1.5">
+              <button
+                type="button"
+                onClick={() => openJitHelp({ contextId: 'production', tab: 'jit' })}
+                className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 underline-offset-2 hover:underline"
+              >
+                <HelpCircle className="h-3 w-3" />
+                Troubleshooting Guide (?)
+              </button>
+              {evaluated.canReportToSupport && (
                 <button
                   type="button"
                   onClick={handleOpenSupport}
@@ -568,8 +578,8 @@ export function GenerationErrorCard({
                   <LifeBuoy className="h-3 w-3" />
                   Still stuck? Report platform bug
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </details>
         )}
       </div>

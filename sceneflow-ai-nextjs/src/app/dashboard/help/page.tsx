@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useLocale } from 'next-intl'
 import {
   HelpCircle,
   Sparkles,
@@ -27,10 +28,12 @@ import {
   Home,
   Settings,
   MessageCircle,
+  LifeBuoy,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   JIT_CONTEXT_GUIDES,
+  JIT_CONTEXT_TO_FEATURE_ROOM,
   INTERACTIVE_TUTORIALS,
   CREATOR_PLAYBOOKS,
   CREDIT_ESTIMATOR_PRESETS,
@@ -40,6 +43,8 @@ import {
   type JitContextId,
 } from '@/config/help/helpAcademyConfig'
 import { AnnotatedStudioScreenshot } from '@/components/help/AnnotatedStudioScreenshot'
+import { InsetRoomTourPlayer } from '@/components/landing/InsetRoomTourPlayer'
+import { openSupportErrorReport } from '@/components/vision/ReportGenerationErrorDialog'
 import {
   openJitHelp,
   ACADEMY_PROGRESS_STORAGE_KEY,
@@ -56,6 +61,7 @@ const PLAYBOOK_ICONS = {
 
 export default function HelpPage() {
   const router = useRouter()
+  const locale = useLocale()
   const [activeTab, setActiveTab] = useState<AcademyTab>('tutorials')
   const [selectedTutorialId, setSelectedTutorialId] = useState<string>(
     INTERACTIVE_TUTORIALS[0].id
@@ -63,9 +69,13 @@ export default function HelpPage() {
   const [activeStepIdx, setActiveStepIdx] = useState<number>(0)
   const [selectedContextId, setSelectedContextId] =
     useState<JitContextId>('blueprint')
+  const [screenVisualMode, setScreenVisualMode] = useState<'map' | 'video'>(() =>
+    locale && !locale.toLowerCase().startsWith('en') ? 'video' : 'map'
+  )
   const [focusedScreenHotspot, setFocusedScreenHotspot] = useState<number | undefined>(undefined)
   const [completedStepIds, setCompletedStepIds] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState<string>('')
+  const [hydratedParams, setHydratedParams] = useState(false)
 
   // Interactive Credit Calculator State
   const [sceneCount, setSceneCount] = useState<number>(8)
@@ -73,17 +83,42 @@ export default function HelpPage() {
   const [videoClipsPerScene, setVideoClipsPerScene] = useState<number>(1)
   const [languagesCount, setLanguagesCount] = useState<number>(2)
 
-  // Read initial `?tab=` query parameter + persisted tutorial progress
+  // Read initial deep-link query parameters (`?tab=&screen=&course=&article=&q=`) + persisted tutorial progress
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search)
       const tabParam = params.get('tab') as AcademyTab | null
+      const screenParam = params.get('screen') as JitContextId | null
+      const courseParam = params.get('course')
+      const articleParam = params.get('article')
+      const qParam = params.get('q')
+
       if (
         tabParam &&
         ['tutorials', 'screens', 'playbooks', 'calculator'].includes(tabParam)
       ) {
         setActiveTab(tabParam)
       }
+      if (screenParam && screenParam in JIT_CONTEXT_GUIDES) {
+        setSelectedContextId(screenParam)
+        if (!tabParam) setActiveTab('screens')
+      }
+      if (courseParam && INTERACTIVE_TUTORIALS.some((c) => c.id === courseParam)) {
+        setSelectedTutorialId(courseParam)
+        setActiveStepIdx(0)
+        if (!tabParam) setActiveTab('tutorials')
+      }
+      if (articleParam) {
+        const match = HELP_KNOWLEDGE_ARTICLES.find((a) => a.id === articleParam)
+        if (match) {
+          setSearchQuery(match.title)
+          setActiveTab('calculator')
+        }
+      }
+      if (qParam) {
+        setSearchQuery(qParam)
+      }
+
       const saved = localStorage.getItem(ACADEMY_PROGRESS_STORAGE_KEY)
       if (saved) {
         const parsed = JSON.parse(saved)
@@ -91,6 +126,8 @@ export default function HelpPage() {
       }
     } catch {
       // ignore
+    } finally {
+      setHydratedParams(true)
     }
 
     const handleProgressSync = () => {
@@ -112,6 +149,22 @@ export default function HelpPage() {
       )
     }
   }, [])
+
+  // Keep shareable URL query params synced as the user switches tabs, screens, or courses
+  useEffect(() => {
+    if (!hydratedParams || typeof window === 'undefined') return
+    try {
+      const params = new URLSearchParams()
+      params.set('tab', activeTab)
+      if (activeTab === 'screens') params.set('screen', selectedContextId)
+      if (activeTab === 'tutorials') params.set('course', selectedTutorialId)
+      if (searchQuery.trim()) params.set('q', searchQuery.trim())
+      const nextUrl = `${window.location.pathname}?${params.toString()}`
+      window.history.replaceState(null, '', nextUrl)
+    } catch {
+      // ignore
+    }
+  }, [hydratedParams, activeTab, selectedContextId, selectedTutorialId, searchQuery])
 
   const toggleStepCompleted = (stepId: string) => {
     setCompletedStepIds((prev) => {
@@ -872,24 +925,63 @@ export default function HelpPage() {
                         {activeGuide.title}
                       </h2>
                     </div>
-                    <span className="text-xs px-3 py-1 rounded-full bg-slate-800 text-slate-300">
-                      ⏱ {activeGuide.estimatedTime}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {JIT_CONTEXT_TO_FEATURE_ROOM[activeGuide.id] && (
+                        <div className="inline-flex rounded-lg border border-slate-700 bg-slate-950 p-0.5 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => setScreenVisualMode('map')}
+                            className={cn(
+                              'px-2.5 py-1 rounded-md font-semibold transition-colors',
+                              screenVisualMode === 'map'
+                                ? 'bg-cyan-500/20 text-cyan-300'
+                                : 'text-slate-400 hover:text-white'
+                            )}
+                          >
+                            Screen Map
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setScreenVisualMode('video')}
+                            className={cn(
+                              'inline-flex items-center gap-1 px-2.5 py-1 rounded-md font-semibold transition-colors',
+                              screenVisualMode === 'video'
+                                ? 'bg-cyan-500/20 text-cyan-300'
+                                : 'text-slate-400 hover:text-white'
+                            )}
+                          >
+                            <Film className="w-3.5 h-3.5" />
+                            <span>7-Lang Video Tour</span>
+                          </button>
+                        </div>
+                      )}
+                      <span className="text-xs px-3 py-1 rounded-full bg-slate-800 text-slate-300">
+                        ⏱ {activeGuide.estimatedTime}
+                      </span>
+                    </div>
                   </div>
                   <p className="text-xs sm:text-sm text-slate-300 mb-4">
                     {activeGuide.summary}
                   </p>
 
-                  <AnnotatedStudioScreenshot
-                    key={`${activeGuide.id}-${focusedScreenHotspot ?? 'default'}`}
-                    screenshotSrc={activeGuide.screenshotSrc}
-                    screenshotAlt={activeGuide.screenshotAlt}
-                    hotspots={activeGuide.hotspots}
-                    initialHotspotNumber={focusedScreenHotspot}
-                    onActionEvent={() =>
-                      router.push(getFallbackHrefForContext(activeGuide.id))
-                    }
-                  />
+                  {JIT_CONTEXT_TO_FEATURE_ROOM[activeGuide.id] && screenVisualMode === 'video' ? (
+                    <InsetRoomTourPlayer
+                      roomId={JIT_CONTEXT_TO_FEATURE_ROOM[activeGuide.id]!}
+                      roomLabel={activeGuide.shortTitle}
+                      initialLocale={locale}
+                    />
+                  ) : (
+                    <AnnotatedStudioScreenshot
+                      key={`${activeGuide.id}-${focusedScreenHotspot ?? 'default'}`}
+                      screenshotSrc={activeGuide.screenshotSrc}
+                      screenshotAlt={activeGuide.screenshotAlt}
+                      hotspots={activeGuide.hotspots}
+                      initialHotspotNumber={focusedScreenHotspot}
+                      onActionEvent={() =>
+                        router.push(getFallbackHrefForContext(activeGuide.id))
+                      }
+                    />
+                  )}
                 </div>
               </div>
 
@@ -1338,13 +1430,29 @@ export default function HelpPage() {
               <span>Vertex AI BYOK Settings</span>
             </Link>
           </div>
-          <a
-            href="mailto:support@sceneflowai.studio"
-            className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 font-semibold"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>Need 1-on-1 Studio Onboarding? Contact Support</span>
-          </a>
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={() =>
+                openSupportErrorReport({
+                  mediaType: 'general',
+                  title: 'Studio Support Request',
+                  explanation: 'Submit a bug report, billing inquiry, or white-label onboarding question.',
+                })
+              }
+              className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-semibold"
+            >
+              <LifeBuoy className="w-4 h-4" />
+              <span>Submit Support Ticket</span>
+            </button>
+            <a
+              href="mailto:support@sceneflowai.studio"
+              className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 font-semibold"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Email Support</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>

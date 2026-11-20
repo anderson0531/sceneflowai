@@ -17,6 +17,43 @@ export const SUPPORT_REPORT_BLOB_PREFIX = 'support/generation-errors/'
 
 export type SupportReportStatus = 'open' | 'resolved'
 
+export type SupportReportMediaType =
+  | GenerationMediaType
+  | 'audio'
+  | 'export'
+  | 'billing'
+  | 'agency'
+  | 'general'
+
+const SUPPORT_MEDIA_LABELS: Record<SupportReportMediaType, string> = {
+  still: 'Shot Still',
+  clip: 'Video Clip',
+  audio: 'Audio & Dubbing',
+  export: 'Export & Streams',
+  billing: 'Billing & Credits',
+  agency: 'White-Label & Agency Ops',
+  general: 'General Studio Support',
+}
+
+export function getSupportMediaLabel(mediaType: SupportReportMediaType): string {
+  return SUPPORT_MEDIA_LABELS[mediaType] || 'Studio Support'
+}
+
+/**
+ * Scrub bearer tokens, API keys, webhook secrets, and auth query params before
+ * persisting diagnostics to Blob storage or emailing via Resend.
+ */
+export function redactSensitiveDiagnostics(input?: string): string | undefined {
+  if (!input) return undefined
+  const trimmed = input.trim()
+  if (!trimmed) return undefined
+  return trimmed
+    .replace(/(Bearer\s+)[A-Za-z0-9._~+/=-]{8,}/gi, '$1[REDACTED]')
+    .replace(/\bAIza[0-9A-Za-z_-]{20,}\b/g, '[REDACTED_API_KEY]')
+    .replace(/\b(?:sk|pk|whsec|re|rk)_[0-9A-Za-z_-]{12,}\b/g, '[REDACTED_SECRET]')
+    .replace(/([?&](?:token|key|api_key|apikey|secret|password|sig|signature|auth)=)[^&\s#]+/gi, '$1[REDACTED]')
+}
+
 export interface SupportReportContext {
   projectId?: string
   projectTitle?: string
@@ -43,12 +80,13 @@ export interface GenerationErrorSupportReport {
   status: SupportReportStatus
   resolvedAt?: string
   resolvedBy?: string
+  resolutionNote?: string
   user: {
     id?: string
     email?: string
     name?: string
   }
-  mediaType: GenerationMediaType
+  mediaType: SupportReportMediaType
   category: GenerationErrorCategory
   title: string
   explanation: string
@@ -58,6 +96,8 @@ export interface GenerationErrorSupportReport {
   technicalDetails?: string
   userNote?: string
   emailSent: boolean
+  confirmationEmailSent?: boolean
+  resolutionEmailSent?: boolean
 }
 
 const memoryFallbackReports = new Map<string, GenerationErrorSupportReport>()
@@ -138,17 +178,24 @@ export async function listSupportErrorReports(
 export async function updateSupportErrorReportStatus(
   ticketId: string,
   status: SupportReportStatus,
-  resolvedBy?: string
+  resolvedBy?: string,
+  resolutionNote?: string
 ): Promise<GenerationErrorSupportReport | null> {
   const existing = await readSupportErrorReport(ticketId)
   if (!existing) return null
   const nowIso = new Date().toISOString()
+  const cleanNote = resolutionNote?.trim().slice(0, 1500) || undefined
   const updated: GenerationErrorSupportReport = {
     ...existing,
     status,
     updatedAt: nowIso,
     resolvedAt: status === 'resolved' ? nowIso : undefined,
     resolvedBy: status === 'resolved' ? resolvedBy : undefined,
+    resolutionNote: status === 'resolved' ? cleanNote : undefined,
+  }
+  if (status === 'resolved' && updated.user.email) {
+    const resEmail = await sendSupportResolutionEmail(updated)
+    updated.resolutionEmailSent = resEmail.sent
   }
   await saveSupportErrorReport(updated)
   return updated
@@ -157,7 +204,7 @@ export async function updateSupportErrorReportStatus(
 export function buildSupportEscalationEmailContent(
   report: GenerationErrorSupportReport
 ): { subject: string; html: string; text: string } {
-  const mediaLabel = report.mediaType === 'clip' ? 'Video Clip' : 'Shot Still'
+  const mediaLabel = getSupportMediaLabel(report.mediaType)
   const userLabel = report.user.email || report.user.name || report.user.id || 'Authenticated User'
   const subject = `[Escalation ${report.ticketId}] ${mediaLabel} Error (${report.category}) — ${userLabel}`
   const adminUrl = `${getAppBaseUrl()}/dashboard/settings/admin`
@@ -272,6 +319,100 @@ export async function sendSupportEscalationEmail(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.warn('[SupportEscalation] Email delivery failed:', msg)
+    return { sent: false, error: msg }
+  }
+}
+
+export async function sendSupportConfirmationEmail(
+  report: GenerationErrorSupportReport
+): Promise<{ sent: boolean; error?: string }> {
+  if (!process.env.RESEND_API_KEY?.trim() || !report.user.email?.trim()) {
+    return { sent: false, error: 'Missing RESEND_API_KEY or user email' }
+  }
+  try {
+    const helpUrl = `${getAppBaseUrl()}/dashboard/help`
+    const mediaLabel = getSupportMediaLabel(report.mediaType)
+    const subject = `We received your SceneFlow Support ticket (${report.ticketId})`
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><title>${escapeHtml(subject)}</title></head>
+<body style="margin:0;padding:24px;background:#020617;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:24px;">
+    <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#22d3ee;">SceneFlow Customer Support</p>
+    <h1 style="margin:0 0 12px;font-size:20px;color:#f8fafc;">Ticket ${escapeHtml(report.ticketId)} Received</h1>
+    <p style="margin:0 0 12px;font-size:14px;line-height:20px;color:#cbd5e1;">Thanks for reaching out. Our engineering and support team received your <strong>${escapeHtml(mediaLabel)}</strong> report (<em>${escapeHtml(report.title)}</em>) and will follow up within 24 hours.</p>
+    <p style="margin:0 0 16px;font-size:13px;color:#94a3b8;">You can reply directly to this email if you want to add screenshots or extra context, or browse <a href="${escapeHtml(helpUrl)}" style="color:#22d3ee;">SceneFlow Studio Academy</a> for self-service fixes.</p>
+  </div>
+</body>
+</html>`
+    const text = [
+      `SceneFlow Support — Ticket ${report.ticketId} Received`,
+      `Category: ${mediaLabel} — ${report.title}`,
+      'Our team received your report and will respond within 24 hours. Reply directly to this email to add context.',
+      `Studio Academy: ${helpUrl}`,
+    ].join('\n')
+
+    await sendEmail({
+      to: report.user.email,
+      subject,
+      html,
+      text,
+      from: getResendFromEmail(),
+      replyTo: getSupportEscalationRecipient(),
+      allowFallbackFrom: true,
+    })
+    return { sent: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn('[SupportEscalation] User confirmation email failed:', msg)
+    return { sent: false, error: msg }
+  }
+}
+
+export async function sendSupportResolutionEmail(
+  report: GenerationErrorSupportReport
+): Promise<{ sent: boolean; error?: string }> {
+  if (!process.env.RESEND_API_KEY?.trim() || !report.user.email?.trim()) {
+    return { sent: false, error: 'Missing RESEND_API_KEY or user email' }
+  }
+  try {
+    const subject = `Update on SceneFlow Support ticket ${report.ticketId} — Resolved`
+    const noteHtml = report.resolutionNote
+      ? `<div style="margin:0 0 16px;padding:12px;border-radius:8px;background:#1e293b;border-left:3px solid #10b981;"><p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;color:#6ee7b7;">Support Resolution Note</p><p style="margin:0;font-size:13px;color:#f8fafc;white-space:pre-wrap;">${escapeHtml(report.resolutionNote)}</p></div>`
+      : ''
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><title>${escapeHtml(subject)}</title></head>
+<body style="margin:0;padding:24px;background:#020617;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:24px;">
+    <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#10b981;">SceneFlow Support Update</p>
+    <h1 style="margin:0 0 12px;font-size:20px;color:#f8fafc;">Ticket ${escapeHtml(report.ticketId)} Marked Resolved</h1>
+    <p style="margin:0 0 12px;font-size:14px;line-height:20px;color:#cbd5e1;">Your report regarding <strong>${escapeHtml(report.title)}</strong> has been resolved by our team.</p>
+    ${noteHtml}
+    <p style="margin:0;font-size:13px;color:#94a3b8;">If you are still seeing the issue, simply reply to this email and we will reopen the ticket immediately.</p>
+  </div>
+</body>
+</html>`
+    const text = [
+      `SceneFlow Support — Ticket ${report.ticketId} Marked Resolved`,
+      `Issue: ${report.title}`,
+      ...(report.resolutionNote ? [`Resolution Note: ${report.resolutionNote}`] : []),
+      'If you still need help, reply directly to this email.',
+    ].join('\n')
+
+    await sendEmail({
+      to: report.user.email,
+      subject,
+      html,
+      text,
+      from: getResendFromEmail(),
+      replyTo: getSupportEscalationRecipient(),
+      allowFallbackFrom: true,
+    })
+    return { sent: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn('[SupportEscalation] Resolution email failed:', msg)
     return { sent: false, error: msg }
   }
 }

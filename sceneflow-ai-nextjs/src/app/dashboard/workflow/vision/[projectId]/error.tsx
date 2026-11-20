@@ -99,6 +99,20 @@ export default function VisionWorkflowError({
             Back to Dashboard
           </a>
         </div>
+        <div className="mt-5 flex items-center justify-center gap-4 text-xs text-gray-400">
+          <a href="/dashboard/help?tab=screens&screen=production" className="text-cyan-400 hover:underline">
+            Production Troubleshooting
+          </a>
+          <span className="text-gray-700">•</span>
+          <a
+            href={`mailto:support@sceneflowai.studio?subject=${encodeURIComponent(
+              `Production Stage Error${error?.digest ? ` (${error.digest})` : ''}`
+            )}`}
+            className="text-gray-300 hover:text-white hover:underline"
+          >
+            Contact Support
+          </a>
+        </div>
       </div>
     </div>
   )

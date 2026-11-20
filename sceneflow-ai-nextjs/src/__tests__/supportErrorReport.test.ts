@@ -30,6 +30,7 @@ import {
 import {
   buildSupportEscalationEmailContent,
   generateSupportTicketId,
+  redactSensitiveDiagnostics,
 } from '@/lib/support/generationErrorReport'
 
 describe('Customer Support Generation Error Escalation', () => {
@@ -86,9 +87,24 @@ describe('Customer Support Generation Error Escalation', () => {
     expect(res.status).toBe(401)
   })
 
-  it('records escalated Still/Clip reports, emails support@sceneflowai.studio, and surfaces in Admin API', async () => {
+  it('scrubs bearer tokens, API keys, secrets, and auth query params from diagnostics', () => {
+    const dirty =
+      'Auth failed: Bearer eyJhbGciOiJIUzI1NiJ9.secret with key AIzaSyD1234567890abcdefghijklmno and sk_live_1234567890abcdef at https://sceneflowai.studio/s/abc?token=topsecret123&view=screening'
+    const clean = redactSensitiveDiagnostics(dirty)
+    expect(clean).toBeDefined()
+    expect(clean).not.toContain('eyJhbGciOiJIUzI1NiJ9')
+    expect(clean).not.toContain('AIzaSyD1234567890')
+    expect(clean).not.toContain('sk_live_1234567890')
+    expect(clean).not.toContain('topsecret123')
+    expect(clean).toContain('[REDACTED]')
+    expect(clean).toContain('[REDACTED_API_KEY]')
+    expect(clean).toContain('[REDACTED_SECRET]')
+    expect(clean).toContain('view=screening')
+  })
+
+  it('records escalated Still/Clip reports, emails support & creator confirmation, and sends resolution notice from Admin API', async () => {
     vi.stubEnv('RESEND_API_KEY', 're_test_key')
-    sendEmailMock.mockResolvedValueOnce({
+    sendEmailMock.mockResolvedValue({
       from: 'SceneFlow Studio <support@sceneflowai.studio>',
       usedFallback: false,
     })
@@ -105,7 +121,8 @@ describe('Customer Support Generation Error Escalation', () => {
         body: JSON.stringify({
           mediaType: 'clip',
           rawError: 'Vertex AI error 500: Internal error encountered',
-          technicalDetails: 'Vertex AI error 500: {"error":{"code":500,"message":"Internal error encountered"}}',
+          technicalDetails:
+            'Vertex AI error 500 with Bearer secret_token_xyz12345: {"error":{"code":500,"message":"Internal error encountered"}}',
           prompt: 'Wide shot of Lake Michigan seawall in blizzard',
           userNote: 'Tried rerunning Shot 2 twice, still failing.',
           context: {
@@ -127,12 +144,18 @@ describe('Customer Support Generation Error Escalation', () => {
     expect(postJson.success).toBe(true)
     expect(postJson.ticketId).toMatch(/^SF-\d{6}-[0-9A-F]{4}$/)
     expect(postJson.emailSent).toBe(true)
+    expect(postJson.confirmationEmailSent).toBe(true)
 
-    expect(sendEmailMock).toHaveBeenCalledTimes(1)
-    const sentArgs = sendEmailMock.mock.calls[0]?.[0]
-    expect(sentArgs.to).toBe('support@sceneflowai.studio')
-    expect(sentArgs.replyTo).toBe('filmmaker@studio.test')
-    expect(sentArgs.subject).toContain(postJson.ticketId)
+    expect(sendEmailMock).toHaveBeenCalledTimes(2)
+    const supportEmailArgs = sendEmailMock.mock.calls[0]?.[0]
+    expect(supportEmailArgs.to).toBe('support@sceneflowai.studio')
+    expect(supportEmailArgs.replyTo).toBe('filmmaker@studio.test')
+    expect(supportEmailArgs.subject).toContain(postJson.ticketId)
+    expect(supportEmailArgs.text).not.toContain('secret_token_xyz12345')
+
+    const confirmEmailArgs = sendEmailMock.mock.calls[1]?.[0]
+    expect(confirmEmailArgs.to).toBe('filmmaker@studio.test')
+    expect(confirmEmailArgs.subject).toContain(postJson.ticketId)
 
     // Non-admin cannot list escalations
     getServerSessionMock.mockResolvedValueOnce({
@@ -143,7 +166,7 @@ describe('Customer Support Generation Error Escalation', () => {
     )
     expect(forbiddenRes.status).toBe(403)
 
-    // Admin can list and resolve the ticket
+    // Admin can list and resolve the ticket with a resolution note
     getServerSessionMock.mockResolvedValue({
       user: { email: 'brian@sceneflowai.studio' },
     })
@@ -163,12 +186,23 @@ describe('Customer Support Generation Error Escalation', () => {
       new NextRequest('https://sceneflowai.studio/api/admin/support-reports', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: postJson.ticketId, status: 'resolved' }),
+        body: JSON.stringify({
+          ticketId: postJson.ticketId,
+          status: 'resolved',
+          resolutionNote: 'Fixed retry timeout on Vertex Veo clip pipeline.',
+        }),
       })
     )
     expect(patchRes.status).toBe(200)
     const patchJson = await patchRes.json()
     expect(patchJson.report.status).toBe('resolved')
     expect(patchJson.report.resolvedBy).toBe('brian@sceneflowai.studio')
+    expect(patchJson.report.resolutionNote).toContain('Fixed retry timeout')
+    expect(patchJson.report.resolutionEmailSent).toBe(true)
+
+    expect(sendEmailMock).toHaveBeenCalledTimes(3)
+    const resolutionArgs = sendEmailMock.mock.calls[2]?.[0]
+    expect(resolutionArgs.to).toBe('filmmaker@studio.test')
+    expect(resolutionArgs.text).toContain('Fixed retry timeout')
   })
 })

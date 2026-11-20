@@ -50,6 +50,20 @@ export default function DashboardError({
             Dashboard
           </a>
         </div>
+        <div className="mt-5 flex items-center justify-center gap-4 text-xs text-zinc-400">
+          <a href="/dashboard/help" className="text-cyan-400 hover:underline">
+            Studio Academy &amp; Help
+          </a>
+          <span className="text-zinc-700">•</span>
+          <a
+            href={`mailto:support@sceneflowai.studio?subject=${encodeURIComponent(
+              `Dashboard Error${error?.digest ? ` (${error.digest})` : ''}`
+            )}`}
+            className="text-zinc-300 hover:text-white hover:underline"
+          >
+            Contact Support
+          </a>
+        </div>
       </div>
     </div>
   )

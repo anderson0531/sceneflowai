@@ -8,16 +8,49 @@ import {
 } from '@/lib/errors/generationErrorIntelligence'
 import {
   generateSupportTicketId,
+  redactSensitiveDiagnostics,
   saveSupportErrorReport,
+  sendSupportConfirmationEmail,
   sendSupportEscalationEmail,
   type GenerationErrorSupportReport,
   type SupportReportContext,
+  type SupportReportMediaType,
 } from '@/lib/support/generationErrorReport'
 
 export const runtime = 'nodejs'
 
+const SUPPORT_RATE_WINDOW_MS = 15 * 60_000
+const SUPPORT_RATE_MAX = 10
+const supportRateBuckets = new Map<string, number[]>()
+
+function checkSupportRateLimit(userKey: string): { allowed: boolean; retryAfterSec: number } {
+  const now = Date.now()
+  const recent = (supportRateBuckets.get(userKey) || []).filter(
+    (ts) => ts > now - SUPPORT_RATE_WINDOW_MS
+  )
+  if (recent.length >= SUPPORT_RATE_MAX) {
+    const oldest = recent[0] ?? now
+    const retryAfterSec = Math.max(1, Math.ceil((oldest + SUPPORT_RATE_WINDOW_MS - now) / 1000))
+    supportRateBuckets.set(userKey, recent)
+    return { allowed: false, retryAfterSec }
+  }
+  recent.push(now)
+  supportRateBuckets.set(userKey, recent)
+  return { allowed: true, retryAfterSec: 0 }
+}
+
+const VALID_SUPPORT_MEDIA_TYPES = new Set<SupportReportMediaType>([
+  'still',
+  'clip',
+  'audio',
+  'export',
+  'billing',
+  'agency',
+  'general',
+])
+
 interface ReportGenerationErrorBody {
-  mediaType?: GenerationMediaType
+  mediaType?: SupportReportMediaType
   rawError?: string
   technicalDetails?: string
   statusCode?: number
@@ -43,13 +76,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const rateKey = String(sessionUser.id || sessionUser.email)
+    const rate = checkSupportRateLimit(rateKey)
+    if (!rate.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Too many support reports submitted recently. Please wait a few minutes or email support@sceneflowai.studio.',
+        },
+        { status: 429, headers: { 'Retry-After': String(rate.retryAfterSec) } }
+      )
+    }
+
     const body = (await request.json().catch(() => ({}))) as ReportGenerationErrorBody
-    const mediaType: GenerationMediaType = body.mediaType === 'still' ? 'still' : 'clip'
-    const rawDiagnostic = (body.technicalDetails || body.rawError || '').trim()
+    const mediaType: SupportReportMediaType =
+      body.mediaType && VALID_SUPPORT_MEDIA_TYPES.has(body.mediaType)
+        ? body.mediaType
+        : 'clip'
+    const evalMediaType: GenerationMediaType = mediaType === 'still' ? 'still' : 'clip'
+    const rawDiagnostic = redactSensitiveDiagnostics(
+      (body.technicalDetails || body.rawError || '').trim()
+    ) || ''
 
     const evaluated = evaluateGenerationError({
-      mediaType,
-      rawError: rawDiagnostic || body.explanation || 'Generation failed',
+      mediaType: evalMediaType,
+      rawError: rawDiagnostic || body.explanation || 'Support request submitted',
       statusCode: body.statusCode,
       errorCode: body.errorCode,
       generationMethod: body.context?.generationMethod,
@@ -91,17 +142,23 @@ export async function POST(request: NextRequest) {
         model: body.context?.model?.slice(0, 120),
         qualityTier: body.context?.qualityTier?.slice(0, 40),
         resolution: body.context?.resolution?.slice(0, 40),
-        pageUrl: body.context?.pageUrl?.slice(0, 500),
+        pageUrl: redactSensitiveDiagnostics(body.context?.pageUrl?.slice(0, 500)),
         userAgent: request.headers.get('user-agent')?.slice(0, 300) || body.context?.userAgent?.slice(0, 300),
       },
-      prompt: body.prompt?.trim().slice(0, 6000) || undefined,
+      prompt: redactSensitiveDiagnostics(body.prompt?.trim().slice(0, 6000)),
       technicalDetails: rawDiagnostic.slice(0, 8000) || undefined,
-      userNote: body.userNote?.trim().slice(0, 2000) || undefined,
+      userNote: redactSensitiveDiagnostics(body.userNote?.trim().slice(0, 2000)),
       emailSent: false,
+      confirmationEmailSent: false,
     }
 
     const emailOutcome = await sendSupportEscalationEmail(report)
     report.emailSent = emailOutcome.sent
+
+    if (report.emailSent && report.user.email) {
+      const confirmOutcome = await sendSupportConfirmationEmail(report)
+      report.confirmationEmailSent = confirmOutcome.sent
+    }
 
     await saveSupportErrorReport(report)
 
@@ -115,6 +172,7 @@ export async function POST(request: NextRequest) {
       segmentId: report.context.segmentId,
       beatId: report.context.beatId,
       emailSent: report.emailSent,
+      confirmationEmailSent: report.confirmationEmailSent,
     })
 
     return NextResponse.json({
@@ -122,6 +180,7 @@ export async function POST(request: NextRequest) {
       ticketId: report.ticketId,
       supportEmail: LEGAL_SUPPORT_EMAIL,
       emailSent: report.emailSent,
+      confirmationEmailSent: report.confirmationEmailSent,
     })
   } catch (error) {
     console.error('[SupportEscalation] Failed to record support report:', error)

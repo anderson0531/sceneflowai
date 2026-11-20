@@ -12,6 +12,7 @@ export function SupportEscalationsCard() {
   const [filter, setFilter] = useState<'open' | 'resolved' | 'all'>('open')
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [resolutionNotes, setResolutionNotes] = useState<Record<string, string>>({})
 
   const loadReports = useCallback(async () => {
     setLoading(true)
@@ -39,14 +40,25 @@ export function SupportEscalationsCard() {
       const res = await fetch('/api/admin/support-reports', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: report.ticketId, status: nextStatus }),
+        body: JSON.stringify({
+          ticketId: report.ticketId,
+          status: nextStatus,
+          resolutionNote:
+            nextStatus === 'resolved'
+              ? resolutionNotes[report.ticketId]?.trim() || undefined
+              : undefined,
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'Update failed')
       setReports((prev) =>
         prev.map((item) => (item.ticketId === report.ticketId ? data.report : item))
       )
-      toast.success(`Ticket ${report.ticketId} marked ${nextStatus}`)
+      toast.success(
+        nextStatus === 'resolved' && data.report?.resolutionEmailSent
+          ? `Ticket ${report.ticketId} resolved & creator notified by email`
+          : `Ticket ${report.ticketId} marked ${nextStatus}`
+      )
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update ticket')
     } finally {
@@ -74,7 +86,7 @@ export function SupportEscalationsCard() {
           <LifeBuoy className="h-5 w-5 text-cyan-400" />
           <div>
             <h3 className="text-lg font-semibold text-white">
-              Still &amp; Clip Support Escalations
+              Customer Support &amp; Bug Escalations
               {openCount > 0 && (
                 <span className="ml-2 rounded-full bg-rose-500/20 border border-rose-500/40 px-2 py-0.5 text-xs font-medium text-rose-200">
                   {openCount} open
@@ -82,7 +94,7 @@ export function SupportEscalationsCard() {
               )}
             </h3>
             <p className="text-xs text-gray-400">
-              Creator-reported Still and Video Clip generation errors with full diagnostic context.
+              Creator-reported generation errors and studio support tickets with redacted diagnostics and email updates.
             </p>
           </div>
         </div>
@@ -194,6 +206,25 @@ export function SupportEscalationsCard() {
                   Note: {report.userNote}
                 </p>
               )}
+
+              {report.status === 'open' ? (
+                <input
+                  type="text"
+                  value={resolutionNotes[report.ticketId] || ''}
+                  onChange={(e) =>
+                    setResolutionNotes((prev) => ({
+                      ...prev,
+                      [report.ticketId]: e.target.value,
+                    }))
+                  }
+                  placeholder="Optional resolution note (emailed to creator when clicking Resolve)..."
+                  className="w-full rounded border border-gray-800 bg-black/40 px-2.5 py-1.5 text-xs text-gray-200 placeholder:text-gray-500 focus:border-emerald-500/50 focus:outline-none"
+                />
+              ) : report.resolutionNote ? (
+                <p className="rounded border-l-2 border-emerald-400 bg-emerald-950/20 px-2.5 py-1.5 text-xs text-emerald-100">
+                  Resolution: {report.resolutionNote}
+                </p>
+              ) : null}
 
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-400">
                 {report.context.projectTitle && <span>Project: {report.context.projectTitle}</span>}

@@ -12,6 +12,7 @@ import {
   ADDON_CREDIT_SHELF_LIFE_DAYS,
   EXPLORER_CREDIT_SHELF_LIFE_DAYS,
 } from '@/lib/credits/creditLots'
+import type { FeatureRoomId } from '@/config/landing/featureRoomMedia'
 
 export type JitContextId =
   | 'dashboard'
@@ -23,6 +24,15 @@ export type JitContextId =
   | 'agency-ops'
   | 'producer'
   | 'billing'
+
+/** Maps studio JIT contexts to their 7-language narrated overview video room ID. */
+export const JIT_CONTEXT_TO_FEATURE_ROOM: Partial<Record<JitContextId, FeatureRoomId>> = {
+  series: 'series-desk',
+  blueprint: 'blueprint-board',
+  production: 'production-stage',
+  'final-cut': 'screening-room',
+  premiere: 'screening-room',
+}
 
 export interface ScreenshotHotspot {
   id: string
@@ -109,7 +119,7 @@ export interface InteractiveTutorialCourse {
   id: string
   title: string
   subtitle: string
-  level: 'Beginner' | 'Essential' | 'Pro Strategy' | 'Showrunner'
+  level: 'Beginner' | 'Essential' | 'Pro Strategy' | 'Showrunner' | 'Agency Scale'
   totalDuration: string
   badgeColor: 'cyan' | 'purple' | 'emerald' | 'amber'
   outcome: string
@@ -1572,6 +1582,72 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
       },
     ],
   },
+
+  {
+    id: 'white-label-agency-scale',
+    title: 'Run a White-Label Video Studio & Multi-PM Agency',
+    subtitle: 'Deliver memoirs, real estate tours, and training videos under your own brand with multiple PMs, QA reviewers, and zero-login client portals.',
+    level: 'Agency Scale',
+    totalDuration: '6 mins',
+    badgeColor: 'emerald',
+    outcome: 'Configure branded client portals, delegate series to PMs, and protect margins with Kanban SLA tracking & Vault hygiene.',
+    steps: [
+      {
+        id: 'wl-1',
+        stepNumber: 1,
+        title: 'Brand Your White-Label Portals & Invite Team Seats',
+        duration: '2 mins',
+        contextId: 'producer',
+        screenshotSrc: '/images/help/credits-byok-screenshot.svg',
+        focusHotspotNumber: 1,
+        objective: 'Replace SceneFlow branding with your studio identity on Client Intake, Blueprint Pass, and Screening Room links.',
+        instructions: [
+          'Open Settings → Producer & Team (/dashboard/settings/producer) and upload your studio logo, brand palette, support email, and optional custom domain.',
+          'Invite Project Managers with monthly credit caps and 0-credit QA Reviewers using signed invite links.',
+          'Configure optional locale auto-routing so incoming Spanish, Portuguese, Mandarin, Hindi, Arabic, or Thai clients route to the right PM.',
+        ],
+        keyTakeaway: 'Every client portal link requires zero client login—reducing friction for families and busy corporate stakeholders.',
+        tryActionLabel: 'Open Producer & Team',
+        tryActionHref: '/dashboard/settings/producer',
+      },
+      {
+        id: 'wl-2',
+        stepNumber: 2,
+        title: 'Track 100+ Projects with Kanban SLA & Series Delegation',
+        duration: '2 mins',
+        contextId: 'agency-ops',
+        screenshotSrc: '/images/help/dashboard-command-screenshot.svg',
+        focusHotspotNumber: 4,
+        objective: 'Keep multiple PMs aligned across hundreds of productions without bottlenecks.',
+        instructions: [
+          'Open Projects (/dashboard/projects) and toggle the 6-column Kanban view for drag-and-drop stage transitions and SLA aging alerts.',
+          'Use bulk actions to assign PMs, update due dates, or filter across clients, statuses, and locales.',
+          'Delegate entire multi-episode seasons to a PM in Series Room while invited staff use the sidebar Workspace Switcher to toggle workspaces.',
+        ],
+        keyTakeaway: 'QA Reviewers can inspect continuity, Blueprints, and Screening Room cuts with 0 credit spend permissions.',
+        tryActionLabel: 'Open Projects Kanban',
+        tryActionHref: '/dashboard/projects',
+      },
+      {
+        id: 'wl-3',
+        stepNumber: 3,
+        title: 'Monitor Margins & Reclaim Continuity Vault Storage',
+        duration: '2 mins',
+        contextId: 'agency-ops',
+        screenshotSrc: '/images/help/dashboard-command-screenshot.svg',
+        focusHotspotNumber: 3,
+        objective: 'Maximize gross margin and keep active projects inside your included Continuity Vault GB.',
+        instructions: [
+          'Open Agency Ops (/dashboard/clients) to inspect the Client CRM directory and PM Workload & Margin Scorecard.',
+          'Switch to the Storage Hygiene tab to see which completed projects hold superseded draft image/video takes.',
+          'Click 1-Click Draft Purge on delivered projects to reclaim Vault GB while preserving final masters and cast reference locks.',
+        ],
+        keyTakeaway: 'Purging unused drafts keeps high-volume agencies inside their included 150 GB (Pro) or 750 GB (Studio) Vault quota.',
+        tryActionLabel: 'Open Agency Ops',
+        tryActionHref: '/dashboard/clients',
+      },
+    ],
+  },
 ]
 
 // =============================================================================
@@ -1886,5 +1962,61 @@ export const HELP_KNOWLEDGE_ARTICLES: HelpKnowledgeArticle[] = [
       'Operator Pro and Studio subscribers can connect their own Google Vertex AI API key in Settings → BYOK Settings (/dashboard/settings/byok).',
     ],
     proTip: 'If an upstream AI generation call ever errors out, SceneFlow automatically refunds the credits to your balance.',
+  },
+  {
+    id: 'kb-agency-scale-ops',
+    category: 'agency-ops',
+    title: 'White-Label Agency Scale: Multi-PM Kanban, Series Delegation & Vault Hygiene',
+    summary: 'How agencies manage 100+ client productions across multiple Project Managers with SLA tracking, QA roles, and 1-click draft purge.',
+    readTime: '4 min read',
+    tags: ['agency', 'clients', 'crm', 'kanban', 'sla', 'pm', 'qa reviewer', 'workspace switcher', 'storage', 'purge', 'series delegation'],
+    bullets: [
+      'Server-side Projects search and the 6-column Kanban board (/dashboard/projects) support unlimited productions with PM filtering, SLA aging badges, and bulk assignment.',
+      'Assign up to 3 seats on Operator Pro or 10 seats on Studio with role guardrails (admin, project_manager, 0-credit qa_reviewer) and locale-based PM auto-routing.',
+      'Agency Ops (/dashboard/clients) combines Client CRM rollups, PM Workload & Margin Scorecards, and Continuity Vault Storage Hygiene with 1-Click Draft Purge.',
+    ],
+    proTip: 'Invited team members switch seamlessly between their personal workspace and agency workspace via the sidebar Workspace Switcher.',
+  },
+  {
+    id: 'kb-flowdirector-qa',
+    category: 'production',
+    title: 'FlowDirector Scene Video QA & Self-Healing Shot Error Investigator',
+    summary: 'How SceneFlow automatically scores rendered clips, diagnoses blocked or failed shots, and recovers with 1-click fixes.',
+    readTime: '3 min read',
+    tags: ['flowdirector', 'qa', 'error', 'investigate', 'policy', 'creative clips', 'kling', 'veo', 'troubleshooting'],
+    bullets: [
+      'FlowDirector QA evaluates rendered scene clips on Audience Resonance and Director Compliance, offering 1-click targeted remakes on weak shots.',
+      'If a still or video clip hits a provider timeout, likeness flag, or safety filter, click "Investigate" on the error card for ranked 1-click self-healing fixes (prompt soften, non-celebrity reference lock, or Creative Clips F2V fallback).',
+      'Failed upstream provider calls automatically refund credits (0 credits charged) and let you escalate diagnostics directly to Engineering Support.',
+    ],
+    proTip: 'Always try the 1-click "Investigate" diagnostic before re-running the exact same blocked prompt manually.',
+  },
+  {
+    id: 'kb-white-label-portals',
+    category: 'producer',
+    title: 'Producer Hub: Zero-Login Client Intake, Consent Ledger & White-Label Portals',
+    summary: 'Deliver branded Intake, Blueprint Pass, Continuity, and Screening Room links under your own studio identity and custom domain.',
+    readTime: '3 min read',
+    tags: ['white-label', 'producer', 'intake', 'custom domain', 'consent', 'exif', 'client portal', 'memoir'],
+    bullets: [
+      'Configure your studio name, logo, colors, support email, and custom domain (Studio tier) in Settings → Producer & Team.',
+      'Zero-login Client Story Intake links automatically strip EXIF GPS metadata from uploaded family photos and record digital likeness & voice consent.',
+      'Clients approve treatments via Blueprint Pass and leave timestamped feedback in white-label Screening Room links without creating a SceneFlow account.',
+    ],
+    proTip: 'Send a Blueprint Pass link for written client sign-off before rendering motion video clips to lock scope and protect margin.',
+  },
+  {
+    id: 'kb-mobile-companion-pwa',
+    category: 'dashboard',
+    title: 'Mobile Companion PWA: On-the-Go Monitoring, Voice Intake & Push Alerts',
+    summary: 'Install SceneFlow on iOS or Android to monitor walk-away renders, triage client notes, and dictate new project concepts by voice.',
+    readTime: '2 min read',
+    tags: ['mobile', 'pwa', 'phone', 'iphone', 'android', 'notifications', 'push', 'voice', 'companion'],
+    bullets: [
+      'Open sceneflowai.studio on your phone and tap "Add to Home Screen" / Install to launch the dedicated Mobile Companion PWA.',
+      'Enable push notifications to get pinged the instant a walk-away Production Agent run finishes or a client leaves Screening Room feedback.',
+      'Tap "Initiate Project" in the companion header to dictate a concept by voice and optionally request PM kickoff support.',
+    ],
+    proTip: 'Need full timeline editing? Use a desktop or tablet viewport—your phone Companion stays fast and distraction-free for approvals and monitoring.',
   },
 ]

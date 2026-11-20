@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Shield, HelpCircle, CreditCard, Scale } from 'lucide-react'
+import { Shield, HelpCircle, CreditCard, Scale, GraduationCap, ArrowRight } from 'lucide-react'
 import {
   LEGAL_ABUSE_EMAIL,
   LEGAL_ADDRESS,
@@ -71,6 +71,32 @@ export default function ContactPage() {
         <p className="text-gray-400 mb-8">We&apos;re here to help. Choose the right channel for your inquiry.</p>
         
         <div className="space-y-8">
+          {/* Self-Service Studio Academy Banner */}
+          <section className="rounded-xl border border-cyan-500/35 bg-gradient-to-r from-cyan-950/40 via-slate-900/80 to-purple-950/30 p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center flex-shrink-0">
+                  <GraduationCap className="w-6 h-6 text-cyan-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-white">
+                    Looking for Instant Answers or Studio Walkthroughs?
+                  </h2>
+                  <p className="text-sm text-gray-300 mt-1">
+                    Explore 7-language room video tours, interactive screen maps, credit estimators, White-Label Agency playbooks, and in-app ticket escalation inside Studio Academy.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/dashboard/help"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-colors shrink-0"
+              >
+                <span>Open Studio Academy</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </section>
+
           {/* Contact Cards */}
           <section className="grid gap-4 md:grid-cols-2">
             {contactChannels.map((channel) => {

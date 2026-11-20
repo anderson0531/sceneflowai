@@ -34,6 +34,7 @@ export async function PATCH(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as {
     ticketId?: string
     status?: SupportReportStatus
+    resolutionNote?: string
   }
   const ticketId = body.ticketId?.trim()
   const status: SupportReportStatus = body.status === 'resolved' ? 'resolved' : 'open'
@@ -42,7 +43,12 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'ticketId is required' }, { status: 400 })
   }
 
-  const updated = await updateSupportErrorReportStatus(ticketId, status, admin.email || undefined)
+  const updated = await updateSupportErrorReportStatus(
+    ticketId,
+    status,
+    admin.email || undefined,
+    body.resolutionNote
+  )
   if (!updated) {
     return NextResponse.json({ error: 'Report not found' }, { status: 404 })
   }
