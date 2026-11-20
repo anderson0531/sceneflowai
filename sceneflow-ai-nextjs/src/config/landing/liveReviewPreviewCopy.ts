@@ -127,7 +127,7 @@ export const LIVE_REVIEW_PREVIEW_COPY: Record<HeroDubLocaleId, LiveReviewPreview
     closeLabel: 'Cerrar vista previa',
     doors: {
       screening: {
-        tabLabel: 'Enlace Screening Room',
+        tabLabel: 'Enlace Sala de Proyección',
         urlPathPrefix: 'sceneflowai.studio/share/screening-room/',
         headline: 'Sala de Proyección Marca Blanca y Aprobación por Tiempo',
         description:
@@ -141,7 +141,7 @@ export const LIVE_REVIEW_PREVIEW_COPY: Record<HeroDubLocaleId, LiveReviewPreview
         ],
       },
       blueprint: {
-        tabLabel: 'Enlace Blueprint Pass',
+        tabLabel: 'Enlace Sala de Blueprint',
         urlPathPrefix: 'sceneflowai.studio/blueprint/share/',
         headline: 'Tratamiento Interactivo, Escaleta y Firma Previa',
         description:
@@ -203,7 +203,7 @@ export const LIVE_REVIEW_PREVIEW_COPY: Record<HeroDubLocaleId, LiveReviewPreview
     closeLabel: 'Fechar prévia',
     doors: {
       screening: {
-        tabLabel: 'Link Screening Room',
+        tabLabel: 'Link Sala de Exibição',
         urlPathPrefix: 'sceneflowai.studio/share/screening-room/',
         headline: 'Sala de Exibição White-Label e Aprovação por Timestamp',
         description:
@@ -217,7 +217,7 @@ export const LIVE_REVIEW_PREVIEW_COPY: Record<HeroDubLocaleId, LiveReviewPreview
         ],
       },
       blueprint: {
-        tabLabel: 'Link Blueprint Pass',
+        tabLabel: 'Link Sala de Blueprint',
         urlPathPrefix: 'sceneflowai.studio/blueprint/share/',
         headline: 'Tratamento Interativo, Escaleta e Aprovação Prévia',
         description:
@@ -293,7 +293,7 @@ export const LIVE_REVIEW_PREVIEW_COPY: Record<HeroDubLocaleId, LiveReviewPreview
         ],
       },
       blueprint: {
-        tabLabel: 'Blueprint पास लिंक',
+        tabLabel: 'ब्लूप्रिंट रूम लिंक',
         urlPathPrefix: 'sceneflowai.studio/blueprint/share/',
         headline: 'इंटरैक्टिव ट्रीटमेंट, बीट शीट और पूर्व-अनुमोदन',
         description:
@@ -445,7 +445,7 @@ export const LIVE_REVIEW_PREVIEW_COPY: Record<HeroDubLocaleId, LiveReviewPreview
         ],
       },
       blueprint: {
-        tabLabel: 'رابط Blueprint Pass',
+        tabLabel: 'رابط غرفة المخطط',
         urlPathPrefix: 'sceneflowai.studio/blueprint/share/',
         headline: 'المعالجة التفاعلية، نبضات القصة والاعتماد قبل الرندر',
         description:
@@ -507,7 +507,7 @@ export const LIVE_REVIEW_PREVIEW_COPY: Record<HeroDubLocaleId, LiveReviewPreview
     closeLabel: 'ปิดหน้าต่างตัวอย่าง',
     doors: {
       screening: {
-        tabLabel: 'ลิงก์ห้องฉาย Screening Room',
+        tabLabel: 'ลิงก์ห้องฉายภาพยนตร์',
         urlPathPrefix: 'sceneflowai.studio/share/screening-room/',
         headline: 'โรงฉายลูกค้า White-Label พร้อมคอมเมนต์ตามเวลา & อนุมัติ',
         description:
@@ -521,7 +521,7 @@ export const LIVE_REVIEW_PREVIEW_COPY: Record<HeroDubLocaleId, LiveReviewPreview
         ],
       },
       blueprint: {
-        tabLabel: 'ลิงก์ Blueprint Pass',
+        tabLabel: 'ลิงก์ห้องบลูพรินต์',
         urlPathPrefix: 'sceneflowai.studio/blueprint/share/',
         headline: 'โครงเรื่องโต้ตอบ บีตชีต & ยืนยันขอบเขตก่อนเรนเดอร์',
         description:
