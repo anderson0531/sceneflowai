@@ -14,6 +14,9 @@ import { NextIntlClientProvider } from 'next-intl'
 import { VideoServicesSpotlightSection } from '@/components/landing/VideoServicesSpotlightSection'
 import { MobileCompanionPwaSection } from '@/components/landing/MobileCompanionPwaSection'
 import { StudioDoorWalkthroughModal } from '@/components/landing/StudioDoorWalkthroughModal'
+import { InsetRoomTourPlayer } from '@/components/landing/InsetRoomTourPlayer'
+import { LiveReviewLinksPreviewModal } from '@/components/landing/LiveReviewLinksPreviewModal'
+import { LIVE_REVIEW_PREVIEW_COPY } from '@/config/landing/liveReviewPreviewCopy'
 import { FeatureScreenshotFrame } from '@/components/landing/FeatureScreenshotFrame'
 import KeyFeaturesSection from '@/components/landing/KeyFeaturesSection'
 import {
@@ -293,6 +296,108 @@ describe('Interim 7-Language Narrated Studio Door Walkthroughs & Panned 5K Scree
     clickElement(closeBtn!)
     expect(closed).toBe(true)
   })
+
+  it('renders InsetRoomTourPlayer for all 4 rooms with number-only bookmark tooltips, globe language selector, and zero Panned 5K screens', () => {
+    for (const roomId of FEATURE_ROOM_IDS) {
+      renderElement(
+        React.createElement(
+          NextIntlClientProvider,
+          { locale: 'en', messages: loadMessages('en') },
+          React.createElement(InsetRoomTourPlayer, {
+            roomId,
+            roomLabel: DOOR_WALKTHROUGH_COPY.en.rooms[roomId],
+            initialLocale: 'en',
+          })
+        )
+      )
+
+      const player = document.querySelector('[data-testid="inset-room-tour-player"]')
+      expect(player).toBeTruthy()
+      expect(player?.textContent).not.toContain('Panned 5K')
+
+      const bookmarkGroup = player?.querySelector('[data-testid="room-tour-bookmarks"]')
+      const bookmarkButtons = Array.from(bookmarkGroup?.querySelectorAll('button') ?? [])
+      const expectedBeats = FEATURE_ROOM_SCRIPTS[roomId].beatsByLocale.en
+      expect(bookmarkButtons).toHaveLength(expectedBeats.length)
+
+      // Number-only labels (01, 02, ...) with full localized narration tooltip
+      expect(bookmarkButtons[0]?.textContent?.trim()).toBe('01')
+      expect(bookmarkButtons[0]?.getAttribute('title')).toContain(`01 — ${expectedBeats[0]}`)
+
+      // Clicking bookmark 02 updates active caption
+      if (bookmarkButtons[1]) {
+        clickElement(bookmarkButtons[1])
+        const caption = player?.querySelector('[data-testid="room-tour-active-caption"]')
+        expect(caption?.textContent).toContain('02')
+        expect(caption?.textContent).toContain(expectedBeats[1])
+      }
+    }
+  })
+
+  it('renders LiveReviewLinksPreviewModal Coming Soon (Dec 3) mockups across all 4 doors and 7 languages', () => {
+    let closed = false
+    renderElement(
+      React.createElement(
+        NextIntlClientProvider,
+        { locale: 'en', messages: loadMessages('en') },
+        React.createElement(LiveReviewLinksPreviewModal, {
+          open: true,
+          onClose: () => {
+            closed = true
+          },
+          productionId: 'drama',
+          productionTitle: 'The Glass Ledger',
+          productionBadge: 'Cinematic Drama',
+          initialDoor: 'screening',
+          locale: 'en',
+        })
+      )
+    )
+
+    const dialog = document.querySelector('[data-testid="live-review-links-preview-modal"]')
+    expect(dialog).toBeTruthy()
+    expect(dialog?.textContent).toContain('The Glass Ledger')
+    expect(dialog?.textContent).toContain('December 3')
+
+    const tabs = Array.from(dialog?.querySelectorAll('[role="tab"]') ?? [])
+    expect(tabs).toHaveLength(4)
+    for (const tab of tabs) {
+      clickElement(tab)
+      const mockFrame = dialog?.querySelector('[data-testid="live-review-mock-screenshot"]')
+      expect(mockFrame).toBeTruthy()
+      expect(mockFrame?.textContent).toContain('sceneflowai.studio/')
+    }
+
+    for (const loc of PRIORITY_LOCALES) {
+      const dubId = normalizeWalkthroughDubLocale(loc)
+      renderElement(
+        React.createElement(
+          NextIntlClientProvider,
+          { locale: loc, messages: loadMessages(loc) },
+          React.createElement(LiveReviewLinksPreviewModal, {
+            open: true,
+            onClose: () => {
+              closed = true
+            },
+            productionId: 'memoir',
+            productionTitle: 'Family Legacy',
+            initialDoor: 'blueprint',
+            locale: loc,
+          })
+        )
+      )
+      const activeDialog = document.querySelector('[data-testid="live-review-links-preview-modal"]')
+      expect(activeDialog?.getAttribute('dir')).toBe(dubId === 'ar' ? 'rtl' : 'ltr')
+      expect(activeDialog?.textContent).toContain(LIVE_REVIEW_PREVIEW_COPY[dubId].comingSoonBadge)
+    }
+
+    const closeBtn = document.querySelector(
+      `[aria-label="${LIVE_REVIEW_PREVIEW_COPY.th.closeLabel}"]`
+    )
+    expect(closeBtn).toBeTruthy()
+    clickElement(closeBtn!)
+    expect(closed).toBe(true)
+  })
 })
 
 describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & Tooltip Audit', () => {
@@ -447,13 +552,15 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
 
     const guidedTour = readSource('src/components/landing/StudioGuidedTourSection.tsx')
     expect(guidedTour).not.toContain('truncate')
-    expect(guidedTour).toContain('StudioDoorWalkthroughModal')
+    expect(guidedTour).toContain('InsetRoomTourPlayer')
+    expect(guidedTour).not.toContain('ExpandedImageModal')
+    expect(guidedTour).not.toContain('inspectFullScreenLabel')
     expect(guidedTour).toContain('VideoControlTooltip')
 
     const styleCard = readSource('src/components/landing/ProductionStyleCard.tsx')
     expect(styleCard).not.toContain('aria-disabled="true"')
     expect(styleCard).toContain('min-[420px]:grid-cols-3')
-    expect(styleCard).toContain('StudioDoorWalkthroughModal')
+    expect(styleCard).toContain('LiveReviewLinksPreviewModal')
 
     const seriesPanel = readSource('src/components/landing/SeriesInputPanel.tsx')
     expect(seriesPanel).toContain('grid-cols-3 gap-1.5 min-[440px]:grid-cols-5')
@@ -1388,9 +1495,11 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
 
     // Pillar 3: Zero mobile text-badge occlusion over 16:9 media frames
     const guidedTourSrc = readSource('src/components/landing/StudioGuidedTourSection.tsx')
-    expect(guidedTourSrc).toContain('hidden sm:flex absolute top-3')
-    expect(guidedTourSrc).toContain('hidden sm:flex absolute inset-x-3 bottom-3')
-    expect(guidedTourSrc).toContain('sm:hidden')
+    expect(guidedTourSrc).toContain('InsetRoomTourPlayer')
+    const insetPlayerSrc = readSource('src/components/landing/InsetRoomTourPlayer.tsx')
+    expect(insetPlayerSrc).toContain('VideoGlobeLanguageSelector')
+    expect(insetPlayerSrc).toContain('data-bookmark-number')
+    expect(insetPlayerSrc).not.toContain('Panned 5K')
 
     const prodStyleCardSrc = readSource('src/components/landing/ProductionStyleCard.tsx')
     expect(prodStyleCardSrc).toContain('hidden sm:flex items-center gap-1 rounded-md')

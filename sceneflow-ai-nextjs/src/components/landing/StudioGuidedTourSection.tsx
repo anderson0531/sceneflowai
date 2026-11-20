@@ -5,35 +5,15 @@ import { motion } from 'framer-motion'
 import {
   ArrowRight,
   Briefcase,
-  CheckCircle2,
   Clapperboard,
-  ExternalLink,
   Film,
   Layers,
-  Maximize2,
-  Play,
-  Share2,
   Sparkles,
 } from 'lucide-react'
-import { useLocale, useTranslations } from 'next-intl'
-import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal'
-import {
-  StudioDoorWalkthroughModal,
-  type WalkthroughDisplayMode,
-} from '@/components/landing/StudioDoorWalkthroughModal'
+import { useLocale } from 'next-intl'
+import { InsetRoomTourPlayer } from '@/components/landing/InsetRoomTourPlayer'
 import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
-import {
-  DOOR_WALKTHROUGH_COPY,
-  normalizeWalkthroughDubLocale,
-} from '@/config/landing/doorWalkthroughCopy'
-import { featureRoomHasVideo, getFeatureRoomMedia } from '@/config/landing/featureRoomMedia'
-import {
-  BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP,
-  SCENE_DIRECTOR_SCREENSHOT_WEBP,
-  SCREENING_COLLAB_SCREENSHOT_WEBP,
-  SERIES_REVIEW_SCREENSHOT_WEBP,
-} from '@/config/landing/keyFeatureScreenshots'
 import { cn } from '@/lib/utils'
 
 export const STUDIO_GUIDED_TOUR_SECTION_ID = 'studio-tour'
@@ -47,61 +27,8 @@ const ROOM_ICONS: Record<RoomId, typeof Layers> = {
   'screening-room': Film,
 }
 
-const ROOM_FULL_SCREENSHOTS: Record<RoomId, string> = {
-  'series-desk': SERIES_REVIEW_SCREENSHOT_WEBP,
-  'blueprint-board': BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP,
-  'production-stage': SCENE_DIRECTOR_SCREENSHOT_WEBP,
-  'screening-room': SCREENING_COLLAB_SCREENSHOT_WEBP,
-}
-
-const ROOM_SANDBOX_ASSETS: Record<
-  RoomId,
-  {
-    heroSrc: string
-    thumbSrcs: readonly [string, string, string, string]
-  }
-> = {
-  'series-desk': {
-    heroSrc: '/images/sandbox/glass-ledger/hero-billboard.jpg',
-    thumbSrcs: [
-      '/images/sandbox/glass-ledger/char-elara.jpg',
-      '/images/sandbox/glass-ledger/char-marcus.jpg',
-      '/images/sandbox/glass-ledger/loc-archive-vault.jpg',
-      '/images/sandbox/glass-ledger/prop-glass-ledger.jpg',
-    ],
-  },
-  'blueprint-board': {
-    heroSrc: '/images/sandbox/glass-ledger/s1-b2-twoshot-table.jpg',
-    thumbSrcs: [
-      '/images/sandbox/glass-ledger/char-elara.jpg',
-      '/images/sandbox/glass-ledger/char-aris.jpg',
-      '/images/sandbox/glass-ledger/loc-observation-deck.jpg',
-      '/images/sandbox/glass-ledger/prop-chrono-key.jpg',
-    ],
-  },
-  'production-stage': {
-    heroSrc: '/images/sandbox/glass-ledger/s1-b4-closeup-elara.jpg',
-    thumbSrcs: [
-      '/images/sandbox/glass-ledger/s1-b1-wide-vault.jpg',
-      '/images/sandbox/glass-ledger/s1-b3-macro-hinge.jpg',
-      '/images/sandbox/glass-ledger/s2-b3-key-handoff.jpg',
-      '/images/sandbox/glass-ledger/s3-b1-corridor-sprint.jpg',
-    ],
-  },
-  'screening-room': {
-    heroSrc: '/images/sandbox/glass-ledger/s2-b2-deck-twoshot.jpg',
-    thumbSrcs: [
-      '/images/sandbox/glass-ledger/s1-b1-wide-vault.jpg',
-      '/images/sandbox/glass-ledger/s2-b1-deck-ots.jpg',
-      '/images/sandbox/glass-ledger/s2-b2-alt-v1.jpg',
-      '/images/sandbox/glass-ledger/s3-b2-lift-unlock.jpg',
-    ],
-  },
-}
-
 export function StudioGuidedTourSection() {
   const locale = useLocale()
-  const tCommon = useTranslations('common')
   const copy = useStudioLandingCopy().guidedTour
 
   const scrollToExamples = () => {
@@ -109,30 +36,9 @@ export function StudioGuidedTourSection() {
   }
 
   const [activeRoomId, setActiveRoomId] = useState<RoomId>('series-desk')
-  const [selectedThumbIdx, setSelectedThumbIdx] = useState<number | null>(null)
   const [lens, setLens] = useState<'creator' | 'service'>('creator')
-  const [expandedScreenshot, setExpandedScreenshot] = useState<{
-    src: string
-    alt: string
-  } | null>(null)
-  const [walkthroughModal, setWalkthroughModal] = useState<{
-    roomId: RoomId
-    mode: WalkthroughDisplayMode
-  } | null>(null)
 
   const activeRoom = copy.rooms.find((r) => r.id === activeRoomId) ?? copy.rooms[0]
-  const assets = ROOM_SANDBOX_ASSETS[activeRoom.id]
-  const visuals = activeRoom.visuals
-  const roomMedia = getFeatureRoomMedia(activeRoom.id, locale)
-  const hasRoomVideo = featureRoomHasVideo(roomMedia)
-  const walkthroughCopy =
-    DOOR_WALKTHROUGH_COPY[normalizeWalkthroughDubLocale(locale)] ??
-    DOOR_WALKTHROUGH_COPY.en
-
-  const openRoomWalkthrough = (mode: WalkthroughDisplayMode = 'video', roomId: RoomId = activeRoom.id) => {
-    if (!hasRoomVideo) return
-    setWalkthroughModal({ roomId, mode })
-  }
 
   return (
     <section
@@ -214,10 +120,7 @@ export function StudioGuidedTourSection() {
                   role="tab"
                   title={fullRoomTitle}
                   aria-selected={isSelected}
-                  onClick={() => {
-                    setActiveRoomId(room.id)
-                    setSelectedThumbIdx(null)
-                  }}
+                  onClick={() => setActiveRoomId(room.id)}
                   className={cn(
                     'flex flex-col items-start gap-2 rounded-2xl border p-3 text-start transition-all sm:flex-row sm:items-center sm:gap-3 sm:p-4 cursor-pointer',
                     isSelected
@@ -254,7 +157,7 @@ export function StudioGuidedTourSection() {
           })}
         </div>
 
-        {/* Active Room Story + Sandbox Visual Stage */}
+        {/* Active Room Narrative + Inset Video Tour Player */}
         <div className="grid grid-cols-1 gap-6 sm:gap-8 rounded-3xl border border-white/10 bg-slate-900/75 p-4 shadow-2xl backdrop-blur-sm sm:p-8 lg:grid-cols-12 lg:items-center">
           {/* Left: Non-Technical Narrative + 3 Callouts */}
           <div className="lg:col-span-5">
@@ -316,165 +219,13 @@ export function StudioGuidedTourSection() {
             </div>
           </div>
 
-          {/* Right: Curated Sandbox Visual Showcase + Room Tour & Full UI Controls */}
+          {/* Right: Embedded 7-Language Inset Room Video Tour Player */}
           <div className="lg:col-span-7">
-            <div className="overflow-hidden rounded-2xl border border-white/15 bg-slate-950 shadow-xl">
-              {/* Top Window Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 bg-slate-900/95 px-3 py-2.5 sm:px-4 sm:py-3">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-rose-500/70" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
-                  <span className="ms-1.5 text-xs font-semibold text-gray-200">
-                    SceneFlow Studio · {activeRoom.tabLabel}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {hasRoomVideo ? (
-                    <button
-                      type="button"
-                      title={`${copy.watchRoomVideoLabel} (${walkthroughCopy.interimBadge})`}
-                      onClick={() => openRoomWalkthrough('video')}
-                      className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-cyan-400/45 bg-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/25 hover:text-white cursor-pointer"
-                    >
-                      <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden />
-                      <span className="whitespace-normal leading-tight">{copy.watchRoomVideoLabel}</span>
-                    </button>
-                  ) : null}
-
-                  <button
-                    type="button"
-                    title={copy.inspectFullScreenLabel}
-                    onClick={() =>
-                      setExpandedScreenshot({
-                        src:
-                          selectedThumbIdx !== null
-                            ? assets.thumbSrcs[selectedThumbIdx] ?? ROOM_FULL_SCREENSHOTS[activeRoom.id]
-                            : ROOM_FULL_SCREENSHOTS[activeRoom.id],
-                        alt: `${activeRoom.tabLabel} — ${copy.inspectFullScreenLabel}`,
-                      })
-                    }
-                    className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-200 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white cursor-pointer"
-                  >
-                    <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    <span className="whitespace-normal leading-tight">
-                      {copy.inspectFullScreenLabel}
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Hero Sandbox Frame — 100% unobstructed on mobile (< sm); overlays appear on spacious sm+ screens */}
-              <div className="relative aspect-video w-full overflow-hidden bg-black">
-                <img
-                  src={
-                    selectedThumbIdx !== null
-                      ? assets.thumbSrcs[selectedThumbIdx] ?? assets.heroSrc
-                      : assets.heroSrc
-                  }
-                  alt={`${activeRoom.tabLabel} — ${activeRoom.title}`}
-                  className="h-full w-full object-cover"
-                  decoding="async"
-                />
-                <div
-                  className="pointer-events-none hidden sm:block absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/45"
-                  aria-hidden
-                />
-
-                {/* Desktop/Tablet Top Status Pill */}
-                <div className="hidden sm:flex absolute top-3 left-3 right-3 flex-wrap items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-400/40 bg-slate-950/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 backdrop-blur-md">
-                    <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
-                    {visuals.topBadge}
-                  </span>
-                </div>
-
-                {/* Desktop/Tablet Bottom Continuity / Action Overlay */}
-                <div className="hidden sm:flex absolute inset-x-3 bottom-3 flex-wrap items-center justify-between gap-2">
-                  <span className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-1.5 text-xs font-medium text-gray-100 backdrop-blur-md">
-                    {visuals.bottomBadge}
-                  </span>
-
-                  {activeRoom.id === 'screening-room' ? (
-                    <button
-                      type="button"
-                      title={`${copy.openLiveScreeningLabel} (${walkthroughCopy.interimBadge})`}
-                      onClick={() => openRoomWalkthrough('video', 'screening-room')}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/50 bg-amber-500/20 px-3 py-1.5 text-xs font-bold text-amber-100 backdrop-blur-md transition-colors hover:bg-amber-500/35 hover:text-white cursor-pointer"
-                    >
-                      <Share2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      <span className="whitespace-normal leading-tight">
-                        {copy.openLiveScreeningLabel}
-                      </span>
-                      <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-
-              {/* Mobile Below-Frame Status Caption Bar (< sm) — zero occlusion over 16:9 artwork */}
-              <div className="border-t border-slate-800/90 bg-slate-900/95 px-3 py-2.5 space-y-1.5 sm:hidden">
-                <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-300">
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span>{visuals.topBadge}</span>
-                </p>
-                <p className="text-[11px] leading-snug text-gray-200">
-                  {visuals.bottomBadge}
-                </p>
-                {activeRoom.id === 'screening-room' ? (
-                  <button
-                    type="button"
-                    title={`${copy.openLiveScreeningLabel} (${walkthroughCopy.interimBadge})`}
-                    onClick={() => openRoomWalkthrough('video', 'screening-room')}
-                    className="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-400/50 bg-amber-500/20 px-3 py-1.5 text-xs font-bold text-amber-100 transition-colors hover:bg-amber-500/35 hover:text-white cursor-pointer"
-                  >
-                    <Share2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    <span className="whitespace-normal leading-tight">
-                      {copy.openLiveScreeningLabel}
-                    </span>
-                    <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
-                  </button>
-                ) : null}
-              </div>
-
-              {/* 4 Interactive Continuity / Shot Preview Cards */}
-              <div className="grid grid-cols-2 gap-2.5 border-t border-slate-800 bg-slate-950 p-3.5 sm:grid-cols-4">
-                {assets.thumbSrcs.map((thumbSrc, idx) => {
-                  const thumbLabel = visuals.thumbLabels[idx] ?? ''
-                  const isThumbActive = selectedThumbIdx === idx
-                  return (
-                    <button
-                      type="button"
-                      key={`${activeRoom.id}-${idx}`}
-                      title={thumbLabel}
-                      aria-pressed={isThumbActive}
-                      onClick={() => setSelectedThumbIdx((prev) => (prev === idx ? null : idx))}
-                      className={`overflow-hidden rounded-xl border text-left transition-all cursor-pointer ${
-                        isThumbActive
-                          ? 'border-cyan-400/80 bg-cyan-950/30 ring-1 ring-cyan-400/50'
-                          : 'border-slate-800 bg-slate-900/90 hover:border-slate-600'
-                      }`}
-                    >
-                      <div className="aspect-[16/10] w-full overflow-hidden bg-black">
-                        <img
-                          src={thumbSrc}
-                          alt={thumbLabel}
-                          className="h-full w-full object-cover"
-                          decoding="async"
-                        />
-                      </div>
-                      <p
-                        title={thumbLabel}
-                        className="!mb-0 line-clamp-2 px-2.5 py-1.5 text-[11px] font-medium leading-tight text-gray-200"
-                      >
-                        {thumbLabel}
-                      </p>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+            <InsetRoomTourPlayer
+              roomId={activeRoom.id}
+              roomLabel={activeRoom.tabLabel}
+              initialLocale={locale}
+            />
           </div>
         </div>
 
@@ -495,23 +246,6 @@ export function StudioGuidedTourSection() {
           </button>
         </div>
       </div>
-
-      {expandedScreenshot ? (
-        <ExpandedImageModal
-          imageUrl={expandedScreenshot.src}
-          expandImageLabel={expandedScreenshot.alt}
-          closeLabel={tCommon.has('close') ? tCommon('close') : 'Close'}
-          onClose={() => setExpandedScreenshot(null)}
-        />
-      ) : null}
-
-      <StudioDoorWalkthroughModal
-        open={Boolean(walkthroughModal)}
-        onClose={() => setWalkthroughModal(null)}
-        initialRoomId={walkthroughModal?.roomId ?? activeRoom.id}
-        initialLocale={locale}
-        initialMode={walkthroughModal?.mode ?? 'video'}
-      />
     </section>
   )
 }

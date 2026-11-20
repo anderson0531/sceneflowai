@@ -30,13 +30,10 @@ import {
 import { TrailerPlayer } from '@/components/landing/TrailerPlayer'
 import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { PipelineReviewDialog } from '@/components/landing/PipelineReviewDialog'
-import { StudioDoorWalkthroughModal } from '@/components/landing/StudioDoorWalkthroughModal'
+import { LiveReviewLinksPreviewModal } from '@/components/landing/LiveReviewLinksPreviewModal'
 import { SeriesInputPanel } from '@/components/landing/SeriesInputPanel'
-import {
-  DOOR_WALKTHROUGH_COPY,
-  milestoneToFeatureRoomId,
-  normalizeWalkthroughDubLocale,
-} from '@/config/landing/doorWalkthroughCopy'
+import { normalizeWalkthroughDubLocale } from '@/config/landing/doorWalkthroughCopy'
+import { LIVE_REVIEW_PREVIEW_COPY } from '@/config/landing/liveReviewPreviewCopy'
 
 export type SolutionPillar = {
   title: string
@@ -193,14 +190,14 @@ export function ProductionStyleCard({
     screening: screeningDoorLabel,
   }
   const [reviewOpen, setReviewOpen] = useState(false)
-  const [walkthroughOpen, setWalkthroughOpen] = useState(false)
+  const [livePreviewOpen, setLivePreviewOpen] = useState(false)
   const [showDetail, setShowDetail] = useState(false)
   const [activeMilestone, setActiveMilestone] = useState<ReviewerMilestoneId>('screening')
   const screeningMilestone = media.milestones.find((milestone) => milestone.id === 'screening')
   const supportingMilestones = media.milestones.filter((milestone) => milestone.id !== 'screening')
-  const walkthroughCopy =
-    DOOR_WALKTHROUGH_COPY[normalizeWalkthroughDubLocale(videoLocale)] ??
-    DOOR_WALKTHROUGH_COPY.en
+  const livePreviewCopy =
+    LIVE_REVIEW_PREVIEW_COPY[normalizeWalkthroughDubLocale(videoLocale)] ??
+    LIVE_REVIEW_PREVIEW_COPY.en
 
   const startProduction = () => {
     window.location.href = getLoginUrl({
@@ -210,9 +207,9 @@ export function ProductionStyleCard({
     })
   }
 
-  const openDoorWalkthrough = (id: ReviewerMilestoneId) => {
+  const openLiveReviewPreview = (id: ReviewerMilestoneId) => {
     setActiveMilestone(id)
-    setWalkthroughOpen(true)
+    setLivePreviewOpen(true)
   }
 
   return (
@@ -246,7 +243,7 @@ export function ProductionStyleCard({
       </div>
 
       <div className="pointer-events-none relative z-10 flex flex-1 flex-col bg-gradient-to-b from-slate-950/95 via-slate-950 to-slate-950 p-4 sm:p-6">
-        {/* Interactive 7-language narrated Studio Door walkthroughs (interim placeholder for live shared links) */}
+        {/* Live Shareable Review Link Doors (Coming Soon Dec 3 Preview Modal) */}
         <nav
           aria-label={tShowcase.has('productionReviewAria') ? tShowcase('productionReviewAria') : 'Production review'}
           title={screeningRoomInstruction}
@@ -254,13 +251,13 @@ export function ProductionStyleCard({
         >
           {screeningMilestone ? (
             <VideoControlTooltip
-              label={`${milestoneLabels[screeningMilestone.id]} · ${walkthroughCopy.doorButtonHint}`}
+              label={`${milestoneLabels[screeningMilestone.id]} · ${livePreviewCopy.doorButtonHint}`}
             >
               <button
                 key={screeningMilestone.id}
                 type="button"
-                title={`${milestoneLabels[screeningMilestone.id]} · ${walkthroughCopy.doorButtonHint}`}
-                onClick={() => openDoorWalkthrough(screeningMilestone.id)}
+                title={`${milestoneLabels[screeningMilestone.id]} · ${livePreviewCopy.doorButtonHint}`}
+                onClick={() => openLiveReviewPreview(screeningMilestone.id)}
                 className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-cyan-400/35 bg-slate-900/85 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:border-cyan-400/70 hover:bg-slate-900 shadow-sm"
               >
                 <Play className={`h-3.5 w-3.5 shrink-0 ${style.accent} fill-current`} />
@@ -274,13 +271,13 @@ export function ProductionStyleCard({
           {supportingMilestones.length > 0 ? (
             <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-1.5">
               {supportingMilestones.map((milestone) => {
-                const doorTitle = `${milestoneLabels[milestone.id]} · ${walkthroughCopy.doorButtonHint}`
+                const doorTitle = `${milestoneLabels[milestone.id]} · ${livePreviewCopy.doorButtonHint}`
                 return (
                   <VideoControlTooltip key={milestone.id} label={doorTitle}>
                     <button
                       type="button"
                       title={doorTitle}
-                      onClick={() => openDoorWalkthrough(milestone.id)}
+                      onClick={() => openLiveReviewPreview(milestone.id)}
                       className="flex h-full w-full cursor-pointer items-center justify-center rounded-md border border-white/15 bg-slate-900/70 px-2.5 py-2 text-center text-xs font-medium leading-tight text-slate-200 transition-colors hover:border-cyan-400/50 hover:bg-slate-900 hover:text-white min-[420px]:px-2 min-[420px]:py-1.5"
                     >
                       <span className="whitespace-normal break-words">
@@ -362,12 +359,14 @@ export function ProductionStyleCard({
         )}
       </div>
 
-      <StudioDoorWalkthroughModal
-        open={walkthroughOpen}
-        onClose={() => setWalkthroughOpen(false)}
-        initialRoomId={milestoneToFeatureRoomId(activeMilestone)}
-        initialLocale={videoLocale}
+      <LiveReviewLinksPreviewModal
+        open={livePreviewOpen}
+        onClose={() => setLivePreviewOpen(false)}
+        productionId={card.id}
         productionTitle={card.title}
+        productionBadge={card.badge}
+        initialDoor={activeMilestone}
+        locale={videoLocale}
       />
 
       <PipelineReviewDialog
