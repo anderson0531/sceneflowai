@@ -25,6 +25,9 @@ import {
   Film,
   LifeBuoy,
   RotateCcw,
+  MessageSquare,
+  Send,
+  Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -37,6 +40,8 @@ import {
   type JitContextId,
   type JitQuickStep,
 } from '@/config/help/helpAcademyConfig'
+import { getHelpUiCopy } from '@/config/help/helpUiCopy'
+import type { StudioCoachAction, StudioCoachReply } from '@/lib/help/studioCoachEngine'
 import { AnnotatedStudioScreenshot } from './AnnotatedStudioScreenshot'
 import { InsetRoomTourPlayer } from '@/components/landing/InsetRoomTourPlayer'
 import { openSupportErrorReport } from '@/components/vision/ReportGenerationErrorDialog'
@@ -47,8 +52,29 @@ const JIT_BEACON_DISMISSED_KEY = 'sceneflow-jit-beacon-dismissed-v1'
 
 export interface OpenJitHelpDetail {
   contextId?: JitContextId
-  tab?: 'jit' | 'tutorial' | 'search'
+  tab?: 'jit' | 'coach' | 'tutorial' | 'search'
   tutorialId?: string
+}
+
+interface CoachChatTurn {
+  id: string
+  question: string
+  reply?: StudioCoachReply
+  error?: string
+  loading?: boolean
+}
+
+function renderInlineBold(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  return parts.map((part, idx) =>
+    part.startsWith('**') && part.endsWith('**') && part.length > 4 ? (
+      <strong key={idx} className="font-semibold text-white">
+        {part.slice(2, -2)}
+      </strong>
+    ) : (
+      <React.Fragment key={idx}>{part}</React.Fragment>
+    )
+  )
 }
 
 /**
@@ -63,6 +89,7 @@ export function JitHelpDrawer() {
   const pathname = usePathname()
   const router = useRouter()
   const locale = useLocale()
+  const ui = useMemo(() => getHelpUiCopy(locale), [locale])
   const [locationSearch, setLocationSearch] = useState('')
   const [visualMode, setVisualMode] = useState<'map' | 'video'>(() =>
     locale && !locale.toLowerCase().startsWith('en') ? 'video' : 'map'
@@ -82,7 +109,7 @@ export function JitHelpDrawer() {
   )
 
   const [isOpen, setIsOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'jit' | 'tutorial' | 'search'>('jit')
+  const [activeTab, setActiveTab] = useState<'jit' | 'coach' | 'tutorial' | 'search'>('jit')
   const [selectedContextId, setSelectedContextId] = useState<JitContextId>(detectedContextId)
   const [focusedHotspotNumber, setFocusedHotspotNumber] = useState<number | undefined>(undefined)
   const [selectedTutorialId, setSelectedTutorialId] = useState<string>(
@@ -92,6 +119,9 @@ export function JitHelpDrawer() {
   const [completedStepIds, setCompletedStepIds] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [beaconDismissed, setBeaconDismissed] = useState(false)
+  const [coachInput, setCoachInput] = useState('')
+  const [coachTurns, setCoachTurns] = useState<CoachChatTurn[]>([])
+  const [coachBusy, setCoachBusy] = useState(false)
 
   // Keep JIT context synced when user navigates between studio routes
   useEffect(() => {
@@ -218,6 +248,65 @@ export function JitHelpDrawer() {
     }
   }
 
+  const handleAskCoach = useCallback(
+    async (rawQuestion: string) => {
+      const question = rawQuestion.trim()
+      if (!question || coachBusy) return
+      const turnId = `coach-${Date.now()}`
+      setCoachInput('')
+      setCoachBusy(true)
+      setCoachTurns((prev) => [...prev, { id: turnId, question, loading: true }])
+      try {
+        const res = await fetch('/api/help/studio-coach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            question,
+            contextId: selectedContextId,
+            locale,
+          }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok || !data.success || !data.reply) {
+          throw new Error(data.error || 'Could not reach Studio Coach')
+        }
+        setCoachTurns((prev) =>
+          prev.map((t) => (t.id === turnId ? { ...t, loading: false, reply: data.reply } : t))
+        )
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Studio Coach unavailable'
+        setCoachTurns((prev) =>
+          prev.map((t) => (t.id === turnId ? { ...t, loading: false, error: msg } : t))
+        )
+      } finally {
+        setCoachBusy(false)
+      }
+    },
+    [coachBusy, locale, selectedContextId]
+  )
+
+  const handleCoachAction = useCallback(
+    (action: StudioCoachAction) => {
+      if (action.href) {
+        router.push(action.href)
+        setIsOpen(false)
+        return
+      }
+      if (action.actionEvent && action.contextId) {
+        dispatchOrNavigateAction(action.actionEvent, action.contextId)
+        return
+      }
+      if (action.contextId) {
+        setSelectedContextId(action.contextId)
+        setFocusedHotspotNumber(action.hotspotNumber)
+        setVisualMode('map')
+        setActiveTab('jit')
+      }
+    },
+    [dispatchOrNavigateAction, router]
+  )
+
   // Search results across hotspots, quick steps, troubleshooting, and knowledge base
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -302,7 +391,9 @@ export function JitHelpDrawer() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400" />
             </span>
-            <span>JIT Guide: {JIT_CONTEXT_GUIDES[detectedContextId].shortTitle}</span>
+            <span>
+              {ui.drawer.pillPrefix}: {JIT_CONTEXT_GUIDES[detectedContextId].shortTitle}
+            </span>
             <kbd className="px-1.5 py-0.5 text-[10px] rounded bg-slate-800 text-cyan-300 border border-slate-700">
               ?
             </kbd>
@@ -318,8 +409,8 @@ export function JitHelpDrawer() {
               }
             }}
             className="p-1 text-slate-500 hover:text-slate-300 rounded-full"
-            aria-label="Dismiss floating JIT guide pill"
-            title="Hide floating pill (you can still open JIT Help via ? in the header)"
+            aria-label={ui.drawer.closeLabel}
+            title={ui.drawer.dismissPillTitle}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -328,7 +419,7 @@ export function JitHelpDrawer() {
 
       {/* Slide-Over Backdrop & Drawer */}
       {isOpen && (
-        <div className="fixed inset-0 z-[140] flex justify-end">
+        <div className="fixed inset-0 z-[140] flex justify-end" dir={ui.isRtl ? 'rtl' : 'ltr'}>
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs transition-opacity"
@@ -340,7 +431,7 @@ export function JitHelpDrawer() {
           <aside
             role="dialog"
             aria-modal="true"
-            aria-label="SceneFlow Just-In-Time Studio Help & Interactive Training"
+            aria-label={ui.drawer.headerTitle}
             className="relative z-10 w-full max-w-2xl bg-slate-950 border-l border-slate-800 text-slate-100 h-full flex flex-col shadow-2xl overflow-hidden"
           >
             {/* Top Drawer Header */}
@@ -352,17 +443,14 @@ export function JitHelpDrawer() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <h2 className="text-base font-bold text-white truncate">
-                      Just-In-Time Studio Coach
+                      {ui.drawer.headerTitle}
                     </h2>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                      ● Auto-Synced
+                      ● {JIT_CONTEXT_GUIDES[detectedContextId].shortTitle}
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 truncate">
-                    Detected Screen:{' '}
-                    <span className="text-cyan-300 font-medium">
-                      {JIT_CONTEXT_GUIDES[detectedContextId].title}
-                    </span>
+                    {ui.drawer.headerSubtitle}
                   </p>
                 </div>
               </div>
@@ -374,13 +462,13 @@ export function JitHelpDrawer() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition-colors"
                 >
                   <GraduationCap className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Full Academy</span>
+                  <span className="hidden sm:inline">{ui.drawer.fullAcademyBtn}</span>
                 </Link>
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
                   className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                  aria-label="Close Just-In-Time Help"
+                  aria-label={ui.drawer.closeLabel}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -388,46 +476,59 @@ export function JitHelpDrawer() {
             </div>
 
             {/* Primary Mode Tabs */}
-            <div className="px-5 pt-3 bg-slate-900/60 border-b border-slate-800 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1">
+            <div className="px-5 pt-3 bg-slate-900/60 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1 overflow-x-auto">
                 <button
                   type="button"
                   onClick={() => setActiveTab('jit')}
                   className={cn(
-                    'flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold border-b-2 transition-colors',
+                    'flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap',
                     activeTab === 'jit'
                       ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10 rounded-t-lg'
                       : 'border-transparent text-slate-400 hover:text-slate-200'
                   )}
                 >
                   <Compass className="w-3.5 h-3.5" />
-                  <span>This Screen (JIT)</span>
+                  <span>{ui.drawer.tabThisScreen}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('coach')}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap',
+                    activeTab === 'coach'
+                      ? 'border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-lg'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  )}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>{ui.drawer.tabAskCoach}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('tutorial')}
                   className={cn(
-                    'flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold border-b-2 transition-colors',
+                    'flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap',
                     activeTab === 'tutorial'
                       ? 'border-purple-400 text-purple-300 bg-purple-500/10 rounded-t-lg'
                       : 'border-transparent text-slate-400 hover:text-slate-200'
                   )}
                 >
                   <PlayCircle className="w-3.5 h-3.5" />
-                  <span>Interactive Tutorial</span>
+                  <span>{ui.drawer.tabGuidedTour}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('search')}
                   className={cn(
-                    'flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold border-b-2 transition-colors',
+                    'flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap',
                     activeTab === 'search'
                       ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10 rounded-t-lg'
                       : 'border-transparent text-slate-400 hover:text-slate-200'
                   )}
                 >
                   <Search className="w-3.5 h-3.5" />
-                  <span>Search &amp; Answers</span>
+                  <span>{ui.drawer.tabSearch}</span>
                 </button>
               </div>
 
@@ -480,7 +581,7 @@ export function JitHelpDrawer() {
                         <>
                           <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                              {showVideo ? '7-Language Narrated Room Tour' : 'Interactive Visual Screen Map'}
+                              {showVideo ? ui.drawer.headingVideoTour : ui.drawer.headingScreenMap}
                             </h4>
                             <div className="flex items-center gap-1.5">
                               {roomVideoId && (
@@ -495,7 +596,7 @@ export function JitHelpDrawer() {
                                         : 'text-slate-400 hover:text-white'
                                     )}
                                   >
-                                    Screen Map
+                                    {ui.drawer.screenMapMode}
                                   </button>
                                   <button
                                     type="button"
@@ -508,7 +609,7 @@ export function JitHelpDrawer() {
                                     )}
                                   >
                                     <Film className="w-3 h-3" />
-                                    <span>7-Lang Video</span>
+                                    <span>{ui.drawer.videoTourMode}</span>
                                   </button>
                                 </div>
                               )}
@@ -526,10 +627,10 @@ export function JitHelpDrawer() {
                                     setIsOpen(false)
                                   }}
                                   className="inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] font-medium text-slate-300 hover:border-cyan-500/50 hover:text-white transition-colors"
-                                  title="Replay the first-time onboarding walkthrough for this room"
+                                  title={ui.drawer.replayTourTitle}
                                 >
                                   <RotateCcw className="w-3 h-3" />
-                                  <span>Replay Tour</span>
+                                  <span>{ui.drawer.replayTourBtn}</span>
                                 </button>
                               )}
                             </div>
@@ -639,7 +740,7 @@ export function JitHelpDrawer() {
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center gap-1.5">
                       <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Unstuck in 10 Seconds (Common Questions Here)</span>
+                      <span>{ui.drawer.headingTroubleshooting}</span>
                     </h4>
                     <div className="space-y-2.5">
                       {activeGuide.troubleshooting.map((item, idx) => (
@@ -691,7 +792,151 @@ export function JitHelpDrawer() {
               )}
 
               {/* ========================================================= */}
-              {/* TAB 2: INTERACTIVE STEP-BY-STEP TUTORIAL SIMULATOR        */}
+              {/* TAB 2: GROUNDED ASK STUDIO COACH                          */}
+              {/* ========================================================= */}
+              {activeTab === 'coach' && (
+                <div className="space-y-4">
+                  <div className="rounded-xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-cyan-950/40 border border-amber-500/30 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-amber-300" />
+                        <span>{ui.drawer.coachTitle}</span>
+                      </h3>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                        {ui.drawer.coachGroundedBadge}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300">{ui.drawer.coachSubtitle}</p>
+                  </div>
+
+                  {/* Context-Aware Starter Question Chips */}
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      ui.drawer.coachPromptsByContext[selectedContextId] ||
+                      ui.drawer.coachPromptsByContext.dashboard
+                    ).map((promptText) => (
+                      <button
+                        key={promptText}
+                        type="button"
+                        disabled={coachBusy}
+                        onClick={() => void handleAskCoach(promptText)}
+                        className="text-left text-xs px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 text-cyan-200 transition-colors disabled:opacity-50"
+                      >
+                        {promptText}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Question Form */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      void handleAskCoach(coachInput)
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <input
+                      type="text"
+                      value={coachInput}
+                      onChange={(e) => setCoachInput(e.target.value)}
+                      placeholder={ui.drawer.coachPlaceholder}
+                      className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
+                    />
+                    <button
+                      type="submit"
+                      disabled={coachBusy || !coachInput.trim()}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 disabled:opacity-40 transition-colors shrink-0"
+                    >
+                      {coachBusy ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Send className="w-3.5 h-3.5" />
+                      )}
+                      <span>{ui.drawer.coachSendBtn}</span>
+                    </button>
+                  </form>
+
+                  {/* Conversation Turns */}
+                  {coachTurns.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setCoachTurns([])}
+                          className="text-[11px] text-slate-400 hover:text-slate-200 underline"
+                        >
+                          {ui.drawer.coachClearBtn}
+                        </button>
+                      </div>
+                      {coachTurns.map((turn) => (
+                        <div key={turn.id} className="space-y-2">
+                          <div className="ms-auto max-w-[90%] rounded-xl bg-cyan-500/15 border border-cyan-500/30 px-3.5 py-2 text-xs text-cyan-100 font-medium">
+                            {turn.question}
+                          </div>
+                          <div className="rounded-xl bg-slate-900/90 border border-slate-800 p-3.5 space-y-2.5">
+                            {turn.loading ? (
+                              <div className="flex items-center gap-2 text-xs text-slate-400">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                                <span>{ui.drawer.coachThinking}</span>
+                              </div>
+                            ) : turn.error ? (
+                              <p className="text-xs text-rose-300">{turn.error}</p>
+                            ) : turn.reply ? (
+                              <>
+                                <div className="space-y-1.5 text-xs text-slate-200 leading-relaxed whitespace-pre-line">
+                                  {turn.reply.answer.split('\n').map((line, i) => (
+                                    <p key={i} className="!mb-0">
+                                      {renderInlineBold(line)}
+                                    </p>
+                                  ))}
+                                </div>
+                                {turn.reply.actions.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 pt-1.5 border-t border-slate-800">
+                                    {turn.reply.actions.map((act, idx) => (
+                                      <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => handleCoachAction(act)}
+                                        className="inline-flex items-center gap-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/35 px-2.5 py-1 text-[11px] font-semibold text-cyan-200 transition-colors"
+                                      >
+                                        <Zap className="w-3 h-3" />
+                                        <span>{act.label}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </>
+                            ) : null}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Escalate to Human Support */}
+                  <div className="pt-2 border-t border-slate-800/80 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsOpen(false)
+                        openSupportErrorReport({
+                          mediaType: 'general',
+                          title: `Studio Coach Escalation (${activeGuide.shortTitle})`,
+                          explanation: 'Share what you were trying to do and our team will help.',
+                          userNote: coachTurns.slice(-1)[0]?.question,
+                        })
+                      }}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 hover:text-emerald-300"
+                    >
+                      <LifeBuoy className="w-3.5 h-3.5" />
+                      <span>{ui.drawer.coachStillStuckBtn}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ========================================================= */}
+              {/* TAB 3: INTERACTIVE STEP-BY-STEP TUTORIAL SIMULATOR        */}
               {/* ========================================================= */}
               {activeTab === 'tutorial' && (
                 <>
@@ -1068,62 +1313,62 @@ export function JitHelpDrawer() {
             {/* Drawer Footer */}
             <div className="px-5 py-3 bg-slate-900/95 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 text-cyan-400" />
-                  <span>
-                    Press{' '}
-                    <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
-                      ?
-                    </kbd>{' '}
-                    or{' '}
-                    <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
-                      ⌘/
-                    </kbd>
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-cyan-400" />
+                    <span>
+                      {ui.drawer.shortcutPrefix}{' '}
+                      <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
+                        ?
+                      </kbd>{' '}
+                      {ui.drawer.shortcutOr}{' '}
+                      <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
+                        ⌘/
+                      </kbd>
+                    </span>
+                  </div>
+                  {beaconDismissed && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBeaconDismissed(false)
+                        try {
+                          localStorage.removeItem(JIT_BEACON_DISMISSED_KEY)
+                        } catch {
+                          // ignore
+                        }
+                      }}
+                      className="text-[11px] text-slate-400 hover:text-cyan-300 underline"
+                    >
+                      {ui.drawer.restorePillBtn}
+                    </button>
+                  )}
                 </div>
-                {beaconDismissed && (
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => {
-                      setBeaconDismissed(false)
-                      try {
-                        localStorage.removeItem(JIT_BEACON_DISMISSED_KEY)
-                      } catch {
-                        // ignore
-                      }
+                      setIsOpen(false)
+                      openSupportErrorReport({
+                        mediaType: 'general',
+                        title: `Support Request (${activeGuide.shortTitle})`,
+                        explanation: 'Tell us what you need help with or describe the issue you encountered.',
+                      })
                     }}
-                    className="text-[11px] text-slate-400 hover:text-cyan-300 underline"
+                    className="inline-flex items-center gap-1 font-medium text-slate-300 hover:text-white transition-colors"
                   >
-                    Restore floating pill
+                    <LifeBuoy className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{ui.drawer.reportIssueBtn}</span>
                   </button>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false)
-                    openSupportErrorReport({
-                      mediaType: 'general',
-                      title: `Support Request (${activeGuide.shortTitle})`,
-                      explanation: 'Tell us what you need help with or describe the issue you encountered.',
-                    })
-                  }}
-                  className="inline-flex items-center gap-1 font-medium text-slate-300 hover:text-white transition-colors"
-                >
-                  <LifeBuoy className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Report Issue</span>
-                </button>
-                <span className="text-slate-700">|</span>
-                <Link
-                  href="/dashboard/help"
-                  onClick={() => setIsOpen(false)}
-                  className="font-semibold text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
-                >
-                  <span>Open Studio Academy</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+                  <span className="text-slate-700">|</span>
+                  <Link
+                    href="/dashboard/help"
+                    onClick={() => setIsOpen(false)}
+                    className="font-semibold text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
+                  >
+                    <span>{ui.drawer.openAcademyFooter}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
             </div>
           </aside>
         </div>

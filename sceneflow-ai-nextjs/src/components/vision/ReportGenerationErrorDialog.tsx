@@ -1,11 +1,13 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useLocale } from 'next-intl'
 import { AlertTriangle, Check, CheckCircle2, Copy, LifeBuoy, Loader2, Mail, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
+import { getHelpUiCopy } from '@/config/help/helpUiCopy'
 import {
   evaluateGenerationError,
   type GenerationMediaType,
@@ -26,6 +28,7 @@ export interface SupportErrorReportPayload {
   explanation?: string
   recommendedAction?: string
   prompt?: string
+  userNote?: string
   context?: SupportReportContext
 }
 
@@ -61,6 +64,9 @@ export function ReportGenerationErrorDialog({
   onOpenChange,
   payload,
 }: ReportGenerationErrorDialogProps) {
+  const locale = useLocale()
+  const ui = useMemo(() => getHelpUiCopy(locale), [locale])
+  const copy = ui.supportDialog
   const [userNote, setUserNote] = useState('')
   const [selectedMediaType, setSelectedMediaType] = useState<SupportReportMediaType>('general')
   const [submitting, setSubmitting] = useState(false)
@@ -72,7 +78,7 @@ export function ReportGenerationErrorDialog({
 
   useEffect(() => {
     if (open) {
-      setUserNote('')
+      setUserNote(payload?.userNote || '')
       setSelectedMediaType(payload?.mediaType || 'general')
       setSubmittedTicketId(null)
       setEmailDelivered(true)
@@ -162,13 +168,14 @@ export function ReportGenerationErrorDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        dir={ui.isRtl ? 'rtl' : 'ltr'}
         className="max-w-lg border-slate-700 bg-slate-900 text-slate-100"
         aria-describedby={undefined}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
             <LifeBuoy className="h-5 w-5 text-cyan-400" />
-            Report {mediaLabel} Issue to Support
+            {copy.titlePrefix} {mediaLabel} {copy.titleSuffix}
           </DialogTitle>
         </DialogHeader>
 
@@ -191,16 +198,14 @@ export function ReportGenerationErrorDialog({
                 ) : (
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                 )}
-                {emailDelivered
-                  ? 'Escalated to SceneFlow Customer Support'
-                  : 'Ticket Saved — Email Relay Unavailable'}
+                {emailDelivered ? copy.escalatedHeading : copy.relayOfflineHeading}
               </div>
               <p className="text-xs leading-relaxed text-slate-300">
                 {emailDelivered
                   ? confirmationSent
-                    ? 'Our engineering and support team received your diagnostics, and we emailed a confirmation receipt with your ticket ID.'
-                    : 'Our engineering and support team received the diagnostics and error log so this can be quickly investigated and resolved.'
-                  : `Your diagnostic ticket was logged in our admin queue, but automated email delivery is currently offline. For urgent help, email ${supportEmailAddress} with your ticket ID below.`}
+                    ? copy.escalatedWithConfirm
+                    : copy.escalatedBody
+                  : `${copy.relayOfflineBodyPrefix} ${supportEmailAddress}.`}
               </p>
               {!emailDelivered && (
                 <a
@@ -210,13 +215,15 @@ export function ReportGenerationErrorDialog({
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-200 hover:text-white underline"
                 >
                   <Mail className="h-3.5 w-3.5" />
-                  <span>Email {supportEmailAddress} with Ticket ID</span>
+                  <span>
+                    {copy.emailFallbackBtnPrefix} {supportEmailAddress}
+                  </span>
                 </a>
               )}
               <div className="flex items-center justify-between gap-2 rounded bg-slate-950/70 border border-slate-800 px-3 py-2">
                 <div>
                   <span className="text-[10px] uppercase tracking-wide text-slate-400 block">
-                    Reference Ticket
+                    {copy.referenceTicketLabel}
                   </span>
                   <span className="font-mono text-sm font-semibold text-cyan-300">
                     {submittedTicketId}
@@ -232,12 +239,12 @@ export function ReportGenerationErrorDialog({
                   {copiedTicket ? (
                     <>
                       <Check className="h-3.5 w-3.5 mr-1 text-emerald-400" />
-                      Copied
+                      {copy.copiedBtn}
                     </>
                   ) : (
                     <>
                       <Copy className="h-3.5 w-3.5 mr-1" />
-                      Copy ID
+                      {copy.copyIdBtn}
                     </>
                   )}
                 </Button>
@@ -245,7 +252,7 @@ export function ReportGenerationErrorDialog({
             </div>
             <div className="flex justify-end">
               <Button type="button" onClick={() => onOpenChange(false)}>
-                Done
+                {copy.doneBtn}
               </Button>
             </div>
           </div>
@@ -275,7 +282,7 @@ export function ReportGenerationErrorDialog({
                   htmlFor="support-report-category"
                   className="block text-xs font-medium text-slate-300"
                 >
-                  Topic / Studio Area
+                  {copy.topicLabel}
                 </label>
                 <select
                   id="support-report-category"
@@ -297,18 +304,14 @@ export function ReportGenerationErrorDialog({
                 htmlFor="support-report-note"
                 className="block text-xs font-medium text-slate-300"
               >
-                {isGeneralMode
-                  ? 'Describe the issue or question'
-                  : 'Add context for our support team (optional)'}
+                {isGeneralMode ? copy.noteLabelGeneral : copy.noteLabelError}
               </label>
               <Textarea
                 id="support-report-note"
                 value={userNote}
                 onChange={(e) => setUserNote(e.target.value)}
                 placeholder={
-                  isGeneralMode
-                    ? 'Tell us what you were doing, what happened, and any steps to reproduce...'
-                    : 'e.g., Tried rerunning twice on Shot 4 and got the same error...'
+                  isGeneralMode ? copy.notePlaceholderGeneral : copy.notePlaceholderError
                 }
                 rows={3}
                 className="bg-slate-950 border-slate-700 text-xs text-slate-100 placeholder:text-slate-500"
@@ -318,7 +321,7 @@ export function ReportGenerationErrorDialog({
             {technical && (
               <details className="rounded border border-slate-800 bg-slate-950/50 px-2.5 py-1.5">
                 <summary className="cursor-pointer text-[11px] text-slate-400 hover:text-slate-200 select-none">
-                  Included diagnostic details (sent automatically)
+                  {copy.diagnosticsSummary}
                 </summary>
                 <pre className="mt-1.5 max-h-28 overflow-y-auto whitespace-pre-wrap break-words font-mono text-[10px] text-slate-400">
                   {technical}
@@ -334,7 +337,7 @@ export function ReportGenerationErrorDialog({
                 disabled={submitting}
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {copy.cancelBtn}
               </Button>
               <Button
                 type="button"
@@ -346,12 +349,12 @@ export function ReportGenerationErrorDialog({
                 {submitting ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                    Sending…
+                    {copy.sendingBtn}
                   </>
                 ) : (
                   <>
                     <Send className="h-3.5 w-3.5 mr-1.5" />
-                    Send to Support
+                    {copy.sendBtn}
                   </>
                 )}
               </Button>

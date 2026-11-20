@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
+import { useLocale } from 'next-intl'
+import { getHelpUiCopy } from '@/config/help/helpUiCopy'
 import {
   AlertCircle,
   AlertTriangle,
@@ -93,6 +95,8 @@ export function GenerationErrorCard({
   onReportToSupport,
   className,
 }: GenerationErrorCardProps) {
+  const locale = useLocale()
+  const errorCardCopy = useMemo(() => getHelpUiCopy(locale).errorCard, [locale])
   const [localReportOpen, setLocalReportOpen] = useState(false)
   const [investigating, setInvestigating] = useState(false)
   const [investigation, setInvestigation] = useState<ShotErrorInvestigationResult | null>(null)
@@ -553,7 +557,7 @@ export function GenerationErrorCard({
         {(showTechnicalToggle || evaluated.canReportToSupport) && (
           <details className="rounded border border-slate-800/80 bg-black/30 px-2.5 py-1">
             <summary className="cursor-pointer select-none text-[10px] text-slate-400 hover:text-slate-200">
-              Technical details
+              {errorCardCopy.technicalDetailsSummary}
             </summary>
             {rawDiag && (
               <pre className="mt-1.5 max-h-36 overflow-y-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-snug text-slate-300/90">
@@ -563,11 +567,11 @@ export function GenerationErrorCard({
             <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/70 pt-1.5">
               <button
                 type="button"
-                onClick={() => openJitHelp({ contextId: 'production', tab: 'jit' })}
+                onClick={() => openJitHelp({ contextId: 'production', tab: 'coach' })}
                 className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 underline-offset-2 hover:underline"
               >
                 <HelpCircle className="h-3 w-3" />
-                Troubleshooting Guide (?)
+                {errorCardCopy.troubleshootingGuideBtn}
               </button>
               {evaluated.canReportToSupport && (
                 <button
@@ -576,7 +580,7 @@ export function GenerationErrorCard({
                   className="inline-flex items-center gap-1 text-[10px] text-slate-400 hover:text-slate-200 underline-offset-2 hover:underline"
                 >
                   <LifeBuoy className="h-3 w-3" />
-                  Still stuck? Report platform bug
+                  {errorCardCopy.reportBugBtn}
                 </button>
               )}
             </div>

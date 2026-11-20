@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLocale } from 'next-intl'
 import { cn } from '@/lib/utils'
+import { getHelpUiCopy } from '@/config/help/helpUiCopy'
 import {
   X,
   ChevronRight,
@@ -101,11 +103,21 @@ interface ProductionOnboardingProps {
 }
 
 export function ProductionOnboarding({ onComplete, className }: ProductionOnboardingProps) {
+  const locale = useLocale()
+  const ui = useMemo(() => getHelpUiCopy(locale), [locale])
+  const tourCopy = ui.productionTour
   const [isVisible, setIsVisible] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
 
   const totalSteps = PRODUCTION_TOUR_STEPS.length
-  const step = PRODUCTION_TOUR_STEPS[currentStep]
+  const baseStep = PRODUCTION_TOUR_STEPS[currentStep]
+  const localizedStep = tourCopy.steps[currentStep]
+  const step = {
+    ...baseStep,
+    title: localizedStep?.title || baseStep.title,
+    description: localizedStep?.description || baseStep.description,
+    tip: localizedStep?.tip || baseStep.tip,
+  }
   const isLastStep = currentStep === totalSteps - 1
 
   useEffect(() => {
@@ -172,6 +184,7 @@ export function ProductionOnboarding({ onComplete, className }: ProductionOnboar
         role="dialog"
         aria-modal="true"
         aria-label={step.title}
+        dir={ui.isRtl ? 'rtl' : 'ltr'}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -210,7 +223,9 @@ export function ProductionOnboarding({ onComplete, className }: ProductionOnboar
             </div>
 
             <div className="text-xs text-gray-500 mb-2">
-              Step {currentStep + 1} of {totalSteps}
+              {tourCopy.stepOfLabel
+                .replace('{current}', String(currentStep + 1))
+                .replace('{total}', String(totalSteps))}
             </div>
 
             <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
@@ -242,22 +257,22 @@ export function ProductionOnboarding({ onComplete, className }: ProductionOnboar
               {currentStep > 0 && (
                 <Button variant="ghost" size="sm" onClick={handlePrev} className="text-gray-400">
                   <ChevronLeft className="w-4 h-4 mr-1" />
-                  Back
+                  {tourCopy.previousBtn}
                 </Button>
               )}
               <Button variant="ghost" size="sm" onClick={handleDismiss} className="text-gray-500">
                 <SkipForward className="w-4 h-4 mr-1" />
-                Skip
+                {tourCopy.skipBtn}
               </Button>
               <Button size="sm" onClick={handleNext} className="bg-purple-600 hover:bg-purple-700 text-white">
                 {isLastStep ? (
                   <>
                     <Share2 className="w-4 h-4 mr-1" />
-                    Start Production
+                    {tourCopy.finishBtn}
                   </>
                 ) : (
                   <>
-                    Next
+                    {tourCopy.nextBtn}
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </>
                 )}
