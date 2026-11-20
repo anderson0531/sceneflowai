@@ -1,0 +1,11 @@
+{
+  "spotId": "svc-01",
+  "title": "Sell $2,500 Client Films With $40 of Compute",
+  "voice": "Charon",
+  "musicFileOrUrl": "tmp/social-promos-build/svc-01/music/score-30s.mp3",
+  "blocks": {
+    "1": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_01",
+    "2": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_02",
+    "3": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_03"
+  }
+}
