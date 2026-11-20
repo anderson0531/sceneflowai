@@ -43,57 +43,58 @@ Target Buyer: Solo video service operators, boutique marketing agencies, real es
 
 ---
 
-## SPOT `SVC-01` — "Sell `$2,500` Client Films With `$40` of Compute"
-- **Primary Offer:** Operator Pro (`$149/mo` White-Label Business) · Entry Tripwire: `$9` Explorer Test Flight
-- **Best Platforms:** YouTube In-Stream, Meta/Instagram Reels, TikTok, LinkedIn
+## SPOT `SVC-01` (v2) — "Beyond Random AI Clips: The Automated 4K Client Studio"
+- **Primary Offer:** Operator Pro (`$149/mo` White-Label Business) · Entry Tripwire: `$9` Explorer Test Flight *(localized in thumbnails/descriptions)*
+- **Core Differentiation vs. Other AI Video Tools:** Ordinary AI video generators only spit out disconnected 5-second clips with drifting faces and hours of manual stitching. SceneFlow is a **complete automated 4K studio platform** — Continuity Vault™, Walk-Away Production Agent, and 100% White-Label Client Portals.
+- **Best Platforms:** YouTube In-Stream, YouTube Shorts, Meta/Instagram Reels, TikTok, LinkedIn
 - **Assembly:** `3 × 10s` Omni 1.2 Flash clips (`0.4s` cross-dissolves) · `30s` total
 - **30s Background Music Prompt (`-12 dB` / 25% under VO):**
   > *Instrumental modern commercial tech-cinema track, 30 seconds, 108 BPM, F minor lifting to A-flat major at 0:11. 0:00-0:10 tense muted bass pulse and subtle rhythmic clock-like percussion. 0:10-0:20 crisp upbeat synth pluck and warm confident Rhodes chords opening smoothly. 0:20-0:30 uplifting string swell and clean bass groove resolving on a resonant warm final chord. Instrumental only, no vocals.*
 
-### Omni 1.2 Flash (10s) Shot-by-Shot Visual Spec
+### Omni 1.2 Flash (10s) Shot-by-Shot Visual Spec (`SVC-01` v2)
 
 | Block | Timecode | Omni 1.2 Flash (10s) Video Prompt (`omniMultiShot=false`, Single Continuous Take) | Localized On-Screen Super (Added in Post) |
 |---|---|---|---|
-| **Block 01** *(Hook + Pain)* | `0:00–0:10` | **0s–2s (Start frame):** Inside a cramped suburban house living room overcrowded with heavy black C-stands, coiled power cables, and bulky hot tungsten Fresnel lamps, `person [1]` stands center-frame in casual studio wear rubbing their forehead as two blurred crew members haul a heavy tripod rig past foreground. **2s–8s (Action):** `person [1]` glances down at their wristwatch with stressed urgency, exhales heavily, and steps carefully over tangled black floor cables toward a cluttered rolling monitor cart casting harsh flickering glare across their face. **8s–10s (End frame):** Medium close-up of `person [1]` pausing with weary tension against the chaotic gear-packed room behind them. **Camera:** Smooth stabilized lateral Steadicam track weaving slowly past a foreground C-stand into medium close-up. **No spoken dialogue.** | `0:00–0:05`: **`$4,000` Shoot · 3-Week Delays**<br>`0:05–0:10`: **Crews & Late Edits Eat Your Margin** |
-| **Block 02** *(Studio Reveal)* | `0:10–0:20` | **0s–2s (Start frame):** Inside `location [1]` bathed in calm golden late-afternoon window light, `person [1]` sits relaxed at a clean matte walnut desk with a single dark-aluminum laptop open and a ceramic espresso cup beside it, zero readable screen text. **2s–8s (Action):** `person [1]` glides two fingers smoothly across the trackpad once; soft warm amber-and-cyan light rises evenly from the screen onto their smiling face as they lean back calmly into the leather chair and lift the espresso cup unhurriedly. **8s–10s (End frame):** Composed three-quarter close-up of `person [1]` smiling calmly in warm golden window light with gentle cyan monitor reflection. **Camera:** Fluid clockwise gimbal arc from wide serene architectural workspace into intimate three-quarter close-up. **No spoken dialogue.** | `0:10–0:15`: **1 Laptop · Full 4K Video Studio**<br>`0:15–0:20`: **Memoirs · Real Estate · Training** |
-| **Block 03** *(Proof + CTA)* | `0:20–0:30` | **0s–2s (Start frame):** Inside a sunlit modern residential living room, a warm silver-haired homeowner couple sits close together on a cream linen sofa holding a sleek widescreen tablet angled away from camera, bathed in warm 3200K afternoon sunbeams. **2s–8s (Action):** Both eyes brighten with genuine delight as warm cinema light reflects softly across their faces; the wife rests her left hand affectionately over her husband's arm while his right index finger taps once on the lower corner of the tablet, triggering a subtle soft emerald glow across his hand. **8s–10s (End frame):** Calm medium-wide hold framing the smiling couple in the upper half with clean warm sunlit negative space across the lower third for the localized end card. **Camera:** Gentle forward dolly arc transitioning smoothly into a slow symmetrical pull-back hold. **No spoken dialogue.** | `0:20–0:25`: **65%–90% Net Margin · 100% White-Label**<br>`0:25–0:30`: **sceneflowai.studio · Start for `$9`** |
+| **Block 01** *(AI Clip Tool Trap)* | `0:00–0:10` | **0s–2s (Start frame):** Inside a dimly lit late-night agency editing bay, `person [1]` sits hunched between two wide curved monitors flickering with clashing discordant blocks of cool magenta, amber warning flashes, and mismatched abstract clip tiles (pure light shapes, zero readable text), two half-empty espresso cups beside a cluttered trackpad. **2s–8s (Action):** `person [1]` clicks rapidly trying to wrestle mismatched clips together, freezes abruptly as a harsh amber glare pulses across the desk, exhales heavily, pushes their chair back from the chaotic monitors, and rubs both temples in quiet exhaustion. **8s–10s (End frame):** Moody profile close-up of `person [1]` leaning back in shadowed blue-amber fatigue while the disorganized mismatched screens flicker behind them. **Camera:** Smooth slow lateral dolly creeping left-to-right past a foreground monitor edge into weary profile close-up. **No spoken dialogue.** | `0:00–0:05`: **Ordinary AI Tools = Random 5s Clips**<br>`0:05–0:10`: **Drifting Faces · Endless Manual Stitching** |
+| **Block 02** *(Automated Studio Platform)* | `0:10–0:20` | **0s–2s (Start frame):** Inside `location [1]` flooded with warm golden-hour sunlight, `person [1]` stands relaxed beside a sleek matte walnut desk where a wide curved studio display shows clean, orderly teal-to-emerald synchronized production lanes advancing smoothly in rhythm (pure geometric light bands, zero readable text). **2s–8s (Action):** `person [1]` reaches down gracefully with one hand to tap a single glowing cyan launch key on the dark-aluminum laptop, picks up a ceramic espresso cup with the other hand, smiles with calm confidence, and turns unhurriedly toward the sunlit floor-to-ceiling city window while the synchronized emerald production tracks finish smoothly on their own behind them. **8s–10s (End frame):** Serene sunlit three-quarter portrait with `person [1]` relaxed on the right third holding the espresso cup while the self-running studio glows softly across the left background. **Camera:** Fluid clockwise gimbal arc sweeping smoothly from the glowing automated desk to a poised sunlit portrait on the right third. **No spoken dialogue.** | `0:10–0:15`: **Continuity Vault™ · Walk-Away Agent**<br>`0:15–0:20`: **End-to-End Automated 4K Studio** |
+| **Block 03** *(White-Label Client Sign-Off + CTA)* | `0:20–0:30` | **0s–2s (Start frame):** Inside an upscale sunlit modern lounge with floor-to-ceiling greenery outside, a poised business executive and their partner sit comfortably together on a warm camel leather sofa holding a sleek widescreen tablet angled away from camera, rich golden cinema reflections illuminating their smiling faces, zero readable text. **2s–8s (Action):** Both exchange an impressed delighted nod as warm cinema light plays across their eyes; the executive reaches smoothly with their right index finger to tap a luminous emerald approval glow on the lower-right glass edge of the tablet, then relaxes back smiling warmly in the golden afternoon light. **8s–10s (End frame):** Calm symmetrical hold framing the smiling clients across the upper half with clean sunlit negative space across the lower third for the localized CTA end card. **Camera:** Gentle forward dolly arc transitioning smoothly into a slow symmetrical pull-back hold. **No spoken dialogue.** | `0:20–0:25`: **100% White-Label Portals · 90% Margin**<br>`0:25–0:30`: **sceneflowai.studio** |
 
-### 7-Language Voiceover Scripts (`SVC-01` · Timed to `3 × 10s` Blocks)
+### 7-Language Voiceover Scripts (`SVC-01` v2 · Tight ~19–22 Words/Block · Currency-Agnostic Global Audio)
 
-- **EN (English — 70 words):**
-  - **Block 01 (`0:00–0:10` · VO `0.5s–9.4s`):** *"Agencies charge four thousand dollars and take three weeks for one client film — while crews, locations, and late-night edits devour your entire profit margin."*
-  - **Block 02 (`0:10–0:20` · VO `0.5s–9.4s`):** *"SceneFlow Studio lets you run a full-scale video business from one laptop — producing life memoirs, real estate tours, and corporate training in 4K."*
-  - **Block 03 (`0:20–0:30` · VO `0.5s–9.2s`):** *"Consistent cast, neural voices, and 100% white-label client portals — with up to ninety percent net margins. Start your nine-dollar test flight at sceneflowai.studio."*
+- **EN (English — 64 words):**
+  - **Block 01 (`0:00–0:10`):** *"Ordinary AI tools only spit out random five-second clips — leaving you trapped babysitting prompts, fixing drifting faces, and stitching audio all night."*
+  - **Block 02 (`0:10–0:20`):** *"SceneFlow Studio is a complete automated 4K production platform. Lock cast and sets in the Continuity Vault, launch the Production Agent, and walk away."*
+  - **Block 03 (`0:20–0:30`):** *"Deliver memoirs, real estate, and corporate films through 100% white-label client portals — with up to ninety percent margins. Launch at sceneflowai.studio."*
 
-- **ES (Spanish — LATAM/Global Neutral):**
-  - **Block 01 (`0:00–0:10`):** *"Las agencias cobran cuatro mil dólares y tardan tres semanas por un solo video, mientras los rodajes y madrugadas editando devoran toda tu ganancia."*
-  - **Block 02 (`0:10–0:20`):** *"Con SceneFlow Studio operas una productora completa desde tu laptop: video memorias, tours inmobiliarios y capacitación corporativa en 4K."*
-  - **Block 03 (`0:20–0:30`):** *"Personajes consistentes, voces naturales y portales 100% marca blanca, con hasta noventa por ciento de margen neto. Empieza tu prueba por nueve dólares en sceneflowai.studio."*
+- **ES (Spanish — Global Neutral):**
+  - **Block 01 (`0:00–0:10`):** *"Las herramientas de IA comunes solo generan clips sueltos de cinco segundos, atrapándote toda la noche entre prompts, rostros cambiantes y edición manual."*
+  - **Block 02 (`0:10–0:20`):** *"SceneFlow Studio es una plataforma completa de producción 4K automatizada. Bloquea elenco y locaciones en Continuity Vault, lanza el agente y aléjate."*
+  - **Block 03 (`0:20–0:30`):** *"Entrega memorias, tours inmobiliarios y videos corporativos en portales 100% marca blanca, con hasta noventa por ciento de margen. Empieza en sceneflowai.studio."*
 
 - **PT (Portuguese — Brazil/Global):**
-  - **Block 01 (`0:00–0:10`):** *"Agências cobram milhares de dólares e levam semanas por um único filme comercial, enquanto equipes caras e madrugadas na edição devoram seu lucro."*
-  - **Block 02 (`0:10–0:20`):** *"O SceneFlow Studio coloca uma produtora completa no seu notebook — criando memórias de vida, tours imobiliários e treinamentos corporativos em 4K."*
-  - **Block 03 (`0:20–0:30`):** *"Elenco consistente, vozes neurais e portais 100% white-label, com margens líquidas de até noventa por cento. Comece seu teste por nove dólares em sceneflowai.studio."*
+  - **Block 01 (`0:00–0:10`):** *"Ferramentas comuns de IA só geram clipes soltos de cinco segundos — prendendo você a noite toda em prompts manuais, rostos inconsistentes e edição."*
+  - **Block 02 (`0:10–0:20`):** *"O SceneFlow Studio é uma plataforma completa de produção 4K automatizada. Trave elenco e cenários no Continuity Vault, acione o agente e relaxe."*
+  - **Block 03 (`0:20–0:30`):** *"Entregue memórias, tours imobiliários e filmes corporativos em portais 100% com a sua marca, com até noventa por cento de margem em sceneflowai.studio."*
 
 - **HI (Hindi — Conversational Business):**
-  - **Block 01 (`0:00–0:10`):** *"एक क्लाइंट वीडियो बनाने में पारंपरिक एजेंसियाँ लाखों रुपये और तीन हफ्ते लगाती हैं — और शूटिंग क्रू व एडिटिंग आपका पूरा मुनाफ़ा खत्म कर देती हैं।"*
-  - **Block 02 (`0:10–0:20`):** *"SceneFlow Studio से आप एक ही लैपटॉप से पूरा वीडियो बिज़नेस चला सकते हैं — लाइफ मेमॉयर, रियल एस्टेट टूर और कॉर्पोरेट ट्रेनिंग, सीधे 4K में।"*
-  - **Block 03 (`0:20–0:30`):** *"एक जैसे चेहरे, असली जैसी आवाज़ें और 100% व्हाइट-लेबल क्लाइंट पोर्टल — 90 प्रतिशत तक नेट मार्जिन के साथ। sceneflowai.studio पर सिर्फ़ नौ डॉलर में शुरू करें।"*
+  - **Block 01 (`0:00–0:10`):** *"आम AI टूल सिर्फ़ पाँच सेकंड के अलग-अलग क्लिप देते हैं — जिससे आप पूरी रात प्रॉम्प्ट, बदलते चेहरों और मैनुअल एडिटिंग में उलझे रहते हैं।"*
+  - **Block 02 (`0:10–0:20`):** *"SceneFlow Studio एक पूरा ऑटोमेटेड 4K प्रोडक्शन प्लेटफ़ॉर्म है। Continuity Vault में किरदार व सेट लॉक करें, Production Agent चलाएँ और निश्चिंत हो जाएँ।"*
+  - **Block 03 (`0:20–0:30`):** *"100% अपने ब्रांड के क्लाइंट पोर्टल से मेमॉयर, रियल एस्टेट और कॉर्पोरेट फ़िल्में डिलीवर करें — 90 प्रतिशत तक मुनाफ़े के साथ। शुरू करें sceneflowai.studio पर।"*
 
 - **ZH-CN (Mandarin Chinese):**
-  - **Block 01 (`0:00–0:10`):** *"传统制作公司拍一条客户宣传片动辄收费数千美元、耗时三周，拍摄团队与通宵剪辑吞噬了你全部的利润。"*
-  - **Block 02 (`0:10–0:20`):** *"有了 SceneFlow Studio，一台笔记本就能运营整家影视机构——4K 打造人生传记、房产巡礼与企业培训片。"*
-  - **Block 03 (`0:20–0:30`):** *"角色面孔统一、配音自然，搭配 100% 白标客户门户，净利率高达 90%。立即访问 sceneflowai.studio，9 美元开启试用。"*
+  - **Block 01 (`0:00–0:10`):** *"普通 AI 工具只会吐出随机的五秒碎片，让你整晚困在反复改提示词、修变脸和手动拼剪音频的噩梦里。"*
+  - **Block 02 (`0:10–0:20`):** *"SceneFlow Studio 是全流程自动化 4K 制片平台：在连续性资产库锁定角色与场景，一键启动自动制片代理即可轻松离开。"*
+  - **Block 03 (`0:20–0:30`):** *"通过 100% 白标客户门户交付传记、房产与企业宣传片，净利率高达 90%。立即访问 sceneflowai.studio 开启工作室。"*
 
 - **AR (Modern Standard Arabic — Clean Commercial):**
-  - **Block 01 (`0:00–0:10`):** *"تتقاضى الوكالات آلاف الدولارات وتستغرق ثلاثة أسابيع لفيلم واحد، بينما تلتهم طواقم التصوير وساعات المونتاج هامش ربحك بالكامل."*
-  - **Block 02 (`0:10–0:20`):** *"مع SceneFlow Studio تدير شركة إنتاج متكاملة من حاسوبك — أفلام السيرة الذاتية، جولات العقارات، وفيديوهات التدريب بدقة 4K."*
-  - **Block 03 (`0:20–0:30`):** *"شخصيات متسقة، أصوات طبيعية، وبوابات عملاء بعلامتك التجارية 100% بهوامش ربح تصل لتسعين بالمئة. ابدأ تجربتك بتسعة دولارات عبر sceneflowai.studio."*
+  - **Block 01 (`0:00–0:10`):** *"أدوات الذكاء الاصطناعي العادية تنتج مقاطع عشوائية من خمس ثوانٍ فقط، فتتركك طوال الليل تصلح تغيّر الوجوه وتدمج الصوت يدوياً."*
+  - **Block 02 (`0:10–0:20`):** *"SceneFlow Studio منصة إنتاج 4K آلية متكاملة. ثبّت الشخصيات والمواقع في خزنة الاستمرارية، شغّل وكيل الإنتاج، واتركه يبني الفيلم وحده."*
+  - **Block 03 (`0:20–0:30`):** *"سلّم أفلام السيرة الذاتية والعقارات والتدريب عبر بوابات عملاء بعلامتك التجارية 100% بهوامش تصل لتسعين بالمئة عبر sceneflowai.studio."*
 
 - **TH (Thai — Natural Business):**
-  - **Block 01 (`0:00–0:10`):** *"เอเจนซี่ทั่วไปคิดค่าผลิตวิดีโอลูกค้าหลักแสนและใช้เวลาสามสัปดาห์ ขณะที่ค่ากองถ่ายและการตัดต่อข้ามคืนทำให้กำไรของคุณแทบไม่เหลือ"*
-  - **Block 02 (`0:10–0:20`):** *"SceneFlow Studio ให้คุณเปิดสตูดิโอวิดีโอครบวงจรได้จากโน้ตบุ๊กเครื่องเดียว ทั้งวิดีโอชีวประวัติ ทัวร์อสังหา และสื่ออบรมระดับ 4K"*
-  - **Block 03 (`0:20–0:30`):** *"ตัวละครหน้าเดิมทุกฉาก เสียงพากย์สมจริง พร้อมพอร์ทัล White-Label 100% ทำกำไรสุทธิสูงสุด 90 เปอร์เซ็นต์ ทดลองเพียง 9 ดอลลาร์ที่ sceneflowai.studio"*
+  - **Block 01 (`0:00–0:10`):** *"เครื่องมือ AI ทั่วไปสร้างได้แค่คลิปสุ่มห้าวินาที ทำให้คุณต้องนั่งแก้พรอมต์ แก้หน้าตัวละครเพี้ยน และตัดต่อเสียงเองทั้งคืน"*
+  - **Block 02 (`0:10–0:20`):** *"SceneFlow Studio คือแพลตฟอร์มผลิตวิดีโอ 4K อัตโนมัติครบวงจร ล็อกตัวละครและฉากใน Continuity Vault กดเริ่ม Production Agent แล้วปล่อยระบบทำงานได้เลย"*
+  - **Block 03 (`0:20–0:30`):** *"ส่งมอบงานชีวประวัติ ทัวร์อสังหา และสื่อองค์กรผ่านพอร์ทัลแบรนด์ของคุณ 100% ทำกำไรสูงสุด 90 เปอร์เซ็นต์ เริ่มเลยที่ sceneflowai.studio"*
 
 ---
 

@@ -516,20 +516,43 @@ async function main() {
     }
 
     for (const locale of args.locales) {
-      const vo1 = join(spotDir, 'vo', locale, 'block-01.mp3')
-      const vo2 = join(spotDir, 'vo', locale, 'block-02.mp3')
-      const vo3 = join(spotDir, 'vo', locale, 'block-03.mp3')
-      for (const v of [vo1, vo2, vo3]) {
-        if (!existsSync(v)) {
-          throw new Error(`Missing VO file: ${v.replace(`${ROOT}/`, '')}. Run generate-social-promo-audio.ts first.`)
+      const voDir = join(spotDir, 'vo', locale)
+      const voPaths = [1, 2, 3].map((n) => {
+        const mp3 = join(voDir, `block-0${n}.mp3`)
+        const wav = join(voDir, `block-0${n}.wav`)
+        if (existsSync(wav) && (!existsSync(mp3) || statSync(wav).mtimeMs > statSync(mp3).mtimeMs)) {
+          runFfmpeg(
+            [
+              '-y',
+              '-i',
+              wav,
+              '-af',
+              'highpass=f=65,silenceremove=start_periods=1:start_silence=0.05:start_threshold=-45dB:detection=peak,areverse,silenceremove=start_periods=1:start_silence=0.08:start_threshold=-45dB:detection=peak,areverse,loudnorm=I=-16:TP=-1.5:LRA=9',
+              '-ar',
+              '48000',
+              '-ac',
+              '2',
+              '-c:a',
+              'libmp3lame',
+              '-b:a',
+              '192k',
+              mp3,
+            ],
+            `${spotId}-${locale}-wav-to-mp3-${n}`
+          )
+          console.log(`  [normalized wav -> mp3] ${mp3.replace(`${ROOT}/`, '')}`)
         }
-      }
+        if (!existsSync(mp3)) {
+          throw new Error(`Missing VO file: ${mp3.replace(`${ROOT}/`, '')}. Run generate-social-promo-audio.ts or drop block-0${n}.wav first.`)
+        }
+        return mp3
+      }) as [string, string, string]
 
       buildLocalizedSpot({
         spotId,
         locale,
         clipPaths: [clip1, clip2, clip3],
-        voPaths: [vo1, vo2, vo3],
+        voPaths,
         musicPath,
         musicVolume: args.musicVolume,
         aspect: args.aspect,

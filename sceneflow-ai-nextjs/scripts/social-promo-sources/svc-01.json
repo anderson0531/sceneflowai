@@ -1,11 +1,11 @@
 {
   "spotId": "svc-01",
-  "title": "Sell $2,500 Client Films With $40 of Compute",
+  "title": "Beyond Random AI Clips: The Automated 4K Client Studio",
   "voice": "Charon",
-  "musicFileOrUrl": "tmp/social-promos-build/svc-01/music/score-30s.mp3",
+  "musicFileOrUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Modern%20Tech-Cinema%20Instrumental%20Track.mp3",
   "blocks": {
-    "1": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_01",
-    "2": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_02",
-    "3": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_03"
+    "1": "https://flow.google.com/shared/video/77780243-b204-44de-9014-3aefaaf4fb19",
+    "2": "https://flow.google.com/shared/video/cac75317-7acd-449b-a79f-50484e1374bc",
+    "3": "https://flow.google.com/shared/video/652bd0cd-128a-4f59-abe4-0e7a350930dc"
   }
 }
