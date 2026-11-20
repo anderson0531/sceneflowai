@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   HelpCircle,
@@ -28,6 +28,7 @@ import {
   INTERACTIVE_TUTORIALS,
   HELP_KNOWLEDGE_ARTICLES,
   getJitContextIdForPath,
+  getFallbackHrefForContext,
   type JitContextId,
   type JitQuickStep,
 } from '@/config/help/helpAcademyConfig'
@@ -53,11 +54,26 @@ export function openJitHelp(detail: OpenJitHelpDetail = {}) {
 
 export function JitHelpDrawer() {
   const pathname = usePathname()
-  const detectedContextId = useMemo(() => getJitContextIdForPath(pathname), [pathname])
+  const router = useRouter()
+  const [locationSearch, setLocationSearch] = useState('')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const syncSearch = () => setLocationSearch(window.location.search || '')
+    syncSearch()
+    window.addEventListener('popstate', syncSearch)
+    return () => window.removeEventListener('popstate', syncSearch)
+  }, [pathname])
+
+  const detectedContextId = useMemo(
+    () => getJitContextIdForPath(pathname, locationSearch),
+    [pathname, locationSearch]
+  )
 
   const [isOpen, setIsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'jit' | 'tutorial' | 'search'>('jit')
   const [selectedContextId, setSelectedContextId] = useState<JitContextId>(detectedContextId)
+  const [focusedHotspotNumber, setFocusedHotspotNumber] = useState<number | undefined>(undefined)
   const [selectedTutorialId, setSelectedTutorialId] = useState<string>(
     INTERACTIVE_TUTORIALS[0].id
   )
@@ -69,6 +85,7 @@ export function JitHelpDrawer() {
   // Keep JIT context synced when user navigates between studio routes
   useEffect(() => {
     setSelectedContextId(detectedContextId)
+    setFocusedHotspotNumber(undefined)
   }, [detectedContextId])
 
   // Load persisted tutorial progress & beacon state
@@ -110,7 +127,9 @@ export function JitHelpDrawer() {
       if (detail.contextId) {
         setSelectedContextId(detail.contextId)
       } else {
-        setSelectedContextId(getJitContextIdForPath(window.location.pathname))
+        const currentSearch = window.location.search || ''
+        setLocationSearch(currentSearch)
+        setSelectedContextId(getJitContextIdForPath(window.location.pathname, currentSearch))
       }
       if (detail.tab) {
         setActiveTab(detail.tab)
@@ -161,10 +180,30 @@ export function JitHelpDrawer() {
   const currentTutorialStep =
     activeTutorial.steps[activeTutorialStepIdx] || activeTutorial.steps[0]
 
-  const handleRunQuickStep = (step: JitQuickStep) => {
-    if (step.actionEvent && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent(step.actionEvent))
+  const dispatchOrNavigateAction = useCallback(
+    (actionEvent: string, targetContextId: JitContextId) => {
+      if (typeof window === 'undefined') return
+      const isVisionTarget =
+        targetContextId === 'production' ||
+        targetContextId === 'final-cut' ||
+        targetContextId === 'premiere'
+      const isOnVision = (pathname || '').toLowerCase().includes('/dashboard/workflow/vision')
+      const isOnTargetRoom =
+        detectedContextId === targetContextId || (isVisionTarget && isOnVision)
+
+      if (isOnTargetRoom) {
+        window.dispatchEvent(new CustomEvent(actionEvent))
+      } else {
+        router.push(getFallbackHrefForContext(targetContextId))
+      }
       setIsOpen(false)
+    },
+    [detectedContextId, pathname, router]
+  )
+
+  const handleRunQuickStep = (step: JitQuickStep) => {
+    if (step.actionEvent) {
+      dispatchOrNavigateAction(step.actionEvent, selectedContextId)
     }
   }
 
@@ -184,9 +223,10 @@ export function JitHelpDrawer() {
     const hotspots: {
       contextId: JitContextId
       contextTitle: string
+      hotspotNumber: number
       label: string
       summary: string
-      proTip: string
+      proTip?: string
     }[] = []
     const faqs: {
       contextId: JitContextId
@@ -200,11 +240,12 @@ export function JitHelpDrawer() {
         if (
           h.label.toLowerCase().includes(q) ||
           h.summary.toLowerCase().includes(q) ||
-          h.proTip.toLowerCase().includes(q)
+          (h.proTip || '').toLowerCase().includes(q)
         ) {
           hotspots.push({
             contextId: guide.id,
             contextTitle: guide.shortTitle,
+            hotspotNumber: h.number,
             label: h.label,
             summary: h.summary,
             proTip: h.proTip,
@@ -236,7 +277,7 @@ export function JitHelpDrawer() {
     <>
       {/* Subtle Floating Just-In-Time (JIT) Coach Pill in Bottom-Right */}
       {!isOpen && !isOnHelpPage && !beaconDismissed && (
-        <div className="fixed bottom-4 left-4 z-[95] hidden sm:flex items-center gap-1 rounded-full bg-slate-900/95 border border-cyan-500/40 pl-3 pr-1.5 py-1.5 shadow-xl shadow-cyan-950/50 backdrop-blur-md">
+        <div className="fixed bottom-4 right-4 z-[95] hidden sm:flex items-center gap-1 rounded-full bg-slate-900/95 border border-cyan-500/40 pl-3 pr-1.5 py-1.5 shadow-xl shadow-cyan-950/50 backdrop-blur-md">
           <button
             type="button"
             onClick={() => {
@@ -428,10 +469,15 @@ export function JitHelpDrawer() {
                       </span>
                     </h4>
                     <AnnotatedStudioScreenshot
+                      key={`${activeGuide.id}-${focusedHotspotNumber ?? 'default'}`}
                       screenshotSrc={activeGuide.screenshotSrc}
                       screenshotAlt={activeGuide.screenshotAlt}
                       hotspots={activeGuide.hotspots}
+                      initialHotspotNumber={focusedHotspotNumber}
                       compact
+                      onActionEvent={(eventName) =>
+                        dispatchOrNavigateAction(eventName, activeGuide.id)
+                      }
                       onActionTriggered={() => setIsOpen(false)}
                     />
                   </div>
@@ -545,10 +591,10 @@ export function JitHelpDrawer() {
                                   type="button"
                                   onClick={() => {
                                     if (item.fixActionEvent) {
-                                      window.dispatchEvent(
-                                        new CustomEvent(item.fixActionEvent)
+                                      dispatchOrNavigateAction(
+                                        item.fixActionEvent,
+                                        selectedContextId
                                       )
-                                      setIsOpen(false)
                                     }
                                   }}
                                   className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-400 hover:text-cyan-300"
@@ -743,10 +789,10 @@ export function JitHelpDrawer() {
                           type="button"
                           onClick={() => {
                             if (currentTutorialStep.tryActionEvent) {
-                              window.dispatchEvent(
-                                new CustomEvent(currentTutorialStep.tryActionEvent)
+                              dispatchOrNavigateAction(
+                                currentTutorialStep.tryActionEvent,
+                                currentTutorialStep.contextId
                               )
-                              setIsOpen(false)
                             }
                           }}
                           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-colors"
@@ -810,13 +856,14 @@ export function JitHelpDrawer() {
                             type="button"
                             onClick={() => {
                               setSelectedContextId(h.contextId)
+                              setFocusedHotspotNumber(h.hotspotNumber)
                               setActiveTab('jit')
                             }}
                             className="w-full text-left rounded-xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500/40 p-3 transition-colors"
                           >
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <span className="text-xs font-bold text-white">
-                                {h.label}
+                                #{h.hotspotNumber} · {h.label}
                               </span>
                               <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300">
                                 {h.contextTitle} →
@@ -828,6 +875,71 @@ export function JitHelpDrawer() {
                       </div>
                     </div>
                   )}
+
+                  {/* Matching Troubleshooting FAQs */}
+                  {searchResults.faqs.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2 flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Troubleshooting Answers ({searchResults.faqs.length})</span>
+                      </h4>
+                      <div className="space-y-2">
+                        {searchResults.faqs.map((faq, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => {
+                              setSelectedContextId(faq.contextId)
+                              setFocusedHotspotNumber(undefined)
+                              setActiveTab('jit')
+                            }}
+                            className="w-full text-left rounded-xl bg-slate-900/90 border border-slate-800 hover:border-amber-500/40 p-3 transition-colors"
+                          >
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <span className="text-xs font-bold text-white">
+                                {faq.question}
+                              </span>
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 shrink-0">
+                                {faq.contextTitle} →
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 leading-relaxed">{faq.answer}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Empty State when Search Matches Nothing */}
+                  {searchQuery.trim() &&
+                    searchResults.hotspots.length === 0 &&
+                    searchResults.faqs.length === 0 &&
+                    searchResults.articles.length === 0 && (
+                      <div className="rounded-xl bg-slate-900/90 border border-slate-800 p-5 text-center space-y-2">
+                        <p className="text-sm font-semibold text-white">
+                          No guides matched &ldquo;{searchQuery.trim()}&rdquo;
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          Try searching for &ldquo;Continuity Vault&rdquo;, &ldquo;BYOK&rdquo;, &ldquo;Agency Ops&rdquo;, or &ldquo;credits&rdquo;.
+                        </p>
+                        <div className="pt-2 flex items-center justify-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setSearchQuery('')}
+                            className="text-xs font-semibold text-cyan-400 hover:text-cyan-300"
+                          >
+                            Clear search
+                          </button>
+                          <span className="text-slate-600">•</span>
+                          <a
+                            href="mailto:support@sceneflowai.studio"
+                            className="text-xs font-semibold text-emerald-400 hover:text-emerald-300"
+                          >
+                            Contact Support
+                          </a>
+                        </div>
+                      </div>
+                    )}
 
                   {/* Knowledge Base Articles */}
                   <div>
@@ -876,20 +988,37 @@ export function JitHelpDrawer() {
             </div>
 
             {/* Drawer Footer */}
-            <div className="px-5 py-3 bg-slate-900/95 border-t border-slate-800 flex items-center justify-between gap-3 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-cyan-400" />
-                <span>
-                  Shortcut: Press{' '}
-                  <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
-                    ?
-                  </kbd>{' '}
-                  or{' '}
-                  <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
-                    ⌘/
-                  </kbd>{' '}
-                  anytime
-                </span>
+            <div className="px-5 py-3 bg-slate-900/95 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4 text-cyan-400" />
+                  <span>
+                    Press{' '}
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
+                      ?
+                    </kbd>{' '}
+                    or{' '}
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
+                      ⌘/
+                    </kbd>
+                  </span>
+                </div>
+                {beaconDismissed && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBeaconDismissed(false)
+                      try {
+                        localStorage.removeItem(JIT_BEACON_DISMISSED_KEY)
+                      } catch {
+                        // ignore
+                      }
+                    }}
+                    className="text-[11px] text-slate-400 hover:text-cyan-300 underline"
+                  >
+                    Restore floating pill
+                  </button>
+                )}
               </div>
               <Link
                 href="/dashboard/help"

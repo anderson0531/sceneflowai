@@ -5,6 +5,8 @@ import { GlobalSidebarUnified } from '@/components/layout/GlobalSidebarUnified';
 import { MobileAppGate } from '@/components/layout/MobileAppGate';
 import { PageTranslateControl } from '@/components/i18n/PageTranslateControl';
 import { JitHelpDrawer } from '@/components/help/JitHelpDrawer';
+import { ReportGenerationErrorDialogHost } from '@/components/vision/ReportGenerationErrorDialog';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { isPublicRoute } from '@/constants/publicRoutes';
 import { allowsGoogleTranslate } from '@/config/i18n/gtSurfaces';
 
@@ -42,11 +44,14 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
 
   // Phones get the companion. Wider screens keep the studio sidebar.
   return (
-    <MobileAppGate translateControl={translateControl}>
-      <GlobalSidebarUnified>
-        {children}
-      </GlobalSidebarUnified>
-      <JitHelpDrawer />
-    </MobileAppGate>
+    <TooltipProvider delayDuration={200}>
+      <MobileAppGate translateControl={translateControl}>
+        <GlobalSidebarUnified>
+          {children}
+        </GlobalSidebarUnified>
+        <JitHelpDrawer />
+      </MobileAppGate>
+      <ReportGenerationErrorDialogHost />
+    </TooltipProvider>
   );
 }

@@ -215,7 +215,6 @@ import { toast } from 'sonner'
 import { SceneImageQuotaToast } from '@/components/vision/SceneImageQuotaToast'
 import { evaluateGenerationError } from '@/lib/errors/generationErrorIntelligence'
 import {
-  ReportGenerationErrorDialogHost,
   openSupportErrorReport,
 } from '@/components/vision/ReportGenerationErrorDialog'
 import {
@@ -10361,6 +10360,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       },
       'vision:characters': () => {
         openReferenceLibrary('cast')
+      },
+      'vision:locations': () => {
+        openReferenceLibrary('locations')
+      },
+      'vision:objects': () => {
+        openReferenceLibrary('object')
       },
       'vision:script-preview': () => openScreeningRoomFromVisionUi(),
       'vision:gallery': () => openScreeningRoomFromVisionUi(),
@@ -23318,9 +23323,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           />
         )}
       </AgentDockStack>
-
-      {/* Global Support Escalation Modal Host */}
-      <ReportGenerationErrorDialogHost />
 
       {/* First-time onboarding tour */}
       <ProductionOnboarding />

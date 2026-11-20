@@ -1,10 +1,31 @@
 import { NextRequest } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { generateText, generateTextCacheAware } from '@/lib/vertexai/gemini'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { localeDirective } from '@/lib/prompts/localeDirective'
 
 export const dynamic = 'force-dynamic'
+
+const CUE_RATE_LIMIT_WINDOW_MS = 60_000
+const CUE_RATE_LIMIT_MAX_REQUESTS = 30
+const cueRateBuckets = new Map<string, number[]>()
+
+function checkCueRateLimit(userKey: string): { allowed: boolean; retryAfterSec: number } {
+  const now = Date.now()
+  const cutoff = now - CUE_RATE_LIMIT_WINDOW_MS
+  const existing = (cueRateBuckets.get(userKey) || []).filter((ts) => ts > cutoff)
+  if (existing.length >= CUE_RATE_LIMIT_MAX_REQUESTS) {
+    const oldest = existing[0] ?? now
+    const retryAfterSec = Math.max(1, Math.ceil((oldest + CUE_RATE_LIMIT_WINDOW_MS - now) / 1000))
+    cueRateBuckets.set(userKey, existing)
+    return { allowed: false, retryAfterSec }
+  }
+  existing.push(now)
+  cueRateBuckets.set(userKey, existing)
+  return { allowed: true, retryAfterSec: 0 }
+}
 
 type Role = 'system' | 'user' | 'assistant'
 
@@ -109,11 +130,12 @@ async function callGemini(messages: Message[], _apiKey: string, context?: CueCon
     // Use cache-aware generation when batch callers provide a cacheZone
     const useCaching = context?.cacheZone && context?.cacheContext
     
+    const flashModel = getGeminiTextModel('flash')
     if (useCaching) {
       const result = await generateTextCacheAware(fullPrompt, {
         sceneflowProjectId: context?.projectId || context?.project?.id || 'default',
         systemInstruction: context?.type === 'scene_script' ? SCENE_SCRIPT_SYSTEM : SYSTEM_PROMPT,
-        model: 'gemini-2.5-flash',
+        model: flashModel,
         temperature: 0.7,
         maxOutputTokens: maxTokens,
         cacheTtlMinutes: 30,
@@ -125,7 +147,7 @@ async function callGemini(messages: Message[], _apiKey: string, context?: CueCon
     }
 
     const result = await generateText(fullPrompt, {
-      model: 'gemini-2.5-flash',
+      model: flashModel,
       temperature: 0.7,
       maxOutputTokens: maxTokens
     })
@@ -267,6 +289,30 @@ function heuristicRefine(seed: string, instruction: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions as any).catch(() => null)
+    const userKey =
+      (session as any)?.user?.id || (session as any)?.user?.email || null
+    if (!userKey) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const rate = checkCueRateLimit(String(userKey))
+    if (!rate.allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please wait before sending more requests.' }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': String(rate.retryAfterSec),
+          },
+        }
+      )
+    }
+
     const data = await req.json()
     let messages = (data?.messages || []) as Message[]
     const context = (data?.context || {}) as CueContext

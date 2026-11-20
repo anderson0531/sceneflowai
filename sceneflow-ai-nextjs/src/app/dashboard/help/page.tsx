@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   HelpCircle,
   Sparkles,
@@ -35,6 +36,7 @@ import {
   CREDIT_ESTIMATOR_PRESETS,
   HELP_KNOWLEDGE_ARTICLES,
   calculateEstimatedCredits,
+  getFallbackHrefForContext,
   type JitContextId,
 } from '@/config/help/helpAcademyConfig'
 import { AnnotatedStudioScreenshot } from '@/components/help/AnnotatedStudioScreenshot'
@@ -53,6 +55,7 @@ const PLAYBOOK_ICONS = {
 }
 
 export default function HelpPage() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<AcademyTab>('tutorials')
   const [selectedTutorialId, setSelectedTutorialId] = useState<string>(
     INTERACTIVE_TUTORIALS[0].id
@@ -60,6 +63,7 @@ export default function HelpPage() {
   const [activeStepIdx, setActiveStepIdx] = useState<number>(0)
   const [selectedContextId, setSelectedContextId] =
     useState<JitContextId>('blueprint')
+  const [focusedScreenHotspot, setFocusedScreenHotspot] = useState<number | undefined>(undefined)
   const [completedStepIds, setCompletedStepIds] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState<string>('')
 
@@ -158,6 +162,104 @@ export default function HelpPage() {
         a.bullets.some((b) => b.toLowerCase().includes(q))
     )
   }, [searchQuery])
+
+  const unifiedSearchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return null
+
+    const hotspots: Array<{
+      contextId: JitContextId
+      contextTitle: string
+      hotspotNumber: number
+      label: string
+      summary: string
+    }> = []
+    const faqs: Array<{
+      contextId: JitContextId
+      contextTitle: string
+      question: string
+      answer: string
+    }> = []
+    const tutorials: Array<{
+      courseId: string
+      courseTitle: string
+      stepIndex: number
+      stepTitle: string
+      objective: string
+    }> = []
+
+    Object.values(JIT_CONTEXT_GUIDES).forEach((guide) => {
+      guide.hotspots.forEach((h) => {
+        if (
+          h.label.toLowerCase().includes(q) ||
+          h.summary.toLowerCase().includes(q) ||
+          (h.proTip || '').toLowerCase().includes(q)
+        ) {
+          hotspots.push({
+            contextId: guide.id,
+            contextTitle: guide.shortTitle,
+            hotspotNumber: h.number,
+            label: h.label,
+            summary: h.summary,
+          })
+        }
+      })
+      guide.troubleshooting.forEach((faq) => {
+        if (
+          faq.question.toLowerCase().includes(q) ||
+          faq.answer.toLowerCase().includes(q)
+        ) {
+          faqs.push({
+            contextId: guide.id,
+            contextTitle: guide.shortTitle,
+            question: faq.question,
+            answer: faq.answer,
+          })
+        }
+      })
+    })
+
+    INTERACTIVE_TUTORIALS.forEach((course) => {
+      course.steps.forEach((step, idx) => {
+        if (
+          course.title.toLowerCase().includes(q) ||
+          step.title.toLowerCase().includes(q) ||
+          step.objective.toLowerCase().includes(q) ||
+          step.instructions.some((i) => i.toLowerCase().includes(q))
+        ) {
+          tutorials.push({
+            courseId: course.id,
+            courseTitle: course.title,
+            stepIndex: idx,
+            stepTitle: step.title,
+            objective: step.objective,
+          })
+        }
+      })
+    })
+
+    const playbooks = CREATOR_PLAYBOOKS.filter(
+      (p) =>
+        p.persona.toLowerCase().includes(q) ||
+        p.tagline.toLowerCase().includes(q) ||
+        p.workflowSummary.toLowerCase().includes(q) ||
+        p.recommendedPlan.toLowerCase().includes(q)
+    )
+
+    return {
+      hotspots,
+      faqs,
+      tutorials,
+      playbooks,
+      articles: filteredArticles,
+      total:
+        hotspots.length +
+        faqs.length +
+        tutorials.length +
+        playbooks.length +
+        filteredArticles.length,
+    }
+  }, [searchQuery, filteredArticles])
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -307,13 +409,8 @@ export default function HelpPage() {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  if (e.target.value.trim() && activeTab !== 'calculator') {
-                    setActiveTab('calculator')
-                  }
-                }}
-                placeholder="Search any tool or topic..."
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search any tool, FAQ, or guide..."
                 className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
               />
             </div>
@@ -325,6 +422,158 @@ export default function HelpPage() {
       {/* MAIN ACADEMY CONTENT AREA                                           */}
       {/* =================================================================== */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Unified Instant Search Results Panel across all Academy sections */}
+        {unifiedSearchResults && (
+          <div className="mb-8 rounded-2xl bg-slate-900/95 border border-cyan-500/35 p-5 space-y-5 shadow-xl">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Search className="w-4 h-4 text-cyan-400" />
+                <h2 className="text-sm sm:text-base font-bold text-white">
+                  Search Results for &ldquo;{searchQuery.trim()}&rdquo; ({unifiedSearchResults.total})
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-xs font-semibold text-cyan-400 hover:text-cyan-300"
+              >
+                Clear search
+              </button>
+            </div>
+
+            {unifiedSearchResults.total === 0 ? (
+              <div className="py-4 text-center space-y-2">
+                <p className="text-sm font-semibold text-white">
+                  No tutorials, screen controls, FAQs, or guides matched &ldquo;{searchQuery.trim()}&rdquo;.
+                </p>
+                <p className="text-xs text-slate-400">
+                  Try searching for &ldquo;Continuity Vault&rdquo;, &ldquo;BYOK&rdquo;, &ldquo;Agency Ops&rdquo;, &ldquo;Producer&rdquo;, or &ldquo;credits&rdquo;.
+                </p>
+                <a
+                  href="mailto:support@sceneflowai.studio"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300 pt-1"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>Still need help? Contact Support</span>
+                </a>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {unifiedSearchResults.hotspots.slice(0, 4).map((h, idx) => (
+                  <button
+                    key={`hs-${idx}`}
+                    type="button"
+                    onClick={() => {
+                      setSelectedContextId(h.contextId)
+                      setFocusedScreenHotspot(h.hotspotNumber)
+                      setActiveTab('screens')
+                      setSearchQuery('')
+                    }}
+                    className="text-left rounded-xl bg-slate-950/90 border border-slate-800 hover:border-cyan-500/50 p-3.5 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300">
+                        Screen Control · {h.contextTitle}
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-white">
+                      #{h.hotspotNumber} {h.label}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{h.summary}</p>
+                  </button>
+                ))}
+
+                {unifiedSearchResults.tutorials.slice(0, 4).map((t, idx) => (
+                  <button
+                    key={`tut-${idx}`}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTutorialId(t.courseId)
+                      setActiveStepIdx(t.stepIndex)
+                      setActiveTab('tutorials')
+                      setSearchQuery('')
+                    }}
+                    className="text-left rounded-xl bg-slate-950/90 border border-slate-800 hover:border-purple-500/50 p-3.5 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-purple-500/15 text-purple-300">
+                        Tutorial · {t.courseTitle}
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-white">{t.stepTitle}</p>
+                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{t.objective}</p>
+                  </button>
+                ))}
+
+                {unifiedSearchResults.faqs.slice(0, 4).map((faq, idx) => (
+                  <button
+                    key={`faq-${idx}`}
+                    type="button"
+                    onClick={() => {
+                      setSelectedContextId(faq.contextId)
+                      setFocusedScreenHotspot(undefined)
+                      setActiveTab('screens')
+                      setSearchQuery('')
+                    }}
+                    className="text-left rounded-xl bg-slate-950/90 border border-slate-800 hover:border-amber-500/50 p-3.5 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">
+                        FAQ · {faq.contextTitle}
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-white">{faq.question}</p>
+                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{faq.answer}</p>
+                  </button>
+                ))}
+
+                {unifiedSearchResults.playbooks.map((pb) => (
+                  <button
+                    key={pb.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('playbooks')
+                      setSearchQuery('')
+                    }}
+                    className="text-left rounded-xl bg-slate-950/90 border border-slate-800 hover:border-emerald-500/50 p-3.5 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300">
+                        Playbook · {pb.recommendedPlan}
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-white">{pb.persona}</p>
+                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{pb.workflowSummary}</p>
+                  </button>
+                ))}
+
+                {unifiedSearchResults.articles.slice(0, 4).map((art) => (
+                  <button
+                    key={art.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('calculator')
+                    }}
+                    className="text-left rounded-xl bg-slate-950/90 border border-slate-800 hover:border-cyan-500/50 p-3.5 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                        Reference Guide · {art.readTime}
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-white">{art.title}</p>
+                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{art.summary}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         {/* ================================================================= */}
         {/* TAB 1: INTERACTIVE STEP-BY-STEP TUTORIALS                         */}
         {/* ================================================================= */}
@@ -494,6 +743,9 @@ export default function HelpPage() {
                       JIT_CONTEXT_GUIDES[currentStep.contextId]?.hotspots || []
                     }
                     initialHotspotNumber={currentStep.focusHotspotNumber}
+                    onActionEvent={() =>
+                      router.push(getFallbackHrefForContext(currentStep.contextId))
+                    }
                   />
 
                   {/* Actionable Step Instructions */}
@@ -540,9 +792,12 @@ export default function HelpPage() {
                     </button>
 
                     <div className="flex items-center gap-2">
-                      {currentStep.tryActionHref && (
+                      {(currentStep.tryActionHref || currentStep.tryActionEvent) && (
                         <Link
-                          href={currentStep.tryActionHref}
+                          href={
+                            currentStep.tryActionHref ||
+                            getFallbackHrefForContext(currentStep.contextId)
+                          }
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
@@ -626,9 +881,14 @@ export default function HelpPage() {
                   </p>
 
                   <AnnotatedStudioScreenshot
+                    key={`${activeGuide.id}-${focusedScreenHotspot ?? 'default'}`}
                     screenshotSrc={activeGuide.screenshotSrc}
                     screenshotAlt={activeGuide.screenshotAlt}
                     hotspots={activeGuide.hotspots}
+                    initialHotspotNumber={focusedScreenHotspot}
+                    onActionEvent={() =>
+                      router.push(getFallbackHrefForContext(activeGuide.id))
+                    }
                   />
                 </div>
               </div>
@@ -1071,11 +1331,11 @@ export default function HelpPage() {
               <span>Plans &amp; Credit Vault</span>
             </Link>
             <Link
-              href="/dashboard/settings/integrations"
+              href="/dashboard/settings/byok"
               className="inline-flex items-center gap-1.5 hover:text-cyan-300 transition-colors"
             >
               <Settings className="w-4 h-4" />
-              <span>BYOK Cloud Keys</span>
+              <span>Vertex AI BYOK Settings</span>
             </Link>
           </div>
           <a

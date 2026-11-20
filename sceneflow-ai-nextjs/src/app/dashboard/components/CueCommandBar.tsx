@@ -27,29 +27,12 @@ export function CueCommandBar({ onImportScript }: CueCommandBarProps = {}) {
   const t = useTranslations('dashboard.greeting')
 
   const userName = useMemo(() => {
-    const name = session?.user?.name
-    const email = session?.user?.email
-
-    if (name && name.includes(' ')) {
-      return name.split(' ')[0]
-    }
-
-    const emailPrefix = email?.split('@')[0]
-    if (name && name === emailPrefix) {
-      const knownUsers: Record<string, string> = {
-        anderson0531: 'Brian',
-      }
-      if (knownUsers[name]) {
-        return knownUsers[name]
-      }
-    }
-
+    const name = session?.user?.name?.trim()
     if (name) {
-      return name.split(' ')[0]
+      return name.split(/\s+/)[0]
     }
-
     return t('fallbackName')
-  }, [session?.user?.name, session?.user?.email, t])
+  }, [session?.user?.name, t])
 
   const greetingKey = useMemo(() => getTimeAwareGreetingKey(), [])
   const greeting = t(greetingKey)

@@ -1,4 +1,6 @@
 import { NextRequest } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
@@ -103,6 +105,16 @@ async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit & { 
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions as any).catch(() => null)
+    if (!session) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    const forwardHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+    const incomingCookie = req.headers.get('cookie')
+    if (incomingCookie) forwardHeaders.cookie = incomingCookie
     const body = await req.json().catch(()=>({}))
     const scenes: SceneIn[] = Array.isArray(body?.scenes) ? body.scenes : []
     if (!scenes.length) return new Response('scenes[] required', { status: 400 })
@@ -143,12 +155,12 @@ export async function POST(req: NextRequest) {
       try {
         // Step 1: Director's Brief (timeout ~20s)
         const briefPrompt = buildBriefPrompt({ title, treatment, scenes, index: i })
-        const briefResp = await fetchWithTimeout(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: briefPrompt, context: { mode:'text', type:'analysis', cacheZone: 'batch_brief', cacheContext: treatmentContext, projectId: batchProjectId } }), timeoutMs: 20000 })
+        const briefResp = await fetchWithTimeout(url, { method:'POST', headers: forwardHeaders, body: JSON.stringify({ prompt: briefPrompt, context: { mode:'text', type:'analysis', cacheZone: 'batch_brief', cacheContext: treatmentContext, projectId: batchProjectId } }), timeoutMs: 20000 })
         const briefJson = await briefResp.json().catch(()=>({}))
         const directorsBrief = String(briefJson?.reply || '').trim()
         // Step 2: Strict scene script (timeout ~60s)
         const scenePrompt = buildScenePrompt({ title, episode, sceneNumber: i+1, scene: scenes[i], directorsBrief, languageBlock })
-        const sceneResp = await fetchWithTimeout(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: scenePrompt, context: { mode:'scene_script', type:'scene_script', cacheZone: 'batch_script', cacheContext: treatmentContext, projectId: batchProjectId } }), timeoutMs: 60000 })
+        const sceneResp = await fetchWithTimeout(url, { method:'POST', headers: forwardHeaders, body: JSON.stringify({ prompt: scenePrompt, context: { mode:'scene_script', type:'scene_script', cacheZone: 'batch_script', cacheContext: treatmentContext, projectId: batchProjectId } }), timeoutMs: 60000 })
         if (!sceneResp.ok) throw new Error('Scene gen failed')
         const sceneJson = await sceneResp.json().catch(()=>({}))
         const sceneText = String(sceneJson?.reply || '').trim()

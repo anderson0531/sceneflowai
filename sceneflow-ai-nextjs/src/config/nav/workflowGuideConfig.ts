@@ -64,7 +64,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
       { id: 'review-analysis', label: 'Revise script (Audio)', actionEventName: 'production:review-analysis' },
       { id: 'lock-script', label: 'Lock script for production', description: 'Draft → Reviewed → Locked' },
       { id: 'assign-voices', label: 'Assign voices (Reference Library)', actionEventName: 'production:assign-voices' },
-      { id: 'create-scene-audio', label: 'Generate scene audio', actionEventName: 'production:generate-audio' },
+      { id: 'create-scene-audio', label: 'Generate scene audio', actionEventName: 'vision:scenes' },
     ],
   },
   {
@@ -74,9 +74,9 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     iconColor: 'text-purple-500',
     collapsed: true,
     steps: [
-      { id: 'create-character-images', label: 'Character references', actionEventName: 'production:generate-characters' },
-      { id: 'create-suggested-objects', label: 'Key objects', actionEventName: 'production:create-objects' },
-      { id: 'create-scene-references', label: 'Location references', actionEventName: 'production:generate-references' },
+      { id: 'create-character-images', label: 'Character references', actionEventName: 'vision:characters' },
+      { id: 'create-suggested-objects', label: 'Key objects', actionEventName: 'vision:objects' },
+      { id: 'create-scene-references', label: 'Location references', actionEventName: 'vision:locations' },
     ],
   },
   {
@@ -87,7 +87,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     steps: [
       { id: 'run-express-scene', label: 'Agents per scene (recommended)', description: 'Checkpoint after each scene to avoid massive redos', actionEventName: 'production:scene-gallery' },
       { id: 'review-storyboard', label: 'Open Screening Room', actionEventName: 'production:scene-gallery' },
-      { id: 'collaborate-share', label: 'Share for review', actionEventName: 'production:share-link' },
+      { id: 'collaborate-share', label: 'Share for review', actionEventName: 'screening-room:create-screening' },
       { id: 'review-animatic', label: 'Screening Room preview', actionEventName: 'production:screening-room' },
     ],
   },
@@ -97,10 +97,10 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     icon: 'Video',
     iconColor: 'text-red-500',
     steps: [
-      { id: 'generate-beat-frames', label: 'Build Shot Frames (start/end)', actionEventName: 'production:generate-frames' },
-      { id: 'create-video', label: 'Generate shot video (Clips)', actionEventName: 'production:generate-video' },
-      { id: 'mix-scene', label: 'Preview in Mixer', actionEventName: 'production:edit-video' },
-      { id: 'render-stream', label: 'Render Stream (export dialog)', actionEventName: 'production:mark-complete' },
+      { id: 'generate-beat-frames', label: 'Build Shot Frames (start/end)', actionEventName: 'vision:scenes' },
+      { id: 'create-video', label: 'Generate shot video (Clips)', actionEventName: 'sceneflow:open-production-builder' },
+      { id: 'mix-scene', label: 'Preview in Mixer', actionEventName: 'production:streams' },
+      { id: 'render-stream', label: 'Render Stream (export dialog)', actionEventName: 'production:render-all' },
     ],
   },
   {
@@ -109,7 +109,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     icon: 'Play',
     iconColor: 'text-green-500',
     steps: [
-      { id: 'review-streams', label: 'Review finished MP4s', actionEventName: 'production:edit-video' },
+      { id: 'review-streams', label: 'Review finished MP4s', actionEventName: 'production:streams' },
       { id: 'rerender-stale', label: 'Re-render when beats change', description: 'Update available badge' },
       { id: 'open-screening-room', label: 'Open Screening Room', actionEventName: 'production:screening-room' },
     ],
@@ -122,8 +122,8 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     collapsed: true,
     steps: [
       { id: 'revise-script', label: 'Unlock script & revise', actionEventName: 'production:review-analysis' },
-      { id: 'revise-frames', label: 'Re-run Stills Agent or edit Shot Frames', actionEventName: 'production:edit-frames' },
-      { id: 'revise-audio', label: 'Revise audio timeline', actionEventName: 'production:audio-timeline' },
+      { id: 'revise-frames', label: 'Re-run Stills Agent or edit Shot Frames', actionEventName: 'vision:scenes' },
+      { id: 'revise-audio', label: 'Revise audio timeline', actionEventName: 'production:streams' },
     ],
   },
 ]

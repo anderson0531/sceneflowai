@@ -70,12 +70,12 @@ export function ReferenceActionCue({
               onSelect?.(primary)
             }}
             className={cueClass}
-            title={list}
+            aria-label={list}
           >
             {body}
           </button>
         ) : (
-          <span className={cueClass} title={list}>
+          <span className={cueClass} aria-label={list}>
             {body}
           </span>
         )}

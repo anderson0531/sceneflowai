@@ -102,7 +102,10 @@ export async function POST(req: NextRequest) {
     const base = String(origin).replace(/^https?:\/\//, '').replace(/\/$/, '')
     const url = `https://${base}/api/cue/respond`
     const isDebug = req.nextUrl?.searchParams?.get('debug') === '1'
-    const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) })
+    const forwardHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+    const incomingCookie = req.headers.get('cookie')
+    if (incomingCookie) forwardHeaders.cookie = incomingCookie
+    const resp = await fetch(url, { method: 'POST', headers: forwardHeaders, body: JSON.stringify({ prompt }) })
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}))
       return NextResponse.json({ success: false, error: err?.error || 'Cue service error' }, { status: 500 })

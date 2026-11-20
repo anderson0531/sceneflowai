@@ -35,15 +35,15 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     id: 'welcome',
     title: `Welcome to ${STUDIO_DISPLAY_NAMES.production}`,
     description:
-      `SceneFlow is one continuous pipeline: Direction → Shots → Music → References → Pre-Vis → Video → Mixer → Streams, then Final Cut.`,
+      `SceneFlow is one continuous pipeline: Direction → Shots → Music → References → Pre-Vis → Video → Mixer → Production Streams & Screening Room.`,
     icon: <Sparkles className="w-6 h-6" />,
-    tip: 'The Production Progress dashboard and co-pilot always show where you are and what is next.',
+    tip: 'The Production Progress dashboard and Co-Director always show where you are and what is next.',
   },
   {
     id: 'script-tab',
-    title: 'Step 1 - Direction, Shots, and audio',
+    title: 'Step 1 - Direction, Shots, and Audio',
     description:
-      'Optimize your script with the Intelligent Assistant Writer, run Audience Resonance Analysis (85+ target), generate audio, and assign voices. The Pre-Visualization panel shows what you need before running agents.',
+      'Optimize your script with the Intelligent Assistant Director, run Audience Resonance Analysis (85+ target), generate audio, and assign voices. The Pre-Visualization panel shows what you need before running agents.',
     icon: <FileText className="w-6 h-6" />,
     workflowStep: 'dialogueAction',
     tip: 'Pre-Vis ready requires character voices and at least one reference in the Reference Library.',
@@ -72,13 +72,13 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     description:
       'Mixer previews with elastic timing; baseline language drives the timeline. Render Stream opens one export dialog (Fast WebM / Broadcast MP4 / Cloud). Finished files live in Production Streams.',
     icon: <Volume2 className="w-6 h-6" />,
-    tip: 'After render: Play in Streams or Send to Final Cut — not auto-download.',
+    tip: 'After render: Play in Production Streams or preview directly in Screening Room.',
   },
   {
     id: 'final-cut',
-    title: 'Step 5 - Final Cut',
+    title: 'Step 5 - Screening Room & Delivery',
     description:
-      'Pick a stream version per scene (Animatic or Video × language), assemble in Final Cut, and export your premiere. The workflow guide lists each step.',
+      'Pick an Animatic or Video stream version per scene across languages, review in the Screening Room, share zero-login `/s/` links, and export your publish-ready master.',
     icon: <Film className="w-6 h-6" />,
     tip: 'Stale streams show “Update available” when shots or audio change.',
   },
@@ -146,11 +146,32 @@ export function ProductionOnboarding({ onComplete, className }: ProductionOnboar
     onComplete?.()
   }, [onComplete])
 
+  useEffect(() => {
+    if (!isVisible) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleDismiss()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isVisible, handleDismiss])
+
+  useEffect(() => {
+    const onReplay = () => {
+      setCurrentStep(0)
+      setIsVisible(true)
+    }
+    window.addEventListener('sceneflow:replay-production-tour', onReplay)
+    return () => window.removeEventListener('sceneflow:replay-production-tour', onReplay)
+  }, [])
+
   if (!isVisible) return null
 
   return (
     <AnimatePresence>
       <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={step.title}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}

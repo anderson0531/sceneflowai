@@ -25,6 +25,8 @@ interface AnnotatedStudioScreenshotProps {
   compact?: boolean
   /** Callback when a live studio action is triggered (e.g., to close the JIT drawer) */
   onActionTriggered?: (hotspot: ScreenshotHotspot) => void
+  /** Optional custom handler for `hotspot.actionEvent` (e.g., navigate when off-route) */
+  onActionEvent?: (eventName: string, hotspot: ScreenshotHotspot) => void
 }
 
 export function AnnotatedStudioScreenshot({
@@ -34,6 +36,7 @@ export function AnnotatedStudioScreenshot({
   initialHotspotNumber = 1,
   compact = false,
   onActionTriggered,
+  onActionEvent,
 }: AnnotatedStudioScreenshotProps) {
   const [activeNumber, setActiveNumber] = useState<number>(initialHotspotNumber)
   const [spotlightEnabled, setSpotlightEnabled] = useState<boolean>(true)
@@ -53,8 +56,12 @@ export function AnnotatedStudioScreenshot({
   }
 
   const handleTriggerAction = (hotspot: ScreenshotHotspot) => {
-    if (hotspot.actionEvent && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent(hotspot.actionEvent))
+    if (hotspot.actionEvent) {
+      if (onActionEvent) {
+        onActionEvent(hotspot.actionEvent, hotspot)
+      } else if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(hotspot.actionEvent))
+      }
     }
     if (onActionTriggered) {
       onActionTriggered(hotspot)
@@ -511,13 +518,15 @@ export function AnnotatedStudioScreenshot({
           </div>
 
           {/* Pro Tip Footer inside Callout */}
-          <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/25 px-3 py-2">
-            <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-200/90">
-              <strong className="text-amber-300 font-semibold">Studio Pro-Tip: </strong>
-              {activeHotspot.proTip}
-            </p>
-          </div>
+          {activeHotspot.proTip && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/25 px-3 py-2">
+              <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-200/90">
+                <strong className="text-amber-300 font-semibold">Studio Pro-Tip: </strong>
+                {activeHotspot.proTip}
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -7,6 +7,12 @@
  * 3. SceneFlow Studio Academy & Training Hub (`/dashboard/help`)
  */
 
+import { TIER_CATALOG } from '@/lib/billing/tierCatalog'
+import {
+  ADDON_CREDIT_SHELF_LIFE_DAYS,
+  EXPLORER_CREDIT_SHELF_LIFE_DAYS,
+} from '@/lib/credits/creditLots'
+
 export type JitContextId =
   | 'dashboard'
   | 'series'
@@ -14,6 +20,8 @@ export type JitContextId =
   | 'production'
   | 'final-cut'
   | 'premiere'
+  | 'agency-ops'
+  | 'producer'
   | 'billing'
 
 export interface ScreenshotHotspot {
@@ -158,7 +166,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
     badge: 'Stage 0 • Launchpad',
     estimatedTime: '1 min setup',
     screenshotSrc: '/images/help/dashboard-command-screenshot.svg',
-    screenshotAlt: 'SceneFlow Studio Command Center Dashboard with Start Project, Series Studio, and Active Productions',
+    screenshotAlt: 'SceneFlow Studio Command Center Dashboard with Start Project, Series Room, and Active Productions',
     summary:
       'The Command Center is where you start new films, manage multi-episode Series Bibles, monitor your credit vault, and resume in-flight productions.',
     hotspots: [
@@ -183,12 +191,12 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         x: 51,
         y: 32,
         spotlight: { left: 41.5, top: 28.5, width: 18.5, height: 8.5 },
-        label: 'Open Series Studio',
+        label: 'Open Series Room',
         locationTag: 'Hero Launchpad • Secondary CTA',
         summary:
-          'Building a multi-episode story or chapter-by-chapter book adaptation? Start in Series Studio so all episodes share one locked cast and location bible.',
+          'Building a multi-episode story or chapter-by-chapter book adaptation? Start in Series Room so all episodes share one locked cast and location bible.',
         proTip: 'Creating a Series Bible first prevents you from having to recreate characters in Episode 2, 3, and beyond.',
-        actionLabel: 'Open Series Studio',
+        actionLabel: 'Open Series Room',
         actionHref: '/dashboard/series',
       },
       {
@@ -226,7 +234,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         stepNumber: 1,
         title: 'Pick Standalone Film vs. Multi-Episode Series',
         description:
-          'Creating one standalone short film or trailer? Click "Start Project". Adapting multiple chapters or episodes? Start in "Series Studio".',
+          'Creating one standalone short film or trailer? Click "Start Project". Adapting multiple chapters or episodes? Start in "Series Room".',
         creditBadge: 'Free to browse',
         actionLabel: 'Start Standalone Film',
         actionHref: '/dashboard/studio/new-project',
@@ -246,7 +254,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         stepNumber: 3,
         title: 'Verify Your Credit & BYOK Setup',
         description:
-          'Check your available credits in Billing, or connect optional cloud API keys in Integrations.',
+          'Check your available credits in Billing, or connect your optional Google Vertex AI key in Settings → BYOK Settings.',
         actionLabel: 'Open Billing & Credits',
         actionHref: '/dashboard/settings/billing',
       },
@@ -259,10 +267,10 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
     },
     troubleshooting: [
       {
-        question: 'Should I start in "Start Project" or "Series Studio"?',
+        question: 'Should I start in "Start Project" or "Series Room"?',
         answer:
-          'If your story is a single self-contained video (under 15 minutes), use Start Project. If your characters will return across multiple chapters or episodes, start in Series Studio so their faces and voices stay locked across episodes.',
-        fixActionLabel: 'Go to Series Studio',
+          'If your story is a single self-contained video (under 15 minutes), use Start Project. If your characters will return across multiple chapters or episodes, start in Series Room so their faces and voices stay locked across episodes.',
+        fixActionLabel: 'Go to Series Room',
         fixActionHref: '/dashboard/series',
       },
       {
@@ -277,15 +285,15 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
 
   series: {
     id: 'series',
-    title: 'Series Studio & Shared Story Bible',
-    shortTitle: 'Series Studio',
+    title: 'Series Room & Shared Story Bible',
+    shortTitle: 'Series Room',
     subtitle: 'Build multi-episode shows or chapter-by-chapter adaptations with one shared cast & location vault.',
     badge: 'Series Architecture',
     estimatedTime: '3–5 mins',
     screenshotSrc: '/images/help/series-studio-screenshot.svg',
-    screenshotAlt: 'Series Studio showing shared Season Story Bible, locked cast, locations, and Episode Pipeline',
+    screenshotAlt: 'Series Room showing shared Season Story Bible, locked cast, locations, and Episode Pipeline',
     summary:
-      'Series Studio lets you define your show universe once—protagonists, antagonists, voices, locations, and visual aesthetic—and automatically injects that Continuity Vault into every episode you generate.',
+      'Series Room lets you define your show universe once—protagonists, antagonists, voices, locations, and visual aesthetic—and automatically injects that Continuity Vault into every episode you generate.',
     hotspots: [
       {
         id: 'series-bible-header',
@@ -320,7 +328,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         label: 'Episode Production Pipeline Cards',
         locationTag: 'Episode Grid',
         summary:
-          'Track each episode from Outline → Blueprint → Virtual Production → Completed Master. Click any episode card to open its studio workspace.',
+          'Track each episode from Outline → Blueprint Room → Production Stage → Completed Master. Click any episode card to open its studio workspace.',
         proTip: 'Produce Episode 1 all the way through Animatic first to validate your show pacing before batch-producing Episodes 2–5.',
       },
       {
@@ -344,7 +352,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         description:
           'Enter your series logline, genre, and target episode count to generate a multi-episode story arc and shared cast.',
         creditBadge: '~30 credits',
-        actionLabel: 'Browse Series Studio',
+        actionLabel: 'Browse Series Room',
         actionHref: '/dashboard/series',
       },
       {
@@ -360,7 +368,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         stepNumber: 3,
         title: 'Launch Episode 1 into Blueprint Room',
         description:
-          'Click "Launch Episode Blueprint" on Episode 1 to refine its 3-act treatment and start Virtual Production.',
+          'Click "Launch Episode Blueprint" on Episode 1 to refine its 3-act treatment and start Production Stage.',
       },
     ],
     creditGuardrail: {
@@ -373,12 +381,12 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
       {
         question: 'What if a character changes wardrobe in Episode 4?',
         answer:
-          'You can add wardrobe outfits to the character inside Virtual Production while keeping their core facial reference portrait and voice locked.',
+          'You can add wardrobe outfits to the character inside Production Stage while keeping their core facial reference portrait and voice locked.',
       },
       {
-        question: 'Can I adapt a book chapter-by-chapter in Series Studio?',
+        question: 'Can I adapt a book chapter-by-chapter in Series Room?',
         answer:
-          'Yes! Treat each chapter as an Episode in Series Studio. Your book characters and world locations stay locked while you produce one chapter at a time.',
+          'Yes! Treat each chapter as an Episode in Series Room. Your book characters and world locations stay locked while you produce one chapter at a time.',
       },
     ],
   },
@@ -445,7 +453,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         x: 88,
         y: 90,
         spotlight: { left: 72, top: 87, width: 25, height: 7 },
-        label: 'Approve & Start Virtual Production',
+        label: 'Approve & Start Production Stage',
         locationTag: 'Bottom Right Greenlight CTA',
         summary:
           'Converts your approved treatment into a full scene-by-scene production script with camera directions, dialogue, and character lists.',
@@ -488,7 +496,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
       {
         id: 'bp-step-4',
         stepNumber: 4,
-        title: 'Greenlight into Virtual Production',
+        title: 'Greenlight into Production Stage',
         description:
           'Lock the Blueprint and generate your scene-by-scene screenplay, cast list, and visual breakdown.',
         creditBadge: '~30 credits',
@@ -522,15 +530,15 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
 
   production: {
     id: 'production',
-    title: 'Virtual Production, Continuity Vault & Timeline',
-    shortTitle: 'Virtual Production',
+    title: 'Production Stage, Continuity Vault & Timeline',
+    shortTitle: 'Production Stage',
     subtitle: 'Lock character faces & voices in the Continuity Vault, render start/end keyframes, and animate motion video clips.',
-    badge: 'Phase 2 • Production',
+    badge: 'Phase 2 • Production Stage',
     estimatedTime: '5–15 mins',
     screenshotSrc: '/images/help/virtual-production-screenshot.svg',
-    screenshotAlt: 'Virtual Production workspace showing Continuity Vault on left, Start/End Keyframes and AI Video Motion in center, and Multitrack Audio Timeline at bottom',
+    screenshotAlt: 'Production Stage workspace showing Continuity Vault on left, Start/End Keyframes and AI Video Motion in center, and Multitrack Audio Timeline at bottom',
     summary:
-      'Virtual Production is your digital soundstage. Lock your cast portraits, wardrobe, and voices on the left; generate reference-locked Start & End Keyframes in the center; mix Dialogue, SFX, and Score on the timeline; and animate hero shots into full motion video.',
+      'Production Stage is your digital soundstage. Lock your cast portraits, wardrobe, and voices on the left; generate reference-locked Start & End Keyframes in the center; mix Dialogue, SFX, and Score on the timeline; and animate hero shots into full motion video.',
     hotspots: [
       {
         id: 'prod-continuity-vault',
@@ -544,8 +552,8 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
           'Approve each character’s portrait, wardrobe, and neural voice here FIRST. SceneFlow automatically injects these visual references into every scene frame.',
         proTip: 'Never generate scene keyframes before locking your main character portraits—this is the secret to 100% facial consistency.',
         creditNote: '10–15 cr per portrait',
-        actionLabel: 'Generate Cast Portraits',
-        actionEvent: 'production:generate-characters',
+        actionLabel: 'Open Cast References',
+        actionEvent: 'vision:characters',
       },
       {
         id: 'prod-keyframes-pair',
@@ -574,8 +582,8 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
           'Transforms your approved Start/End keyframes into smooth 1080p/4K cinematic video with accurate physics and camera movement.',
         proTip: 'You don’t have to animate every single shot! Many top creators animate 40% hero shots and keep 60% as dynamic Ken Burns keyframes.',
         creditNote: '80–150 cr per clip',
-        actionLabel: 'Generate Video Clips',
-        actionEvent: 'production:generate-video',
+        actionLabel: 'Open Production Agent',
+        actionEvent: 'sceneflow:open-production-builder',
       },
       {
         id: 'prod-multitrack-timeline',
@@ -589,8 +597,8 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
           'Synchronizes visual segments with Character Dialogue, Narration, Foley SFX, and auto-ducked Cinematic Music.',
         proTip: 'Generate Dialogue audio before finalizing video clip durations so every shot matches the spoken line length.',
         creditNote: '5–15 cr per scene audio',
-        actionLabel: 'Generate Scene Audio',
-        actionEvent: 'production:generate-audio',
+        actionLabel: 'Jump to Scene Audio',
+        actionEvent: 'vision:scenes',
       },
     ],
     quickSteps: [
@@ -601,8 +609,8 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         description:
           'Generate and approve character portraits, neural voices, and location references in the Reference Library.',
         creditBadge: '10–15 cr / ref',
-        actionLabel: 'Generate Cast References',
-        actionEvent: 'production:generate-characters',
+        actionLabel: 'Open Cast References',
+        actionEvent: 'vision:characters',
       },
       {
         id: 'prod-step-2',
@@ -621,8 +629,8 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         description:
           'Generate reference-locked keyframes for each segment and watch the full film in the Screening Room as an Animatic.',
         creditBadge: '10–15 cr / frame',
-        actionLabel: 'Render Scene Frames',
-        actionEvent: 'production:generate-frames',
+        actionLabel: 'Jump to Scene Keyframes',
+        actionEvent: 'vision:scenes',
       },
       {
         id: 'prod-step-4',
@@ -645,7 +653,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
       {
         question: 'Can SceneFlow build all my scenes, clips, and master while I walk away?',
         answer:
-          'Yes! Click "Production Agent" in the Virtual Production header to choose your scene scope (All Scenes, Chapter, or Custom), stages (Pre-Vis, Clips, Scenes, Master, Promo), Director Checkpoints, and notification frequency. It automatically optimizes shot direction and switches persistent policy blocks to Creative Clips.',
+          'Yes! Click "Production Agent" in the Production Stage header to choose your scene scope (All Scenes, Chapter, or Custom), stages (Pre-Vis, Clips, Scenes, Master, Promo), Director Checkpoints, and notification frequency. It automatically optimizes shot direction and switches persistent policy blocks to Creative Clips.',
         fixActionLabel: 'Open Production Agent',
         fixActionEvent: 'sceneflow:open-production-builder',
       },
@@ -654,14 +662,14 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         answer:
           'Make sure the character has an approved reference portrait in the Reference Library AND is tagged in Scene 4’s character list before generating the keyframe.',
         fixActionLabel: 'Check Cast References',
-        fixActionEvent: 'production:generate-characters',
+        fixActionEvent: 'vision:characters',
       },
       {
         question: 'A dialogue line is longer than the visual segment. How do I fix it?',
         answer:
-          'SceneFlow automatically extends segment duration to match dialogue in Animatic mode, or you can split a long segment into two shots (Wide + Close-up) in the timeline.',
-        fixActionLabel: 'Open Timeline Editor',
-        fixActionEvent: 'production:edit-video',
+          'SceneFlow automatically extends segment duration to match dialogue in Animatic mode, or you can split a long segment into two shots (Wide + Close-up) in Production Streams & Mixer.',
+        fixActionLabel: 'Open Production Streams',
+        fixActionEvent: 'production:streams',
       },
     ],
   },
@@ -885,17 +893,229 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
     ],
   },
 
+  'agency-ops': {
+    id: 'agency-ops',
+    title: 'Agency Ops, Client CRM & Vault Hygiene',
+    shortTitle: 'Agency Ops',
+    subtitle: 'Manage multi-PM client pipelines, SLA aging alerts, margin scorecards, and Continuity Vault storage hygiene.',
+    badge: 'White-Label Operations',
+    estimatedTime: '3 mins',
+    screenshotSrc: '/images/help/dashboard-command-screenshot.svg',
+    screenshotAlt: 'SceneFlow Agency Ops & Client CRM dashboard showing active client accounts, PM workload scorecards, and Vault storage hygiene',
+    summary:
+      'Agency Ops (/dashboard/clients) unifies your Client CRM, PM Workload & Margin Scorecard, and Continuity Vault Storage Hygiene—so multi-PM teams can track hundreds of productions without bottlenecks or storage overages.',
+    hotspots: [
+      {
+        id: 'agency-client-crm',
+        number: 1,
+        x: 32,
+        y: 32,
+        spotlight: { left: 22.5, top: 28.5, width: 18.5, height: 8.5 },
+        label: 'Client Account Directory & Project Rollups',
+        locationTag: 'Clients Tab',
+        summary:
+          'Group projects by client company, filter by locale or PM owner, and jump directly into client intake, Blueprint, or Screening Room deliverables.',
+        actionLabel: 'Open Projects Kanban',
+        actionHref: '/dashboard/projects',
+      },
+      {
+        id: 'agency-pm-scorecard',
+        number: 2,
+        x: 51,
+        y: 32,
+        spotlight: { left: 41.5, top: 28.5, width: 18.5, height: 8.5 },
+        label: 'PM Workload, SLA Aging & Margin Scorecard',
+        locationTag: 'PM Scorecard Tab',
+        summary:
+          'Track active assignments per Project Manager, spot overdue SLA deliverables early, and monitor credit burn vs. monthly PM caps.',
+        actionLabel: 'Manage Team & Roles',
+        actionHref: '/dashboard/settings/producer',
+      },
+      {
+        id: 'agency-vault-hygiene',
+        number: 3,
+        x: 84,
+        y: 4,
+        spotlight: { left: 77.5, top: 1, width: 12, height: 5.5 },
+        label: 'Continuity Vault Storage Hygiene & 1-Click Purge',
+        locationTag: 'Storage Hygiene Tab',
+        summary:
+          'Inspect per-project storage consumption across your Continuity Vault and purge unused draft takes in 1 click without touching locked masters or cast anchors.',
+        actionLabel: 'View Vault Quotas',
+        actionHref: '/dashboard/settings/billing',
+      },
+      {
+        id: 'agency-kanban-scale',
+        number: 4,
+        x: 38,
+        y: 66,
+        spotlight: { left: 20.5, top: 47, width: 38, height: 48 },
+        label: 'Unlimited Projects Search & 6-Column Kanban',
+        locationTag: 'Projects Pipeline',
+        summary:
+          'Switch to Kanban view in Projects for drag-and-drop stage progression, bulk PM assignment, locale auto-routing, and 0-credit QA Reviewer sign-off.',
+        actionLabel: 'Open Projects Pipeline',
+        actionHref: '/dashboard/projects',
+      },
+    ],
+    quickSteps: [
+      {
+        id: 'agency-step-1',
+        stepNumber: 1,
+        title: 'Assign PMs & QA Reviewers to Workspaces',
+        description:
+          'Invite Project Managers with monthly credit caps and 0-credit QA Reviewers in Settings → Producer & Team.',
+        actionLabel: 'Configure Team & Seats',
+        actionHref: '/dashboard/settings/producer',
+      },
+      {
+        id: 'agency-step-2',
+        stepNumber: 2,
+        title: 'Track Deliverables on the 6-Column Kanban Board',
+        description:
+          'Filter by PM, client, status, or SLA urgency on /dashboard/projects to keep every production on schedule.',
+        actionLabel: 'Open Projects Kanban',
+        actionHref: '/dashboard/projects',
+      },
+      {
+        id: 'agency-step-3',
+        stepNumber: 3,
+        title: 'Run Monthly Vault Storage Hygiene',
+        description:
+          'Purge superseded draft takes on completed films to keep active projects inside your included Vault GB quota.',
+        actionLabel: 'Open Agency Ops',
+        actionHref: '/dashboard/clients',
+      },
+    ],
+    creditGuardrail: {
+      title: 'Protect Agency Margins with PM Caps & QA Roles',
+      typicalCost: 'QA Reviewers consume 0 credits while verifying continuity and cuts',
+      proSavingsRule:
+        'Assign a monthly credit cap per PM and use 1-Click Draft Purge on delivered projects before paying for extra 100 GB vault blocks.',
+    },
+    troubleshooting: [
+      {
+        question: 'How do team members switch between their personal workspace and our agency?',
+        answer:
+          'Invited PMs and QA Reviewers can use the Workspace Switcher in the sidebar to toggle between their personal account and any agency workspace they belong to.',
+        fixActionLabel: 'Manage Team Access',
+        fixActionHref: '/dashboard/settings/producer',
+      },
+    ],
+  },
+
+  producer: {
+    id: 'producer',
+    title: 'Producer Hub & White-Label Client Portals',
+    shortTitle: 'Producer Hub',
+    subtitle: 'Configure your studio brand, custom domain, zero-login client intake links, and multi-PM team permissions.',
+    badge: 'White-Label Setup',
+    estimatedTime: '3 mins',
+    screenshotSrc: '/images/help/credits-byok-screenshot.svg',
+    screenshotAlt: 'SceneFlow Producer Hub showing white-label brand identity, client intake links, and team seats',
+    summary:
+      'Producer & Team (/dashboard/settings/producer) lets Operator Pro ($149/mo) and Agency Scale ($599/mo) studios run a 100% white-label production business with branded client intake, Blueprint sign-off, Screening Room portals, and team seats.',
+    hotspots: [
+      {
+        id: 'prodhub-brand',
+        number: 1,
+        x: 45,
+        y: 21,
+        spotlight: { left: 2, top: 10.5, width: 96, height: 21.5 },
+        label: 'White-Label Brand Identity & Custom Domain',
+        locationTag: 'Brand Settings',
+        summary:
+          'Set your studio logo, brand colors, support email, and custom domain (Studio tier) so clients see your brand on every intake and review link.',
+      },
+      {
+        id: 'prodhub-intake',
+        number: 2,
+        x: 26,
+        y: 52,
+        spotlight: { left: 2, top: 34.5, width: 47, height: 36 },
+        label: 'Zero-Login Client Story Intake Links',
+        locationTag: 'Client Intake',
+        summary:
+          'Share private intake links where clients upload EXIF-stripped photos, dictate voice interviews, and sign likeness consent without creating an account.',
+      },
+      {
+        id: 'prodhub-team',
+        number: 3,
+        x: 74,
+        y: 52,
+        spotlight: { left: 50.5, top: 34.5, width: 47.5, height: 36 },
+        label: 'Multi-PM Invites, Credit Caps & Locale Routing',
+        locationTag: 'Team & RBAC',
+        summary:
+          'Invite up to 3 seats on Operator Pro or 10 seats on Studio with role guardrails (admin, project_manager, qa_reviewer) and locale-based PM auto-routing.',
+      },
+      {
+        id: 'prodhub-clients',
+        number: 4,
+        x: 60,
+        y: 84,
+        spotlight: { left: 2, top: 73, width: 96, height: 23.5 },
+        label: 'Agency Ops & Series Delegation',
+        locationTag: 'Operations Link',
+        summary:
+          'Delegate entire multi-episode series to specific PMs and monitor all active client deliveries from Agency Ops.',
+        actionLabel: 'Open Agency Ops',
+        actionHref: '/dashboard/clients',
+      },
+    ],
+    quickSteps: [
+      {
+        id: 'prodhub-step-1',
+        stepNumber: 1,
+        title: 'Complete Your White-Label Brand Profile',
+        description:
+          'Accept the Producer Addendum and upload your studio name, logo, and support contact so client portals are branded immediately.',
+        actionLabel: 'Open Producer Settings',
+        actionHref: '/dashboard/settings/producer',
+      },
+      {
+        id: 'prodhub-step-2',
+        stepNumber: 2,
+        title: 'Invite Project Managers or QA Reviewers',
+        description:
+          'Send signed invite links with monthly credit caps and optional locale routing for global multilingual clients.',
+      },
+      {
+        id: 'prodhub-step-3',
+        stepNumber: 3,
+        title: 'Monitor Client Deliveries in Agency Ops',
+        description:
+          'Track every client project, SLA status, and Continuity Vault storage footprint in one command center.',
+        actionLabel: 'Open Agency Ops',
+        actionHref: '/dashboard/clients',
+      },
+    ],
+    creditGuardrail: {
+      title: 'Zero-Login Client Approvals Protect Your Compute',
+      typicalCost: 'Client intake, Blueprint Pass, and Screening Room links cost 0 credits',
+      proSavingsRule:
+        'Lock client story approval via Blueprint Pass before rendering Veo 4K motion clips so revision rounds never eat your margin.',
+    },
+    troubleshooting: [
+      {
+        question: 'Which plans include White-Label Client Portals and Team Seats?',
+        answer: `Operator Pro ($${TIER_CATALOG.pro.priceUsd}/mo) includes 100% white-label portals and ${TIER_CATALOG.pro.collaborationSeats} team seats; Agency Scale Studio ($${TIER_CATALOG.studio.priceUsd}/mo) adds custom domains and ${TIER_CATALOG.studio.collaborationSeats} team seats.`,
+        fixActionLabel: 'Compare Plans',
+        fixActionHref: '/dashboard/settings/billing',
+      },
+    ],
+  },
+
   billing: {
     id: 'billing',
-    title: 'Plans, Credit Vault & BYOK Cloud Keys',
+    title: 'Plans, Credit Vault & Vertex AI BYOK',
     shortTitle: 'Credits & BYOK',
-    subtitle: 'Understand how Subscription + Top-Up credits work and how to connect your own cloud API keys.',
+    subtitle: 'Understand Subscription + 12-Month Add-On credits, Vault storage, and Google Vertex AI BYOK.',
     badge: 'Studio Economics',
     estimatedTime: '2 mins',
     screenshotSrc: '/images/help/credits-byok-screenshot.svg',
-    screenshotAlt: 'SceneFlow Billing, Plans (Explorer, Starter, Pro, Studio), Credit Pool breakdown, and BYOK integration',
-    summary:
-      'SceneFlow uses a transparent dual-pool credit system: Monthly Subscription credits are spent first, while Top-Up Add-On packs never expire while subscribed. Pro and Studio users can also connect their own cloud API keys (BYOK).',
+    screenshotAlt: 'SceneFlow Billing, Plans (Explorer, Hobbyist, Starter, Operator Pro, Studio), Credit Pool breakdown, and Vertex AI BYOK',
+    summary: `SceneFlow uses a transparent dual-pool credit system: Monthly Subscription credits are spent first, while Subscriber Add-On packs remain valid for ${Math.round(ADDON_CREDIT_SHELF_LIFE_DAYS / 30)} months (${ADDON_CREDIT_SHELF_LIFE_DAYS} days) from purchase (Explorer trial credits expire after ${EXPLORER_CREDIT_SHELF_LIFE_DAYS} days). Operator Pro and Studio subscribers can also connect their own Google Vertex AI API key (BYOK).`,
     hotspots: [
       {
         id: 'bill-dual-pool',
@@ -903,11 +1123,11 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         x: 45,
         y: 21,
         spotlight: { left: 2, top: 10.5, width: 96, height: 21.5 },
-        label: 'Dual Credit Pool (Subscription + Never-Expiring Top-Ups)',
+        label: 'Dual Credit Pool (Monthly + 12-Month Add-On Vault)',
         locationTag: 'Top Credit Vault Banner',
         summary:
-          'Your monthly subscription credits replenish every billing cycle and are always consumed FIRST. Any Top-Up packs you buy sit safely in your reserve vault.',
-        proTip: 'If a big episode render needs extra headroom mid-month, grab a Top-Up pack without changing your base plan.',
+          'Your monthly subscription credits replenish every billing cycle and are always consumed FIRST. Subscriber Add-On packs ($25 / $100 / $250) sit in your reserve vault for 12 months from purchase and spend soonest-expiry-first.',
+        proTip: 'If a big episode render needs extra headroom mid-month, grab a 12-month Add-On pack without changing your base plan.',
       },
       {
         id: 'bill-explorer-starter',
@@ -915,11 +1135,10 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         x: 26,
         y: 52,
         spotlight: { left: 2, top: 34.5, width: 47, height: 36 },
-        label: 'Explorer ($9 Trial) & Starter ($29/mo)',
+        label: `Explorer ($${TIER_CATALOG.explorer.priceUsd}), Hobbyist ($${TIER_CATALOG.hobbyist.priceUsd}/mo) & Starter ($${TIER_CATALOG.starter.priceUsd}/mo)`,
         locationTag: 'Left Plan Cards',
-        summary:
-          'Explorer ($9 one-time, 750 credits) lets you test the full pipeline on your first short. Starter ($29/mo, 4,500 credits) is built for chapter-by-chapter indie creators.',
-        proTip: '4,500 credits on Starter is enough for 2–3 full Animatic chapters plus 15–20 hero motion video clips every month.',
+        summary: `Explorer ($${TIER_CATALOG.explorer.priceUsd} one-time, ${TIER_CATALOG.explorer.credits.toLocaleString()} cr, ${TIER_CATALOG.explorer.storageGb} GB 30-day trial) lets you test the full pipeline. Hobbyist ($${TIER_CATALOG.hobbyist.priceUsd}/mo, ${TIER_CATALOG.hobbyist.credits.toLocaleString()} cr, ${TIER_CATALOG.hobbyist.storageGb} GB) hosts solo storytellers & Vault assets, while Starter ($${TIER_CATALOG.starter.priceUsd}/mo, ${TIER_CATALOG.starter.credits.toLocaleString()} cr, ${TIER_CATALOG.starter.storageGb} GB) powers chapter-by-chapter indie creators.`,
+        proTip: `${TIER_CATALOG.starter.credits.toLocaleString()} credits on Starter is enough for 2–3 full Animatic chapters plus 15–20 hero motion video clips every month.`,
       },
       {
         id: 'bill-pro-studio',
@@ -927,11 +1146,10 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         x: 74,
         y: 52,
         spotlight: { left: 50.5, top: 34.5, width: 47.5, height: 36 },
-        label: 'Pro ($79/mo) & Studio Production House ($249/mo)',
+        label: `Operator Pro ($${TIER_CATALOG.pro.priceUsd}/mo) & Agency Scale Studio ($${TIER_CATALOG.studio.priceUsd}/mo)`,
         locationTag: 'Right Plan Cards',
-        summary:
-          'Pro (15,000 credits/mo) and Studio (75,000 credits/mo) unlock unlimited projects, 4K upscaling, custom voice cloning, priority queues, and BYOK support.',
-        proTip: 'Save 17% (2 months free) when switching any plan to Annual billing.',
+        summary: `Operator Pro (${TIER_CATALOG.pro.credits.toLocaleString()} cr/mo, ${TIER_CATALOG.pro.storageGb} GB, ${TIER_CATALOG.pro.collaborationSeats} seats) and Studio (${TIER_CATALOG.studio.credits.toLocaleString()} cr/mo, ${TIER_CATALOG.studio.storageGb} GB, ${TIER_CATALOG.studio.collaborationSeats} seats) unlock 100% White-Label Client Portals, 4K Veo 3.1, custom voice cloning, priority queues, and Vertex AI BYOK.`,
+        proTip: 'Need a production break while preserving your Continuity Vault and client links? Pause-to-Vault is $19/mo.',
       },
       {
         id: 'bill-byok',
@@ -939,12 +1157,12 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         x: 60,
         y: 84,
         spotlight: { left: 2, top: 73, width: 96, height: 23.5 },
-        label: 'Bring Your Own Key (BYOK) Cloud Integration',
+        label: 'Bring Your Own Key (Google Vertex AI BYOK)',
         locationTag: 'Bottom Hybrid Architecture Card',
         summary:
-          'Connect your own cloud video, image, and voice API keys in Settings → Integrations for unlimited direct-billed studio rendering.',
-        actionLabel: 'Configure BYOK Keys',
-        actionHref: '/dashboard/settings/integrations',
+          'Connect your own Google Vertex AI API key in Settings → BYOK Settings for direct-billed studio compute while keeping SceneFlow orchestration.',
+        actionLabel: 'Configure BYOK Key',
+        actionHref: '/dashboard/settings/byok',
       },
     ],
     quickSteps: [
@@ -952,19 +1170,18 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         id: 'bill-step-1',
         stepNumber: 1,
         title: 'Choose the Right Plan for Your Cadence',
-        description:
-          'Start with Explorer ($9) to test a single short, Starter ($29/mo) for monthly chapters, or Pro ($79/mo) for weekly series.',
+        description: `Start with Explorer ($${TIER_CATALOG.explorer.priceUsd}) for a test flight, Hobbyist ($${TIER_CATALOG.hobbyist.priceUsd}/mo) or Starter ($${TIER_CATALOG.starter.priceUsd}/mo) for solo chapters, Operator Pro ($${TIER_CATALOG.pro.priceUsd}/mo) for white-label client work, or Studio ($${TIER_CATALOG.studio.priceUsd}/mo) for multi-PM agencies.`,
         actionLabel: 'Manage Subscription',
         actionHref: '/dashboard/settings/billing',
       },
       {
         id: 'bill-step-2',
         stepNumber: 2,
-        title: 'Connect Optional BYOK Cloud Keys',
+        title: 'Connect Optional Google Vertex AI BYOK Key',
         description:
-          'Have your own cloud AI or voice synthesis accounts? Plug your keys into Settings → Integrations.',
-        actionLabel: 'Open BYOK Integrations',
-        actionHref: '/dashboard/settings/integrations',
+          'Operator Pro and Studio accounts can plug in a Google Vertex AI key under Settings → BYOK Settings.',
+        actionLabel: 'Open BYOK Settings',
+        actionHref: '/dashboard/settings/byok',
       },
       {
         id: 'bill-step-3',
@@ -989,10 +1206,9 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
           'SceneFlow automatically refunds credits if an upstream AI provider fails to return a valid image, audio track, or video clip.',
       },
       {
-        question: 'How do I activate a plan immediately in Admin / Sandbox mode?',
-        answer:
-          'Authorized studio admins can use the 1-Click Admin Test Mode banner at the top of Billing, or inside the checkout modal via "Instant Test Activation (Admin)".',
-        fixActionLabel: 'Open Billing Page',
+        question: 'How long do Add-On credit packs and Explorer credits last?',
+        answer: `Monthly plan credits refresh each billing cycle and are spent first. Subscriber Add-On packs remain valid for 12 months (${ADDON_CREDIT_SHELF_LIFE_DAYS} days) from purchase and spend soonest-expiring first. One-time Explorer trial credits are valid for ${EXPLORER_CREDIT_SHELF_LIFE_DAYS} days.`,
+        fixActionLabel: 'Open Billing & Credit Vault',
         fixActionHref: '/dashboard/settings/billing',
       },
     ],
@@ -1000,21 +1216,69 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
 }
 
 /**
- * Automatically resolves the active `JitContextId` from any Next.js pathname.
+ * Automatically resolves the active `JitContextId` from any Next.js pathname
+ * (and optional query string / URLSearchParams for `?view=streams|screening`).
  */
-export function getJitContextIdForPath(pathname: string | null | undefined): JitContextId {
+export function getJitContextIdForPath(
+  pathname: string | null | undefined,
+  search?: string | URLSearchParams | null
+): JitContextId {
   const clean = (pathname || '/dashboard').toLowerCase()
+  if (clean.includes('/dashboard/clients')) return 'agency-ops'
+  if (clean.includes('/dashboard/settings/producer')) return 'producer'
   if (clean.includes('/dashboard/series')) return 'series'
   if (clean.includes('/dashboard/studio')) return 'blueprint'
-  if (clean.includes('/dashboard/workflow/vision')) return 'production'
+  if (clean.includes('/dashboard/workflow/vision')) {
+    let viewParam: string | null = null
+    if (search instanceof URLSearchParams) {
+      viewParam = search.get('view')
+    } else if (typeof search === 'string' && search) {
+      const normalized = search.startsWith('?') ? search.slice(1) : search
+      viewParam = new URLSearchParams(normalized).get('view')
+    } else if (clean.includes('?')) {
+      viewParam = new URLSearchParams(clean.split('?')[1]).get('view')
+    }
+    if (viewParam === 'streams') return 'final-cut'
+    if (viewParam === 'screening') return 'premiere'
+    return 'production'
+  }
   if (clean.includes('/dashboard/workflow/final-cut')) return 'final-cut'
   if (clean.includes('/dashboard/workflow/premiere')) return 'premiere'
   if (clean.includes('/dashboard/settings')) return 'billing'
   return 'dashboard'
 }
 
-export function getJitContextForPath(pathname: string | null | undefined): JitContextGuide {
-  return JIT_CONTEXT_GUIDES[getJitContextIdForPath(pathname)]
+export function getJitContextForPath(
+  pathname: string | null | undefined,
+  search?: string | URLSearchParams | null
+): JitContextGuide {
+  return JIT_CONTEXT_GUIDES[getJitContextIdForPath(pathname, search)]
+}
+
+/**
+ * Fallback route when a user clicks a room-scoped action button while on another page
+ * (e.g., `/dashboard/help` or `/dashboard`) where room event listeners are not mounted.
+ */
+export function getFallbackHrefForContext(contextId: JitContextId): string {
+  switch (contextId) {
+    case 'series':
+      return '/dashboard/series'
+    case 'blueprint':
+      return '/dashboard/studio/new-project'
+    case 'production':
+    case 'final-cut':
+    case 'premiere':
+      return '/dashboard/projects'
+    case 'agency-ops':
+      return '/dashboard/clients'
+    case 'producer':
+      return '/dashboard/settings/producer'
+    case 'billing':
+      return '/dashboard/settings/billing'
+    case 'dashboard':
+    default:
+      return '/dashboard'
+  }
 }
 
 // =============================================================================
@@ -1079,14 +1343,14 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
         focusHotspotNumber: 1,
         objective: 'Guarantee 100% character and location consistency across every scene.',
         instructions: [
-          'Click "Start Production" to enter Virtual Production.',
+          'Click "Start Production" to enter Production Stage.',
           'Before generating scene frames, open the Reference Library / Continuity Vault on the left.',
           'Generate and approve each main character’s portrait, wardrobe, and neural voice.',
         ],
         keyTakeaway:
           'Once a character portrait is locked in the Continuity Vault, every scene keyframe automatically inherits their exact face and outfit.',
-        tryActionLabel: 'Generate Cast Portraits',
-        tryActionEvent: 'production:generate-characters',
+        tryActionLabel: 'Open Cast References',
+        tryActionEvent: 'vision:characters',
       },
       {
         id: 'ff-4',
@@ -1104,25 +1368,25 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
         ],
         keyTakeaway:
           'An Animatic lets you experience 100% of your movie’s story, emotion, and timing for less than 15% of the credit cost of full video.',
-        tryActionLabel: 'Render Scene Keyframes',
-        tryActionEvent: 'production:generate-frames',
+        tryActionLabel: 'Jump to Scene Keyframes',
+        tryActionEvent: 'vision:scenes',
       },
       {
         id: 'ff-5',
         stepNumber: 5,
-        title: 'Animate Hero Shots into Motion Video & Export in Final Cut',
+        title: 'Animate Hero Shots into Motion Video & Export in Screening Room',
         duration: '2 mins',
         contextId: 'final-cut',
         screenshotSrc: '/images/help/final-cut-screening-screenshot.svg',
         focusHotspotNumber: 1,
         objective: 'Upgrade key segments to full motion video and share or export your master.',
         instructions: [
-          'Select your favorite keyframes in Virtual Production and click "Animate Video" to interpolate smooth cinematic motion.',
-          'Advance to Final Cut & Screening Room to watch your hybrid or full-video master.',
+          'Select your favorite keyframes in Production Stage and click "Animate Video" to interpolate smooth cinematic motion.',
+          'Switch to Production Streams & Screening Room to watch your hybrid or full-video master.',
           'Click "Share /s/ Review Link" to send a watch link to friends/clients, or "Export MP4 Master" to download.',
         ],
         keyTakeaway:
-          'Final Cut seamlessly blends motion video clips and Ken Burns keyframes so you can export a polished film at any budget.',
+          'Production Streams seamlessly blend motion video clips and Ken Burns keyframes so you can export a polished film at any budget.',
         tryActionLabel: 'Preview in Screening Room',
         tryActionEvent: 'screening-room:preview',
       },
@@ -1148,13 +1412,13 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
         focusHotspotNumber: 1,
         objective: 'Create clean reference anchors in the Continuity Vault.',
         instructions: [
-          'Open the Character Reference panel in Virtual Production (or Series Studio).',
+          'Open the Character Reference panel in Production Stage (or Series Room).',
           'Ensure each character description specifies age, distinct facial structure, hair, and signature wardrobe.',
           'Generate and lock the portrait before rendering any scene keyframes.',
         ],
         keyTakeaway: 'Specificity in silhouette and wardrobe ("cobalt dive suit with brass collar") anchors AI diffusion far better than vague adjectives.',
         tryActionLabel: 'Open Character References',
-        tryActionEvent: 'production:generate-characters',
+        tryActionEvent: 'vision:characters',
       },
       {
         id: 'cm-2',
@@ -1171,8 +1435,8 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
           'Verify that scenes set in that location link to the approved Location Reference.',
         ],
         keyTakeaway: 'Linking a Location Reference automatically injects architectural layout, color palette, and lens style into every shot.',
-        tryActionLabel: 'Manage Location References',
-        tryActionEvent: 'production:generate-references',
+        tryActionLabel: 'Open Location References',
+        tryActionEvent: 'vision:locations',
       },
       {
         id: 'cm-3',
@@ -1237,8 +1501,8 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
           'Watch the entire film in Screening Room using the Animatic stream.',
         ],
         keyTakeaway: 'With dynamic Ken Burns camera pans, synced voices, and spatial sound effects, a SceneFlow Animatic already feels like a motion comic film.',
-        tryActionLabel: 'Generate Scene Audio',
-        tryActionEvent: 'production:generate-audio',
+        tryActionLabel: 'Jump to Scene Audio',
+        tryActionEvent: 'vision:scenes',
       },
       {
         id: 'af-3',
@@ -1248,14 +1512,14 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
         contextId: 'final-cut',
         screenshotSrc: '/images/help/final-cut-screening-screenshot.svg',
         focusHotspotNumber: 1,
-        objective: 'Combine hero motion video clips with Ken Burns keyframes in Final Cut.',
+        objective: 'Combine hero motion video clips with Ken Burns keyframes in Production Streams.',
         instructions: [
           'Pick the most kinetic moments in each scene (e.g., the reveal, the action beat, the emotional close-up) and animate those into motion video.',
           'Leave dialogue reaction shots or establishing stills as high-res animated keyframes.',
-          'Export the hybrid master in Final Cut for maximum visual impact at 30% of the credit cost.',
+          'Export the hybrid master in Production Streams for maximum visual impact at 30% of the credit cost.',
         ],
         keyTakeaway: 'Audiences remember your hero shots and audio emotion—hybrid assembly gives you cinema quality on an indie budget.',
-        tryActionLabel: 'Open Final Cut Stream',
+        tryActionLabel: 'Open Production Streams',
         tryActionEvent: 'screening-room:assemble',
       },
     ],
@@ -1273,19 +1537,19 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
       {
         id: 'sg-1',
         stepNumber: 1,
-        title: 'Architect Your Season in Series Studio',
+        title: 'Architect Your Season in Series Room',
         duration: '3 mins',
         contextId: 'series',
         screenshotSrc: '/images/help/series-studio-screenshot.svg',
         focusHotspotNumber: 1,
         objective: 'Create a shared Story Bible that feeds 10–40 episodes automatically.',
         instructions: [
-          'Open Series Studio (`/dashboard/series`) and create a new Series.',
+          'Open Series Room (`/dashboard/series`) and create a new Series.',
           'Lock your canonical cast portraits, character voices, and master locations in the Series Bible.',
           'Generate Episode 1, 2, and 3 blueprints directly from the Episode Pipeline grid.',
         ],
         keyTakeaway: 'Every episode automatically inherits your Series Bible assets with zero duplicate setup.',
-        tryActionLabel: 'Open Series Studio',
+        tryActionLabel: 'Open Series Room',
         tryActionHref: '/dashboard/series',
       },
       {
@@ -1319,7 +1583,7 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
     id: 'storyteller-author',
     persona: 'First-Time Storyteller & Author',
     tagline: 'I have a book, script, or vivid story in my head—and zero filmmaking or editing experience.',
-    recommendedPlan: 'Explorer ($9) → Starter ($29/mo)',
+    recommendedPlan: `Explorer ($${TIER_CATALOG.explorer.priceUsd}) → Hobbyist ($${TIER_CATALOG.hobbyist.priceUsd}/mo)`,
     recommendedPlanHref: '/dashboard/settings/billing',
     iconName: 'BookOpen',
     workflowSummary:
@@ -1346,15 +1610,15 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
     id: 'indie-chapter-creator',
     persona: 'Chapter-by-Chapter Indie Filmmaker',
     tagline: 'I want to release serialized cinematic chapters on a predictable monthly credit budget.',
-    recommendedPlan: 'Starter ($29/mo • 4,500 cr)',
+    recommendedPlan: `Starter ($${TIER_CATALOG.starter.priceUsd}/mo • ${TIER_CATALOG.starter.credits.toLocaleString()} cr)`,
     recommendedPlanHref: '/dashboard/settings/billing',
     iconName: 'Film',
     workflowSummary:
-      'Use Series Studio to lock your world once, then produce each chapter using Hybrid Smart Assembly (Keyframes + Hero Motion Video Clips).',
+      'Use Series Room to lock your world once, then produce each chapter using Hybrid Smart Assembly (Keyframes + Hero Motion Video Clips).',
     milestones: [
       {
         phase: '1. Series Bible Setup',
-        action: 'Build your cast and locations in Series Studio so Chapter 2+ costs 0 credits for character setup.',
+        action: 'Build your cast and locations in Series Room so Chapter 2+ costs 0 credits for character setup.',
         creditTip: 'Shared Series Vault saves ~100 credits per subsequent chapter.',
       },
       {
@@ -1371,55 +1635,55 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
   },
   {
     id: 'series-showrunner',
-    persona: 'YouTube / TikTok Series Showrunner',
-    tagline: 'I produce high-retention episodic stories and want global multi-language reach.',
-    recommendedPlan: 'Pro ($79/mo • 15,000 cr)',
+    persona: 'Operator Pro & White-Label Video Studio',
+    tagline: 'I produce episodic shows or client productions (memoirs, real estate, training) with multi-language reach.',
+    recommendedPlan: `Operator Pro ($${TIER_CATALOG.pro.priceUsd}/mo • ${TIER_CATALOG.pro.credits.toLocaleString()} cr)`,
     recommendedPlanHref: '/dashboard/settings/billing',
     iconName: 'Layers',
     workflowSummary:
-      'High-velocity episodic production with 85+ Audience Resonance hooks, full motion video, and 70+ language dubbing.',
+      'High-velocity 4K production with 100% White-Label Client Portals, 3 team seats, 150 GB Vault hosting, and 70+ language dubbing.',
     milestones: [
       {
-        phase: '1. Hook Optimization',
-        action: 'Use Audience Resonance™ to ensure Scene 1 scores 90+ on Emotional Hook for viewer retention.',
-        creditTip: '20 credits per Resonance check maximizes watch-time retention.',
+        phase: '1. Branded Intake & Blueprint Pass',
+        action: 'Collect client stories via zero-login intake and hit 85+ Audience Resonance before spending video credits.',
+        creditTip: '20 credits per Resonance check prevents expensive mid-production rewrites.',
       },
       {
-        phase: '2. Full Motion Production',
-        action: 'Batch-generate keyframes and motion video clips across 8–10 scenes per episode.',
-        creditTip: '15,000 monthly credits supports 8–12 rich episodes per month.',
+        phase: '2. Full Motion 4K Production',
+        action: 'Batch-generate keyframes and Veo 3.1 motion video clips across 8–10 scenes with 10,000 included monthly credits.',
+        creditTip: 'Unlocks $250 Bulk Add-On packs ($0.010/cr) valid for 12 months.',
       },
       {
-        phase: '3. 70+ Language Dubbing',
-        action: 'Export Spanish, Portuguese, Mandarin, Hindi, Arabic, Thai, and 70+ language audio tracks in Final Cut.',
-        creditTip: '~20 credits per language track multiplies international channel RPM.',
+        phase: '3. 70+ Language Stem-Separated Dubbing',
+        action: 'Export Spanish, Portuguese, Mandarin, Hindi, Arabic, Thai, and 70+ language tracks in Production Streams.',
+        creditTip: '~20 credits per language track multiplies international reach.',
       },
     ],
   },
   {
     id: 'hybrid-agency-studio',
-    persona: 'Production Company & Hybrid Agency',
-    tagline: 'We pitch commercials, pre-viz, and narrative series for clients and want BYOK cloud scale.',
-    recommendedPlan: 'Studio ($249/mo • 75,000 cr + BYOK)',
+    persona: 'Multi-PM White-Label Agency & Production House',
+    tagline: 'We run dozens of client productions across multiple PMs with custom domains, SLA tracking, and Vertex AI BYOK.',
+    recommendedPlan: `Agency Scale Studio ($${TIER_CATALOG.studio.priceUsd}/mo • ${TIER_CATALOG.studio.credits.toLocaleString()} cr + BYOK)`,
     recommendedPlanHref: '/dashboard/settings/billing',
     iconName: 'Building2',
     workflowSummary:
-      'Combine 75,000 included priority credits with your own cloud video, image, and voice API keys and client `/s/` review rooms.',
+      'Combine 45,000 included priority credits, 750 GB Client Vault, 10 PM/QA seats, Agency Ops CRM, and Google Vertex AI BYOK.',
     milestones: [
       {
-        phase: '1. Client Pitch Animatics',
-        action: 'Turn client briefs into 85+ Resonance treatments and voiced animatics in under 15 minutes.',
-        creditTip: 'Send `/s/` links for client sign-off before rendering final 4K video.',
+        phase: '1. Multi-PM Delegation & Kanban SLA',
+        action: 'Assign PMs with monthly credit caps and 0-credit QA Reviewers in Producer & Team, then track all deliveries on Projects Kanban.',
+        creditTip: 'Send zero-login Blueprint Pass & `/s/` links for sign-off before 4K rendering.',
       },
       {
-        phase: '2. BYOK Cloud Routing',
-        action: 'Connect corporate cloud AI and voice keys in Settings → Integrations for uncapped throughput.',
-        creditTip: 'Route heavy batch renders directly to your studio cloud commitment.',
+        phase: '2. Google Vertex AI BYOK Routing',
+        action: 'Connect your corporate Google Vertex AI key in Settings → BYOK Settings for direct-billed studio throughput.',
+        creditTip: 'Route heavy batch renders to your own GCP commitment while keeping SceneFlow orchestration.',
       },
       {
-        phase: '3. 4K Master & Promo Package',
-        action: 'Deliver normalized 4K masters, SRT bundles, and key art packages from Premiere.',
-        creditTip: 'Full commercial licensing included on all paid plans.',
+        phase: '3. Vault Storage Hygiene & 4K Delivery',
+        action: 'Deliver normalized 4K masters, SRT bundles, and key art, then run 1-Click Draft Purge in Agency Ops to reclaim Vault GB.',
+        creditTip: 'Full commercial licensing and custom domain portals included.',
       },
     ],
   },
@@ -1438,7 +1702,7 @@ export const CREDIT_ESTIMATOR_PRESETS: CreditEstimatorPreset[] = [
     keyframePairsPerScene: 2,
     videoClipsPerScene: 1,
     languagesCount: 1,
-    description: 'Ideal for testing a new story concept on the $9 Explorer trial or pitching a series pilot.',
+    description: `Ideal for testing a new story concept on the $${TIER_CATALOG.explorer.priceUsd} Explorer trial or Hobbyist ($${TIER_CATALOG.hobbyist.priceUsd}/mo).`,
   },
   {
     id: 'indie-chapter',
@@ -1448,7 +1712,7 @@ export const CREDIT_ESTIMATOR_PRESETS: CreditEstimatorPreset[] = [
     keyframePairsPerScene: 3,
     videoClipsPerScene: 1,
     languagesCount: 2,
-    description: 'The sweet spot for Starter ($29/mo) creators combining rich keyframes with hero motion video shots.',
+    description: `The sweet spot for Starter ($${TIER_CATALOG.starter.priceUsd}/mo) creators combining rich keyframes with hero motion video shots.`,
   },
   {
     id: 'cinema-episode',
@@ -1458,17 +1722,17 @@ export const CREDIT_ESTIMATOR_PRESETS: CreditEstimatorPreset[] = [
     keyframePairsPerScene: 3,
     videoClipsPerScene: 3,
     languagesCount: 4,
-    description: 'Designed for Pro ($79/mo) showrunners producing full motion video episodes with 4-language dubbing.',
+    description: `Designed for Operator Pro ($${TIER_CATALOG.pro.priceUsd}/mo) studios producing full motion video episodes with 4-language dubbing.`,
   },
   {
     id: 'season-production',
-    label: '10-Episode Season Arc (Studio Scale)',
+    label: '10-Episode Season Arc (Agency Scale)',
     runtimeLabel: '~60 mins total (80 scenes)',
     sceneCount: 80,
     keyframePairsPerScene: 3,
     videoClipsPerScene: 2,
     languagesCount: 6,
-    description: 'Full season production on Studio ($249/mo) with shared Series Bible continuity and global localization.',
+    description: `Full season production on Agency Scale Studio ($${TIER_CATALOG.studio.priceUsd}/mo) with shared Series Bible continuity and global localization.`,
   },
 ]
 
@@ -1489,17 +1753,20 @@ export function calculateEstimatedCredits(params: {
   const animaticTotal = blueprintAndResonance + continuityRefs + keyframesCost + audioAndScoreCost
   const fullProductionTotal = animaticTotal + videoMotionCost + dubbingCost + exportCost
 
-  let recommendedTier = 'Explorer ($9 Trial • 750 cr)'
+  let recommendedTier = `Explorer ($${TIER_CATALOG.explorer.priceUsd} Trial • ${TIER_CATALOG.explorer.credits.toLocaleString()} cr)`
   let recommendedTierHref = '/dashboard/settings/billing?checkoutTier=explorer'
-  if (fullProductionTotal > 15000) {
-    recommendedTier = 'Studio ($249/mo • 75,000 cr)'
+  if (fullProductionTotal > TIER_CATALOG.pro.credits) {
+    recommendedTier = `Studio — Agency Scale ($${TIER_CATALOG.studio.priceUsd}/mo • ${TIER_CATALOG.studio.credits.toLocaleString()} cr)`
     recommendedTierHref = '/dashboard/settings/billing?checkoutTier=studio'
-  } else if (fullProductionTotal > 4500) {
-    recommendedTier = 'Pro ($79/mo • 15,000 cr)'
+  } else if (fullProductionTotal > TIER_CATALOG.starter.credits) {
+    recommendedTier = `Operator Pro ($${TIER_CATALOG.pro.priceUsd}/mo • ${TIER_CATALOG.pro.credits.toLocaleString()} cr)`
     recommendedTierHref = '/dashboard/settings/billing?checkoutTier=pro'
-  } else if (fullProductionTotal > 750) {
-    recommendedTier = 'Starter ($29/mo • 4,500 cr)'
+  } else if (fullProductionTotal > TIER_CATALOG.hobbyist.credits) {
+    recommendedTier = `Starter — Filmmaker ($${TIER_CATALOG.starter.priceUsd}/mo • ${TIER_CATALOG.starter.credits.toLocaleString()} cr)`
     recommendedTierHref = '/dashboard/settings/billing?checkoutTier=starter'
+  } else if (fullProductionTotal > TIER_CATALOG.explorer.credits) {
+    recommendedTier = `Hobbyist — Creator & Vault ($${TIER_CATALOG.hobbyist.priceUsd}/mo • ${TIER_CATALOG.hobbyist.credits.toLocaleString()} cr)`
+    recommendedTierHref = '/dashboard/settings/billing?checkoutTier=hobbyist'
   }
 
   return {
@@ -1560,7 +1827,7 @@ export const HELP_KNOWLEDGE_ARTICLES: HelpKnowledgeArticle[] = [
     bullets: [
       'Always generate and approve Character Portraits in the Reference Library BEFORE rendering scene keyframes.',
       'When a character is tagged in a scene segment, SceneFlow automatically binds their canonical reference image and wardrobe notes into the image and video prompt pipeline.',
-      'For multi-episode shows, define recurring cast members in Series Studio so every episode inherits the same reference anchors.',
+      'For multi-episode shows, define recurring cast members in Series Room so every episode inherits the same reference anchors.',
     ],
     proTip: 'Give characters a distinct silhouette and color signature (e.g., "crimson bomber jacket, silver cybernetic temple") for rock-solid frame-to-frame recall.',
   },
@@ -1609,14 +1876,14 @@ export const HELP_KNOWLEDGE_ARTICLES: HelpKnowledgeArticle[] = [
   {
     id: 'kb-credits-byok',
     category: 'billing',
-    title: 'Dual Credit Pools, Plans & Bring Your Own Key (BYOK)',
-    summary: 'Everything you need to know about Monthly vs. Top-Up credits and connecting your own cloud API keys.',
+    title: 'Dual Credit Pools, Plans & Google Vertex AI BYOK',
+    summary: 'Everything you need to know about Monthly vs. 12-Month Add-On credits, Vault storage, and Vertex AI BYOK.',
     readTime: '3 min read',
-    tags: ['credits', 'billing', 'plans', 'byok', 'cloud keys', 'top up'],
+    tags: ['credits', 'billing', 'plans', 'byok', 'vertex ai', 'top up', 'expiry'],
     bullets: [
-      'Monthly subscription credits are always spent FIRST. Top-Up Add-On packs never expire as long as you have an active subscription.',
-      'Explorer ($9 one-time) includes 750 credits; Starter ($29/mo) includes 4,500; Pro ($79/mo) includes 15,000; Studio ($249/mo) includes 75,000.',
-      'Pro and Studio subscribers can connect their own cloud video, image, and voice API keys in Settings → Integrations.',
+      `Monthly subscription credits are always spent FIRST. Subscriber Add-On packs remain valid for 12 months (${ADDON_CREDIT_SHELF_LIFE_DAYS} days) from purchase and spend soonest-expiring first (Explorer trial credits expire after ${EXPLORER_CREDIT_SHELF_LIFE_DAYS} days).`,
+      `Plans: Explorer ($${TIER_CATALOG.explorer.priceUsd} one-time · ${TIER_CATALOG.explorer.credits.toLocaleString()} cr), Hobbyist ($${TIER_CATALOG.hobbyist.priceUsd}/mo · ${TIER_CATALOG.hobbyist.credits.toLocaleString()} cr), Starter ($${TIER_CATALOG.starter.priceUsd}/mo · ${TIER_CATALOG.starter.credits.toLocaleString()} cr), Operator Pro ($${TIER_CATALOG.pro.priceUsd}/mo · ${TIER_CATALOG.pro.credits.toLocaleString()} cr), and Studio ($${TIER_CATALOG.studio.priceUsd}/mo · ${TIER_CATALOG.studio.credits.toLocaleString()} cr).`,
+      'Operator Pro and Studio subscribers can connect their own Google Vertex AI API key in Settings → BYOK Settings (/dashboard/settings/byok).',
     ],
     proTip: 'If an upstream AI generation call ever errors out, SceneFlow automatically refunds the credits to your balance.',
   },

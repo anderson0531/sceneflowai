@@ -53,7 +53,6 @@ import {
 import { Button } from '@/components/ui/Button'
 import { ReviewScoresPanel, type ReviewScores, type AudienceReviewDetails } from './ReviewScoresPanel'
 import { ProjectStatsPanel, type ProjectStats } from './ProjectStatsPanel'
-import { ProTipsChecklist } from '../pro-tips/ProTipsChecklist'
 import { WorkflowGuidePanel } from '../workflow/WorkflowGuidePanel'
 import { NavigationWarningDialog } from '../workflow/NavigationWarningDialog'
 import { type WorkflowStepStatus as GuideStepStatus } from '@/config/nav/workflowGuideConfig'

@@ -13,6 +13,7 @@ import {
   Bell,
   Database,
   Zap,
+  Key,
   Briefcase,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -24,6 +25,7 @@ const baseSettingsNavItems = [
   { key: 'profile', href: '/dashboard/settings/profile', icon: Users },
   { key: 'producer', href: '/dashboard/settings/producer', icon: Briefcase },
   { key: 'integrations', href: '/dashboard/settings/integrations', icon: Zap },
+  { key: 'byok', href: '/dashboard/settings/byok', icon: Key },
   { key: 'security', href: '/dashboard/settings/security', icon: Shield },
   { key: 'billing', href: '/dashboard/settings/billing', icon: CreditCard },
   { key: 'notifications', href: '/dashboard/settings/notifications', icon: Bell },
@@ -120,7 +122,9 @@ export function SettingsLayoutClient({
                           {t(`nav.${item.key}`)}
                         </div>
                         <div className={`text-sm ${isActive ? 'text-sf-primary' : 'text-gray-500'}`}>
-                          {t(`nav.${item.key}Description`)}
+                          {t.has(`nav.${item.key}Description`)
+                            ? t(`nav.${item.key}Description`)
+                            : 'Connect your Google Vertex AI API key'}
                         </div>
                       </div>
                     </div>

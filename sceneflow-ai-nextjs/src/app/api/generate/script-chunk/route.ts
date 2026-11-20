@@ -1,4 +1,6 @@
 import { NextRequest } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -235,6 +237,14 @@ function extractContextFromTreatment(treatment_context: any): { logline: string;
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions as any).catch(() => null)
+    if (!session) {
+      return new Response('Unauthorized', { status: 401 })
+    }
+    const forwardHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+    const incomingCookie = request.headers.get('cookie')
+    if (incomingCookie) forwardHeaders.cookie = incomingCookie
+
     const { outline_chunk, previous_scene_summary, title, episode, sceneNumber, treatment_context } = await request.json().catch(() => ({}))
     if (!Array.isArray(outline_chunk) || outline_chunk.length === 0) {
       return new Response('Bad Request: outline_chunk[] required', { status: 400 })
@@ -255,7 +265,7 @@ export async function POST(request: NextRequest) {
 
     let directorsBrief = ''
     try {
-      const respBrief = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: analysisPrompt, context: { mode: 'text', type: 'analysis' } }) })
+      const respBrief = await fetch(url, { method: 'POST', headers: forwardHeaders, body: JSON.stringify({ prompt: analysisPrompt, context: { mode: 'text', type: 'analysis' } }) })
       if (respBrief.ok) {
         const briefJson = await respBrief.json().catch(()=>({}))
         directorsBrief = String(briefJson?.reply || '').trim()
@@ -266,7 +276,7 @@ export async function POST(request: NextRequest) {
     const prompt = buildScenePrompt({ title, episode, sceneNumber: n, scene, directorsBrief })
 
     try {
-      const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, context: { mode: 'scene_script', type: 'text', project: { metadata: { treatment_context } } } }) })
+      const resp = await fetch(url, { method: 'POST', headers: forwardHeaders, body: JSON.stringify({ prompt, context: { mode: 'scene_script', type: 'text', project: { metadata: { treatment_context } } } }) })
       if (!resp.ok) throw new Error('Cue unavailable')
       const json = await resp.json().catch(() => ({}))
       const text: string = json?.reply || ''

@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { AIProvider } from '@/services/ai-providers/BaseAIProviderAdapter'
 import { videoGenerationGateway } from '@/services/VideoGenerationGateway'
 import { EncryptionService } from '@/services/EncryptionService'
+
+const IDEATION_CUE_WINDOW_MS = 60_000
+const IDEATION_CUE_MAX = 30
+const ideationCueBuckets = new Map<string, number[]>()
+
+function checkIdeationCueRate(key: string): boolean {
+  const now = Date.now()
+  const recent = (ideationCueBuckets.get(key) || []).filter((ts) => ts > now - IDEATION_CUE_WINDOW_MS)
+  if (recent.length >= IDEATION_CUE_MAX) {
+    ideationCueBuckets.set(key, recent)
+    return false
+  }
+  recent.push(now)
+  ideationCueBuckets.set(key, recent)
+  return true
+}
 
 interface ConversationMessage {
   role: 'user' | 'assistant' | 'system'
@@ -52,6 +70,15 @@ interface CueResponse {
  */
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions as any).catch(() => null)
+    const sessionUserKey = (session as any)?.user?.id || (session as any)?.user?.email
+    if (!sessionUserKey) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (!checkIdeationCueRate(String(sessionUserKey))) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+    }
+
     const body: CueRequest = await request.json()
     const { userId, conversationHistory, currentConcept, provider = AIProvider.GOOGLE_VEO } = body
 

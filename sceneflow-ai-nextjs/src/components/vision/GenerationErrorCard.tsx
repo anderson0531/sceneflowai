@@ -188,7 +188,7 @@ export function GenerationErrorCard({
       case 'top_up_credits':
         return {
           onClick: () => {
-            if (typeof window !== 'undefined') window.location.assign('/dashboard/settings')
+            if (typeof window !== 'undefined') window.location.assign('/dashboard/settings/billing')
           },
           label: 'View Credits',
           icon: <Sparkles className="h-3.5 w-3.5 mr-1" />,
