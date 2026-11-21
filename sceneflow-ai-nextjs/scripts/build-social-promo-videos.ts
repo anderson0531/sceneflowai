@@ -8,10 +8,10 @@
  *
  * Audio-Visual Guarantees:
  *   1. Automatically resolves & caches `flow.google.com/shared/video/<id>` clips.
- *   2. Automatically clones the settled 8s–10s end frame (`tpad=stop_mode=clone`) if any localized
- *      VO slightly exceeds 9.4s so zero syllables are ever clipped.
- *   3. Places each block's VO cleanly at +0.40s with broadcast loudness (-16 LUFS) and ducks
- *      the instrumental score smoothly (-14 dB under speech, swelling cleanly between blocks).
+ *   2. Uses smooth continuous slow-down (`setpts`, down to 80% speed) instead of freeze frames
+ *      whenever any localized VO exceeds the base clip length so motion stays fluid.
+ *   3. Places each block's VO cleanly at +0.40s over a steady, constant-volume instrumental bed
+ *      (zero distracting sidechain ducking/pumping; gentle fade-in/out only).
  *   4. Outputs both `16:9` (1920×1080 YouTube/LinkedIn) and `9:16` center-safe (1080×1920
  *      TikTok/Shorts/Reels) MP4s with `+faststart` ready for ad managers.
  *
@@ -58,6 +58,7 @@ interface SpotSourceManifest {
   title: string
   voice?: string
   musicFileOrUrl?: string
+  musicStartSec?: number
   blocks: Record<'1' | '2' | '3', string>
 }
 
@@ -103,7 +104,7 @@ function parseArgs(argv: string[]): CliArgs {
     spots,
     locales,
     aspect,
-    musicVolume: Number(get('--music-volume') || 0.24),
+    musicVolume: Number(get('--music-volume') || 0.17),
     forceClips: argv.includes('--force-clips'),
   }
 }
@@ -252,6 +253,7 @@ function buildLocalizedSpot(args: {
   clipPaths: [string, string, string]
   voPaths: [string, string, string]
   musicPath: string | null
+  musicStartSec: number
   musicVolume: number
   aspect: 'both' | '16x9' | '9x16'
   outDir: string
@@ -260,27 +262,44 @@ function buildLocalizedSpot(args: {
   const tmpDir = join(args.outDir, '.work', args.locale)
   mkdirSync(tmpDir, { recursive: true })
 
-  // 1. Prepare each 10s visual block (normalized 1920x1080 24fps, extended cleanly if VO > clip)
+  // 1. Prepare each visual block (normalized 1920x1080 24fps):
+  //    - NEVER freeze-frame!
+  //    - If VO fits inside 10s clip: play video at 100% speed.
+  //    - If VO is slightly longer (up to ~11.8s): smoothly slow video to 90%-80% (setpts <= 1.25) so motion stays silky.
+  //    - If VO exceeds 80% slow-down window (12.5s): cap video slow-down at 80% (12.5s) and apply gentle pitch-preserving
+  //      atempo tightening to the VO so it fits cleanly inside the 12.5s slot with zero clipping and crisp commercial pacing.
   const blockDurations: number[] = []
   const preparedVideoBlocks: string[] = []
   const preparedAudioBlocks: string[] = []
+  const MAX_SLOWDOWN_PTS = 1.25 // 80% minimum video speed
 
   for (let i = 0; i < 3; i++) {
     const clipPath = args.clipPaths[i]!
     const voPath = args.voPaths[i]!
     const rawClipDur = measureMediaDurationSec(clipPath)
     const voDur = measureMediaDurationSec(voPath)
-    const targetDur = Math.max(rawClipDur, VO_LEAD_IN_SEC + voDur + VO_TRAIL_PAD_SEC)
-    const padSec = Math.max(0, targetDur - rawClipDur)
+    const maxSlotDur = rawClipDur * MAX_SLOWDOWN_PTS
+    const maxVoFit = maxSlotDur - VO_LEAD_IN_SEC - VO_TRAIL_PAD_SEC
+
+    let voTempo = 1.0
+    let effectiveVoDur = voDur
+    if (voDur > maxVoFit) {
+      voTempo = Math.min(1.45, voDur / maxVoFit)
+      effectiveVoDur = voDur / voTempo
+    }
+
+    const neededDur = Math.max(rawClipDur, VO_LEAD_IN_SEC + effectiveVoDur + VO_TRAIL_PAD_SEC)
+    const ptsFactor = neededDur > rawClipDur + 0.04 ? Math.min(MAX_SLOWDOWN_PTS, neededDur / rawClipDur) : 1.0
+    const targetDur = rawClipDur * ptsFactor
     blockDurations.push(targetDur)
 
     const prepVid = join(tmpDir, `vblock-0${i + 1}.mp4`)
     const vf = [
       'scale=1920:1080:force_original_aspect_ratio=increase',
       'crop=1920:1080',
+      ...(ptsFactor > 1.005 ? [`setpts=${ptsFactor.toFixed(4)}*PTS`] : []),
       `fps=${FPS}`,
       'format=yuv420p',
-      ...(padSec > 0.04 ? [`tpad=stop_mode=clone:stop_duration=${padSec.toFixed(3)}`] : []),
     ].join(',')
 
     runFfmpeg(
@@ -305,16 +324,21 @@ function buildLocalizedSpot(args: {
     )
     preparedVideoBlocks.push(prepVid)
 
-    // Pad block VO into exact targetDur slot with clean +400ms lead-in
+    // Pad block VO into exact targetDur slot with clean +400ms lead-in (and gentle pitch-preserving atempo if > 80% clip slot)
     const prepAud = join(tmpDir, `ablock-0${i + 1}.wav`)
     const delayMs = Math.round(VO_LEAD_IN_SEC * 1000)
+    const afChain = [
+      ...(voTempo > 1.005 ? [`atempo=${voTempo.toFixed(4)}`] : []),
+      `adelay=${delayMs}|${delayMs}`,
+      `apad=whole_dur=${targetDur.toFixed(3)}`,
+    ].join(',')
     runFfmpeg(
       [
         '-y',
         '-i',
         voPath,
         '-af',
-        `adelay=${delayMs}|${delayMs},apad=whole_dur=${targetDur.toFixed(3)}`,
+        afChain,
         '-t',
         targetDur.toFixed(3),
         '-ar',
@@ -382,15 +406,15 @@ function buildLocalizedSpot(args: {
     `${args.spotId}-${args.locale}-concat-vo`
   )
 
-  // 3. Mix VO + auto-ducked background music (sidechaincompress keeps speech crisp!)
+  // 3. Mix VO + steady constant-volume percussive music bed with subtle static vocal-pocket EQ (ZERO sidechain ducking/pumping!)
   const mixedMasterAudio = join(tmpDir, 'mixed-master.wav')
   if (args.musicPath && existsSync(args.musicPath)) {
+    const startSec = Math.max(0, args.musicStartSec || 0)
     const fadeStart = Math.max(0, totalDur - 1.4).toFixed(2)
+    const trimEnd = (startSec + totalDur).toFixed(3)
     const mixGraph = [
-      `[0:a]asplit=2[vo_mix][vo_sc]`,
-      `[1:a]aloop=loop=-1:size=2e+09,atrim=0:${totalDur.toFixed(3)},asetpts=PTS-STARTPTS,volume=${args.musicVolume.toFixed(2)},afade=t=in:st=0:d=0.4,afade=t=out:st=${fadeStart}:d=1.4[bgm_raw]`,
-      `[bgm_raw][vo_sc]sidechaincompress=threshold=0.03:ratio=5:attack=25:release=320:makeup=1[bgm_ducked]`,
-      `[vo_mix][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.95[aout]`,
+      `[1:a]aloop=loop=-1:size=2e+09,atrim=start=${startSec.toFixed(3)}:end=${trimEnd},asetpts=PTS-STARTPTS,equalizer=f=2200:t=q:w=1.2:g=-3.0,volume=${args.musicVolume.toFixed(2)},afade=t=in:st=0:d=0.25,afade=t=out:st=${fadeStart}:d=1.4[bgm_steady]`,
+      `[0:a][bgm_steady]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.95[aout]`,
     ].join(';')
 
     runFfmpeg(
@@ -554,6 +578,7 @@ async function main() {
         clipPaths: [clip1, clip2, clip3],
         voPaths,
         musicPath,
+        musicStartSec: manifest.musicStartSec ?? 0,
         musicVolume: args.musicVolume,
         aspect: args.aspect,
         outDir,

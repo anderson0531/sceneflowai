@@ -2,7 +2,8 @@
   "spotId": "svc-01",
   "title": "Beyond Random AI Clips: The Automated 4K Client Studio",
   "voice": "Charon",
-  "musicFileOrUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Modern%20Tech-Cinema%20Instrumental%20Track.mp3",
+  "musicFileOrUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Percussive%20Beat-Driven%20Instrumental%20Track.mp3",
+  "musicStartSec": 7.2,
   "blocks": {
     "1": "https://flow.google.com/shared/video/77780243-b204-44de-9014-3aefaaf4fb19",
     "2": "https://flow.google.com/shared/video/cac75317-7acd-449b-a79f-50484e1374bc",
