@@ -17,6 +17,7 @@ import { evaluateCustomerTextQuarantine } from '@/lib/producer/quarantineCheck'
 import { resolveClientPortalLocale, type ClientPortalLocale } from '@/lib/intake/clientPortalCopy'
 import { createReferenceAsset } from '@/lib/referenceLibrary/assetRepository'
 import { notifyUser } from '@/lib/jobs/jobService'
+import { propagateEraVoiceDnaToSiblingCharacters } from '@/lib/continuity/eraVoicePropagation'
 
 export interface ContinuityPortalSlot {
   slotId: string
@@ -774,9 +775,11 @@ export function applyPromotedSubmissionToProjectMetadata(
       voicePatch.voiceName = `${submission.slot_name} (Voice DNA)`
     }
 
+    let targetIdx = idx
     if (idx >= 0) {
       chars[idx] = { ...chars[idx], ...voicePatch }
     } else {
+      targetIdx = chars.length
       chars.push({
         id: targetCharId,
         name: submission.slot_name,
@@ -784,7 +787,12 @@ export function applyPromotedSubmissionToProjectMetadata(
         ...voicePatch,
       })
     }
-    vp.characters = chars
+    if (dna) {
+      const propagated = propagateEraVoiceDnaToSiblingCharacters(chars, targetIdx, dna)
+      vp.characters = propagated.characters
+    } else {
+      vp.characters = chars
+    }
   } else if (submission.slot_type === 'live_video' || submission.slot_type === 'story_audio') {
     const refs = { ...(vp.references || {}) }
     const existingClips = Array.isArray(refs.clientMediaClips)

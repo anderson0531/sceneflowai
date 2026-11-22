@@ -15,6 +15,14 @@ import {
   normalizeClientMediaChapters,
   parseFfmpegInspection,
 } from '@/lib/continuity/voiceDnaService'
+import {
+  deriveEraAdjustedVoiceDna,
+  parseCharacterNameAndAge,
+} from '@/lib/continuity/eraVoicePropagation'
+import {
+  buildLiveIntroToReenactmentBridge,
+  buildPortraitTo16x9DocumentaryFilter,
+} from '@/lib/continuity/documentaryBridge'
 import { buildSegmentEnhancedPrompt } from '@/lib/video/buildSegmentEnhancedPrompt'
 
 function makeTestWav(sampleRate: number, channels: number, bits: number): Buffer {
@@ -398,5 +406,113 @@ describe('Continuity Wave 1 — Voice DNA, Google Voice Clone, & Live Media Clip
       'opened the shop in 1964'
     )
     expect(promotedPhoto.visionPhase.references.clientMediaClips[0].customerName).toBe('Aunt Maria')
+  })
+
+  it('derives and propagates Era-Linked Younger Voice DNA from a senior master to sibling era characters', () => {
+    expect(parseCharacterNameAndAge('Robert (Age 74)')).toEqual({ baseName: 'Robert', age: 74 })
+    expect(parseCharacterNameAndAge('Young Robert')).toEqual({ baseName: 'Robert', age: 24 })
+
+    const seniorDna = {
+      summary: 'Warm 70s Midwestern gravelly baritone · ~115 WPM',
+      gender: 'male',
+      apparentAge: 'early 70s',
+      vocalAttributes: {
+        register: 'low' as const,
+        vocalWeight: 'heavy' as const,
+        timbre: 'warm, gravelly baritone',
+        accent: 'Midwestern American',
+        cadence: 'slow, deliberate storytelling',
+        wpm: 115,
+        emotionalState: 'warm and nostalgic',
+        inflection: 'gentle downward resolution',
+        tone: 'intimate documentary',
+      },
+      voiceDesignPrompt: 'Early 70s male, low heavy gravelly baritone, Midwestern American accent.',
+      veoVoiceCue: 'Warm early-70s Midwestern gravelly baritone.',
+      recommendedGeminiBaseVoice: 'gemini-Charon',
+    }
+
+    const younger = deriveEraAdjustedVoiceDna({
+      sourceDna: seniorDna,
+      sourceAge: 74,
+      targetAge: 25,
+      targetName: 'Robert (Age 25)',
+    })
+    expect(younger.vocalAttributes.register).toBe('mid')
+    expect(younger.vocalAttributes.vocalWeight).toBe('medium')
+    expect(younger.vocalAttributes.wpm).toBeGreaterThan(115)
+    expect(younger.vocalAttributes.accent).toBe('Midwestern American')
+    expect(younger.vocalAttributes.timbre.toLowerCase()).not.toContain('gravelly')
+    expect(younger.veoVoiceCue).toContain('Midwestern American')
+
+    // Automatic sibling propagation when promoting master character voice
+    const updated = applyPromotedSubmissionToProjectMetadata(
+      {
+        visionPhase: {
+          characters: [
+            { id: 'char-74', name: 'Robert (Age 74)' },
+            { id: 'char-25', name: 'Robert (Age 25)' },
+            { id: 'char-other', name: 'Mary (Age 70)' },
+          ],
+        },
+      },
+      {
+        slot_id: 'voice:char-74',
+        slot_type: 'character_voice',
+        slot_name: 'Robert (Age 74)',
+        blob_url: 'https://blob.test/robert-74.webm',
+        metadata: {
+          mediaKind: 'audio',
+          acousticVoiceDna: seniorDna,
+          googleVoiceCloningKey: 'statelessKey12345678901234567890',
+        },
+      }
+    )
+
+    expect(updated.visionPhase.characters[0].voiceId).toBe('statelessKey12345678901234567890')
+    expect(updated.visionPhase.characters[1].voiceDerivedFromCharacterId).toBe('char-74')
+    expect(updated.visionPhase.characters[1].veoVoiceCue).toContain('Midwestern American')
+    expect(updated.visionPhase.characters[1].voiceAcousticDna.vocalAttributes.wpm).toBeGreaterThan(115)
+    // Unrelated character untouched
+    expect(updated.visionPhase.characters[2].voiceAcousticDna).toBeUndefined()
+  })
+
+  it('builds Vertical-to-16:9 Documentary Framing Guard & J-Cut Live-to-AI Audio Bleed presets', () => {
+    const bridged = buildLiveIntroToReenactmentBridge({
+      liveIntroSegment: {
+        segmentId: 'seg-live-1',
+        sequenceIndex: 0,
+        videoUrl: 'https://blob.test/grandpa-vertical.mov',
+        startTime: 0,
+        duration: 12,
+      },
+      reenactmentSegment: {
+        segmentId: 'seg-ai-2',
+        sequenceIndex: 1,
+        videoUrl: 'https://blob.test/1958-harbor-4k.mp4',
+        startTime: 12,
+        duration: 8,
+      },
+      aspectOrientation: 'portrait',
+      extractedAudioUrl: 'https://blob.test/grandpa-stem.mp3',
+      config: {
+        audioBleedSec: 2.5,
+        dissolveSec: 0.75,
+        lowerThirdTitle: 'Robert Miller',
+        lowerThirdSubtitle: 'Chapter 1 · Summer of 1958',
+      },
+    })
+
+    expect(bridged.liveIntroSegment.audioTailOutSec).toBe(2.5)
+    expect(bridged.liveIntroSegment.portraitFramingMode).toBe('documentary_matte')
+    expect(bridged.liveIntroSegment.lowerThirdTitle).toBe('Robert Miller')
+    expect(bridged.reenactmentSegment.transitionIn).toBe('dissolve')
+    expect(bridged.reenactmentSegment.transitionInSec).toBe(0.75)
+    expect(bridged.reenactmentSegment.audioSource).toBe('voiceover')
+    expect(bridged.reenactmentSegment.voiceoverUrl).toBe('https://blob.test/grandpa-stem.mp3')
+
+    const matteFilter = buildPortraitTo16x9DocumentaryFilter({ width: 3840, height: 2160 })
+    expect(matteFilter).toContain('gblur=sigma=28')
+    expect(matteFilter).toContain('overlay=(W-w)/2:(H-h)/2')
   })
 })

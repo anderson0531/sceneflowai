@@ -637,6 +637,13 @@ export function ShareContinuityDialog({
                             )}
                           </div>
                         )}
+                        {isVideo && meta?.aspectOrientation === 'portrait' && (
+                          <div className="rounded-lg border border-amber-500/30 bg-amber-950/20 px-2.5 py-1.5 text-[10px] text-amber-200 leading-snug">
+                            <span className="font-semibold">Vertical 9:16 Phone Clip Detected:</span>{' '}
+                            Auto-framed with 16:9 Documentary Matte &amp; 2.5s J-Cut voice bleed into
+                            AI reenactment.
+                          </div>
+                        )}
                         {isVideo && (
                           <video
                             controls

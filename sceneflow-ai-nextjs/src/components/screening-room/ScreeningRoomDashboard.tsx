@@ -42,10 +42,12 @@ import {
   MessageSquare,
   Download,
   Tag,
+  QrCode,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
+import { KeepsakeQrCardDialog } from './KeepsakeQrCardDialog'
 import type {
   BehavioralAnalyticsSummary,
   ABTestConfig,
@@ -219,6 +221,10 @@ export function ScreeningRoomDashboard({
   const [feedbackDraftRating, setFeedbackDraftRating] = useState(4)
   const [feedbackDraftTags, setFeedbackDraftTags] = useState('')
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
+  const [keepsakeQrTarget, setKeepsakeQrTarget] = useState<{
+    shareUrl: string
+    title: string
+  } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // ============================================================================
@@ -568,20 +574,39 @@ export function ScreeningRoomDashboard({
         {/* Actions */}
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
           {screening.id.startsWith('premiere-') ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full border-violet-500/35 bg-violet-950/20 text-violet-100 hover:bg-violet-950/35"
-              onClick={() => {
-                const path = screening.shareUrl || `/s/${screening.id}`
-                const fullUrl = `${window.location.origin}${path}`
-                void navigator.clipboard.writeText(fullUrl)
-              }}
-              title="Copy audience share link (/s/)"
-            >
-              <ExternalLink className="w-4 h-4 mr-1.5 shrink-0" />
-              Share link
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full border-violet-500/35 bg-violet-950/20 text-violet-100 hover:bg-violet-950/35"
+                onClick={() => {
+                  const path = screening.shareUrl || `/s/${screening.id}`
+                  const fullUrl = `${window.location.origin}${path}`
+                  void navigator.clipboard.writeText(fullUrl)
+                }}
+                title="Copy audience share link (/s/)"
+              >
+                <ExternalLink className="w-4 h-4 mr-1.5 shrink-0" />
+                Share link
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full border-amber-500/35 bg-amber-950/20 text-amber-100 hover:bg-amber-950/35"
+                onClick={() => {
+                  const path = screening.shareUrl || `/s/${screening.id}`
+                  const fullUrl = `${window.location.origin}${path}`
+                  setKeepsakeQrTarget({
+                    shareUrl: fullUrl,
+                    title: screening.title || projectName || 'Our Family Story',
+                  })
+                }}
+                title="Generate a printable 4×6 QR Keepsake Card for photo albums, gifts, or programs"
+              >
+                <QrCode className="w-4 h-4 mr-1.5 shrink-0" />
+                QR Card
+              </Button>
+            </>
           ) : null}
           <Button
             size="sm"
@@ -1082,6 +1107,15 @@ export function ScreeningRoomDashboard({
           ))}
         </Tabs>
       </div>
+
+      <KeepsakeQrCardDialog
+        open={Boolean(keepsakeQrTarget)}
+        onOpenChange={(open) => {
+          if (!open) setKeepsakeQrTarget(null)
+        }}
+        shareUrl={keepsakeQrTarget?.shareUrl || ''}
+        defaultTitle={keepsakeQrTarget?.title || projectName || 'Our Family Story'}
+      />
     </div>
   )
 }

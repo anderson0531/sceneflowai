@@ -350,6 +350,12 @@ export interface SceneRenderVideoSegment {
   audioTailOutSec?: number
   /** Uniform frame crop % (2–10) for uploaded video; preserves aspect ratio */
   watermarkCropPercent?: number
+  /** Automatic 16:9 widescreen framing treatment for portrait (9:16) client live videos */
+  portraitFramingMode?: 'auto' | 'blur_pillarbox' | 'documentary_matte' | 'crop_fill'
+  /** Optional documentary lower-third title burned on live subject intro clips */
+  lowerThirdTitle?: string
+  /** Optional documentary lower-third subtitle (e.g. chapter / era) */
+  lowerThirdSubtitle?: string
   /** Seconds into source MP4 where beat playback begins */
   videoTrimInSec?: number
   /** Seconds into source MP4 where beat playback ends */
@@ -594,6 +600,9 @@ export interface CreateSceneRenderJobRequest {
     audioLeadInSec?: number
     audioTailOutSec?: number
     watermarkCropPercent?: number
+    portraitFramingMode?: 'auto' | 'blur_pillarbox' | 'documentary_matte' | 'crop_fill'
+    lowerThirdTitle?: string
+    lowerThirdSubtitle?: string
     videoTrimInSec?: number
     videoTrimOutSec?: number
     playbackRate?: number
@@ -939,6 +948,9 @@ export function toSceneRenderVideoSegment(
     ...(seg.audioLeadInSec != null && seg.audioLeadInSec > 0 ? { audioLeadInSec: seg.audioLeadInSec } : {}),
     ...(seg.audioTailOutSec != null && seg.audioTailOutSec > 0 ? { audioTailOutSec: seg.audioTailOutSec } : {}),
     watermarkCropPercent: seg.watermarkCropPercent,
+    ...(seg.portraitFramingMode ? { portraitFramingMode: seg.portraitFramingMode } : {}),
+    ...(seg.lowerThirdTitle ? { lowerThirdTitle: seg.lowerThirdTitle } : {}),
+    ...(seg.lowerThirdSubtitle ? { lowerThirdSubtitle: seg.lowerThirdSubtitle } : {}),
     videoTrimInSec: seg.videoTrimInSec,
     videoTrimOutSec: seg.videoTrimOutSec,
     playbackRate: seg.playbackRate,
