@@ -1,7 +1,10 @@
 import crypto from 'crypto'
 import { sequelize } from '@/config/database'
 import CollabSession from '@/models/CollabSession'
-import ClientAssetSubmission, { type ContinuitySlotType } from '@/models/ClientAssetSubmission'
+import ClientAssetSubmission, {
+  type ClientAssetSubmissionMetadata,
+  type ContinuitySlotType,
+} from '@/models/ClientAssetSubmission'
 import Project from '@/models/Project'
 import { ensureProducerPlatformSchema } from '@/lib/database/migrateProducerPlatform'
 import {
@@ -25,6 +28,9 @@ export interface ContinuityPortalSlot {
   description: string
   referenceImageUrl?: string | null
   needsClientPhoto: boolean
+  hasVoiceProfile?: boolean
+  voiceSummary?: string | null
+  voiceProvider?: string | null
   clientDecision?: 'pending' | 'approved' | 'revision_requested'
   clientNote?: string
 }
@@ -35,6 +41,10 @@ export interface ContinuitySessionPayload {
   projectTitle?: string
   clientMode?: boolean
   allowUploads?: boolean
+  /** Enables per-character Voice Capture & Consent (ON by default, collapsed per character card) */
+  allowVoiceCapture?: boolean
+  /** Enables Live Video & Story Audio Clip uploads (auto-ON for memoirs/documentaries, toggleable) */
+  allowVideoClips?: boolean
   locale: ClientPortalLocale
   maxRounds: number
   roundsUsed: number
@@ -45,6 +55,31 @@ export interface ContinuitySessionPayload {
   clientGroupSlug?: string
   brandProfileSnapshot: BrandProfileSnapshot
   slots: ContinuityPortalSlot[]
+}
+
+/**
+ * Auto-enables live video & audio clip uploads by default for memoir, legacy,
+ * documentary, biographical, and testimonial projects while keeping casual commercial
+ * photo-approval links streamlined unless the producer opts in.
+ */
+export function inferDefaultAllowVideoClips(project: Pick<Project, 'metadata'> & { genre?: string | null }): boolean {
+  const md = ((project.metadata || {}) as Record<string, any>)
+  const candidates = [
+    project.genre,
+    md.genre,
+    md.intakeVerticalId,
+    md.clientOrder?.verticalId,
+    md.clientOrder?.narrativeMode,
+    md.filmTreatmentVariant?.genre,
+    md.visionPhase?.genre,
+  ]
+    .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+    .join(' ')
+    .toLowerCase()
+
+  return /(?:^|[\s_/-])(memoir|biograph|documentary|legacy|testimonial|interview|family history)/i.test(
+    candidates
+  )
 }
 
 export function isContinuityPayload(
@@ -84,6 +119,17 @@ export function extractContinuitySlotsFromProject(project: Pick<Project, 'metada
   charSource.forEach((c: any, idx: number) => {
     const charSlotId = String(c.id || `char-${idx + 1}`)
     const charName = String(c.name || `Character ${idx + 1}`)
+    const hasVoiceProfile = Boolean(
+      c.googleVoiceCloningKey ||
+        c.voiceReferenceAudioUrl ||
+        c.voiceAcousticDna ||
+        c.voiceDesignPrompt
+    )
+    const voiceSummary =
+      c.voiceAcousticDna?.summary ||
+      c.veoVoiceCue ||
+      c.voiceDescription ||
+      null
     slots.push({
       slotId: charSlotId,
       slotType: 'character',
@@ -92,6 +138,13 @@ export function extractContinuitySlotsFromProject(project: Pick<Project, 'metada
       description: String(c.description || c.appearanceDescription || c.appearance || ''),
       referenceImageUrl: c.referenceImage || c.imageUrl || null,
       needsClientPhoto: !(c.referenceImage || c.imageUrl),
+      hasVoiceProfile,
+      voiceSummary: voiceSummary ? String(voiceSummary).slice(0, 160) : null,
+      voiceProvider: c.googleVoiceCloningKey
+        ? 'google-clone'
+        : c.voiceAcousticDna
+          ? 'google-dna'
+          : c.voiceProvider || null,
       clientDecision: 'pending',
     })
 
@@ -243,6 +296,8 @@ export async function createOrUpdateContinuityPortalLink(input: {
   ownerDisplayName?: string
   clientMode?: boolean
   allowUploads?: boolean
+  allowVoiceCapture?: boolean
+  allowVideoClips?: boolean
   locale?: string
   maxRounds?: number
   clientGroupSlug?: string
@@ -254,6 +309,8 @@ export async function createOrUpdateContinuityPortalLink(input: {
   url: string
   clientMode: boolean
   allowUploads: boolean
+  allowVoiceCapture: boolean
+  allowVideoClips: boolean
   approvalStatus: ContinuitySessionPayload['approvalStatus']
   slots: ContinuityPortalSlot[]
 }> {
@@ -286,6 +343,10 @@ export async function createOrUpdateContinuityPortalLink(input: {
     Math.max(1, Math.round(input.maxRounds ?? profile.default_max_rounds ?? 3))
   )
   const allowUploads = input.allowUploads !== false
+  const defaultVideoClips = inferDefaultAllowVideoClips(input.project)
+  const allowVoiceCapture = input.allowVoiceCapture !== false
+  const allowVideoClips =
+    input.allowVideoClips !== undefined ? Boolean(input.allowVideoClips) : defaultVideoClips
   const freshSlots = extractContinuitySlotsFromProject(input.project)
 
   const existing = await getActiveContinuitySessionForProject(input.project.id, input.origin)
@@ -305,12 +366,24 @@ export async function createOrUpdateContinuityPortalLink(input: {
     const effectiveClientMode = input.clientMode !== undefined ? clientMode : Boolean(p.clientMode)
     const effectiveAllowUploads =
       input.allowUploads !== undefined ? allowUploads : p.allowUploads !== false
+    const effectiveAllowVoiceCapture =
+      input.allowVoiceCapture !== undefined
+        ? Boolean(input.allowVoiceCapture)
+        : p.allowVoiceCapture !== false
+    const effectiveAllowVideoClips =
+      input.allowVideoClips !== undefined
+        ? Boolean(input.allowVideoClips)
+        : p.allowVideoClips !== undefined
+          ? Boolean(p.allowVideoClips)
+          : defaultVideoClips
 
     const nextPayload: ContinuitySessionPayload = {
       ...p,
       projectTitle: input.project.title || p.projectTitle,
       clientMode: effectiveClientMode,
       allowUploads: effectiveAllowUploads,
+      allowVoiceCapture: effectiveAllowVoiceCapture,
+      allowVideoClips: effectiveAllowVideoClips,
       locale,
       maxRounds,
       brandProfileSnapshot: brandSnapshot,
@@ -326,6 +399,8 @@ export async function createOrUpdateContinuityPortalLink(input: {
       url: `${input.origin}/share/continuity/${existing.session.token}?lang=${encodeURIComponent(locale)}`,
       clientMode: effectiveClientMode,
       allowUploads: effectiveAllowUploads,
+      allowVoiceCapture: effectiveAllowVoiceCapture,
+      allowVideoClips: effectiveAllowVideoClips,
       approvalStatus: nextPayload.approvalStatus,
       slots: mergedSlots,
     }
@@ -341,6 +416,8 @@ export async function createOrUpdateContinuityPortalLink(input: {
     projectTitle: input.project.title || 'Project',
     clientMode,
     allowUploads,
+    allowVoiceCapture,
+    allowVideoClips,
     locale,
     maxRounds,
     roundsUsed: 0,
@@ -365,6 +442,8 @@ export async function createOrUpdateContinuityPortalLink(input: {
     url: `${input.origin}/share/continuity/${token}?lang=${encodeURIComponent(locale)}`,
     clientMode,
     allowUploads,
+    allowVoiceCapture,
+    allowVideoClips,
     approvalStatus: payload.approvalStatus,
     slots: freshSlots,
   }
@@ -530,20 +609,25 @@ export async function submitContinuityClientReview(input: {
 
 /**
  * Pure helper applying a promoted Continuity submission into `project.metadata`.
- * Exported so unit tests can verify exact mutation semantics across all 5 slot types.
+ * Exported so unit tests can verify exact mutation semantics across all slot types
+ * (character, wardrobe, location, location_version, prop, character_voice, live_video, story_audio).
  */
 export function applyPromotedSubmissionToProjectMetadata(
   rawMetadata: Record<string, any> | null | undefined,
   submission: {
+    id?: string
     slot_id: string
     slot_type: ContinuitySlotType
     slot_name: string
     blob_url: string
     caption?: string | null
+    customer_name?: string | null
+    metadata?: ClientAssetSubmissionMetadata | null
   }
 ): Record<string, any> {
   const md = { ...(rawMetadata || {}) }
   const vp = { ...(md.visionPhase || {}) }
+  const subMeta = (submission.metadata || {}) as ClientAssetSubmissionMetadata
 
   if (submission.slot_type === 'character') {
     const chars = Array.isArray(vp.characters) ? vp.characters.map((c: any) => ({ ...c })) : []
@@ -561,6 +645,117 @@ export function applyPromotedSubmissionToProjectMetadata(
       })
     }
     vp.characters = chars
+  } else if (submission.slot_type === 'character_voice') {
+    // slot_id may be `voice:<charId>` or `<charId>`
+    const targetCharId =
+      subMeta.targetCharacterId ||
+      (submission.slot_id.startsWith('voice:')
+        ? submission.slot_id.slice('voice:'.length)
+        : submission.slot_id)
+    const chars = Array.isArray(vp.characters) ? vp.characters.map((c: any) => ({ ...c })) : []
+    const idx = chars.findIndex((c: any) => String(c.id || '') === targetCharId)
+    const dna = subMeta.acousticVoiceDna || null
+    const voicePatch: Record<string, any> = {
+      voiceReferenceAudioUrl: subMeta.extractedAudioUrl || submission.blob_url,
+      voiceOriginalMediaUrl: submission.blob_url,
+      voiceConsentAudioUrl: subMeta.consentAudioBlobUrl || undefined,
+      voiceReferenceSliceWavUrl: subMeta.referenceSliceWavUrl || undefined,
+      voiceTranscript: subMeta.transcript || undefined,
+      voiceLanguageCode: subMeta.languageCode || 'en-US',
+      voiceCloneStatus: subMeta.voiceCloneStatus || (subMeta.googleVoiceCloningKey ? 'minted' : 'tier2_dna_ready'),
+    }
+    if (dna) {
+      voicePatch.voiceAcousticDna = dna
+      voicePatch.voiceDesignPrompt = dna.voiceDesignPrompt
+      voicePatch.veoVoiceCue = dna.veoVoiceCue
+      voicePatch.voiceDescription = dna.summary || dna.voiceDesignPrompt
+      voicePatch.vocalAttributes = dna.vocalAttributes
+    }
+    if (subMeta.googleVoiceCloningKey) {
+      voicePatch.googleVoiceCloningKey = subMeta.googleVoiceCloningKey
+      voicePatch.voiceProvider = 'google'
+      voicePatch.voiceId = subMeta.googleVoiceCloningKey
+      voicePatch.voiceName = `${submission.slot_name} (Custom Voice)`
+    } else if (dna?.recommendedGeminiBaseVoice) {
+      voicePatch.voiceProvider = 'google'
+      voicePatch.voiceId = dna.recommendedGeminiBaseVoice
+      voicePatch.voiceName = `${submission.slot_name} (Voice DNA)`
+    }
+
+    if (idx >= 0) {
+      chars[idx] = { ...chars[idx], ...voicePatch }
+    } else {
+      chars.push({
+        id: targetCharId,
+        name: submission.slot_name,
+        description: submission.caption || '',
+        ...voicePatch,
+      })
+    }
+    vp.characters = chars
+  } else if (submission.slot_type === 'live_video' || submission.slot_type === 'story_audio') {
+    const refs = { ...(vp.references || {}) }
+    const existingClips = Array.isArray(refs.clientMediaClips)
+      ? refs.clientMediaClips.map((c: any) => ({ ...c }))
+      : []
+    const clipId = submission.id || submission.slot_id
+    const nextClip = {
+      id: clipId,
+      slotId: submission.slot_id,
+      slotType: submission.slot_type,
+      title: submission.slot_name,
+      usageIntent:
+        subMeta.usageIntent ||
+        (submission.slot_type === 'live_video' ? 'live_intro' : 'reenactment_vo'),
+      mediaKind: subMeta.mediaKind || (submission.slot_type === 'live_video' ? 'video' : 'audio'),
+      mediaUrl: submission.blob_url,
+      extractedAudioUrl: subMeta.extractedAudioUrl || (submission.slot_type === 'story_audio' ? submission.blob_url : null),
+      referenceSliceWavUrl: subMeta.referenceSliceWavUrl || null,
+      consentAudioBlobUrl: subMeta.consentAudioBlobUrl || null,
+      durationSeconds: subMeta.durationSeconds ?? null,
+      aspectOrientation: subMeta.aspectOrientation ?? null,
+      transcript: subMeta.transcript || null,
+      acousticVoiceDna: subMeta.acousticVoiceDna || null,
+      googleVoiceCloningKey: subMeta.googleVoiceCloningKey || null,
+      targetCharacterId: subMeta.targetCharacterId || null,
+      customerName: submission.customer_name || null,
+      caption: submission.caption || null,
+      promotedAt: new Date().toISOString(),
+    }
+    const existingIdx = existingClips.findIndex((c: any) => String(c.id || '') === clipId)
+    if (existingIdx >= 0) {
+      existingClips[existingIdx] = nextClip
+    } else {
+      existingClips.unshift(nextClip)
+    }
+    refs.clientMediaClips = existingClips
+    vp.references = refs
+
+    // "Record Once, Unlock Everything": if linked to a character and Acoustic DNA / clone was extracted,
+    // also enrich that character's voice fields when not already locked with a custom clone.
+    if (subMeta.targetCharacterId && (subMeta.acousticVoiceDna || subMeta.googleVoiceCloningKey)) {
+      const chars = Array.isArray(vp.characters) ? vp.characters.map((c: any) => ({ ...c })) : []
+      const cIdx = chars.findIndex((c: any) => String(c.id || '') === subMeta.targetCharacterId)
+      if (cIdx >= 0) {
+        const current = chars[cIdx]
+        if (subMeta.acousticVoiceDna && !current.voiceAcousticDna) {
+          current.voiceAcousticDna = subMeta.acousticVoiceDna
+          current.voiceDesignPrompt = subMeta.acousticVoiceDna.voiceDesignPrompt
+          current.veoVoiceCue = subMeta.acousticVoiceDna.veoVoiceCue
+          current.voiceDescription = current.voiceDescription || subMeta.acousticVoiceDna.summary
+        }
+        if (subMeta.extractedAudioUrl && !current.voiceReferenceAudioUrl) {
+          current.voiceReferenceAudioUrl = subMeta.extractedAudioUrl
+        }
+        if (subMeta.googleVoiceCloningKey && !current.googleVoiceCloningKey) {
+          current.googleVoiceCloningKey = subMeta.googleVoiceCloningKey
+          current.voiceProvider = 'google'
+          current.voiceId = subMeta.googleVoiceCloningKey
+        }
+        chars[cIdx] = current
+        vp.characters = chars
+      }
+    }
   } else if (submission.slot_type === 'wardrobe') {
     // slot_id format: `wardrobe:<charId>:<wardrobeId>`
     const parts = submission.slot_id.split(':')
@@ -707,11 +902,14 @@ export async function promoteCustomerSubmissionToContinuity(input: {
     const nextMetadata = applyPromotedSubmissionToProjectMetadata(
       (project.metadata || {}) as Record<string, any>,
       {
+        id: submission.id,
         slot_id: submission.slot_id,
         slot_type: submission.slot_type,
         slot_name: submission.slot_name,
         blob_url: submission.blob_url,
         caption: submission.caption,
+        customer_name: submission.customer_name,
+        metadata: submission.metadata || null,
       }
     )
     await project.update({ metadata: nextMetadata }, { transaction })
@@ -722,16 +920,33 @@ export async function promoteCustomerSubmissionToContinuity(input: {
     return { ok: false, status: 404, error: 'Project not found' }
   }
 
-  // Also refresh active Continuity session slot preview image if present
+  // Also refresh active Continuity session slot preview image / voice state if present
   try {
     const active = await CollabSession.findByPk(submission.collab_session_id)
     if (active && isContinuityPayload(active.payload as Record<string, unknown>)) {
       const p = active.payload as unknown as ContinuitySessionPayload
-      const nextSlots = p.slots.map((s) =>
-        s.slotId === submission.slot_id
+      const subMeta = (submission.metadata || {}) as ClientAssetSubmissionMetadata
+      const nextSlots = p.slots.map((s) => {
+        if (submission.slot_type === 'character_voice') {
+          const targetId =
+            subMeta.targetCharacterId ||
+            (submission.slot_id.startsWith('voice:')
+              ? submission.slot_id.slice('voice:'.length)
+              : submission.slot_id)
+          if (s.slotId === targetId) {
+            return {
+              ...s,
+              hasVoiceProfile: true,
+              voiceSummary: subMeta.acousticVoiceDna?.summary || s.voiceSummary || null,
+              voiceProvider: subMeta.googleVoiceCloningKey ? 'google-clone' : 'google-dna',
+            }
+          }
+          return s
+        }
+        return s.slotId === submission.slot_id
           ? { ...s, referenceImageUrl: submission.blob_url, needsClientPhoto: false }
           : s
-      )
+      })
       await active.update({
         payload: { ...p, slots: nextSlots } as unknown as Record<string, unknown>,
       })
@@ -749,24 +964,45 @@ export async function promoteCustomerSubmissionToContinuity(input: {
         .replace(/^-|-$/g, '')
         .slice(0, 48)
       const assetKind =
-        submission.slot_type === 'character'
+        submission.slot_type === 'character' || submission.slot_type === 'character_voice'
           ? 'character'
           : submission.slot_type === 'wardrobe'
             ? 'wardrobe'
             : submission.slot_type === 'location' || submission.slot_type === 'location_version'
               ? 'location'
               : 'prop'
+      const subMeta = (submission.metadata || {}) as ClientAssetSubmissionMetadata
+      const extraTag =
+        submission.slot_type === 'character_voice'
+          ? 'client-voice'
+          : submission.slot_type === 'live_video'
+            ? 'client-video'
+            : submission.slot_type === 'story_audio'
+              ? 'client-audio'
+              : 'client-upload'
       const createdAsset = await createReferenceAsset({
         userId: input.ownerUserId,
         kind: assetKind,
         name: submission.slot_name,
-        description: submission.caption || `Uploaded by ${submission.customer_name}`,
-        referenceImageUrl: submission.blob_url,
-        tags: [`client:${slug || 'client'}`, 'client-upload'],
+        description:
+          subMeta.acousticVoiceDna?.summary ||
+          submission.caption ||
+          `Uploaded by ${submission.customer_name}`,
+        referenceImageUrl:
+          submission.slot_type === 'character_voice' ||
+          submission.slot_type === 'live_video' ||
+          submission.slot_type === 'story_audio'
+            ? undefined
+            : submission.blob_url,
+        tags: [`client:${slug || 'client'}`, extraTag],
         originProjectId: submission.project_id,
         attributes: {
           sourceSubmissionId: submission.id,
           customerName: submission.customer_name,
+          mediaUrl: submission.blob_url,
+          extractedAudioUrl: subMeta.extractedAudioUrl || undefined,
+          acousticVoiceDna: subMeta.acousticVoiceDna || undefined,
+          googleVoiceCloningKey: subMeta.googleVoiceCloningKey || undefined,
         } as any,
       })
       referenceAssetId = createdAsset.id

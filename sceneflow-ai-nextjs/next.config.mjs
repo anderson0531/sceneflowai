@@ -42,6 +42,8 @@ const nextConfig = {
     "/api/sfx/extract-clip-audio": ["./node_modules/ffmpeg-static/ffmpeg"],
     "/api/tts/google/voice-clone": ["./node_modules/ffmpeg-static/ffmpeg"],
     "/api/export/previs-stitch": ["./node_modules/ffmpeg-static/ffmpeg"],
+    "/api/share/continuity/[token]/media-finalize": ["./node_modules/ffmpeg-static/ffmpeg"],
+    "/api/share/continuity/[token]/mint-voice": ["./node_modules/ffmpeg-static/ffmpeg"],
   },
   // Static public/ assets, docs/, tests, and local encodes must never land in
   // serverless NFT bundles (outputFileTracingRoot is repoRoot = parent of

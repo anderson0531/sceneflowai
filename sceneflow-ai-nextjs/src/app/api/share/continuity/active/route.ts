@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import ClientAssetSubmission from '@/models/ClientAssetSubmission'
 import { assertProjectAccess, getAuthenticatedUserId } from '@/lib/projectAccess'
-import { getActiveContinuitySessionForProject } from '@/lib/continuity/continuityPortalService'
+import {
+  getActiveContinuitySessionForProject,
+  inferDefaultAllowVideoClips,
+} from '@/lib/continuity/continuityPortalService'
 import { ensureProducerPlatformSchema } from '@/lib/database/migrateProducerPlatform'
 
 export const runtime = 'nodejs'
@@ -39,8 +42,11 @@ export async function GET(req: NextRequest) {
       limit: 60,
     })
 
+    const defaultAllowVideoClips = inferDefaultAllowVideoClips(access.project)
+
     return NextResponse.json({
       success: true,
+      defaultAllowVideoClips,
       active: active
         ? {
             token: active.session.token,
@@ -48,6 +54,11 @@ export async function GET(req: NextRequest) {
             shareUrl: active.shareUrl,
             clientMode: Boolean(active.payload.clientMode),
             allowUploads: active.payload.allowUploads !== false,
+            allowVoiceCapture: active.payload.allowVoiceCapture !== false,
+            allowVideoClips:
+              active.payload.allowVideoClips !== undefined
+                ? Boolean(active.payload.allowVideoClips)
+                : defaultAllowVideoClips,
             locale: active.payload.locale,
             approvalStatus: active.payload.approvalStatus,
             roundsUsed: active.payload.roundsUsed,
@@ -65,7 +76,10 @@ export async function GET(req: NextRequest) {
         slotName: s.slot_name,
         customerName: s.customer_name,
         blobUrl: s.blob_url,
+        mimeType: s.mime_type,
+        fileSizeBytes: s.file_size_bytes,
         caption: s.caption,
+        metadata: s.metadata || null,
         approvalStatus: s.approval_status,
         createdAt: s.created_at,
       })),

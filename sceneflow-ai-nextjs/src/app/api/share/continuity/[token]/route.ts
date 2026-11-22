@@ -57,6 +57,8 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       projectTitle: payload.projectTitle || null,
       clientMode,
       allowUploads: payload.allowUploads !== false,
+      allowVoiceCapture: payload.allowVoiceCapture !== false,
+      allowVideoClips: Boolean(payload.allowVideoClips),
       locale,
       brandProfile: payload.brandProfileSnapshot,
       consentAccepted: clientMode ? Boolean(consent) : true,
@@ -74,7 +76,10 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
         slotType: s.slot_type,
         slotName: s.slot_name,
         blobUrl: s.blob_url,
+        mimeType: s.mime_type,
+        fileSizeBytes: s.file_size_bytes,
         caption: s.caption,
+        metadata: s.metadata || null,
         approvalStatus: s.approval_status,
         createdAt: s.created_at,
       })),
@@ -214,6 +219,14 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         typeof body.allowUploads === 'boolean'
           ? body.allowUploads
           : resolved.payload.allowUploads !== false,
+      allowVoiceCapture:
+        typeof body.allowVoiceCapture === 'boolean'
+          ? body.allowVoiceCapture
+          : resolved.payload.allowVoiceCapture !== false,
+      allowVideoClips:
+        typeof body.allowVideoClips === 'boolean'
+          ? body.allowVideoClips
+          : Boolean(resolved.payload.allowVideoClips),
       slots: mergedSlots,
     }
 
@@ -224,6 +237,8 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     return NextResponse.json({
       success: true,
       allowUploads: nextPayload.allowUploads !== false,
+      allowVoiceCapture: nextPayload.allowVoiceCapture !== false,
+      allowVideoClips: Boolean(nextPayload.allowVideoClips),
       slots: mergedSlots,
     })
   } catch (err: unknown) {

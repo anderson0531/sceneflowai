@@ -46,6 +46,8 @@ export async function ensureProducerPlatformSchema(): Promise<void> {
           ON workspace_members(invite_token) WHERE invite_token IS NOT NULL;
         ALTER TABLE producer_profiles
           ADD COLUMN IF NOT EXISTS locale_pm_routing JSONB NOT NULL DEFAULT '{}'::jsonb;
+        ALTER TABLE client_asset_submissions
+          ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
       `)
       schemaCompleted = true
       return
@@ -102,6 +104,7 @@ export async function ensureProducerPlatformSchema(): Promise<void> {
         mime_type VARCHAR(64) NOT NULL,
         file_size_bytes INTEGER NOT NULL DEFAULT 0,
         caption TEXT,
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
         quarantine_status VARCHAR(24) NOT NULL DEFAULT 'clean',
         quarantine_reason TEXT,
         approval_status VARCHAR(24) NOT NULL DEFAULT 'pending',

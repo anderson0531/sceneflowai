@@ -32,7 +32,10 @@ import {
 } from '@/lib/intake/clientPortalCopy'
 import type { BrandProfileSnapshot } from '@/lib/producer/producerProfileService'
 import type { ContinuityPortalSlot } from '@/lib/continuity/continuityPortalService'
+import type { ClientAssetSubmissionMetadata } from '@/models/ClientAssetSubmission'
 import { prepareImageForContinuityUpload } from '@/lib/continuity/clientImageDownscale'
+import { ContinuityVoiceCaptureDrawer } from './ContinuityVoiceCaptureDrawer'
+import { ContinuityLiveMediaSection } from './ContinuityLiveMediaSection'
 
 interface UploadedItem {
   id: string
@@ -40,7 +43,9 @@ interface UploadedItem {
   slotType: string
   slotName: string
   blobUrl: string
+  mimeType?: string
   caption: string | null
+  metadata?: ClientAssetSubmissionMetadata | null
   approvalStatus?: string
 }
 
@@ -56,6 +61,8 @@ export function ContinuityClientPortal({ token }: { token: string }) {
   const [projectTitle, setProjectTitle] = useState<string | null>(null)
   const [clientMode, setClientMode] = useState(false)
   const [allowUploads, setAllowUploads] = useState(true)
+  const [allowVoiceCapture, setAllowVoiceCapture] = useState(true)
+  const [allowVideoClips, setAllowVideoClips] = useState(false)
   const [brand, setBrand] = useState<BrandProfileSnapshot>({
     brandName: 'SceneFlow Studio',
     primaryColor: '#06b6d4',
@@ -116,6 +123,8 @@ export function ContinuityClientPortal({ token }: { token: string }) {
       if (data.projectTitle) setProjectTitle(data.projectTitle)
       setClientMode(Boolean(data.clientMode))
       setAllowUploads(data.allowUploads !== false)
+      setAllowVoiceCapture(data.allowVoiceCapture !== false)
+      setAllowVideoClips(Boolean(data.allowVideoClips))
       if (data.locale && !langParam) {
         const resolvedDataLocale = resolveClientPortalLocale(data.locale)
         if (
@@ -288,7 +297,23 @@ export function ContinuityClientPortal({ token }: { token: string }) {
         </h2>
         <div className="grid sm:grid-cols-2 gap-4">
           {group.map((slot) => {
-            const slotUploads = uploads.filter((u) => u.slotId === slot.slotId)
+            const slotUploads = uploads.filter(
+              (u) =>
+                u.slotId === slot.slotId &&
+                u.slotType !== 'character_voice' &&
+                u.slotType !== 'live_video' &&
+                u.slotType !== 'story_audio'
+            )
+            const characterVoiceUploads =
+              slot.slotType === 'character'
+                ? uploads.filter(
+                    (u) =>
+                      u.slotType === 'character_voice' &&
+                      (u.slotId === `voice:${slot.slotId}` ||
+                        u.slotId === slot.slotId ||
+                        u.metadata?.targetCharacterId === slot.slotId)
+                  )
+                : []
             const currentDecision = decisions[slot.slotId]?.decision || 'approved'
             const isUploading = uploadingSlotId === slot.slotId
             return (
@@ -407,6 +432,23 @@ export function ContinuityClientPortal({ token }: { token: string }) {
                       />
                     </label>
                   </div>
+                )}
+
+                {slot.slotType === 'character' && allowVoiceCapture && (
+                  <ContinuityVoiceCaptureDrawer
+                    token={token}
+                    characterSlotId={slot.slotId}
+                    characterName={slot.name}
+                    locale={locale}
+                    reviewerName={customerName}
+                    hasExistingVoiceProfile={slot.hasVoiceProfile}
+                    existingVoiceSummary={slot.voiceSummary}
+                    existingVoiceSubmissions={characterVoiceUploads}
+                    onUploaded={(submission) => {
+                      setUploads((prev) => [submission, ...prev])
+                      setUploadNotice(`Voice sample saved for ${slot.name}`)
+                    }}
+                  />
                 )}
 
                 {!roundLimitReached && (
@@ -852,6 +894,22 @@ export function ContinuityClientPortal({ token }: { token: string }) {
               MapPin
             )}
             {renderSection(['prop'], formatPortalCopy(locale, 'propsHeading'), Package)}
+
+            {allowVideoClips && (
+              <ContinuityLiveMediaSection
+                token={token}
+                locale={locale}
+                reviewerName={customerName}
+                characterSlots={slots.filter((s) => s.slotType === 'character')}
+                uploadedMedia={uploads.filter(
+                  (u) => u.slotType === 'live_video' || u.slotType === 'story_audio'
+                )}
+                onUploaded={(submission) => {
+                  setUploads((prev) => [submission, ...prev])
+                  setUploadNotice(`Clip saved: ${submission.slotName}`)
+                }}
+              />
+            )}
           </>
         )}
       </main>

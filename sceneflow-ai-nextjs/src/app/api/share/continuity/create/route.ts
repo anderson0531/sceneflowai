@@ -35,6 +35,10 @@ export async function POST(req: NextRequest) {
       ownerDisplayName: (authSession?.user as { name?: string })?.name || 'Studio Producer',
       clientMode: body.clientMode === true,
       allowUploads: body.allowUploads !== false,
+      allowVoiceCapture:
+        typeof body.allowVoiceCapture === 'boolean' ? body.allowVoiceCapture : undefined,
+      allowVideoClips:
+        typeof body.allowVideoClips === 'boolean' ? body.allowVideoClips : undefined,
       locale: body.locale,
       maxRounds: body.maxRounds,
       clientGroupSlug: body.clientGroupSlug,

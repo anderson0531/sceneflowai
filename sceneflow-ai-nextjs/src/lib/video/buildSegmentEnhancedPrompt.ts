@@ -36,6 +36,8 @@ export type SegmentReferenceImage = {
   subjectOrdinal?: number
   wardrobeDescription?: string
   identityTraits?: string
+  /** Optional measured vocal matching cue from client/character Acoustic Voice DNA */
+  veoVoiceCue?: string
 }
 
 export interface BuildSegmentEnhancedPromptInput {
@@ -52,6 +54,8 @@ export interface BuildSegmentEnhancedPromptInput {
     emotionalTone?: string
     dialogueBeat?: string
     suggestedAtmosphere?: string
+    /** Measured vocal matching cues for on-camera speaking characters (0-slot Veo voice match) */
+    speakerVoiceCues?: Array<{ characterName: string; cue: string }>
   }
 }
 
@@ -134,22 +138,46 @@ export function buildSegmentEnhancedPrompt(
     }
   }
 
-  if (audioContext && method !== 'FTV') {
+  if (method !== 'FTV') {
     const atmosphericGuidance: string[] = []
-    if (audioContext.emotionalTone) {
+    if (audioContext?.emotionalTone) {
       atmosphericGuidance.push(`Emotional atmosphere: ${audioContext.emotionalTone}`)
     }
-    if (audioContext.suggestedAtmosphere) {
+    if (audioContext?.suggestedAtmosphere) {
       atmosphericGuidance.push(`Visual mood: ${audioContext.suggestedAtmosphere}`)
     }
-    if (audioContext.hasNarration && audioContext.narrationText) {
+    if (audioContext?.hasNarration && audioContext.narrationText) {
       atmosphericGuidance.push(
         `Scene accompanies narration about: ${audioContext.narrationText.slice(0, 100)}...`
       )
     }
-    if (audioContext.dialogueBeat) {
+    if (audioContext?.dialogueBeat) {
       atmosphericGuidance.push(`Dialogue moment: ${audioContext.dialogueBeat}`)
     }
+
+    // Collect measured 0-slot Acoustic Voice DNA cues from audioContext and/or character refs
+    const voiceCues: string[] = []
+    const seenVoiceKeys = new Set<string>()
+    for (const item of audioContext?.speakerVoiceCues || []) {
+      const cue = item.cue?.trim()
+      const name = item.characterName?.trim()
+      if (cue && name && !seenVoiceKeys.has(name.toLowerCase())) {
+        seenVoiceKeys.add(name.toLowerCase())
+        voiceCues.push(`${name}: ${cue}`)
+      }
+    }
+    for (const ref of referenceImages || []) {
+      const cue = ref.veoVoiceCue?.trim()
+      const name = (ref.characterName || ref.name || '').trim()
+      if (cue && name && !seenVoiceKeys.has(name.toLowerCase())) {
+        seenVoiceKeys.add(name.toLowerCase())
+        voiceCues.push(`${name}: ${cue}`)
+      }
+    }
+    if (voiceCues.length > 0) {
+      atmosphericGuidance.push(`Character vocal delivery: ${voiceCues.join(' | ')}`)
+    }
+
     if (atmosphericGuidance.length > 0) {
       const atmosphericText = `[Audio-Visual Sync Context]\n${atmosphericGuidance.join('\n')}`
       enhancedPrompt = `${enhancedPrompt}\n\n${atmosphericText}`

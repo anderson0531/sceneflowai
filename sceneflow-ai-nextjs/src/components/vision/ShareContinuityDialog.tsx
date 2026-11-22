@@ -2,16 +2,20 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 import {
+  AudioLines,
   Check,
   CheckCircle2,
   Copy,
   ExternalLink,
+  Film,
   ImagePlus,
   Link2,
   Loader2,
+  Mic,
   RefreshCw,
   Share2,
   ShieldCheck,
+  Sparkles,
   Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -28,6 +32,7 @@ import {
   type ClientPortalLocale,
 } from '@/lib/intake/clientPortalCopy'
 import type { ContinuityPortalSlot } from '@/lib/continuity/continuityPortalService'
+import type { ClientAssetSubmissionMetadata } from '@/models/ClientAssetSubmission'
 
 interface ContinuitySubmissionRow {
   id: string
@@ -36,7 +41,10 @@ interface ContinuitySubmissionRow {
   slotName: string
   customerName: string
   blobUrl: string
+  mimeType?: string
+  fileSizeBytes?: number
   caption: string | null
+  metadata?: ClientAssetSubmissionMetadata | null
   approvalStatus: 'pending' | 'promoted' | 'rejected'
   createdAt: string
 }
@@ -47,6 +55,8 @@ interface ActiveContinuityShare {
   shareUrl: string
   clientMode: boolean
   allowUploads: boolean
+  allowVoiceCapture: boolean
+  allowVideoClips: boolean
   locale: ClientPortalLocale
   approvalStatus: 'pending_review' | 'changes_requested' | 'approved'
   roundsUsed: number
@@ -68,10 +78,13 @@ export function ShareContinuityDialog({
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
   const [promotingId, setPromotingId] = useState<string | null>(null)
+  const [mintingId, setMintingId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   const [locale, setLocale] = useState<ClientPortalLocale>('en')
   const [allowUploads, setAllowUploads] = useState(true)
+  const [allowVoiceCapture, setAllowVoiceCapture] = useState(true)
+  const [allowVideoClips, setAllowVideoClips] = useState(false)
   const [clientMode, setClientMode] = useState(false)
 
   const [active, setActive] = useState<ActiveContinuityShare | null>(null)
@@ -91,7 +104,11 @@ export function ShareContinuityDialog({
       if (data.active) {
         setLocale(data.active.locale || 'en')
         setAllowUploads(data.active.allowUploads !== false)
+        setAllowVoiceCapture(data.active.allowVoiceCapture !== false)
+        setAllowVideoClips(Boolean(data.active.allowVideoClips))
         setClientMode(Boolean(data.active.clientMode))
+      } else if (typeof data.defaultAllowVideoClips === 'boolean') {
+        setAllowVideoClips(data.defaultAllowVideoClips)
       }
       setSubmissions(Array.isArray(data.submissions) ? data.submissions : [])
     } catch {
@@ -127,6 +144,8 @@ export function ShareContinuityDialog({
           projectId,
           locale,
           allowUploads,
+          allowVoiceCapture,
+          allowVideoClips,
           clientMode,
         }),
       })
@@ -164,7 +183,12 @@ export function ShareContinuityDialog({
       const res = await fetch(`/api/share/continuity/${encodeURIComponent(active.token)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'resync', allowUploads }),
+        body: JSON.stringify({
+          action: 'resync',
+          allowUploads,
+          allowVoiceCapture,
+          allowVideoClips,
+        }),
       })
       if (res.ok) {
         await loadStatus()
@@ -231,6 +255,30 @@ export function ShareContinuityDialog({
     await loadStatus()
   }
 
+  const handleMintGoogleClone = async (submissionId: string) => {
+    const token = active?.token || 'manage'
+    setMintingId(submissionId)
+    try {
+      const res = await fetch(`/api/share/continuity/${encodeURIComponent(token)}/mint-voice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submissionId }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        toast.error(data.error || 'Google voice cloning is not ready yet; Acoustic Voice DNA remains active.')
+        return
+      }
+      toast.success('Google Chirp 3 Instant Custom Voice key minted!')
+      await loadStatus()
+      onPromoted?.()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to mint Google voice clone')
+    } finally {
+      setMintingId(null)
+    }
+  }
+
   return (
     <>
       <Button
@@ -292,6 +340,30 @@ export function ShareContinuityDialog({
                       className="rounded border-slate-700"
                     />
                     <span>Allow mobile gallery &amp; camera photo uploads</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={allowVoiceCapture}
+                      onChange={(e) => setAllowVoiceCapture(e.target.checked)}
+                      className="rounded border-slate-700"
+                    />
+                    <span className="inline-flex items-center gap-1">
+                      <Mic className="w-3.5 h-3.5 text-cyan-400" />
+                      Allow character voice capture (Voice DNA &amp; Cloning)
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={allowVideoClips}
+                      onChange={(e) => setAllowVideoClips(e.target.checked)}
+                      className="rounded border-slate-700"
+                    />
+                    <span className="inline-flex items-center gap-1">
+                      <Film className="w-3.5 h-3.5 text-amber-400" />
+                      Allow live video &amp; audio clip uploads (Memoirs / Intros)
+                    </span>
                   </label>
                   <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
                     <input
@@ -406,41 +478,124 @@ export function ShareContinuityDialog({
               )}
             </div>
 
-            {/* Incoming Mobile Photo Uploads */}
+            {/* Incoming Client Uploads (Photos, Voice Samples, Live Video & Audio Clips) */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                   <ImagePlus className="w-4 h-4 text-cyan-400" />
-                  Uploaded Continuity Photos ({submissions.length})
+                  Uploaded Continuity Assets ({submissions.length})
                 </h4>
               </div>
               {submissions.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-slate-800 px-4 py-4 text-xs text-slate-500">
-                  No photos uploaded via shared link yet. When a client or collaborator uploads
-                  photos from their phone, they appear here ready for 1-click promotion.
+                  No photos, voice samples, or video clips uploaded via shared link yet. When a
+                  client or collaborator uploads assets from their phone, they appear here ready for
+                  1-click promotion.
                 </p>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {submissions.map((sub) => (
-                    <div
-                      key={sub.id}
-                      className="rounded-xl border border-slate-800 bg-slate-900/60 p-3 flex gap-3"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={sub.blobUrl}
-                        alt={sub.slotName}
-                        className="w-16 h-16 rounded-lg object-cover border border-slate-700 shrink-0"
-                      />
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <p className="text-xs font-semibold text-white truncate">{sub.slotName}</p>
-                        <p className="text-[11px] text-slate-400 truncate">
-                          Uploaded by {sub.customerName}
-                        </p>
-                        {sub.caption && (
-                          <p className="text-[11px] text-slate-300 line-clamp-2">{sub.caption}</p>
+                  {submissions.map((sub) => {
+                    const isVoice = sub.slotType === 'character_voice'
+                    const isVideo =
+                      sub.slotType === 'live_video' || Boolean(sub.mimeType?.startsWith('video/'))
+                    const isAudio =
+                      isVoice ||
+                      sub.slotType === 'story_audio' ||
+                      Boolean(sub.mimeType?.startsWith('audio/'))
+                    const meta = sub.metadata
+                    const canRetryMint =
+                      Boolean(meta?.consentAudioBlobUrl) && !meta?.googleVoiceCloningKey
+                    return (
+                      <div
+                        key={sub.id}
+                        className="rounded-xl border border-slate-800 bg-slate-900/60 p-3 flex flex-col gap-2.5"
+                      >
+                        <div className="flex gap-3">
+                          {isVideo ? (
+                            <div className="w-16 h-16 rounded-lg bg-slate-950 border border-amber-500/30 flex items-center justify-center shrink-0">
+                              <Film className="w-6 h-6 text-amber-400" />
+                            </div>
+                          ) : isAudio ? (
+                            <div className="w-16 h-16 rounded-lg bg-slate-950 border border-cyan-500/30 flex items-center justify-center shrink-0">
+                              <AudioLines className="w-6 h-6 text-cyan-400" />
+                            </div>
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={sub.blobUrl}
+                              alt={sub.slotName}
+                              className="w-16 h-16 rounded-lg object-cover border border-slate-700 shrink-0"
+                            />
+                          )}
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex items-start justify-between gap-1.5">
+                              <p className="text-xs font-semibold text-white truncate">
+                                {sub.slotName}
+                              </p>
+                              {(isVoice || isVideo || isAudio) && (
+                                <span className="shrink-0 rounded-full bg-slate-800 px-1.5 py-0.5 text-[10px] text-cyan-300">
+                                  {isVoice ? 'Voice' : isVideo ? 'Video' : 'Audio'}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-400 truncate">
+                              Uploaded by {sub.customerName}
+                              {meta?.durationSeconds ? ` · ${Math.round(meta.durationSeconds)}s` : ''}
+                            </p>
+                            {meta?.acousticVoiceDna?.summary && (
+                              <p className="text-[11px] text-cyan-200/90 line-clamp-2">
+                                {meta.acousticVoiceDna.summary}
+                              </p>
+                            )}
+                            {sub.caption && (
+                              <p className="text-[11px] text-slate-300 line-clamp-2">
+                                {sub.caption}
+                              </p>
+                            )}
+                            {meta?.googleVoiceCloningKey ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-300">
+                                <Sparkles className="w-3 h-3" />
+                                Google Custom Voice Active (0 slots)
+                              </span>
+                            ) : meta?.acousticVoiceDna ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-cyan-300">
+                                <Sparkles className="w-3 h-3" />
+                                Acoustic Voice DNA Ready (Veo + Gemini)
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        {isVideo && (
+                          <video
+                            controls
+                            playsInline
+                            src={sub.blobUrl}
+                            className="w-full max-h-36 rounded-lg bg-black border border-slate-800"
+                          />
                         )}
-                        <div className="pt-1 flex items-center gap-2">
+                        {isAudio && (
+                          <audio
+                            controls
+                            src={meta?.extractedAudioUrl || sub.blobUrl}
+                            className="w-full h-8"
+                          />
+                        )}
+                        {isVideo && meta?.extractedAudioUrl && (
+                          <div className="space-y-1">
+                            <p className="text-[10px] text-emerald-300">
+                              Extracted Narration Stem:
+                            </p>
+                            <audio controls src={meta.extractedAudioUrl} className="w-full h-7" />
+                          </div>
+                        )}
+                        {meta?.transcript && (
+                          <p className="text-[10px] text-slate-400 line-clamp-2 italic">
+                            &ldquo;{meta.transcript}&rdquo;
+                          </p>
+                        )}
+
+                        <div className="pt-1 flex flex-wrap items-center gap-2">
                           {sub.approvalStatus === 'promoted' ? (
                             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400">
                               <CheckCircle2 className="w-3.5 h-3.5" />
@@ -456,7 +611,13 @@ export function ShareContinuityDialog({
                                 onClick={() => void handlePromote(sub.id)}
                                 className="rounded-md bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 text-[11px] font-semibold text-white disabled:opacity-50"
                               >
-                                {promotingId === sub.id ? 'Promoting…' : 'Use in Continuity'}
+                                {promotingId === sub.id
+                                  ? 'Promoting…'
+                                  : isVoice
+                                    ? 'Apply Character Voice'
+                                    : isVideo || isAudio
+                                      ? 'Promote to Media Library'
+                                      : 'Use in Continuity'}
                               </button>
                               <button
                                 type="button"
@@ -467,10 +628,20 @@ export function ShareContinuityDialog({
                               </button>
                             </>
                           )}
+                          {canRetryMint && (
+                            <button
+                              type="button"
+                              disabled={mintingId === sub.id}
+                              onClick={() => void handleMintGoogleClone(sub.id)}
+                              className="rounded-md border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 px-2 py-1 text-[10px] font-semibold text-purple-200 disabled:opacity-50"
+                            >
+                              {mintingId === sub.id ? 'Minting…' : 'Mint Google Clone'}
+                            </button>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
