@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Shirt,
   User as UserIcon,
+  UserPlus,
 } from 'lucide-react'
 import { getLocaleDirection } from '@/i18n/locale'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
@@ -31,17 +32,22 @@ import {
   type ClientPortalLocale,
 } from '@/lib/intake/clientPortalCopy'
 import type { BrandProfileSnapshot } from '@/lib/producer/producerProfileService'
-import type { ContinuityPortalSlot } from '@/lib/continuity/continuityPortalService'
+import type {
+  ContinuityPortalSlot,
+  ContinuityScenePromptCard,
+} from '@/lib/continuity/continuityPortalService'
 import type { ClientAssetSubmissionMetadata } from '@/models/ClientAssetSubmission'
 import { prepareImageForContinuityUpload } from '@/lib/continuity/clientImageDownscale'
 import { ContinuityVoiceCaptureDrawer } from './ContinuityVoiceCaptureDrawer'
 import { ContinuityLiveMediaSection } from './ContinuityLiveMediaSection'
+import { PhotoVoiceNoteButton } from './PhotoVoiceNoteButton'
 
 interface UploadedItem {
   id: string
   slotId: string
   slotType: string
   slotName: string
+  customerName?: string
   blobUrl: string
   mimeType?: string
   caption: string | null
@@ -52,6 +58,7 @@ interface UploadedItem {
 export function ContinuityClientPortal({ token }: { token: string }) {
   const searchParams = useSearchParams()
   const langParam = searchParams.get('lang')
+  const isFamilyContributorInvite = searchParams.get('contributor') === '1'
 
   const [locale, setLocale] = useState<ClientPortalLocale>(() =>
     resolveClientPortalLocale(langParam)
@@ -93,7 +100,9 @@ export function ContinuityClientPortal({ token }: { token: string }) {
   }, [nameTranscript])
 
   const [slots, setSlots] = useState<ContinuityPortalSlot[]>([])
+  const [scenePromptCards, setScenePromptCards] = useState<ContinuityScenePromptCard[]>([])
   const [uploads, setUploads] = useState<UploadedItem[]>([])
+  const [inviteCopied, setInviteCopied] = useState(false)
   const [roundsUsed, setRoundsUsed] = useState(0)
   const [maxRounds, setMaxRounds] = useState(3)
   const [approvalStatus, setApprovalStatus] = useState<string>('pending_review')
@@ -138,12 +147,23 @@ export function ContinuityClientPortal({ token }: { token: string }) {
           setLocale(resolvedDataLocale)
         }
       }
-      setConsentAccepted(Boolean(data.consentAccepted))
-      if (data.customerName) setCustomerName(data.customerName)
+      const localContributorKey = `continuity_contributor:${token}`
+      const savedContributorName =
+        typeof window !== 'undefined' ? window.sessionStorage.getItem(localContributorKey) : null
+      if (isFamilyContributorInvite && !savedContributorName) {
+        // Invited family member signs in with their own name & media-rights consent
+        setConsentAccepted(false)
+        setCustomerName('')
+      } else {
+        setConsentAccepted(Boolean(data.consentAccepted) || Boolean(savedContributorName))
+        if (savedContributorName) setCustomerName(savedContributorName)
+        else if (data.customerName) setCustomerName(data.customerName)
+      }
       if (data.generalNotes) setGeneralNotes(data.generalNotes)
 
       const loadedSlots: ContinuityPortalSlot[] = Array.isArray(data.slots) ? data.slots : []
       setSlots(loadedSlots)
+      setScenePromptCards(Array.isArray(data.scenePromptCards) ? data.scenePromptCards : [])
       const initialDecisions: Record<
         string,
         { decision: 'approved' | 'revision_requested'; note: string }
@@ -164,7 +184,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
     } finally {
       setLoading(false)
     }
-  }, [token, langParam])
+  }, [token, langParam, isFamilyContributorInvite])
 
   useEffect(() => {
     void loadPortal()
@@ -197,6 +217,9 @@ export function ContinuityClientPortal({ token }: { token: string }) {
         return
       }
       setConsentAccepted(true)
+      if (typeof window !== 'undefined' && customerName.trim()) {
+        window.sessionStorage.setItem(`continuity_contributor:${token}`, customerName.trim())
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error')
     } finally {
@@ -367,15 +390,35 @@ export function ContinuityClientPortal({ token }: { token: string }) {
                         count: slotUploads.length,
                       })}
                     </p>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                       {slotUploads.map((u) => (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          key={u.id}
-                          src={u.blobUrl}
-                          alt={u.slotName}
-                          className="h-20 w-full rounded-lg object-cover border border-emerald-500/40"
-                        />
+                        <div key={u.id} className="space-y-1">
+                          <div className="relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={u.blobUrl}
+                              alt={u.slotName}
+                              className="h-24 w-full rounded-lg object-cover border border-emerald-500/40"
+                            />
+                            {u.customerName && (
+                              <span className="absolute bottom-1 left-1 right-1 truncate rounded bg-black/70 px-1.5 py-0.5 text-[9px] text-slate-200">
+                                by {u.customerName}
+                              </span>
+                            )}
+                          </div>
+                          {allowUploads && (
+                            <PhotoVoiceNoteButton
+                              token={token}
+                              submission={u}
+                              onUpdated={(updated) => {
+                                setUploads((prev) =>
+                                  prev.map((item) => (item.id === updated.id ? updated : item))
+                                )
+                                setUploadNotice(`Photo story saved for ${u.slotName}`)
+                              }}
+                            />
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -579,6 +622,32 @@ export function ContinuityClientPortal({ token }: { token: string }) {
         </div>
 
         <div className="flex items-center gap-2">
+          {consentAccepted && (
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window === 'undefined') return
+                const inviteUrl = `${window.location.origin}/share/continuity/${encodeURIComponent(token)}?lang=${encodeURIComponent(locale)}&contributor=1`
+                void navigator.clipboard?.writeText(inviteUrl).catch(() => {})
+                setInviteCopied(true)
+                setUploadNotice(
+                  'Family contributor link copied! Anyone who opens it can sign in with their own name and add photos or memories.'
+                )
+                setTimeout(() => setInviteCopied(false), 2500)
+              }}
+              title="Copy a link so family members or teammates can add their own photos and memories"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/20 px-2.5 py-1.5 text-xs font-medium text-cyan-200 transition"
+            >
+              {inviteCopied ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              ) : (
+                <UserPlus className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+              )}
+              <span className="hidden sm:inline">
+                {inviteCopied ? 'Invite Copied' : 'Invite Family'}
+              </span>
+            </button>
+          )}
           <Globe className="w-4 h-4 text-slate-400 shrink-0" />
           <select
             aria-label={formatPortalCopy(locale, 'languageLabel')}
@@ -901,6 +970,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
                 locale={locale}
                 reviewerName={customerName}
                 characterSlots={slots.filter((s) => s.slotType === 'character')}
+                scenePromptCards={scenePromptCards}
                 uploadedMedia={uploads.filter(
                   (u) => u.slotType === 'live_video' || u.slotType === 'story_audio'
                 )}

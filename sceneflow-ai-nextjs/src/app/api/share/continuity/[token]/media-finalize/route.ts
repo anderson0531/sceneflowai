@@ -90,6 +90,9 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       usageIntent?: ClientMediaUsageIntent
       targetCharacterId?: string | null
       targetCharacterName?: string | null
+      linkedSceneId?: string | null
+      linkedSceneNumber?: number | null
+      linkedSceneTitle?: string | null
       consentAudioBlobUrl?: string | null
       caption?: string | null
       reviewerName?: string | null
@@ -171,6 +174,12 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       usageIntent,
       targetCharacterId: body.targetCharacterId?.trim() || null,
       targetCharacterName: body.targetCharacterName?.trim() || null,
+      linkedSceneId: body.linkedSceneId?.trim() || null,
+      linkedSceneNumber:
+        typeof body.linkedSceneNumber === 'number' && Number.isFinite(body.linkedSceneNumber)
+          ? Math.round(body.linkedSceneNumber)
+          : null,
+      linkedSceneTitle: body.linkedSceneTitle?.trim().slice(0, 120) || null,
       languageCode,
       consentAudioBlobUrl,
       extractedAudioUrl: null,
@@ -178,6 +187,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       durationSeconds: null,
       aspectOrientation: null,
       transcript: null,
+      chapters: null,
+      bestVoiceSliceWindow: null,
       acousticVoiceDna: null,
       googleVoiceCloningKey: null,
       voiceCloneStatus: consentAudioBlobUrl ? 'tier2_dna_ready' : 'pending_consent',
@@ -229,19 +240,24 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
               }
             }
 
-            // Tier 2: Multimodal Acoustic Voice DNA + Verbatim Transcript (0 saved slots!)
+            // Tier 2: Multimodal Acoustic Voice DNA + Verbatim Transcript + Auto-Chapters (0 saved slots!)
             const analysisAudio = polishedMp3Buffer || (mediaKind === 'audio' ? mediaBuffer : null)
             const analysisMime = polishedMp3Buffer ? 'audio/mpeg' : mimeType
             if (analysisAudio && analysisAudio.length > 0) {
               try {
-                const { dna, transcript } = await analyzeAudioToAcousticVoiceDna({
-                  audioBuffer: analysisAudio,
-                  mimeType: analysisMime,
-                  speakerName: body.targetCharacterName || slotName,
-                  languageCode,
-                })
+                const { dna, transcript, chapters, bestVoiceSliceWindow } =
+                  await analyzeAudioToAcousticVoiceDna({
+                    audioBuffer: analysisAudio,
+                    mimeType: analysisMime,
+                    speakerName: body.targetCharacterName || slotName,
+                    languageCode,
+                    includeChapters: slotType === 'live_video' || slotType === 'story_audio',
+                    durationSeconds: meta.durationSeconds,
+                  })
                 meta.acousticVoiceDna = dna
                 meta.transcript = transcript || null
+                if (chapters.length > 0) meta.chapters = chapters
+                if (bestVoiceSliceWindow) meta.bestVoiceSliceWindow = bestVoiceSliceWindow
                 if (meta.voiceCloneStatus === 'pending_consent') {
                   meta.voiceCloneStatus = 'tier2_dna_ready'
                 }
@@ -301,8 +317,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     }
 
     const uploaderName =
-      consent?.customer_name ||
       body.reviewerName?.trim().slice(0, 160) ||
+      consent?.customer_name ||
       payload.lastReviewerName ||
       'Reviewer'
 
@@ -379,6 +395,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         slotId: submission.slot_id,
         slotType: submission.slot_type,
         slotName: submission.slot_name,
+        customerName: submission.customer_name,
         blobUrl: submission.blob_url,
         mimeType: submission.mime_type,
         fileSizeBytes: submission.file_size_bytes,

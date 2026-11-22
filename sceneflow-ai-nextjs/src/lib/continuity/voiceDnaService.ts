@@ -6,7 +6,10 @@ import { inspectMediaWithFfmpeg, runFfmpeg } from '@/lib/ffmpeg/runFfmpeg'
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import { generateWithVision } from '@/lib/vertexai/gemini'
 import { pickGeminiBaseVoice } from '@/lib/tts/pickGeminiBaseVoice'
-import type { AcousticVoiceDnaPayload } from '@/models/ClientAssetSubmission'
+import type {
+  AcousticVoiceDnaPayload,
+  ClientMediaChapter,
+} from '@/models/ClientAssetSubmission'
 import {
   getGoogleVoiceCloneConsentForLocale,
   resolveGoogleVoiceCloneLanguageCode,
@@ -255,10 +258,48 @@ export async function extractPolishedSpeechAssetsFromMedia(
   }
 }
 
+export function normalizeClientMediaChapters(
+  rawChapters: unknown,
+  maxDurationSec?: number | null
+): ClientMediaChapter[] {
+  if (!Array.isArray(rawChapters)) return []
+  const out: ClientMediaChapter[] = []
+  for (const item of rawChapters.slice(0, 12)) {
+    if (!item || typeof item !== 'object') continue
+    const rec = item as Record<string, unknown>
+    const startRaw = Number(rec.startSeconds ?? rec.start_seconds ?? 0)
+    const endRaw = Number(rec.endSeconds ?? rec.end_seconds ?? startRaw + 10)
+    if (!Number.isFinite(startRaw) || !Number.isFinite(endRaw)) continue
+    const startSeconds = Math.max(0, Math.round(startRaw * 10) / 10)
+    const capEnd =
+      maxDurationSec && Number.isFinite(maxDurationSec)
+        ? Math.min(maxDurationSec, endRaw)
+        : endRaw
+    const endSeconds = Math.max(startSeconds + 1, Math.round(capEnd * 10) / 10)
+    const title = String(rec.title || `Chapter ${out.length + 1}`)
+      .trim()
+      .slice(0, 90)
+    const quote = String(rec.quote || rec.summary || '')
+      .trim()
+      .slice(0, 260)
+    const usageRaw = String(rec.suggestedUsage ?? rec.suggested_usage ?? '').toLowerCase()
+    const suggestedUsage: 'live_intro' | 'reenactment_vo' =
+      usageRaw === 'live_intro' ? 'live_intro' : 'reenactment_vo'
+    out.push({ title, startSeconds, endSeconds, quote, suggestedUsage })
+  }
+  return out
+}
+
 export function normalizeAcousticVoiceDna(
   raw: Record<string, unknown>,
-  speakerName?: string
-): { dna: AcousticVoiceDnaPayload; transcript: string } {
+  speakerName?: string,
+  durationSeconds?: number | null
+): {
+  dna: AcousticVoiceDnaPayload
+  transcript: string
+  chapters: ClientMediaChapter[]
+  bestVoiceSliceWindow: { startSeconds: number; endSeconds: number; reason?: string } | null
+} {
   const vaRaw = (raw.vocalAttributes || raw.vocal_attributes || raw) as Record<string, unknown>
 
   const registerRaw = String(vaRaw.register || 'mid').trim().toLowerCase()
@@ -342,6 +383,24 @@ export function normalizeAcousticVoiceDna(
   }
 
   const transcript = String(raw.transcript || '').trim().slice(0, 4000)
+  const chapters = normalizeClientMediaChapters(raw.chapters, durationSeconds)
+
+  let bestVoiceSliceWindow: { startSeconds: number; endSeconds: number; reason?: string } | null =
+    null
+  const rawWin = (raw.bestVoiceSliceWindow || raw.best_voice_slice_window) as
+    | Record<string, unknown>
+    | undefined
+  if (rawWin && typeof rawWin === 'object') {
+    const s = Number(rawWin.startSeconds ?? rawWin.start_seconds)
+    const e = Number(rawWin.endSeconds ?? rawWin.end_seconds)
+    if (Number.isFinite(s) && Number.isFinite(e) && e > s + 2) {
+      bestVoiceSliceWindow = {
+        startSeconds: Math.max(0, Math.round(s * 10) / 10),
+        endSeconds: Math.round(e * 10) / 10,
+        reason: rawWin.reason ? String(rawWin.reason).trim().slice(0, 120) : undefined,
+      }
+    }
+  }
 
   return {
     dna: {
@@ -354,22 +413,32 @@ export function normalizeAcousticVoiceDna(
       recommendedGeminiBaseVoice,
     },
     transcript,
+    chapters,
+    bestVoiceSliceWindow,
   }
 }
 
 /**
- * Multimodal Audio -> Acoustic Voice DNA + Verbatim Transcript via Gemini Flash.
+ * Multimodal Audio -> Acoustic Voice DNA + Verbatim Transcript + Auto-Chapters via Gemini Flash.
  * Produces a permanent 0-slot voice representation stored in PostgreSQL that drives:
  *   - Veo in-scene dialogue voice matching (`veoVoiceCue`)
  *   - Gemini 3.8 Flash JIT LRU voice pool (`voiceDesignPrompt`)
  *   - 0-slot Gemini Base Voice + Director Notes (`recommendedGeminiBaseVoice` + `vocalAttributes`)
+ *   - Time-coded story chapters (`chapters`) and cleanest voice cloning slice (`bestVoiceSliceWindow`)
  */
 export async function analyzeAudioToAcousticVoiceDna(input: {
   audioBuffer: Buffer
   mimeType: string
   speakerName?: string
   languageCode?: string
-}): Promise<{ dna: AcousticVoiceDnaPayload; transcript: string }> {
+  includeChapters?: boolean
+  durationSeconds?: number | null
+}): Promise<{
+  dna: AcousticVoiceDnaPayload
+  transcript: string
+  chapters: ClientMediaChapter[]
+  bestVoiceSliceWindow: { startSeconds: number; endSeconds: number; reason?: string } | null
+}> {
   // Keep inline audio payload comfortably under Vertex inlineData limits (~6 MB max)
   const cappedAudio =
     input.audioBuffer.length > 6 * 1024 * 1024
@@ -379,10 +448,32 @@ export async function analyzeAudioToAcousticVoiceDna(input: {
   const safeMime =
     input.mimeType.startsWith('audio/') ? input.mimeType : 'audio/mpeg'
 
-  const prompt = `You are a master Voice Casting Director & Acoustic Analyst.
+  const chapterInstructions = input.includeChapters
+    ? `,
+  "chapters": [
+    {
+      "title": "Short chapter title (e.g. Arriving in Chicago)",
+      "startSeconds": 0,
+      "endSeconds": 18,
+      "quote": "Short memorable verbatim quote from this segment",
+      "suggestedUsage": "live_intro" | "reenactment_vo"
+    }
+  ],
+  "bestVoiceSliceWindow": {
+    "startSeconds": 2,
+    "endSeconds": 16,
+    "reason": "Clean uninterrupted solo speech without pauses or background noise"
+  }`
+    : ''
+
+  const prompt = `You are a master Voice Casting Director, Documentary Story Editor, & Acoustic Analyst.
 Listen carefully to the attached real human voice recording${input.speakerName ? ` of "${input.speakerName}"` : ''}.
 
-Analyze the speaker's EXACT acoustic vocal characteristics and transcribe what they say verbatim.
+Analyze the speaker's EXACT acoustic vocal characteristics and transcribe what they say verbatim.${
+    input.includeChapters
+      ? ' Also break the recording into 1 to 8 natural time-coded story chapters (with timestamps in seconds) and identify the cleanest 10-18 second uninterrupted speech window for voice cloning.'
+      : ''
+  }
 Return ONLY valid JSON matching this exact structure:
 {
   "summary": "Short 1-line label, e.g. Warm 70s Midwestern baritone, gentle gravel, ~120 WPM",
@@ -401,7 +492,7 @@ Return ONLY valid JSON matching this exact structure:
   },
   "voiceDesignPrompt": "Purely vocal/acoustic description under 260 characters suitable for synthesizing a matching voice. Do NOT include any names, clothes, appearance, or script lines.",
   "veoVoiceCue": "Concise 1-sentence vocal matching instruction for on-camera video dialogue (age, timbre, accent, pace, warmth).",
-  "transcript": "Accurate verbatim transcript of the spoken words in the recording (in the spoken language)."
+  "transcript": "Accurate verbatim transcript of the spoken words in the recording (in the spoken language)."${chapterInstructions}
 }
 
 STRICT RULES:
@@ -421,7 +512,7 @@ STRICT RULES:
     ],
     {
       temperature: 0.15,
-      maxOutputTokens: 2048,
+      maxOutputTokens: input.includeChapters ? 3072 : 2048,
       responseMimeType: 'application/json',
       thinkingLevel: 'minimal',
     }
@@ -433,7 +524,45 @@ STRICT RULES:
     .replace(/\s*```$/i, '')
 
   const parsed = JSON.parse(cleaned) as Record<string, unknown>
-  return normalizeAcousticVoiceDna(parsed, input.speakerName)
+  return normalizeAcousticVoiceDna(parsed, input.speakerName, input.durationSeconds)
+}
+
+/**
+ * Fast Gemini multimodal transcription for "Tell the story behind this photo" voice notes.
+ */
+export async function transcribePhotoVoiceNote(input: {
+  audioBuffer: Buffer
+  mimeType: string
+  slotName?: string
+}): Promise<string> {
+  const cappedAudio =
+    input.audioBuffer.length > 4 * 1024 * 1024
+      ? input.audioBuffer.subarray(0, 4 * 1024 * 1024)
+      : input.audioBuffer
+  const safeMime = input.mimeType.startsWith('audio/') ? input.mimeType : 'audio/webm'
+
+  const res = await generateWithVision(
+    [
+      {
+        text: `Transcribe this short spoken memory about a family/reference photo${
+          input.slotName ? ` ("${input.slotName}")` : ''
+        }. Return ONLY the clean verbatim transcript text in the spoken language, with no quotes or preamble.`,
+      },
+      {
+        inlineData: {
+          mimeType: safeMime,
+          data: cappedAudio.toString('base64'),
+        },
+      },
+    ],
+    {
+      temperature: 0.1,
+      maxOutputTokens: 1024,
+      thinkingLevel: 'minimal',
+    }
+  )
+
+  return res.text.trim().replace(/^["']|["']$/g, '').slice(0, 2000)
 }
 
 export type GoogleVoiceCloneResult =

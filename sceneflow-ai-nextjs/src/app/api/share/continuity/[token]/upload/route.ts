@@ -104,7 +104,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     })
 
     const uploaderName =
-      consent?.customer_name || reviewerNameRaw || payload.lastReviewerName || 'Reviewer'
+      reviewerNameRaw || consent?.customer_name || payload.lastReviewerName || 'Reviewer'
 
     const submission = await ClientAssetSubmission.create({
       collab_session_id: session.id,
@@ -171,8 +171,10 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         slotId: submission.slot_id,
         slotType: submission.slot_type,
         slotName: submission.slot_name,
+        customerName: submission.customer_name,
         blobUrl: submission.blob_url,
         caption: submission.caption,
+        metadata: submission.metadata || null,
         approvalStatus: submission.approval_status,
       },
     })

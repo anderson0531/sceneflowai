@@ -44,6 +44,14 @@ export interface AcousticVoiceDnaPayload {
   recommendedGeminiBaseVoice?: string
 }
 
+export interface ClientMediaChapter {
+  title: string
+  startSeconds: number
+  endSeconds: number
+  quote: string
+  suggestedUsage: 'live_intro' | 'reenactment_vo'
+}
+
 export interface ClientAssetSubmissionMetadata {
   mediaKind?: 'image' | 'audio' | 'video'
   usageIntent?: ClientMediaUsageIntent
@@ -51,6 +59,20 @@ export interface ClientAssetSubmissionMetadata {
   targetCharacterName?: string | null
   languageCode?: string | null
   durationSeconds?: number | null
+  /** Optional scene linkage when recorded via Guided Teleprompter / Scene Intro Prompt Card */
+  linkedSceneId?: string | null
+  linkedSceneNumber?: number | null
+  linkedSceneTitle?: string | null
+  /** Optional voice story recorded right after uploading a vintage photo */
+  photoVoiceNoteUrl?: string | null
+  photoVoiceNoteTranscript?: string | null
+  photoVoiceNoteDurationSec?: number | null
+  /** Whether a promoted archival photo should be used as AI ref or Ken Burns documentary photo */
+  archivalDisplayMode?: 'ai_reference' | 'archival_ken_burns' | null
+  /** Auto-detected story chapters from longer interview/story recordings */
+  chapters?: ClientMediaChapter[] | null
+  /** Cleanest uninterrupted speech window detected for voice cloning */
+  bestVoiceSliceWindow?: { startSeconds: number; endSeconds: number; reason?: string } | null
   /** Optional spoken consent WAV/audio Blob URL for Google Chirp 3 Instant Custom Voice */
   consentAudioBlobUrl?: string | null
   /** Clean loudness-normalized speech stem (MP3) extracted from uploaded video/audio */

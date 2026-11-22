@@ -49,11 +49,12 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
     }
 
     const { session, payload } = resolved
+    const allowPhotos = payload.allowUploads !== false
     const allowVoice = payload.allowVoiceCapture !== false
     const allowVideo = Boolean(payload.allowVideoClips)
-    if (!allowVoice && !allowVideo) {
+    if (!allowPhotos && !allowVoice && !allowVideo) {
       return NextResponse.json(
-        { error: 'Voice and video uploads are disabled on this continuity link' },
+        { error: 'Uploads are disabled on this continuity link' },
         { status: 403 }
       )
     }
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
         if (kind === 'video' && !allowVideo) {
           throw new Error('Live video uploads are disabled on this continuity link')
         }
-        if (kind === 'audio' && !allowVoice && !allowVideo) {
+        if (kind === 'audio' && !allowVoice && !allowVideo && !allowPhotos) {
           throw new Error('Audio uploads are disabled on this continuity link')
         }
 

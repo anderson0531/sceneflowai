@@ -35,6 +35,16 @@ export interface ContinuityPortalSlot {
   clientNote?: string
 }
 
+export interface ContinuityScenePromptCard {
+  sceneId: string
+  sceneNumber: number
+  title: string
+  promptCue: string
+  eraOrSetting?: string
+  suggestedDurationSec: number
+  deliveryFormatHint?: 'archival_photo' | 'ai_reenactment' | 'live_subject_intro'
+}
+
 export interface ContinuitySessionPayload {
   type: 'continuity'
   projectId: string
@@ -55,6 +65,8 @@ export interface ContinuitySessionPayload {
   clientGroupSlug?: string
   brandProfileSnapshot: BrandProfileSnapshot
   slots: ContinuityPortalSlot[]
+  /** Guided Teleprompter / Memory Prompt Cards for recording live intros & story narration */
+  scenePromptCards?: ContinuityScenePromptCard[]
 }
 
 /**
@@ -258,6 +270,73 @@ export function extractContinuitySlotsFromProject(project: Pick<Project, 'metada
   return slots
 }
 
+/**
+ * Extracts Guided Teleprompter / Memory Prompt Cards from the project's script scenes
+ * or intake resonating beats so memoir subjects have crystal-clear cues when recording
+ * live scene intros or spoken story voiceovers on their phone.
+ */
+export function extractScenePromptCardsFromProject(
+  project: Pick<Project, 'metadata'>
+): ContinuityScenePromptCard[] {
+  const md = ((project.metadata || {}) as Record<string, any>)
+  const vp = ((md.visionPhase || {}) as Record<string, any>)
+  const scenes: any[] =
+    (Array.isArray(vp?.script?.script?.scenes) && vp.script.script.scenes) ||
+    (Array.isArray(vp?.script?.scenes) && vp.script.scenes) ||
+    (Array.isArray(vp?.scenes) && vp.scenes) ||
+    []
+
+  const cards: ContinuityScenePromptCard[] = []
+
+  if (scenes.length > 0) {
+    scenes.slice(0, 12).forEach((scene: any, idx: number) => {
+      const sceneNum = Number(scene?.sceneNumber || idx + 1)
+      const sceneId = String(scene?.id || scene?.sceneId || `scene-${sceneNum}`)
+      const heading = String(scene?.heading || scene?.title || `Chapter ${sceneNum}`).trim()
+      const narration = String(scene?.narration || scene?.voiceover || '').trim()
+      const visual = String(scene?.visualDescription || scene?.action || scene?.summary || '').trim()
+      const cueSource = narration || visual || `Share a short 15-second memory introducing "${heading}".`
+      const promptCue = cueSource.length > 240 ? `${cueSource.slice(0, 237).trim()}...` : cueSource
+
+      cards.push({
+        sceneId,
+        sceneNumber: sceneNum,
+        title: heading.slice(0, 100),
+        promptCue,
+        eraOrSetting: scene?.location || scene?.setting || undefined,
+        suggestedDurationSec: narration ? Math.min(35, Math.max(10, Math.round(narration.split(/\s+/).length / 2.2))) : 20,
+        deliveryFormatHint: 'live_subject_intro',
+      })
+    })
+    return cards
+  }
+
+  // Fallback to Film Treatment / Client Intake beats before full script exists
+  const intakeBeats: any[] =
+    (Array.isArray(md.clientOrder?.resonatingBeats) && md.clientOrder.resonatingBeats) ||
+    (Array.isArray(md.filmTreatmentVariant?.beats) && md.filmTreatmentVariant.beats) ||
+    []
+
+  intakeBeats.slice(0, 10).forEach((beat: any, idx: number) => {
+    const title = String(beat?.title || beat?.beat_title || `Memory ${idx + 1}`).trim()
+    const summary = String(beat?.summary || beat?.description || '').trim()
+    const era = beat?.eraOrAge || beat?.settingHint || undefined
+    cards.push({
+      sceneId: String(beat?.id || `beat-${idx + 1}`),
+      sceneNumber: idx + 1,
+      title: title.slice(0, 100),
+      promptCue:
+        summary.slice(0, 240) ||
+        `In your own words, tell the story of "${title}" as if sharing it with family.`,
+      eraOrSetting: era ? String(era).slice(0, 80) : undefined,
+      suggestedDurationSec: 20,
+      deliveryFormatHint: beat?.deliveryFormatHint || 'live_subject_intro',
+    })
+  })
+
+  return cards
+}
+
 export async function getActiveContinuitySessionForProject(
   projectId: string,
   origin: string
@@ -348,6 +427,7 @@ export async function createOrUpdateContinuityPortalLink(input: {
   const allowVideoClips =
     input.allowVideoClips !== undefined ? Boolean(input.allowVideoClips) : defaultVideoClips
   const freshSlots = extractContinuitySlotsFromProject(input.project)
+  const freshPromptCards = extractScenePromptCardsFromProject(input.project)
 
   const existing = await getActiveContinuitySessionForProject(input.project.id, input.origin)
   if (existing) {
@@ -389,6 +469,7 @@ export async function createOrUpdateContinuityPortalLink(input: {
       brandProfileSnapshot: brandSnapshot,
       clientGroupSlug: input.clientGroupSlug || p.clientGroupSlug,
       slots: mergedSlots,
+      scenePromptCards: freshPromptCards,
     }
     await existing.session.update({
       payload: nextPayload as unknown as Record<string, unknown>,
@@ -425,6 +506,7 @@ export async function createOrUpdateContinuityPortalLink(input: {
     clientGroupSlug: input.clientGroupSlug?.trim() || undefined,
     brandProfileSnapshot: brandSnapshot,
     slots: freshSlots,
+    scenePromptCards: freshPromptCards,
   }
 
   const created = await CollabSession.create({
@@ -632,16 +714,26 @@ export function applyPromotedSubmissionToProjectMetadata(
   if (submission.slot_type === 'character') {
     const chars = Array.isArray(vp.characters) ? vp.characters.map((c: any) => ({ ...c })) : []
     const idx = chars.findIndex((c: any) => String(c.id || '') === submission.slot_id)
+    const photoStoryPatch: Record<string, any> = {}
+    if (subMeta.photoVoiceNoteUrl) photoStoryPatch.photoVoiceNoteUrl = subMeta.photoVoiceNoteUrl
+    if (subMeta.photoVoiceNoteTranscript) {
+      photoStoryPatch.photoVoiceNoteTranscript = subMeta.photoVoiceNoteTranscript
+    }
+    if (subMeta.archivalDisplayMode) {
+      photoStoryPatch.archivalDisplayMode = subMeta.archivalDisplayMode
+    }
     if (idx >= 0) {
       chars[idx].referenceImage = submission.blob_url
       chars[idx].imageUrl = submission.blob_url
+      Object.assign(chars[idx], photoStoryPatch)
     } else {
       chars.push({
         id: submission.slot_id,
         name: submission.slot_name,
-        description: submission.caption || '',
+        description: submission.caption || subMeta.photoVoiceNoteTranscript || '',
         referenceImage: submission.blob_url,
         imageUrl: submission.blob_url,
+        ...photoStoryPatch,
       })
     }
     vp.characters = chars
@@ -715,6 +807,11 @@ export function applyPromotedSubmissionToProjectMetadata(
       durationSeconds: subMeta.durationSeconds ?? null,
       aspectOrientation: subMeta.aspectOrientation ?? null,
       transcript: subMeta.transcript || null,
+      chapters: Array.isArray(subMeta.chapters) ? subMeta.chapters : null,
+      bestVoiceSliceWindow: subMeta.bestVoiceSliceWindow || null,
+      linkedSceneId: subMeta.linkedSceneId || null,
+      linkedSceneNumber: subMeta.linkedSceneNumber ?? null,
+      linkedSceneTitle: subMeta.linkedSceneTitle || null,
       acousticVoiceDna: subMeta.acousticVoiceDna || null,
       googleVoiceCloningKey: subMeta.googleVoiceCloningKey || null,
       targetCharacterId: subMeta.targetCharacterId || null,
@@ -859,6 +956,42 @@ export function applyPromotedSubmissionToProjectMetadata(
       })
     }
     refs.objectReferences = objRefs
+    vp.references = refs
+  }
+
+  // If a promoted archival photo carries a recorded voice story ("Tell the story behind this photo"),
+  // also register that voice note in `clientMediaClips` so producers can drop it onto a scene as VO.
+  if (
+    subMeta.photoVoiceNoteUrl &&
+    submission.slot_type !== 'character_voice' &&
+    submission.slot_type !== 'live_video' &&
+    submission.slot_type !== 'story_audio'
+  ) {
+    const refs = { ...(vp.references || {}) }
+    const existingClips = Array.isArray(refs.clientMediaClips)
+      ? refs.clientMediaClips.map((c: any) => ({ ...c }))
+      : []
+    const noteClipId = `photo-note:${submission.id || submission.slot_id}`
+    const noteClip = {
+      id: noteClipId,
+      slotId: submission.slot_id,
+      slotType: 'story_audio',
+      title: `${submission.slot_name} — Photo Story`,
+      usageIntent: 'reenactment_vo',
+      mediaKind: 'audio',
+      mediaUrl: subMeta.photoVoiceNoteUrl,
+      extractedAudioUrl: subMeta.photoVoiceNoteUrl,
+      sourcePhotoUrl: submission.blob_url,
+      archivalDisplayMode: subMeta.archivalDisplayMode || 'ai_reference',
+      durationSeconds: subMeta.photoVoiceNoteDurationSec ?? null,
+      transcript: subMeta.photoVoiceNoteTranscript || submission.caption || null,
+      customerName: submission.customer_name || null,
+      promotedAt: new Date().toISOString(),
+    }
+    const existingIdx = existingClips.findIndex((c: any) => String(c.id || '') === noteClipId)
+    if (existingIdx >= 0) existingClips[existingIdx] = noteClip
+    else existingClips.unshift(noteClip)
+    refs.clientMediaClips = existingClips
     vp.references = refs
   }
 

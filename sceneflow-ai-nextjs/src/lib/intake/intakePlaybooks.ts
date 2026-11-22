@@ -62,7 +62,7 @@ export interface IntakeResonatingBeat {
   /** Single named individuals featured in this beat — NEVER plural/collective groups */
   keyCharacters: string[]
   settingHint?: string
-  deliveryFormatHint?: 'archival_photo' | 'ai_reenactment'
+  deliveryFormatHint?: 'archival_photo' | 'ai_reenactment' | 'live_subject_intro'
 }
 
 export interface IntakeCompletenessChecklist {

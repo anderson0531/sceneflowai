@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyPromotedSubmissionToProjectMetadata,
+  extractScenePromptCardsFromProject,
   inferDefaultAllowVideoClips,
 } from '@/lib/continuity/continuityPortalService'
 import {
@@ -11,6 +12,7 @@ import {
   classifyGoogleVoiceCloneError,
   isValid24kMonoLinear16Wav,
   normalizeAcousticVoiceDna,
+  normalizeClientMediaChapters,
   parseFfmpegInspection,
 } from '@/lib/continuity/voiceDnaService'
 import { buildSegmentEnhancedPrompt } from '@/lib/video/buildSegmentEnhancedPrompt'
@@ -297,5 +299,104 @@ describe('Continuity Wave 1 — Voice DNA, Google Voice Clone, & Live Media Clip
       ],
     })
     expect(ftvResult.enhancedPrompt).not.toContain('Character vocal delivery:')
+  })
+
+  it('extracts Guided Teleprompter Scene Prompt Cards from script scenes and intake beats', () => {
+    const fromScript = extractScenePromptCardsFromProject({
+      metadata: {
+        visionPhase: {
+          script: {
+            script: {
+              scenes: [
+                {
+                  id: 'sc-1',
+                  sceneNumber: 1,
+                  heading: 'INT. GRANDPA BAKERY - 1962',
+                  narration: 'Every morning before sunrise, the smell of sourdough filled the street.',
+                  location: 'Cleveland, Ohio',
+                },
+              ],
+            },
+          },
+        },
+      },
+    })
+    expect(fromScript).toHaveLength(1)
+    expect(fromScript[0].sceneId).toBe('sc-1')
+    expect(fromScript[0].sceneNumber).toBe(1)
+    expect(fromScript[0].promptCue).toContain('smell of sourdough')
+
+    const fromIntake = extractScenePromptCardsFromProject({
+      metadata: {
+        clientOrder: {
+          resonatingBeats: [
+            {
+              id: 'beat-1',
+              title: 'The First Car',
+              eraOrAge: '1968 (Age 21)',
+              summary: 'Buying a rusted blue Mustang with summer factory wages.',
+              deliveryFormatHint: 'live_subject_intro',
+            },
+          ],
+        },
+      },
+    })
+    expect(fromIntake).toHaveLength(1)
+    expect(fromIntake[0].title).toBe('The First Car')
+    expect(fromIntake[0].deliveryFormatHint).toBe('live_subject_intro')
+  })
+
+  it('normalizes auto-chapters & bestVoiceSliceWindow and promotes photo voice stories into clientMediaClips', () => {
+    const chapters = normalizeClientMediaChapters(
+      [
+        {
+          title: 'Arriving at the Harbor',
+          startSeconds: 0,
+          endSeconds: 22.4,
+          quote: 'We stepped off the boat with two suitcases.',
+          suggestedUsage: 'live_intro',
+        },
+        {
+          title: 'First Apartment',
+          startSeconds: 22.4,
+          endSeconds: 99,
+          quote: 'Three flights up with no elevator.',
+          suggestedUsage: 'reenactment_vo',
+        },
+      ],
+      45
+    )
+    expect(chapters).toHaveLength(2)
+    expect(chapters[0].suggestedUsage).toBe('live_intro')
+    expect(chapters[1].endSeconds).toBe(45)
+
+    const promotedPhoto = applyPromotedSubmissionToProjectMetadata(
+      { visionPhase: { characters: [{ id: 'char-1', name: 'Grandpa' }] } },
+      {
+        id: 'sub-photo-1',
+        slot_id: 'char-1',
+        slot_type: 'character',
+        slot_name: 'Grandpa',
+        blob_url: 'https://blob.test/vintage-1964.jpg',
+        customer_name: 'Aunt Maria',
+        metadata: {
+          mediaKind: 'image',
+          archivalDisplayMode: 'archival_ken_burns',
+          photoVoiceNoteUrl: 'https://blob.test/photo-story.webm',
+          photoVoiceNoteTranscript: 'This was taken the day he opened the shop in 1964.',
+          photoVoiceNoteDurationSec: 14,
+        },
+      }
+    )
+
+    expect(promotedPhoto.visionPhase.characters[0].archivalDisplayMode).toBe('archival_ken_burns')
+    expect(promotedPhoto.visionPhase.characters[0].photoVoiceNoteUrl).toBe(
+      'https://blob.test/photo-story.webm'
+    )
+    expect(promotedPhoto.visionPhase.references.clientMediaClips).toHaveLength(1)
+    expect(promotedPhoto.visionPhase.references.clientMediaClips[0].transcript).toContain(
+      'opened the shop in 1964'
+    )
+    expect(promotedPhoto.visionPhase.references.clientMediaClips[0].customerName).toBe('Aunt Maria')
   })
 })

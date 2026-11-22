@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import ClientAssetSubmission from '@/models/ClientAssetSubmission'
 import {
   extractContinuitySlotsFromProject,
+  extractScenePromptCardsFromProject,
   resolveActiveContinuitySession,
   submitContinuityClientReview,
   type ContinuitySessionPayload,
@@ -70,11 +71,13 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       lastReviewedAt: payload.lastReviewedAt || null,
       generalNotes: payload.generalNotes || null,
       slots: payload.slots,
+      scenePromptCards: Array.isArray(payload.scenePromptCards) ? payload.scenePromptCards : [],
       submissions: submissions.map((s) => ({
         id: s.id,
         slotId: s.slot_id,
         slotType: s.slot_type,
         slotName: s.slot_name,
+        customerName: s.customer_name,
         blobUrl: s.blob_url,
         mimeType: s.mime_type,
         fileSizeBytes: s.file_size_bytes,
@@ -199,7 +202,25 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ success: true })
     }
 
+    if (action === 'set_archival_mode' && body.submissionId) {
+      const sub = await ClientAssetSubmission.findByPk(String(body.submissionId))
+      if (sub && sub.project_id === resolved.session.project_id) {
+        const mode =
+          body.archivalDisplayMode === 'archival_ken_burns'
+            ? 'archival_ken_burns'
+            : 'ai_reference'
+        await sub.update({
+          metadata: {
+            ...(sub.metadata || {}),
+            archivalDisplayMode: mode,
+          },
+        })
+      }
+      return NextResponse.json({ success: true })
+    }
+
     const freshSlots = extractContinuitySlotsFromProject(access.project)
+    const freshPromptCards = extractScenePromptCardsFromProject(access.project)
     const prevBySlot = new Map(resolved.payload.slots.map((s) => [s.slotId, s]))
     const mergedSlots = freshSlots.map((slot) => {
       const prev = prevBySlot.get(slot.slotId)
@@ -228,6 +249,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
           ? body.allowVideoClips
           : Boolean(resolved.payload.allowVideoClips),
       slots: mergedSlots,
+      scenePromptCards: freshPromptCards,
     }
 
     await resolved.session.update({

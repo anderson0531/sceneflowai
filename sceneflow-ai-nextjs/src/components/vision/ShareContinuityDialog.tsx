@@ -255,6 +255,34 @@ export function ShareContinuityDialog({
     await loadStatus()
   }
 
+  const handleToggleArchivalMode = async (
+    submissionId: string,
+    nextMode: 'ai_reference' | 'archival_ken_burns'
+  ) => {
+    if (!active?.token) return
+    await fetch(`/api/share/continuity/${encodeURIComponent(active.token)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'set_archival_mode',
+        submissionId,
+        archivalDisplayMode: nextMode,
+      }),
+    }).catch(() => {})
+    setSubmissions((prev) =>
+      prev.map((row) =>
+        row.id === submissionId
+          ? { ...row, metadata: { ...(row.metadata || {}), archivalDisplayMode: nextMode } }
+          : row
+      )
+    )
+    toast.success(
+      nextMode === 'archival_ken_burns'
+        ? 'Marked as Archival Documentary Photo (Ken Burns)'
+        : 'Marked as AI Reenactment Reference'
+    )
+  }
+
   const handleMintGoogleClone = async (submissionId: string) => {
     const token = active?.token || 'manage'
     setMintingId(submissionId)
@@ -566,6 +594,49 @@ export function ShareContinuityDialog({
                           </div>
                         </div>
 
+                        {meta?.linkedSceneNumber && (
+                          <p className="text-[10px] font-semibold text-amber-300">
+                            Guided Chapter {meta.linkedSceneNumber}
+                            {meta.linkedSceneTitle ? ` · ${meta.linkedSceneTitle}` : ''}
+                          </p>
+                        )}
+                        {!isVideo && !isAudio && (
+                          <div className="flex items-center gap-1.5 pt-0.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void handleToggleArchivalMode(
+                                  sub.id,
+                                  meta?.archivalDisplayMode === 'archival_ken_burns'
+                                    ? 'ai_reference'
+                                    : 'archival_ken_burns'
+                                )
+                              }
+                              className={`rounded-md border px-2 py-0.5 text-[10px] font-medium transition ${
+                                meta?.archivalDisplayMode === 'archival_ken_burns'
+                                  ? 'border-amber-400/50 bg-amber-500/15 text-amber-200'
+                                  : 'border-slate-700 bg-slate-950/70 text-slate-300 hover:border-slate-600'
+                              }`}
+                            >
+                              {meta?.archivalDisplayMode === 'archival_ken_burns'
+                                ? 'Mode: Archival Photo (Ken Burns)'
+                                : 'Mode: AI Reenactment Ref'}
+                            </button>
+                          </div>
+                        )}
+                        {!isVideo && !isAudio && meta?.photoVoiceNoteUrl && (
+                          <div className="rounded-lg border border-cyan-500/25 bg-cyan-950/20 p-2 space-y-1">
+                            <p className="text-[10px] font-medium text-cyan-300">
+                              Client Photo Story Audio:
+                            </p>
+                            <audio controls src={meta.photoVoiceNoteUrl} className="w-full h-7" />
+                            {meta.photoVoiceNoteTranscript && (
+                              <p className="text-[10px] text-slate-300 line-clamp-2 italic">
+                                &ldquo;{meta.photoVoiceNoteTranscript}&rdquo;
+                              </p>
+                            )}
+                          </div>
+                        )}
                         {isVideo && (
                           <video
                             controls
@@ -589,7 +660,28 @@ export function ShareContinuityDialog({
                             <audio controls src={meta.extractedAudioUrl} className="w-full h-7" />
                           </div>
                         )}
-                        {meta?.transcript && (
+                        {Array.isArray(meta?.chapters) && meta.chapters.length > 0 && (
+                          <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-2 space-y-1">
+                            <p className="text-[10px] font-semibold text-amber-300">
+                              Auto-Chapters ({meta.chapters.length})
+                            </p>
+                            {meta.chapters.slice(0, 4).map((ch, idx) => (
+                              <div
+                                key={`${sub.id}-ch-${idx}`}
+                                className="flex items-center justify-between gap-2 text-[10px] text-slate-300"
+                              >
+                                <span className="truncate">{ch.title}</span>
+                                <span className="font-mono text-slate-400 shrink-0">
+                                  {Math.floor(ch.startSeconds / 60)}:
+                                  {String(Math.floor(ch.startSeconds % 60)).padStart(2, '0')}–
+                                  {Math.floor(ch.endSeconds / 60)}:
+                                  {String(Math.floor(ch.endSeconds % 60)).padStart(2, '0')}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {meta?.transcript && (!meta.chapters || meta.chapters.length === 0) && (
                           <p className="text-[10px] text-slate-400 line-clamp-2 italic">
                             &ldquo;{meta.transcript}&rdquo;
                           </p>
