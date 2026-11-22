@@ -35,9 +35,10 @@ export async function GET(req: NextRequest) {
       ? `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host')}`
       : new URL(req.url).origin
 
-    const active = await getActiveContinuitySessionForProject(projectId, origin)
+    const resolvedProjectId = access.project.id
+    const active = await getActiveContinuitySessionForProject(resolvedProjectId, origin)
     const submissions = await ClientAssetSubmission.findAll({
-      where: { project_id: projectId, quarantine_status: 'clean' },
+      where: { project_id: resolvedProjectId, quarantine_status: 'clean' },
       order: [['created_at', 'DESC']],
       limit: 60,
     })

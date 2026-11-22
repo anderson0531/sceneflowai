@@ -8,6 +8,7 @@ import {
   checkWorkspaceProjectAccess,
   type EffectiveProjectRole,
 } from '@/lib/producer/workspaceAccess'
+import { getUiSandboxProject, isDemoProjectId } from '@/lib/demo/uiSandboxProject'
 
 /**
  * Synthetic placeholder email created when a project was saved with a browser
@@ -76,9 +77,47 @@ export async function assertProjectAccess(
   ownerUserId: string,
   legacyOwnerId?: string | null
 ): Promise<ProjectAccessResult> {
-  const project = await Project.findByPk(projectId)
+  const isDemo = isDemoProjectId(projectId)
+  const sandbox = isDemo ? getUiSandboxProject(projectId) : null
+  const lookupId = sandbox?.id ? String(sandbox.id) : projectId
+
+  let project = await Project.findByPk(lookupId)
+  if (!project && sandbox) {
+    // Materialize flagship demo/sandbox projects (e.g., Harbor Books Memoir) on demand
+    // so authenticated users can test Share Continuity, Blueprint Share, and Studio flows.
+    try {
+      const [created] = await Project.findOrCreate({
+        where: { id: lookupId },
+        defaults: {
+          id: lookupId,
+          user_id: ownerUserId,
+          title: String(sandbox.title || 'Sandbox Project').slice(0, 255),
+          description: sandbox.description ? String(sandbox.description) : undefined,
+          genre: sandbox.genre ? String(sandbox.genre) : undefined,
+          status: 'in_progress',
+          current_step: 'vision',
+          step_progress: {},
+          metadata: (sandbox.metadata || {}) as Record<string, any>,
+        },
+      })
+      project = created
+    } catch (err) {
+      console.warn('[assertProjectAccess] Sandbox project materialization fallback:', err)
+      project = await Project.findByPk(lookupId).catch(() => null)
+    }
+  }
+
   if (!project) {
     return { ok: false, status: 404, error: 'Project not found' }
+  }
+
+  if (isDemo) {
+    return {
+      ok: true,
+      project,
+      accessRole: 'owner',
+      billingOwnerUserId: ownerUserId,
+    }
   }
 
   const projectOwnerId = String((project as { user_id?: string }).user_id || '')
