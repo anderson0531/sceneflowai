@@ -29,7 +29,13 @@ const DESKTOP_PREVIEW_PATH = join(OUT_DIR, 'preview-desktop-2560x423.jpg')
 const MOBILE_PREVIEW_PATH = join(OUT_DIR, 'preview-mobile-1546x423.jpg')
 
 const HERO_ANA_PATH = join(ROOT, 'public', 'landing', 'hero', 'sceneflow-hero-en-poster.jpg')
-const STUDIO_DESK_PATH = join(ROOT, 'tmp', 'social-promos-build', 'svc-01', 'thumbnails', '_base-frame.png')
+const VAULT_ART_PATH = join(
+  ROOT,
+  'scripts',
+  'social-promo-sources',
+  'assets',
+  'concept-2-continuity-vault.png'
+)
 
 const CHANNEL_TITLE = 'SceneFlow Studio'
 
@@ -60,7 +66,7 @@ const DESCRIPTION_EN = [
   '• Direct Before You Render — Approve your Blueprint & voiced animatic before spending video credits.',
   '• Walk-Away Production Agent — Build full 4K films autonomously with synced audio and self-healing shots.',
   '• 100% White-Label Client Portals — Deliver Memoirs, Real Estate & Corporate Training with zero client login and up to 90% margins.',
-  '• 7+ Global Languages — Produce once and dub worldwide with original music & SFX intact.',
+  '• 70+ Dubbing Languages — Produce once and dub worldwide with original music & SFX intact (7-language Studio UI).',
   '',
   'Explore the Studio: https://sceneflowai.studio',
 ].join('\n')
@@ -84,7 +90,7 @@ const LOCALIZED_DESCRIPTIONS: Record<string, { title: string; description: strin
       '• Dirige Antes de Renderizar — Aprueba tu Blueprint y animatic con voces antes de gastar créditos.',
       '• Production Agent Autónomo — Genera películas 4K completas con audio mezclado y corrección automática.',
       '• Portales 100% Marca Blanca — Entrega Memorias, Tours Inmobiliarios y Capacitación sin registro y hasta 90% de margen.',
-      '• 7+ Idiomas Globales — Produce una vez y dobla al mundo entero conservando música y SFX.',
+      '• 70+ Idiomas de Doblaje — Produce una vez y dobla al mundo entero conservando música y SFX.',
       '',
       'Explora el estudio: https://sceneflowai.studio/?locale=es',
     ].join('\n'),
@@ -103,7 +109,7 @@ const LOCALIZED_DESCRIPTIONS: Record<string, { title: string; description: strin
       '• Dirige Antes de Renderizar — Aprueba tu Blueprint y animatic con voces antes de gastar créditos.',
       '• Production Agent Autónomo — Construye producciones 4K completas con audio mezclado y reparación automática.',
       '• Portales 100% Marca Blanca — Entrega Memorias, Tours Inmobiliarios y Capacitación sin contraseñas.',
-      '• 7+ Idiomas Globales — Multiplica tu audiencia sin volver a renderizar el video.',
+      '• 70+ Idiomas de Doblaje — Multiplica tu audiencia sin volver a renderizar el video.',
       '',
       'Explora el estudio: https://sceneflowai.studio/?locale=es',
     ].join('\n'),
@@ -122,7 +128,7 @@ const LOCALIZED_DESCRIPTIONS: Record<string, { title: string; description: strin
       '• Dirija Antes de Renderizar — Aprove o Blueprint e animatic com vozes antes de gastar créditos.',
       '• Production Agent Autônomo — Produza filmes 4K completos com áudio mixado e correção automática.',
       '• Portais 100% com a Sua Marca — Entregue Memórias, Tours Imobiliários e Treinamentos sem login e até 90% de margem.',
-      '• 7+ Idiomas Globais — Produza uma vez e duble preservando trilha e efeitos sonoros.',
+      '• 70+ Idiomas de Dublagem — Produza uma vez e duble preservando trilha e efeitos sonoros.',
       '',
       'Explore o estúdio: https://sceneflowai.studio/?locale=pt',
     ].join('\n'),
@@ -141,7 +147,7 @@ const LOCALIZED_DESCRIPTIONS: Record<string, { title: string; description: strin
       '• रेंडर से पहले डायरेक्ट करें — वीडियो क्रेडिट खर्च करने से पहले Blueprint और वॉइस एनिमेटिक देखें।',
       '• ऑटोनॉमस Production Agent — पूरी 4K फ़िल्म, सिंक्ड ऑडियो और सेल्फ़-हीलिंग शॉट्स अपने आप तैयार करें।',
       '• 100% आपका ब्रांड पोर्टल — बिना लॉगिन मेमॉयर, रियल एस्टेट और कॉर्पोरेट फ़िल्में डिलीवर करें (90% तक मार्जिन)।',
-      '• 7+ ग्लोबल भाषाएँ — एक बार बनाएँ और दुनिया भर में पब्लिश करें।',
+      '• 70+ डबिंग भाषाएँ — एक बार बनाएँ और दुनिया भर में पब्लिश करें।',
       '',
       'स्टूडियो देखें: https://sceneflowai.studio/?locale=hi',
     ].join('\n'),
@@ -160,7 +166,7 @@ const LOCALIZED_DESCRIPTIONS: Record<string, { title: string; description: strin
       '• 先导演，再渲染 —— 在蓝图室锁定剧本并观看完整配音预演后再消耗算力。',
       '• 自动制片代理 —— 一键构建 4K 成片，自动混音并智能修复失败镜头。',
       '• 100% 白标客户门户 —— 免登录在线审片，交付人生传记、房产巡礼与企业培训片，净利率高达 90%。',
-      '• 全球 7+ 语种配音 —— 保留原片音乐与音效，无需重新渲染画面。',
+      '• 全球 70+ 语种配音 —— 保留原片音乐与音效，无需重新渲染画面。',
       '',
       '立即体验：https://sceneflowai.studio/?locale=zh-CN',
     ].join('\n'),
@@ -179,7 +185,7 @@ const LOCALIZED_DESCRIPTIONS: Record<string, { title: string; description: strin
       '• أخرج قبل الرندر — اعتمد السيناريو وشاهد النسخة الأولية بالصوت قبل إنفاق الرصيد.',
       '• وكيل الإنتاج الآلي — يبني أفلام 4K كاملة ويمزج الصوت ويصلح اللقطات تلقائياً.',
       '• بوابات عملاء بعلامتك 100% — سلّم أفلام السيرة والعقارات والتدريب دون تسجيل دخول وبأرباح حتى 90%.',
-      '• 7+ لغات عالمية — أنتج مرة واحدة وضاعف جمهورك عالمياً.',
+      '• أكثر من 70 لغة دبلجة — أنتج مرة واحدة وضاعف جمهورك عالمياً.',
       '',
       'اكتشف الاستوديو: https://sceneflowai.studio/?locale=ar',
     ].join('\n'),
@@ -198,7 +204,7 @@ const LOCALIZED_DESCRIPTIONS: Record<string, { title: string; description: strin
       '• กำกับก่อนเรนเดอร์ — ตรวจ Blueprint และ Animatic เสียงครบก่อนใช้เครดิตสร้างวิดีโอ',
       '• Production Agent อัตโนมัติ — สร้างหนัง 4K เต็มเรื่อง มิกซ์เสียง และแก้ช็อตล้มเหลวเอง',
       '• พอร์ทัลแบรนด์คุณ 100% — ส่งมอบงานชีวประวัติ อสังหา และสื่อองค์กรแบบไม่ต้องล็อกอิน กำไรสูงสุด 90%',
-      '• พากย์เสียง 7+ ภาษา — สร้างครั้งเดียวขยายผู้ชมทั่วโลกโดยคงดนตรีและ SFX ครบ',
+      '• พากย์เสียง 70+ ภาษา — สร้างครั้งเดียวขยายผู้ชมทั่วโลกโดยคงดนตรีและ SFX ครบ',
       '',
       'เข้าชมสตูดิโอ: https://sceneflowai.studio/?locale=th',
     ].join('\n'),
@@ -218,19 +224,20 @@ function cleanLegacyMarkdown(text: string): string {
 async function generateBannerAssets() {
   mkdirSync(OUT_DIR, { recursive: true })
 
-  // 1. Right-side Hero Ana (full face + glowing golden matchstick cleanly inside 423px Desktop & 1546px Mobile safe zone!)
-  // Safe zone: x=507..2053, y=508..931. Place Ana (780×440) at left=1440, top=498 -> Ana's center sits at x=1830 (well inside 2053!)
+  // 1. Right-side Hero Ana (full face + glowing golden matchstick cleanly inside 423px Desktop & 1546px Mobile safe zone)
   const anaW = 820
   const anaH = 462
   const anaBuf = await sharp(HERO_ANA_PATH)
     .resize(anaW, anaH, { fit: 'cover', position: 'top' })
     .toBuffer()
 
-  // 2. Outer-left Desktop/TV automated studio flank (x=0..640, fades out completely BEFORE Mobile safe zone x=507!)
+  // 2. Outer-left Desktop/TV glowing 4K film-strip flank (cropped strictly from the text-free amber film strip
+  //    region of Concept 2 artwork so ZERO English text appears anywhere on the left wing!)
   let leftFlankBuf: Buffer | null = null
-  if (existsSync(STUDIO_DESK_PATH)) {
-    leftFlankBuf = await sharp(STUDIO_DESK_PATH)
-      .resize(740, 440, { fit: 'cover', position: 'left' })
+  if (existsSync(VAULT_ART_PATH)) {
+    leftFlankBuf = await sharp(VAULT_ART_PATH)
+      .extract({ left: 0, top: 240, width: 470, height: 528 })
+      .resize(620, 440, { fit: 'cover', position: 'center' })
       .toBuffer()
   }
 
@@ -246,14 +253,18 @@ async function generateBannerAssets() {
     <rect width="2560" height="1440" fill="url(#baseGrad)"/>
   </svg>`
 
-  // 4. Seamless feathering scrims + ambient lighting + crisp typography 100% inside Mobile Safe Zone (x=548..1540, y=544..898)
+  // 4. Language-Neutral Global Brand Banner — ZERO English prose!
+  //    Strictly inside Mobile Safe Zone (x=548..1500, y=542..900):
+  //    - Giant iconic "SceneFlow Studio" wordmark
+  //    - Native-script 7-market language bar: EN · ES · PT · हिन्दी · 中文 · العربية · ไทย
+  //    - Universal CTA pill ("sceneflowai.studio") + universal "4K" cinema badge
   const fgSvg = `<svg width="2560" height="1440" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <!-- Smoothly melts outer-left studio photo (x=0..740) into pure obsidian BEFORE x=520 -->
+      <!-- Smoothly melts outer-left glowing 4K film strip (x=0..620) into pure obsidian BEFORE x=515 -->
       <linearGradient id="leftBlend" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="#040812" stop-opacity="0.35"/>
-        <stop offset="52%" stop-color="#040812" stop-opacity="0.88"/>
-        <stop offset="72%" stop-color="#040812" stop-opacity="1"/>
+        <stop offset="0%" stop-color="#040812" stop-opacity="0.18"/>
+        <stop offset="52%" stop-color="#040812" stop-opacity="0.72"/>
+        <stop offset="80%" stop-color="#040812" stop-opacity="1"/>
         <stop offset="100%" stop-color="#040812" stop-opacity="1"/>
       </linearGradient>
       <!-- Smoothly melts Ana's left edge (x=1440..1760) seamlessly from pure obsidian -->
@@ -269,7 +280,6 @@ async function generateBannerAssets() {
         <stop offset="55%" stop-color="#040812" stop-opacity="0.65"/>
         <stop offset="100%" stop-color="#040812" stop-opacity="1"/>
       </linearGradient>
-      <!-- Smooth vertical top & bottom fades into TV canvas -->
       <linearGradient id="topEdgeFade" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#040812" stop-opacity="1"/>
         <stop offset="100%" stop-color="#040812" stop-opacity="0"/>
@@ -297,13 +307,13 @@ async function generateBannerAssets() {
         <stop offset="100%" stop-color="#10b981"/>
       </linearGradient>
       <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
-        <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.7"/>
+        <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#000000" flood-opacity="0.72"/>
       </filter>
     </defs>
 
     <!-- Feather overlays eliminating ALL hard rectangular seams -->
-    <rect x="0" y="480" width="760" height="480" fill="url(#leftBlend)"/>
-    <rect x="740" y="480" width="720" height="480" fill="#040812"/>
+    <rect x="0" y="480" width="640" height="480" fill="url(#leftBlend)"/>
+    <rect x="620" y="480" width="840" height="480" fill="#040812"/>
     <rect x="1420" y="480" width="380" height="480" fill="url(#anaLeftBlend)"/>
     <rect x="2040" y="480" width="240" height="480" fill="url(#anaRightBlend)"/>
     <rect x="2250" y="480" width="310" height="480" fill="#040812"/>
@@ -318,27 +328,31 @@ async function generateBannerAssets() {
     <rect x="0" y="508" width="2560" height="4" fill="url(#brandGrad)" opacity="0.85"/>
     <rect x="0" y="928" width="2560" height="4" fill="url(#brandGrad)" opacity="0.45"/>
 
-    <!-- ALL CORE BRAND CONTENT STRICTLY INSIDE MOBILE SAFE ZONE (x=548..1540, y=542..900) -->
+    <!-- ALL CORE BRAND ELEMENTS STRICTLY INSIDE MOBILE SAFE ZONE (x=548..1460, y=548..892) -->
 
-    <!-- Eyebrow Pill -->
-    <rect x="548" y="544" width="526" height="38" rx="19" fill="#0a1628" fill-opacity="0.95" stroke="#22d3ee" stroke-opacity="0.65" stroke-width="1.8"/>
-    <text x="811" y="569" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="800" letter-spacing="1.5" fill="#67e8f9">AUTOMATED 4K VIDEO PRODUCTION PLATFORM</text>
+    <!-- Minimalist Cinema Aperture + 4K AI Badge (universal icons/symbols only) -->
+    <g transform="translate(550, 560)">
+      <rect x="0" y="0" width="46" height="36" rx="8" fill="#0a1628" stroke="url(#brandGrad)" stroke-width="2.4"/>
+      <polygon points="18,10 18,26 32,18" fill="#22d3ee"/>
+      <rect x="60" y="0" width="124" height="36" rx="18" fill="#0a1628" fill-opacity="0.95" stroke="#22d3ee" stroke-opacity="0.7" stroke-width="1.8"/>
+      <text x="122" y="25" text-anchor="middle" font-family="sans-serif" font-size="19" font-weight="900" letter-spacing="2" fill="#67e8f9">4K · AI</text>
+    </g>
 
-    <!-- Main Wordmark -->
-    <text x="548" y="672" font-family="sans-serif" font-size="90" font-weight="900" letter-spacing="-1.5" fill="#ffffff" filter="url(#shadow)">SceneFlow <tspan fill="url(#brandGrad)">Studio</tspan></text>
+    <!-- Giant Clean Global Wordmark -->
+    <text x="548" y="698" font-family="sans-serif" font-size="104" font-weight="900" letter-spacing="-2" fill="#ffffff" filter="url(#shadow)">SceneFlow <tspan fill="url(#brandGrad)">Studio</tspan></text>
 
-    <!-- Flagship Tagline -->
-    <text x="548" y="736" font-family="sans-serif" font-size="42" font-weight="800" fill="#f8fafc" filter="url(#shadow)">Build Worlds. <tspan fill="#fbbf24">Not Just Clips.</tspan></text>
+    <!-- Thin Accent Underline -->
+    <rect x="550" y="724" width="280" height="5" rx="2.5" fill="url(#brandGrad)"/>
 
-    <!-- Differentiator Line -->
-    <text x="548" y="788" font-family="sans-serif" font-size="22" font-weight="600" fill="#cbd5e1" filter="url(#shadow)">Continuity Vault™  ·  Production Agent  ·  100% White-Label  ·  7+ Languages</text>
+    <!-- Universal 7-Market Native-Script Language Bar (every visitor sees their own language!) -->
+    <text x="550" y="778" font-family="sans-serif" font-size="27" font-weight="700" fill="#e2e8f0" letter-spacing="0.5" filter="url(#shadow)">EN  ·  ES  ·  PT  ·  हिन्दी  ·  中文  ·  العربية  ·  ไทย</text>
 
-    <!-- Bottom CTA Row -->
-    <rect x="548" y="824" width="310" height="56" rx="12" fill="url(#ctaGrad)" filter="url(#shadow)"/>
-    <text x="703" y="861" text-anchor="middle" font-family="sans-serif" font-size="25" font-weight="900" fill="#03111c">sceneflowai.studio</text>
+    <!-- Universal Bottom Row: Domain CTA + 4K Ultra-HD Badge -->
+    <rect x="550" y="814" width="336" height="60" rx="13" fill="url(#ctaGrad)" filter="url(#shadow)"/>
+    <text x="718" y="853" text-anchor="middle" font-family="sans-serif" font-size="27" font-weight="900" fill="#03111c">sceneflowai.studio</text>
 
-    <rect x="878" y="824" width="420" height="56" rx="12" fill="#0d182b" fill-opacity="0.92" stroke="#fbbf24" stroke-opacity="0.7" stroke-width="2"/>
-    <text x="1088" y="860" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="700" fill="#fde68a">Creators · Showrunners · Agencies</text>
+    <rect x="906" y="814" width="174" height="60" rx="13" fill="#0d182b" fill-opacity="0.92" stroke="#fbbf24" stroke-opacity="0.78" stroke-width="2"/>
+    <text x="993" y="853" text-anchor="middle" font-family="sans-serif" font-size="26" font-weight="900" letter-spacing="1.5" fill="#fde68a">4K UHD</text>
   </svg>`
 
   const composites: sharp.OverlayOptions[] = []

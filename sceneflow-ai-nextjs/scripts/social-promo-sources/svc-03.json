@@ -2,10 +2,11 @@
   "spotId": "svc-03",
   "title": "Scale From 1 Solo Operator to 100+ Client Projects",
   "voice": "Charon",
-  "musicFileOrUrl": "tmp/social-promos-build/svc-03/music/score-30s.mp3",
+  "musicFileOrUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Modern%20Electronic%20Orchestral%20Score.mp3",
+  "musicStartSec": 0,
   "blocks": {
-    "1": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_01",
-    "2": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_02",
-    "3": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_03"
+    "1": "https://flow.google.com/shared/video/6509d0d6-bca1-40f6-a343-df165bd7bd5a",
+    "2": "https://flow.google.com/shared/video/eec94950-aa09-464f-98f8-5ff6bb86e92a",
+    "3": "https://flow.google.com/shared/video/caa04ad9-d41a-4abb-9eb3-f12d77505623"
   }
 }

@@ -1,11 +1,12 @@
 {
   "spotId": "crt-02",
-  "title": "300 Manual Prompts vs. Walk-Away Production Agent",
-  "voice": "Kore",
-  "musicFileOrUrl": "tmp/social-promos-build/crt-02/music/score-30s.mp3",
+  "title": "Zero-Gear 4K Video Business: Earn Recurring Local Client Income From Your Laptop",
+  "voice": "Charon",
+  "musicFileOrUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Upbeat%20Modern%20Tech-Business%20Track.mp3",
+  "musicStartSec": 0,
   "blocks": {
-    "1": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_01",
-    "2": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_02",
-    "3": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_03"
+    "1": "https://flow.google.com/shared/video/39682775-ea7d-4036-941b-409a4e5ebdaf",
+    "2": "https://flow.google.com/shared/video/c6425065-2b4b-4347-a55c-0d8d560c8063",
+    "3": "https://flow.google.com/shared/video/483ca96a-a17f-4b5b-bc3f-f10fddbcf60c"
   }
 }

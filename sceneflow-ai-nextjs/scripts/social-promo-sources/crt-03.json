@@ -1,11 +1,12 @@
 {
   "spotId": "crt-03",
-  "title": "One Film, Seven Global Languages — Multiply Your Audience",
-  "voice": "Kore",
-  "musicFileOrUrl": "tmp/social-promos-build/crt-03/music/score-30s.mp3",
+  "title": "Monetize Global Faceless 4K Video Series in 70+ Languages",
+  "voice": "Charon",
+  "musicFileOrUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Triumphant%20Electronic%20Cinematic%20Media%20Anthem.mp3",
+  "musicStartSec": 13.4,
   "blocks": {
-    "1": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_01",
-    "2": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_02",
-    "3": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_03"
+    "1": "https://flow.google.com/shared/video/99692f1e-6f80-4373-9b41-e37cdd66576e",
+    "2": "https://flow.google.com/shared/video/f474fdf4-c2f7-419d-83fa-d275b1293189",
+    "3": "https://flow.google.com/shared/video/52955166-9c32-4082-8284-ee3e20c0f233"
   }
 }

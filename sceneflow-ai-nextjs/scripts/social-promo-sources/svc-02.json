@@ -2,10 +2,11 @@
   "spotId": "svc-02",
   "title": "100% White-Label Client Portals — Zero Client Login",
   "voice": "Charon",
-  "musicFileOrUrl": "tmp/social-promos-build/svc-02/music/score-30s.mp3",
+  "musicFileOrUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Refined%20Corporate%20Minimalist%20Track.mp3",
+  "musicStartSec": 17.6,
   "blocks": {
-    "1": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_01",
-    "2": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_02",
-    "3": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_03"
+    "1": "https://flow.google.com/shared/video/9aecee44-0da9-4e2a-bc56-aff2c888cf83",
+    "2": "https://flow.google.com/shared/video/db85c7df-62b3-4f53-9fb7-b2a4bc051f97",
+    "3": "https://flow.google.com/shared/video/c06e1605-870d-4457-9b80-abc2b8455a01"
   }
 }

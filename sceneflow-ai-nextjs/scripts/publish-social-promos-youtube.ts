@@ -166,6 +166,41 @@ async function uploadThumbnailFromFile(accessToken: string, videoId: string, thu
   }
 }
 
+async function addVideoToLanguagePlaylist(
+  accessToken: string,
+  locale: SocialPromoLocale,
+  videoId: string
+) {
+  const plMapPath = join(__dirname, 'social-promo-sources', 'youtubePlaylists.json')
+  if (!existsSync(plMapPath)) return
+  try {
+    const map = JSON.parse(readFileSync(plMapPath, 'utf8')) as Record<
+      string,
+      { playlistId?: string }
+    >
+    const playlistId = map[locale]?.playlistId
+    if (!playlistId) return
+    const res = await fetch('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        snippet: {
+          playlistId,
+          resourceId: { kind: 'youtube#video', videoId },
+        },
+      }),
+    })
+    if (res.ok) {
+      console.log(`  [playlist] Added to [${locale}] playlist (${playlistId})`)
+    }
+  } catch {
+    // Non-fatal playlist assignment error
+  }
+}
+
 async function uploadLocalVideo(args: {
   accessToken: string
   videoPath: string
@@ -366,6 +401,7 @@ async function main() {
       privacy: args.privacy,
       label: `${args.spotId}/${v.key}`,
     })
+    await addVideoToLanguagePlaylist(accessToken, v.locale, result.videoId)
     existing.channel = channel
     existing.uploads[v.key] = result
     writeFileSync(logPath, JSON.stringify(existing, null, 2), 'utf8')

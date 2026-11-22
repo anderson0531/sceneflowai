@@ -1,11 +1,12 @@
 {
   "spotId": "crt-01",
-  "title": "Stop Generating Random 5-Second Clips — Build Worlds",
-  "voice": "Kore",
-  "musicFileOrUrl": "tmp/social-promos-build/crt-01/music/score-30s.mp3",
+  "title": "The Video Memoir Business: Turn Family Stories Into High-Margin 4K Income",
+  "voice": "Charon",
+  "musicFileOrUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Uplifting%20Acoustic%20Commercial%20Track.mp3",
+  "musicStartSec": 11.8,
   "blocks": {
-    "1": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_01",
-    "2": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_02",
-    "3": "PASTE_FLOW_SHARE_URL_OR_LOCAL_MP4_FOR_BLOCK_03"
+    "1": "https://flow.google.com/shared/video/f98205cc-20b9-411f-adc0-17d58557cb12",
+    "2": "https://flow.google.com/shared/video/b74fa471-8918-4875-b3ba-1f2d988c9aa9",
+    "3": "https://flow.google.com/shared/video/36fe3f42-72a1-4582-80f0-677b11b1ccf4"
   }
 }
