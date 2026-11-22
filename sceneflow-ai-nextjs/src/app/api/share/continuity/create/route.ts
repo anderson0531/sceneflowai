@@ -20,7 +20,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'projectId is required' }, { status: 400 })
     }
 
-    const access = await assertProjectAccess(projectId, actorUserId)
+    const legacyOwnerId =
+      typeof body.legacyOwnerId === 'string' && body.legacyOwnerId.trim()
+        ? body.legacyOwnerId.trim()
+        : undefined
+    const access = await assertProjectAccess(projectId, actorUserId, legacyOwnerId)
     if (!access.ok) {
       return NextResponse.json({ success: false, error: access.error }, { status: access.status })
     }

@@ -107,7 +107,7 @@ export function ShareContinuityDialog({
     try {
       const res = await fetch(
         `/api/share/continuity/active?projectId=${encodeURIComponent(projectId)}`,
-        { cache: 'no-store' }
+        { cache: 'no-store', credentials: 'include' }
       )
       const data = await res.json()
       if (!res.ok || !data.success) return
@@ -148,8 +148,11 @@ export function ShareContinuityDialog({
   const handleGenerateOrUpdate = async () => {
     setCreating(true)
     try {
+      const legacyOwnerId =
+        typeof window !== 'undefined' ? window.localStorage.getItem('authUserId') || undefined : undefined
       const res = await fetch('/api/share/continuity/create', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
@@ -158,11 +161,18 @@ export function ShareContinuityDialog({
           allowVoiceCapture,
           allowVideoClips,
           clientMode,
+          legacyOwnerId,
         }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.success) {
-        toast.error(data.error || 'Could not create Continuity link')
+        if (res.status === 401) {
+          toast.error(
+            'Sign in required on this domain to create Continuity links (if you signed in on sceneflowai.studio, open your project there or sign in here).'
+          )
+        } else {
+          toast.error(data.error || 'Could not create Continuity link')
+        }
         return
       }
       await loadStatus()
@@ -211,6 +221,7 @@ export function ShareContinuityDialog({
     try {
       const res = await fetch(`/api/share/continuity/${encodeURIComponent(active.token)}`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'resync',
@@ -234,6 +245,7 @@ export function ShareContinuityDialog({
     try {
       const res = await fetch(`/api/share/continuity/${encodeURIComponent(active.token)}`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'revoke' }),
       })
@@ -252,6 +264,7 @@ export function ShareContinuityDialog({
     try {
       const res = await fetch(`/api/share/continuity/${encodeURIComponent(token)}/promote`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           submissionId,
@@ -278,6 +291,7 @@ export function ShareContinuityDialog({
     if (!active?.token) return
     await fetch(`/api/share/continuity/${encodeURIComponent(active.token)}`, {
       method: 'PATCH',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'reject_submission', submissionId }),
     }).catch(() => {})
@@ -291,6 +305,7 @@ export function ShareContinuityDialog({
     if (!active?.token) return
     await fetch(`/api/share/continuity/${encodeURIComponent(active.token)}`, {
       method: 'PATCH',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'set_archival_mode',
@@ -318,6 +333,7 @@ export function ShareContinuityDialog({
     try {
       const res = await fetch(`/api/share/continuity/${encodeURIComponent(token)}/mint-voice`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ submissionId }),
       })
