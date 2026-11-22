@@ -23,6 +23,11 @@ import {
   buildLiveIntroToReenactmentBridge,
   buildPortraitTo16x9DocumentaryFilter,
 } from '@/lib/continuity/documentaryBridge'
+import {
+  buildClientInvitePrepMessage,
+  buildPrintablePrepSheetHtml,
+  getClientPrepGuideCopy,
+} from '@/lib/continuity/clientPrepGuideCopy'
 import { buildSegmentEnhancedPrompt } from '@/lib/video/buildSegmentEnhancedPrompt'
 
 function makeTestWav(sampleRate: number, channels: number, bits: number): Buffer {
@@ -514,5 +519,52 @@ describe('Continuity Wave 1 — Voice DNA, Google Voice Clone, & Live Media Clip
     const matteFilter = buildPortraitTo16x9DocumentaryFilter({ width: 3840, height: 2160 })
     expect(matteFilter).toContain('gblur=sigma=28')
     expect(matteFilter).toContain('overlay=(W-w)/2:(H-h)/2')
+  })
+
+  it('builds localized Client Invite + Prep Messages and Printable Prep Sheets dynamically matching link toggles', () => {
+    const memoirInviteEn = buildClientInvitePrepMessage({
+      projectTitle: 'The Miller Family Memoir',
+      brandName: 'Golden Legacy Films',
+      shareUrl: 'https://sceneflowai.studio/share/continuity/tok123?lang=en',
+      locale: 'en',
+      allowUploads: true,
+      allowVoiceCapture: true,
+      allowVideoClips: true,
+      hasPromptCards: true,
+    })
+    expect(memoirInviteEn).toContain('The Miller Family Memoir')
+    expect(memoirInviteEn).toContain('Tell photo story')
+    expect(memoirInviteEn).toContain('15–30s voice sample')
+    expect(memoirInviteEn).toContain('Cue Cards')
+    expect(memoirInviteEn).toContain('Golden Legacy Films')
+
+    // Simple photo-only commercial link must NOT mention voice or video clips
+    const photoOnlyEs = buildClientInvitePrepMessage({
+      projectTitle: 'Hotel Sol',
+      brandName: 'Estudio Luz',
+      shareUrl: 'https://sceneflowai.studio/share/continuity/tok456?lang=es',
+      locale: 'es',
+      allowUploads: true,
+      allowVoiceCapture: false,
+      allowVideoClips: false,
+      hasPromptCards: false,
+    })
+    expect(photoOnlyEs).toContain('Hotel Sol')
+    expect(photoOnlyEs).toContain('Fotos:')
+    expect(photoOnlyEs).not.toContain('Tu Voz:')
+    expect(photoOnlyEs).not.toContain('Tarjetas Guía:')
+
+    const sheetHtml = buildPrintablePrepSheetHtml({
+      projectTitle: 'Grandpa <Memoir>',
+      brandName: 'Family Studio',
+      locale: 'en',
+      allowUploads: true,
+      allowVoiceCapture: true,
+      allowVideoClips: true,
+      hasPromptCards: true,
+    })
+    expect(sheetHtml).toContain('Grandpa &lt;Memoir&gt;')
+    expect(sheetHtml).toContain('window.print()')
+    expect(getClientPrepGuideCopy('th').guideTitle).toContain('คู่มือ')
   })
 })

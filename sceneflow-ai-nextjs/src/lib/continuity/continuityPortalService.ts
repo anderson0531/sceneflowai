@@ -18,6 +18,7 @@ import { resolveClientPortalLocale, type ClientPortalLocale } from '@/lib/intake
 import { createReferenceAsset } from '@/lib/referenceLibrary/assetRepository'
 import { notifyUser } from '@/lib/jobs/jobService'
 import { propagateEraVoiceDnaToSiblingCharacters } from '@/lib/continuity/eraVoicePropagation'
+import type { ClientProductionStyleId } from '@/lib/continuity/clientPrepGuideCopy'
 
 export interface ContinuityPortalSlot {
   slotId: string
@@ -68,6 +69,8 @@ export interface ContinuitySessionPayload {
   slots: ContinuityPortalSlot[]
   /** Guided Teleprompter / Memory Prompt Cards for recording live intros & story narration */
   scenePromptCards?: ContinuityScenePromptCard[]
+  /** Customer's preferred production style chosen inside the Continuity Prep Guide */
+  preferredProductionStyle?: ClientProductionStyleId
 }
 
 /**

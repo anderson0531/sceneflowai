@@ -72,6 +72,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       generalNotes: payload.generalNotes || null,
       slots: payload.slots,
       scenePromptCards: Array.isArray(payload.scenePromptCards) ? payload.scenePromptCards : [],
+      preferredProductionStyle: payload.preferredProductionStyle || null,
       submissions: submissions.map((s) => ({
         id: s.id,
         slotId: s.slot_id,
@@ -136,6 +137,34 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         consentId: consent.id,
         customerName: consent.customer_name,
       })
+    }
+
+    if (body.action === 'set_production_style') {
+      const resolved = await resolveActiveContinuitySession(token)
+      if (!resolved) {
+        return NextResponse.json(
+          { success: false, error: 'Continuity link not found or expired' },
+          { status: 404 }
+        )
+      }
+      const style = body.preferredProductionStyle
+      if (
+        style !== 'hybrid_live_ai' &&
+        style !== 'voice_over_cinema' &&
+        style !== 'studio_hands_off'
+      ) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid production style' },
+          { status: 400 }
+        )
+      }
+      await resolved.session.update({
+        payload: {
+          ...resolved.payload,
+          preferredProductionStyle: style,
+        } as unknown as Record<string, unknown>,
+      })
+      return NextResponse.json({ success: true, preferredProductionStyle: style })
     }
 
     const reviewResult = await submitContinuityClientReview({

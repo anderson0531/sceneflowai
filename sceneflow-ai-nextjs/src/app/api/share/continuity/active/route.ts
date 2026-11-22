@@ -66,6 +66,12 @@ export async function GET(req: NextRequest) {
             lastReviewerName: active.payload.lastReviewerName || null,
             lastReviewedAt: active.payload.lastReviewedAt || null,
             generalNotes: active.payload.generalNotes || null,
+            projectTitle: active.payload.projectTitle || access.project.title || 'Project',
+            brandName: active.payload.brandProfileSnapshot?.brandName || 'SceneFlow Studio',
+            preferredProductionStyle: active.payload.preferredProductionStyle || null,
+            scenePromptCardsCount: Array.isArray(active.payload.scenePromptCards)
+              ? active.payload.scenePromptCards.length
+              : 0,
             slots: active.payload.slots,
           }
         : null,

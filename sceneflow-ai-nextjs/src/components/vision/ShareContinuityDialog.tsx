@@ -11,6 +11,7 @@ import {
   ImagePlus,
   Link2,
   Loader2,
+  MessageSquareText,
   Mic,
   RefreshCw,
   Share2,
@@ -33,6 +34,11 @@ import {
 } from '@/lib/intake/clientPortalCopy'
 import type { ContinuityPortalSlot } from '@/lib/continuity/continuityPortalService'
 import type { ClientAssetSubmissionMetadata } from '@/models/ClientAssetSubmission'
+import {
+  buildClientInvitePrepMessage,
+  getClientPrepGuideCopy,
+  type ClientProductionStyleId,
+} from '@/lib/continuity/clientPrepGuideCopy'
 
 interface ContinuitySubmissionRow {
   id: string
@@ -64,6 +70,10 @@ interface ActiveContinuityShare {
   lastReviewerName: string | null
   lastReviewedAt: string | null
   generalNotes: string | null
+  projectTitle?: string | null
+  brandName?: string | null
+  preferredProductionStyle?: ClientProductionStyleId | null
+  scenePromptCardsCount?: number
   slots: ContinuityPortalSlot[]
 }
 
@@ -80,6 +90,7 @@ export function ShareContinuityDialog({
   const [promotingId, setPromotingId] = useState<string | null>(null)
   const [mintingId, setMintingId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [inviteNoteCopied, setInviteNoteCopied] = useState(false)
 
   const [locale, setLocale] = useState<ClientPortalLocale>('en')
   const [allowUploads, setAllowUploads] = useState(true)
@@ -174,6 +185,24 @@ export function ShareContinuityDialog({
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
     toast.success('Continuity link copied')
+  }
+
+  const handleCopyInviteNote = async () => {
+    if (!active?.shareUrl) return
+    const msg = buildClientInvitePrepMessage({
+      projectTitle: active.projectTitle || 'your video project',
+      brandName: active.brandName || 'Your Studio Team',
+      shareUrl: active.shareUrl,
+      locale,
+      allowUploads,
+      allowVoiceCapture,
+      allowVideoClips,
+      hasPromptCards: Boolean((active.scenePromptCardsCount || 0) > 0),
+    })
+    await navigator.clipboard.writeText(msg).catch(() => {})
+    setInviteNoteCopied(true)
+    setTimeout(() => setInviteNoteCopied(false), 2500)
+    toast.success('Localized Client Invite + 5-Minute Prep Message copied! Ready to paste into WhatsApp, SMS, or Email.')
   }
 
   const handleResync = async () => {
@@ -435,6 +464,31 @@ export function ShareContinuityDialog({
                     >
                       <ExternalLink className="w-4 h-4" />
                     </a>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                      onClick={() => void handleCopyInviteNote()}
+                      className="border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20 text-xs font-medium"
+                    >
+                      {inviteNoteCopied ? (
+                        <Check className="w-3.5 h-3.5 mr-1.5 text-emerald-300" />
+                      ) : (
+                        <MessageSquareText className="w-3.5 h-3.5 mr-1.5 text-emerald-300" />
+                      )}
+                      {inviteNoteCopied
+                        ? 'Invite + Prep Note Copied!'
+                        : 'Copy Client Invite + Prep Note (WhatsApp / Email)'}
+                    </Button>
+                    {active.preferredProductionStyle && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/35 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-medium text-cyan-200">
+                        Client Style:{' '}
+                        {getClientPrepGuideCopy('en').styles[active.preferredProductionStyle]?.title}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs">

@@ -41,6 +41,8 @@ import { prepareImageForContinuityUpload } from '@/lib/continuity/clientImageDow
 import { ContinuityVoiceCaptureDrawer } from './ContinuityVoiceCaptureDrawer'
 import { ContinuityLiveMediaSection } from './ContinuityLiveMediaSection'
 import { PhotoVoiceNoteButton } from './PhotoVoiceNoteButton'
+import { ContinuityClientPrepGuide } from './ContinuityClientPrepGuide'
+import type { ClientProductionStyleId } from '@/lib/continuity/clientPrepGuideCopy'
 
 interface UploadedItem {
   id: string
@@ -101,6 +103,9 @@ export function ContinuityClientPortal({ token }: { token: string }) {
 
   const [slots, setSlots] = useState<ContinuityPortalSlot[]>([])
   const [scenePromptCards, setScenePromptCards] = useState<ContinuityScenePromptCard[]>([])
+  const [preferredProductionStyle, setPreferredProductionStyle] =
+    useState<ClientProductionStyleId | null>(null)
+  const [savingStyle, setSavingStyle] = useState(false)
   const [uploads, setUploads] = useState<UploadedItem[]>([])
   const [inviteCopied, setInviteCopied] = useState(false)
   const [roundsUsed, setRoundsUsed] = useState(0)
@@ -164,6 +169,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
       const loadedSlots: ContinuityPortalSlot[] = Array.isArray(data.slots) ? data.slots : []
       setSlots(loadedSlots)
       setScenePromptCards(Array.isArray(data.scenePromptCards) ? data.scenePromptCards : [])
+      setPreferredProductionStyle(data.preferredProductionStyle || null)
       const initialDecisions: Record<
         string,
         { decision: 'approved' | 'revision_requested'; note: string }
@@ -264,6 +270,25 @@ export function ContinuityClientPortal({ token }: { token: string }) {
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setUploadingSlotId(null)
+    }
+  }
+
+  const handleSelectProductionStyle = async (style: ClientProductionStyleId) => {
+    setPreferredProductionStyle(style)
+    setSavingStyle(true)
+    try {
+      await fetch(`/api/share/continuity/${encodeURIComponent(token)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'set_production_style',
+          preferredProductionStyle: style,
+        }),
+      })
+    } catch {
+      // Non-fatal preference save
+    } finally {
+      setSavingStyle(false)
     }
   }
 
@@ -887,6 +912,19 @@ export function ContinuityClientPortal({ token }: { token: string }) {
                   {formatPortalCopy(locale, 'continuityPortalSubtitle')}
                 </p>
               </div>
+
+              <ContinuityClientPrepGuide
+                projectTitle={projectTitle || brand.brandName}
+                brandName={brand.brandName}
+                locale={locale}
+                allowUploads={allowUploads}
+                allowVoiceCapture={allowVoiceCapture}
+                allowVideoClips={allowVideoClips}
+                hasPromptCards={scenePromptCards.length > 0}
+                preferredStyle={preferredProductionStyle}
+                savingStyle={savingStyle}
+                onSelectStyle={(style) => void handleSelectProductionStyle(style)}
+              />
 
               {!roundLimitReached && (
                 <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
