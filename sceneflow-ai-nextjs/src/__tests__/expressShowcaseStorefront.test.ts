@@ -103,6 +103,7 @@ import {
   fulfillExpressFilmBalanceOrder,
 } from '@/lib/showcase/expressShowcaseService'
 import { KeepsakeCinemaStorefront } from '@/components/showcase/KeepsakeCinemaStorefront'
+import { isPublicRoute } from '@/constants/publicRoutes'
 
 describe('Express 4K Cinema Showcase Catalog & Whop MoR Fulfillment', () => {
   beforeEach(() => {
@@ -361,5 +362,9 @@ describe('KeepsakeCinemaStorefront UI', () => {
     })
     expect(container.querySelector('[role="dialog"]')).toBeTruthy()
     expect(container.textContent).toContain('Continue to Whop Checkout — $29')
+
+    // Public route guard ensures /showcase and /showcase/order/* never render GlobalHeader or MobileAppGate
+    expect(isPublicRoute('/showcase')).toBe(true)
+    expect(isPublicRoute('/showcase/order/exp_abc123')).toBe(true)
   })
 })

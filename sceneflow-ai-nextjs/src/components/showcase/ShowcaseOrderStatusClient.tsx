@@ -97,18 +97,19 @@ export function ShowcaseOrderStatusClient({ orderId }: { orderId: string }) {
   return (
     <div className="min-h-screen bg-[#06080E] text-[#F5F2EB] flex flex-col">
       <header className="border-b border-white/10 bg-[#0B0F1A]/90">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/showcase" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#E6BE7E] to-[#C9974F] flex items-center justify-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 min-h-[60px] py-2.5 sm:py-0 sm:h-16 flex items-center justify-between gap-3">
+          <Link href="/showcase" className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-[#E6BE7E] to-[#C9974F] flex items-center justify-center">
               <Film className="w-4 h-4 text-[#090B12]" />
             </div>
-            <span className="font-serif text-lg font-semibold text-white">
+            <span className="font-serif text-base sm:text-lg font-semibold text-white truncate">
               {SHOWCASE_BRAND_SNAPSHOT.brandName}
             </span>
           </Link>
-          <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#DFB473]" />
-            Whop Merchant of Record
+          <span className="inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap text-[11px] sm:text-xs text-slate-400">
+            <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-[#DFB473]" />
+            <span className="sm:hidden">Whop MoR</span>
+            <span className="hidden sm:inline">Whop Merchant of Record</span>
           </span>
         </div>
       </header>

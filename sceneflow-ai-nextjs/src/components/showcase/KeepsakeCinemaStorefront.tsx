@@ -170,45 +170,51 @@ export function KeepsakeCinemaStorefront() {
   }
 
   return (
-    <div className="min-h-screen bg-[#06080E] text-[#F5F2EB] selection:bg-[#DFB473]/30 selection:text-white">
+    <div className="min-h-screen overflow-x-clip bg-[#06080E] text-[#F5F2EB] selection:bg-[#DFB473]/30 selection:text-white">
       {/* Subtle Live Reference Storefront Attribution Bar (Google-for-Startups & Pro Operator Safe) */}
       <div className="border-b border-white/10 bg-[#0B0F1A]/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-2 text-slate-300">
-            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-medium text-white">Live White-Label Reference Storefront</span>
-            <span className="hidden sm:inline text-slate-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] sm:text-xs">
+          <div className="flex items-center gap-2 min-w-0 text-slate-300">
+            <span className="inline-flex h-2 w-2 shrink-0 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-medium text-white truncate">
+              Live White-Label Reference Storefront
+            </span>
+            <span className="hidden md:inline text-slate-400">
               · Express 4K Cinema Only · Powered by SceneFlow Studio
             </span>
           </div>
           <Link
             href="/#video-services"
-            className="inline-flex items-center gap-1 font-medium text-[#DFB473] hover:text-[#F0CB92] transition"
+            className="inline-flex items-center gap-1 shrink-0 font-medium text-[#DFB473] hover:text-[#F0CB92] transition"
           >
-            Launch your own branded studio on SceneFlow
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span className="sm:hidden">Launch Your Studio</span>
+            <span className="hidden sm:inline">Launch your own branded studio on SceneFlow</span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </Link>
         </div>
       </div>
 
       {/* Main Editorial Navigation */}
-      <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-[#06080E]/85 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#E6BE7E] via-[#C9974F] to-[#8C6126] flex items-center justify-center shadow-lg shadow-[#C9974F]/20">
-              <Film className="w-4.5 h-4.5 text-[#090B12]" />
+      <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-[#06080E]/90 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[60px] py-2.5 sm:py-0 sm:h-16 flex items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 md:flex-initial">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-gradient-to-br from-[#E6BE7E] via-[#C9974F] to-[#8C6126] flex items-center justify-center shadow-lg shadow-[#C9974F]/20">
+              <Film className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#090B12]" />
             </div>
-            <div>
-              <span className="font-serif text-lg sm:text-xl font-semibold tracking-tight text-white block leading-none">
+            <div className="min-w-0">
+              <span className="font-serif text-base sm:text-xl font-semibold tracking-tight text-white block leading-tight truncate">
                 {SHOWCASE_BRAND_SNAPSHOT.brandName}
               </span>
-              <span className="text-[10px] uppercase tracking-[0.2em] text-[#DFB473]/90">
+              <span className="block sm:hidden text-[10px] tracking-wide text-[#DFB473]/90 leading-tight truncate">
+                Express 4K Films
+              </span>
+              <span className="hidden sm:block text-[10px] uppercase tracking-[0.2em] text-[#DFB473]/90 leading-tight truncate">
                 Express 4K Milestone &amp; Life Films
               </span>
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-7 text-sm text-slate-300">
+          <nav className="hidden md:flex items-center gap-7 text-sm text-slate-300 shrink-0">
             <a href="#occasions" className="hover:text-white transition">
               Occasions
             </a>
@@ -226,30 +232,31 @@ export function KeepsakeCinemaStorefront() {
           <button
             type="button"
             onClick={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F0CB92] hover:to-[#D8A75E] px-4 sm:px-5 py-2 text-xs sm:text-sm font-semibold text-[#090B12] shadow-lg shadow-[#C9974F]/20 transition"
+            className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F0CB92] hover:to-[#D8A75E] px-3.5 sm:px-5 py-2 text-xs sm:text-sm font-semibold text-[#090B12] shadow-lg shadow-[#C9974F]/20 transition"
           >
-            Start $29 Blueprint
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span className="sm:hidden">$29 Blueprint</span>
+            <span className="hidden sm:inline">Start $29 Blueprint</span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </button>
         </div>
       </header>
 
       {/* Hero Section with Real 16:9 Cinema Theater */}
-      <section className="relative overflow-hidden pt-12 pb-16 sm:pt-16 sm:pb-24">
+      <section className="relative overflow-hidden pt-8 pb-14 sm:pt-16 sm:pb-24">
         <div
           aria-hidden
           className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[900px] h-[440px] rounded-full bg-[#DFB473]/10 blur-[120px]"
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Editorial Copy Column */}
-            <div className="lg:col-span-6 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#DFB473]/30 bg-[#DFB473]/10 px-3.5 py-1.5 text-xs font-medium text-[#F0CB92]">
-                <Sparkles className="w-3.5 h-3.5" />
-                Same-Day 4K Cinema · Zero Camera Crews · 7 Languages
+            <div className="lg:col-span-6 space-y-5 sm:space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#DFB473]/30 bg-[#DFB473]/10 px-3 py-1.5 text-[11px] sm:text-xs font-medium text-[#F0CB92]">
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <span>Same-Day 4K Cinema · Zero Crews · 7 Languages</span>
               </div>
 
-              <h1 className="font-serif text-4xl sm:text-5xl lg:text-[56px] font-semibold tracking-tight text-white leading-[1.08]">
+              <h1 className="font-serif text-3xl sm:text-5xl lg:text-[56px] font-semibold tracking-tight text-white leading-[1.12] sm:leading-[1.08]">
                 Turn Life’s Greatest Chapters Into a{' '}
                 <span className="bg-gradient-to-r from-[#F5D6A3] via-[#DFB473] to-[#C48E44] bg-clip-text text-transparent">
                   4K Cinema Film
@@ -257,7 +264,7 @@ export function KeepsakeCinemaStorefront() {
                 — Delivered Today.
               </h1>
 
-              <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-xl">
+              <p className="text-sm sm:text-lg text-slate-300 leading-relaxed max-w-xl">
                 From{' '}
                 <span className="text-white font-medium">
                   family legacies &amp; milestone birthdays
@@ -271,39 +278,39 @@ export function KeepsakeCinemaStorefront() {
               </p>
 
               {/* Price & Guarantee Callout */}
-              <div className="grid grid-cols-3 gap-3 pt-1 max-w-lg">
-                <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3">
-                  <div className="text-xl sm:text-2xl font-bold text-[#F0CB92]">$29</div>
-                  <div className="text-[11px] text-slate-400 leading-tight mt-0.5">
-                    Storyboard Blueprint Pass (100% credited)
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1 max-w-lg">
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 sm:px-3.5 sm:py-3">
+                  <div className="text-lg sm:text-2xl font-bold text-[#F0CB92]">$29</div>
+                  <div className="text-[10px] sm:text-[11px] text-slate-400 leading-snug mt-0.5">
+                    Blueprint Pass (100% credited)
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3">
-                  <div className="text-xl sm:text-2xl font-bold text-white">$149</div>
-                  <div className="text-[11px] text-slate-400 leading-tight mt-0.5">
-                    Complete Express 4K Milestone Film
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 sm:px-3.5 sm:py-3">
+                  <div className="text-lg sm:text-2xl font-bold text-white">$149</div>
+                  <div className="text-[10px] sm:text-[11px] text-slate-400 leading-snug mt-0.5">
+                    Express 4K Milestone Film
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3">
-                  <div className="text-xl sm:text-2xl font-bold text-emerald-300">2–4 hrs</div>
-                  <div className="text-[11px] text-slate-400 leading-tight mt-0.5">
-                    Same-day 4K master after photo lock
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 sm:px-3.5 sm:py-3">
+                  <div className="text-lg sm:text-2xl font-bold text-emerald-300">2–4 hrs</div>
+                  <div className="text-[10px] sm:text-[11px] text-slate-400 leading-snug mt-0.5">
+                    Same-day 4K after photo lock
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3.5 pt-2">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
-                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] px-6 py-3.5 text-sm sm:text-base font-semibold text-[#090B12] shadow-xl shadow-[#C9974F]/25 transition"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] px-6 py-3.5 text-sm sm:text-base font-semibold text-[#090B12] shadow-xl shadow-[#C9974F]/25 transition"
                 >
                   Start My $29 Storyboard Blueprint
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 shrink-0" />
                 </button>
                 <a
                   href="#occasions"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-3.5 text-sm font-medium text-white transition"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-3.5 text-sm font-medium text-white transition"
                 >
                   Browse All Occasions
                 </a>
@@ -412,11 +419,11 @@ export function KeepsakeCinemaStorefront() {
             </div>
 
             {/* Category Switcher */}
-            <div className="inline-flex rounded-full border border-white/15 bg-[#0E1320] p-1 self-start">
+            <div className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-full border border-white/15 bg-[#0E1320] p-1">
               <button
                 type="button"
                 onClick={() => setActiveCategory('milestones')}
-                className={`rounded-full px-4 py-2 text-xs sm:text-sm font-semibold transition ${
+                className={`rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center ${
                   activeCategory === 'milestones'
                     ? 'bg-[#DFB473] text-[#090B12]'
                     : 'text-slate-300 hover:text-white'
@@ -427,7 +434,7 @@ export function KeepsakeCinemaStorefront() {
               <button
                 type="button"
                 onClick={() => setActiveCategory('commercial')}
-                className={`rounded-full px-4 py-2 text-xs sm:text-sm font-semibold transition ${
+                className={`rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center ${
                   activeCategory === 'commercial'
                     ? 'bg-[#DFB473] text-[#090B12]'
                     : 'text-slate-300 hover:text-white'
@@ -448,36 +455,37 @@ export function KeepsakeCinemaStorefront() {
                 key={offer.id}
                 className="group rounded-2xl border border-white/10 hover:border-[#DFB473]/45 bg-[#0D111C] overflow-hidden flex flex-col transition shadow-lg shadow-black/40"
               >
-                <div className="relative h-52 sm:h-56 overflow-hidden bg-slate-950">
+                <div className="relative aspect-[16/9] overflow-hidden bg-slate-950">
                   <img
                     src={offer.posterImage}
                     alt={offer.title}
                     className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0D111C] via-[#0D111C]/35 to-transparent" />
-                  <div className="absolute top-3 left-3 inline-flex items-center rounded-full bg-black/75 border border-[#DFB473]/40 px-3 py-1 text-[11px] font-medium text-[#F0CB92] backdrop-blur">
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0D111C] via-transparent to-black/25" />
+                  <div className="absolute top-3 left-3 max-w-[calc(100%-1.5rem)] inline-flex items-center rounded-full bg-black/75 border border-[#DFB473]/40 px-3 py-1 text-[11px] font-medium text-[#F0CB92] backdrop-blur truncate">
                     {offer.badge}
-                  </div>
-                  <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-2">
-                    <div>
-                      <h3 className="font-serif text-xl sm:text-2xl font-semibold text-white leading-snug">
-                        {offer.title}
-                      </h3>
-                      <p className="text-xs text-slate-300 mt-0.5">{offer.runtimeLabel}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-xl sm:text-2xl font-bold text-[#F0CB92]">
-                        ${offer.totalPriceUsd}
-                      </div>
-                      <div className="text-[10px] uppercase tracking-wider text-slate-300">
-                        $29 Pass + ${offer.balanceDueUsd}
-                      </div>
-                    </div>
                   </div>
                 </div>
 
                 <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between gap-5">
                   <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="font-serif text-xl sm:text-2xl font-semibold text-white leading-snug">
+                          {offer.title}
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-1">{offer.runtimeLabel}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-xl sm:text-2xl font-bold text-[#F0CB92] leading-none">
+                          ${offer.totalPriceUsd}
+                        </div>
+                        <div className="text-[10px] uppercase tracking-wider text-slate-400 mt-1 whitespace-nowrap">
+                          $29 + ${offer.balanceDueUsd}
+                        </div>
+                      </div>
+                    </div>
+
                     <p className="text-sm text-slate-300 leading-relaxed">{offer.subtitle}</p>
 
                     <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-3.5 py-2.5 text-xs text-slate-300">
@@ -495,15 +503,15 @@ export function KeepsakeCinemaStorefront() {
                     </ul>
                   </div>
 
-                  <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between gap-3">
+                  <div className="pt-3 border-t border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-1.5 text-xs text-emerald-300">
-                      <Clock className="w-3.5 h-3.5" />
+                      <Clock className="w-3.5 h-3.5 shrink-0" />
                       <span>{offer.turnaroundLabel}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => openOrderModal(offer)}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-white text-[#090B12] hover:bg-[#F0CB92] px-4 py-2 text-xs sm:text-sm font-semibold transition shrink-0"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-white text-[#090B12] hover:bg-[#F0CB92] px-4 py-2.5 sm:py-2 text-xs sm:text-sm font-semibold transition shrink-0"
                     >
                       Start $29 Blueprint
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -768,7 +776,7 @@ export function KeepsakeCinemaStorefront() {
           aria-modal="true"
           aria-labelledby="checkout-modal-title"
         >
-          <div className="relative w-full max-w-2xl rounded-3xl border border-[#DFB473]/30 bg-[#0B0F1A] shadow-2xl overflow-hidden my-8">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-[#DFB473]/30 bg-[#0B0F1A] shadow-2xl my-4 sm:my-8">
             <button
               type="button"
               onClick={() => setCheckoutOffer(null)}
@@ -780,7 +788,7 @@ export function KeepsakeCinemaStorefront() {
 
             <div className="grid grid-cols-1 md:grid-cols-12">
               {/* Order Summary Sidebar */}
-              <div className="md:col-span-5 bg-gradient-to-b from-[#151B2D] to-[#0B0F1A] p-6 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-between gap-5">
+              <div className="md:col-span-5 bg-gradient-to-b from-[#151B2D] to-[#0B0F1A] p-6 pr-14 md:pr-6 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-between gap-5">
                 <div className="space-y-3">
                   <span className="inline-flex items-center rounded-full bg-[#DFB473]/15 border border-[#DFB473]/35 px-2.5 py-0.5 text-[11px] font-semibold text-[#F0CB92]">
                     Step 1 · Blueprint Pass
