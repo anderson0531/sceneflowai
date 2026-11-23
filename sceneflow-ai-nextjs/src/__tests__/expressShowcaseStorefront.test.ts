@@ -324,6 +324,7 @@ describe('KeepsakeCinemaStorefront UI', () => {
 
   beforeEach(() => {
     ;(globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true
+    window.localStorage.clear()
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -444,6 +445,73 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(container.textContent).toContain(formatLandingCurrency(149, 'th'))
     expect(container.querySelector('video')?.getAttribute('src')).toBe(
       '/landing/video-services/videos/express-memoir-th.mp4'
+    )
+  })
+
+  it('toggles 4K Cinema and Full-Motion videos in the Hero and Milestone cards, and renders high-contrast Start $29 Blueprint buttons', () => {
+    expect(getLocalizedShowcaseVideoUrl('memoir', 'en', 'express4k')).toBe(
+      '/landing/video-services/videos/express-memoir-en.mp4'
+    )
+    expect(getLocalizedShowcaseVideoUrl('memoir', 'en', 'fullMotion')).toBe(
+      '/landing/video-services/videos/memoir-en.mp4'
+    )
+    expect(getLocalizedShowcaseVideoUrl('brand', 'zh-CN', 'fullMotion')).toBe(
+      '/landing/video-services/videos/brand-zh.mp4'
+    )
+
+    act(() => {
+      root.render(React.createElement(KeepsakeCinemaStorefront))
+    })
+
+    // Hero video starts in Express 4K Cinema mode
+    const heroVideo = container.querySelector('video')
+    expect(heroVideo?.getAttribute('src')).toBe('/landing/video-services/videos/express-memoir-en.mp4')
+
+    // Every Milestone card renders a <video> (not an <img>) and a readable gold Start $29 Blueprint button
+    const legacyCard = container.querySelector('[data-testid="offer-card-family_legacy"]')
+    expect(legacyCard).toBeTruthy()
+    expect(legacyCard?.querySelector('img')).toBeNull()
+    expect(legacyCard?.querySelector('video')?.getAttribute('src')).toBe(
+      '/landing/video-services/videos/express-memoir-en.mp4'
+    )
+
+    const cardCta = Array.from(legacyCard!.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Start $29 Blueprint')
+    )
+    expect(cardCta).toBeTruthy()
+    expect(cardCta!.className).toContain('!text-[#090B12]')
+    expect(cardCta!.className).not.toContain('bg-white')
+
+    // Per-card toggle switches just that card to Full-Motion while Hero stays 4K Cinema
+    const cardFullMotionBtn = Array.from(legacyCard!.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Full Motion'
+    )
+    expect(cardFullMotionBtn).toBeTruthy()
+    act(() => {
+      cardFullMotionBtn!.click()
+    })
+    expect(legacyCard?.querySelector('video')?.getAttribute('src')).toBe(
+      '/landing/video-services/videos/memoir-en.mp4'
+    )
+    expect(container.querySelector('video')?.getAttribute('src')).toBe(
+      '/landing/video-services/videos/express-memoir-en.mp4'
+    )
+
+    // Global Hero format toggle switches Hero & all cards to Full-Motion preview
+    const heroToggle = container.querySelector('[data-testid="hero-format-toggle"]')
+    const heroFullMotionBtn = Array.from(heroToggle!.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Full Motion')
+    )
+    expect(heroFullMotionBtn).toBeTruthy()
+    act(() => {
+      heroFullMotionBtn!.click()
+    })
+    expect(container.querySelector('video')?.getAttribute('src')).toBe(
+      '/landing/video-services/videos/memoir-en.mp4'
+    )
+    const retirementCard = container.querySelector('[data-testid="offer-card-retirement_tribute"]')
+    expect(retirementCard?.querySelector('video')?.getAttribute('src')).toBe(
+      '/landing/video-services/videos/brand-en.mp4'
     )
   })
 })

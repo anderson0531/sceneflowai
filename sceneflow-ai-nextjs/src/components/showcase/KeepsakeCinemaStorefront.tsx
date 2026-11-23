@@ -28,11 +28,13 @@ import {
   SHOWCASE_BRAND_SNAPSHOT,
   type ExpressShowcaseOffer,
   type ShowcaseCategoryId,
+  type ShowcaseOfferId,
 } from '@/config/showcase/expressCinemaCatalog'
 import {
   SHOWCASE_LOCALE_COPY,
   getLocalizedShowcaseVideoUrl,
   getShowcaseVideoPosterUrl,
+  type ShowcaseDemoFormat,
 } from '@/config/showcase/showcaseLocaleCopy'
 import {
   SUPPORTED_CLIENT_PORTAL_LOCALES,
@@ -58,7 +60,12 @@ export function KeepsakeCinemaStorefront() {
   const [langMenuOpen, setLangMenuOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<ShowcaseCategoryId>('milestones')
   const [activeReelIdx, setActiveReelIdx] = useState(0)
+  const [demoFormat, setDemoFormat] = useState<ShowcaseDemoFormat>('express4k')
+  const [cardFormatOverrides, setCardFormatOverrides] = useState<
+    Partial<Record<ShowcaseOfferId, ShowcaseDemoFormat>>
+  >({})
   const [isPlayingReel, setIsPlayingReel] = useState(false)
+  const [playingCardId, setPlayingCardId] = useState<ShowcaseOfferId | null>(null)
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0)
 
   // Checkout modal state
@@ -71,6 +78,7 @@ export function KeepsakeCinemaStorefront() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const cardVideoRefs = useRef<Partial<Record<ShowcaseOfferId, HTMLVideoElement | null>>>({})
   const langMenuRef = useRef<HTMLDivElement | null>(null)
 
   // Hydrate initial locale from URL -> localStorage -> browser navigator.language
@@ -118,19 +126,68 @@ export function KeepsakeCinemaStorefront() {
   const txt = (str: string) => localizeUsdText(str, uiLocale)
 
   const activeReel = copy.theater.tabs[activeReelIdx] ?? copy.theater.tabs[0]
-  const activeReelVideoUrl = getLocalizedShowcaseVideoUrl(activeReel.videoSlug, uiLocale)
+  const activeReelVideoUrl = getLocalizedShowcaseVideoUrl(activeReel.videoSlug, uiLocale, demoFormat)
   const activeReelPosterUrl = getShowcaseVideoPosterUrl(activeReel.videoSlug)
+  const fmtToggle = copy.theater.formatToggle
 
   const visibleOffers = useMemo(
     () => EXPRESS_SHOWCASE_OFFERS.filter((o) => o.category === activeCategory),
     [activeCategory]
   )
 
+  const pauseAllCardVideos = (exceptOfferId?: ShowcaseOfferId) => {
+    for (const [id, el] of Object.entries(cardVideoRefs.current)) {
+      if (id !== exceptOfferId && el) {
+        el.pause()
+      }
+    }
+    if (!exceptOfferId) {
+      setPlayingCardId(null)
+    }
+  }
+
+  const handleGlobalFormatChange = (nextFormat: ShowcaseDemoFormat) => {
+    setDemoFormat(nextFormat)
+    setCardFormatOverrides({})
+    setIsPlayingReel(false)
+    pauseAllCardVideos()
+    if (videoRef.current) {
+      videoRef.current.pause()
+      videoRef.current.load()
+    }
+  }
+
+  const handleCardFormatChange = (offerId: ShowcaseOfferId, nextFormat: ShowcaseDemoFormat) => {
+    setCardFormatOverrides((prev) => ({ ...prev, [offerId]: nextFormat }))
+    if (playingCardId === offerId) {
+      setPlayingCardId(null)
+    }
+    const cardEl = cardVideoRefs.current[offerId]
+    if (cardEl) {
+      cardEl.pause()
+      cardEl.load()
+    }
+  }
+
+  const handlePlayCardVideo = (offerId: ShowcaseOfferId) => {
+    if (videoRef.current) {
+      videoRef.current.pause()
+    }
+    setIsPlayingReel(false)
+    pauseAllCardVideos(offerId)
+    setPlayingCardId(offerId)
+    const cardEl = cardVideoRefs.current[offerId]
+    if (cardEl) {
+      void cardEl.play().catch(() => {})
+    }
+  }
+
   const handleLocaleChange = (nextLocale: ClientPortalLocale) => {
     setUiLocale(nextLocale)
     setCheckoutLocale(nextLocale)
     setLangMenuOpen(false)
     setIsPlayingReel(false)
+    pauseAllCardVideos()
     if (videoRef.current) {
       videoRef.current.pause()
       videoRef.current.load()
@@ -161,6 +218,7 @@ export function KeepsakeCinemaStorefront() {
   }
 
   const handlePlayReel = () => {
+    pauseAllCardVideos()
     setIsPlayingReel(true)
     if (videoRef.current) {
       void videoRef.current.play().catch(() => {})
@@ -312,11 +370,11 @@ export function KeepsakeCinemaStorefront() {
             <button
               type="button"
               onClick={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
-              className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F0CB92] hover:to-[#D8A75E] px-3.5 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#090B12] shadow-lg shadow-[#C9974F]/20 transition"
+              className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F0CB92] hover:to-[#D8A75E] px-3.5 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold !text-[#090B12] shadow-lg shadow-[#C9974F]/20 transition"
             >
-              <span className="sm:hidden">{txt(copy.nav.ctaMobile)}</span>
-              <span className="hidden sm:inline">{txt(copy.nav.ctaDesktop)}</span>
-              <ArrowRight className="w-3.5 h-3.5 shrink-0 rtl:rotate-180" />
+              <span className="sm:hidden !text-[#090B12] font-semibold">{txt(copy.nav.ctaMobile)}</span>
+              <span className="hidden sm:inline !text-[#090B12] font-semibold">{txt(copy.nav.ctaDesktop)}</span>
+              <ArrowRight className="w-3.5 h-3.5 shrink-0 !text-[#090B12] rtl:rotate-180" />
             </button>
           </div>
         </div>
@@ -344,6 +402,43 @@ export function KeepsakeCinemaStorefront() {
                 </span>
                 {copy.hero.titleSuffix}
               </h1>
+
+              {/* Interactive Format Option Strip: 4K Cinema (Same-Day Self-Serve) vs Full-Motion Cinema (Studio Preview) */}
+              <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
+                <span className="text-xs font-medium text-slate-400">
+                  {fmtToggle.heroSwitchPrefix}
+                </span>
+                <div
+                  role="group"
+                  aria-label="Compare 4K Cinema and Full-Motion video examples"
+                  className="inline-flex items-center rounded-full border border-white/15 bg-[#0D1220] p-1 gap-1"
+                >
+                  <button
+                    type="button"
+                    aria-pressed={demoFormat === 'express4k'}
+                    onClick={() => handleGlobalFormatChange('express4k')}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                      demoFormat === 'express4k'
+                        ? 'bg-[#DFB473] !text-[#090B12] shadow-sm'
+                        : '!text-slate-300 hover:!text-white'
+                    }`}
+                  >
+                    {fmtToggle.express4kLabel} · {fmtToggle.express4kSub}
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={demoFormat === 'fullMotion'}
+                    onClick={() => handleGlobalFormatChange('fullMotion')}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                      demoFormat === 'fullMotion'
+                        ? 'bg-emerald-400 !text-[#090B12] shadow-sm'
+                        : '!text-slate-300 hover:!text-white'
+                    }`}
+                  >
+                    {fmtToggle.fullMotionLabel} · {fmtToggle.fullMotionSub}
+                  </button>
+                </div>
+              </div>
 
               <p className="text-sm sm:text-lg text-slate-300 leading-relaxed max-w-xl">
                 {copy.hero.subtitleLead}
@@ -385,14 +480,14 @@ export function KeepsakeCinemaStorefront() {
                 <button
                   type="button"
                   onClick={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] px-6 py-3.5 text-sm sm:text-base font-semibold text-[#090B12] shadow-xl shadow-[#C9974F]/25 transition"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] px-6 py-3.5 text-sm sm:text-base font-semibold !text-[#090B12] shadow-xl shadow-[#C9974F]/25 transition"
                 >
                   {txt(copy.hero.primaryCta)}
-                  <ArrowRight className="w-4 h-4 shrink-0 rtl:rotate-180" />
+                  <ArrowRight className="w-4 h-4 shrink-0 !text-[#090B12] rtl:rotate-180" />
                 </button>
                 <a
                   href="#occasions"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-3.5 text-sm font-medium text-white transition"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-3.5 text-sm font-medium !text-white transition"
                 >
                   {copy.hero.secondaryCta}
                 </a>
@@ -414,19 +509,80 @@ export function KeepsakeCinemaStorefront() {
               </div>
             </div>
 
-            {/* Interactive 16:9 Cinema Sample Theater (Plays Matching Language MP4!) */}
+            {/* Interactive 16:9 Cinema Sample Theater (Toggle 4K Cinema vs. Full-Motion in Matching Language!) */}
             <div className="lg:col-span-6">
               <div className="rounded-2xl border border-[#DFB473]/25 bg-[#0C101B] p-2.5 sm:p-3 shadow-2xl shadow-black/60">
-                <div className="flex items-center justify-between gap-2 px-2 pb-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-2 pb-2.5">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="inline-flex h-2 w-2 shrink-0 rounded-full bg-[#DFB473]" />
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[#F0CB92] truncate">
-                      {copy.theater.eyebrow}
+                    <span
+                      className={`inline-flex h-2 w-2 shrink-0 rounded-full ${
+                        demoFormat === 'express4k' ? 'bg-[#DFB473]' : 'bg-emerald-400'
+                      }`}
+                    />
+                    <span
+                      className={`text-xs font-semibold uppercase tracking-wider truncate ${
+                        demoFormat === 'express4k' ? 'text-[#F0CB92]' : 'text-emerald-300'
+                      }`}
+                    >
+                      {demoFormat === 'express4k'
+                        ? copy.theater.eyebrow
+                        : fmtToggle.fullMotionEyebrow}
                     </span>
                   </div>
                   <span className="text-[11px] text-slate-400 shrink-0">
-                    {fmt(activeReel.priceUsd)} · {copy.theater.sameDayTagSuffix}
+                    {demoFormat === 'express4k'
+                      ? `${fmt(activeReel.priceUsd)} · ${copy.theater.sameDayTagSuffix}`
+                      : fmtToggle.fullMotionTagSuffix}
                   </span>
+                </div>
+
+                {/* Format Switcher inside the Theater Card: 4K Cinema vs Full Motion */}
+                <div
+                  data-testid="hero-format-toggle"
+                  className="grid grid-cols-2 gap-1.5 rounded-xl border border-white/10 bg-[#070A12] p-1 mb-2.5"
+                >
+                  <button
+                    type="button"
+                    aria-pressed={demoFormat === 'express4k'}
+                    onClick={() => handleGlobalFormatChange('express4k')}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition flex items-center justify-center gap-1.5 ${
+                      demoFormat === 'express4k'
+                        ? 'bg-[#DFB473] !text-[#090B12] shadow-sm'
+                        : '!text-slate-300 hover:!text-white hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <span className={demoFormat === 'express4k' ? '!text-[#090B12] font-semibold' : '!text-slate-200'}>
+                      {fmtToggle.express4kLabel}
+                    </span>
+                    <span
+                      className={`hidden sm:inline text-[10px] font-medium ${
+                        demoFormat === 'express4k' ? '!text-[#090B12]/80' : '!text-slate-400'
+                      }`}
+                    >
+                      · {fmtToggle.express4kSub}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={demoFormat === 'fullMotion'}
+                    onClick={() => handleGlobalFormatChange('fullMotion')}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition flex items-center justify-center gap-1.5 ${
+                      demoFormat === 'fullMotion'
+                        ? 'bg-emerald-400 !text-[#090B12] shadow-sm'
+                        : '!text-slate-300 hover:!text-white hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <span className={demoFormat === 'fullMotion' ? '!text-[#090B12] font-semibold' : '!text-slate-200'}>
+                      {fmtToggle.fullMotionLabel}
+                    </span>
+                    <span
+                      className={`hidden sm:inline text-[10px] font-medium ${
+                        demoFormat === 'fullMotion' ? '!text-[#090B12]/80' : '!text-slate-400'
+                      }`}
+                    >
+                      · {fmtToggle.fullMotionSub}
+                    </span>
+                  </button>
                 </div>
 
                 <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-white/10">
@@ -438,7 +594,10 @@ export function KeepsakeCinemaStorefront() {
                     controls={isPlayingReel}
                     playsInline
                     preload="metadata"
-                    onPlay={() => setIsPlayingReel(true)}
+                    onPlay={() => {
+                      pauseAllCardVideos()
+                      setIsPlayingReel(true)
+                    }}
                     className="w-full h-full object-cover"
                   />
                   {!isPlayingReel && (
@@ -448,18 +607,42 @@ export function KeepsakeCinemaStorefront() {
                       aria-label={`${copy.theater.watchSamplePrefix} ${activeReel.label}`}
                       className="group absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-black/75 via-black/30 to-black/20 hover:bg-black/45 transition"
                     >
-                      <span className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#DFB473]/95 group-hover:bg-[#F0CB92] group-hover:scale-105 text-[#090B12] flex items-center justify-center shadow-2xl shadow-[#DFB473]/40 transition">
-                        <Play className="w-7 h-7 sm:w-8 sm:h-8 ms-1 fill-current" />
+                      <span
+                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full group-hover:scale-105 !text-[#090B12] flex items-center justify-center shadow-2xl transition ${
+                          demoFormat === 'express4k'
+                            ? 'bg-[#DFB473]/95 group-hover:bg-[#F0CB92] shadow-[#DFB473]/40'
+                            : 'bg-emerald-400/95 group-hover:bg-emerald-300 shadow-emerald-400/40'
+                        }`}
+                      >
+                        <Play className="w-7 h-7 sm:w-8 sm:h-8 ms-1 fill-current !text-[#090B12]" />
                       </span>
-                      <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-black/70 border border-white/15 px-3.5 py-1 text-xs font-medium text-white backdrop-blur">
-                        <Volume2 className="w-3.5 h-3.5 text-[#DFB473]" />
-                        {copy.theater.watchSamplePrefix} · {activeReel.label}
+                      <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-black/75 border border-white/15 px-3.5 py-1 text-xs font-medium !text-white backdrop-blur">
+                        <Volume2
+                          className={`w-3.5 h-3.5 ${
+                            demoFormat === 'express4k' ? 'text-[#DFB473]' : 'text-emerald-400'
+                          }`}
+                        />
+                        {demoFormat === 'express4k'
+                          ? fmtToggle.watchExpressPrefix
+                          : fmtToggle.watchFullMotionPrefix}{' '}
+                        · {activeReel.label}
                       </span>
                     </button>
                   )}
                 </div>
 
-                <p className="text-xs text-slate-300 px-2 pt-2.5 pb-1">{activeReel.caption}</p>
+                <div className="px-2 pt-2.5 pb-1 space-y-1">
+                  <p className="text-xs text-slate-200 font-medium">{activeReel.caption}</p>
+                  <p
+                    className={`text-[11px] leading-snug ${
+                      demoFormat === 'express4k' ? 'text-slate-400' : 'text-emerald-300/90'
+                    }`}
+                  >
+                    {demoFormat === 'express4k'
+                      ? fmtToggle.express4kNote
+                      : fmtToggle.fullMotionNote}
+                  </p>
+                </div>
 
                 {/* Film Switcher Pills with full non-truncated labels + rich tooltips */}
                 <div className="grid grid-cols-2 gap-2 pt-2">
@@ -520,30 +703,69 @@ export function KeepsakeCinemaStorefront() {
               </p>
             </div>
 
-            {/* Category Switcher */}
-            <div className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-full border border-white/15 bg-[#0E1320] p-1">
-              <button
-                type="button"
-                onClick={() => setActiveCategory('milestones')}
-                className={`rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center ${
-                  activeCategory === 'milestones'
-                    ? 'bg-[#DFB473] text-[#090B12]'
-                    : 'text-slate-300 hover:text-white'
-                }`}
+            {/* Category & Format Switchers */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full md:w-auto">
+              <div
+                role="group"
+                aria-label="Preview format for milestone cards"
+                className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-full border border-white/15 bg-[#0E1320] p-1"
               >
-                {copy.occasions.tabMilestones}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveCategory('commercial')}
-                className={`rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center ${
-                  activeCategory === 'commercial'
-                    ? 'bg-[#DFB473] text-[#090B12]'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                {copy.occasions.tabCommercial}
-              </button>
+                <button
+                  type="button"
+                  aria-pressed={demoFormat === 'express4k'}
+                  onClick={() => handleGlobalFormatChange('express4k')}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition text-center whitespace-nowrap ${
+                    demoFormat === 'express4k'
+                      ? 'bg-[#DFB473] !text-[#090B12]'
+                      : '!text-slate-300 hover:!text-white'
+                  }`}
+                >
+                  {fmtToggle.express4kLabel}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={demoFormat === 'fullMotion'}
+                  onClick={() => handleGlobalFormatChange('fullMotion')}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition text-center whitespace-nowrap ${
+                    demoFormat === 'fullMotion'
+                      ? 'bg-emerald-400 !text-[#090B12]'
+                      : '!text-slate-300 hover:!text-white'
+                  }`}
+                >
+                  {fmtToggle.fullMotionLabel}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-full border border-white/15 bg-[#0E1320] p-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    pauseAllCardVideos()
+                    setActiveCategory('milestones')
+                  }}
+                  className={`rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center ${
+                    activeCategory === 'milestones'
+                      ? 'bg-[#DFB473] !text-[#090B12]'
+                      : '!text-slate-300 hover:!text-white'
+                  }`}
+                >
+                  {copy.occasions.tabMilestones}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    pauseAllCardVideos()
+                    setActiveCategory('commercial')
+                  }}
+                  className={`rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center ${
+                    activeCategory === 'commercial'
+                      ? 'bg-[#DFB473] !text-[#090B12]'
+                      : '!text-slate-300 hover:!text-white'
+                  }`}
+                >
+                  {copy.occasions.tabCommercial}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -554,21 +776,120 @@ export function KeepsakeCinemaStorefront() {
           >
             {visibleOffers.map((offer) => {
               const offerCopy = copy.occasions.offers[offer.id]
+              const cardFormat = cardFormatOverrides[offer.id] ?? demoFormat
+              const cardVideoUrl = getLocalizedShowcaseVideoUrl(
+                offer.videoSlug,
+                uiLocale,
+                cardFormat
+              )
+              const isCardPlaying = playingCardId === offer.id
               return (
                 <div
                   key={offer.id}
+                  data-testid={`offer-card-${offer.id}`}
                   className="group rounded-2xl border border-white/10 hover:border-[#DFB473]/45 bg-[#0D111C] overflow-hidden flex flex-col transition shadow-lg shadow-black/40"
                 >
-                  <div className="relative aspect-[16/9] overflow-hidden bg-slate-950">
-                    <img
-                      src={offer.posterImage}
-                      alt={offerCopy.title}
-                      className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-500"
+                  <div className="relative aspect-[16/9] overflow-hidden bg-black">
+                    <video
+                      ref={(el) => {
+                        cardVideoRefs.current[offer.id] = el
+                      }}
+                      key={cardVideoUrl}
+                      src={cardVideoUrl}
+                      poster={offer.posterImage}
+                      controls={isCardPlaying}
+                      playsInline
+                      preload="none"
+                      onPlay={() => {
+                        if (videoRef.current) videoRef.current.pause()
+                        setIsPlayingReel(false)
+                        pauseAllCardVideos(offer.id)
+                        setPlayingCardId(offer.id)
+                      }}
+                      onEnded={() => setPlayingCardId(null)}
+                      className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D111C] via-transparent to-black/25" />
-                    <div className="absolute top-3 start-3 max-w-[calc(100%-1.5rem)] inline-flex items-center rounded-full bg-black/75 border border-[#DFB473]/40 px-3 py-1 text-[11px] font-medium text-[#F0CB92] backdrop-blur truncate">
-                      {offerCopy.badge}
+                    {!isCardPlaying && (
+                      <>
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0D111C]/90 via-black/25 to-black/30" />
+                        <div className="pointer-events-none absolute top-3 start-3 max-w-[calc(100%-1.5rem)] inline-flex items-center rounded-full bg-black/75 border border-[#DFB473]/40 px-3 py-1 text-[11px] font-medium !text-[#F0CB92] backdrop-blur truncate">
+                          {offerCopy.badge}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handlePlayCardVideo(offer.id)}
+                          aria-label={`${
+                            cardFormat === 'express4k'
+                              ? fmtToggle.watchExpressPrefix
+                              : fmtToggle.watchFullMotionPrefix
+                          } — ${offerCopy.title}`}
+                          className="absolute inset-0 flex flex-col items-center justify-center hover:bg-black/20 transition"
+                        >
+                          <span
+                            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full group-hover:scale-105 !text-[#090B12] flex items-center justify-center shadow-xl transition ${
+                              cardFormat === 'express4k'
+                                ? 'bg-[#DFB473]/95 group-hover:bg-[#F0CB92] shadow-[#DFB473]/35'
+                                : 'bg-emerald-400/95 group-hover:bg-emerald-300 shadow-emerald-400/35'
+                            }`}
+                          >
+                            <Play className="w-5 h-5 sm:w-6 sm:h-6 ms-0.5 fill-current !text-[#090B12]" />
+                          </span>
+                          <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-black/75 border border-white/15 px-3 py-0.5 text-[11px] font-medium !text-white backdrop-blur">
+                            <Volume2
+                              className={`w-3 h-3 ${
+                                cardFormat === 'express4k' ? 'text-[#DFB473]' : 'text-emerald-400'
+                              }`}
+                            />
+                            {cardFormat === 'express4k'
+                              ? fmtToggle.watchExpressPrefix
+                              : fmtToggle.watchFullMotionPrefix}
+                          </span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Per-Card 4K Cinema vs Full-Motion Format Switcher */}
+                  <div className="border-b border-white/[0.08] bg-[#080C15] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2">
+                    <div
+                      role="group"
+                      aria-label={`Format switcher for ${offerCopy.title}`}
+                      className="inline-flex items-center rounded-full border border-white/10 bg-[#0D1220] p-0.5 gap-0.5"
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={cardFormat === 'express4k'}
+                        onClick={() => handleCardFormatChange(offer.id, 'express4k')}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                          cardFormat === 'express4k'
+                            ? 'bg-[#DFB473] !text-[#090B12]'
+                            : '!text-slate-300 hover:!text-white'
+                        }`}
+                      >
+                        {fmtToggle.express4kLabel}
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={cardFormat === 'fullMotion'}
+                        onClick={() => handleCardFormatChange(offer.id, 'fullMotion')}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                          cardFormat === 'fullMotion'
+                            ? 'bg-emerald-400 !text-[#090B12]'
+                            : '!text-slate-300 hover:!text-white'
+                        }`}
+                      >
+                        {fmtToggle.fullMotionLabel}
+                      </button>
                     </div>
+                    <span
+                      className={`text-[11px] font-medium ${
+                        cardFormat === 'express4k' ? 'text-[#F0CB92]' : 'text-emerald-300'
+                      }`}
+                    >
+                      {cardFormat === 'express4k'
+                        ? fmtToggle.cardExpressBadge
+                        : fmtToggle.cardFullMotionBadge}
+                    </span>
                   </div>
 
                   <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between gap-5">
@@ -622,10 +943,12 @@ export function KeepsakeCinemaStorefront() {
                       <button
                         type="button"
                         onClick={() => openOrderModal(offer)}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-white text-[#090B12] hover:bg-[#F0CB92] px-4 py-2.5 sm:py-2 text-xs sm:text-sm font-semibold transition shrink-0"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] !text-[#090B12] px-4 py-2.5 sm:py-2 text-xs sm:text-sm font-semibold shadow-md shadow-[#C9974F]/20 transition shrink-0"
                       >
-                        {txt(copy.occasions.cardCta)}
-                        <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+                        <span className="!text-[#090B12] font-semibold">
+                          {txt(copy.occasions.cardCta)}
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 !text-[#090B12] rtl:rotate-180" />
                       </button>
                     </div>
                   </div>
@@ -718,10 +1041,12 @@ export function KeepsakeCinemaStorefront() {
                   <button
                     type="button"
                     onClick={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#DFB473] hover:bg-[#F0CB92] px-4 py-2.5 text-xs font-semibold text-[#090B12] transition"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#DFB473] hover:bg-[#F0CB92] px-4 py-2.5 text-xs font-semibold !text-[#090B12] transition"
                   >
-                    {txt(copy.clarity.partnerPrimaryCta)}
-                    <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+                    <span className="!text-[#090B12] font-semibold">
+                      {txt(copy.clarity.partnerPrimaryCta)}
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5 !text-[#090B12] rtl:rotate-180" />
                   </button>
                   <Link
                     href="/#video-services"
@@ -803,7 +1128,7 @@ export function KeepsakeCinemaStorefront() {
             <button
               type="button"
               onClick={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
-              className="rounded-full bg-[#DFB473] hover:bg-[#F0CB92] px-5 py-2.5 text-xs sm:text-sm font-semibold text-[#090B12] transition"
+              className="rounded-full bg-[#DFB473] hover:bg-[#F0CB92] px-5 py-2.5 text-xs sm:text-sm font-semibold !text-[#090B12] transition"
             >
               {txt(copy.footer.primaryCta)}
             </button>
@@ -983,13 +1308,13 @@ export function KeepsakeCinemaStorefront() {
                   <button
                     type="submit"
                     disabled={submittingCheckout}
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] disabled:opacity-60 px-5 py-3.5 text-sm font-semibold text-[#090B12] shadow-lg shadow-[#C9974F]/25 transition"
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] disabled:opacity-60 px-5 py-3.5 text-sm font-semibold !text-[#090B12] shadow-lg shadow-[#C9974F]/25 transition"
                   >
                     {submittingCheckout
                       ? copy.modal.submitBusy
                       : `${copy.modal.submitIdlePrefix} ${fmt(EXPRESS_BLUEPRINT_PASS_USD)}`}
                     {!submittingCheckout && (
-                      <ArrowRight className="w-4 h-4 shrink-0 rtl:rotate-180" />
+                      <ArrowRight className="w-4 h-4 shrink-0 !text-[#090B12] rtl:rotate-180" />
                     )}
                   </button>
                   <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">

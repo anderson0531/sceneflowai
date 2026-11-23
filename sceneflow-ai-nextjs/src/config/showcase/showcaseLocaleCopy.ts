@@ -61,6 +61,22 @@ export interface ShowcaseLocaleCopy {
     eyebrow: string
     watchSamplePrefix: string
     sameDayTagSuffix: string
+    formatToggle: {
+      express4kLabel: string
+      express4kSub: string
+      fullMotionLabel: string
+      fullMotionSub: string
+      fullMotionEyebrow: string
+      fullMotionTagSuffix: string
+      express4kNote: string
+      fullMotionNote: string
+      cardExpressBadge: string
+      cardFullMotionBadge: string
+      watchExpressPrefix: string
+      watchFullMotionPrefix: string
+      heroSwitchPrefix: string
+      heroOrFullMotion: string
+    }
     tabs: readonly [
       { id: ShowcaseOfferId; label: string; caption: string; priceUsd: number; videoSlug: string },
       { id: ShowcaseOfferId; label: string; caption: string; priceUsd: number; videoSlug: string },
@@ -157,13 +173,21 @@ export interface ShowcaseLocaleCopy {
   }
 }
 
+export type ShowcaseDemoFormat = 'express4k' | 'fullMotion'
+
 export function getShowcaseVideoSlugLocale(locale: ClientPortalLocale): string {
   return locale === 'zh-CN' ? 'zh' : locale
 }
 
-export function getLocalizedShowcaseVideoUrl(videoSlug: string, locale: ClientPortalLocale): string {
+export function getLocalizedShowcaseVideoUrl(
+  videoSlug: string,
+  locale: ClientPortalLocale,
+  format: ShowcaseDemoFormat = 'express4k'
+): string {
   const code = getShowcaseVideoSlugLocale(locale)
-  return `/landing/video-services/videos/express-${videoSlug}-${code}.mp4`
+  return format === 'fullMotion'
+    ? `/landing/video-services/videos/${videoSlug}-${code}.mp4`
+    : `/landing/video-services/videos/express-${videoSlug}-${code}.mp4`
 }
 
 export function getShowcaseVideoPosterUrl(videoSlug: string): string {
@@ -213,6 +237,24 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       eyebrow: 'Express 4K Cinema Reel',
       watchSamplePrefix: 'Watch Sample',
       sameDayTagSuffix: 'Same-Day 4K',
+      formatToggle: {
+        express4kLabel: '4K Cinema',
+        express4kSub: 'Order Today',
+        fullMotionLabel: 'Full Motion',
+        fullMotionSub: 'Studio Preview',
+        fullMotionEyebrow: 'Full-Motion Cinema Preview',
+        fullMotionTagSuffix: 'Partner Studio Tier (Demo Only)',
+        express4kNote:
+          'Photorealistic 4K frames with Ken Burns camera motion, studio voices & score — available for same-day checkout below.',
+        fullMotionNote:
+          'Live-action AI motion & lip-synced dialogue — preview both formats here; Full-Motion films are produced via SceneFlow Studio Partners.',
+        cardExpressBadge: '4K · Same-Day',
+        cardFullMotionBadge: 'Full Motion · Demo',
+        watchExpressPrefix: 'Play 4K Cinema',
+        watchFullMotionPrefix: 'Play Full Motion',
+        heroSwitchPrefix: 'Compare formats:',
+        heroOrFullMotion: 'or Full-Motion Cinema',
+      },
       tabs: [
         {
           id: 'family_legacy',
@@ -540,6 +582,24 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       eyebrow: 'Muestra de Cine Express 4K',
       watchSamplePrefix: 'Ver Muestra',
       sameDayTagSuffix: '4K el Mismo Día',
+      formatToggle: {
+        express4kLabel: 'Cine 4K',
+        express4kSub: 'Pide Hoy',
+        fullMotionLabel: 'Movimiento Total',
+        fullMotionSub: 'Vista de Estudio',
+        fullMotionEyebrow: 'Vista Previa de Cine en Movimiento Total',
+        fullMotionTagSuffix: 'Nivel Estudio Socio (Solo Demo)',
+        express4kNote:
+          'Cuadros 4K fotorrealistas con movimiento Ken Burns, voces de estudio y música — disponible para pedido inmediato abajo.',
+        fullMotionNote:
+          'Video de acción con IA y diálogos sincronizados — explora ambos formatos aquí; Movimiento Total se produce con Estudios Socios de SceneFlow.',
+        cardExpressBadge: '4K · Hoy',
+        cardFullMotionBadge: 'Movimiento · Demo',
+        watchExpressPrefix: 'Ver Cine 4K',
+        watchFullMotionPrefix: 'Ver Movimiento Total',
+        heroSwitchPrefix: 'Compara formatos:',
+        heroOrFullMotion: 'o Cine en Movimiento Total',
+      },
       tabs: [
         {
           id: 'family_legacy',
@@ -867,6 +927,24 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       eyebrow: 'Amostra de Cinema Express 4K',
       watchSamplePrefix: 'Assistir Amostra',
       sameDayTagSuffix: '4K no Mesmo Dia',
+      formatToggle: {
+        express4kLabel: 'Cinema 4K',
+        express4kSub: 'Peça Hoje',
+        fullMotionLabel: 'Movimento Total',
+        fullMotionSub: 'Prévia de Estúdio',
+        fullMotionEyebrow: 'Prévia de Cinema em Movimento Total',
+        fullMotionTagSuffix: 'Estúdio Parceiro (Apenas Demo)',
+        express4kNote:
+          'Quadros 4K fotorrealistas com movimento Ken Burns, vozes de estúdio e trilha — disponível para pedido hoje abaixo.',
+        fullMotionNote:
+          'Movimento cinematográfico com IA e diálogos sincronizados — compare os dois formatos aqui; Movimento Total é produzido via Estúdios Parceiros SceneFlow.',
+        cardExpressBadge: '4K · Mesmo Dia',
+        cardFullMotionBadge: 'Movimento · Demo',
+        watchExpressPrefix: 'Ver Cinema 4K',
+        watchFullMotionPrefix: 'Ver Movimento Total',
+        heroSwitchPrefix: 'Compare formatos:',
+        heroOrFullMotion: 'ou Cinema em Movimento Total',
+      },
       tabs: [
         {
           id: 'family_legacy',
@@ -1194,6 +1272,24 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       eyebrow: 'एक्सप्रेस 4K सिनेमा रील',
       watchSamplePrefix: 'सैंपल देखें',
       sameDayTagSuffix: 'उसी दिन 4K',
+      formatToggle: {
+        express4kLabel: '4K सिनेमा',
+        express4kSub: 'आज ऑर्डर करें',
+        fullMotionLabel: 'फुल मोशन',
+        fullMotionSub: 'स्टूडियो प्रीव्यू',
+        fullMotionEyebrow: 'फुल-मोशन सिनेमा प्रीव्यू',
+        fullMotionTagSuffix: 'पार्टनर स्टूडियो टियर (केवल डेमो)',
+        express4kNote:
+          'स्मूद केन बर्न्स कैमरा मोशन, स्टूडियो वॉइस और संगीत के साथ 4K फ्रेम — नीचे तुरंत ऑर्डर के लिए उपलब्ध।',
+        fullMotionNote:
+          'लाइव-एक्शन AI मोशन और लिप-सिंक डायलॉग — यहाँ दोनों विकल्प देखें; फुल-मोशन फिल्में SceneFlow पार्टनर स्टूडियो द्वारा बनाई जाती हैं।',
+        cardExpressBadge: '4K · उसी दिन',
+        cardFullMotionBadge: 'फुल मोशन · डेमो',
+        watchExpressPrefix: '4K सिनेमा चलाएँ',
+        watchFullMotionPrefix: 'फुल मोशन चलाएँ',
+        heroSwitchPrefix: 'दोनों फॉर्मेट देखें:',
+        heroOrFullMotion: 'या फुल-मोशन सिनेमा',
+      },
       tabs: [
         {
           id: 'family_legacy',
@@ -1519,6 +1615,24 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       eyebrow: '极速 4K 电影实拍样片',
       watchSamplePrefix: '播放样片',
       sameDayTagSuffix: '当日 4K',
+      formatToggle: {
+        express4kLabel: '4K 电影',
+        express4kSub: '今日可订',
+        fullMotionLabel: '全动态电影',
+        fullMotionSub: '工作室预览',
+        fullMotionEyebrow: '全动态 AI 电影预览',
+        fullMotionTagSuffix: '合作工作室专享（仅演示）',
+        express4kNote:
+          '超清 4K 电影画面配丝滑 Ken Burns 运镜、棚录配音与原声配乐 — 本站支持当日自助下单。',
+        fullMotionNote:
+          '真人级 AI 动态镜头与口型同步对白 — 可在此对比两种方案；全动态影片由 SceneFlow 合作工作室定制交付。',
+        cardExpressBadge: '4K · 当日交付',
+        cardFullMotionBadge: '全动态 · 演示',
+        watchExpressPrefix: '播放 4K 电影',
+        watchFullMotionPrefix: '播放全动态电影',
+        heroSwitchPrefix: '对比方案：',
+        heroOrFullMotion: '或全动态电影',
+      },
       tabs: [
         {
           id: 'family_legacy',
@@ -1843,6 +1957,24 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       eyebrow: 'نماذج سينما 4K السريعة',
       watchSamplePrefix: 'شاهد النموذج',
       sameDayTagSuffix: '4K نفس اليوم',
+      formatToggle: {
+        express4kLabel: 'سينما 4K',
+        express4kSub: 'اطلب اليوم',
+        fullMotionLabel: 'حركة كاملة',
+        fullMotionSub: 'معاينة الاستوديو',
+        fullMotionEyebrow: 'معاينة سينما الحركة الكاملة',
+        fullMotionTagSuffix: 'فئة الاستوديوهات الشريكة (عرض فقط)',
+        express4kNote:
+          'إطارات 4K واقعية مع حركة كاميرا سينمائية وصوت استوديو وموسيقى — متاح للطلب الذاتي اليوم أدناه.',
+        fullMotionNote:
+          'مشاهد حركة كاملة بالذكاء الاصطناعي وحوار متزامن — قارن الخيارين هنا؛ تُنتج أفلام الحركة الكاملة عبر استوديوهات SceneFlow الشريكة.',
+        cardExpressBadge: '4K · نفس اليوم',
+        cardFullMotionBadge: 'حركة كاملة · عرض',
+        watchExpressPrefix: 'تشغيل سينما 4K',
+        watchFullMotionPrefix: 'تشغيل الحركة الكاملة',
+        heroSwitchPrefix: 'قارن الخيارات:',
+        heroOrFullMotion: 'أو سينما الحركة الكاملة',
+      },
       tabs: [
         {
           id: 'family_legacy',
@@ -2168,6 +2300,24 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       eyebrow: 'ตัวอย่างภาพยนตร์ Express 4K',
       watchSamplePrefix: 'ชมตัวอย่าง',
       sameDayTagSuffix: '4K วันเดียวกัน',
+      formatToggle: {
+        express4kLabel: 'ภาพยนตร์ 4K',
+        express4kSub: 'สั่งผลิตวันนี้',
+        fullMotionLabel: 'ฟูลโมชัน',
+        fullMotionSub: 'ตัวอย่างสตูดิโอ',
+        fullMotionEyebrow: 'ตัวอย่างภาพยนตร์ฟูลโมชัน',
+        fullMotionTagSuffix: 'ระดับสตูดิโอพาร์ตเนอร์ (ตัวอย่างเท่านั้น)',
+        express4kNote:
+          'ภาพ 4K สมจริงพร้อมการเคลื่อนกล้อง Ken Burns เสียงพากย์สตูดิโอและดนตรีประกอบ — สั่งผลิตด้วยตนเองได้ทันทีด้านล่าง',
+        fullMotionNote:
+          'ภาพเคลื่อนไหว AI เต็มรูปแบบพร้อมเสียงสนทนาซิงก์ปาก — เปรียบเทียบทั้ง 2 รูปแบบได้ที่นี่ โดยฟูลโมชันผลิตผ่านสตูดิโอพาร์ตเนอร์ของ SceneFlow',
+        cardExpressBadge: '4K · วันเดียวกัน',
+        cardFullMotionBadge: 'ฟูลโมชัน · ตัวอย่าง',
+        watchExpressPrefix: 'เล่นภาพยนตร์ 4K',
+        watchFullMotionPrefix: 'เล่นฟูลโมชัน',
+        heroSwitchPrefix: 'เปรียบเทียบรูปแบบ:',
+        heroOrFullMotion: 'หรือภาพยนตร์ฟูลโมชัน',
+      },
       tabs: [
         {
           id: 'family_legacy',

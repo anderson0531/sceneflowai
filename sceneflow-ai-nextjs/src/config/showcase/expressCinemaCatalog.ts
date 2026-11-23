@@ -12,10 +12,13 @@ export type ShowcaseOfferId =
   | 'brand_express'
   | 'training_express'
 
+export type ShowcaseVideoSlug = 'memoir' | 'realestate' | 'brand' | 'training'
+
 export interface ExpressShowcaseOffer {
   id: ShowcaseOfferId
   category: ShowcaseCategoryId
   vertical: IntakeVerticalId
+  videoSlug: ShowcaseVideoSlug
   badge: string
   title: string
   subtitle: string
@@ -51,6 +54,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     id: 'family_legacy',
     category: 'milestones',
     vertical: 'video_memoir',
+    videoSlug: 'memoir',
     badge: 'Most Popular · Family Legacy',
     title: 'Life Stories & Family Memoirs',
     subtitle:
@@ -81,6 +85,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     id: 'wedding_love',
     category: 'milestones',
     vertical: 'video_memoir',
+    videoSlug: 'memoir',
     badge: 'Weddings & Anniversaries',
     title: 'Love Stories, Weddings & Vow Renewals',
     subtitle:
@@ -111,6 +116,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     id: 'graduation_milestone',
     category: 'milestones',
     vertical: 'video_memoir',
+    videoSlug: 'memoir',
     badge: 'Graduations & Coming-of-Age',
     title: 'Graduation & Coming-of-Age Tributes',
     subtitle:
@@ -141,6 +147,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     id: 'retirement_tribute',
     category: 'milestones',
     vertical: 'video_memoir',
+    videoSlug: 'brand',
     badge: 'Retirements & Career Legacy',
     title: 'Retirement & Career Milestone Films',
     subtitle:
@@ -171,6 +178,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     id: 'real_estate_express',
     category: 'commercial',
     vertical: 'real_estate_tour',
+    videoSlug: 'realestate',
     badge: 'Real Estate · Same-Day 4K',
     title: 'Express 4K Property Listing Film',
     subtitle:
@@ -201,6 +209,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     id: 'brand_express',
     category: 'commercial',
     vertical: 'brand_story',
+    videoSlug: 'brand',
     badge: 'Business & Clinics · Same-Day 4K',
     title: 'Express 4K Founder & Practice Film',
     subtitle:
@@ -231,6 +240,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     id: 'training_express',
     category: 'commercial',
     vertical: 'education_module',
+    videoSlug: 'training',
     badge: 'Training & SOPs · Same-Day 4K',
     title: 'Express 4K Narrated Training & SOP Film',
     subtitle:
