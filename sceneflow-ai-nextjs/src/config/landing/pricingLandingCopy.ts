@@ -32,7 +32,7 @@ export const PRICING_LANDING_COPY = {
         badge: 'Flagship • White-Label Video Business • $149/mo',
         title: 'White-Label Video Service Providers',
         description:
-          'Launch a solo Life Memoir, Real Estate Tour, or Corporate Training business under your own brand on Operator Pro ($149/mo — self-funding $29 Blueprint Pass & $19 Iteration Packs at 83% margin with 0 PM hours, Family/Team Comment-Only Triage, Deferred PM Routing, 150 GB Client Vault, 10,000 credits/mo & $250 bulk add-on access). Pays for itself 3x on Client Order #1.',
+          'Launch a solo Life Memoir, Real Estate Tour, or Corporate Training business under your own brand on Operator Pro ($149/mo — self-funding $29 Blueprint Pass & $19 Iteration Packs at 83% margin, Same-Day $149 Express 4K Cinema Films at ~88% margin with auto-rendered 4K masters, Family Comment Triage, Deferred PM Routing, 150 GB Client Vault & 10,000 credits/mo). Pays for itself 3x on Client Order #1.',
         recommendedPlan: 'Operator Pro ($149/mo · $1,490/yr)',
       },
       {

@@ -3990,7 +3990,7 @@
           "description": "在数小时而非数周内，为付费客户交付人生传记电影、房产导览、企业培训与品牌短片 — 享有 100% 商业版权归属。",
           "highlights": [
             "免登录白标门户涵盖访谈采集、Blueprint、连续性与审片室",
-            "有声 Pre-vis 动态预演与轮次上限彻底杜绝高昂返工成本",
+            "有声 Pre-vis 4K 电影预览与轮次上限彻底杜绝高昂返工成本",
             "客户实拍老照片 + 4K AI 电影重现稳守 65–85% 服务毛利"
           ],
           "ctaLabel": "查看商业模式与收益测算",
@@ -4146,9 +4146,9 @@
       "calculatorTitle": "2. 压力测试交付成本与月度服务利润",
       "priceTierLabel": "客户套餐档位：",
       "priceTierNames": [
-        "亲民档",
-        "标准档",
-        "精品档"
+        "极速 4K 电影版",
+        "全动态电影版",
+        "典藏 4K 版"
       ],
       "tierScopePrefix": "套餐交付规格：",
       "volumeLabel": "每月交付客户项目数：",
@@ -4183,8 +4183,8 @@
           "detail": "客户在带有您品牌名称、Logo 与配色的页面审片，无需注册 SceneFlow 也不会看到算力价格。"
         },
         {
-          "title": "动态预演防火墙与硬性轮次上限",
-          "detail": "生成昂贵视频前先由客户确认 Blueprint、连续性与配音动态预演，并内置修改轮次与积分硬上限。"
+          "title": "极速 4K 电影与动态视频防火墙",
+          "detail": "将锁定连贯性的 4K 写实推拉镜画面与克隆配音、音效和配乐直接交付为当日成品（$149–$249）——或作为零浪费审片关口，在客户确认后再投入全动态视频算力。"
         },
         {
           "title": "客户照片与故事绝不用于模型训练",
@@ -4265,13 +4265,13 @@
         },
         {
           "step": "03",
-          "title": "手机传图与连续性锁定",
-          "detail": "客户手机直传照片（自动剥离 EXIF 定位），在限定轮次内确认分龄角色、服装与场景。"
+          "title": "手机照片上传、10 秒发音指南与连贯性锁定",
+          "detail": "客户直接用手机上传真实照片（自动清除 EXIF GPS），填写 10 秒姓名/地名发音指南，并在限定轮次内签收跨年龄角色、服装与场景。"
         },
         {
           "step": "04",
-          "title": "审片室交付与一键清理",
-          "detail": "发送免登录审片室链接收集逐帧批注，交付 4K + 70 语种母带，并可一键清理客户原始上传文件。"
+          "title": "当日极速 4K 或全动态审片室自动交付",
+          "detail": "支持项目经理一键审核发布（或全自动模式）推送至免登录审片室；客户点击批准即自动触发 4K 母带渲染并邮件发送下载链接，随时零返工升级全动态版本。"
         }
       ],
       "verticals": [
@@ -4279,7 +4279,7 @@
           "id": "memoir",
           "tabLabel": "人生传记电影",
           "roleTag": "★ 高毛利王牌破局赛道",
-          "badge": "$349–$1,250 / 部 · 市场价：$1,200–$4,500+",
+          "badge": "$149–$1,250 / 部 · 传统市场价：$1,200–$4,500+",
           "title": "人生回忆录、金婚寿辰致敬与家族传记大片",
           "description": "将珍贵的家庭老照片与电影级 AI 时代重现、传家宝道具锁定、精准分龄人物连续性（17 岁 → 32 岁 → 62 岁）无缝融合，配以温暖自然的旁白。",
           "globalMarketNeed": "全球每年有数以亿计的长辈寿辰、金婚庆典与人生纪念需求，但因传统团队动辄 $2,000+ 的高昂费用，超过 90% 的家庭故事从未被影像记录。",
@@ -4288,31 +4288,31 @@
           "traditionalMarketRangeLabel": "$1,200–$4,500+",
           "typicalRetailUsd": 599,
           "priceTiersUsd": [
-            349,
+            149,
             599,
             1250
           ],
           "tierScopeLabels": [
-            "5 分钟致敬短片 · 75% 老照片 + 1080p→4K 镜头 · 1 语种",
+            "极速 4K 电影纪念片（5–8 分钟 · 当日交付）· 4K 写实推拉镜画面 + 克隆配音/音效/配乐 · 自动渲染 4K 母带",
             "12 分钟家族回忆录 · 分龄角色 + 时代重现 · 2 语种",
             "20 分钟传世纪录片 · 4K 时代大戏 + 信物锁定 · 4 语种"
           ],
           "computeTiersUsd": [
-            18,
+            6,
             34,
             72
           ],
           "operatorTiersUsd": [
-            62,
+            12,
             88,
             150
           ],
           "activeTimeTiersLabels": [
-            "~1.25 小时",
+            "~15 分钟",
             "~1.75 小时",
             "~3.0 小时"
           ],
-          "retailRangeLabel": "$349–$1,250",
+          "retailRangeLabel": "$149–$1,250",
           "estComputeUsd": 34,
           "estOperatorUsd": 88,
           "activeMinutesLabel": "~1.75 小时",
@@ -4322,7 +4322,7 @@
           "id": "realestate",
           "tabLabel": "房产与酒店导览",
           "roleTag": "↻ 经纪人月度复购单",
-          "badge": "$199–$549 / 套 · 市场价：$450–$1,500+",
+          "badge": "$149–$549 / 套房源 · 传统市场价：$450–$1,500+",
           "title": "豪宅房源配音漫游与精品酒店沉浸导览",
           "description": "将房源实拍照片与周边配套亮点转化为配乐配音俱全的电影感导览大片 — 并可即时生成英语、西语、阿语或葡语版本吸引海外买家。",
           "globalMarketNeed": "全球每月有数以千万计的住宅房源、度假民宿与精品酒店急需吸引本地及跨国买家，但绝大多数仍停留在缺乏感染力的静态房源照片。",
@@ -4331,31 +4331,31 @@
           "traditionalMarketRangeLabel": "$450–$1,500+",
           "typicalRetailUsd": 299,
           "priceTiersUsd": [
-            199,
+            149,
             299,
             549
           ],
           "tierScopeLabels": [
-            "90 秒房源照片漫游 · 1080p 电影感 + 1 语种",
+            "极速 4K 房源电影（90 秒 · 当日交付）· 4K 运镜画面 + 专业旁白与配乐 · 1 种语言",
             "2 分钟配音导览片 · 4K 超分 + 2 语种",
             "3 分钟豪宅大片 + 9:16 竖屏切片 · 4 语种跨境版"
           ],
           "computeTiersUsd": [
-            10,
+            5,
             15,
             28
           ],
           "operatorTiersUsd": [
-            38,
+            10,
             50,
             88
           ],
           "activeTimeTiersLabels": [
-            "~45 分钟",
+            "~12 分钟",
             "~1.0 小时",
             "~1.75 小时"
           ],
-          "retailRangeLabel": "$199–$549",
+          "retailRangeLabel": "$149–$549",
           "estComputeUsd": 15,
           "estOperatorUsd": 50,
           "activeMinutesLabel": "~1.0 小时",
@@ -4365,7 +4365,7 @@
           "id": "training",
           "tabLabel": "企业培训与 SOP",
           "roleTag": "↻ 企业 B2B 年度复购",
-          "badge": "$599–$1,800 / 门课 · 市场价：$1,500–$5,000+",
+          "badge": "$249–$1,800 / 模块 · 传统市场价：$1,500–$5,000+",
           "title": "企业入职培训、安全规范与多语种标准课程",
           "description": "在连续性资产库中锁定讲师形象、工装制服与作业场景 — 一键向全球不同母语员工交付清晰统一的标准培训剧集。",
           "globalMarketNeed": "全球每一家制造工厂、连锁医疗、餐饮集团与加盟品牌都面临高频人员流动、安全合规与多语种员工考核，亟需标准化视频 SOP 课程。",
@@ -4374,31 +4374,31 @@
           "traditionalMarketRangeLabel": "$1,500–$5,000+",
           "typicalRetailUsd": 950,
           "priceTiersUsd": [
-            599,
+            249,
             950,
             1800
           ],
           "tierScopeLabels": [
-            "5 分钟标准 SOP 课 · 锁定讲师 + 1 语种",
+            "极速 4K 旁白 SOP（5 分钟 · 当日交付）· 锁定讲师与场景 + 克隆配音/音效 · 1 种语言",
             "10 分钟安全/入职课程 · 3 大员工语种",
             "20 分钟多章节系列培训 · 6+ 员工语种"
           ],
           "computeTiersUsd": [
-            24,
+            9,
             40,
             78
           ],
           "operatorTiersUsd": [
-            88,
+            18,
             125,
             210
           ],
           "activeTimeTiersLabels": [
-            "~1.75 小时",
+            "~20 分钟",
             "~2.5 小时",
             "~4.2 小时"
           ],
-          "retailRangeLabel": "$599–$1,800",
+          "retailRangeLabel": "$249–$1,800",
           "estComputeUsd": 40,
           "estOperatorUsd": 125,
           "activeMinutesLabel": "~2.5 小时",
@@ -4408,7 +4408,7 @@
           "id": "brand",
           "tabLabel": "品牌故事与广告",
           "roleTag": "↻ 本地商户与代运营包",
-          "badge": "$399–$1,200 / 套 · 市场价：$3,000–$8,000+",
+          "badge": "$199–$1,200 / 套 · 传统市场价：$3,000–$8,000+",
           "title": "创始人品牌故事片、诊所科普与竖屏社媒广告",
           "description": "打造高转化官网品牌故事主片，并自动裁剪适配抖音、TikTok、Instagram 与 YouTube Shorts 的 9:16 竖屏预告片 — 通过 Screening Room 高效审片。",
           "globalMarketNeed": "全球超过 3,000 万家本地诊所、律师事务所、特色餐厅与创业品牌急需官网信任背书大片与 9:16 社媒广告，却无力承担 $5,000+ 传统广告制作费。",
@@ -4417,31 +4417,31 @@
           "traditionalMarketRangeLabel": "$3,000–$8,000+",
           "typicalRetailUsd": 650,
           "priceTiersUsd": [
-            399,
+            199,
             650,
             1200
           ],
           "tierScopeLabels": [
-            "60 秒诊所/商户信任短片 + 1 条 9:16 竖屏版",
+            "极速 4K 品牌电影（90 秒 · 当日交付）· 4K 运镜画面 + 旁白与配乐 · 自动渲染 4K 母带",
             "2 分钟创始人品牌故事 + 2 条 9:16 社媒短片",
             "品牌主片 + 4 组多语种广告黄金前 3 秒变体"
           ],
           "computeTiersUsd": [
-            16,
+            7,
             28,
             56
           ],
           "operatorTiersUsd": [
-            62,
+            15,
             88,
             150
           ],
           "activeTimeTiersLabels": [
-            "~1.25 小时",
+            "~18 分钟",
             "~1.75 小时",
             "~3.0 小时"
           ],
-          "retailRangeLabel": "$399–$1,200",
+          "retailRangeLabel": "$199–$1,200",
           "estComputeUsd": 28,
           "estOperatorUsd": 88,
           "activeMinutesLabel": "~1.75 小时",
@@ -4543,7 +4543,7 @@
           "tabLabel": "Production Stage",
           "badge": "Shot Director、逐镜头服装选择与全自动代理",
           "title": "先审看全配音动态分镜 — 再交由代理批量生成成片镜头",
-          "promise": "审阅制作剧本初稿，锁定连续性参考图，试看完整配音的 Pre-vis Animatic，在 Shot Director 中为每个镜头挑选专属服装，随后启动自主代理完成全片制作。",
+          "promise": "审阅制作剧本初稿，锁定连续性参考图，试看完整配音的 极速 4K 电影预览，在 Shot Director 中为每个镜头挑选专属服装，随后启动自主代理完成全片制作。",
           "creatorExampleTitle": "第 1 场：地下档案金库 · 4K 变形宽银幕",
           "creatorExampleNote": "按镜头切换艾拉拉的服装，用语音或文字微调景别构图，在 Production Mixer 混音并派发 Production Agents。",
           "serviceExampleTitle": "客户真实老照片 + 4K 电影级时代重现",
@@ -4554,7 +4554,7 @@
               "detail": "精准指定每个镜头的服装造型，对话式精修构图与神态，告别盲盒式重抽。"
             },
             {
-              "label": "有声 Pre-vis Animatic 预算防火墙",
+              "label": "有声 极速 4K 电影预览 预算防火墙",
               "detail": "在消耗动态视频积分前，先在分镜画面上完整试听对白、旁白、音效与配乐节奏。"
             },
             {
@@ -4563,7 +4563,7 @@
             }
           ],
           "visuals": {
-            "topBadge": "Shot Director · 已选定专属服装 · Pre-vis Animatic 就绪",
+            "topBadge": "Shot Director · 已选定专属服装 · 极速 4K 电影预览 就绪",
             "bottomBadge": "Audio Agent、Stills Agent 与 Clips Agent 自动编排全片场景",
             "thumbLabels": [
               "镜头 1 · 金库全景",
@@ -4618,7 +4618,7 @@
         {
           "id": "memoir-services",
           "tabLabel": "人生传记电影与家族传承",
-          "badge": "王牌客户定制服务 · $349–$1,250/部",
+          "badge": "王牌客户定制服务 · $149–$1,250/部",
           "headline": "将家庭深度访谈与珍藏老照片转化为传世电影",
           "description": "通过智能故事访谈采集人生历程，锁定从 70 年代青年时期到晚年的分龄人物肖像，调度全自动 Production Agents，由 FlowDirector 一键修复镜头，并通过免登录 Screening Room 链接交付。",
           "featureIcons": [

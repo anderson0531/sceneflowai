@@ -122,6 +122,8 @@ export interface ClientPortalStrings {
   slotRevisionPlaceholder: string
   overallContinuityNoteLabel: string
   overallContinuityNotePlaceholder: string
+  pronunciationGuideLabel: string
+  pronunciationGuidePlaceholder: string
   continuityApprovedBanner: string
   continuityChangesSentBanner: string
   blueprintReviewHeading: string
@@ -248,6 +250,8 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     slotRevisionPlaceholder: 'Type or tap the microphone to describe wardrobe, era, angle, or adjustment needed...',
     overallContinuityNoteLabel: 'Overall Continuity Notes (optional)',
     overallContinuityNotePlaceholder: 'Type or tap the microphone to share overall notes for your producer...',
+    pronunciationGuideLabel: '10-Second Pronunciation Guide (optional — names, towns, or brands)',
+    pronunciationGuidePlaceholder: 'Example: Kowalski = koh-VAHL-skee; Siobhan = shih-VAWN (type or tap mic)...',
     continuityApprovedBanner: 'Continuity Approved — Production Ready',
     continuityChangesSentBanner: 'Continuity Feedback Sent to {brand}',
     blueprintReviewHeading: 'Blueprint Review',
@@ -372,6 +376,8 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     slotRevisionPlaceholder: 'Escriba o use el micrófono para describir vestuario, época, ángulo o ajuste...',
     overallContinuityNoteLabel: 'Notas Generales de Continuidad (opcional)',
     overallContinuityNotePlaceholder: 'Escriba o use el micrófono para compartir notas generales con su productor...',
+    pronunciationGuideLabel: 'Guía Rápida de Pronunciación (opcional — apellidos, lugares o marcas)',
+    pronunciationGuidePlaceholder: 'Ejemplo: Kowalski = ko-VAL-ski; apellidos o pueblos poco comunes...',
     continuityApprovedBanner: 'Continuidad Aprobada — Lista para Producción',
     continuityChangesSentBanner: 'Notas de Continuidad Enviadas a {brand}',
     blueprintReviewHeading: 'Revisión de Propuesta',
@@ -496,6 +502,8 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     slotRevisionPlaceholder: 'Digite ou toque no microfone para descrever figurino, época, ângulo ou ajuste...',
     overallContinuityNoteLabel: 'Notas Gerais de Continuidade (opcional)',
     overallContinuityNotePlaceholder: 'Digite ou toque no microfone para enviar observações gerais ao produtor...',
+    pronunciationGuideLabel: 'Guia Rápido de Pronúncia (opcional — sobrenomes, cidades ou marcas)',
+    pronunciationGuidePlaceholder: 'Exemplo: Kowalski = ko-VAL-ski; nomes ou locais especiais...',
     continuityApprovedBanner: 'Continuidade Aprovada — Pronta para Produção',
     continuityChangesSentBanner: 'Notas de Continuidade Enviadas para {brand}',
     blueprintReviewHeading: 'Revisão do Roteiro Base',
@@ -620,6 +628,8 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     slotRevisionPlaceholder: 'वेशभूषा, समय-काल, कोण या बदलाव लिखने या बोलने के लिए माइक दबाएँ...',
     overallContinuityNoteLabel: 'सामान्य निरंतरता नोट्स (वैकल्पिक)',
     overallContinuityNotePlaceholder: 'निर्माता के लिए सामान्य नोट्स लिखें या बोलने के लिए माइक दबाएँ...',
+    pronunciationGuideLabel: '10-सेकंड उच्चारण गाइड (वैकल्पिक — नाम, स्थान या ब्रांड)',
+    pronunciationGuidePlaceholder: 'उदाहरण: Kowalski = को-वाल्स्की; परिवार के नाम या शहर का सही उच्चारण...',
     continuityApprovedBanner: 'विज़ुअल निरंतरता स्वीकृत — प्रोडक्शन के लिए तैयार',
     continuityChangesSentBanner: 'निरंतरता सुझाव {brand} को भेजे गए',
     blueprintReviewHeading: 'ब्लूप्रिंट समीक्षा',
@@ -740,6 +750,8 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     slotRevisionPlaceholder: '输入或点击麦克风口述服装、年代、角度或调整说明...',
     overallContinuityNoteLabel: '整体视觉连贯性备注（选填）',
     overallContinuityNotePlaceholder: '输入或点击麦克风向制作团队口述整体备注...',
+    pronunciationGuideLabel: '10秒人名/地名发音指南（选填）',
+    pronunciationGuidePlaceholder: '示例：Kowalski = koh-VAHL-skee；或注明特殊姓名、地名与品牌读音...',
     continuityApprovedBanner: '视觉连贯性已确认 — 可进入制作阶段',
     continuityChangesSentBanner: '调整意见已发送给 {brand}',
     blueprintReviewHeading: '蓝图审阅',
@@ -863,6 +875,8 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     slotRevisionPlaceholder: 'พิมพ์หรือแตะไมโครโฟนเพื่อระบุชุด ยุคสมัย มุมกล้อง หรือสิ่งที่ต้องแก้ไข...',
     overallContinuityNoteLabel: 'หมายเหตุภาพรวม (ไม่บังคับ)',
     overallContinuityNotePlaceholder: 'พิมพ์หรือแตะไมโครโฟนเพื่อฝากข้อความถึงผู้ผลิต...',
+    pronunciationGuideLabel: 'คู่มือการออกเสียง 10 วินาที (ไม่บังคับ — ชื่อ สกุล หรือสถานที่)',
+    pronunciationGuidePlaceholder: 'ตัวอย่าง: Kowalski = โค-วาล-สกี้ หรือชื่อเฉพาะที่ต้องการให้ออกเสียงถูกต้อง...',
     continuityApprovedBanner: 'อนุมัติความต่อเนื่องของภาพแล้ว — พร้อมเริ่มผลิต',
     continuityChangesSentBanner: 'ส่งบันทึกการแก้ไขไปยัง {brand} แล้ว',
     blueprintReviewHeading: 'ตรวจสอบโครงเรื่อง (Blueprint)',
@@ -987,6 +1001,8 @@ export const CLIENT_PORTAL_COPY: Record<ClientPortalLocale, ClientPortalStrings>
     slotRevisionPlaceholder: 'اكتب أو اضغط على الميكروفون لوصف الزي أو الحقبة أو الزاوية أو التعديل المطلوب...',
     overallContinuityNoteLabel: 'ملاحظات عامة حول الاستمرارية (اختياري)',
     overallContinuityNotePlaceholder: 'اكتب أو اضغط على الميكروفون لمشاركة ملاحظات عامة مع المنتج...',
+    pronunciationGuideLabel: 'دليل النطق السريع (اختياري — الأسماء أو الأماكن أو العلامات)',
+    pronunciationGuidePlaceholder: 'مثال: Kowalski = كو-فال-سكي؛ أو طريقة نطق أسماء العائلة والمدن...',
     continuityApprovedBanner: 'تم اعتماد الاستمرارية البصرية — جاهز للإنتاج',
     continuityChangesSentBanner: 'تم إرسال ملاحظات التعديل إلى {brand}',
     blueprintReviewHeading: 'مراجعة المخطط',

@@ -112,6 +112,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
   const [maxRounds, setMaxRounds] = useState(3)
   const [approvalStatus, setApprovalStatus] = useState<string>('pending_review')
   const [generalNotes, setGeneralNotes] = useState('')
+  const [pronunciationNotes, setPronunciationNotes] = useState('')
 
   const [uploadingSlotId, setUploadingSlotId] = useState<string | null>(null)
   const [uploadNotice, setUploadNotice] = useState<string | null>(null)
@@ -165,6 +166,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
         else if (data.customerName) setCustomerName(data.customerName)
       }
       if (data.generalNotes) setGeneralNotes(data.generalNotes)
+      if (data.pronunciationNotes) setPronunciationNotes(data.pronunciationNotes)
 
       const loadedSlots: ContinuityPortalSlot[] = Array.isArray(data.slots) ? data.slots : []
       setSlots(loadedSlots)
@@ -307,6 +309,7 @@ export function ContinuityClientPortal({ token }: { token: string }) {
         body: JSON.stringify({
           reviewerName: customerName.trim() || 'Reviewer',
           generalNotes: generalNotes.trim() || undefined,
+          pronunciationNotes: pronunciationNotes.trim() || undefined,
           slotDecisions,
         }),
       })
@@ -942,6 +945,25 @@ export function ContinuityClientPortal({ token }: { token: string }) {
                       />
                     </label>
                   )}
+                  <div>
+                    <label className="block text-xs font-medium text-cyan-200 mb-1">
+                      {formatPortalCopy(locale, 'pronunciationGuideLabel')}
+                    </label>
+                    <DictationTextarea
+                      rows={2}
+                      lang={getSpeechLangForPortalLocale(locale)}
+                      dir={getLocaleDirection(locale)}
+                      startLabel={formatPortalCopy(locale, 'tapMicToSpeak')}
+                      stopLabel={formatPortalCopy(locale, 'stopRecording')}
+                      listeningHint={formatPortalCopy(locale, 'listeningInLanguage', {
+                        lang: getPortalLocaleLabel(locale),
+                      })}
+                      value={pronunciationNotes}
+                      onChange={setPronunciationNotes}
+                      placeholder={formatPortalCopy(locale, 'pronunciationGuidePlaceholder')}
+                      className="w-full rounded-xl bg-slate-950 border border-cyan-500/30 text-sm text-white"
+                    />
+                  </div>
                   <div>
                     <label className="block text-xs text-slate-300 mb-1">
                       {formatPortalCopy(locale, 'overallContinuityNoteLabel')}

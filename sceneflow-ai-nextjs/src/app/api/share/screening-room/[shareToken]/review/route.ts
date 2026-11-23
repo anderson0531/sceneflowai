@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { findActiveShareProject } from '@/lib/storyboard/shareProjectLookup'
 import { evaluateCustomerTextQuarantine } from '@/lib/producer/quarantineCheck'
 import { notifyUser } from '@/lib/jobs/jobService'
+import { triggerExpress4kRenderOnScreeningApproval } from '@/lib/export/expressCinemaPipeline'
 
 export const runtime = 'nodejs'
 
@@ -72,6 +73,30 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     await project.update({ metadata: md })
 
     const ownerId = String((project as { user_id?: string }).user_id || '')
+
+    let expressRender: {
+      triggered: boolean
+      status?: 'queued' | 'skipped' | 'failed'
+      jobId?: string
+      reason?: string
+    } = { triggered: false, status: 'skipped' }
+
+    if (decision === 'approved') {
+      try {
+        expressRender = await triggerExpress4kRenderOnScreeningApproval({
+          project,
+          ownerUserId: ownerId,
+        })
+      } catch (renderErr) {
+        console.warn('[screening review] Express 4K auto-render warning:', renderErr)
+        expressRender = {
+          triggered: false,
+          status: 'failed',
+          reason: renderErr instanceof Error ? renderErr.message : 'Auto-render failed',
+        }
+      }
+    }
+
     if (ownerId) {
       try {
         await notifyUser({
@@ -85,13 +110,16 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
               : `Screening Revision Requested: ${project.title}`,
           message:
             decision === 'approved'
-              ? `${reviewerName} approved the Screening Room master! Ready to deliver final video.`
+              ? expressRender.triggered
+                ? `${reviewerName} approved the Screening Room cut! 4K master render has been auto-queued (job ${expressRender.jobId}) and will email the download link upon completion.`
+                : `${reviewerName} approved the Screening Room master! Ready to deliver final video.`
               : `${reviewerName} submitted Screening Room revision notes (${nextRoundsUsed}/${maxRounds}).`,
           sendEmail: true,
           metadata: {
             projectId: project.id,
             stage: 'screening',
             decision,
+            ...(expressRender.jobId ? { expressRenderJobId: expressRender.jobId } : {}),
             openPath: `/dashboard/workflow/vision/${project.id}`,
           },
         })
@@ -105,6 +133,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       approvalStatus: nextStatus,
       roundsUsed: nextRoundsUsed,
       maxRounds,
+      expressRender,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to submit screening review'

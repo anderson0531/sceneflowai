@@ -1586,13 +1586,13 @@
       "cards": [
         {
           "id": "services",
-          "badge": "Income Opportunity · 65–85% Gross Service Margin",
+          "badge": "Income Opportunity · 65–90% Gross Service Margin",
           "title": "Video Delivery Businesses",
-          "description": "Lead with high-margin Life Memoirs—then stack repeat monthly retainers across Corporate Training, Real Estate, and Brand Films with full commercial ownership.",
+          "description": "Lead with $149 Same-Day Express 4K Cinema Films and high-margin Life Memoirs—then stack repeat monthly retainers across Training, Real Estate, and Brand Films with full commercial ownership.",
           "highlights": [
             "Zero-login white-label portals for Intake, Blueprint, Continuity & Screening",
-            "Voiced Pre-vis Animatic & round caps prevent costly client reshoots",
-            "Hybrid client photos + cinema AI re-enactments protect 65–85% margins"
+            "Same-day $149 Express 4K Cinema Films (~88% margin) & zero-rework Full-Motion upgrades",
+            "Voiced Cinema Preview firewall & hard round caps prevent costly client reshoots"
           ],
           "ctaLabel": "Explore Business Models & Margins",
           "targetAnchor": "video-services"
@@ -1605,7 +1605,7 @@
           "highlights": [
             "Instant expert baseline for Series, Blueprint & Script",
             "Speak or type changes in plain language—zero prompt syntax",
-            "Watch your voiced Animatic before spending credits on motion"
+            "Watch your voiced Cinema Preview—or render it directly as a 4K Cinema Film"
           ],
           "ctaLabel": "Take the 4-Step Studio Tour",
           "targetAnchor": "studio-tour"
@@ -1663,7 +1663,7 @@
           "number": "04",
           "badge": "Hands-Free Scale",
           "title": "Autonomous Fast-Track Production Agents",
-          "description": "Once your script and Pre-vis Animatic feel right, launch Audio Agent, Stills Agent, Clips Agent, or full Production Agents to build dozens of scenes, self-heal failed takes, and notify you when your cut is ready.",
+          "description": "Once your script and voiced Cinema Preview feel right, launch Audio Agent, Stills Agent, Clips Agent, or full Production Agents to build dozens of scenes, self-heal failed takes, and deliver a 4K Cinema Film or full-motion master automatically.",
           "outcomeTag": "300+ Manual Prompts Replaced",
           "videoClipKey": "agent"
         },
@@ -1747,9 +1747,9 @@
       "calculatorTitle": "2. Stress-Test Delivery Cost & Monthly Service Profit",
       "priceTierLabel": "Client package tier:",
       "priceTierNames": [
-        "Accessible",
-        "Standard",
-        "Boutique"
+        "Express 4K Cinema",
+        "Full-Motion Cinema",
+        "Signature 4K"
       ],
       "tierScopePrefix": "Package scope:",
       "volumeLabel": "Client deliveries / month:",
@@ -1784,8 +1784,8 @@
           "detail": "Clients review under your studio name, logo, and colors with zero SceneFlow login or credit pricing exposed."
         },
         {
-          "title": "Animatic Firewall & Hard Scope Caps",
-          "detail": "Clients sign off on Blueprint, Continuity, and Voiced Animatic before motion spend—with enforced revision-round and credit caps."
+          "title": "Express 4K Cinema & Motion Firewall",
+          "detail": "Deliver photorealistic panned 4K stills with cloned voices, SFX & score as a finished $149–$249 same-day master—or use that exact voiced cut as a zero-waste approval firewall before Full-Motion video spend."
         },
         {
           "title": "Never Trained on Client Photos or Stories",
@@ -1866,13 +1866,13 @@
         },
         {
           "step": "03",
-          "title": "Mobile Photo Upload & Continuity Lock",
-          "detail": "Clients upload real photos from their phone (EXIF GPS stripped) and approve multi-age Cast, Wardrobes & Sets within capped rounds."
+          "title": "Mobile Photo Upload, Pronunciation & Continuity Lock",
+          "detail": "Clients upload real photos from their phone (EXIF GPS stripped), add a 10-second name/town pronunciation guide, and approve multi-age Cast, Wardrobes & Sets within capped rounds."
         },
         {
           "step": "04",
-          "title": "Screening Room Master Delivery",
-          "detail": "Collect frame-accurate notes on a zero-login Screening Room link, ship 4K + 70-language masters, and purge raw uploads in 1 click."
+          "title": "Same-Day Express 4K or Full-Motion Screening Delivery",
+          "detail": "Run supervised 1-tap PM release (or full auto-pilot) into the zero-login Screening Room. Client approval auto-triggers the 4K master render and emails the download link—with zero-rework upgrades to Full-Motion anytime."
         }
       ],
       "verticals": [
@@ -1880,173 +1880,173 @@
           "id": "memoir",
           "tabLabel": "Video Memoirs",
           "roleTag": "★ Flagship High-Margin Wedge",
-          "badge": "$349–$1,250 / film · Market Rate: $1,200–$4,500+",
+          "badge": "$149–$1,250 / film · Market Rate: $1,200–$4,500+",
           "title": "Life Stories, Milestone Tributes & Family Biographies",
-          "description": "Blend treasured family photographs with cinematic AI era re-enactments, heirloom prop locks, and accurate multi-age character continuity (e.g., Age 17 → Age 32 → Age 62) narrated in warm, lifelike voices.",
-          "globalMarketNeed": "Hundreds of millions of aging parents, 50th anniversaries, and celebrations of life happen globally every year—yet 90%+ go unfilmed because $2,000+ crews are unaffordable.",
+          "description": "Start with a $149 Same-Day Express 4K Cinema Tribute (photorealistic panned stills, cloned voices, SFX & score) or upgrade seamlessly to Full-Motion multi-age era re-enactments (Age 17 → Age 32 → Age 62) with zero rework.",
+          "globalMarketNeed": "Hundreds of millions of aging parents, 50th anniversaries, and celebrations of life happen globally every year—yet 90%+ go unfilmed because $2,000+ crews are unaffordable or take weeks.",
           "clientBuyer": "Families celebrating milestone birthdays, 50th anniversaries, retirements & legacy tributes",
           "partnerChannels": "Estate planners, senior living communities, funeral directors & milestone event planners (15–20% referral partner model)",
           "traditionalMarketRangeLabel": "$1,200–$4,500+",
           "typicalRetailUsd": 599,
           "priceTiersUsd": [
-            349,
+            149,
             599,
             1250
           ],
           "tierScopeLabels": [
-            "5-min Milestone Tribute · 75% Photos + 1080p→4K Clips · 1 Lang",
-            "12-min Family Memoir · Multi-Age Cast + Era Clips · 2 Langs",
-            "20-min Legacy Documentary · 4K Eras + Heirloom Locks · 4 Langs"
+            "Express 4K Cinema (5–8 min · Same-Day) · Panned 4K Stills + Voices, SFX & Score · Auto-4K Master",
+            "12-min Full-Motion Family Memoir · Multi-Age Cast + Era Clips · 2 Langs",
+            "20-min Signature Legacy Documentary · 4K Full-Motion Eras + Heirloom Locks · 4 Langs"
           ],
           "computeTiersUsd": [
-            18,
+            6,
             34,
             72
           ],
           "operatorTiersUsd": [
-            62,
+            12,
             88,
             150
           ],
           "activeTimeTiersLabels": [
-            "~1.25 hrs",
+            "~15 min",
             "~1.75 hrs",
             "~3.0 hrs"
           ],
-          "retailRangeLabel": "$349–$1,250",
+          "retailRangeLabel": "$149–$1,250",
           "estComputeUsd": 34,
           "estOperatorUsd": 88,
           "activeMinutesLabel": "~1.75 hrs",
-          "keyAdvantage": "Our highest-conviction wedge: zero-competition multi-age continuity delivers a $2,000-caliber family film for ~$122 total cost (~$34 compute + ~$88 PM time)."
+          "keyAdvantage": "3-Rung Value Ladder: $29 Blueprint Pass → $149 Same-Day Express 4K Cinema (~$18 total cost, ~88% margin) → $599+ Full-Motion upgrade with zero rework."
         },
         {
           "id": "realestate",
           "tabLabel": "Real Estate Tours",
           "roleTag": "↻ Repeat Broker Retainer",
-          "badge": "$199–$549 / listing · Market Rate: $450–$1,500+",
+          "badge": "$149–$549 / listing · Market Rate: $450–$1,500+",
           "title": "Narrated Luxury Property & Boutique Hospitality Tours",
-          "description": "Turn listing photographs and neighborhood highlights into scored, narrated cinema walkthroughs—plus instant Mandarin, Spanish, Arabic, or Portuguese versions for cross-border buyers.",
+          "description": "Turn listing photographs and neighborhood highlights into Same-Day $149 Express 4K Listing Films or Full-Motion walkthroughs—plus instant Mandarin, Spanish, Arabic, or Portuguese versions for cross-border buyers.",
           "globalMarketNeed": "Tens of millions of home listings, short-term rentals, and boutique hotels compete for domestic and international buyers worldwide every month—most still stuck with static photos.",
           "clientBuyer": "Top-producing residential realtors, luxury brokerages, vacation rentals & boutique hotels",
           "partnerChannels": "Real estate photography studios, MLS staging teams, luxury brokerages & hospitality marketers",
           "traditionalMarketRangeLabel": "$450–$1,500+",
           "typicalRetailUsd": 299,
           "priceTiersUsd": [
-            199,
+            149,
             299,
             549
           ],
           "tierScopeLabels": [
-            "90s MLS Photo Walkthrough · 1080p Cinema + 1 Lang",
-            "2-min Narrated Property Tour · 4K Upscaled + 2 Langs",
+            "Express 4K Listing Film (90s · Same-Day) · Panned 4K Stills + Voiced Narration & Score · 1 Lang",
+            "2-min Full-Motion Property Tour · 4K Upscaled + 2 Langs",
             "3-min Luxury Estate Film + 9:16 Reels · 4 International Langs"
           ],
           "computeTiersUsd": [
-            10,
+            5,
             15,
             28
           ],
           "operatorTiersUsd": [
-            38,
+            10,
             50,
             88
           ],
           "activeTimeTiersLabels": [
-            "~45 min",
+            "~12 min",
             "~1.0 hr",
             "~1.75 hrs"
           ],
-          "retailRangeLabel": "$199–$549",
+          "retailRangeLabel": "$149–$549",
           "estComputeUsd": 15,
           "estOperatorUsd": 50,
           "activeMinutesLabel": "~1.0 hr",
-          "keyAdvantage": "High repeat volume per broker: one luxury team listing 4 homes/month generates recurring monthly orders with zero travel or weather delays (~$65 delivery cost)."
+          "keyAdvantage": "High repeat volume per broker: ship Same-Day $149 Express 4K Listing Films (~$15 delivery cost, ~90% margin) or monthly Full-Motion broker retainers with zero travel delays."
         },
         {
           "id": "training",
           "tabLabel": "Training & SOPs",
           "roleTag": "↻ Repeat B2B Retainer",
-          "badge": "$599–$1,800 / module · Market Rate: $1,500–$5,000+",
+          "badge": "$249–$1,800 / module · Market Rate: $1,500–$5,000+",
           "title": "Corporate Onboarding, Safety & Multilingual Courses",
-          "description": "Lock a consistent instructor presenter, uniforms, and workplace sets in your Continuity Vault—then ship standardized training episodes localized across every employee’s native language.",
+          "description": "Lock a consistent instructor presenter, uniforms, and workplace sets in your Continuity Vault—then ship Same-Day $249 Express 4K Narrated SOPs or Full-Motion courses localized across 70+ employee languages.",
           "globalMarketNeed": "Every manufacturer, clinic network, hospitality group, and franchise globally battles frontline turnover, safety compliance, and multilingual workforces needing clear video SOPs.",
           "clientBuyer": "HR & L&D leaders, manufacturers, healthcare clinic networks, restaurant groups & franchises",
           "partnerChannels": "Fractional HR consultants, workplace safety auditors, LMS integrators & franchise associations",
           "traditionalMarketRangeLabel": "$1,500–$5,000+",
           "typicalRetailUsd": 950,
           "priceTiersUsd": [
-            599,
+            249,
             950,
             1800
           ],
           "tierScopeLabels": [
-            "5-min SOP Module · Locked Instructor + 1 Workforce Lang",
-            "10-min Safety / Onboarding Course · 3 Workforce Langs",
+            "Express 4K Narrated SOP (5 min · Same-Day) · Locked Instructor Stills + Cloned Voice & SFX · 1 Lang",
+            "10-min Full-Motion Safety / Onboarding Course · 3 Workforce Langs",
             "20-min Multi-Chapter Curriculum · 6+ Workforce Langs"
           ],
           "computeTiersUsd": [
-            24,
+            9,
             40,
             78
           ],
           "operatorTiersUsd": [
-            88,
+            18,
             125,
             210
           ],
           "activeTimeTiersLabels": [
-            "~1.75 hrs",
+            "~20 min",
             "~2.5 hrs",
             "~4.2 hrs"
           ],
-          "retailRangeLabel": "$599–$1,800",
+          "retailRangeLabel": "$249–$1,800",
           "estComputeUsd": 40,
           "estOperatorUsd": 125,
           "activeMinutesLabel": "~2.5 hrs",
-          "keyAdvantage": "Sticky B2B retainers: 70%+ lower cost (~$165 vs $3,000+ live shoots), and when compliance rules change, you charge an easy update fee to re-render one beat in minutes."
+          "keyAdvantage": "Sticky B2B retainers: launch Same-Day $249 Express 4K SOPs (~$27 delivery cost, ~89% margin) or $950+ multilingual courses, and re-render compliance updates in minutes."
         },
         {
           "id": "brand",
           "tabLabel": "Brand Stories",
           "roleTag": "↻ Repeat SMB & Agency Pack",
-          "badge": "$399–$1,200 / pack · Market Rate: $3,000–$8,000+",
+          "badge": "$199–$1,200 / pack · Market Rate: $3,000–$8,000+",
           "title": "Founder Origin Films, Clinic Explainers & Social Ads",
-          "description": "Craft high-converting homepage brand stories paired with automatic 9:16 vertical trailers for Instagram, TikTok, and YouTube Shorts—vetted with clients in the Screening Room.",
+          "description": "Fulfill Same-Day $199 Express 4K Brand Films or Full-Motion homepage origin stories paired with automatic 9:16 vertical trailers for Instagram, TikTok, and YouTube Shorts—vetted in the Screening Room.",
           "globalMarketNeed": "30M+ local clinics, law firms, restaurants, and craft founders worldwide urgently need homepage trust videos and fresh 9:16 social ads—but are locked out by $5,000+ agency shoots.",
           "clientBuyer": "Medical/dental practices, law firms, local SMBs, web design agencies & e-commerce founders",
           "partnerChannels": "Local web design shops, SEO/performance ad agencies, business chambers & dental/medical consultants",
           "traditionalMarketRangeLabel": "$3,000–$8,000+",
           "typicalRetailUsd": 650,
           "priceTiersUsd": [
-            399,
+            199,
             650,
             1200
           ],
           "tierScopeLabels": [
-            "60s Clinic / SMB Trust Spot + 1 Vertical 9:16 Cutdown",
-            "2-min Founder Origin Film + 2 Social 9:16 Cutdowns",
-            "Brand Film + 4 Multilingual Paid-Ad Hook Variations"
+            "Express 4K Brand Film (90s · Same-Day) · Panned 4K Stills + Voiced Narration & Score · Auto-4K Master",
+            "2-min Full-Motion Founder Origin Film + 2 Social 9:16 Cutdowns",
+            "Signature Brand Film + 4 Multilingual Paid-Ad Hook Variations"
           ],
           "computeTiersUsd": [
-            16,
+            7,
             28,
             56
           ],
           "operatorTiersUsd": [
-            62,
+            15,
             88,
             150
           ],
           "activeTimeTiersLabels": [
-            "~1.25 hrs",
+            "~18 min",
             "~1.75 hrs",
             "~3.0 hrs"
           ],
-          "retailRangeLabel": "$399–$1,200",
+          "retailRangeLabel": "$199–$1,200",
           "estComputeUsd": 28,
           "estOperatorUsd": 88,
           "activeMinutesLabel": "~1.75 hrs",
-          "keyAdvantage": "White-label fulfillment for local web & ad agencies (~$116 total delivery cost)—complete with automatic 9:16 social cutdowns."
+          "keyAdvantage": "White-label fulfillment for local web & ad agencies—$199 Same-Day Express 4K Brand Films (~$22 cost, ~89% margin) or $650 Full-Motion packs with 9:16 social cutdowns."
         }
       ]
     },
@@ -2143,20 +2143,20 @@
           "stepNumber": "03",
           "tabLabel": "Production Stage",
           "badge": "Shot Director, Wardrobe Control & Autonomous Agents",
-          "title": "Preview the Voiced Animatic—Then Let Agents Build Your Shots",
-          "promise": "Review your baseline Production Script, lock Continuity references, watch the full voiced Pre-vis Animatic, select exact per-shot wardrobes in Shot Director, and run autonomous agents across all scenes.",
+          "title": "Screen the Voiced Cinema Cut—Ship in 4K or Upgrade to Full Motion",
+          "promise": "Review your baseline Production Script, lock Continuity references, watch the full photorealistic panned Cinema Cut with cloned voices, SFX & score—deliver it directly as a Same-Day 4K Express Cinema Film or let autonomous agents build full-motion shots.",
           "creatorExampleTitle": "Scene 1: Subterranean Archive Vault · Anamorphic 4K",
           "creatorExampleNote": "Switch Elara’s wardrobe per shot, direct camera framing by voice or text, blend multi-track dialogue/SFX/score in Production Mixer, and dispatch Production Agents.",
-          "serviceExampleTitle": "Hybrid Client Photos + Cinematic Era Re-Enactments",
-          "serviceExampleNote": "Place real client photographs on Ken Burns beats alongside cinema AI re-enactments for unphotographed memories—keeping a 12-minute memoir around ~$34 in compute (and 20-min 4K legacy films under ~$75).",
+          "serviceExampleTitle": "Same-Day $149 Express 4K Cinema or Hybrid Full-Motion Upgrades",
+          "serviceExampleNote": "Deliver a photorealistic panned 4K Narrated Cinema Film in hours (~$6 compute) or layer AI full-motion re-enactments for unphotographed memories—keeping a 12-minute full-motion memoir around ~$34 in compute.",
           "callouts": [
             {
               "label": "Per-Shot Wardrobe & Voice/Typed Shot Director",
               "detail": "Pick exact outfits per shot and refine framing or expressions conversationally—no slot-machine re-rolls."
             },
             {
-              "label": "Voiced Pre-vis Animatic Firewall",
-              "detail": "Hear dialogue, narration, SFX, and music over storyboard stills before spending motion credits."
+              "label": "Express 4K Cinema Master & Motion Firewall",
+              "detail": "Hear cloned dialogue, narration, SFX, and score over continuity-locked panned 4K stills—ready to export as a finished $149 film or approve before full-motion spend."
             },
             {
               "label": "Autonomous Audio Agent, Stills Agent & Clips Agent",
@@ -2164,7 +2164,7 @@
             }
           ],
           "visuals": {
-            "topBadge": "Shot Director · Wardrobe Selected · Pre-vis Animatic Ready",
+            "topBadge": "Shot Director · Wardrobe Selected · Express 4K Cinema Cut Ready",
             "bottomBadge": "Audio Agent, Stills Agent & Clips Agent Orchestrate All Scenes Automatically",
             "thumbLabels": [
               "Shot 1 · Wide Vault",
@@ -2180,7 +2180,7 @@
           "tabLabel": "Screening Room",
           "badge": "Frame-Accurate Review, 70+ Languages & Publishing",
           "title": "Collaborate via Private Link & Ship Globally in Any Language",
-          "promise": "Screen animatics, rough cuts, and final 4K masters in one unified player. Collect timestamped client or team notes, spin up 70+ in-scene dubbed streams, and export or publish anywhere.",
+          "promise": "Screen Express 4K Cinema cuts, rough cuts, and full-motion 4K masters in one unified player. Client approval can auto-trigger the 4K render and email the download link—plus spin up 70+ in-scene dubbed streams.",
           "creatorExampleTitle": "Premiere-Ready Master, Promo Trailers & Global Dubs",
           "creatorExampleNote": "Cut vertical 9:16 trailers automatically, regenerate localized dialogue streams across 70+ markets, and publish to YouTube or apply to SceneFlow Originals.",
           "serviceExampleTitle": "Frictionless Client Review & Multilingual Delivery",
@@ -2219,7 +2219,7 @@
         {
           "id": "memoir-services",
           "tabLabel": "Video Memoirs & Family Legacy",
-          "badge": "Flagship Client Service · $349–$1,250/Film",
+          "badge": "Flagship Client Service · $149–$1,250/Film",
           "headline": "Turn Family Interviews & Keepsake Photos into Heirloom Cinema",
           "description": "Capture a life story through zero-login 7-language intake, polish & de-age portraits in Character Selfie Studio from 1970s youth to modern day, dispatch autonomous Production Agents, run FlowDirector 1-click clip fixes, and deliver via a zero-login Screening Room link.",
           "featureIcons": [
@@ -2308,9 +2308,9 @@
       ]
     },
     "directoryDrawer": {
-      "badge": "Workflow Automation & 39 Studio Capabilities · Narrated Animatics in 7 Languages",
+      "badge": "Workflow Automation & 39 Studio Capabilities · Narrated Cinema Films in 7 Languages",
       "title": "Automate Production & Expert Video QA Across 20+ Concurrent Projects",
-      "subtitle": "Every capability now includes a clean, mobile-friendly WebM animatic film with complete studio narration in 7 languages. See how White-Label Portals, Selfie Studio, FlowDirector 1-click clip fixes, and autonomous agents replace 300+ manual prompts.",
+      "subtitle": "Every capability now includes a clean, mobile-friendly WebM narrated cinema film in 7 languages. See how White-Label Portals, Selfie Studio, FlowDirector 1-click clip fixes, and autonomous agents replace 300+ manual prompts.",
       "expandCta": "Explore 39 Narrated Studio Capabilities",
       "collapseCta": "Hide Studio Capabilities Directory",
       "automationEyebrow": "Built for High-Volume Creators & 20-Project Video Service Providers",
@@ -2320,8 +2320,8 @@
       "spotlightFlowDirectorMeta": "Audience AR + Director Compliance · 1-Click Fix Recreates Clips",
       "spotlightAgentsLabel": "Autonomous Production Agents",
       "spotlightAgentsMeta": "300+ Prompts Automated · Self-Healing Across 20 Active Projects",
-      "spotlightNarrated5kLabel": "39 Capabilities · Narrated Animatics",
-      "spotlightNarrated5kMeta": "Clean 16:9 WebM Animatic Films + Studio Narration in All 7 Languages"
+      "spotlightNarrated5kLabel": "39 Capabilities · Narrated Cinema Films",
+      "spotlightNarrated5kMeta": "Clean 16:9 WebM Cinema Walkthroughs + Studio Narration in All 7 Languages"
     },
     "academyStrip": {
       "badge": "Zero Learning Curve Guarantee · Studio Academy",
@@ -4488,7 +4488,7 @@
           "id": "hybrid",
           "badge": "Flagship • White-Label Video Business • $149/mo",
           "title": "White-Label Video Service Providers",
-          "description": "Launch a solo Life Memoir, Real Estate Tour, or Corporate Training business under your own brand on Operator Pro ($149/mo — self-funding $29 Blueprint Pass & $19 Iteration Packs at 83% margin with 0 PM hours, Family/Team Comment-Only Triage, Deferred PM Routing, 150 GB Client Vault, 10,000 credits/mo & $250 bulk add-on access). Pays for itself 3x on Client Order #1.",
+          "description": "Launch a solo Life Memoir, Real Estate Tour, or Corporate Training business under your own brand on Operator Pro ($149/mo — self-funding $29 Blueprint Pass & $19 Iteration Packs at 83% margin, Same-Day $149 Express 4K Cinema Films at ~88% margin with auto-rendered 4K masters, Family Comment Triage, Deferred PM Routing, 150 GB Client Vault & 10,000 credits/mo). Pays for itself 3x on Client Order #1.",
           "recommendedPlan": "Operator Pro ($149/mo · $1,490/yr)"
         },
         {

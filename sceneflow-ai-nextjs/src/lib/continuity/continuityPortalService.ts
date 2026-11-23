@@ -64,6 +64,8 @@ export interface ContinuitySessionPayload {
   lastReviewerName?: string
   lastReviewedAt?: string
   generalNotes?: string
+  /** Optional 10-second phonetic pronunciation guide for surnames, towns, or brand terms */
+  pronunciationNotes?: string
   clientGroupSlug?: string
   brandProfileSnapshot: BrandProfileSnapshot
   slots: ContinuityPortalSlot[]
@@ -544,12 +546,21 @@ export async function submitContinuityClientReview(input: {
     note?: string
   }>
   generalNotes?: string
+  pronunciationNotes?: string
+  baseUrl?: string
 }): Promise<
   | {
       ok: true
       approvalStatus: 'approved' | 'changes_requested'
       roundsUsed: number
       maxRounds: number
+      expressPipeline?: {
+        deliveryTier: 'express_cinema_4k' | 'full_motion_cinema'
+        releaseMode: 'supervised_pm_release' | 'full_autopilot'
+        pipelineStatus: string
+        screeningRoomUrl?: string
+        customerEmailSent: boolean
+      }
     }
   | {
       ok: false
@@ -590,6 +601,7 @@ export async function submitContinuityClientReview(input: {
 
   const allNotes = [
     input.generalNotes || '',
+    input.pronunciationNotes || '',
     ...input.slotDecisions.map((d) => d.note || ''),
   ].join(' ')
   const quarantine = evaluateCustomerTextQuarantine(allNotes)
@@ -614,6 +626,10 @@ export async function submitContinuityClientReview(input: {
 
   const nextApprovalStatus = hasRevisionRequest ? 'changes_requested' : 'approved'
   const nextRoundsUsed = hasRevisionRequest ? payload.roundsUsed + 1 : payload.roundsUsed
+  const trimmedPronunciation =
+    typeof input.pronunciationNotes === 'string' && input.pronunciationNotes.trim()
+      ? input.pronunciationNotes.trim().slice(0, 1200)
+      : payload.pronunciationNotes
 
   const nextPayload: ContinuitySessionPayload = {
     ...payload,
@@ -622,12 +638,23 @@ export async function submitContinuityClientReview(input: {
     lastReviewerName: reviewerLabel,
     lastReviewedAt: new Date().toISOString(),
     generalNotes: input.generalNotes ? input.generalNotes.slice(0, 1500) : payload.generalNotes,
+    ...(trimmedPronunciation ? { pronunciationNotes: trimmedPronunciation } : {}),
     slots: updatedSlots,
   }
 
   await session.update({
     payload: nextPayload as unknown as Record<string, unknown>,
   })
+
+  let expressPipelineResult:
+    | {
+        deliveryTier: 'express_cinema_4k' | 'full_motion_cinema'
+        releaseMode: 'supervised_pm_release' | 'full_autopilot'
+        pipelineStatus: string
+        screeningRoomUrl?: string
+        customerEmailSent: boolean
+      }
+    | undefined
 
   const project = await Project.findByPk(session.project_id).catch(() => null)
   if (project) {
@@ -640,6 +667,7 @@ export async function submitContinuityClientReview(input: {
           clientOrder: {
             ...co,
             isClientProject: Boolean(co.isClientProject || payload.clientMode),
+            ...(trimmedPronunciation ? { pronunciationNotes: trimmedPronunciation } : {}),
             stage:
               nextApprovalStatus === 'approved'
                 ? 'continuity_approved'
@@ -648,6 +676,24 @@ export async function submitContinuityClientReview(input: {
           },
         },
       })
+    }
+
+    if (nextApprovalStatus === 'approved') {
+      try {
+        const { handleExpressContinuityApproved } = await import(
+          '@/lib/export/expressCinemaPipeline'
+        )
+        expressPipelineResult = await handleExpressContinuityApproved({
+          project,
+          ownerUserId: session.owner_user_id,
+          reviewerName: reviewerLabel,
+          pronunciationNotes: trimmedPronunciation,
+          preferredProductionStyle: payload.preferredProductionStyle,
+          baseUrl: input.baseUrl,
+        })
+      } catch (expressErr) {
+        console.warn('[continuityPortalService] Express pipeline handoff warning:', expressErr)
+      }
     }
   }
 
@@ -671,7 +717,7 @@ export async function submitContinuityClientReview(input: {
           : 'Continuity Revision Notes Submitted',
       message:
         nextApprovalStatus === 'approved'
-          ? `${reviewerLabel} approved all Continuity references. Ready for Pre-Vis & Video Production!`
+          ? `${reviewerLabel} approved all Continuity references. Ready for Cinema Film & Video Production!`
           : `${reviewerLabel} requested Continuity updates${noteSummary ? ` (${noteSummary})` : ''}.`,
       sendEmail: true,
       metadata: {
@@ -690,6 +736,7 @@ export async function submitContinuityClientReview(input: {
     approvalStatus: nextApprovalStatus,
     roundsUsed: nextRoundsUsed,
     maxRounds: payload.maxRounds,
+    ...(expressPipelineResult ? { expressPipeline: expressPipelineResult } : {}),
   }
 }
 

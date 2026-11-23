@@ -8,24 +8,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { uploadJobSpec, getOutputPath } from '@/lib/gcs/renderStorage'
-import { triggerCloudRunJob, isCloudRunJobsEnabled } from '@/lib/video/CloudRunJobsService'
-import {
-  RenderJobSpec,
-  RenderSegment,
-  RenderAudioClip,
-  KenBurnsSettings,
-} from '@/lib/video/renderTypes'
-import RenderJob from '@/models/RenderJob'
-import { v4 as uuidv4 } from 'uuid'
-import type {
-  AnimaticRenderSettings,
-  KenBurnsIntensity,
-} from '@/components/vision/scene-production/types'
-import { calculateSourceHash } from '@/types/productionStreams'
-import { buildProjectAnimaticTimeline } from '@/lib/storyboard/types'
+import { isCloudRunJobsEnabled } from '@/lib/video/CloudRunJobsService'
+import type { AnimaticRenderSettings } from '@/components/vision/scene-production/types'
 import type { AnimaticAudioMode } from '@/lib/storyboard/animaticAudioMode'
-import { rectToRenderKenBurns, resolveBeatKenBurnsSettings } from '@/lib/storyboard/kenBurnsFrame'
+import { enqueueProjectCinemaRender } from '@/lib/export/expressCinemaPipeline'
 
 export interface ProjectAnimaticRequest {
   projectId: string
@@ -44,104 +30,8 @@ export interface ProjectAnimaticResponse {
   status: 'queued' | 'error'
   message?: string
   estimatedDuration?: number
+  estimatedRenderTime?: number
   sourceHash?: string
-}
-
-/**
- * Whether the deployed ffmpeg container can render dissolves and fades.
- *
- * A segment that hands over to the next one carries the overlap in its own
- * duration, so a container that still hard-concatenates would render a video
- * longer than its soundtrack. The renderer lives in `docker/ffmpeg-renderer/`
- * and ships on its own schedule, so this stays off until someone confirms the
- * running image reads `transitionIn`.
- */
-function animaticTransitionsEnabled(): boolean {
-  return process.env.ANIMATIC_RENDER_TRANSITIONS === 'true'
-}
-
-function getKenBurnsSettings(intensity: KenBurnsIntensity): KenBurnsSettings {
-  switch (intensity) {
-    case 'off':
-      return { zoomStart: 1.0, zoomEnd: 1.0, panX: 0, panY: 0 }
-    case 'subtle':
-      return { zoomStart: 1.0, zoomEnd: 1.05, panX: 0, panY: 0 }
-    case 'medium':
-      return { zoomStart: 1.0, zoomEnd: 1.1, panX: 0, panY: 0 }
-    case 'dramatic':
-      return { zoomStart: 1.0, zoomEnd: 1.2, panX: 0, panY: 0 }
-    default:
-      return { zoomStart: 1.0, zoomEnd: 1.05, panX: 0, panY: 0 }
-  }
-}
-
-function buildProjectAnimaticJobSpec(
-  jobId: string,
-  request: ProjectAnimaticRequest,
-  timeline: ReturnType<typeof buildProjectAnimaticTimeline>
-): RenderJobSpec {
-  const settings: AnimaticRenderSettings = request.settings ?? {
-    kenBurnsIntensity: 'subtle',
-    transitionStyle: 'crossfade',
-    transitionDuration: 0.5,
-    includeSubtitles: false,
-    type: 'animatic',
-  }
-
-  const kenBurnsFallback = getKenBurnsSettings(settings.kenBurnsIntensity)
-
-  const renderSegments: RenderSegment[] = timeline.segments.map((seg, index) => {
-    const resolved = resolveBeatKenBurnsSettings(seg.kenBurns)
-    const kenBurns = resolved
-      ? rectToRenderKenBurns(resolved)
-      : {
-          ...kenBurnsFallback,
-          panX: index % 2 === 0 ? 0 : (index % 4 < 2 ? 1 : -1) * 0.1,
-          panY: index % 3 === 0 ? 0 : (index % 3 === 1 ? 1 : -1) * 0.1,
-        }
-    return {
-      segmentId: seg.segmentId,
-      imageUrl: seg.imageUrl,
-      startTime: seg.startTime,
-      duration: seg.duration,
-      kenBurns,
-      ...(seg.transitionIn && seg.transitionIn !== 'cut'
-        ? { transitionIn: seg.transitionIn, transitionInSec: seg.transitionInSec }
-        : {}),
-    }
-  })
-
-  const renderAudioClips: RenderAudioClip[] = timeline.audioClips.map((clip) => ({
-    url: clip.url,
-    startTime: clip.startTime,
-    duration: clip.duration,
-    volume: clip.volume ?? 1.0,
-    type: clip.type,
-  }))
-
-  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflowai.studio'}/api/export/render-callback`
-
-  return {
-    jobId,
-    projectId: request.projectId,
-    projectTitle: request.projectTitle || 'Project Animatic',
-    renderType: 'project_animatic',
-    streamType: 'animatic',
-    resolution: request.resolution,
-    fps: 24,
-    segments: renderSegments,
-    audioClips: renderAudioClips,
-    outputPath: getOutputPath(jobId),
-    callbackUrl,
-    createdAt: new Date().toISOString(),
-    language: request.language,
-    includeSubtitles: settings.includeSubtitles,
-    kenBurnsConfig: {
-      intensity: settings.kenBurnsIntensity,
-      transitionStyle: settings.transitionStyle,
-      transitionDuration: settings.transitionDuration,
-    },
-  }
 }
 
 export async function POST(request: NextRequest) {
@@ -158,96 +48,37 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as ProjectAnimaticRequest
 
-    if (!body.projectId) {
-      return NextResponse.json({ error: 'Missing required field: projectId' }, { status: 400 })
-    }
-
-    if (!Array.isArray(body.scenes) || body.scenes.length === 0) {
-      return NextResponse.json({ error: 'Missing required field: scenes' }, { status: 400 })
-    }
-
-    const blackUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflowai.studio'}/render/black-frame.png`
-    const timeline = buildProjectAnimaticTimeline(body.scenes, body.language || 'en', {}, {
-      preVisAnimatic: true,
-      interSceneFadeUrl: blackUrl,
-      transitions: animaticTransitionsEnabled(),
-      audioMode: body.audioMode === 'hifi' ? 'hifi' : 'lofi',
+    const result = await enqueueProjectCinemaRender({
+      projectId: body.projectId,
+      userId,
+      projectTitle: body.projectTitle,
+      language: body.language || 'en',
+      resolution: body.resolution || '1080p',
+      scenes: body.scenes,
+      settings: body.settings,
+      audioMode: body.audioMode,
       clipAudioByBeatId: body.clipAudioByBeatId,
     })
-    if (timeline.segments.length === 0) {
-      return NextResponse.json(
-        { error: 'No storyboard frames with images found for animatic export' },
-        { status: 400 }
-      )
-    }
 
-    if (!isCloudRunJobsEnabled()) {
+    if (!result.ok) {
       return NextResponse.json(
         {
-          error: 'Cloud Run rendering not configured',
-          code: 'RENDER_NOT_CONFIGURED',
+          error: result.error,
+          code: result.code,
+          ...(result.details ? { details: result.details } : {}),
         },
-        { status: 503 }
-      )
-    }
-
-    const jobId = uuidv4()
-    const audioUrls = timeline.audioClips.map((c) => c.url).filter(Boolean)
-    const sourceHash = calculateSourceHash(
-      timeline.segments.map((s) => ({
-        segmentId: s.segmentId,
-        imageUrl: s.imageUrl,
-        startTime: s.startTime,
-        duration: s.duration,
-      })),
-      audioUrls
-    )
-
-    const jobSpec = buildProjectAnimaticJobSpec(jobId, body, timeline)
-    const specPath = await uploadJobSpec(jobSpec)
-
-    const totalDuration = timeline.totalDuration
-    const estimatedRenderTime = 15 + totalDuration * 0.5
-
-    try {
-      await RenderJob.create({
-        id: jobId,
-        project_id: body.projectId,
-        user_id: userId,
-        status: 'QUEUED',
-        progress: 0,
-        resolution: body.resolution || '1080p',
-        language: body.language || 'en',
-        include_subtitles: body.settings?.includeSubtitles ?? false,
-        render_type: 'project_animatic',
-        stream_type: 'animatic',
-        estimated_duration: totalDuration,
-      })
-    } catch (dbError) {
-      console.error('[Project Animatic] Failed to create RenderJob record:', dbError)
-    }
-
-    try {
-      await triggerCloudRunJob(jobId, specPath)
-    } catch (triggerError) {
-      await RenderJob.update(
-        { status: 'FAILED', error: String(triggerError) },
-        { where: { id: jobId } }
-      )
-      return NextResponse.json(
-        { error: 'Failed to start render job', details: String(triggerError) },
-        { status: 500 }
+        { status: result.statusCode }
       )
     }
 
     return NextResponse.json({
       success: true,
-      jobId,
+      jobId: result.jobId,
       status: 'queued',
-      message: 'Project animatic render job queued',
-      estimatedDuration: totalDuration,
-      estimatedRenderTime,
-      sourceHash,
+      message: 'Project cinema render job queued',
+      estimatedDuration: result.estimatedDuration,
+      estimatedRenderTime: result.estimatedRenderTime,
+      sourceHash: result.sourceHash,
     } satisfies ProjectAnimaticResponse)
   } catch (error) {
     console.error('[Project Animatic] Unexpected error:', error)

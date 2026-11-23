@@ -158,14 +158,14 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
       voiceTextBadge: 'Voice / Text',
       storyboardBeatLabels: ['Beat 01 · 1958 Oaxaca', 'Beat 03 · 1976 Joinery', 'Beat 05 · 2026 Harbor Toast'],
       packagedDeliverablesTitle: 'Packaged Deliverables:',
-      packagedDeliverablesSummary: '✓ Pre-Vis Animatic · ✓ 12-Min 4K Master · ✓ 60s Harbor Trailer',
+      packagedDeliverablesSummary: '✓ Express 4K Cinema Cut · ✓ 12-Min Full-Motion Master · ✓ 60s Harbor Trailer',
       autoScriptStepPill: 'Step 1 · Auto Script',
       roundOneOfTwoBadge: 'Round 1 of 2',
       intakeEmailSubject: 'Welcome! Click to start your 5-minute guided story intake →',
       blueprintEmailSubject: 'Your Illustrated & Narrated Storyboard Blueprint is ready →',
       arEmailSubject: 'Audience Resonance Score updated (94/100) — review link inside →',
       continuityEmailSubject: 'Upload & approve your Cast, Location & Prop photos →',
-      screeningEmailSubject: 'Your Screening Room is live: Pre-Vis, Chapters & 4K Master →',
+      screeningEmailSubject: 'Your Screening Room is live: Express 4K Cinema Cut, Chapters & Master →',
       intakeProgressLabel: 'Guided Vision & Story Intake · 96% Complete',
       intakeSampleQuote:
         '“12-minute 80th birthday tribute for Mateo Morales—1958 Oaxaca cedar boatyard to 2026 San Diego harbor dinner, passing down his scorched cedar compass box.”',
@@ -190,7 +190,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
       continuityUploadsTitle: 'Client Continuity Library · Photo Upload & Sign-Off',
       continuitySlots: ['Cast Portraits ✓', 'Key Locations ✓', 'Signature Props ✓'],
       screeningDeliverables: [
-        'Pre-Vis Animatic',
+        'Express 4K Cinema',
         'Clips',
         'Scenes',
         'Chapters',
@@ -333,16 +333,16 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         phaseKind: 'production',
         phaseBadge: 'Shared Screening Room · Step 3',
         shortTabLabel: '7. Screening Room',
-        headline: 'Staged Screening Room Review: Pre-Vis, Clips, Chapters, Master & Trailer',
+        headline: 'Screening Room Delivery: Express 4K Cinema Cut, Chapters, Full-Motion & Trailer',
         caption:
-          'Share one white-label Screening Room link for bounded feedback and sign-off across any packaged combination of Pre-Vis Animatic, Clips, Scenes, Chapters, 4K Master, and Social Trailer.',
+          'Share one white-label Screening Room link to approve a Same-Day Express 4K Cinema Film (auto-rendering the 4K master on approval) or use that voiced cut as a zero-waste gate before Full-Motion Clips, Chapters & Trailers.',
         narration:
-          'Collaborate through a single white-label Screening Room link. Clients approve the Pre-Vis Animatic before heavy video rendering, then review packaged Clips, Chapters, the four-K Master, and social trailer with bounded revision rounds.',
+          'Collaborate through a single white-label Screening Room link. Deliver a photorealistic panned Express four-K Cinema Film the same day with automated four-K master rendering on approval, or upgrade seamlessly into Full-Motion Clips and Chapters.',
         fromScale: 1.0,
         toScale: 1.05,
         originX: 55,
         originY: 45,
-        calloutBadge: 'Pre-Vis Gate Protects Video Credits',
+        calloutBadge: 'Express 4K Master or Motion Gate',
         economicsChip: 'Packaged Deliverables · Bounded Revisions',
       },
       {
@@ -582,7 +582,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '7. Proyección',
         headline: 'Aprobación en Sala de Proyección: Pre-Vis, Clips, Capítulos, Máster y Tráiler',
         caption:
-          'Comparte un único enlace marca blanca para aprobar Pre-Vis Animatic antes de renderizar video, seguido de Clips, Escenas, Capítulos, Máster 4K y Tráiler.',
+          'Comparte un único enlace marca blanca para aprobar Express 4K Cinema antes de renderizar video, seguido de Clips, Escenas, Capítulos, Máster 4K y Tráiler.',
         narration:
           'Colabora mediante un enlace de Sala de Proyección marca blanca: aprueba primero el Animatic Pre-Vis para cuidar tus créditos y entrega luego Capítulos, Máster cuatro K y tráiler.',
         fromScale: 1.0,
@@ -829,7 +829,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '7. Sala de Exibição',
         headline: 'Aprovação na Sala de Exibição: Pre-Vis, Clipes, Capítulos, Master e Trailer',
         caption:
-          'Compartilhe um único link white-label da Sala de Exibição para aprovar Pre-Vis Animatic, Clipes, Cenas, Capítulos, Master 4K e Trailer com rodadas controladas.',
+          'Compartilhe um único link white-label da Sala de Exibição para aprovar Express 4K Cinema, Clipes, Cenas, Capítulos, Master 4K e Trailer com rodadas controladas.',
         narration:
           'Colabore em uma Sala de Exibição white-label: aprove primeiro o Animatic Pre-Vis antes do vídeo pesado e entregue Clipes, Capítulos, Master quatro K e trailer.',
         fromScale: 1.0,
@@ -899,7 +899,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
       voiceTextBadge: 'आवाज़ / टेक्स्ट',
       storyboardBeatLabels: ['बीट 01 · 1958 ओआहाका', 'बीट 03 · 1976 कार्यशाला', 'बीट 05 · 2026 हार्बर डिनर'],
       packagedDeliverablesTitle: 'पैकेज्ड डिलीवरेबल्स:',
-      packagedDeliverablesSummary: '✓ Pre-Vis Animatic · ✓ 12-मिनट 4K मास्टर · ✓ 60s ट्रेलर',
+      packagedDeliverablesSummary: '✓ Express 4K Cinema · ✓ 12-मिनट 4K मास्टर · ✓ 60s ट्रेलर',
       autoScriptStepPill: 'चरण 1 · ऑटो स्क्रिप्ट',
       roundOneOfTwoBadge: 'राउंड 1 / 2',
       intakeEmailSubject: 'स्वागत है! अपना 5-मिनट गाइडेड स्टोरी इनटेक शुरू करें →',
@@ -931,7 +931,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
       continuityUploadsTitle: 'क्लाइंट कंटिन्यूटी लाइब्रेरी · फ़ोटो अपलोड व मंज़ूरी',
       continuitySlots: ['कास्ट पोर्ट्रेट ✓', 'प्रमुख लोकेशन ✓', 'सिग्नेचर प्रॉप्स ✓'],
       screeningDeliverables: [
-        'Pre-Vis Animatic',
+        'Express 4K Cinema',
         'क्लिप्स',
         'सीन',
         'चैप्टर्स',
@@ -1076,9 +1076,9 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '7. Screening Room',
         headline: 'Screening Room समीक्षा: Pre-Vis, क्लिप्स, चैप्टर्स, मास्टर और ट्रेलर',
         caption:
-          'एक ही व्हाइट-लेबल Screening Room लिंक से Pre-Vis Animatic, क्लिप्स, सीन, चैप्टर्स, 4K मास्टर और ट्रेलर पर फीडबैक व अंतिम मंज़ूरी लें।',
+          'एक ही व्हाइट-लेबल Screening Room लिंक से Express 4K Cinema, क्लिप्स, सीन, चैप्टर्स, 4K मास्टर और ट्रेलर पर फीडबैक व अंतिम मंज़ूरी लें।',
         narration:
-          'एक व्हाइट-लेबल Screening Room लिंक के ज़रिए ग्राहक भारी रेंडर से पहले Pre-Vis Animatic को मंज़ूरी देते हैं और फिर क्लिप्स, चैप्टर्स व 4K मास्टर स्वीकार करते हैं।',
+          'एक व्हाइट-लेबल Screening Room लिंक के ज़रिए ग्राहक भारी रेंडर से पहले Express 4K Cinema को मंज़ूरी देते हैं और फिर क्लिप्स, चैप्टर्स व 4K मास्टर स्वीकार करते हैं।',
         fromScale: 1.0,
         toScale: 1.05,
         originX: 55,
@@ -1146,7 +1146,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
       voiceTextBadge: '语音 / 文字',
       storyboardBeatLabels: ['节拍 01 · 1958 瓦哈卡', '节拍 03 · 1976 造船坊', '节拍 05 · 2026 寿宴祝酒'],
       packagedDeliverablesTitle: '套餐包含交付物：',
-      packagedDeliverablesSummary: '✓ Pre-Vis 动态预演 · ✓ 12分钟 4K 母带 · ✓ 60秒精华预告',
+      packagedDeliverablesSummary: '✓ 极速 4K 电影版 · ✓ 12分钟 4K 母带 · ✓ 60秒精华预告',
       autoScriptStepPill: '步骤 1 · 自动剧本',
       roundOneOfTwoBadge: '第 1 / 2 轮修改',
       intakeEmailSubject: '欢迎！点击开启 5 分钟 AI 引导故事访谈 →',
@@ -1178,7 +1178,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
       continuityUploadsTitle: '客户连续性资产库 · 上传照片并确认锁定',
       continuitySlots: ['演员人像 ✓', '核心场景 ✓', '标志道具 ✓'],
       screeningDeliverables: [
-        'Pre-Vis 动态预演',
+        '极速 4K 电影版',
         '镜头片段',
         '分场成片',
         '章节成片',
@@ -1323,9 +1323,9 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '7. 白标审片室',
         headline: '白标审片室分阶段签收：Pre-Vis 预演、片段、章节、4K 母带与预告片',
         caption:
-          '通过同一个白标审片室链接，按套餐组合交付 Pre-Vis 动态预演、镜头片段、分场、章节、4K 母带与社交预告片，先审预演再跑高成本视频。',
+          '通过同一个白标审片室链接，按套餐组合交付 极速 4K 电影版、镜头片段、分场、章节、4K 母带与社交预告片，先审预演再跑高成本视频。',
         narration:
-          '通过统一的白标审片室链接协作，客户先批准 Pre-Vis 动态预演再渲染高画质视频，按需验收片段、章节、4K 母带与预告片。',
+          '通过统一的白标审片室链接协作，客户先批准 极速 4K 电影版再渲染高画质视频，按需验收片段、章节、4K 母带与预告片。',
         fromScale: 1.0,
         toScale: 1.05,
         originX: 55,
@@ -1393,7 +1393,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
       voiceTextBadge: 'صوت / نص',
       storyboardBeatLabels: ['مشهد 01 · أواكساكا 1958', 'مشهد 03 · ورشة 1976', 'مشهد 05 · حفل 2026'],
       packagedDeliverablesTitle: 'المخرجات المتضمنة:',
-      packagedDeliverablesSummary: '✓ Pre-Vis Animatic · ✓ نسخة 4K (12 د) · ✓ إعلان 60 ثانية',
+      packagedDeliverablesSummary: '✓ Express 4K Cinema · ✓ نسخة 4K (12 د) · ✓ إعلان 60 ثانية',
       autoScriptStepPill: 'خطوة 1 · سيناريو تلقائي',
       roundOneOfTwoBadge: 'الجولة 1 من 2',
       intakeEmailSubject: 'مرحباً بك! اضغط لبدء مقابلة القصة الذكية خلال 5 دقائق ←',
@@ -1425,7 +1425,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
       continuityUploadsTitle: 'مكتبة الاستمرارية للعميل · رفع الصور واعتمادها',
       continuitySlots: ['صور الشخصيات ✓', 'المواقع الرئيسية ✓', 'الدعائم المميزة ✓'],
       screeningDeliverables: [
-        'Pre-Vis Animatic',
+        'Express 4K Cinema',
         'اللقطات',
         'المشاهد',
         'الفصول',
@@ -1570,7 +1570,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '7. غرفة العرض',
         headline: 'مراجعة واعتماد عبر غرفة العرض: Pre-Vis واللقطات والفصول و4K والإعلان',
         caption:
-          'شارك رابط غرفة عرض بعلامتك لمراجعة واعتماد أي مزيج من Pre-Vis Animatic واللقطات والمشاهد والفصول والنسخة الرئيسية 4K والإعلان الترويجي.',
+          'شارك رابط غرفة عرض بعلامتك لمراجعة واعتماد أي مزيج من Express 4K Cinema واللقطات والمشاهد والفصول والنسخة الرئيسية 4K والإعلان الترويجي.',
         narration:
           'تعاون عبر رابط غرفة عرض واحد بعلامتك التجارية، حيث يعتمد العميل عرض Pre-Vis قبل تصيير الفيديو ثم يراجع الفصول والنسخة الرئيسية بدقة 4K.',
         fromScale: 1.0,
@@ -1640,7 +1640,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
       voiceTextBadge: 'เสียงพูด / พิมพ์',
       storyboardBeatLabels: ['ช็อต 01 · 1958 โออาซากา', 'ช็อต 03 · 1976 โรงไม้', 'ช็อต 05 · 2026 งานฉลอง'],
       packagedDeliverablesTitle: 'รายการผลงานในแพ็กเกจ:',
-      packagedDeliverablesSummary: '✓ Pre-Vis Animatic · ✓ 4K Master 12 นาที · ✓ ตัวอย่าง 60 วิ',
+      packagedDeliverablesSummary: '✓ Express 4K Cinema · ✓ 4K Master 12 นาที · ✓ ตัวอย่าง 60 วิ',
       autoScriptStepPill: 'ขั้นที่ 1 · สร้างบทอัตโนมัติ',
       roundOneOfTwoBadge: 'รอบแก้ไข 1 จาก 2',
       intakeEmailSubject: 'ยินดีต้อนรับ! คลิกเพื่อเริ่มบทสัมภาษณ์เรื่องราว 5 นาที →',
@@ -1672,7 +1672,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
       continuityUploadsTitle: 'คลังความต่อเนื่องลูกค้า · อัปโหลดรูปและกดอนุมัติ',
       continuitySlots: ['ภาพบุคคล ✓', 'สถานที่หลัก ✓', 'พร็อพสำคัญ ✓'],
       screeningDeliverables: [
-        'Pre-Vis Animatic',
+        'Express 4K Cinema',
         'คลิป',
         'ซีน',
         'บท (Chapters)',
@@ -1817,9 +1817,9 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '7. ห้องฉายตรวจงาน',
         headline: 'ตรวจและอนุมัติผ่าน Screening Room: Pre-Vis, คลิป, บท, 4K Master และตัวอย่าง',
         caption:
-          'แชร์ลิงก์ Screening Room แบรนด์ของคุณเพียงลิงก์เดียว เพื่อตรวจอนุมัติตั้งแต่ Pre-Vis Animatic, คลิป, ซีน, บท, 4K Master ไปจนถึงตัวอย่างสั้น',
+          'แชร์ลิงก์ Screening Room แบรนด์ของคุณเพียงลิงก์เดียว เพื่อตรวจอนุมัติตั้งแต่ Express 4K Cinema, คลิป, ซีน, บท, 4K Master ไปจนถึงตัวอย่างสั้น',
         narration:
-          'ทำงานร่วมกับลูกค้าผ่านห้องฉาย White-Label ลิงก์เดียว ให้ลูกค้าอนุมัติ Pre-Vis Animatic ก่อนเรนเดอร์วิดีโอจริง แล้วตรวจรับคลิป บท และไฟล์ 4K Master อย่างเป็นระบบ',
+          'ทำงานร่วมกับลูกค้าผ่านห้องฉาย White-Label ลิงก์เดียว ให้ลูกค้าอนุมัติ Express 4K Cinema ก่อนเรนเดอร์วิดีโอจริง แล้วตรวจรับคลิป บท และไฟล์ 4K Master อย่างเป็นระบบ',
         fromScale: 1.0,
         toScale: 1.05,
         originX: 55,

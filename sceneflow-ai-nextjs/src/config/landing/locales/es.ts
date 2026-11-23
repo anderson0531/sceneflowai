@@ -24,7 +24,7 @@ export const STUDIO_LANDING_COPY_ES = {
           'Entrega Memorias de Vida, Recorridos Inmobiliarios, Capacitación Corporativa y Videos de Marca para clientes en horas en lugar de semanas — con propiedad comercial total.',
         highlights: [
           'Portales marca blanca sin login para Entrevista, Blueprint, Continuidad y Proyección',
-          'Animatic Pre-vis narrado y límites de rondas evitan costosas retomas',
+          'Corte Cine 4K Pre-vis narrado y límites de rondas evitan costosas retomas',
           'Fotos reales del cliente + escenas IA de cine protegen márgenes del 65–85%',
         ],
         ctaLabel: 'Ver Modelos de Negocio y Márgenes',
@@ -39,7 +39,7 @@ export const STUDIO_LANDING_COPY_ES = {
         highlights: [
           'Base experta instantánea para Serie, Blueprint y Guion de Producción',
           'Habla o escribe cambios en lenguaje cotidiano — cero sintaxis técnica',
-          'Mira tu Animatic con voces antes de gastar créditos en video',
+          'Mira tu Corte Cine 4K con voces antes de gastar créditos en video',
         ],
         ctaLabel: 'Hacer el Recorrido de 4 Pasos',
         targetAnchor: 'studio-tour',
@@ -103,7 +103,7 @@ export const STUDIO_LANDING_COPY_ES = {
         badge: 'Escala Sin Fricción',
         title: 'Agentes Autónomos de Producción Rápida',
         description:
-          'Cuando tu guion y Animatic Pre-vis estén listos, lanza Audio Agent, Stills Agent, Clips Agent o los Production Agents completos para producir decenas de escenas y corregir tomas automáticamente.',
+          'Cuando tu guion y Corte Cine 4K Pre-vis estén listos, lanza Audio Agent, Stills Agent, Clips Agent o los Production Agents completos para producir decenas de escenas y corregir tomas automáticamente.',
         outcomeTag: 'Reemplaza 300+ Prompts Manuales',
         videoClipKey: 'agent',
       },
@@ -172,7 +172,7 @@ export const STUDIO_LANDING_COPY_ES = {
     calculatorBadge: 'Calculadora por Alcance de Costo y Ganancia',
     calculatorTitle: '2. Pon a Prueba Costo de Entrega y Ganancia Mensual',
     priceTierLabel: 'Paquete para el cliente:',
-    priceTierNames: ['Accesible', 'Estándar', 'Boutique'],
+    priceTierNames: ["Cine Express 4K", "Cine Movimiento Total", "Signature 4K"],
     tierScopePrefix: 'Alcance del paquete:',
     volumeLabel: 'Entregas a clientes / mes:',
     projectsPerMonthSuffix: 'proyectos/mes',
@@ -211,9 +211,9 @@ export const STUDIO_LANDING_COPY_ES = {
           'Tus clientes revisan bajo tu nombre, logo y colores sin crear cuenta en SceneFlow ni ver costos de créditos.',
       },
       {
-        title: 'Cortafuegos Animatic y Límites de Rondas',
+        title: "Cine Express 4K y Cortafuegos de Movimiento",
         detail:
-          'El cliente aprueba Blueprint, Continuidad y Animatic narrado antes de renderizar video — con topes de rondas y créditos.',
+          "Entrega fotogramas 4K fotorrealistas con paneo, voces clonadas, SFX y música como master terminado el mismo día ($149–$249)—o usa ese mismo corte narrado como filtro sin desperdicio antes del video en movimiento completo.",
       },
       {
         title: 'Nunca Entrenamos Modelos con Fotos del Cliente',
@@ -308,15 +308,15 @@ export const STUDIO_LANDING_COPY_ES = {
       },
       {
         step: '03',
-        title: 'Carga Móvil de Fotos y Continuidad',
+        title: "Carga Móvil de Fotos, Pronunciación y Bloqueo de Continuidad",
         detail:
-          'El cliente sube fotos desde su móvil (sin EXIF GPS) y aprueba Elenco multiedad, Vestuario y Sets con rondas limitadas.',
+          "Los clientes suben fotos reales desde su teléfono (sin GPS EXIF), añaden una guía fonética de 10 segundos para nombres o ciudades y aprueban Elenco, Vestuario y Sets con rondas limitadas.",
       },
       {
         step: '04',
-        title: 'Entrega en Screening Room',
+        title: "Entrega Express 4K el Mismo Día o Screening Room Completo",
         detail:
-          'Comparte un Screening Room sin login, entrega másters 4K en 70+ idiomas y purga archivos crudos en 1 clic.',
+          "Activa liberación supervisada de 1 toque por el PM (o piloto automático) hacia la Screening Room sin inicio de sesión. La aprobación dispara el render 4K y envía el enlace de descarga—actualizable a Movimiento Total sin retrabajo.",
       },
     ],
     verticals: [
@@ -324,7 +324,7 @@ export const STUDIO_LANDING_COPY_ES = {
         id: 'memoir',
         tabLabel: 'Video Memorias',
         roleTag: '★ Servicio Insignia de Alto Margen',
-        badge: '$349–$1,250 / filme · Mercado: $1,200–$4,500+',
+        badge: "$149–$1,250 / filme · Tarifa tradicional: $1,200–$4,500+",
         title: 'Historias de Vida, Homenajes y Biografías Familiares',
         description:
           'Combina fotografías familiares reales con recreaciones cinematográficas de época con IA, bloqueo de reliquias y continuidad precisa por edades (17 → 32 → 62 años) narradas con voces cálidas.',
@@ -336,16 +336,16 @@ export const STUDIO_LANDING_COPY_ES = {
           'Planificadores patrimoniales, residencias sénior, directores funerarios y organizadores de eventos (comisión del 15–20%)',
         traditionalMarketRangeLabel: '$1,200–$4,500+',
         typicalRetailUsd: 599,
-        priceTiersUsd: [349, 599, 1250],
+        priceTiersUsd: [149, 599, 1250],
         tierScopeLabels: [
-          'Homenaje 5 min · 75% Fotos + Clips 1080p→4K · 1 Idioma',
+          "Cine Express 4K (5–8 min · Mismo día) · Fotogramas 4K con paneo + Voces, SFX y Música · Master 4K auto",
           'Memoria Familiar 12 min · Elenco Multiedad + Épocas · 2 Idiomas',
           'Documental Legado 20 min · Épocas 4K + Reliquias · 4 Idiomas',
         ],
-        computeTiersUsd: [18, 34, 72],
-        operatorTiersUsd: [62, 88, 150],
-        activeTimeTiersLabels: ['~1.25 h', '~1.75 h', '~3.0 h'],
-        retailRangeLabel: '$349–$1,250',
+        computeTiersUsd: [6, 34, 72],
+        operatorTiersUsd: [12, 88, 150],
+        activeTimeTiersLabels: ["~15 min", '~1.75 h', '~3.0 h'],
+        retailRangeLabel: "$149–$1,250",
         estComputeUsd: 34,
         estOperatorUsd: 88,
         activeMinutesLabel: '~1.75 h',
@@ -356,7 +356,7 @@ export const STUDIO_LANDING_COPY_ES = {
         id: 'realestate',
         tabLabel: 'Tours Inmobiliarios',
         roleTag: '↻ Retainer Mensual Inmobiliario',
-        badge: '$199–$549 / propiedad · Mercado: $450–$1,500+',
+        badge: "$149–$549 / propiedad · Tarifa tradicional: $450–$1,500+",
         title: 'Recorridos Narrados de Propiedades y Hoteles Boutique',
         description:
           'Transforma fotos de propiedades y atractivos del vecindario en recorridos cinematográficos con música y locución — más versiones al instante en inglés, chino, árabe o portugués para compradores internacionales.',
@@ -368,16 +368,16 @@ export const STUDIO_LANDING_COPY_ES = {
           'Estudios de fotografía inmobiliaria, equipos de home staging, brókers de lujo y consultores hoteleros',
         traditionalMarketRangeLabel: '$450–$1,500+',
         typicalRetailUsd: 299,
-        priceTiersUsd: [199, 299, 549],
+        priceTiersUsd: [149, 299, 549],
         tierScopeLabels: [
-          'Tour Fotos MLS 90s · Cine 1080p + 1 Idioma',
+          "Filme Express 4K de Propiedad (90s · Mismo día) · Fotogramas 4K con paneo + Narración y Música · 1 idioma",
           'Recorrido Narrado 2 min · Escalado 4K + 2 Idiomas',
           'Filme Propiedad de Lujo 3 min + Reels 9:16 · 4 Idiomas',
         ],
-        computeTiersUsd: [10, 15, 28],
-        operatorTiersUsd: [38, 50, 88],
-        activeTimeTiersLabels: ['~45 min', '~1.0 h', '~1.75 h'],
-        retailRangeLabel: '$199–$549',
+        computeTiersUsd: [5, 15, 28],
+        operatorTiersUsd: [10, 50, 88],
+        activeTimeTiersLabels: ["~12 min", '~1.0 h', '~1.75 h'],
+        retailRangeLabel: "$149–$549",
         estComputeUsd: 15,
         estOperatorUsd: 50,
         activeMinutesLabel: '~1.0 h',
@@ -388,7 +388,7 @@ export const STUDIO_LANDING_COPY_ES = {
         id: 'training',
         tabLabel: 'Capacitación y SOPs',
         roleTag: '↻ Retainer Corporativo B2B',
-        badge: '$599–$1,800 / módulo · Mercado: $1,500–$5,000+',
+        badge: "$249–$1,800 / módulo · Tarifa tradicional: $1,500–$5,000+",
         title: 'Inducción Corporativa, Seguridad y Cursos Multilingües',
         description:
           'Bloquea un instructor consistente, uniformes y entornos de trabajo en tu Bóveda de Continuidad — y entrega módulos claros localizados al idioma nativo de cada empleado.',
@@ -400,16 +400,16 @@ export const STUDIO_LANDING_COPY_ES = {
           'Consultores externos de RR. HH., auditores de seguridad laboral, integradores LMS y asociaciones de franquicias',
         traditionalMarketRangeLabel: '$1,500–$5,000+',
         typicalRetailUsd: 950,
-        priceTiersUsd: [599, 950, 1800],
+        priceTiersUsd: [249, 950, 1800],
         tierScopeLabels: [
-          'Módulo SOP 5 min · Instructor Fijo + 1 Idioma',
+          "SOP Narrado Express 4K (5 min · Mismo día) · Instructor fijo + Voz clonada y SFX · 1 idioma",
           'Curso Seguridad / Inducción 10 min · 3 Idiomas',
           'Currículo Multi-Capítulo 20 min · 6+ Idiomas',
         ],
-        computeTiersUsd: [24, 40, 78],
-        operatorTiersUsd: [88, 125, 210],
-        activeTimeTiersLabels: ['~1.75 h', '~2.5 h', '~4.2 h'],
-        retailRangeLabel: '$599–$1,800',
+        computeTiersUsd: [9, 40, 78],
+        operatorTiersUsd: [18, 125, 210],
+        activeTimeTiersLabels: ["~20 min", '~2.5 h', '~4.2 h'],
+        retailRangeLabel: "$249–$1,800",
         estComputeUsd: 40,
         estOperatorUsd: 125,
         activeMinutesLabel: '~2.5 h',
@@ -420,7 +420,7 @@ export const STUDIO_LANDING_COPY_ES = {
         id: 'brand',
         tabLabel: 'Historias de Marca',
         roleTag: '↻ Paquete Recurrente PyME y Agencia',
-        badge: '$399–$1,200 / paquete · Mercado: $3,000–$8,000+',
+        badge: "$199–$1,200 / paquete · Tarifa tradicional: $3,000–$8,000+",
         title: 'Historias de Fundadores, Videos para Clínicas y Anuncios',
         description:
           'Produce historias de marca de alta conversión para sitios web junto con tráilers verticales 9:16 automáticos para Instagram, TikTok y YouTube Shorts — revisados con el cliente en Screening Room.',
@@ -432,16 +432,16 @@ export const STUDIO_LANDING_COPY_ES = {
           'Estudios de diseño web, agencias SEO/Ads, cámaras empresariales y consultores médicos/legales',
         traditionalMarketRangeLabel: '$3,000–$8,000+',
         typicalRetailUsd: 650,
-        priceTiersUsd: [399, 650, 1200],
+        priceTiersUsd: [199, 650, 1200],
         tierScopeLabels: [
-          'Spot Confianza Clínica/PyME 60s + 1 Corte 9:16',
+          "Filme de Marca Express 4K (90s · Mismo día) · Fotogramas 4K con paneo + Narración y Música · Master 4K auto",
           'Historia de Fundador 2 min + 2 Cortes Sociales 9:16',
           'Filme de Marca + 4 Variaciones Multilingües de Anuncios',
         ],
-        computeTiersUsd: [16, 28, 56],
-        operatorTiersUsd: [62, 88, 150],
-        activeTimeTiersLabels: ['~1.25 h', '~1.75 h', '~3.0 h'],
-        retailRangeLabel: '$399–$1,200',
+        computeTiersUsd: [7, 28, 56],
+        operatorTiersUsd: [15, 88, 150],
+        activeTimeTiersLabels: ["~18 min", '~1.75 h', '~3.0 h'],
+        retailRangeLabel: "$199–$1,200",
         estComputeUsd: 28,
         estOperatorUsd: 88,
         activeMinutesLabel: '~1.75 h',
@@ -557,9 +557,9 @@ export const STUDIO_LANDING_COPY_ES = {
         stepNumber: '03',
         tabLabel: 'Production Stage',
         badge: 'Shot Director, Control de Vestuario y Agentes Autónomos',
-        title: 'Previsualiza el Animatic con Voces — Luego Deja que los Agentes Produzcan',
+        title: 'Previsualiza el Corte Cine 4K con Voces — Luego Deja que los Agentes Produzcan',
         promise:
-          'Revisa tu Guion de Producción base, bloquea referencias de continuidad, reproduce el Animatic Pre-vis completo con voces, elige el vestuario exacto por plano en Shot Director y ejecuta agentes autónomos.',
+          'Revisa tu Guion de Producción base, bloquea referencias de continuidad, reproduce el Corte Cine 4K Pre-vis completo con voces, elige el vestuario exacto por plano en Shot Director y ejecuta agentes autónomos.',
         creatorExampleTitle: 'Escena 1: Bóveda Subterránea · Anamórfico 4K',
         creatorExampleNote:
           'Cambia el vestuario de Elara por plano, dirige encuadres por voz o texto, mezcla diálogo/SFX/música en Production Mixer y lanza los Production Agents.',
@@ -573,7 +573,7 @@ export const STUDIO_LANDING_COPY_ES = {
               'Selecciona atuendos exactos en cada toma y refina encuadres o expresiones conversando.',
           },
           {
-            label: 'Cortafuegos de Presupuesto con Animatic Pre-vis',
+            label: 'Cortafuegos de Presupuesto con Corte Cine 4K Pre-vis',
             detail:
               'Escucha diálogos, narración, efectos y música sobre fotogramas antes de gastar créditos de movimiento.',
           },
@@ -584,7 +584,7 @@ export const STUDIO_LANDING_COPY_ES = {
           },
         ],
         visuals: {
-          topBadge: 'Shot Director · Vestuario Seleccionado · Animatic Pre-vis Listo',
+          topBadge: 'Shot Director · Vestuario Seleccionado · Corte Cine 4K Pre-vis Listo',
           bottomBadge: 'Audio Agent, Stills Agent y Clips Agent Orquestan Todas las Escenas',
           thumbLabels: [
             'Plano 1 · Plano General Bóveda',
@@ -601,7 +601,7 @@ export const STUDIO_LANDING_COPY_ES = {
         badge: 'Revisión Precisa por Cuadro, 70+ Idiomas y Publicación',
         title: 'Colabora por Enlace Privado y Entrega en Cualquier Idioma',
         promise:
-          'Proyecta animatics, cortes preliminares y masters 4K finales en un solo reproductor. Recibe notas con código de tiempo, genera más de 70 versiones dobladas y exporta o publica donde quieras.',
+          'Proyecta cortes de cine 4K, cortes preliminares y masters 4K finales en un solo reproductor. Recibe notas con código de tiempo, genera más de 70 versiones dobladas y exporta o publica donde quieras.',
         creatorExampleTitle: 'Máster de Estreno, Tráilers Verticales y Doblajes Globales',
         creatorExampleNote:
           'Genera avances verticales 9:16 automáticamente, adapta diálogos en más de 70 mercados y publica en YouTube o postula a SceneFlow Originals.',
@@ -645,7 +645,7 @@ export const STUDIO_LANDING_COPY_ES = {
       {
         id: 'memoir-services',
         tabLabel: 'Video Memorias y Legado Familiar',
-        badge: 'Servicio Insignia · $349–$1,250/Filme',
+        badge: 'Servicio Insignia · $149–$1,250/Filme',
         headline: 'Transforma Entrevistas Familiares y Fotos Antiguas en Cine Conmemorativo',
         description:
           'Captura una historia de vida con entrevista inteligente, bloquea retratos multiedad desde los años 70 hasta hoy, ejecuta Production Agents autónomos, recrea clips en 1 clic con FlowDirector y entrega por enlace privado de Screening Room.',
@@ -739,10 +739,10 @@ export const STUDIO_LANDING_COPY_ES = {
     ],
   },
   directoryDrawer: {
-    badge: 'Automatización y 39 Capacidades · Animatics WebM Narrados en 7 Idiomas',
+    badge: 'Automatización y 39 Capacidades · Corte Cine 4Ks WebM Narrados en 7 Idiomas',
     title: 'Automatiza Producción y Control de Calidad en 20+ Proyectos Simultáneos',
     subtitle:
-      'Cada herramienta incluye ahora un animatic WebM limpio con narración completa de estudio en 7 idiomas. Descubre los Portales Marca Blanca, el Estudio de Selfies, FlowDirector en 1 clic y los agentes autónomos.',
+      'Cada herramienta incluye ahora un película de cine WebM limpio con narración completa de estudio en 7 idiomas. Descubre los Portales Marca Blanca, el Estudio de Selfies, FlowDirector en 1 clic y los agentes autónomos.',
     expandCta: 'Explorar 39 Capacidades Narradas',
     collapseCta: 'Ocultar Directorio de Capacidades',
     automationEyebrow: 'Diseñado para Creadores de Alto Volumen y Proveedores con 20 Proyectos',
@@ -753,8 +753,8 @@ export const STUDIO_LANDING_COPY_ES = {
     spotlightFlowDirectorMeta: 'Audiencia AR + Director · Recrea Clips en 1 Clic',
     spotlightAgentsLabel: 'Agentes Autónomos de Producción',
     spotlightAgentsMeta: '300+ Prompts Automatizados · Escala a 20 Proyectos Activos',
-    spotlightNarrated5kLabel: '39 Capacidades · Animatics Narrados',
-    spotlightNarrated5kMeta: 'Videos Animatic WebM 16:9 + Narración de Estudio en los 7 Idiomas',
+    spotlightNarrated5kLabel: '39 Capacidades · Corte Cine 4Ks Narrados',
+    spotlightNarrated5kMeta: 'Videos Corte Cine 4K WebM 16:9 + Narración de Estudio en los 7 Idiomas',
   },
   academyStrip: {
     badge: 'Garantía de Curva de Aprendizaje Cero · Studio Academy',

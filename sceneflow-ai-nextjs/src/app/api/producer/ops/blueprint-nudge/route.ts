@@ -10,6 +10,11 @@ import {
   grantBlueprintIterationPack,
   sendAutomatedClientPortalEmail,
 } from '@/lib/intake/automatedClientBlueprint'
+import {
+  releaseExpressFilmToClient,
+  type ExpressDeliveryTier,
+  type ExpressReleaseMode,
+} from '@/lib/export/expressCinemaPipeline'
 
 export const runtime = 'nodejs'
 
@@ -22,8 +27,14 @@ export async function POST(req: NextRequest) {
 
     const body = (await req.json().catch(() => ({}))) as {
       projectId?: string
-      action?: 'send_nudge' | 'grant_iteration_pack'
+      action?:
+        | 'send_nudge'
+        | 'grant_iteration_pack'
+        | 'release_express_film'
+        | 'set_express_mode'
       customNote?: string
+      deliveryTier?: ExpressDeliveryTier
+      expressReleaseMode?: ExpressReleaseMode
     }
 
     const projectId = String(body.projectId || '').trim()
@@ -71,6 +82,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         ...granted,
+      })
+    }
+
+    if (action === 'set_express_mode') {
+      const nextTier: ExpressDeliveryTier =
+        body.deliveryTier === 'express_cinema_4k' ? 'express_cinema_4k' : 'full_motion_cinema'
+      const nextReleaseMode: ExpressReleaseMode =
+        body.expressReleaseMode === 'full_autopilot' ? 'full_autopilot' : 'supervised_pm_release'
+      await project.update({
+        metadata: {
+          ...md,
+          clientOrder: {
+            ...co,
+            deliveryTier: nextTier,
+            expressReleaseMode: nextReleaseMode,
+          },
+        },
+      })
+      return NextResponse.json({
+        success: true,
+        deliveryTier: nextTier,
+        expressReleaseMode: nextReleaseMode,
+      })
+    }
+
+    if (action === 'release_express_film') {
+      const ownerId = access.billingOwnerUserId || actorUserId
+      const released = await releaseExpressFilmToClient({
+        project,
+        ownerUserId: ownerId,
+        customNote: body.customNote,
+        baseUrl: origin,
+      })
+      if (!released.ok) {
+        return NextResponse.json({ success: false, error: released.error }, { status: released.status })
+      }
+      return NextResponse.json({
+        success: true,
+        ...released,
       })
     }
 

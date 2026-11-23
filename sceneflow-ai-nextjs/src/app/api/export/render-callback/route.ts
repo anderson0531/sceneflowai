@@ -156,12 +156,19 @@ export async function POST(request: NextRequest) {
       try {
         const project = await Project.findByPk(job.project_id)
         if (project) {
-          const metadata = { ...(project.metadata || {}) }
-          metadata.exportedAnimaticUrl = downloadUrl
-          metadata.exportedAnimaticJobId = jobId
-          metadata.exportedAnimaticLanguage = job.language || 'en'
-          await project.update({ metadata })
-          console.log(`[Render Callback] Saved exportedAnimaticUrl on project ${job.project_id}`)
+          const { handleExpress4kRenderCompletedCallback } = await import(
+            '@/lib/export/expressCinemaPipeline'
+          )
+          const deliveryResult = await handleExpress4kRenderCompletedCallback({
+            project,
+            jobId,
+            downloadUrl,
+            language: job.language || 'en',
+            resolution: job.resolution || '4K',
+          })
+          console.log(
+            `[Render Callback] Saved exportedMasterUrl on project ${job.project_id} (clientEmailSent=${deliveryResult.emailSent})`
+          )
         }
       } catch (metaErr) {
         console.error('[Render Callback] Failed to update project animatic metadata:', metaErr)

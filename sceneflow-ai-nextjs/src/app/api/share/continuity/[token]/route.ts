@@ -70,6 +70,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       lastReviewerName: payload.lastReviewerName || null,
       lastReviewedAt: payload.lastReviewedAt || null,
       generalNotes: payload.generalNotes || null,
+      pronunciationNotes: payload.pronunciationNotes || null,
       slots: payload.slots,
       scenePromptCards: Array.isArray(payload.scenePromptCards) ? payload.scenePromptCards : [],
       preferredProductionStyle: payload.preferredProductionStyle || null,
@@ -172,6 +173,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       reviewerName: String(body.reviewerName || 'Reviewer'),
       slotDecisions: Array.isArray(body.slotDecisions) ? body.slotDecisions : [],
       generalNotes: body.generalNotes ? String(body.generalNotes) : undefined,
+      pronunciationNotes: body.pronunciationNotes ? String(body.pronunciationNotes) : undefined,
+      baseUrl: new URL(req.url).origin,
     })
 
     if (!reviewResult.ok) {
@@ -186,6 +189,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       approvalStatus: reviewResult.approvalStatus,
       roundsUsed: reviewResult.roundsUsed,
       maxRounds: reviewResult.maxRounds,
+      ...(reviewResult.expressPipeline ? { expressPipeline: reviewResult.expressPipeline } : {}),
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to update continuity portal'
