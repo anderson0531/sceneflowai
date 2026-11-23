@@ -163,7 +163,7 @@ export function getShowcaseVideoSlugLocale(locale: ClientPortalLocale): string {
 
 export function getLocalizedShowcaseVideoUrl(videoSlug: string, locale: ClientPortalLocale): string {
   const code = getShowcaseVideoSlugLocale(locale)
-  return `/landing/video-services/videos/${videoSlug}-${code}.mp4`
+  return `/landing/video-services/videos/express-${videoSlug}-${code}.mp4`
 }
 
 export function getShowcaseVideoPosterUrl(videoSlug: string): string {

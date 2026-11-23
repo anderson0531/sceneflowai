@@ -399,13 +399,13 @@ describe('KeepsakeCinemaStorefront UI', () => {
     }
 
     expect(getLocalizedShowcaseVideoUrl('memoir', 'zh-CN')).toBe(
-      '/landing/video-services/videos/memoir-zh.mp4'
+      '/landing/video-services/videos/express-memoir-zh.mp4'
     )
     expect(getLocalizedShowcaseVideoUrl('realestate', 'ar')).toBe(
-      '/landing/video-services/videos/realestate-ar.mp4'
+      '/landing/video-services/videos/express-realestate-ar.mp4'
     )
     expect(getLocalizedShowcaseVideoUrl('brand', 'th')).toBe(
-      '/landing/video-services/videos/brand-th.mp4'
+      '/landing/video-services/videos/express-brand-th.mp4'
     )
 
     // Interactive language switcher in UI: switch to Spanish (MXN) -> Arabic (SAR + RTL) -> Thai (THB)
@@ -437,13 +437,13 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(container.textContent).toContain(formatLandingCurrency(29, 'ar'))
     expect(container.querySelector('[lang="ar"]')?.getAttribute('dir')).toBe('rtl')
     expect(container.querySelector('video')?.getAttribute('src')).toBe(
-      '/landing/video-services/videos/memoir-ar.mp4'
+      '/landing/video-services/videos/express-memoir-ar.mp4'
     )
 
     pickLang('ไทย')
     expect(container.textContent).toContain(formatLandingCurrency(149, 'th'))
     expect(container.querySelector('video')?.getAttribute('src')).toBe(
-      '/landing/video-services/videos/memoir-th.mp4'
+      '/landing/video-services/videos/express-memoir-th.mp4'
     )
   })
 })

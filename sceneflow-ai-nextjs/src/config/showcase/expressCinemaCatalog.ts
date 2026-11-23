@@ -62,7 +62,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     totalPriceUsd: 149,
     balanceDueUsd: 120,
     posterImage: '/landing/video-services/memoir-1.webp',
-    sampleVideoUrl: '/landing/video-services/videos/memoir-en.mp4',
+    sampleVideoUrl: '/landing/video-services/videos/express-memoir-en.mp4',
     sampleVideoPoster: '/landing/video-services/videos/memoir-poster.webp',
     sampleTitle: 'Family Legacy & Life Story Sample',
     sampleCaption:
@@ -92,7 +92,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     totalPriceUsd: 149,
     balanceDueUsd: 120,
     posterImage: '/landing/video-services/memoir-2.webp',
-    sampleVideoUrl: '/landing/video-services/videos/memoir-en.mp4',
+    sampleVideoUrl: '/landing/video-services/videos/express-memoir-en.mp4',
     sampleVideoPoster: '/landing/video-services/videos/memoir-poster.webp',
     sampleTitle: 'Anniversary & Milestone Tribute Sample',
     sampleCaption:
@@ -122,7 +122,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     totalPriceUsd: 149,
     balanceDueUsd: 120,
     posterImage: '/landing/video-services/memoir-1.webp',
-    sampleVideoUrl: '/landing/video-services/videos/memoir-en.mp4',
+    sampleVideoUrl: '/landing/video-services/videos/express-memoir-en.mp4',
     sampleVideoPoster: '/landing/video-services/videos/memoir-poster.webp',
     sampleTitle: 'Coming-of-Age & Milestone Cinema Sample',
     sampleCaption:
@@ -152,7 +152,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     totalPriceUsd: 149,
     balanceDueUsd: 120,
     posterImage: '/landing/video-services/brand-2.webp',
-    sampleVideoUrl: '/landing/video-services/videos/brand-en.mp4',
+    sampleVideoUrl: '/landing/video-services/videos/express-brand-en.mp4',
     sampleVideoPoster: '/landing/video-services/videos/brand-poster.webp',
     sampleTitle: 'Career & Founder Tribute Sample',
     sampleCaption:
@@ -182,7 +182,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     totalPriceUsd: 149,
     balanceDueUsd: 120,
     posterImage: '/landing/video-services/realestate-1.webp',
-    sampleVideoUrl: '/landing/video-services/videos/realestate-en.mp4',
+    sampleVideoUrl: '/landing/video-services/videos/express-realestate-en.mp4',
     sampleVideoPoster: '/landing/video-services/videos/realestate-poster.webp',
     sampleTitle: 'Real Estate 4K Listing Film Sample',
     sampleCaption:
@@ -212,7 +212,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     totalPriceUsd: 199,
     balanceDueUsd: 170,
     posterImage: '/landing/video-services/brand-1.webp',
-    sampleVideoUrl: '/landing/video-services/videos/brand-en.mp4',
+    sampleVideoUrl: '/landing/video-services/videos/express-brand-en.mp4',
     sampleVideoPoster: '/landing/video-services/videos/brand-poster.webp',
     sampleTitle: 'Founder & Practice Brand Film Sample',
     sampleCaption:
@@ -242,7 +242,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     totalPriceUsd: 249,
     balanceDueUsd: 220,
     posterImage: '/landing/video-services/training-1.webp',
-    sampleVideoUrl: '/landing/video-services/videos/training-en.mp4',
+    sampleVideoUrl: '/landing/video-services/videos/express-training-en.mp4',
     sampleVideoPoster: '/landing/video-services/videos/training-poster.webp',
     sampleTitle: 'Narrated 4K Training Module Sample',
     sampleCaption:

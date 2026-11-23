@@ -12,9 +12,9 @@
  *    so Narration NEVER overlaps Character Dialogue in any language.
  * 2. Gentle onset/tail trimming on Narrator VO (`120ms` pre-pad, `160ms` post-pad, `1.0x` natural
  *    pacing — zero `atempo` rush and zero clipped leading syllables).
- * 3. Frame-exact (`24 fps`) freeze-frame extension (`tpad=stop_mode=clone`) whenever
- *    dialogue + VO (or VO alone) exceeds a block's raw clip length (~10.0s), syncing
- *    visual cuts cleanly to narration completion with zero cumulative drift.
+ * 3. Frame-exact (`24 fps`) smooth slow-motion extension (~80% speed) whenever
+ *    dialogue + VO (or VO alone) exceeds a block's raw clip length (~10.0s), replacing
+ *    static freeze frames while keeping on-camera lip-sync portions strictly at 1.0x speed.
  * 4. Gentle orchestral underscore (`~14%` during transitions, ducked smoothly `-17 dB` below
  *    speech during both character dialogue and narrator VO) so music never drowns out speech.
  * 5. Preserves pre-encoded clip watermarks (`watermarkAlreadyInClips: true`) and optionally
@@ -586,6 +586,8 @@ function encodeNormalizedVideoSegment(args: {
   clipPath: string
   targetFrames: number
   rawClipDurSec: number
+  isDialogueBlock: boolean
+  dialogueEndSec: number
   width: number
   height: number
   outSegPath: string
@@ -597,43 +599,100 @@ function encodeNormalizedVideoSegment(args: {
   mkdirSync(dirname(args.outSegPath), { recursive: true })
 
   const targetSec = args.targetFrames / FPS
-  const extraHoldSec = Math.max(0, targetSec - args.rawClipDurSec)
-  // Always include a small safety pad (+0.6s) on tpad so variable input frame timing never runs short of `-frames:v`
-  const padDur = (extraHoldSec + 0.6).toFixed(3)
-
-  const vf = [
-    `fps=${FPS}`,
-    `scale=${args.width}:${args.height}:force_original_aspect_ratio=decrease`,
-    `pad=${args.width}:${args.height}:(ow-iw)/2:(oh-ih)/2`,
-    'setsar=1',
-    `tpad=stop_mode=clone:stop_duration=${padDur}`,
-  ].join(',')
+  const needsStretch = targetSec > args.rawClipDurSec + 0.04
+  const scalePad = `scale=${args.width}:${args.height}:force_original_aspect_ratio=decrease,pad=${args.width}:${args.height}:(ow-iw)/2:(oh-ih)/2,setsar=1`
 
   const tmpSegPath = `${args.outSegPath}.${process.pid}.tmp.mp4`
-  runFfmpeg(
-    [
-      '-y',
-      '-i',
-      args.clipPath,
-      '-an',
-      '-vf',
-      vf,
-      '-frames:v',
-      String(args.targetFrames),
-      '-c:v',
-      'libx264',
-      '-preset',
-      'fast',
-      '-crf',
-      '18',
-      '-pix_fmt',
-      'yuv420p',
-      '-video_track_timescale',
-      '24000',
-      tmpSegPath,
-    ],
-    `seg ${args.outSegPath.split('/').pop()}`
+  const ffmpegArgs: string[] = ['-y', '-i', args.clipPath, '-an']
+
+  if (needsStretch && args.isDialogueBlock && args.dialogueEndSec > 0.5) {
+    // Keep on-camera in-scene sync audio strictly at 1.0x speed, then slow ONLY the narrated VO tail to 80% speed
+    const splitSec = Math.min(
+      Math.max(1.5, args.dialogueEndSec + 0.3),
+      Math.max(1.5, args.rawClipDurSec - 0.6)
+    )
+    const tailRawSec = Math.max(0.5, args.rawClipDurSec - splitSec)
+    const tailNeededSec = Math.max(0.5, targetSec - splitSec)
+    const splitFmt = splitSec.toFixed(3)
+
+    // At 80% speed (1.25x duration), check if one forward slow-mo pass covers the VO tail
+    const singlePassAt80 = tailRawSec * 1.25
+    if (singlePassAt80 >= tailNeededSec + 0.08) {
+      const fc = [
+        `[0:v]split=2[v1][v2]`,
+        `[v1]trim=start=0:end=${splitFmt},setpts=PTS-STARTPTS,fps=${FPS}[p1]`,
+        `[v2]trim=start=${splitFmt},setpts=(PTS-STARTPTS)*1.25,fps=${FPS}[p2]`,
+        `[p1][p2]concat=n=2:v=1:a=0,fps=${FPS},${scalePad},tpad=stop_mode=clone:stop_duration=0.25[vout]`,
+      ].join(';')
+      ffmpegArgs.push('-filter_complex', fc, '-map', '[vout]')
+    } else {
+      // Verbose localized VO tail exceeds 1.25x of post-dialogue footage:
+      // Keep 1.0x lip-sync strictly untouched, then play post-dialogue tail at lush 80% speed
+      // with seamless forward/reverse ping-pong cycles (0-pixel jump, constant 80% speed, zero freeze frame!)
+      const cycleDurSec = Math.max(0.5, 2 * singlePassAt80)
+      const extraCycles = Math.max(1, Math.ceil((tailNeededSec + 1.0) / cycleDurSec))
+      const cycleMaxFrames = Math.ceil((cycleDurSec + 1.5) * FPS)
+      const fc = [
+        `[0:v]split=2[v1][v2]`,
+        `[v1]trim=start=0:end=${splitFmt},setpts=PTS-STARTPTS,fps=${FPS}[p1]`,
+        `[v2]trim=start=${splitFmt},setpts=(PTS-STARTPTS)*1.25,fps=${FPS},split=2[tf][tr]`,
+        `[tr]reverse,setpts=PTS-STARTPTS[tr2]`,
+        `[tf][tr2]concat=n=2:v=1:a=0[cycle]`,
+        `[cycle]loop=loop=${extraCycles}:size=${cycleMaxFrames}:start=0,setpts=N/(${FPS}*TB)[ptail]`,
+        `[p1][ptail]concat=n=2:v=1:a=0,fps=${FPS},${scalePad},tpad=stop_mode=clone:stop_duration=0.25[vout]`,
+      ].join(';')
+      ffmpegArgs.push('-filter_complex', fc, '-map', '[vout]')
+    }
+  } else if (needsStretch) {
+    // Non-dialogue VO-only block: smooth 80% slow-motion (1.25x duration = 12.54s from 10.03s clip) — zero freeze frame
+    const singlePassAt80 = args.rawClipDurSec * 1.25
+    if (singlePassAt80 >= targetSec + 0.08) {
+      const vf = [
+        `setpts=(PTS-STARTPTS)*1.25`,
+        `fps=${FPS}`,
+        scalePad,
+        'tpad=stop_mode=clone:stop_duration=0.25',
+      ].join(',')
+      ffmpegArgs.push('-vf', vf)
+    } else {
+      // Verbose localized VO-only block (>12.5s): constant 80% slow-mo forward + seamless reverse ping-pong (zero freeze!)
+      const cycleDurSec = Math.max(1.0, 2 * singlePassAt80)
+      const extraCycles = Math.max(1, Math.ceil((targetSec + 1.0) / cycleDurSec))
+      const cycleMaxFrames = Math.ceil((cycleDurSec + 1.5) * FPS)
+      const fc = [
+        `[0:v]setpts=(PTS-STARTPTS)*1.25,fps=${FPS},split=2[tf][tr]`,
+        `[tr]reverse,setpts=PTS-STARTPTS[tr2]`,
+        `[tf][tr2]concat=n=2:v=1:a=0[cycle]`,
+        `[cycle]loop=loop=${extraCycles}:size=${cycleMaxFrames}:start=0,setpts=N/(${FPS}*TB),${scalePad},tpad=stop_mode=clone:stop_duration=0.25[vout]`,
+      ].join(';')
+      ffmpegArgs.push('-filter_complex', fc, '-map', '[vout]')
+    }
+  } else {
+    const vf = [
+      `fps=${FPS}`,
+      scalePad,
+      'tpad=stop_mode=clone:stop_duration=0.35',
+    ].join(',')
+    ffmpegArgs.push('-vf', vf)
+  }
+
+  ffmpegArgs.push(
+    '-frames:v',
+    String(args.targetFrames),
+    '-c:v',
+    'libx264',
+    '-preset',
+    'fast',
+    '-crf',
+    '18',
+    '-pix_fmt',
+    'yuv420p',
+    '-video_track_timescale',
+    '24000',
+    tmpSegPath
   )
+
+  runFfmpeg(ffmpegArgs, `seg ${args.outSegPath.split('/').pop()}`)
   if (existsSync(args.outSegPath) && !args.force) {
     try {
       unlinkSync(tmpSegPath)
@@ -777,7 +836,7 @@ async function main() {
           (isDialogueBlock ? ` | dlg=${dialogueStartSec.toFixed(2)}..${dialogueEndSec.toFixed(2)}s` : '') +
           ` | vo=${voStartSec.toFixed(2)}..${voEndSec.toFixed(2)}s (${voTrimmed.durationSec.toFixed(2)}s)` +
           ` -> block=${exactBlockDurSec.toFixed(2)}s` +
-          (freezeHoldSec > 0.08 ? ` (+${freezeHoldSec.toFixed(2)}s freeze)` : '')
+          (freezeHoldSec > 0.04 ? ` (80% slow-mo stretch +${freezeHoldSec.toFixed(2)}s)` : '')
       )
     }
 
@@ -786,18 +845,24 @@ async function main() {
     const totalSamples = Math.round(totalDurSec * SR)
     console.log(`  Total [${vertical}-${loc}] runtime: ${totalDurSec.toFixed(2)}s (${totalFrames} frames)`)
 
-    // Step 2A: Encode / reuse frame-exact normalized video segments
+    // Step 2A: Encode / reuse frame-exact normalized 80%-speed slow-mo video segments
     const segPaths: string[] = []
     for (const plan of plans) {
       const pad = String(plan.blockNumber).padStart(2, '0')
+      const needsMultiPassV3 =
+        (plan.isDialogueBlock && plan.exactBlockDurSec > plan.rawClipDurSec + 0.04) ||
+        plan.exactBlockDurSec > plan.rawClipDurSec * 1.25 - 0.08
+      const segVer = needsMultiPassV3 ? 'slow80v3' : 'slow80v2'
       const segKey = plan.isDialogueBlock
-        ? `block-${pad}-${loc}-${plan.targetFrames}f.mp4`
-        : `block-${pad}-shared-${plan.targetFrames}f.mp4`
+        ? `block-${pad}-${loc}-${plan.targetFrames}f-${segVer}.mp4`
+        : `block-${pad}-shared-${plan.targetFrames}f-${segVer}.mp4`
       const outSegPath = join(segCacheDir, segKey)
       encodeNormalizedVideoSegment({
         clipPath: plan.clipPath,
         targetFrames: plan.targetFrames,
         rawClipDurSec: plan.rawClipDurSec,
+        isDialogueBlock: plan.isDialogueBlock,
+        dialogueEndSec: plan.dialogueEndSec,
         width: targetWidth,
         height: targetHeight,
         outSegPath,
