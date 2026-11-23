@@ -54,6 +54,12 @@ export type SuperpowerMicroVisualsCopy = {
   }
 }
 
+export type BlueprintFlywheelCardCopy = {
+  tag: string
+  title: string
+  detail: string
+}
+
 export type ServiceTrustPillarCopy = {
   title: string
   detail: string
@@ -270,6 +276,17 @@ export type StudioLandingCopy = {
     playbooksHeading: string
     playbooksSubtitle: string
     playbooksItems: readonly [string, string, string, string]
+    blueprintFlywheel: {
+      badge: string
+      title: string
+      subtitle: string
+      cards: readonly [
+        BlueprintFlywheelCardCopy,
+        BlueprintFlywheelCardCopy,
+        BlueprintFlywheelCardCopy,
+        BlueprintFlywheelCardCopy,
+      ]
+    }
     agencyScaleOps: {
       badge: string
       title: string

@@ -248,26 +248,58 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
       '20% Referral Partner Pitch Sheet (Senior Living, Funeral Homes & Realtors)',
       'Built-In Clickwrap Media, Multi-Age Likeness & Voice Consent Ledger',
     ],
+    blueprintFlywheel: {
+      badge: 'Zero-PM-Hours Automated Discovery · 83% Net Margin',
+      title: 'Earn Automated Revenue Before a PM Ever Touches the Project',
+      subtitle:
+        'Customers struggle to outline a film from a blank page—but excel at reacting to an illustrated, narrated draft. SceneFlow turns client onboarding into a self-funding, family-collaborative Blueprint Pass that profits even on stalled leads.',
+      cards: [
+        {
+          tag: '$29 Pass + $19 Top-Ups · 0 PM Min',
+          title: 'Self-Funding Blueprint Pass & Extra Iteration Packs',
+          detail:
+            'Clients pay $29 upfront to receive illustrated beat storyboards, multi-language narration, and Audience Resonance in ~3 minutes (~83% margin even if they pause)—plus self-serve $19 packs (+3 revisions / +2 AR) whenever they want extra rounds.',
+        },
+        {
+          tag: 'Fast & Authentic Draft 1',
+          title: 'Memory-Jogger Chips, Quick Check & Anti-Fictionalization',
+          detail:
+            'Tappable vertical milestone chips (marriages, promotions, sports, proof points, rooms) and a 15-second voice/text Quick Check catch key people and events fast, while strict non-fiction guardrails never invent biography details.',
+        },
+        {
+          tag: 'Two-Tier Sharing & Triage',
+          title: 'Family / Team Comment-Only Link & Primary Customer Control',
+          detail:
+            'Your customer receives a private Director Portal and shares a comment-only link with family or teammates. Guests listen in 7 languages and comment without burning rounds or approving—the primary customer filters notes + 1-click AR tips into 1 AI update that auto-refreshes storyboards & audio.',
+        },
+        {
+          tag: 'Deferred PM Assignment',
+          title: 'PMs Assign Only on Approval + Blueprint Conversion Funnel',
+          detail:
+            'Zero human PM hours until the customer clicks Approve Blueprint. Track Active, Stale >48h / >7d, and Rounds-Exhausted leads in the Blueprint Funnel with 1-click white-labeled nudge emails, +3 iteration grants, and automated pass revenue.',
+        },
+      ],
+    },
     agencyScaleOps: {
       badge: 'Multi-PM Agency Scale · 100s of Client Projects',
       title: 'Agency Operations Command Center, Built Right Into the Studio',
       subtitle:
-        'Scale from solo operator to a global multi-PM video agency without spreadsheets, leaked margins, or bloated storage.',
+        'Scale from solo operator to a global multi-PM video agency without spreadsheets, wasted sales hours, leaked margins, or bloated storage.',
       pillars: [
         {
-          title: 'Kanban Pipeline & SLA Alerts',
+          title: 'Blueprint Funnel, Kanban & SLA Nudges',
           detail:
-            'Track every order from Intake to Delivered with inline target delivery dates, overdue alerts, and >48h waiting-on-client nudges.',
+            'Separate zero-touch Blueprint Passes from active production—spot stalled unapproved Blueprints (>48h/7d) and exhausted rounds with 1-click white-labeled nudge emails & +3 iteration grants.',
         },
         {
-          title: 'Client CRM & PM Margin Scorecard',
+          title: 'Client CRM, Pass Revenue & PM Scorecard',
           detail:
-            'Group repeat clients automatically, monitor per-PM credit burn & turnaround times, and verify real-time gross margin.',
+            'Roll up automated $29 Blueprint Passes, $19 iteration packs, and full production orders automatically while monitoring per-PM credit burn, turnaround times, and real-time gross margin.',
         },
         {
-          title: 'Multi-PM Isolation & Locale Auto-Routing',
+          title: 'Deferred PM Routing & Workspace Isolation',
           detail:
-            'Delegate entire Series Bibles, isolate workspaces with signed PM invites, assign 0-credit QA Reviewers, and auto-route global intakes by language.',
+            'Keep pre-approval Blueprint Passes zero-touch, auto-assign locale PMs only when clients click Approve, delegate Series Bibles, and isolate teams with 0-credit QA Reviewers.',
         },
         {
           title: 'Unlimited Scale & 1-Click Draft Purge',
@@ -281,15 +313,15 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     workflowSteps: [
       {
         step: '01',
-        title: 'Zero-Login Story Intake',
+        title: 'Self-Funding $29 Guided Intake',
         detail:
-          'Send a branded Intake link ("Tell me your story") with mandatory likeness/media consent to capture key individuals and beats.',
+          'Clients purchase your $29 Blueprint Pass, tap vertical Memory-Jogger chips, speak or type their story with mandatory consent, and run a 15-second Quick Check—with strict non-fiction accuracy.',
       },
       {
         step: '02',
-        title: 'Shared Blueprint Sign-Off',
+        title: 'Living Blueprint, Family Triage & Auto-Revisions',
         detail:
-          'Verify story impact with Audience Resonance internally, then lock client Blueprint approval before spending on renders.',
+          'Within ~3 minutes clients receive illustrated storyboards, multi-language audio & AR scoring, share a comment-only link with family/team, filter notes into AI updates (or add $19 packs), and click Approve to trigger PM assignment.',
       },
       {
         step: '03',
@@ -506,24 +538,24 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         creatorExampleTitle: 'Beat-by-Beat Treatment & Visual Style Lock',
         creatorExampleNote:
           'Each beat pairs dramatic intent with participating characters, anamorphic lighting rules, and narrated Audience Resonance feedback.',
-        serviceExampleTitle: 'Intelligent Memoir Interview & Multi-Age Continuity',
+        serviceExampleTitle: 'Zero-PM-Hours $29 Blueprint Pass & Family Comment Triage',
         serviceExampleNote:
-          'Starts with "Tell me your story," clarifies resonating life beats, and creates distinct age-stage characters (e.g., Age 17, Age 32, Age 62) with locked ancestral heritage.',
+          'Memory-Jogger chips & anti-fictionalization deliver an authentic illustrated, narrated Draft 1 in ~3 minutes. Clients share a comment-only link with family, filter notes + 1-click AR tips into AI revisions (with auto-refreshed audio & storyboards), and trigger PM assignment only on Approval.',
         callouts: [
           {
-            label: 'Story-First Guided Interview',
+            label: 'Memory-Jogger Intake & Anti-Fictionalization',
             detail:
-              'Draws out rich personal or brand stories and highlights specific individuals in every beat.',
+              'Vertical milestone chips and a 15-second voice/text Quick Check capture key people & eras fast—never inventing unshared biography facts.',
           },
           {
-            label: 'Multi-Age Character Continuity',
+            label: 'Two-Tier Family / Team Sharing & Triage',
             detail:
-              'Creates separate age-specific character references so a 1970s youth and modern elder never blur together.',
+              'Guests listen in 7 languages and comment without burning rounds or approving; the primary customer filters notes into 1 clean AI revision.',
           },
           {
-            label: 'Audience Resonance + Shared Blueprint Link',
+            label: 'Auto-Refreshed Audio, Storyboards & $19 Top-Ups',
             detail:
-              'Verify story impact with AI audience scoring and collect client approval from a clean browser link.',
+              'Every iteration re-illustrates changed chapters, regenerates narration, scores Audience Resonance, and offers self-serve +3 iteration packs.',
           },
         ],
         visuals: {

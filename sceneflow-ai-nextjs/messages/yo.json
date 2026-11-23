@@ -1254,7 +1254,12 @@
         ]
       }
     ],
-    "featuresListLabel": "Features List"
+    "featuresListLabel": "Features List",
+    "uiRegions": {
+      "americas": "Americas",
+      "asiaPacific": "Asia Pacific",
+      "middleEastAfrica": "Middle East & Africa"
+    }
   },
   "metadata": {
     "title": "SceneFlow Studio - Ṣíṣe Fídíò pẹ̀lú Agbára AI",
@@ -1277,7 +1282,10 @@
     "noLanguagesFound": "A kò rí èdè kankan",
     "videoServices": "Video Business",
     "studioTour": "Studio Tour",
-    "mobileApp": "Mobile App"
+    "mobileApp": "Mobile App",
+    "primaryNavigation": "Primary navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "floatingNav": {
     "productionExamples": "Àwọn àpẹẹrẹ",
@@ -1368,7 +1376,10 @@
       }
     },
     "soon": "Laipẹ",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
+    "languageSelectTooltip": "Language ({language})",
+    "inSceneSync": "In-Scene Sync",
+    "requestPreLaunchAccess": "Request Pre-Launch Access"
   },
   "twoModes": {
     "eyebrow": "Ìdènà tí a ń mú kúrò",
@@ -2358,6 +2369,80 @@
           }
         ],
         "screeningRoomPreview": "Àwo Márùn-ún — Screening Room"
+      },
+      {
+        "id": "podcast",
+        "title": "Creator Channels & Video Podcasts. Upload Live Host Clips, Generate the World.",
+        "subtitle": "Pair your recorded studio camera feed with a locked desk co-host and cinema-grade historical or sci-fi reconstructions—then publish multi-language YouTube and Spotify Video streams in one click.",
+        "badge": "Creator & Podcasts",
+        "solutionPillars": [
+          {
+            "title": "Hybrid Live Upload + AI Cinema",
+            "frictionHeadline": "40 Hours of Stock B-Roll Hunting.",
+            "friction": "Recording a 30-minute investigative podcast or lore episode takes an hour, but illustrating the story with repetitive stock clips or custom animation takes weeks.",
+            "solutionHeadline": "Seamless Studio-to-Story Cutaways.",
+            "solution": "Upload your live on-camera host segments and intercut directly into SceneFlow-generated historical, scientific, or thriller reconstructions timed to your voice track."
+          },
+          {
+            "title": "Recurring Desk Co-Hosts & Set Continuity",
+            "frictionHeadline": "Talking-Head Fatigue.",
+            "friction": "Static single-camera podcasts lose viewer retention during complex explanations without visual chemistry or dynamic desk staging.",
+            "solutionHeadline": "Locked Sidekick & Studio Blueprints.",
+            "solution": "Anchor a recurring animated or photoreal desk companion—like The Why Files—alongside your live studio feed with consistent lighting, banter, and reaction beats."
+          },
+          {
+            "title": "Automated Pacing & Visual Evidence",
+            "frictionHeadline": "Manual Timeline Assembly.",
+            "friction": "Syncing declassified documents, maps, sound effects, and dramatic music swells across a weekly 30-minute show creates unsustainable editing bottlenecks.",
+            "solutionHeadline": "FlowDirector & Mixer Automation.",
+            "solution": "FlowDirector polishes visual continuity across every cutaway while Mixer and Streams balance voice, atmospheric SFX, and score automatically."
+          },
+          {
+            "title": "Global Multi-Language Channel Scaling",
+            "frictionHeadline": "Single-Language Ceiling.",
+            "friction": "Hiring voice actors and re-editing timelines for Spanish, Portuguese, Hindi, or Arabic audio tracks is too expensive for independent channels.",
+            "solutionHeadline": "One-Click Multi-Language Streams.",
+            "solution": "Generate localized audio and lip-synced cutaways across dozens of languages to multiply global YouTube AdSense and podcast sponsorship reach."
+          }
+        ],
+        "screeningRoomPreview": "The Midnight Frequency — Screening Room"
+      },
+      {
+        "id": "memoir",
+        "title": "Video Memoirs & Bespoke Client Studios. Turn Spoken Memories into Cinema.",
+        "subtitle": "Combine uploaded family interviews and vintage photos with age-locked period reenactments to launch a high-margin video memoir, reunion, and biography production service.",
+        "badge": "New Business Model",
+        "solutionPillars": [
+          {
+            "title": "Unfilmed Memories Brought to Life",
+            "frictionHeadline": "The Missing Footage Problem.",
+            "friction": "Families have hours of spoken stories from grandparents and a handful of faded photos, but zero video of the moments that defined their lives.",
+            "solutionHeadline": "Age-Locked Period Reenactments.",
+            "solution": "Upload a real living-room interview and reference photos; SceneFlow locks the subject’s young likeness to recreate 1960s harbors, hometown streets, and milestone moments."
+          },
+          {
+            "title": "Turnkey Studio-in-a-Box Economics",
+            "frictionHeadline": "$25,000 Crew & Cast Costs.",
+            "friction": "Traditional biographical documentaries require actors, period wardrobe, location permits, and weeks of post-production—pricing out 99% of families and small businesses.",
+            "solutionHeadline": "Solo-Operator Client Production.",
+            "solution": "Deliver broadcast-grade 20-to-30-minute legacy films, wedding/reunion tributes, and founder biographies in a single afternoon with high client margins."
+          },
+          {
+            "title": "Authentic Era & Keepsake Continuity",
+            "frictionHeadline": "Generic Stock Footage Disconnect.",
+            "friction": "Generic stock clips feel impersonal and break the emotional truth of a family’s specific heritage, heirloom objects, and hometown.",
+            "solutionHeadline": "Keepsake & Prop Reference Locks.",
+            "solution": "Lock real family heirlooms—a 1966 leather recipe book, a wedding ring, or a first storefront—so the exact object passes from the present-day interview into the historical reenactment."
+          },
+          {
+            "title": "Multi-Generational Language Sharing",
+            "frictionHeadline": "Language Barriers Across Generations.",
+            "friction": "When grandparents speak one language and grandchildren speak another, recorded oral histories often go unwatched by the younger generation.",
+            "solutionHeadline": "Multilingual Family Editions.",
+            "solution": "Deliver the finished memoir in both the storyteller’s native voice and localized editions so every branch of a global family can experience the story together."
+          }
+        ],
+        "screeningRoomPreview": "Letters Across the Water — Screening Room"
       }
     ],
     "showDetail": "Show more detail",
@@ -2707,11 +2792,170 @@
               "synopsis": "A dessert that needs the heat control of module 1, the timing of module 2, and the seasoning eye of module 3. Then the class sets all five plates as one meal. Lila walks the pass in the same coat, in the same kitchen. The course turns from lessons into a service."
             }
           ]
+        },
+        "podcast": {
+          "showTitle": "The Midnight Frequency",
+          "format": "6-Episode Creator Channel & Video Podcast Series · Hybrid Studio Upload + AI Cinema",
+          "genre": "Investigative Mystery, Hidden History & Science Lore",
+          "artStyle": "Hybrid Warm Broadcast Studio Desk (Uploaded Live Camera) + Anamorphic Period & Deep-Sea Cinematic Reconstructions",
+          "duration": "190 min Season (6 × 30–34 min) · Ep 1: 32 min",
+          "continuityLock": "Host Devon Vance (Live Studio Upload), Orson the Brass Automaton Owl (Co-Host), Captain Nils Lindqvist (1928 Reconstruction) & Locked Midnight Studio Desk",
+          "unitLabel": "Season 1 Investigative Episodes (6)",
+          "artLock": "Seamless match-cuts between Devon Vance’s warm walnut-and-neon broadcast studio desk (uploaded live camera feed), recurring brass automaton sidekick Orson on the desk perch, and photorealistic 35mm period reconstructions of 1928 Arctic acoustic telegraph outposts and deep-ocean sonar vaults.",
+          "logline": "From a late-night broadcast desk, investigative host Devon Vance and his skeptical automaton co-host unpack declassified engineering mysteries—cutting seamlessly from live studio commentary into cinema-grade historical reconstructions.",
+          "seriesSynopsis": "Built for the new wave of narrative YouTube channels and video podcasters, The Midnight Frequency demonstrates how a solo creator turns a recorded studio microphone track and live webcam/camera clips into a television-grade investigative series. Across six 32-minute episodes, host Devon Vance uploads his live studio desk segments and intercuts them with SceneFlow-generated cinematic reconstructions, blueprint overlays, and his recurring desk sidekick Orson—ending each episode by publishing localized multi-language streams for global channel growth.",
+          "cast": [
+            {
+              "name": "Devon Vance",
+              "role": "Lead Host · Uploaded Live Studio Camera & Locked Double",
+              "descriptor": "Investigative Podcast Host (36). Charcoal henley under a tailored slate chore jacket, broadcast boom mic on a brass arm, warm key light against acoustic walnut panels and cyan LED rim spill."
+            },
+            {
+              "name": "Orson",
+              "role": "Co-Host Companion · Locked 3D/Photoreal Character Asset",
+              "descriptor": "Clockwork Brass Barn Owl perched beside the studio mixer; articulated copper feathers, amber glass aperture eyes that widen or squint in comedic skepticism during desk banter."
+            },
+            {
+              "name": "Captain Nils Lindqvist",
+              "role": "Historical Lead · 1928 Svalbard Reconstruction Cast",
+              "descriptor": "Norwegian Acoustic Telegraph Engineer (48). Frost-encrusted sheepskin greatcoat, Bakelite headphones, ice-rimmed beard lit by kerosene lantern glow."
+            },
+            {
+              "name": "Dr. Astrid Solberg",
+              "role": "Historical Co-Lead · 1928 Seismologist Cast",
+              "descriptor": "Expedition Geophysicist (34). Heavy cable-knit wool sweater, brass tuning-fork galvanometer, ink-stained leather logbook in the 1928 listening hut."
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "Episode 1 Synopsis · Hybrid Creator & Podcast Pilot (6 Chapters)",
+            "title": "Episode 1: The Svalbard Sub-Glacial Bell",
+            "duration": "32 min (Hybrid Live Studio + 1928 Arctic Reconstructions)",
+            "logline": "In 1928, an Arctic radio outpost recorded a rhythmic metallic chime two miles beneath the glacier—then vanished leaving their tea still warm.",
+            "synopsis": "Host Devon Vance uploads his live studio desk camera takes and pairs them with SceneFlow cinematic reconstructions of the 1928 Lindqvist Expedition, guiding viewers from the initial mystery hook through the declassified acoustic evidence and the rational geological twist.",
+            "chapter1Title": "Chapter 1: The Cylinder on the Desk & The 82° North Signal",
+            "chapter1Duration": "5.5 min · Live Studio Hook to 1928 Blizzard Match-Cut",
+            "chapter1Synopsis": "Devon sets a corroded 1928 brass wax-cylinder case onto the studio desk beside Orson and plays the original low-frequency recording—triggering a seamless match-cut from the glowing studio VU meter into the freezing 1928 Svalbard listening post."
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "The Svalbard Sub-Glacial Bell",
+              "duration": "32 min",
+              "synopsis": "Devon and Orson investigate the 1928 disappearance of an Arctic acoustic telegraph crew who recorded a rhythmic chime beneath two miles of pack ice."
+            },
+            {
+              "number": "2",
+              "title": "The Glass Library of Alexandria",
+              "duration": "30 min",
+              "synopsis": "How a 1963 deep-desert archaeological survey uncovered vitrified subterranean vaults aligned with ancient astronomical sightlines."
+            },
+            {
+              "number": "3",
+              "title": "Flight 19 & The Bermuda Magnetometer",
+              "duration": "34 min",
+              "synopsis": "Declassified naval compass logs and cockpit reconstructions reveal what really happened inside the 1945 night storm."
+            },
+            {
+              "number": "4",
+              "title": "The Clockwork Automaton of Prague",
+              "duration": "31 min",
+              "synopsis": "A 17th-century guild master builds a mechanical scribe whose surviving gears encode a cipher nobody solved for three hundred years."
+            },
+            {
+              "number": "5",
+              "title": "The Mariana Trench Echo",
+              "duration": "33 min",
+              "synopsis": "In 1977, a deep-ocean hydrophone array tracked a 28-hertz acoustic signature moving against the Pacific abyssal current."
+            },
+            {
+              "number": "6",
+              "title": "The Carrington Vault",
+              "duration": "30 min",
+              "synopsis": "When the 1859 solar superstorm set telegraph wires ablaze, two operators in Boston and Portland kept transmitting with the batteries unplugged."
+            }
+          ]
+        },
+        "memoir": {
+          "showTitle": "Letters Across the Water",
+          "format": "5-Chapter Commissioned Family Legacy Film · Hybrid Interview Upload + Period Reenactment",
+          "genre": "Biographical Family Memoir & Reunion Documentary",
+          "artStyle": "Warm 4K Living-Room Interview Uploads + Lush 1966 Kodachrome Harbor & 1974 Bakery Reenactments",
+          "duration": "28 min Commissioned Featurette (5 Chapters)",
+          "continuityLock": "Elena Rossi-Chen at Age 82 (Uploaded Interview) & Age 22 (1966 Locked Cast), Mateo Chen at Age 24 (1966 Locked Cast), & The 1966 Leather Recipe Trunk",
+          "unitLabel": "Commissioned Memoir Chapters (5)",
+          "artLock": "Age-locked facial and wardrobe continuity bridging uploaded smartphone/camera interviews of 82-year-old Elena with photorealistic 1966 Naples harbor piers, ocean liner steerage decks, and the 1974 corner bakery—unlocking a turnkey video memoir business model.",
+          "logline": "At her 60th family reunion, an 82-year-old matriarch shares how a rained-out 1966 harbor departure and a handwritten sourdough starter recipe built a three-generation neighborhood institution.",
+          "seriesSynopsis": "Designed for solo video entrepreneurs, boutique agencies, and families preserving multi-generational heritage, Letters Across the Water showcases how SceneFlow transforms a recorded living-room interview and five scanned family photos into a breathtaking 28-minute biographical film. Uploading real interview clips of 82-year-old Elena Rossi-Chen, the producer uses SceneFlow’s Continuity Lock and FlowDirector to recreate Elena and her late husband Mateo at age 22—bringing unfilmed family memories to life with emotional authenticity.",
+          "cast": [
+            {
+              "name": "Elena Rossi-Chen (Age 82)",
+              "role": "Present-Day Storyteller · Uploaded Family Interview Clip",
+              "descriptor": "Warm 82-year-old matriarch in an ivory cashmere shawl, silver hair, holding the worn 1966 brown leather recipe notebook in a sunlit living room."
+            },
+            {
+              "name": "Young Elena Rossi (Age 22, 1966)",
+              "role": "Period Reenactment Lead · Age-Locked Character Sheet",
+              "descriptor": "Young Italian woman (22) with identical hazel eyes and facial structure to Present-Day Elena; 1966 navy wool belted trench coat, silk headscarf, clutching the new brown leather recipe notebook."
+            },
+            {
+              "name": "Young Mateo Chen (Age 24, 1966)",
+              "role": "Period Reenactment Co-Lead · Locked Character Sheet",
+              "descriptor": "Young ship’s carpenter and baker (24); rolled-sleeve chambray work shirt, canvas tool apron, warm reassuring smile under 1960s tungsten lantern light."
+            },
+            {
+              "name": "Maya Chen (Age 26, Present Day)",
+              "role": "Granddaughter · Reunion Host & Third-Generation Baker",
+              "descriptor": "Elena’s granddaughter (26) in a linen baker’s apron setting the long family reunion table under warm courtyard string lights."
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "Commissioned Memoir Overview · 5-Chapter Legacy Film",
+            "title": "Letters Across the Water: The Rossi-Chen Family Story",
+            "duration": "28 min Complete Legacy Film · Chapter 1 Proof: 5.5 min",
+            "logline": "One leather recipe book, two oceans, and sixty years of family memory brought from spoken interview to cinema screen.",
+            "synopsis": "Combining real family interview footage and scanned keepsakes with SceneFlow period reenactments, this commissioned memoir turns spoken oral history into a family heirloom—and demonstrates a scalable high-margin service business for creators.",
+            "chapter1Title": "Chapter 1: Pier 14 & The Cedar Trunk (1966)",
+            "chapter1Duration": "5.5 min · Interview Upload to 1966 Harbor Reenactment",
+            "chapter1Synopsis": "Present-day Elena opens her 1966 leather notebook to a pressed olive leaf; as she describes the rain on Pier 14, the frame transitions to 22-year-old Elena standing on the misty 1966 steamer gangway holding the exact same notebook."
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "Pier 14 & The Cedar Trunk (1966)",
+              "duration": "5.5 min",
+              "synopsis": "From Elena’s living-room interview to the rain-swept 1966 harbor departure with one suitcase and her mother’s recipe notebook."
+            },
+            {
+              "number": "2",
+              "title": "The Steerage Deck & The Carpenter’s Table",
+              "duration": "5.5 min",
+              "synopsis": "Mid-Atlantic crossing: young Mateo repairs Elena’s broken trunk clasp and shares a pot of ginger tea during an Atlantic gale."
+            },
+            {
+              "number": "3",
+              "title": "The First Brick Oven on Mulberry Street (1974)",
+              "duration": "6 min",
+              "synopsis": "Firing the second-hand stone oven at 4:00 A.M. in their first tiny storefront as snow piles against the glass."
+            },
+            {
+              "number": "4",
+              "title": "The Great Flood of ’78 & The Neighborhood Line",
+              "duration": "5.5 min",
+              "synopsis": "When a burst water main floods the basement flour cellar, thirty neighbors form a bucket brigade to save the morning bake."
+            },
+            {
+              "number": "5",
+              "title": "Sixty Years at One Table (The Reunion)",
+              "duration": "5.5 min",
+              "synopsis": "Three generations gather under courtyard lights as granddaughter Maya pulls the original 1966 hearth loaf from the oven."
+            }
+          ]
         }
       },
       "settingLabel": "Setting",
       "expandPortraitHint": "Click portrait for full view"
-    }
+    },
+    "productionReviewAria": "Production review"
   },
   "platformWalkthrough": {
     "badge": "Lábẹ́ ìbòrí ẹ̀rọ ọkọ̀",
@@ -3089,18 +3333,11 @@
       "recommendedPathLabel": "Ọna ti a ṣeduro:",
       "cards": [
         {
-          "id": "hobbyist",
-          "badge": "Ko si Iriri Fiimu Nilo • $19 fun osu kan",
-          "title": "Storytellers & Creative Visionaries",
-          "description": "Ṣe itan kan, imọran iwe, tabi itan idile ti o fẹ lati rii loju iboju? Ṣe apejuwe iran rẹ ni awọn ọrọ itọsi lati ṣẹda awọn ohun idanilaraya Pre-Vis ati awọn agekuru fidio yiyan—lakoko ti o tọju awọn ohun kikọ rẹ, awọn aṣọ ipamọ, ati awọn eto ti o fipamọ sinu Ile ifipamọ Ilọsiwaju rẹ.",
-          "recommendedPlan": "Aṣebiakọ ($19 fun osu kan)"
-        },
-        {
-          "id": "chapter",
-          "badge": "Titun & Awọn olupilẹṣẹ Indie • $49 fun oṣu kan",
-          "title": "The Publish Chapter nwon.Mirza",
-          "description": "Rekọja idiyele ati idena akoko ti ṣiṣe ẹya iṣẹju 90 ni iwaju. Ṣe atẹjade itan rẹ ni awọn oju iṣẹlẹ iṣẹju 5–15 tabi awọn ipin ipin lati ṣakoso isuna iṣiro oṣooṣu rẹ lakoko ti o n dagba awọn olugbo rẹ ni imurasilẹ.",
-          "recommendedPlan": "Ibẹrẹ ($ 49 / osu)"
+          "id": "hybrid",
+          "badge": "Ti o ni iriri & Awọn oṣere Fiimu arabara • $149–$599 fun osu kan",
+          "title": "Awọn idii igbeowosile iṣelọpọ & Awọn iyaworan arabara",
+          "description": "Awọn iwe afọwọkọ ti ile-iṣẹ okeere okeere (PDF, FDX, Fountain) ni idapọ pẹlu Pre-Vis Animatic ati Promo Trailer lati ni aabo igbeowo oludokoowo — tabi gbejade awọn iwoye ti o ya fiimu ki o da wọn pọ pẹlu awọn iyaworan 4K AI ni ida kan ti awọn idiyele iṣelọpọ ti ara.",
+          "recommendedPlan": "Pro / Studio + Fikun-un"
         },
         {
           "id": "series",
@@ -3110,11 +3347,18 @@
           "recommendedPlan": "Pro ($149 fun osu kan)"
         },
         {
-          "id": "hybrid",
-          "badge": "Ti o ni iriri & Awọn oṣere Fiimu arabara • $149–$599 fun osu kan",
-          "title": "Awọn idii igbeowosile iṣelọpọ & Awọn iyaworan arabara",
-          "description": "Awọn iwe afọwọkọ ti ile-iṣẹ okeere okeere (PDF, FDX, Fountain) ni idapọ pẹlu Pre-Vis Animatic ati Promo Trailer lati ni aabo igbeowo oludokoowo — tabi gbejade awọn iwoye ti o ya fiimu ki o da wọn pọ pẹlu awọn iyaworan 4K AI ni ida kan ti awọn idiyele iṣelọpọ ti ara.",
-          "recommendedPlan": "Pro / Studio + Fikun-un"
+          "id": "chapter",
+          "badge": "Titun & Awọn olupilẹṣẹ Indie • $49 fun oṣu kan",
+          "title": "The Publish Chapter nwon.Mirza",
+          "description": "Rekọja idiyele ati idena akoko ti ṣiṣe ẹya iṣẹju 90 ni iwaju. Ṣe atẹjade itan rẹ ni awọn oju iṣẹlẹ iṣẹju 5–15 tabi awọn ipin ipin lati ṣakoso isuna iṣiro oṣooṣu rẹ lakoko ti o n dagba awọn olugbo rẹ ni imurasilẹ.",
+          "recommendedPlan": "Ibẹrẹ ($ 49 / osu)"
+        },
+        {
+          "id": "hobbyist",
+          "badge": "Ko si Iriri Fiimu Nilo • $19 fun osu kan",
+          "title": "Storytellers & Creative Visionaries",
+          "description": "Ṣe itan kan, imọran iwe, tabi itan idile ti o fẹ lati rii loju iboju? Ṣe apejuwe iran rẹ ni awọn ọrọ itọsi lati ṣẹda awọn ohun idanilaraya Pre-Vis ati awọn agekuru fidio yiyan—lakoko ti o tọju awọn ohun kikọ rẹ, awọn aṣọ ipamọ, ati awọn eto ti o fipamọ sinu Ile ifipamọ Ilọsiwaju rẹ.",
+          "recommendedPlan": "Aṣebiakọ ($19 fun osu kan)"
         }
       ]
     },
@@ -3130,6 +3374,10 @@
         {
           "title": "2. Pari Eyikeyi Ise agbese lori Ibeere pẹlu Awọn akopọ Fikun-Oṣu 12",
           "description": "Ni kete ti itan rẹ ba wa ni išipopada, awọn ọmọ ẹgbẹ oṣooṣu ti nṣiṣe lọwọ le ra $25, $100, tabi $250 Awọn akopọ kirẹditi Fikun-un nigbakugba lati pari ipin kan, akoko iṣẹlẹ-ọpọlọpọ, tabi titu ẹya arabara. Awọn akopọ-Fikun-un ni oṣu 12 to kọja lakoko ti ẹgbẹ rẹ wa lọwọ."
+        },
+        {
+          "title": "3. Elastic Vault Expansion (+$15/mo per 100 GB) & $19/mo Pause-to-Vault",
+          "description": "Growing client archives expand smoothly at +$15/mo per extra 100 GB. Need a quiet month? Switch to $19/mo Pause-to-Vault Hosting so every existing client Screening Room link and Continuity Vault stays online with zero broken deliveries."
         }
       ]
     },
@@ -3249,7 +3497,8 @@
       "mostPopular": "Èyí tí ó gbajúmọ̀ jùlọ",
       "creditsPerMonth": "Àwọn kirediti/oṣù",
       "storage": "Ifinkan itesiwaju",
-      "perMonth": "/month"
+      "perMonth": "/month",
+      "requestPreLaunchAccess": "Request Pre-Launch Access"
     },
     "trust": {
       "cancelAnytime": "Fagile nígbàkígbà",
@@ -3397,7 +3646,8 @@
     "subtitle": "Fi adirẹsi imeeli rẹ silẹ lati gba awọn iroyin nipa ifilọlẹ — tabi bẹrẹ lilo iṣẹ naa bayii pẹlu eto Explorer ti o jẹ $9.",
     "cta": "Ṣe àyẹ̀wò àwọn ètò",
     "ctaSecondary": "Wo bí ó ṣe ń ṣiṣẹ́",
-    "ctaSecondaryHref": "#two-modes"
+    "ctaSecondaryHref": "#two-modes",
+    "requestPreLaunchAccess": "Request Pre-Launch Access"
   },
   "footer": {
     "description": "Ṣíṣe fídíò nípasẹ̀ ètò àifọwọ́-kàn (láti ìbẹ̀rẹ̀ títí dé ìparí) — láti ìpele èrò títí dé fídíò tó ti péye fún gbígbé jáde. Ilé-iṣẹ́ kan tó ní ìtọ́sọ́nà: Series Room → Blueprint Room → Production Stage → Screening Room.",
@@ -3427,7 +3677,9 @@
     "seePricing": "Wo iye owo",
     "tryNine": "Gbìyànjú $9",
     "tryForNine": "Gbìyànjú rẹ̀ fún $9",
-    "dismiss": "Tu silẹ"
+    "dismiss": "Tu silẹ",
+    "requestAccess": "Request Access",
+    "requestPreLaunchAccess": "Request Pre-Launch Access"
   },
   "common": {
     "watermark": "SceneFlow Studio",
@@ -4125,7 +4377,62 @@
           "activeMinutesLabel": "~1.75 hrs",
           "keyAdvantage": "White-label fulfillment for local web & ad agencies (~$116 total delivery cost)—complete with automatic 9:16 social cutdowns."
         }
-      ]
+      ],
+      "stressTestOnBadge": "ON",
+      "stressTestOffBadge": "OFF",
+      "proPlanCreditsIncludedNote": " (10k cr incl.)",
+      "foundingCharterCta": "Launching a client studio now? View the 25-Seat Founding Operator Charter",
+      "foundingCharterTitle": "Founding Video Service Operator 90-Day Pro Charter",
+      "blueprintFlywheel": {
+        "badge": "Zero-PM-Hours Automated Discovery · 83% Net Margin",
+        "title": "Earn Automated Revenue Before a PM Ever Touches the Project",
+        "subtitle": "Customers struggle to outline a film from a blank page—but excel at reacting to an illustrated, narrated draft. SceneFlow turns client onboarding into a self-funding, family-collaborative Blueprint Pass that profits even on stalled leads.",
+        "cards": [
+          {
+            "tag": "$29 Pass + $19 Top-Ups · 0 PM Min",
+            "title": "Self-Funding Blueprint Pass & Extra Iteration Packs",
+            "detail": "Clients pay $29 upfront to receive illustrated beat storyboards, multi-language narration, and Audience Resonance in ~3 minutes (~83% margin even if they pause)—plus self-serve $19 packs (+3 revisions / +2 AR) whenever they want extra rounds."
+          },
+          {
+            "tag": "Fast & Authentic Draft 1",
+            "title": "Memory-Jogger Chips, Quick Check & Anti-Fictionalization",
+            "detail": "Tappable vertical milestone chips (marriages, promotions, sports, proof points, rooms) and a 15-second voice/text Quick Check catch key people and events fast, while strict non-fiction guardrails never invent biography details."
+          },
+          {
+            "tag": "Two-Tier Sharing & Triage",
+            "title": "Family / Team Comment-Only Link & Primary Customer Control",
+            "detail": "Your customer receives a private Director Portal and shares a comment-only link with family or teammates. Guests listen in 7 languages and comment without burning rounds or approving—the primary customer filters notes + 1-click AR tips into 1 AI update that auto-refreshes storyboards & audio."
+          },
+          {
+            "tag": "Deferred PM Assignment",
+            "title": "PMs Assign Only on Approval + Blueprint Conversion Funnel",
+            "detail": "Zero human PM hours until the customer clicks Approve Blueprint. Track Active, Stale >48h / >7d, and Rounds-Exhausted leads in the Blueprint Funnel with 1-click white-labeled nudge emails, +3 iteration grants, and automated pass revenue."
+          }
+        ]
+      },
+      "agencyScaleOps": {
+        "badge": "Multi-PM Agency Scale · 100s of Client Projects",
+        "title": "Agency Operations Command Center, Built Right Into the Studio",
+        "subtitle": "Scale from solo operator to a global multi-PM video agency without spreadsheets, wasted sales hours, leaked margins, or bloated storage.",
+        "pillars": [
+          {
+            "title": "Blueprint Funnel, Kanban & SLA Nudges",
+            "detail": "Separate zero-touch Blueprint Passes from active production—spot stalled unapproved Blueprints (>48h/7d) and exhausted rounds with 1-click white-labeled nudge emails & +3 iteration grants."
+          },
+          {
+            "title": "Client CRM, Pass Revenue & PM Scorecard",
+            "detail": "Roll up automated $29 Blueprint Passes, $19 iteration packs, and full production orders automatically while monitoring per-PM credit burn, turnaround times, and real-time gross margin."
+          },
+          {
+            "title": "Deferred PM Routing & Workspace Isolation",
+            "detail": "Keep pre-approval Blueprint Passes zero-touch, auto-assign locale PMs only when clients click Approve, delegate Series Bibles, and isolate teams with 0-credit QA Reviewers."
+          },
+          {
+            "title": "Unlimited Scale & 1-Click Draft Purge",
+            "detail": "Server-side search & bulk PM actions across 100s of projects plus 1-click Archive & Purge Draft Intermediates keeping final masters intact."
+          }
+        ]
+      }
     },
     "guidedTour": {
       "eyebrow": "Visual Studio Tour · No Jargon",
@@ -4510,7 +4817,28 @@
       "phoneTeamPaceBadge": "On Pace · Under Budget",
       "installIosBadge": "iOS Safari: Share → Add to Home Screen",
       "installAndroidBadge": "Android / Chrome: 1-Tap Install App",
-      "ctaPrimary": "Start with Studio + Mobile PWA ($9)"
+      "ctaPrimary": "Start with Studio + Mobile PWA ($9)",
+      "phoneVoiceBriefPill": "Voice / Brief",
+      "phoneContinuitySlots": [
+        "Cast ✓",
+        "Wardrobe ✓",
+        "Locations ✓",
+        "Props ✓"
+      ],
+      "phoneMasterLabel": "4K Master"
+    }
+  },
+  "imaginePossibilities": {
+    "headline": "Imagine the Possibilities",
+    "subheadline": "with SceneFlow Studio",
+    "categoriesAriaLabel": "Imagine the Possibilities production categories",
+    "categories": {
+      "drama": "Cinematic Drama",
+      "animation": "Animated Series",
+      "documentary": "Documentaries",
+      "training": "Training Series",
+      "podcast": "Creator & Podcasts",
+      "memoir": "Video Memoirs"
     }
   }
 }

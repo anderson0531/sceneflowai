@@ -235,7 +235,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '2. Auto Intake Email',
         headline: 'Automated Magic-Link Email Launches Guided AI Story Intake',
         caption:
-          'The moment $29 is paid, your customer receives an automated branded email link into Vision Clarification and a 4-turn voice-or-text interview—capturing eras, cast, and tone 24/7.',
+          'The moment $29 is paid, your customer receives an automated branded email link into Vision Clarification, tappable Memory-Jogger milestone chips, a voice/text interview, and a 15-second Quick Check—with strict non-fiction accuracy 24/7.',
         narration:
           'Immediately after checkout, an automated branded email launches a guided AI vision and story interview. Your customer speaks or types their milestones at their own pace, twenty-four seven, with zero scheduling emails.',
         fromScale: 1.01,
@@ -275,7 +275,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '4. AI Revisions & AR',
         headline: '4 AI-Filtered Blueprint Revisions + 3 Automated Audience Resonance Passes',
         caption:
-          'Customer notes are filtered and clarified by AI before routing through Blueprint Director (up to 4 iterations) alongside 3 automated Audience Resonance passes with emailed share links—until the client clicks Approve.',
+          'Primary customers share a safe comment-only link with family or teammates, filter guest notes + 1-click AR suggestions with voice/text dictation into up to 4 AI-filtered Blueprint Director updates (auto-refreshing storyboards & audio), or unlock $19 extra iteration packs—until they click Approve.',
         narration:
           'Customers get up to four self-serve Blueprint iterations and three Audience Resonance passes. AI filters and confirms their feedback, routes updates through Blueprint Director, emails updated review links, and notifies you once locked.',
         fromScale: 1.01,
@@ -482,7 +482,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '2. Entrevista IA',
         headline: 'Correo Automático Lanza la Entrevista Guiada de Visión e Historia',
         caption:
-          'Al pagar MX$547, el cliente recibe automáticamente un enlace mágico por correo hacia la Clarificación de Visión y una entrevista por voz o texto las 24 horas.',
+          'Al pagar MX$547, el cliente recibe un enlace mágico con fichas de memoria por hitos, entrevista por voz/texto y revisión rápida de 15 s—con rigor documental las 24 horas.',
         narration:
           'Al instante del pago, un correo automático abre la entrevista guiada por inteligencia artificial. Tu cliente dicta o escribe sus recuerdos a su ritmo, sin agendar videollamadas.',
         fromScale: 1.01,
@@ -522,7 +522,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '4. Revisiones IA y AR',
         headline: '4 Iteraciones Filtradas por IA + 3 Análisis Automáticos Audience Resonance',
         caption:
-          'La IA filtra y confirma los comentarios del cliente antes de actualizar el Blueprint mediante Blueprint Director (hasta 4 veces) junto con 3 pases automáticos de Audience Resonance por correo.',
+          'El cliente principal comparte un enlace de solo comentarios con familia o equipo, filtra notas + sugerencias AR por voz o texto en hasta 4 revisiones IA (renovando storyboards y audio) o añade paquetes extra hasta aprobar.',
         narration:
           'El cliente dispone de cuatro iteraciones de Blueprint y tres pases de Audience Resonance. La IA aclara sus notas, actualiza la historia automáticamente y te avisa cuando aprueba.',
         fromScale: 1.01,
@@ -729,7 +729,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '2. Entrevista IA',
         headline: 'E-mail Automático Inicia a Entrevista Guiada de Visão e História',
         caption:
-          'Assim que paga R$170, o cliente recebe um link mágico por e-mail para Clarificação de Visão e entrevista guiada por voz ou texto 24 horas por dia.',
+          'Assim que paga R$170, o cliente recebe um link mágico com chips de memória, entrevista por voz/texto e checagem rápida de 15 s—com rigor factual 24 horas por dia.',
         narration:
           'Logo após o pagamento, um e-mail automático abre a entrevista guiada por inteligência artificial. Seu cliente fala ou digita suas memórias no próprio ritmo, sem troca de e-mails.',
         fromScale: 1.01,
@@ -769,7 +769,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '4. Revisões IA e AR',
         headline: '4 Revisões Filtradas por IA + 3 Análises Audience Resonance Automáticas',
         caption:
-          'As notas do cliente são filtradas e confirmadas pela IA antes de atualizar o Blueprint via Blueprint Director (até 4 iterações) com 3 passes automáticos de Audience Resonance.',
+          'O cliente principal compartilha um link apenas para comentários com família ou equipe, filtra notas + sugestões AR por voz ou texto em até 4 revisões IA (atualizando storyboards e áudio) ou desbloqueia pacotes extras até aprovar.',
         narration:
           'O cliente conta com até quatro iterações de Blueprint e três passes de Audience Resonance. A IA confirma os ajustes, atualiza o projeto sozinha e avisa você na aprovação.',
         fromScale: 1.01,
@@ -976,7 +976,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '2. ऑटो इनटेक ईमेल',
         headline: 'स्वचालित ईमेल लिंक से गाइडेड AI स्टोरी इंटरव्यू शुरू होता है',
         caption:
-          '₹2,720 भुगतान होते ही ग्राहक को ब्रांडेड ईमेल लिंक मिलता है जिससे वे 24/7 बोलकर या लिखकर अपना विज़न और कहानी साझा करते हैं।',
+          '₹2,720 भुगतान होते ही ग्राहक को ब्रांडेड ईमेल लिंक, मेमोरी-जॉगर चिप्स, 24/7 वॉइस/टेक्स्ट इंटरव्यू और 15-सेकंड क्विक चेक मिलता है—बिना काल्पनिक तथ्य जोड़े।',
         narration:
           'भुगतान होते ही एक स्वचालित ईमेल गाइडेड AI विज़न और स्टोरी इंटरव्यू खोलता है। आपका ग्राहक बिना किसी मीटिंग के अपनी गति से यादें साझा करता है।',
         fromScale: 1.01,
@@ -1016,7 +1016,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '4. AI संशोधन व AR',
         headline: '4 AI-फ़िल्टर्ड Blueprint संशोधन + 3 स्वचालित Audience Resonance पास',
         caption:
-          'AI ग्राहक के फ़ीडबैक को स्पष्ट व पुष्ट करके Blueprint Director से अपडेट करता है (4 बार तक) और 3 Audience Resonance लिंक ईमेल करता है।',
+          'प्राथमिक ग्राहक परिवार/टीम संग टिप्पणी-मात्र लिंक साझा करते हैं, चुने सुझाव + AR टिप्स को वॉइस/टेक्स्ट से 4 AI संशोधनों में लागू करते हैं (ऑडियो व स्टोरीबोर्ड स्वतः अपडेट) या अतिरिक्त पैक जोड़ते हैं।',
         narration:
           'ग्राहक को चार स्व-सेवा Blueprint संशोधन और तीन Audience Resonance पास मिलते हैं। AI उनके सुझाव पुष्ट कर कहानी अपडेट करता है और मंज़ूरी पर आपको सूचित करता है।',
         fromScale: 1.01,
@@ -1223,7 +1223,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '2. 自动访谈邮件',
         headline: '自动发送专属邮件链接，全天候开启 AI 引导式需求访谈',
         caption:
-          '付款完成后，系统即刻向客户发送品牌邮件链接，进入愿景确认与 4 轮语音或文字故事访谈，全自动采集人物年代与情感基调。',
+          '付款完成后即刻发送品牌邮件链接，结合记忆唤醒标签、语音/文字访谈与 15 秒速检，以严格非虚构护栏全天候精准采集人物与节点。',
         narration:
           '付款瞬间，系统自动发送品牌专属邮件链接，引导客户通过语音或文字完成愿景确认与故事采集，全天候自动运转，无需人工排期开会。',
         fromScale: 1.01,
@@ -1263,7 +1263,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '4. AI 改稿与 AR',
         headline: '最多 4 次 AI 过滤改稿 + 3 次 Audience Resonance 自动优化邮件',
         caption:
-          'AI 自动过滤并向客户确认修改意图，经 Blueprint Director 自动更新故事与分镜（最多 4 轮），同步提供 3 次 Audience Resonance 评估链接，直至客户点击批准。',
+          '主客户可向亲友/团队分享仅评论链接，勾选认可留言与 AR 建议并语音补充，最多完成 4 轮 AI 修订（自动刷新分镜与旁白）或自助加购迭代包，直至批准。',
         narration:
           '客户享有最多四次自助改稿与三次受众共鸣评估。AI 会先提炼确认客户意见，再通过 Blueprint Director 自动修订并发送更新邮件，定稿后才通知您介入。',
         fromScale: 1.01,
@@ -1470,7 +1470,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '2. مقابلة ذكية تلقائية',
         headline: 'رسالة بريد تلقائية تطلق مقابلة الرؤية والقصة بالذكاء الاصطناعي',
         caption:
-          'فور دفع 108 ر.س، يتلقى العميل رابطاً بريدياً ذكياً لتوضيح الرؤية وإجراء مقابلة صوتية أو نصية على مدار الساعة دون أي تنسيق يدوي.',
+          'فور دفع 108 ر.س، يتلقى العميل رابطاً بريدياً يضم شرائح تذكير المحطات ومقابلة صوتية/نصية ومراجعة سريعة خلال 15 ثانية بدقة واقعية على مدار الساعة.',
         narration:
           'فور الدفع، تُرسل رسالة بريدية تلقائية تفتح مقابلة ذكية لتحديد الرؤية وتفاصيل القصة صوتياً أو كتابياً في أي وقت دون مكالمات تحضيرية.',
         fromScale: 1.01,
@@ -1510,7 +1510,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '4. تعديلات ذكية وAR',
         headline: '4 تعديلات مفلترة بالذكاء الاصطناعي + 3 جولات Audience Resonance تلقائية',
         caption:
-          'يصفّي الذكاء الاصطناعي ملاحظات العميل ويؤكدها ثم يحدّث الـ Blueprint عبر Blueprint Director (حتى 4 مرات) مع 3 جولات Audience Resonance مرسلة بالبريد.',
+          'يشارك العميل الأساسي رابط تعليقات فقط مع العائلة أو الفريق، ويصفّي الملاحظات + توصيات AR صوتياً أو نصياً في 4 تعديلات ذكية (تجدّد الصوت واللوحات تلقائياً) أو يضيف باقات إضافية حتى الاعتماد.',
         narration:
           'يحصل العميل على أربع مراجعات ذاتية وثلاث جولات تقييم صدى الجمهور، حيث يؤكد الذكاء الاصطناعي التعديلات ويطبّقها تلقائياً حتى يعتمد العميل المخطط.',
         fromScale: 1.01,
@@ -1717,7 +1717,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '2. อีเมลสัมภาษณ์ AI',
         headline: 'อีเมลอัตโนมัติส่งลิงก์สัมภาษณ์วิสัยทัศน์และเรื่องราวด้วย AI ตลอด 24 ชม.',
         caption:
-          'ทันทีที่ชำระ ฿985 ลูกค้าจะได้รับอีเมลลิงก์เข้าสู่การยืนยันวิสัยทัศน์และสัมภาษณ์เรื่องราว 4 รอบด้วยเสียงพูดหรือข้อความโดยไม่ต้องนัดประชุม',
+          'ทันทีที่ชำระ ฿985 ลูกค้าจะได้รับอีเมลลิงก์พร้อมชิปช่วยจำเหตุการณ์ สัมภาษณ์ด้วยเสียง/ข้อความ และ Quick Check 15 วินาทีด้วยความแม่นยำไม่แต่งเติมตลอด 24 ชม.',
         narration:
           'ทันทีที่ชำระเงิน ระบบจะส่งอีเมลเปิดบทสัมภาษณ์ AI อัตโนมัติ ให้ลูกค้าเล่าเรื่องราวด้วยเสียงหรือพิมพ์ข้อความได้ตลอดยี่สิบสี่ชั่วโมงโดยไม่ต้องเสียเวลานัดหมาย',
         fromScale: 1.01,
@@ -1757,7 +1757,7 @@ export const CUSTOMER_PORTAL_ANIMATIC_COPY: Record<
         shortTabLabel: '4. AI แก้ไข & AR',
         headline: 'ปรับแก้ผ่าน AI ได้ 4 รอบ + วิเคราะห์ Audience Resonance อัตโนมัติ 3 รอบ',
         caption:
-          'AI ช่วยกรองและทวนความต้องการของลูกค้าก่อนส่งให้ Blueprint Director อัปเดตอัตโนมัติ (สูงสุด 4 รอบ) พร้อมส่งลิงก์ผลวิเคราะห์ Audience Resonance 3 รอบจนลูกค้ากดอนุมัติ',
+          'ลูกค้าหลักแชร์ลิงก์คอมเมนต์เท่านั้นให้ครอบครัว/ทีม คัดกรองโน้ต + คำแนะนำ AR ด้วยเสียงหรือข้อความเพื่ออัปเดตผ่าน AI สูงสุด 4 รอบ (รีเฟรชภาพและเสียงอัตโนมัติ) หรือซื้อแพ็กเพิ่มจนกว่าจะอนุมัติ',
         narration:
           'ลูกค้าปรับแก้ Blueprint เองได้สี่รอบและวิเคราะห์ความโดนใจผู้ชมได้สามรอบ โดย AI จะช่วยสรุปยืนยันคำขอก่อนอัปเดตให้อัตโนมัติ และแจ้งเตือนคุณเมื่อลูกค้าอนุมัติ',
         fromScale: 1.01,

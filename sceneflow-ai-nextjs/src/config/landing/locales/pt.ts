@@ -231,26 +231,58 @@ export const STUDIO_LANDING_COPY_PT = {
       'Roteiro de Comissão de 20% para Residenciais Sênior, Memoriais e Imobiliárias',
       'Registro Integrado de Consentimento de Mídia, Idades e Voz',
     ],
+    blueprintFlywheel: {
+      badge: 'Descoberta Automática com 0 Min de PM · 83% Margem Líquida',
+      title: 'Gere Receita Automática Antes de um PM Tocar no Projeto',
+      subtitle:
+        'Clientes têm dificuldade para estruturar um filme do zero, mas revisam com facilidade um rascunho ilustrado e narrado. O SceneFlow transforma a entrada em um Blueprint Pass autofinanciado e colaborativo que lucra mesmo em leads parados.',
+      cards: [
+        {
+          tag: 'Passe $29 + Pacotes $19 · 0 Min PM',
+          title: 'Blueprint Pass Autofinanciado e Iterações Extras',
+          detail:
+            'Clientes pagam $29 antecipados e recebem storyboards ilustrados, narração multilíngue e Audience Resonance em ~3 min (~83% de margem mesmo em pausa)—mais pacotes autoatendidos de $19 (+3 revisões / +2 AR).',
+        },
+        {
+          tag: 'Rascunho 1 Rápido e Autêntico',
+          title: 'Chips de Memória, Checagem Rápida e Zero Ficção',
+          detail:
+            'Chips de marcos por vertical (casamentos, promoções, esportes, provas, ambientes) e uma checagem de 15 s por voz ou texto captam pessoas e fatos essenciais sem inventar biografia.',
+        },
+        {
+          tag: 'Link Duplo e Triagem do Cliente',
+          title: 'Link Apenas para Comentários e Controle Total do Cliente',
+          detail:
+            'Seu cliente recebe um Portal Diretor privado e compartilha um link apenas para comentários com família ou equipe. Convidados ouvem em 7 idiomas e comentam sem gastar rodadas nem aprovar; o cliente filtra notas + dicas AR em 1 atualização que renova áudio e storyboards.',
+        },
+        {
+          tag: 'Alocação Diferida de PM',
+          title: 'PM Alocado Só na Aprovação + Funil de Conversão Blueprint',
+          detail:
+            'Zero horas de PM até o cliente clicar em Aprovar Blueprint. Monitore Blueprints parados (>48h / >7d) ou com rodadas esgotadas no Funil Blueprint com lembretes em 1 clique, bônus de +3 iterações e receita automática.',
+        },
+      ],
+    },
     agencyScaleOps: {
       badge: 'Escala Multi-PM · Centenas de Projetos de Clientes',
       title: 'Central de Operações de Agência Integrada ao Estúdio',
       subtitle:
-        'Escale de operador solo para agência global multi-PM sem planilhas, perda de margem ou excesso de armazenamento.',
+        'Escale de operador solo para agência global multi-PM sem planilhas, horas de venda não pagas, perda de margem ou excesso de armazenamento.',
       pillars: [
         {
-          title: 'Pipeline Kanban e Alertas SLA',
+          title: 'Funil Blueprint, Kanban e Avisos SLA',
           detail:
-            'Acompanhe cada pedido do Intake até Entregue com prazos em linha, alertas de atraso e avisos >48h aguardando cliente.',
+            'Separe Blueprint Passes autoatendidos da produção ativa—identifique Blueprints parados (>48h/7d) e rodadas esgotadas com lembretes white-label em 1 clique e bônus de +3 iterações.',
         },
         {
-          title: 'CRM de Clientes e Scorecard de PM',
+          title: 'CRM de Clientes, Receita de Passes e Scorecard PM',
           detail:
-            'Agrupe clientes recorrentes automaticamente, acompanhe consumo de créditos e prazos por PM e valide a margem bruta em tempo real.',
+            'Consolide automaticamente Blueprint Passes de $29, pacotes de $19 e produções completas monitorando créditos, prazos e margem bruta real por PM.',
         },
         {
-          title: 'Isolamento Multi-PM e Roteamento por Idioma',
+          title: 'Roteamento Diferido de PM e Isolamento de Equipe',
           detail:
-            'Delegue Bíblias de Série inteiras, isole workspaces com convites assinados, atribua Revisores QA (0 créditos) e roteie intakes por idioma.',
+            'Mantenha Blueprint Passes sem carga humana, roteie PMs por idioma apenas na aprovação, delegue Bíblias de Série e isole equipes com Revisores QA (0 créditos).',
         },
         {
           title: 'Escala Ilimitada e Limpeza em 1 Clique',
@@ -264,15 +296,15 @@ export const STUDIO_LANDING_COPY_PT = {
     workflowSteps: [
       {
         step: '01',
-        title: 'Entrevista Guiada sem Login',
+        title: 'Entrevista Guiada Autofinanciada ($29)',
         detail:
-          'Envie um link /intake com sua marca e termo de imagem para captar momentos e personagens individuais.',
+          'Clientes adquirem o Blueprint Pass ($29), selecionam chips de marcos-chave, contam sua história por voz/texto com consentimento e confirmam uma checagem rápida de 15 s com rigor factual.',
       },
       {
         step: '02',
-        title: 'Aprovação via Link de Blueprint',
+        title: 'Blueprint Vivo, Triagem Familiar e Auto-Revisões',
         detail:
-          'Valide com Audience Resonance e garanta o aceite do cliente no Blueprint antes de gastar em renderização.',
+          'Em ~3 min recebem storyboards ilustrados, áudio multilíngue e AR, compartilham link apenas para comentários com família/equipe, filtram notas em revisões IA (ou somam pacotes de $19) e aprovam para acionar o PM.',
       },
       {
         step: '03',
@@ -489,24 +521,24 @@ export const STUDIO_LANDING_COPY_PT = {
         creatorExampleTitle: 'Tratamento Cena a Cena e Estilo Visual Travado',
         creatorExampleNote:
           'Cada batida combina intenção dramática, personagens presentes, iluminação anamórfica e análise narrada de Audience Resonance.',
-        serviceExampleTitle: 'Entrevista Inteligente de Memórias e Continuidade por Idades',
+        serviceExampleTitle: 'Blueprint Pass ($29) sem Horas de PM e Triagem Familiar',
         serviceExampleNote:
-          'Inicia com “Conte-me sua história”, refina momentos marcantes e cria personagens distintos por fase de vida (17, 32 e 62 anos) mantendo a mesma herança física.',
+          'Chips de memória e trava anti-ficção entregam um Rascunho 1 ilustrado e narrado em ~3 min. Clientes compartilham um link de comentários com a família, filtram notas + dicas AR em revisões IA (com áudio e storyboards atualizados) e acionam um PM só ao aprovar.',
         callouts: [
           {
-            label: 'Entrevista Guiada Focada na História',
+            label: 'Chips de Memória e Trava Anti-Ficção',
             detail:
-              'Extrai histórias pessoais ou de marca ricas e destaca pessoas específicas em cada batida.',
+              'Marcos por vertical e checagem rápida de 15 s por voz/texto captam pessoas e fases reais sem inventar fatos biográficos.',
           },
           {
-            label: 'Continuidade de Personagens em Múltiplas Idades',
+            label: 'Compartilhamento Duplo e Triagem pelo Cliente',
             detail:
-              'Cria referências separadas por fase da vida para que a juventude dos anos 70 e a maturidade atual nunca se misturem.',
+              'Convidados ouvem em 7 idiomas e comentam sem gastar rodadas nem aprovar; o cliente filtra notas para 1 revisão IA limpa.',
           },
           {
-            label: 'Audience Resonance + Link Compartilhável de Blueprint',
+            label: 'Áudio e Storyboards Renovados + Pacotes de $19',
             detail:
-              'Valide o impacto da narrativa com IA e colete a aprovação do cliente direto pelo navegador.',
+              'Cada iteração re-ilustra cenas alteradas, regenera a narração, recalcula Audience Resonance e libera +3 iterações sob demanda.',
           },
         ],
         visuals: {

@@ -634,6 +634,45 @@ export function VideoServicesSpotlightSection() {
           </div>
         </div>
 
+        {/* Zero-PM-Hours Self-Funding Blueprint Flywheel Strip (Always Visible) */}
+        {copy.blueprintFlywheel && (
+          <div className="mt-6 rounded-2xl border border-emerald-400/35 bg-gradient-to-br from-slate-900/95 via-emerald-950/30 to-slate-900/95 p-5 sm:p-6 shadow-xl">
+            <div className="max-w-3xl">
+              <p className="!mb-0 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-emerald-300">
+                <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
+                <span>{localizeMoneyText(copy.blueprintFlywheel.badge)}</span>
+              </p>
+              <h3 className="mt-1.5 text-lg font-bold text-white sm:text-2xl">
+                {localizeMoneyText(copy.blueprintFlywheel.title)}
+              </h3>
+              <p className="!mb-0 mt-1.5 text-xs leading-relaxed text-gray-300 sm:text-sm">
+                {localizeMoneyText(copy.blueprintFlywheel.subtitle)}
+              </p>
+            </div>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {copy.blueprintFlywheel.cards.map((card) => (
+                <div
+                  key={card.title}
+                  className="flex flex-col rounded-xl border border-emerald-400/20 bg-slate-950/80 p-4"
+                >
+                  <span className="inline-flex w-fit rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-200">
+                    {localizeMoneyText(card.tag)}
+                  </span>
+                  <h4 className="mt-2.5 text-sm font-bold leading-snug text-white">
+                    {localizeMoneyText(card.title)}
+                  </h4>
+                  <p className="!mb-0 mt-1.5 text-xs leading-relaxed text-gray-300">
+                    {localizeMoneyText(card.detail)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Promoted Out of <details>: Interactive 8-Stage White-Label Client Portal Walkthrough */}
+        <CustomerPortalExperienceAnimatic locale={locale} />
+
         {/* Compact Mobile Companion PWA Callout (folded from standalone section) */}
         <div className="mt-6 flex flex-col items-start justify-between gap-3 rounded-2xl border border-cyan-500/25 bg-slate-900/75 px-5 py-4 sm:flex-row sm:items-center">
           <div className="flex items-start gap-3">
@@ -760,11 +799,8 @@ export function VideoServicesSpotlightSection() {
               </div>
             </div>
 
-            {/* Narrated White-Label Customer Portal Experience Animatic (8 Stages · 7 Languages) */}
-            <CustomerPortalExperienceAnimatic locale={locale} />
-
             {/* 4-Step Client Project Delivery Strip */}
-            <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-7">
+            <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-7">
               <h3 className="text-center text-sm font-bold uppercase tracking-wider text-emerald-300">
                 {copy.workflowHeading}
               </h3>

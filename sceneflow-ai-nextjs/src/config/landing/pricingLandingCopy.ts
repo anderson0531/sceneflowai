@@ -32,7 +32,7 @@ export const PRICING_LANDING_COPY = {
         badge: 'Flagship • White-Label Video Business • $149/mo',
         title: 'White-Label Video Service Providers',
         description:
-          'Launch a solo Life Memoir, Real Estate Tour, or Corporate Training business under your own brand on Operator Pro ($149/mo — 100% White-Label Intake, Blueprint Pass, Continuity & Screening Room Portals, 150 GB Client Vault, 10,000 credits/mo & $250 bulk add-on access). Pays for itself 3x on Client Order #1.',
+          'Launch a solo Life Memoir, Real Estate Tour, or Corporate Training business under your own brand on Operator Pro ($149/mo — self-funding $29 Blueprint Pass & $19 Iteration Packs at 83% margin with 0 PM hours, Family/Team Comment-Only Triage, Deferred PM Routing, 150 GB Client Vault, 10,000 credits/mo & $250 bulk add-on access). Pays for itself 3x on Client Order #1.',
         recommendedPlan: 'Operator Pro ($149/mo · $1,490/yr)',
       },
       {
@@ -40,7 +40,7 @@ export const PRICING_LANDING_COPY = {
         badge: 'Multi-PM Agencies & Production Slates • $599/mo',
         title: 'Multi-PM Agencies & Corporate L&D Teams',
         description:
-          'Run 100s of concurrent client slates on Agency Scale ($599/mo — 750 GB Client Vault, unlimited branded portals, 10 PM/QA seats with Workspace Switcher, Series Delegation, Kanban SLA pipeline, Client CRM & PM Margin Scorecard, Locale Auto-Routing, 1-Click Draft Purge & 45,000 credits/mo).',
+          'Run 100s of concurrent client slates on Agency Scale ($599/mo — 750 GB Client Vault, unlimited white-label portals, Blueprint Conversion Funnel with 1-click stale nudges & automated pass revenue tracking, 10 PM/QA seats with Deferred PM Routing, Kanban SLA, Client CRM & PM Margin Scorecard, 1-Click Draft Purge & 45,000 credits/mo).',
         recommendedPlan: 'Agency Scale ($599/mo · $5,990/yr)',
       },
       {
