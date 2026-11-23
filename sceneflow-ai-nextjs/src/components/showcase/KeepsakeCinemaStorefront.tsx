@@ -398,7 +398,7 @@ export function KeepsakeCinemaStorefront() {
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-400 pt-1">
                 <span className="inline-flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#DFB473] shrink-0" />
-                  {copy.hero.trustWhop}
+                  {txt(copy.hero.trustWhop)}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <Lock className="w-3.5 h-3.5 text-[#DFB473] shrink-0" />
@@ -771,6 +771,10 @@ export function KeepsakeCinemaStorefront() {
               <span className="text-xs text-slate-500">{copy.footer.referenceTag}</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">{copy.footer.body}</p>
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] text-slate-400">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#DFB473] shrink-0" />
+              <span>{copy.modal.whopRefBadge}</span>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button
@@ -929,6 +933,9 @@ export function KeepsakeCinemaStorefront() {
                       </select>
                     </div>
                   </div>
+                  <p className="text-[11px] text-slate-400 -mt-1.5 leading-relaxed">
+                    {copy.modal.fieldLanguageHint}
+                  </p>
 
                   <div>
                     <label className="block text-xs font-medium text-slate-300 mb-1.5">
@@ -962,6 +969,10 @@ export function KeepsakeCinemaStorefront() {
                       <ArrowRight className="w-4 h-4 shrink-0 rtl:rotate-180" />
                     )}
                   </button>
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#DFB473] shrink-0" />
+                    <span>{copy.modal.whopRefBadge}</span>
+                  </div>
                 </form>
               </div>
             </div>

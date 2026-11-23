@@ -113,7 +113,7 @@ export const STUDIO_LANDING_COPY_ES = {
         badge: 'Aprobación de Clientes y Alcance Global',
         title: 'Enlaces Compartidos, Screening Room y 70+ Idiomas',
         description:
-          'Comparte enlaces limpios de navegador para aprobar Blueprint, Guion y cortes con precisión de cuadro en Screening Room — y entrega versiones en más de 70 idiomas operando en 7 idiomas de interfaz.',
+          'Comparte enlaces limpios de navegador para aprobar Blueprint, Guion y cortes con precisión de cuadro en Screening Room — y entrega versiones en más de 70 idiomas operando en 70+ idiomas de filme (interfaz en 7 idiomas) de interfaz.',
         outcomeTag: 'Enlaces · Screening Room · 70+ Doblajes',
         videoClipKey: 'publish',
       },
@@ -216,9 +216,9 @@ export const STUDIO_LANDING_COPY_ES = {
           "Entrega fotogramas 4K fotorrealistas con paneo, voces clonadas, SFX y música como master terminado el mismo día ($149–$249)—o usa ese mismo corte narrado como filtro sin desperdicio antes del video en movimiento completo.",
       },
       {
-        title: 'Nunca Entrenamos Modelos con Fotos del Cliente',
+        title: "Las Fotos e Historias del Cliente Son 100% Privadas",
         detail:
-          'Las fotos familiares y corporativas jamás entrenan modelos compartidos, eliminan GPS EXIF al subir y registran consentimiento.',
+          "Los archivos familiares y corporativos permanecen privados—nunca se usan para entrenar modelos públicos de IA—con eliminación automática de GPS EXIF y consentimiento registrado.",
       },
     ],
     playbooksBadge: 'Kits Operativos «Servicio en Caja» Incluidos',
@@ -226,7 +226,7 @@ export const STUDIO_LANDING_COPY_ES = {
     playbooksSubtitle:
       'Evita empezar desde cero con procedimientos comerciales probados integrados directamente en SceneFlow Studio:',
     playbooksItems: [
-      'Entrevistas IA de Biógrafo y B2B en 7 Idiomas',
+      "Biógrafo IA en 70+ Idiomas de Película y Guías de Entrevista (Portal en 7 Idiomas)",
       'Tarifarios de 3 Niveles y Calculadora de Margen Mínimo',
       'Plantilla de Comisión 20% para Residencias, Funerarias e Inmobiliarias',
       'Registro Integrado de Consentimiento de Medios, Edades y Voz',
@@ -253,7 +253,7 @@ export const STUDIO_LANDING_COPY_ES = {
           tag: 'Enlace Dual y Filtro del Cliente',
           title: 'Enlace de Solo Comentarios para Familia/Equipo y Control Total',
           detail:
-            'Tu cliente recibe un Portal Director privado y comparte un enlace de solo comentarios con familia o equipo. Los invitados escuchan en 7 idiomas y comentan sin gastar rondas ni aprobar; el cliente filtra notas + mejoras de AR en 1 actualización que refresca audio y storyboards.',
+            'Tu cliente recibe un Portal Director privado y comparte un enlace de solo comentarios con familia o equipo. Los invitados escuchan en 70+ idiomas de filme (interfaz en 7 idiomas) y comentan sin gastar rondas ni aprobar; el cliente filtra notas + mejoras de AR en 1 actualización que refresca audio y storyboards.',
         },
         {
           tag: 'Asignación Diferida de PM',
@@ -533,7 +533,7 @@ export const STUDIO_LANDING_COPY_ES = {
           {
             label: 'Enlace Dual para Familia / Equipo y Filtro del Cliente',
             detail:
-              'Los invitados escuchan en 7 idiomas y comentan sin gastar rondas ni aprobar; el cliente selecciona notas para 1 revisión IA limpia.',
+              'Los invitados escuchan en 70+ idiomas de filme (interfaz en 7 idiomas) y comentan sin gastar rondas ni aprobar; el cliente selecciona notas para 1 revisión IA limpia.',
           },
           {
             label: 'Audio y Storyboards Renovados + Paquetes de $19',
@@ -742,7 +742,7 @@ export const STUDIO_LANDING_COPY_ES = {
     badge: 'Automatización y 39 Capacidades · Corte Cine 4Ks WebM Narrados en 7 Idiomas',
     title: 'Automatiza Producción y Control de Calidad en 20+ Proyectos Simultáneos',
     subtitle:
-      'Cada herramienta incluye ahora un película de cine WebM limpio con narración completa de estudio en 7 idiomas. Descubre los Portales Marca Blanca, el Estudio de Selfies, FlowDirector en 1 clic y los agentes autónomos.',
+      'Cada herramienta incluye ahora un película de cine WebM limpio con narración completa de estudio en 70+ idiomas de filme (interfaz en 7 idiomas). Descubre los Portales Marca Blanca, el Estudio de Selfies, FlowDirector en 1 clic y los agentes autónomos.',
     expandCta: 'Explorar 39 Capacidades Narradas',
     collapseCta: 'Ocultar Directorio de Capacidades',
     automationEyebrow: 'Diseñado para Creadores de Alto Volumen y Proveedores con 20 Proyectos',

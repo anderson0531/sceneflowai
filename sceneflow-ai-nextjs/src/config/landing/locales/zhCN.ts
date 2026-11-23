@@ -216,9 +216,9 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
           "将锁定连贯性的 4K 写实推拉镜画面与克隆配音、音效和配乐直接交付为当日成品（$149–$249）——或作为零浪费审片关口，在客户确认后再投入全动态视频算力。",
       },
       {
-        title: '客户照片与故事绝不用于模型训练',
+        title: "客户照片与故事 100% 严格保密",
         detail:
-          '私密家庭老照片与企业素材绝不训练共享 AI 模型，上传自动清除 EXIF 定位并记录肖像授权。',
+          "家庭影像与企业资料仅限专属项目使用——绝不用于训练公共 AI 模型——上传自动清除 EXIF GPS 并留存肖像授权记录。",
       },
     ],
     playbooksBadge: '随附“开箱即用”服务商运营手册',
@@ -226,7 +226,7 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
     playbooksSubtitle:
       '告别冷启动摸索，SceneFlow Studio 直接内置经过验证的商业服务交付套件：',
     playbooksItems: [
-      '7 大语种 AI 传记作家与 B2B 客户立项访谈剧本',
+      "支持 70+ 影片制作语言的 AI 访谈剧本（7 种原生门户界面）",
       '三级套餐报价单模板与内置最低毛利保护测算器',
       '康养社区、纪念礼仪机构与豪宅经纪 20% 返佣合作方案',
       '内置点击签署的素材版权、跨年龄肖像与多语言音色授权台账',
@@ -253,7 +253,7 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
           tag: '双层分享链接与主客户筛选',
           title: '家人/团队“仅评论链接”与主客户全权把控',
           detail:
-            '主客户独享导演门户并可分享“仅评论链接”给亲友或同事。访客可用 7 种语言试听留言且不消耗迭代、无法误批准；主客户勾选认可的意见与 AR 建议合并为 1 次 AI 更新，同步刷新分镜与旁白。',
+            '主客户独享导演门户并可分享“仅评论链接”给亲友或同事。访客可用 70+ 影片语言（7 种门户界面）试听留言且不消耗迭代、无法误批准；主客户勾选认可的意见与 AR 建议合并为 1 次 AI 更新，同步刷新分镜与旁白。',
         },
         {
           tag: '批准后再派单 PM',
@@ -730,7 +730,7 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
     badge: '工作流自动化与 39 项核心能力 · 7 语种配音动态演示',
     title: '自动化制片与专家视频质检，轻松统管 20+ 个并行项目',
     subtitle:
-      '每项能力现均配备清爽的 16:9 WebM 动态分镜演示与覆盖 7 种语言的完整演播室配音解说。了解白标门户、自拍影棚、FlowDirector 一键修片与全自动智能体矩阵。',
+      '每项能力现均配备清爽的 16:9 WebM 动态分镜演示与覆盖 70+ 影片语言（7 种门户界面）的完整演播室配音解说。了解白标门户、自拍影棚、FlowDirector 一键修片与全自动智能体矩阵。',
     expandCta: '探索全部 39 项配音核心能力',
     collapseCta: '收起工作室核心能力名录',
     automationEyebrow: '专为高产创作者与同时管理 20 个项目的视频服务商打造',
@@ -742,7 +742,7 @@ export const STUDIO_LANDING_COPY_ZH_CN = {
     spotlightAgentsLabel: '全自动制片智能体矩阵',
     spotlightAgentsMeta: '替代 300+ 手动提示词 · 轻松扩展至 20 个并行项目',
     spotlightNarrated5kLabel: '39 项能力 · 配音动态演示',
-    spotlightNarrated5kMeta: '清爽 16:9 WebM 动态演示短片 + 覆盖全部 7 种语言的演播室解说',
+    spotlightNarrated5kMeta: '清爽 16:9 WebM 动态演示短片 + 覆盖全部 70+ 影片语言（7 种门户界面）的演播室解说',
   },
   academyStrip: {
     badge: '零学习门槛保障 · Studio Academy',

@@ -344,7 +344,9 @@ describe('KeepsakeCinemaStorefront UI', () => {
     const text = container.textContent || ''
     expect(text).toContain('Keepsake Cinema')
     expect(text).toContain('Live White-Label Reference Storefront')
-    expect(text).toContain('Secured by Whop Merchant of Record')
+    expect(text).toContain('Produce films in 70+ languages (7 portal UIs)')
+    expect(text).toContain('100% private photos — never used to train AI')
+    expect(text).toContain('Payments processed by Whop')
     expect(text).toContain('Life Stories & Family Memoirs')
     expect(text).toContain('Love Stories, Weddings & Vow Renewals')
     expect(text).toContain('Graduation & Coming-of-Age Tributes')
@@ -371,7 +373,8 @@ describe('KeepsakeCinemaStorefront UI', () => {
       startBtn!.click()
     })
     expect(container.querySelector('[role="dialog"]')).toBeTruthy()
-    expect(container.textContent).toContain('Continue to Whop Checkout — $29')
+    expect(container.textContent).toContain('Continue to Secure Checkout — $29')
+    expect(container.textContent).toContain('70+ languages')
 
     // Public route guard ensures /showcase and /showcase/order/* never render GlobalHeader or MobileAppGate
     expect(isPublicRoute('/showcase')).toBe(true)

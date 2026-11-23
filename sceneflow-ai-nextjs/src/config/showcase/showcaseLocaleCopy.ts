@@ -123,6 +123,8 @@ export interface ShowcaseLocaleCopy {
     fieldName: string
     fieldNamePlaceholder: string
     fieldLanguage: string
+    fieldLanguageHint: string
+    whopRefBadge: string
     fieldEmail: string
     fieldEmailPlaceholder: string
     submitIdlePrefix: string
@@ -187,7 +189,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       ctaDesktop: 'Start $29 Blueprint',
     },
     hero: {
-      eyebrow: 'Same-Day 4K Cinema · Zero Crews · 7 Languages',
+      eyebrow: 'Same-Day 4K Cinema · Zero Crews · 70+ Film Languages',
       titlePrefix: 'Turn Life’s Greatest Chapters Into a ',
       titleAccent: '4K Cinema Film',
       titleSuffix: ' — Delivered Today.',
@@ -203,9 +205,9 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       metric3Sub: 'Same-day 4K after photo lock',
       primaryCta: 'Start My $29 Storyboard Blueprint',
       secondaryCta: 'Browse All Occasions',
-      trustWhop: 'Secured by Whop Merchant of Record',
-      trustPrivacy: 'Never trained on client photos',
-      trustLanguages: '7 portal & narration languages',
+      trustWhop: '100% of $29 credited toward your 4K film',
+      trustPrivacy: '100% private photos — never used to train AI',
+      trustLanguages: 'Produce films in 70+ languages (7 portal UIs)',
     },
     theater: {
       eyebrow: 'Express 4K Cinema Reel',
@@ -374,7 +376,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         {
           tag: 'Step 01 · $29 Today',
           title: '5-Minute Guided Story & Living Blueprint',
-          body: 'Tap occasion memory-joggers and speak or type your story in any of 7 languages. In ~3 minutes, receive an illustrated, narrated Blueprint + a comment-only sharing link for family or teammates and 4 AI revision rounds.',
+          body: 'Tap occasion memory-joggers and tell your story in any of 70+ film languages (French, Spanish, Japanese, Arabic & more) inside a 7-language native portal. In ~3 minutes, receive an illustrated, narrated Blueprint + family comment link and 4 AI revision rounds.',
           highlight: '100% of your $29 credits toward your final 4K film →',
         },
         {
@@ -423,7 +425,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         },
         {
           q: 'Can siblings, spouses, or colleagues contribute stories before we lock the film?',
-          a: 'Yes! Your Blueprint Portal includes a separate Guest Comment-Only link. Relatives, bridesmaids, classmates, or coworkers can listen in 7 languages and leave memories or corrections without spending your revision rounds or approving anything.',
+          a: 'Yes! Your Blueprint Portal includes a separate Guest Comment-Only link. Relatives, bridesmaids, classmates, or coworkers can listen in any of 70+ film languages (with a 7-language portal UI) and leave memories without spending your revision rounds or approving anything.',
         },
         {
           q: 'What about unusual family surnames, towns, or company names?',
@@ -457,11 +459,13 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       fieldTitle: 'Who or what is this film celebrating? (optional)',
       fieldName: 'Your Name *',
       fieldNamePlaceholder: 'Alex Rivera',
-      fieldLanguage: 'Preferred Language',
+      fieldLanguage: 'Portal UI Language',
+      fieldLanguageHint: "Films & narration can be produced in 70+ languages (e.g., French, Italian, German, Japanese, Korean & more) during your guided interview.",
+      whopRefBadge: "Payments processed by Whop",
       fieldEmail: 'Email for Your Private Studio Links *',
       fieldEmailPlaceholder: 'you@example.com',
-      submitIdlePrefix: 'Continue to Whop Checkout —',
-      submitBusy: 'Connecting to Whop Checkout...',
+      submitIdlePrefix: 'Continue to Secure Checkout —',
+      submitBusy: 'Opening Secure Checkout...',
       errorFallback: 'Could not start Whop Checkout. Please try again.',
       errorNetwork: 'Network error starting Whop Checkout. Please try again.',
       totalOptionSuffix: 'total',
@@ -512,7 +516,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       ctaDesktop: 'Iniciar Blueprint $29',
     },
     hero: {
-      eyebrow: 'Cine 4K el Mismo Día · Cero Cámaras · 7 Idiomas',
+      eyebrow: 'Cine 4K el Mismo Día · Cero Cámaras · 70+ Idiomas de Producción',
       titlePrefix: 'Convierte los Grandes Capítulos de la Vida en una ',
       titleAccent: 'Película de Cine 4K',
       titleSuffix: ' — Entregada Hoy.',
@@ -528,9 +532,9 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       metric3Sub: 'Master 4K el mismo día',
       primaryCta: 'Iniciar Mi Blueprint con Storyboard — $29',
       secondaryCta: 'Ver Todas las Ocasiones',
-      trustWhop: 'Pago seguro con Whop Merchant of Record',
-      trustPrivacy: 'Nunca entrenamos IA con tus fotos',
-      trustLanguages: '7 idiomas de portal y narración',
+      trustWhop: '100% de tus $29 acreditados a tu filme 4K',
+      trustPrivacy: 'Fotos 100% privadas — nunca usadas para entrenar IA',
+      trustLanguages: 'Produce filmes en 70+ idiomas (interfaz en 7 idiomas)',
     },
     theater: {
       eyebrow: 'Muestra de Cine Express 4K',
@@ -699,7 +703,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         {
           tag: 'Paso 01 · $29 Hoy',
           title: 'Entrevista Guiada de 5 Min y Blueprint Vivo',
-          body: 'Toca fichas de momentos clave y cuenta tu historia por voz o texto en cualquiera de 7 idiomas. En ~3 minutos recibes tu Blueprint ilustrado y narrado + enlace de comentarios para familia y 4 rondas de ajustes con IA.',
+          body: 'Toca fichas de momentos clave y cuenta tu historia en cualquiera de 70+ idiomas de producción (francés, español, italiano, japonés y más) dentro de un portal en 7 idiomas. En ~3 min recibes tu Blueprint ilustrado y narrado + enlace familiar y 4 rondas IA.',
           highlight: '100% de tus $29 se abonan a tu película 4K final →',
         },
         {
@@ -748,7 +752,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         },
         {
           q: '¿Pueden aportar historias hermanos, pareja o compañeros?',
-          a: 'Sí. Tu portal incluye un enlace separado de solo comentarios para invitados. Pueden escuchar en 7 idiomas y dejar recuerdos sin gastar tus rondas ni aprobar nada sin tu permiso.',
+          a: 'Sí. Tu portal incluye un enlace separado de solo comentarios para invitados. Pueden escuchar en cualquiera de 70+ idiomas de película (con interfaz en 7 idiomas) y dejar recuerdos sin gastar tus rondas.',
         },
         {
           q: '¿Cómo aseguran la pronunciación de apellidos o lugares?',
@@ -782,11 +786,13 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       fieldTitle: '¿A quién o qué celebra esta película? (opcional)',
       fieldName: 'Tu Nombre *',
       fieldNamePlaceholder: 'Alejandro Rivera',
-      fieldLanguage: 'Idioma Preferido',
+      fieldLanguage: 'Idioma de la Interfaz',
+      fieldLanguageHint: "Tu película y narración pueden producirse en más de 70 idiomas (francés, italiano, alemán, japonés y más) durante la entrevista.",
+      whopRefBadge: "Pagos procesados por Whop",
       fieldEmail: 'Correo para Tus Enlaces Privados *',
       fieldEmailPlaceholder: 'tu@correo.com',
-      submitIdlePrefix: 'Continuar a Whop Checkout —',
-      submitBusy: 'Conectando con Whop Checkout...',
+      submitIdlePrefix: 'Continuar al Pago Seguro —',
+      submitBusy: 'Abriendo pago seguro...',
       errorFallback: 'No se pudo iniciar Whop Checkout. Inténtalo de nuevo.',
       errorNetwork: 'Error de red al iniciar Whop Checkout. Inténtalo de nuevo.',
       totalOptionSuffix: 'total',
@@ -837,7 +843,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       ctaDesktop: 'Iniciar Blueprint $29',
     },
     hero: {
-      eyebrow: 'Cinema 4K no Mesmo Dia · Zero Equipe · 7 Idiomas',
+      eyebrow: 'Cinema 4K no Mesmo Dia · Zero Equipe · 70+ Idiomas de Produção',
       titlePrefix: 'Transforme os Grandes Capítulos da Vida em um ',
       titleAccent: 'Filme de Cinema 4K',
       titleSuffix: ' — Entregue Hoje.',
@@ -853,9 +859,9 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       metric3Sub: 'Master 4K no mesmo dia',
       primaryCta: 'Iniciar Meu Blueprint com Storyboard — $29',
       secondaryCta: 'Explorar Todas as Ocasiões',
-      trustWhop: 'Pagamento seguro via Whop Merchant of Record',
-      trustPrivacy: 'Nunca treinamos IA com suas fotos',
-      trustLanguages: '7 idiomas de portal e narração',
+      trustWhop: '100% dos $29 abatidos no seu filme 4K',
+      trustPrivacy: 'Fotos 100% privadas — nunca usadas para treinar IA',
+      trustLanguages: 'Produza filmes em 70+ idiomas (portal em 7 idiomas)',
     },
     theater: {
       eyebrow: 'Amostra de Cinema Express 4K',
@@ -1024,7 +1030,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         {
           tag: 'Passo 01 · $29 Hoje',
           title: 'Entrevista Guiada de 5 Min e Blueprint Vivo',
-          body: 'Toque em lembretes da ocasião e fale ou digite sua história em qualquer um dos 7 idiomas. Em ~3 minutos você recebe um Blueprint ilustrado e narrado + link de comentários para a família e 4 rodadas de ajustes por IA.',
+          body: 'Toque em lembretes da ocasião e conte sua história em qualquer um dos 70+ idiomas de filme (francês, português, italiano, japonês e mais) em um portal em 7 idiomas. Em ~3 min receba seu Blueprint ilustrado e narrado + link familiar e 4 rodadas IA.',
           highlight: '100% dos seus $29 abatidos do filme 4K final →',
         },
         {
@@ -1073,7 +1079,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         },
         {
           q: 'Familiares ou colegas podem contribuir com histórias antes de finalizar?',
-          a: 'Sim! Seu portal inclui um link separado somente para comentários. Parentes ou colegas podem ouvir em 7 idiomas e deixar memórias sem consumir suas rodadas nem aprovar nada sem você.',
+          a: 'Sim! Seu portal inclui um link separado somente para comentários. Parentes ou colegas podem ouvir em qualquer um dos 70+ idiomas de produção (interface em 7 idiomas) sem consumir suas rodadas.',
         },
         {
           q: 'E quanto à pronúncia de sobrenomes, cidades ou marcas?',
@@ -1107,11 +1113,13 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       fieldTitle: 'Quem ou o que este filme celebra? (opcional)',
       fieldName: 'Seu Nome *',
       fieldNamePlaceholder: 'Alexandre Silva',
-      fieldLanguage: 'Idioma Preferido',
+      fieldLanguage: 'Idioma da Interface',
+      fieldLanguageHint: "Seu filme e narração podem ser produzidos em mais de 70 idiomas (francês, italiano, alemão, japonês e mais) na entrevista.",
+      whopRefBadge: "Pagamentos processados pela Whop",
       fieldEmail: 'E-mail para Seus Links Privados *',
       fieldEmailPlaceholder: 'voce@exemplo.com',
-      submitIdlePrefix: 'Ir para Whop Checkout —',
-      submitBusy: 'Conectando ao Whop Checkout...',
+      submitIdlePrefix: 'Ir para o Pagamento Seguro —',
+      submitBusy: 'Abrindo pagamento seguro...',
       errorFallback: 'Não foi possível iniciar o Whop Checkout. Tente novamente.',
       errorNetwork: 'Erro de rede ao iniciar o Whop Checkout. Tente novamente.',
       totalOptionSuffix: 'total',
@@ -1162,7 +1170,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       ctaDesktop: '$29 ब्लूप्रिंट शुरू करें',
     },
     hero: {
-      eyebrow: 'उसी दिन 4K सिनेमा · कोई कैमरा क्रू नहीं · 7 भाषाएँ',
+      eyebrow: 'उसी दिन 4K सिनेमा · कोई कैमरा क्रू नहीं · 70+ फ़िल्म भाषाएँ',
       titlePrefix: 'जीवन के सबसे अनमोल अध्यायों को बनाएं ',
       titleAccent: '4K सिनेमा फिल्म',
       titleSuffix: ' — आज ही डिलीवरी।',
@@ -1178,9 +1186,9 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       metric3Sub: 'फोटो लॉक के बाद उसी दिन 4K',
       primaryCta: 'मेरा $29 स्टोरीबोर्ड ब्लूप्रिंट शुरू करें',
       secondaryCta: 'सभी अवसर देखें',
-      trustWhop: 'Whop Merchant of Record द्वारा सुरक्षित',
-      trustPrivacy: 'आपकी तस्वीरों पर कभी AI ट्रेनिंग नहीं',
-      trustLanguages: '7 पोर्टल और नैरेशन भाषाएँ',
+      trustWhop: 'आपके $29 का 100% 4K फिल्म में क्रेडिट',
+      trustPrivacy: '100% निजी तस्वीरें — AI ट्रेनिंग में कभी उपयोग नहीं',
+      trustLanguages: '70+ भाषाओं में फिल्म बनाएँ (7 पोर्टल UI भाषाएँ)',
     },
     theater: {
       eyebrow: 'एक्सप्रेस 4K सिनेमा रील',
@@ -1349,7 +1357,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         {
           tag: 'कदम 01 · आज $29',
           title: '5-मिनट गाइडेड कहानी और जीवंत ब्लूप्रिंट',
-          body: 'किसी भी 7 भाषा में बोलकर या लिखकर अपनी कहानी साझा करें। ~3 मिनट में चित्रित व सुनाया गया ब्लूप्रिंट, परिवार के लिए कमेंट लिंक और 4 AI संशोधन राउंड प्राप्त करें।',
+          body: '7-भाषा पोर्टल के अंदर 70+ फ़िल्म भाषाओं (फ़्रेंच, हिंदी, स्पेनिश, जापानी आदि) में से किसी में भी अपनी कहानी साझा करें। ~3 मिनट में चित्रित व सुनाया गया ब्लूप्रिंट, पारिवारिक कमेंट लिंक और 4 AI संशोधन राउंड पाएँ।',
           highlight: 'आपके $29 का 100% अंतिम 4K फिल्म में क्रेडिट होता है →',
         },
         {
@@ -1398,7 +1406,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         },
         {
           q: 'क्या परिवार के सदस्य या सहकर्मी भी अपनी यादें जोड़ सकते हैं?',
-          a: 'हाँ! आपके पोर्टल में एक अलग गेस्ट कमेंट-ओनली लिंक होता है जिससे परिजन 7 भाषाओं में सुन सकते हैं और बिना आपके राउंड खर्च किए सुझाव दे सकते हैं।',
+          a: 'हाँ! आपके पोर्टल में एक अलग गेस्ट कमेंट-ओनली लिंक होता है जिससे परिजन 70+ फ़िल्म भाषाओं में सुन सकते हैं (7 UI भाषाओं के साथ) और बिना आपके राउंड खर्च किए सुझाव दे सकते हैं।',
         },
         {
           q: 'खास नामों या शहरों का सही उच्चारण कैसे सुनिश्चित होगा?',
@@ -1432,11 +1440,13 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       fieldTitle: 'यह फिल्म किसके या किस अवसर के लिए है? (वैकल्पिक)',
       fieldName: 'आपका नाम *',
       fieldNamePlaceholder: 'आरव शर्मा',
-      fieldLanguage: 'पसंदीदा भाषा',
+      fieldLanguage: 'पोर्टल UI भाषा',
+      fieldLanguageHint: "आपकी फिल्म और नैरेशन 70+ भाषाओं (जैसे फ़्रेंच, इटैलियन, जापानी, हिंदी आदि) में तैयार की जा सकती है।",
+      whopRefBadge: "Whop द्वारा संसाधित भुगतान",
       fieldEmail: 'निजी स्टूडियो लिंक के लिए ईमेल *',
       fieldEmailPlaceholder: 'you@example.com',
-      submitIdlePrefix: 'Whop Checkout पर आगे बढ़ें —',
-      submitBusy: 'Whop Checkout से जुड़ रहा है...',
+      submitIdlePrefix: 'सुरक्षित भुगतान पर आगे बढ़ें —',
+      submitBusy: 'सुरक्षित भुगतान खुल रहा है...',
       errorFallback: 'Whop Checkout शुरू नहीं हो सका। कृपया पुनः प्रयास करें।',
       errorNetwork: 'नेटवर्क त्रुटि। कृपया पुनः प्रयास करें।',
       totalOptionSuffix: 'कुल',
@@ -1485,7 +1495,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       ctaDesktop: '开启 $29 分镜蓝图',
     },
     hero: {
-      eyebrow: '当日交付 4K 电影 · 零摄制组 · 7 国语言',
+      eyebrow: '当日交付 4K 电影 · 零摄制组 · 70+ 影片制作语言',
       titlePrefix: '把人生最珍贵的篇章，铸成一部 ',
       titleAccent: '4K 电影大片',
       titleSuffix: ' — 今日即可交付。',
@@ -1501,9 +1511,9 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       metric3Sub: '锁定照片后当日交付 4K 母带',
       primaryCta: '开启我的 $29 分镜蓝图',
       secondaryCta: '浏览全部适用场景',
-      trustWhop: '由 Whop Merchant of Record 安全收款',
-      trustPrivacy: '绝不使用客户照片训练 AI',
-      trustLanguages: '支持 7 种门户与配音语言',
+      trustWhop: '$29 全额抵扣最终 4K 电影费用',
+      trustPrivacy: '照片 100% 私密 — 绝不用于训练公共 AI 模型',
+      trustLanguages: '支持 70+ 影片配音语言（7 种原生门户界面）',
     },
     theater: {
       eyebrow: '极速 4K 电影实拍样片',
@@ -1672,7 +1682,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         {
           tag: '第 1 步 · 今日 $29',
           title: '5 分钟引导访谈与实时分镜蓝图',
-          body: '点选场景灵感标签，用 7 种语言任一语音或文字讲述故事。约 3 分钟即可获得图文有声蓝图、亲友评论链接及 4 轮 AI 智能修改。',
+          body: '在 7 种语言原生门户中，用 70+ 影片语言（法语、日语、西班牙语、中文等）任一语音或文字讲述故事。约 3 分钟即可获得图文有声蓝图、亲友评论链接及 4 轮 AI 修改。',
           highlight: '$29 全额抵扣您的最终 4K 影片费用 →',
         },
         {
@@ -1720,7 +1730,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         },
         {
           q: '家人或同事可以在定稿前补充故事吗？',
-          a: '可以！门户提供独立的访客只评链接，亲友或同事可用 7 种语言收听并留下回忆，不会消耗您的修改次数，也无法替您批准。',
+          a: '可以！门户提供独立的访客只评链接，亲友或同事可用 70+ 影片语言收听（支持 7 种门户界面）并留下回忆，不会消耗您的修改次数。',
         },
         {
           q: '生僻姓氏、地名或品牌读音如何保证准确？',
@@ -1754,11 +1764,13 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       fieldTitle: '这部电影致敬谁或哪一重要时刻？（选填）',
       fieldName: '您的姓名 *',
       fieldNamePlaceholder: '陈明轩',
-      fieldLanguage: '首选语言',
+      fieldLanguage: '门户界面语言',
+      fieldLanguageHint: "影片与配音支持 70+ 语言（如法语、意大利语、日语、韩语等），可在访谈中自由指定。",
+      whopRefBadge: "由 Whop 提供收款支持",
       fieldEmail: '接收专属门户链接的邮箱 *',
       fieldEmailPlaceholder: 'you@example.com',
-      submitIdlePrefix: '前往 Whop 安全结账 —',
-      submitBusy: '正在连接 Whop 结账...',
+      submitIdlePrefix: '前往安全结账 —',
+      submitBusy: '正在打开安全结账...',
       errorFallback: '无法启动 Whop 结账，请重试。',
       errorNetwork: '网络异常，请稍后重试。',
       totalOptionSuffix: '总价',
@@ -1807,7 +1819,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       ctaDesktop: 'ابدأ مخطط $29',
     },
     hero: {
-      eyebrow: 'سينما 4K في نفس اليوم · بدون طاقم تصوير · 7 لغات',
+      eyebrow: 'سينما 4K في نفس اليوم · بدون طاقم تصوير · +70 لغة إنتاج',
       titlePrefix: 'حوّل أعظم فصول الحياة إلى ',
       titleAccent: 'فيلم سينمائي بدقة 4K',
       titleSuffix: ' — يُسلَّم اليوم.',
@@ -1823,9 +1835,9 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       metric3Sub: 'نسخة 4K نفس اليوم بعد الصور',
       primaryCta: 'ابدأ مخطط القصة الآن — $29',
       secondaryCta: 'تصفح جميع المناسبات',
-      trustWhop: 'دفع آمن عبر Whop Merchant of Record',
-      trustPrivacy: 'لا ندرّب الذكاء الاصطناعي على صورك أبداً',
-      trustLanguages: '7 لغات للبوابة والسرد الصوتي',
+      trustWhop: 'يُخصم 100% من مبلغ $29 من فيلم 4K النهائي',
+      trustPrivacy: 'صورك خاصة 100% — لا تُستخدم أبداً لتدريب نماذج الذكاء الاصطناعي',
+      trustLanguages: 'أنتج أفلامك بأكثر من 70 لغة (بوابة بـ 7 لغات)',
     },
     theater: {
       eyebrow: 'نماذج سينما 4K السريعة',
@@ -1994,7 +2006,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         {
           tag: 'الخطوة 01 · $29 اليوم',
           title: 'مقابلة 5 دقائق ومخطط قصة تفاعلي',
-          body: 'اختر محطات المناسبة وتحدث أو اكتب قصتك بأي من 7 لغات. خلال ~3 دقائق تستلم مخططاً مصوراً ومروياً + رابط تعليقات للعائلة و4 جولات تعديل بالذكاء الاصطناعي.',
+          body: 'اختر محطات المناسبة واحكِ قصتك بأي من +70 لغة إنتاج (الفرنسية، العربية، الإنجليزية، اليابانية وغيرها) داخل بوابة بـ 7 لغات. خلال ~3 دقائق تستلم مخططاً مصوراً ومروياً + رابط عائلي و4 جولات تعديل.',
           highlight: 'يُخصم 100% من مبلغ $29 من سعر الفيلم النهائي ←',
         },
         {
@@ -2043,7 +2055,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         },
         {
           q: 'هل يمكن للأقارب أو الزملاء إضافة قصص قبل الاعتماد؟',
-          a: 'نعم! يوفر البورتال رابطاً مستقلاً للضيوف للتعليق فقط، ويمكنهم الاستماع بـ 7 لغات وترك ذكرياتهم دون استهلاك جولاتك.',
+          a: 'نعم! يوفر البورتال رابطاً مستقلاً للضيوف للتعليق فقط، ويمكنهم الاستماع بأكثر من 70 لغة إنتاج (مع واجهة بـ 7 لغات) وترك ذكرياتهم دون استهلاك جولاتك.',
         },
         {
           q: 'كيف تضمنون نطق أسماء العائلة أو المدن بدقة؟',
@@ -2077,11 +2089,13 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       fieldTitle: 'لمن أو لأي مناسبة يُهدى هذا الفيلم؟ (اختياري)',
       fieldName: 'اسمك *',
       fieldNamePlaceholder: 'كريم المنصور',
-      fieldLanguage: 'اللغة المفضلة',
+      fieldLanguage: 'لغة واجهة البوابة',
+      fieldLanguageHint: "يمكن إنتاج الفيلم والسرد الصوتي بأكثر من 70 لغة (مثل الفرنسية والإيطالية واليابانية وغيرها) أثناء المقابلة.",
+      whopRefBadge: "تتم معالجة المدفوعات عبر Whop",
       fieldEmail: 'بريدك الإلكتروني لروابط الاستوديو الخاصة *',
       fieldEmailPlaceholder: 'you@example.com',
-      submitIdlePrefix: 'المتابعة إلى دفع Whop —',
-      submitBusy: 'جاري الاتصال بـ Whop Checkout...',
+      submitIdlePrefix: 'المتابعة إلى الدفع الآمن —',
+      submitBusy: 'جاري فتح الدفع الآمن...',
       errorFallback: 'تعذّر بدء دفع Whop. يرجى المحاولة مجدداً.',
       errorNetwork: 'خطأ في الشبكة. يرجى المحاولة مجدداً.',
       totalOptionSuffix: 'الإجمالي',
@@ -2130,7 +2144,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       ctaDesktop: 'เริ่มบลูพรินต์ $29',
     },
     hero: {
-      eyebrow: 'ภาพยนตร์ 4K ส่งวันเดียวกัน · ไม่ต้องยกกองถ่าย · 7 ภาษา',
+      eyebrow: 'ภาพยนตร์ 4K ส่งวันเดียวกัน · ไม่ต้องยกกองถ่าย · ผลิตได้กว่า 70 ภาษา',
       titlePrefix: 'เปลี่ยนบทสำคัญที่สุดของชีวิตให้เป็น ',
       titleAccent: 'ภาพยนตร์ซีนีมา 4K',
       titleSuffix: ' — ส่งมอบวันนี้',
@@ -2146,9 +2160,9 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       metric3Sub: 'ได้ไฟล์ 4K วันเดียวกันหลังล็อกภาพ',
       primaryCta: 'เริ่มสตอรี่บอร์ดบลูพรินต์ของฉัน — $29',
       secondaryCta: 'ดูทุกโอกาสสำคัญ',
-      trustWhop: 'ชำระเงินปลอดภัยผ่าน Whop Merchant of Record',
-      trustPrivacy: 'ไม่นำภาพลูกค้าไปเทรน AI เด็ดขาด',
-      trustLanguages: 'รองรับ 7 ภาษาทั้งพอร์ทัลและเสียงพากย์',
+      trustWhop: 'ยอด $29 หักลดค่าภาพยนตร์ 4K เต็ม 100%',
+      trustPrivacy: 'ภาพส่วนตัว 100% — ไม่นำไปใช้เทรน AI สาธารณะ',
+      trustLanguages: 'ผลิตภาพยนตร์ได้ 70+ ภาษา (หน้าเว็บ 7 ภาษา)',
     },
     theater: {
       eyebrow: 'ตัวอย่างภาพยนตร์ Express 4K',
@@ -2317,7 +2331,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         {
           tag: 'ขั้นที่ 01 · วันนี้ $29',
           title: 'สัมภาษณ์นำทาง 5 นาที & บลูพรินต์มีชีวิต',
-          body: 'แตะหัวข้อช่วยนึกแล้วพูดหรือพิมพ์เรื่องราวได้ใน 7 ภาษา ภายใน ~3 นาทีรับบลูพรินต์พร้อมภาพและเสียง ลิงก์ให้ครอบครัวฝากโน้ต และสิทธิ์ปรับด้วย AI 4 รอบ',
+          body: 'แตะหัวข้อช่วยนึกแล้วเล่าเรื่องราวได้กว่า 70 ภาษาการผลิต (ฝรั่งเศส ญี่ปุ่น สเปน ไทย ฯลฯ) บนหน้าพอร์ทัล 7 ภาษา ภายใน ~3 นาทีรับบลูพรินต์พร้อมภาพและเสียง ลิงก์ครอบครัว และปรับ AI 4 รอบ',
           highlight: 'ยอด $29 หักลดจากค่าภาพยนตร์ 4K เต็ม 100% →',
         },
         {
@@ -2366,7 +2380,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
         },
         {
           q: 'พี่น้อง คู่รัก หรือเพื่อนร่วมงานช่วยเติมเรื่องราวได้ไหม?',
-          a: 'ได้! พอร์ทัลมีลิงก์สำหรับแขกแบบคอมเมนต์อย่างเดียว ญาติหรือเพื่อนสามารถฟังได้ 7 ภาษาและฝากความทรงจำโดยไม่กินรอบแก้ไขของคุณ',
+          a: 'ได้! พอร์ทัลมีลิงก์สำหรับแขกแบบคอมเมนต์อย่างเดียว ญาติหรือเพื่อนสามารถฟังได้กว่า 70 ภาษาของภาพยนตร์ (บนหน้าพอร์ทัล 7 ภาษา) โดยไม่กินรอบแก้ไขของคุณ',
         },
         {
           q: 'มั่นใจได้อย่างไรว่าชื่อคนหรือสถานที่จะออกเสียงถูกต้อง?',
@@ -2400,11 +2414,13 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       fieldTitle: 'ภาพยนตร์นี้จัดทำเพื่อใครหรือโอกาสใด? (ไม่บังคับ)',
       fieldName: 'ชื่อของคุณ *',
       fieldNamePlaceholder: 'ธนพล วัฒนา',
-      fieldLanguage: 'ภาษาที่ต้องการ',
+      fieldLanguage: 'ภาษาหน้าพอร์ทัล',
+      fieldLanguageHint: "ภาพยนตร์และเสียงพากย์ผลิตได้กว่า 70 ภาษา (เช่น ฝรั่งเศส อิตาลี ญี่ปุ่น เกาหลี ฯลฯ) ระหว่างการสัมภาษณ์",
+      whopRefBadge: "ระบบชำระเงินโดย Whop",
       fieldEmail: 'อีเมลสำหรับรับลิงก์สตูดิโอส่วนตัว *',
       fieldEmailPlaceholder: 'you@example.com',
-      submitIdlePrefix: 'ดำเนินการต่อไปยัง Whop Checkout —',
-      submitBusy: 'กำลังเชื่อมต่อ Whop Checkout...',
+      submitIdlePrefix: 'ดำเนินการชำระเงินอย่างปลอดภัย —',
+      submitBusy: 'กำลังเปิดหน้าชำระเงิน...',
       errorFallback: 'ไม่สามารถเปิด Whop Checkout ได้ กรุณาลองอีกครั้ง',
       errorNetwork: 'เกิดข้อผิดพลาดของเครือข่าย กรุณาลองอีกครั้ง',
       totalOptionSuffix: 'รวมทั้งหมด',

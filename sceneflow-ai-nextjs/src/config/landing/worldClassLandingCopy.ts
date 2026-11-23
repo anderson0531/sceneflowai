@@ -233,9 +233,9 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
           'Deliver photorealistic panned 4K stills with cloned voices, SFX & score as a finished $149–$249 same-day master—or use that exact voiced cut as a zero-waste approval firewall before Full-Motion video spend.',
       },
       {
-        title: 'Never Trained on Client Photos or Stories',
+        title: 'Client Photos & Stories Stay 100% Private',
         detail:
-          'Sensitive family archives and B2B assets never train shared AI models, strip EXIF GPS on upload, and log explicit likeness consent.',
+          'Family archives and B2B files stay strictly private—never used to train public AI models—with EXIF GPS stripped on upload and explicit likeness consent logged.',
       },
     ],
     playbooksBadge: 'Service-in-a-Box Starter Kits Included',
@@ -243,7 +243,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     playbooksSubtitle:
       'Accelerate past cold-start guesswork with battle-tested vertical SOPs built directly into SceneFlow Studio:',
     playbooksItems: [
-      '7-Language AI Biographer & B2B Client Intake Playbooks',
+      '70+ Film-Language AI Biographer & Intake Playbooks (7 Native Portal UI Locales)',
       '3-Tier Package Rate Cards & In-App Margin Floor Calculator',
       '20% Referral Partner Pitch Sheet (Senior Living, Funeral Homes & Realtors)',
       'Built-In Clickwrap Media, Multi-Age Likeness & Voice Consent Ledger',
@@ -270,7 +270,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
           tag: 'Two-Tier Sharing & Triage',
           title: 'Family / Team Comment-Only Link & Primary Customer Control',
           detail:
-            'Your customer receives a private Director Portal and shares a comment-only link with family or teammates. Guests listen in 7 languages and comment without burning rounds or approving—the primary customer filters notes + 1-click AR tips into 1 AI update that auto-refreshes storyboards & audio.',
+            'Your customer receives a private Director Portal and shares a comment-only link with family or teammates. Guests listen in any of 70+ film languages (with a 7-language native portal UI) and comment without burning rounds or approving—the primary customer filters notes + 1-click AR tips into 1 AI update that auto-refreshes storyboards & audio.',
         },
         {
           tag: 'Deferred PM Assignment',
@@ -550,7 +550,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
           {
             label: 'Two-Tier Family / Team Sharing & Triage',
             detail:
-              'Guests listen in 7 languages and comment without burning rounds or approving; the primary customer filters notes into 1 clean AI revision.',
+              'Guests listen in any of 70+ film languages (7 native UI locales) and comment without burning rounds or approving; the primary customer filters notes into 1 clean AI revision.',
           },
           {
             label: 'Auto-Refreshed Audio, Storyboards & $19 Top-Ups',
@@ -665,7 +665,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         badge: 'Flagship Client Service · $149–$1,250/Film',
         headline: 'Turn Family Interviews & Keepsake Photos into Heirloom Cinema',
         description:
-          'Capture a life story through zero-login 7-language intake, polish & de-age portraits in Character Selfie Studio from 1970s youth to modern day, dispatch autonomous Production Agents, run FlowDirector 1-click clip fixes, and deliver via a zero-login Screening Room link.',
+          'Capture a life story in any of 70+ film languages (French, Spanish, Japanese & more, inside a 7-language native portal UI), polish & de-age portraits in Character Selfie Studio from 1970s youth to modern day, dispatch autonomous Production Agents, run FlowDirector 1-click clip fixes, and deliver via a zero-login Screening Room link.',
         featureIcons: [
           'clientIntake',
           'selfieStudio',
