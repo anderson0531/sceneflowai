@@ -55,11 +55,12 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     category: 'milestones',
     vertical: 'video_memoir',
     videoSlug: 'memoir',
-    badge: 'Most Popular · Family Legacy',
-    title: 'Life Stories & Family Memoirs',
+    badge: 'Most Popular · Life & Milestones',
+    title: 'Life Stories & Family Memoirs, Weddings, Graduations, and more',
     subtitle:
-      'Preserve a parent’s or grandparent’s journey—from childhood roots to today—blending real family photos with photorealistic era scenes, warm narration, and bespoke score.',
-    idealFor: '70th/80th birthdays, parents & grandparents, celebrations of life, family reunions',
+      'Preserve a parent’s or grandparent’s journey, wedding love story, graduation, or retirement—blending real family photos with photorealistic scenes, warm narration, and bespoke score.',
+    idealFor:
+      '70th/80th birthdays, family legacies, weddings & anniversaries, graduations, retirements & celebrations of life',
     runtimeLabel: '5–8 min · 4K Cinema',
     turnaroundLabel: 'Same-Day (2–4 hrs after photo lock)',
     blueprintPassUsd: 29,
@@ -210,7 +211,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     category: 'commercial',
     vertical: 'brand_story',
     videoSlug: 'brand',
-    badge: 'Business & Clinics · Same-Day 4K',
+    badge: 'Brand Story & Clinics · Same-Day 4K',
     title: 'Express 4K Founder & Practice Film',
     subtitle:
       'Give your website a trustworthy, cinema-grade homepage story without a $5,000 agency shoot—combining photorealistic visuals, crisp narration, and music in 4K.',
@@ -268,6 +269,24 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     titlePlaceholder: 'e.g., New Hire Safety & Equipment Onboarding',
   },
 ] as const
+
+/**
+ * The 4 non-redundant featured storefront cards — one unique video example per vertical
+ * (Life & Milestones, Real Estate, Brand Story, and Training & SOP).
+ * Occasion-specific IDs (`wedding_love`, `graduation_milestone`, `retirement_tribute`)
+ * remain in `EXPRESS_SHOWCASE_OFFERS` for tailored intake prompts and checkout compatibility.
+ */
+export const FEATURED_STOREFRONT_OFFER_IDS: readonly ShowcaseOfferId[] = [
+  'family_legacy',
+  'real_estate_express',
+  'brand_express',
+  'training_express',
+] as const
+
+export const FEATURED_STOREFRONT_OFFERS: readonly ExpressShowcaseOffer[] =
+  FEATURED_STOREFRONT_OFFER_IDS.map(
+    (id) => EXPRESS_SHOWCASE_OFFERS.find((o) => o.id === id)!
+  )
 
 export function getShowcaseOfferById(id?: string | null): ExpressShowcaseOffer {
   const found = EXPRESS_SHOWCASE_OFFERS.find((o) => o.id === id)

@@ -88,8 +88,12 @@ export interface ShowcaseLocaleCopy {
     eyebrow: string
     heading: string
     subtitle: string
+    tabAll: string
     tabMilestones: string
     tabCommercial: string
+    groupMilestonesHeading: string
+    groupCommercialHeading: string
+    groupCommercialSub: string
     idealForLabel: string
     cardCta: string
     offers: Record<ShowcaseOfferId, ShowcaseOfferLocaleCopy>
@@ -291,17 +295,23 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       heading: 'Every Milestone Deserves the Big Screen.',
       subtitle:
         'Start any film with a $29 Storyboard Blueprint Pass (100% credited toward your finished 4K film). Review illustrated chapters with loved ones before paying the remaining Express 4K balance.',
-      tabMilestones: 'Life Milestones (4)',
+      tabAll: 'All Examples (4)',
+      tabMilestones: 'Life & Milestones (1)',
       tabCommercial: 'Business & Property (3)',
+      groupMilestonesHeading: 'Life Stories & Milestone Films',
+      groupCommercialHeading: 'Real Estate, Brand Story & Training Examples',
+      groupCommercialSub:
+        'Explore 4K Cinema (same-day checkout) and Full-Motion studio previews for property listings, founder brand stories, and narrated SOP training.',
       idealForLabel: 'Ideal for:',
       cardCta: 'Start $29 Blueprint',
       offers: {
         family_legacy: {
-          badge: 'Most Popular · Family Legacy',
-          title: 'Life Stories & Family Memoirs',
+          badge: 'Most Popular · Life & Milestones',
+          title: 'Life Stories & Family Memoirs, Weddings, Graduations, and more',
           subtitle:
-            'Preserve a parent’s or grandparent’s journey—from childhood roots to today—blending real family photos with photorealistic era scenes, warm narration, and bespoke score.',
-          idealFor: '70th/80th birthdays, parents & grandparents, celebrations of life, family reunions',
+            'Preserve a parent’s or grandparent’s journey, wedding love story, graduation, or retirement—blending real family photos with photorealistic scenes, warm narration, and bespoke score.',
+          idealFor:
+            '70th/80th birthdays, family legacies, weddings & anniversaries, graduations, retirements & celebrations of life',
           runtimeLabel: '5–8 min · 4K Cinema',
           turnaroundLabel: 'Same-Day (2–4 hrs after photo lock)',
           deliverables: [
@@ -377,7 +387,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           titlePlaceholder: 'e.g., 420 Harbor Crest Oceanview Residence',
         },
         brand_express: {
-          badge: 'Business & Clinics · Same-Day 4K',
+          badge: 'Brand Story & Clinics · Same-Day 4K',
           title: 'Express 4K Founder & Practice Film',
           subtitle:
             'Give your website a trustworthy, cinema-grade homepage story without a $5,000 agency shoot—combining photorealistic visuals, crisp narration, and music in 4K.',
@@ -636,14 +646,19 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       heading: 'Cada Hito Merece la Gran Pantalla.',
       subtitle:
         'Inicia cualquier filme con un Pase Blueprint con Storyboard de $29 (100% acreditado a tu película 4K). Revisa los capítulos ilustrados con tus seres queridos antes de cubrir el saldo Express 4K.',
-      tabMilestones: 'Momentos de Vida (4)',
+      tabAll: 'Todos (4)',
+      tabMilestones: 'Vida y Momentos (1)',
       tabCommercial: 'Negocios e Inmuebles (3)',
+      groupMilestonesHeading: 'Historias de Vida y Celebraciones',
+      groupCommercialHeading: 'Ejemplos de Inmobiliaria, Historia de Marca y Capacitación',
+      groupCommercialSub:
+        'Compara Cine 4K (pedido hoy) y Movimiento Total para propiedades inmobiliarias, historias de marca de fundadores y capacitación corporativa.',
       idealForLabel: 'Ideal para:',
       cardCta: 'Iniciar Blueprint $29',
       offers: {
         family_legacy: {
-          badge: 'Más Popular · Legado Familiar',
-          title: 'Historias de Vida y Memorias Familiares',
+          badge: 'Más Popular · Vida y Momentos',
+          title: 'Historias de Vida y Memorias Familiares, Bodas, Graduaciones y más',
           subtitle:
             'Preserva la trayectoria de padres o abuelos combinando fotos reales con escenas fotorrealistas de época, narración cálida y banda sonora a medida.',
           idealFor: 'Cumpleaños 70/80, padres y abuelos, homenajes de vida, reuniones familiares',
@@ -981,14 +996,19 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       heading: 'Cada Marco Merece a Tela Grande.',
       subtitle:
         'Comece qualquer filme com um Passe Blueprint com Storyboard de $29 (100% creditado no seu filme 4K final). Revise os capítulos ilustrados com quem você ama antes de pagar o saldo Express 4K.',
-      tabMilestones: 'Marcos de Vida (4)',
+      tabAll: 'Todos (4)',
+      tabMilestones: 'Vida e Marcos (1)',
       tabCommercial: 'Negócios e Imóveis (3)',
+      groupMilestonesHeading: 'Histórias de Vida e Celebrações',
+      groupCommercialHeading: 'Exemplos de Imóveis, História da Marca e Treinamento',
+      groupCommercialSub:
+        'Compare Cinema 4K (entrega hoje) e Movimento Total para tours imobiliários, filmes de marca de fundadores e treinamentos corporativos.',
       idealForLabel: 'Ideal para:',
       cardCta: 'Iniciar Blueprint $29',
       offers: {
         family_legacy: {
-          badge: 'Mais Popular · Legado Familiar',
-          title: 'Histórias de Vida e Memórias de Família',
+          badge: 'Mais Popular · Vida e Marcos',
+          title: 'Histórias de Vida e Memórias Familiares, Casamentos, Formaturas e mais',
           subtitle:
             'Preserve a jornada de pais ou avós unindo fotos reais da família a cenas fotorrealistas de época, narração calorosa e trilha sob medida.',
           idealFor: 'Aniversários de 70/80 anos, pais e avós, homenagens de vida, encontros em família',
@@ -1326,14 +1346,19 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       heading: 'हर खास पड़ाव बड़े पर्दे का हकदार है।',
       subtitle:
         'किसी भी फिल्म की शुरुआत $29 स्टोरीबोर्ड ब्लूप्रिंट पास से करें (आपकी अंतिम 4K फिल्म में 100% समायोजित)। शेष राशि देने से पहले परिवार के साथ चित्रित अध्याय देखें।',
-      tabMilestones: 'जीवन के पड़ाव (4)',
+      tabAll: 'सभी उदाहरण (4)',
+      tabMilestones: 'जीवन के पड़ाव (1)',
       tabCommercial: 'व्यवसाय और प्रॉपर्टी (3)',
+      groupMilestonesHeading: 'जीवन कथाएँ और विशेष अवसर',
+      groupCommercialHeading: 'रियल एस्टेट, ब्रांड स्टोरी और ट्रेनिंग उदाहरण',
+      groupCommercialSub:
+        'प्रॉपर्टी टूर, फाउंडर ब्रांड स्टोरी और कॉर्पोरेट ट्रेनिंग के लिए 4K सिनेमा और फुल-मोशन प्रीव्यू दोनों देखें।',
       idealForLabel: 'उपयुक्त:',
       cardCta: '$29 ब्लूप्रिंट शुरू करें',
       offers: {
         family_legacy: {
-          badge: 'सबसे लोकप्रिय · पारिवारिक विरासत',
-          title: 'जीवन गाथा और पारिवारिक संस्मरण',
+          badge: 'सबसे लोकप्रिय · जीवन और उत्सव',
+          title: 'जीवन गाथा, पारिवारिक संस्मरण, शादियाँ, ग्रेजुएशन और अधिक',
           subtitle:
             'माता-पिता या दादा-दादी की जीवन यात्रा को असली पारिवारिक तस्वीरों, फोटोरियलिस्टिक दृश्यों, आत्मीय आवाज़ और मौलिक संगीत के साथ संजोएँ।',
           idealFor: '70वाँ/80वाँ जन्मदिन, माता-पिता व दादा-दादी, श्रद्धांजलि व पारिवारिक मिलन',
@@ -1669,14 +1694,19 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       heading: '每一个高光时刻，都值得登上大银幕。',
       subtitle:
         '任何影片均以 $29 分镜蓝图通行证起步（全额抵扣最终 4K 成片费用）。与家人或团队先审阅带插画与配音的章节蓝图，满意后再支付极速 4K 尾款。',
-      tabMilestones: '人生里程碑 (4)',
+      tabAll: '全部示例 (4)',
+      tabMilestones: '人生里程碑 (1)',
       tabCommercial: '商业与房产 (3)',
+      groupMilestonesHeading: '人生故事与重要庆典',
+      groupCommercialHeading: '房产导览、品牌故事与企业培训示例',
+      groupCommercialSub:
+        '一站对比高端房产、创始人品牌故事与企业 SOP 培训的 4K 极速电影与全动态预览效果。',
       idealForLabel: '适合场景：',
       cardCta: '开启 $29 蓝图',
       offers: {
         family_legacy: {
-          badge: '最受欢迎 · 家族传记',
-          title: '人生故事与家族回忆录',
+          badge: '最受欢迎 · 人生与庆典',
+          title: '人生故事与家族回忆录、婚礼、毕业典礼等更多场景',
           subtitle:
             '珍藏父母或长辈从童年至今的人生旅程，将真实老照片与写实年代画面、温暖旁白及定制配乐无缝融合。',
           idealFor: '70/80 岁大寿、父母长辈纪念、家族聚会与人生礼赞',
@@ -2011,14 +2041,19 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       heading: 'كل محطة عظيمة تستحق الشاشة الكبيرة.',
       subtitle:
         'ابدأ أي فيلم ببطاقة المخطط المصور مقابل $29 (تُحتسب بالكامل ضمن سعر فيلم 4K النهائي). راجع الفصول المصورة مع أحبائك قبل سداد الرصيد المتبقي.',
-      tabMilestones: 'مناسبات الحياة (4)',
+      tabAll: 'جميع الأمثلة (4)',
+      tabMilestones: 'مناسبات الحياة (1)',
       tabCommercial: 'الأعمال والعقارات (3)',
+      groupMilestonesHeading: 'قصص الحياة والمناسبات الخاصة',
+      groupCommercialHeading: 'أمثلة العقارات وقصة العلامة التجارية والتدريب',
+      groupCommercialSub:
+        'استعرض سينما 4K (طلب اليوم) ومعاينات الحركة الكاملة للجولات العقارية وقصص المؤسسين وبرامج التدريب المؤسسي.',
       idealForLabel: 'مثالي لـ:',
       cardCta: 'ابدأ مخطط $29',
       offers: {
         family_legacy: {
-          badge: 'الأكثر طلباً · إرث العائلة',
-          title: 'قصص الحياة والمذكرات العائلية',
+          badge: 'الأكثر طلباً · الحياة والمناسبات',
+          title: 'قصص الحياة والمذكرات العائلية، حفلات الزفاف، التخرج والمزيد',
           subtitle:
             'احفظ رحلة الوالدين أو الأجداد عبر دمج صور العائلة الحقيقية مع مشاهد حقب واقعية وسرد دافئ وموسيقى خاصة.',
           idealFor: 'أعياد الميلاد 70 و80، تكريم الوالدين والأجداد، اللقاءات العائلية',
@@ -2354,14 +2389,19 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       heading: 'ทุกช่วงเวลาสำคัญคู่ควรกับจอใหญ่',
       subtitle:
         'เริ่มต้นทุกเรื่องด้วยบัตรสตอรี่บอร์ดบลูพรินต์ $29 (นำไปหักลดค่าหนัง 4K เต็มจำนวน 100%) ตรวจบทภาพพร้อมครอบครัวก่อนชำระยอดส่วนต่าง',
-      tabMilestones: 'โอกาสสำคัญชีวิต (4)',
+      tabAll: 'ตัวอย่างทั้งหมด (4)',
+      tabMilestones: 'โอกาสสำคัญชีวิต (1)',
       tabCommercial: 'ธุรกิจและอสังหาฯ (3)',
+      groupMilestonesHeading: 'เรื่องราวชีวิตและโอกาสสำคัญ',
+      groupCommercialHeading: 'ตัวอย่างอสังหาริมทรัพย์ เรื่องราวแบรนด์ และการฝึกอบรม',
+      groupCommercialSub:
+        'เปรียบเทียบทั้งภาพยนตร์ 4K (สั่งผลิตวันนี้) และตัวอย่างฟูลโมชันสำหรับทัวร์อสังหาฯ เรื่องราวแบรนด์ และวิดีโอฝึกอบรมองค์กร',
       idealForLabel: 'เหมาะสำหรับ:',
       cardCta: 'เริ่มบลูพรินต์ $29',
       offers: {
         family_legacy: {
-          badge: 'ยอดนิยม · มรดกครอบครัว',
-          title: 'เรื่องราวชีวิตและอนุสรณ์ครอบครัว',
+          badge: 'ยอดนิยม · ชีวิตและโอกาสสำคัญ',
+          title: 'เรื่องราวชีวิตและอนุสรณ์ครอบครัว งานแต่งงาน รับปริญญา และอีกมากมาย',
           subtitle:
             'บันทึกเส้นทางชีวิตของคุณพ่อคุณแม่หรือปู่ย่าตายาย ผสานภาพถ่ายจริงกับฉากย้อนยุคสมจริง เสียงบรรยายอบอุ่น และดนตรีประกอบเฉพาะเรื่อง',
           idealFor: 'แซยิด 70/80 ปี, คุณพ่อคุณแม่และญาติผู้ใหญ่, งานรวมญาติและรำลึกชีวิต',

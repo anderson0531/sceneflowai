@@ -348,12 +348,29 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(text).toContain('Produce films in 70+ languages (7 portal UIs)')
     expect(text).toContain('100% private photos — never used to train AI')
     expect(text).toContain('Payments processed by Whop')
-    expect(text).toContain('Life Stories & Family Memoirs')
-    expect(text).toContain('Love Stories, Weddings & Vow Renewals')
-    expect(text).toContain('Graduation & Coming-of-Age Tributes')
-    expect(text).toContain('Retirement & Career Milestone Films')
+    expect(text).toContain('Life Stories & Family Memoirs, Weddings, Graduations, and more')
+    // Redundant wedding/graduation duplicate-video cards are removed from the storefront grid
+    expect(container.querySelector('[data-testid="offer-card-wedding_love"]')).toBeNull()
+    expect(container.querySelector('[data-testid="offer-card-graduation_milestone"]')).toBeNull()
+    expect(container.querySelector('[data-testid="offer-card-retirement_tribute"]')).toBeNull()
+    // Real Estate, Brand Story, and Training examples are immediately visible in the 2x2 grid
+    expect(text).toContain('Express 4K Property Listing Film')
+    expect(text).toContain('Express 4K Founder & Practice Film')
+    expect(text).toContain('Express 4K Narrated Training & SOP Film')
+    expect(
+      container.querySelector('[data-testid="offer-card-family_legacy"] video')?.getAttribute('src')
+    ).toBe('/landing/video-services/videos/express-memoir-en.mp4')
+    expect(
+      container.querySelector('[data-testid="offer-card-real_estate_express"] video')?.getAttribute('src')
+    ).toBe('/landing/video-services/videos/express-realestate-en.mp4')
+    expect(
+      container.querySelector('[data-testid="offer-card-brand_express"] video')?.getAttribute('src')
+    ).toBe('/landing/video-services/videos/express-brand-en.mp4')
+    expect(
+      container.querySelector('[data-testid="offer-card-training_express"] video')?.getAttribute('src')
+    ).toBe('/landing/video-services/videos/express-training-en.mp4')
 
-    // Switch to Business & Property tab
+    // Filter to Business & Property tab only
     const bizBtn = Array.from(container.querySelectorAll('button')).find((b) =>
       b.textContent?.includes('Business & Property')
     )
@@ -364,6 +381,7 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(container.textContent).toContain('Express 4K Property Listing Film')
     expect(container.textContent).toContain('Express 4K Founder & Practice Film')
     expect(container.textContent).toContain('Express 4K Narrated Training & SOP Film')
+    expect(container.querySelector('[data-testid="offer-card-family_legacy"]')).toBeNull()
 
     // Open Whop Checkout modal
     const startBtn = Array.from(container.querySelectorAll('button')).find((b) =>
@@ -509,9 +527,17 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(container.querySelector('video')?.getAttribute('src')).toBe(
       '/landing/video-services/videos/memoir-en.mp4'
     )
-    const retirementCard = container.querySelector('[data-testid="offer-card-retirement_tribute"]')
-    expect(retirementCard?.querySelector('video')?.getAttribute('src')).toBe(
+    const brandCard = container.querySelector('[data-testid="offer-card-brand_express"]')
+    expect(brandCard?.querySelector('video')?.getAttribute('src')).toBe(
       '/landing/video-services/videos/brand-en.mp4'
+    )
+    const realEstateCard = container.querySelector('[data-testid="offer-card-real_estate_express"]')
+    expect(realEstateCard?.querySelector('video')?.getAttribute('src')).toBe(
+      '/landing/video-services/videos/realestate-en.mp4'
+    )
+    const trainingCard = container.querySelector('[data-testid="offer-card-training_express"]')
+    expect(trainingCard?.querySelector('video')?.getAttribute('src')).toBe(
+      '/landing/video-services/videos/training-en.mp4'
     )
   })
 })

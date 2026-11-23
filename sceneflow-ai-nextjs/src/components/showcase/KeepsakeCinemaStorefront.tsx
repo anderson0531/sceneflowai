@@ -25,6 +25,7 @@ import {
 import {
   EXPRESS_BLUEPRINT_PASS_USD,
   EXPRESS_SHOWCASE_OFFERS,
+  FEATURED_STOREFRONT_OFFERS,
   SHOWCASE_BRAND_SNAPSHOT,
   type ExpressShowcaseOffer,
   type ShowcaseCategoryId,
@@ -58,7 +59,7 @@ export function KeepsakeCinemaStorefront() {
     urlLang ? resolveClientPortalLocale(urlLang) : 'en'
   )
   const [langMenuOpen, setLangMenuOpen] = useState(false)
-  const [activeCategory, setActiveCategory] = useState<ShowcaseCategoryId>('milestones')
+  const [activeCategory, setActiveCategory] = useState<'all' | ShowcaseCategoryId>('all')
   const [activeReelIdx, setActiveReelIdx] = useState(0)
   const [demoFormat, setDemoFormat] = useState<ShowcaseDemoFormat>('express4k')
   const [cardFormatOverrides, setCardFormatOverrides] = useState<
@@ -131,7 +132,10 @@ export function KeepsakeCinemaStorefront() {
   const fmtToggle = copy.theater.formatToggle
 
   const visibleOffers = useMemo(
-    () => EXPRESS_SHOWCASE_OFFERS.filter((o) => o.category === activeCategory),
+    () =>
+      activeCategory === 'all'
+        ? FEATURED_STOREFRONT_OFFERS
+        : FEATURED_STOREFRONT_OFFERS.filter((o) => o.category === activeCategory),
     [activeCategory]
   )
 
@@ -736,14 +740,28 @@ export function KeepsakeCinemaStorefront() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-full border border-white/15 bg-[#0E1320] p-1">
+              <div className="flex flex-wrap sm:inline-flex w-full sm:w-auto rounded-2xl sm:rounded-full border border-white/15 bg-[#0E1320] p-1 gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    pauseAllCardVideos()
+                    setActiveCategory('all')
+                  }}
+                  className={`flex-1 sm:flex-none rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center whitespace-nowrap ${
+                    activeCategory === 'all'
+                      ? 'bg-[#DFB473] !text-[#090B12]'
+                      : '!text-slate-300 hover:!text-white'
+                  }`}
+                >
+                  {copy.occasions.tabAll}
+                </button>
                 <button
                   type="button"
                   onClick={() => {
                     pauseAllCardVideos()
                     setActiveCategory('milestones')
                   }}
-                  className={`rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center ${
+                  className={`flex-1 sm:flex-none rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center whitespace-nowrap ${
                     activeCategory === 'milestones'
                       ? 'bg-[#DFB473] !text-[#090B12]'
                       : '!text-slate-300 hover:!text-white'
@@ -757,7 +775,7 @@ export function KeepsakeCinemaStorefront() {
                     pauseAllCardVideos()
                     setActiveCategory('commercial')
                   }}
-                  className={`rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center ${
+                  className={`flex-1 sm:flex-none rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center whitespace-nowrap ${
                     activeCategory === 'commercial'
                       ? 'bg-[#DFB473] !text-[#090B12]'
                       : '!text-slate-300 hover:!text-white'
@@ -769,12 +787,8 @@ export function KeepsakeCinemaStorefront() {
             </div>
           </div>
 
-          <div
-            className={`grid grid-cols-1 gap-6 ${
-              visibleOffers.length === 4 ? 'md:grid-cols-2' : 'md:grid-cols-3'
-            }`}
-          >
-            {visibleOffers.map((offer) => {
+          {(() => {
+            const renderOfferCard = (offer: ExpressShowcaseOffer) => {
               const offerCopy = copy.occasions.offers[offer.id]
               const cardFormat = cardFormatOverrides[offer.id] ?? demoFormat
               const cardVideoUrl = getLocalizedShowcaseVideoUrl(
@@ -954,8 +968,22 @@ export function KeepsakeCinemaStorefront() {
                   </div>
                 </div>
               )
-            })}
-          </div>
+            }
+
+            return (
+              <div
+                className={`grid grid-cols-1 gap-6 ${
+                  visibleOffers.length === 1
+                    ? 'max-w-2xl mx-auto'
+                    : visibleOffers.length === 3
+                      ? 'md:grid-cols-3'
+                      : 'md:grid-cols-2'
+                }`}
+              >
+                {visibleOffers.map(renderOfferCard)}
+              </div>
+            )
+          })()}
         </div>
       </section>
 
