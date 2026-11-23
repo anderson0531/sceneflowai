@@ -33,6 +33,8 @@ function extractMetadata(event: WhopWebhookEvent): {
   addonPack?: string
   charterOffer?: string
   applicationId?: string
+  orderKind?: string
+  showcaseOrderId?: string
 } {
   const data = event.data || {}
   const metadata: Record<string, unknown> =
@@ -66,7 +68,23 @@ function extractMetadata(event: WhopWebhookEvent): {
     (metadata.application_id as string | undefined) ||
     (metadata.applicationId as string | undefined)
 
-  return { userId, tierName, addonPack, charterOffer, applicationId }
+  const orderKind =
+    (metadata.order_kind as string | undefined) ||
+    (metadata.orderKind as string | undefined)
+
+  const showcaseOrderId =
+    (metadata.showcase_order_id as string | undefined) ||
+    (metadata.showcaseOrderId as string | undefined)
+
+  return {
+    userId,
+    tierName,
+    addonPack,
+    charterOffer,
+    applicationId,
+    orderKind,
+    showcaseOrderId,
+  }
 }
 
 function extractBillingPeriodEnd(data: Record<string, unknown>): Date | undefined {
@@ -122,6 +140,8 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
     addonPack: metadataAddonPack,
     charterOffer: metadataCharterOffer,
     applicationId,
+    orderKind,
+    showcaseOrderId,
   } = extractMetadata(event)
   const planId = extractPlanId(event)
   const normalizedMetaCharter = metadataCharterOffer
@@ -156,6 +176,31 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
   switch (eventType) {
     case 'payment.succeeded':
     case 'payment_succeeded': {
+      // Express 4K Cinema Showcase consumer orders (zero-login buyers fulfilled via showcaseOrderId)
+      if (
+        showcaseOrderId &&
+        (orderKind === 'express_blueprint_pass' || orderKind === 'express_film_balance')
+      ) {
+        const paymentId =
+          typeof event.data?.id === 'string' ? event.data.id : event.id
+        const {
+          fulfillExpressBlueprintPassOrder,
+          fulfillExpressFilmBalanceOrder,
+        } = await import('@/lib/showcase/expressShowcaseService')
+        if (orderKind === 'express_blueprint_pass') {
+          await fulfillExpressBlueprintPassOrder({
+            orderId: showcaseOrderId,
+            whopPaymentId: paymentId,
+          })
+        } else {
+          await fulfillExpressFilmBalanceOrder({
+            orderId: showcaseOrderId,
+            whopPaymentId: paymentId,
+          })
+        }
+        break
+      }
+
       if (!metadataUserId) {
         console.error('[Whop Webhook] Missing user_id in payment.succeeded')
         return

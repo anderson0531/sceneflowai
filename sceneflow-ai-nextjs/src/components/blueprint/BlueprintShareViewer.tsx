@@ -147,6 +147,7 @@ export function BlueprintShareViewer({ token }: Props) {
   const [pendingClarification, setPendingClarification] =
     useState<BlueprintClientClarificationDraft | null>(null)
   const [approvingBlueprint, setApprovingBlueprint] = useState(false)
+  const [unlockingExpress, setUnlockingExpress] = useState(false)
   const [audioPollStale, setAudioPollStale] = useState(false)
   const audioPollCountRef = useRef(0)
 
@@ -525,6 +526,37 @@ export function BlueprintShareViewer({ token }: Props) {
     }
   }
 
+  const handleUnlockExpressFilm = async () => {
+    setUnlockingExpress(true)
+    try {
+      const res = await fetch('/api/showcase/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderKind: 'express_film_balance',
+          blueprintToken: token,
+          customerName: reviewerName || regName || shareSettings?.customerName || undefined,
+          customerEmail: shareSettings?.customerEmail || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (data.success && data.purchaseUrl) {
+        window.location.href = data.purchaseUrl
+      } else {
+        toast.error(data.error || 'Could not launch Whop checkout')
+        setUnlockingExpress(false)
+      }
+    } catch {
+      toast.error('Could not launch Whop checkout')
+      setUnlockingExpress(false)
+    }
+  }
+
+  const isExpress4kOrder = shareSettings?.deliveryTier === 'express_cinema_4k'
+  const expressBalanceUsd = shareSettings?.expressBalanceUsd ?? 120
+  const expressTotalUsd = shareSettings?.expressTotalPriceUsd ?? 149
+  const expressContinuityUrl = shareSettings?.continuityPortalUrl || null
+
   return (
     <div
       dir={getLocaleDirection(portalLocale)}
@@ -634,6 +666,41 @@ export function BlueprintShareViewer({ token }: Props) {
               {formatPortalCopy(portalLocale, 'roundLimitReached', {
                 brand: brandSnapshot?.brandName || ownerName,
               })}
+            </div>
+          )}
+          {isExpress4kOrder && !isGuestReviewer && (
+            <div className="rounded-xl border border-amber-400/35 bg-gradient-to-r from-amber-500/12 via-slate-900/90 to-slate-900/90 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-amber-300">
+                  {expressContinuityUrl
+                    ? 'Express 4K Cinema Film Unlocked'
+                    : 'Next Step · Same-Day Express 4K Cinema Film'}
+                </p>
+                <p className="text-xs sm:text-sm text-slate-200">
+                  {expressContinuityUrl
+                    ? 'Your balance is paid! Open your Continuity Library to upload real photos & add your 10-second pronunciation guide.'
+                    : `Your $29 Blueprint Pass is 100% credited toward your $${expressTotalUsd} Express 4K Cinema Film. Complete the $${expressBalanceUsd} balance via Whop to unlock your Continuity Library & Same-Day 4K Master.`}
+                </p>
+              </div>
+              {expressContinuityUrl ? (
+                <a
+                  href={expressContinuityUrl}
+                  className="inline-flex items-center justify-center rounded-lg bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-950 transition shrink-0"
+                >
+                  Open Continuity Library →
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled={unlockingExpress}
+                  onClick={handleUnlockExpressFilm}
+                  className="inline-flex items-center justify-center rounded-lg bg-amber-400 hover:bg-amber-300 disabled:opacity-60 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-950 transition shrink-0 shadow-sm"
+                >
+                  {unlockingExpress
+                    ? 'Opening Whop Checkout...'
+                    : `Unlock Express 4K Film ($${expressBalanceUsd}) →`}
+                </button>
+              )}
             </div>
           )}
           <p className="sf-review-eyebrow">

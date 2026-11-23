@@ -219,13 +219,22 @@ export function VideoServicesSpotlightSection() {
             <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
               {copy.verticalsHeading}
             </p>
-            <a
-              href={`#${CUSTOMER_PORTAL_ANIMATIC_ID}`}
-              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/45 bg-emerald-500/15 px-3 py-1 text-[11px] font-bold text-emerald-200 transition-colors hover:border-emerald-300 hover:bg-emerald-500/25 hover:text-white"
-            >
-              <Play className="h-3 w-3 shrink-0 fill-current text-emerald-300" aria-hidden />
-              <span>{portalAnimaticCopy.jumpButtonLabel}</span>
-            </a>
+            <div className="flex flex-wrap items-center gap-2">
+              <a
+                href={`#${CUSTOMER_PORTAL_ANIMATIC_ID}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/45 bg-emerald-500/15 px-3 py-1 text-[11px] font-bold text-emerald-200 transition-colors hover:border-emerald-300 hover:bg-emerald-500/25 hover:text-white"
+              >
+                <Play className="h-3 w-3 shrink-0 fill-current text-emerald-300" aria-hidden />
+                <span>{portalAnimaticCopy.jumpButtonLabel}</span>
+              </a>
+              <Link
+                href="/showcase"
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/45 bg-amber-500/15 px-3 py-1 text-[11px] font-bold text-amber-200 transition-colors hover:border-amber-300 hover:bg-amber-500/25 hover:text-white"
+              >
+                <Sparkles className="h-3 w-3 shrink-0 text-amber-300" aria-hidden />
+                <span>Live Express 4K Storefront →</span>
+              </Link>
+            </div>
           </div>
 
           <div

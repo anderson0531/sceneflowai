@@ -1,0 +1,365 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import React, { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const mockCreateCheckoutConfig = vi.fn()
+const mockCreateClientIntakeLink = vi.fn()
+const mockCreateContinuityLink = vi.fn()
+const mockSendEmail = vi.fn()
+const mockNotifyUser = vi.fn()
+const mockFindCollabSession = vi.fn()
+const mockFindProject = vi.fn()
+
+vi.mock('@/lib/billing/checkoutHelper', () => ({
+  buildWhopPurchaseUrl: (raw: string | null | undefined, sessionId: string, email?: string | null) => {
+    const base = raw && raw.startsWith('https://') ? raw : `https://whop.com/checkout/${sessionId}/`
+    const url = new URL(base)
+    if (email) url.searchParams.set('email', email)
+    return url.toString()
+  },
+}))
+
+vi.mock('@/config/database', () => ({
+  sequelize: { authenticate: vi.fn().mockResolvedValue(undefined) },
+}))
+
+vi.mock('@/models', () => ({}))
+
+vi.mock('@/models/CollabSession', () => ({
+  default: {
+    findOne: (...args: unknown[]) => mockFindCollabSession(...args),
+    create: vi.fn(),
+    update: vi.fn().mockResolvedValue([1]),
+  },
+}))
+
+vi.mock('@/models/Project', () => ({
+  default: {
+    findByPk: (...args: unknown[]) => mockFindProject(...args),
+    create: vi.fn(),
+  },
+}))
+
+vi.mock('@/models/User', () => ({
+  default: {
+    findOne: vi.fn().mockResolvedValue({ id: 'owner-showcase-1' }),
+  },
+}))
+
+vi.mock('@/lib/billing/whopClient', () => ({
+  ensureWhopRuntimeConfig: vi.fn().mockResolvedValue(undefined),
+  getWhopCompanyId: () => 'biz_test_company',
+  getWhopClient: () => ({
+    checkoutConfigurations: {
+      create: (...args: unknown[]) => mockCreateCheckoutConfig(...args),
+    },
+    payments: {
+      list: vi.fn().mockResolvedValue({ data: [] }),
+    },
+  }),
+}))
+
+vi.mock('@/lib/intake/intakeService', () => ({
+  createClientIntakeLink: (...args: unknown[]) => mockCreateClientIntakeLink(...args),
+}))
+
+vi.mock('@/lib/continuity/continuityPortalService', () => ({
+  createOrUpdateContinuityPortalLink: (...args: unknown[]) => mockCreateContinuityLink(...args),
+}))
+
+vi.mock('@/lib/intake/automatedClientBlueprint', () => ({
+  sendAutomatedClientPortalEmail: (...args: unknown[]) => mockSendEmail(...args),
+}))
+
+vi.mock('@/lib/jobs/jobService', () => ({
+  notifyUser: (...args: unknown[]) => mockNotifyUser(...args),
+}))
+
+vi.mock('@/lib/database/migrateProducerPlatform', () => ({
+  ensureProducerPlatformSchema: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('@/lib/blueprint/shareSession', () => ({
+  resolveBlueprintShareByToken: vi.fn().mockResolvedValue(null),
+}))
+
+vi.mock('@/lib/blueprint/shareAuth', () => ({
+  sessionDbId: (s: any) => s?.id || 'sess-id',
+}))
+
+import {
+  EXPRESS_BLUEPRINT_PASS_USD,
+  EXPRESS_SHOWCASE_OFFERS,
+  SHOWCASE_BRAND_SNAPSHOT,
+  getShowcaseOfferById,
+} from '@/config/showcase/expressCinemaCatalog'
+import {
+  createWhopExpressCheckoutSession,
+  fulfillExpressBlueprintPassOrder,
+  fulfillExpressFilmBalanceOrder,
+} from '@/lib/showcase/expressShowcaseService'
+import { KeepsakeCinemaStorefront } from '@/components/showcase/KeepsakeCinemaStorefront'
+
+describe('Express 4K Cinema Showcase Catalog & Whop MoR Fulfillment', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    delete process.env.WHOP_PLAN_EXPRESS_BLUEPRINT_29
+    delete process.env.WHOP_PLAN_BLUEPRINT_PASS_29
+    mockSendEmail.mockResolvedValue(true)
+    mockNotifyUser.mockResolvedValue({ ok: true })
+  })
+
+  it('covers 4 milestone occasions (legacy, weddings, graduations, retirements) and 3 commercial Express 4K offers with clean pricing math', () => {
+    const milestones = EXPRESS_SHOWCASE_OFFERS.filter((o) => o.category === 'milestones')
+    const commercial = EXPRESS_SHOWCASE_OFFERS.filter((o) => o.category === 'commercial')
+
+    expect(milestones.map((o) => o.id)).toEqual([
+      'family_legacy',
+      'wedding_love',
+      'graduation_milestone',
+      'retirement_tribute',
+    ])
+    expect(commercial.map((o) => o.id)).toEqual([
+      'real_estate_express',
+      'brand_express',
+      'training_express',
+    ])
+
+    for (const offer of EXPRESS_SHOWCASE_OFFERS) {
+      expect(offer.blueprintPassUsd).toBe(EXPRESS_BLUEPRINT_PASS_USD)
+      expect(offer.balanceDueUsd).toBe(offer.totalPriceUsd - offer.blueprintPassUsd)
+      expect(offer.sampleVideoUrl).toMatch(/^\/landing\/video-services\/videos\/.+\.mp4$/)
+      expect(offer.title.toLowerCase()).not.toContain('full-motion')
+    }
+
+    // Transparently attributes SceneFlow Studio for Google-for-Startups & SaaS clarity
+    expect(SHOWCASE_BRAND_SNAPSHOT.hideSceneFlowBranding).toBe(false)
+    expect(getShowcaseOfferById('graduation_milestone').title).toContain('Graduation')
+  })
+
+  it('creates an inline Whop MoR one-time checkout session when no pre-configured plan ID env var is set', async () => {
+    mockCreateCheckoutConfig.mockResolvedValue({
+      id: 'ch_test_123',
+      purchase_url: 'https://whop.com/checkout/ch_test_123/',
+    })
+
+    const res = await createWhopExpressCheckoutSession({
+      orderId: 'exp_abc',
+      orderKind: 'express_blueprint_pass',
+      amountUsd: 29,
+      title: 'Keepsake Cinema — Storyboard Blueprint Pass',
+      description: 'Test blueprint pass',
+      productExternalId: 'keepsake_blueprint_pass_graduation_milestone',
+      customerEmail: 'buyer@example.com',
+      origin: 'https://sceneflowai.studio',
+      metadata: { order_kind: 'express_blueprint_pass', showcase_order_id: 'exp_abc' },
+    })
+
+    expect(res.sessionId).toBe('ch_test_123')
+    expect(res.purchaseUrl).toContain('https://whop.com/checkout/ch_test_123/')
+    expect(res.purchaseUrl).toContain('email=buyer%40example.com')
+
+    const callArg = mockCreateCheckoutConfig.mock.calls[0][0]
+    expect(callArg.mode).toBe('payment')
+    expect(callArg.plan.company_id).toBe('biz_test_company')
+    expect(callArg.plan.plan_type).toBe('one_time')
+    expect(callArg.plan.initial_price).toBe(29)
+    expect(callArg.redirect_url).toBe(
+      'https://www.sceneflowai.studio/showcase/order/exp_abc?checkout=success'
+    )
+  })
+
+  it('fulfills paid $29 Blueprint Pass order idempotently and launches Express 4K intake', async () => {
+    const orderSession: any = {
+      token: 'exp_order_1',
+      payload: {
+        type: 'express_showcase_order',
+        orderId: 'exp_order_1',
+        orderKind: 'express_blueprint_pass',
+        status: 'pending_payment',
+        offerId: 'wedding_love',
+        vertical: 'video_memoir',
+        locale: 'en',
+        customerName: 'Claire Bennett',
+        customerEmail: 'claire@example.com',
+        honoreeOrTitle: 'Claire & Daniel',
+        amountUsd: 29,
+        totalPriceUsd: 149,
+        balanceDueUsd: 120,
+        projectId: 'proj-wedding-1',
+        ownerUserId: 'owner-showcase-1',
+        origin: 'https://sceneflowai.studio',
+        createdAt: new Date().toISOString(),
+      },
+      update: vi.fn(async (patch: any) => {
+        if (patch.payload) orderSession.payload = patch.payload
+      }),
+    }
+
+    const mockProject: any = {
+      id: 'proj-wedding-1',
+      title: 'Claire & Daniel',
+      metadata: { clientOrder: { isClientProject: true } },
+      update: vi.fn(async (patch: any) => {
+        if (patch.metadata) mockProject.metadata = patch.metadata
+      }),
+    }
+
+    mockFindCollabSession.mockResolvedValue(orderSession)
+    mockFindProject.mockResolvedValue(mockProject)
+    mockCreateClientIntakeLink.mockResolvedValue({
+      token: 'intake_tok_1',
+      sessionId: 'sess_1',
+      projectId: 'proj-wedding-1',
+      hostedUrl: 'https://sceneflowai.studio/intake/intake_tok_1?lang=en',
+    })
+
+    const first = await fulfillExpressBlueprintPassOrder({
+      orderId: 'exp_order_1',
+      whopPaymentId: 'pay_whop_1',
+    })
+    expect(first.ok).toBe(true)
+    expect(first.alreadyFulfilled).toBe(false)
+    expect(first.intakeUrl).toBe('https://sceneflowai.studio/intake/intake_tok_1?lang=en')
+    expect(mockCreateClientIntakeLink).toHaveBeenCalledTimes(1)
+    expect(mockCreateClientIntakeLink.mock.calls[0][0].deliveryTier).toBe('express_cinema_4k')
+    expect(mockCreateClientIntakeLink.mock.calls[0][0].expressReleaseMode).toBe(
+      'supervised_pm_release'
+    )
+    expect(mockCreateClientIntakeLink.mock.calls[0][0].skipCommercialAddendumCheck).toBe(true)
+
+    // Duplicate Whop webhook must be a clean no-op
+    const second = await fulfillExpressBlueprintPassOrder({
+      orderId: 'exp_order_1',
+      whopPaymentId: 'pay_whop_1',
+    })
+    expect(second.ok).toBe(true)
+    expect(second.alreadyFulfilled).toBe(true)
+    expect(mockCreateClientIntakeLink).toHaveBeenCalledTimes(1)
+  })
+
+  it('fulfills paid $120 Express Balance order idempotently and emails Continuity Library link', async () => {
+    const balanceSession: any = {
+      token: 'expbal_order_2',
+      payload: {
+        type: 'express_showcase_order',
+        orderId: 'expbal_order_2',
+        orderKind: 'express_film_balance',
+        status: 'pending_payment',
+        offerId: 'retirement_tribute',
+        vertical: 'video_memoir',
+        locale: 'en',
+        customerName: 'Robert Hayes',
+        customerEmail: 'robert@example.com',
+        amountUsd: 120,
+        totalPriceUsd: 149,
+        balanceDueUsd: 120,
+        projectId: 'proj-retire-1',
+        ownerUserId: 'owner-showcase-1',
+        origin: 'https://sceneflowai.studio',
+        createdAt: new Date().toISOString(),
+      },
+      update: vi.fn(async (patch: any) => {
+        if (patch.payload) balanceSession.payload = patch.payload
+      }),
+    }
+
+    const mockProject: any = {
+      id: 'proj-retire-1',
+      title: 'Captain Robert Hayes — 35 Years',
+      metadata: { clientOrder: { isClientProject: true } },
+      update: vi.fn(async (patch: any) => {
+        if (patch.metadata) mockProject.metadata = patch.metadata
+      }),
+    }
+
+    mockFindCollabSession.mockResolvedValue(balanceSession)
+    mockFindProject.mockResolvedValue(mockProject)
+    mockCreateContinuityLink.mockResolvedValue({
+      token: 'cont_tok_1',
+      url: 'https://sceneflowai.studio/share/continuity/cont_tok_1',
+    })
+
+    const first = await fulfillExpressFilmBalanceOrder({
+      orderId: 'expbal_order_2',
+      whopPaymentId: 'pay_whop_2',
+    })
+    expect(first.ok).toBe(true)
+    expect(first.alreadyFulfilled).toBe(false)
+    expect(first.continuityUrl).toBe('https://sceneflowai.studio/share/continuity/cont_tok_1')
+    expect(mockCreateContinuityLink).toHaveBeenCalledTimes(1)
+    expect(mockCreateContinuityLink.mock.calls[0][0].project).toBe(mockProject)
+    expect(mockSendEmail).toHaveBeenCalledTimes(1)
+    expect(mockSendEmail.mock.calls[0][0].toEmail).toBe('robert@example.com')
+    expect(mockProject.metadata.clientOrder.stage).toBe('continuity_sent')
+
+    const second = await fulfillExpressFilmBalanceOrder({
+      orderId: 'expbal_order_2',
+      whopPaymentId: 'pay_whop_2',
+    })
+    expect(second.ok).toBe(true)
+    expect(second.alreadyFulfilled).toBe(true)
+    expect(mockSendEmail).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('KeepsakeCinemaStorefront UI', () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  beforeEach(() => {
+    ;(globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => {
+      root.unmount()
+    })
+    container.remove()
+  })
+
+  it('renders Life Milestone occasions, switches to Business & Property, and opens Whop Checkout modal', () => {
+    act(() => {
+      root.render(React.createElement(KeepsakeCinemaStorefront))
+    })
+
+    const text = container.textContent || ''
+    expect(text).toContain('Keepsake Cinema')
+    expect(text).toContain('Live White-Label Reference Storefront')
+    expect(text).toContain('Secured by Whop Merchant of Record')
+    expect(text).toContain('Life Stories & Family Memoirs')
+    expect(text).toContain('Love Stories, Weddings & Vow Renewals')
+    expect(text).toContain('Graduation & Coming-of-Age Tributes')
+    expect(text).toContain('Retirement & Career Milestone Films')
+
+    // Switch to Business & Property tab
+    const bizBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Business & Property')
+    )
+    expect(bizBtn).toBeTruthy()
+    act(() => {
+      bizBtn!.click()
+    })
+    expect(container.textContent).toContain('Express 4K Property Listing Film')
+    expect(container.textContent).toContain('Express 4K Founder & Practice Film')
+    expect(container.textContent).toContain('Express 4K Narrated Training & SOP Film')
+
+    // Open Whop Checkout modal
+    const startBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Start My $29 Storyboard Blueprint')
+    )
+    expect(startBtn).toBeTruthy()
+    act(() => {
+      startBtn!.click()
+    })
+    expect(container.querySelector('[role="dialog"]')).toBeTruthy()
+    expect(container.textContent).toContain('Continue to Whop Checkout — $29')
+  })
+})

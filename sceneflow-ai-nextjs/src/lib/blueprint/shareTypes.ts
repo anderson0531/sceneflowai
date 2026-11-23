@@ -118,6 +118,14 @@ export type BlueprintShareSettings = {
   customerEmail?: string
   customerName?: string
   blueprintDepositUsd?: number
+  /** Express 4K Cinema self-serve upgrade metadata (Whop MoR checkout right from Blueprint Portal). */
+  deliveryTier?: 'express_cinema_4k' | 'full_motion_cinema'
+  expressTotalPriceUsd?: number
+  expressBalanceUsd?: number
+  expressBalancePaidAt?: string
+  continuityPortalUrl?: string
+  occasionId?: string
+  showcaseOrderId?: string
   approvalStatus?: BlueprintApprovalStatus
   approvedByName?: string
   approvedAt?: string

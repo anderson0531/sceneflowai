@@ -73,6 +73,13 @@ export interface IntakeSessionPayload {
   maxArIterations?: number
   blueprintDepositUsd?: number
   autoPublishBlueprintShare?: boolean
+  deliveryTier?: 'express_cinema_4k' | 'full_motion_cinema'
+  expressReleaseMode?: 'supervised_pm_release' | 'full_autopilot'
+  expressTotalPriceUsd?: number
+  expressBalanceUsd?: number
+  occasionId?: string
+  occasionPromptContext?: string
+  showcaseOrderId?: string
   customerEmail?: string
   clientPriceUsd?: number
   creditBudgetCap?: number
@@ -339,6 +346,15 @@ export async function createClientIntakeLink(input: {
   maxArIterations?: number
   blueprintDepositUsd?: number
   autoPublishBlueprintShare?: boolean
+  deliveryTier?: 'express_cinema_4k' | 'full_motion_cinema'
+  expressReleaseMode?: 'supervised_pm_release' | 'full_autopilot'
+  expressTotalPriceUsd?: number
+  expressBalanceUsd?: number
+  occasionId?: string
+  occasionPromptContext?: string
+  showcaseOrderId?: string
+  brandProfileOverride?: BrandProfileSnapshot
+  skipCommercialAddendumCheck?: boolean
   customerEmail?: string
   clientPriceUsd?: number
   creditBudgetCap?: number
@@ -355,7 +371,7 @@ export async function createClientIntakeLink(input: {
 }> {
   await ensureProducerPlatformSchema()
   const profile = await getOrCreateProducerProfile(input.ownerUserId)
-  if (!profile.commercial_addendum_accepted_at) {
+  if (!input.skipCommercialAddendumCheck && !profile.commercial_addendum_accepted_at) {
     throw new Error(
       'COMMERCIAL_ADDENDUM_REQUIRED: Accept the SceneFlow Commercial Producer Addendum in Producer Settings before creating client intake links.'
     )
@@ -363,7 +379,9 @@ export async function createClientIntakeLink(input: {
 
   const playbook = INTAKE_PLAYBOOKS[input.vertical]
   const locale = resolveClientPortalLocale(input.locale)
-  const brandSnapshot = toBrandProfileSnapshot(profile, input.ownerDisplayName || 'Studio Producer')
+  const brandSnapshot =
+    input.brandProfileOverride ||
+    toBrandProfileSnapshot(profile, input.ownerDisplayName || 'Studio Producer')
   const maxCustomerTurns = Math.min(
     16,
     Math.max(3, Math.round(input.maxCustomerTurns ?? playbook.suggestedMaxTurns))
@@ -406,6 +424,16 @@ export async function createClientIntakeLink(input: {
           clientPriceUsd: input.clientPriceUsd,
           creditBudgetCap: input.creditBudgetCap,
           enforceHardCap: Boolean(input.creditBudgetCap && input.creditBudgetCap > 0),
+          ...(input.deliveryTier ? { deliveryTier: input.deliveryTier } : {}),
+          ...(input.expressReleaseMode ? { expressReleaseMode: input.expressReleaseMode } : {}),
+          ...(typeof input.expressTotalPriceUsd === 'number'
+            ? { expressTotalPriceUsd: input.expressTotalPriceUsd }
+            : {}),
+          ...(typeof input.expressBalanceUsd === 'number'
+            ? { expressBalanceUsd: input.expressBalanceUsd }
+            : {}),
+          ...(input.occasionId ? { occasionId: input.occasionId } : {}),
+          ...(input.showcaseOrderId ? { showcaseOrderId: input.showcaseOrderId } : {}),
           createdAt: new Date().toISOString(),
         },
         ...(input.creditBudgetCap && input.creditBudgetCap > 0
@@ -453,6 +481,17 @@ export async function createClientIntakeLink(input: {
     ),
     blueprintDepositUsd: input.blueprintDepositUsd ?? DEFAULT_CLIENT_BLUEPRINT_DEPOSIT_USD,
     autoPublishBlueprintShare: input.autoPublishBlueprintShare !== false,
+    ...(input.deliveryTier ? { deliveryTier: input.deliveryTier } : {}),
+    ...(input.expressReleaseMode ? { expressReleaseMode: input.expressReleaseMode } : {}),
+    ...(typeof input.expressTotalPriceUsd === 'number'
+      ? { expressTotalPriceUsd: input.expressTotalPriceUsd }
+      : {}),
+    ...(typeof input.expressBalanceUsd === 'number'
+      ? { expressBalanceUsd: input.expressBalanceUsd }
+      : {}),
+    ...(input.occasionId ? { occasionId: input.occasionId } : {}),
+    ...(input.occasionPromptContext ? { occasionPromptContext: input.occasionPromptContext } : {}),
+    ...(input.showcaseOrderId ? { showcaseOrderId: input.showcaseOrderId } : {}),
     customerEmail: input.customerEmail?.trim() || undefined,
     clientPriceUsd: input.clientPriceUsd,
     creditBudgetCap: input.creditBudgetCap,
@@ -1826,6 +1865,11 @@ export async function completeClientIntakeToBlueprint(input: {
         maxArIterations: payload.maxArIterations ?? DEFAULT_MAX_AUTOMATED_AR_ITERATIONS,
         blueprintDepositUsd:
           payload.blueprintDepositUsd ?? DEFAULT_CLIENT_BLUEPRINT_DEPOSIT_USD,
+        deliveryTier: payload.deliveryTier,
+        expressTotalPriceUsd: payload.expressTotalPriceUsd,
+        expressBalanceUsd: payload.expressBalanceUsd,
+        occasionId: payload.occasionId,
+        showcaseOrderId: payload.showcaseOrderId,
         origin: input.origin,
       })
       finalTreatmentVariant = provisioned.treatment

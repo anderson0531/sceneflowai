@@ -456,6 +456,11 @@ export async function provisionAutomatedBlueprintShareFromIntake(input: {
   maxBlueprintRevisions?: number
   maxArIterations?: number
   blueprintDepositUsd?: number
+  deliveryTier?: 'express_cinema_4k' | 'full_motion_cinema'
+  expressTotalPriceUsd?: number
+  expressBalanceUsd?: number
+  occasionId?: string
+  showcaseOrderId?: string
   origin?: string
 }): Promise<{
   shareToken: string
@@ -535,6 +540,15 @@ export async function provisionAutomatedBlueprintShareFromIntake(input: {
       customerEmail: input.customerEmail?.trim() || undefined,
       customerName: input.customerName,
       blueprintDepositUsd: depositUsd,
+      ...(input.deliveryTier ? { deliveryTier: input.deliveryTier } : {}),
+      ...(typeof input.expressTotalPriceUsd === 'number'
+        ? { expressTotalPriceUsd: input.expressTotalPriceUsd }
+        : {}),
+      ...(typeof input.expressBalanceUsd === 'number'
+        ? { expressBalanceUsd: input.expressBalanceUsd }
+        : {}),
+      ...(input.occasionId ? { occasionId: input.occasionId } : {}),
+      ...(input.showcaseOrderId ? { showcaseOrderId: input.showcaseOrderId } : {}),
       approvalStatus: 'pending_review',
       brandProfileSnapshot: input.brandProfileSnapshot,
     },
