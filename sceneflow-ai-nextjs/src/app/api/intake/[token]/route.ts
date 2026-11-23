@@ -60,6 +60,9 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       customerTurnsUsed: payload.customerTurnsUsed,
       maxCustomerTurns: payload.maxCustomerTurns,
       turns: localizedTurns,
+      selectedCoverageTopics: Array.isArray(payload.selectedCoverageTopics)
+        ? payload.selectedCoverageTopics
+        : [],
       extractedCharacters: Array.isArray(payload.extractedCharacters)
         ? payload.extractedCharacters
         : [],
@@ -71,6 +74,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       completed: Boolean(payload.completedAt || session.status === 'closed'),
       blueprintShareToken: payload.blueprintShareToken || null,
       blueprintShareUrl: payload.blueprintShareUrl || null,
+      guestShareUrl: payload.guestShareUrl || null,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to load intake session'

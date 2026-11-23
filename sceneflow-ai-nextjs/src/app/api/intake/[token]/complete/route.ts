@@ -11,8 +11,19 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const { token } = await ctx.params
     const body = await req.json().catch(() => ({}))
     const locale = body?.locale ? String(body.locale) : undefined
+    const finalQuickAddNote =
+      typeof body?.finalQuickAddNote === 'string' ? body.finalQuickAddNote : undefined
+    const selectedCoverageTopics = Array.isArray(body?.selectedCoverageTopics)
+      ? body.selectedCoverageTopics.map((s: unknown) => String(s || ''))
+      : undefined
     const origin = new URL(req.url).origin
-    const result = await completeClientIntakeToBlueprint({ token, locale, origin })
+    const result = await completeClientIntakeToBlueprint({
+      token,
+      locale,
+      origin,
+      finalQuickAddNote,
+      selectedCoverageTopics,
+    })
     if (!result.ok) {
       return NextResponse.json({ success: false, error: result.error }, { status: result.status })
     }
@@ -23,6 +34,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       title: result.title,
       blueprintShareToken: result.blueprintShareToken,
       blueprintShareUrl: result.blueprintShareUrl,
+      guestShareUrl: result.guestShareUrl,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to complete intake'

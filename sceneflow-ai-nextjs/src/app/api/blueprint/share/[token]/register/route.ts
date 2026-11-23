@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { sequelize } from '@/config/database'
 import CollabParticipant from '@/models/CollabParticipant'
-import { resolveSessionByToken, getPayload } from '@/lib/blueprint/shareSession'
+import { resolveBlueprintShareByToken } from '@/lib/blueprint/shareSession'
 import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
 
 export const runtime = 'nodejs'
@@ -20,14 +20,11 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const body = RegisterSchema.parse(await req.json())
     await sequelize.authenticate()
 
-    const session = await resolveSessionByToken(token)
-    if (!session) {
+    const resolved = await resolveBlueprintShareByToken(token)
+    if (!resolved) {
       return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 })
     }
-    const payload = getPayload(session)
-    if (!payload) {
-      return NextResponse.json({ success: false, error: 'Invalid session' }, { status: 400 })
-    }
+    const { session, payload } = resolved
     if (!isBlueprintFeedbackAllowed(payload.shareSettings)) {
       return NextResponse.json(
         { success: false, error: 'Feedback is disabled for this share' },

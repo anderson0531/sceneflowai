@@ -30,13 +30,16 @@ import {
 } from '@/lib/intake/clientPortalCopy'
 import { getLocaleDirection } from '@/i18n/locale'
 import type { BrandProfileSnapshot } from '@/lib/producer/producerProfileService'
-import type {
-  IntakeCompletenessChecklist,
-  IntakeExtractedCharacter,
-  IntakeMessageTurn,
-  IntakePhase,
-  IntakeResonatingBeat,
-  IntakeVisionProposal,
+import {
+  getCoverageTopicsForNarrativeMode,
+  inferNarrativeModeFromVision,
+  type IntakeCompletenessChecklist,
+  type IntakeExtractedCharacter,
+  type IntakeMessageTurn,
+  type IntakePhase,
+  type IntakeResonatingBeat,
+  type IntakeVerticalId,
+  type IntakeVisionProposal,
 } from '@/lib/intake/intakePlaybooks'
 
 interface ClientIntakeExperienceProps {
@@ -80,6 +83,10 @@ export function ClientIntakeExperience({
   const [confirmingVision, setConfirmingVision] = useState(false)
 
   // Phase 2: Automated Completeness-Driven Interview
+  const [vertical, setVertical] = useState<IntakeVerticalId>('custom_production')
+  const [selectedCoverageTopics, setSelectedCoverageTopics] = useState<string[]>([])
+  const [showQuickCheck, setShowQuickCheck] = useState(false)
+  const [quickAddNote, setQuickAddNote] = useState('')
   const [turns, setTurns] = useState<IntakeMessageTurn[]>([])
   const [extractedCharacters, setExtractedCharacters] = useState<IntakeExtractedCharacter[]>([])
   const [resonatingBeats, setResonatingBeats] = useState<IntakeResonatingBeat[]>([])
@@ -96,7 +103,7 @@ export function ClientIntakeExperience({
 
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTarget, setRecordingTarget] = useState<
-    'consent_name' | 'vision' | 'interview' | null
+    'consent_name' | 'vision' | 'interview' | 'quick_add' | null
   >(null)
   const [speechSupported, setSpeechSupported] = useState(false)
   const recognitionRef = useRef<any>(null)
@@ -150,6 +157,10 @@ export function ClientIntakeExperience({
         }
         setConsentAccepted(Boolean(data.consentAccepted))
         if (data.customerName) setCustomerName(data.customerName)
+        if (data.vertical) setVertical(data.vertical as IntakeVerticalId)
+        if (Array.isArray(data.selectedCoverageTopics)) {
+          setSelectedCoverageTopics(data.selectedCoverageTopics)
+        }
         if (data.phase) setPhase(data.phase)
         setVisionProposal(data.visionProposal || null)
         setTurns(Array.isArray(data.turns) ? data.turns : [])
@@ -205,7 +216,7 @@ export function ClientIntakeExperience({
   }, [])
 
   const toggleDictation = useCallback(
-    (target: 'consent_name' | 'vision' | 'interview') => {
+    (target: 'consent_name' | 'vision' | 'interview' | 'quick_add') => {
       if (isRecording) {
         stopDictation()
         return
@@ -229,6 +240,8 @@ export function ClientIntakeExperience({
               setCustomerName((prev) => (prev ? `${prev} ${piece}` : piece))
             } else if (target === 'vision') {
               setVisionDraft((prev) => (prev ? `${prev} ${piece}` : piece))
+            } else if (target === 'quick_add') {
+              setQuickAddNote((prev) => (prev ? `${prev} ${piece}` : piece))
             } else {
               setDraftMessage((prev) => (prev ? `${prev} ${piece}` : piece))
             }
@@ -431,7 +444,11 @@ export function ClientIntakeExperience({
       const res = await fetch(`/api/intake/${encodeURIComponent(token)}/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: content, locale }),
+        body: JSON.stringify({
+          message: content,
+          locale,
+          selectedCoverageTopics,
+        }),
       })
       const data = await res.json()
       if (!res.ok || !data.success) {
@@ -462,8 +479,8 @@ export function ClientIntakeExperience({
     }
   }
 
-  const handleCompleteBlueprint = async () => {
-    if (completing || turnsUsed < 1) return
+  const handleCompleteBlueprint = async (finalNote?: string) => {
+    if (completing || (turnsUsed < 1 && !(finalNote || '').trim())) return
     stopDictation()
     setCompleting(true)
     setError(null)
@@ -471,7 +488,11 @@ export function ClientIntakeExperience({
       const res = await fetch(`/api/intake/${encodeURIComponent(token)}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ locale }),
+        body: JSON.stringify({
+          locale,
+          selectedCoverageTopics,
+          ...(finalNote && finalNote.trim() ? { finalQuickAddNote: finalNote.trim() } : {}),
+        }),
       })
       const data = await res.json()
       if (!res.ok || !data.success) {
@@ -481,6 +502,7 @@ export function ClientIntakeExperience({
       if (typeof data.blueprintShareUrl === 'string' && data.blueprintShareUrl) {
         setBlueprintShareUrl(data.blueprintShareUrl)
       }
+      setShowQuickCheck(false)
       setCompleted(true)
       postEmbedEvent('completed', {
         projectId: data.projectId,
@@ -493,6 +515,15 @@ export function ClientIntakeExperience({
       setCompleting(false)
     }
   }
+
+  const toggleCoverageTopic = (topicId: string) => {
+    setSelectedCoverageTopics((prev) =>
+      prev.includes(topicId) ? prev.filter((id) => id !== topicId) : [...prev, topicId]
+    )
+  }
+
+  const activeNarrativeMode = inferNarrativeModeFromVision(visionProposal, vertical)
+  const coverageTopics = getCoverageTopicsForNarrativeMode(activeNarrativeMode)
 
   const accentColor = brand.primaryColor || '#7c3aed'
   const isVisionPhase =
@@ -1009,6 +1040,134 @@ export function ClientIntakeExperience({
               </div>
             )}
 
+            {/* Lightweight Vertical Memory-Jogger Chips (Tap key pillars to include) */}
+            {coverageTopics.length > 0 && (
+              <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-900/75 px-4 py-3 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-purple-300">
+                    Optional Memory-Joggers — tap chapters/milestones you want included:
+                  </span>
+                  {selectedCoverageTopics.length > 0 && (
+                    <span className="text-[11px] text-emerald-300 font-medium">
+                      {selectedCoverageTopics.length} selected
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {coverageTopics.map((topic) => {
+                    const active = selectedCoverageTopics.includes(topic.id)
+                    return (
+                      <button
+                        key={topic.id}
+                        type="button"
+                        onClick={() => toggleCoverageTopic(topic.id)}
+                        title={topic.promptHint}
+                        className={`rounded-full px-3 py-1 text-xs font-medium border transition ${
+                          active
+                            ? 'bg-purple-600/30 border-purple-400 text-white shadow-sm'
+                            : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-slate-600 hover:text-white'
+                        }`}
+                      >
+                        {active ? '✓ ' : '+ '}
+                        {topic.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Pre-Build 15-Second Quick Check (Catch missed people/milestones before Draft 1 synthesis) */}
+            {showQuickCheck && (
+              <div className="mb-4 rounded-2xl border border-emerald-500/45 bg-emerald-950/25 p-5 space-y-3 shadow-xl">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                      Quick Check Before We Illustrate &amp; Narrate Draft 1
+                    </h2>
+                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      We&apos;ve captured{' '}
+                      <strong className="text-white">{extractedCharacters.length}</strong>{' '}
+                      character(s) and{' '}
+                      <strong className="text-white">{resonatingBeats.length}</strong> story beat(s).
+                      Any other key people (spouse, kids, mentors) or major milestones (marriages,
+                      promotions, sports, turning points) you want in Draft 1?
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={completing}
+                    onClick={() => setShowQuickCheck(false)}
+                    className="text-xs text-slate-400 hover:text-white"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <textarea
+                  dir={getLocaleDirection(locale)}
+                  lang={locale}
+                  rows={3}
+                  value={quickAddNote}
+                  onChange={(e) => setQuickAddNote(e.target.value)}
+                  placeholder="Optional: e.g., Include our 1998 wedding in Chicago with Clara, my 2005 promotion to VP, and coaching Little League baseball…"
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400"
+                />
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {speechSupported ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleDictation('quick_add')}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition ${
+                        isRecording && recordingTarget === 'quick_add'
+                          ? 'bg-red-600 text-white animate-pulse'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                      }`}
+                    >
+                      {isRecording && recordingTarget === 'quick_add' ? (
+                        <>
+                          <MicOff className="w-3.5 h-3.5" />
+                          {formatPortalCopy(locale, 'stopRecording')}
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="w-3.5 h-3.5 text-purple-400" />
+                          {formatPortalCopy(locale, 'tapMicToSpeak')}
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <div />
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={completing}
+                      onClick={() => void handleCompleteBlueprint(quickAddNote)}
+                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-xs sm:text-sm font-extrabold text-slate-950 disabled:opacity-50"
+                    >
+                      {completing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {formatPortalCopy(locale, 'completingBlueprint')}
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          {quickAddNote.trim()
+                            ? 'Add Details & Build Draft 1 Blueprint'
+                            : 'Looks Great — Build My Blueprint Now'}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Interview Progress & Completeness Readiness Header */}
             <div className="mb-4 space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1039,7 +1198,7 @@ export function ClientIntakeExperience({
                 {isInterviewReadyToSubmit && turnsUsed >= 1 ? (
                   <button
                     type="button"
-                    onClick={handleCompleteBlueprint}
+                    onClick={() => setShowQuickCheck(true)}
                     disabled={completing || sending}
                     className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                   >
@@ -1058,7 +1217,7 @@ export function ClientIntakeExperience({
                 ) : turnsUsed >= 4 ? (
                   <button
                     type="button"
-                    onClick={handleCompleteBlueprint}
+                    onClick={() => setShowQuickCheck(true)}
                     disabled={completing || sending}
                     className="text-xs font-medium text-slate-400 hover:text-emerald-300 underline underline-offset-4 disabled:opacity-50"
                   >
@@ -1287,7 +1446,7 @@ export function ClientIntakeExperience({
               <div className="pt-4 border-t border-slate-800 text-center">
                 <button
                   type="button"
-                  onClick={handleCompleteBlueprint}
+                  onClick={() => setShowQuickCheck(true)}
                   disabled={completing}
                   className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white disabled:opacity-50"
                 >

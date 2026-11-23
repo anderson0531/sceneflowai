@@ -13,6 +13,8 @@ import {
   ExternalLink,
   FolderOpen,
   HardDrive,
+  Mail,
+  PlusCircle,
   Search,
   Sparkles,
   Trash2,
@@ -28,6 +30,8 @@ import {
 } from '@/lib/producer/activeWorkspaceClient'
 import {
   formatStorageBytes,
+  type BlueprintFunnelItem,
+  type BlueprintFunnelSummary,
   type ClientCrmRecord,
   type PmScorecardRow,
 } from '@/lib/producer/agencyOps'
@@ -60,6 +64,7 @@ interface AgencyOpsPayload {
     totalCreditsUsed: number
   }
   clients: ClientCrmRecord[]
+  blueprintFunnel?: BlueprintFunnelSummary
   pmScorecard: PmScorecardRow[]
   unassignedActiveCount: number
   storageSummary: {
@@ -73,13 +78,14 @@ interface AgencyOpsPayload {
 
 export default function AgencyClientsOpsPage() {
   const { status: authStatus } = useSession()
-  const [activeTab, setActiveTab] = useState<'clients' | 'scorecard' | 'storage'>('clients')
+  const [activeTab, setActiveTab] = useState<'clients' | 'funnel' | 'scorecard' | 'storage'>('clients')
   const [workspaceOwnerId, setWorkspaceOwnerId] = useState<string>('all')
   const [data, setData] = useState<AgencyOpsPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [clientSearch, setClientSearch] = useState('')
   const [expandedClientKey, setExpandedClientKey] = useState<string | null>(null)
   const [purgingProjectId, setPurgingProjectId] = useState<string | null>(null)
+  const [funnelActionProjectId, setFunnelActionProjectId] = useState<string | null>(null)
 
   useEffect(() => {
     setWorkspaceOwnerId(getActiveWorkspaceOwnerId())
@@ -155,6 +161,34 @@ export default function AgencyClientsOpsPage() {
       toast.error(err instanceof Error ? err.message : 'Could not purge draft intermediates')
     } finally {
       setPurgingProjectId(null)
+    }
+  }
+
+  const handleFunnelAction = async (
+    item: BlueprintFunnelItem,
+    action: 'send_nudge' | 'grant_iteration_pack'
+  ) => {
+    setFunnelActionProjectId(item.projectId)
+    try {
+      const res = await fetch('/api/producer/ops/blueprint-nudge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: item.projectId, action }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Action failed')
+      }
+      if (action === 'grant_iteration_pack') {
+        toast.success(`Granted +3 Blueprint iterations to ${item.customerName}`)
+      } else {
+        toast.success(`Follow-up reminder sent to ${item.customerEmail || item.customerName}`)
+      }
+      await loadOps()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to process Blueprint action')
+    } finally {
+      setFunnelActionProjectId(null)
     }
   }
 
@@ -263,6 +297,24 @@ export default function AgencyClientsOpsPage() {
           {data && (
             <span className="rounded-full bg-gray-800 px-1.5 py-0.5 text-[10px]">
               {data.clients.length}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('funnel')}
+          className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-medium transition-all ${
+            activeTab === 'funnel'
+              ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/35'
+              : 'text-gray-400 hover:text-gray-200 border border-transparent'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          Blueprint Funnel
+          {data?.blueprintFunnel && (
+            <span className="rounded-full bg-gray-800 px-1.5 py-0.5 text-[10px]">
+              {data.blueprintFunnel.totalSelfServeCount}
             </span>
           )}
         </button>
@@ -458,6 +510,193 @@ export default function AgencyClientsOpsPage() {
                   </div>
                 )
               })}
+            </div>
+          )}
+        </div>
+      ) : activeTab === 'funnel' ? (
+        /* TAB 2: SELF-SERVE BLUEPRINT PASS CONVERSION FUNNEL */
+        <div className="space-y-4">
+          {data.blueprintFunnel && (
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4">
+                <div className="text-[11px] uppercase tracking-wider text-emerald-300">
+                  Approved — Ready to Quote
+                </div>
+                <div className="mt-1 text-2xl font-bold text-white tabular-nums">
+                  {data.blueprintFunnel.approvedReadyToQuoteCount}
+                </div>
+                <div className="text-[11px] text-emerald-200/80 mt-0.5">
+                  PM auto-routed on approval
+                </div>
+              </div>
+              <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-4">
+                <div className="text-[11px] uppercase tracking-wider text-amber-300">
+                  Rounds Exhausted
+                </div>
+                <div className="mt-1 text-2xl font-bold text-white tabular-nums">
+                  {data.blueprintFunnel.roundsExhaustedCount}
+                </div>
+                <div className="text-[11px] text-amber-200/80 mt-0.5">
+                  High-intent upsell / close
+                </div>
+              </div>
+              <div className="rounded-xl border border-red-500/30 bg-red-950/20 p-4">
+                <div className="text-[11px] uppercase tracking-wider text-red-300">
+                  Unapproved Stale
+                </div>
+                <div className="mt-1 text-2xl font-bold text-white tabular-nums">
+                  {data.blueprintFunnel.stale48hCount + data.blueprintFunnel.stale7dCount}
+                </div>
+                <div className="text-[11px] text-red-200/80 mt-0.5">
+                  {data.blueprintFunnel.stale7dCount} idle 7d+ · {data.blueprintFunnel.stale48hCount}{' '}
+                  idle 48h+
+                </div>
+              </div>
+              <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-4">
+                <div className="text-[11px] uppercase tracking-wider text-cyan-300">
+                  Active Self-Serve
+                </div>
+                <div className="mt-1 text-2xl font-bold text-white tabular-nums">
+                  {data.blueprintFunnel.iteratingCount + data.blueprintFunnel.intakeIncompleteCount}
+                </div>
+                <div className="text-[11px] text-cyan-200/80 mt-0.5">
+                  Zero human PM hours used
+                </div>
+              </div>
+              <div className="rounded-xl border border-purple-500/30 bg-purple-950/20 p-4 col-span-2 lg:col-span-1">
+                <div className="text-[11px] uppercase tracking-wider text-purple-300">
+                  Automated Pass Revenue
+                </div>
+                <div className="mt-1 text-2xl font-bold text-emerald-300 tabular-nums">
+                  ${data.blueprintFunnel.automatedBlueprintRevenueUsd.toLocaleString()}
+                </div>
+                <div className="text-[11px] text-purple-200/80 mt-0.5">
+                  Blueprint Passes + Iteration Packs
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!data.blueprintFunnel || data.blueprintFunnel.items.length === 0 ? (
+            <ProductEmptyState
+              icon={<Sparkles className="w-8 h-8 text-gray-400" />}
+              title="No active Blueprint Pass leads yet"
+              description="Share a white-label Intake link to start capturing self-serve Blueprint Pass revenue and monitoring unapproved Blueprints here."
+              actionLabel="Open Producer Hub"
+              onAction={() => {
+                window.location.href = '/dashboard/settings/producer'
+              }}
+            />
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-gray-800 bg-gray-900/70">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-gray-800 bg-gray-950/70 text-[11px] uppercase tracking-wider text-gray-400">
+                  <tr>
+                    <th className="px-4 py-3">Client / Project</th>
+                    <th className="px-4 py-3">Funnel Status</th>
+                    <th className="px-4 py-3">Iterations &amp; Family Notes</th>
+                    <th className="px-4 py-3">Auto Revenue</th>
+                    <th className="px-4 py-3 text-right">Conversion Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800/80">
+                  {data.blueprintFunnel.items.map((item) => {
+                    const busy = funnelActionProjectId === item.projectId
+                    const badgeClass =
+                      item.bucket === 'approved_ready_to_quote'
+                        ? 'bg-emerald-950/70 border border-emerald-500/40 text-emerald-300'
+                        : item.bucket === 'rounds_exhausted'
+                          ? 'bg-amber-950/70 border border-amber-500/40 text-amber-300'
+                          : item.bucket === 'stale_7d'
+                            ? 'bg-red-950/70 border border-red-500/40 text-red-300'
+                            : item.bucket === 'stale_48h'
+                              ? 'bg-orange-950/70 border border-orange-500/40 text-orange-300'
+                              : 'bg-cyan-950/60 border border-cyan-500/30 text-cyan-200'
+                    return (
+                      <tr key={item.projectId} className="hover:bg-gray-800/40">
+                        <td className="px-4 py-3">
+                          <Link
+                            href={`/dashboard/studio/${item.projectId}`}
+                            className="font-semibold text-white hover:text-cyan-300 block"
+                          >
+                            {item.title}
+                          </Link>
+                          <div className="text-[11px] text-gray-400 mt-0.5">
+                            {item.customerName}
+                            {item.customerEmail ? ` · ${item.customerEmail}` : ''} ·{' '}
+                            <span className="uppercase text-cyan-300">{item.locale}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${badgeClass}`}>
+                            {item.bucketLabel}
+                          </span>
+                          {item.lastNudgeSentAt && (
+                            <div className="text-[10px] text-gray-500 mt-1">
+                              Nudged {new Date(item.lastNudgeSentAt).toLocaleDateString()}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 tabular-nums text-gray-200">
+                          <div>
+                            {item.roundsUsed} / {item.maxBlueprintRevisions} revisions
+                            {item.extraIterationPacksPurchased > 0 && (
+                              <span className="ml-1.5 text-[10px] text-amber-300">
+                                (+{item.extraIterationPacksPurchased} pack)
+                              </span>
+                            )}
+                          </div>
+                          {item.guestFeedbackCount > 0 && (
+                            <div className="text-[11px] text-purple-300 mt-0.5">
+                              {item.guestFeedbackCount} family/team note(s)
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 tabular-nums font-semibold text-emerald-300">
+                          ${item.blueprintPassRevenueUsd.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="inline-flex flex-wrap items-center justify-end gap-2">
+                            {item.blueprintShareUrl && item.customerEmail && item.bucket !== 'approved_ready_to_quote' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={busy}
+                                onClick={() => void handleFunnelAction(item, 'send_nudge')}
+                                className="h-7 px-2.5 text-[11px] border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/20"
+                              >
+                                <Mail className="w-3 h-3 mr-1" />
+                                Send Nudge
+                              </Button>
+                            )}
+                            {item.blueprintShareToken && item.bucket !== 'approved_ready_to_quote' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={busy}
+                                onClick={() => void handleFunnelAction(item, 'grant_iteration_pack')}
+                                className="h-7 px-2.5 text-[11px] border-amber-500/40 text-amber-200 hover:bg-amber-500/20"
+                              >
+                                <PlusCircle className="w-3 h-3 mr-1" />
+                                +3 Iterations
+                              </Button>
+                            )}
+                            <Link href={`/dashboard/studio/${item.projectId}`}>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="h-7 px-2.5 text-[11px] border border-gray-700"
+                              >
+                                Open Studio
+                              </Button>
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

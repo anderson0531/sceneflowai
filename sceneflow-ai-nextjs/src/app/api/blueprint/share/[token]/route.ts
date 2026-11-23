@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sequelize } from '@/config/database'
 import CollabSession from '@/models/CollabSession'
 import { recoverStaleSectionAudioIfNeeded } from '@/lib/blueprint/generateShareSectionAudio'
-import { getPayload, resolveSessionByToken } from '@/lib/blueprint/shareSession'
+import { getPayload, resolveBlueprintShareByToken } from '@/lib/blueprint/shareSession'
 import { shouldHideBlueprintAudienceResonance } from '@/lib/blueprint/shareSettings'
 import {
   getSectionAudioForLanguage,
@@ -22,20 +22,18 @@ export const maxDuration = 60
 
 type RouteCtx = { params: Promise<{ token: string }> }
 
-export async function GET(_req: NextRequest, ctx: RouteCtx) {
+export async function GET(req: NextRequest, ctx: RouteCtx) {
   try {
     const { token } = await ctx.params
     await sequelize.authenticate()
 
-    const session = await resolveSessionByToken(token)
-    if (!session) {
+    const resolved = await resolveBlueprintShareByToken(token)
+    if (!resolved) {
       return NextResponse.json({ success: false, error: 'Not found or expired' }, { status: 404 })
     }
 
-    let payload = getPayload(session)
-    if (!payload) {
-      return NextResponse.json({ success: false, error: 'Invalid session type' }, { status: 400 })
-    }
+    const { session, accessRole } = resolved
+    let payload = resolved.payload
 
     payload = await recoverStaleSectionAudioIfNeeded(session.id, payload)
     payload = normalizeShareAudioPayload(payload)
@@ -47,10 +45,31 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
       await CollabSession.update({ payload }, { where: { id: session.id } })
     }
 
+    const origin = new URL(req.url).origin
+    const isGuest = accessRole === 'guest_reviewer'
+    const guestToken = payload.shareSettings?.guestShareToken
+    const guestShareUrl =
+      !isGuest && guestToken
+        ? `${origin}/blueprint/share/${guestToken}?lang=${encodeURIComponent(lang)}`
+        : null
+
+    const safeShareSettings = payload.shareSettings
+      ? isGuest
+        ? {
+            ...payload.shareSettings,
+            clientAutoReviseMode: false,
+            guestShareToken: undefined,
+            customerEmail: undefined,
+          }
+        : payload.shareSettings
+      : undefined
+
     return NextResponse.json({
       success: true,
       sessionId: session.id,
       token,
+      accessRole,
+      guestShareUrl,
       status: (session as { status?: string }).status,
       expiresAt: (session as { expires_at?: Date | null }).expires_at,
       payload: {
@@ -58,7 +77,8 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
         heroImageUrl,
         variantId: payload.variantId,
         projectId: payload.projectId,
-        shareSettings: payload.shareSettings,
+        shareSettings: safeShareSettings,
+        pendingClientClarification: isGuest ? null : payload.pendingClientClarification ?? null,
         ownerDisplayName: payload.ownerDisplayName,
         sectionAudio: getSectionAudioForLanguage(payload, lang),
         sectionAudioByLanguage: payload.sectionAudioByLanguage,

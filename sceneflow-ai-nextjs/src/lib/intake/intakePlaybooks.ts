@@ -65,6 +65,66 @@ export interface IntakeResonatingBeat {
   deliveryFormatHint?: 'archival_photo' | 'ai_reenactment' | 'live_subject_intro'
 }
 
+export interface IntakeCoverageTopic {
+  id: string
+  label: string
+  promptHint: string
+}
+
+/**
+ * Lightweight "memory-jogger" coverage chips by narrative mode.
+ * Customers tap any chapters/pillars that apply in ~10 seconds so the AI interviewer
+ * ensures key life/project milestones (marriages, promotions, sports, proof points, etc.)
+ * are captured cleanly without turning intake into a lengthy questionnaire.
+ */
+export const INTAKE_COVERAGE_TOPICS: Record<IntakeNarrativeMode, IntakeCoverageTopic[]> = {
+  biographical_memoir: [
+    { id: 'early_roots', label: 'Childhood & Roots', promptHint: 'Early family roots, hometown, and formative childhood memories' },
+    { id: 'education_mentors', label: 'Education & Mentors', promptHint: 'Schooling, teachers, coaches, or mentors who shaped their path' },
+    { id: 'sports_passions', label: 'Sports, Hobbies & Passions', promptHint: 'Athletics, music, crafts, or lifelong passions' },
+    { id: 'career_promotions', label: 'Career & Promotions', promptHint: 'Defining jobs, promotions, businesses built, or service' },
+    { id: 'love_marriage', label: 'Love & Marriage', promptHint: 'How they met their partner, wedding, or partnership milestones' },
+    { id: 'family_children', label: 'Family & Children', promptHint: 'Named children, grandchildren, or cherished family traditions' },
+    { id: 'challenges_transitions', label: 'Challenges & Turning Points', promptHint: 'Hardships overcome, moves, or life transitions' },
+    { id: 'proudest_legacy', label: 'Achievements & Legacy', promptHint: 'Proudest accomplishments and closing blessing/legacy' },
+  ],
+  commercial_brand: [
+    { id: 'founder_origin', label: 'Founder Origin', promptHint: 'Why the business started and the founding spark' },
+    { id: 'customer_problem', label: 'Customer Pain Point', promptHint: 'The core problem or frustration customers face' },
+    { id: 'unique_solution', label: 'Product / Secret Sauce', promptHint: 'How the solution works and what differentiates it' },
+    { id: 'proof_results', label: 'Customer Proof & Milestones', promptHint: 'Real transformations, testimonials, or verified milestones' },
+    { id: 'team_culture', label: 'Key People & Craft', promptHint: 'Named leaders, makers, or team members behind the brand' },
+    { id: 'call_to_action', label: 'Offer & Call to Action', promptHint: 'The clear next step viewers should take' },
+  ],
+  property_showcase: [
+    { id: 'exterior_approach', label: 'Exterior & Curb Appeal', promptHint: 'Arrival moment, architecture, and setting' },
+    { id: 'signature_rooms', label: 'Signature Rooms', promptHint: 'Top 3 hero interior spaces (kitchen, primary suite, living)' },
+    { id: 'outdoor_amenities', label: 'Outdoor & Amenities', promptHint: 'Pool, terrace, views, or unique property perks' },
+    { id: 'neighborhood_lifestyle', label: 'Neighborhood & Lifestyle', promptHint: 'Local dining, schools, beaches, transit, or community vibe' },
+    { id: 'agent_cta', label: 'Host & Listing CTA', promptHint: 'Agent presentation and open-house/contact closing' },
+  ],
+  educational_explainer: [
+    { id: 'opening_hook', label: 'Core Question / Hook', promptHint: 'Why this lesson matters right away to learners' },
+    { id: 'core_concepts', label: '3 Key Takeaways', promptHint: 'The essential skills or frameworks viewers must retain' },
+    { id: 'real_case_study', label: 'Real-World Example', promptHint: 'Concrete case study, demo, or visual analogy' },
+    { id: 'common_pitfalls', label: 'Common Mistakes', promptHint: 'Misconceptions or errors to avoid' },
+    { id: 'recap_action', label: 'Recap & Practice Prompt', promptHint: 'Closing summary or action exercise' },
+  ],
+  fictional_narrative: [
+    { id: 'world_protagonist', label: 'Protagonist & World', promptHint: 'Main character, setting, and ordinary world' },
+    { id: 'inciting_incident', label: 'Inciting Incident', promptHint: 'The event that disrupts the status quo' },
+    { id: 'antagonist_stakes', label: 'Antagonist & Stakes', promptHint: 'Opposition, allies, and what is at risk' },
+    { id: 'midpoint_twist', label: 'Turning Point / Twist', promptHint: 'Major escalation or reveal in Act 2' },
+    { id: 'climax_payoff', label: 'Climax & Resolution', promptHint: 'Peak confrontation and final emotional resonance' },
+  ],
+}
+
+export function getCoverageTopicsForNarrativeMode(
+  mode: IntakeNarrativeMode
+): IntakeCoverageTopic[] {
+  return INTAKE_COVERAGE_TOPICS[mode] || INTAKE_COVERAGE_TOPICS.fictional_narrative
+}
+
 export interface IntakeCompletenessChecklist {
   visionConfirmed: boolean
   charactersComplete: boolean
@@ -636,6 +696,7 @@ export function buildNextIntakeQuestionPrompt(input: {
   confirmedVision?: IntakeVisionProposal | null
   existingCharacters?: IntakeExtractedCharacter[]
   existingBeats?: IntakeResonatingBeat[]
+  selectedCoverageTopics?: string[]
 }): string {
   const playbook = INTAKE_PLAYBOOKS[input.vertical]
   const languageName = getLocaleEnglishName(input.locale)
@@ -644,6 +705,19 @@ export function buildNextIntakeQuestionPrompt(input: {
   const genreLabel =
     input.confirmedVision?.inferredGenre ||
     (narrativeMode === 'fictional_narrative' ? 'Cinematic Narrative' : playbook.genre)
+
+  const coverageCatalog = getCoverageTopicsForNarrativeMode(narrativeMode)
+  const selectedTopics = Array.isArray(input.selectedCoverageTopics)
+    ? input.selectedCoverageTopics
+        .map((id) => coverageCatalog.find((t) => t.id === id))
+        .filter((t): t is IntakeCoverageTopic => Boolean(t))
+    : []
+  const coverageBlock =
+    selectedTopics.length > 0
+      ? `\nCLIENT-SELECTED PILLARS / CHAPTERS TO COVER (PRIORITY MEMORY-JOGGERS — verify each selected pillar has concrete people/events before setting readyToComplete=true):\n${selectedTopics
+          .map((t) => `- ${t.label}: ${t.promptHint}`)
+          .join('\n')}\n`
+      : ''
 
   const suggestedFallbackAngle = input.confirmedVision?.clarifiedVision
     ? getLocalizedVisionFallbackQuestion('en', input.customerTurnNumber - 1, narrativeMode)
@@ -684,7 +758,7 @@ export function buildNextIntakeQuestionPrompt(input: {
 Production Studio Brand: ${input.brandName}
 Output Language: ${languageName} (${input.locale}) — write "reply", character fields, and beat fields strictly in ${languageName}.
 Client turns completed: ${input.customerTurnNumber} of ${input.maxCustomerTurns} (${remaining} remaining).
-${confirmedVisionBlock}
+${confirmedVisionBlock}${coverageBlock}
 Suggested discovery angle if a gap remains:
 "${suggestedFallbackAngle}"
 ${priorCharactersBlock}${priorBeatsBlock}
@@ -857,7 +931,12 @@ ${transcriptText}
 CRITICAL FIRST-TAKE BLUEPRINT QUALITY & CONTINUITY RULES (MANDATORY):
 1. HONOR THE CONFIRMED VISION & GENRE (${targetGenre}):
    - Align "title", "logline", "synopsis", "genre", "tone_description", "visual_style", and "target_audience" directly to the Confirmed Client Vision Statement and Intended Impact.
-   - NEVER force biographical/memoir tropes onto a fictional drama or other genre, and never invent subplots that contradict client facts.
+   - NEVER force biographical/memoir tropes onto a fictional drama or other genre, and never invent subplots that contradict client facts.${
+     !isFictional
+       ? `
+   - STRICT ANTI-FICTIONALIZATION (NON-FICTION ACCURACY): Because this is a real-world ${narrativeMode} production, NEVER fabricate specific personal names, unmentioned marriages, promotions, dates, companies, statistics, or fictional events not shared by the client. If a chapter has sparse specifics, keep the prose warmly evocative and faithful to the shared facts so the client can enrich specifics during Blueprint iterations rather than deleting AI-invented biography.`
+       : ''
+   }
 2. INDIVIDUALS ONLY — NEVER GROUPS:
    - Every entry in "character_descriptions" and every beat's "characters" array MUST be a SINGLE NAMED INDIVIDUAL character/person.
    - NEVER output plural or collective groups ("Friends", "Neighbors", "The Brothers", "Guards", "Parents", "Guests"). Split any duo ("Arthur & Elena") into two separate individual character entries.

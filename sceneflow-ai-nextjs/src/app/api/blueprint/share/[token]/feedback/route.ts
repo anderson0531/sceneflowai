@@ -3,7 +3,7 @@ import { sequelize } from '@/config/database'
 import CollabBlueprintFeedback from '@/models/CollabBlueprintFeedback'
 import CollabSession from '@/models/CollabSession'
 import Project from '@/models/Project'
-import { resolveSessionByToken, getPayload } from '@/lib/blueprint/shareSession'
+import { resolveBlueprintShareByToken } from '@/lib/blueprint/shareSession'
 import {
   isBlueprintFeedbackAllowed,
   isBlueprintRoundLimitReached,
@@ -14,6 +14,7 @@ import type { BlueprintStructuredFeedbackInput } from '@/lib/blueprint/shareType
 import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollabBlueprintSchema'
 import { buildFeedbackNotification, feedbackExcerpt } from '@/lib/companion/feedbackNotification'
 import { notifyUser } from '@/lib/jobs/jobService'
+import { notifyPrimaryCustomerOfGuestFeedback } from '@/lib/intake/automatedClientBlueprint'
 
 export const runtime = 'nodejs'
 
@@ -63,21 +64,24 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     await sequelize.authenticate()
     await ensureCollabBlueprintFeedbackTable()
 
-    const session = await resolveSessionByToken(token)
-    if (!session) {
+    const resolved = await resolveBlueprintShareByToken(token)
+    if (!resolved) {
       return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 })
     }
-    const payload = getPayload(session)
-    if (!payload) {
-      return NextResponse.json({ success: false, error: 'Invalid session' }, { status: 400 })
-    }
+    const { session, payload, accessRole } = resolved
     if (!isBlueprintFeedbackAllowed(payload.shareSettings)) {
       return NextResponse.json(
         { success: false, error: 'Feedback is disabled for this share' },
         { status: 403 }
       )
     }
-    if (isBlueprintRoundLimitReached(payload.shareSettings)) {
+
+    // In automated self-serve Client Blueprint mode, guest/family feedback is collected for
+    // Primary Customer triage (filtering) and NEVER burns paid Blueprint iterations!
+    const isSelfServeClientTriage =
+      payload.shareSettings?.clientAutoReviseMode === true || accessRole === 'guest_reviewer'
+
+    if (!isSelfServeClientTriage && isBlueprintRoundLimitReached(payload.shareSettings)) {
       return NextResponse.json(
         {
           success: false,
@@ -130,64 +134,98 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
 
     const ownerId = (session as { owner_user_id?: string }).owner_user_id
     const projectId = (session as { project_id?: string }).project_id
+    const nowIso = new Date().toISOString()
 
-    if (
-      payload.shareSettings?.clientMode ||
-      typeof payload.shareSettings?.maxFeedbackRounds === 'number'
-    ) {
-      const nextRoundsUsed = Number(payload.shareSettings?.roundsUsed ?? 0) + 1
-      const updatedPayload = {
-        ...payload,
-        shareSettings: {
-          ...payload.shareSettings,
-          roundsUsed: nextRoundsUsed,
-          approvalStatus: 'changes_requested' as const,
-        },
-      }
-      await CollabSession.update(
-        { payload: updatedPayload },
-        { where: { id: sessionId } }
-      )
+    if (isSelfServeClientTriage) {
+      // Guest / family feedback goes to the Primary Customer's triage queue — zero producer interruption, zero rounds burned.
       if (projectId) {
         const proj = await Project.findByPk(projectId).catch(() => null)
         if (proj) {
-          const md = ((proj.metadata || {}) as Record<string, unknown>)
-          const co = ((md.clientOrder || {}) as Record<string, unknown>)
+          const md = (proj.metadata || {}) as Record<string, unknown>
+          const co = (md.clientOrder || {}) as Record<string, unknown>
+          const prevGuestCount = Number(co.guestFeedbackCount ?? 0)
           await proj.update({
             metadata: {
               ...md,
               clientOrder: {
                 ...co,
-                isClientProject: true,
-                stage: 'blueprint_feedback_received',
-                actionState: 'action_required',
-                roundsUsed: nextRoundsUsed,
+                guestFeedbackCount: prevGuestCount + 1,
+                lastClientActivityAt: nowIso,
               },
             },
           })
         }
       }
-    }
-    if (ownerId && projectId) {
-      try {
-        await notifyUser(
-          buildFeedbackNotification({
-            userId: ownerId,
-            projectId,
-            source: 'blueprint',
-            reviewer: row.reviewerName,
-            excerpt: feedbackExcerpt(row.freeformNotes || 'New blueprint review'),
-            feedbackId: row.id,
-          })
+
+      const primaryToken = String((session as { token?: string }).token || token)
+      await notifyPrimaryCustomerOfGuestFeedback({
+        payload,
+        primaryShareToken: primaryToken,
+        reviewerName: row.reviewerName,
+        excerpt: feedbackExcerpt(row.freeformNotes || combinedNotes || 'New Blueprint comment'),
+        origin: new URL(req.url).origin,
+      }).catch((err) => console.warn('[blueprint feedback] customer triage email warning:', err))
+    } else {
+      if (
+        payload.shareSettings?.clientMode ||
+        typeof payload.shareSettings?.maxFeedbackRounds === 'number'
+      ) {
+        const nextRoundsUsed = Number(payload.shareSettings?.roundsUsed ?? 0) + 1
+        const updatedPayload = {
+          ...payload,
+          shareSettings: {
+            ...payload.shareSettings,
+            roundsUsed: nextRoundsUsed,
+            approvalStatus: 'changes_requested' as const,
+          },
+        }
+        await CollabSession.update(
+          { payload: updatedPayload },
+          { where: { id: sessionId } }
         )
-      } catch (error) {
-        console.error('[blueprint feedback] notify failed', error)
+        if (projectId) {
+          const proj = await Project.findByPk(projectId).catch(() => null)
+          if (proj) {
+            const md = ((proj.metadata || {}) as Record<string, unknown>)
+            const co = ((md.clientOrder || {}) as Record<string, unknown>)
+            await proj.update({
+              metadata: {
+                ...md,
+                clientOrder: {
+                  ...co,
+                  isClientProject: true,
+                  stage: 'blueprint_feedback_received',
+                  actionState: 'action_required',
+                  roundsUsed: nextRoundsUsed,
+                  lastClientActivityAt: nowIso,
+                },
+              },
+            })
+          }
+        }
+      }
+      if (ownerId && projectId) {
+        try {
+          await notifyUser(
+            buildFeedbackNotification({
+              userId: ownerId,
+              projectId,
+              source: 'blueprint',
+              reviewer: row.reviewerName,
+              excerpt: feedbackExcerpt(row.freeformNotes || 'New blueprint review'),
+              feedbackId: row.id,
+            })
+          )
+        } catch (error) {
+          console.error('[blueprint feedback] notify failed', error)
+        }
       }
     }
 
     return NextResponse.json({
       success: true,
       id: row.id,
+      queuedForCustomerTriage: isSelfServeClientTriage,
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed'

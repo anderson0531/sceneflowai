@@ -14,6 +14,9 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       token,
       message: String(body.message || ''),
       locale: body.locale ? String(body.locale) : undefined,
+      selectedCoverageTopics: Array.isArray(body.selectedCoverageTopics)
+        ? body.selectedCoverageTopics.map((s: unknown) => String(s || ''))
+        : undefined,
     })
 
     if (!result.ok) {
@@ -24,6 +27,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       success: true,
       reply: result.reply,
       turns: result.turns,
+      selectedCoverageTopics: result.selectedCoverageTopics,
       extractedCharacters: result.extractedCharacters,
       resonatingBeats: result.resonatingBeats,
       completenessChecklist: result.completenessChecklist,

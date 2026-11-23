@@ -56,12 +56,31 @@ export type BlueprintApprovalStatus =
   | 'changes_requested'
   | 'approved'
 
+export type BlueprintShareAccessRole =
+  | 'primary_customer'
+  | 'guest_reviewer'
+  | 'standard'
+
+export type BlueprintGuestFeedbackStatus = 'pending' | 'applied' | 'dismissed'
+
+export type BlueprintGuestFeedbackItem = {
+  id: string
+  reviewerName: string
+  overallScore: number | null
+  sections: BlueprintFeedbackSections | null
+  freeformNotes: string | null
+  createdAt: string
+  status: BlueprintGuestFeedbackStatus
+}
+
 export type BlueprintClientClarificationDraft = {
   id: string
   rawFeedback: string
   clarifiedSummary: string
   proposedChanges: string[]
   targetSections: BlueprintFixSection[]
+  selectedFeedbackIds?: string[]
+  selectedRecommendationIds?: string[]
   createdAt: string
 }
 
@@ -79,6 +98,8 @@ export type BlueprintShareSettings = {
   clientAutoReviseMode?: boolean
   /** Strips Audience Resonance from client share view (Producer-only control). */
   hideAudienceResonance?: boolean
+  /** Separate comment-only token for family/stakeholders so only the primary customer can revise or approve. */
+  guestShareToken?: string
   /** Maximum customer revision rounds allowed on this link. */
   maxFeedbackRounds?: number
   /** Customer revision rounds consumed so far. */
@@ -87,6 +108,13 @@ export type BlueprintShareSettings = {
   maxArIterations?: number
   /** Automated Audience Resonance passes consumed so far. */
   arIterationsUsed?: number
+  /** Self-serve extra iteration pack tracking & pricing overrides. */
+  extraIterationPacksPurchased?: number
+  extraIterationRevenueUsd?: number
+  iterationPackPriceUsd?: number
+  iterationPackRevisions?: number
+  iterationPackArPasses?: number
+  iterationPackCheckoutUrl?: string
   customerEmail?: string
   customerName?: string
   blueprintDepositUsd?: number
@@ -128,6 +156,10 @@ export type BlueprintSessionPayload = {
   blueprintAudienceResonance?: SharedBlueprintARSnapshot | null
   /** Pending AI-filtered customer feedback awaiting client confirmation before routing to Blueprint Director. */
   pendingClientClarification?: BlueprintClientClarificationDraft | null
+  /** Guest feedback IDs already merged into an applied Blueprint revision by the primary customer. */
+  appliedFeedbackIds?: string[]
+  /** Guest feedback IDs explicitly dismissed by the primary customer during triage. */
+  dismissedFeedbackIds?: string[]
   resonanceAudioByLanguage?: Record<string, BlueprintSectionAudioEntry>
   resonanceTranslations?: Record<string, string>
 }

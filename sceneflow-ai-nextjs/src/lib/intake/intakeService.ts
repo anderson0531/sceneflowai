@@ -79,6 +79,7 @@ export interface IntakeSessionPayload {
   customerLabel?: string
   brandProfileSnapshot: BrandProfileSnapshot
   turns: IntakeMessageTurn[]
+  selectedCoverageTopics?: string[]
   extractedCharacters?: IntakeExtractedCharacter[]
   resonatingBeats?: IntakeResonatingBeat[]
   completenessChecklist?: IntakeCompletenessChecklist
@@ -87,6 +88,7 @@ export interface IntakeSessionPayload {
   resultProjectId?: string
   blueprintShareToken?: string
   blueprintShareUrl?: string
+  guestShareUrl?: string
   publicCreditsSpentToday?: number
   publicCreditsDayKey?: string
 }
@@ -412,13 +414,16 @@ export async function createClientIntakeLink(input: {
       },
     } as any)
 
-    // Auto-route newly created client intake project to the workspace's locale PM
-    const { autoAssignProjectByLocale } = await import('@/lib/producer/workspaceAccess')
-    await autoAssignProjectByLocale({
-      ownerUserId: input.ownerUserId,
-      projectId: targetProject.id,
-      locale,
-    })
+    // Defer PM auto-assignment for self-serve automated Blueprint Passes until the customer approves their Blueprint.
+    // Only auto-assign immediately when the studio explicitly disables automated Blueprint publishing.
+    if (input.autoPublishBlueprintShare === false) {
+      const { autoAssignProjectByLocale } = await import('@/lib/producer/workspaceAccess')
+      await autoAssignProjectByLocale({
+        ownerUserId: input.ownerUserId,
+        projectId: targetProject.id,
+        locale,
+      })
+    }
   }
 
   const token = crypto.randomBytes(24).toString('base64url')
@@ -918,11 +923,13 @@ export async function submitCustomerIntakeTurn(input: {
   token: string
   message: string
   locale?: string
+  selectedCoverageTopics?: string[]
 }): Promise<
   | {
       ok: true
       reply: string
       turns: IntakeMessageTurn[]
+      selectedCoverageTopics: string[]
       extractedCharacters: IntakeExtractedCharacter[]
       resonatingBeats: IntakeResonatingBeat[]
       completenessChecklist: IntakeCompletenessChecklist
@@ -1021,6 +1028,11 @@ export async function submitCustomerIntakeTurn(input: {
   const nextTurns = [...payload.turns, customerTurn]
   const nextCount = payload.customerTurnsUsed + 1
   const playbook = INTAKE_PLAYBOOKS[payload.vertical]
+  const selectedCoverageTopics = Array.isArray(input.selectedCoverageTopics)
+    ? input.selectedCoverageTopics.map((s) => String(s || '').trim()).filter(Boolean).slice(0, 12)
+    : Array.isArray(payload.selectedCoverageTopics)
+      ? payload.selectedCoverageTopics
+      : []
 
   let assistantReply = ''
   let extractedCharacters: IntakeExtractedCharacter[] = Array.isArray(payload.extractedCharacters)
@@ -1043,6 +1055,7 @@ export async function submitCustomerIntakeTurn(input: {
       confirmedVision: payload.visionProposal?.confirmed ? payload.visionProposal : null,
       existingCharacters: extractedCharacters,
       existingBeats: resonatingBeats,
+      selectedCoverageTopics,
     })
 
     const llmRes = await generateText(prompt, {
@@ -1151,6 +1164,7 @@ export async function submitCustomerIntakeTurn(input: {
     phase: 'structured_interview',
     customerTurnsUsed: nextCount,
     turns: finalTurns,
+    selectedCoverageTopics,
     extractedCharacters,
     resonatingBeats,
     completenessChecklist,
@@ -1186,6 +1200,7 @@ export async function submitCustomerIntakeTurn(input: {
     ok: true,
     reply: assistantReply,
     turns: finalTurns,
+    selectedCoverageTopics,
     extractedCharacters,
     resonatingBeats,
     completenessChecklist,
@@ -1475,6 +1490,8 @@ export async function completeClientIntakeToBlueprint(input: {
   token: string
   locale?: string
   origin?: string
+  finalQuickAddNote?: string
+  selectedCoverageTopics?: string[]
 }): Promise<
   | {
       ok: true
@@ -1483,6 +1500,7 @@ export async function completeClientIntakeToBlueprint(input: {
       extracted: ExtractedBlueprintFromIntake
       blueprintShareToken?: string
       blueprintShareUrl?: string
+      guestShareUrl?: string
     }
   | {
       ok: false
@@ -1513,7 +1531,19 @@ export async function completeClientIntakeToBlueprint(input: {
     }
   }
 
-  if (payload.customerTurnsUsed < 1) {
+  const quickAddTrimmed = (input.finalQuickAddNote || '').trim().slice(0, 6000)
+  if (quickAddTrimmed) {
+    const quarantine = evaluateCustomerTextQuarantine(quickAddTrimmed)
+    if (quarantine.status === 'flagged') {
+      return {
+        ok: false,
+        status: 422,
+        error: quarantine.reason || 'Input flagged by safety filter. Please rephrase your note.',
+      }
+    }
+  }
+
+  if (payload.customerTurnsUsed < 1 && !quickAddTrimmed) {
     return {
       ok: false,
       status: 400,
@@ -1524,6 +1554,17 @@ export async function completeClientIntakeToBlueprint(input: {
   const activeLocale = input.locale
     ? resolveClientPortalLocale(input.locale)
     : payload.locale
+
+  const turnsForSynthesis: IntakeMessageTurn[] = quickAddTrimmed
+    ? [
+        ...payload.turns,
+        {
+          role: 'customer',
+          content: `[Additional Key People / Milestones Added Before Blueprint Build]\n${quickAddTrimmed}`,
+          createdAt: new Date().toISOString(),
+        },
+      ]
+    : payload.turns
 
   const synthesisCreditCost = Math.max(5, (TEXT_CREDITS.GEMINI_PRO || 10))
   let extracted: ExtractedBlueprintFromIntake | null = null
@@ -1540,7 +1581,7 @@ export async function completeClientIntakeToBlueprint(input: {
       vertical: payload.vertical,
       locale: activeLocale,
       customerName: consent.customer_name,
-      turns: payload.turns,
+      turns: turnsForSynthesis,
       confirmedVision,
       extractedCharacters: payload.extractedCharacters,
       resonatingBeats: payload.resonatingBeats,
@@ -1721,7 +1762,7 @@ export async function completeClientIntakeToBlueprint(input: {
 
   const transcriptPrimeText =
     visionHeaderText +
-    payload.turns
+    turnsForSynthesis
       .map((t) => `${t.role === 'assistant' ? 'Interviewer' : consent.customer_name}: ${t.content}`)
       .join('\n\n')
 
@@ -1744,16 +1785,19 @@ export async function completeClientIntakeToBlueprint(input: {
     } as any)
   }
 
-  // Ensure locale-based PM auto-routing runs using the finalized client intake locale
-  try {
-    const { autoAssignProjectByLocale } = await import('@/lib/producer/workspaceAccess')
-    await autoAssignProjectByLocale({
-      ownerUserId: session.owner_user_id,
-      projectId: targetProject.id,
-      locale: activeLocale,
-    })
-  } catch (routeErr) {
-    console.warn('[intakeService] Locale PM auto-routing skipped:', routeErr)
+  // Defer PM auto-routing when automated self-serve Blueprint Pass is enabled —
+  // a human Video Service PM is assigned only when the customer approves their Blueprint!
+  if (payload.autoPublishBlueprintShare === false) {
+    try {
+      const { autoAssignProjectByLocale } = await import('@/lib/producer/workspaceAccess')
+      await autoAssignProjectByLocale({
+        ownerUserId: session.owner_user_id,
+        projectId: targetProject.id,
+        locale: activeLocale,
+      })
+    } catch (routeErr) {
+      console.warn('[intakeService] Locale PM auto-routing skipped:', routeErr)
+    }
   }
 
   const prevMeta = ((targetProject.metadata || {}) as Record<string, unknown>)
@@ -1762,6 +1806,8 @@ export async function completeClientIntakeToBlueprint(input: {
   let finalTreatmentVariant: Record<string, any> = filmTreatmentVariant
   let blueprintShareToken: string | undefined
   let blueprintShareUrl: string | undefined
+  let guestShareToken: string | undefined
+  let guestShareUrl: string | undefined
 
   if (payload.autoPublishBlueprintShare !== false) {
     try {
@@ -1785,11 +1831,14 @@ export async function completeClientIntakeToBlueprint(input: {
       finalTreatmentVariant = provisioned.treatment
       blueprintShareToken = provisioned.shareToken
       blueprintShareUrl = provisioned.shareUrl
+      guestShareToken = provisioned.guestShareToken
+      guestShareUrl = provisioned.guestShareUrl
     } catch (provErr) {
       console.warn('[intakeService] Automated Blueprint Share provisioning warning:', provErr)
     }
   }
 
+  const nowIso = new Date().toISOString()
   const nextMeta: Record<string, unknown> = {
     ...prevMeta,
     storyLocale: activeLocale === 'zh-CN' ? 'zh' : activeLocale,
@@ -1832,9 +1881,10 @@ export async function completeClientIntakeToBlueprint(input: {
       stage: blueprintShareToken ? 'blueprint_client_iteration' : 'blueprint_review_ready',
       actionState: blueprintShareToken ? 'waiting_on_client' : 'action_required',
       customerName: consent.customer_name,
-      customerEmail: consent.customer_email,
+      customerEmail: consent.customer_email || payload.customerEmail,
       customerConsentId: consent.id,
-      intakeCompletedAt: new Date().toISOString(),
+      intakeCompletedAt: nowIso,
+      lastClientActivityAt: nowIso,
       maxFeedbackRounds: payload.maxFeedbackRounds,
       maxBlueprintRevisions:
         payload.maxBlueprintRevisions ?? DEFAULT_MAX_AUTOMATED_BLUEPRINT_REVISIONS,
@@ -1842,6 +1892,7 @@ export async function completeClientIntakeToBlueprint(input: {
       blueprintDepositUsd:
         payload.blueprintDepositUsd ?? DEFAULT_CLIENT_BLUEPRINT_DEPOSIT_USD,
       ...(blueprintShareToken ? { blueprintShareToken, blueprintShareUrl } : {}),
+      ...(guestShareToken ? { guestShareToken, guestShareUrl } : {}),
       ...(confirmedVision
         ? {
             confirmedVision: {
@@ -1871,10 +1922,12 @@ export async function completeClientIntakeToBlueprint(input: {
       status: 'closed',
       payload: {
         ...payload,
+        turns: turnsForSynthesis,
         phase: 'completed',
-        completedAt: new Date().toISOString(),
+        completedAt: nowIso,
         resultProjectId: targetProject.id,
         ...(blueprintShareToken ? { blueprintShareToken, blueprintShareUrl } : {}),
+        ...(guestShareUrl ? { guestShareUrl } : {}),
       } as unknown as Record<string, unknown>,
     })
   }
@@ -1899,9 +1952,13 @@ export async function completeClientIntakeToBlueprint(input: {
       userId: session.owner_user_id,
       projectId: targetProject.id,
       type: 'client_intake_submitted',
-      title: `Client Intake Ready: ${extracted.title}`,
-      message: `${consent.customer_name} completed their ${payload.vertical.replace(/_/g, ' ')} onboarding interview. Review Blueprint & run Audience Resonance before sharing back.`,
-      sendEmail: true,
+      title: blueprintShareToken
+        ? `Self-Serve Blueprint Delivered: ${extracted.title}`
+        : `Client Intake Ready: ${extracted.title}`,
+      message: blueprintShareToken
+        ? `${consent.customer_name} completed their ${payload.vertical.replace(/_/g, ' ')} intake. Their Illustrated Blueprint & AR score were auto-delivered — no PM work needed until they click Approve.`
+        : `${consent.customer_name} completed their ${payload.vertical.replace(/_/g, ' ')} onboarding interview. Review Blueprint & run Audience Resonance before sharing back.`,
+      sendEmail: !blueprintShareToken,
       metadata: {
         projectId: targetProject.id,
         customerName: consent.customer_name,
@@ -1920,5 +1977,6 @@ export async function completeClientIntakeToBlueprint(input: {
     extracted,
     blueprintShareToken,
     blueprintShareUrl,
+    guestShareUrl,
   }
 }

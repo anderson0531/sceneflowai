@@ -11,6 +11,33 @@ export const OPERATOR_CREDIT_COST_USD = 0.01
 /** Stale threshold when waiting on client feedback before flagging SLA nudge (48 hours). */
 export const CLIENT_WAITING_STALE_HOURS = 48
 
+/** High-priority conversion follow-up threshold for unapproved Blueprints (7 days = 168 hours). */
+export const BLUEPRINT_HIGH_PRIORITY_STALE_HOURS = 168
+
+/**
+ * Computes total realized client revenue for an order:
+ * - Full production `clientPriceUsd` when quoted/booked, OR automated `blueprintDepositUsd` when still in Blueprint Pass stage
+ * - Plus any self-serve extra Blueprint iteration pack revenue (`extraIterationRevenueUsd`).
+ */
+export function getClientOrderRevenueUsd(order: Record<string, any> | null | undefined): number {
+  if (!order || typeof order !== 'object') return 0
+  const productionPrice = Math.max(0, Number(order.clientPriceUsd ?? 0) || 0)
+  const blueprintDeposit = Math.max(0, Number(order.blueprintDepositUsd ?? 0) || 0)
+  const extraIterations = Math.max(0, Number(order.extraIterationRevenueUsd ?? 0) || 0)
+  const baseRevenue = productionPrice > 0 ? productionPrice : blueprintDeposit
+  return Number((baseRevenue + extraIterations).toFixed(2))
+}
+
+export function isSelfServePreApprovalOrder(order: Record<string, any> | null | undefined): boolean {
+  if (!order || typeof order !== 'object') return false
+  const stage = String(order.stage || '').toLowerCase()
+  return (
+    stage === 'awaiting_intake' ||
+    stage === 'intake_in_progress' ||
+    stage === 'blueprint_client_iteration'
+  )
+}
+
 /** Due-soon threshold before target delivery date (48 hours). */
 export const SLA_DUE_SOON_HOURS = 48
 
@@ -140,6 +167,10 @@ export function resolveKanbanStage(project: AgencyProjectInput): KanbanStageId {
 
   if (orderStage === 'awaiting_intake' || orderStage === 'intake_in_progress') {
     return 'intake'
+  }
+
+  if (orderStage === 'blueprint_client_iteration' || orderStage === 'blueprint_review_ready' || orderStage === 'blueprint_approved') {
+    return 'blueprint'
   }
 
   if (
@@ -452,7 +483,7 @@ export function buildClientDirectory(
     const displayName = nameRaw || emailRaw || proj.title
     const locale = String(order.locale || meta.storyLocale || 'en').trim() || 'en'
     const vertical = typeof order.vertical === 'string' && order.vertical.trim() ? order.vertical.trim() : null
-    const priceUsd = Math.max(0, Number(order.clientPriceUsd ?? 0) || 0)
+    const priceUsd = getClientOrderRevenueUsd(order)
     const creditsUsed = Math.max(0, getProjectCreditsUsed(meta))
     const stage = resolveKanbanStage(proj)
     const sla = evaluateProjectSla(proj, now)
@@ -614,7 +645,11 @@ export function buildPmScorecard(input: {
   for (const p of input.projects) {
     const stage = resolveKanbanStage(p)
     const isArchived = String(p.status || '').toLowerCase() === 'archived'
-    if (!isArchived && stage !== 'delivered') {
+    const order = ((p.metadata || {}) as Record<string, any>).clientOrder as
+      | Record<string, any>
+      | undefined
+    // Self-serve pre-approval Blueprint Passes run zero-touch until the customer clicks Approve!
+    if (!isArchived && stage !== 'delivered' && !isSelfServePreApprovalOrder(order)) {
       const pms = assignedMembersByProject.get(p.id)
       if (!pms || pms.size === 0) {
         unassignedActiveCount += 1
@@ -660,7 +695,7 @@ export function buildPmScorecard(input: {
           actionRequiredCount += 1
         }
 
-        assignedRevenueUsd += Math.max(0, Number(order.clientPriceUsd ?? 0) || 0)
+        assignedRevenueUsd += getClientOrderRevenueUsd(order)
         assignedCreditsUsed += Math.max(0, getProjectCreditsUsed(meta))
       }
     }
@@ -940,4 +975,190 @@ export function formatStorageBytes(bytes: number): string {
     return `${Math.round(safe / 1024)} KB`
   }
   return `${Math.round(safe)} B`
+}
+
+export type BlueprintFunnelBucket =
+  | 'intake_incomplete'
+  | 'iterating'
+  | 'stale_48h'
+  | 'stale_7d'
+  | 'rounds_exhausted'
+  | 'approved_ready_to_quote'
+
+export interface BlueprintFunnelItem {
+  projectId: string
+  title: string
+  customerName: string
+  customerEmail: string | null
+  vertical: string
+  locale: string
+  bucket: BlueprintFunnelBucket
+  bucketLabel: string
+  idleHours: number
+  roundsUsed: number
+  maxBlueprintRevisions: number
+  guestFeedbackCount: number
+  blueprintPassRevenueUsd: number
+  extraIterationPacksPurchased: number
+  blueprintShareToken: string | null
+  blueprintShareUrl: string | null
+  lastNudgeSentAt: string | null
+  lastActivityAt: string | null
+}
+
+export interface BlueprintFunnelSummary {
+  totalSelfServeCount: number
+  intakeIncompleteCount: number
+  iteratingCount: number
+  stale48hCount: number
+  stale7dCount: number
+  roundsExhaustedCount: number
+  approvedReadyToQuoteCount: number
+  automatedBlueprintRevenueUsd: number
+  items: BlueprintFunnelItem[]
+}
+
+const BUCKET_PRIORITY: Record<BlueprintFunnelBucket, number> = {
+  approved_ready_to_quote: 0,
+  rounds_exhausted: 1,
+  stale_7d: 2,
+  stale_48h: 3,
+  iterating: 4,
+  intake_incomplete: 5,
+}
+
+/**
+ * Separates automated self-serve Blueprint Pass leads from active production projects so
+ * Video Service Providers can monitor stalled/unapproved Blueprints, send 1-click conversion
+ * nudges, and assign PMs right when customers approve.
+ */
+export function buildBlueprintFunnel(
+  projects: AgencyProjectInput[],
+  now = new Date()
+): BlueprintFunnelSummary {
+  const items: BlueprintFunnelItem[] = []
+  let intakeIncompleteCount = 0
+  let iteratingCount = 0
+  let stale48hCount = 0
+  let stale7dCount = 0
+  let roundsExhaustedCount = 0
+  let approvedReadyToQuoteCount = 0
+  let automatedBlueprintRevenueUsd = 0
+
+  for (const proj of projects) {
+    if (String(proj.status || '').toLowerCase() === 'archived') continue
+    const meta = (proj.metadata || {}) as Record<string, any>
+    const order = (meta.clientOrder || {}) as Record<string, any>
+    if (!order.isClientProject) continue
+
+    const stage = String(order.stage || '').toLowerCase()
+    const isFunnelStage =
+      stage === 'awaiting_intake' ||
+      stage === 'intake_in_progress' ||
+      stage === 'blueprint_client_iteration' ||
+      stage === 'blueprint_review_ready' ||
+      stage === 'blueprint_approved'
+    if (!isFunnelStage) continue
+
+    const roundsUsed = Math.max(
+      0,
+      Number(order.blueprintRoundsUsed ?? order.roundsUsed ?? 0) || 0
+    )
+    const maxBlueprintRevisions = Math.max(
+      1,
+      Number(order.maxBlueprintRevisions ?? order.maxFeedbackRounds ?? 4) || 4
+    )
+    const depositUsd = Math.max(0, Number(order.blueprintDepositUsd ?? 0) || 0)
+    const extraRevUsd = Math.max(0, Number(order.extraIterationRevenueUsd ?? 0) || 0)
+    const blueprintPassRevenueUsd = Number((depositUsd + extraRevUsd).toFixed(2))
+    automatedBlueprintRevenueUsd += blueprintPassRevenueUsd
+
+    const refTs =
+      order.lastClientActivityAt ||
+      order.lastClientBlueprintRevisionAt ||
+      order.intakeCompletedAt ||
+      proj.updatedAt ||
+      proj.createdAt
+    const refMs = refTs ? Date.parse(String(refTs)) : NaN
+    const idleHours = Number.isFinite(refMs)
+      ? Math.max(0, Math.floor((now.getTime() - refMs) / (60 * 60 * 1000)))
+      : 0
+
+    let bucket: BlueprintFunnelBucket
+    let bucketLabel: string
+    if (stage === 'blueprint_approved') {
+      bucket = 'approved_ready_to_quote'
+      bucketLabel = 'Approved — Ready to Quote'
+      approvedReadyToQuoteCount += 1
+    } else if (stage === 'awaiting_intake' || stage === 'intake_in_progress') {
+      bucket = 'intake_incomplete'
+      bucketLabel = idleHours >= CLIENT_WAITING_STALE_HOURS ? `Intake Idle ${idleHours}h` : 'Intake In Progress'
+      intakeIncompleteCount += 1
+    } else if (roundsUsed >= maxBlueprintRevisions) {
+      bucket = 'rounds_exhausted'
+      bucketLabel = 'Rounds Used — Upsell / Close'
+      roundsExhaustedCount += 1
+    } else if (idleHours >= BLUEPRINT_HIGH_PRIORITY_STALE_HOURS) {
+      bucket = 'stale_7d'
+      bucketLabel = `Unapproved ${Math.floor(idleHours / 24)}d+`
+      stale7dCount += 1
+    } else if (idleHours >= CLIENT_WAITING_STALE_HOURS) {
+      bucket = 'stale_48h'
+      bucketLabel = `Idle ${idleHours}h — Nudge`
+      stale48hCount += 1
+    } else {
+      bucket = 'iterating'
+      bucketLabel = 'Active Self-Serve'
+      iteratingCount += 1
+    }
+
+    items.push({
+      projectId: proj.id,
+      title: proj.title,
+      customerName:
+        String(order.customerName || order.customerLabel || order.customerEmail || 'Client').trim(),
+      customerEmail:
+        typeof order.customerEmail === 'string' && order.customerEmail.trim()
+          ? order.customerEmail.trim()
+          : null,
+      vertical: String(order.vertical || 'custom_production'),
+      locale: String(order.locale || meta.storyLocale || 'en'),
+      bucket,
+      bucketLabel,
+      idleHours,
+      roundsUsed,
+      maxBlueprintRevisions,
+      guestFeedbackCount: Math.max(0, Number(order.guestFeedbackCount ?? 0) || 0),
+      blueprintPassRevenueUsd,
+      extraIterationPacksPurchased: Math.max(
+        0,
+        Number(order.extraIterationPacksPurchased ?? 0) || 0
+      ),
+      blueprintShareToken:
+        typeof order.blueprintShareToken === 'string' ? order.blueprintShareToken : null,
+      blueprintShareUrl:
+        typeof order.blueprintShareUrl === 'string' ? order.blueprintShareUrl : null,
+      lastNudgeSentAt:
+        typeof order.lastBlueprintNudgeSentAt === 'string' ? order.lastBlueprintNudgeSentAt : null,
+      lastActivityAt: Number.isFinite(refMs) ? new Date(refMs).toISOString() : null,
+    })
+  }
+
+  items.sort((a, b) => {
+    const pDiff = BUCKET_PRIORITY[a.bucket] - BUCKET_PRIORITY[b.bucket]
+    if (pDiff !== 0) return pDiff
+    return b.idleHours - a.idleHours
+  })
+
+  return {
+    totalSelfServeCount: items.length,
+    intakeIncompleteCount,
+    iteratingCount,
+    stale48hCount,
+    stale7dCount,
+    roundsExhaustedCount,
+    approvedReadyToQuoteCount,
+    automatedBlueprintRevenueUsd: Number(automatedBlueprintRevenueUsd.toFixed(2)),
+    items,
+  }
 }

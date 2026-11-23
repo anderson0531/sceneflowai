@@ -20,6 +20,7 @@ import type {
   BlueprintSectionAudioMap,
   BlueprintSectionAudioStatus,
   BlueprintSectionTranslationsByLanguage,
+  BlueprintShareAccessRole,
   BlueprintShareSettings,
 } from '@/lib/blueprint/shareTypes'
 import { countSectionsWithUrl } from '@/lib/blueprint/shareAudioPayload'
@@ -141,6 +142,8 @@ export function BlueprintShareViewer({ token }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [shareSettings, setShareSettings] = useState<BlueprintShareSettings | null>(null)
+  const [accessRole, setAccessRole] = useState<BlueprintShareAccessRole>('standard')
+  const [guestShareUrl, setGuestShareUrl] = useState<string | null>(null)
   const [pendingClarification, setPendingClarification] =
     useState<BlueprintClientClarificationDraft | null>(null)
   const [approvingBlueprint, setApprovingBlueprint] = useState(false)
@@ -154,6 +157,8 @@ export function BlueprintShareViewer({ token }: Props) {
       setError(data.error || 'Link not found')
       return false
     }
+    setAccessRole((data.accessRole as BlueprintShareAccessRole) || 'standard')
+    setGuestShareUrl(typeof data.guestShareUrl === 'string' ? data.guestShareUrl : null)
     setTreatment(data.payload?.treatment || null)
     setHeroImageUrl(
       resolveBlueprintHeroImageUrl(data.payload) ??
@@ -486,9 +491,14 @@ export function BlueprintShareViewer({ token }: Props) {
 
   const roundLimitReached = isBlueprintRoundLimitReached(shareSettings)
   const isApproved = shareSettings?.approvalStatus === 'approved'
+  const isGuestReviewer = accessRole === 'guest_reviewer'
   const brandSnapshot = shareSettings?.brandProfileSnapshot
   const portalLocale = resolveClientPortalLocale(reviewLanguage)
-  const canFeedback = allowFeedback && !!participantId && !submitted && !roundLimitReached
+  const canFeedback =
+    allowFeedback &&
+    !!participantId &&
+    !submitted &&
+    (isGuestReviewer || shareSettings?.clientAutoReviseMode === true || !roundLimitReached)
 
   const handleApproveBlueprint = async () => {
     setApprovingBlueprint(true)
@@ -569,7 +579,7 @@ export function BlueprintShareViewer({ token }: Props) {
             )}
 
             <div className="flex flex-wrap items-center gap-2.5">
-              {typeof shareSettings?.maxFeedbackRounds === 'number' && (
+              {!isGuestReviewer && typeof shareSettings?.maxFeedbackRounds === 'number' && (
                 <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-200">
                   {formatPortalCopy(portalLocale, 'roundBadge', {
                     used: shareSettings.roundsUsed ?? 0,
@@ -577,7 +587,12 @@ export function BlueprintShareViewer({ token }: Props) {
                   })}
                 </span>
               )}
-              {shareSettings?.clientMode && (
+              {isGuestReviewer && (
+                <span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-200">
+                  Guest Reviewer • Comment Only
+                </span>
+              )}
+              {shareSettings?.clientMode && !isGuestReviewer && (
                 <button
                   type="button"
                   disabled={isApproved || approvingBlueprint}
@@ -614,7 +629,7 @@ export function BlueprintShareViewer({ token }: Props) {
                   )}
             </div>
           </div>
-          {roundLimitReached && !isApproved && (
+          {roundLimitReached && !isApproved && !isGuestReviewer && !shareSettings?.clientAutoReviseMode && (
             <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
               {formatPortalCopy(portalLocale, 'roundLimitReached', {
                 brand: brandSnapshot?.brandName || ownerName,
@@ -655,12 +670,27 @@ export function BlueprintShareViewer({ token }: Props) {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-8 pb-36">
-        {shareSettings?.clientAutoReviseMode && !isApproved && (
+        {isGuestReviewer && (
+          <div className="rounded-2xl border border-cyan-500/35 bg-gradient-to-r from-cyan-950/50 via-slate-900/90 to-slate-900/90 p-4 space-y-1 shadow-lg">
+            <div className="text-sm font-semibold text-cyan-200">
+              Shared for Your Review &amp; Comments
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Listen to the narrated Blueprint and explore each chapter storyboard below. Any comments
+              you leave are sent directly to{' '}
+              <strong className="text-white">{shareSettings?.customerName || 'the project owner'}</strong>{' '}
+              to review and filter before updating the Blueprint.
+            </p>
+          </div>
+        )}
+        {shareSettings?.clientAutoReviseMode && !isGuestReviewer && !isApproved && (
           <ClientAutoRevisePanel
             token={token}
             locale={portalLocale}
             shareSettings={shareSettings}
             initialClarification={pendingClarification}
+            arSnapshot={arSnapshot}
+            guestShareUrl={guestShareUrl}
             onBlueprintUpdated={loadShare}
           />
         )}
@@ -931,7 +961,7 @@ export function BlueprintShareViewer({ token }: Props) {
 
       </main>
 
-      {allowFeedback && participantId && !submitted && !roundLimitReached && activeTab === 'review' && (
+      {allowFeedback && participantId && !submitted && (isGuestReviewer || shareSettings?.clientAutoReviseMode === true || !roundLimitReached) && activeTab === 'review' && (
         <div className="fixed bottom-0 inset-x-0 z-30 border-t border-gray-800 bg-gray-950/95 backdrop-blur px-4 py-3">
           <div className="max-w-4xl mx-auto flex items-center gap-3">
             <div className="flex-1 hidden sm:block" />

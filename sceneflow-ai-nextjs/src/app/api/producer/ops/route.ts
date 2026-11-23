@@ -12,10 +12,12 @@ import { ensureProducerPlatformSchema } from '@/lib/database/migrateProducerPlat
 import { buildAccessibleProjectsScope } from '@/lib/producer/workspaceProjectsQuery'
 import { resolveProducerWhiteLabelEligibility } from '@/lib/producer/producerProfileService'
 import {
+  buildBlueprintFunnel,
   buildClientDirectory,
   buildPmScorecard,
   estimateProjectStorage,
   evaluateProjectSla,
+  getClientOrderRevenueUsd,
   getTierStorageCapBytes,
   resolveKanbanStage,
   type AgencyProjectInput,
@@ -141,6 +143,7 @@ export async function GET(req: NextRequest) {
     }))
 
     const clients = buildClientDirectory(agencyProjects, now)
+    const blueprintFunnel = buildBlueprintFunnel(agencyProjects, now)
 
     const scorecard = buildPmScorecard({
       members: members.map((m) => ({
@@ -197,7 +200,7 @@ export async function GET(req: NextRequest) {
       if (stage === 'delivered') deliveredCount += 1
 
       const order = (p.metadata?.clientOrder || {}) as Record<string, any>
-      totalRevenueUsd += Math.max(0, Number(order.clientPriceUsd ?? 0) || 0)
+      totalRevenueUsd += getClientOrderRevenueUsd(order)
       totalCreditsUsed += Math.max(0, getProjectCreditsUsed(p.metadata))
 
       const est = estimateProjectStorage(p.metadata, p.clientUploadsBytes || 0)
@@ -239,6 +242,7 @@ export async function GET(req: NextRequest) {
         totalCreditsUsed,
       },
       clients,
+      blueprintFunnel,
       pmScorecard: scorecard.rows,
       unassignedActiveCount: scorecard.unassignedActiveCount,
       storageSummary: {

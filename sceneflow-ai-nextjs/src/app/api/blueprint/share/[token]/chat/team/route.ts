@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sequelize } from '@/config/database'
-import { resolveSessionByToken, getPayload } from '@/lib/blueprint/shareSession'
+import { resolveBlueprintShareByToken, getPayload } from '@/lib/blueprint/shareSession'
 import { requireOwnerForSession, validateParticipant, sessionDbId as dbSessionId } from '@/lib/blueprint/shareAuth'
 import { listChatMessages, postChatMessage } from '@/lib/blueprint/shareChat'
 import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
@@ -11,9 +11,8 @@ type RouteCtx = { params: Promise<{ token: string }> }
 
 async function resolveSession(token: string) {
   await sequelize.authenticate()
-  const session = await resolveSessionByToken(token)
-  if (!session || !getPayload(session)) return null
-  return session
+  const resolved = await resolveBlueprintShareByToken(token)
+  return resolved ? resolved.session : null
 }
 
 export async function GET(req: NextRequest, ctx: RouteCtx) {

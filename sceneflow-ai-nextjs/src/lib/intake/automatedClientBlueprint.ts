@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import CollabSession from '@/models/CollabSession'
+import CollabBlueprintFeedback from '@/models/CollabBlueprintFeedback'
 import Project from '@/models/Project'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getGeminiProductModel } from '@/lib/config/modelConfig'
@@ -34,9 +35,12 @@ import {
 import { sanitizeBlueprintARForShare, type SharedBlueprintARSnapshot } from '@/lib/blueprint/sanitizeShareAR'
 import type {
   BlueprintClientClarificationDraft,
+  BlueprintFeedbackSections,
+  BlueprintGuestFeedbackItem,
   BlueprintSessionPayload,
 } from '@/lib/blueprint/shareTypes'
-import { resolveSessionByToken, getPayload } from '@/lib/blueprint/shareSession'
+import { resolveBlueprintShareByToken } from '@/lib/blueprint/shareSession'
+import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollabBlueprintSchema'
 import { isBlueprintRoundLimitReached } from '@/lib/blueprint/shareSettings'
 import {
   buildGuidedRevisePayload,
@@ -57,8 +61,51 @@ function sessionDbId(session: { id?: string }): string {
 export const DEFAULT_CLIENT_BLUEPRINT_DEPOSIT_USD = 29
 export const DEFAULT_MAX_AUTOMATED_BLUEPRINT_REVISIONS = 4
 export const DEFAULT_MAX_AUTOMATED_AR_ITERATIONS = 3
+export const DEFAULT_ITERATION_PACK_PRICE_USD = 19
+export const DEFAULT_ITERATION_PACK_REVISIONS = 3
+export const DEFAULT_ITERATION_PACK_AR_PASSES = 2
 const MAX_INITIAL_STORYBOARD_BEATS = 6
-const MAX_REVISED_STORYBOARD_BEATS = 2
+const MAX_REVISED_STORYBOARD_BEATS = 6
+const MAX_TOTAL_BLUEPRINT_REVISIONS_CAP = 20
+const MAX_TOTAL_AR_ITERATIONS_CAP = 12
+
+async function resolvePrimaryCustomerBlueprintSession(token: string): Promise<
+  | { ok: true; session: CollabSession; payload: BlueprintSessionPayload }
+  | { ok: false; status: number; error: string }
+> {
+  const resolved = await resolveBlueprintShareByToken(token)
+  if (!resolved) {
+    return { ok: false, status: 404, error: 'Blueprint share link not found or expired' }
+  }
+  if (resolved.accessRole === 'guest_reviewer') {
+    return {
+      ok: false,
+      status: 403,
+      error:
+        'GUEST_READ_ONLY: Only the primary customer can revise, triage feedback, or approve this Blueprint.',
+    }
+  }
+  return { ok: true, session: resolved.session, payload: resolved.payload }
+}
+
+function summarizeFeedbackSectionsForPrompt(
+  sections?: BlueprintFeedbackSections | null
+): string {
+  if (!sections || typeof sections !== 'object') return ''
+  const parts: string[] = []
+  for (const [secKey, val] of Object.entries(sections)) {
+    if (!val) continue
+    const notes = [
+      val.concerns ? `Concerns: ${val.concerns}` : '',
+      val.suggestions ? `Suggestions: ${val.suggestions}` : '',
+      val.strengths ? `Strengths: ${val.strengths}` : '',
+    ]
+      .filter(Boolean)
+      .join(' | ')
+    if (notes) parts.push(`[${secKey}] ${notes}`)
+  }
+  return parts.join('; ')
+}
 
 export async function sendAutomatedClientPortalEmail(input: {
   toEmail?: string | null
@@ -232,7 +279,7 @@ export async function illustrateTreatmentBeatsForClientShare(input: {
         operation: 'automated_client_blueprint_beat_storyboards',
         generatedCount,
       }
-    ).catch((e) => console.warn('[automatedClientBlueprint] Storyboard credit charge warning:', e))
+    ).catch((e: unknown) => console.warn('[automatedClientBlueprint] Storyboard credit charge warning:', e))
   }
 
   const firstBeatImg = nextBeats.find((b) => typeof b?.imageUrl === 'string' && b.imageUrl)?.imageUrl as
@@ -343,7 +390,7 @@ Return valid JSON ONLY:
       await CreditService.charge(ownerUserId, arCost, 'ai_usage', projectId, {
         operation: 'automated_client_audience_resonance',
         iterationNumber,
-      }).catch((e) => console.warn('[automatedClientBlueprint] AR credit charge warning:', e))
+      }).catch((e: unknown) => console.warn('[automatedClientBlueprint] AR credit charge warning:', e))
     } catch (err) {
       console.warn('[automatedClientBlueprint] AR analysis fallback used:', err)
     }
@@ -413,6 +460,8 @@ export async function provisionAutomatedBlueprintShareFromIntake(input: {
 }): Promise<{
   shareToken: string
   shareUrl: string
+  guestShareToken: string
+  guestShareUrl: string
   treatment: Record<string, any>
   arSnapshot: SharedBlueprintARSnapshot | null
 }> {
@@ -451,8 +500,9 @@ export async function provisionAutomatedBlueprintShareFromIntake(input: {
     console.warn('[automatedClientBlueprint] Initial AR pass warning:', arErr)
   }
 
-  // 3. Create white-label Client Blueprint Share session
+  // 3. Create white-label Client Blueprint Share session with separate primary vs guest comment-only tokens
   const shareToken = crypto.randomBytes(24).toString('base64url')
+  const guestShareToken = crypto.randomBytes(20).toString('base64url')
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   const reviewLang = toBlueprintReviewLanguageCode(input.locale)
 
@@ -472,10 +522,16 @@ export async function provisionAutomatedBlueprintShareFromIntake(input: {
       clientMode: true,
       clientAutoReviseMode: true,
       hideAudienceResonance: false,
+      guestShareToken,
       maxFeedbackRounds: maxRevisions,
       roundsUsed: 0,
       maxArIterations: maxAr,
       arIterationsUsed: arSnapshot ? 1 : 0,
+      extraIterationPacksPurchased: 0,
+      extraIterationRevenueUsd: 0,
+      iterationPackPriceUsd: DEFAULT_ITERATION_PACK_PRICE_USD,
+      iterationPackRevisions: DEFAULT_ITERATION_PACK_REVISIONS,
+      iterationPackArPasses: DEFAULT_ITERATION_PACK_AR_PASSES,
       customerEmail: input.customerEmail?.trim() || undefined,
       customerName: input.customerName,
       blueprintDepositUsd: depositUsd,
@@ -488,6 +544,8 @@ export async function provisionAutomatedBlueprintShareFromIntake(input: {
     sectionAudioVoiceId: DEFAULT_BLUEPRINT_GEMINI_VOICE,
     sectionAudioByLanguage: {},
     blueprintAudienceResonance: arSnapshot,
+    appliedFeedbackIds: [],
+    dismissedFeedbackIds: [],
   }
 
   const createdShare = await CollabSession.create({
@@ -515,6 +573,7 @@ export async function provisionAutomatedBlueprintShareFromIntake(input: {
 
   const baseOrigin = (input.origin || getAppBaseUrl()).replace(/\/$/, '')
   const shareUrl = `${baseOrigin}/blueprint/share/${shareToken}?lang=${encodeURIComponent(input.locale)}`
+  const guestShareUrl = `${baseOrigin}/blueprint/share/${guestShareToken}?lang=${encodeURIComponent(input.locale)}`
 
   // 5. Email automated Illustrated & Narrated Blueprint Review link to the customer
   await sendAutomatedClientPortalEmail({
@@ -525,16 +584,18 @@ export async function provisionAutomatedBlueprintShareFromIntake(input: {
     heading: 'Your Illustrated & Narrated Storyboard Blueprint Is Ready',
     paragraphs: [
       `Hi ${input.customerName},`,
-      `Your story Blueprint for "${String(illustrated.treatment.title || 'your film')}" has been synthesized with chapter storyboards, voiceover audio, and an Audience Resonance score${arSnapshot?.analysis?.overallScore ? ` (${arSnapshot.analysis.overallScore}/100)` : ''}.`,
-      `Open your private review portal below to listen, inspect each storyboard beat, refine up to ${maxRevisions} AI-guided iterations (plus up to ${maxAr} Audience Resonance passes), and click Approve when you are ready for your production quote.`,
+      `Your living Draft 1 Blueprint for "${String(illustrated.treatment.title || 'your film')}" is ready with chapter storyboards, voiceover audio, and an Audience Resonance score${arSnapshot?.analysis?.overallScore ? ` (${arSnapshot.analysis.overallScore}/100)` : ''}.`,
+      `Open your private Director Portal below to listen, share a comment-only link with family or teammates (you filter their notes before applying any changes), refine up to ${maxRevisions} AI-guided iterations, and click Approve when you are ready for your production quote.`,
     ],
-    ctaLabel: 'Review Illustrated Storyboard Blueprint',
+    ctaLabel: 'Open My Director Blueprint Portal',
     ctaUrl: shareUrl,
   })
 
   return {
     shareToken,
     shareUrl,
+    guestShareToken,
+    guestShareUrl,
     treatment: illustrated.treatment,
     arSnapshot,
   }
@@ -543,6 +604,8 @@ export async function provisionAutomatedBlueprintShareFromIntake(input: {
 export async function clarifyCustomerBlueprintFeedback(input: {
   token: string
   rawFeedback: string
+  selectedFeedbackIds?: string[]
+  selectedRecommendationIds?: string[]
   reviewerName?: string
   locale?: string
 }): Promise<
@@ -554,10 +617,9 @@ export async function clarifyCustomerBlueprintFeedback(input: {
     }
   | { ok: false; status: number; error: string }
 > {
-  const session = await resolveSessionByToken(input.token)
-  if (!session) return { ok: false, status: 404, error: 'Blueprint share link not found or expired' }
-  const payload = getPayload(session)
-  if (!payload) return { ok: false, status: 400, error: 'Invalid Blueprint session' }
+  const resolved = await resolvePrimaryCustomerBlueprintSession(input.token)
+  if (!resolved.ok) return resolved
+  const { session, payload } = resolved
 
   if (payload.shareSettings?.approvalStatus === 'approved') {
     return { ok: false, status: 409, error: 'BLUEPRINT_LOCKED: This Blueprint has already been approved.' }
@@ -571,11 +633,68 @@ export async function clarifyCustomerBlueprintFeedback(input: {
   }
 
   const trimmed = (input.rawFeedback || '').trim()
-  if (!trimmed) {
+  const selectedFeedbackIds = Array.isArray(input.selectedFeedbackIds)
+    ? input.selectedFeedbackIds.map((id) => String(id || '').trim()).filter(Boolean)
+    : []
+  const selectedRecommendationIds = Array.isArray(input.selectedRecommendationIds)
+    ? input.selectedRecommendationIds.map((id) => String(id || '').trim()).filter(Boolean)
+    : []
+
+  if (!trimmed && selectedFeedbackIds.length === 0 && selectedRecommendationIds.length === 0) {
+    return {
+      ok: false,
+      status: 400,
+      error: 'Please enter changes, select a collaborator note, or pick an Audience Resonance suggestion.',
+    }
+  }
+
+  // Pull primary-customer-selected guest feedback notes so they can be filtered & merged into 1 iteration
+  const guestNoteLines: string[] = []
+  if (selectedFeedbackIds.length > 0) {
+    try {
+      await ensureCollabBlueprintFeedbackTable().catch(() => undefined)
+      const rows = await CollabBlueprintFeedback.findAll({
+        where: { sessionId: sessionDbId(session) },
+        order: [['createdAt', 'ASC']],
+        limit: 100,
+      })
+      const idSet = new Set(selectedFeedbackIds)
+      for (const row of rows) {
+        if (!idSet.has(String(row.id))) continue
+        const sectionSummary = summarizeFeedbackSectionsForPrompt(row.sections)
+        const noteText = [row.freeformNotes || '', sectionSummary].filter(Boolean).join(' — ')
+        if (noteText.trim()) {
+          guestNoteLines.push(`${row.reviewerName}: ${noteText.trim()}`)
+        }
+      }
+    } catch (err) {
+      console.warn('[automatedClientBlueprint] Could not load selected guest feedback rows:', err)
+    }
+  }
+
+  const arRecs = payload.blueprintAudienceResonance?.analysis?.recommendations || []
+  const selectedArLines = arRecs
+    .filter((r) => selectedRecommendationIds.includes(r.id))
+    .map((r) => `${r.title || 'AR Suggestion'}: ${r.text}`)
+
+  const combinedInput = [
+    trimmed ? `Primary Customer Notes:\n${trimmed}` : '',
+    guestNoteLines.length > 0
+      ? `Approved Family / Team Feedback:\n${guestNoteLines.map((l) => `- ${l}`).join('\n')}`
+      : '',
+    selectedArLines.length > 0
+      ? `Selected Audience Resonance Suggestions:\n${selectedArLines.map((l) => `- ${l}`).join('\n')}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+    .trim()
+
+  if (!combinedInput) {
     return { ok: false, status: 400, error: 'Please enter the changes you would like to make' }
   }
 
-  const quarantine = evaluateCustomerTextQuarantine(trimmed)
+  const quarantine = evaluateCustomerTextQuarantine(combinedInput)
   if (quarantine.status === 'flagged') {
     return {
       ok: false,
@@ -590,25 +709,29 @@ export async function clarifyCustomerBlueprintFeedback(input: {
   const languageName = getLocaleEnglishName(activeLocale)
   const treatment = payload.treatment || {}
 
-  let clarifiedSummary = trimmed.slice(0, 400)
-  let proposedChanges: string[] = [trimmed.slice(0, 240)]
+  let clarifiedSummary = combinedInput.slice(0, 400)
+  let proposedChanges: string[] = [
+    ...(trimmed ? [trimmed.slice(0, 240)] : []),
+    ...guestNoteLines.slice(0, 3).map((l) => l.slice(0, 220)),
+    ...selectedArLines.slice(0, 2).map((l) => l.slice(0, 220)),
+  ].slice(0, 5)
   let targetSections: BlueprintFixSection[] = ['beats', 'story']
 
   try {
-    const prompt = `You are a helpful executive story producer filtering and clarifying a client's feedback before routing it to SceneFlow's automated Blueprint Director.
+    const prompt = `You are a helpful executive story producer filtering and clarifying a client's feedback (and any approved family/team comments or Audience Resonance suggestions they selected) before routing it to SceneFlow's automated Blueprint Director.
 Output Language: ${languageName} (${activeLocale}) — write "clarifiedSummary" and "proposedChanges" in ${languageName}.
 
 Current Blueprint Title: ${String(treatment.title || '')}
 Logline: ${String(treatment.logline || '')}
 Beats: ${JSON.stringify((Array.isArray(treatment.beats) ? treatment.beats : []).slice(0, 8))}
 
-Client's Raw Feedback:
-"${trimmed.slice(0, 2500)}"
+Curated Revision Input:
+"${combinedInput.slice(0, 3500)}"
 
 RULES:
-1. Distill only actionable story, beat, tone, character, or prop adjustments (ignore off-topic chatter).
+1. Distill only actionable story, beat, tone, character, location, or prop adjustments (ignore off-topic chatter).
 2. Keep every character as a single named individual (never create plural group characters).
-3. Summarize clearly so the client can confirm: "Yes, apply these updates to my Blueprint."
+3. Summarize clearly so the primary customer can confirm: "Yes, apply these updates to my Blueprint."
 
 Return valid JSON ONLY:
 {
@@ -640,7 +763,7 @@ Return valid JSON ONLY:
       proposedChanges = parsed.proposedChanges
         .map((c) => String(c || '').trim())
         .filter(Boolean)
-        .slice(0, 5)
+        .slice(0, 6)
     }
     const validSections: BlueprintFixSection[] = ['core', 'story', 'tone', 'beats', 'characters']
     if (Array.isArray(parsed.targetSections)) {
@@ -655,10 +778,12 @@ Return valid JSON ONLY:
 
   const clarification: BlueprintClientClarificationDraft = {
     id: `clarify-${crypto.randomUUID().slice(0, 8)}`,
-    rawFeedback: trimmed.slice(0, 2500),
+    rawFeedback: combinedInput.slice(0, 3500),
     clarifiedSummary,
     proposedChanges,
     targetSections,
+    ...(selectedFeedbackIds.length > 0 ? { selectedFeedbackIds } : {}),
+    ...(selectedRecommendationIds.length > 0 ? { selectedRecommendationIds } : {}),
     createdAt: new Date().toISOString(),
   }
 
@@ -686,6 +811,7 @@ export async function applyConfirmedCustomerBlueprintRevision(input: {
   token: string
   confirmedIntent?: string
   selectedRecommendationIds?: string[]
+  selectedFeedbackIds?: string[]
   locale?: string
   origin?: string
 }): Promise<
@@ -700,10 +826,9 @@ export async function applyConfirmedCustomerBlueprintRevision(input: {
     }
   | { ok: false; status: number; error: string }
 > {
-  const session = await resolveSessionByToken(input.token)
-  if (!session) return { ok: false, status: 404, error: 'Blueprint share link not found or expired' }
-  const payload = getPayload(session)
-  if (!payload) return { ok: false, status: 400, error: 'Invalid Blueprint session' }
+  const resolved = await resolvePrimaryCustomerBlueprintSession(input.token)
+  if (!resolved.ok) return resolved
+  const { session, payload } = resolved
 
   if (payload.shareSettings?.approvalStatus === 'approved') {
     return { ok: false, status: 409, error: 'BLUEPRINT_LOCKED: This Blueprint has already been approved.' }
@@ -731,9 +856,16 @@ export async function applyConfirmedCustomerBlueprintRevision(input: {
   ).trim()
 
   const arRecs = payload.blueprintAudienceResonance?.analysis?.recommendations || []
-  const selectedIds = Array.isArray(input.selectedRecommendationIds)
+  const selectedIds = Array.isArray(input.selectedRecommendationIds) && input.selectedRecommendationIds.length > 0
     ? input.selectedRecommendationIds
-    : []
+    : Array.isArray(pending?.selectedRecommendationIds)
+      ? pending.selectedRecommendationIds
+      : []
+  const appliedFeedbackBatch = Array.isArray(input.selectedFeedbackIds) && input.selectedFeedbackIds.length > 0
+    ? input.selectedFeedbackIds
+    : Array.isArray(pending?.selectedFeedbackIds)
+      ? pending.selectedFeedbackIds
+      : []
 
   if (!intentText && selectedIds.length === 0) {
     return {
@@ -793,7 +925,7 @@ export async function applyConfirmedCustomerBlueprintRevision(input: {
     any
   >
 
-  // Preserve unchanged beat storyboard stills and detect modified beats for re-illustration
+  // Preserve unchanged beat storyboard stills and detect modified/newly added beats for re-illustration
   const changedBeatIndices: number[] = []
   if (Array.isArray(nextTreatment.beats)) {
     nextTreatment.beats = nextTreatment.beats.map((nb: Record<string, any>, idx: number) => {
@@ -828,7 +960,7 @@ export async function applyConfirmedCustomerBlueprintRevision(input: {
 
   await CreditService.charge(ownerUserId, reviseCreditCost, 'ai_usage', projectId, {
     operation: 'automated_client_blueprint_guided_revise',
-  }).catch((e) => console.warn('[automatedClientBlueprint] Guided revise credit warning:', e))
+  }).catch((e: unknown) => console.warn('[automatedClientBlueprint] Guided revise credit warning:', e))
 
   const nextRoundsUsed = Number(payload.shareSettings?.roundsUsed ?? 0) + 1
   const maxFeedbackRounds = Number(
@@ -840,7 +972,7 @@ export async function applyConfirmedCustomerBlueprintRevision(input: {
   )
   let nextArSnapshot = payload.blueprintAudienceResonance ?? null
 
-  // Auto-run Audience Resonance pass if under the 3-iteration cap
+  // Auto-run Audience Resonance pass if under the cap
   if (arIterationsUsed < maxArIterations) {
     try {
       const arRes = await runAutomatedClientAudienceResonance({
@@ -858,14 +990,22 @@ export async function applyConfirmedCustomerBlueprintRevision(input: {
     }
   }
 
+  const prevAppliedIds = Array.isArray(payload.appliedFeedbackIds) ? payload.appliedFeedbackIds : []
+  const mergedAppliedIds = Array.from(new Set([...prevAppliedIds, ...appliedFeedbackBatch]))
+  const reviewLang = toBlueprintReviewLanguageCode(activeLocale)
+  const nowIso = new Date().toISOString()
+
   const nextPayload: BlueprintSessionPayload = {
     ...payload,
     treatment: nextTreatment,
     heroImageUrl:
       resolveBlueprintHeroImageUrl(nextTreatment) ?? payload.heroImageUrl,
     pendingClientClarification: null,
+    appliedFeedbackIds: mergedAppliedIds,
     blueprintAudienceResonance: nextArSnapshot,
-    sectionAudioStatus: isGeminiTtsConfigured() ? 'idle' : payload.sectionAudioStatus,
+    sectionAudioStatus: isGeminiTtsConfigured() ? 'pending' : payload.sectionAudioStatus,
+    sectionAudioStartedAt: isGeminiTtsConfigured() ? nowIso : payload.sectionAudioStartedAt,
+    sectionAudioLanguage: reviewLang,
     sectionAudioByLanguage: {},
     shareSettings: {
       ...payload.shareSettings,
@@ -882,6 +1022,20 @@ export async function applyConfirmedCustomerBlueprintRevision(input: {
     { where: { id: sessionDbId(session) } }
   )
 
+  // Re-generate narrated section audio automatically so audio stays live after every client revision
+  if (isGeminiTtsConfigured() && sessionDbId(session)) {
+    try {
+      const { runShareSectionAudioGeneration } = await import(
+        '@/lib/blueprint/generateShareSectionAudio'
+      )
+      await runShareSectionAudioGeneration(sessionDbId(session), {
+        language: reviewLang,
+      })
+    } catch (ttsErr) {
+      console.warn('[automatedClientBlueprint] Post-revise TTS regeneration warning:', ttsErr)
+    }
+  }
+
   // Sync updated Blueprint variant back onto Project metadata
   const project = await Project.findByPk(projectId).catch(() => null)
   if (project) {
@@ -897,8 +1051,10 @@ export async function applyConfirmedCustomerBlueprintRevision(input: {
         clientOrder: {
           ...co,
           blueprintRoundsUsed: nextRoundsUsed,
+          roundsUsed: nextRoundsUsed,
           arIterationsUsed,
-          lastClientBlueprintRevisionAt: new Date().toISOString(),
+          lastClientActivityAt: nowIso,
+          lastClientBlueprintRevisionAt: nowIso,
         },
       },
     })
@@ -920,7 +1076,7 @@ export async function applyConfirmedCustomerBlueprintRevision(input: {
     paragraphs: [
       `Hi ${payload.shareSettings?.customerName || 'there'},`,
       `Your confirmed feedback has been applied by Blueprint Director${nextArSnapshot?.analysis?.overallScore ? ` and re-scored by Audience Resonance (${nextArSnapshot.analysis.overallScore}/100, Pass ${arIterationsUsed}/${maxArIterations})` : ''}.`,
-      `Open your Blueprint link below to review the updated storyboards and click Approve when ready for your production quote.`,
+      `Open your Director Portal below to review the updated storyboards and narrated audio, share with family, or click Approve when ready for your production quote.`,
     ],
     ctaLabel: 'Open Updated Blueprint & AR Score',
     ctaUrl: shareUrl,
@@ -950,10 +1106,9 @@ export async function runStandaloneCustomerArIteration(input: {
     }
   | { ok: false; status: number; error: string }
 > {
-  const session = await resolveSessionByToken(input.token)
-  if (!session) return { ok: false, status: 404, error: 'Blueprint share link not found or expired' }
-  const payload = getPayload(session)
-  if (!payload) return { ok: false, status: 400, error: 'Invalid Blueprint session' }
+  const resolved = await resolvePrimaryCustomerBlueprintSession(input.token)
+  if (!resolved.ok) return resolved
+  const { session, payload } = resolved
 
   const used = Number(payload.shareSettings?.arIterationsUsed ?? 0)
   const maxAr = Number(
@@ -1025,4 +1180,308 @@ export async function runStandaloneCustomerArIteration(input: {
     maxArIterations: maxAr,
     blueprintAudienceResonance: arRes.snapshot,
   }
+}
+
+/**
+ * Ensures a comment-only guest share link exists for family/team collaboration
+ * (only callable by the primary customer token).
+ */
+export async function ensureGuestBlueprintShareLink(input: {
+  token: string
+  origin?: string
+  locale?: string
+}): Promise<
+  | { ok: true; guestShareToken: string; guestShareUrl: string }
+  | { ok: false; status: number; error: string }
+> {
+  const resolved = await resolvePrimaryCustomerBlueprintSession(input.token)
+  if (!resolved.ok) return resolved
+  const { session, payload } = resolved
+
+  let guestShareToken = payload.shareSettings?.guestShareToken?.trim()
+  if (!guestShareToken) {
+    guestShareToken = crypto.randomBytes(20).toString('base64url')
+    const nextPayload: BlueprintSessionPayload = {
+      ...payload,
+      shareSettings: {
+        ...payload.shareSettings,
+        guestShareToken,
+      },
+    }
+    await CollabSession.update(
+      { payload: nextPayload as unknown as Record<string, unknown> },
+      { where: { id: sessionDbId(session) } }
+    )
+  }
+
+  const activeLocale = resolveClientPortalLocale(
+    input.locale || payload.sectionAudioLanguage || 'en'
+  )
+  const baseOrigin = (input.origin || getAppBaseUrl()).replace(/\/$/, '')
+  const guestShareUrl = `${baseOrigin}/blueprint/share/${guestShareToken}?lang=${encodeURIComponent(activeLocale)}`
+
+  return { ok: true, guestShareToken, guestShareUrl }
+}
+
+/**
+ * Lists family/stakeholder feedback for Primary Customer triage so the customer can
+ * filter & approve comments before spending an AI Blueprint iteration.
+ */
+export async function listGuestBlueprintFeedbackForPrimaryCustomer(input: {
+  token: string
+}): Promise<
+  | { ok: true; items: BlueprintGuestFeedbackItem[] }
+  | { ok: false; status: number; error: string }
+> {
+  const resolved = await resolvePrimaryCustomerBlueprintSession(input.token)
+  if (!resolved.ok) return resolved
+  const { session, payload } = resolved
+
+  await ensureCollabBlueprintFeedbackTable().catch(() => undefined)
+  const rows = await CollabBlueprintFeedback.findAll({
+    where: { sessionId: sessionDbId(session) },
+    order: [['createdAt', 'DESC']],
+    limit: 100,
+  })
+
+  const appliedSet = new Set(Array.isArray(payload.appliedFeedbackIds) ? payload.appliedFeedbackIds : [])
+  const dismissedSet = new Set(
+    Array.isArray(payload.dismissedFeedbackIds) ? payload.dismissedFeedbackIds : []
+  )
+
+  const items: BlueprintGuestFeedbackItem[] = rows.map((row) => {
+    const id = String(row.id)
+    const status = appliedSet.has(id)
+      ? 'applied'
+      : dismissedSet.has(id)
+        ? 'dismissed'
+        : 'pending'
+    return {
+      id,
+      reviewerName: row.reviewerName,
+      overallScore: row.overallScore ?? null,
+      sections: (row.sections as BlueprintFeedbackSections | null) ?? null,
+      freeformNotes: row.freeformNotes ?? null,
+      createdAt:
+        row.createdAt instanceof Date
+          ? row.createdAt.toISOString()
+          : String(row.createdAt || new Date().toISOString()),
+      status,
+    }
+  })
+
+  return { ok: true, items }
+}
+
+/**
+ * Allows the primary customer to dismiss a family/team comment they choose not to incorporate.
+ */
+export async function dismissGuestBlueprintFeedback(input: {
+  token: string
+  feedbackId: string
+}): Promise<{ ok: true; dismissedFeedbackIds: string[] } | { ok: false; status: number; error: string }> {
+  const resolved = await resolvePrimaryCustomerBlueprintSession(input.token)
+  if (!resolved.ok) return resolved
+  const { session, payload } = resolved
+
+  const cleanId = String(input.feedbackId || '').trim()
+  if (!cleanId) {
+    return { ok: false, status: 400, error: 'feedbackId is required' }
+  }
+
+  const prev = Array.isArray(payload.dismissedFeedbackIds) ? payload.dismissedFeedbackIds : []
+  const dismissedFeedbackIds = Array.from(new Set([...prev, cleanId]))
+
+  const nextPayload: BlueprintSessionPayload = {
+    ...payload,
+    dismissedFeedbackIds,
+  }
+  await CollabSession.update(
+    { payload: nextPayload as unknown as Record<string, unknown> },
+    { where: { id: sessionDbId(session) } }
+  )
+
+  return { ok: true, dismissedFeedbackIds }
+}
+
+/**
+ * Adds a self-serve (or producer-granted) Iteration Top-Up Pack (+3 Blueprint Revisions & +2 AR Passes by default)
+ * and records the automated add-on revenue onto both the share session and Project.metadata.clientOrder.
+ */
+export async function grantBlueprintIterationPack(input: {
+  token: string
+  packsCount?: number
+  priceUsd?: number
+  revisionsPerPack?: number
+  arPassesPerPack?: number
+  origin?: string
+  locale?: string
+  source?: 'client_self_serve' | 'producer_grant' | 'billing_webhook'
+}): Promise<
+  | {
+      ok: true
+      maxFeedbackRounds: number
+      roundsUsed: number
+      maxArIterations: number
+      arIterationsUsed: number
+      extraIterationPacksPurchased: number
+      extraIterationRevenueUsd: number
+    }
+  | { ok: false; status: number; error: string }
+> {
+  const resolved = await resolvePrimaryCustomerBlueprintSession(input.token)
+  if (!resolved.ok) return resolved
+  const { session, payload } = resolved
+
+  if (payload.shareSettings?.approvalStatus === 'approved') {
+    return { ok: false, status: 409, error: 'BLUEPRINT_LOCKED: This Blueprint has already been approved.' }
+  }
+
+  const packsCount = Math.min(5, Math.max(1, Math.round(input.packsCount ?? 1)))
+  const revisionsPerPack = Math.min(
+    8,
+    Math.max(1, Math.round(input.revisionsPerPack ?? payload.shareSettings?.iterationPackRevisions ?? DEFAULT_ITERATION_PACK_REVISIONS))
+  )
+  const arPassesPerPack = Math.min(
+    5,
+    Math.max(0, Math.round(input.arPassesPerPack ?? payload.shareSettings?.iterationPackArPasses ?? DEFAULT_ITERATION_PACK_AR_PASSES))
+  )
+  const packPriceUsd = Math.max(
+    0,
+    Number(input.priceUsd ?? payload.shareSettings?.iterationPackPriceUsd ?? DEFAULT_ITERATION_PACK_PRICE_USD)
+  )
+
+  const prevMaxRevisions = Number(
+    payload.shareSettings?.maxFeedbackRounds ?? DEFAULT_MAX_AUTOMATED_BLUEPRINT_REVISIONS
+  )
+  const prevMaxAr = Number(
+    payload.shareSettings?.maxArIterations ?? DEFAULT_MAX_AUTOMATED_AR_ITERATIONS
+  )
+  const nextMaxRevisions = Math.min(
+    MAX_TOTAL_BLUEPRINT_REVISIONS_CAP,
+    prevMaxRevisions + revisionsPerPack * packsCount
+  )
+  const nextMaxAr = Math.min(
+    MAX_TOTAL_AR_ITERATIONS_CAP,
+    prevMaxAr + arPassesPerPack * packsCount
+  )
+  const nextPacksPurchased =
+    Number(payload.shareSettings?.extraIterationPacksPurchased ?? 0) + packsCount
+  const addedRevenueUsd = input.source === 'producer_grant' && input.priceUsd === undefined
+    ? 0
+    : packPriceUsd * packsCount
+  const nextExtraRevenueUsd =
+    Number(payload.shareSettings?.extraIterationRevenueUsd ?? 0) + addedRevenueUsd
+  const nowIso = new Date().toISOString()
+
+  const nextPayload: BlueprintSessionPayload = {
+    ...payload,
+    shareSettings: {
+      ...payload.shareSettings,
+      maxFeedbackRounds: nextMaxRevisions,
+      maxArIterations: nextMaxAr,
+      extraIterationPacksPurchased: nextPacksPurchased,
+      extraIterationRevenueUsd: nextExtraRevenueUsd,
+    },
+  }
+
+  await CollabSession.update(
+    { payload: nextPayload as unknown as Record<string, unknown> },
+    { where: { id: sessionDbId(session) } }
+  )
+
+  const projectId = String((session as { project_id?: string }).project_id || payload.projectId || '')
+  if (projectId) {
+    const project = await Project.findByPk(projectId).catch(() => null)
+    if (project) {
+      const md = (project.metadata || {}) as Record<string, unknown>
+      const co = (md.clientOrder || {}) as Record<string, unknown>
+      await project.update({
+        metadata: {
+          ...md,
+          clientOrder: {
+            ...co,
+            maxBlueprintRevisions: nextMaxRevisions,
+            maxFeedbackRounds: nextMaxRevisions,
+            maxArIterations: nextMaxAr,
+            extraIterationPacksPurchased: nextPacksPurchased,
+            extraIterationRevenueUsd: nextExtraRevenueUsd,
+            lastClientActivityAt: nowIso,
+          },
+        },
+      })
+    }
+  }
+
+  const brandName =
+    payload.shareSettings?.brandProfileSnapshot?.brandName ||
+    payload.ownerDisplayName ||
+    'Video Studio'
+  const activeLocale = resolveClientPortalLocale(
+    input.locale || payload.sectionAudioLanguage || 'en'
+  )
+  const baseOrigin = (input.origin || getAppBaseUrl()).replace(/\/$/, '')
+  const shareUrl = `${baseOrigin}/blueprint/share/${input.token}?lang=${encodeURIComponent(activeLocale)}`
+
+  await sendAutomatedClientPortalEmail({
+    toEmail: payload.shareSettings?.customerEmail,
+    customerName: payload.shareSettings?.customerName,
+    brandName,
+    subject: `${brandName} — +${revisionsPerPack * packsCount} Blueprint Iterations Unlocked`,
+    heading: 'Extra Blueprint Iterations Are Ready',
+    paragraphs: [
+      `Hi ${payload.shareSettings?.customerName || 'there'},`,
+      `Your Blueprint now has up to ${nextMaxRevisions} total AI-guided iterations and ${nextMaxAr} Audience Resonance passes.`,
+      `Return to your Director Portal below to continue refining your storyboard and narration.`,
+    ],
+    ctaLabel: 'Continue Refining My Blueprint',
+    ctaUrl: shareUrl,
+  })
+
+  return {
+    ok: true,
+    maxFeedbackRounds: nextMaxRevisions,
+    roundsUsed: Number(payload.shareSettings?.roundsUsed ?? 0),
+    maxArIterations: nextMaxAr,
+    arIterationsUsed: Number(payload.shareSettings?.arIterationsUsed ?? 0),
+    extraIterationPacksPurchased: nextPacksPurchased,
+    extraIterationRevenueUsd: nextExtraRevenueUsd,
+  }
+}
+
+/**
+ * Best-effort notification to the Primary Customer when a family member or stakeholder
+ * submits comment-only notes via the Guest Share link.
+ */
+export async function notifyPrimaryCustomerOfGuestFeedback(input: {
+  payload: BlueprintSessionPayload
+  primaryShareToken: string
+  reviewerName: string
+  excerpt: string
+  origin?: string
+}): Promise<boolean> {
+  const email = input.payload.shareSettings?.customerEmail
+  if (!email) return false
+  const brandName =
+    input.payload.shareSettings?.brandProfileSnapshot?.brandName ||
+    input.payload.ownerDisplayName ||
+    'Video Studio'
+  const baseOrigin = (input.origin || getAppBaseUrl()).replace(/\/$/, '')
+  const lang = input.payload.sectionAudioLanguage || 'en'
+  const shareUrl = `${baseOrigin}/blueprint/share/${input.primaryShareToken}?lang=${encodeURIComponent(lang)}`
+
+  return sendAutomatedClientPortalEmail({
+    toEmail: email,
+    customerName: input.payload.shareSettings?.customerName,
+    brandName,
+    subject: `${brandName} — ${input.reviewerName} left feedback on your Blueprint`,
+    heading: `New Comment from ${input.reviewerName}`,
+    paragraphs: [
+      `Hi ${input.payload.shareSettings?.customerName || 'there'},`,
+      `${input.reviewerName} reviewed your Blueprint and left feedback for you to filter: "${input.excerpt.slice(0, 260)}"`,
+      `No changes have been applied automatically. Open your Director Portal below to review their notes and decide which ones to include in your next AI Blueprint iteration.`,
+    ],
+    ctaLabel: 'Review & Filter Comment',
+    ctaUrl: shareUrl,
+  })
 }
