@@ -224,21 +224,22 @@ export function KeepsakeCinemaStorefront() {
         </div>
       </div>
 
-      {/* Main Editorial Navigation */}
-      <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-[#06080E]/90 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 min-h-[60px] py-2.5 sm:py-0 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 md:flex-initial">
+      {/* Main Editorial Navigation — 2 stacked rows on mobile (<640px) so brand never collides with controls */}
+      <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-[#06080E]/92 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-0 sm:h-16 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-4">
+          {/* Row 1 (full width on mobile): Brand Logo & Name */}
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-gradient-to-br from-[#E6BE7E] via-[#C9974F] to-[#8C6126] flex items-center justify-center shadow-lg shadow-[#C9974F]/20">
               <Film className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#090B12]" />
             </div>
             <div className="min-w-0">
-              <span className="font-serif text-base sm:text-xl font-semibold tracking-tight text-white block leading-tight truncate">
+              <span className="font-serif text-lg sm:text-xl font-semibold tracking-tight text-white block leading-tight">
                 {SHOWCASE_BRAND_SNAPSHOT.brandName}
               </span>
-              <span className="block sm:hidden text-[10px] tracking-wide text-[#DFB473]/90 leading-tight truncate">
+              <span className="block sm:hidden text-[10px] tracking-wide text-[#DFB473]/90 leading-tight">
                 {copy.brandSubtitleMobile}
               </span>
-              <span className="hidden sm:block text-[10px] uppercase tracking-[0.16em] text-[#DFB473]/90 leading-tight truncate">
+              <span className="hidden sm:block text-[10px] uppercase tracking-[0.16em] text-[#DFB473]/90 leading-tight">
                 {copy.brandSubtitleDesktop}
               </span>
             </div>
@@ -259,7 +260,8 @@ export function KeepsakeCinemaStorefront() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* Row 2 on mobile (separate line below brand): Language Switcher + Blueprint Price CTA */}
+          <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 sm:gap-2.5 border-t border-white/[0.07] pt-2 sm:border-t-0 sm:pt-0 shrink-0">
             {/* Compact 7-Language & Currency Switcher */}
             <div ref={langMenuRef} className="relative">
               <button
@@ -267,7 +269,7 @@ export function KeepsakeCinemaStorefront() {
                 aria-label="Select language and currency"
                 aria-expanded={langMenuOpen}
                 onClick={() => setLangMenuOpen((prev) => !prev)}
-                className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/[0.04] hover:border-[#DFB473]/50 hover:bg-white/[0.08] px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-medium text-slate-200 transition whitespace-nowrap"
+                className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/[0.04] hover:border-[#DFB473]/50 hover:bg-white/[0.08] px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-medium text-slate-200 transition whitespace-nowrap"
               >
                 <Globe className="w-3.5 h-3.5 text-[#DFB473] shrink-0" />
                 <span>{copy.shortCode}</span>
@@ -278,7 +280,7 @@ export function KeepsakeCinemaStorefront() {
               {langMenuOpen && (
                 <div
                   role="menu"
-                  className="absolute end-0 mt-2 w-48 rounded-2xl border border-white/15 bg-[#0D111C] p-1.5 shadow-2xl shadow-black/80 z-50"
+                  className="absolute start-0 sm:start-auto sm:end-0 mt-2 w-48 rounded-2xl border border-white/15 bg-[#0D111C] p-1.5 shadow-2xl shadow-black/80 z-50"
                 >
                   {SUPPORTED_CLIENT_PORTAL_LOCALES.map((loc) => {
                     const locCopy = SHOWCASE_LOCALE_COPY[loc.code]
@@ -310,9 +312,10 @@ export function KeepsakeCinemaStorefront() {
             <button
               type="button"
               onClick={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
-              className="hidden sm:inline-flex items-center gap-2 shrink-0 whitespace-nowrap rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F0CB92] hover:to-[#D8A75E] px-5 py-2 text-sm font-semibold text-[#090B12] shadow-lg shadow-[#C9974F]/20 transition"
+              className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F0CB92] hover:to-[#D8A75E] px-3.5 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#090B12] shadow-lg shadow-[#C9974F]/20 transition"
             >
-              <span>{txt(copy.nav.ctaDesktop)}</span>
+              <span className="sm:hidden">{txt(copy.nav.ctaMobile)}</span>
+              <span className="hidden sm:inline">{txt(copy.nav.ctaDesktop)}</span>
               <ArrowRight className="w-3.5 h-3.5 shrink-0 rtl:rotate-180" />
             </button>
           </div>
@@ -458,22 +461,42 @@ export function KeepsakeCinemaStorefront() {
 
                 <p className="text-xs text-slate-300 px-2 pt-2.5 pb-1">{activeReel.caption}</p>
 
-                {/* Film Switcher Pills */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-2">
-                  {copy.theater.tabs.map((tab, idx) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => handleSelectReel(idx)}
-                      className={`rounded-lg px-2.5 py-2 text-start text-xs transition border ${
-                        idx === activeReelIdx
-                          ? 'border-[#DFB473]/60 bg-[#DFB473]/15 text-white font-semibold'
-                          : 'border-white/10 bg-white/[0.02] text-slate-400 hover:text-white hover:border-white/20'
-                      }`}
-                    >
-                      <div className="truncate">{tab.label}</div>
-                    </button>
-                  ))}
+                {/* Film Switcher Pills with full non-truncated labels + rich tooltips */}
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                  {copy.theater.tabs.map((tab, idx) => {
+                    const fullTooltip = `${tab.label} (${fmt(tab.priceUsd)}) — ${tab.caption}`
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        title={fullTooltip}
+                        aria-label={fullTooltip}
+                        onClick={() => handleSelectReel(idx)}
+                        className={`group relative rounded-lg px-3 py-2 text-start text-xs leading-snug transition border ${
+                          idx === activeReelIdx
+                            ? 'border-[#DFB473]/60 bg-[#DFB473]/15 text-white font-semibold'
+                            : 'border-white/10 bg-white/[0.02] text-slate-300 hover:text-white hover:border-white/25'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="leading-snug">{tab.label}</span>
+                          <span className="text-[10px] text-[#DFB473]/90 font-medium shrink-0">
+                            {fmt(tab.priceUsd)}
+                          </span>
+                        </div>
+                        {/* Styled hover/focus tooltip showing complete title & caption */}
+                        <span
+                          role="tooltip"
+                          className="pointer-events-none absolute bottom-full start-1/2 -translate-x-1/2 rtl:translate-x-1/2 mb-2 z-40 w-56 rounded-xl border border-[#DFB473]/35 bg-[#0A0E18]/95 px-3 py-2 text-[11px] leading-snug text-slate-200 shadow-2xl opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150"
+                        >
+                          <span className="block font-semibold text-[#F0CB92] mb-0.5">
+                            {tab.label} · {fmt(tab.priceUsd)}
+                          </span>
+                          <span className="block text-slate-300 font-normal">{tab.caption}</span>
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             </div>
