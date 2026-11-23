@@ -13,6 +13,10 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { SHOWCASE_BRAND_SNAPSHOT } from '@/config/showcase/expressCinemaCatalog'
+import { SHOWCASE_LOCALE_COPY } from '@/config/showcase/showcaseLocaleCopy'
+import { resolveClientPortalLocale, type ClientPortalLocale } from '@/lib/intake/clientPortalCopy'
+import { formatLandingCurrency } from '@/lib/i18n/landingCurrency'
+import { getLocaleDirection } from '@/i18n/locale'
 
 interface ShowcaseOrderView {
   orderId: string
@@ -20,6 +24,7 @@ interface ShowcaseOrderView {
   status: 'pending_payment' | 'fulfilled' | 'failed'
   offerId: string
   offerTitle: string
+  locale?: string
   customerName: string
   honoreeOrTitle: string | null
   amountUsd: number
@@ -35,10 +40,19 @@ interface ShowcaseOrderView {
 export function ShowcaseOrderStatusClient({ orderId }: { orderId: string }) {
   const searchParams = useSearchParams()
   const checkoutReturned = searchParams?.get('checkout') === 'success'
+  const urlLang = searchParams?.get('lang')
+
   const [order, setOrder] = useState<ShowcaseOrderView | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pollCount, setPollCount] = useState(0)
+
+  const locale: ClientPortalLocale = resolveClientPortalLocale(
+    order?.locale || urlLang || 'en'
+  )
+  const copy = (SHOWCASE_LOCALE_COPY[locale] ?? SHOWCASE_LOCALE_COPY.en).orderPage
+  const direction = getLocaleDirection(locale)
+  const fmt = (usd: number) => formatLandingCurrency(usd, locale)
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -48,7 +62,7 @@ export function ShowcaseOrderStatusClient({ orderId }: { orderId: string }) {
       })
       const data = await res.json()
       if (!res.ok || !data.success || !data.order) {
-        setError(data.error || 'Order not found')
+        setError(data.error || copy.notFound)
         setLoading(false)
         return null
       }
@@ -57,11 +71,11 @@ export function ShowcaseOrderStatusClient({ orderId }: { orderId: string }) {
       setLoading(false)
       return data.order as ShowcaseOrderView
     } catch {
-      setError('Could not load order status. Please refresh in a moment.')
+      setError(copy.notFound)
       setLoading(false)
       return null
     }
-  }, [orderId, checkoutReturned])
+  }, [orderId, checkoutReturned, copy.notFound])
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null
@@ -90,15 +104,20 @@ export function ShowcaseOrderStatusClient({ orderId }: { orderId: string }) {
   const nextPortalUrl =
     order?.orderKind === 'express_film_balance' ? order?.continuityUrl : order?.intakeUrl
   const nextCtaLabel =
-    order?.orderKind === 'express_film_balance'
-      ? 'Open My Continuity Photo Library'
-      : 'Start My 5-Minute Guided Story Interview'
+    order?.orderKind === 'express_film_balance' ? copy.ctaContinuity : copy.ctaIntake
 
   return (
-    <div className="min-h-screen bg-[#06080E] text-[#F5F2EB] flex flex-col">
+    <div
+      dir={direction}
+      lang={locale}
+      className="min-h-screen overflow-x-clip bg-[#06080E] text-[#F5F2EB] flex flex-col"
+    >
       <header className="border-b border-white/10 bg-[#0B0F1A]/90">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 min-h-[60px] py-2.5 sm:py-0 sm:h-16 flex items-center justify-between gap-3">
-          <Link href="/showcase" className="flex items-center gap-2.5 min-w-0">
+          <Link
+            href={`/showcase?lang=${encodeURIComponent(locale)}`}
+            className="flex items-center gap-2.5 min-w-0"
+          >
             <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-[#E6BE7E] to-[#C9974F] flex items-center justify-center">
               <Film className="w-4 h-4 text-[#090B12]" />
             </div>
@@ -108,8 +127,8 @@ export function ShowcaseOrderStatusClient({ orderId }: { orderId: string }) {
           </Link>
           <span className="inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap text-[11px] sm:text-xs text-slate-400">
             <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-[#DFB473]" />
-            <span className="sm:hidden">Whop MoR</span>
-            <span className="hidden sm:inline">Whop Merchant of Record</span>
+            <span className="sm:hidden">{copy.whopBadgeShort}</span>
+            <span className="hidden sm:inline">{copy.whopBadgeFull}</span>
           </span>
         </div>
       </header>
@@ -119,16 +138,16 @@ export function ShowcaseOrderStatusClient({ orderId }: { orderId: string }) {
           {loading ? (
             <div className="py-10 text-center space-y-3">
               <Loader2 className="w-8 h-8 text-[#DFB473] animate-spin mx-auto" />
-              <p className="text-sm text-slate-300">Confirming your Whop checkout...</p>
+              <p className="text-sm text-slate-300">{copy.loading}</p>
             </div>
           ) : error || !order ? (
             <div className="py-8 text-center space-y-4">
-              <p className="text-base font-semibold text-white">{error || 'Order not found'}</p>
+              <p className="text-base font-semibold text-white">{error || copy.notFound}</p>
               <Link
-                href="/showcase"
+                href={`/showcase?lang=${encodeURIComponent(locale)}`}
                 className="inline-flex items-center gap-2 rounded-full bg-[#DFB473] px-5 py-2.5 text-sm font-semibold text-[#090B12]"
               >
-                Return to Keepsake Cinema
+                {copy.returnCta}
               </Link>
             </div>
           ) : order.status === 'fulfilled' && nextPortalUrl ? (
@@ -139,28 +158,23 @@ export function ShowcaseOrderStatusClient({ orderId }: { orderId: string }) {
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest text-emerald-300">
-                    Payment Confirmed · Ready Now
+                    {copy.confirmedTag}
                   </p>
                   <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-white mt-1">
                     {order.orderKind === 'express_film_balance'
-                      ? 'Your Express 4K Film Is Unlocked!'
-                      : `Welcome, ${order.customerName}!`}
+                      ? copy.unlockedTitle
+                      : `${copy.welcomePrefix} ${order.customerName}!`}
                   </h1>
                 </div>
               </div>
 
               <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                {order.orderKind === 'express_film_balance'
-                  ? `Thank you for completing your $${order.amountUsd} Express 4K balance. Your private Continuity Photo Library is live now—upload real photos from your phone and add a 10-second name/town pronunciation guide so we can produce your Same-Day 4K Cinema Film.`
-                  : `Your $${order.amountUsd} Storyboard Blueprint Pass for "${order.honoreeOrTitle || order.offerTitle}" is active (100% credited toward your $${order.totalPriceUsd} Express 4K Film). Launch your guided story interview right now—or open the magic link we just emailed you.`}
+                {order.orderKind === 'express_film_balance' ? copy.unlockedBody : copy.passBody}
               </p>
 
               <div className="rounded-2xl border border-[#DFB473]/25 bg-[#DFB473]/10 p-4 flex items-center gap-3 text-xs text-[#F0CB92]">
                 <Mail className="w-4 h-4 shrink-0" />
-                <span>
-                  A private copy of this magic link has also been sent to your email so you can
-                  resume from phone or desktop anytime.
-                </span>
+                <span>{copy.emailCopiedNotice}</span>
               </div>
 
               <a
@@ -168,7 +182,7 @@ export function ShowcaseOrderStatusClient({ orderId }: { orderId: string }) {
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] px-6 py-4 text-sm sm:text-base font-semibold text-[#090B12] shadow-xl shadow-[#C9974F]/25 transition"
               >
                 {nextCtaLabel}
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 shrink-0 rtl:rotate-180" />
               </a>
             </>
           ) : (
@@ -176,14 +190,10 @@ export function ShowcaseOrderStatusClient({ orderId }: { orderId: string }) {
               <Loader2 className="w-9 h-9 text-[#DFB473] animate-spin mx-auto" />
               <div className="space-y-2">
                 <h1 className="font-serif text-2xl font-semibold text-white">
-                  {checkoutReturned
-                    ? 'Finalizing Your Studio Portal...'
-                    : 'Checkout Pending'}
+                  {checkoutReturned ? copy.finalizingTitle : copy.pendingTitle}
                 </h1>
                 <p className="text-sm text-slate-300 leading-relaxed">
-                  {checkoutReturned
-                    ? 'We are confirming your Whop payment and spinning up your private studio link. This usually takes just a few seconds.'
-                    : `Complete your $${order.amountUsd} Whop checkout to instantly unlock your private studio portal.`}
+                  {checkoutReturned ? copy.finalizingBody : copy.pendingBody}
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -193,15 +203,15 @@ export function ShowcaseOrderStatusClient({ orderId }: { orderId: string }) {
                   className="inline-flex items-center gap-2 rounded-full border border-white/15 hover:border-white/30 px-4 py-2 text-xs font-medium text-white transition"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  Refresh Status
+                  {copy.refreshBtn}
                 </button>
                 {order.whopPurchaseUrl && !checkoutReturned && (
                   <a
                     href={order.whopPurchaseUrl}
                     className="inline-flex items-center gap-2 rounded-full bg-[#DFB473] hover:bg-[#F0CB92] px-5 py-2 text-xs font-semibold text-[#090B12] transition"
                   >
-                    Resume Whop Checkout (${order.amountUsd})
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    {copy.resumeCheckoutPrefix} ({fmt(order.amountUsd)})
+                    <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                   </a>
                 )}
               </div>

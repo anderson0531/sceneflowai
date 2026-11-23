@@ -42,6 +42,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
         status: order.status,
         offerId: order.offerId,
         offerTitle: offer.title,
+        locale: order.locale || 'en',
         customerName: order.customerName,
         honoreeOrTitle: order.honoreeOrTitle || null,
         amountUsd: order.amountUsd,

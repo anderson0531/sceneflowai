@@ -102,11 +102,12 @@ export function resolveShowcaseWhopPlanEnvId(
   return null
 }
 
-function resolveWhopRedirectUrl(origin: string, orderId: string): string {
+function resolveWhopRedirectUrl(origin: string, orderId: string, locale?: string): string {
   const cleanOrigin = origin.startsWith('https://')
     ? origin.replace(/^https:\/\/sceneflowai\.studio\b/, 'https://www.sceneflowai.studio')
     : 'https://www.sceneflowai.studio'
-  return `${cleanOrigin}/showcase/order/${encodeURIComponent(orderId)}?checkout=success`
+  const langParam = locale ? `&lang=${encodeURIComponent(locale)}` : ''
+  return `${cleanOrigin}/showcase/order/${encodeURIComponent(orderId)}?checkout=success${langParam}`
 }
 
 export async function resolveShowcaseOwnerUserId(): Promise<string> {
@@ -137,7 +138,7 @@ export async function createWhopExpressCheckoutSession(input: {
 }): Promise<{ sessionId: string; purchaseUrl: string }> {
   await ensureWhopRuntimeConfig()
   const client = getWhopClient()
-  const redirectUrl = resolveWhopRedirectUrl(input.origin, input.orderId)
+  const redirectUrl = resolveWhopRedirectUrl(input.origin, input.orderId, input.metadata.locale)
   const configuredPlanId = resolveShowcaseWhopPlanEnvId(input.orderKind, input.amountUsd)
 
   const checkoutConfig = configuredPlanId
@@ -390,6 +391,7 @@ export async function startExpressFilmBalanceOrder(input: {
       project_id: projectId,
       owner_user_id: ownerUserId,
       offer_id: offer.id,
+      locale,
       customer_name: customerName,
       customer_email: customerEmail,
       delivery_tier: 'express_cinema_4k',

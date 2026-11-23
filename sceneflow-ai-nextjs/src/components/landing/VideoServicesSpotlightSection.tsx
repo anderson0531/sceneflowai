@@ -228,7 +228,7 @@ export function VideoServicesSpotlightSection() {
                 <span>{portalAnimaticCopy.jumpButtonLabel}</span>
               </a>
               <Link
-                href="/showcase"
+                href={locale && locale !== 'en' ? `/showcase?lang=${encodeURIComponent(locale)}` : '/showcase'}
                 className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/45 bg-amber-500/15 px-3 py-1 text-[11px] font-bold text-amber-200 transition-colors hover:border-amber-300 hover:bg-amber-500/25 hover:text-white"
               >
                 <Sparkles className="h-3 w-3 shrink-0 text-amber-300" aria-hidden />

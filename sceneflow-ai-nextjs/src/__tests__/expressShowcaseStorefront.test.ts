@@ -102,8 +102,18 @@ import {
   fulfillExpressBlueprintPassOrder,
   fulfillExpressFilmBalanceOrder,
 } from '@/lib/showcase/expressShowcaseService'
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(),
+}))
+
 import { KeepsakeCinemaStorefront } from '@/components/showcase/KeepsakeCinemaStorefront'
 import { isPublicRoute } from '@/constants/publicRoutes'
+import {
+  SHOWCASE_LOCALE_COPY,
+  getLocalizedShowcaseVideoUrl,
+} from '@/config/showcase/showcaseLocaleCopy'
+import { SUPPORTED_CLIENT_PORTAL_LOCALES } from '@/lib/intake/clientPortalCopy'
+import { formatLandingCurrency } from '@/lib/i18n/landingCurrency'
 
 describe('Express 4K Cinema Showcase Catalog & Whop MoR Fulfillment', () => {
   beforeEach(() => {
@@ -366,5 +376,71 @@ describe('KeepsakeCinemaStorefront UI', () => {
     // Public route guard ensures /showcase and /showcase/order/* never render GlobalHeader or MobileAppGate
     expect(isPublicRoute('/showcase')).toBe(true)
     expect(isPublicRoute('/showcase/order/exp_abc123')).toBe(true)
+  })
+
+  it('supports all 7 languages (en, es, pt, hi, zh-CN, ar, th) with localized currency, videos, and Arabic RTL', () => {
+    const expectedCodes = ['en', 'es', 'pt', 'hi', 'zh-CN', 'ar', 'th']
+    expect(SUPPORTED_CLIENT_PORTAL_LOCALES.map((l) => l.code)).toEqual(expectedCodes)
+
+    for (const loc of SUPPORTED_CLIENT_PORTAL_LOCALES) {
+      const pack = SHOWCASE_LOCALE_COPY[loc.code]
+      expect(pack, `pack for ${loc.code}`).toBeDefined()
+      expect(pack.theater.tabs).toHaveLength(4)
+      expect(pack.steps.items).toHaveLength(3)
+      expect(pack.faq.items.length).toBeGreaterThanOrEqual(6)
+      for (const offer of EXPRESS_SHOWCASE_OFFERS) {
+        const offerCopy = pack.occasions.offers[offer.id]
+        expect(offerCopy.title.trim().length, `${loc.code} ${offer.id} title`).toBeGreaterThan(3)
+        expect(offerCopy.deliverables).toHaveLength(4)
+      }
+    }
+
+    expect(getLocalizedShowcaseVideoUrl('memoir', 'zh-CN')).toBe(
+      '/landing/video-services/videos/memoir-zh.mp4'
+    )
+    expect(getLocalizedShowcaseVideoUrl('realestate', 'ar')).toBe(
+      '/landing/video-services/videos/realestate-ar.mp4'
+    )
+    expect(getLocalizedShowcaseVideoUrl('brand', 'th')).toBe(
+      '/landing/video-services/videos/brand-th.mp4'
+    )
+
+    // Interactive language switcher in UI: switch to Spanish (MXN) -> Arabic (SAR + RTL) -> Thai (THB)
+    act(() => {
+      root.render(React.createElement(KeepsakeCinemaStorefront))
+    })
+
+    const openLangMenu = () => {
+      const btn = container.querySelector('button[aria-label="Select language and currency"]') as HTMLButtonElement
+      expect(btn).toBeTruthy()
+      act(() => btn.click())
+    }
+
+    const pickLang = (label: string) => {
+      openLangMenu()
+      const item = Array.from(container.querySelectorAll('[role="menuitem"]')).find((el) =>
+        el.textContent?.includes(label)
+      ) as HTMLButtonElement | undefined
+      expect(item, `menu item ${label}`).toBeTruthy()
+      act(() => item!.click())
+    }
+
+    pickLang('Español')
+    expect(container.textContent).toContain(formatLandingCurrency(29, 'es'))
+    expect(container.textContent).toContain(formatLandingCurrency(149, 'es'))
+    expect(container.querySelector('[lang="es"]')?.getAttribute('dir')).toBe('ltr')
+
+    pickLang('العربية')
+    expect(container.textContent).toContain(formatLandingCurrency(29, 'ar'))
+    expect(container.querySelector('[lang="ar"]')?.getAttribute('dir')).toBe('rtl')
+    expect(container.querySelector('video')?.getAttribute('src')).toBe(
+      '/landing/video-services/videos/memoir-ar.mp4'
+    )
+
+    pickLang('ไทย')
+    expect(container.textContent).toContain(formatLandingCurrency(149, 'th'))
+    expect(container.querySelector('video')?.getAttribute('src')).toBe(
+      '/landing/video-services/videos/memoir-th.mp4'
+    )
   })
 })
