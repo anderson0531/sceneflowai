@@ -144,7 +144,7 @@ describe('Express 4K Cinema Showcase Catalog & Whop MoR Fulfillment', () => {
     for (const offer of EXPRESS_SHOWCASE_OFFERS) {
       expect(offer.blueprintPassUsd).toBe(EXPRESS_BLUEPRINT_PASS_USD)
       expect(offer.balanceDueUsd).toBe(offer.totalPriceUsd - offer.blueprintPassUsd)
-      expect(offer.sampleVideoUrl).toMatch(/^\/landing\/video-services\/videos\/.+\.mp4$/)
+      expect(offer.sampleVideoUrl).toMatch(/^(?:\/landing\/video-services)?\/videos\/.+\.mp4$/)
       expect(offer.title.toLowerCase()).not.toContain('full-motion')
     }
 
@@ -360,7 +360,7 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(text).toContain('Express 4K Narrated Training & SOP Film')
     expect(
       container.querySelector('[data-testid="offer-card-family_legacy"] video')?.getAttribute('src')
-    ).toBe('/landing/video-services/videos/express-memoir-en.mp4')
+    ).toBe('/videos/video-memoir-trailer-4k.mp4')
     expect(
       container.querySelector('[data-testid="offer-card-real_estate_express"] video')?.getAttribute('src')
     ).toBe('/landing/video-services/videos/express-realestate-en.mp4')
@@ -419,7 +419,7 @@ describe('KeepsakeCinemaStorefront UI', () => {
     }
 
     expect(getLocalizedShowcaseVideoUrl('memoir', 'zh-CN')).toBe(
-      '/landing/video-services/videos/express-memoir-zh.mp4'
+      '/videos/video-memoir-trailer-4k-zh.mp4'
     )
     expect(getLocalizedShowcaseVideoUrl('realestate', 'ar')).toBe(
       '/landing/video-services/videos/express-realestate-ar.mp4'
@@ -457,22 +457,22 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(container.textContent).toContain(formatLandingCurrency(29, 'ar'))
     expect(container.querySelector('[lang="ar"]')?.getAttribute('dir')).toBe('rtl')
     expect(container.querySelector('video')?.getAttribute('src')).toBe(
-      '/landing/video-services/videos/express-memoir-ar.mp4'
+      '/videos/video-memoir-trailer-4k-ar.mp4'
     )
 
     pickLang('ไทย')
     expect(container.textContent).toContain(formatLandingCurrency(149, 'th'))
     expect(container.querySelector('video')?.getAttribute('src')).toBe(
-      '/landing/video-services/videos/express-memoir-th.mp4'
+      '/videos/video-memoir-trailer-4k-th.mp4'
     )
   })
 
   it('toggles 4K Cinema and Full-Motion videos in the Hero and Milestone cards, and renders high-contrast Start $29 Blueprint buttons', () => {
     expect(getLocalizedShowcaseVideoUrl('memoir', 'en', 'express4k')).toBe(
-      '/landing/video-services/videos/express-memoir-en.mp4'
+      '/videos/video-memoir-trailer-4k.mp4'
     )
     expect(getLocalizedShowcaseVideoUrl('memoir', 'en', 'fullMotion')).toBe(
-      '/landing/video-services/videos/memoir-en.mp4'
+      '/videos/video-memoir-trailer.mp4'
     )
     expect(getLocalizedShowcaseVideoUrl('brand', 'zh-CN', 'fullMotion')).toBe(
       '/landing/video-services/videos/brand-zh.mp4'
@@ -482,16 +482,16 @@ describe('KeepsakeCinemaStorefront UI', () => {
       root.render(React.createElement(KeepsakeCinemaStorefront))
     })
 
-    // Hero video starts in Express 4K Cinema mode
+    // Hero video starts in Express 4K Cinema mode (Harbor Books)
     const heroVideo = container.querySelector('video')
-    expect(heroVideo?.getAttribute('src')).toBe('/landing/video-services/videos/express-memoir-en.mp4')
+    expect(heroVideo?.getAttribute('src')).toBe('/videos/video-memoir-trailer-4k.mp4')
 
     // Every Milestone card renders a <video> (not an <img>) and a readable gold Start $29 Blueprint button
     const legacyCard = container.querySelector('[data-testid="offer-card-family_legacy"]')
     expect(legacyCard).toBeTruthy()
     expect(legacyCard?.querySelector('img')).toBeNull()
     expect(legacyCard?.querySelector('video')?.getAttribute('src')).toBe(
-      '/landing/video-services/videos/express-memoir-en.mp4'
+      '/videos/video-memoir-trailer-4k.mp4'
     )
 
     const cardCta = Array.from(legacyCard!.querySelectorAll('button')).find((b) =>
@@ -510,10 +510,10 @@ describe('KeepsakeCinemaStorefront UI', () => {
       cardFullMotionBtn!.click()
     })
     expect(legacyCard?.querySelector('video')?.getAttribute('src')).toBe(
-      '/landing/video-services/videos/memoir-en.mp4'
+      '/videos/video-memoir-trailer.mp4'
     )
     expect(container.querySelector('video')?.getAttribute('src')).toBe(
-      '/landing/video-services/videos/express-memoir-en.mp4'
+      '/videos/video-memoir-trailer-4k.mp4'
     )
 
     // Global Hero format toggle switches Hero & all cards to Full-Motion preview
@@ -526,7 +526,7 @@ describe('KeepsakeCinemaStorefront UI', () => {
       heroFullMotionBtn!.click()
     })
     expect(container.querySelector('video')?.getAttribute('src')).toBe(
-      '/landing/video-services/videos/memoir-en.mp4'
+      '/videos/video-memoir-trailer.mp4'
     )
     const brandCard = container.querySelector('[data-testid="offer-card-brand_express"]')
     expect(brandCard?.querySelector('video')?.getAttribute('src')).toBe(

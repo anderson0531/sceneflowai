@@ -66,10 +66,10 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     blueprintPassUsd: 29,
     totalPriceUsd: 149,
     balanceDueUsd: 120,
-    posterImage: '/landing/video-services/memoir-1.webp',
-    sampleVideoUrl: '/landing/video-services/videos/express-memoir-en.mp4',
-    sampleVideoPoster: '/landing/video-services/videos/memoir-poster.webp',
-    sampleTitle: 'Family Legacy & Life Story Sample',
+    posterImage: '/images/trailers/video-memoir-poster.webp',
+    sampleVideoUrl: '/videos/video-memoir-trailer-4k.mp4',
+    sampleVideoPoster: '/images/trailers/video-memoir-poster.webp',
+    sampleTitle: 'Harbor Books: Fifty Years on Pike Street',
     sampleCaption:
       '2-min preview example — $149 package delivers up to a 60-min (360-frame) 4K feature film + 1–3 min trailer (expandable to 150 min).',
     deliverables: [
@@ -98,8 +98,8 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     totalPriceUsd: 149,
     balanceDueUsd: 120,
     posterImage: '/landing/video-services/memoir-2.webp',
-    sampleVideoUrl: '/landing/video-services/videos/express-memoir-en.mp4',
-    sampleVideoPoster: '/landing/video-services/videos/memoir-poster.webp',
+    sampleVideoUrl: '/videos/video-memoir-trailer-4k.mp4',
+    sampleVideoPoster: '/images/trailers/video-memoir-poster.webp',
     sampleTitle: 'Anniversary & Milestone Tribute Sample',
     sampleCaption:
       'Heartfelt narrated chapter progression crafted from couple photos, romantic locations, and multi-language family editions.',
@@ -129,8 +129,8 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     totalPriceUsd: 149,
     balanceDueUsd: 120,
     posterImage: '/landing/video-services/memoir-1.webp',
-    sampleVideoUrl: '/landing/video-services/videos/express-memoir-en.mp4',
-    sampleVideoPoster: '/landing/video-services/videos/memoir-poster.webp',
+    sampleVideoUrl: '/videos/video-memoir-trailer-4k.mp4',
+    sampleVideoPoster: '/images/trailers/video-memoir-poster.webp',
     sampleTitle: 'Coming-of-Age & Milestone Cinema Sample',
     sampleCaption:
       'Childhood keepsake photos paired with bespoke illustrated beats, upbeat narrative pacing, and uplifting score.',

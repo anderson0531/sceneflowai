@@ -189,12 +189,25 @@ export function getLocalizedShowcaseVideoUrl(
   format: ShowcaseDemoFormat = 'express4k'
 ): string {
   const code = getShowcaseVideoSlugLocale(locale)
+  if (videoSlug === 'memoir') {
+    if (format === 'fullMotion') {
+      return code === 'en'
+        ? '/videos/video-memoir-trailer.mp4'
+        : `/videos/video-memoir-trailer-${code}.mp4`
+    }
+    return code === 'en'
+      ? '/videos/video-memoir-trailer-4k.mp4'
+      : `/videos/video-memoir-trailer-4k-${code}.mp4`
+  }
   return format === 'fullMotion'
     ? `/landing/video-services/videos/${videoSlug}-${code}.mp4`
     : `/landing/video-services/videos/express-${videoSlug}-${code}.mp4`
 }
 
 export function getShowcaseVideoPosterUrl(videoSlug: string): string {
+  if (videoSlug === 'memoir') {
+    return '/images/trailers/video-memoir-poster.webp'
+  }
   return `/landing/video-services/videos/${videoSlug}-poster.webp`
 }
 
@@ -262,8 +275,9 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       tabs: [
         {
           id: 'family_legacy',
-          label: 'Life & Milestones',
-          caption: 'Family Legacy · Weddings · Graduations · Retirements',
+          label: 'Harbor Books · Life & Milestones',
+          caption:
+            'Harbor Books: Fifty Years on Pike Street — Family Legacy, Weddings, Graduations & Retirements',
           priceUsd: 149,
           videoSlug: 'memoir',
         },
