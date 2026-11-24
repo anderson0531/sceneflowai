@@ -506,8 +506,8 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(cardCta!.className).not.toContain('bg-white')
 
     // Per-card toggle switches just that card to Full-Motion while Hero stays 4K Cinema
-    const cardFullMotionBtn = Array.from(legacyCard!.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === 'Full Motion'
+    const cardFullMotionBtn = Array.from(legacyCard!.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Full Motion · PM Directed')
     )
     expect(cardFullMotionBtn).toBeTruthy()
     act(() => {
@@ -520,15 +520,24 @@ describe('KeepsakeCinemaStorefront UI', () => {
       '/videos/video-memoir-trailer-4k.mp4'
     )
 
-    // Global Hero format toggle switches Hero & all cards to Full-Motion preview
+    // Global Hero format toggle uses Tiered Studio Ladder labels & helper microcopy
     const heroToggle = container.querySelector('[data-testid="hero-format-toggle"]')
+    expect(heroToggle?.textContent).toContain('Express 4K Cinema · Automated ($149–$249)')
+    expect(heroToggle?.textContent).toContain('Full-Motion Cinema · Studio PM Directed (Preview)')
+    expect(container.querySelector('[data-testid="studio-ladder-helper"]')?.textContent).toContain(
+      '100% Automated Same-Day Master'
+    )
+
     const heroFullMotionBtn = Array.from(heroToggle!.querySelectorAll('button')).find((b) =>
-      b.textContent?.includes('Full Motion')
+      b.textContent?.includes('Full-Motion Cinema')
     )
     expect(heroFullMotionBtn).toBeTruthy()
     act(() => {
       heroFullMotionBtn!.click()
     })
+    expect(container.querySelector('[data-testid="studio-ladder-helper"]')?.textContent).toContain(
+      'Studio Director Tier (Preview)'
+    )
     expect(container.querySelector('video')?.getAttribute('src')).toBe(
       '/videos/video-memoir-trailer.mp4'
     )
@@ -589,10 +598,16 @@ describe('KeepsakeCinemaStorefront UI', () => {
   })
 
   it('implements all 4 high-impact conversion optimizations (brand framing, SSR pre-render without spinner, reel anchors, and same-day delivery window)', async () => {
-    // 1. All 7 locales have complete conversion copy
+    // 1. All 7 locales have complete conversion, Studio Ladder, and white-label operator copy
     for (const loc of SUPPORTED_CLIENT_PORTAL_LOCALES) {
       const c = SHOWCASE_CONVERSION_COPY[loc.code]
       expect(c, `conversion copy for ${loc.code}`).toBeDefined()
+      expect(c.operatorBar.badge.length).toBeGreaterThan(10)
+      expect(c.studioLadder.expressTabLabel.length).toBeGreaterThan(8)
+      expect(c.studioLadder.fullMotionTabLabel.length).toBeGreaterThan(8)
+      expect(c.nichePresetCallout.length).toBeGreaterThan(20)
+      expect(c.fullMotionUpgrade.heading.length).toBeGreaterThan(10)
+      expect(c.operatorFooter.heading.length).toBeGreaterThan(10)
       expect(c.artisanSuperpower.length).toBeGreaterThan(20)
       expect(c.startLikeThisCta.length).toBeGreaterThan(4)
       expect(c.deliveryWindow.requirements.length).toBeGreaterThan(10)
@@ -612,11 +627,46 @@ describe('KeepsakeCinemaStorefront UI', () => {
 
     expect(container.textContent).not.toContain('Loading Keepsake Cinema')
 
-    // Keepsake Cinema is the topmost header brand (no B2B white-label ribbon above <header>)
+    // Dismissible Top Operator Demo Bar sits cleanly above <header> and dismisses to leave pure Keepsake Cinema
+    const operatorBar = container.querySelector('[data-testid="operator-demo-bar"]')
+    expect(operatorBar).toBeTruthy()
+    expect(operatorBar?.textContent).toContain(
+      'Live White-Label Reference Storefront · Powered by SceneFlow Studio'
+    )
+    expect(operatorBar?.textContent).toContain('Launch Under Your Brand')
+
     const header = container.querySelector('header')
     expect(header).toBeTruthy()
-    expect(header?.previousElementSibling).toBeNull()
+    expect(header?.previousElementSibling).toBe(operatorBar)
     expect(header?.textContent).toContain('Keepsake Cinema')
+
+    const dismissBtn = operatorBar?.querySelector(
+      'button[aria-label="Dismiss operator demo banner"]'
+    ) as HTMLButtonElement | null
+    expect(dismissBtn).toBeTruthy()
+    act(() => dismissBtn!.click())
+    expect(container.querySelector('[data-testid="operator-demo-bar"]')).toBeNull()
+    expect(header?.previousElementSibling).toBeNull()
+
+    // Niche Presets callout above filter tabs, Studio Ladder tiers, PM Upgrade Callout, and Operator Footer Block
+    expect(container.querySelector('[data-testid="niche-preset-callout"]')?.textContent).toContain(
+      'supports multiple verticals out of the box'
+    )
+    const ladderTiers = container.querySelector('[data-testid="studio-ladder-tiers"]')
+    expect(ladderTiers?.textContent).toContain('Express 4K Cinema ($149–$249 · Self-Serve Automated)')
+    expect(ladderTiers?.textContent).toContain('Full-Motion Cinema (Studio Director Tier · Custom Quote)')
+
+    const upgradeCallout = container.querySelector('[data-testid="full-motion-upgrade-callout"]')
+    expect(upgradeCallout?.textContent).toContain(
+      'Start Automated Today. Upgrade to PM-Directed Full Motion Anytime.'
+    )
+    expect(upgradeCallout?.textContent).toContain('Start My $29 Automated Blueprint')
+    expect(upgradeCallout?.textContent).toContain('Request PM Full-Motion Upgrade')
+
+    const operatorFooter = container.querySelector('[data-testid="white-label-operator-block"]')
+    expect(operatorFooter?.textContent).toContain('Run This Exact Storefront Under Your Own Brand')
+    expect(operatorFooter?.textContent).toContain('Launch Your Branded Studio on SceneFlow')
+    expect(operatorFooter?.textContent).toContain('Book an Operator Walkthrough')
 
     // Artisan behind-the-scenes superpower copy rendered in Hero
     expect(container.textContent).toContain(

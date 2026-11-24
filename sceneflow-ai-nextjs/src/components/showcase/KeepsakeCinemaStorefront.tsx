@@ -52,6 +52,7 @@ import {
   localizeUsdText,
 } from '@/lib/i18n/landingCurrency'
 import { getLocaleDirection } from '@/i18n/locale'
+import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 const LOCALE_STORAGE_KEY = 'keepsake_showcase_locale'
 
@@ -65,6 +66,7 @@ export function KeepsakeCinemaStorefront({
   hasExplicitLocaleParam = false,
 }: KeepsakeCinemaStorefrontProps = {}) {
   const [uiLocale, setUiLocale] = useState<ClientPortalLocale>(initialLocale)
+  const [showOperatorBanner, setShowOperatorBanner] = useState(true)
   const [deliveryEtaText, setDeliveryEtaText] = useState<string | null>(null)
   const [langMenuOpen, setLangMenuOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<'all' | ShowcaseCategoryId>('all')
@@ -295,7 +297,43 @@ export function KeepsakeCinemaStorefront({
       lang={uiLocale}
       className="min-h-screen overflow-x-clip bg-[#06080E] text-[#F5F2EB] selection:bg-[#DFB473]/30 selection:text-white"
     >
-      {/* Main Editorial Navigation — Keepsake Cinema is the unmistakable hero brand at the very top */}
+      {/* Dismissible Platform Demo Mode Operator Ribbon — separates SaaS demo context from the 100% consumer-facing Keepsake Cinema storefront */}
+      {showOperatorBanner && (
+        <div
+          data-testid="operator-demo-bar"
+          role="region"
+          aria-label="SceneFlow Studio white-label demo notice"
+          className="border-b border-emerald-400/20 bg-gradient-to-r from-[#071117] via-[#0B1520] to-[#071117] text-[11px] sm:text-xs"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 min-w-0">
+              <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-300 shrink-0">
+                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span>{convCopy.operatorBar.badge}</span>
+              </span>
+              <span className="hidden md:inline text-slate-400">—</span>
+              <span className="hidden md:inline text-slate-300">{convCopy.operatorBar.body}</span>
+              <Link
+                href="/#video-services"
+                className="inline-flex items-center gap-1 font-semibold text-[#F0CB92] hover:text-white transition whitespace-nowrap"
+              >
+                <span>{convCopy.operatorBar.cta}</span>
+                <ArrowRight className="w-3 h-3 shrink-0 rtl:rotate-180" />
+              </Link>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowOperatorBanner(false)}
+              aria-label={convCopy.operatorBar.dismissLabel}
+              className="inline-flex items-center justify-center w-6 h-6 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Editorial Navigation — Keepsake Cinema consumer storefront header */}
       <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-[#06080E]/92 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-0 sm:h-16 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-4">
           {/* Row 1 (full width on mobile): Brand Logo & Name */}
@@ -416,39 +454,40 @@ export function KeepsakeCinemaStorefront({
                 {copy.hero.titleSuffix}
               </h1>
 
-              {/* Interactive Format Option Strip: 4K Cinema (Same-Day Self-Serve) vs Full-Motion Cinema (Studio Preview) */}
-              <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
-                <span className="text-xs font-medium text-slate-400">
-                  {fmtToggle.heroSwitchPrefix}
-                </span>
+              {/* Tiered Studio Ladder Format Switcher: Automated Express 4K vs PM-Directed Full-Motion Cinema */}
+              <div className="space-y-2 pt-0.5 max-w-xl">
                 <div
                   role="group"
-                  aria-label="Compare 4K Cinema and Full-Motion video examples"
-                  className="inline-flex items-center rounded-full border border-white/15 bg-[#0D1220] p-1 gap-1"
+                  aria-label="Compare Automated Express 4K Cinema and PM-Directed Full-Motion Cinema"
+                  className="inline-flex flex-wrap items-center rounded-2xl sm:rounded-full border border-white/15 bg-[#0D1220] p-1 gap-1"
                 >
                   <button
                     type="button"
                     aria-pressed={demoFormat === 'express4k'}
                     onClick={() => handleGlobalFormatChange('express4k')}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    className={`rounded-xl sm:rounded-full px-3 py-1.5 text-[11px] sm:text-xs font-semibold transition ${
                       demoFormat === 'express4k'
                         ? 'bg-[#DFB473] !text-[#090B12] shadow-sm'
                         : '!text-slate-300 hover:!text-white'
                     }`}
                   >
-                    {fmtToggle.express4kLabel} · {fmtToggle.express4kSub}
+                    <span className={demoFormat === 'express4k' ? '!text-[#090B12] font-semibold' : '!text-slate-300'}>
+                      {txt(convCopy.studioLadder.expressTabLabel)}
+                    </span>
                   </button>
                   <button
                     type="button"
                     aria-pressed={demoFormat === 'fullMotion'}
                     onClick={() => handleGlobalFormatChange('fullMotion')}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    className={`rounded-xl sm:rounded-full px-3 py-1.5 text-[11px] sm:text-xs font-semibold transition ${
                       demoFormat === 'fullMotion'
                         ? 'bg-emerald-400 !text-[#090B12] shadow-sm'
                         : '!text-slate-300 hover:!text-white'
                     }`}
                   >
-                    {fmtToggle.fullMotionLabel} · {fmtToggle.fullMotionSub}
+                    <span className={demoFormat === 'fullMotion' ? '!text-[#090B12] font-semibold' : '!text-slate-300'}>
+                      {convCopy.studioLadder.fullMotionTabLabel}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -572,54 +611,52 @@ export function KeepsakeCinemaStorefront({
                   </span>
                 </div>
 
-                {/* Format Switcher inside the Theater Card: 4K Cinema vs Full Motion */}
+                {/* Tiered Studio Ladder Switcher inside the Theater Card: Automated 4K vs PM-Directed Full Motion */}
                 <div
                   data-testid="hero-format-toggle"
-                  className="grid grid-cols-2 gap-1.5 rounded-xl border border-white/10 bg-[#070A12] p-1 mb-2.5"
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 rounded-xl border border-white/10 bg-[#070A12] p-1 mb-2"
                 >
                   <button
                     type="button"
                     aria-pressed={demoFormat === 'express4k'}
                     onClick={() => handleGlobalFormatChange('express4k')}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition flex items-center justify-center gap-1.5 ${
+                    className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition flex items-center justify-center text-center leading-tight ${
                       demoFormat === 'express4k'
                         ? 'bg-[#DFB473] !text-[#090B12] shadow-sm'
                         : '!text-slate-300 hover:!text-white hover:bg-white/[0.04]'
                     }`}
                   >
                     <span className={demoFormat === 'express4k' ? '!text-[#090B12] font-semibold' : '!text-slate-200'}>
-                      {fmtToggle.express4kLabel}
-                    </span>
-                    <span
-                      className={`hidden sm:inline text-[10px] font-medium ${
-                        demoFormat === 'express4k' ? '!text-[#090B12]/80' : '!text-slate-400'
-                      }`}
-                    >
-                      · {fmtToggle.express4kSub}
+                      {txt(convCopy.studioLadder.expressTabLabel)}
                     </span>
                   </button>
                   <button
                     type="button"
                     aria-pressed={demoFormat === 'fullMotion'}
                     onClick={() => handleGlobalFormatChange('fullMotion')}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition flex items-center justify-center gap-1.5 ${
+                    className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition flex items-center justify-center text-center leading-tight ${
                       demoFormat === 'fullMotion'
                         ? 'bg-emerald-400 !text-[#090B12] shadow-sm'
                         : '!text-slate-300 hover:!text-white hover:bg-white/[0.04]'
                     }`}
                   >
                     <span className={demoFormat === 'fullMotion' ? '!text-[#090B12] font-semibold' : '!text-slate-200'}>
-                      {fmtToggle.fullMotionLabel}
-                    </span>
-                    <span
-                      className={`hidden sm:inline text-[10px] font-medium ${
-                        demoFormat === 'fullMotion' ? '!text-[#090B12]/80' : '!text-slate-400'
-                      }`}
-                    >
-                      · {fmtToggle.fullMotionSub}
+                      {convCopy.studioLadder.fullMotionTabLabel}
                     </span>
                   </button>
                 </div>
+
+                {/* Tiered Studio Ladder Helper Microcopy directly below toggle */}
+                <p
+                  data-testid="studio-ladder-helper"
+                  className={`px-2 pb-2.5 text-[11px] leading-relaxed ${
+                    demoFormat === 'express4k' ? 'text-[#F0CB92]/90' : 'text-emerald-300/95'
+                  }`}
+                >
+                  {demoFormat === 'express4k'
+                    ? convCopy.studioLadder.expressHelper
+                    : convCopy.studioLadder.fullMotionHelper}
+                </p>
 
                 <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-white/10">
                   <video
@@ -706,17 +743,8 @@ export function KeepsakeCinemaStorefront({
                   </button>
                 </div>
 
-                <div className="px-2 pt-2 pb-1 space-y-1">
+                <div className="px-2 pt-2 pb-1">
                   <p className="text-xs text-slate-200 font-medium">{activeReel.caption}</p>
-                  <p
-                    className={`text-[11px] leading-snug ${
-                      demoFormat === 'express4k' ? 'text-slate-400' : 'text-emerald-300/90'
-                    }`}
-                  >
-                    {demoFormat === 'express4k'
-                      ? fmtToggle.express4kNote
-                      : fmtToggle.fullMotionNote}
-                  </p>
                 </div>
 
                 {/* Film Switcher Pills with full non-truncated labels + rich tooltips */}
@@ -778,40 +806,48 @@ export function KeepsakeCinemaStorefront({
               </p>
             </div>
 
-            {/* Category & Format Switchers */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full md:w-auto">
-              <div
-                role="group"
-                aria-label="Preview format for milestone cards"
-                className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-full border border-white/15 bg-[#0E1320] p-1"
+            {/* Storefront Niche Presets Callout + Category & Format Switchers */}
+            <div className="flex flex-col items-start md:items-end gap-2.5 w-full md:w-auto">
+              <p
+                data-testid="niche-preset-callout"
+                className="text-[11px] sm:text-xs text-slate-400 md:text-end max-w-xl leading-relaxed"
               >
-                <button
-                  type="button"
-                  aria-pressed={demoFormat === 'express4k'}
-                  onClick={() => handleGlobalFormatChange('express4k')}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition text-center whitespace-nowrap ${
-                    demoFormat === 'express4k'
-                      ? 'bg-[#DFB473] !text-[#090B12]'
-                      : '!text-slate-300 hover:!text-white'
-                  }`}
-                >
-                  {fmtToggle.express4kLabel}
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={demoFormat === 'fullMotion'}
-                  onClick={() => handleGlobalFormatChange('fullMotion')}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition text-center whitespace-nowrap ${
-                    demoFormat === 'fullMotion'
-                      ? 'bg-emerald-400 !text-[#090B12]'
-                      : '!text-slate-300 hover:!text-white'
-                  }`}
-                >
-                  {fmtToggle.fullMotionLabel}
-                </button>
-              </div>
+                {convCopy.nichePresetCallout}
+              </p>
 
-              <div className="flex flex-wrap sm:inline-flex w-full sm:w-auto rounded-2xl sm:rounded-full border border-white/15 bg-[#0E1320] p-1 gap-1">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full md:w-auto">
+                <div
+                  role="group"
+                  aria-label="Preview format for milestone cards"
+                  className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-full border border-white/15 bg-[#0E1320] p-1"
+                >
+                  <button
+                    type="button"
+                    aria-pressed={demoFormat === 'express4k'}
+                    onClick={() => handleGlobalFormatChange('express4k')}
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition text-center whitespace-nowrap ${
+                      demoFormat === 'express4k'
+                        ? 'bg-[#DFB473] !text-[#090B12]'
+                        : '!text-slate-300 hover:!text-white'
+                    }`}
+                  >
+                    {convCopy.studioLadder.expressCardToggle}
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={demoFormat === 'fullMotion'}
+                    onClick={() => handleGlobalFormatChange('fullMotion')}
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition text-center whitespace-nowrap ${
+                      demoFormat === 'fullMotion'
+                        ? 'bg-emerald-400 !text-[#090B12]'
+                        : '!text-slate-300 hover:!text-white'
+                    }`}
+                  >
+                    {convCopy.studioLadder.fullMotionCardToggle}
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap sm:inline-flex w-full sm:w-auto rounded-2xl sm:rounded-full border border-white/15 bg-[#0E1320] p-1 gap-1">
                 <button
                   type="button"
                   onClick={() => {
@@ -854,6 +890,7 @@ export function KeepsakeCinemaStorefront({
                 >
                   {copy.occasions.tabCommercial}
                 </button>
+              </div>
               </div>
             </div>
           </div>
@@ -941,7 +978,7 @@ export function KeepsakeCinemaStorefront({
                     )}
                   </div>
 
-                  {/* Per-Card 4K Cinema vs Full-Motion Format Switcher */}
+                  {/* Per-Card Automated 4K vs PM-Directed Full-Motion Format Switcher */}
                   <div className="border-b border-white/[0.08] bg-[#080C15] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2">
                     <div
                       role="group"
@@ -958,7 +995,7 @@ export function KeepsakeCinemaStorefront({
                             : '!text-slate-300 hover:!text-white'
                         }`}
                       >
-                        {fmtToggle.express4kLabel}
+                        {convCopy.studioLadder.expressCardToggle}
                       </button>
                       <button
                         type="button"
@@ -970,7 +1007,7 @@ export function KeepsakeCinemaStorefront({
                             : '!text-slate-300 hover:!text-white'
                         }`}
                       >
-                        {fmtToggle.fullMotionLabel}
+                        {convCopy.studioLadder.fullMotionCardToggle}
                       </button>
                     </div>
                     <span
@@ -979,8 +1016,8 @@ export function KeepsakeCinemaStorefront({
                       }`}
                     >
                       {cardFormat === 'express4k'
-                        ? fmtToggle.cardExpressBadge
-                        : fmtToggle.cardFullMotionBadge}
+                        ? convCopy.studioLadder.expressCardBadge
+                        : convCopy.studioLadder.fullMotionCardBadge}
                     </span>
                   </div>
 
@@ -1137,12 +1174,12 @@ export function KeepsakeCinemaStorefront({
         </div>
       </section>
 
-      {/* Honest Express 4K Cinema Clarity + Partner Full-Motion Upgrade Path */}
+      {/* Tiered Studio Ladder + Upgraded Automated-to-PM Full-Motion Callout */}
       <section id="express-4k" className="py-16 border-t border-white/[0.07] bg-[#090C14]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-[#DFB473]/25 bg-gradient-to-br from-[#121625] via-[#0C101B] to-[#090C14] p-6 sm:p-10">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-7 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              <div className="lg:col-span-6 space-y-4">
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#DFB473]/30 bg-[#DFB473]/10 px-3 py-1 text-xs font-medium text-[#F0CB92]">
                   <Layers className="w-3.5 h-3.5 shrink-0" />
                   {copy.clarity.badge}
@@ -1150,10 +1187,30 @@ export function KeepsakeCinemaStorefront({
                 <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-white">
                   {copy.clarity.heading}
                 </h2>
-                <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                  {txt(copy.clarity.body)}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm">
+
+                {/* 2-Tier Studio Ladder Comparison Cards */}
+                <div data-testid="studio-ladder-tiers" className="space-y-3 pt-1">
+                  <div className="rounded-2xl border border-[#DFB473]/35 bg-[#DFB473]/[0.06] p-4 space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#F0CB92]">
+                      <span className="inline-flex h-2 w-2 rounded-full bg-[#DFB473] shrink-0" />
+                      <span>{txt(convCopy.studioLadder.tier1Title)}</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                      {convCopy.studioLadder.tier1Desc}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/[0.06] p-4 space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-emerald-300">
+                      <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 shrink-0" />
+                      <span>{convCopy.studioLadder.tier2Title}</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                      {convCopy.studioLadder.tier2Desc}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 text-xs sm:text-sm">
                   {copy.clarity.bullets.map((bullet) => (
                     <div key={bullet} className="flex items-center gap-2 text-slate-200">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -1163,29 +1220,37 @@ export function KeepsakeCinemaStorefront({
                 </div>
               </div>
 
-              <div className="lg:col-span-5 rounded-2xl border border-white/10 bg-black/40 p-5 sm:p-6 space-y-4">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  <Heart className="w-4 h-4 text-[#DFB473] shrink-0" />
-                  {copy.clarity.partnerHeading}
+              <div
+                data-testid="full-motion-upgrade-callout"
+                className="lg:col-span-6 rounded-2xl border border-white/15 bg-black/45 p-5 sm:p-7 space-y-4 shadow-xl shadow-black/40"
+              >
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
+                  <Heart className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                  <span>{convCopy.studioLadder.fullMotionCardBadge}</span>
                 </div>
-                <p className="text-sm text-slate-300 leading-relaxed">{copy.clarity.partnerBody1}</p>
-                <p className="text-sm text-slate-300 leading-relaxed">{copy.clarity.partnerBody2}</p>
-                <div className="pt-2 border-t border-white/10 flex flex-col sm:flex-row gap-2.5">
+                <h3 className="font-serif text-xl sm:text-2xl font-semibold text-white leading-snug">
+                  {convCopy.fullMotionUpgrade.heading}
+                </h3>
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  {txt(convCopy.fullMotionUpgrade.body)}
+                </p>
+                <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row flex-wrap gap-2.5">
                   <button
                     type="button"
                     onClick={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#DFB473] hover:bg-[#F0CB92] px-4 py-2.5 text-xs font-semibold !text-[#090B12] transition"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] px-4 py-2.5 text-xs font-semibold !text-[#090B12] shadow-md shadow-[#C9974F]/20 transition"
                   >
                     <span className="!text-[#090B12] font-semibold">
-                      {txt(copy.clarity.partnerPrimaryCta)}
+                      {txt(convCopy.fullMotionUpgrade.primaryCta)}
                     </span>
                     <ArrowRight className="w-3.5 h-3.5 !text-[#090B12] rtl:rotate-180" />
                   </button>
                   <Link
                     href="/#video-services"
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/15 hover:border-white/30 px-4 py-2.5 text-xs font-medium text-slate-200 hover:text-white transition"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-400/35 bg-emerald-500/10 hover:bg-emerald-500/20 px-4 py-2.5 text-xs font-semibold text-emerald-200 hover:text-white transition"
                   >
-                    {copy.clarity.partnerSecondaryCta}
+                    <span>{convCopy.fullMotionUpgrade.secondaryCta}</span>
+                    <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                   </Link>
                 </div>
               </div>
@@ -1240,9 +1305,52 @@ export function KeepsakeCinemaStorefront({
         </div>
       </section>
 
-      {/* Footer + Discreet Reference Storefront / SceneFlow Studio Operator Attribution */}
+      {/* Clean Visual Divider + Upgraded White-Label Operator Conversion Block */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <hr className="border-t border-white/15" />
+      </div>
+
+      <section
+        data-testid="white-label-operator-block"
+        className="py-14 sm:py-20 bg-gradient-to-b from-[#06080E] via-[#09111B] to-[#05070C]"
+      >
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-3xl border border-emerald-400/25 bg-gradient-to-br from-[#0D1824] via-[#0A101B] to-[#070B12] p-6 sm:p-10 shadow-2xl shadow-black/50 space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              <span>{convCopy.operatorFooter.eyebrow}</span>
+            </div>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-semibold text-white leading-tight">
+              {convCopy.operatorFooter.heading}
+            </h2>
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-3xl">
+              {convCopy.operatorFooter.body}
+            </p>
+            <div className="pt-2 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
+              <Link
+                href={getSignupUrlForTier('pro')}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 hover:from-emerald-300 hover:to-teal-200 px-6 py-3 text-xs sm:text-sm font-semibold !text-[#090B12] shadow-lg shadow-emerald-500/20 transition"
+              >
+                <span className="!text-[#090B12] font-semibold">
+                  {convCopy.operatorFooter.primaryCta}
+                </span>
+                <ArrowRight className="w-4 h-4 shrink-0 !text-[#090B12] rtl:rotate-180" />
+              </Link>
+              <Link
+                href="/#video-services"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 hover:border-[#DFB473]/60 bg-white/[0.03] hover:bg-white/[0.07] px-6 py-3 text-xs sm:text-sm font-semibold text-slate-100 hover:text-white transition"
+              >
+                <span>{convCopy.operatorFooter.secondaryCta}</span>
+                <ArrowRight className="w-4 h-4 shrink-0 rtl:rotate-180" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Keepsake Cinema Consumer Footer */}
       <footer className="border-t border-white/10 bg-[#05070C]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-lg">
             <div className="flex items-center gap-2.5 flex-wrap">
               <Film className="w-4 h-4 text-[#DFB473] shrink-0" />
@@ -1263,32 +1371,8 @@ export function KeepsakeCinemaStorefront({
               onClick={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
               className="rounded-full bg-[#DFB473] hover:bg-[#F0CB92] px-5 py-2.5 text-xs sm:text-sm font-semibold !text-[#090B12] transition"
             >
-              {txt(copy.footer.primaryCta)}
+              <span className="!text-[#090B12] font-semibold">{txt(copy.footer.primaryCta)}</span>
             </button>
-            <Link
-              href="/#video-services"
-              className="rounded-full border border-white/15 hover:border-[#DFB473]/50 px-5 py-2.5 text-xs sm:text-sm font-medium text-slate-200 hover:text-white transition"
-            >
-              {copy.footer.secondaryCta}
-            </Link>
-          </div>
-        </div>
-
-        {/* Discreet bottom attribution ribbon (keeps Keepsake Cinema the unmistakable hero brand above the fold) */}
-        <div className="border-t border-white/[0.06] bg-[#030509]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 text-[11px] text-slate-400">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
-              <span className="font-medium text-slate-300">{copy.topBarBadge}</span>
-              <span className="hidden md:inline text-slate-500">{copy.topBarSubtext}</span>
-            </div>
-            <Link
-              href="/#video-services"
-              className="inline-flex items-center gap-1 shrink-0 font-medium text-[#DFB473]/90 hover:text-[#F0CB92] transition"
-            >
-              <span>{copy.topBarCtaDesktop}</span>
-              <ArrowRight className="w-3 h-3 shrink-0 rtl:rotate-180" />
-            </Link>
           </div>
         </div>
       </footer>
