@@ -3,6 +3,7 @@ import { requireOwnerForSession } from '@/lib/blueprint/shareAuth'
 import { runShareSectionAudioGeneration } from '@/lib/blueprint/generateShareSectionAudio'
 import { getPayload } from '@/lib/blueprint/shareSession'
 import CollabSession from '@/models/CollabSession'
+import { resolveDemoBlueprintToken } from '@/lib/blueprint/demoBlueprintShare'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -12,6 +13,9 @@ type RouteCtx = { params: Promise<{ token: string }> }
 export async function POST(_req: NextRequest, ctx: RouteCtx) {
   try {
     const { token } = await ctx.params
+    if (resolveDemoBlueprintToken(token)) {
+      return NextResponse.json({ success: true, skipped: true, demoSandbox: true })
+    }
     const auth = await requireOwnerForSession(token)
     if (!auth.ok) {
       return NextResponse.json({ success: false, error: auth.error }, { status: auth.status })

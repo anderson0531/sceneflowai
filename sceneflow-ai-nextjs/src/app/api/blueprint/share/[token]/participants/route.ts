@@ -5,6 +5,7 @@ import CollabParticipant from '@/models/CollabParticipant'
 import CollabChatMessage from '@/models/CollabChatMessage'
 import { requireOwnerForSession, sessionDbId } from '@/lib/blueprint/shareAuth'
 import { dmScopeForParticipant } from '@/lib/blueprint/shareChat'
+import { resolveDemoBlueprintToken } from '@/lib/blueprint/demoBlueprintShare'
 
 export const runtime = 'nodejs'
 
@@ -13,6 +14,14 @@ type RouteCtx = { params: Promise<{ token: string }> }
 export async function GET(_req: NextRequest, ctx: RouteCtx) {
   try {
     const { token } = await ctx.params
+    if (resolveDemoBlueprintToken(token)) {
+      return NextResponse.json({
+        success: true,
+        participants: [],
+        teamMessageCount: 0,
+        demoSandbox: true,
+      })
+    }
     const auth = await requireOwnerForSession(token)
     if (!auth.ok) {
       return NextResponse.json({ success: false, error: auth.error }, { status: auth.status })

@@ -9,18 +9,53 @@ export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
   try {
-    const ownerUserId = await getAuthenticatedUserId(req)
-    if (!ownerUserId) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
-    }
-
     const projectId = new URL(req.url).searchParams.get('projectId') || ''
     if (!projectId) {
       return NextResponse.json({ success: false, error: 'projectId required' }, { status: 400 })
     }
 
+    const ownerUserId = await getAuthenticatedUserId(req)
+
     if (isDemoProjectId(projectId)) {
-      return NextResponse.json({ success: true, active: false })
+      if (!ownerUserId) {
+        return NextResponse.json({ success: true, active: false, demoSandbox: true })
+      }
+      // If authenticated, check for an active DB session first; fall back cleanly to inactive
+      try {
+        await sequelize.authenticate()
+        const candidates = await CollabSession.findAll({
+          where: {
+            project_id: projectId,
+            owner_user_id: ownerUserId,
+            status: 'active',
+          },
+          order: [['created_at', 'DESC']],
+          limit: 5,
+        })
+        const session = candidates.find((s) => getPayload(s)) ?? null
+        const token = session ? (session as { token?: string }).token : undefined
+        const expiresAt = session ? (session as { expires_at?: Date | null }).expires_at : null
+        if (session && token && (!expiresAt || new Date(expiresAt) >= new Date())) {
+          const origin = req.headers.get('x-forwarded-host')
+            ? `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host')}`
+            : new URL(req.url).origin
+          return NextResponse.json({
+            success: true,
+            active: true,
+            token,
+            sessionId: session.id,
+            url: `${origin}/blueprint/share/${token}`,
+            expiresAt: expiresAt?.toISOString?.() ?? null,
+          })
+        }
+      } catch {
+        // Ignore DB errors on sandbox projects
+      }
+      return NextResponse.json({ success: true, active: false, demoSandbox: true })
+    }
+
+    if (!ownerUserId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
     await sequelize.authenticate()

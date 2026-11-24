@@ -35,6 +35,8 @@ import {
   toBlueprintReviewLanguageCode,
 } from '@/lib/intake/clientPortalCopy'
 import ProducerProfile from '@/models/ProducerProfile'
+import { isDemoProjectId } from '@/lib/demo/uiSandboxProject'
+import { getDemoBlueprintShareToken } from '@/lib/blueprint/demoBlueprintShare'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -118,6 +120,11 @@ function invalidateAudioIfTreatmentChanged(
 }
 
 export async function POST(req: NextRequest) {
+  let parsedBody: (BlueprintShareCreateBody & { legacyOwnerId?: string }) | null = null
+  const origin = req.headers.get('x-forwarded-host')
+    ? `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host')}`
+    : new URL(req.url).origin
+
   try {
     const authSession = (await getServerSession(authOptions as any).catch(() => null)) as {
       user?: { name?: string; email?: string }
@@ -125,11 +132,9 @@ export async function POST(req: NextRequest) {
     const ownerUserId = await getAuthenticatedUserId(req)
     const ownerName = authSession?.user?.name || 'Owner'
     const ownerEmail = authSession?.user?.email || null
-    if (!ownerUserId) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
-    }
 
     const body = (await req.json()) as BlueprintShareCreateBody & { legacyOwnerId?: string }
+    parsedBody = body
     const {
       projectId,
       variantId,
@@ -148,6 +153,23 @@ export async function POST(req: NextRequest) {
 
     if (!projectId || !variantId || !treatment) {
       return NextResponse.json({ success: false, error: 'Missing projectId, variantId, or treatment' }, { status: 400 })
+    }
+
+    if (!ownerUserId) {
+      if (isDemoProjectId(projectId)) {
+        const demoToken = getDemoBlueprintShareToken(projectId, {
+          clientMode: reqClientMode === true,
+        })
+        return NextResponse.json({
+          success: true,
+          token: demoToken,
+          sessionId: `demo-session-${projectId}`,
+          url: `${origin}/blueprint/share/${demoToken}`,
+          reused: false,
+          demoSandbox: true,
+        })
+      }
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
     const resolvedHeroImageUrl = pickBestHeroImageUrl(
@@ -231,10 +253,6 @@ export async function POST(req: NextRequest) {
     await CollabSession.sync({ alter: false })
     await CollabParticipant.sync({ alter: false })
     await ensureCollabBlueprintFeedbackTable()
-
-    const origin = req.headers.get('x-forwarded-host')
-      ? `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host')}`
-      : new URL(req.url).origin
 
     if (!forceNew) {
       const existing = await findActiveBlueprintSession(projectId, ownerUserId)
@@ -383,6 +401,20 @@ export async function POST(req: NextRequest) {
       throw e
     }
   } catch (e: unknown) {
+    if (parsedBody?.projectId && isDemoProjectId(parsedBody.projectId)) {
+      const demoToken = getDemoBlueprintShareToken(parsedBody.projectId, {
+        clientMode: parsedBody.clientMode === true,
+      })
+      console.warn('[blueprint/share/create] Returning demo sandbox share fallback:', e)
+      return NextResponse.json({
+        success: true,
+        token: demoToken,
+        sessionId: `demo-session-${parsedBody.projectId}`,
+        url: `${origin}/blueprint/share/${demoToken}`,
+        reused: false,
+        demoSandbox: true,
+      })
+    }
     const message = e instanceof Error ? e.message : 'Failed to create share'
     console.error('[blueprint/share/create]', e)
     return NextResponse.json({ success: false, error: message }, { status: 500 })

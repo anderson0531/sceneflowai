@@ -4,6 +4,7 @@ import { sequelize } from '@/config/database'
 import CollabParticipant from '@/models/CollabParticipant'
 import { resolveBlueprintShareByToken } from '@/lib/blueprint/shareSession'
 import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
+import { resolveDemoBlueprintToken } from '@/lib/blueprint/demoBlueprintShare'
 
 export const runtime = 'nodejs'
 
@@ -18,6 +19,16 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
   try {
     const { token } = await ctx.params
     const body = RegisterSchema.parse(await req.json())
+
+    if (resolveDemoBlueprintToken(token)) {
+      return NextResponse.json({
+        success: true,
+        participantId: `demo-reviewer-${Date.now()}`,
+        name: body.name.trim(),
+        demoSandbox: true,
+      })
+    }
+
     await sequelize.authenticate()
 
     const resolved = await resolveBlueprintShareByToken(token)

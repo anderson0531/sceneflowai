@@ -16,6 +16,10 @@ import {
   resolveShareHeroImageUrl,
   shouldPersistShareHeroUpdate,
 } from '@/lib/blueprint/shareHeroImage'
+import {
+  buildDemoBlueprintSharePayload,
+  resolveDemoBlueprintToken,
+} from '@/lib/blueprint/demoBlueprintShare'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -25,6 +29,47 @@ type RouteCtx = { params: Promise<{ token: string }> }
 export async function GET(req: NextRequest, ctx: RouteCtx) {
   try {
     const { token } = await ctx.params
+
+    const demoMatch = resolveDemoBlueprintToken(token)
+    if (demoMatch) {
+      const demoPayload = buildDemoBlueprintSharePayload(demoMatch.projectId, {
+        clientMode: demoMatch.clientMode,
+      })
+      const lang = getShareAudioLanguage(demoPayload)
+      return NextResponse.json({
+        success: true,
+        sessionId: `demo-session-${demoMatch.projectId}`,
+        token,
+        accessRole: 'standard',
+        guestShareUrl: null,
+        status: 'active',
+        expiresAt: null,
+        demoSandbox: true,
+        payload: {
+          treatment: demoPayload.treatment,
+          heroImageUrl: demoPayload.heroImageUrl,
+          variantId: demoPayload.variantId,
+          projectId: demoPayload.projectId,
+          shareSettings: demoPayload.shareSettings,
+          pendingClientClarification: null,
+          ownerDisplayName: demoPayload.ownerDisplayName,
+          sectionAudio: {},
+          sectionAudioByLanguage: {},
+          sectionTranslations: {},
+          beatAudioByLanguage: {},
+          beatTranslations: {},
+          sectionAudioLanguage: lang,
+          sectionAudioStatus: 'skipped',
+          sectionAudioVoiceId: demoPayload.sectionAudioVoiceId,
+          blueprintAudienceResonance: shouldHideBlueprintAudienceResonance(demoPayload.shareSettings)
+            ? null
+            : demoPayload.blueprintAudienceResonance ?? null,
+          resonanceAudioByLanguage: {},
+          resonanceTranslations: {},
+        },
+      })
+    }
+
     await sequelize.authenticate()
 
     const resolved = await resolveBlueprintShareByToken(token)

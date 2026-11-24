@@ -15,6 +15,7 @@ import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollab
 import { buildFeedbackNotification, feedbackExcerpt } from '@/lib/companion/feedbackNotification'
 import { notifyUser } from '@/lib/jobs/jobService'
 import { notifyPrimaryCustomerOfGuestFeedback } from '@/lib/intake/automatedClientBlueprint'
+import { resolveDemoBlueprintToken } from '@/lib/blueprint/demoBlueprintShare'
 
 export const runtime = 'nodejs'
 
@@ -23,6 +24,9 @@ type RouteCtx = { params: Promise<{ token: string }> }
 export async function GET(_req: NextRequest, ctx: RouteCtx) {
   try {
     const { token } = await ctx.params
+    if (resolveDemoBlueprintToken(token)) {
+      return NextResponse.json({ success: true, feedback: [], demoSandbox: true })
+    }
     const auth = await requireOwnerForSession(token)
     if (!auth.ok) {
       return NextResponse.json({ success: false, error: auth.error }, { status: auth.status })
@@ -61,6 +65,13 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
 export async function POST(req: NextRequest, ctx: RouteCtx) {
   try {
     const { token } = await ctx.params
+    if (resolveDemoBlueprintToken(token)) {
+      return NextResponse.json({
+        success: true,
+        id: `demo-feedback-${Date.now()}`,
+        demoSandbox: true,
+      })
+    }
     await sequelize.authenticate()
     await ensureCollabBlueprintFeedbackTable()
 

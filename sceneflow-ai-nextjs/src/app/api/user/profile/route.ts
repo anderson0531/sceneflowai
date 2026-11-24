@@ -8,6 +8,25 @@ import { resolveUser } from '@/lib/userHelper'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+async function resolveSessionUser(session: { user?: { id?: string; email?: string } } | null) {
+  const userId = session?.user?.id
+  const userEmail = session?.user?.email
+  if (userId) {
+    try {
+      return await resolveUser(userId)
+    } catch (err) {
+      if (userEmail && userEmail !== userId) {
+        return await resolveUser(userEmail)
+      }
+      throw err
+    }
+  }
+  if (userEmail) {
+    return await resolveUser(userEmail)
+  }
+  return null
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions as any)
@@ -19,16 +38,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Resolve user by ID or email (handles both UUID and email)
-    const userIdOrEmail = session.user.id || session.user.email
-    if (!userIdOrEmail) {
+    const user = await resolveSessionUser(session)
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
-
-    const user = await resolveUser(userIdOrEmail)
 
     return NextResponse.json({
       user: {
@@ -64,16 +80,13 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Resolve user by ID or email (handles both UUID and email)
-    const userIdOrEmail = session.user.id || session.user.email
-    if (!userIdOrEmail) {
+    const user = await resolveSessionUser(session)
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
-
-    const user = await resolveUser(userIdOrEmail)
 
     const body = await request.json()
     const { first_name, last_name, email, username } = body

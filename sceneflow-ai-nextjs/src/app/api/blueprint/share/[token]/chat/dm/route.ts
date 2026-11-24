@@ -4,6 +4,7 @@ import { resolveSessionByToken, getPayload } from '@/lib/blueprint/shareSession'
 import { requireOwnerForSession, validateParticipant, sessionDbId } from '@/lib/blueprint/shareAuth'
 import { listChatMessages, postChatMessage, dmScopeForParticipant } from '@/lib/blueprint/shareChat'
 import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
+import { resolveDemoBlueprintToken } from '@/lib/blueprint/demoBlueprintShare'
 
 export const runtime = 'nodejs'
 
@@ -32,6 +33,9 @@ function resolveDmScope(
 export async function GET(req: NextRequest, ctx: RouteCtx) {
   try {
     const { token } = await ctx.params
+    if (resolveDemoBlueprintToken(token)) {
+      return NextResponse.json({ success: true, messages: [], nextCursor: 0, demoSandbox: true })
+    }
     const session = await resolveSession(token)
     if (!session) {
       return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 })
