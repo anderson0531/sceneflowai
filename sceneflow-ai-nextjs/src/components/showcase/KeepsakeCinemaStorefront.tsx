@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import {
   ArrowRight,
   Award,
@@ -18,6 +17,7 @@ import {
   Play,
   ShieldCheck,
   Sparkles,
+  Upload,
   Users,
   Volume2,
   X,
@@ -27,9 +27,11 @@ import {
   EXPRESS_SHOWCASE_OFFERS,
   FEATURED_STOREFRONT_OFFERS,
   SHOWCASE_BRAND_SNAPSHOT,
+  getShowcaseOfferById,
   type ExpressShowcaseOffer,
   type ShowcaseCategoryId,
   type ShowcaseOfferId,
+  type ShowcaseVideoSlug,
 } from '@/config/showcase/expressCinemaCatalog'
 import {
   SHOWCASE_LOCALE_COPY,
@@ -37,6 +39,7 @@ import {
   getShowcaseVideoPosterUrl,
   type ShowcaseDemoFormat,
 } from '@/config/showcase/showcaseLocaleCopy'
+import { SHOWCASE_CONVERSION_COPY } from '@/config/showcase/showcaseConversionCopy'
 import { LongformCinemaCraftShowcase } from '@/components/showcase/LongformCinemaCraftShowcase'
 import {
   SUPPORTED_CLIENT_PORTAL_LOCALES,
@@ -52,13 +55,17 @@ import { getLocaleDirection } from '@/i18n/locale'
 
 const LOCALE_STORAGE_KEY = 'keepsake_showcase_locale'
 
-export function KeepsakeCinemaStorefront() {
-  const searchParams = useSearchParams()
-  const urlLang = searchParams?.get('lang')
+export interface KeepsakeCinemaStorefrontProps {
+  initialLocale?: ClientPortalLocale
+  hasExplicitLocaleParam?: boolean
+}
 
-  const [uiLocale, setUiLocale] = useState<ClientPortalLocale>(() =>
-    urlLang ? resolveClientPortalLocale(urlLang) : 'en'
-  )
+export function KeepsakeCinemaStorefront({
+  initialLocale = 'en',
+  hasExplicitLocaleParam = false,
+}: KeepsakeCinemaStorefrontProps = {}) {
+  const [uiLocale, setUiLocale] = useState<ClientPortalLocale>(initialLocale)
+  const [deliveryEtaText, setDeliveryEtaText] = useState<string | null>(null)
   const [langMenuOpen, setLangMenuOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<'all' | ShowcaseCategoryId>('all')
   const [activeReelIdx, setActiveReelIdx] = useState(0)
@@ -75,7 +82,7 @@ export function KeepsakeCinemaStorefront() {
   const [customerName, setCustomerName] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
   const [honoreeOrTitle, setHonoreeOrTitle] = useState('')
-  const [checkoutLocale, setCheckoutLocale] = useState<ClientPortalLocale>('en')
+  const [checkoutLocale, setCheckoutLocale] = useState<ClientPortalLocale>(initialLocale)
   const [submittingCheckout, setSubmittingCheckout] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
 
@@ -83,12 +90,11 @@ export function KeepsakeCinemaStorefront() {
   const cardVideoRefs = useRef<Partial<Record<ShowcaseOfferId, HTMLVideoElement | null>>>({})
   const langMenuRef = useRef<HTMLDivElement | null>(null)
 
-  // Hydrate initial locale from URL -> localStorage -> browser navigator.language
+  // Hydrate locale from localStorage / browser language only if server didn't receive explicit ?lang=
   useEffect(() => {
-    if (urlLang) {
-      const resolved = resolveClientPortalLocale(urlLang)
-      setUiLocale(resolved)
-      setCheckoutLocale(resolved)
+    if (hasExplicitLocaleParam) {
+      setUiLocale(initialLocale)
+      setCheckoutLocale(initialLocale)
       return
     }
     try {
@@ -107,7 +113,24 @@ export function KeepsakeCinemaStorefront() {
     } catch {
       // Ignore storage access errors
     }
-  }, [urlLang])
+  }, [initialLocale, hasExplicitLocaleParam])
+
+  // Compute live local same-day delivery window client-side after SSR hydration (zero mismatch)
+  useEffect(() => {
+    const conv = SHOWCASE_CONVERSION_COPY[uiLocale] ?? SHOWCASE_CONVERSION_COPY.en
+    const now = new Date()
+    const hour = now.getHours()
+    if (hour < 18) {
+      const etaDate = new Date(now.getTime() + 3.5 * 60 * 60 * 1000)
+      const etaStr = etaDate.toLocaleTimeString(uiLocale === 'zh-CN' ? 'zh-CN' : uiLocale, {
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+      setDeliveryEtaText(conv.deliveryWindow.sameDayToday.replace('{eta}', etaStr))
+    } else {
+      setDeliveryEtaText(conv.deliveryWindow.nextMorning)
+    }
+  }, [uiLocale])
 
   // Close language dropdown on outside click
   useEffect(() => {
@@ -122,6 +145,7 @@ export function KeepsakeCinemaStorefront() {
   }, [langMenuOpen])
 
   const copy = SHOWCASE_LOCALE_COPY[uiLocale] ?? SHOWCASE_LOCALE_COPY.en
+  const convCopy = SHOWCASE_CONVERSION_COPY[uiLocale] ?? SHOWCASE_CONVERSION_COPY.en
   const currencyCfg = getLandingCurrencyConfig(uiLocale)
   const direction = getLocaleDirection(uiLocale)
   const fmt = (usd: number) => formatLandingCurrency(usd, uiLocale)
@@ -130,6 +154,9 @@ export function KeepsakeCinemaStorefront() {
   const activeReel = copy.theater.tabs[activeReelIdx] ?? copy.theater.tabs[0]
   const activeReelVideoUrl = getLocalizedShowcaseVideoUrl(activeReel.videoSlug, uiLocale, demoFormat)
   const activeReelPosterUrl = getShowcaseVideoPosterUrl(activeReel.videoSlug)
+  const activeReelAnchor =
+    convCopy.reelAnchors[activeReel.videoSlug as ShowcaseVideoSlug] ?? convCopy.reelAnchors.memoir
+  const activeReelOffer = getShowcaseOfferById(activeReel.id)
   const fmtToggle = copy.theater.formatToggle
 
   const visibleOffers = useMemo(
@@ -268,26 +295,7 @@ export function KeepsakeCinemaStorefront() {
       lang={uiLocale}
       className="min-h-screen overflow-x-clip bg-[#06080E] text-[#F5F2EB] selection:bg-[#DFB473]/30 selection:text-white"
     >
-      {/* Subtle Live Reference Storefront Attribution Bar (Google-for-Startups & Pro Operator Safe) */}
-      <div className="border-b border-white/10 bg-[#0B0F1A]/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] sm:text-xs">
-          <div className="flex items-center gap-2 min-w-0 text-slate-300">
-            <span className="inline-flex h-2 w-2 shrink-0 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-medium text-white truncate">{copy.topBarBadge}</span>
-            <span className="hidden md:inline text-slate-400">{copy.topBarSubtext}</span>
-          </div>
-          <Link
-            href="/#video-services"
-            className="inline-flex items-center gap-1 shrink-0 font-medium text-[#DFB473] hover:text-[#F0CB92] transition"
-          >
-            <span className="sm:hidden">{copy.topBarCtaMobile}</span>
-            <span className="hidden sm:inline">{copy.topBarCtaDesktop}</span>
-            <ArrowRight className="w-3.5 h-3.5 shrink-0 rtl:rotate-180" />
-          </Link>
-        </div>
-      </div>
-
-      {/* Main Editorial Navigation — 2 stacked rows on mobile (<640px) so brand never collides with controls */}
+      {/* Main Editorial Navigation — Keepsake Cinema is the unmistakable hero brand at the very top */}
       <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-[#06080E]/92 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-0 sm:h-16 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-4">
           {/* Row 1 (full width on mobile): Brand Logo & Name */}
@@ -453,6 +461,12 @@ export function KeepsakeCinemaStorefront() {
                 {txt(copy.hero.subtitleEnd)}
               </p>
 
+              {/* Artisan Craft Superpower Framing (Resolves Brand vs. AI Tension) */}
+              <div className="inline-flex items-start gap-2 rounded-xl border border-[#DFB473]/25 bg-[#DFB473]/[0.06] px-3.5 py-2 text-xs sm:text-sm text-[#F5DFB8] max-w-xl">
+                <Film className="w-4 h-4 text-[#DFB473] shrink-0 mt-0.5" />
+                <span>{convCopy.artisanSuperpower}</span>
+              </div>
+
               {/* Price & Guarantee Callout */}
               <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1 max-w-lg">
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 sm:px-3.5 sm:py-3">
@@ -496,6 +510,23 @@ export function KeepsakeCinemaStorefront() {
                 >
                   {copy.hero.secondaryCta}
                 </a>
+              </div>
+
+              {/* Operationalized Same-Day Delivery Window Indicator */}
+              <div
+                data-testid="same-day-delivery-window"
+                className="rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.06] px-4 py-3 space-y-1 max-w-xl"
+              >
+                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
+                  <span className="inline-flex h-2 w-2 shrink-0 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{convCopy.deliveryWindow.badge}</span>
+                </div>
+                <p className="text-xs sm:text-[13px] text-white font-medium leading-snug">
+                  {txt(deliveryEtaText || convCopy.deliveryWindow.ssrDefault)}
+                </p>
+                <p className="text-[11px] text-slate-300 leading-snug">
+                  {convCopy.deliveryWindow.requirements}
+                </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-400 pt-1">
@@ -606,37 +637,76 @@ export function KeepsakeCinemaStorefront() {
                     className="w-full h-full object-cover"
                   />
                   {!isPlayingReel && (
-                    <button
-                      type="button"
-                      onClick={handlePlayReel}
-                      aria-label={`${copy.theater.watchSamplePrefix} ${activeReel.label}`}
-                      className="group absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-black/75 via-black/30 to-black/20 hover:bg-black/45 transition"
-                    >
-                      <span
-                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full group-hover:scale-105 !text-[#090B12] flex items-center justify-center shadow-2xl transition ${
-                          demoFormat === 'express4k'
-                            ? 'bg-[#DFB473]/95 group-hover:bg-[#F0CB92] shadow-[#DFB473]/40'
-                            : 'bg-emerald-400/95 group-hover:bg-emerald-300 shadow-emerald-400/40'
-                        }`}
+                    <>
+                      {/* Static poster frame rendered directly in initial SSR HTML for instant LCP */}
+                      <img
+                        src={activeReelPosterUrl}
+                        alt={activeReel.label}
+                        loading="eager"
+                        fetchPriority="high"
+                        className="pointer-events-none absolute inset-0 w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={handlePlayReel}
+                        aria-label={`${copy.theater.watchSamplePrefix} ${activeReel.label}`}
+                        className="group absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-black/75 via-black/30 to-black/20 hover:bg-black/45 transition"
                       >
-                        <Play className="w-7 h-7 sm:w-8 sm:h-8 ms-1 fill-current !text-[#090B12]" />
-                      </span>
-                      <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-black/75 border border-white/15 px-3.5 py-1 text-xs font-medium !text-white backdrop-blur">
-                        <Volume2
-                          className={`w-3.5 h-3.5 ${
-                            demoFormat === 'express4k' ? 'text-[#DFB473]' : 'text-emerald-400'
+                        <span
+                          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full group-hover:scale-105 !text-[#090B12] flex items-center justify-center shadow-2xl transition ${
+                            demoFormat === 'express4k'
+                              ? 'bg-[#DFB473]/95 group-hover:bg-[#F0CB92] shadow-[#DFB473]/40'
+                              : 'bg-emerald-400/95 group-hover:bg-emerald-300 shadow-emerald-400/40'
                           }`}
-                        />
-                        {demoFormat === 'express4k'
-                          ? fmtToggle.watchExpressPrefix
-                          : fmtToggle.watchFullMotionPrefix}{' '}
-                        · {activeReel.label}
-                      </span>
-                    </button>
+                        >
+                          <Play className="w-7 h-7 sm:w-8 sm:h-8 ms-1 fill-current !text-[#090B12]" />
+                        </span>
+                        <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-black/75 border border-white/15 px-3.5 py-1 text-xs font-medium !text-white backdrop-blur">
+                          <Volume2
+                            className={`w-3.5 h-3.5 ${
+                              demoFormat === 'express4k' ? 'text-[#DFB473]' : 'text-emerald-400'
+                            }`}
+                          />
+                          {demoFormat === 'express4k'
+                            ? fmtToggle.watchExpressPrefix
+                            : fmtToggle.watchFullMotionPrefix}{' '}
+                          · {activeReel.label}
+                        </span>
+                      </button>
+                    </>
                   )}
                 </div>
 
-                <div className="px-2 pt-2.5 pb-1 space-y-1">
+                {/* 3 Direct Conversion Anchors tied to the active Hero Showcase Reel */}
+                <div
+                  data-testid="hero-reel-conversion-bar"
+                  className="mt-2.5 rounded-xl border border-white/10 bg-[#070A12] px-3 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
+                      <span className="font-semibold text-[#F0CB92]">
+                        {convCopy.occasionLabel}:
+                      </span>
+                      <span className="text-white font-medium">{activeReelAnchor.occasion}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-300">
+                      <Upload className="w-3 h-3 text-[#DFB473] shrink-0" />
+                      <span>{activeReelAnchor.inputRequired}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openOrderModal(activeReelOffer)}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] px-3.5 py-2 text-xs font-semibold !text-[#090B12] shadow-md shadow-[#C9974F]/20 transition shrink-0 whitespace-nowrap"
+                  >
+                    <span className="!text-[#090B12] font-semibold">
+                      {convCopy.startLikeThisCta}
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5 !text-[#090B12] rtl:rotate-180" />
+                  </button>
+                </div>
+
+                <div className="px-2 pt-2 pb-1 space-y-1">
                   <p className="text-xs text-slate-200 font-medium">{activeReel.caption}</p>
                   <p
                     className={`text-[11px] leading-snug ${
@@ -826,6 +896,13 @@ export function KeepsakeCinemaStorefront() {
                     />
                     {!isCardPlaying && (
                       <>
+                        <img
+                          src={offer.posterImage}
+                          alt={offerCopy.title}
+                          loading="lazy"
+                          decoding="async"
+                          className="pointer-events-none absolute inset-0 w-full h-full object-cover"
+                        />
                         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0D111C]/90 via-black/25 to-black/30" />
                         <div className="pointer-events-none absolute top-3 start-3 max-w-[calc(100%-1.5rem)] inline-flex items-center rounded-full bg-black/75 border border-[#DFB473]/40 px-3 py-1 text-[11px] font-medium !text-[#F0CB92] backdrop-blur truncate">
                           {offerCopy.badge}
@@ -907,6 +984,26 @@ export function KeepsakeCinemaStorefront() {
                     </span>
                   </div>
 
+                  {/* Per-Card Conversion Anchors: Occasion + Exact Input Required */}
+                  {(() => {
+                    const cardAnchor =
+                      convCopy.reelAnchors[offer.videoSlug] ?? convCopy.reelAnchors.memoir
+                    return (
+                      <div className="border-b border-white/[0.06] bg-[#0A0F1A] px-4 py-2.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[11px]">
+                        <span className="text-slate-200">
+                          <strong className="text-[#F0CB92] font-semibold">
+                            {convCopy.occasionLabel}:
+                          </strong>{' '}
+                          {cardAnchor.occasion}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-slate-300">
+                          <Upload className="w-3 h-3 text-[#DFB473] shrink-0" />
+                          <span>{cardAnchor.inputRequired}</span>
+                        </span>
+                      </div>
+                    )
+                  })()}
+
                   <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between gap-5">
                     <div className="space-y-4">
                       <div className="flex items-start justify-between gap-3">
@@ -961,7 +1058,7 @@ export function KeepsakeCinemaStorefront() {
                         className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] !text-[#090B12] px-4 py-2.5 sm:py-2 text-xs sm:text-sm font-semibold shadow-md shadow-[#C9974F]/20 transition shrink-0"
                       >
                         <span className="!text-[#090B12] font-semibold">
-                          {txt(copy.occasions.cardCta)}
+                          {convCopy.startLikeThisCta} · {fmt(offer.blueprintPassUsd)}
                         </span>
                         <ArrowRight className="w-3.5 h-3.5 !text-[#090B12] rtl:rotate-180" />
                       </button>
@@ -1143,9 +1240,9 @@ export function KeepsakeCinemaStorefront() {
         </div>
       </section>
 
-      {/* Footer + Prospective Operator CTA */}
-      <footer className="border-t border-white/10 bg-[#05070C] py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      {/* Footer + Discreet Reference Storefront / SceneFlow Studio Operator Attribution */}
+      <footer className="border-t border-white/10 bg-[#05070C]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-lg">
             <div className="flex items-center gap-2.5 flex-wrap">
               <Film className="w-4 h-4 text-[#DFB473] shrink-0" />
@@ -1173,6 +1270,24 @@ export function KeepsakeCinemaStorefront() {
               className="rounded-full border border-white/15 hover:border-[#DFB473]/50 px-5 py-2.5 text-xs sm:text-sm font-medium text-slate-200 hover:text-white transition"
             >
               {copy.footer.secondaryCta}
+            </Link>
+          </div>
+        </div>
+
+        {/* Discreet bottom attribution ribbon (keeps Keepsake Cinema the unmistakable hero brand above the fold) */}
+        <div className="border-t border-white/[0.06] bg-[#030509]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 text-[11px] text-slate-400">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+              <span className="font-medium text-slate-300">{copy.topBarBadge}</span>
+              <span className="hidden md:inline text-slate-500">{copy.topBarSubtext}</span>
+            </div>
+            <Link
+              href="/#video-services"
+              className="inline-flex items-center gap-1 shrink-0 font-medium text-[#DFB473]/90 hover:text-[#F0CB92] transition"
+            >
+              <span>{copy.topBarCtaDesktop}</span>
+              <ArrowRight className="w-3 h-3 shrink-0 rtl:rotate-180" />
             </Link>
           </div>
         </div>

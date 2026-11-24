@@ -1,23 +1,29 @@
-import React, { Suspense } from 'react'
+import React from 'react'
 import type { Metadata } from 'next'
 import { KeepsakeCinemaStorefront } from '@/components/showcase/KeepsakeCinemaStorefront'
+import { resolveClientPortalLocale } from '@/lib/intake/clientPortalCopy'
 
 export const metadata: Metadata = {
-  title: 'Keepsake Cinema — Same-Day Express 4K Milestone & Life Films | Powered by SceneFlow Studio',
+  title: 'Keepsake Cinema — Same-Day 4K Milestone & Life Films',
   description:
-    'Live White-Label Reference Storefront powered by SceneFlow Studio in 7 languages. Order a $29 Storyboard Blueprint Pass and receive a Same-Day Express 4K Cinema Film for family legacies, weddings, graduations, retirements, real estate, or brands.',
+    'Turn treasured photos and spoken memories into a director-crafted, longform 4K Cinema Feature Film with a 1–3 min theatrical trailer—accelerated by SceneFlow Studio for same-day delivery in 70+ languages.',
 }
 
-export default function ShowcaseStorefrontPage() {
+type ShowcasePageProps = {
+  searchParams?: Promise<{ lang?: string | string[] }>
+}
+
+export default async function ShowcaseStorefrontPage({ searchParams }: ShowcasePageProps) {
+  const resolvedParams = searchParams ? await searchParams : undefined
+  const rawLang = Array.isArray(resolvedParams?.lang)
+    ? resolvedParams?.lang[0]
+    : resolvedParams?.lang
+  const initialLocale = rawLang ? resolveClientPortalLocale(rawLang) : 'en'
+
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[#06080E] flex items-center justify-center text-slate-300 text-sm">
-          Loading Keepsake Cinema...
-        </div>
-      }
-    >
-      <KeepsakeCinemaStorefront />
-    </Suspense>
+    <KeepsakeCinemaStorefront
+      initialLocale={initialLocale}
+      hasExplicitLocaleParam={Boolean(rawLang)}
+    />
   )
 }

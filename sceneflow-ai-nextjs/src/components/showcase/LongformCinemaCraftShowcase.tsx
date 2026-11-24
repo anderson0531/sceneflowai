@@ -45,13 +45,17 @@ export function LongformCinemaCraftShowcase({
 }: LongformCinemaCraftShowcaseProps) {
   const [activePillarId, setActivePillarId] = useState<CraftPillarId>('resonance_script')
   const copy = LONGFORM_CRAFT_COPY[locale] ?? LONGFORM_CRAFT_COPY.en
+  const isStorefront = variant === 'storefront'
   const txt = (s: string) => localizeUsdText(s, locale)
+  const brandTxt = (s: string) => {
+    const localized = txt(s)
+    return isStorefront ? localized.replace(/SceneFlow/g, 'Keepsake Cinema') : localized
+  }
 
   const activePillar =
     copy.pillars.find((p) => p.id === activePillarId) ?? copy.pillars[0]
   const ActiveIcon = PILLAR_ICONS[activePillar.id]
 
-  const isStorefront = variant === 'storefront'
   const accentText = isStorefront ? 'text-[#F0CB92]' : 'text-emerald-300'
   const accentBorder = isStorefront ? 'border-[#DFB473]/30' : 'border-emerald-400/30'
   const accentBgSoft = isStorefront ? 'bg-[#DFB473]/10' : 'bg-emerald-500/10'
@@ -159,7 +163,7 @@ export function LongformCinemaCraftShowcase({
               <h3 className="font-serif text-xl sm:text-2xl font-semibold text-white">
                 {copy.pillarsHeading}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">{copy.pillarsHint}</p>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">{brandTxt(copy.pillarsHint)}</p>
             </div>
           </div>
 
@@ -334,10 +338,10 @@ export function LongformCinemaCraftShowcase({
           <div className="px-5 sm:px-7 py-5 border-b border-white/10 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
             <div>
               <h3 className="font-serif text-xl sm:text-2xl font-semibold text-white">
-                {txt(copy.comparisonHeading)}
+                {brandTxt(copy.comparisonHeading)}
               </h3>
               <p className="text-xs sm:text-sm text-slate-400 mt-1">
-                {txt(copy.comparisonSubtitle)}
+                {brandTxt(copy.comparisonSubtitle)}
               </p>
             </div>
           </div>
@@ -346,7 +350,7 @@ export function LongformCinemaCraftShowcase({
           <div className="hidden md:grid md:grid-cols-12 border-b border-white/10 bg-white/[0.02] px-7 py-3 text-xs font-semibold uppercase tracking-wider">
             <div className="col-span-3 text-slate-400">{copy.colDimension}</div>
             <div className="col-span-4 text-rose-300/90">{copy.colSlop}</div>
-            <div className={`col-span-5 ${accentText}`}>{txt(copy.colSceneFlow)}</div>
+            <div className={`col-span-5 ${accentText}`}>{brandTxt(copy.colSceneFlow)}</div>
           </div>
 
           <div className="divide-y divide-white/[0.07]">

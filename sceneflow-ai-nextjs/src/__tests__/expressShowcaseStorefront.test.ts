@@ -107,11 +107,13 @@ vi.mock('next/navigation', () => ({
 }))
 
 import { KeepsakeCinemaStorefront } from '@/components/showcase/KeepsakeCinemaStorefront'
+import ShowcaseStorefrontPage from '@/app/showcase/page'
 import { isPublicRoute } from '@/constants/publicRoutes'
 import {
   SHOWCASE_LOCALE_COPY,
   getLocalizedShowcaseVideoUrl,
 } from '@/config/showcase/showcaseLocaleCopy'
+import { SHOWCASE_CONVERSION_COPY } from '@/config/showcase/showcaseConversionCopy'
 import { LONGFORM_CRAFT_COPY } from '@/config/showcase/longformCraftCopy'
 import { SUPPORTED_CLIENT_PORTAL_LOCALES } from '@/lib/intake/clientPortalCopy'
 import { formatLandingCurrency } from '@/lib/i18n/landingCurrency'
@@ -486,16 +488,18 @@ describe('KeepsakeCinemaStorefront UI', () => {
     const heroVideo = container.querySelector('video')
     expect(heroVideo?.getAttribute('src')).toBe('/videos/video-memoir-trailer-4k.mp4')
 
-    // Every Milestone card renders a <video> (not an <img>) and a readable gold Start $29 Blueprint button
+    // Every Milestone card renders a <video> plus a static SSR poster <img> and a high-contrast "Start a film like this" button
     const legacyCard = container.querySelector('[data-testid="offer-card-family_legacy"]')
     expect(legacyCard).toBeTruthy()
-    expect(legacyCard?.querySelector('img')).toBeNull()
+    expect(legacyCard?.querySelector('img')?.getAttribute('src')).toBe(
+      '/images/trailers/video-memoir-poster.webp'
+    )
     expect(legacyCard?.querySelector('video')?.getAttribute('src')).toBe(
       '/videos/video-memoir-trailer-4k.mp4'
     )
 
     const cardCta = Array.from(legacyCard!.querySelectorAll('button')).find((b) =>
-      b.textContent?.includes('Start $29 Blueprint')
+      b.textContent?.includes('Start a film like this')
     )
     expect(cardCta).toBeTruthy()
     expect(cardCta!.className).toContain('!text-[#090B12]')
@@ -582,5 +586,86 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(
       showcaseSection?.querySelector('[data-testid="active-craft-pillar-panel"]')?.textContent
     ).toContain('Family Bible')
+  })
+
+  it('implements all 4 high-impact conversion optimizations (brand framing, SSR pre-render without spinner, reel anchors, and same-day delivery window)', async () => {
+    // 1. All 7 locales have complete conversion copy
+    for (const loc of SUPPORTED_CLIENT_PORTAL_LOCALES) {
+      const c = SHOWCASE_CONVERSION_COPY[loc.code]
+      expect(c, `conversion copy for ${loc.code}`).toBeDefined()
+      expect(c.artisanSuperpower.length).toBeGreaterThan(20)
+      expect(c.startLikeThisCta.length).toBeGreaterThan(4)
+      expect(c.deliveryWindow.requirements.length).toBeGreaterThan(10)
+      expect(c.reelAnchors.memoir.occasion.length).toBeGreaterThan(5)
+      expect(c.reelAnchors.realestate.inputRequired.length).toBeGreaterThan(5)
+      expect(c.reelAnchors.brand.occasion.length).toBeGreaterThan(5)
+      expect(c.reelAnchors.training.inputRequired.length).toBeGreaterThan(5)
+    }
+
+    // 2. Server page resolves locale without wrapping in a Suspense loading spinner
+    const pageEl = await ShowcaseStorefrontPage({
+      searchParams: Promise.resolve({ lang: 'en' }),
+    })
+    act(() => {
+      root.render(pageEl)
+    })
+
+    expect(container.textContent).not.toContain('Loading Keepsake Cinema')
+
+    // Keepsake Cinema is the topmost header brand (no B2B white-label ribbon above <header>)
+    const header = container.querySelector('header')
+    expect(header).toBeTruthy()
+    expect(header?.previousElementSibling).toBeNull()
+    expect(header?.textContent).toContain('Keepsake Cinema')
+
+    // Artisan behind-the-scenes superpower copy rendered in Hero
+    expect(container.textContent).toContain(
+      'Director-crafted pacing, accelerated by SceneFlow Studio for same-day delivery.'
+    )
+
+    // Storefront Craft Matrix brands column as Keepsake Cinema (not SceneFlow)
+    const craftSection = container.querySelector(
+      '[data-testid="longform-craft-showcase-storefront"]'
+    )
+    expect(craftSection?.textContent).toContain('Keepsake Cinema Longform 4K Cinema')
+
+    // Hero static poster <img> pre-renders in initial HTML above the fold
+    const heroPoster = container.querySelector('img[src="/images/trailers/video-memoir-poster.webp"]')
+    expect(heroPoster).toBeTruthy()
+
+    // 3. Same-Day Delivery Window indicator near primary CTA
+    const deliveryBox = container.querySelector('[data-testid="same-day-delivery-window"]')
+    expect(deliveryBox).toBeTruthy()
+    expect(deliveryBox?.textContent).toContain('Same-Day Delivery Window')
+    expect(deliveryBox?.textContent).toContain('15–40 phone photos')
+
+    // 4. Hero reel conversion anchors (Occasion + Input Required + "Start a film like this")
+    const heroBar = container.querySelector('[data-testid="hero-reel-conversion-bar"]')
+    expect(heroBar).toBeTruthy()
+    expect(heroBar?.textContent).toContain('50th Anniversary & Family Legacy')
+    expect(heroBar?.textContent).toContain('Created from 35 phone photos + 4 voice notes')
+
+    // Switch Hero reel to Real Estate and verify anchors update dynamically
+    const realEstateReelTab = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Real Estate 4K')
+    ) as HTMLButtonElement | undefined
+    expect(realEstateReelTab).toBeTruthy()
+    act(() => realEstateReelTab!.click())
+    expect(heroBar?.textContent).toContain('Luxury Estate & MLS Showcase')
+    expect(heroBar?.textContent).toContain('Created from 24 MLS listing photos + 1 property sheet')
+
+    // Clicking "Start a film like this" in Hero bar opens checkout pre-selected to Real Estate
+    const startHeroLikeThisBtn = Array.from(heroBar!.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Start a film like this')
+    ) as HTMLButtonElement | undefined
+    expect(startHeroLikeThisBtn).toBeTruthy()
+    expect(startHeroLikeThisBtn!.className).toContain('!text-[#090B12]')
+    act(() => startHeroLikeThisBtn!.click())
+    const dialog = container.querySelector('[role="dialog"]')
+    expect(dialog).toBeTruthy()
+    expect(dialog?.textContent).toContain('Express 4K Property Listing Film')
+    expect((dialog?.querySelector('select') as HTMLSelectElement | null)?.value).toBe(
+      'real_estate_express'
+    )
   })
 })
