@@ -98,12 +98,12 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       'Shortform AI clip apps flood the internet with disposable 5-second "AI slop." SceneFlow equips your white-label business with true longform 4K cinema—90%+ resonance scripts, locked character de-aging, location & prop continuity, voice cloning, and broadcast-ready masters clients proudly screen and pay premium fees for.',
     noSlopBadge: 'ZERO AI SLOP · LONGFORM 4K CINEMA',
     trailerSpotlight: {
-      badge: 'Signature Example · Feature Film + Trailer Included',
-      headline: 'Turn Your Life Story Into a Cinematic Feature Film — Package Includes a Theatrical Trailer.',
-      body: 'Text a goosebump-inducing 60-second theatrical trailer to family, wedding guests, or colleagues before the event—then premiere the full longform 4K Cinema Feature Film on the big screen.',
-      pill1: '60-Sec Shareable Theatrical Trailer Included',
-      pill2: 'Full Longform 4K Feature Master',
-      pill3: 'Built for Big Screens & Family Keepsakes',
+      badge: 'Go Deep · 30–150 Min Feature Film + 1–3 Min Trailer Included',
+      headline: 'Turn Your Life Story Into a 30–150 Minute Cinematic Feature Film — Package Includes a 1–3 Min Theatrical Trailer.',
+      body: 'Published showcase clips are 2-minute examples—your $149 package buys true longform cinema (up to 1 hour / 360 directed 4K frames; extended 90–150 min feature epics available). Send the 1–3 minute theatrical trailer overview to family or guests before the event, then premiere every life chapter on the big screen.',
+      pill1: '1–3 Min Shareable Theatrical Trailer Overview',
+      pill2: 'Up to 60 Min (360 4K Frames) Included at $149',
+      pill3: 'Expandable to 90–150 Min Full Feature Epics',
     },
     pillarsHeading: 'Explore the 6 Studio Craft Systems Inside Every Film',
     pillarsHint: 'Select any capability to inspect how SceneFlow directs real stories with zero AI slop.',
@@ -120,9 +120,9 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleDetails:
           'Each beat is scored against your specific audience (families, luxury buyers, clinic patients, or new hires) before a single frame renders—eliminating flat narration and filler.',
         highlights: [
-          'Structured multi-act longform arc (5–8+ min, not 8-second gimmicks)',
+          'True 30–150 min multi-chapter feature arc (up to 60 min / 360 frames at $149)',
           'Scored & refined for 90%+ target audience emotional & conversion resonance',
-          'Interactive Storyboard Blueprint approval before final 4K production',
+          'Includes 1–3 min theatrical trailer overview + interactive Storyboard Blueprint',
         ],
         metricValue: '90%+',
         metricLabel: 'Target Audience Resonance',
@@ -152,9 +152,9 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         badge: 'Real-World Environment Fidelity',
         title: 'Exact Location Matching — Real Estate, Childhood Streets & Flagship Spaces',
         summary:
-          'Generic AI invents random rooms that look nothing like reality. SceneFlow locks real locations into continuity—matching MLS listing rooms accurately, recreating a beloved childhood neighborhood or ancestral hometown, or preserving your clinic, workshop, or corporate floor.',
+          'Generic AI invents random rooms that look nothing like reality. SceneFlow goes deep and locks real locations into continuity—walking real estate buyers through every room, architectural updates, luxury appliances, outdoor living & neighborhood amenities, recreating a beloved childhood street, or preserving your clinic or corporate floor.',
         exampleLabel: 'Environment Lock Example',
-        exampleHeadline: 'Childhood Porch · 420 Harbor Crest Kitchen · Flagship Clinic',
+        exampleHeadline: 'Childhood Street · Real Estate Upgrades, Appliances & Neighborhood · Flagship Clinic',
         exampleDetails:
           'Upload listing photos, archival street snapshots, or workplace references so every angle and transition honors the true architecture and atmosphere of your story.',
         highlights: [
@@ -233,7 +233,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       {
         dimension: 'Format & Runtime',
         shortformSlop: '5–15 sec disconnected clips with no story arc',
-        sceneFlowLongform: '5–8+ min multi-chapter longform 4K cinema film',
+        sceneFlowLongform: 'Up to 60 min (360 4K frames) at $149 + 1–3 min trailer (expandable to 150-min feature films)',
       },
       {
         dimension: 'Script & Resonance',
@@ -301,7 +301,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleDetails:
           'Cada escena se evalúa según tu público antes de renderizar, eliminando narraciones planas o relleno.',
         highlights: [
-          'Arco narrativo largo en capítulos (5–8+ min, no clips de 8 segundos)',
+          'Largometraje real de 30–150 min en capítulos (hasta 60 min / 360 cuadros por $149)',
           'Guion evaluado y refinado para 90%+ de resonancia con tu audiencia',
           'Aprobación interactiva del Storyboard Blueprint antes del 4K final',
         ],
@@ -413,7 +413,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       {
         dimension: 'Duración y Formato',
         shortformSlop: 'Clips sueltos de 5–15 segundos sin arco narrativo',
-        sceneFlowLongform: 'Película larga 4K de 5–8+ min en capítulos dirigidos',
+        sceneFlowLongform: 'Hasta 60 min (360 cuadros 4K) por $149 + tráiler 1–3 min (ampliable a 150 min)',
       },
       {
         dimension: 'Guion y Resonancia',
@@ -481,7 +481,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleDetails:
           'Cada cena é avaliada para o seu público-alvo antes da renderização, garantindo ritmo envolvente do início ao fim.',
         highlights: [
-          'Narrativa longa em capítulos (5–8+ min, não clipes de 8 segundos)',
+          'Longa-metragem de 30–150 min em capítulos (até 60 min / 360 quadros por $149)',
           'Roteiro calibrado para 90%+ de ressonância com a audiência',
           'Aprovação do Storyboard Blueprint antes do master 4K final',
         ],
@@ -593,7 +593,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       {
         dimension: 'Formato e Duração',
         shortformSlop: 'Clipes soltos de 5–15 segundos sem história',
-        sceneFlowLongform: 'Filme longo em 4K de 5–8+ min dividido em capítulos',
+        sceneFlowLongform: 'Até 60 min (360 quadros 4K) por $149 + trailer 1–3 min (expansível a 150 min)',
       },
       {
         dimension: 'Roteiro e Ressonância',
@@ -661,7 +661,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleDetails:
           'फ्रेम बनने से पहले हर बीट को आपके लक्ष्य दर्शकों के अनुसार परखा जाता है।',
         highlights: [
-          'पूर्ण अध्याय-आधारित लॉन्ग-फॉर्म कहानी (5–8+ मिनट, 8-सेकंड क्लिप नहीं)',
+          '30–150 मिनट की पूर्ण फीचर कहानी ($149 में 60 मिनट / 360 फ्रेम + 1–3 मिनट ट्रेलर)',
           '90%+ ऑडियंस रेज़ोनेंस के लिए स्कोर और परिष्कृत स्क्रिप्ट',
           'फाइनल 4K से पहले इंटरैक्टिव स्टोरीबोर्ड ब्लूप्रिंट स्वीकृति',
         ],
@@ -773,7 +773,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       {
         dimension: 'फॉर्मेट व अवधि',
         shortformSlop: 'बिना कहानी के 5–15 सेकंड के टुकड़े',
-        sceneFlowLongform: '5–8+ मिनट की मल्टी-चैप्टर लॉन्ग-फॉर्म 4K फिल्म',
+        sceneFlowLongform: '$149 में 60 मिनट तक (360 4K फ्रेम) + 1–3 मिनट ट्रेलर (150 मिनट तक विस्तार योग्य)',
       },
       {
         dimension: 'स्क्रिप्ट व जुड़ाव',
@@ -841,7 +841,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleDetails:
           '在生成任何一帧画面前，每个节拍都会针对您的目标受众进行共鸣校准，彻底消除平淡流水账。',
         highlights: [
-          '完整多章节长篇叙事（5–8+ 分钟，非 8 秒噱头短片）',
+          '30–150 分钟院线级长篇叙事（$149 含最长 60 分钟 / 360 帧 + 1–3 分钟预告片）',
           '针对 90%+ 目标受众情感与转化共鸣深度优化',
           '最终 4K 渲染前支持交互式分镜蓝图审阅',
         ],
@@ -953,7 +953,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       {
         dimension: '片长与结构',
         shortformSlop: '5–15 秒碎片短片，毫无完整叙事弧线',
-        sceneFlowLongform: '5–8+ 分钟多章节长篇 4K 电影成片',
+        sceneFlowLongform: '$149 含最长 60 分钟（360 帧 4K）+ 1–3 分钟预告片（可扩展至 150 分钟长片）',
       },
       {
         dimension: '剧本与共鸣',
@@ -1021,7 +1021,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleDetails:
           'يُختبر كل مشهد وفق جمهورك قبل إنتاج أي لقطة، لضمان سرد مشوق يخلو من الحشو.',
         highlights: [
-          'سرد طويل متعدد الفصول (5–8+ دقائق وليس مقاطع 8 ثوانٍ)',
+          'فيلم سينمائي طويل 30–150 دقيقة (حتى 60 دقيقة / 360 إطاراً بـ $149 + إعلان 1–3 دقائق)',
           'سيناريو مصقول لتحقيق 90%+ من الصدى العاطفي والإقناعي',
           'مراجعة واعتماد مخطط Storyboard Blueprint قبل الإنتاج النهائي',
         ],
@@ -1133,7 +1133,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       {
         dimension: 'المدة والشكل',
         shortformSlop: 'مقاطع منفصلة 5–15 ثانية بلا قصة',
-        sceneFlowLongform: 'فيلم سينمائي طويل 5–8+ دقائق بدقة 4K متعددة الفصول',
+        sceneFlowLongform: 'حتى 60 دقيقة (360 إطاراً بدقة 4K) بـ $149 + إعلان 1–3 دقائق (قابل للتوسيع حتى 150 دقيقة)',
       },
       {
         dimension: 'السيناريو والتأثير',
@@ -1201,7 +1201,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleDetails:
           'ทุกบีตผ่านการประเมินตามกลุ่มผู้ชมเป้าหมายก่อนเรนเดอร์ ตัดความน่าเบื่อและน้ำออกทั้งหมด',
         highlights: [
-          'เรื่องราวยาวหลายบท (5–8+ นาที ไม่ใช่คลิปสั้น 8 วินาที)',
+          'ภาพยนตร์เรื่องยาว 30–150 นาที ($149 รวมสูงสุด 60 นาที / 360 เฟรม + ตัวอย่าง 1–3 นาที)',
           'คัดเกลาบทเพื่อความประทับใจและการมีส่วนร่วมของกลุ่มเป้าหมาย 90%+',
           'ตรวจสอบและอนุมัติ Storyboard Blueprint ก่อนผลิต 4K จริง',
         ],
@@ -1313,7 +1313,7 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       {
         dimension: 'รูปแบบและความยาว',
         shortformSlop: 'คลิปสั้น 5–15 วินาทีขาดตอน ไร้โครงเรื่อง',
-        sceneFlowLongform: 'ภาพยนตร์ 4K แบบยาว 5–8+ นาที แบ่งบทชัดเจน',
+        sceneFlowLongform: 'สูงสุด 60 นาที (360 เฟรม 4K) เพียง $149 + ตัวอย่าง 1–3 นาที (ขยายได้ถึง 150 นาที)',
       },
       {
         dimension: 'บทและความประทับใจ',

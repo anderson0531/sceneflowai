@@ -226,9 +226,9 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       subtitleMid: ' to ',
       subtitleHighlight2: 'weddings, graduations, and retirements',
       subtitleEnd:
-        '—turn treasured photos and spoken memories into a longform 4K feature film (with shareable trailer), locked character & heirloom continuity, cloned/matched studio voices, and musical score.',
+        '—go deep with a 30 to 150 minute feature-length 4K film (up to 60 min / 360 directed frames included at $149, expandable to 150 min) plus a shareable 1–3 min theatrical trailer, locked character & heirloom continuity, cloned/matched studio voices, and musical score.',
       metric1Sub: 'Blueprint Pass (100% credited)',
-      metric2Sub: 'Longform 4K Film + Trailer',
+      metric2Sub: 'Up to 60-min 4K Film (360 frames) + Trailer',
       metric3Val: '2–4 hrs',
       metric3Sub: 'Same-day 4K after photo lock',
       primaryCta: 'Start My $29 Storyboard Blueprint',
@@ -294,7 +294,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
       eyebrow: 'Curated Express 4K Collections',
       heading: 'Every Milestone Deserves the Big Screen.',
       subtitle:
-        'Start any film with a $29 Storyboard Blueprint Pass (100% credited toward your finished 4K film). Review illustrated chapters with loved ones before paying the remaining Express 4K balance.',
+        'The 2-minute videos below are short preview samples—your $149 package buys a true longform 4K feature film (up to 1 hour / 360 directed frames; longer 90–150 min epics available) plus a shareable 1–3 min theatrical trailer. Start any film with a $29 Storyboard Blueprint Pass (100% credited).',
       tabAll: 'All Examples (4)',
       tabMilestones: 'Life & Milestones (1)',
       tabCommercial: 'Business & Property (3)',
@@ -309,16 +309,16 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           badge: 'Most Popular · Life & Milestones',
           title: 'Life Stories & Family Memoirs, Weddings, Graduations, and more',
           subtitle:
-            'Preserve a parent’s or grandparent’s journey, wedding love story, graduation, or retirement—blending real family photos with photorealistic scenes, warm narration, and bespoke score.',
+            'Go deep—tell an unforgettable 30 to 150 minute feature-length life story covering every chapter from childhood roots and career triumphs to family traditions, weddings, graduations, or retirements. Your $149 package includes up to 1 hour (360 directed 4K frames) plus a shareable 1–3 min theatrical trailer (longer films available).',
           idealFor:
             '70th/80th birthdays, family legacies, weddings & anniversaries, graduations, retirements & celebrations of life',
-          runtimeLabel: '5–8 min · Longform 4K Feature + Trailer',
+          runtimeLabel: 'Up to 60 min (360 frames) · + 1–3 min Trailer',
           turnaroundLabel: 'Same-Day (2–4 hrs after photo lock)',
           deliverables: [
-            '90%+ resonance Storyboard Blueprint & narrated preview in ~3 min',
-            'Continuity lock: age-28 de-aging, family resemblance, hometowns & heirlooms',
-            'Voice cloning / voice-image matching + 10-second pronunciation lock',
-            'Auto-rendered Longform 4K Master + 60-sec Shareable Theatrical Trailer',
+            'Up to 60-min Longform 4K Feature (360 directed frames; extendable to 150 min)',
+            '1–3 min Shareable Theatrical Trailer included for family & event invites',
+            'Continuity lock: age-28 de-aging, relative matching, hometowns & heirlooms',
+            '90%+ resonance multi-chapter script, voice cloning/matching & stereo score',
           ],
           titlePlaceholder: 'e.g., Grandpa Mateo’s 80th Birthday Story',
         },
@@ -326,15 +326,15 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           badge: 'Weddings & Anniversaries',
           title: 'Love Stories, Weddings & Vow Renewals',
           subtitle:
-            'Turn how you met, favorite trips, proposals, and family blessings into a theater-worthy 4K film ready to screen at the rehearsal dinner, reception, or 25th/50th anniversary.',
+            'Turn how you met, favorite trips, proposals, and family blessings into a feature-length 4K film (up to 60 min / 360 frames) plus a 1–3 min rehearsal-dinner trailer.',
           idealFor: 'Rehearsal dinners, wedding receptions, 25th & 50th anniversaries, engagement films',
-          runtimeLabel: '5–7 min · 4K Cinema',
+          runtimeLabel: 'Up to 60 min (360 frames) · + 1–3 min Trailer',
           turnaroundLabel: 'Same-Day (2–4 hrs after photo lock)',
           deliverables: [
             'Story Blueprint + family/wedding-party comment triage link',
             'Upload favorite couple & proposal photos right from your phone',
             'Warm narration, ambient soundscapes & cinematic score',
-            'Downloadable 4K MP4 ready for venue projectors & TVs',
+            'Downloadable 4K MP4 feature + 1–3 min theatrical trailer',
           ],
           titlePlaceholder: 'e.g., Claire & Daniel — From Lisbon to Forever',
         },
@@ -342,15 +342,15 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           badge: 'Graduations & Coming-of-Age',
           title: 'Graduation & Coming-of-Age Tributes',
           subtitle:
-            'Celebrate high school, college, or graduate school with a moving 4K story—from first steps and sports wins to late-night study sessions and cap-and-gown pride.',
+            'Celebrate high school, college, or graduate school with a deep chapter-by-chapter 4K tribute (up to 60 min / 360 frames) plus a 1–3 min party trailer.',
           idealFor: 'High school & university graduations, scholarship banquets, senior night & send-offs',
-          runtimeLabel: '4–6 min · 4K Cinema',
+          runtimeLabel: 'Up to 60 min (360 frames) · + 1–3 min Trailer',
           turnaroundLabel: 'Same-Day (ready for the weekend party)',
           deliverables: [
             'Fast 5-minute guided intake with milestone memory-jogger chips',
             'Gather notes from parents, coaches & siblings via guest link',
             'Phone photo uploads + name/school pronunciation guide',
-            'Crisp 4K MP4 ready for graduation parties & family sharing',
+            'Crisp 4K MP4 feature + 1–3 min shareable party trailer',
           ],
           titlePlaceholder: 'e.g., Maya’s Class of 2026 Journey',
         },
@@ -358,63 +358,63 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           badge: 'Retirements & Career Legacy',
           title: 'Retirement & Career Milestone Films',
           subtitle:
-            'Honor 20–40 years of leadership, mentorship, and unforgettable workplace moments in a polished 4K tribute film—complete with colleague anecdotes gathered via one private link.',
+            'Honor 20–40 years of leadership, mentorship, and unforgettable workplace moments in a deep longform 4K tribute film (up to 60 min / 360 frames) plus a 1–3 min banquet trailer.',
           idealFor: 'Retirement dinners, executive farewells, military/first-responder honors, founder tributes',
-          runtimeLabel: '5–8 min · 4K Cinema',
+          runtimeLabel: 'Up to 60 min (360 frames) · + 1–3 min Trailer',
           turnaroundLabel: 'Same-Day (2–4 hrs after photo lock)',
           deliverables: [
             'Share a guest comment link so teammates can add stories easily',
             'Upload career photos, team shots & workplace milestones',
             'Studio narration + 10-second name/company pronunciation guide',
-            '4K MP4 master ready for banquet screens & Zoom farewells',
+            '4K MP4 feature + 1–3 min trailer ready for banquet screens',
           ],
           titlePlaceholder: 'e.g., 35 Years of Leadership — Captain Robert Hayes',
         },
         real_estate_express: {
-          badge: 'Real Estate · Same-Day 4K',
+          badge: 'Real Estate · Deep-Dive 4K',
           title: 'Express 4K Property Listing Film',
           subtitle:
-            'Transform existing MLS listing photos and neighborhood highlights into a voiced, scored 4K cinema tour the same day—zero weather delays or extra camera crews.',
-          idealFor: 'Residential listings, luxury estates, boutique hotels & vacation rentals',
-          runtimeLabel: '90 sec · 4K Cinema',
+            'Go far beyond a 60-second slideshow. Walk buyers deeply through every room, architectural upgrades, chef-grade appliances, outdoor living, schools, and neighborhood lifestyle—includes up to 60 min (360 directed 4K frames) plus a 1–3 min MLS & social overview trailer.',
+          idealFor: 'Luxury estates, residential listings, out-of-town buyers, boutique hotels & vacation rentals',
+          runtimeLabel: 'Up to 60 min (360 frames) · Deep Tour + 1–3 min Trailer',
           turnaroundLabel: 'Same-Day (2–3 hrs)',
           deliverables: [
-            'Room-by-room Storyboard Blueprint in ~3 min',
-            'Upload MLS listing stills directly from phone or desktop',
-            'Optional multilingual dubs for international buyers',
-            'Commercial-licensed 4K MP4 ready for MLS & social',
+            'Deep-dive 4K property & neighborhood film (up to 60 min / 360 frames)',
+            '1–3 min MLS & social highlight trailer included for instant buyer hooks',
+            'Room-by-room updates, luxury appliances, schools & lifestyle storytelling',
+            'Multilingual buyer dubs (70+ languages) + commercial-licensed 4K master',
           ],
           titlePlaceholder: 'e.g., 420 Harbor Crest Oceanview Residence',
         },
         brand_express: {
-          badge: 'Brand Story & Clinics · Same-Day 4K',
+          badge: 'Brand Story & Clinics · Longform 4K',
           title: 'Express 4K Founder & Practice Film',
           subtitle:
-            'Give your website a trustworthy, cinema-grade homepage story without a $5,000 agency shoot—combining photorealistic visuals, crisp narration, and music in 4K.',
+            'Tell the complete documentary story behind your clinic, firm, or flagship brand—founder origin, client transformations, facility walkthrough, and team philosophy—up to 60 min (360 directed 4K frames) plus a 1–3 min high-converting homepage trailer.',
           idealFor: 'Medical/dental clinics, law firms, craft founders, local businesses & nonprofits',
-          runtimeLabel: '90 sec–2 min · 4K Cinema',
+          runtimeLabel: 'Up to 60 min (360 frames) · Brand Doc + 1–3 min Trailer',
           turnaroundLabel: 'Same-Day (2–4 hrs)',
           deliverables: [
-            'Conversion-focused Storyboard Blueprint + team review link',
-            'Lock founder, clinic/office & signature brand visuals',
-            '10-second brand & leadership pronunciation guide',
-            '100% commercial-licensed 4K MP4 master',
+            'Longform 4K founder & brand documentary (up to 60 min / 360 frames)',
+            '1–3 min homepage & social trailer included to convert visitors fast',
+            'Lock founder, clinic/office, signature products & pronunciation lock',
+            '90%+ target audience resonance script + 100% commercial 4K master',
           ],
           titlePlaceholder: 'e.g., Pacific Coast Family Dental — Our Story',
         },
         training_express: {
-          badge: 'Training & SOPs · Same-Day 4K',
+          badge: 'Training & SOPs · Full-Length 4K Course',
           title: 'Express 4K Narrated Training & SOP Film',
           subtitle:
-            'Convert manuals, onboarding checklists, or safety protocols into a clear, instructor-locked 4K narrated training module—easy to update whenever policies change.',
-          idealFor: 'Employee onboarding, workplace safety, clinic SOPs & franchise playbooks',
-          runtimeLabel: '5 min · 4K Cinema',
+            'Convert 50-page manuals, onboarding playbooks, or compliance protocols into an engaging multi-module 4K training course (up to 60 min / 360 directed frames; extendable to 150-min curricula) with locked instructors, real equipment visuals & a 1–3 min overview trailer.',
+          idealFor: 'Employee onboarding, workplace safety, clinic SOPs, franchise playbooks & certification courses',
+          runtimeLabel: 'Up to 60 min (360 frames) · Full Course + 1–3 min Overview',
           turnaroundLabel: 'Same-Day (2–4 hrs)',
           deliverables: [
-            'Structured chapter Blueprint + stakeholder sign-off link',
-            'Locked presenter, uniform & workplace visual library',
-            'Technical terminology & acronym pronunciation guide',
-            'LMS-ready 4K MP4 master with commercial ownership',
+            'Multi-module 4K training course (up to 60 min / 360 frames; extendable)',
+            '1–3 min executive & new-hire overview trailer included',
+            'Locked instructor, uniform, workplace & safety equipment visuals',
+            'Technical acronym pronunciation lock + LMS-ready 4K master in 70+ langs',
           ],
           titlePlaceholder: 'e.g., New Hire Safety & Equipment Onboarding',
         },
@@ -662,7 +662,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Preserva la trayectoria de padres o abuelos combinando fotos reales con escenas fotorrealistas de época, narración cálida y banda sonora a medida.',
           idealFor: 'Cumpleaños 70/80, padres y abuelos, homenajes de vida, reuniones familiares',
-          runtimeLabel: '5–8 min · Cine 4K',
+          runtimeLabel: 'Hasta 60 min (360 cuadros) · + Tráiler 1–3 min',
           turnaroundLabel: 'Mismo día (2–4 h tras aprobar fotos)',
           deliverables: [
             'Blueprint ilustrado y narrado en ~3 minutos',
@@ -678,7 +678,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Convierte cómo se conocieron, viajes inolvidables y bendiciones familiares en un filme 4K listo para proyectar en la cena de ensayo, boda o aniversario.',
           idealFor: 'Cenas de ensayo, recepciones, bodas de plata y oro, compromisos',
-          runtimeLabel: '5–7 min · Cine 4K',
+          runtimeLabel: 'Hasta 60 min (360 cuadros) · + Tráiler 1–3 min',
           turnaroundLabel: 'Mismo día (2–4 h tras aprobar fotos)',
           deliverables: [
             'Blueprint narrado + enlace de aportes para familia y padrinos',
@@ -694,7 +694,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Celebra preparatoria, universidad o posgrado con una película 4K emotiva—desde los primeros pasos y triunfos deportivos hasta el orgullo del birrete.',
           idealFor: 'Graduaciones escolares y universitarias, cenas de gala, despedidas',
-          runtimeLabel: '4–6 min · Cine 4K',
+          runtimeLabel: 'Hasta 60 min (360 cuadros) · + Tráiler 1–3 min',
           turnaroundLabel: 'Mismo día (listo para la fiesta del fin de semana)',
           deliverables: [
             'Entrevista guiada de 5 min con fichas rápidas de hitos',
@@ -710,7 +710,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Honra 20 a 40 años de liderazgo, mentoría y logros laborales en un filme tributo 4K pulido, sumando anécdotas de colegas mediante un solo enlace privado.',
           idealFor: 'Cenas de retiro, despedidas ejecutivas, homenajes a fundadores y servicio',
-          runtimeLabel: '5–8 min · Cine 4K',
+          runtimeLabel: 'Hasta 60 min (360 cuadros) · + Tráiler 1–3 min',
           turnaroundLabel: 'Mismo día (2–4 h tras aprobar fotos)',
           deliverables: [
             'Enlace de comentarios para que colegas aporten recuerdos',
@@ -726,7 +726,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Transforma fotos de listado y atractivos del vecindario en un recorrido cinematográfico 4K narrado y musicalizado hoy mismo—sin retrasos por clima.',
           idealFor: 'Propiedades residenciales, residencias de lujo, hoteles boutique y Airbnb',
-          runtimeLabel: '90 seg · Cine 4K',
+          runtimeLabel: 'Hasta 60 min (360 cuadros) · Tour Profundo + Tráiler 1–3 min',
           turnaroundLabel: 'Mismo día (2–3 h)',
           deliverables: [
             'Blueprint por espacios listo en ~3 minutos',
@@ -742,7 +742,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Dale a tu sitio web una historia principal que inspire confianza sin gastar $5,000 en un rodaje—combinando visuales 4K fotorrealistas, narración y música.',
           idealFor: 'Clínicas médicas/dentales, despachos legales, pymes y fundadores',
-          runtimeLabel: '90 seg–2 min · Cine 4K',
+          runtimeLabel: 'Hasta 60 min (360 cuadros) · Doc. de Marca + Tráiler 1–3 min',
           turnaroundLabel: 'Mismo día (2–4 h)',
           deliverables: [
             'Blueprint enfocado en conversión + enlace de revisión de equipo',
@@ -758,7 +758,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Convierte manuales, protocolos de seguridad o guías de inducción en un módulo 4K claro con instructor consistente—fácil de actualizar al cambiar normas.',
           idealFor: 'Inducción de personal, seguridad industrial, protocolos clínicos y franquicias',
-          runtimeLabel: '5 min · Cine 4K',
+          runtimeLabel: 'Hasta 60 min (360 cuadros) · Curso Completo + Tráiler 1–3 min',
           turnaroundLabel: 'Mismo día (2–4 h)',
           deliverables: [
             'Blueprint por capítulos + enlace de validación interna',
@@ -1012,7 +1012,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Preserve a jornada de pais ou avós unindo fotos reais da família a cenas fotorrealistas de época, narração calorosa e trilha sob medida.',
           idealFor: 'Aniversários de 70/80 anos, pais e avós, homenagens de vida, encontros em família',
-          runtimeLabel: '5–8 min · Cinema 4K',
+          runtimeLabel: 'Até 60 min (360 quadros) · + Trailer 1–3 min',
           turnaroundLabel: 'Mesmo dia (2–4 h após aprovar fotos)',
           deliverables: [
             'Blueprint ilustrado e narrado em ~3 minutos',
@@ -1028,7 +1028,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Transforme como vocês se conheceram, viagens marcantes e pedidos de casamento em um filme 4K pronto para exibir no jantar, recepção ou bodas de prata/ouro.',
           idealFor: 'Jantares de ensaio, recepções, bodas de 25 e 50 anos, noivados',
-          runtimeLabel: '5–7 min · Cinema 4K',
+          runtimeLabel: 'Até 60 min (360 quadros) · + Trailer 1–3 min',
           turnaroundLabel: 'Mesmo dia (2–4 h após aprovar fotos)',
           deliverables: [
             'Blueprint narrado + link de notas para família e padrinhos',
@@ -1044,7 +1044,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Celebre ensino médio, faculdade ou pós-graduação com um filme 4K emocionante—dos primeiros passos e vitórias esportivas ao orgulho do diploma.',
           idealFor: 'Formaturas escolares e universitárias, jantares de formatura e despedidas',
-          runtimeLabel: '4–6 min · Cinema 4K',
+          runtimeLabel: 'Até 60 min (360 quadros) · + Trailer 1–3 min',
           turnaroundLabel: 'Mesmo dia (pronto para a festa do fim de semana)',
           deliverables: [
             'Entrevista guiada de 5 min com fichas rápidas de marcos',
@@ -1060,7 +1060,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Homenageie 20 a 40 anos de liderança, mentoria e conquistas em um filme tributo 4K refinado—com histórias de colegas reunidas em um único link privado.',
           idealFor: 'Jantares de aposentadoria, despedidas executivas, homenagens a fundadores',
-          runtimeLabel: '5–8 min · Cinema 4K',
+          runtimeLabel: 'Até 60 min (360 quadros) · + Trailer 1–3 min',
           turnaroundLabel: 'Mesmo dia (2–4 h após aprovar fotos)',
           deliverables: [
             'Compartilhe um link para colegas adicionarem memórias',
@@ -1076,7 +1076,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Transforme fotos de anúncios e destaques do bairro em um tour 4K narrado e musicado no mesmo dia—sem atrasos por clima ou equipe extra.',
           idealFor: 'Imóveis residenciais, alto padrão, hotéis boutique e temporada',
-          runtimeLabel: '90 seg · Cinema 4K',
+          runtimeLabel: 'Até 60 min (360 quadros) · Tour Profundo + Trailer 1–3 min',
           turnaroundLabel: 'Mesmo dia (2–3 h)',
           deliverables: [
             'Blueprint ambiente por ambiente em ~3 minutos',
@@ -1092,7 +1092,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Dê ao seu site um filme institucional confiável sem gastar $5,000 em produtora—combinando visuais 4K fotorrealistas, narração impecável e trilha.',
           idealFor: 'Clínicas médicas/odontológicas, escritórios, negócios locais e fundadores',
-          runtimeLabel: '90 seg–2 min · Cinema 4K',
+          runtimeLabel: 'Até 60 min (360 quadros) · Doc. de Marca + Trailer 1–3 min',
           turnaroundLabel: 'Mesmo dia (2–4 h)',
           deliverables: [
             'Blueprint focado em conversão + link de revisão da equipe',
@@ -1108,7 +1108,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'Converta manuais, integrações e normas de segurança em um módulo 4K claro com instrutor fixo—fácil de atualizar sempre que o processo mudar.',
           idealFor: 'Onboarding de equipes, segurança do trabalho, clínicas e franquias',
-          runtimeLabel: '5 min · Cinema 4K',
+          runtimeLabel: 'Até 60 min (360 quadros) · Curso Completo + Trailer 1–3 min',
           turnaroundLabel: 'Mesmo dia (2–4 h)',
           deliverables: [
             'Blueprint em capítulos + link de aprovação dos gestores',
@@ -1362,7 +1362,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'माता-पिता या दादा-दादी की जीवन यात्रा को असली पारिवारिक तस्वीरों, फोटोरियलिस्टिक दृश्यों, आत्मीय आवाज़ और मौलिक संगीत के साथ संजोएँ।',
           idealFor: '70वाँ/80वाँ जन्मदिन, माता-पिता व दादा-दादी, श्रद्धांजलि व पारिवारिक मिलन',
-          runtimeLabel: '5–8 मिनट · 4K सिनेमा',
+          runtimeLabel: '60 मिनट तक (360 फ्रेम) · + 1–3 मिनट ट्रेलर',
           turnaroundLabel: 'उसी दिन (फोटो लॉक के 2–4 घंटे में)',
           deliverables: [
             '~3 मिनट में चित्रित व सुनाया गया स्टोरीबोर्ड ब्लूप्रिंट',
@@ -1378,7 +1378,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'आपकी पहली मुलाकात, यादगार यात्राओं और परिवार के आशीर्वाद को संगीत, रिसेप्शन या 25वीं/50वीं सालगिरह के लिए भव्य 4K फिल्म में बदलें।',
           idealFor: 'संगीत, वेडिंग रिसेप्शन, 25वीं व 50वीं सालगिरह, सगाई फिल्म',
-          runtimeLabel: '5–7 मिनट · 4K सिनेमा',
+          runtimeLabel: '60 मिनट तक (360 फ्रेम) · + 1–3 मिनट ट्रेलर',
           turnaroundLabel: 'उसी दिन (फोटो लॉक के 2–4 घंटे में)',
           deliverables: [
             'स्टोरी ब्लूप्रिंट + परिवार व दोस्तों का कमेंट लिंक',
@@ -1394,7 +1394,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'स्कूल, कॉलेज या डिग्री की सफलता का जश्न मनाएँ—बचपन के पहले कदम और खेल जीत से लेकर स्नातक के गौरव तक की प्रेरणादायक 4K कहानी।',
           idealFor: 'स्कूल व यूनिवर्सिटी ग्रेजुएशन, सम्मान समारोह और फेयरवेल पार्टी',
-          runtimeLabel: '4–6 मिनट · 4K सिनेमा',
+          runtimeLabel: '60 मिनट तक (360 फ्रेम) · + 1–3 मिनट ट्रेलर',
           turnaroundLabel: 'उसी दिन (वीकेंड पार्टी के लिए तैयार)',
           deliverables: [
             'माइलस्टोन चिप्स के साथ 5-मिनट का आसान इंटरव्यू',
@@ -1410,7 +1410,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             '20–40 वर्षों के नेतृत्व, मार्गदर्शन और कार्यस्थल की अविस्मरणीय यादों को सहकर्मियों के संदेशों के साथ एक शानदार 4K सम्मान फिल्म में पिरोएँ।',
           idealFor: 'रिटायरमेंट डिनर, एग्जीक्यूटिव फेयरवेल, संस्थापक और सेवा सम्मान',
-          runtimeLabel: '5–8 मिनट · 4K सिनेमा',
+          runtimeLabel: '60 मिनट तक (360 फ्रेम) · + 1–3 मिनट ट्रेलर',
           turnaroundLabel: 'उसी दिन (फोटो लॉक के 2–4 घंटे में)',
           deliverables: [
             'सहकर्मियों की यादें जोड़ने के लिए निजी कमेंट लिंक',
@@ -1426,7 +1426,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'मौजूदा प्रॉपर्टी तस्वीरों और लोकेशन की खूबियों को उसी दिन वॉइस-ओवर और संगीत के साथ शानदार 4K सिनेमा टूर में बदलें—बिना अतिरिक्त शूट के।',
           idealFor: 'आवासीय प्रॉपर्टी, लग्ज़री विला, बुटीक होटल और वेकेशन रेंटल',
-          runtimeLabel: '90 सेकंड · 4K सिनेमा',
+          runtimeLabel: '60 मिनट तक (360 फ्रेम) · डीप टूर + 1–3 मिनट ट्रेलर',
           turnaroundLabel: 'उसी दिन (2–3 घंटे)',
           deliverables: [
             '~3 मिनट में कमरा-दर-कमरा स्टोरीबोर्ड ब्लूप्रिंट',
@@ -1442,7 +1442,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             '$5,000 के एजेंसी शूट के बिना अपनी वेबसाइट के लिए विश्वसनीय 4K ब्रांड स्टोरी बनाएँ—फोटोरियलिस्टिक दृश्य, स्पष्ट आवाज़ और संगीत के साथ।',
           idealFor: 'मेडिकल/डेंटल क्लीनिक, लॉ फर्म, स्थानीय व्यवसाय और स्टार्टअप संस्थापक',
-          runtimeLabel: '90 सेकंड–2 मिनट · 4K सिनेमा',
+          runtimeLabel: '60 मिनट तक (360 फ्रेम) · ब्रांड डॉक + 1–3 मिनट ट्रेलर',
           turnaroundLabel: 'उसी दिन (2–4 घंटे)',
           deliverables: [
             'विश्वास बढ़ाने वाला ब्लूप्रिंट + टीम रिव्यू लिंक',
@@ -1458,7 +1458,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'मैनुअल, ऑनबोर्डिंग या सेफ्टी नियमों को एक समान प्रशिक्षक के साथ स्पष्ट 4K ट्रेनिंग मॉड्यूल में बदलें—नियम बदलने पर मिनटों में अपडेट करें।',
           idealFor: 'कर्मचारी ऑनबोर्डिंग, कार्यस्थल सुरक्षा, क्लीनिक SOP और फ्रैंचाइज़ी',
-          runtimeLabel: '5 मिनट · 4K सिनेमा',
+          runtimeLabel: '60 मिनट तक (360 फ्रेम) · फुल कोर्स + 1–3 मिनट ट्रेलर',
           turnaroundLabel: 'उसी दिन (2–4 घंटे)',
           deliverables: [
             'अध्याय-वार ब्लूप्रिंट + स्टेकहोल्डर स्वीकृति लिंक',
@@ -1710,7 +1710,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             '珍藏父母或长辈从童年至今的人生旅程，将真实老照片与写实年代画面、温暖旁白及定制配乐无缝融合。',
           idealFor: '70/80 岁大寿、父母长辈纪念、家族聚会与人生礼赞',
-          runtimeLabel: '5–8 分钟 · 4K 电影',
+          runtimeLabel: '最长 60 分钟 (360 帧) · 含 1–3 分钟预告片',
           turnaroundLabel: '当日交付（确认照片后 2–4 小时）',
           deliverables: [
             '约 3 分钟生成图文并茂的有声分镜蓝图',
@@ -1726,7 +1726,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             '将相遇相知、难忘旅程、求婚瞬间与家人祝福化作影院级 4K 影片，随时在迎宾晚宴、婚宴或银婚/金婚庆典大屏播放。',
           idealFor: '婚宴开场、迎宾晚宴、25/50 周年纪念、求婚回忆片',
-          runtimeLabel: '5–7 分钟 · 4K 电影',
+          runtimeLabel: '最长 60 分钟 (360 帧) · 含 1–3 分钟预告片',
           turnaroundLabel: '当日交付（确认照片后 2–4 小时）',
           deliverables: [
             '故事分镜蓝图 + 亲友伴郎伴娘留言收集链接',
@@ -1742,7 +1742,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             '为高中、大学或硕博毕业献上动人 4K 成长电影——从蹒跚学步、赛场拼搏到深夜苦读与拨穗礼的荣耀时刻。',
           idealFor: '高中/大学毕业典礼、升学宴、奖学金晚宴与青春送别',
-          runtimeLabel: '4–6 分钟 · 4K 电影',
+          runtimeLabel: '最长 60 分钟 (360 帧) · 含 1–3 分钟预告片',
           turnaroundLabel: '当日交付（周末派对前即可就绪）',
           deliverables: [
             '5 分钟引导访谈，内置成长里程碑灵感标签',
@@ -1758,7 +1758,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             '致敬 20–40 年的坚守、领导力与难忘职场点滴，通过专属链接轻松汇集同事祝福，打造体面感人的 4K 荣休礼赞。',
           idealFor: '荣休晚宴、高管欢送会、创始人致敬与资深员工纪念',
-          runtimeLabel: '5–8 分钟 · 4K 电影',
+          runtimeLabel: '最长 60 分钟 (360 帧) · 含 1–3 分钟预告片',
           turnaroundLabel: '当日交付（确认照片后 2–4 小时）',
           deliverables: [
             '专属同事留言链接，轻松收集团队故事与祝福',
@@ -1774,7 +1774,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             '将现有房源照片与社区亮点当日转化为配音配乐俱全的 4K 电影导览，无需等待天气或二次实地拍摄。',
           idealFor: '住宅房源、豪宅庄园、精品酒店与高端民宿',
-          runtimeLabel: '90 秒 · 4K 电影',
+          runtimeLabel: '最长 60 分钟 (360 帧) · 深度导览 + 1–3 分钟预告片',
           turnaroundLabel: '当日交付（2–3 小时）',
           deliverables: [
             '约 3 分钟生成逐空间分镜蓝图',
@@ -1790,7 +1790,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             '无需 $5,000 广告摄制费用，即可为官网打造极具信任感的 4K 品牌起源电影——写实画面、专业旁白与定制配乐一步到位。',
           idealFor: '医疗/口腔诊所、律所、本地企业、匠心品牌与公益机构',
-          runtimeLabel: '90 秒–2 分钟 · 4K 电影',
+          runtimeLabel: '最长 60 分钟 (360 帧) · 品牌纪录片 + 1–3 分钟预告片',
           turnaroundLabel: '当日交付（2–4 小时）',
           deliverables: [
             '高转化品牌故事蓝图 + 团队协作审阅链接',
@@ -1806,7 +1806,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             '将员工手册、入职清单或安全规范转化为形象统一的 4K 旁白培训短片，制度更新时随时快速迭代。',
           idealFor: '新员工入职、安全生产培训、医疗 SOP 与连锁门店标准',
-          runtimeLabel: '5 分钟 · 4K 电影',
+          runtimeLabel: '最长 60 分钟 (360 帧) · 完整培训课 + 1–3 分钟预告片',
           turnaroundLabel: '当日交付（2–4 小时）',
           deliverables: [
             '结构化章节蓝图 + 管理层签收链接',
@@ -2057,7 +2057,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'احفظ رحلة الوالدين أو الأجداد عبر دمج صور العائلة الحقيقية مع مشاهد حقب واقعية وسرد دافئ وموسيقى خاصة.',
           idealFor: 'أعياد الميلاد 70 و80، تكريم الوالدين والأجداد، اللقاءات العائلية',
-          runtimeLabel: '5–8 دقائق · سينما 4K',
+          runtimeLabel: 'حتى 60 دقيقة (360 إطاراً) · + إعلان 1–3 دقائق',
           turnaroundLabel: 'نفس اليوم (2–4 ساعات بعد اعتماد الصور)',
           deliverables: [
             'مخطط قصة مصور ومروي خلال ~3 دقائق',
@@ -2073,7 +2073,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'حوّل قصة تعارفكما وأجمل الرحلات ولحظات العائلة إلى فيلم 4K جاهز للعرض في حفل الزفاف أو عشاء الخطوبة أو الذكرى الفضية والذهبية.',
           idealFor: 'حفلات الزفاف، عشاء الخطوبة، اليوبيل الفضي والذهبي',
-          runtimeLabel: '5–7 دقائق · سينما 4K',
+          runtimeLabel: 'حتى 60 دقيقة (360 إطاراً) · + إعلان 1–3 دقائق',
           turnaroundLabel: 'نفس اليوم (2–4 ساعات بعد اعتماد الصور)',
           deliverables: [
             'مخطط مصور + رابط لمشاركة ملاحظات العائلة والأصدقاء',
@@ -2089,7 +2089,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'احتفل بالتخرج الثانوي أو الجامعي بفيلم 4K مؤثر يروي الرحلة من خطوات الطفولة والإنجازات حتى لحظة التخرج.',
           idealFor: 'حفلات التخرج المدرسية والجامعية وولائم التكريم',
-          runtimeLabel: '4–6 دقائق · سينما 4K',
+          runtimeLabel: 'حتى 60 دقيقة (360 إطاراً) · + إعلان 1–3 دقائق',
           turnaroundLabel: 'نفس اليوم (جاهز لحفل نهاية الأسبوع)',
           deliverables: [
             'مقابلة سريعة من 5 دقائق ببطاقات تذكير للمحطات',
@@ -2105,7 +2105,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'كرّم 20 إلى 40 عاماً من القيادة والعطاء بفيلم 4K أنيق يجمع ذكريات الزملاء وإنجازات المسيرة عبر رابط خاص واحد.',
           idealFor: 'حفلات التقاعد، تكريم القيادات والمؤسسين ووداع الزملاء',
-          runtimeLabel: '5–8 دقائق · سينما 4K',
+          runtimeLabel: 'حتى 60 دقيقة (360 إطاراً) · + إعلان 1–3 دقائق',
           turnaroundLabel: 'نفس اليوم (2–4 ساعات بعد اعتماد الصور)',
           deliverables: [
             'رابط خاص للزملاء لإضافة ذكرياتهم وكلماتهم',
@@ -2121,7 +2121,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'حوّل صور العقار ومزايا الحي إلى جولة سينمائية 4K ناطقة وموسيقية في نفس اليوم دون انتظار الطقس أو طواقم تصوير.',
           idealFor: 'العقارات السكنية، الفلل الفاخرة، الفنادق البوتيكية والإيجارات',
-          runtimeLabel: '90 ثانية · سينما 4K',
+          runtimeLabel: 'حتى 60 دقيقة (360 إطاراً) · جولة معمّقة + إعلان 1–3 د',
           turnaroundLabel: 'نفس اليوم (2–3 ساعات)',
           deliverables: [
             'مخطط مشاهد لكل غرفة خلال ~3 دقائق',
@@ -2137,7 +2137,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'امنح موقعك الإلكتروني قصة علامة تجارية تبني الثقة دون إنفاق $5,000 على تصوير تقليدي—بمرئيات 4K واقعية وسرد احترافي وموسيقى.',
           idealFor: 'العيادات الطبية والأسنان، مكاتب المحاماة، الشركات المحلية والمؤسسون',
-          runtimeLabel: '90 ثانية–دقيقتان · سينما 4K',
+          runtimeLabel: 'حتى 60 دقيقة (360 إطاراً) · وثائقي العلامة + إعلان 1–3 د',
           turnaroundLabel: 'نفس اليوم (2–4 ساعات)',
           deliverables: [
             'مخطط قصة موجه لبناء الثقة + رابط مراجعة للفريق',
@@ -2153,7 +2153,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'حوّل أدلة العمل وإجراءات السلامة إلى وحدة تدريبية 4K واضحة بمدرب ثابت يسهل تحديثها كلما تغيّرت السياسات.',
           idealFor: 'تأهيل الموظفين، السلامة المهنية، إجراءات العيادات والامتيازات',
-          runtimeLabel: '5 دقائق · سينما 4K',
+          runtimeLabel: 'حتى 60 دقيقة (360 إطاراً) · دورة كاملة + إعلان 1–3 د',
           turnaroundLabel: 'نفس اليوم (2–4 ساعات)',
           deliverables: [
             'مخطط منظم بالفصول + رابط اعتماد للمديرين',
@@ -2405,7 +2405,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'บันทึกเส้นทางชีวิตของคุณพ่อคุณแม่หรือปู่ย่าตายาย ผสานภาพถ่ายจริงกับฉากย้อนยุคสมจริง เสียงบรรยายอบอุ่น และดนตรีประกอบเฉพาะเรื่อง',
           idealFor: 'แซยิด 70/80 ปี, คุณพ่อคุณแม่และญาติผู้ใหญ่, งานรวมญาติและรำลึกชีวิต',
-          runtimeLabel: '5–8 นาที · ซีนีมา 4K',
+          runtimeLabel: 'สูงสุด 60 นาที (360 เฟรม) · + ตัวอย่าง 1–3 นาที',
           turnaroundLabel: 'ส่งวันเดียวกัน (2–4 ชม. หลังล็อกภาพ)',
           deliverables: [
             'สตอรี่บอร์ดบลูพรินต์พร้อมภาพและเสียงใน ~3 นาที',
@@ -2421,7 +2421,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'ถ่ายทอดจุดเริ่มต้น ทริปประทับใจ และคำอวยพรจากครอบครัวเป็นภาพยนตร์ 4K พร้อมฉายในงานเลี้ยงฉลองสมรสหรือครบรอบแต่งงาน',
           idealFor: 'พรีเซนเทชันงานแต่ง, อาฟเตอร์ปาร์ตี้, ครบรอบ 25/50 ปี',
-          runtimeLabel: '5–7 นาที · ซีนีมา 4K',
+          runtimeLabel: 'สูงสุด 60 นาที (360 เฟรม) · + ตัวอย่าง 1–3 นาที',
           turnaroundLabel: 'ส่งวันเดียวกัน (2–4 ชม. หลังล็อกภาพ)',
           deliverables: [
             'สตอรี่บลูพรินต์ + ลิงก์รับโน้ตจากเพื่อนเจ้าบ่าวเจ้าสาว',
@@ -2437,7 +2437,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'ฉลองความสำเร็จมัธยม มหาวิทยาลัย หรือปริญญาโท-เอก ตั้งแต่วัยเด็ก รางวัลกีฬา จนถึงความภาคภูมิใจในชุดครุย',
           idealFor: 'งานรับปริญญา, งานเลี้ยงแสดงความยินดี และงานอำลา',
-          runtimeLabel: '4–6 นาที · ซีนีมา 4K',
+          runtimeLabel: 'สูงสุด 60 นาที (360 เฟรม) · + ตัวอย่าง 1–3 นาที',
           turnaroundLabel: 'ส่งวันเดียวกัน (พร้อมฉายงานเลี้ยงสุดสัปดาห์)',
           deliverables: [
             'สัมภาษณ์นำทาง 5 นาทีพร้อมปุ่มช่วยนึกเหตุการณ์สำคัญ',
@@ -2453,7 +2453,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'เชิดชู 20–40 ปีแห่งความทุ่มเทและภาวะผู้นำ เป็นภาพยนตร์ 4K สุดประทับใจ พร้อมรวบรวมความทรงจำจากเพื่อนร่วมงานในลิงก์เดียว',
           idealFor: 'งานเลี้ยงเกษียณ, อำลาผู้บริหาร, เชิดชูผู้ก่อตั้งองค์กร',
-          runtimeLabel: '5–8 นาที · ซีนีมา 4K',
+          runtimeLabel: 'สูงสุด 60 นาที (360 เฟรม) · + ตัวอย่าง 1–3 นาที',
           turnaroundLabel: 'ส่งวันเดียวกัน (2–4 ชม. หลังล็อกภาพ)',
           deliverables: [
             'ลิงก์ส่วนตัวให้เพื่อนร่วมงานช่วยเติมเรื่องเล่าและคำอวยพร',
@@ -2469,7 +2469,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'เปลี่ยนภาพถ่ายบ้านและจุดเด่นทำเลเป็นทัวร์ภาพยนตร์ 4K พร้อมเสียงบรรยายและดนตรีเสร็จภายในวันเดียว ไม่ต้องรอแดดหรือถ่ายซ้ำ',
           idealFor: 'บ้านเดี่ยว คอนโดหรู พูลวิลล่า โรงแรมบูทีค และที่พักตากอากาศ',
-          runtimeLabel: '90 วินาที · ซีนีมา 4K',
+          runtimeLabel: 'สูงสุด 60 นาที (360 เฟรม) · ทัวร์เจาะลึก + ตัวอย่าง 1–3 นาที',
           turnaroundLabel: 'ส่งวันเดียวกัน (2–3 ชม.)',
           deliverables: [
             'สตอรี่บอร์ดบลูพรินต์รายห้องเสร็จใน ~3 นาที',
@@ -2485,7 +2485,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'ยกระดับหน้าเว็บไซต์ด้วยเรื่องราวแบรนด์ที่สร้างความเชื่อมั่นโดยไม่ต้องจ่าย $5,000 ค่าโปรดักชัน—ภาพ 4K สมจริง เสียงพากย์คมชัด และดนตรีครบจบ',
           idealFor: 'คลินิกแพทย์/ทันตกรรม สำนักงานกฎหมาย ธุรกิจท้องถิ่น และผู้ก่อตั้งแบรนด์',
-          runtimeLabel: '90 วิ–2 นาที · ซีนีมา 4K',
+          runtimeLabel: 'สูงสุด 60 นาที (360 เฟรม) · สารคดีแบรนด์ + ตัวอย่าง 1–3 นาที',
           turnaroundLabel: 'ส่งวันเดียวกัน (2–4 ชม.)',
           deliverables: [
             'บลูพรินต์เน้นสร้างความน่าเชื่อถือ + ลิงก์ตรวจงานทีม',
@@ -2501,7 +2501,7 @@ export const SHOWCASE_LOCALE_COPY: Record<ClientPortalLocale, ShowcaseLocaleCopy
           subtitle:
             'เปลี่ยนคู่มือพนักงานและมาตรฐานความปลอดภัยเป็นวิดีโออบรม 4K ที่เข้าใจง่าย ล็อกวิทยากรคงที่ และอัปเดตเมื่อเปลี่ยนนโยบายได้ทันที',
           idealFor: 'ปฐมนิเทศพนักงาน ความปลอดภัยโรงงาน SOP คลินิก และแฟรนไชส์',
-          runtimeLabel: '5 นาที · ซีนีมา 4K',
+          runtimeLabel: 'สูงสุด 60 นาที (360 เฟรม) · คอร์สเต็ม + ตัวอย่าง 1–3 นาที',
           turnaroundLabel: 'ส่งวันเดียวกัน (2–4 ชม.)',
           deliverables: [
             'บลูพรินต์แบ่งบทชัดเจน + ลิงก์อนุมัติผู้บริหาร',

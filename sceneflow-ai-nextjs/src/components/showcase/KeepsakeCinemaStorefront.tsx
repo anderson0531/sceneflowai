@@ -450,7 +450,7 @@ export function KeepsakeCinemaStorefront() {
                 <span className="text-white font-medium">{copy.hero.subtitleHighlight1}</span>
                 {copy.hero.subtitleMid}
                 <span className="text-white font-medium">{copy.hero.subtitleHighlight2}</span>
-                {copy.hero.subtitleEnd}
+                {txt(copy.hero.subtitleEnd)}
               </p>
 
               {/* Price & Guarantee Callout */}

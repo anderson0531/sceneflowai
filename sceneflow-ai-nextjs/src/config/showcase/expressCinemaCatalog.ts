@@ -58,10 +58,10 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     badge: 'Most Popular · Life & Milestones',
     title: 'Life Stories & Family Memoirs, Weddings, Graduations, and more',
     subtitle:
-      'Preserve a parent’s or grandparent’s journey, wedding love story, graduation, or retirement—blending real family photos with photorealistic scenes, warm narration, and bespoke score.',
+      'Go deep—tell an unforgettable 30 to 150 minute feature-length life story covering every chapter from childhood roots and career triumphs to family traditions, weddings, graduations, or retirements. Your $149 package includes up to 1 hour (360 directed 4K frames) plus a shareable 1–3 min theatrical trailer (longer films available).',
     idealFor:
       '70th/80th birthdays, family legacies, weddings & anniversaries, graduations, retirements & celebrations of life',
-    runtimeLabel: '5–8 min · Longform 4K Feature + Trailer',
+    runtimeLabel: 'Up to 60 min (360 frames) · + 1–3 min Trailer',
     turnaroundLabel: 'Same-Day (2–4 hrs after photo lock)',
     blueprintPassUsd: 29,
     totalPriceUsd: 149,
@@ -71,12 +71,12 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     sampleVideoPoster: '/landing/video-services/videos/memoir-poster.webp',
     sampleTitle: 'Family Legacy & Life Story Sample',
     sampleCaption:
-      'Photorealistic continuity-locked 4K frames, smooth documentary camera motion, studio voices, SFX & original underscore.',
+      '2-min preview example — $149 package delivers up to a 60-min (360-frame) 4K feature film + 1–3 min trailer (expandable to 150 min).',
     deliverables: [
-      '90%+ resonance Storyboard Blueprint & narrated preview in ~3 min',
-      'Continuity lock: age-28 de-aging, family resemblance, hometowns & heirlooms',
-      'Voice cloning / voice-image matching + 10-second pronunciation lock',
-      'Auto-rendered Longform 4K Master + 60-sec Shareable Theatrical Trailer',
+      'Up to 60-min Longform 4K Feature (360 directed frames; extendable to 150 min)',
+      '1–3 min Shareable Theatrical Trailer included for family & event invites',
+      'Continuity lock: age-28 de-aging, relative matching, hometowns & heirlooms',
+      '90%+ resonance multi-chapter script, voice cloning/matching & stereo score',
     ],
     occasionPromptContext:
       'Family Legacy / Life Story Memoir honoring a loved one’s key chapters, influential people, cherished traditions, and lasting impact.',
@@ -92,7 +92,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     subtitle:
       'Turn how you met, favorite trips, proposals, and family blessings into a theater-worthy 4K film ready to screen at the rehearsal dinner, reception, or 25th/50th anniversary.',
     idealFor: 'Rehearsal dinners, wedding receptions, 25th & 50th anniversaries, engagement films',
-    runtimeLabel: '5–7 min · 4K Cinema',
+    runtimeLabel: 'Up to 60 min (360 frames) · + 1–3 min Trailer',
     turnaroundLabel: 'Same-Day (2–4 hrs after photo lock)',
     blueprintPassUsd: 29,
     totalPriceUsd: 149,
@@ -123,7 +123,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     subtitle:
       'Celebrate high school, college, or medical/law school graduation with a moving 4K story—from first steps and sports wins to late-night study sessions and cap-and-gown pride.',
     idealFor: 'High school & university graduations, scholarship banquets, senior night & send-offs',
-    runtimeLabel: '4–6 min · 4K Cinema',
+    runtimeLabel: 'Up to 60 min (360 frames) · + 1–3 min Trailer',
     turnaroundLabel: 'Same-Day (ready for the weekend party)',
     blueprintPassUsd: 29,
     totalPriceUsd: 149,
@@ -154,7 +154,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     subtitle:
       'Honor 20–40 years of leadership, mentorship, and unforgettable workplace moments in a polished 4K tribute film—complete with colleague anecdotes gathered via one private link.',
     idealFor: 'Retirement dinners, executive farewells, military/first-responder honors, founder tributes',
-    runtimeLabel: '5–8 min · 4K Cinema',
+    runtimeLabel: 'Up to 60 min (360 frames) · + 1–3 min Trailer',
     turnaroundLabel: 'Same-Day (2–4 hrs after photo lock)',
     blueprintPassUsd: 29,
     totalPriceUsd: 149,
@@ -183,9 +183,9 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     badge: 'Real Estate · Same-Day 4K',
     title: 'Express 4K Property Listing Film',
     subtitle:
-      'Transform existing MLS listing photos and neighborhood highlights into a voiced, scored 4K cinema tour the same day—zero weather delays or extra camera crews.',
-    idealFor: 'Residential listings, luxury estates, boutique hotels & vacation rentals',
-    runtimeLabel: '90 sec · 4K Cinema',
+      'Go far beyond a 60-second slideshow. Walk buyers deeply through every room, architectural upgrades, chef-grade appliances, outdoor living, schools, and neighborhood lifestyle—includes up to 60 min (360 directed 4K frames) plus a 1–3 min MLS & social overview trailer.',
+    idealFor: 'Luxury estates, residential listings, out-of-town buyers, boutique hotels & vacation rentals',
+    runtimeLabel: 'Up to 60 min (360 frames) · Deep Tour + 1–3 min Trailer',
     turnaroundLabel: 'Same-Day (2–3 hrs)',
     blueprintPassUsd: 29,
     totalPriceUsd: 149,
@@ -195,12 +195,12 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     sampleVideoPoster: '/landing/video-services/videos/realestate-poster.webp',
     sampleTitle: 'Real Estate 4K Listing Film Sample',
     sampleCaption:
-      'Smooth 4K architectural Ken Burns pans, warm luxury voiceover, ambient sound design & music.',
+      '2-min preview example — $149 buys a deep-dive property & neighborhood film (up to 60 min / 360 frames) + 1–3 min trailer.',
     deliverables: [
-      'Room-by-room Storyboard Blueprint in ~3 min',
-      'Upload MLS listing stills directly from phone or desktop',
-      'Optional multilingual dubs for international buyers',
-      'Commercial-licensed 4K MP4 ready for MLS & social',
+      'Deep-dive 4K property & neighborhood film (up to 60 min / 360 frames)',
+      '1–3 min MLS & social highlight trailer included for instant buyer hooks',
+      'Room-by-room updates, luxury appliances, schools & lifestyle storytelling',
+      'Multilingual buyer dubs (70+ languages) + commercial-licensed 4K master',
     ],
     occasionPromptContext:
       'Real Estate Express 4K Listing Film showcasing architectural highlights, lifestyle appeal, and neighborhood amenities.',
@@ -214,9 +214,9 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     badge: 'Brand Story & Clinics · Same-Day 4K',
     title: 'Express 4K Founder & Practice Film',
     subtitle:
-      'Give your website a trustworthy, cinema-grade homepage story without a $5,000 agency shoot—combining photorealistic visuals, crisp narration, and music in 4K.',
+      'Tell the complete documentary story behind your clinic, firm, or flagship brand—founder origin, client transformations, facility walkthrough, and team philosophy—up to 60 min (360 directed 4K frames) plus a 1–3 min high-converting homepage trailer.',
     idealFor: 'Medical/dental clinics, law firms, craft founders, local businesses & nonprofits',
-    runtimeLabel: '90 sec–2 min · 4K Cinema',
+    runtimeLabel: 'Up to 60 min (360 frames) · Brand Doc + 1–3 min Trailer',
     turnaroundLabel: 'Same-Day (2–4 hrs)',
     blueprintPassUsd: 29,
     totalPriceUsd: 199,
@@ -226,12 +226,12 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     sampleVideoPoster: '/landing/video-services/videos/brand-poster.webp',
     sampleTitle: 'Founder & Practice Brand Film Sample',
     sampleCaption:
-      'High-trust homepage narrative film with locked founder visuals, custom narration, SFX & commercial rights.',
+      '2-min preview example — package delivers a deep-dive brand documentary (up to 60 min / 360 frames) + 1–3 min trailer.',
     deliverables: [
-      'Conversion-focused Storyboard Blueprint + team review link',
-      'Lock founder, clinic/office & signature brand visuals',
-      '10-second brand & leadership pronunciation guide',
-      '100% commercial-licensed 4K MP4 master',
+      'Longform 4K founder & brand documentary (up to 60 min / 360 frames)',
+      '1–3 min homepage & social trailer included to convert visitors fast',
+      'Lock founder, clinic/office, signature products & pronunciation lock',
+      '90%+ target audience resonance script + 100% commercial 4K master',
     ],
     occasionPromptContext:
       'Founder & Practice Brand Film communicating origin story, client trust, core outcomes, and call to action.',
@@ -245,9 +245,9 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     badge: 'Training & SOPs · Same-Day 4K',
     title: 'Express 4K Narrated Training & SOP Film',
     subtitle:
-      'Convert manuals, onboarding checklists, or safety protocols into a clear, instructor-locked 4K narrated training module—easy to update whenever policies change.',
-    idealFor: 'Employee onboarding, workplace safety, clinic SOPs & franchise playbooks',
-    runtimeLabel: '5 min · 4K Cinema',
+      'Convert 50-page manuals, onboarding playbooks, or compliance protocols into an engaging multi-module 4K training course (up to 60 min / 360 directed frames; extendable to 150-min curricula) with locked instructors, real equipment visuals & a 1–3 min overview trailer.',
+    idealFor: 'Employee onboarding, workplace safety, clinic SOPs, franchise playbooks & certification courses',
+    runtimeLabel: 'Up to 60 min (360 frames) · Full Course + 1–3 min Overview',
     turnaroundLabel: 'Same-Day (2–4 hrs)',
     blueprintPassUsd: 29,
     totalPriceUsd: 249,
@@ -257,12 +257,12 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     sampleVideoPoster: '/landing/video-services/videos/training-poster.webp',
     sampleTitle: 'Narrated 4K Training Module Sample',
     sampleCaption:
-      'Consistent presenter & workplace visual continuity paired with crystal-clear voiceover and chapter structure.',
+      '2-min preview example — package builds full multi-module training courses (up to 60 min / 360 frames; extendable to 150 min).',
     deliverables: [
-      'Structured chapter Blueprint + stakeholder sign-off link',
-      'Locked presenter, uniform & workplace visual library',
-      'Technical terminology & acronym pronunciation guide',
-      'LMS-ready 4K MP4 master with commercial ownership',
+      'Multi-module 4K training course (up to 60 min / 360 frames; extendable)',
+      '1–3 min executive & new-hire overview trailer included',
+      'Locked instructor, uniform, workplace & safety equipment visuals',
+      'Technical acronym pronunciation lock + LMS-ready 4K master in 70+ langs',
     ],
     occasionPromptContext:
       'Narrated Corporate Training / SOP Film transforming operational guidelines into clear visual chapters.',

@@ -131,7 +131,7 @@ export function LongformCinemaCraftShowcase({
                 {copy.trailerSpotlight.headline}
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                {copy.trailerSpotlight.body}
+                {txt(copy.trailerSpotlight.body)}
               </p>
             </div>
             <div className="flex flex-col gap-2 shrink-0 lg:min-w-[260px]">
@@ -145,7 +145,7 @@ export function LongformCinemaCraftShowcase({
                   className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/40 px-3.5 py-2 text-xs font-medium text-slate-100"
                 >
                   <Check className="w-3.5 h-3.5 text-[#DFB473] shrink-0" />
-                  <span>{pill}</span>
+                  <span>{txt(pill)}</span>
                 </div>
               ))}
             </div>
@@ -285,7 +285,7 @@ export function LongformCinemaCraftShowcase({
                           isStorefront ? 'text-[#DFB473]' : 'text-emerald-400'
                         }`}
                       />
-                      <span>{item}</span>
+                      <span>{txt(item)}</span>
                     </li>
                   ))}
                 </ul>
@@ -374,7 +374,7 @@ export function LongformCinemaCraftShowcase({
                   >
                     <Check className="w-3 h-3" />
                   </span>
-                  <span>{row.sceneFlowLongform}</span>
+                  <span>{txt(row.sceneFlowLongform)}</span>
                 </div>
               </div>
             ))}
