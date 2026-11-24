@@ -88,6 +88,19 @@ export function KeepsakeCinemaStorefront({
   const [submittingCheckout, setSubmittingCheckout] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
 
+  // Distinct inquiry modal state (PM Full-Motion Upgrade vs. Operator Walkthrough)
+  const [inquiryModalType, setInquiryModalType] = useState<
+    'pm_full_motion_upgrade' | 'operator_walkthrough' | null
+  >(null)
+  const [inquiryName, setInquiryName] = useState('')
+  const [inquiryEmail, setInquiryEmail] = useState('')
+  const [inquiryRefOrBrand, setInquiryRefOrBrand] = useState('')
+  const [inquiryScope, setInquiryScope] = useState('')
+  const [inquiryNotes, setInquiryNotes] = useState('')
+  const [submittingInquiry, setSubmittingInquiry] = useState(false)
+  const [inquiryError, setInquiryError] = useState<string | null>(null)
+  const [inquirySubmitted, setInquirySubmitted] = useState(false)
+
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const cardVideoRefs = useRef<Partial<Record<ShowcaseOfferId, HTMLVideoElement | null>>>({})
   const langMenuRef = useRef<HTMLDivElement | null>(null)
@@ -291,6 +304,51 @@ export function KeepsakeCinemaStorefront({
     }
   }
 
+  const openInquiryModal = (type: 'pm_full_motion_upgrade' | 'operator_walkthrough') => {
+    setInquiryModalType(type)
+    setInquiryError(null)
+    setInquirySubmitted(false)
+    setInquiryScope(
+      type === 'operator_walkthrough'
+        ? 'All 4 Verticals (Turnkey Multi-Niche)'
+        : 'Key Chapters + Live-Action Integration'
+    )
+  }
+
+  const handleInquirySubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inquiryModalType) return
+    setSubmittingInquiry(true)
+    setInquiryError(null)
+
+    try {
+      const res = await fetch('/api/showcase/inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inquiryType: inquiryModalType,
+          name: inquiryName.trim(),
+          email: inquiryEmail.trim(),
+          referenceOrBrand: inquiryRefOrBrand.trim() || undefined,
+          nicheOrScope: inquiryScope.trim() || undefined,
+          notes: inquiryNotes.trim() || undefined,
+          locale: uiLocale,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.success) {
+        setInquiryError(data.error || 'Please check your name and email and try again.')
+        setSubmittingInquiry(false)
+        return
+      }
+      setInquirySubmitted(true)
+      setSubmittingInquiry(false)
+    } catch {
+      setInquiryError('Network error — please try again or email support@sceneflowai.studio.')
+      setSubmittingInquiry(false)
+    }
+  }
+
   return (
     <div
       dir={direction}
@@ -453,44 +511,6 @@ export function KeepsakeCinemaStorefront({
                 </span>
                 {copy.hero.titleSuffix}
               </h1>
-
-              {/* Tiered Studio Ladder Format Switcher: Automated Express 4K vs PM-Directed Full-Motion Cinema */}
-              <div className="space-y-2 pt-0.5 max-w-xl">
-                <div
-                  role="group"
-                  aria-label="Compare Automated Express 4K Cinema and PM-Directed Full-Motion Cinema"
-                  className="inline-flex flex-wrap items-center rounded-2xl sm:rounded-full border border-white/15 bg-[#0D1220] p-1 gap-1"
-                >
-                  <button
-                    type="button"
-                    aria-pressed={demoFormat === 'express4k'}
-                    onClick={() => handleGlobalFormatChange('express4k')}
-                    className={`rounded-xl sm:rounded-full px-3 py-1.5 text-[11px] sm:text-xs font-semibold transition ${
-                      demoFormat === 'express4k'
-                        ? 'bg-[#DFB473] !text-[#090B12] shadow-sm'
-                        : '!text-slate-300 hover:!text-white'
-                    }`}
-                  >
-                    <span className={demoFormat === 'express4k' ? '!text-[#090B12] font-semibold' : '!text-slate-300'}>
-                      {txt(convCopy.studioLadder.expressTabLabel)}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={demoFormat === 'fullMotion'}
-                    onClick={() => handleGlobalFormatChange('fullMotion')}
-                    className={`rounded-xl sm:rounded-full px-3 py-1.5 text-[11px] sm:text-xs font-semibold transition ${
-                      demoFormat === 'fullMotion'
-                        ? 'bg-emerald-400 !text-[#090B12] shadow-sm'
-                        : '!text-slate-300 hover:!text-white'
-                    }`}
-                  >
-                    <span className={demoFormat === 'fullMotion' ? '!text-[#090B12] font-semibold' : '!text-slate-300'}>
-                      {convCopy.studioLadder.fullMotionTabLabel}
-                    </span>
-                  </button>
-                </div>
-              </div>
 
               <p className="text-sm sm:text-lg text-slate-300 leading-relaxed max-w-xl">
                 {copy.hero.subtitleLead}
@@ -1245,13 +1265,15 @@ export function KeepsakeCinemaStorefront({
                     </span>
                     <ArrowRight className="w-3.5 h-3.5 !text-[#090B12] rtl:rotate-180" />
                   </button>
-                  <Link
-                    href="/#video-services"
+                  <button
+                    type="button"
+                    data-testid="cta-request-pm-upgrade"
+                    onClick={() => openInquiryModal('pm_full_motion_upgrade')}
                     className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-400/35 bg-emerald-500/10 hover:bg-emerald-500/20 px-4 py-2.5 text-xs font-semibold text-emerald-200 hover:text-white transition"
                   >
                     <span>{convCopy.fullMotionUpgrade.secondaryCta}</span>
                     <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1329,6 +1351,7 @@ export function KeepsakeCinemaStorefront({
             <div className="pt-2 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
               <Link
                 href={getSignupUrlForTier('pro')}
+                data-testid="cta-launch-branded-studio"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 hover:from-emerald-300 hover:to-teal-200 px-6 py-3 text-xs sm:text-sm font-semibold !text-[#090B12] shadow-lg shadow-emerald-500/20 transition"
               >
                 <span className="!text-[#090B12] font-semibold">
@@ -1336,30 +1359,30 @@ export function KeepsakeCinemaStorefront({
                 </span>
                 <ArrowRight className="w-4 h-4 shrink-0 !text-[#090B12] rtl:rotate-180" />
               </Link>
-              <Link
-                href="/#video-services"
+              <button
+                type="button"
+                data-testid="cta-book-operator-walkthrough"
+                onClick={() => openInquiryModal('operator_walkthrough')}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 hover:border-[#DFB473]/60 bg-white/[0.03] hover:bg-white/[0.07] px-6 py-3 text-xs sm:text-sm font-semibold text-slate-100 hover:text-white transition"
               >
                 <span>{convCopy.operatorFooter.secondaryCta}</span>
                 <ArrowRight className="w-4 h-4 shrink-0 rtl:rotate-180" />
-              </Link>
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Keepsake Cinema Consumer Footer */}
+      {/* Keepsake Cinema Consumer Footer (crisp & uncluttered) */}
       <footer className="border-t border-white/10 bg-[#05070C]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-lg">
-            <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
               <Film className="w-4 h-4 text-[#DFB473] shrink-0" />
               <span className="font-serif text-lg font-semibold text-white">
                 {SHOWCASE_BRAND_SNAPSHOT.brandName}
               </span>
-              <span className="text-xs text-slate-500">{copy.footer.referenceTag}</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">{copy.footer.body}</p>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] text-slate-400">
               <ShieldCheck className="w-3.5 h-3.5 text-[#DFB473] shrink-0" />
               <span>{copy.modal.whopRefBadge}</span>
@@ -1558,6 +1581,218 @@ export function KeepsakeCinemaStorefront({
                   </div>
                 </form>
               </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Dedicated PM Full-Motion Upgrade & Operator Walkthrough Inquiry Modal */}
+      {inquiryModalType && (() => {
+        const isWalkthrough = inquiryModalType === 'operator_walkthrough'
+        return (
+          <div
+            data-testid={isWalkthrough ? 'operator-walkthrough-modal' : 'pm-upgrade-modal'}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="showcase-inquiry-title"
+          >
+            <div className="relative w-full max-w-lg rounded-3xl border border-emerald-400/30 bg-[#0B0F1A] p-6 sm:p-7 shadow-2xl my-4">
+              <button
+                type="button"
+                onClick={() => setInquiryModalType(null)}
+                aria-label="Close inquiry modal"
+                className="absolute top-4 end-4 z-10 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="space-y-2 pe-10">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
+                  <Sparkles className="w-3 h-3 shrink-0" />
+                  <span>
+                    {isWalkthrough
+                      ? 'White-Label Operator Walkthrough'
+                      : 'Studio Director Tier · PM Full-Motion Upgrade'}
+                  </span>
+                </span>
+                <h3
+                  id="showcase-inquiry-title"
+                  className="font-serif text-xl sm:text-2xl font-semibold text-white leading-snug"
+                >
+                  {isWalkthrough
+                    ? 'Book a SceneFlow White-Label Walkthrough'
+                    : 'Request PM-Directed Full-Motion Upgrade'}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  {isWalkthrough
+                    ? 'Walk through custom domain deployment, Whop MoR margin payouts, niche locking, and PM handoff workflows with our operator team.'
+                    : 'Share your Blueprint or Express 4K reference—a dedicated Studio Production Manager will scope your Full-Motion AI scenes and live-action integration with zero rework.'}
+                </p>
+              </div>
+
+              {inquirySubmitted ? (
+                <div
+                  data-testid="inquiry-confirmation"
+                  className="mt-5 rounded-2xl border border-emerald-400/35 bg-emerald-500/10 p-5 space-y-3"
+                >
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-300">
+                    <Check className="w-4 h-4 shrink-0" />
+                    <span>
+                      {isWalkthrough
+                        ? 'Walkthrough Request Received'
+                        : 'PM Full-Motion Upgrade Request Received'}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                    {isWalkthrough
+                      ? `Thanks, ${inquiryName}! Our SceneFlow Studio operator team will reach out to ${inquiryEmail} within 1 business day with live walkthrough times.`
+                      : `Thanks, ${inquiryName}! A SceneFlow Studio Production Manager will review your request and follow up at ${inquiryEmail} with custom Full-Motion options.`}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setInquiryModalType(null)}
+                    className="inline-flex items-center justify-center rounded-full bg-emerald-400 hover:bg-emerald-300 px-5 py-2 text-xs font-semibold !text-[#090B12] transition"
+                  >
+                    <span className="!text-[#090B12] font-semibold">Back to Storefront</span>
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleInquirySubmit} className="mt-5 space-y-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-300 mb-1">
+                        Your Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={inquiryName}
+                        onChange={(e) => setInquiryName(e.target.value)}
+                        placeholder="Alex Rivera"
+                        className="w-full rounded-xl bg-slate-950 border border-white/15 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-300 mb-1">
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={inquiryEmail}
+                        onChange={(e) => setInquiryEmail(e.target.value)}
+                        placeholder="you@studio.com"
+                        className="w-full rounded-xl bg-slate-950 border border-white/15 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      {isWalkthrough
+                        ? 'Your Brand or Custom Domain (optional)'
+                        : 'Blueprint / Order Reference or Film Title (optional)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={inquiryRefOrBrand}
+                      onChange={(e) => setInquiryRefOrBrand(e.target.value)}
+                      placeholder={
+                        isWalkthrough
+                          ? 'e.g. legacyfilms.co or Apex Real Estate Media'
+                          : 'e.g. Harbor Books 50th Anniversary or Order #KC-...'
+                      }
+                      className="w-full rounded-xl bg-slate-950 border border-white/15 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      {isWalkthrough ? 'Target Storefront Niche Preset' : 'Full-Motion Scope'}
+                    </label>
+                    <select
+                      value={inquiryScope}
+                      onChange={(e) => setInquiryScope(e.target.value)}
+                      className="w-full rounded-xl bg-slate-950 border border-white/15 px-3.5 py-2.5 text-sm text-white focus:border-emerald-400 focus:outline-none"
+                    >
+                      {isWalkthrough ? (
+                        <>
+                          <option value="All 4 Verticals (Turnkey Multi-Niche)">
+                            All 4 Verticals (Turnkey Multi-Niche)
+                          </option>
+                          <option value="Weddings, Memoirs & Life Milestones">
+                            Weddings, Memoirs &amp; Life Milestones
+                          </option>
+                          <option value="Luxury Real Estate & Brokerages">
+                            Luxury Real Estate &amp; Brokerages
+                          </option>
+                          <option value="Clinics, Founders & Brand Stories">
+                            Clinics, Founders &amp; Brand Stories
+                          </option>
+                          <option value="Corporate Training & SOPs">
+                            Corporate Training &amp; SOPs
+                          </option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="Key Chapters + Live-Action Integration">
+                            Upgrade Key Chapters to Full-Motion AI Video
+                          </option>
+                          <option value="Full-Motion Feature + Live-Filmed Interviews">
+                            Full-Motion Feature + Live-Filmed Interviews
+                          </option>
+                          <option value="Custom Commercial / Broadcast Finish">
+                            Custom Commercial / Broadcast Finish
+                          </option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      {isWalkthrough
+                        ? 'Monthly Volume & Preferred Timeframe (optional)'
+                        : 'Chapters, Event Date, or Creative Notes (optional)'}
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={inquiryNotes}
+                      onChange={(e) => setInquiryNotes(e.target.value)}
+                      placeholder={
+                        isWalkthrough
+                          ? 'Tell us your target launch date or questions about custom domains & Whop payouts...'
+                          : 'Share your screening date or which moments you want animated in Full Motion...'
+                      }
+                      className="w-full rounded-xl bg-slate-950 border border-white/15 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none"
+                    />
+                  </div>
+
+                  {inquiryError && (
+                    <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
+                      {inquiryError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submittingInquiry}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-300 hover:from-emerald-300 hover:to-teal-200 disabled:opacity-60 px-5 py-3 text-sm font-semibold !text-[#090B12] shadow-lg shadow-emerald-500/20 transition"
+                  >
+                    <span className="!text-[#090B12] font-semibold">
+                      {submittingInquiry
+                        ? 'Submitting Request...'
+                        : isWalkthrough
+                          ? 'Request Operator Walkthrough'
+                          : 'Send PM Upgrade Request'}
+                    </span>
+                    {!submittingInquiry && (
+                      <ArrowRight className="w-4 h-4 shrink-0 !text-[#090B12] rtl:rotate-180" />
+                    )}
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         )

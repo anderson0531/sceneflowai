@@ -668,6 +668,49 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(operatorFooter?.textContent).toContain('Launch Your Branded Studio on SceneFlow')
     expect(operatorFooter?.textContent).toContain('Book an Operator Walkthrough')
 
+    // Quick Cleanup Checklist verifications:
+    // A. Duplicate sub-footer paragraph removed from <footer>
+    const footerEl = container.querySelector('footer')
+    expect(footerEl).toBeTruthy()
+    expect(footerEl?.textContent).not.toContain('This storefront runs 100% on SceneFlow Studio')
+
+    // B. Only ONE primary format toggle above the fold in Hero section (on the Cinema Reel player)
+    const heroSection = container.querySelector('section')
+    const heroFormatButtons = Array.from(heroSection!.querySelectorAll('button')).filter((b) =>
+      b.textContent?.includes('Express 4K Cinema · Automated')
+    )
+    expect(heroFormatButtons).toHaveLength(1)
+
+    // C. Distinct CTA destinations: Pro Signup link, PM Upgrade modal, and Operator Walkthrough modal
+    const launchStudioLink = container.querySelector(
+      '[data-testid="cta-launch-branded-studio"]'
+    ) as HTMLAnchorElement | null
+    expect(launchStudioLink?.getAttribute('href')).toContain('checkoutTier=pro')
+
+    const pmUpgradeBtn = container.querySelector(
+      '[data-testid="cta-request-pm-upgrade"]'
+    ) as HTMLButtonElement | null
+    expect(pmUpgradeBtn).toBeTruthy()
+    act(() => pmUpgradeBtn!.click())
+    expect(container.querySelector('[data-testid="pm-upgrade-modal"]')).toBeTruthy()
+    const closePmBtn = container.querySelector(
+      '[data-testid="pm-upgrade-modal"] button[aria-label="Close inquiry modal"]'
+    ) as HTMLButtonElement | null
+    act(() => closePmBtn!.click())
+    expect(container.querySelector('[data-testid="pm-upgrade-modal"]')).toBeNull()
+
+    const walkthroughBtn = container.querySelector(
+      '[data-testid="cta-book-operator-walkthrough"]'
+    ) as HTMLButtonElement | null
+    expect(walkthroughBtn).toBeTruthy()
+    act(() => walkthroughBtn!.click())
+    expect(container.querySelector('[data-testid="operator-walkthrough-modal"]')).toBeTruthy()
+    const closeWalkthroughBtn = container.querySelector(
+      '[data-testid="operator-walkthrough-modal"] button[aria-label="Close inquiry modal"]'
+    ) as HTMLButtonElement | null
+    act(() => closeWalkthroughBtn!.click())
+    expect(container.querySelector('[data-testid="operator-walkthrough-modal"]')).toBeNull()
+
     // Artisan behind-the-scenes superpower copy rendered in Hero
     expect(container.textContent).toContain(
       'Director-crafted pacing, accelerated by SceneFlow Studio for same-day delivery.'
