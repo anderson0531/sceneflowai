@@ -37,6 +37,7 @@ import {
   getShowcaseVideoPosterUrl,
   type ShowcaseDemoFormat,
 } from '@/config/showcase/showcaseLocaleCopy'
+import { LongformCinemaCraftShowcase } from '@/components/showcase/LongformCinemaCraftShowcase'
 import {
   SUPPORTED_CLIENT_PORTAL_LOCALES,
   resolveClientPortalLocale,
@@ -986,6 +987,13 @@ export function KeepsakeCinemaStorefront() {
           })()}
         </div>
       </section>
+
+      {/* Longform 4K Cinema Craft & Continuity Showcase (Zero AI Slop + Feature Film & Trailer) */}
+      <LongformCinemaCraftShowcase
+        variant="storefront"
+        locale={uiLocale}
+        onPrimaryCta={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
+      />
 
       {/* 3-Step Self-Serve Workflow */}
       <section id="how-it-works" className="py-16 sm:py-24 border-t border-white/[0.07]">

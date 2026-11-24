@@ -112,6 +112,7 @@ import {
   SHOWCASE_LOCALE_COPY,
   getLocalizedShowcaseVideoUrl,
 } from '@/config/showcase/showcaseLocaleCopy'
+import { LONGFORM_CRAFT_COPY } from '@/config/showcase/longformCraftCopy'
 import { SUPPORTED_CLIENT_PORTAL_LOCALES } from '@/lib/intake/clientPortalCopy'
 import { formatLandingCurrency } from '@/lib/i18n/landingCurrency'
 
@@ -539,5 +540,47 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(trainingCard?.querySelector('video')?.getAttribute('src')).toBe(
       '/landing/video-services/videos/training-en.mp4'
     )
+  })
+
+  it('renders interactive Longform 4K Craft & Zero AI Slop Showcase across all 7 languages including Trailer spotlight and Continuity pillars', () => {
+    for (const loc of SUPPORTED_CLIENT_PORTAL_LOCALES) {
+      const pack = LONGFORM_CRAFT_COPY[loc.code]
+      expect(pack, `craft pack for ${loc.code}`).toBeDefined()
+      expect(pack.pillars).toHaveLength(6)
+      expect(pack.comparisonRows).toHaveLength(6)
+      expect(pack.trailerSpotlight.headline.length).toBeGreaterThan(10)
+    }
+
+    act(() => {
+      root.render(React.createElement(KeepsakeCinemaStorefront))
+    })
+
+    const showcaseSection = container.querySelector(
+      '[data-testid="longform-craft-showcase-storefront"]'
+    )
+    expect(showcaseSection).toBeTruthy()
+    expect(showcaseSection?.textContent).toContain('Theatrical Trailer')
+    expect(showcaseSection?.textContent).toContain('90%+ Target Audience Resonance')
+    expect(showcaseSection?.textContent).toContain('Shortform AI Clip Generators')
+
+    // Click Character Continuity pillar (28-year-old Grandfather)
+    const agingTab = Array.from(showcaseSection!.querySelectorAll('[role="tab"]')).find((el) =>
+      el.textContent?.includes('Age-28')
+    ) as HTMLButtonElement | undefined
+    expect(agingTab).toBeTruthy()
+    act(() => agingTab!.click())
+    expect(
+      showcaseSection?.querySelector('[data-testid="active-craft-pillar-panel"]')?.textContent
+    ).toContain('28-Year-Old Grandfather')
+
+    // Click Heirloom Props pillar (family Bible)
+    const propTab = Array.from(showcaseSection!.querySelectorAll('[role="tab"]')).find((el) =>
+      el.textContent?.includes('Signature Props')
+    ) as HTMLButtonElement | undefined
+    expect(propTab).toBeTruthy()
+    act(() => propTab!.click())
+    expect(
+      showcaseSection?.querySelector('[data-testid="active-craft-pillar-panel"]')?.textContent
+    ).toContain('Family Bible')
   })
 })

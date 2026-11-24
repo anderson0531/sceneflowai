@@ -61,7 +61,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
       'Preserve a parent’s or grandparent’s journey, wedding love story, graduation, or retirement—blending real family photos with photorealistic scenes, warm narration, and bespoke score.',
     idealFor:
       '70th/80th birthdays, family legacies, weddings & anniversaries, graduations, retirements & celebrations of life',
-    runtimeLabel: '5–8 min · 4K Cinema',
+    runtimeLabel: '5–8 min · Longform 4K Feature + Trailer',
     turnaroundLabel: 'Same-Day (2–4 hrs after photo lock)',
     blueprintPassUsd: 29,
     totalPriceUsd: 149,
@@ -73,10 +73,10 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     sampleCaption:
       'Photorealistic continuity-locked 4K frames, smooth documentary camera motion, studio voices, SFX & original underscore.',
     deliverables: [
-      'Illustrated & narrated Storyboard Blueprint in ~3 min',
-      'Private comment-only sharing link for siblings & relatives',
-      'Continuity photo library + 10-second name pronunciation guide',
-      'Auto-rendered 4K MP4 Master delivered to your inbox',
+      '90%+ resonance Storyboard Blueprint & narrated preview in ~3 min',
+      'Continuity lock: age-28 de-aging, family resemblance, hometowns & heirlooms',
+      'Voice cloning / voice-image matching + 10-second pronunciation lock',
+      'Auto-rendered Longform 4K Master + 60-sec Shareable Theatrical Trailer',
     ],
     occasionPromptContext:
       'Family Legacy / Life Story Memoir honoring a loved one’s key chapters, influential people, cherished traditions, and lasting impact.',

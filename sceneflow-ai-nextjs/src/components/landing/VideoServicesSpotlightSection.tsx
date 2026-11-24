@@ -42,6 +42,8 @@ import {
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { formatLandingCurrency, localizeUsdText } from '@/lib/i18n/landingCurrency'
+import { resolveClientPortalLocale } from '@/lib/intake/clientPortalCopy'
+import { LongformCinemaCraftShowcase } from '@/components/showcase/LongformCinemaCraftShowcase'
 import { cn } from '@/lib/utils'
 
 export const VIDEO_SERVICES_SECTION_ID = 'video-services'
@@ -699,6 +701,12 @@ export function VideoServicesSpotlightSection() {
             iOS &amp; Android PWA
           </span>
         </div>
+
+        {/* Interactive Longform 4K Cinema vs Shortform AI Slop Differentiation Moat */}
+        <LongformCinemaCraftShowcase
+          variant="studio"
+          locale={resolveClientPortalLocale(locale)}
+        />
 
         {/* Multi-PM Agency Scale Operations Strip (Kanban SLA, CRM Scorecard, Locale Routing & Storage Purge) */}
         {copy.agencyScaleOps && (
