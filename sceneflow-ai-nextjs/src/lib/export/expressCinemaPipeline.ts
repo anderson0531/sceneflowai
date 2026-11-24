@@ -163,42 +163,42 @@ export function computeDocumentaryKenBurns(
   }
 
   const zoomDelta =
-    intensity === 'dramatic' ? 0.16 : intensity === 'medium' ? 0.1 : 0.06
+    intensity === 'dramatic' ? 0.30 : intensity === 'medium' ? 0.22 : 0.14
   const panStep =
-    intensity === 'dramatic' ? 0.16 : intensity === 'medium' ? 0.12 : 0.08
+    intensity === 'dramatic' ? 0.45 : intensity === 'medium' ? 0.34 : 0.22
 
   switch (index % 4) {
     case 0:
-      // Gentle push-in centered slightly upward (flattering for portraits)
+      // Confident push-in centered slightly upward (flattering for portraits)
       return {
         zoomStart: 1.0,
         zoomEnd: Number((1.0 + zoomDelta).toFixed(3)),
         panX: 0,
-        panY: Number((-panStep * 0.5).toFixed(3)),
+        panY: Number((-panStep * 0.35).toFixed(3)),
       }
     case 1:
-      // Subtle left-to-right drift with slow zoom-in
+      // Sweeping left-to-right documentary dolly pan with gentle push-in
       return {
-        zoomStart: 1.0,
-        zoomEnd: Number((1.0 + zoomDelta * 0.85).toFixed(3)),
+        zoomStart: 1.12,
+        zoomEnd: Number((1.12 + zoomDelta * 0.55).toFixed(3)),
         panX: panStep,
-        panY: 0,
+        panY: Number((-panStep * 0.15).toFixed(3)),
       }
     case 2:
-      // Subtle pull-back reveal
+      // Grand pull-back reveal
       return {
         zoomStart: Number((1.0 + zoomDelta).toFixed(3)),
         zoomEnd: 1.0,
         panX: 0,
-        panY: Number((panStep * 0.4).toFixed(3)),
+        panY: Number((panStep * 0.25).toFixed(3)),
       }
     default:
-      // Subtle right-to-left drift with slow zoom-in
+      // Sweeping right-to-left documentary dolly pan with gentle pull-out
       return {
-        zoomStart: 1.0,
-        zoomEnd: Number((1.0 + zoomDelta * 0.85).toFixed(3)),
+        zoomStart: Number((1.12 + zoomDelta * 0.55).toFixed(3)),
+        zoomEnd: 1.12,
         panX: -panStep,
-        panY: 0,
+        panY: Number((panStep * 0.15).toFixed(3)),
       }
   }
 }
@@ -209,7 +209,7 @@ export function buildProjectCinemaJobSpec(
   timeline: ReturnType<typeof buildProjectAnimaticTimeline>
 ): RenderJobSpec {
   const settings: AnimaticRenderSettings = request.settings ?? {
-    kenBurnsIntensity: 'subtle',
+    kenBurnsIntensity: 'medium',
     transitionStyle: 'crossfade',
     transitionDuration: 0.5,
     includeSubtitles: false,

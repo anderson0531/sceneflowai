@@ -54,8 +54,8 @@ const ALL_LOCALES: readonly FeaturePanLocaleId[] = [
 const FPS = 24
 const TARGET_W = 3840
 const TARGET_H = 2160
-const KB_SOURCE_W = 4224 // 1.10x overscan for crisp subpixel Ken Burns motion
-const KB_SOURCE_H = 2376
+const KB_SOURCE_W = 5760 // 1.50x overscan for silky sub-pixel 4K Ken Burns motion even at 1.32x zoom
+const KB_SOURCE_H = 3240
 
 function parseArgs(argv: string[]) {
   const get = (flag: string) => {
@@ -142,8 +142,13 @@ function loadBlockFrameCountsFromConcat(
 }
 
 function buildKenBurnsFilter(blockIndex: number, totalFrames: number): string {
-  const denom = Math.max(1, totalFrames - 1)
-  const motion = blockIndex % 4
+  // Time-normalized documentary cinema curve:
+  // sin(PI * on / 540) starts moving immediately at full cinema velocity on frame 0,
+  // hits ~98.5% of the full sweep across a standard 10s (240f) shot, reaches a smooth
+  // zero-jerk apex at 11.25s (270f), and gracefully arcs back on longer 13-21s localized
+  // dialogue blocks — zero freeze, zero stall, unmistakably alive from the very first frame!
+  const s = 'sin(PI*on/540)'
+  const motion = blockIndex % 6
 
   let zExpr: string
   let xExpr: string
@@ -151,28 +156,40 @@ function buildKenBurnsFilter(blockIndex: number, totalFrames: number): string {
 
   switch (motion) {
     case 0:
-      // Gentle push-in (1.00 -> 1.08), upper-centered for portraits
-      zExpr = `1.00+0.08*on/${denom}`
-      xExpr = `iw/2-(iw/zoom/2)`
-      yExpr = `(ih/2-(ih/zoom/2))*0.75`
+      // Confident documentary push-in (1.00 -> 1.26), upper-thirds portrait anchor
+      zExpr = `1.00+0.26*${s}`
+      xExpr = `(iw-iw/zoom)*0.50`
+      yExpr = `(ih-ih/zoom)*0.35`
       break
     case 1:
-      // Smooth left-to-right drift at 1.07x zoom
-      zExpr = `1.07`
-      xExpr = `(iw-iw/zoom)*(0.15+0.70*on/${denom})`
-      yExpr = `(ih-ih/zoom)*0.45`
+      // Sweeping left-to-right dolly pan + gentle push (1.22 -> 1.32, ~22% frame travel)
+      zExpr = `1.22+0.10*${s}`
+      xExpr = `(iw-iw/zoom)*(0.03+0.94*${s})`
+      yExpr = `(ih-ih/zoom)*(0.42+0.12*${s})`
       break
     case 2:
-      // Gentle pull-back reveal (1.08 -> 1.00)
-      zExpr = `1.08-0.08*on/${denom}`
-      xExpr = `iw/2-(iw/zoom/2)`
-      yExpr = `(ih/2-(ih/zoom/2))*0.85`
+      // Grand pull-back reveal (1.28 -> 1.02)
+      zExpr = `1.28-0.26*${s}`
+      xExpr = `(iw-iw/zoom)*0.50`
+      yExpr = `(ih-ih/zoom)*0.40`
+      break
+    case 3:
+      // Sweeping right-to-left dolly pan + gentle pull (1.32 -> 1.20, ~22% frame travel)
+      zExpr = `1.32-0.12*${s}`
+      xExpr = `(iw-iw/zoom)*(0.97-0.94*${s})`
+      yExpr = `(ih-ih/zoom)*(0.52-0.12*${s})`
+      break
+    case 4:
+      // Diagonal crane rise: bottom-left -> upper-right push (1.15 -> 1.32)
+      zExpr = `1.15+0.17*${s}`
+      xExpr = `(iw-iw/zoom)*(0.12+0.76*${s})`
+      yExpr = `(ih-ih/zoom)*(0.78-0.54*${s})`
       break
     default:
-      // Smooth right-to-left drift at 1.07x zoom
-      zExpr = `1.07`
-      xExpr = `(iw-iw/zoom)*(0.85-0.70*on/${denom})`
-      yExpr = `(ih-ih/zoom)*0.45`
+      // Diagonal crane glide: upper-right -> lower-left reveal (1.30 -> 1.14)
+      zExpr = `1.30-0.16*${s}`
+      xExpr = `(iw-iw/zoom)*(0.88-0.76*${s})`
+      yExpr = `(ih-ih/zoom)*(0.24+0.54*${s})`
       break
   }
 
@@ -257,7 +274,7 @@ async function buildVerticalExpress4k(
     }
 
     const maxFrames = (maxFramesByBlock.get(block.blockNumber) || 264) + 12
-    const basePath = join(baseDir, `block-${pad}-${maxFrames}f-base4k.mp4`)
+    const basePath = join(baseDir, `block-${pad}-${maxFrames}f-base4k-kb2.mp4`)
     baseJobs.push({
       blockNumber: block.blockNumber,
       blockIndex: idx,
@@ -311,9 +328,9 @@ async function buildVerticalExpress4k(
         '-c:v',
         'h264_videotoolbox',
         '-b:v',
-        '2200k',
+        '2800k',
         '-maxrate',
-        '3400k',
+        '4200k',
         '-profile:v',
         'high',
         '-g',
@@ -325,11 +342,11 @@ async function buildVerticalExpress4k(
         '-preset',
         'fast',
         '-crf',
-        '25',
+        '23',
         '-maxrate',
-        '3400k',
+        '4200k',
         '-bufsize',
-        '6800k',
+        '8400k',
         '-g',
         '72',
       ]
