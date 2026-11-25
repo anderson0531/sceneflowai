@@ -1574,7 +1574,7 @@
   },
   "studioLanding": {
     "heroDock": {
-      "tagline": "Direct original films & series — or build a high-margin video production business. Zero filmmaking or prompt skills required.",
+      "tagline": "Create engaging 1-hour+ life stories, historical reenactments, and multi-episode series—or build a high-margin video studio. Engineered for long-form continuity that short-form AI tools cannot sustain.",
       "primaryCta": "Launch Studio ($9)",
       "businessCta": "Explore Video Business",
       "howItWorksCta": "See How It Works"
@@ -1673,7 +1673,7 @@
           "number": "05",
           "badge": "Client Sign-Off & Global Reach",
           "title": "Shared Review Links, Screening Room & 70+ Languages",
-          "description": "Share clean browser links for Blueprint, Script, and frame-accurate Screening Room sign-off—then deliver localized streams in 70+ languages while directing in 7 native Studio UI languages.",
+          "description": "Share clean browser links for Blueprint, Script, and frame-accurate Screening Room sign-off—then deliver localized streams in 70+ languages while directing in 14 native Studio UI languages.",
           "outcomeTag": "Share Links · Screening Room · 70+ Dubs",
           "videoClipKey": "publish"
         }
@@ -1797,7 +1797,7 @@
       "playbooksHeading": "Turnkey Operator Playbooks, Rate Cards & Partner Pitch Templates",
       "playbooksSubtitle": "Accelerate past cold-start guesswork with battle-tested vertical SOPs built directly into SceneFlow Studio:",
       "playbooksItems": [
-        "70+ Film-Language AI Biographer & Intake Playbooks (7 Native Portal UI Locales)",
+        "70+ Film-Language AI Biographer & Intake Playbooks (14 Native Portal UI Locales)",
         "3-Tier Package Rate Cards & In-App Margin Floor Calculator",
         "20% Referral Partner Pitch Sheet (Senior Living, Funeral Homes & Realtors)",
         "Built-In Clickwrap Media, Multi-Age Likeness & Voice Consent Ledger"
@@ -1820,7 +1820,7 @@
           {
             "tag": "Two-Tier Sharing & Triage",
             "title": "Family / Team Comment-Only Link & Primary Customer Control",
-            "detail": "Your customer receives a private Director Portal and shares a comment-only link with family or teammates. Guests listen in any of 70+ film languages (with a 7-language native portal UI) and comment without burning rounds or approving—the primary customer filters notes + 1-click AR tips into 1 AI update that auto-refreshes storyboards & audio."
+            "detail": "Your customer receives a private Director Portal and shares a comment-only link with family or teammates. Guests listen in any of 70+ film languages (with a 14-language native portal UI) and comment without burning rounds or approving—the primary customer filters notes + 1-click AR tips into 1 AI update that auto-refreshes storyboards & audio."
           },
           {
             "tag": "Deferred PM Assignment",
@@ -1882,8 +1882,8 @@
           "tabLabel": "Video Memoirs",
           "roleTag": "★ Flagship High-Margin Wedge",
           "badge": "$149–$1,250 / film · Market Rate: $1,200–$4,500+",
-          "title": "Life Stories, Milestone Tributes & Family Biographies",
-          "description": "Start with a $149 Same-Day Express 4K Cinema Tribute (photorealistic panned stills, cloned voices, SFX & score) or upgrade seamlessly to Full-Motion multi-age era re-enactments (Age 17 → Age 32 → Age 62) with zero rework.",
+          "title": "Life Stories, 1-Hour+ Reenactments & Multi-Episode Family Biographies",
+          "description": "Start with a $149 Same-Day Express 4K Longform Feature or Episodic Series (up to 60 min / 360 directed frames + 1–3 min trailer) recreating unfilmed chapters with era-accurate people, locations, culture & history—or upgrade seamlessly to Full-Motion multi-age reenactments (Age 17 → Age 32 → Age 62) with zero rework.",
           "globalMarketNeed": "Hundreds of millions of aging parents, 50th anniversaries, and celebrations of life happen globally every year—yet 90%+ go unfilmed because $2,000+ crews are unaffordable or take weeks.",
           "clientBuyer": "Families celebrating milestone birthdays, 50th anniversaries, retirements & legacy tributes",
           "partnerChannels": "Estate planners, senior living communities, funeral directors & milestone event planners (15–20% referral partner model)",
@@ -1895,9 +1895,9 @@
             1250
           ],
           "tierScopeLabels": [
-            "Express 4K Cinema (5–8 min · Same-Day) · Panned 4K Stills + Voices, SFX & Score · Auto-4K Master",
-            "12-min Full-Motion Family Memoir · Multi-Age Cast + Era Clips · 2 Langs",
-            "20-min Signature Legacy Documentary · 4K Full-Motion Eras + Heirloom Locks · 4 Langs"
+            "Express 4K Longform Feature or Episodic Series (up to 60 min / 360 frames · Same-Day) + 1–3 min Trailer · Age-Locked Reenactments, Voices & Score",
+            "30–60 min Hybrid Full-Motion Life Documentary or 4-Episode Series · Multi-Age Era Reenactments · 2 Langs",
+            "60–150 min Signature Feature or 6–8 Episode Legacy Series · 4K Full-Motion Eras, Cultural Context & Heirloom Locks · 4 Langs"
           ],
           "computeTiersUsd": [
             6,
@@ -2121,7 +2121,7 @@
             },
             {
               "label": "Two-Tier Family / Team Sharing & Triage",
-              "detail": "Guests listen in any of 70+ film languages (7 native UI locales) and comment without burning rounds or approving; the primary customer filters notes into 1 clean AI revision."
+              "detail": "Guests listen in any of 70+ film languages (14 native UI locales) and comment without burning rounds or approving; the primary customer filters notes into 1 clean AI revision."
             },
             {
               "label": "Auto-Refreshed Audio, Storyboards & $19 Top-Ups",
@@ -2459,9 +2459,9 @@
     }
   },
   "hero": {
-    "eyebrow": "Studio-grade filmmaking for storytellers, series creators & studios",
-    "headline": "From first spark to finished master.",
-    "subheadline": "If you can imagine a story, you can direct a film—no technical filmmaking or prompting skills required. Describe your vision in everyday words, and SceneFlow builds the Blueprint, locks character and setting continuity, plays the full animatic, and stitches the finished master.",
+    "eyebrow": "Built for 1-Hour+ Long-Form Films & Multi-Episode Series · Beyond Short-Form AI Clips",
+    "headline": "Direct 1-Hour+ Films & Series. Not 5-Second Clips.",
+    "subheadline": "If you can imagine a story, you can direct a 1-hour+ film or multi-episode series—no technical filmmaking or prompting skills required. SceneFlow builds the Blueprint, locks multi-age cast, location, and historical continuity, plays the full voiced cut, and stitches the finished 4K master.",
     "ctaPrimaryLaunch": "Launch Studio ($9)",
     "ctaSupportingLine": "The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.",
     "ctaNetworkInvite": "Standout projects can apply for the invite-only SceneFlow Network.",
@@ -3795,15 +3795,15 @@
         },
         "memoir": {
           "showTitle": "Letters Across the Water",
-          "format": "5-Chapter Commissioned Family Legacy Film · Hybrid Interview Upload + Period Reenactment",
-          "genre": "Biographical Family Memoir & Reunion Documentary",
-          "artStyle": "Warm 4K Living-Room Interview Uploads + Lush 1966 Kodachrome Harbor & 1974 Bakery Reenactments",
-          "duration": "28 min Commissioned Featurette (5 Chapters)",
-          "continuityLock": "Elena Rossi-Chen at Age 82 (Uploaded Interview) & Age 22 (1966 Locked Cast), Mateo Chen at Age 24 (1966 Locked Cast), & The 1966 Leather Recipe Trunk",
-          "unitLabel": "Commissioned Memoir Chapters (5)",
-          "artLock": "Age-locked facial and wardrobe continuity bridging uploaded smartphone/camera interviews of 82-year-old Elena with photorealistic 1966 Naples harbor piers, ocean liner steerage decks, and the 1974 corner bakery—unlocking a turnkey video memoir business model.",
-          "logline": "At her 60th family reunion, an 82-year-old matriarch shares how a rained-out 1966 harbor departure and a handwritten sourdough starter recipe built a three-generation neighborhood institution.",
-          "seriesSynopsis": "Designed for solo video entrepreneurs, boutique agencies, and families preserving multi-generational heritage, Letters Across the Water showcases how SceneFlow transforms a recorded living-room interview and five scanned family photos into a breathtaking 28-minute biographical film. Uploading real interview clips of 82-year-old Elena Rossi-Chen, the producer uses SceneFlow’s Continuity Lock and FlowDirector to recreate Elena and her late husband Mateo at age 22—bringing unfilmed family memories to life with emotional authenticity.",
+          "format": "1-Hour+ Feature Film OR 6-Episode Family Legacy Series · Hybrid Interview + Period Reenactment",
+          "genre": "Biographical Family Memoir & Historical Reenactment Series",
+          "artStyle": "Warm 4K Living-Room Interview Uploads + Lush 1958–1978 Period Harbor, Street & Bakery Reenactments",
+          "duration": "68 min Feature Film OR 6 × 11-min Episodes (360+ Directed Frames)",
+          "continuityLock": "Elena Rossi-Chen at Age 82 (Uploaded Interview) & Age 14/22/30 (Locked Cast), Mateo Chen at Age 24/32, & The 1966 Leather Recipe Trunk",
+          "unitLabel": "Memoir Chapters / Episodes (6)",
+          "artLock": "Age-locked facial and wardrobe continuity bridging uploaded smartphone/camera interviews of 82-year-old Elena with culturally authentic 1958 Mediterranean streets, 1966 Naples harbor piers, and the 1974 corner bakery—engineered for long-form storytelling unsustainable in short-form AI clip tools.",
+          "logline": "At her 80th family reunion, an 82-year-old matriarch shares how a rained-out 1966 harbor departure and a handwritten sourdough starter recipe built a three-generation neighborhood institution.",
+          "seriesSynopsis": "Designed for solo video entrepreneurs, boutique agencies, and families preserving multi-generational heritage, Letters Across the Water showcases how SceneFlow transforms a recorded living-room interview and everyday family photos into an engaging 68-minute biographical feature—or a bingeable 6-episode life series. Uploading real interview clips of 82-year-old Elena Rossi-Chen, the producer uses SceneFlow’s Continuity Lock, Cultural Time-Capsule Engine, and FlowDirector to reenact Elena and her late husband Mateo across decades—bringing unfilmed memories to life with emotional and historical authenticity.",
           "cast": [
             {
               "name": "Elena Rossi-Chen (Age 82)",
@@ -4073,23 +4073,23 @@
       },
       {
         "id": "memoir",
-        "title": "Video Memoirs & Bespoke Client Studios. Turn Spoken Memories into Cinema.",
-        "subtitle": "Combine uploaded family interviews and vintage photos with age-locked period reenactments to launch a high-margin video memoir, reunion, and biography production service.",
-        "badge": "New Business Model",
+        "title": "1-Hour+ Life Stories & Episodic Memoir Studios. Reenact Unfilmed Chapters.",
+        "subtitle": "Combine spoken family memories and vintage photos with age-locked period, cultural, and historical reenactments—delivered as a 1-hour+ 4K feature film or a bingeable multi-episode series.",
+        "badge": "1-Hour+ & Episodic",
         "solutionPillars": [
           {
             "title": "Unfilmed Memories Brought to Life",
             "frictionHeadline": "The Missing Footage Problem.",
-            "friction": "Families have hours of spoken stories from grandparents and a handful of faded photos, but zero video of the moments that defined their lives.",
-            "solutionHeadline": "Age-Locked Period Reenactments.",
-            "solution": "Upload a real living-room interview and reference photos; SceneFlow locks the subject’s young likeness to recreate 1960s harbors, hometown streets, and milestone moments."
+            "friction": "Families have hours of spoken stories from grandparents and a handful of faded photos, but zero video of the defining chapters—and short-form AI clip tools cannot sustain continuity across an hour-long story.",
+            "solutionHeadline": "Age-Locked Period & Cultural Reenactments.",
+            "solution": "Upload a real living-room interview and reference photos; SceneFlow locks the subject’s young likeness across decades to recreate 1960s harbors, hometown streets, local culture, and milestone chapters."
           },
           {
-            "title": "Turnkey Studio-in-a-Box Economics",
+            "title": "Turnkey Long-Form & Episodic Economics",
             "frictionHeadline": "$25,000 Crew & Cast Costs.",
             "friction": "Traditional biographical documentaries require actors, period wardrobe, location permits, and weeks of post-production—pricing out 99% of families and small businesses.",
-            "solutionHeadline": "Solo-Operator Client Production.",
-            "solution": "Deliver broadcast-grade 20-to-30-minute legacy films, wedding/reunion tributes, and founder biographies in a single afternoon with high client margins."
+            "solutionHeadline": "Solo-Operator Feature or Series Studio.",
+            "solution": "Deliver broadcast-grade 1-hour+ legacy features or 6-episode life story series, wedding/reunion tributes, and founder biographies in a single afternoon with high client margins."
           },
           {
             "title": "Authentic Era & Keepsake Continuity",

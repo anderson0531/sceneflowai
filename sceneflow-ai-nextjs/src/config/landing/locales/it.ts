@@ -3,7 +3,7 @@ import type { StudioLandingCopy } from './types'
 export const STUDIO_LANDING_COPY_IT: StudioLandingCopy = {
   heroDock: {
     tagline:
-      'Dirigi film e serie originali — oppure costruisci un’attività di produzione video ad alto margine. Nessuna competenza cinematografica o di prompting richiesta.',
+      'Crea coinvolgenti storie di vita da oltre 1 ora, ricostruzioni storiche e serie multi-episodio — oppure costruisci uno studio video ad alto margine. Progettato per una continuità long-form che gli strumenti IA short-form non riescono a sostenere.',
     primaryCta: 'Avvia Studio ($9)',
     businessCta: 'Esplora il Business Video',
     howItWorksCta: 'Scopri Come Funziona',
@@ -112,7 +112,7 @@ export const STUDIO_LANDING_COPY_IT: StudioLandingCopy = {
         badge: 'Approvazione Clienti & Portata Globale',
         title: 'Link di Revisione, Screening Room & 70+ Lingue',
         description:
-          'Condividi link browser puliti per approvare Blueprint, Sceneggiatura e tagli al fotogramma nella Screening Room — poi distribuisci flussi localizzati in oltre 70 lingue lavorando in un’interfaccia Studio multilingue.',
+          'Condividi link browser puliti per approvare Blueprint, Sceneggiatura e tagli al fotogramma nella Screening Room — poi distribuisci flussi localizzati in oltre 70 lingue mentre dirigi in 14 lingue native dell’interfaccia Studio.',
         outcomeTag: 'Link Condivisi · Screening Room · 70+ Doppiaggi',
         videoClipKey: 'publish',
       },
@@ -225,7 +225,7 @@ export const STUDIO_LANDING_COPY_IT: StudioLandingCopy = {
     playbooksSubtitle:
       'Supera subito la partenza a freddo con procedure verticali collaudate integrate direttamente in SceneFlow Studio:',
     playbooksItems: [
-      'Biografo IA & Guide di Intervista in 70+ Lingue di Film (Portale Nativo Multilingue)',
+      'Biografo IA & Guide di Intervista in 70+ Lingue di Film (14 Lingue Native dell’Interfaccia Portale)',
       'Listini a 3 Livelli & Calcolatore Integrato del Margine Minimo',
       'Scheda Proposta Partner al 20% (Residenze Senior, Onoranze Funebri e Immobiliare)',
       'Registro Integrato di Consenso Media, Somiglianza Multi-Età e Voce',
@@ -252,7 +252,7 @@ export const STUDIO_LANDING_COPY_IT: StudioLandingCopy = {
           tag: 'Condivisione a Due Livelli & Filtro',
           title: 'Link Solo Commenti per Famiglia/Team & Controllo Cliente Principale',
           detail:
-            'Il cliente riceve un Portale Regista privato e condivide un link solo commenti con famiglia o colleghi. Gli ospiti ascoltano in 70+ lingue di film e commentano senza bruciare round né approvare; il cliente principale filtra note + consigli AR in 1 aggiornamento IA che rigenera audio e storyboard.',
+            'Il cliente riceve un Portale Regista privato e condivide un link solo commenti con famiglia o colleghi. Gli ospiti ascoltano in 70+ lingue di film (con interfaccia portale nativa in 14 lingue) e commentano senza bruciare round né approvare; il cliente principale filtra note + consigli AR in 1 aggiornamento IA che rigenera audio e storyboard.',
         },
         {
           tag: 'Assegnazione PM Differita',
@@ -324,9 +324,9 @@ export const STUDIO_LANDING_COPY_IT: StudioLandingCopy = {
         tabLabel: 'Memorie Video',
         roleTag: '★ Servizio di Punta ad Alto Margine',
         badge: '$149–$1,250 / film · Tariffa mercato: $1,200–$4,500+',
-        title: 'Storie di Vita, Tributi Speciali & Biografie di Famiglia',
+        title: 'Storie di Vita, Ricostruzioni da 1+ Ora & Biografie Familiari Multi-Episodio',
         description:
-          'Inizia con un Tributo Express 4K Cinema consegnato in giornata a $149 (fotogrammi 4K fotorealistici animati, voci clonate, SFX e colonna sonora) oppure passa senza rifacimenti a ricostruzioni Full-Motion multi-età (17 → 32 → 62 anni).',
+          'Inizia con un Lungometraggio o una Serie a Episodi Express 4K in Giornata da $149 (fino a 60 min / 360 fotogrammi diretti + trailer da 1–3 min) che ricrea capitoli non filmati con persone, luoghi, cultura e storia fedeli all’epoca — oppure passa senza rifacimenti a ricostruzioni Full-Motion multi-età (17 → 32 → 62 anni).',
         globalMarketNeed:
           'Centinaia di milioni di genitori anziani, nozze d’oro e celebrazioni di vita avvengono ogni anno nel mondo — eppure oltre il 90% resta senza film perché le troupe da $2,000+ costano troppo o richiedono settimane.',
         clientBuyer:
@@ -337,9 +337,9 @@ export const STUDIO_LANDING_COPY_IT: StudioLandingCopy = {
         typicalRetailUsd: 599,
         priceTiersUsd: [149, 599, 1250],
         tierScopeLabels: [
-          'Express 4K Cinema (5–8 min · In giornata) · Frame 4K animati + Voci, SFX & Musica · Master 4K auto',
-          'Memoria Familiare Full-Motion 12 min · Cast Multi-Età + Epoche · 2 Lingue',
-          'Documentario Eredità Signature 20 min · Epoche Full-Motion 4K + Ricordi Bloccati · 4 Lingue',
+          'Lungometraggio o Serie Express 4K (fino a 60 min / 360 fotogrammi · In giornata) + Trailer 1–3 min · Ricostruzioni con Età Bloccata, Voci & Musica',
+          'Documentario di Vita Ibrido Full-Motion 30–60 min o Serie in 4 Episodi · Ricostruzioni d’Epoca Multi-Età · 2 Lingue',
+          'Lungometraggio Signature 60–150 min o Serie Eredità in 6–8 Episodi · Epoche Full-Motion 4K, Contesto Culturale & Ricordi Bloccati · 4 Lingue',
         ],
         computeTiersUsd: [6, 34, 72],
         operatorTiersUsd: [12, 88, 150],
@@ -532,7 +532,7 @@ export const STUDIO_LANDING_COPY_IT: StudioLandingCopy = {
           {
             label: 'Condivisione Famiglia/Team a Due Livelli & Filtro',
             detail:
-              'Gli ospiti ascoltano in 70+ lingue di film e commentano senza consumare round né approvare; il cliente principale filtra le note in 1 revisione IA pulita.',
+              'Gli ospiti ascoltano in 70+ lingue di film (14 lingue native UI) e commentano senza consumare round né approvare; il cliente principale filtra le note in 1 revisione IA pulita.',
           },
           {
             label: 'Audio e Storyboard Aggiornati + Ricariche da $19',

@@ -1576,7 +1576,7 @@
   },
   "studioLanding": {
     "heroDock": {
-      "tagline": "Dirija filmes e séries originais — ou crie um negócio lucrativo de produção de vídeo. Sem faculdade de cinema nem engenharia de prompts.",
+      "tagline": "Crie histórias de vida envolventes com mais de 1 hora, reconstituições históricas e séries multiepisódio — ou construa um estúdio de vídeo de alta margem. Projetado para continuidade de longa duração que ferramentas de IA de formato curto não conseguem sustentar.",
       "primaryCta": "Iniciar Studio ($9)",
       "businessCta": "Negócio de Serviços de Vídeo",
       "howItWorksCta": "Como Funciona"
@@ -1675,7 +1675,7 @@
           "number": "05",
           "badge": "Aprovação de Clientes e Alcance Global",
           "title": "Links Compartilháveis, Screening Room e 70+ Idiomas",
-          "description": "Compartilhe links diretos de navegador para aprovação de Blueprint, Roteiro e revisão quadro a quadro na Screening Room — e entregue versões em mais de 70 idiomas operando em 70+ idiomas de filme (portal em 7 idiomas) nativos do estúdio.",
+          "description": "Compartilhe links diretos de navegador para aprovação de Blueprint, Roteiro e revisão quadro a quadro na Screening Room — e entregue versões localizadas em mais de 70 idiomas enquanto dirige em 14 idiomas nativos da interface do Studio.",
           "outcomeTag": "Links · Screening Room · 70+ Dublagens",
           "videoClipKey": "publish"
         }
@@ -1799,7 +1799,7 @@
       "playbooksHeading": "Playbooks Prontos, Tabelas de Preços e Roteiros de Parceria",
       "playbooksSubtitle": "Acelere sua operação com SOPs comerciais testados e integrados diretamente no SceneFlow Studio:",
       "playbooksItems": [
-        "Biógrafo de IA em 70+ Idiomas de Filme e Playbooks de Entrevista (Portal em 7 Idiomas)",
+        "Biógrafo de IA em 70+ Idiomas de Filme e Playbooks de Entrevista (14 Idiomas Nativos de Interface do Portal)",
         "Tabelas de 3 Pacotes e Calculadora de Piso de Margem",
         "Roteiro de Comissão de 20% para Residenciais Sênior, Memoriais e Imobiliárias",
         "Registro Integrado de Consentimento de Mídia, Idades e Voz"
@@ -1822,7 +1822,7 @@
           {
             "tag": "Link Duplo e Triagem do Cliente",
             "title": "Link Apenas para Comentários e Controle Total do Cliente",
-            "detail": "Seu cliente recebe um Portal Diretor privado e compartilha um link apenas para comentários com família ou equipe. Convidados ouvem em 70+ idiomas de filme (portal em 7 idiomas) e comentam sem gastar rodadas nem aprovar; o cliente filtra notas + dicas AR em 1 atualização que renova áudio e storyboards."
+            "detail": "Seu cliente recebe um Portal Diretor privado e compartilha um link apenas para comentários com família ou equipe. Convidados ouvem em 70+ idiomas de filme (com interface nativa do portal em 14 idiomas) e comentam sem gastar rodadas nem aprovar; o cliente filtra notas + dicas AR em 1 atualização que renova áudio e storyboards."
           },
           {
             "tag": "Alocação Diferida de PM",
@@ -1884,8 +1884,8 @@
           "tabLabel": "Vídeo Memórias",
           "roleTag": "★ Carro-Chefe de Alta Margem",
           "badge": "$149–$1,250 / filme · Valor de mercado: $1,200–$4,500+",
-          "title": "Histórias de Vida, Homenagens e Biografias Familiares",
-          "description": "Combine fotografias de família com reconstituições cinematográficas de época em IA, relíquias travadas e continuidade precisa por idade (17 → 32 → 62 anos) narradas com vozes acolhedoras.",
+          "title": "Histórias de Vida, Reconstituições de 1+ Hora e Biografias Familiares Multiepisódio",
+          "description": "Comece com um Longa-Metragem ou Série por Episódios Express 4K no Mesmo Dia por $149 (até 60 min / 360 quadros dirigidos + trailer de 1–3 min) recriando capítulos não filmados com pessoas, locais, cultura e história fiéis à época — ou faça upgrade sem retrabalho para reconstituições Full-Motion em múltiplas idades (17 → 32 → 62 anos).",
           "globalMarketNeed": "Centenas de milhões de pais idosos, bodas de ouro e aniversários marcantes acontecem todo ano no mundo, mas mais de 90% não é filmado porque equipes de $2,000+ são caras demais.",
           "clientBuyer": "Famílias celebrando aniversários marcantes, bodas de ouro, aposentadorias e tributos de legado",
           "partnerChannels": "Planejadores sucessórios, residenciais sênior, casas memoriais e cerimonialistas (comissão de indicação de 15–20%)",
@@ -1897,9 +1897,9 @@
             1250
           ],
           "tierScopeLabels": [
-            "Cinema Express 4K (5–8 min · Mesmo dia) · Quadros 4K com movimento + Vozes, SFX e Trilha · Master 4K auto",
-            "Memória Familiar 12 min · Elenco Multigeracional · 2 Idiomas",
-            "Documentário Legado 20 min · Épocas 4K + Relíquias · 4 Idiomas"
+            "Longa ou Série Express 4K (até 60 min / 360 quadros · Mesmo dia) + Trailer 1–3 min · Reconstituições com Idade Travada, Vozes e Trilha",
+            "Documentário de Vida Híbrido Full-Motion 30–60 min ou Série de 4 Episódios · Reconstituições de Época Multigeracionais · 2 Idiomas",
+            "Longa Signature 60–150 min ou Série Legado de 6–8 Episódios · Épocas Full-Motion 4K, Contexto Cultural e Relíquias Travadas · 4 Idiomas"
           ],
           "computeTiersUsd": [
             6,
@@ -2123,7 +2123,7 @@
             },
             {
               "label": "Compartilhamento Duplo e Triagem pelo Cliente",
-              "detail": "Convidados ouvem em 70+ idiomas de filme (portal em 7 idiomas) e comentam sem gastar rodadas nem aprovar; o cliente filtra notas para 1 revisão IA limpa."
+              "detail": "Convidados ouvem em 70+ idiomas de filme (14 idiomas nativos de interface) e comentam sem gastar rodadas nem aprovar; o cliente filtra notas para 1 revisão IA limpa."
             },
             {
               "label": "Áudio e Storyboards Renovados + Pacotes de $19",
@@ -2461,9 +2461,9 @@
     }
   },
   "hero": {
-    "eyebrow": "Cinema com qualidade de estúdio para contadores de histórias, criadores de séries e estúdios",
-    "headline": "Da primeira centelha à master finalizada.",
-    "subheadline": "Se você consegue imaginar uma história, você pode dirigir um filme – sem necessidade de produção técnica ou habilidades de estímulo. Descreva sua visão em palavras do dia a dia, e SceneFlow constrói o Blueprint, bloqueia o caráter e define a continuidade, reproduz o animatic completo e costura o master finalizado.",
+    "eyebrow": "Criado para filmes longos de +1 hora e séries em múltiplos episódios · Muito além de clipes curtos de IA",
+    "headline": "Dirija filmes e séries de +1 hora. Não clipes de 5 segundos.",
+    "subheadline": "Se você consegue imaginar uma história, pode dirigir um filme de +1 hora ou uma série em vários episódios—sem precisar de experiência técnica em cinema ou engenharia de prompts. O SceneFlow cria o Blueprint, trava a continuidade de elenco em várias idades, locações e contexto histórico, reproduz o corte completo narrado e finaliza o master em 4K.",
     "ctaPrimaryLaunch": "Launch Studio (US$ 9)",
     "ctaSupportingLine": "O estúdio completo para criar, exportar e distribuir suas histórias. Baixe um master e envie para qualquer lugar — ou publique cortes de longa duração e capítulos no {longForm} e promova trailers no {shorts}.",
     "ctaNetworkInvite": "Projetos de destaque podem se candidatar à rede SceneFlow, de acesso exclusivo mediante convite.",

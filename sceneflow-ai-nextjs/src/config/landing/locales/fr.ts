@@ -3,7 +3,7 @@ import type { StudioLandingCopy } from './types'
 export const STUDIO_LANDING_COPY_FR: StudioLandingCopy = {
   heroDock: {
     tagline:
-      'Réalisez des films et séries originaux — ou bâtissez une activité de production vidéo à forte marge. Aucune compétence en cinéma ou en prompting requise.',
+      'Créez des récits de vie captivants de plus d’1 heure, des reconstitutions historiques et des séries multi-épisodes — ou bâtissez un studio vidéo à forte marge. Conçu pour une continuité long format que les outils d’IA courts ne peuvent pas soutenir.',
     primaryCta: 'Lancer Studio ($9)',
     businessCta: 'Explorer l’Activité Vidéo',
     howItWorksCta: 'Voir Comment Ça Marche',
@@ -112,7 +112,7 @@ export const STUDIO_LANDING_COPY_FR: StudioLandingCopy = {
         badge: 'Validation Client & Portée Mondiale',
         title: 'Liens de Revue, Screening Room & 70+ Langues',
         description:
-          'Partagez des liens web épurés pour valider le Blueprint, le Scénario et le montage à l’image près dans la Screening Room — puis livrez des flux localisés dans plus de 70 langues tout en dirigeant dans une interface Studio native multilingue.',
+          'Partagez des liens web épurés pour valider le Blueprint, le Scénario et le montage à l’image près dans la Screening Room — puis livrez des flux localisés dans plus de 70 langues tout en dirigeant dans 14 langues natives d’interface Studio.',
         outcomeTag: 'Liens Partagés · Screening Room · 70+ Doublages',
         videoClipKey: 'publish',
       },
@@ -225,7 +225,7 @@ export const STUDIO_LANDING_COPY_FR: StudioLandingCopy = {
     playbooksSubtitle:
       'Éliminez les tâtonnements du démarrage grâce à des procédures sectorielles éprouvées intégrées directement dans SceneFlow Studio :',
     playbooksItems: [
-      'Biographe IA & Guides d’Entretien en 70+ Langues de Film (Portail Natif Multilingue)',
+      'Biographe IA & Guides d’Entretien en 70+ Langues de Film (14 Langues Natives d’Interface du Portail)',
       'Grilles Tarifaires 3 Niveaux & Calculateur de Marge Plancher Intégré',
       'Argumentaire Partenaire à 20 % de Commission (Résidences Seniors, Pompes Funèbres & Immobilier)',
       'Registre Intégré de Consentement Média, Image Multi-Âges et Voix',
@@ -252,7 +252,7 @@ export const STUDIO_LANDING_COPY_FR: StudioLandingCopy = {
           tag: 'Partage à Deux Niveaux & Triage',
           title: 'Lien Commentaire Famille / Équipe & Contrôle du Client Principal',
           detail:
-            'Votre client reçoit un Portail Réalisateur privé et partage un lien en commentaire seul avec sa famille ou son équipe. Les invités écoutent en 70+ langues de film et commentent sans consommer de tours ni approuver ; le client principal trie notes + conseils AR en 1 mise à jour IA qui régénère audio et storyboards.',
+            'Votre client reçoit un Portail Réalisateur privé et partage un lien en commentaire seul avec sa famille ou son équipe. Les invités écoutent en 70+ langues de film (avec une interface portail native en 14 langues) et commentent sans consommer de tours ni approuver ; le client principal trie notes + conseils AR en 1 mise à jour IA qui régénère audio et storyboards.',
         },
         {
           tag: 'Affectation Différée des PM',
@@ -324,9 +324,9 @@ export const STUDIO_LANDING_COPY_FR: StudioLandingCopy = {
         tabLabel: 'Mémoires Vidéo',
         roleTag: '★ Offre Phare à Forte Marge',
         badge: '$149–$1,250 / film · Tarif marché : $1,200–$4,500+',
-        title: 'Récits de Vie, Hommages Marquants & Biographies Familiales',
+        title: 'Récits de Vie, Reconstitutions d’1 Heure+ & Biographies Familiales Multi-Épisodes',
         description:
-          'Démarrez par un Hommage Express 4K Cinema livré le jour même à $149 (plans fixes 4K photoréalistes animés, voix clonées, SFX et musique) ou passez sans refonte aux reconstitutions Full-Motion multi-âges (17 ans → 32 ans → 62 ans).',
+          'Démarrez avec un Long-Métrage ou une Série par Épisodes Express 4K livré le jour même à $149 (jusqu’à 60 min / 360 images dirigées + bande-annonce de 1–3 min) recréant les chapitres non filmés avec des personnes, lieux, cultures et contextes historiques fidèles à l’époque — ou passez sans refonte aux reconstitutions Full-Motion multi-âges (17 ans → 32 ans → 62 ans).',
         globalMarketNeed:
           'Des centaines de millions de parents âgés, noces d’or et célébrations de vie ont lieu chaque année dans le monde — pourtant plus de 90 % ne sont jamais filmés faute d’équipes accessibles sous $2,000+ ou de délais courts.',
         clientBuyer:
@@ -337,9 +337,9 @@ export const STUDIO_LANDING_COPY_FR: StudioLandingCopy = {
         typicalRetailUsd: 599,
         priceTiersUsd: [149, 599, 1250],
         tierScopeLabels: [
-          'Express 4K Cinema (5–8 min · Jour même) · Plans 4K animés + Voix, SFX & Musique · Master 4K auto',
-          'Mémoire Familiale Full-Motion 12 min · Cast Multi-Âges + Époques · 2 Langues',
-          'Documentaire Héritage Signature 20 min · Époques Full-Motion 4K + Objets Souvenirs · 4 Langues',
+          'Long-Métrage ou Série Express 4K (jusqu’à 60 min / 360 images · Jour même) + Bande-annonce 1–3 min · Reconstitutions à Âge Verrouillé, Voix & Musique',
+          'Documentaire de Vie Hybride Full-Motion 30–60 min ou Série de 4 Épisodes · Reconstitutions d’Époques Multi-Âges · 2 Langues',
+          'Long-Métrage Signature 60–150 min ou Série Héritage de 6–8 Épisodes · Époques Full-Motion 4K, Contexte Culturel & Objets Souvenirs Verrouillés · 4 Langues',
         ],
         computeTiersUsd: [6, 34, 72],
         operatorTiersUsd: [12, 88, 150],
@@ -532,7 +532,7 @@ export const STUDIO_LANDING_COPY_FR: StudioLandingCopy = {
           {
             label: 'Partage Famille / Équipe à Deux Niveaux & Triage',
             detail:
-              'Les invités écoutent en 70+ langues de film et commentent sans consommer de tours ni approuver ; le client principal trie les notes en 1 révision IA propre.',
+              'Les invités écoutent en 70+ langues de film (14 langues natives d’interface) et commentent sans consommer de tours ni approuver ; le client principal trie les notes en 1 révision IA propre.',
           },
           {
             label: 'Audio & Storyboards Actualisés + Packs à $19',

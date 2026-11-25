@@ -570,22 +570,22 @@ export const EXAMPLE_SERIES_INPUTS: readonly ExampleSeriesInput[] = [
   {
     cardId: 'memoir',
     showTitle: 'Letters Across the Water',
-    format: '5-Chapter Commissioned Family Legacy Film · Hybrid Interview Upload + Period Reenactment',
-    genre: 'Biographical Family Memoir & Reunion Documentary',
+    format: '1-Hour+ Feature Film OR 6-Episode Family Legacy Series · Hybrid Interview + Period Reenactment',
+    genre: 'Biographical Family Memoir & Historical Reenactment Series',
     artStyle:
-      'Warm 4K Living-Room Interview Uploads + Lush 1966 Kodachrome Harbor & 1974 Bakery Reenactments',
-    duration: '28 min Commissioned Featurette (5 Chapters)',
+      'Warm 4K Living-Room Interview Uploads + Lush 1958–1978 Period Harbor, Street & Bakery Reenactments',
+    duration: '68 min Feature Film OR 6 × 11-min Episodes (360+ Directed Frames)',
     continuityLock:
-      'Elena Rossi-Chen at Age 82 (Uploaded Interview) & Age 22 (1966 Locked Cast), Mateo Chen at Age 24 (1966 Locked Cast), & The 1966 Leather Recipe Trunk',
-    unitLabel: 'Commissioned Memoir Chapters (5)',
+      'Elena Rossi-Chen at Age 82 (Uploaded Interview) & Age 14/22/30 (Locked Cast), Mateo Chen at Age 24/32, & The 1966 Leather Recipe Trunk',
+    unitLabel: 'Memoir Chapters / Episodes (6)',
     artLock:
-      'Age-locked facial and wardrobe continuity bridging uploaded smartphone/camera interviews of 82-year-old Elena with photorealistic 1966 Naples harbor piers, ocean liner steerage decks, and the 1974 corner bakery—unlocking a turnkey video memoir business model.',
+      'Age-locked facial and wardrobe continuity bridging uploaded smartphone/camera interviews of 82-year-old Elena with culturally authentic 1958 Mediterranean streets, 1966 Naples harbor piers, and the 1974 corner bakery—engineered for long-form storytelling unsustainable in short-form AI clip tools.',
     concept:
-      'Turn recorded family interviews, voice notes, and vintage photographs into a cinema-grade biographical legacy film for reunions, anniversaries, and client commissions—automated in a single studio workflow.',
+      'Turn recorded family interviews, voice notes, and vintage photographs into an engaging 1-hour+ biographical feature or multi-episode series—recreating unfilmed life chapters with authentic people, locations, culture, and historical context.',
     logline:
-      'At her 60th family reunion, an 82-year-old matriarch shares how a rained-out 1966 harbor departure and a handwritten sourdough starter recipe built a three-generation neighborhood institution.',
+      'At her 80th family reunion, an 82-year-old matriarch shares how a rained-out 1966 harbor departure and a handwritten sourdough starter recipe built a three-generation neighborhood institution.',
     seriesSynopsis:
-      'Designed for solo video entrepreneurs, boutique agencies, and families preserving multi-generational heritage, Letters Across the Water showcases how SceneFlow transforms a recorded living-room interview and five scanned family photos into a breathtaking 28-minute biographical film. Uploading real interview clips of 82-year-old Elena Rossi-Chen, the producer uses SceneFlow’s Continuity Lock and FlowDirector to recreate Elena and her late husband Mateo at age 22—bringing unfilmed family memories to life with emotional authenticity.',
+      'Designed for solo video entrepreneurs, boutique agencies, and families preserving multi-generational heritage, Letters Across the Water showcases how SceneFlow transforms a recorded living-room interview and everyday family photos into an engaging 68-minute biographical feature—or a bingeable 6-episode life series. Uploading real interview clips of 82-year-old Elena Rossi-Chen, the producer uses SceneFlow’s Continuity Lock, Cultural Time-Capsule Engine, and FlowDirector to reenact Elena and her late husband Mateo across decades—bringing unfilmed memories to life with emotional and historical authenticity.',
     storyline:
       'Opening in a sunlit modern dining room where 82-year-old Elena holds a weathered 1966 brass-clasped leather recipe notebook (uploaded live interview clip), her voice carries us into a rain-slicked 1966 port where 22-year-old Elena clutches the exact same notebook at the gangway. Across five chapters, we witness her meeting young ship’s carpenter Mateo on the ocean crossing, their first winter firing a second-hand brick oven in a snowbound new city, the night the neighborhood rallied to save their flooded bakery in 1978, and the present-day three-generation family reunion where her granddaughter opens the same recipe book.',
     cast: [

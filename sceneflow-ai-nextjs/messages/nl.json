@@ -1574,7 +1574,7 @@
   },
   "studioLanding": {
     "heroDock": {
-      "tagline": "Regisseer originele films en series — of bouw een winstgevend videoproductiebedrijf. Geen filmopleiding of prompt-ervaring nodig.",
+      "tagline": "Maak meeslepende levensverhalen van 1 uur+, historische reconstructies en meerdelige series — of bouw een hoogrenderende videostudio. Ontworpen voor long-form continuïteit die short-form AI-tools niet kunnen volhouden.",
       "primaryCta": "Start Studio ($9)",
       "businessCta": "Ontdek Videobedrijf",
       "howItWorksCta": "Bekijk Hoe Het Werkt"
@@ -1673,7 +1673,7 @@
           "number": "05",
           "badge": "Klantgoedkeuring & Wereldwijd Bereik",
           "title": "Deelbare Reviewlinks, Screening Room & 70+ Talen",
-          "description": "Deel strakke browserlinks voor Blueprint-, Script- en framenauwkeurige Screening Room-goedkeuring — en lever gelokaliseerde streams in 70+ talen vanuit een meertalige Studio-interface.",
+          "description": "Deel strakke browserlinks voor Blueprint-, Script- en framenauwkeurige Screening Room-goedkeuring — en lever gelokaliseerde streams in 70+ talen terwijl je regisseert in 14 native Studio UI-talen.",
           "outcomeTag": "Deellinks · Screening Room · 70+ Talen",
           "videoClipKey": "publish"
         }
@@ -1797,7 +1797,7 @@
       "playbooksHeading": "Kant-en-Klare Playbooks, Tariefkaarten & Partner-Pitchtemplates",
       "playbooksSubtitle": "Sla het gokwerk bij de start over met bewezen sector-SOP’s rechtstreeks ingebouwd in SceneFlow Studio:",
       "playbooksItems": [
-        "AI-Biograaf & Intake-Playbooks in 70+ Filmtalen (Meertalige Portaal-UI)",
+        "AI-Biograaf & Intake-Playbooks in 70+ Filmtalen (14 Native Portaal UI-Talen)",
         "3-Laags Tariefkaarten & Ingebouwde Minimale Margecalculator",
         "20% Verwijzingspartner-Pitchsheet (Woonzorg, Uitvaart & Makelaars)",
         "Ingebouwd Clickwrap-Register voor Media-, Multi-Leeftijd- & Stemtoestemming"
@@ -1820,7 +1820,7 @@
           {
             "tag": "Tweelaags Delen & Triage",
             "title": "Alleen-Reageren Link voor Familie/Team & Regie bij Hoofdklant",
-            "detail": "Je klant ontvangt een privé Director Portal en deelt een alleen-reageren link met familie of collega’s. Gasten luisteren in 70+ filmtalen en reageren zonder rondes te verbruiken of goed te keuren; de hoofdklant bundelt notities + 1-klik AR-tips in 1 AI-update die audio & storyboards vernieuwt."
+            "detail": "Je klant ontvangt een privé Director Portal en deelt een alleen-reageren link met familie of collega’s. Gasten luisteren in 70+ filmtalen (met een 14-talige native portaal-UI) en reageren zonder rondes te verbruiken of goed te keuren; de hoofdklant bundelt notities + 1-klik AR-tips in 1 AI-update die audio & storyboards vernieuwt."
           },
           {
             "tag": "Uitgestelde PM-Toewijzing",
@@ -1882,8 +1882,8 @@
           "tabLabel": "Video-Memoires",
           "roleTag": "★ Vlaggenschip Hoog-Marge Aanbod",
           "badge": "$149–$1,250 / film · Markttarief: $1,200–$4,500+",
-          "title": "Levensverhalen, Mijlpaal-Eerbetonen & Familiebiografieën",
-          "description": "Start met een $149 Same-Day Express 4K Cinema-eerbetoon (fotorealistische bewegende 4K-stills, gekloonde stemmen, SFX & muziek) of upgrade naadloos naar Full-Motion reconstructies per levensfase (17 → 32 → 62 jaar) zonder herwerk.",
+          "title": "Levensverhalen, 1-Uur+ Reconstructies & Meerdelige Familiebiografieën",
+          "description": "Start met een $149 Same-Day Express 4K Longform Speelfilm of Episodische Serie (tot 60 min / 360 geregisseerde frames + 1–3 min trailer) die niet-gefilmde hoofdstukken tot leven brengt met tijdsechte mensen, locaties, cultuur & geschiedenis — of upgrade naadloos en zonder herwerk naar Full-Motion reconstructies per levensfase (17 → 32 → 62 jaar).",
           "globalMarketNeed": "Honderden miljoenen oudere ouders, 50-jarige huwelijken en levensvieringen vinden elk jaar wereldwijd plaats — toch wordt 90%+ nooit verfilmd omdat crews van $2,000+ te duur zijn of weken duren.",
           "clientBuyer": "Families die mijlpaalverjaardagen, gouden bruiloften, pensioenen en herdenkingen vieren",
           "partnerChannels": "Vermogensplanners, woonzorgcentra, uitvaartbegeleiders & eventplanners (15–20% partnermodel)",
@@ -1895,9 +1895,9 @@
             1250
           ],
           "tierScopeLabels": [
-            "Express 4K Cinema (5–8 min · Zelfde dag) · Bewegende 4K-stills + Stemmen, SFX & Muziek · Auto-4K Master",
-            "12-min Full-Motion Familiememoire · Multi-Leeftijd Cast + Tijdperken · 2 Talen",
-            "20-min Signature Erfgoeddocumentaire · 4K Full-Motion Tijdperken + Erfstuk-Locks · 4 Talen"
+            "Express 4K Longform Speelfilm of Episodische Serie (tot 60 min / 360 frames · Zelfde dag) + 1–3 min Trailer · Leeftijdsvaste Reconstructies, Stemmen & Muziek",
+            "30–60 min Hybride Full-Motion Levensdocumentaire of 4-Delige Serie · Multi-Leeftijd Tijdperkreconstructies · 2 Talen",
+            "60–150 min Signature Speelfilm of 6–8 Delige Erfgoedserie · 4K Full-Motion Tijdperken, Culturele Context & Erfstuk-Locks · 4 Talen"
           ],
           "computeTiersUsd": [
             6,
@@ -2121,7 +2121,7 @@
             },
             {
               "label": "Tweelaags Delen voor Familie / Team & Triage",
-              "detail": "Gasten luisteren in 70+ filmtalen en reageren zonder rondes te verbruiken of goed te keuren; de hoofdklant filtert opmerkingen tot 1 strakke AI-revisie."
+              "detail": "Gasten luisteren in 70+ filmtalen (14 native UI-talen) en reageren zonder rondes te verbruiken of goed te keuren; de hoofdklant filtert opmerkingen tot 1 strakke AI-revisie."
             },
             {
               "label": "Ververste Audio, Storyboards & $19 Top-Ups",
@@ -2459,9 +2459,9 @@
     }
   },
   "hero": {
-    "eyebrow": "Gedemocratiseerd filmmaken voor verhalenvertellers, makers van series en studio's",
-    "headline": "Van de eerste vonk tot het voltooide meesterwerk.",
-    "subheadline": "Als je een verhaal kunt bedenken, kun je een film regisseren; er zijn geen technische filmvaardigheden of aansporingsvaardigheden vereist. Beschrijf uw visie in alledaagse woorden, en SceneFlow bouwt de Blueprint, vergrendelt karakter en instellingscontinuïteit, speelt de volledige animatie af en hecht de voltooide master.",
+    "eyebrow": "Gebouwd voor lange films van 1+ uur & series met meerdere afleveringen · Voorbij korte AI-clips",
+    "headline": "Regisseer films en series van 1+ uur. Geen clips van 5 seconden.",
+    "subheadline": "Als je een verhaal kunt bedenken, kun je een film van 1+ uur of een serie met meerdere afleveringen regisseren—zonder technische film- of promptingvaardigheden. SceneFlow bouwt de Blueprint, vergrendelt de continuïteit van cast door de jaren heen, locaties en historische context, speelt de volledige ingesproken montage af en voegt alles samen tot de afgewerkte 4K-master.",
     "ctaPrimaryLaunch": "Start Studio ($9)",
     "ctaSupportingLine": "De alles-in-één studio om je verhalen te creëren, te exporteren en te verspreiden. Download een master en verstuur deze waarheen je maar wilt — of publiceer langere versies en hoofdstukken op {longForm} en promoot trailers op {shorts}.",
     "ctaNetworkInvite": "Uitmuntende projecten kunnen zich aanmelden voor het SceneFlow-netwerk, dat uitsluitend op uitnodiging toegankelijk is.",

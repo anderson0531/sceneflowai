@@ -336,28 +336,28 @@ export const PRODUCTION_SHOWCASE_COPY = {
     },
     {
       id: 'memoir',
-      title: 'Video Memoirs & Bespoke Client Studios. Turn Spoken Memories into Cinema.',
+      title: '1-Hour+ Life Stories & Episodic Memoir Studios. Reenact Unfilmed Chapters.',
       subtitle:
-        'Combine uploaded family interviews and vintage photos with age-locked period reenactments to launch a high-margin video memoir, reunion, and biography production service.',
-      badge: 'New Business Model',
+        'Combine spoken family memories and vintage photos with age-locked period, cultural, and historical reenactments—delivered as a 1-hour+ 4K feature film or a bingeable multi-episode series.',
+      badge: '1-Hour+ & Episodic',
       solutionPillars: [
         {
           title: 'Unfilmed Memories Brought to Life',
           frictionHeadline: 'The Missing Footage Problem.',
           friction:
-            'Families have hours of spoken stories from grandparents and a handful of faded photos, but zero video of the moments that defined their lives.',
-          solutionHeadline: 'Age-Locked Period Reenactments.',
+            'Families have hours of spoken stories from grandparents and a handful of faded photos, but zero video of the defining chapters—and short-form AI clip tools cannot sustain continuity across an hour-long story.',
+          solutionHeadline: 'Age-Locked Period & Cultural Reenactments.',
           solution:
-            'Upload a real living-room interview and reference photos; SceneFlow locks the subject’s young likeness to recreate 1960s harbors, hometown streets, and milestone moments.',
+            'Upload a real living-room interview and reference photos; SceneFlow locks the subject’s young likeness across decades to recreate 1960s harbors, hometown streets, local culture, and milestone chapters.',
         },
         {
-          title: 'Turnkey Studio-in-a-Box Economics',
+          title: 'Turnkey Long-Form & Episodic Economics',
           frictionHeadline: '$25,000 Crew & Cast Costs.',
           friction:
             'Traditional biographical documentaries require actors, period wardrobe, location permits, and weeks of post-production—pricing out 99% of families and small businesses.',
-          solutionHeadline: 'Solo-Operator Client Production.',
+          solutionHeadline: 'Solo-Operator Feature or Series Studio.',
           solution:
-            'Deliver broadcast-grade 20-to-30-minute legacy films, wedding/reunion tributes, and founder biographies in a single afternoon with high client margins.',
+            'Deliver broadcast-grade 1-hour+ legacy features or 6-episode life story series, wedding/reunion tributes, and founder biographies in a single afternoon with high client margins.',
         },
         {
           title: 'Authentic Era & Keepsake Continuity',

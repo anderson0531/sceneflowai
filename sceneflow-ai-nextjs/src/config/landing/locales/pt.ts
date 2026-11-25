@@ -4,7 +4,7 @@ import { MOBILE_COMPANION_COPY_PT } from '../mobileCompanionCopy'
 export const STUDIO_LANDING_COPY_PT = {
   heroDock: {
     tagline:
-      'Dirija filmes e séries originais — ou crie um negócio lucrativo de produção de vídeo. Sem faculdade de cinema nem engenharia de prompts.',
+      'Crie histórias de vida envolventes com mais de 1 hora, reconstituições históricas e séries multiepisódio — ou construa um estúdio de vídeo de alta margem. Projetado para continuidade de longa duração que ferramentas de IA de formato curto não conseguem sustentar.',
     primaryCta: 'Iniciar Studio ($9)',
     businessCta: 'Negócio de Serviços de Vídeo',
     howItWorksCta: 'Como Funciona',
@@ -113,7 +113,7 @@ export const STUDIO_LANDING_COPY_PT = {
         badge: 'Aprovação de Clientes e Alcance Global',
         title: 'Links Compartilháveis, Screening Room e 70+ Idiomas',
         description:
-          'Compartilhe links diretos de navegador para aprovação de Blueprint, Roteiro e revisão quadro a quadro na Screening Room — e entregue versões em mais de 70 idiomas operando em 70+ idiomas de filme (portal em 7 idiomas) nativos do estúdio.',
+          'Compartilhe links diretos de navegador para aprovação de Blueprint, Roteiro e revisão quadro a quadro na Screening Room — e entregue versões localizadas em mais de 70 idiomas enquanto dirige em 14 idiomas nativos da interface do Studio.',
         outcomeTag: 'Links · Screening Room · 70+ Dublagens',
         videoClipKey: 'publish',
       },
@@ -226,7 +226,7 @@ export const STUDIO_LANDING_COPY_PT = {
     playbooksSubtitle:
       'Acelere sua operação com SOPs comerciais testados e integrados diretamente no SceneFlow Studio:',
     playbooksItems: [
-      "Biógrafo de IA em 70+ Idiomas de Filme e Playbooks de Entrevista (Portal em 7 Idiomas)",
+      "Biógrafo de IA em 70+ Idiomas de Filme e Playbooks de Entrevista (14 Idiomas Nativos de Interface do Portal)",
       'Tabelas de 3 Pacotes e Calculadora de Piso de Margem',
       'Roteiro de Comissão de 20% para Residenciais Sênior, Memoriais e Imobiliárias',
       'Registro Integrado de Consentimento de Mídia, Idades e Voz',
@@ -253,7 +253,7 @@ export const STUDIO_LANDING_COPY_PT = {
           tag: 'Link Duplo e Triagem do Cliente',
           title: 'Link Apenas para Comentários e Controle Total do Cliente',
           detail:
-            'Seu cliente recebe um Portal Diretor privado e compartilha um link apenas para comentários com família ou equipe. Convidados ouvem em 70+ idiomas de filme (portal em 7 idiomas) e comentam sem gastar rodadas nem aprovar; o cliente filtra notas + dicas AR em 1 atualização que renova áudio e storyboards.',
+            'Seu cliente recebe um Portal Diretor privado e compartilha um link apenas para comentários com família ou equipe. Convidados ouvem em 70+ idiomas de filme (com interface nativa do portal em 14 idiomas) e comentam sem gastar rodadas nem aprovar; o cliente filtra notas + dicas AR em 1 atualização que renova áudio e storyboards.',
         },
         {
           tag: 'Alocação Diferida de PM',
@@ -325,9 +325,9 @@ export const STUDIO_LANDING_COPY_PT = {
         tabLabel: 'Vídeo Memórias',
         roleTag: '★ Carro-Chefe de Alta Margem',
         badge: "$149–$1,250 / filme · Valor de mercado: $1,200–$4,500+",
-        title: 'Histórias de Vida, Homenagens e Biografias Familiares',
+        title: 'Histórias de Vida, Reconstituições de 1+ Hora e Biografias Familiares Multiepisódio',
         description:
-          'Combine fotografias de família com reconstituições cinematográficas de época em IA, relíquias travadas e continuidade precisa por idade (17 → 32 → 62 anos) narradas com vozes acolhedoras.',
+          'Comece com um Longa-Metragem ou Série por Episódios Express 4K no Mesmo Dia por $149 (até 60 min / 360 quadros dirigidos + trailer de 1–3 min) recriando capítulos não filmados com pessoas, locais, cultura e história fiéis à época — ou faça upgrade sem retrabalho para reconstituições Full-Motion em múltiplas idades (17 → 32 → 62 anos).',
         globalMarketNeed:
           'Centenas de milhões de pais idosos, bodas de ouro e aniversários marcantes acontecem todo ano no mundo, mas mais de 90% não é filmado porque equipes de $2,000+ são caras demais.',
         clientBuyer:
@@ -338,9 +338,9 @@ export const STUDIO_LANDING_COPY_PT = {
         typicalRetailUsd: 599,
         priceTiersUsd: [149, 599, 1250],
         tierScopeLabels: [
-          "Cinema Express 4K (5–8 min · Mesmo dia) · Quadros 4K com movimento + Vozes, SFX e Trilha · Master 4K auto",
-          'Memória Familiar 12 min · Elenco Multigeracional · 2 Idiomas',
-          'Documentário Legado 20 min · Épocas 4K + Relíquias · 4 Idiomas',
+          'Longa ou Série Express 4K (até 60 min / 360 quadros · Mesmo dia) + Trailer 1–3 min · Reconstituições com Idade Travada, Vozes e Trilha',
+          'Documentário de Vida Híbrido Full-Motion 30–60 min ou Série de 4 Episódios · Reconstituições de Época Multigeracionais · 2 Idiomas',
+          'Longa Signature 60–150 min ou Série Legado de 6–8 Episódios · Épocas Full-Motion 4K, Contexto Cultural e Relíquias Travadas · 4 Idiomas',
         ],
         computeTiersUsd: [6, 34, 72],
         operatorTiersUsd: [12, 88, 150],
@@ -533,7 +533,7 @@ export const STUDIO_LANDING_COPY_PT = {
           {
             label: 'Compartilhamento Duplo e Triagem pelo Cliente',
             detail:
-              'Convidados ouvem em 70+ idiomas de filme (portal em 7 idiomas) e comentam sem gastar rodadas nem aprovar; o cliente filtra notas para 1 revisão IA limpa.',
+              'Convidados ouvem em 70+ idiomas de filme (14 idiomas nativos de interface) e comentam sem gastar rodadas nem aprovar; o cliente filtra notas para 1 revisão IA limpa.',
           },
           {
             label: 'Áudio e Storyboards Renovados + Pacotes de $19',

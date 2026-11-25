@@ -3,10 +3,10 @@
  */
 
 export const HERO_COPY = {
-  eyebrow: 'Studio-grade filmmaking for storytellers, series creators & studios',
-  headline: 'From first spark to finished master.',
+  eyebrow: 'Built for 1-Hour+ Long-Form Films & Multi-Episode Series · Beyond Short-Form AI Clips',
+  headline: 'Direct 1-Hour+ Films & Series. Not 5-Second Clips.',
   subheadline:
-    'If you can imagine a story, you can direct a film—no technical filmmaking or prompting skills required. Describe your vision in everyday words, and SceneFlow builds the Blueprint, locks character and setting continuity, plays the full animatic, and stitches the finished master.',
+    'If you can imagine a story, you can direct a 1-hour+ film or multi-episode series—no technical filmmaking or prompting skills required. SceneFlow builds the Blueprint, locks multi-age cast, location, and historical continuity, plays the full voiced cut, and stitches the finished 4K master.',
   ctaPrimaryLaunch: 'Launch Studio ($9)',
   ctaSupportingLine:
     'The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.',

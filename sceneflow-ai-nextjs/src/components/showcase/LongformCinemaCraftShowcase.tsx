@@ -24,6 +24,7 @@ import {
   type CraftPillarId,
   type ImmediateLiftCardId,
 } from '@/config/showcase/longformCraftCopy'
+import { LongformChapterAnatomy } from '@/components/showcase/LongformChapterAnatomy'
 import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 import type { ClientPortalLocale } from '@/lib/intake/clientPortalCopy'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
@@ -166,6 +167,9 @@ export function LongformCinemaCraftShowcase({
             </div>
           </div>
         </div>
+
+        {/* Interactive 1-Hour+ Reenactment Chapter / Multi-Episode Series Anatomy + Short-Form Math */}
+        <LongformChapterAnatomy variant={variant} locale={locale} />
 
         {/* Interactive 6-Pillar Studio Craft Workbench */}
         <div className="mt-10 sm:mt-12">

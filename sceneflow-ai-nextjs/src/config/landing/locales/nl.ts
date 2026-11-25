@@ -3,7 +3,7 @@ import type { StudioLandingCopy } from './types'
 export const STUDIO_LANDING_COPY_NL: StudioLandingCopy = {
   heroDock: {
     tagline:
-      'Regisseer originele films en series — of bouw een winstgevend videoproductiebedrijf. Geen filmopleiding of prompt-ervaring nodig.',
+      'Maak meeslepende levensverhalen van 1 uur+, historische reconstructies en meerdelige series — of bouw een hoogrenderende videostudio. Ontworpen voor long-form continuïteit die short-form AI-tools niet kunnen volhouden.',
     primaryCta: 'Start Studio ($9)',
     businessCta: 'Ontdek Videobedrijf',
     howItWorksCta: 'Bekijk Hoe Het Werkt',
@@ -112,7 +112,7 @@ export const STUDIO_LANDING_COPY_NL: StudioLandingCopy = {
         badge: 'Klantgoedkeuring & Wereldwijd Bereik',
         title: 'Deelbare Reviewlinks, Screening Room & 70+ Talen',
         description:
-          'Deel strakke browserlinks voor Blueprint-, Script- en framenauwkeurige Screening Room-goedkeuring — en lever gelokaliseerde streams in 70+ talen vanuit een meertalige Studio-interface.',
+          'Deel strakke browserlinks voor Blueprint-, Script- en framenauwkeurige Screening Room-goedkeuring — en lever gelokaliseerde streams in 70+ talen terwijl je regisseert in 14 native Studio UI-talen.',
         outcomeTag: 'Deellinks · Screening Room · 70+ Talen',
         videoClipKey: 'publish',
       },
@@ -225,7 +225,7 @@ export const STUDIO_LANDING_COPY_NL: StudioLandingCopy = {
     playbooksSubtitle:
       'Sla het gokwerk bij de start over met bewezen sector-SOP’s rechtstreeks ingebouwd in SceneFlow Studio:',
     playbooksItems: [
-      'AI-Biograaf & Intake-Playbooks in 70+ Filmtalen (Meertalige Portaal-UI)',
+      'AI-Biograaf & Intake-Playbooks in 70+ Filmtalen (14 Native Portaal UI-Talen)',
       '3-Laags Tariefkaarten & Ingebouwde Minimale Margecalculator',
       '20% Verwijzingspartner-Pitchsheet (Woonzorg, Uitvaart & Makelaars)',
       'Ingebouwd Clickwrap-Register voor Media-, Multi-Leeftijd- & Stemtoestemming',
@@ -252,7 +252,7 @@ export const STUDIO_LANDING_COPY_NL: StudioLandingCopy = {
           tag: 'Tweelaags Delen & Triage',
           title: 'Alleen-Reageren Link voor Familie/Team & Regie bij Hoofdklant',
           detail:
-            'Je klant ontvangt een privé Director Portal en deelt een alleen-reageren link met familie of collega’s. Gasten luisteren in 70+ filmtalen en reageren zonder rondes te verbruiken of goed te keuren; de hoofdklant bundelt notities + 1-klik AR-tips in 1 AI-update die audio & storyboards vernieuwt.',
+            'Je klant ontvangt een privé Director Portal en deelt een alleen-reageren link met familie of collega’s. Gasten luisteren in 70+ filmtalen (met een 14-talige native portaal-UI) en reageren zonder rondes te verbruiken of goed te keuren; de hoofdklant bundelt notities + 1-klik AR-tips in 1 AI-update die audio & storyboards vernieuwt.',
         },
         {
           tag: 'Uitgestelde PM-Toewijzing',
@@ -324,9 +324,9 @@ export const STUDIO_LANDING_COPY_NL: StudioLandingCopy = {
         tabLabel: 'Video-Memoires',
         roleTag: '★ Vlaggenschip Hoog-Marge Aanbod',
         badge: '$149–$1,250 / film · Markttarief: $1,200–$4,500+',
-        title: 'Levensverhalen, Mijlpaal-Eerbetonen & Familiebiografieën',
+        title: 'Levensverhalen, 1-Uur+ Reconstructies & Meerdelige Familiebiografieën',
         description:
-          'Start met een $149 Same-Day Express 4K Cinema-eerbetoon (fotorealistische bewegende 4K-stills, gekloonde stemmen, SFX & muziek) of upgrade naadloos naar Full-Motion reconstructies per levensfase (17 → 32 → 62 jaar) zonder herwerk.',
+          'Start met een $149 Same-Day Express 4K Longform Speelfilm of Episodische Serie (tot 60 min / 360 geregisseerde frames + 1–3 min trailer) die niet-gefilmde hoofdstukken tot leven brengt met tijdsechte mensen, locaties, cultuur & geschiedenis — of upgrade naadloos en zonder herwerk naar Full-Motion reconstructies per levensfase (17 → 32 → 62 jaar).',
         globalMarketNeed:
           'Honderden miljoenen oudere ouders, 50-jarige huwelijken en levensvieringen vinden elk jaar wereldwijd plaats — toch wordt 90%+ nooit verfilmd omdat crews van $2,000+ te duur zijn of weken duren.',
         clientBuyer:
@@ -337,9 +337,9 @@ export const STUDIO_LANDING_COPY_NL: StudioLandingCopy = {
         typicalRetailUsd: 599,
         priceTiersUsd: [149, 599, 1250],
         tierScopeLabels: [
-          'Express 4K Cinema (5–8 min · Zelfde dag) · Bewegende 4K-stills + Stemmen, SFX & Muziek · Auto-4K Master',
-          '12-min Full-Motion Familiememoire · Multi-Leeftijd Cast + Tijdperken · 2 Talen',
-          '20-min Signature Erfgoeddocumentaire · 4K Full-Motion Tijdperken + Erfstuk-Locks · 4 Talen',
+          'Express 4K Longform Speelfilm of Episodische Serie (tot 60 min / 360 frames · Zelfde dag) + 1–3 min Trailer · Leeftijdsvaste Reconstructies, Stemmen & Muziek',
+          '30–60 min Hybride Full-Motion Levensdocumentaire of 4-Delige Serie · Multi-Leeftijd Tijdperkreconstructies · 2 Talen',
+          '60–150 min Signature Speelfilm of 6–8 Delige Erfgoedserie · 4K Full-Motion Tijdperken, Culturele Context & Erfstuk-Locks · 4 Talen',
         ],
         computeTiersUsd: [6, 34, 72],
         operatorTiersUsd: [12, 88, 150],
@@ -532,7 +532,7 @@ export const STUDIO_LANDING_COPY_NL: StudioLandingCopy = {
           {
             label: 'Tweelaags Delen voor Familie / Team & Triage',
             detail:
-              'Gasten luisteren in 70+ filmtalen en reageren zonder rondes te verbruiken of goed te keuren; de hoofdklant filtert opmerkingen tot 1 strakke AI-revisie.',
+              'Gasten luisteren in 70+ filmtalen (14 native UI-talen) en reageren zonder rondes te verbruiken of goed te keuren; de hoofdklant filtert opmerkingen tot 1 strakke AI-revisie.',
           },
           {
             label: 'Ververste Audio, Storyboards & $19 Top-Ups',

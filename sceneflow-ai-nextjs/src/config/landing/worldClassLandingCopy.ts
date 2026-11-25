@@ -29,7 +29,7 @@ export * from './locales/types'
 export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
   heroDock: {
     tagline:
-      'Direct original films & series — or build a high-margin video production business. Zero filmmaking or prompt skills required.',
+      'Create engaging 1-hour+ life stories, historical reenactments, and multi-episode series—or build a high-margin video studio. Engineered for long-form continuity that short-form AI tools cannot sustain.',
     primaryCta: 'Launch Studio ($9)',
     businessCta: 'Explore Video Business',
     howItWorksCta: 'See How It Works',
@@ -138,7 +138,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         badge: 'Client Sign-Off & Global Reach',
         title: 'Shared Review Links, Screening Room & 70+ Languages',
         description:
-          'Share clean browser links for Blueprint, Script, and frame-accurate Screening Room sign-off—then deliver localized streams in 70+ languages while directing in 7 native Studio UI languages.',
+          'Share clean browser links for Blueprint, Script, and frame-accurate Screening Room sign-off—then deliver localized streams in 70+ languages while directing in 14 native Studio UI languages.',
         outcomeTag: 'Share Links · Screening Room · 70+ Dubs',
         videoClipKey: 'publish',
       },
@@ -251,7 +251,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
     playbooksSubtitle:
       'Accelerate past cold-start guesswork with battle-tested vertical SOPs built directly into SceneFlow Studio:',
     playbooksItems: [
-      '70+ Film-Language AI Biographer & Intake Playbooks (7 Native Portal UI Locales)',
+      '70+ Film-Language AI Biographer & Intake Playbooks (14 Native Portal UI Locales)',
       '3-Tier Package Rate Cards & In-App Margin Floor Calculator',
       '20% Referral Partner Pitch Sheet (Senior Living, Funeral Homes & Realtors)',
       'Built-In Clickwrap Media, Multi-Age Likeness & Voice Consent Ledger',
@@ -278,7 +278,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
           tag: 'Two-Tier Sharing & Triage',
           title: 'Family / Team Comment-Only Link & Primary Customer Control',
           detail:
-            'Your customer receives a private Director Portal and shares a comment-only link with family or teammates. Guests listen in any of 70+ film languages (with a 7-language native portal UI) and comment without burning rounds or approving—the primary customer filters notes + 1-click AR tips into 1 AI update that auto-refreshes storyboards & audio.',
+            'Your customer receives a private Director Portal and shares a comment-only link with family or teammates. Guests listen in any of 70+ film languages (with a 14-language native portal UI) and comment without burning rounds or approving—the primary customer filters notes + 1-click AR tips into 1 AI update that auto-refreshes storyboards & audio.',
         },
         {
           tag: 'Deferred PM Assignment',
@@ -350,9 +350,9 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         tabLabel: 'Video Memoirs',
         roleTag: '★ Flagship High-Margin Wedge',
         badge: '$149–$1,250 / film · Market Rate: $1,200–$4,500+',
-        title: 'Life Stories, Milestone Tributes & Family Biographies',
+        title: 'Life Stories, 1-Hour+ Reenactments & Multi-Episode Family Biographies',
         description:
-          'Start with a $149 Same-Day Express 4K Cinema Tribute (photorealistic panned stills, cloned voices, SFX & score) or upgrade seamlessly to Full-Motion multi-age era re-enactments (Age 17 → Age 32 → Age 62) with zero rework.',
+          'Start with a $149 Same-Day Express 4K Longform Feature or Episodic Series (up to 60 min / 360 directed frames + 1–3 min trailer) recreating unfilmed chapters with era-accurate people, locations, culture & history—or upgrade seamlessly to Full-Motion multi-age reenactments (Age 17 → Age 32 → Age 62) with zero rework.',
         globalMarketNeed:
           'Hundreds of millions of aging parents, 50th anniversaries, and celebrations of life happen globally every year—yet 90%+ go unfilmed because $2,000+ crews are unaffordable or take weeks.',
         clientBuyer:
@@ -363,9 +363,9 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
         typicalRetailUsd: 599,
         priceTiersUsd: [149, 599, 1250],
         tierScopeLabels: [
-          'Express 4K Cinema (5–8 min · Same-Day) · Panned 4K Stills + Voices, SFX & Score · Auto-4K Master',
-          '12-min Full-Motion Family Memoir · Multi-Age Cast + Era Clips · 2 Langs',
-          '20-min Signature Legacy Documentary · 4K Full-Motion Eras + Heirloom Locks · 4 Langs',
+          'Express 4K Longform Feature or Episodic Series (up to 60 min / 360 frames · Same-Day) + 1–3 min Trailer · Age-Locked Reenactments, Voices & Score',
+          '30–60 min Hybrid Full-Motion Life Documentary or 4-Episode Series · Multi-Age Era Reenactments · 2 Langs',
+          '60–150 min Signature Feature or 6–8 Episode Legacy Series · 4K Full-Motion Eras, Cultural Context & Heirloom Locks · 4 Langs',
         ],
         computeTiersUsd: [6, 34, 72],
         operatorTiersUsd: [12, 88, 150],
@@ -558,7 +558,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
           {
             label: 'Two-Tier Family / Team Sharing & Triage',
             detail:
-              'Guests listen in any of 70+ film languages (7 native UI locales) and comment without burning rounds or approving; the primary customer filters notes into 1 clean AI revision.',
+              'Guests listen in any of 70+ film languages (14 native UI locales) and comment without burning rounds or approving; the primary customer filters notes into 1 clean AI revision.',
           },
           {
             label: 'Auto-Refreshed Audio, Storyboards & $19 Top-Ups',

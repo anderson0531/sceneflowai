@@ -115,6 +115,7 @@ import {
 } from '@/config/showcase/showcaseLocaleCopy'
 import { SHOWCASE_CONVERSION_COPY } from '@/config/showcase/showcaseConversionCopy'
 import { LONGFORM_CRAFT_COPY } from '@/config/showcase/longformCraftCopy'
+import { LONGFORM_CHAPTER_ANATOMY_COPY } from '@/config/showcase/longformChapterAnatomyCopy'
 import { SUPPORTED_CLIENT_PORTAL_LOCALES } from '@/lib/intake/clientPortalCopy'
 import { formatLandingCurrency } from '@/lib/i18n/landingCurrency'
 
@@ -856,5 +857,56 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect((dialog?.querySelector('select') as HTMLSelectElement | null)?.value).toBe(
       'real_estate_express'
     )
+  })
+
+  it('ships complete 14-locale LongformChapterAnatomy copy and toggles Feature Film vs. Multi-Episode Series interactively', () => {
+    // 1. Verify all 14 supported locales ship complete 6-chapter + 3-stat anatomy packs
+    expect(SUPPORTED_CLIENT_PORTAL_LOCALES).toHaveLength(14)
+    for (const loc of SUPPORTED_CLIENT_PORTAL_LOCALES) {
+      const pack = LONGFORM_CHAPTER_ANATOMY_COPY[loc.code]
+      expect(pack).toBeTruthy()
+      expect(pack.chapters).toHaveLength(6)
+      expect(pack.mathStats).toHaveLength(3)
+      for (const ch of pack.chapters) {
+        expect(ch.title.trim().length).toBeGreaterThan(2)
+        expect(ch.reenactmentCulture.trim().length).toBeGreaterThan(5)
+        expect(ch.posterImage).toMatch(/^\/(?:images|landing)\//)
+      }
+    }
+
+    // 2. Render KeepsakeCinemaStorefront and verify interactive anatomy toggles
+    act(() => {
+      root!.render(React.createElement(KeepsakeCinemaStorefront, { initialLocale: 'en', hasExplicitLocaleParam: true }))
+    })
+
+    const anatomy = container.querySelector('[data-testid="longform-chapter-anatomy-storefront"]')
+    expect(anatomy).toBeTruthy()
+
+    const modeMeta = anatomy?.querySelector('[data-testid="anatomy-mode-meta"]')
+    expect(modeMeta?.textContent).toContain('68 min continuous · 6 Chapters')
+
+    const ch1Tab = anatomy?.querySelector('[data-testid="anatomy-chapter-tab-1"]') as HTMLButtonElement | null
+    expect(ch1Tab?.textContent).toContain('Chapter 1')
+
+    // Toggle to Multi-Episode Series mode
+    const seriesModeBtn = anatomy?.querySelector('[data-testid="anatomy-mode-series"]') as HTMLButtonElement | null
+    expect(seriesModeBtn).toBeTruthy()
+    act(() => seriesModeBtn!.click())
+    expect(modeMeta?.textContent).toContain('6 Bingeable Episodes')
+    expect(ch1Tab?.textContent).toContain('Episode 1')
+
+    // Switch to Chapter 4 (0 photos · unphotographed crisis reenactment)
+    const ch4Tab = anatomy?.querySelector('[data-testid="anatomy-chapter-tab-4"]') as HTMLButtonElement | null
+    expect(ch4Tab).toBeTruthy()
+    act(() => ch4Tab!.click())
+    const panel = anatomy?.querySelector('[data-testid="anatomy-chapter-panel"]')
+    expect(panel?.textContent).toContain('0 photos · Spoken family story only')
+    expect(panel?.textContent).toContain('1978')
+
+    // Verify Short-Form AI Collapse Math strip renders with storefront branding
+    const mathStrip = anatomy?.querySelector('[data-testid="longform-vs-shortform-math"]')
+    expect(mathStrip?.textContent).toContain('360+ Shots')
+    expect(mathStrip?.textContent).toContain('80–120 hrs → 2–4 hrs')
+    expect(mathStrip?.textContent).toContain('Feature OR Series')
   })
 })

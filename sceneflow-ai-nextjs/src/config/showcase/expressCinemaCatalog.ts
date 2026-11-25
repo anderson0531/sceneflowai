@@ -58,10 +58,10 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     badge: 'Most Popular · Life & Milestones',
     title: 'Life Stories & Family Memoirs, Weddings, Graduations, and more',
     subtitle:
-      'Go deep—tell an unforgettable 30 to 150 minute feature-length life story covering every chapter from childhood roots and career triumphs to family traditions, weddings, graduations, or retirements. Your $149 package includes up to 1 hour (360 directed 4K frames) plus a shareable 1–3 min theatrical trailer (longer films available).',
+      'Go deep—tell an unforgettable 1-hour+ (30–150 min) feature film or multi-episode life series recreating every defining chapter with authentic people, locations, culture, and historical context. Your $149 package includes up to 60 min (360 directed 4K frames) as one feature or episodic series plus a shareable 1–3 min theatrical trailer.',
     idealFor:
-      '70th/80th birthdays, family legacies, weddings & anniversaries, graduations, retirements & celebrations of life',
-    runtimeLabel: 'Up to 60 min (360 frames) · + 1–3 min Trailer',
+      '70th/80th birthdays, family legacies, multi-episode life series, weddings & anniversaries, graduations, retirements & celebrations of life',
+    runtimeLabel: 'Up to 60 min Feature OR Multi-Episode Series · + 1–3 min Trailer',
     turnaroundLabel: 'Same-Day (2–4 hrs after photo lock)',
     blueprintPassUsd: 29,
     totalPriceUsd: 149,
@@ -71,11 +71,11 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
     sampleVideoPoster: '/images/trailers/video-memoir-poster.webp',
     sampleTitle: 'Harbor Books: Fifty Years on Pike Street',
     sampleCaption:
-      '2-min preview example — $149 package delivers up to a 60-min (360-frame) 4K feature film + 1–3 min trailer (expandable to 150 min).',
+      '2-min preview example — $149 package delivers up to a 60-min (360-frame) 4K feature or multi-episode series + 1–3 min trailer (expandable to 150 min).',
     deliverables: [
-      'Up to 60-min Longform 4K Feature (360 directed frames; extendable to 150 min)',
+      'Up to 60-min 4K Feature OR Multi-Episode Series (360 directed frames; extendable to 150 min)',
       '1–3 min Shareable Theatrical Trailer included for family & event invites',
-      'Continuity lock: age-28 de-aging, relative matching, hometowns & heirlooms',
+      'Period reenactments: age-28 de-aging, relative matching, era locations & heirlooms',
       'Includes automatic regional & decade-specific cultural/economic context + staged family gatherings & traditions across 70+ languages',
     ],
     occasionPromptContext:

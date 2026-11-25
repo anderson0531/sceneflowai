@@ -3,7 +3,7 @@ import type { StudioLandingCopy } from './types'
 export const STUDIO_LANDING_COPY_DE: StudioLandingCopy = {
   heroDock: {
     tagline:
-      'Inszenieren Sie eigene Filme und Serien — oder bauen Sie ein margenstarkes Videoproduktions-Business auf. Ganz ohne Filmstudium oder Prompt-Engineering.',
+      'Erschaffen Sie fesselnde Lebensgeschichten über 1 Stunde+, historische Reenactments und mehrteilige Serien — oder bauen Sie ein margenstarkes Videostudio auf. Entwickelt für Langform-Kontinuität, die Kurzform-KI-Tools nicht durchhalten.',
     primaryCta: 'Studio starten ($9)',
     businessCta: 'Video-Business entdecken',
     howItWorksCta: 'So funktioniert es',
@@ -112,7 +112,7 @@ export const STUDIO_LANDING_COPY_DE: StudioLandingCopy = {
         badge: 'Kundenfreigabe & globale Reichweite',
         title: 'Geteilte Review-Links, Screening Room & 70+ Sprachen',
         description:
-          'Teilen Sie aufgeräumte Browser-Links für Blueprint-, Drehbuch- und bildgenaue Screening-Room-Freigaben — und liefern Sie lokalisierte Streams in über 70 Sprachen aus, während Sie in 7 nativen Studio-UI-Sprachen arbeiten.',
+          'Teilen Sie aufgeräumte Browser-Links für Blueprint-, Drehbuch- und bildgenaue Screening-Room-Freigaben — und liefern Sie lokalisierte Streams in über 70 Sprachen aus, während Sie in 14 nativen Studio-UI-Sprachen arbeiten.',
         outcomeTag: 'Share-Links · Screening Room · 70+ Synchronfassungen',
         videoClipKey: 'publish',
       },
@@ -225,7 +225,7 @@ export const STUDIO_LANDING_COPY_DE: StudioLandingCopy = {
     playbooksSubtitle:
       'Überspringen Sie Kaltstart-Rätselraten mit praxiserprobten Branchen-SOPs direkt in SceneFlow Studio:',
     playbooksItems: [
-      'KI-Biograf & Intake-Playbooks für 70+ Filmsprachen (7 native Portal-UI-Sprachen)',
+      'KI-Biograf & Intake-Playbooks für 70+ Filmsprachen (14 native Portal-UI-Sprachen)',
       '3-Stufen-Paketpreislisten & integrierter Mindestmargen-Rechner',
       '20 %-Empfehlungspartner-Pitchsheet (Seniorenresidenzen, Bestatter & Makler)',
       'Integriertes Clickwrap-Register für Medien-, Altersstufen- & Stimmenfreigaben',
@@ -252,7 +252,7 @@ export const STUDIO_LANDING_COPY_DE: StudioLandingCopy = {
           tag: 'Zweistufiges Teilen & Kunden-Triage',
           title: 'Kommentar-Link für Familie/Team & alleinige Hauptkunden-Steuerung',
           detail:
-            'Ihr Hauptkunde erhält ein privates Director-Portal und teilt einen reinen Kommentar-Link mit Familie oder Kollegen. Gäste hören in 70+ Filmsprachen (7 native Portal-Sprachen) mit und kommentieren, ohne Runden zu verbrauchen oder freizugeben; der Hauptkunde bündelt Hinweise + 1-Klick-AR-Tipps zu einem sauberen KI-Update mit erneuerten Storyboards & Audio.',
+            'Ihr Hauptkunde erhält ein privates Director-Portal und teilt einen reinen Kommentar-Link mit Familie oder Kollegen. Gäste hören in 70+ Filmsprachen (mit nativer 14-Sprachen-Portal-UI) mit und kommentieren, ohne Runden zu verbrauchen oder freizugeben; der Hauptkunde bündelt Hinweise + 1-Klick-AR-Tipps zu einem sauberen KI-Update mit erneuerten Storyboards & Audio.',
         },
         {
           tag: 'Verzögerte PM-Zuweisung',
@@ -324,9 +324,9 @@ export const STUDIO_LANDING_COPY_DE: StudioLandingCopy = {
         tabLabel: 'Video-Biografien',
         roleTag: '★ Margenstarkes Flaggschiff',
         badge: '$149–$1,250 / Film · Marktpreis: $1,200–$4,500+',
-        title: 'Lebensgeschichten, Jubiläumstribute & Familienbiografien',
+        title: 'Lebensgeschichten, 1-Stunde+-Reenactments & mehrteilige Familienbiografien',
         description:
-          'Beginnen Sie mit einem Same-Day Express 4K-Kinotribut für $149 (fotorealistisch geschwenkte Stills, geklonte Stimmen, SFX & Musik) oder erweitern Sie nahtlos und ohne Nacharbeit auf Full-Motion-Epochenszenen über mehrere Lebensalter (17 → 32 → 62 Jahre).',
+          'Starten Sie mit einem Same-Day Express 4K Langform-Film oder einer Episodenserie für $149 (bis zu 60 Min. / 360 inszenierte Frames + 1–3 Min. Trailer), der ungefilmte Kapitel mit epochengerechten Menschen, Orten, Kultur & Geschichte zum Leben erweckt — oder upgraden Sie nahtlos und ohne Nacharbeit auf Full-Motion-Reenactments über mehrere Lebensalter (17 → 32 → 62 Jahre).',
         globalMarketNeed:
           'Weltweit finden jedes Jahr hunderte Millionen runde Geburtstage, goldene Hochzeiten und Lebensfeiern statt — doch über 90 % bleiben unverfilmt, weil $2,000+ Filmcrews zu teuer sind oder Wochen dauern.',
         clientBuyer:
@@ -337,9 +337,9 @@ export const STUDIO_LANDING_COPY_DE: StudioLandingCopy = {
         typicalRetailUsd: 599,
         priceTiersUsd: [149, 599, 1250],
         tierScopeLabels: [
-          'Express 4K Kino (5–8 Min. · Same-Day) · Geschwenkte 4K-Stills + Stimmen, SFX & Score · Auto-4K-Master',
-          '12-Min. Full-Motion Familienbiografie · Mehrgenerationen-Cast + Epochenclips · 2 Sprachen',
-          '20-Min. Signature Vermächtnis-Doku · 4K Full-Motion Epochen + Erbstück-Locks · 4 Sprachen',
+          'Express 4K Langform-Film oder Episodenserie (bis zu 60 Min. / 360 Frames · Same-Day) + 1–3 Min. Trailer · Altersfixierte Reenactments, Stimmen & Score',
+          '30–60 Min. Hybrid Full-Motion Lebensdoku oder 4-teilige Serie · Mehrgenerationen-Epochen-Reenactments · 2 Sprachen',
+          '60–150 Min. Signature-Langfilm oder 6–8-teilige Vermächtnis-Serie · 4K Full-Motion Epochen, kultureller Kontext & Erbstück-Locks · 4 Sprachen',
         ],
         computeTiersUsd: [6, 34, 72],
         operatorTiersUsd: [12, 88, 150],
@@ -532,7 +532,7 @@ export const STUDIO_LANDING_COPY_DE: StudioLandingCopy = {
           {
             label: 'Zweistufiges Familien-/Team-Sharing & Triage',
             detail:
-              'Gäste hören in 70+ Filmsprachen (7 native UI-Sprachen) zu und kommentieren ohne Rundenverbrauch oder Freigaberecht; der Hauptkunde bündelt Notizen in 1 saubere KI-Revision.',
+              'Gäste hören in 70+ Filmsprachen (14 native UI-Sprachen) zu und kommentieren ohne Rundenverbrauch oder Freigaberecht; der Hauptkunde bündelt Notizen in 1 saubere KI-Revision.',
           },
           {
             label: 'Auto-aktualisiertes Audio, Storyboards & $19 Zusatzpakete',
