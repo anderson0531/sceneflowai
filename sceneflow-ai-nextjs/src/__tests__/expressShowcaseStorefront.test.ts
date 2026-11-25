@@ -348,7 +348,7 @@ describe('KeepsakeCinemaStorefront UI', () => {
     const text = container.textContent || ''
     expect(text).toContain('Keepsake Cinema')
     expect(text).toContain('Live White-Label Reference Storefront')
-    expect(text).toContain('Produce films in 70+ languages (7 portal UIs)')
+    expect(text).toContain('14 native UI portals · Culturally localized 4K masters in 70+ languages')
     expect(text).toContain('100% private photos — never used to train AI')
     expect(text).toContain('Payments processed by Whop')
     expect(text).toContain('Life Stories & Family Memoirs, Weddings, Graduations, and more')
@@ -403,8 +403,23 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(isPublicRoute('/showcase/order/exp_abc123')).toBe(true)
   })
 
-  it('supports all 7 languages (en, es, pt, hi, zh-CN, ar, th) with localized currency, videos, and Arabic RTL', () => {
-    const expectedCodes = ['en', 'es', 'pt', 'hi', 'zh-CN', 'ar', 'th']
+  it('supports all 14 base UI languages with localized currency, videos, and Arabic RTL', () => {
+    const expectedCodes = [
+      'en',
+      'es',
+      'pt',
+      'hi',
+      'zh-CN',
+      'ar',
+      'th',
+      'ja',
+      'ko',
+      'de',
+      'fr',
+      'it',
+      'nl',
+      'ru',
+    ]
     expect(SUPPORTED_CLIENT_PORTAL_LOCALES.map((l) => l.code)).toEqual(expectedCodes)
 
     for (const loc of SUPPORTED_CLIENT_PORTAL_LOCALES) {
@@ -428,6 +443,11 @@ describe('KeepsakeCinemaStorefront UI', () => {
     )
     expect(getLocalizedShowcaseVideoUrl('brand', 'th')).toBe(
       '/landing/video-services/videos/express-brand-th.mp4'
+    )
+    // New base UI locales fall back cleanly to English master demo videos until dubbed
+    expect(getLocalizedShowcaseVideoUrl('memoir', 'ja')).toBe('/videos/video-memoir-trailer-4k.mp4')
+    expect(getLocalizedShowcaseVideoUrl('realestate', 'de')).toBe(
+      '/landing/video-services/videos/express-realestate-en.mp4'
     )
 
     // Interactive language switcher in UI: switch to Spanish (MXN) -> Arabic (SAR + RTL) -> Thai (THB)
@@ -467,6 +487,17 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(container.querySelector('video')?.getAttribute('src')).toBe(
       '/videos/video-memoir-trailer-4k-th.mp4'
     )
+
+    pickLang('日本語')
+    expect(container.textContent).toContain(formatLandingCurrency(149, 'ja'))
+    expect(container.querySelector('[lang="ja"]')?.getAttribute('dir')).toBe('ltr')
+    expect(container.querySelector('video')?.getAttribute('src')).toBe(
+      '/videos/video-memoir-trailer-4k.mp4'
+    )
+
+    pickLang('Deutsch')
+    expect(container.textContent).toContain(formatLandingCurrency(149, 'de'))
+    expect(container.querySelector('[lang="de"]')?.getAttribute('dir')).toBe('ltr')
   })
 
   it('toggles 4K Cinema and Full-Motion videos in the Hero and Milestone cards, and renders high-contrast Start $29 Blueprint buttons', () => {
@@ -555,13 +586,29 @@ describe('KeepsakeCinemaStorefront UI', () => {
     )
   })
 
-  it('renders interactive Longform 4K Craft & Zero AI Slop Showcase across all 7 languages including Trailer spotlight and Continuity pillars', () => {
+  it('renders interactive Longform 4K Craft, Cultural World-Building Tiles, Immediate-Lift Engines & 14-Portal Positioning across all 14 languages', () => {
     for (const loc of SUPPORTED_CLIENT_PORTAL_LOCALES) {
       const pack = LONGFORM_CRAFT_COPY[loc.code]
       expect(pack, `craft pack for ${loc.code}`).toBeDefined()
       expect(pack.pillars).toHaveLength(6)
       expect(pack.comparisonRows).toHaveLength(6)
       expect(pack.trailerSpotlight.headline.length).toBeGreaterThan(10)
+      expect(pack.immediateLift.cards).toHaveLength(3)
+      expect(pack.immediateLift.cards.map((c) => c.id)).toEqual([
+        'multi_perspective_audio',
+        'qr_print_companion',
+        'living_continuity_vault',
+      ])
+      expect(pack.immediateLift.cards[2].accessNote?.trim().length).toBeGreaterThan(10)
+
+      const storefrontPack = SHOWCASE_LOCALE_COPY[loc.code]
+      expect(storefrontPack.faq.items.length).toBeGreaterThanOrEqual(7)
+      expect(storefrontPack.hero.trustLanguages).not.toMatch(/7 portal|7-language/i)
+      expect(storefrontPack.hero.trustLanguages).toContain('14')
+
+      const convPack = SHOWCASE_CONVERSION_COPY[loc.code]
+      expect(convPack.operatorFooter.heading).toContain('14')
+      expect(convPack.operatorFooter.body).toContain('70')
     }
 
     act(() => {
@@ -585,6 +632,53 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(
       showcaseSection?.querySelector('[data-testid="active-craft-pillar-panel"]')?.textContent
     ).toContain('28-Year-Old Grandfather')
+
+    // Click Tile B: Continuity-Locked Active Scenes & Cultural Staging
+    const stagingTab = Array.from(showcaseSection!.querySelectorAll('[role="tab"]')).find((el) =>
+      el.textContent?.includes('Active Scenes & Cultural Staging')
+    ) as HTMLButtonElement | undefined
+    expect(stagingTab).toBeTruthy()
+    act(() => stagingTab!.click())
+    expect(
+      showcaseSection?.querySelector('[data-testid="active-craft-pillar-panel"]')?.textContent
+    ).toContain('Unphotographed Moments, Staged With Cultural Authenticity')
+
+    // Click Tile A: Localized Era & Cultural Time-Capsule Engine
+    const timeCapsuleTab = Array.from(showcaseSection!.querySelectorAll('[role="tab"]')).find(
+      (el) => el.textContent?.includes('Era & Cultural Time-Capsule')
+    ) as HTMLButtonElement | undefined
+    expect(timeCapsuleTab).toBeTruthy()
+    act(() => timeCapsuleTab!.click())
+    expect(
+      showcaseSection?.querySelector('[data-testid="active-craft-pillar-panel"]')?.textContent
+    ).toContain('Period & Regional Context That Brings History Alive')
+
+    // Verify 3 Immediate-Lift Consumer & Operator Engine cards render with Continuity Library Code note
+    const liftGrid = showcaseSection?.querySelector('[data-testid="showcase-immediate-lift-grid"]')
+    expect(liftGrid).toBeTruthy()
+    expect(liftGrid?.textContent).toContain('Multi-Perspective Audio Tracks')
+    expect(liftGrid?.textContent).toContain('QR-Linked Print Companion PDF')
+    expect(liftGrid?.textContent).toContain('Living Continuity Vault')
+    expect(liftGrid?.textContent).toContain('Continuity Library Code')
+
+    // Verify Localized Intelligence Edge bullets appear on all 4 vertical cards
+    expect(container.querySelector('[data-testid="offer-card-family_legacy"]')?.textContent).toContain(
+      'regional & decade-specific cultural/economic context'
+    )
+    expect(
+      container.querySelector('[data-testid="offer-card-real_estate_express"]')?.textContent
+    ).toContain('virtual furniture updates, active neighborhood lifestyle staging')
+    expect(container.querySelector('[data-testid="offer-card-brand_express"]')?.textContent).toContain(
+      'local founding-era historical context & active patient/client care scene staging'
+    )
+    expect(
+      container.querySelector('[data-testid="offer-card-training_express"]')?.textContent
+    ).toContain('localized workplace safety/equipment scenario staging adapted to regional compliance')
+
+    // Verify 14 Native Portals × 70+ Culturally Localized Masters copy in FAQ and Operator Footer
+    expect(container.textContent).toContain(
+      'Operate in 14 Native Portals. Produce Culturally Authentic Films in 70+ Languages.'
+    )
 
     // Click Heirloom Props pillar (family Bible)
     const propTab = Array.from(showcaseSection!.querySelectorAll('[role="tab"]')).find((el) =>
@@ -664,7 +758,9 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(upgradeCallout?.textContent).toContain('Request PM Full-Motion Upgrade')
 
     const operatorFooter = container.querySelector('[data-testid="white-label-operator-block"]')
-    expect(operatorFooter?.textContent).toContain('Run This Exact Storefront Under Your Own Brand')
+    expect(operatorFooter?.textContent).toContain(
+      'Operate in 14 Native Portals. Produce Culturally Authentic Films in 70+ Languages.'
+    )
     expect(operatorFooter?.textContent).toContain('Launch Your Branded Studio on SceneFlow')
     expect(operatorFooter?.textContent).toContain('Book an Operator Walkthrough')
 

@@ -89,12 +89,17 @@ const LOCALE_FILTER_OPTIONS = [
   { value: 'en', label: 'English (EN)' },
   { value: 'es', label: 'Español (ES)' },
   { value: 'pt', label: 'Português (PT)' },
-  { value: 'fr', label: 'Français (FR)' },
-  { value: 'de', label: 'Deutsch (DE)' },
   { value: 'hi', label: 'हिन्दी (HI)' },
-  { value: 'zh-CN', label: '简体中文 (ZH)' },
+  { value: 'zh-CN', label: '中文 (简体) (ZH)' },
   { value: 'ar', label: 'العربية (AR)' },
-  { value: 'th', label: 'ไทย (TH)' },
+  { value: 'th', label: 'ภาษาไทย (TH)' },
+  { value: 'ja', label: '日本語 (JA)' },
+  { value: 'ko', label: '한국어 (KO)' },
+  { value: 'de', label: 'Deutsch (DE)' },
+  { value: 'fr', label: 'Français (FR)' },
+  { value: 'it', label: 'Italiano (IT)' },
+  { value: 'nl', label: 'Nederlands (NL)' },
+  { value: 'ru', label: 'Русский (RU)' },
 ] as const
 
 const VERTICAL_FILTER_OPTIONS = [

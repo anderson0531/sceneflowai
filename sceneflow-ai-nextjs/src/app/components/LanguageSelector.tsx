@@ -53,6 +53,8 @@ export function LanguageSelector({ variant = 'default' }: LanguageSelectorProps)
   const filteredLangs = LANGUAGES.filter(
     (l) =>
       l.name.toLowerCase().includes(search.toLowerCase()) ||
+      l.englishName.toLowerCase().includes(search.toLowerCase()) ||
+      l.code.toLowerCase().includes(search.toLowerCase()) ||
       l.region.toLowerCase().includes(search.toLowerCase())
   )
 

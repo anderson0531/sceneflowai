@@ -4,7 +4,7 @@
     "subtitle": "Verwalte dein Konto, deine Integrationen und Einstellungen",
     "sectionsHeading": "Einstellungen",
     "quickActions": "Schnellzugriff",
-    "backToDashboard": "Back to dashboard",
+    "backToDashboard": "Zurück zum Dashboard",
     "continueWorkflow": "Workflow forts."
   },
   "nav": {
@@ -46,12 +46,12 @@
     "description": "Lies das Studio in einer Sprache, schreibe deine Geschichte in einer anderen und liefere so viele, wie du brauchst",
     "interfaceTitle": "Sprache der Benutzeroberfläche",
     "interfaceDescription": "Menüs, Schaltflächen und Dialoge über das Dashboard und alle drei Studios hinweg.",
-    "storyTitle": "Story-Sprache",
+    "storyTitle": "Geschichtensprache",
     "storyDescription": "Die Sprache, in der neue KI-geschriebene Treatments, Beats, Figuren und Dialoge verfasst werden. Der Sprachumschalter in der Kopfzeile aktualisiert dies zusammen mit der Oberflächenprache.",
     "deliveryTitle": "Liefersprachen",
     "deliveryDescription": "Narration, Dubs und gerendertes Video. Ein einzelnes Projekt kann in mehreren Sprachen gleichzeitig ausgeliefert werden, sodass diese pro Szene und nicht pro Konto ausgewählt werden.",
     "deliveryStartsFrom": "Beginnt ab {language}",
-    "deliverySetInProduction": "In Production Stage einstellen",
+    "deliverySetInProduction": "In Production Stage festlegen",
     "promptsStayEnglish": "Bild- und Videoaufforderungen bleiben unabhängig von diesen Einstellungen in englischer Sprache — die Generierungsmodelle produzieren spürbar schwächere Ergebnisse aus übersetzten Aufforderungen.",
     "interfaceSet": "Schnittstellensprache eingestellt auf {language}",
     "saved": "Spracheinstellung gespeichert",

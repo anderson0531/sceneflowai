@@ -129,8 +129,22 @@ export function matchAcceptLanguage(header: string | null | undefined): string |
   return undefined
 }
 
-/** Top 6 non-English UI language markets aligned with Google AI compatibility. */
-export const TIER_A_LOCALES = ['es', 'pt', 'hi', 'zh-CN', 'ar', 'th'] as const
+/** All 13 non-English base UI language markets shipped across the platform. */
+export const TIER_A_LOCALES = [
+  'es',
+  'pt',
+  'hi',
+  'zh-CN',
+  'ar',
+  'th',
+  'ja',
+  'ko',
+  'de',
+  'fr',
+  'it',
+  'nl',
+  'ru',
+] as const
 
 // ---------------------------------------------------------------------------
 // Landing-page aliases. The landing page predates the app-wide locale setting

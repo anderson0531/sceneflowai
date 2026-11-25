@@ -41,12 +41,12 @@
     }
   },
   "tabs": {
-    "core": "Core",
+    "core": "Grundlagen",
     "story": "Geschichte",
-    "tone": "Klang",
-    "beats": "Schläge",
-    "characters": "Buchstaben",
-    "charactersWithCount": "Zeichen ({count})"
+    "tone": "Ton & Stil",
+    "beats": "Beats",
+    "characters": "Charaktere",
+    "charactersWithCount": "Charaktere ({count})"
   },
   "sections": {
     "coreInfo": "Kerninfo",
@@ -57,13 +57,13 @@
     "toneStyle": "Farbton & Stil",
     "toneStyleThemes": "Farbton, Stil und Themen",
     "toneStyleDescription": "Visueller Stil, Stimmung und thematische Elemente",
-    "beats": "Schläge",
-    "beatsRuntime": "Beats & Runtime",
+    "beats": "Story-Beats",
+    "beatsRuntime": "Beats & Laufzeit",
     "beatsDescription": "Story-Struktur und Tempo",
     "beatsTotalling": "{count} schlägt insgesamt {display}",
     "runtimeTotal": "{display} gesamt",
-    "characters": "Buchstaben",
-    "charactersWithCount": "Zeichen ({count})",
+    "characters": "Charaktere",
+    "charactersWithCount": "Charaktere ({count})",
     "charactersDescription": "Charakterdetails und psychologische Tiefe",
     "wholeBlueprint": "ganzer Bauplan"
   },
@@ -84,9 +84,12 @@
     "narrationMode": "Narrationsmodus",
     "modeSynopsis": "Logline + Synopsis",
     "modeFull": "GANZBEHANDLUNG",
-    "modeBeats": "Beat‑by‑Beat",
+    "modeBeats": "Schritt für Schritt",
     "generating": "Generieren einer Erzählung",
-    "playing": "Gespielte Erzählung"
+    "playing": "Gespielte Erzählung",
+    "listen": "Hör zu",
+    "blueprintListenHint": "Hören Sie sich diesen Entwurf mit der von Ihnen gewählten Sprecherstimme an.",
+    "reasoningListenHint": "Hören Sie sich die narrativen Überlegungen der KI mit der von Ihnen gewählten Erzählerstimme an."
   },
   "menu": {
     "reimagine": "Neu erfinden"
@@ -136,20 +139,20 @@
     "createdBy": "Erstellt von",
     "date": "Datum",
     "tone": "Klang",
-    "artStyle": "Art, Style",
+    "artStyle": "Kunststil",
     "aspectRatio": "Bildverhältnis",
     "themesPlain": "Themes",
     "moodReferences": "Stimmung / Referenzen",
     "treatmentFallback": "Behandlung",
     "synopsis": "UeBERSICHT",
-    "setting": "Einrichtung/Umgebung",
+    "setting": "Schauplatz",
     "protagonist": "Protagonist",
     "antagonist": "Antagonist / Konflikt",
     "toneDescription": "Beschreibung des Tons",
     "themes": "Designs (durch Kommas getrennt)",
     "beat": "Beat {number}",
     "beatTitle": "Beat-Titel",
-    "beatDescription": "Beschreibung schlagen...",
+    "beatDescription": "Beat-Beschreibung…",
     "minutes": "Protokoll",
     "minutesShort": "Min.",
     "minutesSuffix": "{value} m",
@@ -161,7 +164,18 @@
     "internalNeed": "Interner Bedarf",
     "fatalFlaw": "Fataler Fehler",
     "psychologicalDepth": "Psychologische Tiefe (optional)",
-    "customInstruction": "Fügen Sie spezifische Verfeinerungsanweisungen hinzu..."
+    "customInstruction": "Fügen Sie spezifische Verfeinerungsanweisungen hinzu...",
+    "scriptCraft": "Drehbuchhandwerk",
+    "scriptCraftHint": "Fokus auf die Erstellung umfangreicher Skripte – keine zeitlichen Begrenzungen. Mehrfachauswahl möglich.",
+    "scriptCraftNotes": "Anmerkungen zur handwerklichen Gestaltung",
+    "scriptCraftNotesPlaceholder": "Optionale Anmerkungen (Figur, Handlung, Subtext …)",
+    "scriptCraftPriorities": {
+      "characterDepth": "Charaktertiefe",
+      "actionClarity": "Klarheit des Handelns",
+      "subtext": "Subtext",
+      "dialogueRichness": "Dialogreichtum",
+      "visualFirst": "Visuelles zuerst"
+    }
   },
   "refine": {
     "refiningTitle": "Veredelung {section}",
@@ -227,7 +241,9 @@
     "startProduction": "Gehen Sie zu Production Stage",
     "reAnalyzeOrRefine": "Blueprint neu analysieren oder verfeinern",
     "improveScoreOrStart": "Verbessere die Punktzahl oder gehe zu Production Stage",
-    "generating": "Blueprint wird generiert..."
+    "generating": "Blueprint wird generiert...",
+    "readyForProduction": "Produktionsreif",
+    "nextStepLabel": "Nächster Schritt"
   },
   "sidePanel": {
     "tabs": {
@@ -254,7 +270,26 @@
       "notes": "Anmerkungen: ",
       "synthesize": "Feedback in Empfehlungen umwandeln",
       "synthesized": "Zusammengefasste Empfehlungen",
-      "openAssistant": "Öffnen Sie {assistant}"
+      "openAssistant": "Öffnen Sie {assistant}",
+      "exportTitle": "Blueprint exportieren",
+      "exportHint": "Laden Sie PDF, Fountain, Markdown oder JSON zur Verwendung in anderen Tools herunter.",
+      "exportButton": "Herunterladen…",
+      "listenOnlyTitle": "Vorschau (nur zum Anhören)",
+      "reviewerLinkTitle": "Link für Rezensenten",
+      "shareForFeedbackTitle": "Zur Feedback-Einholung teilen",
+      "listenOnlyHint": "Nur Lesen und Hören. Keine Bewertungen, Notizen oder Chat. Läuft nicht ab.",
+      "reviewerLinkHint": "Ein Link für alle Prüfer. Versenden Sie ihn, damit Mitarbeiter lesen, anhören und kommentieren können.",
+      "createLinkHint": "Erstellen Sie einen Link, den Prüfer ohne Anmeldung öffnen können.",
+      "listenOnlyCheckbox": "Vorschau nur zum Anhören (keine Rückmeldung)",
+      "copyLink": "Link kopieren",
+      "copied": "Kopiert!",
+      "createNewLink": "Neuen Link erstellen (neue URL)",
+      "creatingNewLink": "Neuen Link erstellen…",
+      "subTabs": {
+        "feedback": "Feedback",
+        "team": "Team",
+        "messages": "Nachrichten"
+      }
     }
   },
   "audienceResonance": {
@@ -275,10 +310,13 @@
     "categoryScores": "Kategorie: Highscores",
     "jumpToSection": "Zum Abschnitt Matching Blueprint springen",
     "emptyHint": "Speichern Sie Ihre Zielgruppe und analysieren Sie dann, wie Ihr Blueprint bei dieser Zielgruppe ankommt.",
-    "readyOptionalPolish": "Ready for production — optional polish below",
-    "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
-    "optionalPolish": "Optional polish",
-    "polishBadge": "Polish"
+    "readyOptionalPolish": "Produktionsreif – optionaler Feinschliff unten",
+    "scoreBreakdownBalancedHint": "Die Auswirkung wird pro Lücke dargestellt; der Gesamtwert basiert auf einer ausgewogenen Gewichtung, sodass eine umfangreiche Liste von Nachbesserungen ein starkes Konzept nicht zunichtemacht.",
+    "optionalPolish": "Optionaler Feinschliff",
+    "polishBadge": "Polish",
+    "selectGapForFix": "Schließen Sie diese Lücke: {gap}",
+    "fixSelectedWith": "Fix {count} zusammen mit {assistant} ausgewählt",
+    "rewriteInEnglish": "Auf Englisch umschreiben"
   },
   "heroImage": {
     "uploading": "Wird hochgeladen...",
@@ -323,7 +361,31 @@
     "cancelIt": "Sag es ab",
     "generateBalanced": "Ausgewogene Revision erzeugen",
     "reviseIntent": "Absicht überarbeiten",
-    "applyRevision": "Überarbeitung anwenden"
+    "applyRevision": "Überarbeitung anwenden",
+    "addToInstructions": "+ Hinzufügen",
+    "addedToInstructions": "Hinzugefügt",
+    "resonanceGap": "Lücke",
+    "whatShouldChangePlaceholder": "Gib deine Anweisungen ein oder diktiere sie – zum Beispiel: Mach den Mentor heimlich zum Antagonisten und passe die Handlungspunkte des zweiten Akts so an, dass der Verrat bei einem Thriller-Publikum der Generation der Millennials seine volle Wirkung entfaltet …",
+    "clarifyAndConfirm": "Klären und bestätigen",
+    "clarifying": "Wird geklärt…",
+    "proposedDirection": "Vorgeschlagene Richtung",
+    "directionReadyToConfirm": "Diese Anweisung ist präzise genug, um sie zu bestätigen.",
+    "confirmDirection": "Richtung bestätigen",
+    "directionConfirmed": "Richtung bestätigt",
+    "reviseDirection": "Überarbeiten",
+    "startOver": "Von vorne beginnen",
+    "targetAudience": "Zielgruppe",
+    "targetAudienceHint": "(optional – klären und bestätigen, um den Entwurf abzustimmen)",
+    "confirmTargetAudience": "Zielgruppe bestätigen",
+    "targetAudienceConfirmed": "Zielgruppe bestätigt",
+    "scopes": {
+      "all": "Vollständiger Blaupausen-Ausgleich",
+      "core": "Wichtige Informationen",
+      "story": "Geschichte",
+      "characters": "Kontinuität",
+      "beats": "Beats",
+      "tone": "Tonfall und Stil"
+    }
   },
   "reimagine": {
     "reimagineTitle": "Blueprint neu erfinden",
@@ -340,7 +402,10 @@
     "targetAudience": "Zielgruppe",
     "audienceHint": "Beschreiben Sie es mit Ihren eigenen Worten.",
     "visualFoundation": "Visuelle Grundlage",
-    "lockedAtBlueprint": "(gesperrt bei Blueprint)"
+    "lockedAtBlueprint": "(gesperrt bei Blueprint)",
+    "reimagining": "Neu gedacht …",
+    "generateBlueprint": "Blueprint generieren",
+    "startDescription": "Fixieren Sie die Synopsis und erstellen Sie anschließend den Entwurf daraus."
   },
   "tour": {
     "stepCounter": "{current} von {total}",
@@ -458,5 +523,69 @@
       "collaborate-export": "Zusammenarbeiten und exportieren",
       "start-production": "Gehen Sie zu Production Stage"
     }
+  },
+  "toolbar": {
+    "documentLabel": "Behandlung",
+    "rewriteInEnglish": "Auf Englisch umschreiben"
+  },
+  "regenerate": {
+    "sectionTitle": "Ganz von vorne anfangen",
+    "sectionHint": "„Regenerate“ ersetzt das gesamte Blueprint. Verwenden Sie stattdessen den Blueprint Director für gezielte Änderungen.",
+    "confirmTitle": "Blueprint neu generieren?",
+    "confirmDescription": "Dadurch wird Ihr aktueller Blueprint durch eine neue, KI-generierte Variante ersetzt. Manuelle Bearbeitungen, Resonanzwerte und der Variantenverlauf für diesen Entwurf gehen dabei verloren. Dieser Vorgang lässt sich nicht rückgängig machen.",
+    "cancel": "Abbrechen",
+    "confirmAction": "Ja, neu generieren"
+  },
+  "export": {
+    "title": "Blueprint exportieren",
+    "description": "Laden Sie Ihr Treatment in einem Format herunter, das mit anderen Schreib- und Produktionstools kompatibel ist.",
+    "cancel": "Abbrechen",
+    "download": "Herunterladen",
+    "savePdf": "Als PDF speichern",
+    "noVariant": "Kein Bauplan zum Exportieren.",
+    "pdfNotReady": "Die Exportvorschau ist noch nicht bereit.",
+    "pdfHint": "Verwenden Sie den Druckdialog Ihres Browsers und wählen Sie „Als PDF speichern“.",
+    "exportFailed": "Export fehlgeschlagen.",
+    "downloadSuccess": "Als {format} heruntergeladen",
+    "formats": {
+      "pdf": {
+        "label": "PDF",
+        "hint": "Layout in Druckqualität zum Teilen oder Archivieren."
+      },
+      "fountain": {
+        "label": "Brunnen",
+        "hint": "Branchenübliches Textformat für WriterDuet, Highland und Slugline."
+      },
+      "markdown": {
+        "label": "Markdown",
+        "hint": "Lesbare Gliederung für Google Docs, Notion oder Wikis."
+      },
+      "json": {
+        "label": "JSON",
+        "hint": "Vollständige strukturierte Sicherung dieser Blueprint-Variante."
+      }
+    }
+  },
+  "continuity": {
+    "subTabs": {
+      "all": "Alle ({count})",
+      "cast": "Gipsverband ({count})",
+      "locations": "Standorte ({count})",
+      "props": "Stützen ({count})"
+    },
+    "castTitle": "Besetzung",
+    "locationsTitle": "Standorte",
+    "propsTitle": "Requisiten",
+    "sharedSeriesBannerTitle": "Gemeinsame Serie Continuity Library",
+    "sharedSeriesBannerDesc": "Besetzung, Drehorte und Requisiten aus {series} werden von dieser Episodenvorlage mitgenutzt.",
+    "sharedSeriesBannerGeneric": "Die Kontinuitäts-Assets aus der Serienbibel werden für diesen Episodenentwurf genutzt.",
+    "openSeriesContinuity": "Series Room",
+    "seriesAssetBadge": "Serienkontinuität",
+    "newEpisodeAssetBadge": "Episoden-Asset",
+    "locationAtmosphere": "Atmosphäre & Beleuchtung",
+    "locationProps": "Set-Ausstattung & Requisiten",
+    "propSignificance": "Erzählerische Bedeutung",
+    "emptyLocations": "Es wurden noch keine Standorte definiert. Verwenden Sie {assistant}, um Schlüsselstandorte für diesen Blueprint zu generieren.",
+    "emptyProps": "Es wurden noch keine Props definiert. Verwenden Sie {assistant}, um Schlüssel-Props für diesen Blueprint zu generieren."
   }
 }

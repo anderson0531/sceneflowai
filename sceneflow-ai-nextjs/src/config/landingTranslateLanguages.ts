@@ -8,10 +8,10 @@ export type LandingTranslateLanguage = {
 }
 
 /**
- * Single source of truth for UI locales the platform ships in the Landing Page
- * and Studio UI language selectors: English + the Top 6 global language markets
- * aligned with Google AI compatibility (Spanish, Portuguese, Hindi, Simplified
- * Chinese, Arabic, and Thai).
+ * Single source of truth for base UI locales the platform ships in the Landing
+ * Page, Client Portals, and Studio UI language selectors: 14 global languages
+ * (English, Spanish, Portuguese, Hindi, Simplified Chinese, Arabic, Thai,
+ * Japanese, Korean, German, French, Italian, Dutch, and Russian).
  *
  * Production output (dubbing, lip-sync, and regenerated dialogue & signage clips)
  * supports 70+ languages via `src/constants/languages.ts`.
@@ -24,6 +24,13 @@ export const LANDING_TRANSLATE_LANGUAGES: LandingTranslateLanguage[] = [
   { code: 'zh-CN', name: '中文 (简体)', englishName: 'Simplified Chinese', region: 'Asia Pacific' },
   { code: 'ar', name: 'العربية', englishName: 'Arabic', region: 'Middle East & Africa' },
   { code: 'th', name: 'ภาษาไทย', englishName: 'Thai', region: 'Asia Pacific' },
+  { code: 'ja', name: '日本語', englishName: 'Japanese', region: 'Asia Pacific' },
+  { code: 'ko', name: '한국어', englishName: 'Korean', region: 'Asia Pacific' },
+  { code: 'de', name: 'Deutsch', englishName: 'German', region: 'Europe' },
+  { code: 'fr', name: 'Français', englishName: 'French', region: 'Europe' },
+  { code: 'it', name: 'Italiano', englishName: 'Italian', region: 'Europe' },
+  { code: 'nl', name: 'Nederlands', englishName: 'Dutch', region: 'Europe' },
+  { code: 'ru', name: 'Русский', englishName: 'Russian', region: 'Europe' },
 ]
 
 /**
@@ -32,12 +39,7 @@ export const LANDING_TRANSLATE_LANGUAGES: LandingTranslateLanguage[] = [
  */
 export const ALL_PLATFORM_LANGUAGES: LandingTranslateLanguage[] = [
   ...LANDING_TRANSLATE_LANGUAGES,
-  { code: 'fr', name: 'Français', englishName: 'French', region: 'Europe' },
-  { code: 'de', name: 'Deutsch', englishName: 'German', region: 'Europe' },
-  { code: 'it', name: 'Italiano', englishName: 'Italian', region: 'Europe' },
-  { code: 'nl', name: 'Nederlands', englishName: 'Dutch', region: 'Europe' },
   { code: 'pl', name: 'Polski', englishName: 'Polish', region: 'Europe' },
-  { code: 'ru', name: 'Русский', englishName: 'Russian', region: 'Europe' },
   { code: 'uk', name: 'Українська', englishName: 'Ukrainian', region: 'Europe' },
   { code: 'cs', name: 'Čeština', englishName: 'Czech', region: 'Europe' },
   { code: 'sv', name: 'Svenska', englishName: 'Swedish', region: 'Europe' },
@@ -49,8 +51,6 @@ export const ALL_PLATFORM_LANGUAGES: LandingTranslateLanguage[] = [
   { code: 'ro', name: 'Română', englishName: 'Romanian', region: 'Europe' },
   { code: 'hu', name: 'Magyar', englishName: 'Hungarian', region: 'Europe' },
   { code: 'zh-TW', name: '中文 (繁體)', englishName: 'Traditional Chinese', region: 'Asia Pacific' },
-  { code: 'ja', name: '日本語', englishName: 'Japanese', region: 'Asia Pacific' },
-  { code: 'ko', name: '한국어', englishName: 'Korean', region: 'Asia Pacific' },
   { code: 'bn', name: 'বাংলা', englishName: 'Bengali', region: 'Asia Pacific' },
   { code: 'vi', name: 'Tiếng Việt', englishName: 'Vietnamese', region: 'Asia Pacific' },
   { code: 'id', name: 'Bahasa Indonesia', englishName: 'Indonesian', region: 'Asia Pacific' },

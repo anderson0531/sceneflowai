@@ -6,10 +6,14 @@ import {
   ArrowRight,
   BookOpen,
   Check,
-  Clapperboard,
   Film,
+  Globe,
+  KeyRound,
+  Languages,
   MapPin,
   Mic,
+  QrCode,
+  RefreshCw,
   ShieldAlert,
   Sparkles,
   Users,
@@ -18,6 +22,7 @@ import {
 import {
   LONGFORM_CRAFT_COPY,
   type CraftPillarId,
+  type ImmediateLiftCardId,
 } from '@/config/showcase/longformCraftCopy'
 import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 import type { ClientPortalLocale } from '@/lib/intake/clientPortalCopy'
@@ -29,7 +34,13 @@ const PILLAR_ICONS: Record<CraftPillarId, React.ComponentType<{ className?: stri
   location_matching: MapPin,
   heirloom_props: BookOpen,
   voice_cloning: Mic,
-  directed_4k_master: Clapperboard,
+  directed_4k_master: Globe,
+}
+
+const LIFT_ICONS: Record<ImmediateLiftCardId, React.ComponentType<{ className?: string }>> = {
+  multi_perspective_audio: Languages,
+  qr_print_companion: QrCode,
+  living_continuity_vault: RefreshCw,
 }
 
 export interface LongformCinemaCraftShowcaseProps {
@@ -332,6 +343,85 @@ export function LongformCinemaCraftShowcase({
             </div>
           </div>
         </div>
+
+        {/* 3 Immediate-Lift Consumer & White-Label Operator Engines */}
+        {copy.immediateLift && (
+          <div
+            data-testid="showcase-immediate-lift-grid"
+            className="mt-12 sm:mt-16 space-y-6"
+          >
+            <div className="max-w-3xl space-y-2">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border ${accentBorder} ${accentBgSoft} px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${accentText}`}
+              >
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <span>{copy.immediateLift.eyebrow}</span>
+              </span>
+              <h3 className="font-serif text-xl sm:text-2xl font-semibold text-white">
+                {brandTxt(copy.immediateLift.heading)}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                {brandTxt(copy.immediateLift.subtitle)}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+              {copy.immediateLift.cards.map((card) => {
+                const LiftIcon = LIFT_ICONS[card.id]
+                return (
+                  <div
+                    key={card.id}
+                    data-testid={`lift-card-${card.id}`}
+                    className="rounded-2xl border border-white/12 bg-gradient-to-b from-[#111728]/95 to-[#090D18] p-5 flex flex-col justify-between gap-4 shadow-xl shadow-black/40"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${accentBorder} ${accentBgSoft} ${accentText}`}
+                        >
+                          <LiftIcon className="w-5 h-5" />
+                        </span>
+                        <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-300">
+                          {card.badge}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="font-serif text-lg font-semibold text-white leading-snug">
+                          {card.title}
+                        </h4>
+                        <p className={`text-xs font-medium mt-1 ${accentText}`}>
+                          {card.subtitle}
+                        </p>
+                      </div>
+
+                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        {brandTxt(card.description)}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-white/[0.08] space-y-2">
+                      <div className="flex items-start gap-2 text-xs text-slate-200 font-medium">
+                        <Check
+                          className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
+                            isStorefront ? 'text-[#DFB473]' : 'text-emerald-400'
+                          }`}
+                        />
+                        <span>{brandTxt(card.liftHighlight)}</span>
+                      </div>
+                      {card.accessNote && (
+                        <div className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/25 bg-amber-500/10 px-2.5 py-1.5 text-[11px] text-amber-200">
+                          <KeyRound className="w-3.5 h-3.5 shrink-0 text-amber-300" />
+                          <span>{card.accessNote}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Side-by-Side Matrix: Shortform "AI Slop" Generators vs. SceneFlow Longform 4K Cinema */}
         <div className="mt-12 sm:mt-16 rounded-2xl border border-white/10 bg-[#080C15]/95 overflow-hidden shadow-2xl shadow-black/50">

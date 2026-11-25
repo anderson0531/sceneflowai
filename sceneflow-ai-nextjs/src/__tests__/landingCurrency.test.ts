@@ -28,13 +28,20 @@ describe('landingCurrency — locale-matched currency conversion', () => {
     expect(localizeUsdText('$1,200–$4,500+', 'en')).toBe('$1,200–$4,500+')
   })
 
-  it('formats all 7 supported landing locales consistently', () => {
+  it('formats all 14 supported landing locales consistently', () => {
     expect(formatLandingCurrency(100, 'es')).toBe('MX$1,885')
     expect(formatLandingCurrency(100, 'pt')).toBe('R$586')
     expect(formatLandingCurrency(100, 'hi')).toBe('₹9,380')
     expect(formatLandingCurrency(100, 'zh-CN')).toBe('¥665')
     expect(formatLandingCurrency(100, 'ar')).toBe('375 ر.س')
     expect(formatLandingCurrency(100, 'th')).toBe('฿3,400')
+    expect(formatLandingCurrency(100, 'ja')).toBe('¥15,500')
+    expect(formatLandingCurrency(100, 'ko')).toBe('₩140,000')
+    expect(formatLandingCurrency(100, 'de')).toBe('92 €')
+    expect(formatLandingCurrency(100, 'fr')).toBe('92 €')
+    expect(formatLandingCurrency(100, 'it')).toBe('92 €')
+    expect(formatLandingCurrency(100, 'nl')).toBe('€92')
+    expect(formatLandingCurrency(100, 'ru')).toBe('9\u00a0600 ₽')
   })
 
   it('does not double-convert already-prefixed MX$ or R$ strings', () => {

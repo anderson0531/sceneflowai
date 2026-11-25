@@ -41,12 +41,12 @@
     }
   },
   "tabs": {
-    "core": "Core",
+    "core": "Essentiel",
     "story": "Histoire",
-    "tone": "Ton",
+    "tone": "Ton et style",
     "beats": "Beats",
-    "characters": "Caractères",
-    "charactersWithCount": "Caractères ({count})"
+    "characters": "Personnages",
+    "charactersWithCount": "Personnages ({count})"
   },
   "sections": {
     "coreInfo": "Informations de base",
@@ -57,13 +57,13 @@
     "toneStyle": "Ton et style",
     "toneStyleThemes": "Ton, style et thèmes",
     "toneStyleDescription": "Style visuel, ambiance et éléments thématiques",
-    "beats": "Beats",
-    "beatsRuntime": "Beats & Runtime",
+    "beats": "Beats narratifs",
+    "beatsRuntime": "Temps forts et durée",
     "beatsDescription": "Structure de l'histoire et rythme",
     "beatsTotalling": "{count} bat un total de {display}",
     "runtimeTotal": "{display} total",
-    "characters": "Caractères",
-    "charactersWithCount": "Caractères ({count})",
+    "characters": "Personnages",
+    "charactersWithCount": "Personnages ({count})",
     "charactersDescription": "Détails du personnage et profondeur psychologique",
     "wholeBlueprint": "plan complet"
   },
@@ -82,11 +82,14 @@
     "language": "Langue",
     "narration": "Narration",
     "narrationMode": "Mode narration",
-    "modeSynopsis": "Logline + Synopsis",
+    "modeSynopsis": "Accroche + Synopsis",
     "modeFull": "traitement complet :",
-    "modeBeats": "Beat‑by‑Beat",
+    "modeBeats": "Temps par temps",
     "generating": "Générer de la narration",
-    "playing": "Jouer de la narration"
+    "playing": "Jouer de la narration",
+    "listen": "Écoutez",
+    "blueprintListenHint": "Écoutez ce modèle avec la voix de narrateur que vous avez choisie.",
+    "reasoningListenHint": "Écoutez le raisonnement narratif de l'IA avec la voix de narrateur que vous avez choisie."
   },
   "menu": {
     "reimagine": "Réinventer"
@@ -136,20 +139,20 @@
     "createdBy": "Créé par",
     "date": "Date",
     "tone": "Ton",
-    "artStyle": "style nail art",
+    "artStyle": "Style artistique",
     "aspectRatio": "Rapport d'aspect",
     "themesPlain": "Thèmes",
     "moodReferences": "Humeur / Références",
     "treatmentFallback": "Traitement",
     "synopsis": "Synopsis",
-    "setting": "Environnement",
+    "setting": "Cadre narratif",
     "protagonist": "Protagoniste",
     "antagonist": "Antagoniste / Conflit",
     "toneDescription": "Description de la tonalité",
     "themes": "Thèmes (séparés par des virgules)",
     "beat": "Beat {number}",
-    "beatTitle": "Titre Beat",
-    "beatDescription": "Description du battement...",
+    "beatTitle": "Titre du beat",
+    "beatDescription": "Description du beat…",
     "minutes": "Compte-rendus",
     "minutesShort": "Min",
     "minutesSuffix": "{value} m",
@@ -161,7 +164,18 @@
     "internalNeed": "Besoin interne",
     "fatalFlaw": "Défaut fatal",
     "psychologicalDepth": "Profondeur psychologique (facultatif)",
-    "customInstruction": "Ajouter des instructions de raffinement spécifiques..."
+    "customInstruction": "Ajouter des instructions de raffinement spécifiques...",
+    "scriptCraft": "L'art du scénario",
+    "scriptCraftHint": "Priorité à la génération de scripts longs, plutôt qu'aux limites de durée. Sélection multiple.",
+    "scriptCraftNotes": "Notes sur l'artisanat",
+    "scriptCraftNotesPlaceholder": "Notes facultatives (personnage, action, sous-texte…)",
+    "scriptCraftPriorities": {
+      "characterDepth": "Profondeur du personnage",
+      "actionClarity": "Clarté de l'action",
+      "subtext": "Sous-texte",
+      "dialogueRichness": "Richesse des dialogues",
+      "visualFirst": "Priorité au visuel"
+    }
   },
   "refine": {
     "refiningTitle": "Raffinage {section}",
@@ -174,7 +188,7 @@
     "refineSection": "Affiner {section}",
     "fieldsRefined": "{count, plural, =1 {# field} other {# fields}} raffiné",
     "failed": "Échec du raffinement",
-    "sharpenLogline": "Sharpen Logline",
+    "sharpenLogline": "Affiner le logline",
     "clarifyGenre": "Clarifier le genre",
     "strongerTitle": "Titre plus fort",
     "expandSetting": "Développer le paramètre",
@@ -185,7 +199,7 @@
     "visualClarity": "Clarté visuelle",
     "deepenThemes": "Approfondir les thèmes",
     "improvePacing": "Améliorer la stimulation",
-    "risingAction": "Rising Action",
+    "risingAction": "Progression dramatique",
     "strongerClimax": "Climax plus fort",
     "clearResolution": "Effacer la résolution",
     "addDepth": "Ajouter une profondeur psychologique",
@@ -227,7 +241,9 @@
     "startProduction": "Aller à Production Stage",
     "reAnalyzeOrRefine": "Réanalyser ou affiner Blueprint",
     "improveScoreOrStart": "Améliorer le score ou Aller à Production Stage",
-    "generating": "Génération de Blueprint…"
+    "generating": "Génération de Blueprint…",
+    "readyForProduction": "Prêt pour la production",
+    "nextStepLabel": "Étape suivante"
   },
   "sidePanel": {
     "tabs": {
@@ -254,7 +270,26 @@
       "notes": "Notes: ",
       "synthesize": "Transformer les commentaires en recommandations",
       "synthesized": "Recommandations synthétisées",
-      "openAssistant": "Ouvrir {assistant}"
+      "openAssistant": "Ouvrir {assistant}",
+      "exportTitle": "Exporter Blueprint",
+      "exportHint": "Téléchargez le fichier au format PDF, Fountain, Markdown ou JSON pour l'utiliser dans d'autres outils.",
+      "exportButton": "Télécharger…",
+      "listenOnlyTitle": "Aperçu en écoute seule",
+      "reviewerLinkTitle": "Lien pour le réviseur",
+      "shareForFeedbackTitle": "Partager pour recueillir des avis",
+      "listenOnlyHint": "Lecture et écoute uniquement. Pas d'évaluations, de notes ni de messagerie. Sans date d'expiration.",
+      "reviewerLinkHint": "Un seul lien pour tous les relecteurs. Envoyez-le pour permettre à vos collaborateurs de lire, d'écouter et de commenter.",
+      "createLinkHint": "Créez un lien que les relecteurs peuvent ouvrir sans se connecter.",
+      "listenOnlyCheckbox": "Aperçu en écoute seule (sans retour)",
+      "copyLink": "Copier le lien",
+      "copied": "Copié !",
+      "createNewLink": "Créer un nouveau lien (nouvelle URL)",
+      "creatingNewLink": "Création d'un nouveau lien…",
+      "subTabs": {
+        "feedback": "Commentaires",
+        "team": "Équipe",
+        "messages": "Messages"
+      }
     }
   },
   "audienceResonance": {
@@ -275,10 +310,13 @@
     "categoryScores": "Scores de catégorie",
     "jumpToSection": "Aller à la section Blueprint correspondante",
     "emptyHint": "Enregistrez votre public cible, puis analysez comment votre plan résonne avec ce public.",
-    "readyOptionalPolish": "Ready for production — optional polish below",
-    "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
-    "optionalPolish": "Optional polish",
-    "polishBadge": "Polish"
+    "readyOptionalPolish": "Prêt pour la production — améliorations facultatives ci-dessous",
+    "scoreBreakdownBalancedHint": "L'impact est indiqué pour chaque lacune ; le score global repose sur une pondération équilibrée, de sorte qu'une longue liste de retouches ne compromette pas un plan d'action solide.",
+    "optionalPolish": "Finition facultative",
+    "polishBadge": "Polish",
+    "selectGapForFix": "Comblez cette lacune : {gap}",
+    "fixSelectedWith": "Correction : {count} sélectionné avec {assistant}",
+    "rewriteInEnglish": "Réécrire en anglais"
   },
   "heroImage": {
     "uploading": "Transfert en cours...",
@@ -323,7 +361,31 @@
     "cancelIt": "- Annule-le.",
     "generateBalanced": "Générer une révision équilibrée",
     "reviseIntent": "Réviser l'intention",
-    "applyRevision": "Appliquer la révision"
+    "applyRevision": "Appliquer la révision",
+    "addToInstructions": "+ Ajouter",
+    "addedToInstructions": "Ajouté",
+    "resonanceGap": "Gap",
+    "whatShouldChangePlaceholder": "Saisissez ou dictez vos directives — par exemple, faites du mentor l'antagoniste en secret et rééquilibrez les temps forts du deuxième acte pour que la trahison ait de l'impact auprès d'un public de thrillers de la génération Y…",
+    "clarifyAndConfirm": "Clarifier et confirmer",
+    "clarifying": "Clarification en cours…",
+    "proposedDirection": "Orientation proposée",
+    "directionReadyToConfirm": "Cette orientation est suffisamment précise pour être confirmée.",
+    "confirmDirection": "Confirmer la direction",
+    "directionConfirmed": "Direction confirmée",
+    "reviseDirection": "Réviser",
+    "startOver": "Recommencer",
+    "targetAudience": "Public cible",
+    "targetAudienceHint": "(facultatif — clarifier et confirmer pour harmoniser le plan directeur)",
+    "confirmTargetAudience": "Confirmer le public cible",
+    "targetAudienceConfirmed": "Public cible confirmé",
+    "scopes": {
+      "all": "Équilibrage complet des plans",
+      "core": "Informations essentielles",
+      "story": "Histoire",
+      "characters": "Continuité",
+      "beats": "Beats",
+      "tone": "Ton et style"
+    }
   },
   "reimagine": {
     "reimagineTitle": "Réimaginez Blueprint",
@@ -340,7 +402,10 @@
     "targetAudience": "Public cible",
     "audienceHint": "décrire (avec vos propres mots)",
     "visualFoundation": "Fond de teint visuel",
-    "lockedAtBlueprint": "(verrouillé à Blueprint)"
+    "lockedAtBlueprint": "(verrouillé à Blueprint)",
+    "reimagining": "Réinventer…",
+    "generateBlueprint": "Générer Blueprint",
+    "startDescription": "Figez le synopsis, puis générez le plan directeur à partir de celui-ci."
   },
   "tour": {
     "stepCounter": "{current} de {total}",
@@ -387,7 +452,7 @@
     "blueprintGenerated": "Blueprint généré",
     "audienceSaved": "Public cible enregistré",
     "arAnalyzed": "Audience Resonance analysée",
-    "arRunAtLeastOnce": "Audience Resonance run at least once",
+    "arRunAtLeastOnce": "Audience Resonance exécuté au moins une fois",
     "scoreTarget": "Score {target}+",
     "scoreAtTarget": "Score {target}+ (courant : {current})",
     "artStyle": "style nail art",
@@ -458,5 +523,69 @@
       "collaborate-export": "Collaborer et exporter",
       "start-production": "Aller à Production Stage"
     }
+  },
+  "toolbar": {
+    "documentLabel": "Traitement",
+    "rewriteInEnglish": "Réécrire en anglais"
+  },
+  "regenerate": {
+    "sectionTitle": "Repartir de zéro",
+    "sectionHint": "La fonction de régénération remplace l'intégralité du Blueprint. Utilisez plutôt Blueprint Director pour effectuer des modifications ciblées.",
+    "confirmTitle": "Régénérer Blueprint ?",
+    "confirmDescription": "Cela remplacera votre Blueprint actuel par une nouvelle version générée par IA. Les modifications manuelles, les scores de résonance et l'historique des variantes de ce modèle seront perdus. Cette action est irréversible.",
+    "cancel": "Annuler",
+    "confirmAction": "Oui, régénérer"
+  },
+  "export": {
+    "title": "Exporter Blueprint",
+    "description": "Téléchargez votre traitement dans un format compatible avec d'autres outils d'écriture et de production.",
+    "cancel": "Annuler",
+    "download": "Télécharger",
+    "savePdf": "Enregistrer au format PDF",
+    "noVariant": "Aucun plan à exporter.",
+    "pdfNotReady": "L'aperçu de l'exportation n'est pas encore prêt.",
+    "pdfHint": "Utilisez la boîte de dialogue d'impression de votre navigateur et choisissez « Enregistrer au format PDF ».",
+    "exportFailed": "L'exportation a échoué.",
+    "downloadSuccess": "Téléchargé sous le nom {format}",
+    "formats": {
+      "pdf": {
+        "label": "PDF",
+        "hint": "Mise en page de qualité impression pour le partage ou l'archivage."
+      },
+      "fountain": {
+        "label": "Fontaine",
+        "hint": "Format de texte standard de l'industrie pour WriterDuet, Highland et Slugline."
+      },
+      "markdown": {
+        "label": "Markdown",
+        "hint": "Plan lisible pour Google Docs, Notion ou les wikis."
+      },
+      "json": {
+        "label": "JSON",
+        "hint": "Sauvegarde structurée complète de cette variante de blueprint."
+      }
+    }
+  },
+  "continuity": {
+    "subTabs": {
+      "all": "Tous ({count})",
+      "cast": "Plâtre ({count})",
+      "locations": "Emplacements ({count})",
+      "props": "Accessoires ({count})"
+    },
+    "castTitle": "Distribution",
+    "locationsTitle": "Emplacements",
+    "propsTitle": "Accessoires",
+    "sharedSeriesBannerTitle": "Série partagée Continuity Library",
+    "sharedSeriesBannerDesc": "La distribution, les lieux de tournage et les accessoires de {series} sont partagés avec ce modèle d'épisode.",
+    "sharedSeriesBannerGeneric": "Les éléments de continuité issus de la bible de la série sont partagés avec ce plan d'épisode.",
+    "openSeriesContinuity": "Series Room",
+    "seriesAssetBadge": "Continuité de la série",
+    "newEpisodeAssetBadge": "Élément d'épisode",
+    "locationAtmosphere": "Ambiance et éclairage",
+    "locationProps": "Habillage de décor et accessoires",
+    "propSignificance": "Portée narrative",
+    "emptyLocations": "Aucun emplacement n'est encore défini. Utilisez le {assistant} pour générer les emplacements clés de ce modèle.",
+    "emptyProps": "Aucune propriété n'est encore définie. Utilisez le {assistant} pour générer les propriétés clés de ce modèle."
   }
 }

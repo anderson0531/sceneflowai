@@ -10,7 +10,22 @@ import {
 } from '@/lib/intake/clientPortalCopy'
 import { INTAKE_PLAYBOOKS, isValidIntakeVertical } from '@/lib/intake/intakePlaybooks'
 
-const REQUIRED_LOCALES: ClientPortalLocale[] = ['en', 'es', 'pt', 'hi', 'zh-CN', 'ar', 'th']
+const REQUIRED_LOCALES: ClientPortalLocale[] = [
+  'en',
+  'es',
+  'pt',
+  'hi',
+  'zh-CN',
+  'ar',
+  'th',
+  'ja',
+  'ko',
+  'de',
+  'fr',
+  'it',
+  'nl',
+  'ru',
+]
 
 function extractPlaceholders(str: string): string[] {
   return Array.from(str.matchAll(/\{([a-zA-Z0-9_]+)\}/g))
@@ -18,7 +33,7 @@ function extractPlaceholders(str: string): string[] {
     .sort()
 }
 
-describe('Client Portal 7-Locale i18n & Playbook Parity (Platform UI Locales)', () => {
+describe('Client Portal 14-Locale i18n & Playbook Parity (Platform UI Locales)', () => {
   it('matches LANDING_TRANSLATE_LANGUAGES 1-for-1 (including Arabic) with valid BCP-47 speech codes', () => {
     expect(SUPPORTED_CLIENT_PORTAL_LOCALES.map((l) => l.code)).toEqual(
       LANDING_TRANSLATE_LANGUAGES.map((l) => l.code)
@@ -31,6 +46,13 @@ describe('Client Portal 7-Locale i18n & Playbook Parity (Platform UI Locales)', 
     expect(getSpeechLangForPortalLocale('zh-CN')).toBe('zh-CN')
     expect(getSpeechLangForPortalLocale('ar')).toBe('ar-SA')
     expect(getSpeechLangForPortalLocale('th')).toBe('th-TH')
+    expect(getSpeechLangForPortalLocale('ja')).toBe('ja-JP')
+    expect(getSpeechLangForPortalLocale('ko')).toBe('ko-KR')
+    expect(getSpeechLangForPortalLocale('de')).toBe('de-DE')
+    expect(getSpeechLangForPortalLocale('fr')).toBe('fr-FR')
+    expect(getSpeechLangForPortalLocale('it')).toBe('it-IT')
+    expect(getSpeechLangForPortalLocale('nl')).toBe('nl-NL')
+    expect(getSpeechLangForPortalLocale('ru')).toBe('ru-RU')
   })
 
   it('normalizes regional browser language tags cleanly', () => {
@@ -40,10 +62,17 @@ describe('Client Portal 7-Locale i18n & Playbook Parity (Platform UI Locales)', 
     expect(resolveClientPortalLocale('ar-AE')).toBe('ar')
     expect(resolveClientPortalLocale('hi-IN')).toBe('hi')
     expect(resolveClientPortalLocale('th-TH')).toBe('th')
+    expect(resolveClientPortalLocale('ja-JP')).toBe('ja')
+    expect(resolveClientPortalLocale('ko-KR')).toBe('ko')
+    expect(resolveClientPortalLocale('de-AT')).toBe('de')
+    expect(resolveClientPortalLocale('fr-CA')).toBe('fr')
+    expect(resolveClientPortalLocale('it-CH')).toBe('it')
+    expect(resolveClientPortalLocale('nl-BE')).toBe('nl')
+    expect(resolveClientPortalLocale('ru-RU')).toBe('ru')
     expect(resolveClientPortalLocale('unknown-XX')).toBe('en')
   })
 
-  it('maintains 100% key and ICU placeholder parity across en, es, pt, hi, zh-CN, and th', () => {
+  it('maintains 100% key and ICU placeholder parity across all 14 base UI locales', () => {
     const enCopy = CLIENT_PORTAL_COPY.en
     const enKeys = Object.keys(enCopy) as Array<keyof typeof enCopy>
 

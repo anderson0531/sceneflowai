@@ -282,10 +282,24 @@ describe('World-Class Creator + Video Services Landing Architecture', () => {
     expect(collapseCopy).toContain("'key-features'")
   })
 
-  it('ships complete native translations across all 7 priority locales (en, es, pt, hi, zh-CN, ar, th) and message catalogs', () => {
+  it('ships complete native translations across all 14 base UI locales and message catalogs', () => {
     expect((enMessages as Record<string, unknown>).studioLanding).toEqual(WORLD_CLASS_LANDING_COPY)
 
-    for (const locale of ['es', 'pt', 'hi', 'zh-CN', 'ar', 'th'] as const) {
+    for (const locale of [
+      'es',
+      'pt',
+      'hi',
+      'zh-CN',
+      'ar',
+      'th',
+      'ja',
+      'ko',
+      'de',
+      'fr',
+      'it',
+      'nl',
+      'ru',
+    ] as const) {
       expect(WORLD_CLASS_LANDING_TRANSLATIONS[locale]).toBeDefined()
       const localized = resolveLocalizedStudioLandingCopy(locale)
 

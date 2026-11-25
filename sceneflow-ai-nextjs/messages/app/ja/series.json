@@ -1,0 +1,62 @@
+{
+  "studio": {
+    "title": "Series Room",
+    "description": "複数話にわたるストーリー展開を一度計画し、その計画に沿って各エピソードを制作する。",
+    "newSeries": "新シリーズ",
+    "emptyHint": "シリーズ作品では、エピソード間で登場人物、舞台、そして物語の連続性が一貫して保たれます。",
+    "searchPlaceholder": "タイトル、あらすじ、またはジャンルでシリーズを検索...",
+    "statusAll": "すべてのアクティブな項目と下書き",
+    "statusDraft": "草案",
+    "statusActive": "アクティブ",
+    "statusCompleted": "完了",
+    "statusArchived": "アーカイブ済み",
+    "sortRecent": "最近更新されました",
+    "sortAlphabetical": "タイトル (A–Z)",
+    "sortEpisodes": "エピソード数",
+    "seriesCount": "{count}シリーズ",
+    "noMatchingSeries": "一致するシリーズはありません",
+    "empty": "まだシリーズがありません"
+  },
+  "detail": {
+    "productionBible": "シリーズ・バイブル",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "addEpisode": "エピソードを追加",
+    "openEpisode": "エピソード {number} を開く",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}",
+    "episodes": "エピソード",
+    "generateEpisodes": "エピソードを生成"
+  },
+  "continuity": {
+    "title": "コンティニュイティ・エンジン",
+    "aesthetics": "美学",
+    "keyEvents": "主要な出来事",
+    "storyThreads": "物語の糸",
+    "reviewUpdates": "レビューの更新",
+    "characters": "キャラクター",
+    "locations": "ロケーション"
+  },
+  "fields": {
+    "seriesTitle": "シリーズ名",
+    "logline": "ログライン",
+    "synopsis": "あらすじ",
+    "targetAudience": "ターゲット層",
+    "episodeTitle": "エピソードタイトル",
+    "episodeHook": "次回への引き",
+    "characterName": "キャラクター名",
+    "characterDescription": "説明",
+    "appearance": "外観",
+    "backstory": "背景",
+    "personality": "性格",
+    "locationName": "場所の名称",
+    "locationDescription": "説明",
+    "setting": "舞台設定",
+    "episodeSynopsis": "エピソードのあらすじ"
+  },
+  "toast": {
+    "created": "シリーズが作成されました",
+    "updated": "シリーズが更新されました",
+    "generateFailed": "エピソードを生成できませんでした",
+    "deleted": "シリーズが削除されました"
+  }
+}

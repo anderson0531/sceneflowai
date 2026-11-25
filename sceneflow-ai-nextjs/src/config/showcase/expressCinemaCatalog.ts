@@ -76,7 +76,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
       'Up to 60-min Longform 4K Feature (360 directed frames; extendable to 150 min)',
       '1–3 min Shareable Theatrical Trailer included for family & event invites',
       'Continuity lock: age-28 de-aging, relative matching, hometowns & heirlooms',
-      '90%+ resonance multi-chapter script, voice cloning/matching & stereo score',
+      'Includes automatic regional & decade-specific cultural/economic context + staged family gatherings & traditions across 70+ languages',
     ],
     occasionPromptContext:
       'Family Legacy / Life Story Memoir honoring a loved one’s key chapters, influential people, cherished traditions, and lasting impact.',
@@ -200,7 +200,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
       'Deep-dive 4K property & neighborhood film (up to 60 min / 360 frames)',
       '1–3 min MLS & social highlight trailer included for instant buyer hooks',
       'Room-by-room updates, luxury appliances, schools & lifestyle storytelling',
-      'Multilingual buyer dubs (70+ languages) + commercial-licensed 4K master',
+      'Includes virtual furniture updates, active neighborhood lifestyle staging & localized buyer narration in 70+ languages',
     ],
     occasionPromptContext:
       'Real Estate Express 4K Listing Film showcasing architectural highlights, lifestyle appeal, and neighborhood amenities.',
@@ -231,7 +231,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
       'Longform 4K founder & brand documentary (up to 60 min / 360 frames)',
       '1–3 min homepage & social trailer included to convert visitors fast',
       'Lock founder, clinic/office, signature products & pronunciation lock',
-      '90%+ target audience resonance script + 100% commercial 4K master',
+      'Includes local founding-era historical context & active patient/client care scene staging',
     ],
     occasionPromptContext:
       'Founder & Practice Brand Film communicating origin story, client trust, core outcomes, and call to action.',
@@ -262,7 +262,7 @@ export const EXPRESS_SHOWCASE_OFFERS: readonly ExpressShowcaseOffer[] = [
       'Multi-module 4K training course (up to 60 min / 360 frames; extendable)',
       '1–3 min executive & new-hire overview trailer included',
       'Locked instructor, uniform, workplace & safety equipment visuals',
-      'Technical acronym pronunciation lock + LMS-ready 4K master in 70+ langs',
+      'Includes localized workplace safety/equipment scenario staging adapted to regional compliance & 70+ workforce languages',
     ],
     occasionPromptContext:
       'Narrated Corporate Training / SOP Film transforming operational guidelines into clear visual chapters.',

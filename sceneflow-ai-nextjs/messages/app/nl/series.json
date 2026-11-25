@@ -1,0 +1,62 @@
+{
+  "studio": {
+    "title": "Series Room",
+    "description": "Zet de verhaallijn voor meerdere afleveringen één keer op en produceer vervolgens elke aflevering op basis daarvan.",
+    "newSeries": "Nieuwe serie",
+    "emptyHint": "Een serie behoudt consistentie wat betreft personages, locaties en continuïteit door de afleveringen heen.",
+    "searchPlaceholder": "Zoek series op titel, logline of genre...",
+    "statusAll": "Alle actieve items en concepten",
+    "statusDraft": "Concept",
+    "statusActive": "Actief",
+    "statusCompleted": "Voltooid",
+    "statusArchived": "Gearchiveerd",
+    "sortRecent": "Recent bijgewerkt",
+    "sortAlphabetical": "Titel (A–Z)",
+    "sortEpisodes": "Aantal afleveringen",
+    "seriesCount": "{count}-serie",
+    "noMatchingSeries": "Geen overeenkomende series",
+    "empty": "Nog geen series"
+  },
+  "detail": {
+    "productionBible": "Seriebijbel",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "addEpisode": "Aflevering toevoegen",
+    "openEpisode": "Open episode {number}",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}",
+    "episodes": "Afleveringen",
+    "generateEpisodes": "Afleveringen genereren"
+  },
+  "continuity": {
+    "title": "Continuity Engine",
+    "aesthetics": "Esthetiek",
+    "keyEvents": "Belangrijke gebeurtenissen",
+    "storyThreads": "Verhaallijnen",
+    "reviewUpdates": "Updates van beoordelingen",
+    "characters": "Personages",
+    "locations": "Locaties"
+  },
+  "fields": {
+    "seriesTitle": "Serietitel",
+    "logline": "Logline",
+    "synopsis": "Synopsis",
+    "targetAudience": "Doelgroep",
+    "episodeTitle": "Afleveringstitel",
+    "episodeHook": "Haakje voor de volgende aflevering",
+    "characterName": "Personagenaam",
+    "characterDescription": "Beschrijving",
+    "appearance": "Uiterlijk",
+    "backstory": "Achtergrondverhaal",
+    "personality": "Persoonlijkheid",
+    "locationName": "Locatienaam",
+    "locationDescription": "Beschrijving",
+    "setting": "Setting",
+    "episodeSynopsis": "Synopsis van aflevering"
+  },
+  "toast": {
+    "created": "Serie aangemaakt",
+    "updated": "Serie bijgewerkt",
+    "generateFailed": "Kon geen afleveringen genereren",
+    "deleted": "Reeks verwijderd"
+  }
+}

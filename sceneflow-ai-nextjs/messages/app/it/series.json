@@ -1,0 +1,62 @@
+{
+  "studio": {
+    "title": "Series Room",
+    "description": "Pianifica una volta sola l'arco narrativo che si sviluppa su più episodi, quindi realizza ogni singolo episodio basandoti su di esso.",
+    "newSeries": "Nuova serie",
+    "emptyHint": "Una serie mantiene la coerenza di personaggi, ambientazioni e continuità tra gli episodi.",
+    "searchPlaceholder": "Cerca serie per titolo, logline o genere...",
+    "statusAll": "Tutti gli elementi attivi e le bozze",
+    "statusDraft": "Bozza",
+    "statusActive": "Attivo",
+    "statusCompleted": "Completato",
+    "statusArchived": "Archiviato",
+    "sortRecent": "Aggiornato di recente",
+    "sortAlphabetical": "Titolo (A–Z)",
+    "sortEpisodes": "Numero di episodi",
+    "seriesCount": "Serie {count}",
+    "noMatchingSeries": "Nessuna serie corrispondente",
+    "empty": "Nessuna serie ancora"
+  },
+  "detail": {
+    "productionBible": "Bibbia della serie",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "addEpisode": "Aggiungi episodio",
+    "openEpisode": "Episodio aperto {number}",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}",
+    "episodes": "Episodi",
+    "generateEpisodes": "Genera episodi"
+  },
+  "continuity": {
+    "title": "Motore di continuità",
+    "aesthetics": "Estetica",
+    "keyEvents": "Eventi chiave",
+    "storyThreads": "Fili narrativi",
+    "reviewUpdates": "Aggiornamenti della recensione",
+    "characters": "Personaggi",
+    "locations": "Location"
+  },
+  "fields": {
+    "seriesTitle": "Titolo della serie",
+    "logline": "Logline",
+    "synopsis": "Sinossi",
+    "targetAudience": "Pubblico di riferimento",
+    "episodeTitle": "Titolo dell'episodio",
+    "episodeHook": "Gancio per il prossimo episodio",
+    "characterName": "Nome del personaggio",
+    "characterDescription": "Descrizione",
+    "appearance": "Aspetto",
+    "backstory": "Antefatto",
+    "personality": "Personalità",
+    "locationName": "Nome della località",
+    "locationDescription": "Descrizione",
+    "setting": "Ambientazione",
+    "episodeSynopsis": "Sinossi dell’episodio"
+  },
+  "toast": {
+    "created": "Serie creata",
+    "updated": "Serie aggiornata",
+    "generateFailed": "Impossibile generare gli episodi",
+    "deleted": "Serie eliminata"
+  }
+}

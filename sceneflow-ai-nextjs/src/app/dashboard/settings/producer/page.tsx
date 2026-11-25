@@ -83,12 +83,17 @@ const ROUTING_LOCALE_ROWS = [
   { code: 'en', label: 'English (EN)' },
   { code: 'es', label: 'Español (ES)' },
   { code: 'pt', label: 'Português (PT)' },
-  { code: 'fr', label: 'Français (FR)' },
-  { code: 'de', label: 'Deutsch (DE)' },
   { code: 'hi', label: 'हिन्दी (HI)' },
-  { code: 'zh-CN', label: '简体中文 (ZH)' },
+  { code: 'zh-CN', label: '中文 (简体) (ZH)' },
   { code: 'ar', label: 'العربية (AR)' },
-  { code: 'th', label: 'ไทย (TH)' },
+  { code: 'th', label: 'ภาษาไทย (TH)' },
+  { code: 'ja', label: '日本語 (JA)' },
+  { code: 'ko', label: '한국어 (KO)' },
+  { code: 'de', label: 'Deutsch (DE)' },
+  { code: 'fr', label: 'Français (FR)' },
+  { code: 'it', label: 'Italiano (IT)' },
+  { code: 'nl', label: 'Nederlands (NL)' },
+  { code: 'ru', label: 'Русский (RU)' },
 ] as const
 
 interface ProjectSummaryItem {
@@ -138,9 +143,16 @@ const LOCALE_OPTIONS = [
   { value: 'es', label: 'Español (es)' },
   { value: 'pt', label: 'Português (pt)' },
   { value: 'hi', label: 'हिन्दी (hi)' },
-  { value: 'zh-CN', label: '简体中文 (zh-CN)' },
+  { value: 'zh-CN', label: '中文 (简体) (zh-CN)' },
   { value: 'ar', label: 'العربية (ar)' },
-  { value: 'th', label: 'ไทย (th)' },
+  { value: 'th', label: 'ภาษาไทย (th)' },
+  { value: 'ja', label: '日本語 (ja)' },
+  { value: 'ko', label: '한국어 (ko)' },
+  { value: 'de', label: 'Deutsch (de)' },
+  { value: 'fr', label: 'Français (fr)' },
+  { value: 'it', label: 'Italiano (it)' },
+  { value: 'nl', label: 'Nederlands (nl)' },
+  { value: 'ru', label: 'Русский (ru)' },
 ] as const
 
 export default function ProducerSettingsPage() {

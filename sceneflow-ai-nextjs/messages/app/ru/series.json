@@ -1,0 +1,62 @@
+{
+  "studio": {
+    "title": "Series Room",
+    "description": "Спланируйте сюжетную арку, охватывающую несколько эпизодов, а затем создавайте каждый эпизод с опорой на этот план.",
+    "newSeries": "Новая серия",
+    "emptyHint": "В сериале персонажи, места действия и сюжетная преемственность остаются неизменными от серии к серии.",
+    "searchPlaceholder": "Поиск сериалов по названию, логлайну или жанру...",
+    "statusAll": "Все активные и черновики",
+    "statusDraft": "Черновик",
+    "statusActive": "Активный",
+    "statusCompleted": "Завершено",
+    "statusArchived": "В архиве",
+    "sortRecent": "Недавно обновлено",
+    "sortAlphabetical": "Название (А–Я)",
+    "sortEpisodes": "Количество эпизодов",
+    "seriesCount": "Серия {count}",
+    "noMatchingSeries": "Нет подходящих серий",
+    "empty": "Сериалов пока нет"
+  },
+  "detail": {
+    "productionBible": "Библия сериала",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "addEpisode": "Добавить эпизод",
+    "openEpisode": "Открыть эпизод {number}",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}",
+    "episodes": "Эпизоды",
+    "generateEpisodes": "Сгенерировать эпизоды"
+  },
+  "continuity": {
+    "title": "Механизм обеспечения непрерывности",
+    "aesthetics": "Эстетика",
+    "keyEvents": "Ключевые события",
+    "storyThreads": "Сюжетные линии",
+    "reviewUpdates": "Обновления обзоров",
+    "characters": "Персонажи",
+    "locations": "Локации"
+  },
+  "fields": {
+    "seriesTitle": "Название серии",
+    "logline": "Логлайн",
+    "synopsis": "Синопсис",
+    "targetAudience": "Целевая аудитория",
+    "episodeTitle": "Название эпизода",
+    "episodeHook": "Завязка для следующего эпизода",
+    "characterName": "Имя персонажа",
+    "characterDescription": "Описание",
+    "appearance": "Внешний вид",
+    "backstory": "Предыстория",
+    "personality": "Личность",
+    "locationName": "Название местоположения",
+    "locationDescription": "Описание",
+    "setting": "Сеттинг",
+    "episodeSynopsis": "Синопсис эпизода"
+  },
+  "toast": {
+    "created": "Серия создана",
+    "updated": "Серия обновлена",
+    "generateFailed": "Не удалось сгенерировать эпизоды",
+    "deleted": "Серия удалена"
+  }
+}

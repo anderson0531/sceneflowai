@@ -309,8 +309,8 @@ describe('Embeddable Client Intake Interview, Consent Shield & Blueprint Synthes
     )
   })
 
-  it('opens video_memoir intake with a story-first ("tell me your story") invitation across all 7 locales', () => {
-    const locales = ['en', 'es', 'pt', 'hi', 'zh-CN', 'ar', 'th'] as const
+  it('opens video_memoir intake with a story-first ("tell me your story") invitation across all 14 locales', () => {
+    const locales = ['en', 'es', 'pt', 'hi', 'zh-CN', 'ar', 'th', 'ja', 'ko', 'de', 'fr', 'it', 'nl', 'ru'] as const
     for (const locale of locales) {
       const greeting = INTAKE_PLAYBOOKS.video_memoir.welcomeByLocale[locale]
       expect(typeof greeting).toBe('string')

@@ -1,0 +1,60 @@
+{
+  "shell": {
+    "title": "Impostazioni dell'account",
+    "subtitle": "Gestisci il tuo account, le integrazioni e le preferenze",
+    "sectionsHeading": "Impostazioni",
+    "quickActions": "Azioni rapide",
+    "backToDashboard": "Torna alla dashboard",
+    "continueWorkflow": "Continua il flusso di lavoro"
+  },
+  "nav": {
+    "profile": "Profilo",
+    "profileDescription": "Gestisci le informazioni del tuo account",
+    "integrations": "Integrazioni",
+    "integrationsDescription": "Connetti provider di IA e servizi esterni",
+    "security": "Sicurezza",
+    "securityDescription": "Impostazioni di password e sicurezza",
+    "billing": "Fatturazione",
+    "billingDescription": "Gestisci l'abbonamento e la fatturazione",
+    "notifications": "Notifiche",
+    "notificationsDescription": "Preferenze per email e notifiche push",
+    "data": "Dati e privacy",
+    "dataDescription": "Esportazione dei dati e controlli sulla privacy",
+    "byok": "Impostazioni BYOK",
+    "storage": "Archiviazione",
+    "admin": "Amministratore",
+    "adminDescription": "Funzioni e controlli di amministrazione",
+    "producer": "Produttore e team",
+    "producerDescription": "Link per l'acquisizione clienti, branding white-label e accesso per il team"
+  },
+  "profile": {
+    "title": "Informazioni sul profilo",
+    "description": "Gestisci le informazioni del tuo account e i tuoi dati personali",
+    "username": "Nome utente",
+    "usernamePlaceholder": "Inserisci il tuo nome utente",
+    "email": "Indirizzo e-mail",
+    "emailPlaceholder": "Inserisci la tua email",
+    "firstName": "Nome",
+    "firstNamePlaceholder": "Inserisci il tuo nome",
+    "lastName": "Cognome",
+    "lastNamePlaceholder": "Inserisci il tuo cognome",
+    "updated": "Profilo aggiornato con successo",
+    "updateFailed": "Impossibile aggiornare il profilo"
+  },
+  "languages": {
+    "title": "Lingue",
+    "description": "Leggi lo studio in una lingua, scrivi la tua storia in un'altra e distribuiscila in tutte le lingue che ti servono.",
+    "interfaceTitle": "Lingua dell'interfaccia",
+    "interfaceDescription": "Menu, pulsanti e finestre di dialogo nella Dashboard e in tutti e tre gli studio.",
+    "storyDescription": "La lingua in cui vengono redatti i nuovi soggetti, le sequenze narrative (beat), i personaggi e i dialoghi generati dall'IA. Il selettore della lingua nell'intestazione aggiorna questa impostazione insieme alla lingua dell'interfaccia.",
+    "deliveryTitle": "Lingue di erogazione",
+    "deliveryDescription": "Narrazione, doppiaggio e video renderizzati. Un singolo progetto può essere distribuito in più lingue contemporaneamente; pertanto, la scelta viene effettuata per singola scena anziché per account.",
+    "deliveryStartsFrom": "Parte da {language}",
+    "promptsStayEnglish": "I prompt per immagini e video rimangono in inglese a prescindere da queste impostazioni: i modelli di generazione producono risultati sensibilmente inferiori a partire da prompt tradotti.",
+    "interfaceSet": "Lingua dell'interfaccia impostata su {language}",
+    "saved": "Preferenza linguistica salvata",
+    "saveFailed": "Impossibile salvare la preferenza della lingua",
+    "storyTitle": "Lingua della storia",
+    "deliverySetInProduction": "Configurato in Production Stage"
+  }
+}

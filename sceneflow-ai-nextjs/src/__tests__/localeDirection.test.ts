@@ -78,7 +78,7 @@ describe('matchAcceptLanguage', () => {
 })
 
 describe('language registry', () => {
-  it('ships English plus the top 6 Google AI language markets', () => {
+  it('ships all 14 base UI languages across global markets', () => {
     expect(PLATFORM_LANGUAGES.map((l) => l.code)).toEqual([
       'en',
       'es',
@@ -87,6 +87,13 @@ describe('language registry', () => {
       'zh-CN',
       'ar',
       'th',
+      'ja',
+      'ko',
+      'de',
+      'fr',
+      'it',
+      'nl',
+      'ru',
     ])
   })
 

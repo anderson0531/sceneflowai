@@ -1,0 +1,60 @@
+{
+  "shell": {
+    "title": "계정 설정",
+    "subtitle": "계정, 연동 및 환경설정 관리",
+    "sectionsHeading": "설정",
+    "quickActions": "빠른 작업",
+    "backToDashboard": "대시보드로 돌아가기",
+    "continueWorkflow": "워크플로 계속하기"
+  },
+  "nav": {
+    "profile": "프로필",
+    "profileDescription": "계정 정보 관리",
+    "integrations": "통합",
+    "integrationsDescription": "AI 제공업체와 외부 서비스를 연결하세요.",
+    "security": "보안",
+    "securityDescription": "비밀번호 및 보안 설정",
+    "billing": "청구",
+    "billingDescription": "구독 및 결제 관리",
+    "notifications": "알림",
+    "notificationsDescription": "이메일 및 푸시 알림 설정",
+    "data": "데이터 및 개인정보",
+    "dataDescription": "데이터 내보내기 및 개인정보 보호 제어",
+    "byok": "BYOK 설정",
+    "storage": "보관",
+    "admin": "관리자",
+    "adminDescription": "관리 기능 및 제어",
+    "producer": "프로듀서 및 팀",
+    "producerDescription": "고객 정보 수집 링크, 화이트 라벨 브랜딩, 팀 액세스"
+  },
+  "profile": {
+    "title": "프로필 정보",
+    "description": "계정 정보 및 개인 정보를 관리하세요.",
+    "username": "사용자 이름",
+    "usernamePlaceholder": "사용자 이름을 입력하세요.",
+    "email": "이메일 주소",
+    "emailPlaceholder": "이메일을 입력하세요",
+    "firstName": "이름",
+    "firstNamePlaceholder": "이름을 입력하세요.",
+    "lastName": "성",
+    "lastNamePlaceholder": "성을 입력하세요.",
+    "updated": "프로필이 성공적으로 업데이트되었습니다.",
+    "updateFailed": "프로필 업데이트에 실패했습니다."
+  },
+  "languages": {
+    "title": "언어",
+    "description": "한 가지 언어로 스튜디오 내용을 확인하고, 다른 언어로 이야기를 작성한 뒤, 필요한 만큼 다양한 언어로 결과물을 전달하세요.",
+    "interfaceTitle": "인터페이스 언어",
+    "interfaceDescription": "대시보드 및 세 가지 스튜디오 전반의 메뉴, 버튼, 대화 상자.",
+    "storyDescription": "AI가 새로 작성하는 트리트먼트, 비트, 캐릭터, 대사가 생성되는 언어입니다. 헤더의 언어 전환 기능을 사용하면 인터페이스 언어와 함께 이 설정도 변경됩니다.",
+    "deliveryTitle": "제공 언어",
+    "deliveryDescription": "내레이션, 더빙, 렌더링된 영상이 이에 해당합니다. 하나의 프로젝트를 여러 언어로 동시에 출시할 수 있으므로, 이러한 요소는 계정 단위가 아닌 장면(scene) 단위로 선택됩니다.",
+    "deliveryStartsFrom": "{language}부터 시작",
+    "promptsStayEnglish": "이러한 설정과 관계없이 이미지 및 동영상 프롬프트는 영어로 유지됩니다. 번역된 프롬프트를 사용할 경우 생성 모델의 결과물 품질이 눈에 띄게 떨어지기 때문입니다.",
+    "interfaceSet": "인터페이스 언어가 {language}로 설정되었습니다.",
+    "saved": "언어 설정이 저장되었습니다.",
+    "saveFailed": "언어 설정을 저장할 수 없습니다.",
+    "storyTitle": "스토리 언어",
+    "deliverySetInProduction": "Production Stage에서 설정"
+  }
+}

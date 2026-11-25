@@ -1,0 +1,60 @@
+{
+  "shell": {
+    "title": "Accountinstellingen",
+    "subtitle": "Beheer je account, integraties en voorkeuren",
+    "sectionsHeading": "Instellingen",
+    "quickActions": "Snelle acties",
+    "backToDashboard": "Terug naar het dashboard",
+    "continueWorkflow": "Workflow voortzetten"
+  },
+  "nav": {
+    "profile": "Profiel",
+    "profileDescription": "Beheer uw accountgegevens",
+    "integrations": "Integraties",
+    "integrationsDescription": "Verbind AI-aanbieders en externe diensten",
+    "security": "Beveiliging",
+    "securityDescription": "Wachtwoord- en beveiligingsinstellingen",
+    "billing": "Facturering",
+    "billingDescription": "Beheer uw abonnement en facturering",
+    "notifications": "Meldingen",
+    "notificationsDescription": "Voorkeuren voor e-mail en pushmeldingen",
+    "data": "Data & privacy",
+    "dataDescription": "Gegevensexport en privacyinstellingen",
+    "byok": "BYOK-instellingen",
+    "storage": "Opslag",
+    "admin": "Beheer",
+    "adminDescription": "Beheersfuncties en -besturingselementen",
+    "producer": "Producent & team",
+    "producerDescription": "Links voor klantintake, white-label branding en teamtoegang"
+  },
+  "profile": {
+    "title": "Profielinformatie",
+    "description": "Beheer uw accountinformatie en persoonlijke gegevens",
+    "username": "Gebruikersnaam",
+    "usernamePlaceholder": "Voer uw gebruikersnaam in",
+    "email": "E-mailadres",
+    "emailPlaceholder": "Voer uw e-mailadres in",
+    "firstName": "Voornaam",
+    "firstNamePlaceholder": "Voer uw voornaam in",
+    "lastName": "Achternaam",
+    "lastNamePlaceholder": "Vul uw achternaam in",
+    "updated": "Profiel succesvol bijgewerkt",
+    "updateFailed": "Bijwerken van profiel mislukt"
+  },
+  "languages": {
+    "title": "Talen",
+    "description": "Gebruik de studio in de ene taal, schrijf je verhaal in een andere en lever het op in zoveel talen als nodig is.",
+    "interfaceTitle": "Interfacetaal",
+    "interfaceDescription": "Menu's, knoppen en dialoogvensters in het dashboard en alle drie de studio's.",
+    "storyDescription": "De taal waarin nieuwe, door AI geschreven treatments, beats, personages en dialogen worden opgesteld. De taalschakelaar in de koptekst werkt dit bij, samen met de taal van de interface.",
+    "deliveryTitle": "Talen van uitvoering",
+    "deliveryDescription": "Voice-over, nasynchronisatie en gerenderde video. Eén project kan in meerdere talen tegelijk worden uitgebracht; daarom worden de talen per scène gekozen in plaats van per account.",
+    "deliveryStartsFrom": "Begint bij {language}",
+    "promptsStayEnglish": "Prompts voor afbeeldingen en video's blijven in het Engels, ongeacht deze instellingen; de generatiemodellen leveren merkbaar zwakkere resultaten op bij vertaalde prompts.",
+    "interfaceSet": "Interfacetaal ingesteld op {language}",
+    "saved": "Taalvoorkeur opgeslagen",
+    "saveFailed": "Taalvoorkeur kon niet worden opgeslagen",
+    "storyTitle": "Verhaaltaal",
+    "deliverySetInProduction": "Ingesteld in Production Stage"
+  }
+}

@@ -138,7 +138,7 @@ describe('landing locale copy', () => {
       'studioAcademy.jitMap.title',
       'studioAcademy.scriptBlocks.0.narration',
     ] as const
-    for (const code of ['es', 'pt', 'hi', 'zh-CN', 'ar', 'th']) {
+    for (const code of ['es', 'pt', 'hi', 'zh-CN', 'ar', 'th', 'ja', 'ko', 'de', 'fr', 'it', 'nl', 'ru']) {
       const localeMessages = JSON.parse(readFileSync(join(ROOT, `${code}.json`), 'utf8')) as Record<
         string,
         unknown

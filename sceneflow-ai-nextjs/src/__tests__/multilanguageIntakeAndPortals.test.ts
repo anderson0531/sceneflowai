@@ -25,10 +25,25 @@ import {
   type IntakeVisionProposal,
 } from '@/lib/intake/intakePlaybooks'
 
-const ALL_LOCALES: ClientPortalLocale[] = ['en', 'es', 'pt', 'hi', 'zh-CN', 'ar', 'th']
+const ALL_LOCALES: ClientPortalLocale[] = [
+  'en',
+  'es',
+  'pt',
+  'hi',
+  'zh-CN',
+  'ar',
+  'th',
+  'ja',
+  'ko',
+  'de',
+  'fr',
+  'it',
+  'nl',
+  'ru',
+]
 
-describe('Multilanguage Intake, Consent Form & Vision-Driven Interview (7 Global Languages)', () => {
-  it('supports English, Spanish, Portuguese, Hindi, Chinese, Arabic (RTL), and Thai with accurate speech recognition BCP-47 tags', () => {
+describe('Multilanguage Intake, Consent Form & Vision-Driven Interview (14 Global Languages)', () => {
+  it('supports all 14 base UI languages with accurate speech recognition BCP-47 tags', () => {
     expect(SUPPORTED_CLIENT_PORTAL_LOCALES.map((l) => l.code)).toEqual(ALL_LOCALES)
 
     const expectedSpeech: Record<ClientPortalLocale, string> = {
@@ -39,6 +54,13 @@ describe('Multilanguage Intake, Consent Form & Vision-Driven Interview (7 Global
       'zh-CN': 'zh-CN',
       ar: 'ar-SA',
       th: 'th-TH',
+      ja: 'ja-JP',
+      ko: 'ko-KR',
+      de: 'de-DE',
+      fr: 'fr-FR',
+      it: 'it-IT',
+      nl: 'nl-NL',
+      ru: 'ru-RU',
     }
 
     for (const loc of ALL_LOCALES) {

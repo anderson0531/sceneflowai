@@ -1,16 +1,24 @@
 /**
- * Canonical copy & 7-locale priority translations for SceneFlow Studio's
+ * Canonical copy & 14-locale priority translations for SceneFlow Studio's
  * Creator + Video Services Business landing page architecture.
  *
  * Wired into `buildEnMessages()` under `studioLanding` so `messages/en.json`
  * stays 100% reproducible via `npm run i18n:build-en`, with complete native
- * translations for `es`, `pt`, `hi`, `zh-CN`, `ar`, and `th`.
+ * translations for `es`, `pt`, `hi`, `zh-CN`, `ar`, `th`, `ja`, `ko`, `de`,
+ * `fr`, `it`, `nl`, and `ru`.
  */
 
 import { STUDIO_LANDING_COPY_AR } from './locales/ar'
+import { STUDIO_LANDING_COPY_DE } from './locales/de'
 import { STUDIO_LANDING_COPY_ES } from './locales/es'
+import { STUDIO_LANDING_COPY_FR } from './locales/fr'
 import { STUDIO_LANDING_COPY_HI } from './locales/hi'
+import { STUDIO_LANDING_COPY_IT } from './locales/it'
+import { STUDIO_LANDING_COPY_JA } from './locales/ja'
+import { STUDIO_LANDING_COPY_KO } from './locales/ko'
+import { STUDIO_LANDING_COPY_NL } from './locales/nl'
 import { STUDIO_LANDING_COPY_PT } from './locales/pt'
+import { STUDIO_LANDING_COPY_RU } from './locales/ru'
 import { STUDIO_LANDING_COPY_TH } from './locales/th'
 import { STUDIO_LANDING_COPY_ZH_CN } from './locales/zhCN'
 import { MOBILE_COMPANION_COPY_EN } from './mobileCompanionCopy'
@@ -790,7 +798,7 @@ export const WORLD_CLASS_LANDING_COPY: StudioLandingCopy = {
 }
 
 export const WORLD_CLASS_LANDING_TRANSLATIONS: Record<
-  'es' | 'pt' | 'hi' | 'zh-CN' | 'ar' | 'th',
+  'es' | 'pt' | 'hi' | 'zh-CN' | 'ar' | 'th' | 'ja' | 'ko' | 'de' | 'fr' | 'it' | 'nl' | 'ru',
   StudioLandingCopy
 > = {
   es: STUDIO_LANDING_COPY_ES,
@@ -799,6 +807,13 @@ export const WORLD_CLASS_LANDING_TRANSLATIONS: Record<
   'zh-CN': STUDIO_LANDING_COPY_ZH_CN,
   ar: STUDIO_LANDING_COPY_AR,
   th: STUDIO_LANDING_COPY_TH,
+  ja: STUDIO_LANDING_COPY_JA,
+  ko: STUDIO_LANDING_COPY_KO,
+  de: STUDIO_LANDING_COPY_DE,
+  fr: STUDIO_LANDING_COPY_FR,
+  it: STUDIO_LANDING_COPY_IT,
+  nl: STUDIO_LANDING_COPY_NL,
+  ru: STUDIO_LANDING_COPY_RU,
 }
 
 export function resolveLocalizedStudioLandingCopy(locale: string): StudioLandingCopy {

@@ -21,14 +21,14 @@ import { buildDeterministicCoachReply } from '@/lib/help/studioCoachEngine'
 import { POST as askStudioCoach } from '@/app/api/help/studio-coach/route'
 import { TIER_CATALOG } from '@/lib/billing/tierCatalog'
 
-describe('Sprint 3 — 7-Language Help UI Parity & Grounded Studio Coach', () => {
+describe('Sprint 3 — 14-Language Help UI Parity & Grounded Studio Coach', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.unstubAllEnvs()
   })
 
-  it('ships complete 7-language UI copy (en, es, pt, hi, zh, ar, th) with RTL Arabic support', () => {
-    const locales = ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'] as const
+  it('ships complete 14-language UI copy (en, es, pt, hi, zh, ar, th, ja, ko, de, fr, it, nl, ru) with RTL Arabic support', () => {
+    const locales = ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th', 'ja', 'ko', 'de', 'fr', 'it', 'nl', 'ru'] as const
     for (const loc of locales) {
       const copy = HELP_UI_COPY[loc]
       expect(copy).toBeDefined()
@@ -49,6 +49,13 @@ describe('Sprint 3 — 7-Language Help UI Parity & Grounded Studio Coach', () =>
     expect(getHelpUiCopy('zh-CN')).toBe(HELP_UI_COPY.zh)
     expect(getHelpUiCopy('ar-SA').isRtl).toBe(true)
     expect(getHelpUiCopy('pt-BR')).toBe(HELP_UI_COPY.pt)
+    expect(getHelpUiCopy('ja-JP')).toBe(HELP_UI_COPY.ja)
+    expect(getHelpUiCopy('ko-KR')).toBe(HELP_UI_COPY.ko)
+    expect(getHelpUiCopy('de-DE')).toBe(HELP_UI_COPY.de)
+    expect(getHelpUiCopy('fr-FR')).toBe(HELP_UI_COPY.fr)
+    expect(getHelpUiCopy('it-IT')).toBe(HELP_UI_COPY.it)
+    expect(getHelpUiCopy('nl-NL')).toBe(HELP_UI_COPY.nl)
+    expect(getHelpUiCopy('ru-RU')).toBe(HELP_UI_COPY.ru)
   })
 
   it('grounds deterministic Studio Coach answers in live TIER_CATALOG, BYOK, Agency Ops, and FlowDirector QA across languages', () => {

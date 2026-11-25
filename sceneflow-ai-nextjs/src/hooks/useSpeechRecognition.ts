@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 type RecognitionConstructor = new () => SpeechRecognition
 
 export interface UseSpeechRecognitionOptions {
-  /** BCP-47 or ISO language code (e.g. 'en', 'es', 'pt', 'hi', 'zh', 'zh-CN', 'ar', 'th') */
+  /** BCP-47 or ISO language code (e.g. 'en', 'es', 'pt', 'hi', 'zh', 'zh-CN', 'ar', 'th', 'ja', 'ko', 'de', 'fr', 'it', 'nl', 'ru') */
   lang?: string
 }
 
@@ -25,6 +25,13 @@ export function normalizeSpeechRecognitionLang(raw?: string | null): string {
   if (lower === 'zh-tw' || lower === 'zh-hant') return 'zh-TW'
   if (lower === 'ar') return 'ar-SA'
   if (lower === 'th') return 'th-TH'
+  if (lower === 'ja') return 'ja-JP'
+  if (lower === 'ko') return 'ko-KR'
+  if (lower === 'de') return 'de-DE'
+  if (lower === 'fr') return 'fr-FR'
+  if (lower === 'it') return 'it-IT'
+  if (lower === 'nl') return 'nl-NL'
+  if (lower === 'ru') return 'ru-RU'
   if (clean.includes('-')) return clean
   return clean
 }

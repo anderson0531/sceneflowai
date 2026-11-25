@@ -1,0 +1,62 @@
+{
+  "studio": {
+    "title": "Series Room",
+    "description": "여러 에피소드에 걸친 스토리 라인을 한 번 기획한 뒤, 그에 맞춰 각 에피소드를 제작하십시오.",
+    "newSeries": "새로운 시리즈",
+    "emptyHint": "시리즈는 에피소드 전반에 걸쳐 등장인물, 배경, 그리고 연속성을 일관되게 유지합니다.",
+    "searchPlaceholder": "제목, 로그라인 또는 장르로 시리즈를 검색하세요...",
+    "statusAll": "모든 활성 항목 및 초안",
+    "statusDraft": "초안",
+    "statusActive": "활성",
+    "statusCompleted": "완료됨",
+    "statusArchived": "보관됨",
+    "sortRecent": "최근 업데이트됨",
+    "sortAlphabetical": "제목 (A–Z)",
+    "sortEpisodes": "에피소드 수",
+    "seriesCount": "{count} 시리즈",
+    "noMatchingSeries": "일치하는 시리즈가 없습니다.",
+    "empty": "아직 시리즈가 없습니다"
+  },
+  "detail": {
+    "productionBible": "시리즈 바이블",
+    "referenceLibrary": "Reference Library",
+    "resonance": "Audience Resonance",
+    "addEpisode": "에피소드 추가",
+    "openEpisode": "에피소드 {number} 열기",
+    "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}",
+    "episodes": "에피소드",
+    "generateEpisodes": "에피소드 생성"
+  },
+  "continuity": {
+    "title": "연속성 엔진",
+    "aesthetics": "미학",
+    "keyEvents": "주요 사건",
+    "storyThreads": "이야기의 실타래",
+    "reviewUpdates": "검토 업데이트",
+    "characters": "캐릭터",
+    "locations": "로케이션"
+  },
+  "fields": {
+    "seriesTitle": "시리즈 제목",
+    "logline": "로그라인",
+    "synopsis": "줄거리",
+    "targetAudience": "타겟 고객",
+    "episodeTitle": "에피소드 제목",
+    "episodeHook": "다음 에피소드를 위한 흥미 유발 요소",
+    "characterName": "캐릭터 이름",
+    "characterDescription": "설명",
+    "appearance": "외관",
+    "backstory": "배경 이야기",
+    "personality": "성격",
+    "locationName": "위치 이름",
+    "locationDescription": "설명",
+    "setting": "배경 설정",
+    "episodeSynopsis": "에피소드 시놉시스"
+  },
+  "toast": {
+    "created": "시리즈 생성됨",
+    "updated": "시리즈가 업데이트되었습니다.",
+    "generateFailed": "에피소드를 생성할 수 없습니다.",
+    "deleted": "시리즈 삭제됨"
+  }
+}

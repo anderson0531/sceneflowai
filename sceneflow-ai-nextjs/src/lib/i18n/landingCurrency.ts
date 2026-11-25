@@ -1,12 +1,12 @@
 /**
  * Landing-page currency conversion & formatting matched to the selected locale.
  *
- * Keeps exchange rates aligned with `customerPortalAnimaticCopy.ts` across all
- * 7 supported landing locales (`en`, `es`, `pt`, `hi`, `zh-CN`, `ar`, `th`).
+ * Keeps exchange rates aligned across all 14 supported base UI locales
+ * (`en`, `es`, `pt`, `hi`, `zh-CN`, `ar`, `th`, `ja`, `ko`, `de`, `fr`, `it`, `nl`, `ru`).
  */
 
 export interface LandingCurrencyConfig {
-  code: 'USD' | 'MXN' | 'BRL' | 'INR' | 'CNY' | 'SAR' | 'THB'
+  code: 'USD' | 'MXN' | 'BRL' | 'INR' | 'CNY' | 'SAR' | 'THB' | 'JPY' | 'KRW' | 'EUR' | 'RUB'
   symbol: string
   rate: number
   placement: 'prefix' | 'suffix'
@@ -21,6 +21,13 @@ export const LANDING_CURRENCY_BY_LOCALE: Record<string, LandingCurrencyConfig> =
   'zh-CN': { code: 'CNY', symbol: '¥', rate: 6.65, placement: 'prefix', numberLocale: 'zh-CN' },
   ar: { code: 'SAR', symbol: 'ر.س', rate: 3.75, placement: 'suffix', numberLocale: 'en-US' },
   th: { code: 'THB', symbol: '฿', rate: 34, placement: 'prefix', numberLocale: 'th-TH' },
+  ja: { code: 'JPY', symbol: '¥', rate: 155, placement: 'prefix', numberLocale: 'ja-JP' },
+  ko: { code: 'KRW', symbol: '₩', rate: 1400, placement: 'prefix', numberLocale: 'ko-KR' },
+  de: { code: 'EUR', symbol: '€', rate: 0.92, placement: 'suffix', numberLocale: 'de-DE' },
+  fr: { code: 'EUR', symbol: '€', rate: 0.92, placement: 'suffix', numberLocale: 'fr-FR' },
+  it: { code: 'EUR', symbol: '€', rate: 0.92, placement: 'suffix', numberLocale: 'it-IT' },
+  nl: { code: 'EUR', symbol: '€', rate: 0.92, placement: 'prefix', numberLocale: 'nl-NL' },
+  ru: { code: 'RUB', symbol: '₽', rate: 96, placement: 'suffix', numberLocale: 'ru-RU' },
 }
 
 export function getLandingCurrencyConfig(locale?: string | null): LandingCurrencyConfig {

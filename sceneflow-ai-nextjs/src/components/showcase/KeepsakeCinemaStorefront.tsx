@@ -429,7 +429,7 @@ export function KeepsakeCinemaStorefront({
 
           {/* Row 2 on mobile (separate line below brand): Language Switcher + Blueprint Price CTA */}
           <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 sm:gap-2.5 border-t border-white/[0.07] pt-2 sm:border-t-0 sm:pt-0 shrink-0">
-            {/* Compact 7-Language & Currency Switcher */}
+            {/* Compact 14-Language & Currency Switcher */}
             <div ref={langMenuRef} className="relative">
               <button
                 type="button"
@@ -447,7 +447,7 @@ export function KeepsakeCinemaStorefront({
               {langMenuOpen && (
                 <div
                   role="menu"
-                  className="absolute start-0 sm:start-auto sm:end-0 mt-2 w-48 rounded-2xl border border-white/15 bg-[#0D111C] p-1.5 shadow-2xl shadow-black/80 z-50"
+                  className="absolute start-0 sm:start-auto sm:end-0 mt-2 w-52 max-h-[340px] overflow-y-auto rounded-2xl border border-white/15 bg-[#0D111C] p-1.5 shadow-2xl shadow-black/80 z-50"
                 >
                   {SUPPORTED_CLIENT_PORTAL_LOCALES.map((loc) => {
                     const locCopy = SHOWCASE_LOCALE_COPY[loc.code]
@@ -1092,15 +1092,26 @@ export function KeepsakeCinemaStorefront({
                       </div>
 
                       <ul className="space-y-2">
-                        {offerCopy.deliverables.map((item) => (
-                          <li
-                            key={item}
-                            className="flex items-start gap-2 text-xs sm:text-sm text-slate-200"
-                          >
-                            <Check className="w-4 h-4 text-[#DFB473] shrink-0 mt-0.5" />
-                            <span>{txt(item)}</span>
-                          </li>
-                        ))}
+                        {offerCopy.deliverables.map((item, idx) => {
+                          const isLocalizedEdge = idx === offerCopy.deliverables.length - 1
+                          return (
+                            <li
+                              key={item}
+                              className={
+                                isLocalizedEdge
+                                  ? 'flex items-start gap-2 rounded-lg border border-[#DFB473]/25 bg-[#DFB473]/[0.07] px-2.5 py-2 text-xs sm:text-sm text-[#F7DFB8] font-medium'
+                                  : 'flex items-start gap-2 text-xs sm:text-sm text-slate-200'
+                              }
+                            >
+                              {isLocalizedEdge ? (
+                                <Globe className="w-4 h-4 text-[#DFB473] shrink-0 mt-0.5" />
+                              ) : (
+                                <Check className="w-4 h-4 text-[#DFB473] shrink-0 mt-0.5" />
+                              )}
+                              <span>{txt(item)}</span>
+                            </li>
+                          )
+                        })}
                       </ul>
                     </div>
 

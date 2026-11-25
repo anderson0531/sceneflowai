@@ -74,7 +74,22 @@ import { resolveLocalizedStudioLandingCopy } from '@/config/landing/worldClassLa
 
 const ROOT = path.resolve(__dirname, '../..')
 
-const PRIORITY_LOCALES = ['en', 'es', 'pt', 'hi', 'zh-CN', 'ar', 'th'] as const
+const PRIORITY_LOCALES = [
+  'en',
+  'es',
+  'pt',
+  'hi',
+  'zh-CN',
+  'ar',
+  'th',
+  'ja',
+  'ko',
+  'de',
+  'fr',
+  'it',
+  'nl',
+  'ru',
+] as const
 const DUB_LOCALES: readonly HeroDubLocaleId[] = ['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th']
 
 function loadMessages(locale: string): Record<string, any> {
@@ -96,7 +111,7 @@ function countSpacingGlyphs(str: string): number {
 }
 
 function estimateLongestWordPx(label: string, fontSizePx: number, locale: string): number {
-  if (locale.startsWith('zh')) {
+  if (locale.startsWith('zh') || locale === 'ja') {
     return Math.ceil(fontSizePx * 1.1)
   }
   if (locale === 'th' && typeof Intl !== 'undefined' && 'Segmenter' in Intl) {

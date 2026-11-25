@@ -18,6 +18,22 @@ export type CraftPillarId =
   | 'voice_cloning'
   | 'directed_4k_master'
 
+export type ImmediateLiftCardId =
+  | 'multi_perspective_audio'
+  | 'qr_print_companion'
+  | 'living_continuity_vault'
+
+export interface ImmediateLiftCardCopy {
+  id: ImmediateLiftCardId
+  badge: string
+  title: string
+  subtitle: string
+  description: string
+  liftHighlight: string
+  /** Optional access requirement badge (e.g., Continuity Library Code for returning vault updates). */
+  accessNote?: string
+}
+
 export interface CraftPillarCopy {
   id: CraftPillarId
   shortTab: string
@@ -66,6 +82,12 @@ export interface LongformCraftLocaleCopy {
     CraftPillarCopy,
     CraftPillarCopy,
   ]
+  immediateLift: {
+    eyebrow: string
+    heading: string
+    subtitle: string
+    cards: readonly [ImmediateLiftCardCopy, ImmediateLiftCardCopy, ImmediateLiftCardCopy]
+  }
   comparisonHeading: string
   comparisonSubtitle: string
   colDimension: string
@@ -148,22 +170,22 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'location_matching',
-        shortTab: 'Location Matching',
-        badge: 'Real-World Environment Fidelity',
-        title: 'Exact Location Matching — Real Estate, Childhood Streets & Flagship Spaces',
+        shortTab: 'Active Scenes & Cultural Staging',
+        badge: 'Continuity-Locked Staging',
+        title: 'Continuity-Locked Active Scenes & Cultural Staging',
         summary:
-          'Generic AI invents random rooms that look nothing like reality. SceneFlow goes deep and locks real locations into continuity—walking real estate buyers through every room, architectural updates, luxury appliances, outdoor living & neighborhood amenities, recreating a beloved childhood street, or preserving your clinic or corporate floor.',
-        exampleLabel: 'Environment Lock Example',
-        exampleHeadline: 'Childhood Street · Real Estate Upgrades, Appliances & Neighborhood · Flagship Clinic',
+          "Missing photos from the biggest chapters? Using your Continuity Vault, SceneFlow stages lively family gatherings, regional traditions, era-accurate homes, and virtual interior/furniture updates—keeping your real faces, attire, and signature heirlooms unmistakably locked.",
+        exampleLabel: 'Active Staging & Environment Lock',
+        exampleHeadline: 'Unphotographed Moments, Staged With Cultural Authenticity',
         exampleDetails:
-          'Upload listing photos, archival street snapshots, or workplace references so every angle and transition honors the true architecture and atmosphere of your story.',
+          'Stage lively multigenerational dinners, virtual furniture refreshes for real estate listings, founding-era clinic care scenes, or regional workplace compliance drills—all locked to your real cast and architecture.',
         highlights: [
-          'Room-by-room MLS architectural fidelity for Real Estate 4K tours',
-          'Era-accurate childhood neighborhoods, schools & family hometowns',
-          'Brand-consistent offices, clinics, hotels & safety training floors',
+          'Stages unphotographed family gatherings, regional traditions & era-accurate homes',
+          'Virtual interior/furniture updates & active neighborhood lifestyle staging for Real Estate',
+          'Localized workplace safety, equipment & patient/client care scenes with zero face drift',
         ],
-        metricValue: 'Room-Exact',
-        metricLabel: 'Architectural & Era Fidelity',
+        metricValue: 'Active Staging',
+        metricLabel: 'Cultural & Room Lock',
       },
       {
         id: 'heirloom_props',
@@ -186,43 +208,79 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'voice_cloning',
-        shortTab: 'Voice Cloning & Matching',
-        badge: 'Vocal Identity & Audio Craft',
-        title: 'Voice Cloning, Voice-to-Image Matching & 10-Second Pronunciation Lock',
+        shortTab: 'Voice Cloning & Multi-Track',
+        badge: 'Multi-Perspective Audio & 70+ Langs',
+        title: 'Voice Cloning, Multi-Perspective Audio Tracks & 10-Second Pronunciation Lock',
         summary:
-          'An unforgettable film sounds as real as it looks. SceneFlow pairs voice cloning and voice-to-image character matching with a 10-second pronunciation guide—so family names, hometowns, and technical acronyms are spoken with natural warmth and broadcast clarity in 70+ languages.',
-        exampleLabel: 'Audio Continuity Example',
-        exampleHeadline: 'Matched Character Voices + Cloned Warmth + Flawless Name Pronunciation',
+          'An unforgettable film sounds as real as it looks. SceneFlow pairs voice cloning, voice-to-image matching, and a 10-second pronunciation lock with Multi-Perspective Audio Tracks—flipping the exact same 4K visual master seamlessly between English, Japanese, and Spanish, or between first-person memoir and third-person documentary.',
+        exampleLabel: 'Multi-Perspective Audio Example',
+        exampleHeadline: '1 Locked 4K Visual Reel → 70+ Languages & Multiple Narrative Perspectives',
         exampleDetails:
-          'Each on-screen speaker matches their visual age and persona, backed by gated lip-sync dialogue, custom ambient SFX, and a dynamically ducked orchestral score.',
+          'Virtually zero extra video compute: keep every visual frame locked while delivering native pronunciation for family names, hometowns, and technical acronyms across 70+ languages.',
         highlights: [
-          'Voice cloning & age/persona-matched voices paired to on-screen characters',
-          '10-second phonetic pronunciation lock for surnames, towns & brand terms',
-          'Broadcast stereo mix: dialogue, Studio Narrator VO, SFX & ducked score',
+          'Multi-Perspective Audio Tracks: flip languages or 1st/3rd-person voices on the same 4K reel',
+          'Voice cloning & age/persona-matched voices with 10-second phonetic pronunciation lock',
+          'Broadcast stereo mix: dialogue, Studio Narrator VO, ambient SFX & ducked orchestral score',
         ],
         metricValue: '70+ Langs',
-        metricLabel: 'Voice & Pronunciation Lock',
+        metricLabel: 'Multi-Track Voice Lock',
       },
       {
         id: 'directed_4k_master',
-        shortTab: 'Directed 4K Beats & Master',
-        badge: 'Photorealistic & Illustrative 4K Cinema',
-        title: 'Professionally Directed Beats (Realistic or Illustrative) & 4K Cinema Master',
+        shortTab: 'Era & Cultural Time-Capsule',
+        badge: 'Period & Regional World-Building',
+        title: 'Localized Era & Cultural Time-Capsule Engine',
         summary:
-          'Choose lush photorealistic cinema or heirloom illustrative art direction. Every single beat is framed like a documentary DP, animated with smooth 4K Ken Burns camera choreography (or Full-Motion via Studio Partners), and delivered as a theater-ready 3840×2160 master.',
-        exampleLabel: 'Finishing Pipeline Example',
-        exampleHeadline: 'Art-Directed 4K Beat Frames → 6-Move Camera Choreography → Broadcast Master',
+          "We don't just read back your notes—our story engine weaves in the authentic music, economic milestones, cultural touchstones, and everyday atmosphere of the exact decade, city, and country your story took place, turning private memories into a lasting historical documentary.",
+        exampleLabel: 'Cultural Time-Capsule Example',
+        exampleHeadline: 'Period & Regional Context That Brings History Alive',
         exampleDetails:
-          'No muddy 720p exports or jarring cuts—ready to project onto a wedding banquet screen, stream on a 75" living room TV, or anchor a flagship business homepage.',
+          'Every directed 4K frame (3840×2160) pairs authentic decade music, regional economic & cultural context, and smooth 6-move camera choreography into a theater-ready historical master.',
         highlights: [
-          'Photorealistic cinema OR bespoke illustrative art direction per story',
-          'True 4K (3840×2160) with directed push-ins, dolly pans & crane reveals',
-          'Upgradeable anytime to Full-Motion live-action cinema via Studio Partners',
+          'Automatic decade & regional cultural, musical, and economic context woven into the script',
+          'Photorealistic cinema OR heirloom illustrative 4K UHD (3840×2160) master choreography',
+          'Operate in 14 native UI portals while producing culturally localized 4K masters in 70+ languages',
         ],
-        metricValue: '4K UHD',
-        metricLabel: 'Theater-Ready Master',
+        metricValue: 'Era-True 4K',
+        metricLabel: 'Cultural Time-Capsule',
       },
     ],
+    immediateLift: {
+      eyebrow: 'Immediate Lift · Consumers & White-Label Operators',
+      heading: 'Three Built-In Growth Engines Beyond Video Editing',
+      subtitle:
+        'Deliver live multilingual demos, tangible print artifacts, and effortless recurring chapter or SOP updates—powered automatically from the same locked Continuity Vault.',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: 'Near-Zero Extra Compute',
+          title: 'Multi-Perspective Audio Tracks',
+          subtitle: 'Same 4K Visuals · Multiple Voices & Languages',
+          description:
+            'Showcase Voice Cloning and Script Intelligence instantly: flip one single 4K visual reel live between English, Japanese, and Spanish—or switch between first-person memoir and third-person documentary—right on a family preview or client sales call.',
+          liftHighlight: 'Virtually zero extra video compute per added language or narrator perspective',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: '100% Automated Artifact',
+          title: 'QR-Linked Print Companion PDF',
+          subtitle: 'Keepsake Book · Property Sheet · SOP Poster',
+          description:
+            'Turn every digital 4K master into a tangible physical companion for open houses, milestone birthday dinners, or factory floors—automatically formatted with frame stills, chapter summaries, and scannable QR video links.',
+          liftHighlight: 'Gives realtors, hosts & training leads a physical keepsake that justifies premium pricing',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: 'Recurring Revenue Engine',
+          title: 'Living Continuity Vault',
+          subtitle: 'Incremental Chapter, Property & SOP Updates',
+          description:
+            'Because cast faces, voices, and environments remain permanently locked, operators can sell annual family chapter extensions or quarterly SOP and property updates at high margins with near-zero rework.',
+          liftHighlight: 'Add new milestones or compliance revisions in minutes with zero continuity drift',
+          accessNote: 'Returning updates unlock via a private Continuity Library Code (no full account password)',
+        },
+      ],
+    },
     comparisonHeading: 'Why $149 Longform 4K Cinema Is a Different Universe',
     comparisonSubtitle:
       'Compare disposable shortform AI clip generators against a true SceneFlow longform production.',
@@ -329,22 +387,22 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'location_matching',
-        shortTab: 'Locaciones Reales',
-        badge: 'Fidelidad de Espacios',
-        title: 'Locaciones Exactas — Inmuebles, Barrios de Infancia y Clínicas',
+        shortTab: 'Escenas Activas y Cultura',
+        badge: 'Escenografía con Continuidad Fija',
+        title: 'Escenas Activas y Escenografía Cultural con Continuidad Fija',
         summary:
-          'La IA genérica inventa espacios irreales. SceneFlow fija tus locaciones reales: recorridos inmobiliarios habitación por habitación, el barrio de la infancia o tu clínica, oficina o planta corporativa.',
-        exampleLabel: 'Ejemplo de Locación',
-        exampleHeadline: 'Barrio de Infancia · Propiedad Inmobiliaria · Clínica Principal',
+          '¿Faltan fotos de los capítulos más importantes? Usando tu Continuity Vault, SceneFlow escenifica reuniones familiares llenas de vida, tradiciones regionales, hogares fieles a cada época y renovaciones virtuales de interiores y mobiliario—manteniendo intactos tus rostros reales, vestuario y reliquias.',
+        exampleLabel: 'Escenografía Activa y Bloqueo Ambiental',
+        exampleHeadline: 'Momentos Sin Fotografiar, Escenificados con Autenticidad Cultural',
         exampleDetails:
-          'Sube fotos del inmueble o lugares queridos para respetar la arquitectura y atmósfera reales.',
+          'Escenifica cenas multigeneracionales animadas, actualizaciones virtuales de mobiliario para inmuebles, escenas fundacionales de clínicas o simulacros regionales de cumplimiento laboral—todo fijado a tu elenco y arquitectura reales.',
         highlights: [
-          'Fidelidad arquitectónica habitación por habitación en tours 4K',
-          'Recuerdos fieles de vecindarios, escuelas y pueblos familiares',
-          'Coherencia visual para oficinas, hoteles y áreas de capacitación',
+          'Escenifica reuniones familiares sin fotografiar, tradiciones regionales y hogares de época',
+          'Actualizaciones virtuales de interiores/mobiliario y vida vecinal activa para Bienes Raíces',
+          'Escenas localizadas de seguridad laboral, equipos y atención al paciente/cliente sin deriva facial',
         ],
-        metricValue: 'Exacto',
-        metricLabel: 'Fidelidad de Locación',
+        metricValue: 'Escena Activa',
+        metricLabel: 'Bloqueo Cultural y Espacial',
       },
       {
         id: 'heirloom_props',
@@ -367,43 +425,79 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'voice_cloning',
-        shortTab: 'Clonación de Voz',
-        badge: 'Identidad Vocal',
-        title: 'Clonación de Voz, Emparejamiento Voz-Imagen y Pronunciación Exacta',
+        shortTab: 'Clonación y Multipista',
+        badge: 'Audio Multiperspectiva y 70+ Idiomas',
+        title: 'Clonación de Voz, Pistas de Audio Multiperspectiva y Bloqueo de Pronunciación en 10s',
         summary:
-          'Un gran filme suena tan real como se ve. Combinamos clonación de voz, emparejamiento de voz con la imagen del personaje y una guía de pronunciación de 10 segundos en más de 70 idiomas.',
-        exampleLabel: 'Ejemplo Vocal',
-        exampleHeadline: 'Voces Coherentes + Clonación Natural + Nombres Bien Pronunciados',
+          'Un filme inolvidable suena tan real como se ve. SceneFlow combina clonación de voz, emparejamiento voz-imagen y bloqueo fonético de 10 segundos con Pistas de Audio Multiperspectiva—cambiando el mismo máster visual 4K sin cortes entre inglés, japonés y español, o entre memoria en primera persona y documental en tercera persona.',
+        exampleLabel: 'Ejemplo de Audio Multiperspectiva',
+        exampleHeadline: '1 Rollo Visual 4K Fijo → 70+ Idiomas y Múltiples Perspectivas Narrativas',
         exampleDetails:
-          'Cada voz coincide con el personaje en pantalla, acompañada de efectos sonoros y música orquestal mezclada.',
+          'Prácticamente cero cómputo extra de video: mantén cada cuadro visual intacto mientras entregas pronunciación nativa para apellidos, ciudades y siglas técnicas en más de 70 idiomas.',
         highlights: [
-          'Clonación de voz y ajuste preciso de edad y tono con cada personaje',
-          'Guía fonética de 10 segundos para apellidos, ciudades y marcas',
-          'Mezcla estéreo profesional: diálogo, narración, SFX y banda sonora',
+          'Pistas de Audio Multiperspectiva: cambia idiomas o voces de 1.ª/3.ª persona sobre el mismo rollo 4K',
+          'Clonación de voz y voces acordes a edad/personaje con bloqueo fonético de 10 segundos',
+          'Mezcla estéreo broadcast: diálogo, narrador de estudio, SFX ambientales y música orquestal',
         ],
         metricValue: '70+ Idiomas',
-        metricLabel: 'Voz y Pronunciación',
+        metricLabel: 'Voz Multipista Fija',
       },
       {
         id: 'directed_4k_master',
-        shortTab: 'Escenas 4K y Máster',
-        badge: 'Dirección Realista o Ilustrada',
-        title: 'Escenas 4K Dirigidas (Realistas o Ilustradas) y Máster Cinematográfico',
+        shortTab: 'Cápsula Cultural y de Época',
+        badge: 'Ambientación Histórica y Regional',
+        title: 'Motor Localizado de Época y Cápsula Cultural del Tiempo',
         summary:
-          'Elige estilo cinematográfico fotorrealista o ilustración artística. Cada plano se dirige con movimientos fluidos de cámara 4K (o Movimiento Total con Estudios Socios) y se entrega en máster 3840×2160 listo para pantalla grande.',
-        exampleLabel: 'Acabado de Estudio',
-        exampleHeadline: 'Cuadros 4K Dirigidos → Coreografía de Cámara → Máster Profesional',
+          'No solo leemos tus notas: nuestro motor narrativo entreteje la música auténtica, los hitos económicos, los referentes culturales y la atmósfera cotidiana de la década, ciudad y país exactos de tu historia, convirtiendo recuerdos privados en un documental histórico perdurable.',
+        exampleLabel: 'Ejemplo de Cápsula Cultural',
+        exampleHeadline: 'Contexto Histórico y Regional Que Da Vida a la Historia',
         exampleDetails:
-          'Listo para proyectar en bodas, celebraciones familiares, televisores 4K o tu sitio web principal.',
+          'Cada cuadro 4K dirigido (3840×2160) combina música auténtica de la década, contexto económico y cultural regional y coreografía fluida de 6 movimientos de cámara en un máster histórico listo para pantalla grande.',
         highlights: [
-          'Dirección fotorrealista o ilustrada según el tono de tu historia',
-          '4K UHD real (3840×2160) con paneos y acercamientos cinematográficos',
-          'Actualizable en cualquier momento a Movimiento Total vía socios',
+          'Contexto cultural, musical y económico de época y región tejido automáticamente en el guion',
+          'Cine fotorrealista O ilustración artística 4K UHD (3840×2160) con coreografía de cámara',
+          'Opera en 14 portales nativos mientras produces másteres 4K localizados en 70+ idiomas',
         ],
-        metricValue: '4K UHD',
-        metricLabel: 'Máster de Cine',
+        metricValue: '4K de Época',
+        metricLabel: 'Cápsula Cultural',
       },
     ],
+    immediateLift: {
+      eyebrow: 'Impulso Inmediato · Clientes y Operadores Marca Blanca',
+      heading: 'Tres Motores de Crecimiento Integrados Más Allá de la Edición de Video',
+      subtitle:
+        'Entrega demostraciones multilingües en vivo, piezas impresas tangibles y actualizaciones recurrentes de capítulos o SOP sin esfuerzo—todo impulsado automáticamente desde el mismo Continuity Vault bloqueado.',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: 'Casi Cero Cómputo Extra',
+          title: 'Pistas de Audio Multiperspectiva',
+          subtitle: 'Mismo Visual 4K · Múltiples Voces e Idiomas',
+          description:
+            'Demuestra la Clonación de Voz y la Inteligencia de Guion al instante: cambia en vivo un mismo rollo visual 4K entre inglés, japonés y español—o alterna entre memoria en primera persona y documental en tercera persona—en plena presentación familiar o llamada de ventas.',
+          liftHighlight: 'Prácticamente cero cómputo extra de video por cada idioma o perspectiva añadida',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: 'Pieza 100% Automatizada',
+          title: 'PDF Impreso Complementario con QR',
+          subtitle: 'Libro Recuerdo · Ficha Inmobiliaria · Póster SOP',
+          description:
+            'Convierte cada máster digital 4K en un complemento físico tangible para jornadas de puertas abiertas, cenas de aniversario o plantas industriales—maquetado automáticamente con fotogramas, resúmenes por capítulo y códigos QR escaneables.',
+          liftHighlight: 'Entrega a agentes, anfitriones y líderes de capacitación un recuerdo físico que justifica tarifas premium',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: 'Motor de Ingresos Recurrentes',
+          title: 'Continuity Vault Vivo',
+          subtitle: 'Actualizaciones Incrementales de Capítulos, Inmuebles y SOP',
+          description:
+            'Como los rostros, voces y entornos del elenco quedan bloqueados permanentemente, los operadores pueden vender extensiones anuales de capítulos familiares o actualizaciones trimestrales de SOP e inmuebles con altos márgenes y casi cero retrabajo.',
+          liftHighlight: 'Añade nuevos hitos o revisiones de cumplimiento en minutos sin deriva de continuidad',
+          accessNote: 'Las actualizaciones se desbloquean mediante un Código Privado de Biblioteca de Continuidad (sin contraseña completa de cuenta)',
+        },
+      ],
+    },
     comparisonHeading: 'Por Qué el Cine 4K Largo de $149 Está en Otra Liga',
     comparisonSubtitle: 'Compara los generadores cortos de IA contra una producción larga de SceneFlow.',
     colDimension: 'Estándar de Producción',
@@ -509,22 +603,22 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'location_matching',
-        shortTab: 'Locais Reais',
-        badge: 'Fidelidade de Ambientes',
-        title: 'Correspondência Exata de Locais — Imóveis, Bairro Natal e Clínicas',
+        shortTab: 'Cenas Ativas e Cultura',
+        badge: 'Encenação com Continuidade Travada',
+        title: 'Cenas Ativas e Encenação Cultural com Continuidade Travada',
         summary:
-          'IA genérica inventa cenários artificiais. O SceneFlow fixa seus ambientes reais: cômodos de imóveis, o bairro da infância ou sua clínica, loja ou sede corporativa.',
-        exampleLabel: 'Exemplo de Ambiente',
-        exampleHeadline: 'Casa da Infância · Tour Imobiliário Real · Clínica Flagship',
+          'Faltam fotos dos capítulos mais marcantes? Usando seu Continuity Vault, o SceneFlow encena encontros familiares animados, tradições regionais, lares fiéis à época e atualizações virtuais de interiores e mobiliário—mantendo rostos reais, trajes e relíquias inconfundivelmente travados.',
+        exampleLabel: 'Encenação Ativa e Trava Ambiental',
+        exampleHeadline: 'Momentos Não Fotografados, Encenados com Autenticidade Cultural',
         exampleDetails:
-          'Envie fotos do imóvel ou memórias do bairro para preservar arquitetura e atmosfera autênticas.',
+          'Encene jantares multigeracionais vibrantes, renovações virtuais de móveis para imóveis à venda, cenas fundacionais de clínicas ou simulações regionais de conformidade—tudo travado ao seu elenco e arquitetura reais.',
         highlights: [
-          'Fidelidade arquitetônica cômodo a cômodo em tours 4K',
-          'Bairros de infância, escolas e cidades de origem autênticas',
-          'Consistência visual para clínicas, hotéis e ambientes de trabalho',
+          'Encena encontros familiares sem fotos, tradições regionais e lares fiéis à época',
+          'Atualizações virtuais de interiores/mobiliário e estilo de vida do bairro para Imóveis',
+          'Cenas localizadas de segurança no trabalho, equipamentos e atendimento sem desvio facial',
         ],
-        metricValue: 'Exato',
-        metricLabel: 'Fidelidade de Local',
+        metricValue: 'Cena Ativa',
+        metricLabel: 'Trava Cultural e Espacial',
       },
       {
         id: 'heirloom_props',
@@ -547,43 +641,79 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'voice_cloning',
-        shortTab: 'Clonagem de Voz',
-        badge: 'Identidade Vocal',
-        title: 'Clonagem de Voz, Harmonia Voz-Imagem e Guia de Pronúncia',
+        shortTab: 'Clonagem e Multipista',
+        badge: 'Áudio Multiperspectiva e 70+ Idiomas',
+        title: 'Clonagem de Voz, Faixas de Áudio Multiperspectiva e Trava de Pronúncia em 10s',
         summary:
-          'Um filme inesquecível soa tão verdadeiro quanto parece. Unimos clonagem de voz, correspondência entre voz e personagem e trava fonética de 10 segundos em 70+ idiomas.',
-        exampleLabel: 'Exemplo de Áudio',
-        exampleHeadline: 'Vozes Combinadas à Imagem + Clonagem + Pronúncia Perfeita',
+          'Um filme inesquecível soa tão verdadeiro quanto parece. O SceneFlow combina clonagem de voz, harmonia voz-imagem e trava fonética de 10 segundos com Faixas de Áudio Multiperspectiva—alternando o mesmo master visual 4K sem cortes entre inglês, japonês e espanhol, ou entre memórias em 1.ª pessoa e documentário em 3.ª pessoa.',
+        exampleLabel: 'Exemplo de Áudio Multiperspectiva',
+        exampleHeadline: '1 Rolo Visual 4K Travado → 70+ Idiomas e Múltiplas Perspectivas Narrativas',
         exampleDetails:
-          'Cada personagem fala com voz coerente à idade e perfil, sobre efeitos sonoros e trilha mixada.',
+          'Praticamente zero computação extra de vídeo: mantenha cada quadro visual intacto enquanto entrega pronúncia nativa para sobrenomes, cidades e siglas técnicas em mais de 70 idiomas.',
         highlights: [
-          'Clonagem de voz e combinação fiel de voz com imagem em tela',
-          'Guia de pronúncia de 10s para sobrenomes, cidades e siglas',
-          'Mixagem estéreo profissional: diálogos, narração, SFX e trilha',
+          'Faixas de Áudio Multiperspectiva: alterne idiomas ou vozes em 1.ª/3.ª pessoa no mesmo rolo 4K',
+          'Clonagem de voz e timbres fiéis à idade/persona com trava fonética de 10 segundos',
+          'Mixagem estéreo broadcast: diálogos, narrador de estúdio, SFX ambientes e trilha orquestral',
         ],
         metricValue: '70+ Idiomas',
-        metricLabel: 'Voz e Pronúncia',
+        metricLabel: 'Trava Vocal Multipista',
       },
       {
         id: 'directed_4k_master',
-        shortTab: 'Cenas 4K e Master',
-        badge: 'Realista ou Ilustrado em 4K',
-        title: 'Cenas 4K Dirigidas (Realistas ou Ilustradas) e Master Profissional',
+        shortTab: 'Cápsula Cultural e de Época',
+        badge: 'Ambientação Histórica e Regional',
+        title: 'Motor Localizado de Época e Cápsula Cultural do Tempo',
         summary:
-          'Escolha cinema fotorrealista ou direção ilustrada autoral. Cada plano recebe câmera 4K fluida (ou Movimento Total com Estúdios Parceiros) e entrega em master 3840×2160 pronto para telão.',
-        exampleLabel: 'Acabamento de Cinema',
-        exampleHeadline: 'Quadros 4K Dirigidos → Movimentos de Câmera → Master Profissional',
+          'Não apenas lemos suas anotações: nosso motor narrativo tece a música autêntica, os marcos econômicos, as referências culturais e a atmosfera cotidiana da década, cidade e país exatos da sua história—transformando memórias privadas em um documentário histórico duradouro.',
+        exampleLabel: 'Exemplo de Cápsula Cultural',
+        exampleHeadline: 'Contexto Histórico e Regional Que Dá Vida à História',
         exampleDetails:
-          'Sem vídeos borrados—pronto para projetores de eventos, TVs 4K e páginas principais de empresas.',
+          'Cada quadro 4K dirigido (3840×2160) combina música autêntica da década, contexto econômico e cultural regional e coreografia suave de 6 movimentos de câmera em um master histórico pronto para telão.',
         highlights: [
-          'Estilo cinematográfico fotorrealista OU ilustrado sob medida',
-          '4K UHD real (3840×2160) com movimentos suaves de câmera',
-          'Upgrade para Movimento Total disponível via Estúdios Parceiros',
+          'Contexto cultural, musical e econômico da década e região integrado automaticamente ao roteiro',
+          'Cinema fotorrealista OU direção ilustrada 4K UHD (3840×2160) com coreografia de câmera',
+          'Opere em 14 portais nativos enquanto produz masters 4K localizados em 70+ idiomas',
         ],
-        metricValue: '4K UHD',
-        metricLabel: 'Master de Cinema',
+        metricValue: '4K de Época',
+        metricLabel: 'Cápsula Cultural',
       },
     ],
+    immediateLift: {
+      eyebrow: 'Ganho Imediato · Consumidores e Operadores White-Label',
+      heading: 'Três Motores de Crescimento Integrados Além da Edição de Vídeo',
+      subtitle:
+        'Entregue demonstrações multilíngues ao vivo, materiais impressos tangíveis e atualizações recorrentes de capítulos ou SOPs sem esforço—tudo alimentado automaticamente pelo mesmo Continuity Vault travado.',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: 'Custo de Vídeo Quase Zero',
+          title: 'Faixas de Áudio Multiperspectiva',
+          subtitle: 'Mesmo Visual 4K · Múltiplas Vozes e Idiomas',
+          description:
+            'Mostre a Clonagem de Voz e a Inteligência de Roteiro na hora: alterne ao vivo um único rolo visual 4K entre inglês, japonês e espanhol—ou troque entre memórias em 1.ª pessoa e documentário em 3.ª pessoa—em uma prévia familiar ou reunião comercial.',
+          liftHighlight: 'Praticamente zero computação extra de vídeo por idioma ou perspectiva adicionada',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: 'Peça 100% Automatizada',
+          title: 'PDF Impresso Complementar com QR',
+          subtitle: 'Livro Recordação · Ficha de Imóvel · Pôster SOP',
+          description:
+            'Transforme cada master digital 4K em um material físico tangível para visitas abertas, jantares comemorativos ou chão de fábrica—diagramado automaticamente com quadros do filme, resumos por capítulo e links QR escaneáveis.',
+          liftHighlight: 'Entrega a corretores, anfitriões e líderes de treinamento uma lembrança física que justifica preços premium',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: 'Motor de Receita Recorrente',
+          title: 'Continuity Vault Vivo',
+          subtitle: 'Atualizações Incrementais de Capítulos, Imóveis e SOPs',
+          description:
+            'Como rostos, vozes e ambientes do elenco permanecem travados permanentemente, operadores podem vender extensões anuais de capítulos familiares ou atualizações trimestrais de SOPs e imóveis com alta margem e retrabalho quase zero.',
+          liftHighlight: 'Adicione novos marcos ou revisões de conformidade em minutos sem desvio de continuidade',
+          accessNote: 'Atualizações futuras são desbloqueadas via Código Privado da Biblioteca de Continuidade (sem senha completa da conta)',
+        },
+      ],
+    },
     comparisonHeading: 'Por Que o Cinema 4K Longo de $149 Está em Outro Patamar',
     comparisonSubtitle: 'Compare geradores curtos descartáveis com uma produção longa SceneFlow.',
     colDimension: 'Padrão de Produção',
@@ -689,22 +819,22 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'location_matching',
-        shortTab: 'लोकेशन मैचिंग',
-        badge: 'असली वातावरण की सटीकता',
-        title: 'सटीक लोकेशन मैचिंग — रियल एस्टेट, बचपन की गलियाँ और क्लिनिक',
+        shortTab: 'जीवंत दृश्य व सांस्कृतिक स्टेजिंग',
+        badge: 'कंटिन्यूटी-लॉक्ड स्टेजिंग',
+        title: 'कंटिन्यूटी-लॉक्ड जीवंत दृश्य और सांस्कृतिक स्टेजिंग',
         summary:
-          'साधारण AI काल्पनिक कमरे बना देता है। SceneFlow असली स्थानों को लॉक करता है—हर कमरे का रियल एस्टेट मिलान, बचपन का मोहल्ला या आपका क्लिनिक और ऑफिस।',
-        exampleLabel: 'लोकेशन लॉक उदाहरण',
-        exampleHeadline: 'बचपन का आँगन · असली प्रॉपर्टी टूर · मुख्य क्लिनिक',
+          'क्या सबसे खास अध्यायों की तस्वीरें नहीं हैं? आपके Continuity Vault का उपयोग करके SceneFlow जीवंत पारिवारिक समारोह, क्षेत्रीय परंपराएँ, युग-सटीक घर और वर्चुअल इंटीरियर/फ़र्नीचर अपडेट तैयार करता है—आपके असली चेहरे, परिधान और पारिवारिक धरोहरों को पूरी तरह लॉक रखते हुए।',
+        exampleLabel: 'जीवंत स्टेजिंग और वातावरण लॉक',
+        exampleHeadline: 'बिना तस्वीरों वाले पल, सांस्कृतिक प्रामाणिकता के साथ मंचित',
         exampleDetails:
-          'असली फोटो अपलोड करें ताकि हर दृश्य आपके वास्तविक स्थान की वास्तुकला और एहसास को जीवंत रखे।',
+          'पीढ़ियों के जीवंत पारिवारिक भोज, रियल एस्टेट के लिए वर्चुअल फ़र्नीचर रिफ़्रेश, क्लिनिक के शुरुआती सेवा दृश्य या क्षेत्रीय कार्यस्थल सुरक्षा अभ्यास तैयार करें—सब आपके असली पात्रों और वास्तुकला पर लॉक।',
         highlights: [
-          'रियल एस्टेट 4K टूर के लिए हर कमरे की सटीक वास्तुकला',
-          'बचपन के मोहल्ले, स्कूल और पैतृक शहर की प्रामाणिक झलक',
-          'ब्रांड और ट्रेनिंग के लिए एकरूप ऑफिस और कार्यस्थल',
+          'बिना फोटो वाले पारिवारिक समारोह, क्षेत्रीय परंपराएँ और युग-सटीक घर मंचित करता है',
+          'रियल एस्टेट के लिए वर्चुअल इंटीरियर/फ़र्नीचर अपडेट व सक्रिय पड़ोस जीवनशैली स्टेजिंग',
+          'बिना चेहरा बदले स्थानीय कार्यस्थल सुरक्षा, उपकरण व मरीज़/ग्राहक देखभाल दृश्य',
         ],
-        metricValue: 'सटीक',
-        metricLabel: 'स्थान व युग मिलान',
+        metricValue: 'सक्रिय स्टेजिंग',
+        metricLabel: 'संस्कृति व स्थान लॉक',
       },
       {
         id: 'heirloom_props',
@@ -727,43 +857,79 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'voice_cloning',
-        shortTab: 'वॉइस क्लोनिंग व मैच',
-        badge: 'आवाज़ की पहचान',
-        title: 'वॉइस क्लोनिंग, वॉइस-टू-इमेज मैचिंग और 10-सेकंड उच्चारण लॉक',
+        shortTab: 'वॉइस क्लोनिंग व मल्टी-ट्रैक',
+        badge: 'मल्टी-पर्सपेक्टिव ऑडियो व 70+ भाषाएँ',
+        title: 'वॉइस क्लोनिंग, मल्टी-पर्सपेक्टिव ऑडियो ट्रैक्स और 10-सेकंड उच्चारण लॉक',
         summary:
-          'यादगार फिल्म जितनी सुंदर दिखती है उतनी ही स्वाभाविक सुनाई देती है। वॉइस क्लोनिंग, किरदार के अनुसार आवाज़ और 10-सेकंड उच्चारण गाइड के साथ 70+ भाषाओं में बिल्कुल सटीक नाम और संवाद।',
-        exampleLabel: 'ऑडियो उदाहरण',
-        exampleHeadline: 'किरदार-मेल आवाज़ें + वॉइस क्लोनिंग + सटीक नाम उच्चारण',
+          'यादगार फिल्म जितनी सुंदर दिखती है उतनी ही स्वाभाविक सुनाई देती है। SceneFlow वॉइस क्लोनिंग, किरदार-मेल आवाज़ और 10-सेकंड उच्चारण लॉक को मल्टी-पर्सपेक्टिव ऑडियो ट्रैक्स के साथ जोड़ता है—एक ही 4K विज़ुअल मास्टर को अंग्रेज़ी, जापानी और स्पैनिश में, या प्रथम-पुरुष संस्मरण व तृतीय-पुरुष डॉक्यूमेंट्री के बीच सहजता से बदलते हुए।',
+        exampleLabel: 'मल्टी-पर्सपेक्टिव ऑडियो उदाहरण',
+        exampleHeadline: '1 लॉक्ड 4K विज़ुअल रील → 70+ भाषाएँ और विविध कथा दृष्टिकोण',
         exampleDetails:
-          'डायलॉग, स्टूडियो नैरेटर, साउंड इफेक्ट्स और संतुलित ऑर्केस्ट्रा संगीत का ब्रॉडकास्ट मिक्स।',
+          'लगभग शून्य अतिरिक्त वीडियो कंप्यूट: हर विज़ुअल फ्रेम को लॉक रखते हुए 70+ भाषाओं में उपनाम, गृहनगर और तकनीकी शब्दों का सटीक मूल उच्चारण दें।',
         highlights: [
-          'ऑन-स्क्रीन उम्र व व्यक्तित्व के अनुसार वॉइस क्लोनिंग व मैचिंग',
-          'उपनाम, शहर व तकनीकी शब्दों के लिए 10-सेकंड उच्चारण लॉक',
-          'प्रोफेशनल स्टीरियो मास्टर: संवाद, वॉइस-ओवर, SFX व संगीत',
+          'मल्टी-पर्सपेक्टिव ऑडियो ट्रैक्स: एक ही 4K रील पर भाषाएँ या 1st/3rd-पर्सन आवाज़ें बदलें',
+          '10-सेकंड फ़ोनेटिक उच्चारण लॉक के साथ वॉइस क्लोनिंग व उम्र/किरदार-मेल आवाज़ें',
+          'ब्रॉडकास्ट स्टीरियो मिक्स: संवाद, स्टूडियो नैरेटर VO, परिवेशी SFX और संतुलित ऑर्केस्ट्रा स्कोर',
         ],
         metricValue: '70+ भाषाएँ',
-        metricLabel: 'वॉइस और उच्चारण',
+        metricLabel: 'मल्टी-ट्रैक वॉइस लॉक',
       },
       {
         id: 'directed_4k_master',
-        shortTab: '4K बीट्स और मास्टर',
-        badge: 'रियलिस्टिक व इलस्ट्रेटिव 4K',
-        title: 'पेशेवर निर्देशित 4K बीट फ्रेम्स (रियलिस्टिक या इलस्ट्रेटिव) व मास्टर',
+        shortTab: 'युग व सांस्कृतिक टाइम-कैप्सूल',
+        badge: 'कालखंड व क्षेत्रीय विश्व-निर्माण',
+        title: 'स्थानीयकृत युग और सांस्कृतिक टाइम-कैप्सूल इंजन',
         summary:
-          'फोटोरियलिस्टिक सिनेमा या कलात्मक इलस्ट्रेटिव शैली चुनें। हर बीट को डॉक्यूमेंट्री कैमरे की तरह निर्देशित कर स्मूद 4K मोशन (या पार्टनर स्टूडियो द्वारा फुल मोशन) के साथ 3840×2160 मास्टर में तैयार किया जाता है।',
-        exampleLabel: 'फिनिशिंग उदाहरण',
-        exampleHeadline: 'कला-निर्देशित 4K फ्रेम → 6-मूव कैमरा मोशन → ब्रॉडकास्ट मास्टर',
+          'हम केवल आपके नोट्स नहीं पढ़ते—हमारा स्टोरी इंजन उस सटीक दशक, शहर और देश के प्रामाणिक संगीत, आर्थिक मील के पत्थर, सांस्कृतिक संदर्भ और रोज़मर्रा के माहौल को कहानी में बुनता है, जिससे निजी यादें एक स्थायी ऐतिहासिक डॉक्यूमेंट्री बन जाती हैं।',
+        exampleLabel: 'सांस्कृतिक टाइम-कैप्सूल उदाहरण',
+        exampleHeadline: 'कालखंड और क्षेत्रीय संदर्भ जो इतिहास को जीवंत बना दे',
         exampleDetails:
-          'शादी के प्रोजेक्टर, 75-इंच टीवी और वेबसाइट होमपेज के लिए बिल्कुल तैयार।',
+          'हर निर्देशित 4K फ्रेम (3840×2160) प्रामाणिक दशक संगीत, क्षेत्रीय आर्थिक व सांस्कृतिक संदर्भ और स्मूद 6-मूव कैमरा कोरियोग्राफी को थिएटर-रेडी ऐतिहासिक मास्टर में जोड़ता है।',
         highlights: [
-          'रियलिस्टिक सिनेमा या कहानी के अनुसार इलस्ट्रेटिव आर्ट स्टाइल',
-          'ट्रू 4K (3840×2160) और स्मूद डॉक्यूमेंट्री कैमरा मूवमेंट',
-          'कभी भी पार्टनर स्टूडियो के साथ फुल-मोशन में अपग्रेड संभव',
+          'स्क्रिप्ट में स्वचालित रूप से बुना गया दशक व क्षेत्रीय सांस्कृतिक, संगीतमय और आर्थिक संदर्भ',
+          'फोटोरियलिस्टिक सिनेमा या कलात्मक इलस्ट्रेटिव 4K UHD (3840×2160) मास्टर कोरियोग्राफी',
+          '14 मूल UI पोर्टल में कार्य करें और 70+ भाषाओं में सांस्कृतिक रूप से स्थानीयकृत 4K मास्टर बनाएँ',
         ],
-        metricValue: '4K UHD',
-        metricLabel: 'थिएटर-रेडी मास्टर',
+        metricValue: 'युग-सटीक 4K',
+        metricLabel: 'सांस्कृतिक टाइम-कैप्सूल',
       },
     ],
+    immediateLift: {
+      eyebrow: 'तत्काल बढ़त · उपभोक्ता व व्हाइट-लेबल ऑपरेटर',
+      heading: 'वीडियो एडिटिंग से आगे तीन अंतर्निर्मित ग्रोथ इंजन',
+      subtitle:
+        'लाइव बहुभाषी डेमो, ठोस प्रिंट स्मृति-पुस्तिकाएँ और आसान आवर्ती अध्याय या SOP अपडेट दें—सब एक ही लॉक्ड Continuity Vault से स्वचालित रूप से संचालित।',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: 'लगभग शून्य अतिरिक्त कंप्यूट',
+          title: 'मल्टी-पर्सपेक्टिव ऑडियो ट्रैक्स',
+          subtitle: 'वही 4K विज़ुअल्स · अनेक आवाज़ें और भाषाएँ',
+          description:
+            'वॉइस क्लोनिंग और स्क्रिप्ट इंटेलिजेंस को तुरंत दिखाएँ: पारिवारिक प्रीव्यू या क्लाइंट सेल्स कॉल पर एक ही 4K विज़ुअल रील को लाइव अंग्रेज़ी, जापानी और स्पैनिश—या प्रथम-पुरुष संस्मरण और तृतीय-पुरुष डॉक्यूमेंट्री—के बीच बदलें।',
+          liftHighlight: 'प्रत्येक नई भाषा या नैरेटर दृष्टिकोण के लिए लगभग शून्य अतिरिक्त वीडियो कंप्यूट',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: '100% स्वचालित प्रिंट कृति',
+          title: 'QR-लिंक्ड प्रिंट कम्पेनियन PDF',
+          subtitle: 'स्मृति पुस्तिका · प्रॉपर्टी शीट · SOP पोस्टर',
+          description:
+            'हर डिजिटल 4K मास्टर को ओपन हाउस, माइलस्टोन जन्मदिन भोज या फ़ैक्टरी फ़्लोर के लिए एक ठोस भौतिक साथी में बदलें—फ्रेम स्टिल्स, अध्याय सारांश और स्कैन करने योग्य QR वीडियो लिंक के साथ स्वतः फ़ॉर्मेट किया हुआ।',
+          liftHighlight: 'रियलटर्स, मेज़बानों और ट्रेनिंग लीड्स को ऐसा भौतिक स्मृतिचिह्न देता है जो प्रीमियम मूल्य को सही ठहराता है',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: 'आवर्ती राजस्व इंजन',
+          title: 'लिविंग Continuity Vault',
+          subtitle: 'क्रमिक अध्याय, प्रॉपर्टी और SOP अपडेट',
+          description:
+            'क्योंकि पात्रों के चेहरे, आवाज़ें और परिवेश स्थायी रूप से लॉक रहते हैं, ऑपरेटर लगभग शून्य दोबारा मेहनत के साथ उच्च मार्जिन पर वार्षिक पारिवारिक अध्याय विस्तार या त्रैमासिक SOP और प्रॉपर्टी अपडेट बेच सकते हैं।',
+          liftHighlight: 'बिना किसी कंटिन्यूटी ड्रिफ्ट के मिनटों में नए मील के पत्थर या अनुपालन संशोधन जोड़ें',
+          accessNote: 'बाद के अपडेट एक निजी Continuity Library Code से अनलॉक होते हैं (पूरे अकाउंट पासवर्ड की आवश्यकता नहीं)',
+        },
+      ],
+    },
     comparisonHeading: '$149 लॉन्ग-फॉर्म 4K सिनेमा बिल्कुल अलग स्तर क्यों है',
     comparisonSubtitle: 'साधारण शॉर्ट-फॉर्म AI क्लिप ऐप्स और SceneFlow लॉन्ग-फॉर्म प्रोडक्शन की तुलना करें।',
     colDimension: 'प्रोडक्शन मानक',
@@ -869,22 +1035,22 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'location_matching',
-        shortTab: '实景与空间匹配',
-        badge: '真实环境还原',
-        title: '精准场景匹配 —— 高端房产、童年街巷与实体门店',
+        shortTab: '实景演绎与文化布景',
+        badge: '连续性锁定布景',
+        title: '连续性锁定的实景演绎与文化布景',
         summary:
-          '普通 AI 只会编造毫无关联的房间。SceneFlow 将真实空间锁定进连续性库：逐间还原房源格局、重现童年老街或故乡院落，或忠实呈现您的诊所、工坊与办公环境。',
-        exampleLabel: '场景锁定示例',
-        exampleHeadline: '童年老宅门廊 · 真实房源格局 · 旗舰诊所实景',
+          '最重要的人生篇章缺少照片？依托您的 Continuity Vault，SceneFlow 可真实演绎热闹的家族团聚、地域风俗、年代感老宅以及虚拟室内/家具焕新——始终牢牢锁定真实面孔、服饰与标志性传家宝。',
+        exampleLabel: '动态布景与环境锁定',
+        exampleHeadline: '未曾留影的珍贵瞬间，以真实文化底蕴生动再现',
         exampleDetails:
-          '上传房源图、老街照片或门店参考，让每个机位都尊重真实的建筑结构与氛围。',
+          '演绎多代同堂的热闹家宴、房产展示的虚拟家具焕新、诊所创立年代的问诊实景，或本土化的职场安全合规演练——全部严格锚定真实人物与建筑空间。',
         highlights: [
-          '4K 房产导览逐间还原真实建筑格局与采光',
-          '真实再现童年街区、母校与家族故乡风貌',
-          '商业诊所、酒店与培训车间环境全程统一',
+          '生动演绎缺少照片的家族聚会、地方传统与符合年代风貌的居家场景',
+          '为高端房产提供虚拟室内/家具焕新与鲜活社区生活方式实景演绎',
+          '本土化职场安全、专业设备与医患/客户服务场景，人物面孔零漂移',
         ],
-        metricValue: '实景还原',
-        metricLabel: '空间与年代精度',
+        metricValue: '实景演绎',
+        metricLabel: '文化与空间锁定',
       },
       {
         id: 'heirloom_props',
@@ -907,43 +1073,79 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'voice_cloning',
-        shortTab: '声音克隆与声画匹配',
-        badge: '声纹与母带混音',
-        title: '声音克隆、声画角色匹配与 10 秒专有名词发音锁',
+        shortTab: '声音克隆与多音轨',
+        badge: '多视角音轨与 70+ 语言',
+        title: '声音克隆、多视角音轨与 10 秒专有名词发音锁',
         summary:
-          '好电影同样靠声音打动人心。SceneFlow 将声音克隆、角色年龄声画匹配与 10 秒发音指南结合，确保人名、地名与行业术语在 70+ 语言中自然温暖、发音零失误。',
-        exampleLabel: '音频连续性示例',
-        exampleHeadline: '角色声画精准匹配 + 声音克隆 + 人名零误读',
+          '好电影的声音与画面同样真实动人。SceneFlow 将声音克隆、声画角色匹配、10 秒发音锁定与多视角音轨融为一体——同一份 4K 视觉母带可在英语、日语、西班牙语之间无缝切换，或在第一人称回忆录与第三人称纪录片视角之间自由转换。',
+        exampleLabel: '多视角音轨示例',
+        exampleHeadline: '1 份锁定 4K 视觉母带 → 70+ 语言与多叙事视角自由切换',
         exampleDetails:
-          '屏幕人物与声线高度契合，搭配环境音效与智能闪避交响配乐，达到广播级听感。',
+          '几乎零额外视频算力成本：保持每一帧画面完全锁定，同时在 70+ 语言中以原生发音精准呈现姓氏、故乡地名与专业缩写。',
         highlights: [
-          '支持声音克隆及与画面年龄、气质高度契合的角色配音',
-          '10 秒发音指南精准锁定姓氏、地名与品牌专有名词',
-          '广播级立体声混音：对白、棚录旁白、音效与交响配乐',
+          '多视角音轨：在同一条 4K 画面母带上即时切换语言或第一/第三人称旁白',
+          '声音克隆与年龄气质匹配配音，配合 10 秒音标级发音锁定',
+          '广播级立体声混音：对白、棚录旁白、环境音效与智能闪避交响配乐',
         ],
         metricValue: '70+ 语言',
-        metricLabel: '声纹与发音锁定',
+        metricLabel: '多音轨声纹锁定',
       },
       {
         id: 'directed_4k_master',
-        shortTab: '导演级 4K 画面与母带',
-        badge: '写实或绘本 4K 电影',
-        title: '专业导演分镜（写实或插画风格）与影院级 4K 母带',
+        shortTab: '年代与文化时间胶囊',
+        badge: '时代背景与地域世界构建',
+        title: '本土化年代与文化时间胶囊引擎',
         summary:
-          '可自由选择电影级写实画面或温情插画艺术风格。每个节拍均经专业构图与 6 种纪录片 4K 运镜编排（亦可通过合作工作室升级全动态），交付 3840×2160 影院级成片母带。',
-        exampleLabel: '成片交付示例',
-        exampleHeadline: '导演级 4K 分镜画面 → 电影感运镜编排 → 影院级立体声母带',
+          '我们绝不只是照本宣科——故事引擎会自动融入故事发生年代、城市与国家的真实流行音乐、经济里程碑、文化印记与市井烟火，将私人记忆升华为历久弥新的历史纪录片。',
+        exampleLabel: '文化时间胶囊示例',
+        exampleHeadline: '还原时代与地域脉络，让历史鲜活重现',
         exampleDetails:
-          '告别模糊画质与生硬切换，可直接投屏宴会大屏、75 寸客厅电视或品牌官网首页。',
+          '每一帧导演级 4K 画面（3840×2160）都将纯正年代配乐、地域经济文化语境与 6 种丝滑电影运镜融为一体，打造可直投大屏的历史级母带。',
         highlights: [
-          '按故事气质定制写实电影风或精装插画艺术风',
-          '真 4K (3840×2160) 丝滑推拉摇移与鹤臂电影运镜',
-          '随时可通过 SceneFlow 合作工作室升级全动态实拍级成片',
+          '自动将所属年代与地域的文化、音乐与经济历史脉络编织进剧本',
+          '电影级写实或传世插画 4K 超清（3840×2160）母带与镜头编排',
+          '支持 14 种母语界面门户运营，制作覆盖 70+ 语言的文化本土化 4K 母带',
         ],
-        metricValue: '4K 超清',
-        metricLabel: '影院级母带交付',
+        metricValue: '时代 4K',
+        metricLabel: '文化时间胶囊',
       },
     ],
+    immediateLift: {
+      eyebrow: '即刻增效 · 个人客户与白标运营商',
+      heading: '超越视频剪辑的三大内置增长引擎',
+      subtitle:
+        '无需重复返工，依托同一份锁定的 Continuity Vault 自动实现多语种现场演示、实体印刷伴手礼以及轻松的周期性章节或 SOP 更新。',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: '几乎零额外视频算力',
+          title: '多视角音轨切换',
+          subtitle: '同一 4K 画面 · 多声线与多语言',
+          description:
+            '即刻展示声音克隆与智能编剧实力：在家庭试映或客户销售通话中，将同一条 4K 视觉成片实时切换为英语、日语或西班牙语，或即时切换第一人称回忆录与第三人称纪录片视角。',
+          liftHighlight: '每新增一种语言或叙事视角，几乎零额外视频算力消耗',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: '100% 自动化实体产物',
+          title: '二维码联动实体伴读 PDF',
+          subtitle: '家族纪念画册 · 房产精装手册 · SOP 岗位海报',
+          description:
+            '将每部数字 4K 母带转化为开放日、大寿宴席或工厂车间的实体伴手礼——自动排版精选剧照、章节摘要与可扫码播放的二维码视频链接。',
+          liftHighlight: '为房产经纪、宴会主人与培训负责人提供高质感实体纪念品，稳固高端定价',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: '持续复购营收引擎',
+          title: '持续演进的 Continuity Vault',
+          subtitle: '增量式家庭新章、房源与 SOP 迭代更新',
+          description:
+            '由于人物面孔、声线与环境永久锁定，运营商可以极低返工成本与高毛利持续销售年度家族新篇章，或季度企业 SOP 与房源更新服务。',
+          liftHighlight: '数分钟即可新增人生里程碑或合规修订，连续性零漂移',
+          accessNote: '后续更新仅凭专属 Continuity Library Code 解锁（无需提供完整账号密码）',
+        },
+      ],
+    },
     comparisonHeading: '为什么 $149 长篇 4K 电影与短片 AI 完全不在一个维度',
     comparisonSubtitle: '直观对比市面上的一次性短片 AI 工具与 SceneFlow 长篇电影级制作。',
     colDimension: '制作标准',
@@ -1049,22 +1251,22 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'location_matching',
-        shortTab: 'مطابقة المواقع',
-        badge: 'دقة الأماكن الحقيقية',
-        title: 'مطابقة دقيقة للمواقع — العقارات، حي الطفولة والعيادات',
+        shortTab: 'مشاهد حية وإخراج ثقافي',
+        badge: 'تثبيت الاستمرارية والإخراج المكاني',
+        title: 'مشاهد حية وإخراج ثقافي باستمرارية مثبّتة',
         summary:
-          'الذكاء العشوائي يخترع غرفاً خيالية. يثبّت SceneFlow مواقعك الحقيقية: غرف العقار المعروض، حي الطفولة أو البلدة الأم، أو مقر شركتك وعيادتك بدقة معمارية عالية.',
-        exampleLabel: 'مثال الموقع',
-        exampleHeadline: 'شارع الطفولة · غرف العقار الحقيقية · العيادة الرئيسية',
+          'هل تنقصك صور لأهم فصول القصة؟ عبر Continuity Vault، يخرج SceneFlow تجمعات عائلية نابضة بالحياة وتقاليد محلية ومنازل مطابقة للعصر وتحديثات افتراضية للديكور والأثاث—مع تثبيت الوجوه الحقيقية والملابس والمقتنيات الموروثة بدقة تامة.',
+        exampleLabel: 'إخراج حي وتثبيت بيئي',
+        exampleHeadline: 'لحظات لم تُصوَّر، مُخرجة بأصالة ثقافية حقيقية',
         exampleDetails:
-          'ارفع صور العقار أو الأماكن العزيزة ليحافظ كل مشهد على الطابع المعماري الحقيقي.',
+          'أخرج مآدب عائلية تجمع الأجيال، وتجديدات افتراضية للأثاث لعروض العقارات، ومشاهد رعاية طبية من بدايات العيادة، أو تدريبات سلامة مهنية محلية—كل ذلك مثبّت على شخصياتك وعمارتك الحقيقية.',
         highlights: [
-          'دقة معمارية غرفة بغرفة لجولات العقارات بدقة 4K',
-          'إحياء أحياء الطفولة والمدارس والبلدات العائلية بأمانة',
-          'بيئات عمل وعيادات متسقة للأفلام التجارية والتدريبية',
+          'يُخرج التجمعات العائلية غير المصوَّرة والتقاليد الإقليمية والمنازل المطابقة للعصر',
+          'تحديثات افتراضية للديكور والأثاث وإبراز أسلوب حياة الحي لعروض العقارات',
+          'مشاهد محلية للسلامة المهنية والمعدات ورعاية المرضى والعملاء بلا أي تغيّر في الوجوه',
         ],
-        metricValue: 'دقيق',
-        metricLabel: 'أمانة المكان والعصر',
+        metricValue: 'إخراج حي',
+        metricLabel: 'تثبيت الثقافة والمكان',
       },
       {
         id: 'heirloom_props',
@@ -1087,43 +1289,79 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'voice_cloning',
-        shortTab: 'استنساخ ومطابقة الصوت',
-        badge: 'الهوية الصوتية',
-        title: 'استنساخ الصوت، مطابقة الصوت بالصورة ودليل نطق 10 ثوانٍ',
+        shortTab: 'استنساخ الصوت وتعدد المسارات',
+        badge: 'صوت متعدد المنظور و+70 لغة',
+        title: 'استنساخ الصوت، مسارات صوتية متعددة المنظور وقفل نطق 10 ثوانٍ',
         summary:
-          'الفيلم الخالد يُسمع بنفس صدق صورته. يجمع SceneFlow بين استنساخ الصوت ومطابقة نبرة كل شخصية مع صورتها ودليل نطق للأسماء والمدن بأكثر من 70 لغة.',
-        exampleLabel: 'مثال الصوت',
-        exampleHeadline: 'أصوات مطابقة للشخصيات + استنساخ دافئ + نطق سليم للأسماء',
+          'الفيلم الخالد يُسمع بنفس صدق صورته. يجمع SceneFlow بين استنساخ الصوت ومطابقة الصوت بالصورة وقفل النطق بـ 10 ثوانٍ مع مسارات صوتية متعددة المنظور—لتبديل نفس الماستر البصري 4K بسلاسة بين الإنجليزية واليابانية والإسبانية، أو بين مذكرات بضمير المتكلم ووثائقي بضمير الغائب.',
+        exampleLabel: 'مثال الصوت متعدد المنظور',
+        exampleHeadline: 'شريط بصري 4K واحد مثبّت ← +70 لغة وعدة منظورات سردية',
         exampleDetails:
-          'مزج صوتي احترافي يوازن الحوار والسرد والمؤثرات والموسيقى الأوركسترالية بسلاسة.',
+          'تكلفة حوسبة فيديو إضافية شبه معدومة: حافظ على كل إطار بصري مثبّتاً مع تقديم نطق أصلي لأسماء العائلات والمدن والمصطلحات التقنية بأكثر من 70 لغة.',
         highlights: [
-          'استنساخ الصوت ومطابقته لعمر وشخصية الظاهر على الشاشة',
-          'دليل نطق 10 ثوانٍ لأسماء العائلات والمدن والمصطلحات',
-          'ماستر صوتي ستيريو: حوار، سرد استوديو، مؤثرات وموسيقى',
+          'مسارات صوتية متعددة المنظور: بدّل اللغات أو أصوات المتكلم/الغائب على نفس الشريط 4K',
+          'استنساخ الصوت وأصوات مطابقة للعمر والشخصية مع قفل نطق صوتي خلال 10 ثوانٍ',
+          'مزج ستيريو احترافي: حوار، سرد استوديو، مؤثرات محيطة وموسيقى أوركسترالية متوازنة',
         ],
         metricValue: '+70 لغة',
-        metricLabel: 'الصوت والنطق',
+        metricLabel: 'تثبيت صوتي متعدد المسارات',
       },
       {
         id: 'directed_4k_master',
-        shortTab: 'إخراج 4K وماستر نهائي',
-        badge: 'واقعي أو فني بدقة 4K',
-        title: 'لقطات 4K مُخرجة باحتراف (واقعية أو فنية) وماستر جاهز للعرض',
+        shortTab: 'كبسولة العصر والثقافة',
+        badge: 'بناء عالم تاريخي وإقليمي أصيل',
+        title: 'محرك كبسولة العصر والثقافة المحلية',
         summary:
-          'اختر الأسلوب السينمائي الواقعي أو الفني المرسوم. كل لقطة مؤطرة بعناية وتتحرك بانسيابية سينمائية بدقة 4K (أو بحركة كاملة عبر الشركاء) وتُسلّم كملف 3840×2160 جاهز للشاشات العملاقة.',
-        exampleLabel: 'مثال الإخراج النهائي',
-        exampleHeadline: 'إطارات 4K مُخرجة ← حركة كاميرا سينمائية ← ماستر احترافي',
+          'لا نكتفي بقراءة ملاحظاتك—بل ينسج محرك القصة الموسيقى الأصيلة والمحطات الاقتصادية والرموز الثقافية وأجواء الحياة اليومية للعقد والمدينة والبلد الدقيق لقصتك، ليحوّل الذكريات الخاصة إلى فيلم وثائقي تاريخي خالد.',
+        exampleLabel: 'مثال كبسولة الزمن الثقافية',
+        exampleHeadline: 'سياق زمني وإقليمي يعيد للتاريخ نبضه الحقيقي',
         exampleDetails:
-          'جاهز للعرض في قاعات الاحتفال وشاشات التلفاز الكبيرة والصفحات الرئيسية للشركات.',
+          'يجمع كل إطار 4K مُخرج (3840×2160) بين موسيقى العقد الأصيلة والسياق الاقتصادي والثقافي المحلي وحركات كاميرا سلسة بـ 6 أنماط في ماستر تاريخي جاهز للعرض السينمائي.',
         highlights: [
-          'إخراج واقعي سينمائي أو أسلوب فني مرسوم حسب طابع قصتك',
-          'دقة 4K حقيقية (3840×2160) بحركات كاميرا وثائقية سلسة',
-          'قابلية الترقية للحركة الكاملة عبر استوديوهات SceneFlow الشريكة',
+          'دمج تلقائي للسياق الثقافي والموسيقي والاقتصادي للعقد والمنطقة داخل السيناريو',
+          'سينما واقعية أو أسلوب فني مرسوم بدقة 4K UHD (3840×2160) مع إخراج كاميرا سينمائي',
+          'اعمل عبر 14 بوابة واجهة أصلية وأنتج نسخ ماستر 4K موطّنة ثقافياً بأكثر من 70 لغة',
         ],
-        metricValue: '4K UHD',
-        metricLabel: 'ماستر جاهز للشاشة',
+        metricValue: '4K أصيل للعصر',
+        metricLabel: 'كبسولة زمن ثقافية',
       },
     ],
+    immediateLift: {
+      eyebrow: 'قيمة فورية · للأفراد ومشغّلي العلامات البيضاء',
+      heading: 'ثلاثة محركات نمو مدمجة تتجاوز مجرد مونتاج الفيديو',
+      subtitle:
+        'قدّم عروضاً حية متعددة اللغات، ومطبوعات ملموسة، وتحديثات متكررة للفصول أو إجراءات العمل بسهولة—كلها مدعومة تلقائياً من نفس Continuity Vault المثبّت.',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: 'حوسبة إضافية شبه معدومة',
+          title: 'مسارات صوتية متعددة المنظور',
+          subtitle: 'نفس المشاهد 4K · عدة أصوات ولغات',
+          description:
+            'اعرض قوة استنساخ الصوت وذكاء السيناريو فوراً: بدّل شريطاً بصرياً واحداً بدقة 4K مباشرة بين الإنجليزية واليابانية والإسبانية—أو بين مذكرات شخصية ووثائقي بضمير الغائب—أثناء عرض عائلي أو مكالمة مبيعات.',
+          liftHighlight: 'حوسبة فيديو إضافية شبه معدومة لكل لغة أو منظور سردي إضافي',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: 'مطبوعة آلية 100%',
+          title: 'ملف PDF مطبوع مرتبط برموز QR',
+          subtitle: 'كتاب تذكاري · نشرة عقارية · ملصق إجراءات SOP',
+          description:
+            'حوّل كل ماستر رقمي 4K إلى رفيق مطبوع ملموس لمعارض العقارات أو حفلات الميلاد أو أرض المصنع—مُنسّق تلقائياً بلقطات ثابتة وملخصات فصول وروابط فيديو QR قابلة للمسح.',
+          liftHighlight: 'يمنح الوسطاء والمضيفين ومديري التدريب تذكاراً مادياً يبرر التسعير المميز',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: 'محرك إيرادات متكررة',
+          title: 'Continuity Vault حي ومتجدد',
+          subtitle: 'تحديثات تراكمية للفصول والعقارات وإجراءات SOP',
+          description:
+            'لأن وجوه الشخصيات وأصواتها وبيئاتها تبقى مثبّتة بشكل دائم، يمكن للمشغّلين بيع امتدادات سنوية لفصول العائلة أو تحديثات ربع سنوية للعقارات وإجراءات العمل بهوامش ربح عالية وإعادة عمل شبه معدومة.',
+          liftHighlight: 'أضف محطات جديدة أو تعديلات امتثال خلال دقائق دون أي خلل في الاستمرارية',
+          accessNote: 'تُفتح التحديثات اللاحقة عبر رمز خاص لمكتبة الاستمرارية (Continuity Library Code) دون الحاجة لكلمة مرور الحساب الكاملة',
+        },
+      ],
+    },
     comparisonHeading: 'لماذا سينما 4K الطويلة بـ $149 عالم مختلف تماماً',
     comparisonSubtitle: 'قارن مولدات المقاطع القصيرة العشوائية بإنتاج SceneFlow السينمائي الطويل.',
     colDimension: 'معيار الإنتاج',
@@ -1229,22 +1467,22 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'location_matching',
-        shortTab: 'สถานที่ตรงของจริง',
-        badge: 'ความแม่นยำของสถานที่',
-        title: 'จำลองสถานที่ตรงจริง — บ้านอสังหาฯ ย่านวัยเด็ก และคลินิกของคุณ',
+        shortTab: 'ฉากมีชีวิตและจัดฉากวัฒนธรรม',
+        badge: 'การจัดฉากที่ล็อกความต่อเนื่อง',
+        title: 'ฉากมีชีวิตและการจัดฉากวัฒนธรรมที่ล็อกความต่อเนื่อง',
         summary:
-          'AI ทั่วไปสุ่มสร้างห้องที่ไม่ตรงความจริง SceneFlow ล็อกสถานที่จริงของคุณ ทั้งห้องต่างๆ ในบ้านอสังหาฯ ย่านวัยเด็ก หรือคลินิกและสำนักงานจริงของคุณ',
-        exampleLabel: 'ตัวอย่างสถานที่',
-        exampleHeadline: 'บ้านวัยเด็ก · ทัวร์อสังหาฯ ตรงทุกห้อง · คลินิกหลักของคุณ',
+          'ไม่มีรูปถ่ายช่วงเวลาสำคัญที่สุดใช่ไหม? ด้วย Continuity Vault ของคุณ SceneFlow จัดฉากงานรวมญาติที่มีชีวิตชีวา ประเพณีท้องถิ่น บ้านเรือนที่สมยุค และการตกแต่งภายใน/เฟอร์นิเจอร์เสมือนจริง โดยยังคงล็อกใบหน้าจริง เครื่องแต่งกาย และของรักประจำตระกูลไว้อย่างแม่นยำ',
+        exampleLabel: 'การจัดฉากมีชีวิตและล็อกสภาพแวดล้อม',
+        exampleHeadline: 'ช่วงเวลาที่ไร้ภาพถ่าย ถูกจัดฉากอย่างสมจริงตามวัฒนธรรม',
         exampleDetails:
-          'อัปโหลดภาพอ้างอิงสถานที่จริงเพื่อให้ทุกมุมกล้องเคารพสถาปัตยกรรมและบรรยากาศดั้งเดิม',
+          'จัดฉากมื้อค่ำครอบครัวหลายรุ่นที่อบอุ่น การปรับแต่งเฟอร์นิเจอร์เสมือนจริงสำหรับประกาศขายบ้าน ฉากการดูแลผู้ป่วยยุคก่อตั้งคลินิก หรือการซ้อมความปลอดภัยในที่ทำงานท้องถิ่น โดยล็อกกับตัวละครและสถาปัตยกรรมจริงของคุณทั้งหมด',
         highlights: [
-          'ทัวร์อสังหาฯ 4K ตรงสถาปัตยกรรมจริงทีละห้อง',
-          'จำลองละแวกบ้านวัยเด็ก โรงเรียน และบ้านเกิดอย่างสมจริง',
-          'คุมโทนสำนักงาน คลินิก โรงแรม และพื้นที่ฝึกอบรมอย่างแม่นยำ',
+          'จัดฉากการรวมญาติที่ไม่มีภาพถ่าย ประเพณีท้องถิ่น และบ้านเรือนตรงยุคสมัย',
+          'ปรับตกแต่งภายใน/เฟอร์นิเจอร์เสมือนจริงและจัดฉากไลฟ์สไตล์ย่านที่พักสำหรับอสังหาฯ',
+          'ฉากความปลอดภัยในที่ทำงาน อุปกรณ์ และการดูแลผู้ป่วย/ลูกค้าแบบท้องถิ่นโดยหน้าไม่เพี้ยน',
         ],
-        metricValue: 'ตรงจริง',
-        metricLabel: 'ความแม่นยำสถานที่',
+        metricValue: 'จัดฉากมีชีวิต',
+        metricLabel: 'ล็อกวัฒนธรรมและสถานที่',
       },
       {
         id: 'heirloom_props',
@@ -1267,43 +1505,79 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
       },
       {
         id: 'voice_cloning',
-        shortTab: 'โคลนเสียง & ตรงตัวละคร',
-        badge: 'อัตลักษณ์เสียงระดับสตูดิโอ',
-        title: 'โคลนเสียง จับคู่เสียงตรงภาพตัวละคร และล็อกการออกเสียง 10 วินาที',
+        shortTab: 'โคลนเสียงและหลายแทร็ก',
+        badge: 'เสียงหลายมุมมอง & 70+ ภาษา',
+        title: 'โคลนเสียง แทร็กเสียงหลายมุมมอง และล็อกการออกเสียง 10 วินาที',
         summary:
-          'ภาพยนตร์ที่น่าจดจำต้องมีเสียงที่สมจริงพอๆ กับภาพ ผสานการโคลนเสียง การจับคู่โทนเสียงตามวัยของตัวละคร และคู่มือออกเสียงชื่อเฉพาะใน 70+ ภาษา',
-        exampleLabel: 'ตัวอย่างเสียง',
-        exampleHeadline: 'เสียงตรงวัยตัวละคร + โคลนเสียงอบอุ่น + อ่านชื่อถูกต้อง 100%',
+          'ภาพยนตร์ที่น่าจดจำต้องมีเสียงที่สมจริงพอๆ กับภาพ SceneFlow ผสานการโคลนเสียง การจับคู่เสียงตรงภาพ และการล็อกการออกเสียง 10 วินาที เข้ากับแทร็กเสียงหลายมุมมอง—สลับไฟล์ภาพ 4K ชุดเดียวกันได้อย่างลื่นไหลระหว่างภาษาอังกฤษ ญี่ปุ่น และสเปน หรือสลับระหว่างบันทึกความทรงจำบุรุษที่ 1 กับสารคดีบุรุษที่ 3',
+        exampleLabel: 'ตัวอย่างเสียงหลายมุมมอง',
+        exampleHeadline: 'ภาพ 4K ล็อก 1 ชุด → 70+ ภาษา และหลากหลายมุมมองการเล่าเรื่อง',
         exampleDetails:
-          'มิกซ์เสียงสเตอริโอระดับออกอากาศทั้งบทสนทนา เสียงบรรยาย เอฟเฟกต์ และดนตรีประกอบ',
+          'แทบไม่ต้องใช้พลังประมวลผลวิดีโอเพิ่ม: คงทุกเฟรมภาพเดิมไว้ครบถ้วน พร้อมออกเสียงนามสกุล บ้านเกิด และคำย่อเฉพาะทางอย่างเป็นธรรมชาติในกว่า 70 ภาษา',
         highlights: [
-          'โคลนเสียงและจับคู่น้ำเสียงตรงกับตัวละครบนหน้าจอ',
-          'คู่มือออกเสียง 10 วินาทีสำหรับนามสกุล ชื่อเมือง และศัพท์เฉพาะ',
-          'มาสเตอร์เสียงสเตอริโอ: บทสนทนา เสียงบรรยาย SFX และดนตรี',
+          'แทร็กเสียงหลายมุมมอง: สลับภาษาหรือเสียงเล่าเรื่องบุรุษที่ 1/3 บนภาพ 4K ชุดเดียวกัน',
+          'โคลนเสียงและจับคู่เสียงตามวัย/บุคลิก พร้อมล็อกการออกเสียงตามสัทศาสตร์ใน 10 วินาที',
+          'มิกซ์สเตอริโอระดับออกอากาศ: บทสนทนา เสียงบรรยายสตูดิโอ SFX บรรยากาศ และดนตรีออร์เคสตรา',
         ],
         metricValue: '70+ ภาษา',
-        metricLabel: 'เสียงและการออกเสียง',
+        metricLabel: 'ล็อกเสียงหลายแทร็ก',
       },
       {
         id: 'directed_4k_master',
-        shortTab: 'บีต 4K & มาสเตอร์',
-        badge: 'สมจริงหรือภาพวาด 4K',
-        title: 'กำกับเฟรมบีต 4K มืออาชีพ (สมจริงหรือภาพวาด) พร้อมมาสเตอร์ฉายจอใหญ่',
+        shortTab: 'แคปซูลเวลาแห่งยุคและวัฒนธรรม',
+        badge: 'สร้างโลกแห่งยุคสมัยและท้องถิ่น',
+        title: 'ระบบแคปซูลเวลาแห่งยุคสมัยและวัฒนธรรมเฉพาะถิ่น',
         summary:
-          'เลือกสไตล์ภาพยนตร์สมจริงหรือภาพวาดสุดประณีต ทุกเฟรมกำกับองค์ประกอบและเคลื่อนกล้อง 4K อย่างนุ่มนวล (หรืออัปเกรดฟูลโมชันผ่านพาร์ตเนอร์) ส่งมอบไฟล์มาสเตอร์ 3840×2160',
-        exampleLabel: 'ตัวอย่างงานมาสเตอร์',
-        exampleHeadline: 'เฟรม 4K กำกับศิลป์ → การเคลื่อนกล้องสารคดี → มาสเตอร์จอใหญ่',
+          'เราไม่ได้แค่อ่านบันทึกของคุณ—ระบบเล่าเรื่องของเราถักทอเสียงดนตรีแท้จริง เหตุการณ์เศรษฐกิจสำคัญ สัญลักษณ์ทางวัฒนธรรม และบรรยากาศชีวิตประจำวันของทศวรรษ เมือง และประเทศที่เรื่องราวเกิดขึ้น เปลี่ยนความทรงจำส่วนตัวให้กลายเป็นสารคดีประวัติศาสตร์ที่ทรงคุณค่าตลอดกาล',
+        exampleLabel: 'ตัวอย่างแคปซูลเวลาทางวัฒนธรรม',
+        exampleHeadline: 'บริบทแห่งยุคสมัยและท้องถิ่นที่ปลุกประวัติศาสตร์ให้มีชีวิต',
         exampleDetails:
-          'พร้อมฉายขึ้นโปรเจกเตอร์งานเลี้ยง ทีวี 75 นิ้ว หรือหน้าแรกเว็บไซต์ธุรกิจของคุณ',
+          'ทุกเฟรม 4K ที่กำกับ (3840×2160) ผสานดนตรีประจำทศวรรษ บริบทเศรษฐกิจและวัฒนธรรมท้องถิ่น และการเคลื่อนกล้อง 6 รูปแบบอย่างนุ่มนวล สู่งานมาสเตอร์ประวัติศาสตร์พร้อมฉายจอใหญ่',
         highlights: [
-          'เลือกได้ทั้งภาพยนตร์สมจริงหรือสไตล์ภาพวาดประณีตตามอารมณ์เรื่อง',
-          '4K UHD แท้ (3840×2160) พร้อมการเคลื่อนกล้องสารคดี 6 รูปแบบ',
-          'อัปเกรดเป็นฟูลโมชันได้ทุกเมื่อผ่านสตูดิโอพาร์ตเนอร์ของ SceneFlow',
+          'สอดแทรกบริบททางวัฒนธรรม ดนตรี และเศรษฐกิจประจำทศวรรษและภูมิภาคลงในบทโดยอัตโนมัติ',
+          'ภาพยนตร์สมจริงหรือภาพวาดประณีตระดับ 4K UHD (3840×2160) พร้อมงานกำกับมุมกล้อง',
+          'ใช้งานผ่านพอร์ทัลภาษาแม่ 14 ภาษา พร้อมผลิตมาสเตอร์ 4K ที่ปรับเข้ากับวัฒนธรรมกว่า 70 ภาษา',
         ],
-        metricValue: '4K UHD',
-        metricLabel: 'มาสเตอร์ระดับโรงภาพยนตร์',
+        metricValue: '4K สมยุค',
+        metricLabel: 'แคปซูลเวลาวัฒนธรรม',
       },
     ],
+    immediateLift: {
+      eyebrow: 'ยกระดับทันที · ลูกค้าทั่วไปและผู้ให้บริการไวท์เลเบล',
+      heading: '3 ขุมพลังเติบโตในตัวที่เหนือกว่าแค่การตัดต่อวิดีโอ',
+      subtitle:
+        'นำเสนอเดโมหลายภาษาแบบสด มอบสื่อสิ่งพิมพ์ที่จับต้องได้ และรับงานอัปเดตบทใหม่หรือ SOP ต่อเนื่องอย่างง่ายดาย—ขับเคลื่อนอัตโนมัติจาก Continuity Vault เดิมที่ล็อกไว้แล้ว',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: 'แทบไม่เพิ่มต้นทุนประมวลผล',
+          title: 'แทร็กเสียงหลายมุมมอง',
+          subtitle: 'ภาพ 4K ชุดเดิม · หลายเสียงและหลายภาษา',
+          description:
+            'โชว์ศักยภาพโคลนเสียงและบทอัจฉริยะได้ทันที: สลับม้วนภาพ 4K เดียวแบบสดๆ ระหว่างอังกฤษ ญี่ปุ่น และสเปน—หรือสลับระหว่างบันทึกบุรุษที่ 1 กับสารคดีบุรุษที่ 3—กลางรอบพรีวิวครอบครัวหรือการนำเสนอขายลูกค้า',
+          liftHighlight: 'แทบไม่ต้องใช้พลังประมวลผลวิดีโอเพิ่มต่อภาษาหรือมุมมองผู้บรรยายที่เพิ่มเข้ามา',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: 'สื่ออัตโนมัติ 100%',
+          title: 'PDF สิ่งพิมพ์คู่ขวัญพร้อมคิวอาร์โค้ด',
+          subtitle: 'หนังสือที่ระลึก · แผ่นข้อมูลอสังหาฯ · โปสเตอร์ SOP',
+          description:
+            'เปลี่ยนไฟล์มาสเตอร์ดิจิทัล 4K ทุกเรื่องให้เป็นสื่อสิ่งพิมพ์ที่จับต้องได้สำหรับงานเปิดบ้าน งานเลี้ยงวันเกิดสำคัญ หรือพื้นที่โรงงาน—จัดหน้าอัตโนมัติพร้อมภาพนิ่งจากหนัง บทสรุปแต่ละตอน และลิงก์วิดีโอ QR ที่สแกนได้',
+          liftHighlight: 'มอบของที่ระลึกจับต้องได้ให้ตัวแทนอสังหาฯ เจ้าภาพ และหัวหน้าฝึกอบรม ช่วยยกระดับราคาขายพรีเมียม',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: 'ขุมพลังรายได้ประจำ',
+          title: 'Continuity Vault ที่มีชีวิต',
+          subtitle: 'อัปเดตบทใหม่ อสังหาฯ และ SOP แบบต่อยอด',
+          description:
+            'เพราะใบหน้านักแสดง เสียง และสภาพแวดล้อมถูกล็อกไว้ถาวร ผู้ให้บริการจึงสามารถขายบทขยายประจำปีของครอบครัว หรือการอัปเดต SOP และอสังหาฯ รายไตรมาสด้วยกำไรสูงโดยแทบไม่ต้องทำใหม่',
+          liftHighlight: 'เพิ่มช่วงเวลาสำคัญหรือปรับปรุงข้อกำหนดใหม่ในไม่กี่นาทีโดยไม่เสียความต่อเนื่อง',
+          accessNote: 'ปลดล็อกการอัปเดตครั้งต่อไปด้วยรหัส Continuity Library Code ส่วนตัว (ไม่ต้องใช้รหัสผ่านบัญชีเต็มรูปแบบ)',
+        },
+      ],
+    },
     comparisonHeading: 'ทำไมภาพยนตร์ 4K แบบยาว $149 จึงอยู่คนละระดับ',
     comparisonSubtitle: 'เปรียบเทียบแอปสร้างคลิปสั้น AI ทั่วไปกับการผลิตภาพยนตร์แบบยาวของ SceneFlow',
     colDimension: 'มาตรฐานการผลิต',
@@ -1344,5 +1618,1517 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
     storefrontCtaLabel: 'เริ่ม Blueprint หนังยาว $29 (หักลดจาก $149 เต็มจำนวน)',
     studioPrimaryCtaLabel: 'เปิดตัวสตูดิโอหนังยาวไวท์เลเบลของคุณ',
     studioSecondaryCtaLabel: 'ชมหน้าร้านจริงราคา $149',
+  },
+
+  ja: {
+    storefrontEyebrow: '長編4Kシネマ · AIスロップゼロ',
+    studioEyebrow: 'ホワイトラベル・スタジオを支える圧倒的な競争優位',
+    storefrontHeadingPrefix: '5秒のAIクリップアプリではない。本物の ',
+    storefrontHeadingAccent: '$149 長編4K映画スタジオ。',
+    studioHeadingPrefix: 'なぜ顧客は短尺AIアプリではなく $149–$950+ を ',
+    studioHeadingAccent: '長編シネマ制作に支払うのか。',
+    storefrontSubtitle:
+      '汎用的な短尺AI生成ツールは、顔が崩れる5秒クリップと空虚な文章を量産するだけです。$149のKeepsake Cinema作品はすべて、ターゲット視聴者の共鳴度90%以上を目指して演出された多章構成の長編4K映画——実在の人物、時代、住まい、家宝、そして事業を圧倒的なリアリティで蘇らせます。',
+    studioSubtitle:
+      '短尺AIアプリは使い捨ての「AIスロップ」で溢れています。SceneFlowはあなたのホワイトラベル事業に本物の長編4Kシネマを提供——共鳴度90%以上の脚本、年代別の人物一貫性、実在ロケーション・小道具ロック、音声クローン、そして大画面上映に耐える放送品質マスターを実現します。',
+    noSlopBadge: 'AIスロップゼロ · 長編4Kシネマ',
+    trailerSpotlight: {
+      badge: '本格長編 · 30〜150分の本編映画＋1〜3分予告編付き',
+      headline: '人生の物語を30〜150分の劇場級長編映画へ — 1〜3分の公式予告編もパッケージに含まれます。',
+      body: '公開中のサンプルは2分の抜粋です。$149のパッケージには本格的な長編4K映画（最大60分・360演出フレーム／90〜150分の超大作へ拡張可能）と1〜3分のシェア用予告編が含まれます。イベント前に家族やゲストへ予告編を送り、当日は大画面で全章を上映できます。',
+      pill1: '共有しやすい1〜3分の劇場風予告編付き',
+      pill2: '$149で最大60分（360枚の4Kフレーム）込み',
+      pill3: '90〜150分の本格長編へ拡張可能',
+    },
+    pillarsHeading: 'すべての作品を支える6つのスタジオ制作システム',
+    pillarsHint: '各機能を選択すると、SceneFlowがAIスロップゼロで実話を演出する仕組みを確認できます。',
+    pillars: [
+      {
+        id: 'resonance_script',
+        shortTab: '共鳴度90%+の脚本',
+        badge: '視聴者設計に基づく脚本術',
+        title: 'ターゲット視聴者の共鳴度90%以上をスコア検証した本格脚本',
+        summary:
+          '1行の雑なプロンプトを映像AIに投げることは一切ありません。すべての作品は感情曲線・テンポ・共鳴度90%以上を精密に設計した多幕構成の脚本からスタート。傘寿の祝いで家族の涙を誘う作品から、高級不動産の購入検討、クリニックの信頼醸成、社員研修の定着まで最適化します。',
+        exampleLabel: 'ディレクター構成例',
+        exampleHeadline: '第1幕フック → 時代の歩み → 感情のクライマックス → 記憶に残るフィナーレ',
+        exampleDetails:
+          'レンダリング前に各ビートをターゲット視聴者（家族、購入検討者、患者、新入社員）に照らしてスコア検証し、単調なナレーションや水増しを徹底排除します。',
+        highlights: [
+          '30〜150分の本格多章構成（$149で最大60分・360フレーム）',
+          '感情・成約共鳴度90%以上を目指してスコア評価＆推敲',
+          '1〜3分の劇場風予告編＋対話型ストーリーボード設計書付き',
+        ],
+        metricValue: '90%+',
+        metricLabel: 'ターゲット視聴者共鳴度',
+      },
+      {
+        id: 'character_aging',
+        shortTab: '28歳の祖父＆家族一貫性',
+        badge: '人物アイデンティティ＆年代エンジン',
+        title: '28歳当時の祖父を再現し、世代を超えた家族の面影を完全維持',
+        summary:
+          '80歳の今の写真しかなくても大丈夫。SceneFlowのコンティニュイティ・エンジンが1970年代シーン向けに自然な28歳の姿を生成し、兄弟や親子・孫の面影を調和させ、長編全体を通じて全員の顔立ちをロックします。',
+        exampleLabel: '一貫性ロック例',
+        exampleHeadline: '現在の写真1枚 → 自然な28歳 · 52歳 · 現在',
+        exampleDetails:
+          '骨格や温かな表情を損なわず、幼少期からキャリアの節目、現在の家族団らんまで自然に繋がり、カットごとに別人の顔へ変わることはありません。',
+        highlights: [
+          '普段のスマホ写真から自然な若返り・加齢表現を実現',
+          '夫婦・子ども・孫まで複数世代の家族の面影を忠実に再現',
+          '企業・研修映画でも創業者や講師の人物像を完全固定',
+        ],
+        metricValue: '100%',
+        metricLabel: '人物アイデンティティ固定',
+      },
+      {
+        id: 'location_matching',
+        shortTab: '動的シーン＆文化演出',
+        badge: '一貫性ロック空間演出',
+        title: '一貫性ロックの動的シーン＆文化演出ステージング',
+        summary:
+          '人生最大の節目の写真が残っていませんか？Continuity Vaultを活用し、SceneFlowは賑やかな家族団らん、地域の伝統行事、時代に忠実な住まい、バーチャル内装・家具リノベーションをリアルに演出——実在の顔立ち、衣装、大切な家宝を一切崩さず固定します。',
+        exampleLabel: '動的ステージング＆環境ロック',
+        exampleHeadline: '写真にない名場面を、文化的リアリティで鮮やかに演出',
+        exampleDetails:
+          '三世代が囲む賑やかな食卓、不動産物件向けのバーチャル家具刷新、創業期のクリニック診療風景、地域に根ざした職場安全訓練まで——すべて実在の人物と建築に完全ロックして再現します。',
+        highlights: [
+          '写真が残っていない家族の集い・地域の伝統・時代に忠実な住まいを生き生きと演出',
+          '不動産向けのバーチャル内装・家具アップデートと活気ある街の暮らし演出',
+          '顔ブレゼロで描く地域仕様の職場安全・設備運用・患者／顧客ケアシーン',
+        ],
+        metricValue: '動的演出',
+        metricLabel: '文化＆空間ロック',
+      },
+      {
+        id: 'heirloom_props',
+        shortTab: '大切な品・家宝ロック',
+        badge: '小道具・記念品の一貫性',
+        title: '大切な小道具を固定 — 家族の聖書からブランド象徴アイテムまで',
+        summary:
+          '心に残る物語は、誰もが一目で気づく細部に宿ります。使い込まれた家族の聖書や祖父の腕時計、愛用ギター、看板商品、安全装備などの重要な品をシーンをまたいで崩さず保持します。',
+        exampleLabel: '小道具リファレンス例',
+        exampleHeadline: '家族の聖書 · 形見の腕時計 · ブランド象徴アイテム',
+        exampleDetails:
+          'レンダリング前にコンティニュイティ・ライブラリへ登録するため、途中で歪んだり消えたり不自然なAI破綻を起こすことがありません。',
+        highlights: [
+          '大切な家宝や記念品（家族の聖書、手紙、時計、愛車）を忠実に保存',
+          'ブランドストーリー向けに主力製品・看板・ユニフォームを固定',
+          'コンプライアンス・SOP研修で正確な機材や安全装備を描写',
+        ],
+        metricValue: '破綻ゼロ',
+        metricLabel: '小道具・家宝ロック',
+      },
+      {
+        id: 'voice_cloning',
+        shortTab: '音声クローン＆マルチトラック',
+        badge: '多視点オーディオ＆70+言語',
+        title: '音声クローン、多視点オーディオトラック＆10秒発音ロック',
+        summary:
+          '忘れられない映画は、映像と同じくらい「音」が本物です。SceneFlowは音声クローン、映像との声質マッチ、10秒発音ロックに多視点オーディオトラックを統合——同一の4K映像マスターを英語・日本語・スペイン語へ、あるいは一人称回想録と三人称ドキュメンタリーへ自在に切り替えられます。',
+        exampleLabel: '多視点オーディオの例',
+        exampleHeadline: '固定4K映像リール1本 → 70+言語＆複数の語り口を自在に切替',
+        exampleDetails:
+          '追加の映像生成コストはほぼゼロ。全フレームを完全固定したまま、70以上の言語で苗字・故郷の地名・専門略語をネイティブ発音で正確に届けます。',
+        highlights: [
+          '多視点オーディオトラック：同一4Kリール上で言語や一人称／三人称ナレーションを即時切替',
+          '音声クローン＆年齢・人物像に調和した声質と10秒の音声発音ロック',
+          '放送品質ステレオミックス：セリフ、スタジオナレーション、環境SFX、ダッキング劇伴',
+        ],
+        metricValue: '70+言語',
+        metricLabel: 'マルチトラック音声ロック',
+      },
+      {
+        id: 'directed_4k_master',
+        shortTab: '時代＆文化タイムカプセル',
+        badge: '時代背景＆地域のワールドビルディング',
+        title: 'ローカライズ時代＆文化タイムカプセル・エンジン',
+        summary:
+          'メモをただ読み上げるだけではありません。物語が起きた正確な年代・都市・国の本物の音楽、経済の節目、文化的象徴、日々の空気感を脚本に織り込み、個人の記憶を後世に残る歴史ドキュメンタリーへ昇華させます。',
+        exampleLabel: '文化タイムカプセルの例',
+        exampleHeadline: '歴史を鮮やかに蘇らせる時代と地域のリアリティ',
+        exampleDetails:
+          '演出された全4Kフレーム（3840×2160）に、時代を象徴する音楽、地域の経済・文化背景、滑らかな6軸カメラワークを融合し、劇場品質の歴史マスターに仕上げます。',
+        highlights: [
+          'その年代・地域ならではの文化・音楽・経済の背景を脚本へ自動統合',
+          'フォトリアル映画または家宝級イラスト調の4K UHD（3840×2160）マスター演出',
+          '14の母国語UIポータルで運用し、70+言語の文化ローカライズ4Kマスターを制作',
+        ],
+        metricValue: '時代忠実4K',
+        metricLabel: '文化タイムカプセル',
+      },
+    ],
+    immediateLift: {
+      eyebrow: '即効リフト · 個人顧客＆ホワイトラベル運営者向け',
+      heading: '動画編集を超える3つの内蔵グロースエンジン',
+      subtitle:
+        '多言語ライブデモ、手元に残る印刷冊子、継続的な章追加やSOP更新を、ロック済みの同一Continuity Vaultから自動展開します。',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: '追加映像コストほぼゼロ',
+          title: '多視点オーディオトラック',
+          subtitle: '同一4K映像 · 複数ボイス＆多言語切替',
+          description:
+            '音声クローンと脚本インテリジェンスを即座に実演：家族向け試写や法人商談の場で、1本の4K映像を英語・日本語・スペイン語へライブ切替、または一人称回想録と三人称ドキュメンタリーを瞬時に切り替えられます。',
+          liftHighlight: '言語や語り手の視点を追加しても、追加の映像演算コストはほぼゼロ',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: '100%自動生成の印刷物',
+          title: 'QR連動プリント・コンパニオンPDF',
+          subtitle: '記念フォトブック · 物件資料 · SOPポスター',
+          description:
+            'すべてのデジタル4Kマスターを、オープンハウスや長寿祝いの席、工場現場で手に取れる印刷物へ変換。名場面スチール、章ごとの要約、スキャン再生できるQR動画リンクを自動レイアウトします。',
+          liftHighlight: '不動産担当者・主催者・研修責任者に、高単価を納得させる実物の記念品を提供',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: '継続収益エンジン',
+          title: '進化し続ける Continuity Vault',
+          subtitle: '家族の続編・物件更新・SOP改訂をシームレスに追加',
+          description:
+            '出演者の顔・声・空間が恒久ロックされているため、運営者は毎年の家族の続編追加や四半期ごとのSOP・物件アップデートを、ほぼゼロのやり直しで高利益に販売できます。',
+          liftHighlight: '一貫性の崩れゼロで、新たな節目やコンプライアンス改訂を数分で追加',
+          accessNote: '継続アップデートは専用の Continuity Library Code で解放（アカウント本体のパスワード不要）',
+        },
+      ],
+    },
+    comparisonHeading: 'なぜ $149 の長編4Kシネマは別次元なのか',
+    comparisonSubtitle: '使い捨ての短尺AIクリップ生成ツールと、SceneFlowの本物の長編制作を比較してください。',
+    colDimension: '制作基準',
+    colSlop: '短尺AIクリップアプリ（「AIスロップ」）',
+    colSceneFlow: 'SceneFlow 長編4Kシネマ（$149）',
+    comparisonRows: [
+      {
+        dimension: '形式・尺',
+        shortformSlop: '物語のない5〜15秒の断片クリップ',
+        sceneFlowLongform: '$149で最大60分（360枚の4Kフレーム）＋1〜3分予告編（150分へ拡張可）',
+      },
+      {
+        dimension: '脚本と共鳴度',
+        shortformSlop: '1行プロンプトによる平坦で薄い構成',
+        sceneFlowLongform: '共鳴度90%+で検証されたプロ仕様の多幕脚本',
+      },
+      {
+        dimension: '人物・年代再現',
+        shortformSlop: '数秒ごとに顔が別人に変化してしまう',
+        sceneFlowLongform: '人物の一貫性ロック（28歳の祖父の再現や家族の面影一致）',
+      },
+      {
+        dimension: 'ロケーション・小道具',
+        shortformSlop: '架空の部屋と歪んだ小道具を自動生成',
+        sceneFlowLongform: '実在空間（物件・幼少期の街）と大切な品（家族の聖書など）を忠実ロック',
+      },
+      {
+        dimension: '音声・サウンド',
+        shortformSlop: '機械的な読み上げ、誤読、安っぽいBGMループ',
+        sceneFlowLongform: '音声クローン、人物マッチ音声、発音ロック、SFX、専用スコア',
+      },
+      {
+        dimension: '映像演出・マスター',
+        shortformSlop: 'ちらつきや破綻が目立つ使い捨て映像',
+        sceneFlowLongform: '実写調／イラスト調の演出4Kビート＋劇場品質4Kマスター',
+      },
+    ],
+    storefrontCtaLabel: '$29 長編ブループリントを始める（$149 4K本編に全額充当）',
+    studioPrimaryCtaLabel: '自社ブランドの長編シネマスタジオを開設',
+    studioSecondaryCtaLabel: '$149 ライブストアを体験する',
+  },
+
+  ko: {
+    storefrontEyebrow: '장편 4K 시네마 · 제로 AI 슬롭',
+    studioEyebrow: '화이트라벨 스튜디오의 압도적 경쟁력',
+    storefrontHeadingPrefix: '5초짜리 AI 클립 앱이 아닙니다. 진짜 ',
+    storefrontHeadingAccent: '$149 장편 4K 영화 스튜디오입니다.',
+    studioHeadingPrefix: '고객이 단편 AI 클립 앱 대신 $149–$950+를 ',
+    studioHeadingAccent: '장편 시네마에 기꺼이 지불하는 이유.',
+    storefrontSubtitle:
+      '일반 단편 AI 생성기는 얼굴이 바뀌는 5초 클립과 공허한 문구만 찍어냅니다. $149 Keepsake Cinema 작품은 타깃 관객 공명도 90%+를 목표로 연출된 다챕터 장편 4K 영화로, 실제 인물·시대·집·가보·비즈니스를 생생하게 되살립니다.',
+    studioSubtitle:
+      '단편 AI 앱은 일회용 "AI 슬롭"으로 인터넷을 채웁니다. SceneFlow는 당신의 화이트라벨 스튜디오에 진짜 장편 4K 시네마를 제공합니다—90%+ 공명 각본, 시대별 인물 일관성, 실제 장소·소품 잠금, 음성 클로닝, 극장급 4K 마스터까지.',
+    noSlopBadge: 'ZERO AI SLOP · 장편 4K 시네마',
+    trailerSpotlight: {
+      badge: '깊이 있는 장편 · 30–150분 본편 영화 + 1–3분 예고편 포함',
+      headline: '인생의 이야기를 30–150분 극장판 장편 영화로 — 1–3분 공식 예고편이 기본 포함됩니다.',
+      body: '공개된 쇼케이스 영상은 2분 미리보기 샘플입니다. $149 패키지는 최대 60분(360 연출 4K 프레임, 90–150분 대작 확장 가능) 장편 본편과 공유용 1–3분 예고편을 함께 제공합니다. 행사 전 가족과 하객에게 예고편을 보내고 당일 대형 스크린에서 전 챕터를 상영하세요.',
+      pill1: '공유용 1–3분 극장판 예고편 기본 포함',
+      pill2: '$149에 최대 60분 (360 4K 프레임) 포함',
+      pill3: '90–150분 초대형 장편으로 확장 가능',
+    },
+    pillarsHeading: '모든 영화 속에 담긴 6가지 스튜디오 제작 시스템',
+    pillarsHint: '각 기능을 선택해 SceneFlow가 AI 슬롭 없이 진짜 이야기를 연출하는 방식을 확인하세요.',
+    pillars: [
+      {
+        id: 'resonance_script',
+        shortTab: '90%+ 공명 각본',
+        badge: '관객 맞춤형 시나리오 설계',
+        title: '타깃 관객 공명도 90% 이상으로 검증된 전문 시나리오',
+        summary:
+          '한 줄 프롬프트를 그대로 영상 AI에 넣지 않습니다. 모든 영화는 감정선·호흡·타깃 관객 공명도 90%+에 맞춘 다막 각본으로 시작해, 팔순 잔치의 감동, 고급 부동산 구매 설득, 병원 신뢰 구축, 신입 교육 정착까지 완벽하게 설계합니다.',
+        exampleLabel: '디렉터 구성 예시',
+        exampleHeadline: '1막 몰입 훅 → 시대 흐름 → 감정 클라이맥스 → 여운 남는 피날레',
+        exampleDetails:
+          '단 한 프레임도 렌더링하기 전에 타깃 관객(가족, 매수자, 환자, 신입사원) 기준으로 모든 비트를 점수화해 지루한 나레이션과 군더더기를 제거합니다.',
+        highlights: [
+          '30–150분 다챕터 장편 서사 ($149에 최대 60분 / 360 프레임)',
+          '감정·전환 공명도 90%+ 달성까지 정밀 채점 및 다듬기',
+          '1–3분 극장 예고편 + 인터랙티브 스토리보드 블루프린트 포함',
+        ],
+        metricValue: '90%+',
+        metricLabel: '타깃 관객 공명도',
+      },
+      {
+        id: 'character_aging',
+        shortTab: '28세 할아버지 & 가족 일치',
+        badge: '인물 정체성 & 시대 엔진',
+        title: '28세 시절의 할아버지를 복원하고 세대 간 가족의 닮은꼴을 고정',
+        summary:
+          '80세 할아버지의 최근 사진 한 장만 있으신가요? SceneFlow 연속성 엔진은 1970년대 장면을 위한 자연스러운 28세 모습을 생성하고, 형제·자녀·손주의 닮은꼴을 맞추며 영화 전체에서 모든 인물의 얼굴을 고정합니다.',
+        exampleLabel: '연속성 잠금 예시',
+        exampleHeadline: '현재 사진 1장 → 자연스러운 28세 · 52세 · 현재',
+        exampleDetails:
+          '같은 이목구비와 따뜻한 분위기가 어린 시절부터 커리어의 절정, 오늘의 가족 모임까지 자연스럽게 이어져 컷마다 낯선 얼굴로 변하지 않습니다.',
+        highlights: [
+          '일상 휴대폰 사진으로 자연스러운 젊어짐·나이 듦 구현',
+          '배우자·자녀·손주까지 다세대 가족의 닮은꼴 정밀 매칭',
+          '브랜드·교육 영화의 창업자 및 강사 정체성 완벽 고정',
+        ],
+        metricValue: '100%',
+        metricLabel: '인물 정체성 고정',
+      },
+      {
+        id: 'location_matching',
+        shortTab: '생동감 있는 장면 & 문화 연출',
+        badge: '연속성 고정 스테이징',
+        title: '연속성 고정 라이브 장면 & 문화 스테이징',
+        summary:
+          '가장 중요한 장의 사진이 없으신가요? Continuity Vault를 활용해 SceneFlow는 활기찬 가족 모임, 지역 전통, 시대에 충실한 집, 가상 인테리어·가구 리뉴얼을 생생하게 연출하며 실제 얼굴·복장·가보를 완벽히 고정합니다.',
+        exampleLabel: '라이브 스테이징 & 공간 잠금',
+        exampleHeadline: '사진에 남지 않은 순간, 문화적 진정성으로 생생하게 연출',
+        exampleDetails:
+          '다세대 가족 만찬, 부동산 매물의 가상 가구 리프레시, 병원 개원 초기 진료 장면, 지역 맞춤 안전 규정 훈련까지—모두 실제 인물과 건축물에 정확히 고정해 연출합니다.',
+        highlights: [
+          '사진이 없는 가족 모임, 지역 전통, 시대 고증 주택을 생생하게 연출',
+          '부동산을 위한 가상 인테리어·가구 업데이트 및 활기찬 동네 라이프스타일 스테이징',
+          '얼굴 변형 제로로 구현하는 현지화 직장 안전·장비·환자/고객 케어 장면',
+        ],
+        metricValue: '라이브 스테이징',
+        metricLabel: '문화 & 공간 잠금',
+      },
+      {
+        id: 'heirloom_props',
+        shortTab: '소중한 소품 & 가보',
+        badge: '사물·가보 연속성',
+        title: '의미 있는 소품 고정 — 가족 성경책부터 브랜드 시그니처 장비까지',
+        summary:
+          '깊은 감동은 모두가 단번에 알아보는 디테일에서 나옵니다. 낡은 가족 성경책, 할아버지의 손목시계, 빈티지 기타, 대표 제품, 안전 장비까지 장면이 바뀌어도 형태가 흔들리지 않게 고정합니다.',
+        exampleLabel: '소품 레퍼런스 예시',
+        exampleHeadline: '가족 성경책 · 유품 손목시계 · 브랜드 핵심 장비',
+        exampleDetails:
+          '렌더링 전 연속성 라이브러리에 고정되므로 소품이 장면 도중 뒤틀리거나 사라지는 AI 오류가 발생하지 않습니다.',
+        highlights: [
+          '소중한 가족 유품 보존 (가족 성경책, 손편지, 시계, 추억의 차)',
+          '브랜드 필름의 핵심 제품, 간판, 유니폼 일관성 유지',
+          '안전·SOP 교육 모듈을 위한 정확한 장비와 시각 자료 구현',
+        ],
+        metricValue: '왜곡 제로',
+        metricLabel: '소품 및 가보 고정',
+      },
+      {
+        id: 'voice_cloning',
+        shortTab: '음성 클로닝 & 멀티트랙',
+        badge: '다관점 오디오 & 70+ 언어',
+        title: '음성 클로닝, 다관점 오디오 트랙 및 10초 발음 잠금',
+        summary:
+          '잊지 못할 영화는 화면만큼 소리도 진짜 같아야 합니다. SceneFlow는 음성 클로닝, 인물-음성 매칭, 10초 발음 잠금에 다관점 오디오 트랙을 결합해 동일한 4K 영상 마스터를 영어·일본어·스페인어로 매끄럽게 전환하거나 1인칭 회고록과 3인칭 다큐멘터리 사이를 자유롭게 오갑니다.',
+        exampleLabel: '다관점 오디오 예시',
+        exampleHeadline: '고정 4K 영상 릴 1편 → 70+ 언어 & 다양한 서사 관점 전환',
+        exampleDetails:
+          '추가 영상 연산 비용 거의 제로: 모든 영상 프레임을 고정한 채 70개 이상 언어로 성씨, 고향 지명, 전문 약어를 원어민 발음으로 정확히 전달합니다.',
+        highlights: [
+          '다관점 오디오 트랙: 동일한 4K 릴에서 언어 또는 1인칭/3인칭 목소리를 즉시 전환',
+          '10초 음성 발음 잠금을 갖춘 음성 클로닝 및 연령·성격 맞춤 보이스 매칭',
+          '방송급 스테레오 믹스: 대사, 스튜디오 나레이터 VO, 환경 SFX, 오케스트라 스코어',
+        ],
+        metricValue: '70+ 언어',
+        metricLabel: '멀티트랙 음성 잠금',
+      },
+      {
+        id: 'directed_4k_master',
+        shortTab: '시대 & 문화 타임캡슐',
+        badge: '시대·지역 세계관 구축',
+        title: '현지화 시대 & 문화 타임캡슐 엔진',
+        summary:
+          '단순히 메모를 읽어 주는 데 그치지 않습니다. 스토리 엔진이 이야기가 펼쳐진 정확한 연대·도시·국가의 당시 음악, 경제적 이정표, 문화적 상징, 일상의 공기를 자연스럽게 엮어 개인의 기억을 영원히 남을 역사 다큐멘터리로 완성합니다.',
+        exampleLabel: '문화 타임캡슐 예시',
+        exampleHeadline: '역사를 생생하게 되살리는 시대와 지역의 맥락',
+        exampleDetails:
+          '연출된 모든 4K 프레임(3840×2160)에 당시의 음악, 지역 경제·문화 맥락, 부드러운 6축 카메라 안무를 결합해 극장 상영용 역사 마스터로 완성합니다.',
+        highlights: [
+          '해당 연대와 지역의 문화·음악·경제 맥락을 시나리오에 자동 반영',
+          '포토리얼 시네마 또는 소장용 일러스트 4K UHD(3840×2160) 마스터 연출',
+          '14개 모국어 UI 포털로 운영하며 70+ 언어로 문화 현지화된 4K 마스터 제작',
+        ],
+        metricValue: '시대 고증 4K',
+        metricLabel: '문화 타임캡슐',
+      },
+    ],
+    immediateLift: {
+      eyebrow: '즉각적인 가치 상승 · 일반 고객 & 화이트라벨 운영자',
+      heading: '영상 편집을 넘어서는 3가지 내장 성장 엔진',
+      subtitle:
+        '잠긴 동일한 Continuity Vault에서 자동으로 구동되는 실시간 다국어 데모, 실물 인쇄 패키지, 손쉬운 정기 챕터·SOP 업데이트를 제공하세요.',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: '추가 연산 거의 제로',
+          title: '다관점 오디오 트랙',
+          subtitle: '동일한 4K 영상 · 다양한 목소리 & 언어',
+          description:
+            '음성 클로닝과 스크립트 지능을 현장에서 바로 시연하세요: 가족 시사회나 고객 영업 미팅에서 단일 4K 영상 릴을 영어·일본어·스페인어로 실시간 전환하거나 1인칭 회고록과 3인칭 다큐멘터리 사이를 즉시 바꿀 수 있습니다.',
+          liftHighlight: '언어나 내레이터 관점을 추가해도 추가 영상 연산 비용이 거의 제로',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: '100% 자동화 실물 아티팩트',
+          title: 'QR 연동 인쇄 컴패니언 PDF',
+          subtitle: '기념 화보집 · 매물 브로슈어 · SOP 포스터',
+          description:
+            '모든 디지털 4K 마스터를 오픈하우스, 칠순·팔순 만찬, 공장 현장에서 활용하는 실물 인쇄물로 변환하세요. 주요 스틸컷, 챕터 요약, 스캔 가능한 QR 영상 링크가 자동으로 편집됩니다.',
+          liftHighlight: '부동산 중개인·행사 주최자·교육 담당자에게 프리미엄 가격을 정당화하는 실물 기념품 제공',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: '반복 매출 엔진',
+          title: '살아 있는 Continuity Vault',
+          subtitle: '가족 챕터·부동산·SOP의 점진적 업데이트',
+          description:
+            '인물의 얼굴, 목소리, 공간이 영구 고정되어 있어 운영자는 거의 재작업 없이 높은 마진으로 연간 가족 챕터 확장이나 분기별 SOP·매물 업데이트를 판매할 수 있습니다.',
+          liftHighlight: '연속성 흔들림 없이 몇 분 만에 새 이정표나 규정 개정 내용을 추가',
+          accessNote: '후속 업데이트는 전용 Continuity Library Code로 잠금 해제 (전체 계정 비밀번호 불필요)',
+        },
+      ],
+    },
+    comparisonHeading: '왜 $149 장편 4K 시네마는 차원이 다른가',
+    comparisonSubtitle: '일회용 단편 AI 클립 생성기와 SceneFlow의 진짜 장편 제작을 비교해 보세요.',
+    colDimension: '제작 기준',
+    colSlop: '단편 AI 클립 생성기 ("AI 슬롭")',
+    colSceneFlow: 'SceneFlow 장편 4K 시네마 ($149)',
+    comparisonRows: [
+      {
+        dimension: '형식 및 러닝타임',
+        shortformSlop: '서사 없이 끊어지는 5–15초 단편 클립',
+        sceneFlowLongform: '$149에 최대 60분(360 4K 프레임) + 1–3분 예고편 (150분 확장 가능)',
+      },
+      {
+        dimension: '각본 및 공명도',
+        shortformSlop: '감동 없는 1줄 프롬프트와 단조로운 전개',
+        sceneFlowLongform: '타깃 관객 공명도 90%+로 검증된 전문 다막 각본',
+      },
+      {
+        dimension: '인물 및 연령 재현',
+        shortformSlop: '몇 초마다 얼굴이 다른 사람으로 변형됨',
+        sceneFlowLongform: '인물 연속성 고정 (28세 할아버지 복원 및 가족 닮은꼴 일치)',
+      },
+      {
+        dimension: '장소 및 소품',
+        shortformSlop: '지어낸 가짜 공간과 뒤틀린 사물',
+        sceneFlowLongform: '실제 장소 매칭(부동산, 어린 시절 거리) 및 가보 고정(가족 성경책 등)',
+      },
+      {
+        dimension: '음성 및 사운드 믹스',
+        shortformSlop: '기계음 TTS, 이름 오발음, 단조로운 스톡 배경음',
+        sceneFlowLongform: '음성 클로닝, 인물-음성 매칭, 발음 잠금, SFX 및 오리지널 스코어',
+      },
+      {
+        dimension: '연출 및 최종 마스터',
+        shortformSlop: '깜빡임과 깨짐이 심한 일회용 "AI 슬롭"',
+        sceneFlowLongform: '아트 디렉션 실사·일러스트 4K 프레임 + 극장급 4K 마스터',
+      },
+    ],
+    storefrontCtaLabel: '$29 장편 블루프린트 시작하기 ($149 4K 영화에 100% 차감)',
+    studioPrimaryCtaLabel: '화이트라벨 장편 스튜디오 시작하기',
+    studioSecondaryCtaLabel: '$149 라이브 스토어 체험하기',
+  },
+
+  de: {
+    storefrontEyebrow: 'Langform-4K-Kino · Null AI-Slop',
+    studioEyebrow: 'Der uneinholbare Vorsprung Ihres White-Label-Studios',
+    storefrontHeadingPrefix: 'Keine 5-Sekunden-KI-Clip-App. Ein echtes ',
+    storefrontHeadingAccent: '$149 Langform-4K-Filmstudio.',
+    studioHeadingPrefix: 'Warum Kunden $149–$950+ zahlen, statt ',
+    studioHeadingAccent: 'Kurzclip-KI-Generatoren zu nutzen.',
+    storefrontSubtitle:
+      'Gewöhnliche Kurzclip-Generatoren spucken 5-Sekunden-Schnipsel mit verformten Gesichtern und hohlen Prompts aus. Jeder $149 Keepsake-Cinema-Film ist eine inszenierte Mehrkapitel-4K-Langformproduktion mit 90 %+ Zielgruppenresonanz – für echte Menschen, Epochen, Häuser, Erbstücke und Unternehmen.',
+    studioSubtitle:
+      'Kurzclip-Apps fluten das Netz mit Wegwerf-„AI Slop“. SceneFlow stattet Ihr White-Label-Geschäft mit echtem Langform-4K-Kino aus: 90 %+ Resonanz-Drehbücher, konsistentes De-Aging, exakte Schauplatz- & Requisiten-Treue, Voice-Cloning und kinoreife Master.',
+    noSlopBadge: 'NULL AI-SLOP · LANGFORM-4K-KINO',
+    trailerSpotlight: {
+      badge: 'Tiefgang · 30–150 Min. Spielfilm + 1–3 Min. Trailer inklusive',
+      headline: 'Verwandeln Sie Ihre Lebensgeschichte in einen 30–150-minütigen Kinofilm — inklusive 1–3-Min.-Trailer.',
+      body: 'Die gezeigten Beispiele sind 2-Minuten-Ausschnitte – Ihr $149-Paket umfasst echtes Langform-Kino (bis zu 60 Min. / 360 inszenierte 4K-Frames; erweiterbar auf 90–150 Min.) plus einen teilbaren 1–3-Minuten-Kinotrailer vorab für Familie und Gäste.',
+      pill1: 'Teilbarer 1–3-Min.-Kinotrailer inklusive',
+      pill2: 'Bis zu 60 Min. (360 4K-Frames) für $149 inklusive',
+      pill3: 'Erweiterbar auf 90–150 Min. Langform-Epen',
+    },
+    pillarsHeading: 'Entdecken Sie die 6 Studio-Handwerkssysteme in jedem Film',
+    pillarsHint: 'Wählen Sie eine Funktion, um zu sehen, wie SceneFlow echte Geschichten ohne AI-Slop inszeniert.',
+    pillars: [
+      {
+        id: 'resonance_script',
+        shortTab: '90%+ Resonanz-Skripte',
+        badge: 'Zielgruppen-Drehbuchkunst',
+        title: 'Professionelle Drehbücher mit 90 %+ Zielgruppenresonanz',
+        summary:
+          'Wir werfen niemals einen Einzeiler in einen Videogenerator. Jeder Film beginnt mit einem mehraktigen Drehbuch für Dramaturgie, Timing und 90 %+ Zielgruppenresonanz – ob zu Tränen rührender 80. Geburtstag, Luxusimmobilien-Verkauf, Klinikvertrauen oder Mitarbeiter-Onboarding.',
+        exampleLabel: 'Regie-Blueprint-Beispiel',
+        exampleHeadline: 'Akt-I-Hook → Epochenreise → Emotionaler Höhepunkt → Vermächtnis-Finale',
+        exampleDetails:
+          'Jeder Beat wird vor dem Rendern gegen Ihre konkrete Zielgruppe (Familien, Käufer, Patienten oder neue Mitarbeiter) bewertet – ohne leere Floskeln.',
+        highlights: [
+          'Echter 30–150-Min.-Mehrkapitel-Bogen (bis 60 Min. / 360 Frames für $149)',
+          'Bewertet und verfeinert auf 90 %+ emotionale & geschäftliche Resonanz',
+          'Inkl. 1–3-Min.-Kinotrailer & interaktivem Storyboard-Blueprint',
+        ],
+        metricValue: '90%+',
+        metricLabel: 'Zielgruppenresonanz',
+      },
+      {
+        id: 'character_aging',
+        shortTab: 'Opa mit 28 & Familie',
+        badge: 'Identitäts- & Epochen-Engine',
+        title: 'Erschaffen Sie Großvater mit 28 Jahren & verbinden Sie Generationen',
+        summary:
+          'Sie haben nur ein aktuelles Porträt von Opa mit 80? Unsere Continuity-Engine generiert sein authentisches 28-jähriges Ich für Szenen der 1970er, harmonisiert Familienähnlichkeiten über Generationen hinweg und hält jedes Gesicht über den gesamten Film stabil.',
+        exampleLabel: 'Continuity-Lock-Beispiel',
+        exampleHeadline: '1 aktuelles Foto → Authentisch mit 28 · 52 · Heute',
+        exampleDetails:
+          'Dieselben Gesichtszüge und dieselbe Wärme begleiten die Geschichte von der Jugend über Karriere-Meilensteine bis heute – ohne Gesichtsverfremdung zwischen Schnitten.',
+        highlights: [
+          'Authentische Verjüngung & Alterung aus normalen Handyfotos',
+          'Generationenübergreifende Ähnlichkeit bei Eltern, Kindern & Enkeln',
+          'Konstante Gründer- & Trainer-Identität in Marken- und Schulungsfilmen',
+        ],
+        metricValue: '100%',
+        metricLabel: 'Gesicherte Identität',
+      },
+      {
+        id: 'location_matching',
+        shortTab: 'Lebendige Szenen & Kultur-Staging',
+        badge: 'Kontinuitätsgesichertes Staging',
+        title: 'Kontinuitätsgesicherte aktive Szenen & kulturelles Staging',
+        summary:
+          'Fehlen Fotos aus den wichtigsten Kapiteln? Über Ihren Continuity Vault inszeniert SceneFlow lebendige Familienfeiern, regionale Traditionen, epochengerechte Häuser sowie virtuelle Innenraum- und Möbel-Updates – wobei echte Gesichter, Kleidung und Erbstücke unverwechselbar fixiert bleiben.',
+        exampleLabel: 'Aktives Staging & Umgebungs-Lock',
+        exampleHeadline: 'Unfotografierte Momente, kulturell authentisch inszeniert',
+        exampleDetails:
+          'Inszenieren Sie lebhafte Mehrgenerationen-Dinner, virtuelle Möbel-Refreshes für Immobilien-Exposés, Behandlungsszenen aus der Klinik-Gründerzeit oder regionale Arbeitssicherheits-Übungen – alles fest an Ihre reale Besetzung und Architektur gebunden.',
+        highlights: [
+          'Inszeniert unfotografierte Familienfeiern, regionale Bräuche & epochengerechte Häuser',
+          'Virtuelle Innenraum-/Möbel-Updates & lebendiges Nachbarschafts-Staging für Immobilien',
+          'Lokalisierte Arbeitsplatzsicherheits-, Geräte- & Patienten-/Kundenbetreuungsszenen ohne Gesichtsdrift',
+        ],
+        metricValue: 'Aktives Staging',
+        metricLabel: 'Kultur- & Raum-Lock',
+      },
+      {
+        id: 'heirloom_props',
+        shortTab: 'Erbstücke & Requisiten',
+        badge: 'Objekt- & Erbstück-Kontinuität',
+        title: 'Verankern Sie besondere Gegenstände — von der Familienbibel bis zur Markenausrüstung',
+        summary:
+          'Großes Erzählen lebt von Details, die jeder sofort erkennt. Unsere Objekt-Kontinuität sichert persönliche Stücke wie eine abgegriffene Familienbibel, Großvaters Uhr, eine Gitarre, Kernprodukte oder Sicherheitsausrüstung Szene für Szene.',
+        exampleLabel: 'Requisiten-Referenzbeispiel',
+        exampleHeadline: 'Familienbibel · Erbstück-Uhr · Marken-Equipment',
+        exampleDetails:
+          'Da alle Objekte vorab in Ihrer Continuity-Bibliothek verankert werden, verformen sie sich nie und verschwinden nicht plötzlich im Bild.',
+        highlights: [
+          'Bewahrt geschätzte Erbstücke (Familienbibel, Briefe, Schmuck, Oldtimer)',
+          'Sichert Produkte, Logos & Arbeitskleidung in Markenfilmen',
+          'Präzise Geräte & Hilfsmittel für Compliance- und SOP-Schulungen',
+        ],
+        metricValue: 'Null Drift',
+        metricLabel: 'Objekt- & Erbstück-Lock',
+      },
+      {
+        id: 'voice_cloning',
+        shortTab: 'Voice-Cloning & Mehrspur-Audio',
+        badge: 'Multiperspektiv-Audio & 70+ Sprachen',
+        title: 'Voice-Cloning, Multiperspektiv-Audiospuren & 10-Sek.-Aussprache-Lock',
+        summary:
+          'Ein unvergesslicher Film klingt so echt, wie er aussieht. SceneFlow verbindet Voice-Cloning, bildgerechte Stimmbesetzung und einen 10-Sekunden-Aussprache-Lock mit Multiperspektiv-Audiospuren – und schaltet denselben 4K-Bildmaster nahtlos zwischen Englisch, Japanisch und Spanisch oder zwischen Ich-Memoiren und Doku-Erzähler um.',
+        exampleLabel: 'Multiperspektiv-Audio-Beispiel',
+        exampleHeadline: '1 gesicherter 4K-Bildmaster → 70+ Sprachen & mehrere Erzählperspektiven',
+        exampleDetails:
+          'Nahezu null zusätzlicher Video-Rechenaufwand: Jeder Bildframe bleibt fixiert, während Familiennamen, Heimatorte und Fachkürzel in über 70 Sprachen muttersprachlich korrekt gesprochen werden.',
+        highlights: [
+          'Multiperspektiv-Audiospuren: Sprachen oder Ich-/Erzählerstimmen auf demselben 4K-Reel umschalten',
+          'Voice-Cloning & alters-/charaktergerechte Stimmen mit 10-Sekunden-Phonetik-Lock',
+          'Broadcast-Stereomix: Dialoge, Studio-Erzähler, Umgebungs-SFX & dynamischer Orchester-Score',
+        ],
+        metricValue: '70+ Sprachen',
+        metricLabel: 'Mehrspur-Stimm-Lock',
+      },
+      {
+        id: 'directed_4k_master',
+        shortTab: 'Epochen- & Kultur-Zeitkapsel',
+        badge: 'Zeitgeschichtliches & regionales World-Building',
+        title: 'Lokalisierte Epochen- & Kultur-Zeitkapsel-Engine',
+        summary:
+          'Wir lesen Ihre Notizen nicht bloß vor – unsere Story-Engine verwebt authentische Musik, wirtschaftliche Meilensteine, kulturelle Bezugspunkte und den Alltagsgeist genau des Jahrzehnts, der Stadt und des Landes Ihrer Geschichte und macht aus privaten Erinnerungen eine bleibende historische Dokumentation.',
+        exampleLabel: 'Kultur-Zeitkapsel-Beispiel',
+        exampleHeadline: 'Zeit- & Regionalkontext, der Geschichte lebendig macht',
+        exampleDetails:
+          'Jeder inszenierte 4K-Frame (3840×2160) verbindet authentische Dekaden-Musik, regionalen Wirtschafts- und Kulturkontext sowie eine sanfte 6-Wege-Kamerachoreografie zu einem kinoreifen historischen Master.',
+        highlights: [
+          'Automatischer Dekaden- & Regionalkontext aus Kultur, Musik und Wirtschaft im Drehbuch verwoben',
+          'Fotorealistisches Kino ODER illustrierte 4K-UHD-Masterchoreografie (3840×2160)',
+          'Betrieb in 14 nativen UI-Portalen für kulturell lokalisierte 4K-Master in über 70 Sprachen',
+        ],
+        metricValue: 'Epochentreu 4K',
+        metricLabel: 'Kultur-Zeitkapsel',
+      },
+    ],
+    immediateLift: {
+      eyebrow: 'Sofortiger Mehrwert · Kunden & White-Label-Betreiber',
+      heading: 'Drei integrierte Wachstumsmotoren jenseits des Videoschnitts',
+      subtitle:
+        'Liefern Sie Live-Demos in mehreren Sprachen, greifbare Druckprodukte und mühelose laufende Kapitel- oder SOP-Updates – automatisch gespeist aus demselben gesicherten Continuity Vault.',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: 'Nahezu null Zusatz-Rechenleistung',
+          title: 'Multiperspektiv-Audiospuren',
+          subtitle: 'Dieselbe 4K-Optik · Mehrere Stimmen & Sprachen',
+          description:
+            'Präsentieren Sie Voice-Cloning und Drehbuch-Intelligenz sofort live: Schalten Sie ein einziges 4K-Reel direkt zwischen Englisch, Japanisch und Spanisch – oder zwischen Ich-Memoiren und Doku-Perspektive – mitten in der Familienvorschau oder im Verkaufsgespräch.',
+          liftHighlight: 'Nahezu null zusätzlicher Video-Rechenaufwand pro Sprache oder Erzählperspektive',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: '100 % automatisiertes Begleitprodukt',
+          title: 'QR-verknüpftes Print-Begleit-PDF',
+          subtitle: 'Erinnerungsbuch · Immobilien-Exposé · SOP-Poster',
+          description:
+            'Verwandeln Sie jeden digitalen 4K-Master in ein greifbares Begleitmedium für Besichtigungen, runde Geburtstage oder Werkshallen – automatisch gestaltet mit Filmstills, Kapitelzusammenfassungen und scanbaren QR-Videolinks.',
+          liftHighlight: 'Gibt Maklern, Gastgebern & Trainingsleitern ein physisches Andenken, das Premium-Preise rechtfertigt',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: 'Motor für wiederkehrende Umsätze',
+          title: 'Lebendiger Continuity Vault',
+          subtitle: 'Schrittweise Kapitel-, Immobilien- & SOP-Updates',
+          description:
+            'Da Gesichter, Stimmen und Schauplätze dauerhaft fixiert bleiben, können Betreiber jährliche Familienkapitel-Erweiterungen oder quartalsweise SOP- und Immobilien-Updates mit hohen Margen und minimalem Aufwand verkaufen.',
+          liftHighlight: 'Neue Meilensteine oder Compliance-Anpassungen in Minuten ohne Kontinuitätsverlust ergänzen',
+          accessNote: 'Folge-Updates werden über einen privaten Continuity Library Code freigeschaltet (ohne vollständiges Kontopasswort)',
+        },
+      ],
+    },
+    comparisonHeading: 'Warum $149 Langform-4K-Kino in einer eigenen Liga spielt',
+    comparisonSubtitle: 'Vergleichen Sie Wegwerf-KI-Kurzclips mit einer echten SceneFlow-Langformproduktion.',
+    colDimension: 'Produktionsstandard',
+    colSlop: 'Kurzclip-KI-Generatoren („AI Slop“)',
+    colSceneFlow: 'SceneFlow Langform-4K-Kino ($149)',
+    comparisonRows: [
+      {
+        dimension: 'Format & Laufzeit',
+        shortformSlop: '5–15 Sek. unzusammenhängende Clips ohne Storybogen',
+        sceneFlowLongform: 'Bis zu 60 Min. (360 4K-Frames) für $149 + 1–3 Min. Trailer (bis 150 Min. erweiterbar)',
+      },
+      {
+        dimension: 'Drehbuch & Resonanz',
+        shortformSlop: 'Flache Einzeiler-Prompts ohne emotionales Tempo',
+        sceneFlowLongform: 'Mehraktiges Profi-Drehbuch mit 90 %+ Zielgruppenresonanz',
+      },
+      {
+        dimension: 'Personen & Alterung',
+        shortformSlop: 'Gesichter mutieren alle paar Sekunden zu Fremden',
+        sceneFlowLongform: 'Feste Kontinuität (z. B. Großvater mit 28 & Familienähnlichkeit)',
+      },
+      {
+        dimension: 'Orte & Requisiten',
+        shortformSlop: 'Halluzinierte Standardräume und verzerrte Objekte',
+        sceneFlowLongform: 'Exakte Orte (Immobilien, Kindheitsstraßen) & Erbstücke (Familienbibel usw.)',
+      },
+      {
+        dimension: 'Stimmen & Tonmix',
+        shortformSlop: 'Roboterstimmen, falsch ausgesprochene Namen, Stock-Loops',
+        sceneFlowLongform: 'Voice-Cloning, Stimm-Bild-Match, Aussprache-Lock, SFX & Score',
+      },
+      {
+        dimension: 'Bildregie & Master',
+        shortformSlop: 'Flackernde Artefakte und unansehnlicher „AI Slop“',
+        sceneFlowLongform: 'Inszenierte realistische oder illustrierte 4K-Beats + Kinomaster',
+      },
+    ],
+    storefrontCtaLabel: '$29 Langform-Blueprint starten (voll auf den $149 4K-Film anrechenbar)',
+    studioPrimaryCtaLabel: 'Eigenes White-Label-Langformstudio starten',
+    studioSecondaryCtaLabel: 'Live-$149-Storefront erleben',
+  },
+
+  fr: {
+    storefrontEyebrow: 'Cinéma 4K Long Format · Zéro « AI Slop »',
+    studioEyebrow: 'L’avantage décisif de votre studio en marque blanche',
+    storefrontHeadingPrefix: 'Pas une appli de clips de 5 secondes. Un vrai ',
+    storefrontHeadingAccent: 'Studio de Cinéma 4K Long Format à $149.',
+    studioHeadingPrefix: 'Pourquoi les clients paient $149–$950+ au lieu d’utiliser des ',
+    studioHeadingAccent: 'générateurs de clips IA courts.',
+    storefrontSubtitle:
+      'Les générateurs courts produisent des clips de 5 secondes aux visages changeants et aux textes creux. Chaque film Keepsake Cinema à $149 est une production 4K long format mise en scène en chapitres et calibrée pour 90 %+ de résonance — donnant vie aux proches, aux époques, aux lieux, aux souvenirs et aux entreprises.',
+    studioSubtitle:
+      'Les applis courtes inondent le web de contenu jetable (« AI slop »). SceneFlow dote votre studio en marque blanche d’un véritable cinéma 4K long format : scénarios à 90 %+ de résonance, rajeunissement cohérent des visages, fidélité des lieux et objets, clonage vocal et masters dignes du grand écran.',
+    noSlopBadge: 'ZÉRO AI SLOP · CINÉMA 4K LONG FORMAT',
+    trailerSpotlight: {
+      badge: 'Long Métrage · Film de 30–150 min + Bande-Annonce 1–3 min incluse',
+      headline: 'Transformez votre histoire en un long métrage cinéma de 30 à 150 minutes — avec bande-annonce de 1 à 3 min incluse.',
+      body: 'Les exemples publiés durent 2 minutes : votre forfait à $149 finance un vrai long métrage 4K (jusqu’à 60 min / 360 plans mis en scène ; extensible à 90–150 min) accompagné d’une bande-annonce partageable de 1–3 min à envoyer à vos proches avant la projection.',
+      pill1: 'Bande-annonce cinéma 1–3 min partageable incluse',
+      pill2: 'Jusqu’à 60 min (360 plans 4K) inclus à $149',
+      pill3: 'Extensible en fresque de 90–150 min',
+    },
+    pillarsHeading: 'Explorez les 6 systèmes de studio au cœur de chaque film',
+    pillarsHint: 'Sélectionnez chaque capacité pour découvrir comment SceneFlow met en scène de vraies histoires sans « AI slop ».',
+    pillars: [
+      {
+        id: 'resonance_script',
+        shortTab: 'Scénarios 90 %+ Résonance',
+        badge: 'Écriture calibrée pour votre public',
+        title: 'Scénarios professionnels notés pour 90 %+ de résonance auprès du public',
+        summary:
+          'Nous n’injectons jamais une simple phrase dans un générateur vidéo. Chaque film démarre par un scénario en plusieurs actes calibré pour l’arc émotionnel, le rythme et 90 %+ de résonance — qu’il s’agisse d’émouvoir une famille pour des 80 ans, de convaincre des acquéreurs immobiliers, de rassurer des patients ou de former des équipes.',
+        exampleLabel: 'Exemple de structure de réalisation',
+        exampleHeadline: 'Accroche Acte I → Traversée des époques → Climax émotionnel → Final mémorable',
+        exampleDetails:
+          'Chaque séquence est évaluée par rapport à votre audience cible (famille, acheteurs, patients ou recrues) avant tout rendu — zéro remplissage.',
+        highlights: [
+          'Véritable récit chapitré de 30–150 min (jusqu’à 60 min / 360 plans à $149)',
+          'Noté et affiné pour 90 %+ de résonance émotionnelle et commerciale',
+          'Bande-annonce 1–3 min + Storyboard Blueprint interactif inclus',
+        ],
+        metricValue: '90 %+',
+        metricLabel: 'Résonance du public cible',
+      },
+      {
+        id: 'character_aging',
+        shortTab: 'Grand-père à 28 ans & Famille',
+        badge: 'Moteur d’identité & d’époques',
+        title: 'Recréez votre grand-père à 28 ans et liez les ressemblances familiales',
+        summary:
+          'Vous n’avez qu’un portrait récent de votre grand-père à 80 ans ? Le moteur de continuité SceneFlow recrée fidèlement son visage à 28 ans pour les années 1970, harmonise les traits entre générations et verrouille chaque visage sur tout le film.',
+        exampleLabel: 'Exemple de continuité',
+        exampleHeadline: '1 photo actuelle → Fidèle à 28 ans · 52 ans · Aujourd’hui',
+        exampleDetails:
+          'La même physionomie et la même chaleur traversent les décennies sans jamais se transformer en inconnu d’un plan à l’autre.',
+        highlights: [
+          'Rajeunissement et vieillissement crédibles depuis de simples photos mobile',
+          'Ressemblances familiales cohérentes entre parents, enfants et petits-enfants',
+          'Identité constante du fondateur ou formateur pour vos films d’entreprise',
+        ],
+        metricValue: '100 %',
+        metricLabel: 'Identité verrouillée',
+      },
+      {
+        id: 'location_matching',
+        shortTab: 'Scènes actives & Mise en scène culturelle',
+        badge: 'Mise en scène à continuité verrouillée',
+        title: 'Scènes actives et mise en scène culturelle à continuité verrouillée',
+        summary:
+          'Il manque des photos des plus grands chapitres ? Grâce à votre Continuity Vault, SceneFlow met en scène des réunions de famille vivantes, des traditions régionales, des intérieurs fidèles à l’époque et des rénovations virtuelles de mobilier — tout en verrouillant vos vrais visages, tenues et souvenirs de famille.',
+        exampleLabel: 'Mise en scène active & verrou d’environnement',
+        exampleHeadline: 'Moments jamais photographiés, mis en scène avec authenticité culturelle',
+        exampleDetails:
+          'Mettez en scène des dîners multigénérationnels animés, du home staging virtuel pour l’immobilier, des soins d’époque en clinique ou des exercices régionaux de conformité au travail — le tout verrouillé sur vos vrais visages et votre architecture.',
+        highlights: [
+          'Met en scène réunions familiales non photographiées, traditions régionales & maisons d’époque',
+          'Mises à jour virtuelles d’intérieurs/mobilier & vie de quartier animée pour l’immobilier',
+          'Scènes localisées de sécurité au travail, équipements & accueil patients/clients sans dérive faciale',
+        ],
+        metricValue: 'Scène active',
+        metricLabel: 'Verrou culturel & spatial',
+      },
+      {
+        id: 'heirloom_props',
+        shortTab: 'Objets & Souvenirs clés',
+        badge: 'Continuité des objets',
+        title: 'Verrouillez les objets chers — De la Bible familiale aux produits phares',
+        summary:
+          'Les grandes histoires vivent dans les détails que chacun reconnaît aussitôt. La continuité d’objets fixe les pièces précieuses — Bible de famille, montre ancienne, guitare, produit signature ou équipement de sécurité — plan après plan.',
+        exampleLabel: 'Exemple d’accessoires',
+        exampleHeadline: 'Bible familiale · Montre de famille · Équipement signature',
+        exampleDetails:
+          'Ancrés dans votre bibliothèque de continuité avant le rendu, les objets ne se déforment jamais et ne disparaissent pas en cours de scène.',
+        highlights: [
+          'Préserve les souvenirs de famille (Bible familiale, lettres, bijoux, voitures)',
+          'Verrouille produits, enseignes et tenues dans vos films de marque',
+          'Équipements exacts pour les modules de conformité et de sécurité SOP',
+        ],
+        metricValue: 'Zéro dérive',
+        metricLabel: 'Continuité des objets',
+      },
+      {
+        id: 'voice_cloning',
+        shortTab: 'Clonage vocal & Multipiste',
+        badge: 'Audio multiperspective & 70+ langues',
+        title: 'Clonage vocal, pistes audio multiperspectives & verrou de prononciation 10 s',
+        summary:
+          'Un film inoubliable s’écoute autant qu’il se regarde. SceneFlow associe clonage vocal, accord voix-image et verrou phonétique de 10 secondes aux Pistes Audio Multiperspectives — basculant exactement le même master visuel 4K entre anglais, japonais et espagnol, ou entre mémoires à la 1re personne et documentaire à la 3e personne.',
+        exampleLabel: 'Exemple d’audio multiperspective',
+        exampleHeadline: '1 bobine visuelle 4K verrouillée → 70+ langues & plusieurs voix narratives',
+        exampleDetails:
+          'Quasiment zéro calcul vidéo supplémentaire : chaque image reste figée tout en offrant une prononciation native des noms de famille, villes d’origine et sigles métier dans plus de 70 langues.',
+        highlights: [
+          'Pistes Audio Multiperspectives : changez de langue ou de voix 1re/3e personne sur la même bobine 4K',
+          'Clonage vocal et voix assorties à l’âge/personnalité avec verrou phonétique de 10 secondes',
+          'Mixage stéréo broadcast : dialogues, narrateur studio, SFX ambiants & partition orchestrale',
+        ],
+        metricValue: '70+ langues',
+        metricLabel: 'Verrou vocal multipiste',
+      },
+      {
+        id: 'directed_4k_master',
+        shortTab: 'Capsule temporelle & culturelle',
+        badge: 'Reconstitution d’époque & régionale',
+        title: 'Moteur localisé d’époque et capsule temporelle culturelle',
+        summary:
+          'Nous ne nous contentons pas de relire vos notes — notre moteur narratif tisse la musique authentique, les repères économiques, les références culturelles et l’atmosphère quotidienne de la décennie, de la ville et du pays exacts de votre histoire, transformant des souvenirs intimes en documentaire historique durable.',
+        exampleLabel: 'Exemple de capsule culturelle',
+        exampleHeadline: 'Un contexte historique et régional qui redonne vie au passé',
+        exampleDetails:
+          'Chaque plan 4K dirigé (3840×2160) associe musique d’époque authentique, contexte économique et culturel local et chorégraphie caméra fluide sur 6 axes dans un master historique prêt pour le grand écran.',
+        highlights: [
+          'Contexte culturel, musical et économique de la décennie et de la région intégré au scénario',
+          'Cinéma photoréaliste OU direction illustrée patrimoniale en 4K UHD (3840×2160)',
+          'Pilotez en 14 portails natifs tout en produisant des masters 4K localisés en 70+ langues',
+        ],
+        metricValue: '4K d’époque',
+        metricLabel: 'Capsule culturelle',
+      },
+    ],
+    immediateLift: {
+      eyebrow: 'Impact immédiat · Particuliers & opérateurs marque blanche',
+      heading: 'Trois moteurs de croissance intégrés au-delà du montage vidéo',
+      subtitle:
+        'Offrez des démos multilingues en direct, des supports imprimés tangibles et des mises à jour récurrentes de chapitres ou SOP sans effort — alimentés automatiquement par le même Continuity Vault verrouillé.',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: 'Quasiment zéro calcul en plus',
+          title: 'Pistes Audio Multiperspectives',
+          subtitle: 'Mêmes visuels 4K · Plusieurs voix & langues',
+          description:
+            'Démontrez instantanément le clonage vocal et l’intelligence scénaristique : basculez en direct une seule bobine 4K entre anglais, japonais et espagnol — ou entre mémoires à la 1re personne et documentaire à la 3e personne — lors d’une projection familiale ou d’un appel commercial.',
+          liftHighlight: 'Quasiment zéro calcul vidéo supplémentaire par langue ou point de vue narratif ajouté',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: 'Support 100 % automatisé',
+          title: 'PDF compagnon imprimable avec QR',
+          subtitle: 'Livre souvenir · Fiche immobilière · Affiche SOP',
+          description:
+            'Transformez chaque master numérique 4K en un objet physique tangible pour les visites libres, dîners d’anniversaire ou ateliers — mis en page automatiquement avec captures de plans, résumés de chapitres et liens vidéo QR scannables.',
+          liftHighlight: 'Offre aux agents, hôtes et responsables formation un souvenir matériel qui justifie des tarifs premium',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: 'Moteur de revenus récurrents',
+          title: 'Continuity Vault vivant',
+          subtitle: 'Mises à jour progressives de chapitres, biens & SOP',
+          description:
+            'Parce que les visages, les voix et les décors restent verrouillés en permanence, les opérateurs peuvent vendre des extensions annuelles familiales ou des mises à jour trimestrielles SOP et immobilières à forte marge et presque sans retouche.',
+          liftHighlight: 'Ajoutez de nouvelles étapes ou révisions réglementaires en quelques minutes sans perte de continuité',
+          accessNote: 'Les mises à jour ultérieures se déverrouillent via un Continuity Library Code privé (sans mot de passe complet du compte)',
+        },
+      ],
+    },
+    comparisonHeading: 'Pourquoi le Cinéma 4K Long Format à $149 change totalement d’univers',
+    comparisonSubtitle: 'Comparez les générateurs de clips IA jetables à une vraie production long format SceneFlow.',
+    colDimension: 'Standard de production',
+    colSlop: 'Générateurs de clips IA (« AI Slop »)',
+    colSceneFlow: 'SceneFlow Cinéma 4K Long Format ($149)',
+    comparisonRows: [
+      {
+        dimension: 'Format & Durée',
+        shortformSlop: 'Clips isolés de 5–15 s sans arc narratif',
+        sceneFlowLongform: 'Jusqu’à 60 min (360 plans 4K) à $149 + bande-annonce 1–3 min (extensible à 150 min)',
+      },
+      {
+        dimension: 'Scénario & Résonance',
+        shortformSlop: 'Prompt générique d’une ligne au rythme plat',
+        sceneFlowLongform: 'Scénario pro multi-actes calibré pour 90 %+ de résonance',
+      },
+      {
+        dimension: 'Visages & Âges',
+        shortformSlop: 'Visages qui changent d’identité toutes les 4 secondes',
+        sceneFlowLongform: 'Continuité verrouillée (grand-père à 28 ans & ressemblances familiales)',
+      },
+      {
+        dimension: 'Lieux & Objets',
+        shortformSlop: 'Pièces inventées et objets déformés',
+        sceneFlowLongform: 'Lieux exacts (immobilier, rues d’enfance) & souvenirs (Bible familiale, etc.)',
+      },
+      {
+        dimension: 'Voix & Mixage',
+        shortformSlop: 'Voix robotiques, noms écorchés et boucles musicales banales',
+        sceneFlowLongform: 'Clonage vocal, accord voix-image, verrou phonétique, SFX & musique',
+      },
+      {
+        dimension: 'Direction & Master',
+        shortformSlop: 'Scintillements et rendu jetable « AI slop »',
+        sceneFlowLongform: 'Plans 4K réalistes ou illustrés dirigés + master prêt pour le grand écran',
+      },
+    ],
+    storefrontCtaLabel: 'Démarrer mon Blueprint Long Format à $29 (déduit du film 4K à $149)',
+    studioPrimaryCtaLabel: 'Lancer votre studio long format en marque blanche',
+    studioSecondaryCtaLabel: 'Découvrir la vitrine live à $149',
+  },
+
+  it: {
+    storefrontEyebrow: 'Cinema 4K Lungometraggio · Zero "AI Slop"',
+    studioEyebrow: 'Il vantaggio decisivo del tuo studio White-Label',
+    storefrontHeadingPrefix: 'Non un’app di clip IA da 5 secondi. Un vero ',
+    storefrontHeadingAccent: 'Studio Cinema 4K Lungometraggio da $149.',
+    studioHeadingPrefix: 'Perché i clienti pagano $149–$950+ invece di usare ',
+    studioHeadingAccent: 'generatori brevi di clip IA.',
+    storefrontSubtitle:
+      'I generatori brevi producono clip da 5 secondi con volti deformati e testi vuoti. Ogni film Keepsake Cinema da $149 è una produzione 4K longform diretta a capitoli e calibrata per oltre il 90% di risonanza emotiva — dando vita a persone reali, epoche, case, cimeli e aziende.',
+    studioSubtitle:
+      'Le app di clip brevi inondano il web di "AI slop" usa e getta. SceneFlow dota il tuo studio white-label di vero cinema 4K longform: sceneggiature con 90%+ di risonanza, ringiovanimento coerente dei volti, fedeltà di luoghi e oggetti, clonazione vocale e master pronti per il grande schermo.',
+    noSlopBadge: 'ZERO AI SLOP · CINEMA 4K LONGFORM',
+    trailerSpotlight: {
+      badge: 'Vero Lungometraggio · Film da 30–150 min + Trailer 1–3 min incluso',
+      headline: 'Trasforma la tua storia di vita in un film da 30–150 minuti — con Trailer cinematografico 1–3 min incluso.',
+      body: 'Le clip in vetrina sono anteprime da 2 minuti: il pacchetto da $149 include un vero lungometraggio 4K (fino a 60 min / 360 fotogrammi diretti; estendibile fino a 90–150 min) più un trailer condivisibile da 1–3 minuti da inviare a famiglia e ospiti prima dell’evento.',
+      pill1: 'Trailer cinematografico 1–3 min condivisibile incluso',
+      pill2: 'Fino a 60 min (360 fotogrammi 4K) inclusi a $149',
+      pill3: 'Estendibile a grandi opere da 90–150 min',
+    },
+    pillarsHeading: 'Scopri i 6 sistemi artigianali di studio dentro ogni film',
+    pillarsHint: 'Seleziona una capacità per vedere come SceneFlow dirige storie reali senza "AI slop".',
+    pillars: [
+      {
+        id: 'resonance_script',
+        shortTab: 'Sceneggiature 90%+ Risonanza',
+        badge: 'Scrittura calibrata sul pubblico',
+        title: 'Sceneggiature professionali con oltre il 90% di risonanza sul pubblico',
+        summary:
+          'Non inseriamo mai un prompt di una riga in un generatore video. Ogni film nasce da una sceneggiatura in più atti calibrata per arco emotivo, ritmo e 90%+ di risonanza — per commuovere una famiglia agli 80 anni, convincere acquirenti immobiliari, creare fiducia in clinica o formare il personale.',
+        exampleLabel: 'Esempio di struttura registica',
+        exampleHeadline: 'Apertura Atto I → Viaggio nelle epoche → Climax emotivo → Finale indimenticabile',
+        exampleDetails:
+          'Ogni passaggio è valutato sul tuo pubblico specifico (famiglie, acquirenti, pazienti o neoassunti) prima del rendering — eliminando narrazioni piatte.',
+        highlights: [
+          'Vero arco narrativo in capitoli da 30–150 min (fino a 60 min / 360 frame a $149)',
+          'Valutato e rifinito per 90%+ di risonanza emotiva e di conversione',
+          'Include trailer cinematografico 1–3 min + Storyboard Blueprint interattivo',
+        ],
+        metricValue: '90%+',
+        metricLabel: 'Risonanza sul pubblico',
+      },
+      {
+        id: 'character_aging',
+        shortTab: 'Nonno a 28 anni & Famiglia',
+        badge: 'Motore di identità ed epoche',
+        title: 'Ricrea il nonno a 28 anni e armonizza i lineamenti di famiglia',
+        summary:
+          'Hai solo una foto recente del nonno a 80 anni? Il motore di continuità SceneFlow ricrea il suo volto autentico a 28 anni per le scene degli anni ’70, mantiene le somiglianze tra parenti e blocca ogni viso per tutto il film.',
+        exampleLabel: 'Esempio di continuità',
+        exampleHeadline: '1 foto attuale → Autentico a 28 anni · 52 anni · Oggi',
+        exampleDetails:
+          'Gli stessi lineamenti e lo stesso calore attraversano i decenni senza mai trasformarsi in sconosciuti tra un’inquadratura e l’altra.',
+        highlights: [
+          'Ringiovanimento e invecchiamento naturali da normali foto da smartphone',
+          'Somiglianze coerenti tra coniugi, figli e nipoti attraverso le generazioni',
+          'Identità costante di fondatori e formatori per film aziendali e SOP',
+        ],
+        metricValue: '100%',
+        metricLabel: 'Identità bloccata',
+      },
+      {
+        id: 'location_matching',
+        shortTab: 'Scene attive & Allestimento culturale',
+        badge: 'Staging a continuità bloccata',
+        title: 'Scene attive e allestimento culturale a continuità bloccata',
+        summary:
+          'Mancano foto dei capitoli più importanti? Usando il tuo Continuity Vault, SceneFlow mette in scena riunioni di famiglia vivaci, tradizioni regionali, case fedeli all’epoca e restyling virtuali di interni e arredi — mantenendo saldamente bloccati volti reali, abiti e cimeli.',
+        exampleLabel: 'Staging attivo e blocco ambientale',
+        exampleHeadline: 'Momenti mai fotografati, messi in scena con autenticità culturale',
+        exampleDetails:
+          'Metti in scena cene multigenerazionali vivaci, home staging virtuale per immobili, scene storiche di cura in clinica o esercitazioni locali di sicurezza sul lavoro — tutto ancorato al tuo cast e alla tua architettura reali.',
+        highlights: [
+          'Mette in scena feste familiari non fotografate, tradizioni regionali e case d’epoca',
+          'Restyling virtuale di interni/arredi e vita di quartiere attiva per il settore immobiliare',
+          'Scene localizzate di sicurezza sul lavoro, attrezzature e cura pazienti/clienti senza deriva dei volti',
+        ],
+        metricValue: 'Staging attivo',
+        metricLabel: 'Blocco culturale e spazi',
+      },
+      {
+        id: 'heirloom_props',
+        shortTab: 'Oggetti & Cimeli cari',
+        badge: 'Continuità di oggetti e cimeli',
+        title: 'Blocca oggetti preziosi — Dalla Bibbia di famiglia ai prodotti del brand',
+        summary:
+          'Le grandi storie vivono nei dettagli che tutti riconoscono all’istante. La continuità degli oggetti mantiene coerenti la Bibbia di famiglia, l’orologio del nonno, la chitarra vintage, i prodotti di punta o i dispositivi di sicurezza scena dopo scena.',
+        exampleLabel: 'Esempio di oggetti',
+        exampleHeadline: 'Bibbia di famiglia · Orologio storico · Attrezzatura del brand',
+        exampleDetails:
+          'Ancorati nella Libreria di Continuità prima del rendering, gli oggetti non si distorcono né svaniscono mai a metà scena.',
+        highlights: [
+          'Preserva cimeli di famiglia (Bibbia, lettere, gioielli, auto d’epoca)',
+          'Blocca prodotti, insegne e divise nei film dedicati al brand',
+          'Attrezzature e strumenti precisi per corsi di sicurezza e SOP',
+        ],
+        metricValue: 'Zero errori',
+        metricLabel: 'Continuità degli oggetti',
+      },
+      {
+        id: 'voice_cloning',
+        shortTab: 'Clonazione voce & Multitraccia',
+        badge: 'Audio multiprospettiva & 70+ lingue',
+        title: 'Clonazione vocale, tracce audio multiprospettiva e blocco pronuncia in 10s',
+        summary:
+          'Un film indimenticabile suona vero quanto sembra. SceneFlow unisce clonazione vocale, abbinamento voce-volto e blocco fonetico in 10 secondi alle Tracce Audio Multiprospettiva — passando senza stacchi lo stesso master visivo 4K tra inglese, giapponese e spagnolo, o tra memorie in 1ª persona e documentario in 3ª persona.',
+        exampleLabel: 'Esempio di audio multiprospettiva',
+        exampleHeadline: '1 bobina visiva 4K bloccata → 70+ lingue e più prospettive narrative',
+        exampleDetails:
+          'Praticamente zero calcolo video aggiuntivo: mantieni ogni fotogramma bloccato offrendo pronuncia madrelingua per cognomi, paesi e sigle tecniche in oltre 70 lingue.',
+        highlights: [
+          'Tracce Audio Multiprospettiva: cambia lingua o voce in 1ª/3ª persona sulla stessa bobina 4K',
+          'Clonazione vocale e voci abbinate a età/carattere con blocco fonetico di 10 secondi',
+          'Mix stereo broadcast: dialoghi, narratore di studio, SFX ambientali e colonna sonora orchestrale',
+        ],
+        metricValue: '70+ lingue',
+        metricLabel: 'Blocco vocale multitraccia',
+      },
+      {
+        id: 'directed_4k_master',
+        shortTab: 'Capsula temporale ed epoca',
+        badge: 'Ricostruzione storica e regionale',
+        title: 'Motore localizzato di epoca e capsula del tempo culturale',
+        summary:
+          'Non ci limitiamo a leggere i tuoi appunti — il nostro motore narrativo intreccia la musica autentica, i traguardi economici, i simboli culturali e l’atmosfera quotidiana del decennio, della città e del Paese esatti della tua storia, trasformando ricordi privati in un documentario storico duraturo.',
+        exampleLabel: 'Esempio di capsula culturale',
+        exampleHeadline: 'Contesto storico e regionale che riporta in vita il passato',
+        exampleDetails:
+          'Ogni fotogramma 4K diretto (3840×2160) combina musica autentica del decennio, contesto economico-culturale locale e coreografia camera fluida a 6 movimenti in un master storico pronto per la sala.',
+        highlights: [
+          'Contesto culturale, musicale ed economico del decennio e della regione tessuto nella sceneggiatura',
+          'Cinema fotorealistico OPPURE illustrazione d’autore 4K UHD (3840×2160) con regia camera',
+          'Opera in 14 portali nativi producendo master 4K localizzati culturalmente in oltre 70 lingue',
+        ],
+        metricValue: '4K d’epoca',
+        metricLabel: 'Capsula culturale',
+      },
+    ],
+    immediateLift: {
+      eyebrow: 'Valore immediato · Clienti e operatori White-Label',
+      heading: 'Tre motori di crescita integrati oltre il montaggio video',
+      subtitle:
+        'Offri demo multilingue dal vivo, materiali stampati tangibili e aggiornamenti ricorrenti di capitoli o SOP senza sforzo — alimentati automaticamente dallo stesso Continuity Vault bloccato.',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: 'Calcolo extra quasi zero',
+          title: 'Tracce Audio Multiprospettiva',
+          subtitle: 'Stesse immagini 4K · Più voci e lingue',
+          description:
+            'Mostra subito Clonazione Vocale e Intelligenza di Sceneggiatura: commuta dal vivo una sola bobina 4K tra inglese, giapponese e spagnolo — o tra memorie in 1ª persona e documentario in 3ª persona — durante un’anteprima familiare o una call commerciale.',
+          liftHighlight: 'Praticamente zero calcolo video aggiuntivo per ogni lingua o punto di vista aggiunto',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: 'Articolo 100% automatizzato',
+          title: 'PDF stampabile abbinato con QR',
+          subtitle: 'Libro ricordo · Scheda immobile · Poster SOP',
+          description:
+            'Trasforma ogni master digitale 4K in un oggetto fisico tangibile per open house, cene di compleanno o reparti produttivi — impaginato automaticamente con fotogrammi, riassunti dei capitoli e codici QR scansionabili.',
+          liftHighlight: 'Dona ad agenti, organizzatori e responsabili formazione un ricordo fisico che giustifica prezzi premium',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: 'Motore di ricavi ricorrenti',
+          title: 'Continuity Vault vivo',
+          subtitle: 'Aggiornamenti incrementali di capitoli, immobili e SOP',
+          description:
+            'Poiché volti, voci e ambienti del cast restano bloccati in modo permanente, gli operatori possono vendere estensioni annuali dei capitoli familiari o aggiornamenti trimestrali di SOP e immobili ad alti margini con quasi zero rilavorazione.',
+          liftHighlight: 'Aggiungi nuovi traguardi o revisioni normative in pochi minuti senza deriva di continuità',
+          accessNote: 'Gli aggiornamenti successivi si sbloccano con un Continuity Library Code privato (senza password completa dell’account)',
+        },
+      ],
+    },
+    comparisonHeading: 'Perché il Cinema 4K Longform da $149 è un altro universo',
+    comparisonSubtitle: 'Confronta i generatori brevi usa e getta con una vera produzione longform SceneFlow.',
+    colDimension: 'Standard di produzione',
+    colSlop: 'Generatori brevi di clip IA ("AI Slop")',
+    colSceneFlow: 'SceneFlow Cinema 4K Longform ($149)',
+    comparisonRows: [
+      {
+        dimension: 'Formato e durata',
+        shortformSlop: 'Clip scollegate da 5–15 sec senza arco narrativo',
+        sceneFlowLongform: 'Fino a 60 min (360 frame 4K) a $149 + trailer 1–3 min (estendibile a 150 min)',
+      },
+      {
+        dimension: 'Sceneggiatura e risonanza',
+        shortformSlop: 'Prompt generico di una riga dal ritmo piatto',
+        sceneFlowLongform: 'Sceneggiatura pro multi-atto con 90%+ di risonanza sul pubblico',
+      },
+      {
+        dimension: 'Volti ed età',
+        shortformSlop: 'I volti cambiano in estranei ogni pochi secondi',
+        sceneFlowLongform: 'Continuità bloccata (nonno a 28 anni e somiglianze familiari)',
+      },
+      {
+        dimension: 'Luoghi e oggetti',
+        shortformSlop: 'Stanze inventate e oggetti deformati',
+        sceneFlowLongform: 'Luoghi reali (immobili, vie d’infanzia) e cimeli (Bibbia di famiglia, ecc.)',
+      },
+      {
+        dimension: 'Voci e mix audio',
+        shortformSlop: 'Voci robotiche, nomi sbagliati e loop banali',
+        sceneFlowLongform: 'Clonazione vocale, abbinamento voce-volto, pronuncia, SFX e colonna sonora',
+      },
+      {
+        dimension: 'Regia visiva e master',
+        shortformSlop: 'Artefatti tremolanti e "AI slop" inguardabile',
+        sceneFlowLongform: 'Frame 4K realistici o illustrati diretti + master da grande schermo',
+      },
+    ],
+    storefrontCtaLabel: 'Avvia il mio Blueprint Longform da $29 (scalato dal film 4K da $149)',
+    studioPrimaryCtaLabel: 'Lancia il tuo studio longform White-Label',
+    studioSecondaryCtaLabel: 'Esplora la vetrina live da $149',
+  },
+
+  nl: {
+    storefrontEyebrow: 'Longform 4K Cinema · Nul "AI Slop"',
+    studioEyebrow: 'De beslissende voorsprong van jouw White-Label Studio',
+    storefrontHeadingPrefix: 'Geen 5-seconden AI-clipapp. Een echte ',
+    storefrontHeadingAccent: '$149 Longform 4K Filmstudio.',
+    studioHeadingPrefix: 'Waarom klanten $149–$950+ betalen in plaats van ',
+    studioHeadingAccent: 'korte AI-clipgenerators te gebruiken.',
+    storefrontSubtitle:
+      'Standaard korte generators spugen 5-secondenclips uit met vervormde gezichten en holle teksten. Elke $149 Keepsake Cinema-film is een geregisseerde longform 4K-productie in hoofdstukken met 90%+ doelgroepresonantie — die echte mensen, tijdperken, huizen, erfstukken en bedrijven tastbaar tot leven brengt.',
+    studioSubtitle:
+      'Korte AI-clipapps overspoelen het internet met wegwerp-"AI slop". SceneFlow rust jouw white-label studio uit met echte longform 4K cinema: scripts met 90%+ resonantie, verjonging met vaste gezichtsidentiteit, locatie- en objectcontinuïteit, stemkloning en bioscoopklare masters.',
+    noSlopBadge: 'NUL AI SLOP · LONGFORM 4K CINEMA',
+    trailerSpotlight: {
+      badge: 'Echte Speelfilm · 30–150 min Hoofdfilm + 1–3 min Trailer inbegrepen',
+      headline: 'Maak van jouw levensverhaal een 30–150 minuten durende bioscoopfilm — inclusief 1–3 min trailer.',
+      body: 'De voorbeelden op de site zijn voorproefjes van 2 minuten — jouw $149-pakket levert een echte longform 4K-film (tot 60 min / 360 geregisseerde frames; uitbreidbaar tot 90–150 min) plus een deelbare bioscooptrailer van 1–3 min voor familie en gasten vooraf.',
+      pill1: 'Deelbare 1–3 min bioscooptrailer inbegrepen',
+      pill2: 'Tot 60 min (360 4K-frames) inbegrepen voor $149',
+      pill3: 'Uitbreidbaar naar 90–150 min epossen',
+    },
+    pillarsHeading: 'Ontdek de 6 studiotechnieken achter elke film',
+    pillarsHint: 'Kies een onderdeel om te zien hoe SceneFlow echte verhalen zonder "AI slop" regisseert.',
+    pillars: [
+      {
+        id: 'resonance_script',
+        shortTab: '90%+ Resonantie-scripts',
+        badge: 'Doelgericht scenario-ontwerp',
+        title: 'Professionele scripts gescoord op 90%+ doelgroepresonantie',
+        summary:
+          'We gooien nooit een korte prompt in een videogenerator. Elke film begint met een meerdelig scenario afgestemd op spanningsboog, tempo en 90%+ doelgroepresonantie — of je nu een familie raakt op een 80e verjaardag, huizenkopers overtuigt, vertrouwen wekt voor een kliniek of medewerkers traint.',
+        exampleLabel: 'Voorbeeld regie-blueprint',
+        exampleHeadline: 'Akte I Hook → Tijdperken → Emotionele climax → Onvergetelijke finale',
+        exampleDetails:
+          'Elk moment wordt vóór het renderen getoetst op jouw doelgroep (familie, kopers, patiënten of nieuwe collega’s) — zonder vlakke opvulling.',
+        highlights: [
+          'Echte 30–150 min verhaallijn in hoofdstukken (tot 60 min / 360 frames voor $149)',
+          'Gescoord en aangescherpt voor 90%+ emotionele en commerciële resonantie',
+          'Inclusief 1–3 min bioscooptrailer + interactieve Storyboard Blueprint',
+        ],
+        metricValue: '90%+',
+        metricLabel: 'Doelgroepresonantie',
+      },
+      {
+        id: 'character_aging',
+        shortTab: 'Opa op 28 jaar & Familie',
+        badge: 'Identiteits- & Tijdperkengine',
+        title: 'Breng opa van 28 tot leven & match familieleden door de decennia',
+        summary:
+          'Heb je alleen een recente foto van opa op zijn 80e? De Continuity-engine van SceneFlow creëert zijn geloofwaardige 28-jarige zelf voor scènes uit de jaren 70, laat familiegelijkenissen kloppen en vergrendelt elk gezicht door de hele film.',
+        exampleLabel: 'Voorbeeld continuïteit',
+        exampleHeadline: '1 huidige foto → Geloofwaardig op 28 · 52 · Nu',
+        exampleDetails:
+          'Dezelfde gelaatstrekken en warmte lopen moeiteloos door van jeugd tot mijlpalen en familiebijeenkomsten — nooit een vreemde tussen twee shots.',
+        highlights: [
+          'Natuurlijke verjonging en veroudering op basis van gewone telefoonfoto’s',
+          'Familiegelijkenis over generaties tussen ouders, kinderen & kleinkinderen',
+          'Consistente oprichter- en traineridentiteit voor merk- en trainingsfilms',
+        ],
+        metricValue: '100%',
+        metricLabel: 'Vergrendelde identiteit',
+      },
+      {
+        id: 'location_matching',
+        shortTab: 'Actieve scènes & Culturele staging',
+        badge: 'Continuïteitsvergrendelde staging',
+        title: 'Continuïteitsvergrendelde actieve scènes & culturele staging',
+        summary:
+          'Ontbreken er foto’s van de grootste hoofdstukken? Via jouw Continuity Vault ensceneert SceneFlow levendige familiebijeenkomsten, regionale tradities, tijdseigen woningen en virtuele interieur- of meubelupdates — terwijl echte gezichten, kleding en erfstukken onmiskenbaar vergrendeld blijven.',
+        exampleLabel: 'Actieve staging & omgevingslock',
+        exampleHeadline: 'Ongefotografeerde momenten, met culturele authenticiteit geënsceneerd',
+        exampleDetails:
+          'Ensceneer levendige diners met meerdere generaties, virtuele meubelstyling voor vastgoed, oprichtingsscènes van een praktijk of regionale veiligheidsoefeningen op de werkvloer — allemaal vergrendeld aan jouw echte cast en architectuur.',
+        highlights: [
+          'Ensceneert ongefotografeerde familiefeesten, regionale tradities & tijdseigen woningen',
+          'Virtuele interieur-/meubelupdates & levendige buurtbeleving voor Vastgoed',
+          'Gelokaliseerde veiligheids-, apparatuur- & patiënt-/klantzorgscènes zonder gezichtsdrift',
+        ],
+        metricValue: 'Actieve staging',
+        metricLabel: 'Cultuur- & ruimtelock',
+      },
+      {
+        id: 'heirloom_props',
+        shortTab: 'Erfstukken & Rekwisieten',
+        badge: 'Object- & erfstukcontinuïteit',
+        title: 'Vergrendel dierbare objecten — Van familiebijbel tot merkapparatuur',
+        summary:
+          'Sterke verhalen zitten in de details die iedereen direct herkent. Objectcontinuïteit houdt bijzondere voorwerpen — een oude familiebijbel, opa’s horloge, een gitaar, topproduct of veiligheidsuitrusting — scène na scène identiek.',
+        exampleLabel: 'Voorbeeld objectreferentie',
+        exampleHeadline: 'Familiebijbel · Erfstukhorloge · Herkenbare merkuitrusting',
+        exampleDetails:
+          'Doordat objecten vooraf in je Continuity-bibliotheek staan, vervormen of verdwijnen ze nooit halverwege een scène.',
+        highlights: [
+          'Behoudt dierbare erfstukken (familiebijbel, brieven, sieraden, auto’s)',
+          'Vergrendelt producten, logo’s en bedrijfskleding in merkverhalen',
+          'Nauwkeurige uitrusting en hulpmiddelen voor compliance- en SOP-training',
+        ],
+        metricValue: 'Nul drift',
+        metricLabel: 'Object- & erfstuklock',
+      },
+      {
+        id: 'voice_cloning',
+        shortTab: 'Stemkloning & Multitrack',
+        badge: 'Multiperspectief-audio & 70+ talen',
+        title: 'Stemkloning, multiperspectief-audiosporen & 10-sec. uitspraaklock',
+        summary:
+          'Een onvergetelijke film klinkt net zo echt als hij oogt. SceneFlow combineert stemkloning, stem-beeldmatching en een 10-seconden uitspraaklock met Multiperspectief-audiosporen — waarmee dezelfde 4K-beeldmaster naadloos schakelt tussen Engels, Japans en Spaans, of tussen ik-memoires en documentaire in de derde persoon.',
+        exampleLabel: 'Voorbeeld multiperspectief-audio',
+        exampleHeadline: '1 vergrendelde 4K-beeldreel → 70+ talen & meerdere vertelperspectieven',
+        exampleDetails:
+          'Vrijwel nul extra videorekenkracht: houd elk beeldframe identiek terwijl achternamen, woonplaatsen en vakafkortingen in meer dan 70 talen vloeiend worden uitgesproken.',
+        highlights: [
+          'Multiperspectief-audiosporen: wissel talen of 1e/3e-persoonsstemmen op dezelfde 4K-reel',
+          'Stemkloning & op leeftijd/karakter afgestemde stemmen met 10-seconden fonetische lock',
+          'Broadcast stereomix: dialoog, studioverteller, omgevings-SFX & geduckte orkestscore',
+        ],
+        metricValue: '70+ talen',
+        metricLabel: 'Multitrack-stemlock',
+      },
+      {
+        id: 'directed_4k_master',
+        shortTab: 'Tijdperk- & Cultuurtijdcapsule',
+        badge: 'Historische & regionale wereldopbouw',
+        title: 'Gelokaliseerde Tijdperk- & Cultuurtijdcapsule-engine',
+        summary:
+          'We lezen niet slechts je aantekeningen voor — onze verhaalengine verweeft authentieke muziek, economische mijlpalen, culturele ankerpunten en de dagelijkse sfeer van precies het decennium, de stad en het land van jouw verhaal, zodat privéherinneringen een blijvende historische documentaire worden.',
+        exampleLabel: 'Voorbeeld cultuurtijdcapsule',
+        exampleHeadline: 'Tijdperk- & regiocontext die geschiedenis tot leven brengt',
+        exampleDetails:
+          'Elk geregisseerd 4K-frame (3840×2160) combineert authentieke decenniummuziek, regionale economische en culturele context en vloeiende 6-voudige camerachoreografie tot een bioscoopklare historische master.',
+        highlights: [
+          'Automatische decennium- & regionale cultuur-, muziek- en economiecontext in het script verweven',
+          'Fotorealistische cinema OF erfstuk-geïllustreerde 4K UHD (3840×2160) masterchoreografie',
+          'Werk in 14 native UI-portals en produceer cultureel gelokaliseerde 4K-masters in 70+ talen',
+        ],
+        metricValue: 'Tijdseigen 4K',
+        metricLabel: 'Cultuurtijdcapsule',
+      },
+    ],
+    immediateLift: {
+      eyebrow: 'Directe meerwaarde · Consumenten & White-Label-operators',
+      heading: 'Drie ingebouwde groeimotoren naast videomontage',
+      subtitle:
+        'Lever live meertalige demo’s, tastbare printuitgaven en moeiteloze periodieke hoofdstuk- of SOP-updates — automatisch aangedreven vanuit dezelfde vergrendelde Continuity Vault.',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: 'Vrijwel nul extra rekenkracht',
+          title: 'Multiperspectief-audiosporen',
+          subtitle: 'Dezelfde 4K-beelden · Meerdere stemmen & talen',
+          description:
+            'Laat stemkloning en scriptintelligentie direct zien: schakel één 4K-beeldreel live tussen Engels, Japans en Spaans — of tussen ik-memoires en documentaire in de derde persoon — tijdens een familiepreview of verkoopgesprek.',
+          liftHighlight: 'Vrijwel nul extra videorekenkracht per toegevoegde taal of vertelperspectief',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: '100% geautomatiseerd drukwerk',
+          title: 'QR-gekoppelde print-companion PDF',
+          subtitle: 'Herinneringsboek · Woningbrochure · SOP-poster',
+          description:
+            'Zet elke digitale 4K-master om in een tastbare fysieke aanvulling voor open huizen, jubileumdiners of werkvloeren — automatisch opgemaakt met filmstills, hoofdstuksamenvattingen en scanbare QR-videolinks.',
+          liftHighlight: 'Geeft makelaars, gastheren & trainingsleiders een tastbaar aandenken dat premium prijzen rechtvaardigt',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: 'Terugkerende omzetmotor',
+          title: 'Levende Continuity Vault',
+          subtitle: 'Stapsgewijze hoofdstuk-, vastgoed- & SOP-updates',
+          description:
+            'Doordat gezichten, stemmen en omgevingen blijvend vergrendeld zijn, verkopen operators jaarlijkse familie-uitbreidingen of driemaandelijkse SOP- en vastgoedupdates met hoge marges en vrijwel nul herwerk.',
+          liftHighlight: 'Voeg nieuwe mijlpalen of compliance-wijzigingen in minuten toe zonder continuïteitsverlies',
+          accessNote: 'Vervolgupdates worden ontgrendeld met een privé Continuity Library Code (zonder volledig accountwachtwoord)',
+        },
+      ],
+    },
+    comparisonHeading: 'Waarom $149 Longform 4K Cinema een andere wereld is',
+    comparisonSubtitle: 'Vergelijk wegwerp-AI-clips met een echte longform productie van SceneFlow.',
+    colDimension: 'Productiestandaard',
+    colSlop: 'Korte AI-clipgenerators ("AI Slop")',
+    colSceneFlow: 'SceneFlow Longform 4K Cinema ($149)',
+    comparisonRows: [
+      {
+        dimension: 'Formaat & speelduur',
+        shortformSlop: 'Losse clips van 5–15 sec zonder verhaallijn',
+        sceneFlowLongform: 'Tot 60 min (360 4K-frames) voor $149 + 1–3 min trailer (tot 150 min uitbreidbaar)',
+      },
+      {
+        dimension: 'Script & resonantie',
+        shortformSlop: 'Vlakke eenregelige prompt zonder emotioneel tempo',
+        sceneFlowLongform: 'Professioneel meerdelig script gescoord op 90%+ doelgroepresonantie',
+      },
+      {
+        dimension: 'Gezichten & leeftijd',
+        shortformSlop: 'Gezichten veranderen elke paar seconden in vreemden',
+        sceneFlowLongform: 'Vaste continuïteit (bijv. opa op 28 jaar & familiegelijkenis)',
+      },
+      {
+        dimension: 'Locaties & objecten',
+        shortformSlop: 'Verzonnen standaardkamers en vervormde spullen',
+        sceneFlowLongform: 'Exacte locaties (vastgoed, jeugdstraten) & erfstukken (familiebijbel e.d.)',
+      },
+      {
+        dimension: 'Stemmen & geluidsmix',
+        shortformSlop: 'Robotstemmen, verkeerd uitgesproken namen & standaardmuziek',
+        sceneFlowLongform: 'Stemkloning, stem-beeldmatch, uitspraaklock, SFX & originele score',
+      },
+      {
+        dimension: 'Beeldregie & master',
+        shortformSlop: 'Flikkerende artefacten en onkijkbare "AI slop"',
+        sceneFlowLongform: 'Realistische of geïllustreerde 4K-frames + bioscoopklare master',
+      },
+    ],
+    storefrontCtaLabel: 'Start mijn $29 Longform Blueprint (verrekend met de $149 4K-film)',
+    studioPrimaryCtaLabel: 'Lanceer jouw White-Label Longform Studio',
+    studioSecondaryCtaLabel: 'Ervaar de live $149-storefront',
+  },
+
+  ru: {
+    storefrontEyebrow: 'Полнометражное 4K Кино · Ноль «AI Slop»',
+    studioEyebrow: 'Неоспоримое преимущество вашей White-Label студии',
+    storefrontHeadingPrefix: 'Не приложение для 5-секундных роликов. Настоящая ',
+    storefrontHeadingAccent: 'Студия полнометражного 4K-кино за $149.',
+    studioHeadingPrefix: 'Почему клиенты платят $149–$950+ вместо того, чтобы использовать ',
+    studioHeadingAccent: 'генераторы коротких ИИ-клипов.',
+    storefrontSubtitle:
+      'Обычные генераторы выдают 5-секундные ролики с «плывущими» лицами и пустыми текстами. Каждый фильм Keepsake Cinema за $149 — это постановочная многоглавая 4K-картина с целевым резонансом 90%+, достоверно оживляющая близких, эпохи, дома, реликвии и компании.',
+    studioSubtitle:
+      'Короткие ИИ-приложения наводнили сеть одноразовым «AI slop». SceneFlow даёт вашей white-label студии настоящее полнометражное 4K-кино: сценарии с резонансом 90%+, возрастное омоложение с сохранением черт, точность локаций и предметов, клонирование голоса и кинотеатральный мастер.',
+    noSlopBadge: 'НОЛЬ AI SLOP · ПОЛНОМЕТРАЖНОЕ 4K КИНО',
+    trailerSpotlight: {
+      badge: 'Настоящий полный метр · Фильм 30–150 мин + Трейлер 1–3 мин в комплекте',
+      headline: 'Превратите историю жизни в полнометражный фильм на 30–150 минут — с кинотрейлером 1–3 мин в комплекте.',
+      body: 'Опубликованные примеры длятся по 2 минуты — а ваш пакет за $149 даёт настоящий полнометражный 4K-фильм (до 60 мин / 360 постановочных кадров; с возможностью расширения до 90–150 мин) плюс готовый 1–3-минутный трейлер для рассылки родным и гостям перед премьерой.',
+      pill1: 'Кинотрейлер 1–3 мин для рассылки включён',
+      pill2: 'До 60 мин (360 кадров 4K) включено за $149',
+      pill3: 'Расширение до эпического формата 90–150 мин',
+    },
+    pillarsHeading: 'Изучите 6 студийных систем мастерства в каждом фильме',
+    pillarsHint: 'Выберите любой модуль, чтобы увидеть, как SceneFlow ставит настоящие истории без «AI slop».',
+    pillars: [
+      {
+        id: 'resonance_script',
+        shortTab: 'Сценарии 90%+ резонанса',
+        badge: 'Сценарная инженерия под аудиторию',
+        title: 'Профессиональные сценарии с оценкой 90%+ резонанса целевой аудитории',
+        summary:
+          'Мы никогда не скармливаем генератору однострочный промпт. Каждый фильм начинается с многоактного сценария, выверенного по драматургии, темпу и 90%+ резонансу — чтобы тронуть семью до слёз на 80-летии, убедить покупателей элитного дома, вызвать доверие к клинике или закрепить знания сотрудников.',
+        exampleLabel: 'Пример режиссёрской структуры',
+        exampleHeadline: 'Завязка Акта I → Смена эпох → Эмоциональная кульминация → Памятный финал',
+        exampleDetails:
+          'Каждый смысловой бит оценивается под вашу аудиторию (семья, покупатели, пациенты или новые сотрудники) ещё до рендера — без воды и плоской речи.',
+        highlights: [
+          'Настоящая многоглавая арка 30–150 мин (до 60 мин / 360 кадров за $149)',
+          'Проверка и доработка до 90%+ эмоционального и коммерческого резонанса',
+          'Включает трейлер 1–3 мин + интерактивный Storyboard Blueprint',
+        ],
+        metricValue: '90%+',
+        metricLabel: 'Резонанс аудитории',
+      },
+      {
+        id: 'character_aging',
+        shortTab: 'Дедушка в 28 лет и семья',
+        badge: 'Движок идентичности и эпох',
+        title: 'Воссоздайте дедушку в 28 лет и сохраните семейное сходство поколений',
+        summary:
+          'Есть только недавний портрет дедушки в 80 лет? Движок преемственности SceneFlow достоверно воссоздаёт его 28-летний облик для сцен 1970-х, согласует семейное сходство между родственниками и фиксирует каждое лицо на протяжении всего фильма.',
+        exampleLabel: 'Пример фиксации облика',
+        exampleHeadline: '1 текущее фото → Достоверно в 28 · 52 · Сегодня',
+        exampleDetails:
+          'Те же черты лица и тёплое выражение проходят через десятилетия — герои никогда не превращаются в чужих людей на соседнем кадре.',
+        highlights: [
+          'Естественное омоложение и возрастные изменения по обычным фото с телефона',
+          'Достоверное сходство между супругами, детьми и внуками разных поколений',
+          'Стабильный образ основателя и инструктора для бренд- и учебных фильмов',
+        ],
+        metricValue: '100%',
+        metricLabel: 'Фиксация идентичности',
+      },
+      {
+        id: 'location_matching',
+        shortTab: 'Живые сцены и культурный стейджинг',
+        badge: 'Стейджинг с фиксацией преемственности',
+        title: 'Живые сцены и культурный стейджинг с фиксацией преемственности',
+        summary:
+          'Нет фотографий самых главных глав? Используя ваш Continuity Vault, SceneFlow ставит живые семейные застолья, региональные традиции, дома с точностью эпохи и виртуальное обновление интерьеров и мебели — сохраняя реальные лица, одежду и семейные реликвии в строгой фиксации.',
+        exampleLabel: 'Активный стейджинг и фиксация среды',
+        exampleHeadline: 'Несфотографированные моменты, поставленные с культурной достоверностью',
+        exampleDetails:
+          'Ставьте тёплые ужины нескольких поколений, виртуальное обновление мебели для объектов недвижимости, сцены первых лет клиники или региональные тренинги по технике безопасности — всё с привязкой к вашим реальным героям и архитектуре.',
+        highlights: [
+          'Воссоздаёт несфотографированные семейные встречи, региональные традиции и дома эпохи',
+          'Виртуальное обновление интерьеров/мебели и живой стиль жизни района для недвижимости',
+          'Локализованные сцены охраны труда, оборудования и заботы о пациентах/клиентах без искажения лиц',
+        ],
+        metricValue: 'Живой стейджинг',
+        metricLabel: 'Фиксация культуры и среды',
+      },
+      {
+        id: 'heirloom_props',
+        shortTab: 'Реликвии и детали',
+        badge: 'Преемственность предметов',
+        title: 'Закрепите дорогие предметы — от семейной Библии до фирменного оборудования',
+        summary:
+          'Сильное кино держится на деталях, которые близкие узнают с первого взгляда. Модуль реквизита фиксирует значимые вещи — старинную семейную Библию, часы деда, гитару, флагманский продукт или защитное снаряжение — из сцены в сцену.',
+        exampleLabel: 'Пример референсов реквизита',
+        exampleHeadline: 'Семейная Библия · Памятные часы · Фирменное оборудование',
+        exampleDetails:
+          'Поскольку предметы закреплены в библиотеке преемственности до рендера, они не искажаются и не пропадают посреди кадра.',
+        highlights: [
+          'Сохраняет семейные реликвии (семейная Библия, письма, украшения, авто)',
+          'Фиксирует продукцию, вывески и униформу в историях бренда',
+          'Точное оборудование и наглядные материалы для курсов безопасности и SOP',
+        ],
+        metricValue: 'Без искажений',
+        metricLabel: 'Фиксация предметов',
+      },
+      {
+        id: 'voice_cloning',
+        shortTab: 'Клонирование и мультитрек',
+        badge: 'Мультиперспективное аудио и 70+ языков',
+        title: 'Клонирование голоса, мультиперспективные аудиодорожки и 10-сек. фиксация произношения',
+        summary:
+          'Настоящий фильм звучит так же убедительно, как выглядит. SceneFlow соединяет клонирование голоса, подбор тембра под образ и 10-секундную фиксацию произношения с мультиперспективными аудиодорожками — мгновенно переключая один и тот же 4K-видеомастер между английским, японским и испанским или между мемуарами от 1-го лица и документалистикой от 3-го лица.',
+        exampleLabel: 'Пример мультиперспективного аудио',
+        exampleHeadline: '1 зафиксированный 4K-видеоряд → 70+ языков и разные ракурсы повествования',
+        exampleDetails:
+          'Практически нулевые допрасходы видеовычислений: каждый кадр остаётся неизменным, а фамилии, родные города и термины звучат безупречно на более чем 70 языках.',
+        highlights: [
+          'Мультиперспективные аудиодорожки: меняйте язык или рассказчика от 1-го/3-го лица на одном 4K-видеоряде',
+          'Клонирование голоса и подбор тембра по возрасту/типажу с 10-секундной фонетической фиксацией',
+          'Эфирный стереомикс: диалоги, диктор студии, атмосферный SFX и оркестровый саундтрек',
+        ],
+        metricValue: '70+ языков',
+        metricLabel: 'Мультитрековая фиксация голоса',
+      },
+      {
+        id: 'directed_4k_master',
+        shortTab: 'Капсула эпохи и культуры',
+        badge: 'Исторический и региональный контекст',
+        title: 'Локализованный движок эпохи и культурной капсулы времени',
+        summary:
+          'Мы не просто зачитываем ваши заметки — наш сценарный движок вплетает подлинную музыку, экономические вехи, культурные ориентиры и повседневную атмосферу конкретного десятилетия, города и страны вашей истории, превращая личные воспоминания в долговечный исторический документальный фильм.',
+        exampleLabel: 'Пример культурной капсулы времени',
+        exampleHeadline: 'Исторический и региональный контекст, оживляющий прошлое',
+        exampleDetails:
+          'Каждый постановочный 4K-кадр (3840×2160) объединяет музыку эпохи, региональный культурно-экономический контекст и плавную 6-осевую хореографию камеры в исторический киномастер.',
+        highlights: [
+          'Автоматическое вплетение культурного, музыкального и экономического контекста десятилетия и региона в сценарий',
+          'Фотореалистичное кино ИЛИ памятная иллюстрированная хореография в 4K UHD (3840×2160)',
+          'Работайте в 14 нативных UI-порталах и создавайте культурно локализованные 4K-мастера на 70+ языках',
+        ],
+        metricValue: '4K эпохи',
+        metricLabel: 'Культурная капсула',
+      },
+    ],
+    immediateLift: {
+      eyebrow: 'Мгновенный эффект · Частные клиенты и White-Label операторы',
+      heading: 'Три встроенных движка роста за пределами видеомонтажа',
+      subtitle:
+        'Проводите живые мультиязычные демонстрации, вручайте осязаемые печатные издания и легко продавайте регулярные обновления глав или SOP — всё автоматически работает на базе единого Continuity Vault.',
+      cards: [
+        {
+          id: 'multi_perspective_audio',
+          badge: 'Почти ноль лишних вычислений',
+          title: 'Мультиперспективные аудиодорожки',
+          subtitle: 'Единый 4K-видеоряд · Разные голоса и языки',
+          description:
+            'Мгновенно продемонстрируйте клонирование голоса и интеллект сценария: в прямом эфире переключите один 4K-ролик между английским, японским и испанским — или между мемуарами от 1-го лица и документалистикой от 3-го лица — прямо на семейном предпросмотре или звонке с клиентом.',
+          liftHighlight: 'Практически нулевые дополнительные видеовычисления на каждый новый язык или ракурс диктора',
+        },
+        {
+          id: 'qr_print_companion',
+          badge: '100% автоматический артефакт',
+          title: 'Печатный PDF-компаньон с QR-кодами',
+          subtitle: 'Памятная книга · Буклет объекта · Плакат SOP',
+          description:
+            'Превратите каждый цифровой 4K-мастер в осязаемое печатное издание для показов недвижимости, юбилейных ужинов или цехов — автоматически свёрстанное с кадрами, резюме глав и сканируемыми QR-ссылками на видео.',
+          liftHighlight: 'Даёт риелторам, хозяевам праздников и тренерам материальный сувенир, обосновывающий премиальную цену',
+        },
+        {
+          id: 'living_continuity_vault',
+          badge: 'Движок регулярной выручки',
+          title: 'Живой Continuity Vault',
+          subtitle: 'Поэтапные обновления глав, объектов и SOP',
+          description:
+            'Поскольку лица, голоса и локации героев зафиксированы навсегда, операторы могут продавать ежегодные продолжения семейной хроники или квартальные обновления SOP и объектов с высокой маржой и почти нулевой переделкой.',
+          liftHighlight: 'Добавляйте новые события или правки регламентов за минуты без малейшей потери преемственности',
+          accessNote: 'Повторные обновления открываются по приватному Continuity Library Code (без полного пароля от аккаунта)',
+        },
+      ],
+    },
+    comparisonHeading: 'Почему полнометражное 4K-кино за $149 — это совершенно другой уровень',
+    comparisonSubtitle: 'Сравните одноразовые генераторы коротких клипов с полноценным производством SceneFlow.',
+    colDimension: 'Стандарт производства',
+    colSlop: 'Генераторы коротких ИИ-клипов («AI Slop»)',
+    colSceneFlow: 'SceneFlow Полнометражное 4K Кино ($149)',
+    comparisonRows: [
+      {
+        dimension: 'Формат и хронометраж',
+        shortformSlop: 'Разрозненные клипы по 5–15 сек без сюжета',
+        sceneFlowLongform: 'До 60 мин (360 кадров 4K) за $149 + трейлер 1–3 мин (расширение до 150 мин)',
+      },
+      {
+        dimension: 'Сценарий и резонанс',
+        shortformSlop: 'Шаблонная фраза без драматургии и эмоций',
+        sceneFlowLongform: 'Профессиональный многоактный сценарий с резонансом 90%+',
+      },
+      {
+        dimension: 'Лица и возраст',
+        shortformSlop: 'Лица превращаются в чужих людей каждые пару секунд',
+        sceneFlowLongform: 'Фиксированная преемственность (дедушка в 28 лет и сходство родных)',
+      },
+      {
+        dimension: 'Локации и реквизит',
+        shortformSlop: 'Выдуманные комнаты и искажённые предметы',
+        sceneFlowLongform: 'Реальные локации (объекты, улицы детства) и реликвии (семейная Библия и др.)',
+      },
+      {
+        dimension: 'Голоса и сведение',
+        shortformSlop: 'Роботизированный TTS, ошибки в именах, примитивные лупы',
+        sceneFlowLongform: 'Клонирование голоса, подбор под образ, словарь имён, SFX и музыка',
+      },
+      {
+        dimension: 'Визуал и мастер',
+        shortformSlop: 'Мерцание, артефакты и несмотрибельный «AI slop»',
+        sceneFlowLongform: 'Постановочные реалистичные или иллюстрированные 4K-кадры + киномастер',
+      },
+    ],
+    storefrontCtaLabel: 'Начать план полного метра за $29 (засчитывается в $149 за 4K-фильм)',
+    studioPrimaryCtaLabel: 'Запустить White-Label студию полного метра',
+    studioSecondaryCtaLabel: 'Посмотреть живую витрину за $149',
   },
 }

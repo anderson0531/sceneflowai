@@ -9,7 +9,21 @@ import { resolveClientUiLocale, UI_LOCALE_CHANGE_EVENT } from '@/i18n/useUiLocal
 
 const COOKIE_CONSENT_KEY = 'sceneflow-cookie-consent'
 
-type SupportedCookieLocale = 'en' | 'es' | 'pt' | 'hi' | 'zh-CN' | 'ar' | 'th'
+type SupportedCookieLocale =
+  | 'en'
+  | 'es'
+  | 'pt'
+  | 'hi'
+  | 'zh-CN'
+  | 'ar'
+  | 'th'
+  | 'ja'
+  | 'ko'
+  | 'de'
+  | 'fr'
+  | 'it'
+  | 'nl'
+  | 'ru'
 
 interface CookieLocaleCopy {
   bannerHeading: string
@@ -191,6 +205,167 @@ const COOKIE_CONSENT_COPY: Record<SupportedCookieLocale, CookieLocaleCopy> = {
     marketingDescription: 'ใช้เพื่อนำเสนอโฆษณาที่ตรงความสนใจและวัดผลแคมเปญ',
     savePreferences: 'บันทึกการตั้งค่า',
     closeAriaLabel: 'ปิดหน้าต่างตั้งค่าคุกกี้',
+  },
+  ja: {
+    bannerHeading: 'プライバシーを大切にしています',
+    bannerBody:
+      '閲覧体験の向上、トラフィック分析、コンテンツのパーソナライズのために Cookie を使用しています。',
+    bannerConsentNote: '「すべて許可」をクリックすると、Cookie の使用に同意したものとみなされます。',
+    learnMore: '詳細を見る',
+    customize: '設定',
+    essentialOnly: '必須のみ',
+    acceptAll: 'すべて許可',
+    modalTitle: 'Cookie の設定',
+    modalDescriptionPrefix:
+      'より良い体験を提供するために Cookie を使用しています。以下で設定をカスタマイズできます。詳しくは',
+    privacyPolicyLink: 'プライバシーポリシー',
+    modalDescriptionSuffix: 'をご覧ください。',
+    essentialTitle: '必須 Cookie',
+    essentialDescription: 'サイトの基本機能に不可欠なため、無効にすることはできません。',
+    analyticsTitle: '分析 Cookie',
+    analyticsDescription: 'サイトの利用状況を把握し、サービス改善に役立てます。',
+    marketingTitle: 'マーケティング Cookie',
+    marketingDescription: '関連性の高い広告配信やキャンペーン効果の測定に使用されます。',
+    savePreferences: '設定を保存',
+    closeAriaLabel: 'Cookie の設定を閉じる',
+  },
+  ko: {
+    bannerHeading: '개인정보를 소중히 여깁니다',
+    bannerBody:
+      '탐색 경험 향상, 트래픽 분석 및 콘텐츠 개인화를 위해 쿠키를 사용합니다.',
+    bannerConsentNote: '"모두 허용"을 클릭하면 쿠키 사용에 동의하게 됩니다.',
+    learnMore: '자세히 보기',
+    customize: '맞춤 설정',
+    essentialOnly: '필수만',
+    acceptAll: '모두 허용',
+    modalTitle: '쿠키 기본 설정',
+    modalDescriptionPrefix:
+      '더 나은 서비스 제공을 위해 쿠키를 사용합니다. 아래에서 설정을 조정할 수 있으며, 자세한 내용은 ',
+    privacyPolicyLink: '개인정보 처리방침',
+    modalDescriptionSuffix: '을 확인해 주세요.',
+    essentialTitle: '필수 쿠키',
+    essentialDescription: '웹사이트가 정상적으로 작동하는 데 필요하며 비활성화할 수 없습니다.',
+    analyticsTitle: '분석 쿠키',
+    analyticsDescription: '방문자가 웹사이트와 상호작용하는 방식을 이해하는 데 도움이 됩니다.',
+    marketingTitle: '마케팅 쿠키',
+    marketingDescription: '관련성 높은 광고를 제공하고 캠페인 성과를 측정하는 데 사용됩니다.',
+    savePreferences: '설정 저장',
+    closeAriaLabel: '쿠키 기본 설정 닫기',
+  },
+  de: {
+    bannerHeading: 'Wir schützen Ihre Privatsphäre',
+    bannerBody:
+      'Wir verwenden Cookies, um die Nutzung zu verbessern, den Datenverkehr zu analysieren und Inhalte zu personalisieren.',
+    bannerConsentNote: 'Mit Klick auf „Alle akzeptieren“ stimmen Sie der Verwendung von Cookies zu.',
+    learnMore: 'Mehr erfahren',
+    customize: 'Anpassen',
+    essentialOnly: 'Nur notwendige',
+    acceptAll: 'Alle akzeptieren',
+    modalTitle: 'Cookie-Einstellungen',
+    modalDescriptionPrefix:
+      'Wir verwenden Cookies, um Ihr Erlebnis zu verbessern. Sie können Ihre Einstellungen unten anpassen. Weitere Details finden Sie in unserer ',
+    privacyPolicyLink: 'Datenschutzerklärung',
+    modalDescriptionSuffix: '.',
+    essentialTitle: 'Notwendige Cookies',
+    essentialDescription: 'Für die Grundfunktionen der Website erforderlich. Können nicht deaktiviert werden.',
+    analyticsTitle: 'Analyse-Cookies',
+    analyticsDescription: 'Helfen uns zu verstehen, wie Besucher mit unserer Website interagieren.',
+    marketingTitle: 'Marketing-Cookies',
+    marketingDescription: 'Dienen der Anzeige relevanter Werbung und der Messung von Kampagnen.',
+    savePreferences: 'Einstellungen speichern',
+    closeAriaLabel: 'Cookie-Einstellungen schließen',
+  },
+  fr: {
+    bannerHeading: 'Nous respectons votre vie privée',
+    bannerBody:
+      'Nous utilisons des cookies pour améliorer la navigation, analyser le trafic et personnaliser le contenu.',
+    bannerConsentNote: 'En cliquant sur « Tout accepter », vous consentez à l’utilisation des cookies.',
+    learnMore: 'En savoir plus',
+    customize: 'Personnaliser',
+    essentialOnly: 'Essentiels',
+    acceptAll: 'Tout accepter',
+    modalTitle: 'Préférences des cookies',
+    modalDescriptionPrefix:
+      'Nous utilisons des cookies pour améliorer votre expérience. Personnalisez vos choix ci-dessous ou consultez notre ',
+    privacyPolicyLink: 'Politique de confidentialité',
+    modalDescriptionSuffix: '.',
+    essentialTitle: 'Cookies essentiels',
+    essentialDescription: 'Indispensables au bon fonctionnement du site. Ne peuvent pas être désactivés.',
+    analyticsTitle: 'Cookies d’analyse',
+    analyticsDescription: 'Nous aident à comprendre comment les visiteurs interagissent avec le site.',
+    marketingTitle: 'Cookies marketing',
+    marketingDescription: 'Utilisés pour afficher des annonces pertinentes et mesurer les campagnes.',
+    savePreferences: 'Enregistrer',
+    closeAriaLabel: 'Fermer les préférences des cookies',
+  },
+  it: {
+    bannerHeading: 'Teniamo alla tua privacy',
+    bannerBody:
+      'Utilizziamo i cookie per migliorare la navigazione, analizzare il traffico e personalizzare i contenuti.',
+    bannerConsentNote: 'Cliccando su "Accetta tutto", acconsenti all’uso dei cookie.',
+    learnMore: 'Scopri di più',
+    customize: 'Personalizza',
+    essentialOnly: 'Essenziali',
+    acceptAll: 'Accetta tutto',
+    modalTitle: 'Preferenze sui cookie',
+    modalDescriptionPrefix:
+      'Utilizziamo i cookie per migliorare la tua esperienza. Puoi personalizzare le preferenze qui sotto o consultare la nostra ',
+    privacyPolicyLink: 'Informativa sulla privacy',
+    modalDescriptionSuffix: '.',
+    essentialTitle: 'Cookie essenziali',
+    essentialDescription: 'Necessari per il funzionamento del sito. Non possono essere disattivati.',
+    analyticsTitle: 'Cookie analitici',
+    analyticsDescription: 'Ci aiutano a capire come i visitatori interagiscono con il nostro sito.',
+    marketingTitle: 'Cookie di marketing',
+    marketingDescription: 'Utilizzati per mostrare annunci pertinenti e misurare le campagne.',
+    savePreferences: 'Salva preferenze',
+    closeAriaLabel: 'Chiudi preferenze sui cookie',
+  },
+  nl: {
+    bannerHeading: 'Wij respecteren je privacy',
+    bannerBody:
+      'We gebruiken cookies om je browse-ervaring te verbeteren, verkeer te analyseren en inhoud te personaliseren.',
+    bannerConsentNote: 'Door op "Alles accepteren" te klikken, stem je in met ons gebruik van cookies.',
+    learnMore: 'Meer informatie',
+    customize: 'Aanpassen',
+    essentialOnly: 'Alleen noodzakelijk',
+    acceptAll: 'Alles accepteren',
+    modalTitle: 'Cookievoorkeuren',
+    modalDescriptionPrefix:
+      'We gebruiken cookies om je ervaring te verbeteren. Pas je voorkeuren hieronder aan of bekijk ons ',
+    privacyPolicyLink: 'Privacybeleid',
+    modalDescriptionSuffix: '.',
+    essentialTitle: 'Noodzakelijke cookies',
+    essentialDescription: 'Vereist voor de basiswerking van de website. Kunnen niet worden uitgeschakeld.',
+    analyticsTitle: 'Analytische cookies',
+    analyticsDescription: 'Helpen ons te begrijpen hoe bezoekers onze website gebruiken.',
+    marketingTitle: 'Marketingcookies',
+    marketingDescription: 'Worden gebruikt om relevante advertenties te tonen en campagnes te meten.',
+    savePreferences: 'Voorkeuren opslaan',
+    closeAriaLabel: 'Cookievoorkeuren sluiten',
+  },
+  ru: {
+    bannerHeading: 'Мы ценим вашу конфиденциальность',
+    bannerBody:
+      'Мы используем файлы cookie для улучшения работы сайта, анализа трафика и персонализации контента.',
+    bannerConsentNote: 'Нажимая «Принять все», вы соглашаетесь на использование файлов cookie.',
+    learnMore: 'Подробнее',
+    customize: 'Настроить',
+    essentialOnly: 'Только важные',
+    acceptAll: 'Принять все',
+    modalTitle: 'Настройки файлов cookie',
+    modalDescriptionPrefix:
+      'Мы используем файлы cookie для улучшения работы сервиса. Вы можете изменить настройки ниже или ознакомиться с нашей ',
+    privacyPolicyLink: 'Политикой конфиденциальности',
+    modalDescriptionSuffix: '.',
+    essentialTitle: 'Необходимые cookie',
+    essentialDescription: 'Обязательны для корректной работы сайта и не могут быть отключены.',
+    analyticsTitle: 'Аналитические cookie',
+    analyticsDescription: 'Помогают понять, как посетители взаимодействуют с нашим сайтом.',
+    marketingTitle: 'Маркетинговые cookie',
+    marketingDescription: 'Используются для показа релевантной рекламы и оценки эффективности кампаний.',
+    savePreferences: 'Сохранить настройки',
+    closeAriaLabel: 'Закрыть настройки файлов cookie',
   },
 }
 

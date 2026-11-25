@@ -168,6 +168,13 @@ export const INTAKE_PLAYBOOKS: Record<IntakeVerticalId, IntakePlaybook> = {
         '欢迎！围绕您已确认的项目愿景，让我们一步步梳理核心角色与关键剧情节点。首先，这部作品的核心人物是谁？他们的角色定位与动机是什么？又是哪一个开篇场景或事件拉开了故事序幕？',
       ar: 'مرحباً بك! انطلاقاً من رؤيتك المؤكدة للمشروع، دعنا نحدد الشخصيات المحورية والمشاهد الرئيسية. من يقف في قلب هذا العمل، وما دوره، وما المشهد أو الحدث الافتتاحي الذي يطلق هذه الرؤية؟',
       th: 'ยินดีต้อนรับครับ! จากวิสัยทัศน์โปรเจกต์ที่คุณยืนยันแล้ว เรามาวางตัวละครหลักและฉากสำคัญกันครับ ใครคือจุดศูนย์กลางของเรื่องนี้ มีบทบาทอย่างไร และฉากหรือเหตุการณ์เริ่มต้นใดเป็นจุดเปิดเรื่องครับ?',
+      ja: 'ようこそ！確定いただいたプロジェクトビジョンをもとに、中心となる登場人物と重要なシーンを形にしていきましょう。この作品の中心にいる人物は誰で、どのような役割を担い、どのような冒頭のシーンや出来事からビジョンが動き出しますか？',
+      ko: '환영합니다! 확정하신 프로젝트 비전을 바탕으로 핵심 인물과 결정적인 순간을 생생하게 그려보겠습니다. 이 프로젝트의 중심에 있는 인물은 누구이며 어떤 역할을 맡고 있고, 어떤 오프닝 장면이나 사건으로 비전이 시작되나요?',
+      de: 'Willkommen! Mit Ihrer Projektvision im Fokus erwecken wir nun die zentralen Figuren und Schlüsselmomente zum Leben. Wer steht im Mittelpunkt dieses Projekts, welche Rolle spielt diese Person und welche Eröffnungsszene oder welches Ereignis setzt Ihre Vision in Gang?',
+      fr: 'Bienvenue ! Avec la vision de votre projet bien définie, donnons vie aux personnages clés et aux moments décisifs. Qui est au cœur de ce projet, quel est son rôle et quelle scène ou quel événement d’ouverture met votre vision en mouvement ?',
+      it: 'Benvenuto! Con la visione del tuo progetto bene a fuoco, diamo vita ai personaggi centrali e ai momenti decisivi. Chi è al centro di questo progetto, qual è il suo ruolo e quale scena o evento iniziale mette in moto la tua visione?',
+      nl: 'Welkom! Met je projectvisie helder voor ogen brengen we nu de hoofdpersonages en sleutelmomenten tot leven. Wie staat er centraal in dit project, wat is diens rol en welke openingsscène of gebeurtenis zet jouw visie in gang?',
+      ru: 'Добро пожаловать! Опираясь на подтверждённое видение проекта, давайте воплотим в жизнь ключевых персонажей и поворотные моменты. Кто находится в центре этой истории, какова их роль и какая открывающая сцена или событие запускает ваше видение?',
     },
     milestoneQuestions: [
       'Who are the central individual characters or subjects (by name), what are their roles, and how does each person impact the core vision?',
@@ -195,6 +202,13 @@ export const INTAKE_PLAYBOOKS: Record<IntakeVerticalId, IntakePlaybook> = {
         '您好，欢迎来到专属人生故事访谈。请放慢脚步，向我娓娓道来您（或主人公）的人生故事——从早年成长背景、重要人生转折，到最难忘的地方与生命中关键的具体人物，请尽情详细讲述。随后我将陪伴您一步步梳理出最打动人心的故事篇章与人物脉络。',
       ar: 'أهلاً ومرحباً بك. خذ وقتك الكامل واحكِ لي قصتك بالتفصيل — شاركني وصفاً وافياً لمسيرة الحياة التي نحتفي بها، منذ الجذور الأولى والمحطات الفارقة وصولاً إلى الأماكن والأشخاص المحددين الذين تركوا الأثر الأعمق. تحدث بحرية وبكلماتك الخاصة، ثم سنصوغ معاً أجمل الفصول والمشاهد المؤثرة.',
       th: 'สวัสดีและยินดีต้อนรับครับ เชิญเล่าเรื่องราวชีวิตของคุณให้ผมฟังได้อย่างเต็มที่เลยครับ — เล่ารายละเอียดตั้งแต่จุดเริ่มต้น วัยเยาว์ จุดเปลี่ยนสำคัญ สถานที่ ไปจนถึงบุคคลสำคัญแต่ละท่านที่มีความหมายในแต่ละช่วงชีวิต เล่าตามธรรมชาติได้ยาวเท่าที่ต้องการ แล้วเราจะค่อยๆ ขัดเกลาฉากสำคัญที่กินใจที่สุดร่วมกันครับ',
+      ja: 'こんにちは、ようこそ。どうぞゆっくりとお話しください。私たちが称える人生の物語について、生い立ちや人生の転機から、特に大切だった章や場所、一人ひとりの登場人物まで詳しくお聞かせください。ご自身の言葉で思う存分お話しいただいた後、最も心に響くストーリービートを一緒に形作っていきましょう。',
+      ko: '안녕하세요, 환영합니다. 천천히 편하게 이야기를 들려주세요. 우리가 기리고자 하는 삶의 여정을 어린 시절의 뿌리와 결정적인 전환점부터 가장 소중했던 시기, 장소, 그리고 한 분 한 분의 인물까지 자세히 들려주시면, 그 이야기를 바탕으로 가장 울림 있는 스토리 비트를 함께 다듬어 가겠습니다.',
+      de: 'Hallo und herzlich willkommen. Nehmen Sie sich alle Zeit, die Sie brauchen, und erzählen Sie mir Ihre Geschichte — schildern Sie das Leben, das wir würdigen, ausführlich von den frühen Wurzeln und prägenden Wendepunkten bis hin zu den wichtigsten Kapiteln, Orten und einzelnen Menschen. Erzählen Sie ganz frei in Ihren eigenen Worten, danach formen wir gemeinsam die bewegendsten Story-Beats.',
+      fr: 'Bonjour et bienvenue. Prenez tout votre temps pour me raconter votre histoire — partagez en détail le parcours de vie que nous célébrons, des racines familiales et grands tournants jusqu’aux chapitres, lieux et personnes individuelles qui ont le plus compté. Exprimez-vous librement avec vos propres mots, puis nous façonnerons ensemble les temps forts les plus émouvants.',
+      it: 'Ciao e benvenuto. Prenditi tutto il tempo che desideri e raccontami la tua storia — condividi una descrizione dettagliata della vita che stiamo celebrando, dalle radici e dai punti di svolta decisivi fino ai capitoli, ai luoghi e alle singole persone che hanno contato di più. Racconta liberamente con le tue parole e poi daremo forma insieme agli snodi narrativi più emozionanti.',
+      nl: 'Hallo en welkom. Neem rustig de tijd en vertel me je verhaal — deel een uitgebreide beschrijving van het leven dat we vieren, van vroege wortels en bepalende keerpunten tot de hoofdstukken, plekken en individuele mensen die het meest hebben betekend. Vertel in je eigen woorden zoveel je wilt, daarna vormen we samen de meest rakende verhaalbeats.',
+      ru: 'Здравствуйте и добро пожаловать. Не торопитесь и расскажите мне свою историю — подробно опишите жизнь, которой посвящён этот фильм, от ранних истоков и судьбоносных переломов до самых дорогих глав, мест и конкретных людей. Делитесь свободно своими словами, а затем мы вместе оформим самые трогательные сюжетные вехи.',
     },
     milestoneQuestions: [
       'Thank you for sharing that foundation. Looking at your early chapters, approximately how old was the protagonist during those childhood/youth moments, and who are the specific individual people (by name, rather than groups) beside them in that beat?',
@@ -225,6 +239,13 @@ export const INTAKE_PLAYBOOKS: Record<IntakeVerticalId, IntakePlaybook> = {
         '欢迎！让我们打造一支高转化率的房产导览大片。首先，请问该物业位于哪个街区或楼盘，属于什么类型的住宅或商业空间？',
       ar: 'مرحباً بك! دعنا نصمم جولة عقارية مميزة. أولاً، ما اسم العقار أو الحي، وما نوع المنزل أو المساحة التي نعرضها؟',
       th: 'ยินดีต้อนรับครับ! มาออกแบบวิดีโอทัวร์อสังหาริมทรัพย์ที่โดดเด่นกัน เริ่มแรก โครงการหรือทรัพย์สินนี้อยู่ในทำเลใด และเป็นบ้านหรือพื้นที่รูปแบบไหนครับ?',
+      ja: 'ようこそ！印象に残る物件紹介ツアーを一緒に設計しましょう。まず、物件名またはエリアと、紹介する住まい・空間のタイプを教えてください。',
+      ko: '환영합니다! 돋보이는 부동산 투어 영상을 설계해 보겠습니다. 먼저 매물 이름이나 지역, 그리고 소개할 주택 또는 공간의 유형을 알려주시겠어요?',
+      de: 'Willkommen! Lassen Sie uns eine herausragende Immobilientour gestalten. Wie lautet zunächst der Name der Immobilie oder des Viertels, und welche Art von Haus oder Objekt präsentieren wir?',
+      fr: 'Bienvenue ! Concevons une visite immobilière remarquable. Tout d’abord, quel est le nom du bien ou du quartier, et quel type de résidence ou d’espace présentons-nous ?',
+      it: 'Benvenuto! Progettiamo un tour immobiliare di grande impatto. Innanzitutto, qual è il nome della proprietà o del quartiere e che tipo di casa o spazio stiamo presentando?',
+      nl: 'Welkom! Laten we een opvallende vastgoedtour ontwerpen. Wat is allereerst de naam of buurt van het pand, en wat voor soort woning of ruimte presenteren we?',
+      ru: 'Добро пожаловать! Давайте создадим эффектный видеотур по объекту недвижимости. Для начала подскажите название объекта или район, а также какой тип дома или пространства мы показываем?',
     },
     milestoneQuestions: [
       'Who is the ideal buyer or guest for this property, and what immediate emotion should the opening aerial/exterior shot evoke?',
@@ -252,6 +273,13 @@ export const INTAKE_PLAYBOOKS: Record<IntakeVerticalId, IntakePlaybook> = {
       'zh-CN': '欢迎！让我们把您的课程转化为生动的视觉教学短片。请问本节课程的主题是什么？目标学员是谁？',
       ar: 'مرحباً بك! دعنا نحول درسك إلى وحدة مرئية تفاعلية ومشوقة. ما موضوع هذه الحلقة ومن هم المتعلمون المستهدفون؟',
       th: 'ยินดีต้อนรับครับ! มาเปลี่ยนบทเรียนของคุณเป็นวิดีโอการเรียนรู้ที่น่าติดตาม หัวข้อของบทเรียนนี้คืออะไร และผู้เรียนเป็นกลุ่มไหนครับ?',
+      ja: 'ようこそ！あなたのレッスンを魅力的なビジュアル教材モジュールに仕上げましょう。今回のエピソードのテーマと、対象となる受講者について教えてください。',
+      ko: '환영합니다! 강의를 몰입감 있는 비주얼 학습 모듈로 만들어 보겠습니다. 이번 에피소드의 주제는 무엇이며, 어떤 학습자를 대상으로 하나요?',
+      de: 'Willkommen! Verwandeln wir Ihre Lektion in ein fesselndes visuelles Lernmodul. Was ist das Thema dieser Episode und wer sind die Lernenden?',
+      fr: 'Bienvenue ! Transformons votre cours en un module visuel captivant. Quel est le sujet de cet épisode et à quels apprenants s’adresse-t-il ?',
+      it: 'Benvenuto! Trasformiamo la tua lezione in un modulo visivo coinvolgente. Qual è l’argomento di questo episodio e chi sono i destinatari?',
+      nl: 'Welkom! Laten we van jouw les een boeiende visuele leermodule maken. Wat is het onderwerp van deze aflevering en wie zijn de lerenden?',
+      ru: 'Добро пожаловать! Превратим ваш урок в увлекательный визуальный учебный модуль. Какова тема этого выпуска и кто ваши слушатели?',
     },
     milestoneQuestions: [
       'By the end of this video, what are the 3 core takeaways or skills the viewer must remember?',
@@ -279,6 +307,13 @@ export const INTAKE_PLAYBOOKS: Record<IntakeVerticalId, IntakePlaybook> = {
       'zh-CN': '欢迎！让我们打造打动人心的品牌故事。请告诉我您的品牌名称，以及当初创立它的初心是什么？',
       ar: 'مرحباً بك! دعنا نصنع قصة علامتك التجارية. أخبرني باسم مشروعك وما الذي ألهمك لإطلاقه؟',
       th: 'ยินดีต้อนรับครับ! มาสร้างสรรค์เรื่องราวแบรนด์ของคุณกัน ชื่อธุรกิจของคุณคืออะไร และอะไรคือแรงบันดาลใจเริ่มต้นครับ?',
+      ja: 'ようこそ！心に響くブランドストーリーを一緒に作りましょう。まず、貴社のビジネス・ブランド名と、創業のきっかけになった想いを教えてください。',
+      ko: '환영합니다! 설득력 있는 브랜드 스토리를 함께 만들어 보겠습니다. 브랜드 또는 회사 이름과 사업을 시작하게 된 계기를 들려주시겠어요?',
+      de: 'Willkommen! Lassen Sie uns Ihre Markengeschichte gestalten. Nennen Sie mir den Namen Ihres Unternehmens und was Sie zur Gründung inspiriert hat.',
+      fr: 'Bienvenue ! Façonnons l’histoire de votre marque. Quel est le nom de votre entreprise et qu’est-ce qui vous a inspiré à la fonder ?',
+      it: 'Benvenuto! Costruiamo la storia del tuo brand. Dimmi il nome della tua attività e cosa ti ha ispirato ad avviarla.',
+      nl: 'Welkom! Laten we het verhaal van jouw merk vormgeven. Wat is de naam van je bedrijf en wat inspireerde je om ermee te starten?',
+      ru: 'Добро пожаловать! Давайте создадим историю вашего бренда. Расскажите, как называется ваша компания и что вдохновило вас на её основание?',
     },
     milestoneQuestions: [
       'Who is your core customer, and what everyday frustration or need do you solve for them?',
@@ -381,14 +416,14 @@ export function parseRuntimeMinutesFromScope(
 ): number {
   if (!scope) return fallbackMinutes
   const lower = scope.toLowerCase()
-  const secMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:sec|second|segundos|วินาที|秒|ثان)/i)
+  const secMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:sec|second|segundos|วินาที|秒|ثان|초|sek|секунд)/i)
   if (secMatch) {
     const secs = Number(secMatch[1])
     if (Number.isFinite(secs) && secs >= 10 && secs <= 600) {
       return Math.max(0.5, Number((secs / 60).toFixed(1)))
     }
   }
-  const minMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:min|minute|minutos|นาที|分钟|دق)/i)
+  const minMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:min|minute|minutos|นาที|分钟|分|دق|분|минут)/i)
   if (minMatch) {
     const mins = Number(minMatch[1])
     if (Number.isFinite(mins) && mins >= 0.5 && mins <= 120) {
@@ -540,6 +575,146 @@ const LOCALIZED_VISION_FALLBACK_QUESTIONS: Record<
       'ช่วยเล่า 2–3 ช่วงสำคัญกลางเรื่อง และผลลัพธ์ที่แต่ละช่วงช่วยขับเคลื่อนวิสัยทัศน์ของคุณ',
       'จุดไฮไลต์สำคัญที่สุดของวิดีโอคืออะไร และเกิดขึ้นในบรรยากาศหรือสถานที่แบบใด?',
       'ตอนท้ายต้องการสรุปสารสำคัญหรือ Call-to-Action อย่างไร และมีภาพถ่าย สถานที่ หรือสิ่งของจริงที่ต้องการนำมาใช้หรือไม่?',
+    ],
+  },
+  ja: {
+    fictional: [
+      '物語の中心となる登場人物は誰ですか（お名前で教えてください）？それぞれのドラマ上の役割や動機、そして物語を動かす冒頭のシーンを教えてください。',
+      '登場人物を試練にかける重要な転機や深まる対立は何ですか？そのビートで視聴者にどんな感情を届けたいですか？',
+      '作品のクライマックスとなる対決や感情の頂点について教えてください。誰が登場し、どこで展開し、何が変わりますか？',
+      '最終ビートで物語はどのように決着しますか？また、ビジュアルの世界観に欠かせない象徴的な場所や小道具はありますか？',
+    ],
+    memoir: [
+      'この記念作品の中心にいる人物はどなたですか？傍らにいる大切な個人（お名前で）と、人生の旅路を開く冒頭の章について教えてください。',
+      'その方の歩みを決定づけた重要な転機や節目は何でしたか？おおよそ何歳頃・どの時代で、なぜそれほど深い意味を持ったのでしょうか？',
+      '困難を乗り越えた瞬間、深い愛情、あるいは最も誇らしい功績のうち、感情の頂点となる場面はどれですか？その章を共にするのは誰ですか？',
+      '結びとなるレガシーの章はどのような余韻を残したいですか？また、実写写真がある時代と、映画的に再現したいシーンを教えてください。',
+    ],
+    general: [
+      '出演する主要な人物やプレゼンターは誰ですか（氏名と役割）？また、視聴者の心を一瞬で掴む冒頭のフックはどのようなシーンですか？',
+      '中盤の核となる 2〜3 のビートやチャプターと、それぞれの場面がビジョンに向けて生み出すインパクトを教えてください。',
+      '最も説得力のあるハイライト、変化、または見せ場は何ですか？どのようなビジュアル空間で展開されますか？',
+      '動画の締めくくりとなるメッセージや行動喚起（CTA）は何ですか？また、取り入れたい実写写真・場所・小道具はありますか？',
+    ],
+  },
+  ko: {
+    fictional: [
+      '이야기의 중심이 되는 개별 인물은 누구인가요(이름 포함)? 각자의 극적 역할과 동기, 그리고 사건을 여는 오프닝 장면은 무엇인가요?',
+      '인물들을 시험에 들게 하는 핵심 전환점이나 고조되는 갈등은 무엇이며, 그 비트에서 시청자에게 어떤 감정적 울림을 주고 싶으신가요?',
+      '작품의 클라이맥스 대립이나 감정의 정점을 묘사해 주세요. 누가 등장하고, 어디에서 벌어지며, 무엇이 달라지나요?',
+      '마지막 비트에서 이야기는 어떻게 마무리되나요? 시각적 세계관에 꼭 필요한 상징적인 장소나 소품이 있나요?',
+    ],
+    memoir: [
+      '이 헌정 이야기의 중심에 있는 인물은 누구이며, 곁을 지킨 주요 인물들(이름 포함)은 누구인가요? 여정을 여는 첫 챕터는 무엇인가요?',
+      '삶의 방향을 바꾼 결정적인 전환점이나 이정표는 무엇이었나요? 대략 어느 시기나 나이 때였고, 왜 그토록 깊은 의미가 있었나요?',
+      '회복탄력성, 사랑, 또는 가장 자랑스러웠던 성취 중 감정의 정점을 이끌 순간은 무엇이며, 그 챕터를 함께한 사람은 누구인가요?',
+      '마지막 레거시 챕터는 어떤 여운을 남기길 원하시나요? 실제 사진이 있는 시기와 영화적으로 재현해야 할 장면은 어느 부분인가요?',
+    ],
+    general: [
+      '주요 출연 인물이나 진행자는 누구인가요(이름과 역할)? 시청자의 시선을 단숨에 사로잡을 오프닝 훅은 무엇인가요?',
+      '중반부를 이루는 핵심 비트 또는 챕터 2~3가지와 각 장면이 비전 달성에 기여하는 효과를 설명해 주세요.',
+      '가장 핵심적인 증명 포인트, 변화, 또는 하이라이트는 무엇이며 어떤 시각적 배경에서 펼쳐지나요?',
+      '영상을 마무리할 핵심 메시지나 행동 유도(CTA)는 무엇이며, 활용할 실제 사진·장소·소품이 있나요?',
+    ],
+  },
+  de: {
+    fictional: [
+      'Wer sind die zentralen einzelnen Figuren Ihrer Geschichte (namentlich), welche dramatischen Rollen und Beweggründe haben sie, und welche Eröffnungsszene bringt die Handlung ins Rollen?',
+      'Was ist der entscheidende Wendepunkt oder sich zuspitzende Konflikt, der Ihre Figuren auf die Probe stellt, und welche emotionale Wirkung soll dieser Beat entfalten?',
+      'Beschreiben Sie den dramatischen Höhepunkt oder die entscheidende Konfrontation des Films — wer ist in der Szene, wo spielt sie und was verändert sich?',
+      'Wie löst sich die Geschichte im finalen Beat auf, und gibt es markante Schauplätze oder Requisiten, die für die visuelle Welt unverzichtbar sind?',
+    ],
+    memoir: [
+      'Wer ist die zentrale Persönlichkeit im Herzen dieser Würdigung, welche namentlich genannten Einzelpersonen stehen ihr zur Seite, und mit welchem Kapitel beginnt ihre Reise?',
+      'Welcher prägende Wendepunkt oder Lebensmeilenstein hat ihren Weg geformt, in welchem Alter oder Zeitraum geschah dies ungefähr und warum war er so bedeutsam?',
+      'Welcher Moment voller Stärke, Liebe oder größtem Stolz soll den emotionalen Höhepunkt bilden, und wer teilt dieses Kapitel?',
+      'Welches Gefühl soll das abschließende Vermächtniskapitel hinterlassen, und für welche Lebensphasen gibt es echte Fotos gegenüber Szenen, die wir filmisch nachstellen sollten?',
+    ],
+    general: [
+      'Wer sind die konkreten Personen oder Moderatoren im Fokus (mit Namen und Rolle), und welcher Einstieg fesselt Ihr Publikum sofort?',
+      'Führen Sie mich durch die 2–3 zentralen Beats oder Kapitel im Mittelteil und die Wirkung, die jeder Moment für Ihre Vision erzielen soll.',
+      'Was ist der wichtigste Beleg, die größte Veränderung oder das visuelle Highlight, und an welchem Schauplatz spielt es?',
+      'Welche Schlussbotschaft oder Handlungsaufforderung rundet das Video ab, und haben Sie echte Fotos, Orte oder Requisiten zum Einbinden?',
+    ],
+  },
+  fr: {
+    fictional: [
+      'Qui sont les personnages individuels centraux de votre histoire (par leur nom), quels sont leurs rôles et motivations dramatiques, et quelle scène d’ouverture lance l’intrigue ?',
+      'Quel est le tournant décisif ou le conflit croissant qui met vos personnages à l’épreuve, et quel impact émotionnel ce temps fort doit-il susciter ?',
+      'Décrivez la confrontation culminante ou le sommet émotionnel du film : qui est présent dans la scène, où se déroule-t-elle et qu’est-ce qui change ?',
+      'Comment l’histoire se dénoue-t-elle dans le dernier temps fort, et existe-t-il des lieux ou accessoires emblématiques essentiels à l’univers visuel ?',
+    ],
+    memoir: [
+      'Qui est la personne centrale au cœur de cet hommage, quelles personnes individuelles nommées l’accompagnent, et quel chapitre d’ouverture lance son parcours ?',
+      'Quel tournant décisif ou grande étape de vie a façonné son chemin, à quel âge ou à quelle époque cela s’est-il produit, et pourquoi cela a-t-il tant compté ?',
+      'Quel moment de résilience, d’amour ou de plus grande fierté doit porter le sommet émotionnel, et qui partage ce chapitre ?',
+      'Quelle émotion souhaitez-vous laisser dans le chapitre final d’héritage, et pour quelles époques disposez-vous de vraies photos par rapport aux scènes à recréer en cinéma ?',
+    ],
+    general: [
+      'Qui sont les personnes clés ou intervenants mis en avant (nom et rôle), et quelle accroche d’ouverture capte immédiatement votre public ?',
+      'Décrivez-moi les 2 à 3 temps forts ou chapitres centraux du développement et l’impact que chaque moment doit apporter à votre vision.',
+      'Quel est l’élément de preuve principal, la transformation ou le moment fort visuel, et dans quel décor prend-il place ?',
+      'Quel message final ou appel à l’action conclut la vidéo, et disposez-vous de vraies photos, de lieux ou d’objets à intégrer ?',
+    ],
+  },
+  it: {
+    fictional: [
+      'Chi sono i personaggi individuali centrali della tua storia (per nome), quali sono i loro ruoli e motivazioni drammatiche e quale scena iniziale avvia la trama?',
+      'Qual è il punto di svolta decisivo o il conflitto crescente che mette alla prova i personaggi e quale impatto emotivo deve generare quello snodo?',
+      'Descrivi il confronto culminante o il picco emotivo del film: chi c’è nella scena, dove si svolge e cosa cambia?',
+      'Come si risolve la storia nello snodo finale e ci sono luoghi o oggetti di scena iconici essenziali per il mondo visivo?',
+    ],
+    memoir: [
+      'Chi è la persona centrale al cuore di questo tributo, quali altre singole persone (per nome) le stanno accanto e quale capitolo iniziale apre il suo percorso?',
+      'Quale svolta decisiva o traguardo di vita ha plasmato il suo cammino, in quale periodo o età circa è avvenuto e perché ha avuto un significato così profondo?',
+      'Quale momento di resilienza, amore o più grande orgoglio dovrebbe guidare il picco emotivo e chi condivide quel capitolo?',
+      'Quale sensazione desideri lasciare nel capitolo conclusivo dedicato alla sua eredità, e per quali epoche disponi di foto reali rispetto alle scene da ricreare cinematograficamente?',
+    ],
+    general: [
+      'Chi sono le persone o i presentatori principali in evidenza (nome e ruolo) e quale apertura cattura subito il pubblico?',
+      'Illustraci i 2–3 snodi o capitoli centrali della parte intermedia e l’impatto che ciascun momento deve generare per la tua visione.',
+      'Qual è la prova principale, la trasformazione o il momento clou visivo, e in quale ambientazione si svolge?',
+      'Quale messaggio conclusivo o invito all’azione chiude il video, e hai foto reali, luoghi o oggetti da includere?',
+    ],
+  },
+  nl: {
+    fictional: [
+      'Wie zijn de centrale individuele personages in je verhaal (bij naam), wat zijn hun dramatische rollen en drijfveren, en welke openingsscène zet het plot in beweging?',
+      'Wat is het belangrijkste keerpunt of oplopende conflict dat je personages op de proef stelt, en welke emotionele impact moet dat moment hebben?',
+      'Beschrijf de climax of het emotionele hoogtepunt van de film — wie is er in de scène, waar speelt die zich af en wat verandert er?',
+      'Hoe komt het verhaal in de slotbeat tot een ontknoping, en zijn er herkenbare locaties of rekwisieten die onmisbaar zijn voor de visuele wereld?',
+    ],
+    memoir: [
+      'Wie is de centrale persoon in het hart van dit eerbetoon, welke andere met naam genoemde personen staan naast hen en welk openingshoofdstuk start hun levensreis?',
+      'Welk bepalend keerpunt of welke mijlpaal heeft hun pad gevormd, rond welke leeftijd of periode gebeurde dat en waarom was het zo betekenisvol?',
+      'Welk moment van veerkracht, liefde of grootste trots vormt het emotionele hoogtepunt, en wie deelt dat hoofdstuk?',
+      'Welk gevoel moet het afsluitende nalatenschapshoofdstuk achterlaten, en voor welke periodes heb je echte foto’s versus scènes die we filmisch kunnen recreëren?',
+    ],
+    general: [
+      'Wie zijn de specifieke personen of presentatoren in beeld (naam en rol) en welke openingshook grijpt direct de aandacht van je publiek?',
+      'Neem me mee door de 2–3 kernbeats of hoofdstukken in het middendeel en de impact die elk moment voor jouw visie moet opleveren.',
+      'Wat is het belangrijkste bewijs, de transformatie of het hoogtepunt, en in welke visuele omgeving speelt dat zich af?',
+      'Welke afsluitende boodschap of call-to-action sluit de video af, en heb je echte foto’s, locaties of voorwerpen om te tonen?',
+    ],
+  },
+  ru: {
+    fictional: [
+      'Кто главные конкретные персонажи вашей истории (по именам), каковы их драматические роли и мотивы, и какая открывающая сцена запускает сюжет?',
+      'Какой ключевой поворот или нарастающий конфликт испытывает героев на прочность, и какой эмоциональный отклик должен вызвать этот момент?',
+      'Опишите кульминационное столкновение или эмоциональный пик фильма — кто участвует в сцене, где она происходит и что меняется?',
+      'Как разрешается история в финальной сцене и есть ли знаковые локации или реквизит, важные для визуального мира?',
+    ],
+    memoir: [
+      'Кто главный герой этого посвящения, какие конкретные люди (по именам) находятся рядом и с какой главы начинается их жизненный путь?',
+      'Какой поворотный момент или важная веха определили их судьбу, примерно в каком возрасте или периоде это произошло и почему это было так значимо?',
+      'Какой момент стойкости, любви или главной гордости должен стать эмоциональной вершиной фильма и кто разделяет эту главу?',
+      'Какое чувство должна оставить заключительная глава о наследии, и для каких периодов есть реальные фотографии, а какие сцены стоит воссоздать кинематографически?',
+    ],
+    general: [
+      'Кто ключевые герои или ведущие в кадре (имя и роль), и какая открывающая сцена мгновенно захватывает внимание зрителей?',
+      'Расскажите о 2–3 главных главах или вехах в основной части и о том, какой эффект каждая из них должна создать для вашего видения.',
+      'В чём главный аргумент, трансформация или кульминационный момент видео и в какой визуальной обстановке он происходит?',
+      'Какой финальный вывод или призыв к действию завершает видео, и есть ли у вас реальные фото, локации или предметы для включения?',
     ],
   },
 }

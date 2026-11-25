@@ -118,6 +118,7 @@ function featuresForRoom(room: RoomData, paneId: string): FeatureData[] {
 
 const REGION_KEY_MAP: Record<string, string> = {
   Americas: 'uiRegions.americas',
+  Europe: 'uiRegions.europe',
   'Asia Pacific': 'uiRegions.asiaPacific',
   'Middle East & Africa': 'uiRegions.middleEastAfrica',
 }

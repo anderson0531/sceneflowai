@@ -1144,6 +1144,10 @@ html:lang(ko) body {
   font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', var(--font-inter), sans-serif;
 }
 
+html:lang(ru) body {
+  font-family: 'Noto Sans', 'Segoe UI', 'Helvetica Neue', Arial, var(--font-inter), sans-serif;
+}
+
 /* Display faces have no coverage outside Latin; fall through to the body stack
    so a heading does not render in a different script than its page. */
 html:lang(th) h1, html:lang(th) h2, html:lang(th) h3,
@@ -1157,20 +1161,22 @@ html:lang(ur) h1, html:lang(ur) h2, html:lang(ur) h3,
 html:lang(zh-CN) h1, html:lang(zh-CN) h2, html:lang(zh-CN) h3,
 html:lang(zh-TW) h1, html:lang(zh-TW) h2, html:lang(zh-TW) h3,
 html:lang(ja) h1, html:lang(ja) h2, html:lang(ja) h3,
-html:lang(ko) h1, html:lang(ko) h2, html:lang(ko) h3 {
+html:lang(ko) h1, html:lang(ko) h2, html:lang(ko) h3,
+html:lang(ru) h1, html:lang(ru) h2, html:lang(ru) h3 {
   font-family: inherit;
 }
 
 /* =============================================================================
    Text expansion
 
-   German and Finnish run roughly 30% longer than English, so fixed-width
-   controls that fit "Save" clip "Speichern". These relax the studio chrome's
-   fixed widths into minimums for the locales that need it, which is safer than
-   hunting every w-* utility across ~250 files.
+   German, Dutch, Russian, and Finnish run roughly 30% longer than English, so
+   fixed-width controls that fit "Save" clip "Speichern". These relax the studio
+   chrome's fixed widths into minimums for the locales that need it, which is
+   safer than hunting every w-* utility across ~250 files.
    ============================================================================= */
 
 html:lang(de) .sf-expandable,
+html:lang(nl) .sf-expandable,
 html:lang(fi) .sf-expandable,
 html:lang(pl) .sf-expandable,
 html:lang(ru) .sf-expandable,
