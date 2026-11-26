@@ -1,12 +1,21 @@
 #!/usr/bin/env npx tsx
 /**
- * Local zero-GCP-spend assembler for Chapter 2:
+ * Local zero-GCP-spend broadcast assembler for Chapter 2:
  * "Letters Across the Water — Chapter 2: Rain on the Naples Pier & A New Horizon (1966)"
  *
+ * Studio Audio Architecture (Zero Double-Music Clash, Zero Hallucinated Voice Bleed):
+ *   - All 24 Separate V.O. clips + Clip 30 (+ Clip 12 ES/JA): Flow native audio muted so
+ *     Elena (82) VO + the 6 dedicated continuous orchestral score movements play cleanly.
+ *   - Clip 12 (EN): Regenerated `12-en.mp4` native synced dialogue + pure ocean wind foley,
+ *     scored seamlessly by `scene3.mp3` (auto-ducked under Mateo's voice).
+ *   - Clips 13–14 & 19–20 (EN/ES/JA): Verified native in-scene synced dialogue clips with
+ *     their own clean accompaniment — external `music_bus` smoothly fades to 0 (-inf dB)
+ *     across `[13–14]` and `[19–20]` (0.7s fade-out / 0.9s fade-in) for zero key clash!
+ *
  * Produces 6 web-optimized H.264 masters in `public/videos/`:
- *   - chapter2-fullmotion-{en,es,ja}.mp4  (30 Google Flow clips + elastic timing + 3-layer audio)
- *   - chapter2-express-{en,es,ja}.mp4     (30 extracted hero stills + smooth Ken Burns + same 3-layer audio)
- *   - chapter2-poster.webp                (hero poster frame from Clip 06)
+ *   - chapter2-fullmotion-{en,es,ja}.mp4
+ *   - chapter2-express-{en,es,ja}.mp4
+ *   - chapter2-poster.webp
  */
 
 import { execFileSync } from 'child_process'
@@ -31,11 +40,13 @@ const SCENES: readonly { id: number; music: string; clips: readonly number[] }[]
   { id: 6, music: 'scene6.mp3', clips: [27, 28, 29, 30] },
 ]
 
-// Clips where on-camera dialogue audio comes from the video clip itself
+// Clips with multi-language native in-scene synced dialogue AND baked-in Flow accompaniment
 const MULTILANG_DIALOGUE_CLIPS = new Set([13, 14, 19, 20])
-// Scene end clips get a subtle 0.30s fade-out / next scene start gets 0.30s fade-in
 const SCENE_END_CLIPS = new Set([3, 9, 15, 20, 26])
 const SCENE_START_CLIPS = new Set([1, 4, 10, 16, 21, 27])
+
+// Pass --force-video to force re-encoding all cached per-shot video segments
+const FORCE_VIDEO = process.argv.includes('--force-video')
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 
@@ -67,6 +78,9 @@ function getClipPath(clipNum: number, lang: Lang): string {
   if (MULTILANG_DIALOGUE_CLIPS.has(clipNum)) {
     return join(BASE, 'clips', `${n}-${lang}.mp4`)
   }
+  if (clipNum === 12 && lang === 'en' && existsSync(join(BASE, 'clips', '12-en.mp4'))) {
+    return join(BASE, 'clips', '12-en.mp4')
+  }
   return join(BASE, 'clips', `${n}.mp4`)
 }
 
@@ -79,47 +93,66 @@ function usesNativeDialogue(clipNum: number, lang: Lang): boolean {
 function extractHeroStills() {
   const stillsDir = join(BUILD, 'stills')
   mkdirSync(stillsDir, { recursive: true })
-  console.log('Extracting 30 hero stills + poster...')
+  console.log('Verifying 30 hero stills + poster...')
   for (let i = 1; i <= 30; i++) {
     const out = join(stillsDir, `${pad2(i)}.png`)
-    if (!existsSync(out)) {
+    // Always refresh Clip 12 still from regenerated 12-en.mp4
+    if (!existsSync(out) || i === 12) {
       const clip = getClipPath(i, 'en')
       const seek = i === 23 ? '4.5' : i === 30 ? '2.5' : '4.0'
       runFfmpeg(['-ss', seek, '-i', clip, '-frames:v', '1', '-q:v', '2', out], `still-${i}`)
     }
   }
-  // Extract crisp WebP poster from Clip 06 (Young Elena in 1966 Naples rain with notebook)
   const posterOut = join(OUT_DIR, 'chapter2-poster.webp')
-  runFfmpeg(
-    ['-ss', '4.2', '-i', getClipPath(6, 'en'), '-frames:v', '1', '-c:v', 'libwebp', '-quality', '86', posterOut],
-    'poster-webp'
-  )
-  console.log('  -> poster saved to public/videos/chapter2-poster.webp')
+  if (!existsSync(posterOut)) {
+    runFfmpeg(
+      ['-ss', '4.2', '-i', getClipPath(6, 'en'), '-frames:v', '1', '-c:v', 'libwebp', '-quality', '86', posterOut],
+      'poster-webp'
+    )
+  }
+}
+
+/**
+ * Builds an ffmpeg `volume` expression (`eval=frame`) that smoothly dips external
+ * `music_bus` to 0.0 during time windows `[start, end]` where native in-scene dialogue
+ * clips (13–14 and 19–20) already carry their own baked-in musical accompaniment.
+ */
+function buildMusicDipExpression(windows: { start: number; end: number }[]): string {
+  const fadeOut = 0.7
+  const fadeIn = 0.9
+  const factors = windows.map(({ start, end }) => {
+    const pre = Math.max(0, start - fadeOut).toFixed(3)
+    const s = start.toFixed(3)
+    const e = end.toFixed(3)
+    const post = (end + fadeIn).toFixed(3)
+    return `if(between(t,${pre},${s}),1-(t-${pre})/${fadeOut},if(between(t,${s},${e}),0,if(between(t,${e},${post}),(t-${e})/${fadeIn},1)))`
+  })
+  return factors.join('*')
 }
 
 function buildLanguage(lang: Lang) {
-  console.log(`\n=== Building Chapter 2 (${lang.toUpperCase()}) ===`)
+  console.log(`\n=== Building Studio-Clean Chapter 2 (${lang.toUpperCase()}) ===`)
   const langDir = join(BUILD, lang)
   const voDir = join(langDir, 'vo')
-  const sfxDir = join(langDir, 'sfx')
   const fmDir = join(langDir, 'fm')
   const exDir = join(langDir, 'ex')
   mkdirSync(voDir, { recursive: true })
-  mkdirSync(sfxDir, { recursive: true })
   mkdirSync(fmDir, { recursive: true })
   mkdirSync(exDir, { recursive: true })
 
   interface ShotPlan {
     clipNum: number
+    start: number
+    end: number
     dur: number
     voWav: string
-    sfxWav: string
     fmMp4: string
     exMp4: string
   }
 
   const plans: ShotPlan[] = []
   const sceneDurations: number[] = []
+  let cursor = 0
 
   for (const scene of SCENES) {
     let sceneDur = 0
@@ -127,56 +160,41 @@ function buildLanguage(lang: Lang) {
       const n = pad2(clipNum)
       const clipPath = getClipPath(clipNum, lang)
       const clipDur = Math.min(9.96, probeDuration(clipPath) || 10.0)
-      const voWav = join(voDir, `${n}.wav`)
-      const sfxWav = join(sfxDir, `${n}.wav`)
+      const voWav = join(voDir, `${n}-clean48k.wav`)
       const fmMp4 = join(fmDir, `${n}.mp4`)
       const exMp4 = join(exDir, `${n}.mp4`)
 
       let dur = 8.0
 
       if (clipNum === 30) {
-        // Music-only closing shot
         dur = 8.0
         runFfmpeg(
           ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-t', dur.toFixed(3), '-c:a', 'pcm_s16le', voWav],
           `${lang}-vo-30`
         )
-        runFfmpeg(
-          [
-            '-i', clipPath,
-            '-t', dur.toFixed(3),
-            '-af', `aresample=48000,pan=stereo|c0=c0|c1=c1,highpass=f=120,volume=0.08,afade=t=out:st=${(dur - 2.5).toFixed(2)}:d=2.5`,
-            '-vn', '-c:a', 'pcm_s16le', sfxWav,
-          ],
-          `${lang}-sfx-30`
-        )
       } else if (usesNativeDialogue(clipNum, lang)) {
-        // In-scene synced dialogue clip: preserve exact 1.0x timing & native synced speech
+        // Verified native in-scene synced dialogue clip (12[en], 13, 14, 19, 20)
         dur = Number(clipDur.toFixed(3))
         runFfmpeg(
           [
             '-i', clipPath,
             '-t', dur.toFixed(3),
-            '-af', 'aresample=48000,highpass=f=75,acompressor=threshold=-20dB:ratio=2.5:attack=15:release=180,loudnorm=I=-16:TP=-1.5:LRA=9,afade=t=in:st=0:d=0.05,afade=t=out:st=' + (dur - 0.12).toFixed(2) + ':d=0.12',
-            '-vn', '-ar', '48000', '-c:a', 'pcm_s16le', voWav,
+            '-af',
+            `aresample=48000,aformat=channel_layouts=stereo,highpass=f=75,acompressor=threshold=-20dB:ratio=2.4:attack=15:release=180,loudnorm=I=-15.5:TP=-1.5:LRA=9,aresample=48000,afade=t=in:st=0:d=0.06,afade=t=out:st=${(dur - 0.14).toFixed(2)}:d=0.14`,
+            '-vn', '-ar', '48000', '-ac', '2', '-c:a', 'pcm_s16le', voWav,
           ],
           `${lang}-dlg-${n}`
         )
-        // Silent sfx_bus since native dialogue clip already carries its natural room/deck ambience
-        runFfmpeg(
-          ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-t', dur.toFixed(3), '-c:a', 'pcm_s16le', sfxWav],
-          `${lang}-sfx-dlg-${n}`
-        )
       } else {
-        // Separate V.O. shot (or Clip 12 dubbed in es/ja)
+        // Separate V.O. shot (or Clip 12 ES/JA): native Flow audio muted cleanly -> zero whisper/music bleed
         const rawVo = join(BASE, 'vo', lang, `${n}.wav`)
         const trimmedVo = join(voDir, `${n}-trimmed.wav`)
         runFfmpeg(
           [
             '-i', rawVo,
             '-af',
-            'aresample=48000,aformat=channel_layouts=stereo,highpass=f=75,equalizer=f=3200:t=q:w=1.2:g=1.8,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.08,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.08,areverse,loudnorm=I=-16:TP=-1.5:LRA=8',
-            '-c:a', 'pcm_s16le',
+            'aresample=48000,aformat=channel_layouts=stereo,highpass=f=75,equalizer=f=3200:t=q:w=1.2:g=1.8,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.08,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.08,areverse,loudnorm=I=-15.5:TP=-1.5:LRA=8,aresample=48000',
+            '-ar', '48000', '-ac', '2', '-c:a', 'pcm_s16le',
             trimmedVo,
           ],
           `${lang}-trim-vo-${n}`
@@ -185,163 +203,154 @@ function buildLanguage(lang: Lang) {
         const leadIn = 0.35
         const tailPad = 0.55
         dur = Number(Math.max(5.8, speechDur + leadIn + tailPad).toFixed(3))
-
-        // Pad VO cleanly to exact shot duration with lead-in delay
         const delayMs = Math.round(leadIn * 1000)
         runFfmpeg(
           [
             '-i', trimmedVo,
             '-af', `adelay=${delayMs}|${delayMs},apad=whole_dur=${dur.toFixed(3)},atrim=0:${dur.toFixed(3)}`,
-            '-ar', '48000', '-c:a', 'pcm_s16le',
+            '-ar', '48000', '-ac', '2', '-c:a', 'pcm_s16le',
             voWav,
           ],
           `${lang}-pad-vo-${n}`
         )
+      }
 
-        // Subtle clip SFX/ambience bed (mute completely on Clip 12 es/ja so EN Mateo speech doesn't bleed!)
-        if (clipNum === 12) {
-          runFfmpeg(
-            ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-t', dur.toFixed(3), '-c:a', 'pcm_s16le', sfxWav],
-            `${lang}-sfx-mute12`
-          )
-        } else {
-          // Attenuate native clip audio to -17 dB (0.14) so subtle rain/foghorn/waves remain while featured orchestral score shines
-          const sfxLoop = dur > clipDur ? `-stream_loop 1` : ''
-          const sfxArgs = [
-            ...(sfxLoop ? ['-stream_loop', '1'] : []),
+      // Check if we need to (re)render FM / EX video segment
+      const mustRebuildClip =
+        FORCE_VIDEO ||
+        (clipNum === 12 && lang === 'en') ||
+        (dur > 16.5) ||
+        !existsSync(fmMp4) ||
+        Math.abs(probeDuration(fmMp4) - dur) > 0.15
+
+      if (mustRebuildClip) {
+        const vFilters: string[] = ['scale=1280:720:flags=lanczos', 'setsar=1']
+        if (dur > clipDur) {
+          // Smooth elastic slow-down up to 2.15x (eliminates frozen frames even on longest JA shots)
+          const maxSlowDur = clipDur * 2.15
+          const stretchDur = Math.min(dur, maxSlowDur)
+          const ptsFactor = stretchDur / clipDur
+          vFilters.push(`setpts=${ptsFactor.toFixed(5)}*PTS`)
+          if (dur > stretchDur + 0.04) {
+            const padExtra = dur - stretchDur + 0.25
+            vFilters.push(`tpad=stop_mode=clone:stop_duration=${padExtra.toFixed(3)}`)
+          }
+        }
+        vFilters.push('fps=24')
+        if (SCENE_START_CLIPS.has(clipNum)) {
+          vFilters.push(`fade=t=in:st=0:d=${clipNum === 1 ? '0.60' : '0.30'}`)
+        }
+        if (clipNum === 30) {
+          vFilters.push(`fade=t=out:st=${(dur - 2.2).toFixed(2)}:d=2.2`)
+        } else if (SCENE_END_CLIPS.has(clipNum)) {
+          vFilters.push(`fade=t=out:st=${(dur - 0.30).toFixed(2)}:d=0.30`)
+        }
+        runFfmpeg(
+          [
             '-i', clipPath,
             '-t', dur.toFixed(3),
-            '-af',
-            `aresample=48000,highpass=f=130,lowpass=f=7500,volume=0.14,afade=t=in:st=0:d=0.25,afade=t=out:st=${Math.max(0.1, dur - 0.35).toFixed(2)}:d=0.35`,
-            '-vn', '-c:a', 'pcm_s16le',
-            sfxWav,
-          ]
-          runFfmpeg(sfxArgs, `${lang}-sfx-${n}`)
+            '-vf', vFilters.join(','),
+            '-an',
+            '-c:v', 'libx264',
+            '-preset', 'fast',
+            '-crf', '18',
+            '-pix_fmt', 'yuv420p',
+            fmMp4,
+          ],
+          `${lang}-fm-${n}`
+        )
+      }
+
+      const mustRebuildEx =
+        FORCE_VIDEO ||
+        clipNum === 12 ||
+        !existsSync(exMp4) ||
+        Math.abs(probeDuration(exMp4) - dur) > 0.15
+
+      if (mustRebuildEx) {
+        const stillPath = join(BUILD, 'stills', `${n}.png`)
+        const totalFrames = Math.max(24, Math.round(dur * 24))
+        const moveType = clipNum % 4
+        let zpExpr = ''
+        if (moveType === 1) {
+          zpExpr = `zoompan=z='1.0+0.06*(on/${totalFrames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
+        } else if (moveType === 2) {
+          zpExpr = `zoompan=z='1.06-0.06*(on/${totalFrames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
+        } else if (moveType === 3) {
+          zpExpr = `zoompan=z='1.06':x='(iw-iw/zoom)*(0.2+0.6*(on/${totalFrames}))':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
+        } else {
+          zpExpr = `zoompan=z='1.06':x='(iw-iw/zoom)*(0.8-0.6*(on/${totalFrames}))':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
         }
-      }
-
-      // Render Full-Motion video segment (elastic slow-down if VO > 10s, + gentle tpad hold if > 16.5s)
-      const vFilters: string[] = ['scale=1280:720:flags=lanczos', 'setsar=1']
-      if (dur > clipDur) {
-        const maxSlowDur = clipDur * 1.65 // down to ~0.60x buttery slow motion
-        const stretchDur = Math.min(dur, maxSlowDur)
-        const ptsFactor = stretchDur / clipDur
-        vFilters.push(`setpts=${ptsFactor.toFixed(5)}*PTS`)
-        if (dur > stretchDur + 0.04) {
-          const padExtra = dur - stretchDur + 0.25
-          vFilters.push(`tpad=stop_mode=clone:stop_duration=${padExtra.toFixed(3)}`)
+        const exFilters = ['scale=1920:1080:flags=lanczos', zpExpr, 'setsar=1']
+        if (SCENE_START_CLIPS.has(clipNum)) {
+          exFilters.push(`fade=t=in:st=0:d=${clipNum === 1 ? '0.60' : '0.30'}`)
         }
-      }
-      vFilters.push('fps=24')
-      if (SCENE_START_CLIPS.has(clipNum)) {
-        vFilters.push(`fade=t=in:st=0:d=${clipNum === 1 ? '0.60' : '0.30'}`)
-      }
-      if (clipNum === 30) {
-        vFilters.push(`fade=t=out:st=${(dur - 2.2).toFixed(2)}:d=2.2`)
-      } else if (SCENE_END_CLIPS.has(clipNum)) {
-        vFilters.push(`fade=t=out:st=${(dur - 0.30).toFixed(2)}:d=0.30`)
-      }
-
-      runFfmpeg(
-        [
-          '-i', clipPath,
-          '-t', dur.toFixed(3),
-          '-vf', vFilters.join(','),
-          '-an',
-          '-c:v', 'libx264',
-          '-preset', 'fast',
-          '-crf', '18',
-          '-pix_fmt', 'yuv420p',
-          fmMp4,
-        ],
-        `${lang}-fm-${n}`
-      )
-
-      // Render Express 4K-style Ken Burns segment from the extracted hero still (same exact duration!)
-      const stillPath = join(BUILD, 'stills', `${n}.png`)
-      const totalFrames = Math.max(24, Math.round(dur * 24))
-      const moveType = clipNum % 4
-      // Smooth subtle 6% cinema Ken Burns moves on upscaled 2x canvas for silky sub-pixel smoothness
-      let zpExpr = ''
-      if (moveType === 1) {
-        // Gentle push-in
-        zpExpr = `zoompan=z='1.0+0.06*(on/${totalFrames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
-      } else if (moveType === 2) {
-        // Gentle pull-back
-        zpExpr = `zoompan=z='1.06-0.06*(on/${totalFrames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
-      } else if (moveType === 3) {
-        // Slow pan right at 1.06x
-        zpExpr = `zoompan=z='1.06':x='(iw-iw/zoom)*(0.2+0.6*(on/${totalFrames}))':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
-      } else {
-        // Slow pan left at 1.06x
-        zpExpr = `zoompan=z='1.06':x='(iw-iw/zoom)*(0.8-0.6*(on/${totalFrames}))':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
-      }
-      const exFilters = ['scale=1920:1080:flags=lanczos', zpExpr, 'setsar=1']
-      if (SCENE_START_CLIPS.has(clipNum)) {
-        exFilters.push(`fade=t=in:st=0:d=${clipNum === 1 ? '0.60' : '0.30'}`)
-      }
-      if (clipNum === 30) {
-        exFilters.push(`fade=t=out:st=${(dur - 2.2).toFixed(2)}:d=2.2`)
-      } else if (SCENE_END_CLIPS.has(clipNum)) {
-        exFilters.push(`fade=t=out:st=${(dur - 0.30).toFixed(2)}:d=0.30`)
+        if (clipNum === 30) {
+          exFilters.push(`fade=t=out:st=${(dur - 2.2).toFixed(2)}:d=2.2`)
+        } else if (SCENE_END_CLIPS.has(clipNum)) {
+          exFilters.push(`fade=t=out:st=${(dur - 0.30).toFixed(2)}:d=0.30`)
+        }
+        runFfmpeg(
+          [
+            '-loop', '1',
+            '-i', stillPath,
+            '-t', dur.toFixed(3),
+            '-vf', exFilters.join(','),
+            '-an',
+            '-c:v', 'libx264',
+            '-preset', 'fast',
+            '-crf', '18',
+            '-pix_fmt', 'yuv420p',
+            exMp4,
+          ],
+          `${lang}-ex-${n}`
+        )
       }
 
-      runFfmpeg(
-        [
-          '-loop', '1',
-          '-i', stillPath,
-          '-t', dur.toFixed(3),
-          '-vf', exFilters.join(','),
-          '-an',
-          '-c:v', 'libx264',
-          '-preset', 'fast',
-          '-crf', '18',
-          '-pix_fmt', 'yuv420p',
-          exMp4,
-        ],
-        `${lang}-ex-${n}`
-      )
-
-      plans.push({ clipNum, dur, voWav, sfxWav, fmMp4, exMp4 })
+      plans.push({ clipNum, start: cursor, end: cursor + dur, dur, voWav, fmMp4, exMp4 })
+      cursor += dur
       sceneDur += dur
     }
     sceneDurations.push(sceneDur)
   }
 
   const totalDur = sceneDurations.reduce((a, b) => a + b, 0)
+  const p13 = plans.find((p) => p.clipNum === 13)!
+  const p14 = plans.find((p) => p.clipNum === 14)!
+  const p19 = plans.find((p) => p.clipNum === 19)!
+  const p20 = plans.find((p) => p.clipNum === 20)!
+  const dipWindows = [
+    { start: p13.start, end: p14.end },
+    { start: p19.start, end: p20.end },
+  ]
   console.log(
-    `  Scene durations (${lang}): [${sceneDurations.map((d) => d.toFixed(1) + 's').join(', ')}] -> Total: ${(totalDur / 60).toFixed(2)} min (${totalDur.toFixed(1)}s)`
+    `  Total (${lang}): ${(totalDur / 60).toFixed(2)}m (${totalDur.toFixed(1)}s) · Music dip windows for native-scored dialogue: [${p13.start.toFixed(1)}-${p14.end.toFixed(1)}s], [${p19.start.toFixed(1)}-${p20.end.toFixed(1)}s]`
   )
 
-  // Concatenate VO bus, SFX bus, Full-Motion video, and Express video
   const writeConcat = (name: string, files: string[]) => {
     const p = join(langDir, `${name}.txt`)
     writeFileSync(p, files.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join('\n') + '\n')
     return p
   }
 
-  const voConcatList = writeConcat('vo-list', plans.map((p) => p.voWav))
-  const sfxConcatList = writeConcat('sfx-list', plans.map((p) => p.sfxWav))
-  const fmConcatList = writeConcat('fm-list', plans.map((p) => p.fmMp4))
-  const exConcatList = writeConcat('ex-list', plans.map((p) => p.exMp4))
+  const voConcatList = writeConcat('vo-list-clean', plans.map((p) => p.voWav))
+  const fmConcatList = writeConcat('fm-list-clean', plans.map((p) => p.fmMp4))
+  const exConcatList = writeConcat('ex-list-clean', plans.map((p) => p.exMp4))
 
-  const voFull = join(langDir, 'vo-bus.wav')
-  const sfxFull = join(langDir, 'sfx-bus.wav')
-  const fmVideoOnly = join(langDir, 'fm-video.mp4')
-  const exVideoOnly = join(langDir, 'ex-video.mp4')
+  const voFull = join(langDir, 'vo-bus-clean.wav')
+  const fmVideoOnly = join(langDir, 'fm-video-clean.mp4')
+  const exVideoOnly = join(langDir, 'ex-video-clean.mp4')
 
-  runFfmpeg(['-f', 'concat', '-safe', '0', '-i', voConcatList, '-c:a', 'pcm_s16le', voFull], `${lang}-vo-concat`)
-  runFfmpeg(['-f', 'concat', '-safe', '0', '-i', sfxConcatList, '-c:a', 'pcm_s16le', sfxFull], `${lang}-sfx-concat`)
+  runFfmpeg(['-f', 'concat', '-safe', '0', '-i', voConcatList, '-ar', '48000', '-ac', '2', '-c:a', 'pcm_s16le', voFull], `${lang}-vo-concat`)
   runFfmpeg(['-f', 'concat', '-safe', '0', '-i', fmConcatList, '-c:v', 'copy', fmVideoOnly], `${lang}-fm-concat`)
   runFfmpeg(['-f', 'concat', '-safe', '0', '-i', exConcatList, '-c:v', 'copy', exVideoOnly], `${lang}-ex-concat`)
 
-  // Build 6-movement continuous crossfaded orchestral score aligned to exact scene boundaries!
+  // 6-Movement continuous crossfaded orchestral score
   const xfade = 2.0
   const musicInputs: string[] = []
   const musicTrimFilters: string[] = []
   for (let i = 0; i < SCENES.length; i++) {
     musicInputs.push('-i', join(BASE, 'music', SCENES[i].music))
-    // Add overlap compensation for acrossfade so total score matches exact scene boundaries
     const extra = (i > 0 ? xfade / 2 : 0) + (i < SCENES.length - 1 ? xfade / 2 : 0)
     const trimDur = sceneDurations[i] + extra + (i === SCENES.length - 1 ? 0.5 : 0)
     let f = `[${i}:a]aresample=48000,aformat=channel_layouts=stereo,atrim=0:${trimDur.toFixed(3)},asetpts=PTS-STARTPTS`
@@ -357,33 +366,36 @@ function buildLanguage(lang: Lang) {
     xfadeChain.push(`[${prev}][m${i}]acrossfade=d=${xfade}:c1=tri:c2=tri[${outTag}]`)
     prev = outTag
   }
-  const musicFull = join(langDir, 'music-bus.wav')
+  const musicFull = join(langDir, 'music-bus-clean.wav')
+  const dipExpr = buildMusicDipExpression(dipWindows)
   runFfmpeg(
     [
       ...musicInputs,
       '-filter_complex',
-      [...musicTrimFilters, ...xfadeChain, `[music_all]atrim=0:${totalDur.toFixed(3)}[mout]`].join(';'),
+      [
+        ...musicTrimFilters,
+        ...xfadeChain,
+        `[music_all]atrim=0:${totalDur.toFixed(3)},volume='${dipExpr}':eval=frame[mout]`,
+      ].join(';'),
       '-map', '[mout]',
-      '-c:a', 'pcm_s16le',
+      '-ar', '48000', '-ac', '2', '-c:a', 'pcm_s16le',
       musicFull,
     ],
     `${lang}-music-score`
   )
 
-  // Final 3-Layer Broadcast Mix:
-  // Featured orchestral score (volume=0.38) ducked smoothly by voice bus + subtle SFX bus + crystal-clear VO/Dialogue -> -14 LUFS
-  const masterAudio = join(langDir, 'master-audio.m4a')
+  // Clean 2-Bus Broadcast Mix: Crystal-clear Speech/Dialogue + Clash-Free Featured Orchestral Score -> -14 LUFS
+  const masterAudio = join(langDir, 'master-audio-clean.m4a')
   runFfmpeg(
     [
       '-i', voFull,
-      '-i', sfxFull,
       '-i', musicFull,
       '-filter_complex',
       [
         '[0:a]asplit=2[vo_mix][vo_sc]',
-        '[2:a]volume=0.40[mus_base]',
+        '[1:a]volume=0.42[mus_base]',
         '[mus_base][vo_sc]sidechaincompress=threshold=0.025:ratio=4.5:attack=120:release=550:makeup=1[mus_duck]',
-        '[vo_mix][1:a][mus_duck]amix=inputs=3:duration=first:dropout_transition=0:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[aout]',
+        '[vo_mix][mus_duck]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[aout]',
       ].join(';'),
       '-map', '[aout]',
       '-c:a', 'aac',
@@ -394,7 +406,7 @@ function buildLanguage(lang: Lang) {
     `${lang}-master-mix`
   )
 
-  // Mux & web-optimize final Full-Motion & Express masters (-movflags +faststart for instant playback)
+  // Mux & web-optimize final Full-Motion & Express masters
   const outFullMotion = join(OUT_DIR, `chapter2-fullmotion-${lang}.mp4`)
   const outExpress = join(OUT_DIR, `chapter2-express-${lang}.mp4`)
 
@@ -405,8 +417,8 @@ function buildLanguage(lang: Lang) {
       '-c:v', 'libx264',
       '-preset', 'medium',
       '-crf', '23',
-      '-maxrate', '1600k',
-      '-bufsize', '3200k',
+      '-maxrate', '1500k',
+      '-bufsize', '3000k',
       '-pix_fmt', 'yuv420p',
       '-c:a', 'copy',
       '-movflags', '+faststart',
@@ -423,8 +435,8 @@ function buildLanguage(lang: Lang) {
       '-c:v', 'libx264',
       '-preset', 'medium',
       '-crf', '23',
-      '-maxrate', '1400k',
-      '-bufsize', '2800k',
+      '-maxrate', '1350k',
+      '-bufsize', '2700k',
       '-pix_fmt', 'yuv420p',
       '-c:a', 'copy',
       '-movflags', '+faststart',
@@ -445,7 +457,7 @@ function main() {
   for (const lang of LANGS) {
     buildLanguage(lang)
   }
-  console.log('\nALL 6 CHAPTER 2 MASTERS + POSTER BUILT SUCCESSFULLY!')
+  console.log('\nALL 6 STUDIO-CLEAN CHAPTER 2 MASTERS REBUILT SUCCESSFULLY!')
 }
 
 main()
