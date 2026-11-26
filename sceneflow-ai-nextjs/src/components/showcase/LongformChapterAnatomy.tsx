@@ -2,16 +2,19 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import {
+  Building2,
   Check,
   Clock,
   Film,
   Globe,
+  Home,
   Languages,
   Layers,
   MapPin,
   Mic,
   Play,
   RefreshCw,
+  ShieldCheck,
   Sparkles,
   Tv,
   Upload,
@@ -20,8 +23,15 @@ import {
 } from 'lucide-react'
 import { LONGFORM_CHAPTER_ANATOMY_COPY } from '@/config/showcase/longformChapterAnatomyCopy'
 import type { AnatomyDeliveryMode } from '@/config/showcase/longformChapterAnatomyTypes'
+import {
+  REAL_ESTATE_ANATOMY_COPY,
+  type RealEstateBlueprintMode,
+} from '@/config/showcase/realEstateAnatomyCopy'
+import { getLocalizedShowcaseVideoUrl } from '@/config/showcase/showcaseLocaleCopy'
+import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 import type { ClientPortalLocale } from '@/lib/intake/clientPortalCopy'
 
+type AnatomyVertical = 'lifestory' | 'realestate'
 type ChapterVideoLang = 'en' | 'es' | 'ja'
 type ChapterVideoFormat = 'fullmotion' | 'express'
 
@@ -43,6 +53,7 @@ export interface LongformChapterAnatomyProps {
 }
 
 export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnatomyProps) {
+  const [activeVertical, setActiveVertical] = useState<AnatomyVertical>('lifestory')
   const [deliveryMode, setDeliveryMode] = useState<AnatomyDeliveryMode>('feature')
   // Default to Chapter 2 (1966 Ocean Crossing) — live playable 30-shot featured chapter
   const [activeChapterIdx, setActiveChapterIdx] = useState(1)
@@ -51,6 +62,9 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
     resolveChapterVideoLang(locale)
   )
   const [videoFormat, setVideoFormat] = useState<ChapterVideoFormat>('fullmotion')
+  const [reMode, setReMode] = useState<RealEstateBlueprintMode>('remodel')
+  const [reChapterIdx, setReChapterIdx] = useState(0)
+  const [playingReSample, setPlayingReSample] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const pendingSeekRatioRef = useRef<number | null>(null)
 
@@ -59,10 +73,16 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
   }, [locale])
 
   const copy = LONGFORM_CHAPTER_ANATOMY_COPY[locale] ?? LONGFORM_CHAPTER_ANATOMY_COPY.en
+  const reCopy = REAL_ESTATE_ANATOMY_COPY[locale] ?? REAL_ESTATE_ANATOMY_COPY.en
   const isStorefront = variant === 'storefront'
-  const brandTxt = (s: string) => (isStorefront ? s.replace(/SceneFlow/g, 'Keepsake Cinema') : s)
+  const brandTxt = (s: string) => {
+    const localized = localizeUsdText(s, locale)
+    return isStorefront ? localized.replace(/SceneFlow/g, 'Keepsake Cinema') : localized
+  }
 
   const activeChapter = copy.chapters[activeChapterIdx] ?? copy.chapters[0]
+  const activeReChapter = reCopy.chapters[reChapterIdx] ?? reCopy.chapters[0]
+  const reSampleVideoUrl = getLocalizedShowcaseVideoUrl('realestate', locale, 'fullMotion')
   const isFeaturedChapter2 = activeChapter.id === 'ch2_crossing'
   const resolvedVideoUrl = isFeaturedChapter2
     ? `/videos/chapter2-${videoFormat}-${videoLang}.mp4`
@@ -107,8 +127,314 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
       data-testid={`longform-chapter-anatomy-${variant}`}
       className="mt-10 sm:mt-14 space-y-6"
     >
-      {/* Header + Feature vs. Multi-Episode Series Mode Toggle */}
-      <div className="rounded-2xl border border-white/12 bg-gradient-to-br from-[#0F1423] via-[#0B0F1A] to-[#080B13] p-5 sm:p-7 shadow-2xl shadow-black/50 space-y-6">
+      {/* Top Vertical Blueprint Switcher: Life Story Reenactment vs. Real Estate Underwriting */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          data-testid="anatomy-vertical-lifestory"
+          aria-pressed={activeVertical === 'lifestory'}
+          onClick={() => {
+            setActiveVertical('lifestory')
+            setPlayingReSample(false)
+          }}
+          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs sm:text-sm font-semibold transition cursor-pointer ${
+            activeVertical === 'lifestory'
+              ? activeModeBtn + ' border-transparent'
+              : 'border-white/15 bg-white/[0.04] text-slate-200 hover:border-white/30 hover:bg-white/[0.08]'
+          }`}
+        >
+          <Film className="w-4 h-4 shrink-0" />
+          <span>{reCopy.verticalTabLifeStory}</span>
+        </button>
+        <button
+          type="button"
+          data-testid="anatomy-vertical-realestate"
+          aria-pressed={activeVertical === 'realestate'}
+          onClick={() => {
+            setActiveVertical('realestate')
+            setPlayingSampleChapter(false)
+          }}
+          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs sm:text-sm font-semibold transition cursor-pointer ${
+            activeVertical === 'realestate'
+              ? activeModeBtn + ' border-transparent'
+              : 'border-white/15 bg-white/[0.04] text-slate-200 hover:border-white/30 hover:bg-white/[0.08]'
+          }`}
+        >
+          <Building2 className="w-4 h-4 shrink-0" />
+          <span>{reCopy.verticalTabRealEstate}</span>
+        </button>
+      </div>
+
+      {/* Header + Mode Toggle + Chapter Timeline (Life Story OR Real Estate Underwriting) */}
+      {activeVertical === 'realestate' ? (
+        <div
+          data-testid="realestate-underwriting-anatomy"
+          className="rounded-2xl border border-white/12 bg-gradient-to-br from-[#0F1423] via-[#0B0F1A] to-[#080B13] p-5 sm:p-7 shadow-2xl shadow-black/50 space-y-6"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+            <div className="space-y-2.5 max-w-3xl">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border ${accentBorder} ${accentBgSoft} px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${accentText}`}
+              >
+                <Home className="w-3.5 h-3.5 shrink-0" />
+                <span>{brandTxt(reCopy.eyebrow)}</span>
+              </span>
+              <h3 className="font-serif text-xl sm:text-2xl lg:text-3xl font-semibold text-white leading-snug">
+                {brandTxt(reCopy.heading)}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                {brandTxt(reCopy.subtitle)}
+              </p>
+            </div>
+
+            <div className="shrink-0 space-y-2">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                {reCopy.modeLabel}
+              </div>
+              <div
+                role="group"
+                aria-label={reCopy.modeLabel}
+                className="inline-flex rounded-xl border border-white/15 bg-black/50 p-1 gap-1"
+              >
+                <button
+                  type="button"
+                  data-testid="re-mode-remodel"
+                  aria-pressed={reMode === 'remodel'}
+                  onClick={() => setReMode('remodel')}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition cursor-pointer ${
+                    reMode === 'remodel'
+                      ? activeModeBtn
+                      : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+                  }`}
+                >
+                  <Home className="w-3.5 h-3.5 shrink-0" />
+                  <span>{reCopy.modeRemodelLabel}</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="re-mode-precon"
+                  aria-pressed={reMode === 'preconstruction'}
+                  onClick={() => setReMode('preconstruction')}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition cursor-pointer ${
+                    reMode === 'preconstruction'
+                      ? activeModeBtn
+                      : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>{reCopy.modePreconLabel}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-xs">
+            <div className="flex items-center gap-2 font-medium text-white">
+              <Sparkles className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+              <span data-testid="re-mode-meta">
+                {reMode === 'remodel' ? reCopy.modeRemodelMeta : reCopy.modePreconMeta}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[11px] font-semibold text-slate-200">
+                <Clock className="w-3 h-3 shrink-0" />
+                <span>{reCopy.totalRuntimeBadge}</span>
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 rounded-full border ${accentBorder} ${accentBgSoft} px-2.5 py-0.5 text-[11px] font-semibold ${accentText}`}
+              >
+                <span>{brandTxt(reCopy.retainerRangeBadge)}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* 4-Chapter Real Estate Split-Chapter Timeline */}
+          <div role="tablist" aria-label={reCopy.heading} className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+            {reCopy.chapters.map((chapter, idx) => {
+              const isSelected = idx === reChapterIdx
+              const badge = reMode === 'remodel' ? chapter.remodelBadge : chapter.preconBadge
+              const title = reMode === 'remodel' ? chapter.remodelTitle : chapter.preconTitle
+              return (
+                <button
+                  key={chapter.id}
+                  type="button"
+                  role="tab"
+                  data-testid={`re-chapter-tab-${chapter.chapterNumber}`}
+                  aria-selected={isSelected}
+                  onClick={() => {
+                    setReChapterIdx(idx)
+                    setPlayingReSample(false)
+                  }}
+                  className={`text-start rounded-xl border p-3.5 transition flex flex-col justify-between gap-1.5 cursor-pointer ${
+                    isSelected
+                      ? activeTabClasses
+                      : 'border-white/10 bg-white/[0.02] hover:border-white/25 hover:bg-white/[0.05]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <span
+                      className={`text-[11px] font-bold uppercase tracking-wider ${
+                        isSelected ? accentText : 'text-slate-400'
+                      }`}
+                    >
+                      {badge}
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 tabular-nums">
+                      {chapter.durationLabel}
+                    </span>
+                  </div>
+                  <div className="text-xs sm:text-sm font-semibold text-white leading-snug">
+                    {title}
+                  </div>
+                  <div className="text-[10px] text-slate-400 tabular-nums">{chapter.timecodeRange}</div>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Active Real Estate Chapter Panel */}
+          <div
+            role="tabpanel"
+            data-testid="re-chapter-panel"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch"
+          >
+            <div className="lg:col-span-5 flex flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-black/45 p-4">
+              <div className="space-y-3">
+                <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-slate-950">
+                  {playingReSample ? (
+                    <video
+                      src={reSampleVideoUrl}
+                      poster={activeReChapter.posterImage}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <>
+                      <img
+                        src={activeReChapter.posterImage}
+                        alt={reMode === 'remodel' ? activeReChapter.remodelTitle : activeReChapter.preconTitle}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
+                      <div className="absolute top-2.5 start-2.5">
+                        <span
+                          className={`rounded-full border ${accentBorder} bg-black/75 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${accentText}`}
+                        >
+                          {reMode === 'remodel' ? activeReChapter.remodelBadge : activeReChapter.preconBadge} ·{' '}
+                          {activeReChapter.timecodeRange}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPlayingReSample(true)}
+                        className="absolute inset-0 flex items-center justify-center bg-black/25 hover:bg-black/15 transition cursor-pointer"
+                      >
+                        <span
+                          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold shadow-xl ${activeModeBtn}`}
+                        >
+                          <Play className="w-3.5 h-3.5 fill-current" />
+                          <span>{reCopy.watchSampleCta}</span>
+                        </span>
+                      </button>
+                      <div className="absolute bottom-2.5 inset-x-3 flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-white drop-shadow">
+                          {reMode === 'remodel' ? activeReChapter.remodelTitle : activeReChapter.preconTitle}
+                        </span>
+                        <span className="rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-slate-200 tabular-nums">
+                          {activeReChapter.durationLabel}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div>
+                  <h4 className="font-serif text-lg sm:text-xl font-semibold text-white leading-snug">
+                    {reMode === 'remodel' ? activeReChapter.remodelTitle : activeReChapter.preconTitle}
+                  </h4>
+                  <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    {brandTxt(activeReChapter.narrativeSummary)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3.5 space-y-1.5">
+                <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <Upload className="w-3.5 h-3.5 shrink-0 text-slate-300" />
+                  <span>{reCopy.inputBoxHeading}</span>
+                </div>
+                <div className={`text-xs sm:text-sm font-semibold ${accentText}`}>
+                  {activeReChapter.clientInputLabel}
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {brandTxt(activeReChapter.clientInputDetail)}
+                </p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-7 flex flex-col justify-between gap-4 rounded-2xl border border-white/12 bg-gradient-to-br from-[#12182B] via-[#0B101D] to-[#080B13] p-4 sm:p-5">
+              <div className="space-y-4">
+                <span
+                  className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${accentText}`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                  <span>{brandTxt(reCopy.recreatedBoxHeading)}</span>
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                      <MapPin className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                      <span>{reCopy.labelStructure}</span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {activeReChapter.fidelityStructure}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                      <Building2 className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                      <span>{reCopy.labelArchitecture}</span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {activeReChapter.fidelityArchitecture}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                      <Users className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                      <span>{reCopy.labelLifestyle}</span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {activeReChapter.fidelityLifestyle}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                      <Mic className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                      <span>{reCopy.labelBuyerAudio}</span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {activeReChapter.fidelityBuyerAudio}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className={`rounded-xl border ${accentBorder} ${accentBgSoft} px-4 py-3 flex items-start gap-2.5 text-xs text-slate-200 leading-relaxed`}
+              >
+                <ShieldCheck className={`w-4 h-4 shrink-0 mt-0.5 ${accentText}`} />
+                <span>{reCopy.complianceNote}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-white/12 bg-gradient-to-br from-[#0F1423] via-[#0B0F1A] to-[#080B13] p-5 sm:p-7 shadow-2xl shadow-black/50 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
           <div className="space-y-2.5 max-w-3xl">
             <span
@@ -462,7 +788,8 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Why Short-Form AI Tools Collapse at 1-Hour+ Scale (Architectural Math Strip) */}
       <div

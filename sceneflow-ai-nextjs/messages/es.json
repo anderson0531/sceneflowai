@@ -1924,46 +1924,46 @@
         },
         {
           "id": "realestate",
-          "tabLabel": "Tours Inmobiliarios",
-          "roleTag": "↻ Retainer Mensual Inmobiliario",
-          "badge": "$149–$549 / propiedad · Tarifa tradicional: $450–$1,500+",
-          "title": "Recorridos Narrados de Propiedades y Hoteles Boutique",
-          "description": "Transforma fotos de propiedades y atractivos del vecindario en recorridos cinematográficos con música y locución — más versiones al instante en inglés, chino, árabe o portugués para compradores internacionales.",
-          "globalMarketNeed": "Decenas de millones de propiedades residenciales, alquileres vacacionales y hoteles boutique compiten cada mes por compradores locales y extranjeros usando solo fotos fijas.",
-          "clientBuyer": "Agentes inmobiliarios residenciales, agencias de lujo, alquileres vacacionales y hoteles boutique",
-          "partnerChannels": "Estudios de fotografía inmobiliaria, equipos de home staging, brókers de lujo y consultores hoteleros",
-          "traditionalMarketRangeLabel": "$450–$1,500+",
-          "typicalRetailUsd": 299,
+          "tabLabel": "Visión Inmobiliaria",
+          "roleTag": "↻ Retainer $500–$1,800+ para Brókers y Desarrolladores",
+          "badge": "$149–$1,650 / propiedad · Tarifa CGI y Staging: $3,500–$18,000+",
+          "title": "Visualización de Renovación, Estilo de Vida y Preconstrucción",
+          "description": "Deja de competir con tours baratos en dron de 60 segundos. Resuelve la falta de imaginación del comprador con filmes \"Antes y Después\" de 10–15 min en 4 capítulos sobre remodelación y reuniones familiares — además de recorridos de Preconstrucción y Terrenos sin desarrollar con horizonte fijado en más de 70 idiomas.",
+          "globalMarketNeed": "Las casas de lujo anticuadas quedan sin vender porque los compradores no pueden imaginar la remodelación — y los desarrolladores luchan por vender terrenos vírgenes sin renders CGI 3D de $10,000+ que tardan semanas.",
+          "clientBuyer": "Agencias inmobiliarias de lujo, constructores de casas a medida, desarrolladores de terrenos, inversionistas fix-and-flip y hospitalidad boutique",
+          "partnerChannels": "Agencias de lujo, equipos de foto/dron inmobiliario, estudios de staging arquitectónico y constructores de casas a medida",
+          "traditionalMarketRangeLabel": "$3,500–$18,000+",
+          "typicalRetailUsd": 699,
           "priceTiersUsd": [
             149,
-            299,
-            549
+            699,
+            1650
           ],
           "tierScopeLabels": [
-            "Filme Express 4K de Propiedad (90s · Mismo día) · Fotogramas 4K con paneo + Narración y Música · 1 idioma",
-            "Recorrido Narrado 2 min · Escalado 4K + 2 Idiomas",
-            "Filme Propiedad de Lujo 3 min + Reels 9:16 · 4 Idiomas"
+            "Visión Inmobiliaria Express 4K y Staging Virtual (Mismo día) · Mobiliario Virtual + Historia del Vecindario · 1 idioma",
+            "Filme de Remodelación \"Antes y Después\" de 10–15 min en 4 Capítulos (Estructura → Remodelación → Jardín → Reuniones Familiares) · 2 idiomas",
+            "Filme de Propiedad en Preconstrucción y Terreno Virgen con Horizonte Fijado + Escuelas y Ediciones para Compradores Internacionales (4+ idiomas) + Hoja QR"
           ],
           "computeTiersUsd": [
             5,
-            15,
-            28
+            36,
+            76
           ],
           "operatorTiersUsd": [
-            10,
-            50,
-            88
+            12,
+            100,
+            195
           ],
           "activeTimeTiersLabels": [
-            "~12 min",
-            "~1.0 h",
-            "~1.75 h"
+            "~15 min",
+            "~2.0 h",
+            "~3.9 h"
           ],
-          "retailRangeLabel": "$149–$549",
-          "estComputeUsd": 15,
-          "estOperatorUsd": 50,
-          "activeMinutesLabel": "~1.0 h",
-          "keyAdvantage": "Alta repetición por agencia: un equipo con 4 captaciones al mes genera pedidos constantes sin viajes ni demoras por clima (~$65 de costo total)."
+          "retailRangeLabel": "$149–$1,650",
+          "estComputeUsd": 36,
+          "estOperatorUsd": 100,
+          "activeMinutesLabel": "~2.0 h",
+          "keyAdvantage": "Escapa del tope de $150 de los tours en dron: abre puertas con Staging Virtual Express de $149, luego cierra filmes de remodelación \"Antes y Después\" de $699 (~81% margen) y retainers de Preconstrucción con horizonte fijado de $1,650."
         },
         {
           "id": "training",

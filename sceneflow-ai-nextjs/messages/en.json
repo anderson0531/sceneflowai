@@ -1922,46 +1922,46 @@
         },
         {
           "id": "realestate",
-          "tabLabel": "Real Estate Tours",
-          "roleTag": "↻ Repeat Broker Retainer",
-          "badge": "$149–$549 / listing · Market Rate: $450–$1,500+",
-          "title": "Narrated Luxury Property & Boutique Hospitality Tours",
-          "description": "Turn listing photographs and neighborhood highlights into Same-Day $149 Express 4K Listing Films or Full-Motion walkthroughs—plus instant Mandarin, Spanish, Arabic, or Portuguese versions for cross-border buyers.",
-          "globalMarketNeed": "Tens of millions of home listings, short-term rentals, and boutique hotels compete for domestic and international buyers worldwide every month—most still stuck with static photos.",
-          "clientBuyer": "Top-producing residential realtors, luxury brokerages, vacation rentals & boutique hotels",
-          "partnerChannels": "Real estate photography studios, MLS staging teams, luxury brokerages & hospitality marketers",
-          "traditionalMarketRangeLabel": "$450–$1,500+",
-          "typicalRetailUsd": 299,
+          "tabLabel": "Real Estate Vision",
+          "roleTag": "↻ $500–$1,800+ Broker & Developer Retainer",
+          "badge": "$149–$1,650 / property · CGI & Staging Rate: $3,500–$18,000+",
+          "title": "Renovation & Lifestyle Underwriting + Pre-Construction Visualization",
+          "description": "Stop competing with cheap 60-second drone tours. Solve buyer imagination failure with 10–15 min \"Before & After\" 4-chapter remodel & family-gathering films—plus horizon-locked Pre-Construction & Raw Land estate walkthroughs in 70+ buyer languages.",
+          "globalMarketNeed": "Dated luxury homes sit unsold because buyers cannot picture the remodel—and developers struggle to sell raw land without $10,000+ 3D CGI renders that take weeks.",
+          "clientBuyer": "Luxury brokerages, custom home builders, land developers, fix-and-flip investors & boutique hospitality",
+          "partnerChannels": "Luxury brokerages, real estate photo/drone teams, architectural staging studios & custom home builders",
+          "traditionalMarketRangeLabel": "$3,500–$18,000+",
+          "typicalRetailUsd": 699,
           "priceTiersUsd": [
             149,
-            299,
-            549
+            699,
+            1650
           ],
           "tierScopeLabels": [
-            "Express 4K Listing Film (90s · Same-Day) · Panned 4K Stills + Voiced Narration & Score · 1 Lang",
-            "2-min Full-Motion Property Tour · 4K Upscaled + 2 Langs",
-            "3-min Luxury Estate Film + 9:16 Reels · 4 International Langs"
+            "Express 4K Property Vision & Virtual Staging (Same-Day) · Virtual Furniture + Neighborhood Story · 1 Lang",
+            "10–15 min \"Before & After\" 4-Chapter Remodel Film (Bones → Remodel → Backyard → Family Gatherings) · 2 Langs",
+            "Pre-Construction & Raw Land Horizon-Locked Estate Film + Schools & International Buyer Editions (4+ Langs) + QR Sheet"
           ],
           "computeTiersUsd": [
             5,
-            15,
-            28
+            36,
+            76
           ],
           "operatorTiersUsd": [
-            10,
-            50,
-            88
+            12,
+            100,
+            195
           ],
           "activeTimeTiersLabels": [
-            "~12 min",
-            "~1.0 hr",
-            "~1.75 hrs"
+            "~15 min",
+            "~2.0 hrs",
+            "~3.9 hrs"
           ],
-          "retailRangeLabel": "$149–$549",
-          "estComputeUsd": 15,
-          "estOperatorUsd": 50,
-          "activeMinutesLabel": "~1.0 hr",
-          "keyAdvantage": "High repeat volume per broker: ship Same-Day $149 Express 4K Listing Films (~$15 delivery cost, ~90% margin) or monthly Full-Motion broker retainers with zero travel delays."
+          "retailRangeLabel": "$149–$1,650",
+          "estComputeUsd": 36,
+          "estOperatorUsd": 100,
+          "activeMinutesLabel": "~2.0 hrs",
+          "keyAdvantage": "Escape $150 drone-tour price caps: open doors with $149 Express Virtual Staging, then close $699 \"Before & After\" remodel films (~81% margin) and $1,650 horizon-locked Pre-Construction developer retainers."
         },
         {
           "id": "training",

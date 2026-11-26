@@ -116,6 +116,7 @@ import {
 import { SHOWCASE_CONVERSION_COPY } from '@/config/showcase/showcaseConversionCopy'
 import { LONGFORM_CRAFT_COPY } from '@/config/showcase/longformCraftCopy'
 import { LONGFORM_CHAPTER_ANATOMY_COPY } from '@/config/showcase/longformChapterAnatomyCopy'
+import { REAL_ESTATE_ANATOMY_COPY } from '@/config/showcase/realEstateAnatomyCopy'
 import { SUPPORTED_CLIENT_PORTAL_LOCALES } from '@/lib/intake/clientPortalCopy'
 import { formatLandingCurrency } from '@/lib/i18n/landingCurrency'
 
@@ -358,7 +359,7 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(container.querySelector('[data-testid="offer-card-graduation_milestone"]')).toBeNull()
     expect(container.querySelector('[data-testid="offer-card-retirement_tribute"]')).toBeNull()
     // Real Estate, Brand Story, and Training examples are immediately visible in the 2x2 grid
-    expect(text).toContain('Express 4K Property Listing Film')
+    expect(text).toContain('Express 4K Property Vision & Underwriting Film')
     expect(text).toContain('Express 4K Founder & Practice Film')
     expect(text).toContain('Express 4K Narrated Training & SOP Film')
     expect(
@@ -382,7 +383,7 @@ describe('KeepsakeCinemaStorefront UI', () => {
     act(() => {
       bizBtn!.click()
     })
-    expect(container.textContent).toContain('Express 4K Property Listing Film')
+    expect(container.textContent).toContain('Express 4K Property Vision & Underwriting Film')
     expect(container.textContent).toContain('Express 4K Founder & Practice Film')
     expect(container.textContent).toContain('Express 4K Narrated Training & SOP Film')
     expect(container.querySelector('[data-testid="offer-card-family_legacy"]')).toBeNull()
@@ -853,7 +854,7 @@ describe('KeepsakeCinemaStorefront UI', () => {
     act(() => startHeroLikeThisBtn!.click())
     const dialog = container.querySelector('[role="dialog"]')
     expect(dialog).toBeTruthy()
-    expect(dialog?.textContent).toContain('Express 4K Property Listing Film')
+    expect(dialog?.textContent).toContain('Express 4K Property Vision & Underwriting Film')
     expect((dialog?.querySelector('select') as HTMLSelectElement | null)?.value).toBe(
       'real_estate_express'
     )
@@ -935,5 +936,34 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(mathStrip?.textContent).toContain('360+ Shots')
     expect(mathStrip?.textContent).toContain('80–120 hrs → 2–4 hrs')
     expect(mathStrip?.textContent).toContain('Feature OR Series')
+
+    // Verify Real Estate Underwriting (4-Chapter) blueprint tab across all 14 locales
+    for (const loc of SUPPORTED_CLIENT_PORTAL_LOCALES) {
+      const rePack = REAL_ESTATE_ANATOMY_COPY[loc.code]
+      expect(rePack).toBeTruthy()
+      expect(rePack.chapters).toHaveLength(4)
+      for (const ch of rePack.chapters) {
+        expect(ch.remodelTitle.trim().length).toBeGreaterThan(2)
+        expect(ch.preconTitle.trim().length).toBeGreaterThan(2)
+      }
+    }
+
+    const reVerticalBtn = anatomy?.querySelector(
+      '[data-testid="anatomy-vertical-realestate"]'
+    ) as HTMLButtonElement | null
+    expect(reVerticalBtn).toBeTruthy()
+    act(() => reVerticalBtn!.click())
+    const reSection = anatomy?.querySelector('[data-testid="realestate-underwriting-anatomy"]')
+    expect(reSection).toBeTruthy()
+    expect(reSection?.textContent).toContain('Current State & Structural Bones')
+    expect(reSection?.textContent).toContain('A Year of Family Gatherings')
+
+    // Toggle to Pre-Construction & Raw Land mode
+    const preconBtn = reSection?.querySelector(
+      '[data-testid="re-mode-precon"]'
+    ) as HTMLButtonElement | null
+    expect(preconBtn).toBeTruthy()
+    act(() => preconBtn!.click())
+    expect(reSection?.textContent).toContain('Raw Land & Exact Drone Horizon Lock')
   })
 })

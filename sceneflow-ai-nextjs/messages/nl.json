@@ -1922,46 +1922,46 @@
         },
         {
           "id": "realestate",
-          "tabLabel": "Vastgoedrondleidingen",
-          "roleTag": "↻ Terugkerende Makelaarsretainer",
-          "badge": "$149–$549 / woning · Markttarief: $450–$1,500+",
-          "title": "Ingesproken Luxe Vastgoed- & Boetiekhotel-Tours",
-          "description": "Zet woningfoto’s en buurthighlights om in Same-Day $149 Express 4K-woningfilms of Full-Motion rondleidingen — plus directe Mandarijn-, Spaans-, Arabisch- of Portugeestalige versies voor internationale kopers.",
-          "globalMarketNeed": "Tientallen miljoenen woningen, vakantieverblijven en boetiekhotels strijden elke maand om binnen- en buitenlandse kopers — meestal nog met alleen statische foto’s.",
-          "clientBuyer": "Topmakelaars, luxe vastgoedkantoren, vakantiewoningen & boetiekhotels",
-          "partnerChannels": "Vastgoedfotografen, stylingteams, luxe makelaarsnetwerken & hospitality-marketeers",
-          "traditionalMarketRangeLabel": "$450–$1,500+",
-          "typicalRetailUsd": 299,
+          "tabLabel": "Vastgoedvisie",
+          "roleTag": "↻ $500–$1,800+ Makelaars- & Ontwikkelaarsretainer",
+          "badge": "$149–$1,650 / woning · CGI- & Stagingtarief: $3,500–$18,000+",
+          "title": "Renovatie- & Lifestyle-onderbouwing + Nieuwbouwvisualisatie",
+          "description": "Stop met concurreren tegen goedkope drone-tours van 60 seconden. Los het verbeeldingsprobleem van kopers op met 10–15 min \"Voor & Na\"-verbouwings- en familiefilms in 4 hoofdstukken — plus horizonvergrendelde Nieuwbouw- & Bouwgrond-rondleidingen in 70+ koperstalen.",
+          "globalMarketNeed": "Gedateerde luxewoningen blijven onverkocht omdat kopers de verbouwing niet kunnen visualiseren — en ontwikkelaars krijgen bouwgrond moeilijk verkocht zonder 3D CGI-renders van $10,000+ die weken duren.",
+          "clientBuyer": "Luxe makelaarskantoren, villabouwers op maat, gebiedsontwikkelaars, fix-and-flip-investeerders & boetiekhotels",
+          "partnerChannels": "Luxe makelaarskantoren, vastgoedfoto-/droneteams, architectonische stagingstudio’s & villabouwers op maat",
+          "traditionalMarketRangeLabel": "$3,500–$18,000+",
+          "typicalRetailUsd": 699,
           "priceTiersUsd": [
             149,
-            299,
-            549
+            699,
+            1650
           ],
           "tierScopeLabels": [
-            "Express 4K Woningfilm (90s · Zelfde dag) · Bewegende 4K-stills + Voice-over & Muziek · 1 Taal",
-            "2-min Full-Motion Woningtour · 4K Upscaled + 2 Talen",
-            "3-min Luxe Landgoedfilm + 9:16 Reels · 4 Internationale Talen"
+            "Express 4K Vastgoedvisie & Virtuele Staging (Zelfde dag) · Virtueel Meubilair + Buurtverhaal · 1 Taal",
+            "10–15 min \"Voor & Na\" 4-Hoofdstukken Verbouwfilm (Basis → Verbouwing → Tuin → Familiebijeenkomsten) · 2 Talen",
+            "Horizonvergrendelde Nieuwbouw- & Bouwgrond-Landgoedfilm + Scholen & Internationale Kopersedities (4+ Talen) + QR-kaart"
           ],
           "computeTiersUsd": [
             5,
-            15,
-            28
+            36,
+            76
           ],
           "operatorTiersUsd": [
-            10,
-            50,
-            88
+            12,
+            100,
+            195
           ],
           "activeTimeTiersLabels": [
-            "~12 min",
-            "~1,0 uur",
-            "~1,75 uur"
+            "~15 min",
+            "~2,0 uur",
+            "~3,9 uur"
           ],
-          "retailRangeLabel": "$149–$549",
-          "estComputeUsd": 15,
-          "estOperatorUsd": 50,
-          "activeMinutesLabel": "~1,0 uur",
-          "keyAdvantage": "Hoog herhaalvolume per makelaar: lever Same-Day $149 Express 4K-woningfilms (~$15 kosten, ~90% marge) of maandelijkse Full-Motion retainers zonder reistijd."
+          "retailRangeLabel": "$149–$1,650",
+          "estComputeUsd": 36,
+          "estOperatorUsd": 100,
+          "activeMinutesLabel": "~2,0 uur",
+          "keyAdvantage": "Ontsnap aan het $150-prijsplafond voor drone-tours: open deuren met $149 Express Virtuele Staging en sluit vervolgens $699 \"Voor & Na\"-verbouwfilms (~81% marge) en $1,650 horizonvergrendelde Nieuwbouw-retainers met ontwikkelaars."
         },
         {
           "id": "training",

@@ -261,7 +261,7 @@ describe('Track A — Express 4K Cinema Tier Economics & Terminology Hygiene', (
   it('syncs Express 4K Cinema pricing tiers across English and all 6 priority landing locales with zero Pre-Vis Animatic leaks', () => {
     const expectedTiers = [
       [149, 599, 1250],
-      [149, 299, 549],
+      [149, 699, 1650],
       [249, 950, 1800],
       [199, 650, 1200],
     ]

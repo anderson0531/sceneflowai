@@ -178,10 +178,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: 'Active Staging & Environment Lock',
         exampleHeadline: 'Unphotographed Moments, Staged With Cultural Authenticity',
         exampleDetails:
-          'Stage lively multigenerational dinners, virtual furniture refreshes for real estate listings, founding-era clinic care scenes, or regional workplace compliance drills—all locked to your real cast and architecture.',
+          'Stage lively multigenerational dinners, 4-chapter "Before & After" luxury remodels and horizon-locked pre-construction estate walkthroughs, founding-era clinic care scenes, or regional workplace compliance drills—all locked to your real cast and architecture.',
         highlights: [
           'Stages unphotographed family gatherings, regional traditions & era-accurate homes',
-          'Virtual interior/furniture updates & active neighborhood lifestyle staging for Real Estate',
+          '"Before & After" 4-chapter luxury remodels & horizon/coastline-locked Pre-Construction land visualization',
           'Localized workplace safety, equipment & patient/client care scenes with zero face drift',
         ],
         metricValue: 'Active Staging',
@@ -395,10 +395,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: 'Escenografía Activa y Bloqueo Ambiental',
         exampleHeadline: 'Momentos Sin Fotografiar, Escenificados con Autenticidad Cultural',
         exampleDetails:
-          'Escenifica cenas multigeneracionales animadas, actualizaciones virtuales de mobiliario para inmuebles, escenas fundacionales de clínicas o simulacros regionales de cumplimiento laboral—todo fijado a tu elenco y arquitectura reales.',
+          'Escenifica cenas multigeneracionales animadas, remodelaciones de lujo "Antes y Después" en 4 capítulos y recorridos de preventa en terreno con horizonte fijado, escenas fundacionales de clínicas o simulacros regionales de cumplimiento laboral—todo fijado a tu elenco y arquitectura reales.',
         highlights: [
           'Escenifica reuniones familiares sin fotografiar, tradiciones regionales y hogares de época',
-          'Actualizaciones virtuales de interiores/mobiliario y vida vecinal activa para Bienes Raíces',
+          'Remodelaciones de lujo "Antes y Después" en 4 capítulos y visualización de terrenos en preventa con horizonte y costa fijados',
           'Escenas localizadas de seguridad laboral, equipos y atención al paciente/cliente sin deriva facial',
         ],
         metricValue: 'Escena Activa',
@@ -611,10 +611,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: 'Encenação Ativa e Trava Ambiental',
         exampleHeadline: 'Momentos Não Fotografados, Encenados com Autenticidade Cultural',
         exampleDetails:
-          'Encene jantares multigeracionais vibrantes, renovações virtuais de móveis para imóveis à venda, cenas fundacionais de clínicas ou simulações regionais de conformidade—tudo travado ao seu elenco e arquitetura reais.',
+          'Encene jantares multigeracionais vibrantes, reformas de luxo "Antes e Depois" em 4 capítulos e tours de pré-construção com horizonte travado, cenas fundacionais de clínicas ou simulações regionais de conformidade—tudo travado ao seu elenco e arquitetura reais.',
         highlights: [
           'Encena encontros familiares sem fotos, tradições regionais e lares fiéis à época',
-          'Atualizações virtuais de interiores/mobiliário e estilo de vida do bairro para Imóveis',
+          'Reformas de luxo "Antes e Depois" em 4 capítulos e visualização de terrenos em pré-construção com horizonte e costa travados',
           'Cenas localizadas de segurança no trabalho, equipamentos e atendimento sem desvio facial',
         ],
         metricValue: 'Cena Ativa',
@@ -827,10 +827,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: 'जीवंत स्टेजिंग और वातावरण लॉक',
         exampleHeadline: 'बिना तस्वीरों वाले पल, सांस्कृतिक प्रामाणिकता के साथ मंचित',
         exampleDetails:
-          'पीढ़ियों के जीवंत पारिवारिक भोज, रियल एस्टेट के लिए वर्चुअल फ़र्नीचर रिफ़्रेश, क्लिनिक के शुरुआती सेवा दृश्य या क्षेत्रीय कार्यस्थल सुरक्षा अभ्यास तैयार करें—सब आपके असली पात्रों और वास्तुकला पर लॉक।',
+          'पीढ़ियों के जीवंत पारिवारिक भोज, 4-अध्याय "पहले और बाद में" लग्ज़री रीमॉडल और क्षितिज-लॉक्ड प्री-कंस्ट्रक्शन एस्टेट वॉकथ्रू, क्लिनिक के शुरुआती सेवा दृश्य या क्षेत्रीय कार्यस्थल सुरक्षा अभ्यास तैयार करें—सब आपके असली पात्रों और वास्तुकला पर लॉक।',
         highlights: [
           'बिना फोटो वाले पारिवारिक समारोह, क्षेत्रीय परंपराएँ और युग-सटीक घर मंचित करता है',
-          'रियल एस्टेट के लिए वर्चुअल इंटीरियर/फ़र्नीचर अपडेट व सक्रिय पड़ोस जीवनशैली स्टेजिंग',
+          '"पहले और बाद में" 4-अध्याय लग्ज़री रीमॉडल व क्षितिज/तटरेखा-लॉक्ड प्री-कंस्ट्रक्शन भूमि विज़ुअलाइज़ेशन',
           'बिना चेहरा बदले स्थानीय कार्यस्थल सुरक्षा, उपकरण व मरीज़/ग्राहक देखभाल दृश्य',
         ],
         metricValue: 'सक्रिय स्टेजिंग',
@@ -1043,10 +1043,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: '动态布景与环境锁定',
         exampleHeadline: '未曾留影的珍贵瞬间，以真实文化底蕴生动再现',
         exampleDetails:
-          '演绎多代同堂的热闹家宴、房产展示的虚拟家具焕新、诊所创立年代的问诊实景，或本土化的职场安全合规演练——全部严格锚定真实人物与建筑空间。',
+          '演绎多代同堂的热闹家宴、四章节“改造前后”豪宅翻新与锁定地平线的预建庄园漫游、诊所创立年代的问诊实景，或本土化的职场安全合规演练——全部严格锚定真实人物与建筑空间。',
         highlights: [
           '生动演绎缺少照片的家族聚会、地方传统与符合年代风貌的居家场景',
-          '为高端房产提供虚拟室内/家具焕新与鲜活社区生活方式实景演绎',
+          '四章节“改造前后”豪宅翻新与锁定地平线/海岸线的预建土地可视化演绎',
           '本土化职场安全、专业设备与医患/客户服务场景，人物面孔零漂移',
         ],
         metricValue: '实景演绎',
@@ -1259,10 +1259,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: 'إخراج حي وتثبيت بيئي',
         exampleHeadline: 'لحظات لم تُصوَّر، مُخرجة بأصالة ثقافية حقيقية',
         exampleDetails:
-          'أخرج مآدب عائلية تجمع الأجيال، وتجديدات افتراضية للأثاث لعروض العقارات، ومشاهد رعاية طبية من بدايات العيادة، أو تدريبات سلامة مهنية محلية—كل ذلك مثبّت على شخصياتك وعمارتك الحقيقية.',
+          'أخرج مآدب عائلية تجمع الأجيال، وتجديدات فاخرة «قبل وبعد» من 4 فصول وجولات ما قبل البناء بأفق مثبّت، ومشاهد رعاية طبية من بدايات العيادة، أو تدريبات سلامة مهنية محلية—كل ذلك مثبّت على شخصياتك وعمارتك الحقيقية.',
         highlights: [
           'يُخرج التجمعات العائلية غير المصوَّرة والتقاليد الإقليمية والمنازل المطابقة للعصر',
-          'تحديثات افتراضية للديكور والأثاث وإبراز أسلوب حياة الحي لعروض العقارات',
+          'تجديدات فاخرة «قبل وبعد» من 4 فصول وتصوّر أراضي ما قبل البناء مع تثبيت الأفق والساحل',
           'مشاهد محلية للسلامة المهنية والمعدات ورعاية المرضى والعملاء بلا أي تغيّر في الوجوه',
         ],
         metricValue: 'إخراج حي',
@@ -1475,10 +1475,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: 'การจัดฉากมีชีวิตและล็อกสภาพแวดล้อม',
         exampleHeadline: 'ช่วงเวลาที่ไร้ภาพถ่าย ถูกจัดฉากอย่างสมจริงตามวัฒนธรรม',
         exampleDetails:
-          'จัดฉากมื้อค่ำครอบครัวหลายรุ่นที่อบอุ่น การปรับแต่งเฟอร์นิเจอร์เสมือนจริงสำหรับประกาศขายบ้าน ฉากการดูแลผู้ป่วยยุคก่อตั้งคลินิก หรือการซ้อมความปลอดภัยในที่ทำงานท้องถิ่น โดยล็อกกับตัวละครและสถาปัตยกรรมจริงของคุณทั้งหมด',
+          'จัดฉากมื้อค่ำครอบครัวหลายรุ่นที่อบอุ่น รีโนเวตบ้านหรู "ก่อนและหลัง" 4 บท และทัวร์โครงการก่อนก่อสร้างที่ล็อกเส้นขอบฟ้าจริง ฉากการดูแลผู้ป่วยยุคก่อตั้งคลินิก หรือการซ้อมความปลอดภัยในที่ทำงานท้องถิ่น โดยล็อกกับตัวละครและสถาปัตยกรรมจริงของคุณทั้งหมด',
         highlights: [
           'จัดฉากการรวมญาติที่ไม่มีภาพถ่าย ประเพณีท้องถิ่น และบ้านเรือนตรงยุคสมัย',
-          'ปรับตกแต่งภายใน/เฟอร์นิเจอร์เสมือนจริงและจัดฉากไลฟ์สไตล์ย่านที่พักสำหรับอสังหาฯ',
+          'รีโนเวตบ้านหรู "ก่อนและหลัง" 4 บท และภาพจำลองที่ดินก่อนก่อสร้างที่ล็อกเส้นขอบฟ้าและแนวชายฝั่งจริง',
           'ฉากความปลอดภัยในที่ทำงาน อุปกรณ์ และการดูแลผู้ป่วย/ลูกค้าแบบท้องถิ่นโดยหน้าไม่เพี้ยน',
         ],
         metricValue: 'จัดฉากมีชีวิต',
@@ -1691,10 +1691,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: '動的ステージング＆環境ロック',
         exampleHeadline: '写真にない名場面を、文化的リアリティで鮮やかに演出',
         exampleDetails:
-          '三世代が囲む賑やかな食卓、不動産物件向けのバーチャル家具刷新、創業期のクリニック診療風景、地域に根ざした職場安全訓練まで——すべて実在の人物と建築に完全ロックして再現します。',
+          '三世代が囲む賑やかな食卓、4章構成の「ビフォー＆アフター」高級リノベーションや水平線ロックの着工前・更地邸宅ウォークスルー、創業期のクリニック診療風景、地域に根ざした職場安全訓練まで——すべて実在の人物と建築に完全ロックして再現します。',
         highlights: [
           '写真が残っていない家族の集い・地域の伝統・時代に忠実な住まいを生き生きと演出',
-          '不動産向けのバーチャル内装・家具アップデートと活気ある街の暮らし演出',
+          '4章構成の「ビフォー＆アフター」高級リノベーション＆水平線・海岸線ロックの着工前土地ビジュアライゼーション',
           '顔ブレゼロで描く地域仕様の職場安全・設備運用・患者／顧客ケアシーン',
         ],
         metricValue: '動的演出',
@@ -1907,10 +1907,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: '라이브 스테이징 & 공간 잠금',
         exampleHeadline: '사진에 남지 않은 순간, 문화적 진정성으로 생생하게 연출',
         exampleDetails:
-          '다세대 가족 만찬, 부동산 매물의 가상 가구 리프레시, 병원 개원 초기 진료 장면, 지역 맞춤 안전 규정 훈련까지—모두 실제 인물과 건축물에 정확히 고정해 연출합니다.',
+          '다세대 가족 만찬, 4챕터 "비포 & 애프터" 럭셔리 리모델링 및 수평선 고정 사전 분양 저택 워크스루, 병원 개원 초기 진료 장면, 지역 맞춤 안전 규정 훈련까지—모두 실제 인물과 건축물에 정확히 고정해 연출합니다.',
         highlights: [
           '사진이 없는 가족 모임, 지역 전통, 시대 고증 주택을 생생하게 연출',
-          '부동산을 위한 가상 인테리어·가구 업데이트 및 활기찬 동네 라이프스타일 스테이징',
+          '4챕터 "비포 & 애프터" 럭셔리 리모델링 및 수평선·해안선 고정 사전 분양·토지 시각화',
           '얼굴 변형 제로로 구현하는 현지화 직장 안전·장비·환자/고객 케어 장면',
         ],
         metricValue: '라이브 스테이징',
@@ -2123,10 +2123,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: 'Aktives Staging & Umgebungs-Lock',
         exampleHeadline: 'Unfotografierte Momente, kulturell authentisch inszeniert',
         exampleDetails:
-          'Inszenieren Sie lebhafte Mehrgenerationen-Dinner, virtuelle Möbel-Refreshes für Immobilien-Exposés, Behandlungsszenen aus der Klinik-Gründerzeit oder regionale Arbeitssicherheits-Übungen – alles fest an Ihre reale Besetzung und Architektur gebunden.',
+          'Inszenieren Sie lebhafte Mehrgenerationen-Dinner, 4-Kapitel-„Vorher & Nachher“-Luxussanierungen und horizontfixierte Pre-Construction-Anwesen-Walkthroughs, Behandlungsszenen aus der Klinik-Gründerzeit oder regionale Arbeitssicherheits-Übungen – alles fest an Ihre reale Besetzung und Architektur gebunden.',
         highlights: [
           'Inszeniert unfotografierte Familienfeiern, regionale Bräuche & epochengerechte Häuser',
-          'Virtuelle Innenraum-/Möbel-Updates & lebendiges Nachbarschafts-Staging für Immobilien',
+          '„Vorher & Nachher“-Luxussanierungen in 4 Kapiteln & horizont-/küstenfixierte Pre-Construction-Grundstücksvisualisierung',
           'Lokalisierte Arbeitsplatzsicherheits-, Geräte- & Patienten-/Kundenbetreuungsszenen ohne Gesichtsdrift',
         ],
         metricValue: 'Aktives Staging',
@@ -2339,10 +2339,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: 'Mise en scène active & verrou d’environnement',
         exampleHeadline: 'Moments jamais photographiés, mis en scène avec authenticité culturelle',
         exampleDetails:
-          'Mettez en scène des dîners multigénérationnels animés, du home staging virtuel pour l’immobilier, des soins d’époque en clinique ou des exercices régionaux de conformité au travail — le tout verrouillé sur vos vrais visages et votre architecture.',
+          'Mettez en scène des dîners multigénérationnels animés, des rénovations de luxe « Avant & Après » en 4 chapitres et des visites pré-construction à horizon verrouillé, des soins d’époque en clinique ou des exercices régionaux de conformité au travail — le tout verrouillé sur vos vrais visages et votre architecture.',
         highlights: [
           'Met en scène réunions familiales non photographiées, traditions régionales & maisons d’époque',
-          'Mises à jour virtuelles d’intérieurs/mobilier & vie de quartier animée pour l’immobilier',
+          'Rénovations de luxe « Avant & Après » en 4 chapitres & visualisation pré-construction sur terrain verrouillée sur l’horizon et le littoral',
           'Scènes localisées de sécurité au travail, équipements & accueil patients/clients sans dérive faciale',
         ],
         metricValue: 'Scène active',
@@ -2555,10 +2555,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: 'Staging attivo e blocco ambientale',
         exampleHeadline: 'Momenti mai fotografati, messi in scena con autenticità culturale',
         exampleDetails:
-          'Metti in scena cene multigenerazionali vivaci, home staging virtuale per immobili, scene storiche di cura in clinica o esercitazioni locali di sicurezza sul lavoro — tutto ancorato al tuo cast e alla tua architettura reali.',
+          'Metti in scena cene multigenerazionali vivaci, ristrutturazioni di lusso "Prima e Dopo" in 4 capitoli e walkthrough pre-costruzione con orizzonte bloccato, scene storiche di cura in clinica o esercitazioni locali di sicurezza sul lavoro — tutto ancorato al tuo cast e alla tua architettura reali.',
         highlights: [
           'Mette in scena feste familiari non fotografate, tradizioni regionali e case d’epoca',
-          'Restyling virtuale di interni/arredi e vita di quartiere attiva per il settore immobiliare',
+          'Ristrutturazioni di lusso "Prima e Dopo" in 4 capitoli e visualizzazione terreni pre-costruzione con orizzonte e costa bloccati',
           'Scene localizzate di sicurezza sul lavoro, attrezzature e cura pazienti/clienti senza deriva dei volti',
         ],
         metricValue: 'Staging attivo',
@@ -2771,10 +2771,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: 'Actieve staging & omgevingslock',
         exampleHeadline: 'Ongefotografeerde momenten, met culturele authenticiteit geënsceneerd',
         exampleDetails:
-          'Ensceneer levendige diners met meerdere generaties, virtuele meubelstyling voor vastgoed, oprichtingsscènes van een praktijk of regionale veiligheidsoefeningen op de werkvloer — allemaal vergrendeld aan jouw echte cast en architectuur.',
+          'Ensceneer levendige diners met meerdere generaties, 4-hoofdstukken "Voor & Na" luxeverbouwingen en horizonvergrendelde nieuwbouw-rondleidingen, oprichtingsscènes van een praktijk of regionale veiligheidsoefeningen op de werkvloer — allemaal vergrendeld aan jouw echte cast en architectuur.',
         highlights: [
           'Ensceneert ongefotografeerde familiefeesten, regionale tradities & tijdseigen woningen',
-          'Virtuele interieur-/meubelupdates & levendige buurtbeleving voor Vastgoed',
+          '"Voor & Na" 4-hoofdstukken luxeverbouwingen & horizon-/kustlijnvergrendelde pre-constructie kavelvisualisatie',
           'Gelokaliseerde veiligheids-, apparatuur- & patiënt-/klantzorgscènes zonder gezichtsdrift',
         ],
         metricValue: 'Actieve staging',
@@ -2987,10 +2987,10 @@ export const LONGFORM_CRAFT_COPY: Record<ClientPortalLocale, LongformCraftLocale
         exampleLabel: 'Активный стейджинг и фиксация среды',
         exampleHeadline: 'Несфотографированные моменты, поставленные с культурной достоверностью',
         exampleDetails:
-          'Ставьте тёплые ужины нескольких поколений, виртуальное обновление мебели для объектов недвижимости, сцены первых лет клиники или региональные тренинги по технике безопасности — всё с привязкой к вашим реальным героям и архитектуре.',
+          'Ставьте тёплые ужины нескольких поколений, 4-главные люксовые реновации «До и после» и прогулки по будущим виллам на стадии предстроительства с фиксацией горизонта, сцены первых лет клиники или региональные тренинги по технике безопасности — всё с привязкой к вашим реальным героям и архитектуре.',
         highlights: [
           'Воссоздаёт несфотографированные семейные встречи, региональные традиции и дома эпохи',
-          'Виртуальное обновление интерьеров/мебели и живой стиль жизни района для недвижимости',
+          'Люксовые реновации «До и после» в 4 главах и визуализация участков до застройки с фиксацией горизонта и береговой линии',
           'Локализованные сцены охраны труда, оборудования и заботы о пациентах/клиентах без искажения лиц',
         ],
         metricValue: 'Живой стейджинг',
