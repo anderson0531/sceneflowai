@@ -895,6 +895,33 @@ describe('KeepsakeCinemaStorefront UI', () => {
     expect(modeMeta?.textContent).toContain('6 Bingeable Episodes')
     expect(ch1Tab?.textContent).toContain('Episode 1')
 
+    // Verify live Chapter 2 multi-format & 3-language stream switcher defaults on Chapter 2
+    const playCh2Btn = anatomy?.querySelector(
+      '[data-testid="play-featured-chapter-btn"]'
+    ) as HTMLButtonElement | null
+    expect(playCh2Btn).toBeTruthy()
+    act(() => playCh2Btn!.click())
+    expect(
+      (anatomy?.querySelector('video') as HTMLVideoElement | null)?.getAttribute('src')
+    ).toBe('/videos/chapter2-fullmotion-en.mp4')
+
+    const jaBtn = anatomy?.querySelector(
+      '[data-testid="chapter2-lang-ja"]'
+    ) as HTMLButtonElement | null
+    const expressBtn = anatomy?.querySelector(
+      '[data-testid="chapter2-format-express"]'
+    ) as HTMLButtonElement | null
+    expect(jaBtn).toBeTruthy()
+    expect(expressBtn).toBeTruthy()
+    act(() => jaBtn!.click())
+    expect(
+      (anatomy?.querySelector('video') as HTMLVideoElement | null)?.getAttribute('src')
+    ).toBe('/videos/chapter2-fullmotion-ja.mp4')
+    act(() => expressBtn!.click())
+    expect(
+      (anatomy?.querySelector('video') as HTMLVideoElement | null)?.getAttribute('src')
+    ).toBe('/videos/chapter2-express-ja.mp4')
+
     // Switch to Chapter 4 (0 photos · unphotographed crisis reenactment)
     const ch4Tab = anatomy?.querySelector('[data-testid="anatomy-chapter-tab-4"]') as HTMLButtonElement | null
     expect(ch4Tab).toBeTruthy()

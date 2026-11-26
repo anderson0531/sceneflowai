@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Check,
   Clock,
   Film,
   Globe,
+  Languages,
   Layers,
   MapPin,
   Mic,
@@ -21,6 +22,21 @@ import { LONGFORM_CHAPTER_ANATOMY_COPY } from '@/config/showcase/longformChapter
 import type { AnatomyDeliveryMode } from '@/config/showcase/longformChapterAnatomyTypes'
 import type { ClientPortalLocale } from '@/lib/intake/clientPortalCopy'
 
+type ChapterVideoLang = 'en' | 'es' | 'ja'
+type ChapterVideoFormat = 'fullmotion' | 'express'
+
+const CHAPTER2_VIDEO_LANGS: readonly { code: ChapterVideoLang; label: string }[] = [
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Español' },
+  { code: 'ja', label: '日本語' },
+]
+
+function resolveChapterVideoLang(locale: ClientPortalLocale): ChapterVideoLang {
+  if (locale === 'es') return 'es'
+  if (locale === 'ja') return 'ja'
+  return 'en'
+}
+
 export interface LongformChapterAnatomyProps {
   variant: 'storefront' | 'studio'
   locale: ClientPortalLocale
@@ -28,14 +44,32 @@ export interface LongformChapterAnatomyProps {
 
 export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnatomyProps) {
   const [deliveryMode, setDeliveryMode] = useState<AnatomyDeliveryMode>('feature')
-  const [activeChapterIdx, setActiveChapterIdx] = useState(0)
+  // Default to Chapter 2 (1966 Ocean Crossing) — live playable 30-shot featured chapter
+  const [activeChapterIdx, setActiveChapterIdx] = useState(1)
   const [playingSampleChapter, setPlayingSampleChapter] = useState(false)
+  const [videoLang, setVideoLang] = useState<ChapterVideoLang>(() =>
+    resolveChapterVideoLang(locale)
+  )
+  const [videoFormat, setVideoFormat] = useState<ChapterVideoFormat>('fullmotion')
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const pendingSeekRatioRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    setVideoLang(resolveChapterVideoLang(locale))
+  }, [locale])
 
   const copy = LONGFORM_CHAPTER_ANATOMY_COPY[locale] ?? LONGFORM_CHAPTER_ANATOMY_COPY.en
   const isStorefront = variant === 'storefront'
   const brandTxt = (s: string) => (isStorefront ? s.replace(/SceneFlow/g, 'Keepsake Cinema') : s)
 
   const activeChapter = copy.chapters[activeChapterIdx] ?? copy.chapters[0]
+  const isFeaturedChapter2 = activeChapter.id === 'ch2_crossing'
+  const resolvedVideoUrl = isFeaturedChapter2
+    ? `/videos/chapter2-${videoFormat}-${videoLang}.mp4`
+    : activeChapter.sampleVideoUrl
+  const resolvedPosterUrl = isFeaturedChapter2
+    ? '/videos/chapter2-poster.webp'
+    : activeChapter.posterImage
 
   const accentText = isStorefront ? 'text-[#F0CB92]' : 'text-emerald-300'
   const accentBorder = isStorefront ? 'border-[#DFB473]/35' : 'border-emerald-400/35'
@@ -50,6 +84,22 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
   const handleSelectChapter = (idx: number) => {
     setActiveChapterIdx(idx)
     setPlayingSampleChapter(false)
+    pendingSeekRatioRef.current = null
+  }
+
+  const handleSwitchChapterStream = (
+    nextFormat: ChapterVideoFormat,
+    nextLang: ChapterVideoLang
+  ) => {
+    const el = videoRef.current
+    if (el && Number.isFinite(el.duration) && el.duration > 0 && el.currentTime > 0) {
+      pendingSeekRatioRef.current = Math.min(0.98, el.currentTime / el.duration)
+    } else {
+      pendingSeekRatioRef.current = null
+    }
+    setVideoFormat(nextFormat)
+    setVideoLang(nextLang)
+    setPlayingSampleChapter(true)
   }
 
   return (
@@ -195,19 +245,29 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
           <div className="lg:col-span-5 flex flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-black/45 p-4">
             <div className="space-y-3">
               <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-slate-950">
-                {activeChapter.sampleVideoUrl && playingSampleChapter ? (
+                {resolvedVideoUrl && playingSampleChapter ? (
                   <video
-                    src={activeChapter.sampleVideoUrl}
-                    poster={activeChapter.posterImage}
+                    ref={videoRef}
+                    key={resolvedVideoUrl}
+                    src={resolvedVideoUrl}
+                    poster={resolvedPosterUrl}
                     controls
                     autoPlay
                     playsInline
+                    onLoadedMetadata={(e) => {
+                      const ratio = pendingSeekRatioRef.current
+                      if (ratio != null && Number.isFinite(e.currentTarget.duration)) {
+                        e.currentTarget.currentTime = ratio * e.currentTarget.duration
+                        pendingSeekRatioRef.current = null
+                      }
+                      void e.currentTarget.play().catch(() => {})
+                    }}
                     className="h-full w-full object-cover"
                   />
                 ) : (
                   <>
                     <img
-                      src={activeChapter.posterImage}
+                      src={resolvedPosterUrl}
                       alt={activeChapter.title}
                       loading="lazy"
                       className="h-full w-full object-cover"
@@ -227,9 +287,10 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                         </span>
                       )}
                     </div>
-                    {activeChapter.sampleVideoUrl && (
+                    {resolvedVideoUrl && (
                       <button
                         type="button"
+                        data-testid="play-featured-chapter-btn"
                         onClick={() => setPlayingSampleChapter(true)}
                         className="absolute inset-0 flex items-center justify-center bg-black/25 hover:bg-black/15 transition cursor-pointer"
                       >
@@ -252,6 +313,60 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                   </>
                 )}
               </div>
+
+              {/* Live Multi-Format (Full-Motion vs. Express 4K) & 3-Language (EN/ES/JA) Switcher for Chapter 2 */}
+              {isFeaturedChapter2 && (
+                <div
+                  data-testid="chapter2-stream-controls"
+                  className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 flex flex-wrap items-center justify-between gap-2"
+                >
+                  <div className="inline-flex rounded-lg border border-white/10 bg-black/50 p-0.5 gap-0.5">
+                    <button
+                      type="button"
+                      data-testid="chapter2-format-fullmotion"
+                      onClick={() => handleSwitchChapterStream('fullmotion', videoLang)}
+                      className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition cursor-pointer ${
+                        videoFormat === 'fullmotion'
+                          ? activeModeBtn
+                          : 'text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      Full-Motion (30 Clips)
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="chapter2-format-express"
+                      onClick={() => handleSwitchChapterStream('express', videoLang)}
+                      className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition cursor-pointer ${
+                        videoFormat === 'express'
+                          ? activeModeBtn
+                          : 'text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      Express 4K Cinema
+                    </button>
+                  </div>
+
+                  <div className="inline-flex items-center gap-1">
+                    <Languages className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    {CHAPTER2_VIDEO_LANGS.map((item) => (
+                      <button
+                        key={item.code}
+                        type="button"
+                        data-testid={`chapter2-lang-${item.code}`}
+                        onClick={() => handleSwitchChapterStream(videoFormat, item.code)}
+                        className={`rounded-md px-2 py-1 text-[11px] font-semibold transition cursor-pointer ${
+                          videoLang === item.code
+                            ? activeModeBtn
+                            : 'border border-white/10 bg-black/40 text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <h4 className="font-serif text-lg sm:text-xl font-semibold text-white leading-snug">

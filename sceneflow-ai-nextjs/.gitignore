@@ -137,6 +137,12 @@ google-cloud-cli*.tar.gz
 !/public/videos/video-memoir-trailer-ar.mp4
 !/public/videos/video-memoir-trailer-th.webm
 !/public/videos/video-memoir-trailer-th.mp4
+!/public/videos/chapter2-fullmotion-en.mp4
+!/public/videos/chapter2-fullmotion-es.mp4
+!/public/videos/chapter2-fullmotion-ja.mp4
+!/public/videos/chapter2-express-en.mp4
+!/public/videos/chapter2-express-es.mp4
+!/public/videos/chapter2-express-ja.mp4
 
 # debug
 npm-debug.log*
