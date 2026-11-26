@@ -6,6 +6,8 @@ from ffmpeg_utils import (
     _overlay_audio_filter,
     build_concat_ffmpeg_command,
     build_stream_copy_ffmpeg_command,
+    build_video_encode_args,
+    fallback_nvenc_cmd_to_libx264,
     full_stream_copy_block_reason,
     narration_bass_filters,
     resolve_encode_settings,
@@ -44,6 +46,30 @@ class EncodeSettingsTest(unittest.TestCase):
 
     def test_draft_is_faster(self):
         self.assertEqual(resolve_encode_settings('draft'), ('veryfast', '28'))
+
+    def test_nvenc_hardware_encoding_args_and_cpu_fallback(self):
+        nv_delivery = build_video_encode_args('delivery', use_nvenc=True)
+        self.assertEqual(nv_delivery[:4], ['-c:v', 'h264_nvenc', '-preset', 'p5'])
+        self.assertIn('-spatial-aq', nv_delivery)
+        self.assertIn('-temporal-aq', nv_delivery)
+        self.assertEqual(nv_delivery[nv_delivery.index('-cq') + 1], '23')
+
+        nv_draft = build_video_encode_args('draft', use_nvenc=True)
+        self.assertEqual(nv_draft[:4], ['-c:v', 'h264_nvenc', '-preset', 'p2'])
+        self.assertNotIn('-spatial-aq', nv_draft)
+        self.assertEqual(nv_draft[nv_draft.index('-cq') + 1], '28')
+
+        cpu_delivery = build_video_encode_args('delivery', use_nvenc=False)
+        self.assertEqual(cpu_delivery, ['-c:v', 'libx264', '-preset', 'medium', '-crf', '23', '-pix_fmt', 'yuv420p'])
+
+        nv_cmd = ['ffmpeg', '-y', '-i', 'in.mp4', *nv_delivery, '-c:a', 'aac', '/tmp/out.mp4']
+        rewritten = fallback_nvenc_cmd_to_libx264(nv_cmd, encode_quality='delivery')
+        self.assertIsNotNone(rewritten)
+        self.assertIn('libx264', rewritten)
+        self.assertNotIn('h264_nvenc', rewritten)
+        self.assertNotIn('-spatial-aq', rewritten)
+        self.assertEqual(rewritten[-3:], ['-c:a', 'aac', '/tmp/out.mp4'])
+        self.assertIsNone(fallback_nvenc_cmd_to_libx264(rewritten))
 
     def test_reencode_command_uses_draft_preset(self):
         cmd = build_concat_ffmpeg_command(

@@ -1,6 +1,8 @@
-# SceneFlow AI FFmpeg Video Renderer
+# SceneFlow AI FFmpeg Video Renderer (CPU libx264 Edition)
 # Deployed to GCP Cloud Run Jobs for cost-effective video rendering
 # Cost: ~$0.002/min vs Shotstack $0.25/min (100x cheaper)
+# For NVIDIA L4 GPU hardware-accelerated NVENC (`h264_nvenc`) 4K mastering,
+# use `Dockerfile.gpu` via `scripts/deploy-ffmpeg-renderer.sh --gpu`.
 
 FROM python:3.11-slim
 

@@ -31,6 +31,7 @@ from ffmpeg_utils import (
     build_concat_ffmpeg_command,
     build_stream_copy_ffmpeg_command,
     full_stream_copy_block_reason,
+    is_nvenc_available,
     parse_frame_rate,
     resolve_encode_settings,
     run_ffmpeg,
@@ -602,7 +603,8 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
     # Build and run FFmpeg command for video concatenation
     log("=== Starting FFmpeg Render (Concatenation) ===")
     preset, crf = resolve_encode_settings(encode_quality)
-    log(f"Encode settings: quality={encode_quality if encode_quality in ('delivery', 'draft') else 'delivery'} preset={preset} crf={crf}")
+    encoder_label = "h264_nvenc (NVIDIA L4 GPU)" if is_nvenc_available() else "libx264 (CPU)"
+    log(f"Encode settings: encoder={encoder_label} quality={encode_quality if encode_quality in ('delivery', 'draft') else 'delivery'} preset={preset} crf={crf}")
     if text_overlays:
         log(f"Text overlays to apply: {len(text_overlays)}")
         for i, overlay in enumerate(text_overlays):

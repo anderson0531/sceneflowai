@@ -1,0 +1,62 @@
+# SceneFlow AI FFmpeg Video Renderer — NVIDIA L4 GPU (CUDA / NVENC) Edition
+# Deployed to GCP Cloud Run Jobs with `--gpu=1 --gpu-type=nvidia-l4` for
+# hardware-accelerated 4K H.264/HEVC mastering (`h264_nvenc`), with automatic
+# `libx264` CPU fallback if no GPU device is attached at runtime.
+
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,video,utility \
+    ENABLE_NVENC=true
+
+# Install Python 3, FFmpeg (Ubuntu 22.04 build includes NVENC/CUVID via ffnvcodec),
+# and fonts for localized chapter title sequences & text overlays.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-venv \
+    ffmpeg \
+    curl \
+    fonts-dejavu-core \
+    fonts-liberation \
+    fonts-liberation2 \
+    fonts-noto-cjk \
+    fontconfig \
+    unzip \
+    wget \
+    && ln -sf /usr/bin/python3 /usr/bin/python \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Google Fonts (Montserrat, Roboto, RobotoMono) for text overlays
+RUN mkdir -p /usr/share/fonts/google/montserrat \
+             /usr/share/fonts/google/roboto \
+             /usr/share/fonts/google/robotomono && \
+    wget -q "https://github.com/JulietaUla/Montserrat/archive/refs/heads/master.zip" -O /tmp/montserrat.zip && \
+    unzip -q /tmp/montserrat.zip -d /tmp && \
+    find /tmp/Montserrat-master/fonts -name "*.ttf" -exec cp {} /usr/share/fonts/google/montserrat/ \; 2>/dev/null || true && \
+    wget -q "https://github.com/googlefonts/roboto/releases/download/v2.138/roboto-android.zip" -O /tmp/roboto.zip && \
+    unzip -q /tmp/roboto.zip -d /tmp/roboto && \
+    find /tmp/roboto -name "*.ttf" -exec cp {} /usr/share/fonts/google/roboto/ \; 2>/dev/null || true && \
+    wget -q "https://github.com/googlefonts/RobotoMono/archive/refs/heads/main.zip" -O /tmp/robotomono.zip && \
+    unzip -q /tmp/robotomono.zip -d /tmp && \
+    find /tmp/RobotoMono-main -name "*.ttf" -exec cp {} /usr/share/fonts/google/robotomono/ \; 2>/dev/null || true && \
+    rm -rf /tmp/*.zip /tmp/Montserrat-* /tmp/roboto /tmp/RobotoMono-* && \
+    fc-cache -fv
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+COPY render.py .
+COPY ffmpeg_utils.py .
+
+RUN mkdir -p /tmp/assets /tmp/output
+
+ENV JOB_SPEC_PATH=""
+ENV GCS_BUCKET=""
+ENV CALLBACK_URL=""
+
+CMD ["python3", "render.py"]

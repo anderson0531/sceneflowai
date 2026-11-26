@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Shield, CheckCircle2, ArrowRight, FileSearch, Volume2 } from 'lucide-react'
+import { Shield, CheckCircle2, ArrowRight, Cpu, FileSearch, Volume2 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { MobileDisclosure } from '@/components/landing/MobileDisclosure'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
@@ -129,6 +129,10 @@ export function TrustSafeguardSection() {
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-950/70 px-2.5 py-1 font-medium text-gray-200">
             <Image src="/images/vertex-ai-logo.svg" alt="Vertex AI" width={16} height={16} />
             Vertex AI
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-slate-950/70 px-2.5 py-1 font-medium text-gray-200">
+            <Cpu className="h-3.5 w-3.5 text-lime-400" aria-hidden />
+            NVIDIA L4 · NVENC 4K Mastering
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-950/70 px-2.5 py-1 font-medium text-gray-200">
             <Volume2 className="h-3.5 w-3.5 text-emerald-400" aria-hidden />

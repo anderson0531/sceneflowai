@@ -17,6 +17,15 @@
 set -e
 
 # Configuration - customize these values
+# Pass `--gpu` or set `USE_NVIDIA_GPU=true` to deploy on GCP Cloud Run Jobs with
+# an NVIDIA L4 GPU (`--gpu=1 --gpu-type=nvidia-l4`) and hardware NVENC (`h264_nvenc`).
+USE_NVIDIA_GPU="${USE_NVIDIA_GPU:-false}"
+for arg in "$@"; do
+    case "$arg" in
+        --gpu) USE_NVIDIA_GPU="true" ;;
+    esac
+done
+
 PROJECT_ID="${GCP_PROJECT_ID:-your-project-id}"
 REGION="${GCP_REGION:-us-central1}"
 GCS_BUCKET="${GCS_RENDER_BUCKET:-sceneflow-render-jobs}"
@@ -24,6 +33,18 @@ ARTIFACT_REPO="${ARTIFACT_REGISTRY_REPO:-sceneflow}"
 IMAGE_NAME="ffmpeg-renderer"
 JOB_NAME="${CLOUD_RUN_JOB_NAME:-sceneflow-ffmpeg-renderer}"
 CLOUD_SQL_INSTANCE="${CLOUD_SQL_INSTANCE_CONNECTION_NAME:-sceneflowai-2d3e6:us-central1:sceneflow-db}"
+
+if [ "$USE_NVIDIA_GPU" = "true" ]; then
+    DOCKERFILE_NAME="Dockerfile.gpu"
+    IMAGE_TAG="gpu-latest"
+    JOB_CPU="${CLOUD_RUN_CPU:-4}"
+    JOB_MEMORY="${CLOUD_RUN_MEMORY:-16Gi}"
+else
+    DOCKERFILE_NAME="Dockerfile"
+    IMAGE_TAG="latest"
+    JOB_CPU="${CLOUD_RUN_CPU:-4}"
+    JOB_MEMORY="${CLOUD_RUN_MEMORY:-8Gi}"
+fi
 
 # Colors for output
 RED='\033[0;31m'
@@ -48,8 +69,9 @@ echo "  Project ID:      $PROJECT_ID"
 echo "  Region:          $REGION"
 echo "  GCS Bucket:      $GCS_BUCKET"
 echo "  Artifact Repo:   $ARTIFACT_REPO"
-echo "  Image Name:      $IMAGE_NAME"
+echo "  Image Name:      $IMAGE_NAME:$IMAGE_TAG ($DOCKERFILE_NAME)"
 echo "  Job Name:        $JOB_NAME"
+echo "  NVIDIA L4 GPU:   $USE_NVIDIA_GPU (CPU=$JOB_CPU, Memory=$JOB_MEMORY)"
 echo ""
 
 # Confirm before proceeding
@@ -95,9 +117,9 @@ if [ ! -d "$DOCKER_DIR" ]; then
     exit 1
 fi
 
-IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REPO}/${IMAGE_NAME}:latest"
+IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REPO}/${IMAGE_NAME}:${IMAGE_TAG}"
 
-docker build -t $IMAGE_URI $DOCKER_DIR
+docker build -f "${DOCKER_DIR}/${DOCKERFILE_NAME}" -t $IMAGE_URI $DOCKER_DIR
 
 echo -e "${GREEN}Step 6: Pushing Docker image to Artifact Registry...${NC}"
 docker push $IMAGE_URI
@@ -128,15 +150,26 @@ echo -e "${GREEN}Step 8: Creating Cloud Run Job...${NC}"
 gcloud run jobs describe $JOB_NAME --region=$REGION 2>/dev/null && \
     gcloud run jobs delete $JOB_NAME --region=$REGION --quiet || true
 
+GPU_FLAGS=()
+ENV_VARS="GCS_BUCKET=$GCS_BUCKET,CLOUD_SQL_INSTANCE_CONNECTION_NAME=$CLOUD_SQL_INSTANCE,DB_USER=\${DB_USER},DB_PASSWORD=\${DB_PASSWORD},DB_NAME=\${DB_NAME:-sceneflow}"
+
+if [ "$USE_NVIDIA_GPU" = "true" ]; then
+    GPU_FLAGS=(--gpu=1 --gpu-type=nvidia-l4 --no-gpu-zonal-redundancy)
+    ENV_VARS="${ENV_VARS},ENABLE_NVENC=true,NVIDIA_VISIBLE_DEVICES=all,NVIDIA_DRIVER_CAPABILITIES=compute,video,utility"
+else
+    ENV_VARS="${ENV_VARS},ENABLE_NVENC=false"
+fi
+
 gcloud run jobs create $JOB_NAME \
     --image=$IMAGE_URI \
     --region=$REGION \
     --task-timeout=24h \
     --max-retries=0 \
-    --cpu=4 \
-    --memory=8Gi \
+    --cpu="$JOB_CPU" \
+    --memory="$JOB_MEMORY" \
+    "${GPU_FLAGS[@]}" \
     --add-cloudsql-instances="$CLOUD_SQL_INSTANCE" \
-    --set-env-vars="GCS_BUCKET=$GCS_BUCKET,CLOUD_SQL_INSTANCE_CONNECTION_NAME=$CLOUD_SQL_INSTANCE,DB_USER=\${DB_USER},DB_PASSWORD=\${DB_PASSWORD},DB_NAME=\${DB_NAME:-sceneflow}" \
+    --set-env-vars="$ENV_VARS" \
     --service-account="${PROJECT_ID}-compute@developer.gserviceaccount.com"
 
 # Set IAM permissions for the service account

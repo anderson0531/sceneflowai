@@ -36,6 +36,147 @@ ENCODE_QUALITY_SETTINGS = {
     'draft': {'preset': 'veryfast', 'crf': '28'},
 }
 
+# Hardware-accelerated NVIDIA L4 NVENC (h264_nvenc) encode settings.
+# Used automatically when running on Cloud Run NVIDIA L4 GPU with ENABLE_NVENC!=false;
+# otherwise transparently falls back to CPU libx264 above.
+NVENC_QUALITY_SETTINGS = {
+    'delivery': {
+        'preset': 'p5',
+        'tune': 'hq',
+        'cq': '23',
+        'spatial_aq': True,
+        'temporal_aq': True,
+    },
+    'draft': {
+        'preset': 'p2',
+        'tune': 'ull',
+        'cq': '28',
+        'spatial_aq': False,
+        'temporal_aq': False,
+    },
+}
+
+_NVENC_AVAILABLE_CACHE: Optional[bool] = None
+
+
+def is_nvenc_available(force_refresh: bool = False) -> bool:
+    """
+    Detect whether NVIDIA NVENC (`h264_nvenc`) hardware encoding is usable.
+
+    Checks:
+      1. `ENABLE_NVENC` env var (set to 'false'/'0'/'no' to force CPU libx264)
+      2. Presence of an NVIDIA GPU device (`/dev/nvidia0` or `nvidia-smi` exit 0)
+      3. FFmpeg binary compiled with `h264_nvenc` encoder support
+    """
+    global _NVENC_AVAILABLE_CACHE
+    if not force_refresh and _NVENC_AVAILABLE_CACHE is not None:
+        return _NVENC_AVAILABLE_CACHE
+
+    env_flag = os.environ.get('ENABLE_NVENC', 'auto').strip().lower()
+    if env_flag in ('0', 'false', 'no', 'off'):
+        _NVENC_AVAILABLE_CACHE = False
+        return False
+
+    has_gpu_device = os.path.exists('/dev/nvidia0')
+    if not has_gpu_device:
+        try:
+            smi = subprocess.run(
+                ['nvidia-smi', '-L'],
+                capture_output=True,
+                text=True,
+                timeout=3,
+            )
+            has_gpu_device = smi.returncode == 0 and 'GPU' in (smi.stdout or '')
+        except Exception:
+            has_gpu_device = False
+
+    if not has_gpu_device:
+        _NVENC_AVAILABLE_CACHE = False
+        return False
+
+    try:
+        enc = subprocess.run(
+            ['ffmpeg', '-hide_banner', '-encoders'],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        has_nvenc = enc.returncode == 0 and 'h264_nvenc' in (enc.stdout or '')
+    except Exception:
+        has_nvenc = False
+
+    _NVENC_AVAILABLE_CACHE = has_nvenc
+    return has_nvenc
+
+
+def build_video_encode_args(
+    encode_quality: Optional[str] = 'delivery',
+    use_nvenc: Optional[bool] = None,
+) -> List[str]:
+    """
+    Build FFmpeg H.264 output encoding flags.
+
+    Uses NVIDIA L4 hardware encoding (`h264_nvenc`) when available, and falls back
+    seamlessly to CPU `libx264` otherwise.
+    """
+    quality = encode_quality if encode_quality in ENCODE_QUALITY_SETTINGS else 'delivery'
+    nvenc_active = is_nvenc_available() if use_nvenc is None else bool(use_nvenc)
+
+    if nvenc_active:
+        nv = NVENC_QUALITY_SETTINGS[quality]
+        args = [
+            '-c:v', 'h264_nvenc',
+            '-preset', nv['preset'],
+            '-tune', nv['tune'],
+            '-rc', 'vbr',
+            '-cq', nv['cq'],
+            '-b:v', '0',
+        ]
+        if nv['spatial_aq']:
+            args.extend(['-spatial-aq', '1'])
+        if nv['temporal_aq']:
+            args.extend(['-temporal-aq', '1'])
+        args.extend(['-pix_fmt', 'yuv420p'])
+        return args
+
+    spec = ENCODE_QUALITY_SETTINGS[quality]
+    return [
+        '-c:v', 'libx264',
+        '-preset', spec['preset'],
+        '-crf', spec['crf'],
+        '-pix_fmt', 'yuv420p',
+    ]
+
+
+def fallback_nvenc_cmd_to_libx264(
+    cmd: List[str],
+    encode_quality: Optional[str] = 'delivery',
+) -> Optional[List[str]]:
+    """
+    If `cmd` targets `h264_nvenc`, return an equivalent CPU `libx264` command
+    for transparent runtime fallback; otherwise return None.
+    """
+    if 'h264_nvenc' not in cmd:
+        return None
+    cpu_args = build_video_encode_args(encode_quality=encode_quality, use_nvenc=False)
+    nvenc_flags_with_values = {'-c:v', '-preset', '-tune', '-rc', '-cq', '-b:v', '-spatial-aq', '-temporal-aq', '-pix_fmt'}
+    rebuilt: List[str] = []
+    inserted = False
+    i = 0
+    while i < len(cmd):
+        token = cmd[i]
+        if token == '-c:v' and i + 1 < len(cmd) and cmd[i + 1] == 'h264_nvenc':
+            rebuilt.extend(cpu_args)
+            inserted = True
+            i += 2
+            continue
+        if inserted and token in nvenc_flags_with_values and i + 1 < len(cmd):
+            i += 2
+            continue
+        rebuilt.append(token)
+        i += 1
+    return rebuilt if inserted else None
+
 # Requested fps must match probed fps this closely before stream copy is safe.
 FPS_MATCH_TOLERANCE = 0.01
 
@@ -915,13 +1056,8 @@ def build_ffmpeg_command(
     if audio_output:
         cmd.extend(['-map', audio_output])
     
-    # Output settings
-    cmd.extend([
-        '-c:v', 'libx264',
-        '-preset', 'medium',
-        '-crf', '23',
-        '-pix_fmt', 'yuv420p',
-    ])
+    # Output settings (uses NVIDIA L4 h264_nvenc when available, automatic libx264 fallback)
+    cmd.extend(build_video_encode_args(encode_quality='delivery'))
     
     if audio_output:
         cmd.extend([
@@ -961,6 +1097,19 @@ def run_ffmpeg(cmd: List[str], timeout: int = 3600) -> bool:
         
         if result.returncode != 0:
             print(f"[FFmpeg] Error: {result.stderr}")
+            fallback_cmd = fallback_nvenc_cmd_to_libx264(cmd)
+            if fallback_cmd is not None:
+                print("[FFmpeg] NVENC encode failed; automatically falling back to CPU libx264...")
+                retry = subprocess.run(
+                    fallback_cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                )
+                if retry.returncode == 0:
+                    print("[FFmpeg] Fallback CPU libx264 render completed successfully")
+                    return True
+                print(f"[FFmpeg] Fallback CPU libx264 error: {retry.stderr}")
             return False
         
         print("[FFmpeg] Render completed successfully")
@@ -1915,13 +2064,8 @@ def build_concat_ffmpeg_command(
     if audio_output:
         cmd.extend(['-map', audio_output])
     
-    # Output settings
-    cmd.extend([
-        '-c:v', 'libx264',
-        '-preset', preset,
-        '-crf', crf,
-        '-pix_fmt', 'yuv420p',
-    ])
+    # Output settings (uses NVIDIA L4 h264_nvenc when available, automatic libx264 fallback)
+    cmd.extend(build_video_encode_args(encode_quality=encode_quality))
     
     if audio_output:
         cmd.extend([
