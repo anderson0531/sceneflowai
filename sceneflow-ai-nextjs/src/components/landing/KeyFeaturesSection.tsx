@@ -560,8 +560,8 @@ export default function KeyFeaturesSection() {
             {t('subtitle')}
           </p>
 
-          {/* Clean 2-Mode Switcher: Browse by Use Case vs Browse by Studio Room */}
-          <div className="mt-6 flex w-full flex-col items-stretch justify-center gap-1.5 rounded-2xl border border-slate-800 bg-slate-900/90 p-1.5 sm:inline-flex sm:w-auto sm:flex-row sm:items-center">
+          {/* Clean 2-Mode Switcher: compact 2-col segmented toggle on mobile */}
+          <div className="mt-5 grid w-full grid-cols-2 items-stretch justify-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 p-1 sm:mt-6 sm:inline-flex sm:w-auto sm:flex-row sm:items-center sm:rounded-2xl sm:p-1.5">
             <button
               type="button"
               title={useCaseCopy.viewByUseCaseLabel}
@@ -572,13 +572,13 @@ export default function KeyFeaturesSection() {
                 setDesktopDetailOffsetPx(0)
               }}
               className={cn(
-                'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:w-auto sm:text-sm cursor-pointer',
+                'inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-[11px] font-semibold transition-all sm:w-auto sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm cursor-pointer',
                 browseMode === 'use-case'
                   ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 shadow'
                   : 'text-gray-300 hover:bg-slate-800 hover:text-white'
               )}
             >
-              <Briefcase className="h-4 w-4 shrink-0" aria-hidden />
+              <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" aria-hidden />
               <span className="whitespace-normal leading-tight">
                 {useCaseCopy.viewByUseCaseLabel}
               </span>
@@ -593,13 +593,13 @@ export default function KeyFeaturesSection() {
                 setDesktopDetailOffsetPx(0)
               }}
               className={cn(
-                'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all sm:w-auto sm:text-sm cursor-pointer',
+                'inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-[11px] font-semibold transition-all sm:w-auto sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm cursor-pointer',
                 browseMode === 'room'
                   ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow'
                   : 'text-gray-300 hover:bg-slate-800 hover:text-white'
               )}
             >
-              <Layers className="h-4 w-4 shrink-0" aria-hidden />
+              <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" aria-hidden />
               <span className="whitespace-normal leading-tight">{useCaseCopy.viewByRoomLabel}</span>
             </button>
           </div>
@@ -607,11 +607,11 @@ export default function KeyFeaturesSection() {
 
         {browseMode === 'use-case' ? (
           <>
-            {/* 5 Use-Case Track Tabs */}
+            {/* 5 Use-Case Track Tabs — sleek horizontal scroll strip on mobile, wrapped row on desktop */}
             <div
               role="tablist"
               aria-label={useCaseCopy.viewByUseCaseLabel}
-              className="mb-5 grid grid-cols-1 gap-1.5 rounded-2xl border border-slate-800 bg-slate-900/70 p-1.5 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-center"
+              className="mb-4 sm:mb-5 flex flex-nowrap gap-1.5 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/70 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-2 sm:overflow-visible sm:rounded-2xl lg:flex lg:flex-wrap lg:justify-center"
             >
               {useCaseCopy.tracks.map((track) => {
                 const isActive = track.id === activeTrack.id
@@ -624,13 +624,13 @@ export default function KeyFeaturesSection() {
                     aria-selected={isActive}
                     onClick={() => selectTrack(track.id)}
                     className={cn(
-                      'rounded-xl px-3.5 py-2.5 text-left text-xs font-semibold leading-snug transition-all sm:text-sm lg:text-center cursor-pointer',
+                      'shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-left text-xs font-semibold leading-snug transition-all sm:whitespace-normal sm:rounded-xl sm:px-3.5 sm:py-2.5 sm:text-sm lg:text-center cursor-pointer',
                       isActive
                         ? 'border border-emerald-400/50 bg-emerald-500/15 text-white shadow-sm'
                         : 'border border-transparent text-gray-400 hover:bg-slate-800/70 hover:text-white'
                     )}
                   >
-                    <span className="whitespace-normal break-words">{track.tabLabel}</span>
+                    <span className="sm:whitespace-normal sm:break-words">{track.tabLabel}</span>
                   </button>
                 )
               })}

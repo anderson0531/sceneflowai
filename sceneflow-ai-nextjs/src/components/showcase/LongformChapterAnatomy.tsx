@@ -28,6 +28,7 @@ import {
   type RealEstateBlueprintMode,
 } from '@/config/showcase/realEstateAnatomyCopy'
 import { getLocalizedShowcaseVideoUrl } from '@/config/showcase/showcaseLocaleCopy'
+import { MobileDisclosure } from '@/components/landing/MobileDisclosure'
 import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 import type { ClientPortalLocale } from '@/lib/intake/clientPortalCopy'
 
@@ -122,64 +123,74 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
     setPlayingSampleChapter(true)
   }
 
+  const disclosureAccent = isStorefront ? 'gold' : 'emerald'
+
   return (
     <div
       data-testid={`longform-chapter-anatomy-${variant}`}
-      className="mt-10 sm:mt-14 space-y-6"
+      className="mt-6 sm:mt-10 space-y-5 sm:space-y-6"
     >
       {/* Top Vertical Blueprint Switcher: Life Story Reenactment vs. Real Estate Underwriting */}
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <button
-          type="button"
-          data-testid="anatomy-vertical-lifestory"
-          aria-pressed={activeVertical === 'lifestory'}
-          onClick={() => {
-            setActiveVertical('lifestory')
-            setPlayingReSample(false)
-          }}
-          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs sm:text-sm font-semibold transition cursor-pointer ${
-            activeVertical === 'lifestory'
-              ? activeModeBtn + ' border-transparent'
-              : 'border-white/15 bg-white/[0.04] text-slate-200 hover:border-white/30 hover:bg-white/[0.08]'
-          }`}
+      <div className="flex justify-center">
+        <div
+          role="group"
+          aria-label={copy.eyebrow}
+          className="grid w-full grid-cols-1 gap-1.5 rounded-xl border border-white/12 bg-black/45 p-1 min-[420px]:grid-cols-2 sm:inline-flex sm:w-auto"
         >
-          <Film className="w-4 h-4 shrink-0" />
-          <span>{reCopy.verticalTabLifeStory}</span>
-        </button>
-        <button
-          type="button"
-          data-testid="anatomy-vertical-realestate"
-          aria-pressed={activeVertical === 'realestate'}
-          onClick={() => {
-            setActiveVertical('realestate')
-            setPlayingSampleChapter(false)
-          }}
-          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs sm:text-sm font-semibold transition cursor-pointer ${
-            activeVertical === 'realestate'
-              ? activeModeBtn + ' border-transparent'
-              : 'border-white/15 bg-white/[0.04] text-slate-200 hover:border-white/30 hover:bg-white/[0.08]'
-          }`}
-        >
-          <Building2 className="w-4 h-4 shrink-0" />
-          <span>{reCopy.verticalTabRealEstate}</span>
-        </button>
+          <button
+            type="button"
+            title={reCopy.verticalTabLifeStory}
+            data-testid="anatomy-vertical-lifestory"
+            aria-pressed={activeVertical === 'lifestory'}
+            onClick={() => {
+              setActiveVertical('lifestory')
+              setPlayingReSample(false)
+            }}
+            className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold leading-snug transition cursor-pointer sm:px-4 ${
+              activeVertical === 'lifestory'
+                ? activeModeBtn
+                : 'text-slate-200 hover:bg-white/[0.06] hover:text-white'
+            }`}
+          >
+            <Film className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span className="whitespace-normal break-words text-center">{reCopy.verticalTabLifeStory}</span>
+          </button>
+          <button
+            type="button"
+            title={reCopy.verticalTabRealEstate}
+            data-testid="anatomy-vertical-realestate"
+            aria-pressed={activeVertical === 'realestate'}
+            onClick={() => {
+              setActiveVertical('realestate')
+              setPlayingSampleChapter(false)
+            }}
+            className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold leading-snug transition cursor-pointer sm:px-4 ${
+              activeVertical === 'realestate'
+                ? activeModeBtn
+                : 'text-slate-200 hover:bg-white/[0.06] hover:text-white'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span className="whitespace-normal break-words text-center">{reCopy.verticalTabRealEstate}</span>
+          </button>
+        </div>
       </div>
 
       {/* Header + Mode Toggle + Chapter Timeline (Life Story OR Real Estate Underwriting) */}
       {activeVertical === 'realestate' ? (
         <div
           data-testid="realestate-underwriting-anatomy"
-          className="rounded-2xl border border-white/12 bg-gradient-to-br from-[#0F1423] via-[#0B0F1A] to-[#080B13] p-5 sm:p-7 shadow-2xl shadow-black/50 space-y-6"
+          className="rounded-2xl border border-white/12 bg-gradient-to-br from-[#0F1423] via-[#0B0F1A] to-[#080B13] p-4 sm:p-7 shadow-2xl shadow-black/50 space-y-4 sm:space-y-6"
         >
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
-            <div className="space-y-2.5 max-w-3xl">
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full border ${accentBorder} ${accentBgSoft} px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${accentText}`}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-5">
+            <div className="space-y-2 max-w-3xl">
+              <p
+                className={`!mb-0 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] ${accentText}`}
               >
                 <Home className="w-3.5 h-3.5 shrink-0" />
                 <span>{brandTxt(reCopy.eyebrow)}</span>
-              </span>
-              <h3 className="font-serif text-xl sm:text-2xl lg:text-3xl font-semibold text-white leading-snug">
+              </p>
+              <h3 className="font-serif text-lg sm:text-2xl lg:text-3xl font-semibold text-white leading-snug">
                 {brandTxt(reCopy.heading)}
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -187,61 +198,63 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
               </p>
             </div>
 
-            <div className="shrink-0 space-y-2">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="shrink-0 space-y-1.5 w-full lg:w-auto">
+              <div className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 {reCopy.modeLabel}
               </div>
               <div
                 role="group"
                 aria-label={reCopy.modeLabel}
-                className="inline-flex rounded-xl border border-white/15 bg-black/50 p-1 gap-1"
+                className="grid grid-cols-2 w-full sm:inline-flex sm:w-auto rounded-xl border border-white/15 bg-black/50 p-1 gap-1"
               >
                 <button
                   type="button"
+                  title={reCopy.modeRemodelLabel}
                   data-testid="re-mode-remodel"
                   aria-pressed={reMode === 'remodel'}
                   onClick={() => setReMode('remodel')}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition cursor-pointer ${
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-2 text-[11px] sm:text-xs font-semibold leading-tight transition cursor-pointer ${
                     reMode === 'remodel'
                       ? activeModeBtn
                       : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
                   }`}
                 >
                   <Home className="w-3.5 h-3.5 shrink-0" />
-                  <span>{reCopy.modeRemodelLabel}</span>
+                  <span className="whitespace-normal break-words">{reCopy.modeRemodelLabel}</span>
                 </button>
                 <button
                   type="button"
+                  title={reCopy.modePreconLabel}
                   data-testid="re-mode-precon"
                   aria-pressed={reMode === 'preconstruction'}
                   onClick={() => setReMode('preconstruction')}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition cursor-pointer ${
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-2 text-[11px] sm:text-xs font-semibold leading-tight transition cursor-pointer ${
                     reMode === 'preconstruction'
                       ? activeModeBtn
                       : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
                   }`}
                 >
                   <Building2 className="w-3.5 h-3.5 shrink-0" />
-                  <span>{reCopy.modePreconLabel}</span>
+                  <span className="whitespace-normal break-words">{reCopy.modePreconLabel}</span>
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/40 px-3.5 py-2 text-xs">
             <div className="flex items-center gap-2 font-medium text-white">
               <Sparkles className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
               <span data-testid="re-mode-meta">
                 {reMode === 'remodel' ? reCopy.modeRemodelMeta : reCopy.modePreconMeta}
               </span>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[11px] font-semibold text-slate-200">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-slate-200">
                 <Clock className="w-3 h-3 shrink-0" />
                 <span>{reCopy.totalRuntimeBadge}</span>
               </span>
               <span
-                className={`inline-flex items-center gap-1 rounded-full border ${accentBorder} ${accentBgSoft} px-2.5 py-0.5 text-[11px] font-semibold ${accentText}`}
+                className={`inline-flex items-center gap-1 rounded-md border ${accentBorder} ${accentBgSoft} px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold ${accentText}`}
               >
                 <span>{brandTxt(reCopy.retainerRangeBadge)}</span>
               </span>
@@ -249,7 +262,7 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
           </div>
 
           {/* 4-Chapter Real Estate Split-Chapter Timeline */}
-          <div role="tablist" aria-label={reCopy.heading} className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+          <div role="tablist" aria-label={reCopy.heading} className="grid grid-cols-2 lg:grid-cols-4 gap-2">
             {reCopy.chapters.map((chapter, idx) => {
               const isSelected = idx === reChapterIdx
               const badge = reMode === 'remodel' ? chapter.remodelBadge : chapter.preconBadge
@@ -259,13 +272,14 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                   key={chapter.id}
                   type="button"
                   role="tab"
+                  title={`${badge} — ${title}`}
                   data-testid={`re-chapter-tab-${chapter.chapterNumber}`}
                   aria-selected={isSelected}
                   onClick={() => {
                     setReChapterIdx(idx)
                     setPlayingReSample(false)
                   }}
-                  className={`text-start rounded-xl border p-3.5 transition flex flex-col justify-between gap-1.5 cursor-pointer ${
+                  className={`text-start rounded-xl border p-2.5 sm:p-3.5 transition flex flex-col justify-between gap-1 cursor-pointer ${
                     isSelected
                       ? activeTabClasses
                       : 'border-white/10 bg-white/[0.02] hover:border-white/25 hover:bg-white/[0.05]'
@@ -273,7 +287,7 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                 >
                   <div className="flex items-center justify-between gap-1">
                     <span
-                      className={`text-[11px] font-bold uppercase tracking-wider ${
+                      className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider ${
                         isSelected ? accentText : 'text-slate-400'
                       }`}
                     >
@@ -283,10 +297,10 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                       {chapter.durationLabel}
                     </span>
                   </div>
-                  <div className="text-xs sm:text-sm font-semibold text-white leading-snug">
+                  <div className="text-xs sm:text-sm font-semibold text-white leading-snug line-clamp-2">
                     {title}
                   </div>
-                  <div className="text-[10px] text-slate-400 tabular-nums">{chapter.timecodeRange}</div>
+                  <div className="hidden sm:block text-[10px] text-slate-400 tabular-nums">{chapter.timecodeRange}</div>
                 </button>
               )
             })}
@@ -296,9 +310,9 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
           <div
             role="tabpanel"
             data-testid="re-chapter-panel"
-            className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-stretch"
           >
-            <div className="lg:col-span-5 flex flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-black/45 p-4">
+            <div className="lg:col-span-5 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-white/10 bg-black/45 p-3.5 sm:p-4">
               <div className="space-y-3">
                 <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-slate-950">
                   {playingReSample ? (
@@ -319,9 +333,9 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                         className="h-full w-full object-cover"
                       />
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
-                      <div className="absolute top-2.5 start-2.5">
+                      <div className="hidden sm:block absolute top-2.5 start-2.5">
                         <span
-                          className={`rounded-full border ${accentBorder} bg-black/75 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${accentText}`}
+                          className={`rounded-md border ${accentBorder} bg-black/75 backdrop-blur-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${accentText}`}
                         >
                           {reMode === 'remodel' ? activeReChapter.remodelBadge : activeReChapter.preconBadge} ·{' '}
                           {activeReChapter.timecodeRange}
@@ -329,21 +343,22 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                       </div>
                       <button
                         type="button"
+                        title={reCopy.watchSampleCta}
                         onClick={() => setPlayingReSample(true)}
                         className="absolute inset-0 flex items-center justify-center bg-black/25 hover:bg-black/15 transition cursor-pointer"
                       >
                         <span
-                          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold shadow-xl ${activeModeBtn}`}
+                          className={`inline-flex items-center gap-1.5 sm:gap-2 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-semibold shadow-xl ${activeModeBtn}`}
                         >
                           <Play className="w-3.5 h-3.5 fill-current" />
                           <span>{reCopy.watchSampleCta}</span>
                         </span>
                       </button>
-                      <div className="absolute bottom-2.5 inset-x-3 flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-white drop-shadow">
+                      <div className="absolute bottom-2 inset-x-2.5 sm:bottom-2.5 sm:inset-x-3 flex items-center justify-between gap-2">
+                        <span className="text-[11px] sm:text-xs font-semibold text-white drop-shadow line-clamp-1">
                           {reMode === 'remodel' ? activeReChapter.remodelTitle : activeReChapter.preconTitle}
                         </span>
-                        <span className="rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-slate-200 tabular-nums">
+                        <span className="rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-slate-200 tabular-nums shrink-0">
                           {activeReChapter.durationLabel}
                         </span>
                       </div>
@@ -352,7 +367,7 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                 </div>
 
                 <div>
-                  <h4 className="font-serif text-lg sm:text-xl font-semibold text-white leading-snug">
+                  <h4 className="font-serif text-base sm:text-xl font-semibold text-white leading-snug">
                     {reMode === 'remodel' ? activeReChapter.remodelTitle : activeReChapter.preconTitle}
                   </h4>
                   <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -361,7 +376,7 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                 </div>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3.5 space-y-1.5">
+              <div className="hidden md:block rounded-xl border border-white/10 bg-white/[0.03] p-3.5 space-y-1.5">
                 <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                   <Upload className="w-3.5 h-3.5 shrink-0 text-slate-300" />
                   <span>{reCopy.inputBoxHeading}</span>
@@ -375,75 +390,101 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
               </div>
             </div>
 
-            <div className="lg:col-span-7 flex flex-col justify-between gap-4 rounded-2xl border border-white/12 bg-gradient-to-br from-[#12182B] via-[#0B101D] to-[#080B13] p-4 sm:p-5">
-              <div className="space-y-4">
-                <span
-                  className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${accentText}`}
-                >
-                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                  <span>{brandTxt(reCopy.recreatedBoxHeading)}</span>
-                </span>
+            <div className="lg:col-span-7 flex flex-col">
+              <MobileDisclosure
+                title={brandTxt(reCopy.recreatedBoxHeading)}
+                subtitle={activeReChapter.clientInputLabel}
+                icon={<Sparkles className={`w-4 h-4 ${accentText}`} />}
+                locale={locale}
+                accent={disclosureAccent}
+                testId="re-chapter-details-disclosure"
+                className="flex-1 flex flex-col"
+                contentClassName="flex-1 md:flex md:flex-col"
+              >
+                <div className="flex-1 flex flex-col justify-between gap-4 rounded-2xl border border-white/12 bg-gradient-to-br from-[#12182B] via-[#0B101D] to-[#080B13] p-4 sm:p-5">
+                  <div className="space-y-3.5 sm:space-y-4">
+                    <div className="md:hidden rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1">
+                      <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <Upload className="w-3.5 h-3.5 shrink-0 text-slate-300" />
+                        <span>{reCopy.inputBoxHeading}</span>
+                      </div>
+                      <div className={`text-xs font-semibold ${accentText}`}>
+                        {activeReChapter.clientInputLabel}
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {brandTxt(activeReChapter.clientInputDetail)}
+                      </p>
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
-                      <MapPin className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
-                      <span>{reCopy.labelStructure}</span>
+                    <span
+                      className={`hidden md:inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${accentText}`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                      <span>{brandTxt(reCopy.recreatedBoxHeading)}</span>
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                          <MapPin className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                          <span>{reCopy.labelStructure}</span>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {activeReChapter.fidelityStructure}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                          <Building2 className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                          <span>{reCopy.labelArchitecture}</span>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {activeReChapter.fidelityArchitecture}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                          <Users className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                          <span>{reCopy.labelLifestyle}</span>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {activeReChapter.fidelityLifestyle}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                          <Mic className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                          <span>{reCopy.labelBuyerAudio}</span>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {activeReChapter.fidelityBuyerAudio}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      {activeReChapter.fidelityStructure}
-                    </p>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
-                      <Building2 className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
-                      <span>{reCopy.labelArchitecture}</span>
-                    </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      {activeReChapter.fidelityArchitecture}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
-                      <Users className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
-                      <span>{reCopy.labelLifestyle}</span>
-                    </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      {activeReChapter.fidelityLifestyle}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
-                      <Mic className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
-                      <span>{reCopy.labelBuyerAudio}</span>
-                    </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      {activeReChapter.fidelityBuyerAudio}
-                    </p>
+
+                  <div
+                    className={`rounded-xl border ${accentBorder} ${accentBgSoft} px-3.5 py-3 flex items-start gap-2.5 text-xs text-slate-200 leading-relaxed`}
+                  >
+                    <ShieldCheck className={`w-4 h-4 shrink-0 mt-0.5 ${accentText}`} />
+                    <span>{reCopy.complianceNote}</span>
                   </div>
                 </div>
-              </div>
-
-              <div
-                className={`rounded-xl border ${accentBorder} ${accentBgSoft} px-4 py-3 flex items-start gap-2.5 text-xs text-slate-200 leading-relaxed`}
-              >
-                <ShieldCheck className={`w-4 h-4 shrink-0 mt-0.5 ${accentText}`} />
-                <span>{reCopy.complianceNote}</span>
-              </div>
+              </MobileDisclosure>
             </div>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-white/12 bg-gradient-to-br from-[#0F1423] via-[#0B0F1A] to-[#080B13] p-5 sm:p-7 shadow-2xl shadow-black/50 space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
-          <div className="space-y-2.5 max-w-3xl">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full border ${accentBorder} ${accentBgSoft} px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${accentText}`}
+        <div className="rounded-2xl border border-white/12 bg-gradient-to-br from-[#0F1423] via-[#0B0F1A] to-[#080B13] p-4 sm:p-7 shadow-2xl shadow-black/50 space-y-4 sm:space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-5">
+          <div className="space-y-2 max-w-3xl">
+            <p
+              className={`!mb-0 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] ${accentText}`}
             >
               <Layers className="w-3.5 h-3.5 shrink-0" />
               <span>{copy.eyebrow}</span>
-            </span>
-            <h3 className="font-serif text-xl sm:text-2xl lg:text-3xl font-semibold text-white leading-snug">
+            </p>
+            <h3 className="font-serif text-lg sm:text-2xl lg:text-3xl font-semibold text-white leading-snug">
               {brandTxt(copy.heading)}
             </h3>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -452,62 +493,64 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
           </div>
 
           {/* Delivery Format Toggle: 1-Hour+ Feature Film OR Multi-Episode Series */}
-          <div className="shrink-0 space-y-2">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <div className="shrink-0 space-y-1.5 w-full lg:w-auto">
+            <div className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               {copy.modeLabel}
             </div>
             <div
               role="group"
               aria-label={copy.modeLabel}
-              className="inline-flex rounded-xl border border-white/15 bg-black/50 p-1 gap-1"
+              className="grid grid-cols-2 w-full sm:inline-flex sm:w-auto rounded-xl border border-white/15 bg-black/50 p-1 gap-1"
             >
               <button
                 type="button"
+                title={copy.modeFeatureLabel}
                 data-testid="anatomy-mode-feature"
                 aria-pressed={deliveryMode === 'feature'}
                 onClick={() => setDeliveryMode('feature')}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-2 text-[11px] sm:text-xs font-semibold leading-tight transition cursor-pointer ${
                   deliveryMode === 'feature'
                     ? activeModeBtn
                     : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
                 }`}
               >
                 <Film className="w-3.5 h-3.5 shrink-0" />
-                <span>{copy.modeFeatureLabel}</span>
+                <span className="whitespace-normal break-words">{copy.modeFeatureLabel}</span>
               </button>
               <button
                 type="button"
+                title={copy.modeSeriesLabel}
                 data-testid="anatomy-mode-series"
                 aria-pressed={deliveryMode === 'series'}
                 onClick={() => setDeliveryMode('series')}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-2 text-[11px] sm:text-xs font-semibold leading-tight transition cursor-pointer ${
                   deliveryMode === 'series'
                     ? activeModeBtn
                     : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
                 }`}
               >
                 <Tv className="w-3.5 h-3.5 shrink-0" />
-                <span>{copy.modeSeriesLabel}</span>
+                <span className="whitespace-normal break-words">{copy.modeSeriesLabel}</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Active Format Summary Strip */}
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/40 px-3.5 py-2 text-xs">
           <div className="flex items-center gap-2 font-medium text-white">
             <Sparkles className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
             <span data-testid="anatomy-mode-meta">
               {deliveryMode === 'feature' ? copy.modeFeatureMeta : copy.modeSeriesMeta}
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[11px] font-semibold text-slate-200">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-slate-200">
               <Clock className="w-3 h-3 shrink-0" />
               <span>{copy.totalRuntimeBadge}</span>
             </span>
             <span
-              className={`inline-flex items-center gap-1 rounded-full border ${accentBorder} ${accentBgSoft} px-2.5 py-0.5 text-[11px] font-semibold ${accentText}`}
+              className={`inline-flex items-center gap-1 rounded-md border ${accentBorder} ${accentBgSoft} px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold ${accentText}`}
             >
               <span>{copy.totalFramesBadge}</span>
             </span>
@@ -529,10 +572,11 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                 key={chapter.id}
                 type="button"
                 role="tab"
+                title={`${unitLabel} — ${chapter.title} (${chapter.durationLabel})`}
                 data-testid={`anatomy-chapter-tab-${chapter.chapterNumber}`}
                 aria-selected={isSelected}
                 onClick={() => handleSelectChapter(idx)}
-                className={`text-start rounded-xl border p-3 transition flex flex-col justify-between gap-1.5 cursor-pointer ${
+                className={`text-start rounded-xl border p-2.5 sm:p-3 transition flex flex-col justify-between gap-1 cursor-pointer ${
                   isSelected
                     ? activeTabClasses
                     : 'border-white/10 bg-white/[0.02] hover:border-white/25 hover:bg-white/[0.05]'
@@ -540,7 +584,7 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
               >
                 <div className="flex items-center justify-between gap-1">
                   <span
-                    className={`text-[11px] font-bold uppercase tracking-wider ${
+                    className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider ${
                       isSelected ? accentText : 'text-slate-400'
                     }`}
                   >
@@ -553,7 +597,7 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                 <div className="text-xs font-semibold text-white leading-snug line-clamp-2">
                   {chapter.title}
                 </div>
-                <div className="text-[10px] text-slate-400 truncate">
+                <div className="hidden sm:block text-[10px] text-slate-400 line-clamp-1">
                   {deliveryMode === 'feature' ? chapter.timecodeRange : chapter.eraBadge}
                 </div>
               </button>
@@ -565,10 +609,10 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
         <div
           role="tabpanel"
           data-testid="anatomy-chapter-panel"
-          className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch"
+          className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-stretch"
         >
           {/* Left Visual & Chapter Context Column */}
-          <div className="lg:col-span-5 flex flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-black/45 p-4">
+          <div className="lg:col-span-5 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-white/10 bg-black/45 p-3.5 sm:p-4">
             <div className="space-y-3">
               <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-slate-950">
                 {resolvedVideoUrl && playingSampleChapter ? (
@@ -599,16 +643,16 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                       className="h-full w-full object-cover"
                     />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
-                    <div className="absolute top-2.5 start-2.5 flex flex-wrap items-center gap-1.5">
+                    <div className="hidden sm:flex absolute top-2.5 start-2.5 flex-wrap items-center gap-1.5">
                       <span
-                        className={`rounded-full border ${accentBorder} bg-black/75 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${accentText}`}
+                        className={`rounded-md border ${accentBorder} bg-black/75 backdrop-blur-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${accentText}`}
                       >
                         {deliveryMode === 'feature'
                           ? `${activeChapter.featureLabel} · ${activeChapter.timecodeRange}`
                           : `${activeChapter.seriesLabel} · ${activeChapter.durationLabel}`}
                       </span>
                       {activeChapter.featuredChapterBadge && (
-                        <span className="rounded-full border border-cyan-400/40 bg-cyan-950/80 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-semibold text-cyan-200">
+                        <span className="rounded-md border border-cyan-400/40 bg-cyan-950/80 backdrop-blur-sm px-2 py-0.5 text-[10px] font-semibold text-cyan-200">
                           {activeChapter.featuredChapterBadge}
                         </span>
                       )}
@@ -616,23 +660,24 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                     {resolvedVideoUrl && (
                       <button
                         type="button"
+                        title={copy.watchChapterCta}
                         data-testid="play-featured-chapter-btn"
                         onClick={() => setPlayingSampleChapter(true)}
                         className="absolute inset-0 flex items-center justify-center bg-black/25 hover:bg-black/15 transition cursor-pointer"
                       >
                         <span
-                          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold shadow-xl ${activeModeBtn}`}
+                          className={`inline-flex items-center gap-1.5 sm:gap-2 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-semibold shadow-xl ${activeModeBtn}`}
                         >
                           <Play className="w-3.5 h-3.5 fill-current" />
                           <span>{copy.watchChapterCta}</span>
                         </span>
                       </button>
                     )}
-                    <div className="absolute bottom-2.5 inset-x-3 flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-white drop-shadow">
+                    <div className="absolute bottom-2 inset-x-2.5 sm:bottom-2.5 sm:inset-x-3 flex items-center justify-between gap-2">
+                      <span className="text-[11px] sm:text-xs font-semibold text-white drop-shadow line-clamp-1">
                         {activeChapter.eraBadge}
                       </span>
-                      <span className="rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-slate-200 tabular-nums">
+                      <span className="rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-slate-200 tabular-nums shrink-0">
                         {activeChapter.durationLabel}
                       </span>
                     </div>
@@ -644,14 +689,15 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
               {isFeaturedChapter2 && (
                 <div
                   data-testid="chapter2-stream-controls"
-                  className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 flex flex-wrap items-center justify-between gap-2"
+                  className="rounded-xl border border-white/10 bg-white/[0.03] p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2"
                 >
-                  <div className="inline-flex rounded-lg border border-white/10 bg-black/50 p-0.5 gap-0.5">
+                  <div className="grid grid-cols-2 w-full sm:w-auto sm:inline-flex rounded-lg border border-white/10 bg-black/50 p-0.5 gap-0.5">
                     <button
                       type="button"
+                      title="Full-Motion (30 Clips)"
                       data-testid="chapter2-format-fullmotion"
                       onClick={() => handleSwitchChapterStream('fullmotion', videoLang)}
-                      className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition cursor-pointer ${
+                      className={`rounded-md px-2 py-1 text-[11px] font-semibold transition cursor-pointer text-center ${
                         videoFormat === 'fullmotion'
                           ? activeModeBtn
                           : 'text-slate-300 hover:text-white'
@@ -661,9 +707,10 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                     </button>
                     <button
                       type="button"
+                      title="Express 4K Cinema"
                       data-testid="chapter2-format-express"
                       onClick={() => handleSwitchChapterStream('express', videoLang)}
-                      className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition cursor-pointer ${
+                      className={`rounded-md px-2 py-1 text-[11px] font-semibold transition cursor-pointer text-center ${
                         videoFormat === 'express'
                           ? activeModeBtn
                           : 'text-slate-300 hover:text-white'
@@ -679,6 +726,7 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
                       <button
                         key={item.code}
                         type="button"
+                        title={item.label}
                         data-testid={`chapter2-lang-${item.code}`}
                         onClick={() => handleSwitchChapterStream(videoFormat, item.code)}
                         className={`rounded-md px-2 py-1 text-[11px] font-semibold transition cursor-pointer ${
@@ -695,7 +743,7 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
               )}
 
               <div>
-                <h4 className="font-serif text-lg sm:text-xl font-semibold text-white leading-snug">
+                <h4 className="font-serif text-base sm:text-xl font-semibold text-white leading-snug">
                   {activeChapter.title}
                 </h4>
                 <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -704,8 +752,8 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
               </div>
             </div>
 
-            {/* What You Provide Card */}
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3.5 space-y-1.5">
+            {/* What You Provide Card (desktop visible here; on mobile tucked inside disclosure below) */}
+            <div className="hidden md:block rounded-xl border border-white/10 bg-white/[0.03] p-3.5 space-y-1.5">
               <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 <Upload className="w-3.5 h-3.5 shrink-0 text-slate-300" />
                 <span>{copy.inputBoxHeading}</span>
@@ -719,142 +767,179 @@ export function LongformChapterAnatomy({ variant, locale }: LongformChapterAnato
             </div>
           </div>
 
-          {/* Right Reenactment Breakdown Column */}
-          <div className="lg:col-span-7 flex flex-col justify-between gap-4 rounded-2xl border border-white/12 bg-gradient-to-br from-[#12182B] via-[#0B101D] to-[#080B13] p-4 sm:p-5">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${accentText}`}
-                >
-                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                  <span>{brandTxt(copy.recreatedBoxHeading)}</span>
-                </span>
-                {activeChapter.featuredChapterBadge && (
-                  <span className="text-[11px] font-medium text-cyan-200/90">
-                    {copy.sampleChapterReadyBadge}
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
-                    <Users className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
-                    <span>{copy.labelPeople}</span>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    {activeChapter.reenactmentPeople}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
-                    <MapPin className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
-                    <span>{copy.labelLocation}</span>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    {activeChapter.reenactmentLocation}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
-                    <Globe className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
-                    <span>{copy.labelCulture}</span>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    {activeChapter.reenactmentCulture}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
-                    <Mic className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
-                    <span>{copy.labelAudioProps}</span>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    {activeChapter.reenactmentAudioProps}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Living Continuity Vault Episodic Callout */}
-            <div
-              className={`rounded-xl border ${accentBorder} ${accentBgSoft} px-4 py-3 flex items-start gap-2.5 text-xs text-slate-200 leading-relaxed`}
+          {/* Right Reenactment Breakdown Column (collapsible on mobile, always expanded on md+) */}
+          <div className="lg:col-span-7 flex flex-col">
+            <MobileDisclosure
+              title={brandTxt(copy.recreatedBoxHeading)}
+              subtitle={`${copy.inputBoxHeading}: ${activeChapter.clientInputLabel}`}
+              icon={<Sparkles className={`w-4 h-4 ${accentText}`} />}
+              locale={locale}
+              accent={disclosureAccent}
+              testId="chapter-details-disclosure"
+              className="flex-1 flex flex-col"
+              contentClassName="flex-1 md:flex md:flex-col"
             >
-              <RefreshCw className={`w-4 h-4 shrink-0 mt-0.5 ${accentText}`} />
-              <span>{brandTxt(copy.livingVaultNote)}</span>
-            </div>
+              <div className="flex-1 flex flex-col justify-between gap-4 rounded-2xl border border-white/12 bg-gradient-to-br from-[#12182B] via-[#0B101D] to-[#080B13] p-4 sm:p-5">
+                <div className="space-y-3.5 sm:space-y-4">
+                  {/* Mobile-only What You Provide card inside disclosure */}
+                  <div className="md:hidden rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1">
+                    <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                      <Upload className="w-3.5 h-3.5 shrink-0 text-slate-300" />
+                      <span>{copy.inputBoxHeading}</span>
+                    </div>
+                    <div className={`text-xs font-semibold ${accentText}`}>
+                      {activeChapter.clientInputLabel}
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {activeChapter.clientInputDetail}
+                    </p>
+                  </div>
+
+                  <div className="hidden md:flex flex-wrap items-center justify-between gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${accentText}`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                      <span>{brandTxt(copy.recreatedBoxHeading)}</span>
+                    </span>
+                    {activeChapter.featuredChapterBadge && (
+                      <span className="text-[11px] font-medium text-cyan-200/90">
+                        {copy.sampleChapterReadyBadge}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                        <Users className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                        <span>{copy.labelPeople}</span>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {activeChapter.reenactmentPeople}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                        <MapPin className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                        <span>{copy.labelLocation}</span>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {activeChapter.reenactmentLocation}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                        <Globe className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                        <span>{copy.labelCulture}</span>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {activeChapter.reenactmentCulture}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white">
+                        <Mic className={`w-3.5 h-3.5 shrink-0 ${accentText}`} />
+                        <span>{copy.labelAudioProps}</span>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {activeChapter.reenactmentAudioProps}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Living Continuity Vault Episodic Callout */}
+                <div
+                  className={`rounded-xl border ${accentBorder} ${accentBgSoft} px-3.5 py-3 flex items-start gap-2.5 text-xs text-slate-200 leading-relaxed`}
+                >
+                  <RefreshCw className={`w-4 h-4 shrink-0 mt-0.5 ${accentText}`} />
+                  <span>{brandTxt(copy.livingVaultNote)}</span>
+                </div>
+              </div>
+            </MobileDisclosure>
           </div>
         </div>
         </div>
       )}
 
-      {/* Why Short-Form AI Tools Collapse at 1-Hour+ Scale (Architectural Math Strip) */}
-      <div
-        data-testid="longform-vs-shortform-math"
-        className="rounded-2xl border border-white/12 bg-[#080C15]/95 p-5 sm:p-6 shadow-xl shadow-black/40 space-y-5"
+      {/* Why Short-Form AI Tools Collapse at 1-Hour+ Scale (Collapsible on Mobile, Expanded on md+) */}
+      <MobileDisclosure
+        title={brandTxt(copy.mathHeading)}
+        subtitle={brandTxt(copy.mathSubtitle)}
+        badge={`${copy.mathStats.length}`}
+        icon={<Layers className={`w-4 h-4 ${accentText}`} />}
+        locale={locale}
+        accent={disclosureAccent}
+        testId="longform-math-disclosure"
       >
-        <div className="max-w-3xl space-y-1.5">
-          <h4 className="font-serif text-lg sm:text-xl font-semibold text-white">
-            {brandTxt(copy.mathHeading)}
-          </h4>
-          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-            {brandTxt(copy.mathSubtitle)}
-          </p>
-        </div>
+        <div
+          data-testid="longform-vs-shortform-math"
+          className="rounded-2xl border border-white/12 bg-[#080C15]/95 p-4 sm:p-6 shadow-xl shadow-black/40 space-y-4 sm:space-y-5"
+        >
+          <div className="hidden md:block max-w-3xl space-y-1.5">
+            <h4 className="font-serif text-lg sm:text-xl font-semibold text-white">
+              {brandTxt(copy.mathHeading)}
+            </h4>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              {brandTxt(copy.mathSubtitle)}
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
-          {copy.mathStats.map((stat) => (
-            <div
-              key={stat.metric}
-              className="rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-4 flex flex-col justify-between gap-3"
-            >
-              <div>
-                <div className={`text-lg sm:text-xl font-bold tracking-tight ${accentText}`}>
-                  {stat.metric}
-                </div>
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">
-                  {stat.label}
-                </div>
-              </div>
-
-              <div className="space-y-2.5 pt-2 border-t border-white/[0.08]">
-                <div className="flex items-start gap-2 text-xs text-slate-400">
-                  <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-rose-500/15 text-rose-400">
-                    <X className="w-3 h-3" />
-                  </span>
-                  <div>
-                    <span className="font-semibold text-rose-300/90">
-                      {copy.mathShortformLabel}:{' '}
-                    </span>
-                    <span>{stat.shortformReality}</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+            {copy.mathStats.map((stat) => (
+              <div
+                key={stat.metric}
+                className="rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-3.5 sm:p-4 flex flex-col justify-between gap-3"
+              >
+                <div>
+                  <div className={`text-base sm:text-xl font-bold tracking-tight ${accentText}`}>
+                    {stat.metric}
+                  </div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">
+                    {stat.label}
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2 text-xs text-slate-100">
-                  <span
-                    className={`mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
-                      isStorefront
-                        ? 'bg-[#DFB473]/20 text-[#F0CB92]'
-                        : 'bg-emerald-500/20 text-emerald-300'
-                    }`}
-                  >
-                    <Check className="w-3 h-3" />
-                  </span>
-                  <div>
-                    <span className={`font-semibold ${accentText}`}>
-                      {brandTxt(copy.mathSceneFlowLabel)}:{' '}
+                <div className="space-y-2.5 pt-2 border-t border-white/[0.08]">
+                  <div className="flex items-start gap-2 text-xs text-slate-400">
+                    <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-rose-500/15 text-rose-400">
+                      <X className="w-3 h-3" />
                     </span>
-                    <span>{brandTxt(stat.sceneFlowReality)}</span>
+                    <div>
+                      <span className="font-semibold text-rose-300/90">
+                        {copy.mathShortformLabel}:{' '}
+                      </span>
+                      <span>{stat.shortformReality}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2 text-xs text-slate-100">
+                    <span
+                      className={`mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                        isStorefront
+                          ? 'bg-[#DFB473]/20 text-[#F0CB92]'
+                          : 'bg-emerald-500/20 text-emerald-300'
+                      }`}
+                    >
+                      <Check className="w-3 h-3" />
+                    </span>
+                    <div>
+                      <span className={`font-semibold ${accentText}`}>
+                        {brandTxt(copy.mathSceneFlowLabel)}:{' '}
+                      </span>
+                      <span>{brandTxt(stat.sceneFlowReality)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </MobileDisclosure>
     </div>
   )
 }

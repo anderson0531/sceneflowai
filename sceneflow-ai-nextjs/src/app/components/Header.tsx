@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
-import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass, CreditCard, Briefcase, Layers, Smartphone } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass, CreditCard, Briefcase, Layers, Smartphone, Film } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import {
@@ -34,14 +34,26 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [activeSectionId, setActiveSectionId] = useState<string>('studio-tour')
   const { data: session } = useSession()
   const isAuthenticated = !!session?.user
   const user = session?.user
 
+  const blueprintNavLabel = t.has('longformBlueprint') ? t('longformBlueprint') : 'Longform Blueprint'
+  const mobileQuickSections = [
+    { id: 'studio-tour', label: t.has('studioTour') ? t('studioTour') : 'Studio Tour' },
+    { id: 'production-examples', label: t('productionExamples') },
+    { id: 'longform-differentiation', label: blueprintNavLabel },
+    { id: 'video-services', label: t.has('videoServices') ? t('videoServices') : 'Video Business' },
+    { id: 'key-features', label: t('keyFeatures') },
+    { id: 'pricing', label: t('plansPricing') },
+    { id: 'trust-safety', label: t('trustSafety') },
+  ] as const
+
   const loginUrl = getLoginUrl({ returnUrl: getDashboardUrl(), mode: 'login' })
   const signupUrl = getSignupUrlForTier('explorer')
 
-  // Scroll progress tracking
+  // Scroll progress tracking + active section highlight for mobile quick-jump rail
   useEffect(() => {
     const handleScroll = () => {
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight
@@ -53,6 +65,37 @@ export function Header() {
     window.addEventListener('scroll', handleScroll, { passive: true })
     handleScroll() // Check initial state
     return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return
+    const sectionIds = [
+      'studio-tour',
+      'production-examples',
+      'longform-differentiation',
+      'video-services',
+      'key-features',
+      'pricing',
+      'trust-safety',
+    ]
+    const elements = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => Boolean(el))
+    if (elements.length === 0) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)
+        if (visible[0]?.target?.id) {
+          setActiveSectionId(visible[0].target.id)
+        }
+      },
+      { rootMargin: '-25% 0px -55% 0px', threshold: [0.05, 0.2, 0.5] }
+    )
+    for (const el of elements) observer.observe(el)
+    return () => observer.disconnect()
   }, [])
 
   const [isAdmin, setIsAdmin] = useState(false)
@@ -173,6 +216,15 @@ export function Header() {
                 className="flex shrink-0 items-center whitespace-nowrap px-2 2xl:px-3 py-1.5 text-xs 2xl:text-[13px] text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <span>{t('productionExamples')}</span>
+              </button>
+
+              <button
+                type="button"
+                title={blueprintNavLabel}
+                onClick={() => scrollToSection('longform-differentiation')}
+                className="flex shrink-0 items-center whitespace-nowrap px-2 2xl:px-3 py-1.5 text-xs 2xl:text-[13px] text-emerald-300 hover:text-emerald-200 transition-colors cursor-pointer font-medium rounded-lg hover:bg-emerald-500/10"
+              >
+                <span>{blueprintNavLabel}</span>
               </button>
 
               <button
@@ -330,6 +382,37 @@ export function Header() {
               </div>
             </div>
             
+            {/* Slim Sticky Mobile Section Quick-Jump Rail (visible < xl once scrolled past hero) */}
+            {isScrolled && !isMobileMenuOpen && (
+              <nav
+                aria-label="Mobile section quick navigation"
+                data-testid="mobile-section-quick-nav"
+                className="flex items-center gap-1.5 overflow-x-auto border-t border-white/10 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {mobileQuickSections.map((item) => {
+                  const isActive = activeSectionId === item.id
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      title={item.label}
+                      aria-current={isActive ? 'location' : undefined}
+                      onClick={() => scrollToSection(item.id)}
+                      className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
+                        isActive
+                          ? item.id === 'longform-differentiation'
+                            ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-200'
+                            : 'border-cyan-400/60 bg-cyan-500/20 text-cyan-100'
+                          : 'border-white/10 bg-slate-900/75 text-gray-300 hover:border-white/25 hover:text-white'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  )
+                })}
+              </nav>
+            )}
+
             {/* Mobile Menu Dropdown */}
             {isMobileMenuOpen && (
               <div className="xl:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto pb-5 border-t border-gray-800/70 bg-sf-brand-navy/98">
@@ -341,6 +424,10 @@ export function Header() {
                   <button type="button" onClick={() => scrollToSection('production-examples')} className="flex items-center gap-2 text-gray-200 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Clapperboard className="w-4 h-4 text-sf-primary" />
                     {t('productionExamples')}
+                  </button>
+                  <button type="button" onClick={() => scrollToSection('longform-differentiation')} className="flex items-center gap-2 text-emerald-200 hover:text-white hover:bg-emerald-500/15 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Film className="w-4 h-4 text-emerald-400" />
+                    {blueprintNavLabel}
                   </button>
                   <button type="button" onClick={() => scrollToSection('video-services')} className="flex items-center gap-2 text-gray-200 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Briefcase className="w-4 h-4 text-sf-primary" />

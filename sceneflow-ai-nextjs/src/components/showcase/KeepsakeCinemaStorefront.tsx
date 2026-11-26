@@ -412,9 +412,12 @@ export function KeepsakeCinemaStorefront({
             </div>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-6 text-sm text-slate-300 shrink-0">
+          <nav className="hidden lg:flex items-center gap-5 text-sm text-slate-300 shrink-0">
             <a href="#occasions" className="hover:text-white transition">
               {copy.nav.occasions}
+            </a>
+            <a href="#studio-craft" className="text-[#F0CB92] hover:text-white font-medium transition">
+              Longform Blueprint
             </a>
             <a href="#how-it-works" className="hover:text-white transition">
               {copy.nav.howItWorks}
@@ -436,7 +439,7 @@ export function KeepsakeCinemaStorefront({
                 aria-label="Select language and currency"
                 aria-expanded={langMenuOpen}
                 onClick={() => setLangMenuOpen((prev) => !prev)}
-                className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/[0.04] hover:border-[#DFB473]/50 hover:bg-white/[0.08] px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-medium text-slate-200 transition whitespace-nowrap"
+                className="inline-flex items-center gap-1 rounded-lg sm:rounded-full border border-white/15 bg-white/[0.04] hover:border-[#DFB473]/50 hover:bg-white/[0.08] px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-medium text-slate-200 transition whitespace-nowrap"
               >
                 <Globe className="w-3.5 h-3.5 text-[#DFB473] shrink-0" />
                 <span>{copy.shortCode}</span>
@@ -479,7 +482,7 @@ export function KeepsakeCinemaStorefront({
             <button
               type="button"
               onClick={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
-              className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F0CB92] hover:to-[#D8A75E] px-3.5 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold !text-[#090B12] shadow-lg shadow-[#C9974F]/20 transition"
+              className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap rounded-lg sm:rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F0CB92] hover:to-[#D8A75E] px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold !text-[#090B12] shadow-lg shadow-[#C9974F]/20 transition"
             >
               <span className="sm:hidden !text-[#090B12] font-semibold">{txt(copy.nav.ctaMobile)}</span>
               <span className="hidden sm:inline !text-[#090B12] font-semibold">{txt(copy.nav.ctaDesktop)}</span>
@@ -487,6 +490,42 @@ export function KeepsakeCinemaStorefront({
             </button>
           </div>
         </div>
+        {/* Slim Mobile Quick-Jump Strip for Storefront Sections (< lg) */}
+        <nav
+          aria-label="Storefront section quick navigation"
+          className="lg:hidden flex items-center gap-1.5 overflow-x-auto border-t border-white/[0.07] px-4 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          <a
+            href="#occasions"
+            className="shrink-0 whitespace-nowrap rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:text-white"
+          >
+            {copy.nav.occasions}
+          </a>
+          <a
+            href="#studio-craft"
+            className="shrink-0 whitespace-nowrap rounded-lg border border-[#DFB473]/40 bg-[#DFB473]/12 px-2.5 py-1 text-[11px] font-semibold text-[#F0CB92] hover:text-white"
+          >
+            Longform Blueprint
+          </a>
+          <a
+            href="#how-it-works"
+            className="shrink-0 whitespace-nowrap rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:text-white"
+          >
+            {copy.nav.howItWorks}
+          </a>
+          <a
+            href="#express-4k"
+            className="shrink-0 whitespace-nowrap rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:text-white"
+          >
+            {copy.nav.expressQuality}
+          </a>
+          <a
+            href="#faq"
+            className="shrink-0 whitespace-nowrap rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:text-white"
+          >
+            {copy.nav.faq}
+          </a>
+        </nav>
       </header>
 
       {/* Hero Section with Real 16:9 Localized Cinema Theater */}
@@ -499,7 +538,7 @@ export function KeepsakeCinemaStorefront({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Editorial Copy Column */}
             <div className="lg:col-span-6 space-y-5 sm:space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#DFB473]/30 bg-[#DFB473]/10 px-3 py-1.5 text-[11px] sm:text-xs font-medium text-[#F0CB92]">
+              <div className="inline-flex items-center gap-1.5 rounded-lg sm:rounded-full border border-[#DFB473]/30 bg-[#DFB473]/10 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-medium text-[#F0CB92]">
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
                 <span>{copy.hero.eyebrow}</span>
               </div>
@@ -554,20 +593,21 @@ export function KeepsakeCinemaStorefront({
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => openOrderModal(EXPRESS_SHOWCASE_OFFERS[0])}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] px-6 py-3.5 text-sm sm:text-base font-semibold !text-[#090B12] shadow-xl shadow-[#C9974F]/25 transition"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl sm:rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] px-4 py-2.5 sm:px-6 sm:py-3.5 text-xs sm:text-base font-semibold !text-[#090B12] shadow-xl shadow-[#C9974F]/25 transition"
                 >
                   {txt(copy.hero.primaryCta)}
                   <ArrowRight className="w-4 h-4 shrink-0 !text-[#090B12] rtl:rotate-180" />
                 </button>
                 <a
-                  href="#occasions"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-3.5 text-sm font-medium !text-white transition"
+                  href="#studio-craft"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl sm:rounded-full border border-[#DFB473]/35 bg-[#DFB473]/10 hover:bg-[#DFB473]/20 px-4 py-2.5 sm:px-5 sm:py-3.5 text-xs sm:text-sm font-semibold text-[#F0CB92] hover:text-white transition"
                 >
-                  {copy.hero.secondaryCta}
+                  <Layers className="w-3.5 h-3.5 shrink-0" />
+                  <span>{copy.hero.secondaryCta}</span>
                 </a>
               </div>
 
@@ -754,7 +794,7 @@ export function KeepsakeCinemaStorefront({
                   <button
                     type="button"
                     onClick={() => openOrderModal(activeReelOffer)}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] px-3.5 py-2 text-xs font-semibold !text-[#090B12] shadow-md shadow-[#C9974F]/20 transition shrink-0 whitespace-nowrap"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] px-3.5 py-2 text-xs font-semibold !text-[#090B12] shadow-md shadow-[#C9974F]/20 transition shrink-0 whitespace-nowrap"
                   >
                     <span className="!text-[#090B12] font-semibold">
                       {convCopy.startLikeThisCta}
@@ -835,17 +875,17 @@ export function KeepsakeCinemaStorefront({
                 {convCopy.nichePresetCallout}
               </p>
 
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
                 <div
                   role="group"
                   aria-label="Preview format for milestone cards"
-                  className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-full border border-white/15 bg-[#0E1320] p-1"
+                  className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-xl sm:rounded-full border border-white/15 bg-[#0E1320] p-1 gap-1"
                 >
                   <button
                     type="button"
                     aria-pressed={demoFormat === 'express4k'}
                     onClick={() => handleGlobalFormatChange('express4k')}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition text-center whitespace-nowrap ${
+                    className={`rounded-lg sm:rounded-full px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold transition text-center whitespace-nowrap ${
                       demoFormat === 'express4k'
                         ? 'bg-[#DFB473] !text-[#090B12]'
                         : '!text-slate-300 hover:!text-white'
@@ -857,7 +897,7 @@ export function KeepsakeCinemaStorefront({
                     type="button"
                     aria-pressed={demoFormat === 'fullMotion'}
                     onClick={() => handleGlobalFormatChange('fullMotion')}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition text-center whitespace-nowrap ${
+                    className={`rounded-lg sm:rounded-full px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold transition text-center whitespace-nowrap ${
                       demoFormat === 'fullMotion'
                         ? 'bg-emerald-400 !text-[#090B12]'
                         : '!text-slate-300 hover:!text-white'
@@ -867,14 +907,14 @@ export function KeepsakeCinemaStorefront({
                   </button>
                 </div>
 
-                <div className="flex flex-wrap sm:inline-flex w-full sm:w-auto rounded-2xl sm:rounded-full border border-white/15 bg-[#0E1320] p-1 gap-1">
+                <div className="grid grid-cols-3 sm:inline-flex w-full sm:w-auto rounded-xl sm:rounded-full border border-white/15 bg-[#0E1320] p-1 gap-1">
                 <button
                   type="button"
                   onClick={() => {
                     pauseAllCardVideos()
                     setActiveCategory('all')
                   }}
-                  className={`flex-1 sm:flex-none rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center whitespace-nowrap ${
+                  className={`rounded-lg sm:rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-sm font-semibold transition text-center whitespace-nowrap ${
                     activeCategory === 'all'
                       ? 'bg-[#DFB473] !text-[#090B12]'
                       : '!text-slate-300 hover:!text-white'
@@ -888,7 +928,7 @@ export function KeepsakeCinemaStorefront({
                     pauseAllCardVideos()
                     setActiveCategory('milestones')
                   }}
-                  className={`flex-1 sm:flex-none rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center whitespace-nowrap ${
+                  className={`rounded-lg sm:rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-sm font-semibold transition text-center whitespace-nowrap ${
                     activeCategory === 'milestones'
                       ? 'bg-[#DFB473] !text-[#090B12]'
                       : '!text-slate-300 hover:!text-white'
@@ -902,7 +942,7 @@ export function KeepsakeCinemaStorefront({
                     pauseAllCardVideos()
                     setActiveCategory('commercial')
                   }}
-                  className={`flex-1 sm:flex-none rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition text-center whitespace-nowrap ${
+                  className={`rounded-lg sm:rounded-full px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-sm font-semibold transition text-center whitespace-nowrap ${
                     activeCategory === 'commercial'
                       ? 'bg-[#DFB473] !text-[#090B12]'
                       : '!text-slate-300 hover:!text-white'
@@ -1123,7 +1163,7 @@ export function KeepsakeCinemaStorefront({
                       <button
                         type="button"
                         onClick={() => openOrderModal(offer)}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] !text-[#090B12] px-4 py-2.5 sm:py-2 text-xs sm:text-sm font-semibold shadow-md shadow-[#C9974F]/20 transition shrink-0"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl sm:rounded-full bg-gradient-to-r from-[#E6BE7E] to-[#C9974F] hover:from-[#F2D098] hover:to-[#D8A75E] !text-[#090B12] px-4 py-2 text-xs sm:text-sm font-semibold shadow-md shadow-[#C9974F]/20 transition shrink-0"
                       >
                         <span className="!text-[#090B12] font-semibold">
                           {convCopy.startLikeThisCta} · {fmt(offer.blueprintPassUsd)}

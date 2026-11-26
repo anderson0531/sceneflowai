@@ -23,6 +23,7 @@ import {
 import { getBillingUrl } from '@/lib/billing/billingUrls'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { PricingTierGrid } from '@/components/landing/PricingTierGrid'
+import { MobileDisclosure } from '@/components/landing/MobileDisclosure'
 import { PRICING_LANDING_COPY } from '@/config/landing/pricingLandingCopy'
 import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 
@@ -130,150 +131,170 @@ export function PricingCredits() {
           <PricingTierGrid onSelectTier={handlePlanClick} />
         </div>
 
-        {/* 4 Filmmaker Perspectives & Production Strategies */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-14"
+        {/* 4 Filmmaker Perspectives & Production Strategies (Collapsible on mobile) */}
+        <MobileDisclosure
+          title={perspectives.heading}
+          subtitle={perspectives.subheading}
+          badge={`${perspectives.cards.length}`}
+          icon={<Film className="w-4 h-4 text-indigo-400" />}
+          locale={locale}
+          accent="indigo"
+          className="mb-5 md:mb-14"
+          testId="pricing-perspectives-disclosure"
         >
-          <div className="text-center mb-8">
-            <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
-              {perspectives.heading}
-            </h3>
-            <p className="text-sm md:text-base text-gray-400 max-w-3xl mx-auto">
-              {perspectives.subheading}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {perspectives.cards.map((card, idx) => {
-              const Icon = PERSPECTIVE_ICONS[idx] ?? Film
-              return (
-                <div
-                  key={card.id || idx}
-                  className="rounded-2xl border border-slate-800/90 bg-slate-900/60 p-5 flex flex-col justify-between hover:border-indigo-500/30 transition-colors"
-                >
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center shrink-0">
-                        <Icon className="w-4 h-4 text-indigo-400" />
-                      </div>
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-indigo-300">
-                        {card.badge}
-                      </span>
-                    </div>
-                    <h4 className="text-base font-bold text-white mb-2 leading-snug">
-                      {card.title}
-                    </h4>
-                    <p className="text-xs text-gray-400 leading-relaxed mb-4">
-                      {card.description}
-                    </p>
-                  </div>
-                  <div className="pt-3 border-t border-slate-800/80 flex flex-col gap-1">
-                    <span className="text-[11px] uppercase tracking-wider text-gray-500">
-                      {perspectives.recommendedPathLabel ?? 'Recommended path:'}
-                    </span>
-                    <span className="text-sm font-semibold text-emerald-400">
-                      {localizeUsdText(card.recommendedPlan, locale)}
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </motion.div>
-
-        {/* Studio Membership + Continuity Vault & Subscriber Add-On Packs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-14 rounded-2xl border border-slate-800 bg-slate-900/70 p-6 lg:p-8"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left: Membership & Continuity Vault Explanation */}
-            <div className="lg:col-span-5 space-y-3.5">
-              <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-cyan-300">
-                <HardDrive className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
-                <span>{membershipModel.badge}</span>
-              </p>
-              <h3 className="text-xl font-bold text-white leading-snug">
-                {membershipModel.title}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <div className="hidden md:block text-center mb-8">
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
+                {perspectives.heading}
               </h3>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                {membershipModel.description}
+              <p className="text-sm md:text-base text-gray-400 max-w-3xl mx-auto">
+                {perspectives.subheading}
               </p>
-              <div className="space-y-3 pt-1">
-                {membershipModel.pillars.map((pillar, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-xl border border-slate-800 bg-slate-950/60 p-4"
-                  >
-                    <div className="text-sm font-semibold text-white mb-1">{pillar.title}</div>
-                    <p className="text-xs text-gray-400 leading-relaxed">{pillar.description}</p>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            {/* Right: Subscriber Add-On Packs & BYOK */}
-            <div className="lg:col-span-7 space-y-5">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <PlusCircle className="w-4 h-4 text-emerald-400" />
-                  <h4 className="text-lg font-bold text-white">{creditTopUps.title}</h4>
-                </div>
-                <p className="text-xs sm:text-sm text-gray-400">{creditTopUps.subtitle}</p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                {creditTopUps.packs.map((pack, idx) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5 md:gap-4">
+              {perspectives.cards.map((card, idx) => {
+                const Icon = PERSPECTIVE_ICONS[idx] ?? Film
+                return (
                   <div
-                    key={idx}
-                    className="rounded-xl border border-emerald-500/25 bg-gradient-to-br from-emerald-950/20 via-slate-950 to-slate-950 p-4 flex flex-col justify-between"
+                    key={card.id || idx}
+                    className="rounded-2xl border border-slate-800/90 bg-slate-900/60 p-4 sm:p-5 flex flex-col justify-between hover:border-indigo-500/30 transition-colors"
                   >
                     <div>
-                      <div className="text-base font-bold text-white mb-1">
-                        {localizeUsdText(pack.label, locale)}
-                      </div>
-                      {'credits' in pack && pack.credits && (
-                        <div className="text-xs font-semibold text-emerald-400 mb-2">
-                          {pack.credits}
+                      <div className="flex items-center gap-2 mb-2.5 sm:mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center shrink-0">
+                          <Icon className="w-4 h-4 text-indigo-400" />
                         </div>
-                      )}
-                      <p className="text-xs text-gray-400 leading-relaxed">
-                        {localizeUsdText(pack.description, locale)}
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-indigo-300">
+                          {card.badge}
+                        </span>
+                      </div>
+                      <h4 className="text-base font-bold text-white mb-2 leading-snug">
+                        {card.title}
+                      </h4>
+                      <p className="text-xs text-gray-400 leading-relaxed mb-4">
+                        {card.description}
                       </p>
                     </div>
-                  </div>
-                ))}
-              </div>
-
-              {'subscriberNote' in creditTopUps && creditTopUps.subscriberNote && (
-                <p className="text-xs text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3.5 py-2.5">
-                  {creditTopUps.subscriberNote}
-                </p>
-              )}
-
-              {/* BYOK Summary Card */}
-              {rawByok?.title && (
-                <div className="rounded-xl border border-indigo-500/25 bg-indigo-950/15 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <KeyRound className="w-4 h-4 shrink-0 text-indigo-400" />
-                      <span className="text-sm font-bold text-white">{rawByok.title}</span>
-                      <span className="rounded-md bg-indigo-500/20 border border-indigo-500/30 px-2 py-0.5 text-[11px] font-semibold text-indigo-300">
-                        {rawByok.badge}
+                    <div className="pt-3 border-t border-slate-800/80 flex flex-col gap-1">
+                      <span className="text-[11px] uppercase tracking-wider text-gray-500">
+                        {perspectives.recommendedPathLabel ?? 'Recommended path:'}
+                      </span>
+                      <span className="text-sm font-semibold text-emerald-400">
+                        {localizeUsdText(card.recommendedPlan, locale)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 leading-relaxed">{rawByok.description}</p>
                   </div>
-                </div>
-              )}
+                )
+              })}
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </MobileDisclosure>
+
+        {/* Studio Membership + Continuity Vault & Subscriber Add-On Packs (Collapsible on mobile) */}
+        <MobileDisclosure
+          title={`${membershipModel.title} · ${creditTopUps.title}`}
+          subtitle={membershipModel.badge}
+          icon={<HardDrive className="w-4 h-4 text-cyan-400" />}
+          locale={locale}
+          accent="cyan"
+          className="mb-8 md:mb-14"
+          testId="pricing-membership-topups-disclosure"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:p-6 lg:p-8"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+              {/* Left: Membership & Continuity Vault Explanation */}
+              <div className="lg:col-span-5 space-y-3.5">
+                <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-cyan-300">
+                  <HardDrive className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                  <span>{membershipModel.badge}</span>
+                </p>
+                <h3 className="text-xl font-bold text-white leading-snug">
+                  {membershipModel.title}
+                </h3>
+                <p className="text-sm text-gray-400 leading-relaxed">
+                  {membershipModel.description}
+                </p>
+                <div className="space-y-3 pt-1">
+                  {membershipModel.pillars.map((pillar, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-slate-800 bg-slate-950/60 p-4"
+                    >
+                      <div className="text-sm font-semibold text-white mb-1">{pillar.title}</div>
+                      <p className="text-xs text-gray-400 leading-relaxed">{pillar.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: Subscriber Add-On Packs & BYOK */}
+              <div className="lg:col-span-7 space-y-5">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <PlusCircle className="w-4 h-4 text-emerald-400" />
+                    <h4 className="text-lg font-bold text-white">{creditTopUps.title}</h4>
+                  </div>
+                  <p className="text-xs sm:text-sm text-gray-400">{creditTopUps.subtitle}</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  {creditTopUps.packs.map((pack, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-emerald-500/25 bg-gradient-to-br from-emerald-950/20 via-slate-950 to-slate-950 p-4 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="text-base font-bold text-white mb-1">
+                          {localizeUsdText(pack.label, locale)}
+                        </div>
+                        {'credits' in pack && pack.credits && (
+                          <div className="text-xs font-semibold text-emerald-400 mb-2">
+                            {pack.credits}
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-400 leading-relaxed">
+                          {localizeUsdText(pack.description, locale)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {'subscriberNote' in creditTopUps && creditTopUps.subscriberNote && (
+                  <p className="text-xs text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3.5 py-2.5">
+                    {creditTopUps.subscriberNote}
+                  </p>
+                )}
+
+                {/* BYOK Summary Card */}
+                {rawByok?.title && (
+                  <div className="rounded-xl border border-indigo-500/25 bg-indigo-950/15 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <KeyRound className="w-4 h-4 shrink-0 text-indigo-400" />
+                        <span className="text-sm font-bold text-white">{rawByok.title}</span>
+                        <span className="rounded-md bg-indigo-500/20 border border-indigo-500/30 px-2 py-0.5 text-[11px] font-semibold text-indigo-300">
+                          {rawByok.badge}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 leading-relaxed">{rawByok.description}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </MobileDisclosure>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

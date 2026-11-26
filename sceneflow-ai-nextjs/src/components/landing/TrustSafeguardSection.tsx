@@ -4,7 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Shield, CheckCircle2, ArrowRight, FileSearch, Volume2 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { MobileDisclosure } from '@/components/landing/MobileDisclosure'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
 
@@ -17,6 +18,7 @@ const TIER_GRADIENTS = [
 ] as const
 
 export function TrustSafeguardSection() {
+  const locale = useLocale()
   const t = useTranslations('trustSafeguard')
   const rawTiers = t.raw('tiers')
   const tiers = (Array.isArray(rawTiers) ? rawTiers : []) as Array<{
@@ -77,32 +79,43 @@ export function TrustSafeguardSection() {
           ))}
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-10">
-          {tiers.map((tier, index) => (
-            <motion.div
-              key={tier.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.08 }}
-              className={`rounded-2xl border bg-gradient-to-br p-6 ${TIER_GRADIENTS[index]}`}
-            >
-              <span className="inline-block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
-                {tier.badge}
-              </span>
-              <h3 className="text-xl font-bold text-white mb-2">{tier.title}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed mb-4">{tier.description}</p>
-              <ul className="space-y-2">
-                {tier.highlights.map((highlight) => (
-                  <li key={highlight} className="flex gap-2 text-sm text-gray-300">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                    <span>{highlight}</span>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          ))}
-        </div>
+        <MobileDisclosure
+          title={`${t('title')} ${t('titleAccent')}`}
+          subtitle={t('badge')}
+          badge={`${tiers.length}`}
+          icon={<Shield className="w-4 h-4 text-cyan-400" />}
+          locale={locale}
+          accent="cyan"
+          className="mb-8 sm:mb-10"
+          testId="trust-tiers-disclosure"
+        >
+          <div className="grid md:grid-cols-3 gap-4 sm:gap-6">
+            {tiers.map((tier, index) => (
+              <motion.div
+                key={tier.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.08 }}
+                className={`rounded-2xl border bg-gradient-to-br p-5 sm:p-6 ${TIER_GRADIENTS[index]}`}
+              >
+                <span className="inline-block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2.5 sm:mb-3">
+                  {tier.badge}
+                </span>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2">{tier.title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed mb-4">{tier.description}</p>
+                <ul className="space-y-2">
+                  {tier.highlights.map((highlight) => (
+                    <li key={highlight} className="flex gap-2 text-sm text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                      <span>{highlight}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+        </MobileDisclosure>
 
         {/* Enterprise Cloud & AI Infrastructure Strip (consolidated from InfrastructureSection) */}
         <div className="mb-8 flex flex-wrap items-center justify-center gap-3 rounded-xl border border-slate-800/80 bg-slate-900/60 px-4 py-3 text-xs text-gray-300">

@@ -42,8 +42,7 @@ import {
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { formatLandingCurrency, localizeUsdText } from '@/lib/i18n/landingCurrency'
-import { resolveClientPortalLocale } from '@/lib/intake/clientPortalCopy'
-import { LongformCinemaCraftShowcase } from '@/components/showcase/LongformCinemaCraftShowcase'
+import { MobileDisclosure, openMobileDisclosureById } from '@/components/landing/MobileDisclosure'
 import { cn } from '@/lib/utils'
 
 export const VIDEO_SERVICES_SECTION_ID = 'video-services'
@@ -221,17 +220,18 @@ export function VideoServicesSpotlightSection() {
             <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
               {copy.verticalsHeading}
             </p>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <a
                 href={`#${CUSTOMER_PORTAL_ANIMATIC_ID}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/45 bg-emerald-500/15 px-3 py-1 text-[11px] font-bold text-emerald-200 transition-colors hover:border-emerald-300 hover:bg-emerald-500/25 hover:text-white"
+                onClick={() => openMobileDisclosureById(CUSTOMER_PORTAL_ANIMATIC_ID)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/45 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-200 transition-colors hover:border-emerald-300 hover:bg-emerald-500/25 hover:text-white"
               >
                 <Play className="h-3 w-3 shrink-0 fill-current text-emerald-300" aria-hidden />
                 <span>{portalAnimaticCopy.jumpButtonLabel}</span>
               </a>
               <Link
                 href={locale && locale !== 'en' ? `/showcase?lang=${encodeURIComponent(locale)}` : '/showcase'}
-                className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/45 bg-amber-500/15 px-3 py-1 text-[11px] font-bold text-amber-200 transition-colors hover:border-amber-300 hover:bg-amber-500/25 hover:text-white"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/45 bg-amber-500/15 px-2.5 py-1 text-[11px] font-bold text-amber-200 transition-colors hover:border-amber-300 hover:bg-amber-500/25 hover:text-white"
               >
                 <Sparkles className="h-3 w-3 shrink-0 text-amber-300" aria-hidden />
                 <span>Live Express 4K Storefront →</span>
@@ -348,42 +348,52 @@ export function VideoServicesSpotlightSection() {
                 </p>
               </div>
 
-              <div className="mt-6 grid grid-cols-1 gap-3 border-t border-slate-800 pt-5 sm:grid-cols-2">
-                <div className="rounded-xl border border-amber-400/25 bg-gradient-to-r from-amber-950/30 via-slate-900/85 to-emerald-950/25 p-3.5 sm:col-span-2 sm:p-4">
-                  <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-300">
-                    <Globe2 className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
-                    <span>{copy.globalDemandLabel}</span>
-                  </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-amber-50/95 sm:text-sm">
-                    {activeVertical.globalMarketNeed}
-                  </p>
+              <MobileDisclosure
+                title={`${copy.globalDemandLabel} · ${copy.whoBuysLabel}`}
+                subtitle={copy.marginAdvantageLabel}
+                icon={<Globe2 className="h-4 w-4 text-amber-300" aria-hidden />}
+                locale={locale}
+                accent="emerald"
+                className="mt-4 md:mt-6 border-t border-slate-800 pt-4 md:pt-5"
+                testId="vertical-playbook-disclosure"
+              >
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-amber-400/25 bg-gradient-to-r from-amber-950/30 via-slate-900/85 to-emerald-950/25 p-3.5 sm:col-span-2 sm:p-4">
+                    <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-300">
+                      <Globe2 className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
+                      <span>{copy.globalDemandLabel}</span>
+                    </p>
+                    <p className="mt-1.5 text-xs leading-relaxed text-amber-50/95 sm:text-sm">
+                      {activeVertical.globalMarketNeed}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3.5 sm:p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                      {copy.whoBuysLabel}
+                    </p>
+                    <p className="mt-1.5 text-xs leading-relaxed text-gray-200 sm:text-sm">
+                      {activeVertical.clientBuyer}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-cyan-500/25 bg-cyan-950/20 p-3.5 sm:p-4">
+                    <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-cyan-300">
+                      <Handshake className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
+                      <span>{copy.partnerChannelsLabel}</span>
+                    </p>
+                    <p className="mt-1.5 text-xs leading-relaxed text-cyan-50/90 sm:text-sm">
+                      {activeVertical.partnerChannels}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/25 p-3.5 sm:col-span-2 sm:p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
+                      {copy.marginAdvantageLabel}
+                    </p>
+                    <p className="mt-1.5 text-xs leading-relaxed text-emerald-100/90 sm:text-sm">
+                      {activeVertical.keyAdvantage}
+                    </p>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3.5 sm:p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                    {copy.whoBuysLabel}
-                  </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-gray-200 sm:text-sm">
-                    {activeVertical.clientBuyer}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-cyan-500/25 bg-cyan-950/20 p-3.5 sm:p-4">
-                  <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-cyan-300">
-                    <Handshake className="h-3.5 w-3.5 shrink-0 text-cyan-300" aria-hidden />
-                    <span>{copy.partnerChannelsLabel}</span>
-                  </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-cyan-50/90 sm:text-sm">
-                    {activeVertical.partnerChannels}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/25 p-3.5 sm:col-span-2 sm:p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
-                    {copy.marginAdvantageLabel}
-                  </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-emerald-100/90 sm:text-sm">
-                    {activeVertical.keyAdvantage}
-                  </p>
-                </div>
-              </div>
+              </MobileDisclosure>
             </div>
           </div>
 
@@ -491,80 +501,90 @@ export function VideoServicesSpotlightSection() {
                 </div>
               </div>
 
-              {/* Optional Conservative Stress-Test Toggle (Month-1 Ramp-Up + Pro Plan $149/mo) */}
-              <div className="mt-3.5">
-                <VideoControlTooltip
-                  label={`${localizeMoneyText(copy.stressTestToggleLabel)} — ${localizeMoneyText(copy.stressTestActiveNote)}`}
-                  side="top"
-                >
-                  <button
-                    type="button"
-                    title={`${localizeMoneyText(copy.stressTestToggleLabel)} — ${localizeMoneyText(copy.stressTestActiveNote)}`}
-                    aria-pressed={conservativeRampUp}
-                    onClick={() => setConservativeRampUp((prev) => !prev)}
-                    className={cn(
-                      'flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-start text-xs font-semibold transition-all cursor-pointer',
-                      conservativeRampUp
-                        ? 'border-amber-400/60 bg-amber-500/15 text-amber-100'
-                        : 'border-slate-700/90 bg-slate-950/60 text-gray-300 hover:border-slate-600 hover:text-white'
-                    )}
+              {/* Optional Conservative Stress-Test Toggle + Per-Project Cost Breakdown (collapsible on mobile) */}
+              <MobileDisclosure
+                title={`${copy.fullyLoadedCostLabel}: ~${formatMoney(fullyLoadedCost)}`}
+                subtitle={`${copy.traditionalMarketLabel}: ${localizeMoneyText(activeVertical.traditionalMarketRangeLabel)}`}
+                icon={<SlidersHorizontal className="h-4 w-4 text-amber-300" aria-hidden />}
+                locale={locale}
+                accent="amber"
+                className="mt-3.5"
+                testId="calculator-cost-breakdown-disclosure"
+              >
+                <div>
+                  <VideoControlTooltip
+                    label={`${localizeMoneyText(copy.stressTestToggleLabel)} — ${localizeMoneyText(copy.stressTestActiveNote)}`}
+                    side="top"
                   >
-                    <span className="inline-flex items-center gap-2">
-                      <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
-                      <span>{localizeMoneyText(copy.stressTestToggleLabel)}</span>
-                    </span>
-                    <span
+                    <button
+                      type="button"
+                      title={`${localizeMoneyText(copy.stressTestToggleLabel)} — ${localizeMoneyText(copy.stressTestActiveNote)}`}
+                      aria-pressed={conservativeRampUp}
+                      onClick={() => setConservativeRampUp((prev) => !prev)}
                       className={cn(
-                        'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                        'flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-start text-xs font-semibold transition-all cursor-pointer',
                         conservativeRampUp
-                          ? 'bg-amber-400/25 text-amber-200'
-                          : 'bg-white/10 text-gray-400'
+                          ? 'border-amber-400/60 bg-amber-500/15 text-amber-100'
+                          : 'border-slate-700/90 bg-slate-950/60 text-gray-300 hover:border-slate-600 hover:text-white'
                       )}
                     >
-                      {conservativeRampUp ? copy.stressTestOnBadge : copy.stressTestOffBadge}
-                    </span>
-                  </button>
-                </VideoControlTooltip>
-                {conservativeRampUp && (
-                  <p className="mt-1.5 rounded-lg border border-amber-400/25 bg-amber-950/25 px-3 py-1.5 text-[11px] leading-relaxed text-amber-100/90">
-                    {localizeMoneyText(copy.stressTestActiveNote)}
-                  </p>
-                )}
-              </div>
+                      <span className="inline-flex items-center gap-2">
+                        <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
+                        <span>{localizeMoneyText(copy.stressTestToggleLabel)}</span>
+                      </span>
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                          conservativeRampUp
+                            ? 'bg-amber-400/25 text-amber-200'
+                            : 'bg-white/10 text-gray-400'
+                        )}
+                      >
+                        {conservativeRampUp ? copy.stressTestOnBadge : copy.stressTestOffBadge}
+                      </span>
+                    </button>
+                  </VideoControlTooltip>
+                  {conservativeRampUp && (
+                    <p className="mt-1.5 rounded-lg border border-amber-400/25 bg-amber-950/25 px-3 py-1.5 text-[11px] leading-relaxed text-amber-100/90">
+                      {localizeMoneyText(copy.stressTestActiveNote)}
+                    </p>
+                  )}
 
-              {/* Transparent Per-Project Cost vs Market Rate Breakdown (1-col on 360px S23, 2-col on >=420px) */}
-              <div className="mt-4 grid grid-cols-1 gap-2.5 rounded-xl border border-white/10 bg-slate-950/75 p-3 min-[420px]:grid-cols-2 sm:p-3.5">
-                <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
-                  <p className="text-[11px] text-gray-400">{copy.traditionalMarketLabel}</p>
-                  <p className="mt-1 text-sm font-semibold text-gray-400 line-through decoration-rose-400/60 sm:text-base">
-                    {localizeMoneyText(activeVertical.traditionalMarketRangeLabel)}
-                  </p>
+                  {/* Transparent Per-Project Cost vs Market Rate Breakdown (1-col on 360px S23, 2-col on >=420px) */}
+                  <div className="mt-3.5 grid grid-cols-1 gap-2.5 rounded-xl border border-white/10 bg-slate-950/75 p-3 min-[420px]:grid-cols-2 sm:p-3.5">
+                    <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
+                      <p className="text-[11px] text-gray-400">{copy.traditionalMarketLabel}</p>
+                      <p className="mt-1 text-sm font-semibold text-gray-400 line-through decoration-rose-400/60 sm:text-base">
+                        {localizeMoneyText(activeVertical.traditionalMarketRangeLabel)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/25 p-2.5">
+                      <p className="text-[11px] text-emerald-200">{copy.typicalFeeLabel}</p>
+                      <p className="mt-1 text-sm font-bold text-white sm:text-base">
+                        {formatMoney(clientPrice)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
+                      <p className="text-[11px] text-gray-400">{copy.fullyLoadedCostLabel}</p>
+                      <p className="mt-0.5 text-sm font-bold text-cyan-300 sm:text-base">
+                        ~{formatMoney(fullyLoadedCost)}
+                      </p>
+                      <p className="mt-0.5 text-[10px] leading-snug text-gray-400">
+                        ~{formatMoney(computeUsd)} + ~{formatMoney(operatorUsd)} ({copy.costBreakdownSubLabel})
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
+                      <p className="text-[11px] text-gray-400">{localizeMoneyText(copy.activeHandsOnLabel)}</p>
+                      <p className="mt-0.5 text-sm font-bold text-amber-200 sm:text-base">
+                        {conservativeRampUp ? `${baseActiveTimeLabel} (×1.6)` : baseActiveTimeLabel}
+                      </p>
+                      <p className="mt-0.5 text-[10px] leading-snug text-gray-400">
+                        {copy.estComputeLabel}: ~{formatMoney(computeUsd)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/25 p-2.5">
-                  <p className="text-[11px] text-emerald-200">{copy.typicalFeeLabel}</p>
-                  <p className="mt-1 text-sm font-bold text-white sm:text-base">
-                    {formatMoney(clientPrice)}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
-                  <p className="text-[11px] text-gray-400">{copy.fullyLoadedCostLabel}</p>
-                  <p className="mt-0.5 text-sm font-bold text-cyan-300 sm:text-base">
-                    ~{formatMoney(fullyLoadedCost)}
-                  </p>
-                  <p className="mt-0.5 text-[10px] leading-snug text-gray-400">
-                    ~{formatMoney(computeUsd)} + ~{formatMoney(operatorUsd)} ({copy.costBreakdownSubLabel})
-                  </p>
-                </div>
-                <div className="rounded-lg border border-slate-800/80 bg-slate-900/70 p-2.5">
-                  <p className="text-[11px] text-gray-400">{localizeMoneyText(copy.activeHandsOnLabel)}</p>
-                  <p className="mt-0.5 text-sm font-bold text-amber-200 sm:text-base">
-                    {conservativeRampUp ? `${baseActiveTimeLabel} (×1.6)` : baseActiveTimeLabel}
-                  </p>
-                  <p className="mt-0.5 text-[10px] leading-snug text-gray-400">
-                    {copy.estComputeLabel}: ~{formatMoney(computeUsd)}
-                  </p>
-                </div>
-              </div>
+              </MobileDisclosure>
 
               {/* Per-Project Net Profit + Monthly Income Summary */}
               <div className="mt-4 rounded-2xl border border-emerald-400/35 bg-emerald-950/40 p-4 sm:p-5">
@@ -645,47 +665,70 @@ export function VideoServicesSpotlightSection() {
           </div>
         </div>
 
-        {/* Zero-PM-Hours Self-Funding Blueprint Flywheel Strip (Always Visible) */}
+        {/* Zero-PM-Hours Self-Funding Blueprint Flywheel Strip (Collapsible on mobile, expanded on md+) */}
         {copy.blueprintFlywheel && (
-          <div className="mt-6 rounded-2xl border border-emerald-400/35 bg-gradient-to-br from-slate-900/95 via-emerald-950/30 to-slate-900/95 p-5 sm:p-6 shadow-xl">
-            <div className="max-w-3xl">
-              <p className="!mb-0 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-emerald-300">
-                <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
-                <span>{localizeMoneyText(copy.blueprintFlywheel.badge)}</span>
-              </p>
-              <h3 className="mt-1.5 text-lg font-bold text-white sm:text-2xl">
-                {localizeMoneyText(copy.blueprintFlywheel.title)}
-              </h3>
-              <p className="!mb-0 mt-1.5 text-xs leading-relaxed text-gray-300 sm:text-sm">
-                {localizeMoneyText(copy.blueprintFlywheel.subtitle)}
-              </p>
+          <MobileDisclosure
+            title={localizeMoneyText(copy.blueprintFlywheel.title)}
+            subtitle={localizeMoneyText(copy.blueprintFlywheel.badge)}
+            badge={`${copy.blueprintFlywheel.cards.length}`}
+            icon={<Sparkles className="h-4 w-4 text-emerald-300" aria-hidden />}
+            locale={locale}
+            accent="emerald"
+            className="mt-5 sm:mt-6"
+            testId="blueprint-flywheel-disclosure"
+          >
+            <div className="rounded-2xl border border-emerald-400/35 bg-gradient-to-br from-slate-900/95 via-emerald-950/30 to-slate-900/95 p-4 sm:p-6 shadow-xl">
+              <div className="max-w-3xl">
+                <p className="!mb-0 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-emerald-300">
+                  <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
+                  <span>{localizeMoneyText(copy.blueprintFlywheel.badge)}</span>
+                </p>
+                <h3 className="mt-1.5 text-lg font-bold text-white sm:text-2xl">
+                  {localizeMoneyText(copy.blueprintFlywheel.title)}
+                </h3>
+                <p className="!mb-0 mt-1.5 text-xs leading-relaxed text-gray-300 sm:text-sm">
+                  {localizeMoneyText(copy.blueprintFlywheel.subtitle)}
+                </p>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {copy.blueprintFlywheel.cards.map((card) => (
+                  <div
+                    key={card.title}
+                    className="flex flex-col rounded-xl border border-emerald-400/20 bg-slate-950/80 p-4"
+                  >
+                    <span className="inline-flex w-fit rounded-md border border-emerald-400/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-200">
+                      {localizeMoneyText(card.tag)}
+                    </span>
+                    <h4 className="mt-2.5 text-sm font-bold leading-snug text-white">
+                      {localizeMoneyText(card.title)}
+                    </h4>
+                    <p className="!mb-0 mt-1.5 text-xs leading-relaxed text-gray-300">
+                      {localizeMoneyText(card.detail)}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {copy.blueprintFlywheel.cards.map((card) => (
-                <div
-                  key={card.title}
-                  className="flex flex-col rounded-xl border border-emerald-400/20 bg-slate-950/80 p-4"
-                >
-                  <span className="inline-flex w-fit rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-200">
-                    {localizeMoneyText(card.tag)}
-                  </span>
-                  <h4 className="mt-2.5 text-sm font-bold leading-snug text-white">
-                    {localizeMoneyText(card.title)}
-                  </h4>
-                  <p className="!mb-0 mt-1.5 text-xs leading-relaxed text-gray-300">
-                    {localizeMoneyText(card.detail)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+          </MobileDisclosure>
         )}
 
-        {/* Promoted Out of <details>: Interactive 8-Stage White-Label Client Portal Walkthrough */}
-        <CustomerPortalExperienceAnimatic locale={locale} />
+        {/* Interactive 8-Stage White-Label Client Portal Walkthrough (Collapsible on mobile, auto-opens on jump link) */}
+        <MobileDisclosure
+          title={`${portalAnimaticCopy.title} ${portalAnimaticCopy.titleAccent}`}
+          subtitle={portalAnimaticCopy.eyebrow}
+          badge="8 Steps"
+          icon={<Play className="h-4 w-4 text-emerald-300" aria-hidden />}
+          locale={locale}
+          accent="emerald"
+          hashTargetId={CUSTOMER_PORTAL_ANIMATIC_ID}
+          className="mt-4 sm:mt-8"
+          testId="customer-portal-disclosure"
+        >
+          <CustomerPortalExperienceAnimatic locale={locale} />
+        </MobileDisclosure>
 
         {/* Compact Mobile Companion PWA Callout (folded from standalone section) */}
-        <div className="mt-6 flex flex-col items-start justify-between gap-3 rounded-2xl border border-cyan-500/25 bg-slate-900/75 px-5 py-4 sm:flex-row sm:items-center">
+        <div className="mt-4 sm:mt-6 flex flex-col items-start justify-between gap-3 rounded-2xl border border-cyan-500/25 bg-slate-900/75 px-4 py-3.5 sm:px-5 sm:py-4 sm:flex-row sm:items-center">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-400/35 bg-cyan-500/15 text-cyan-300">
               <Smartphone className="h-4 w-4" aria-hidden />
@@ -697,54 +740,59 @@ export function VideoServicesSpotlightSection() {
               </p>
             </div>
           </div>
-          <span className="shrink-0 rounded-full border border-cyan-400/30 bg-cyan-950/50 px-3 py-1 text-[11px] font-semibold text-cyan-200">
+          <span className="shrink-0 rounded-md border border-cyan-400/30 bg-cyan-950/50 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold text-cyan-200">
             iOS &amp; Android PWA
           </span>
         </div>
 
-        {/* Interactive Longform 4K Cinema vs Shortform AI Slop Differentiation Moat */}
-        <LongformCinemaCraftShowcase
-          variant="studio"
-          locale={resolveClientPortalLocale(locale)}
-        />
-
-        {/* Multi-PM Agency Scale Operations Strip (Kanban SLA, CRM Scorecard, Locale Routing & Storage Purge) */}
+        {/* Multi-PM Agency Scale Operations Strip (Collapsible on mobile, expanded on md+) */}
         {copy.agencyScaleOps && (
-          <div className="mt-6 rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-slate-900/90 via-indigo-950/25 to-slate-900/90 p-5 sm:p-6">
-            <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="!mb-0 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-indigo-300">
-                  <Users className="h-3.5 w-3.5 shrink-0 text-indigo-300" aria-hidden />
-                  <span>{copy.agencyScaleOps.badge}</span>
-                </p>
-                <h3 className="mt-1.5 text-lg font-bold text-white sm:text-xl">
-                  {copy.agencyScaleOps.title}
-                </h3>
-                <p className="!mb-0 mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm max-w-3xl">
-                  {copy.agencyScaleOps.subtitle}
-                </p>
+          <MobileDisclosure
+            title={copy.agencyScaleOps.title}
+            subtitle={copy.agencyScaleOps.badge}
+            badge={`${copy.agencyScaleOps.pillars.length}`}
+            icon={<Users className="h-4 w-4 text-indigo-300" aria-hidden />}
+            locale={locale}
+            accent="indigo"
+            className="mt-4 sm:mt-6"
+            testId="agency-scale-ops-disclosure"
+          >
+            <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-slate-900/90 via-indigo-950/25 to-slate-900/90 p-4 sm:p-6">
+              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="!mb-0 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-indigo-300">
+                    <Users className="h-3.5 w-3.5 shrink-0 text-indigo-300" aria-hidden />
+                    <span>{copy.agencyScaleOps.badge}</span>
+                  </p>
+                  <h3 className="mt-1.5 text-lg font-bold text-white sm:text-xl">
+                    {copy.agencyScaleOps.title}
+                  </h3>
+                  <p className="!mb-0 mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm max-w-3xl">
+                    {copy.agencyScaleOps.subtitle}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {copy.agencyScaleOps.pillars.map((pillar, idx) => {
+                  const Icon = AGENCY_OPS_ICONS[idx % AGENCY_OPS_ICONS.length]
+                  return (
+                    <div
+                      key={pillar.title}
+                      className="rounded-xl border border-white/10 bg-slate-950/75 p-4"
+                    >
+                      <div className="flex items-center gap-2 text-sm font-bold text-white">
+                        <Icon className="h-4 w-4 shrink-0 text-cyan-300" aria-hidden />
+                        <span>{pillar.title}</span>
+                      </div>
+                      <p className="!mb-0 mt-1.5 text-xs leading-relaxed text-gray-300">
+                        {pillar.detail}
+                      </p>
+                    </div>
+                  )
+                })}
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {copy.agencyScaleOps.pillars.map((pillar, idx) => {
-                const Icon = AGENCY_OPS_ICONS[idx % AGENCY_OPS_ICONS.length]
-                return (
-                  <div
-                    key={pillar.title}
-                    className="rounded-xl border border-white/10 bg-slate-950/75 p-4"
-                  >
-                    <div className="flex items-center gap-2 text-sm font-bold text-white">
-                      <Icon className="h-4 w-4 shrink-0 text-cyan-300" aria-hidden />
-                      <span>{pillar.title}</span>
-                    </div>
-                    <p className="!mb-0 mt-1.5 text-xs leading-relaxed text-gray-300">
-                      {pillar.detail}
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+          </MobileDisclosure>
         )}
 
         {/* Progressive Disclosure: Full Agency Operating Kit, White-Label Portal & Delivery Workflow */}

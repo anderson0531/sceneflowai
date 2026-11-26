@@ -531,7 +531,7 @@ export function ImaginePossibilitiesHero() {
                       onMouseEnter={() => prefetchCategory(script.id)}
                       onFocus={() => prefetchCategory(script.id)}
                       onClick={() => selectCategory(script.id)}
-                      className={`shrink-0 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold backdrop-blur-md transition-all sm:px-4 sm:py-1.5 sm:text-sm ${
+                      className={`shrink-0 whitespace-nowrap rounded-lg sm:rounded-full border px-3 py-1.5 text-xs font-semibold backdrop-blur-md transition-all sm:px-4 sm:py-1.5 sm:text-sm ${
                         isSelected
                           ? 'border-cyan-400/80 bg-cyan-500/25 text-white shadow-lg shadow-cyan-500/25'
                           : 'border-white/20 bg-black/55 text-gray-200 hover:border-white/40 hover:bg-black/75 hover:text-white'

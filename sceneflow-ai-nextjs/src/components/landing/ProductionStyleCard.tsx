@@ -320,7 +320,7 @@ export function ProductionStyleCard({
             type="button"
             onClick={() => setShowDetail((prev) => !prev)}
             aria-expanded={showDetail}
-            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-900/80 px-3.5 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400/40 hover:bg-slate-800 hover:text-white"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-slate-900/80 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400/40 hover:bg-slate-800 hover:text-white cursor-pointer"
           >
             <span>{showDetail ? hideDetailLabel : showDetailLabel}</span>
             {showDetail ? (

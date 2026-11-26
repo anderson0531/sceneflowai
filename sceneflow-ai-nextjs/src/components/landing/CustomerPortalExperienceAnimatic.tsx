@@ -887,11 +887,11 @@ export function CustomerPortalExperienceAnimatic({ locale }: { locale?: string }
           {copy.subtitle}
         </p>
 
-        <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold">
-          <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3 py-1 text-emerald-200">
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-[11px] font-semibold">
+          <span className="rounded-lg border border-emerald-400/35 bg-emerald-500/15 px-2.5 py-1 text-emerald-200">
             {copy.automatedZeroPmPill}
           </span>
-          <span className="rounded-full border border-amber-400/40 bg-amber-500/15 px-3 py-1 text-amber-200">
+          <span className="rounded-lg border border-amber-400/35 bg-amber-500/15 px-2.5 py-1 text-amber-200">
             {copy.pmGatePill}
           </span>
         </div>

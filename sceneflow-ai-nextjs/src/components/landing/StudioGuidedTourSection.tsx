@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useLocale } from 'next-intl'
 import { InsetRoomTourPlayer } from '@/components/landing/InsetRoomTourPlayer'
+import { MobileDisclosure } from '@/components/landing/MobileDisclosure'
 import { VideoControlTooltip } from '@/components/landing/VideoControlTooltip'
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import { cn } from '@/lib/utils'
@@ -67,39 +68,41 @@ export function StudioGuidedTourSection() {
             {copy.subtitle}
           </p>
 
-          {/* Creator vs Client Service Lens Switcher */}
-          <div className="mt-6 flex w-full flex-col items-stretch justify-center gap-2 rounded-2xl border border-white/10 bg-slate-900/90 p-2 sm:inline-flex sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:p-1.5">
-            <span className="px-2.5 text-center text-xs font-medium text-gray-400">
+          {/* Creator vs Client Service Lens Switcher — compact 2-col segmented toggle on mobile */}
+          <div className="mt-5 flex w-full flex-col items-stretch justify-center gap-1.5 rounded-2xl border border-white/10 bg-slate-900/90 p-1.5 sm:mt-6 sm:inline-flex sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+            <span className="px-2 text-center text-[11px] font-medium text-gray-400 sm:px-2.5 sm:text-xs">
               {copy.lensLabel}
             </span>
-            <button
-              type="button"
-              title={copy.lensCreator}
-              onClick={() => setLens('creator')}
-              className={cn(
-                'inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all sm:w-auto sm:py-1.5 cursor-pointer',
-                lens === 'creator'
-                  ? 'bg-violet-600 text-white shadow'
-                  : 'text-gray-300 hover:text-white'
-              )}
-            >
-              <Clapperboard className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span className="whitespace-normal leading-tight">{copy.lensCreator}</span>
-            </button>
-            <button
-              type="button"
-              title={copy.lensService}
-              onClick={() => setLens('service')}
-              className={cn(
-                'inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all sm:w-auto sm:py-1.5 cursor-pointer',
-                lens === 'service'
-                  ? 'bg-emerald-600 text-white shadow'
-                  : 'text-gray-300 hover:text-white'
-              )}
-            >
-              <Briefcase className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span className="whitespace-normal leading-tight">{copy.lensService}</span>
-            </button>
+            <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center sm:gap-2">
+              <button
+                type="button"
+                title={copy.lensCreator}
+                onClick={() => setLens('creator')}
+                className={cn(
+                  'inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-[11px] sm:text-xs font-semibold transition-all sm:w-auto sm:px-3.5 sm:py-1.5 cursor-pointer',
+                  lens === 'creator'
+                    ? 'bg-violet-600 text-white shadow'
+                    : 'text-gray-300 hover:text-white'
+                )}
+              >
+                <Clapperboard className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className="whitespace-normal leading-tight">{copy.lensCreator}</span>
+              </button>
+              <button
+                type="button"
+                title={copy.lensService}
+                onClick={() => setLens('service')}
+                className={cn(
+                  'inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-[11px] sm:text-xs font-semibold transition-all sm:w-auto sm:px-3.5 sm:py-1.5 cursor-pointer',
+                  lens === 'service'
+                    ? 'bg-emerald-600 text-white shadow'
+                    : 'text-gray-300 hover:text-white'
+                )}
+              >
+                <Briefcase className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className="whitespace-normal leading-tight">{copy.lensService}</span>
+              </button>
+            </div>
           </div>
         </motion.div>
 
@@ -157,75 +160,93 @@ export function StudioGuidedTourSection() {
           })}
         </div>
 
-        {/* Active Room Narrative + Inset Video Tour Player */}
-        <div className="grid grid-cols-1 gap-6 sm:gap-8 rounded-3xl border border-white/10 bg-slate-900/75 p-4 shadow-2xl backdrop-blur-sm sm:p-8 lg:grid-cols-12 lg:items-center">
-          {/* Left: Non-Technical Narrative + 3 Callouts */}
+        {/* Active Room Narrative + Inset Video Tour Player (single mounted player; player appears before collapsible details on mobile) */}
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-x-8 rounded-3xl border border-white/10 bg-slate-900/75 p-4 shadow-2xl backdrop-blur-sm sm:p-8 lg:grid-cols-12 lg:items-start">
+          {/* 1. Concise Room Title & Promise */}
           <div className="lg:col-span-5">
             <p className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.15em] text-cyan-300">
               {activeRoom.stepNumber} · {activeRoom.badge}
             </p>
 
-            <h3 className="mt-2.5 text-2xl font-bold leading-snug text-white sm:text-3xl">
+            <h3 className="mt-2 text-xl font-bold leading-snug text-white sm:mt-2.5 sm:text-3xl">
               {activeRoom.title}
             </h3>
-            <p className="mt-3 text-sm leading-relaxed text-gray-300 sm:text-base">
+            <p className="mt-2 text-sm leading-relaxed text-gray-300 sm:mt-3 sm:text-base">
               {activeRoom.promise}
             </p>
-
-            {/* Active Lens Highlight Box */}
-            <div
-              className={cn(
-                'mt-5 rounded-2xl border p-4',
-                lens === 'creator'
-                  ? 'border-violet-500/30 bg-violet-950/25'
-                  : 'border-emerald-500/30 bg-emerald-950/25'
-              )}
-            >
-              <p
-                className={cn(
-                  'text-xs font-bold uppercase tracking-wider',
-                  lens === 'creator' ? 'text-violet-300' : 'text-emerald-300'
-                )}
-              >
-                {lens === 'creator'
-                  ? activeRoom.creatorExampleTitle
-                  : activeRoom.serviceExampleTitle}
-              </p>
-              <p className="mt-1.5 text-xs leading-relaxed text-gray-200 sm:text-sm">
-                {lens === 'creator'
-                  ? activeRoom.creatorExampleNote
-                  : activeRoom.serviceExampleNote}
-              </p>
-            </div>
-
-            {/* 3 Crisp Callouts */}
-            <div className="mt-5 space-y-3">
-              {activeRoom.callouts.map((callout, idx) => (
-                <div
-                  key={callout.label}
-                  className="flex items-start gap-3 rounded-xl border border-slate-800/90 bg-slate-950/65 p-3.5"
-                >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/20 text-xs font-bold text-cyan-300">
-                    {idx + 1}
-                  </span>
-                  <div>
-                    <p className="text-xs font-bold text-white sm:text-sm">{callout.label}</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-gray-300">
-                      {callout.detail}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
 
-          {/* Right: Embedded 7-Language Inset Room Video Tour Player */}
-          <div className="lg:col-span-7">
+          {/* 2. Embedded 7-Language Inset Room Video Tour Player (middle on mobile, right column spanning 2 rows on desktop) */}
+          <div className="lg:col-span-7 lg:row-span-2 lg:self-center">
             <InsetRoomTourPlayer
               roomId={activeRoom.id}
               roomLabel={activeRoom.tabLabel}
               initialLocale={locale}
             />
+          </div>
+
+          {/* 3. Active Lens Highlight + 3 Crisp Callouts (collapsible on mobile, always visible on md+/lg+) */}
+          <div className="lg:col-span-5">
+            <MobileDisclosure
+              title={
+                lens === 'creator'
+                  ? activeRoom.creatorExampleTitle
+                  : activeRoom.serviceExampleTitle
+              }
+              badge={`${activeRoom.callouts.length}`}
+              icon={<Sparkles className="h-4 w-4 text-cyan-300" aria-hidden />}
+              locale={locale}
+              accent="cyan"
+              testId="guided-tour-room-details-disclosure"
+            >
+              <div>
+                {/* Active Lens Highlight Box */}
+                <div
+                  className={cn(
+                    'rounded-2xl border p-3.5 sm:p-4',
+                    lens === 'creator'
+                      ? 'border-violet-500/30 bg-violet-950/25'
+                      : 'border-emerald-500/30 bg-emerald-950/25'
+                  )}
+                >
+                  <p
+                    className={cn(
+                      'text-xs font-bold uppercase tracking-wider',
+                      lens === 'creator' ? 'text-violet-300' : 'text-emerald-300'
+                    )}
+                  >
+                    {lens === 'creator'
+                      ? activeRoom.creatorExampleTitle
+                      : activeRoom.serviceExampleTitle}
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-gray-200 sm:text-sm">
+                    {lens === 'creator'
+                      ? activeRoom.creatorExampleNote
+                      : activeRoom.serviceExampleNote}
+                  </p>
+                </div>
+
+                {/* 3 Crisp Callouts */}
+                <div className="mt-4 space-y-2.5 sm:mt-5 sm:space-y-3">
+                  {activeRoom.callouts.map((callout, idx) => (
+                    <div
+                      key={callout.label}
+                      className="flex items-start gap-3 rounded-xl border border-slate-800/90 bg-slate-950/65 p-3 sm:p-3.5"
+                    >
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/20 text-xs font-bold text-cyan-300">
+                        {idx + 1}
+                      </span>
+                      <div>
+                        <p className="text-xs font-bold text-white sm:text-sm">{callout.label}</p>
+                        <p className="mt-0.5 text-xs leading-relaxed text-gray-300">
+                          {callout.detail}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </MobileDisclosure>
           </div>
         </div>
 

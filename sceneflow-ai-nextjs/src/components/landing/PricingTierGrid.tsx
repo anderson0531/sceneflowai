@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, Gift, HardDrive, ShieldCheck, Zap } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, Gift, HardDrive, ShieldCheck, Zap } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -27,6 +28,7 @@ export function PricingTierGrid({
   const tPlans = useTranslations('pricing.plans')
   const tTopUps = useTranslations('pricing.creditTopUps')
   const prelaunchOnly = isPrelaunchAccessModeEnabled()
+  const [expandedPlans, setExpandedPlans] = useState<Record<string, boolean>>({})
   const requestAccessLabel = t.has('requestPreLaunchAccess')
     ? t('requestPreLaunchAccess')
     : 'Request Pre-Launch Access'
@@ -39,9 +41,9 @@ export function PricingTierGrid({
   }>) || []
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 sm:space-y-12">
       {prelaunchOnly && (
-        <div className="max-w-3xl mx-auto rounded-2xl border border-emerald-500/35 bg-emerald-950/25 px-5 py-3.5 text-center">
+        <div className="max-w-3xl mx-auto rounded-2xl border border-emerald-500/35 bg-emerald-950/25 px-4 py-3 sm:px-5 sm:py-3.5 text-center">
           <p className="inline-flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-medium text-emerald-200">
             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
@@ -55,9 +57,9 @@ export function PricingTierGrid({
         animate={{ opacity: 1, y: 0 }}
         className="max-w-2xl mx-auto"
       >
-        <div className="relative rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/20 via-gray-900 to-gray-900 p-6 lg:p-8">
+        <div className="relative rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/20 via-gray-900 to-gray-900 p-5 sm:p-6 lg:p-8">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-            <div className="px-4 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold flex items-center gap-1 whitespace-nowrap">
+            <div className="px-3 py-0.5 sm:px-3.5 sm:py-1 rounded-lg sm:rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[11px] sm:text-xs font-semibold flex items-center gap-1 whitespace-nowrap">
               <Gift className="w-3 h-3" />
               {t('productionTestFlight')}
             </div>
@@ -134,20 +136,20 @@ export function PricingTierGrid({
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <div className="px-4 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-semibold whitespace-nowrap">
+                  <div className="px-3 py-0.5 sm:px-3.5 sm:py-1 rounded-lg sm:rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[11px] sm:text-xs font-semibold whitespace-nowrap">
                     {t('mostPopular')}
                   </div>
                 </div>
               )}
 
-              <div className="mb-5">
+              <div className="mb-4 sm:mb-5">
                 <h3 className="text-lg font-bold text-white mb-1.5">{planName}</h3>
-                <p className="text-xs text-gray-400 leading-relaxed min-h-[3.25rem]">
+                <p className="text-xs text-gray-400 leading-relaxed md:min-h-[3.25rem]">
                   {planDescription}
                 </p>
               </div>
 
-              <div className="mb-5">
+              <div className="mb-4 sm:mb-5">
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-3xl sm:text-4xl font-bold text-white tabular-nums">
                     {formatLandingCurrency(plan.price, locale)}
@@ -161,7 +163,7 @@ export function PricingTierGrid({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5 mb-5">
+              <div className="grid grid-cols-2 gap-2.5 mb-4 sm:mb-5">
                 <div
                   title={`${t('creditsPerMonth')}: ${plan.includedCredits.toLocaleString()}`}
                   className="p-2.5 rounded-lg bg-gray-800/50 border border-gray-700/50"
@@ -190,13 +192,46 @@ export function PricingTierGrid({
                 </div>
               </div>
 
-              <div className="space-y-2.5 mb-6 flex-grow">
-                {planFeatures.map((feature, fIndex) => (
-                  <div key={fIndex} className="flex items-start gap-2.5">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                    <span className="text-xs text-gray-300 leading-snug">{feature}</span>
-                  </div>
-                ))}
+              <div className="space-y-2 sm:space-y-2.5 mb-5 sm:mb-6 flex-grow">
+                {planFeatures.map((feature, fIndex) => {
+                  const isOverflowOnMobile = fIndex >= 3 && !expandedPlans[plan.id]
+                  return (
+                    <div
+                      key={fIndex}
+                      className={cn(
+                        'items-start gap-2.5',
+                        isOverflowOnMobile ? 'hidden md:flex' : 'flex'
+                      )}
+                    >
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <span className="text-xs text-gray-300 leading-snug">{feature}</span>
+                    </div>
+                  )
+                })}
+                {planFeatures.length > 3 && (
+                  <button
+                    type="button"
+                    title={`${planName} features`}
+                    aria-expanded={Boolean(expandedPlans[plan.id])}
+                    onClick={() =>
+                      setExpandedPlans((prev) => ({ ...prev, [plan.id]: !prev[plan.id] }))
+                    }
+                    className="md:hidden inline-flex items-center gap-1 pt-1 text-xs font-semibold text-emerald-300 hover:text-emerald-200 cursor-pointer"
+                  >
+                    <span>
+                      {expandedPlans[plan.id]
+                        ? 'Show fewer'
+                        : `+${planFeatures.length - 3} more included`}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        'h-3.5 w-3.5 transition-transform',
+                        expandedPlans[plan.id] && 'rotate-180'
+                      )}
+                      aria-hidden
+                    />
+                  </button>
+                )}
               </div>
 
               <Button

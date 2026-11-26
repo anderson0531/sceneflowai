@@ -24,6 +24,8 @@ import {
   requestFocusKeyFeature,
 } from '@/components/landing/FullStudioDirectoryDrawer'
 import { StudioAcademyGuaranteeStrip } from '@/components/landing/StudioAcademyGuaranteeStrip'
+import { StudioGuidedTourSection } from '@/components/landing/StudioGuidedTourSection'
+import { LongformCinemaCraftShowcase } from '@/components/showcase/LongformCinemaCraftShowcase'
 import { DEFAULT_EXPANDED_LANDING_SECTION_IDS } from '@/config/landing/landingSectionCollapseCopy'
 import {
   DOOR_WALKTHROUGH_COPY,
@@ -303,9 +305,10 @@ describe('Interim 7-Language Narrated Studio Door Walkthroughs & Panned 5K Scree
       expect(activeDialog?.textContent).toContain(DOOR_WALKTHROUGH_COPY[dubId].interimBadge)
     }
 
-    // Close button works
+    // Close button works (matches last rendered locale in PRIORITY_LOCALES)
+    const lastDubId = normalizeWalkthroughDubLocale(PRIORITY_LOCALES[PRIORITY_LOCALES.length - 1])
     const closeBtn = document.querySelector(
-      `[aria-label="${DOOR_WALKTHROUGH_COPY.th.closeLabel}"]`
+      `[aria-label="${DOOR_WALKTHROUGH_COPY[lastDubId].closeLabel}"]`
     )
     expect(closeBtn).toBeTruthy()
     clickElement(closeBtn!)
@@ -406,8 +409,9 @@ describe('Interim 7-Language Narrated Studio Door Walkthroughs & Panned 5K Scree
       expect(activeDialog?.textContent).toContain(LIVE_REVIEW_PREVIEW_COPY[dubId].comingSoonBadge)
     }
 
+    const lastLiveDubId = normalizeWalkthroughDubLocale(PRIORITY_LOCALES[PRIORITY_LOCALES.length - 1])
     const closeBtn = document.querySelector(
-      `[aria-label="${LIVE_REVIEW_PREVIEW_COPY.th.closeLabel}"]`
+      `[aria-label="${LIVE_REVIEW_PREVIEW_COPY[lastLiveDubId].closeLabel}"]`
     )
     expect(closeBtn).toBeTruthy()
     clickElement(closeBtn!)
@@ -1548,5 +1552,135 @@ describe('Desktop (1280px/1440px) & Samsung Galaxy S23 (360px) UI, Button Fit & 
     const featureFrameSrc = readSource('src/components/landing/FeatureScreenshotFrame.tsx')
     expect(featureFrameSrc).not.toContain('h-6 w-6')
     expect(featureFrameSrc).toContain('h-8 w-8')
+  })
+
+  it('features the Interactive Longform Blueprint on BOTH the landing page and 4K storefront, collapses dense mobile details cleanly, eliminates oversized mobile oval buttons, and provides mobile quick-jump navigation', () => {
+    // 1. LandingPageClient promotes LongformCinemaCraftShowcase (variant="studio") as a dedicated top-level section
+    //    and KeepsakeCinemaStorefront renders variant="storefront"
+    const landingClientSrc = readSource('src/app/LandingPageClient.tsx')
+    const videoServicesSrc = readSource('src/components/landing/VideoServicesSpotlightSection.tsx')
+    const storefrontSrc = readSource('src/components/showcase/KeepsakeCinemaStorefront.tsx')
+
+    expect(landingClientSrc).toContain('<LongformCinemaCraftShowcase')
+    expect(landingClientSrc).toContain('variant="studio"')
+    expect(videoServicesSrc).not.toContain('<LongformCinemaCraftShowcase')
+    expect(storefrontSrc).toContain('<LongformCinemaCraftShowcase')
+    expect(storefrontSrc).toContain('variant="storefront"')
+
+    // 2. Clean mobile navigation: sticky mobile quick-jump rail in Header + Longform Blueprint links on both Landing & Storefront
+    const headerSrc = readSource('src/app/components/Header.tsx')
+    expect(headerSrc).toContain('data-testid="mobile-section-quick-nav"')
+    expect(headerSrc).toContain("'longform-differentiation'")
+    expect(storefrontSrc).toContain('href="#studio-craft"')
+
+    // 3. No oversized wrapping oval pills/buttons on mobile across Longform Blueprint, Hero, Style Cards, and Storefront
+    const anatomySrc = readSource('src/components/showcase/LongformChapterAnatomy.tsx')
+    const craftSrc = readSource('src/components/showcase/LongformCinemaCraftShowcase.tsx')
+    const heroSrc = readSource('src/components/landing/ImaginePossibilitiesHero.tsx')
+    const styleCardSrc = readSource('src/components/landing/ProductionStyleCard.tsx')
+    const portalAnimaticSrc = readSource('src/components/landing/CustomerPortalExperienceAnimatic.tsx')
+
+    // LongformChapterAnatomy puts LongformChapterAnatomy FIRST inside LongformCinemaCraftShowcase
+    expect(craftSrc.indexOf('<LongformChapterAnatomy')).toBeLessThan(
+      craftSrc.indexOf('copy.trailerSpotlight.headline')
+    )
+    // Vertical switcher and long eyebrows are no longer giant wrapping rounded-full ovals
+    expect(anatomySrc).not.toContain('rounded-full border px-4 py-2 text-xs sm:text-sm')
+    expect(anatomySrc).not.toContain('rounded-full border ${accentBorder} ${accentBgSoft} px-3 py-1')
+    expect(craftSrc).not.toContain('gap-2 rounded-full bg-gradient-to-r from-[#E6BE7E]')
+    expect(craftSrc).not.toContain('gap-2 rounded-full bg-gradient-to-r from-emerald-400')
+    expect(craftSrc).toContain('rounded-xl sm:rounded-full')
+    expect(heroSrc).toContain('rounded-lg sm:rounded-full border px-3 py-1.5')
+    expect(styleCardSrc).not.toContain('rounded-full border border-white/15 bg-slate-900/80 px-3.5')
+    expect(portalAnimaticSrc).toContain('rounded-lg border border-emerald-400/35')
+
+    // 4. Render LongformCinemaCraftShowcase (variant="studio") as featured on the Landing Page and test interactive Blueprint + MobileDisclosure toggles
+    renderElement(
+      React.createElement(LongformCinemaCraftShowcase, {
+        variant: 'studio',
+        locale: 'en',
+      })
+    )
+
+    const studioShowcase = container?.querySelector('[data-testid="longform-craft-showcase-studio"]')
+    const studioAnatomy = container?.querySelector('[data-testid="longform-chapter-anatomy-studio"]')
+    expect(studioShowcase).toBeTruthy()
+    expect(studioAnatomy).toBeTruthy()
+    expect(studioAnatomy?.textContent).toContain(
+      'Interactive Longform Blueprint · 1-Hour+ Feature OR Multi-Episode Series'
+    )
+
+    // Interactive toggle: Feature Film <-> Multi-Episode Series works on the landing page variant too
+    const modeMeta = studioAnatomy?.querySelector('[data-testid="anatomy-mode-meta"]')
+    expect(modeMeta?.textContent).toContain('68 min continuous · 6 Chapters')
+    const seriesBtn = studioAnatomy?.querySelector('[data-testid="anatomy-mode-series"]')
+    expect(seriesBtn).toBeTruthy()
+    clickElement(seriesBtn!)
+    expect(modeMeta?.textContent).toContain('6 Bingeable Episodes')
+
+    // Every button inside the studio Longform Showcase has a title tooltip
+    const studioButtons = Array.from(studioShowcase?.querySelectorAll('button') ?? [])
+    expect(studioButtons.length).toBeGreaterThan(10)
+    for (const btn of studioButtons) {
+      expect(
+        (btn.getAttribute('title') ?? '').trim().length,
+        `LongformCinemaCraftShowcase button missing title: "${btn.textContent}"`
+      ).toBeGreaterThan(1)
+    }
+
+    // MobileDisclosure blocks start collapsed on mobile (data-mobile-disclosure-open="false") and expand cleanly on tap
+    for (const testId of [
+      'chapter-details-disclosure',
+      'longform-math-disclosure',
+      'trailer-spotlight-disclosure',
+      'craft-pillars-disclosure',
+      'immediate-lift-disclosure',
+      'comparison-matrix-disclosure',
+    ]) {
+      const wrapper = studioShowcase?.querySelector(`[data-testid="${testId}"]`)
+      expect(wrapper, `missing MobileDisclosure ${testId}`).toBeTruthy()
+      const toggleBtn = wrapper?.querySelector('button[aria-expanded]')
+      const body = wrapper?.querySelector('[data-mobile-disclosure-open]')
+      expect(toggleBtn?.getAttribute('aria-expanded')).toBe('false')
+      expect(body?.getAttribute('data-mobile-disclosure-open')).toBe('false')
+      expect(body?.className.split(/\s+/)).toContain('hidden')
+
+      clickElement(toggleBtn!)
+      expect(toggleBtn?.getAttribute('aria-expanded')).toBe('true')
+      expect(body?.getAttribute('data-mobile-disclosure-open')).toBe('true')
+      expect(body?.className.split(/\s+/)).not.toContain('hidden')
+    }
+
+    // 5. Render StudioGuidedTourSection and verify single mounted player + collapsible room details on mobile
+    renderElement(
+      React.createElement(
+        NextIntlClientProvider,
+        { key: 'tour-mobile', locale: 'en', messages: loadMessages('en') },
+        React.createElement(StudioGuidedTourSection)
+      )
+    )
+    expect(container?.querySelectorAll('[data-testid="inset-room-tour-player"]')).toHaveLength(1)
+    const tourDisclosure = container?.querySelector(
+      '[data-testid="guided-tour-room-details-disclosure"]'
+    )
+    expect(tourDisclosure).toBeTruthy()
+    const tourToggleBtn = tourDisclosure?.querySelector('button[aria-expanded]')
+    expect(tourToggleBtn?.getAttribute('aria-expanded')).toBe('false')
+    clickElement(tourToggleBtn!)
+    expect(tourToggleBtn?.getAttribute('aria-expanded')).toBe('true')
+
+    // 6. Verify VideoServicesSpotlightSection, PricingCredits, and TrustSafeguardSection all wire MobileDisclosure cleanly
+    expect(videoServicesSrc).toContain('testId="vertical-playbook-disclosure"')
+    expect(videoServicesSrc).toContain('testId="calculator-cost-breakdown-disclosure"')
+    expect(videoServicesSrc).toContain('testId="blueprint-flywheel-disclosure"')
+    expect(videoServicesSrc).toContain('testId="customer-portal-disclosure"')
+    expect(videoServicesSrc).toContain('testId="agency-scale-ops-disclosure"')
+
+    const pricingSrc = readSource('src/components/landing/PricingCredits.tsx')
+    expect(pricingSrc).toContain('testId="pricing-perspectives-disclosure"')
+    expect(pricingSrc).toContain('testId="pricing-membership-topups-disclosure"')
+
+    const trustSrc = readSource('src/components/landing/TrustSafeguardSection.tsx')
+    expect(trustSrc).toContain('testId="trust-tiers-disclosure"')
   })
 })
