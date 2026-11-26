@@ -21,6 +21,7 @@
 import { execFileSync } from 'child_process'
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
+import { createCanvas, GlobalFonts, type SKRSContext2D } from '@napi-rs/canvas'
 
 const ROOT = process.cwd()
 const FFMPEG = join(ROOT, 'node_modules/ffmpeg-static/ffmpeg')
@@ -30,6 +31,407 @@ const OUT_DIR = join(ROOT, 'public/videos')
 
 type Lang = 'en' | 'es' | 'ja'
 const LANGS: readonly Lang[] = ['en', 'es', 'ja']
+
+const CLIP30_DURATION_SEC = 13.5
+
+interface NextChapterCardItem {
+  tag: string
+  title: string
+  meta: string
+}
+
+interface Clip30OverlayCopy {
+  card1Eyebrow: string
+  card1Title: string
+  card1Subtitle: string
+  card2Eyebrow: string
+  card2Chapters: readonly [
+    NextChapterCardItem,
+    NextChapterCardItem,
+    NextChapterCardItem,
+    NextChapterCardItem,
+  ]
+  card2Footer: string
+  card3Eyebrow: string
+  card3Title: string
+}
+
+const CLIP30_TITLE_COPY: Record<Lang, Clip30OverlayCopy> = {
+  en: {
+    card1Eyebrow: 'END OF CHAPTER 2 OF 6',
+    card1Title: 'Letters Across the Water',
+    card1Subtitle: 'A 68-Minute 4K Feature Film  ·  or  6-Episode Series',
+    card2Eyebrow: 'THE STORY CONTINUES  —  NEXT CHAPTERS',
+    card2Chapters: [
+      {
+        tag: 'CHAPTER 3  ·  1974',
+        title: 'First Winter at the Corner Brick Oven',
+        meta: '11.5 min  ·  22:30 – 34:00',
+      },
+      {
+        tag: 'CHAPTER 4  ·  1978',
+        title: 'The Night the Neighborhood Saved the Bakery',
+        meta: '11.5 min  ·  34:00 – 45:30',
+      },
+      {
+        tag: 'CHAPTER 5  ·  1994–2012',
+        title: 'Graduations, Weddings & Sunday Tables',
+        meta: '11.0 min  ·  45:30 – 56:30',
+      },
+      {
+        tag: 'CHAPTER 6  ·  TODAY',
+        title: 'The 80th Reunion & The Recipe Passed Forward',
+        meta: '11.5 min  ·  56:30 – 68:00',
+      },
+    ],
+    card2Footer: 'Same Age-Locked Cast  ·  Same Heirloom Props  ·  68 Minutes of Continuous 4K Cinema',
+    card3Eyebrow: 'ONLY ONE CHAPTER OF A 1-HOUR+ STORY',
+    card3Title: 'Explore All 6 Chapters in the Interactive Blueprint',
+  },
+  es: {
+    card1Eyebrow: 'FIN DEL CAPÍTULO 2 DE 6',
+    card1Title: 'Cartas a Través del Agua',
+    card1Subtitle: 'Largometraje 4K de 68 Minutos  ·  o  Serie de 6 Episodios',
+    card2Eyebrow: 'LA HISTORIA CONTINÚA  —  PRÓXIMOS CAPÍTULOS',
+    card2Chapters: [
+      {
+        tag: 'CAPÍTULO 3  ·  1974',
+        title: 'Primer invierno en el horno de ladrillo de la esquina',
+        meta: '11,5 min  ·  22:30 – 34:00',
+      },
+      {
+        tag: 'CAPÍTULO 4  ·  1978',
+        title: 'La noche en que el barrio salvó la panadería',
+        meta: '11,5 min  ·  34:00 – 45:30',
+      },
+      {
+        tag: 'CAPÍTULO 5  ·  1994–2012',
+        title: 'Graduaciones, bodas y mesas de domingo',
+        meta: '11,0 min  ·  45:30 – 56:30',
+      },
+      {
+        tag: 'CAPÍTULO 6  ·  HOY',
+        title: 'La reunión de los 80 años y la receta heredada',
+        meta: '11,5 min  ·  56:30 – 68:00',
+      },
+    ],
+    card2Footer: 'Mismo elenco con edad fiel  ·  Mismas reliquias  ·  68 minutos de cine 4K continuo',
+    card3Eyebrow: 'SOLO UN CAPÍTULO DE UNA HISTORIA DE 1 HORA+',
+    card3Title: 'Explora los 6 capítulos en el plano interactivo',
+  },
+  ja: {
+    card1Eyebrow: '全6章 · 第2章 完',
+    card1Title: '海を越えた手紙',
+    card1Subtitle: '全68分 4K長編映画  ·  または  全6話シリーズ',
+    card2Eyebrow: '物語は続く  —  これからのチャプター',
+    card2Chapters: [
+      {
+        tag: '第3章  ·  1974年',
+        title: '角のレンガ窯で迎えた最初の冬',
+        meta: '11.5分  ·  22:30 – 34:00',
+      },
+      {
+        tag: '第4章  ·  1978年',
+        title: '街のみんながベーカリーを救った夜',
+        meta: '11.5分  ·  34:00 – 45:30',
+      },
+      {
+        tag: '第5章  ·  1994〜2012年',
+        title: '卒業式、結婚式、そして日曜の食卓',
+        meta: '11.0分  ·  45:30 – 56:30',
+      },
+      {
+        tag: '第6章  ·  現在',
+        title: '80歳の再会と次世代へ手渡すレシピ',
+        meta: '11.5分  ·  56:30 – 68:00',
+      },
+    ],
+    card2Footer: '年齢一貫キャスト  ·  受け継ぐ家宝  ·  途切れない全68分の4Kシネマ',
+    card3Eyebrow: '1時間超の物語の、ほんの1章',
+    card3Title: '全6章の構成をインタラクティブ設計図でご覧ください',
+  },
+}
+
+let fontsRegistered = false
+function registerOverlayFonts() {
+  if (fontsRegistered) return
+  fontsRegistered = true
+  const pairs: readonly [string, string][] = [
+    ['/System/Library/Fonts/Supplemental/Georgia.ttf', 'SFGeorgia'],
+    ['/System/Library/Fonts/Supplemental/Georgia Bold.ttf', 'SFGeorgiaBold'],
+    ['/System/Library/Fonts/Avenir Next.ttc', 'SFAvenir'],
+    ['/System/Library/Fonts/ヒラギノ明朝 ProN.ttc', 'SFMincho'],
+    ['/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc', 'SFGothicBold'],
+    ['/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc', 'SFGothic'],
+  ]
+  for (const [fontPath, alias] of pairs) {
+    if (existsSync(fontPath)) {
+      GlobalFonts.registerFromPath(fontPath, alias)
+    }
+  }
+}
+
+function drawRoundedRect(
+  ctx: SKRSContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.arcTo(x + w, y, x + w, y + h, r)
+  ctx.arcTo(x + w, y + h, x, y + h, r)
+  ctx.arcTo(x, y + h, x, y, r)
+  ctx.arcTo(x, y, x + w, y, r)
+  ctx.closePath()
+}
+
+function wrapTextLines(
+  ctx: SKRSContext2D,
+  text: string,
+  maxWidth: number,
+  isCjk: boolean
+): string[] {
+  if (ctx.measureText(text).width <= maxWidth) return [text]
+  const tokens = isCjk ? Array.from(text) : text.split(' ')
+  const lines: string[] = []
+  let current = ''
+  for (const token of tokens) {
+    const candidate = current ? (isCjk ? current + token : `${current} ${token}`) : token
+    if (ctx.measureText(candidate).width <= maxWidth) {
+      current = candidate
+    } else {
+      if (current) lines.push(current)
+      current = token
+    }
+  }
+  if (current) lines.push(current)
+  return lines.slice(0, 2)
+}
+
+function drawTrackedCenteredText(
+  ctx: SKRSContext2D,
+  text: string,
+  cx: number,
+  y: number,
+  trackingPx: number
+) {
+  if (trackingPx <= 0) {
+    ctx.textAlign = 'center'
+    ctx.fillText(text, cx, y)
+    return
+  }
+  const chars = Array.from(text)
+  const widths = chars.map((ch) => ctx.measureText(ch).width)
+  const totalWidth =
+    widths.reduce((sum, w) => sum + w, 0) + trackingPx * Math.max(0, chars.length - 1)
+  let x = cx - totalWidth / 2
+  ctx.textAlign = 'left'
+  for (let i = 0; i < chars.length; i++) {
+    ctx.fillText(chars[i], x, y)
+    x += widths[i] + trackingPx
+  }
+}
+
+function renderClip30TitleCards(lang: Lang, outDir: string): [string, string, string] {
+  registerOverlayFonts()
+  mkdirSync(outDir, { recursive: true })
+  const copy = CLIP30_TITLE_COPY[lang]
+  const isJa = lang === 'ja'
+  const serifFont = isJa ? 'SFMincho, Hiragino Mincho ProN, serif' : 'SFGeorgia, Georgia, serif'
+  const sansFont = isJa ? 'SFGothicBold, Hiragino Sans, sans-serif' : 'SFAvenir, Helvetica Neue, sans-serif'
+  const sansLight = isJa ? 'SFGothic, Hiragino Sans, sans-serif' : 'SFAvenir, Helvetica Neue, sans-serif'
+
+  const W = 1280
+  const H = 720
+
+  // --- CARD 1: End of Chapter 2 of 6 (framed cleanly in upper third above the sunlit journal) ---
+  const card1Path = join(outDir, 'clip30-card1.png')
+  {
+    const canvas = createCanvas(W, H)
+    const ctx = canvas.getContext('2d')
+
+    const topGrad = ctx.createLinearGradient(0, 0, 0, 390)
+    topGrad.addColorStop(0, 'rgba(6, 9, 16, 0.78)')
+    topGrad.addColorStop(0.68, 'rgba(6, 9, 16, 0.42)')
+    topGrad.addColorStop(1, 'rgba(6, 9, 16, 0.0)')
+    ctx.fillStyle = topGrad
+    ctx.fillRect(0, 0, W, 390)
+
+    ctx.textBaseline = 'middle'
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)'
+    ctx.shadowBlur = 16
+    ctx.shadowOffsetY = 2
+
+    // Gold eyebrow
+    ctx.font = `700 17px ${sansFont}`
+    ctx.fillStyle = '#F0CB92'
+    drawTrackedCenteredText(ctx, copy.card1Eyebrow, W / 2, 92, isJa ? 4 : 3.5)
+
+    // Main film title
+    ctx.font = `600 ${isJa ? 48 : 50}px ${serifFont}`
+    ctx.fillStyle = '#FFFFFF'
+    ctx.textAlign = 'center'
+    ctx.fillText(copy.card1Title, W / 2, 152)
+
+    // Gold hairline divider
+    ctx.shadowBlur = 0
+    const ruleGrad = ctx.createLinearGradient(W / 2 - 140, 0, W / 2 + 140, 0)
+    ruleGrad.addColorStop(0, 'rgba(223, 180, 115, 0)')
+    ruleGrad.addColorStop(0.5, 'rgba(223, 180, 115, 0.9)')
+    ruleGrad.addColorStop(1, 'rgba(223, 180, 115, 0)')
+    ctx.fillStyle = ruleGrad
+    ctx.fillRect(W / 2 - 140, 194, 280, 1.5)
+
+    // Subtitle
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)'
+    ctx.shadowBlur = 12
+    ctx.font = `500 21px ${sansLight}`
+    ctx.fillStyle = '#E5E7EB'
+    ctx.textAlign = 'center'
+    ctx.fillText(copy.card1Subtitle, W / 2, 228)
+
+    writeFileSync(card1Path, canvas.toBuffer('image/png'))
+  }
+
+  // --- CARD 2: Upcoming Chapters 3–6 Grid (cinema scrim + 2x2 prestige editorial cards) ---
+  const card2Path = join(outDir, 'clip30-card2.png')
+  {
+    const canvas = createCanvas(W, H)
+    const ctx = canvas.getContext('2d')
+
+    const bgGrad = ctx.createRadialGradient(W / 2, H / 2, 80, W / 2, H / 2, 760)
+    bgGrad.addColorStop(0, 'rgba(7, 10, 18, 0.72)')
+    bgGrad.addColorStop(1, 'rgba(5, 7, 13, 0.86)')
+    ctx.fillStyle = bgGrad
+    ctx.fillRect(0, 0, W, H)
+
+    ctx.textBaseline = 'middle'
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)'
+    ctx.shadowBlur = 14
+    ctx.shadowOffsetY = 2
+
+    // Eyebrow
+    ctx.font = `700 18px ${sansFont}`
+    ctx.fillStyle = '#F0CB92'
+    drawTrackedCenteredText(ctx, copy.card2Eyebrow, W / 2, 78, isJa ? 4 : 3.2)
+
+    // Divider
+    ctx.shadowBlur = 0
+    const ruleGrad = ctx.createLinearGradient(W / 2 - 180, 0, W / 2 + 180, 0)
+    ruleGrad.addColorStop(0, 'rgba(223, 180, 115, 0)')
+    ruleGrad.addColorStop(0.5, 'rgba(223, 180, 115, 0.85)')
+    ruleGrad.addColorStop(1, 'rgba(223, 180, 115, 0)')
+    ctx.fillStyle = ruleGrad
+    ctx.fillRect(W / 2 - 180, 108, 360, 1.5)
+
+    // 2x2 Chapter Cards
+    const cardW = 532
+    const cardH = 176
+    const gapX = 28
+    const gapY = 24
+    const startX = (W - (cardW * 2 + gapX)) / 2
+    const startY = 140
+
+    copy.card2Chapters.forEach((ch, idx) => {
+      const col = idx % 2
+      const row = Math.floor(idx / 2)
+      const x = startX + col * (cardW + gapX)
+      const y = startY + row * (cardH + gapY)
+
+      // Card fill
+      drawRoundedRect(ctx, x, y, cardW, cardH, 16)
+      const cardGrad = ctx.createLinearGradient(x, y, x + cardW, y + cardH)
+      cardGrad.addColorStop(0, 'rgba(15, 22, 38, 0.88)')
+      cardGrad.addColorStop(1, 'rgba(9, 13, 24, 0.92)')
+      ctx.fillStyle = cardGrad
+      ctx.fill()
+
+      // Gold border
+      ctx.lineWidth = 1.5
+      ctx.strokeStyle = 'rgba(223, 180, 115, 0.42)'
+      ctx.stroke()
+
+      // Subtle left accent bar
+      drawRoundedRect(ctx, x + 20, y + 26, 3.5, cardH - 52, 2)
+      ctx.fillStyle = '#DFB473'
+      ctx.fill()
+
+      // Tag (CHAPTER X · YEAR)
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'top'
+      ctx.font = `700 15px ${sansFont}`
+      ctx.fillStyle = '#F0CB92'
+      ctx.fillText(ch.tag, x + 38, y + 26)
+
+      // Chapter Title (wrapped up to 2 lines)
+      ctx.font = `600 ${isJa ? 24 : 25}px ${serifFont}`
+      ctx.fillStyle = '#FFFFFF'
+      const lines = wrapTextLines(ctx, ch.title, cardW - 64, isJa)
+      lines.forEach((line, lIdx) => {
+        ctx.fillText(line, x + 38, y + 58 + lIdx * 34)
+      })
+
+      // Runtime / timecode meta
+      ctx.font = `500 14px ${sansLight}`
+      ctx.fillStyle = '#94A3B8'
+      ctx.fillText(ch.meta, x + 38, y + cardH - 36)
+    })
+
+    // Bottom continuity tagline (aligned left-center safely away from bottom-right SceneFlow watermark)
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)'
+    ctx.shadowBlur = 10
+    ctx.font = `600 17px ${sansLight}`
+    ctx.fillStyle = '#CBD5E1'
+    ctx.fillText(copy.card2Footer, W / 2 - 36, 594)
+
+    writeFileSync(card2Path, canvas.toBuffer('image/png'))
+  }
+
+  // --- CARD 3: Prestige Closing Tag (fades into final fade-to-black) ---
+  const card3Path = join(outDir, 'clip30-card3.png')
+  {
+    const canvas = createCanvas(W, H)
+    const ctx = canvas.getContext('2d')
+
+    const veil = ctx.createLinearGradient(0, 0, 0, H)
+    veil.addColorStop(0, 'rgba(6, 9, 16, 0.72)')
+    veil.addColorStop(0.55, 'rgba(6, 9, 16, 0.45)')
+    veil.addColorStop(1, 'rgba(6, 9, 16, 0.18)')
+    ctx.fillStyle = veil
+    ctx.fillRect(0, 0, W, H)
+
+    ctx.textBaseline = 'middle'
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)'
+    ctx.shadowBlur = 18
+    ctx.shadowOffsetY = 2
+
+    ctx.font = `700 17px ${sansFont}`
+    ctx.fillStyle = '#F0CB92'
+    drawTrackedCenteredText(ctx, copy.card3Eyebrow, W / 2, 148, isJa ? 4 : 3.2)
+
+    ctx.font = `600 ${isJa ? 34 : 38}px ${serifFont}`
+    ctx.fillStyle = '#FFFFFF'
+    ctx.textAlign = 'center'
+    ctx.fillText(copy.card3Title, W / 2, 204)
+
+    ctx.shadowBlur = 0
+    const ruleGrad = ctx.createLinearGradient(W / 2 - 120, 0, W / 2 + 120, 0)
+    ruleGrad.addColorStop(0, 'rgba(223, 180, 115, 0)')
+    ruleGrad.addColorStop(0.5, 'rgba(223, 180, 115, 0.85)')
+    ruleGrad.addColorStop(1, 'rgba(223, 180, 115, 0)')
+    ctx.fillStyle = ruleGrad
+    ctx.fillRect(W / 2 - 120, 244, 240, 1.5)
+
+    writeFileSync(card3Path, canvas.toBuffer('image/png'))
+  }
+
+  return [card1Path, card2Path, card3Path]
+}
 
 const SCENES: readonly { id: number; music: string; clips: readonly number[] }[] = [
   { id: 1, music: 'scene1.mp3', clips: [1, 2, 3] },
@@ -167,7 +569,7 @@ function buildLanguage(lang: Lang) {
       let dur = 8.0
 
       if (clipNum === 30) {
-        dur = 8.0
+        dur = CLIP30_DURATION_SEC
         runFfmpeg(
           ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-t', dur.toFixed(3), '-c:a', 'pcm_s16le', voWav],
           `${lang}-vo-30`
@@ -215,41 +617,37 @@ function buildLanguage(lang: Lang) {
         )
       }
 
-      // Check if we need to (re)render FM / EX video segment
-      const mustRebuildClip =
-        FORCE_VIDEO ||
-        (clipNum === 12 && lang === 'en') ||
-        (dur > 16.5) ||
-        !existsSync(fmMp4) ||
-        Math.abs(probeDuration(fmMp4) - dur) > 0.15
+      // Clip 30 carries the localized 3-card "Next Chapters (Ch. 3–6)" cinema title sequence overlay
+      if (clipNum === 30) {
+        const overlayDir = join(langDir, 'overlays')
+        const [card1Png, card2Png, card3Png] = renderClip30TitleCards(lang, overlayDir)
+        const durStr = dur.toFixed(3)
+        const ptsFactor = (dur / clipDur).toFixed(5)
+        const fadeOutStart = (dur - 1.6).toFixed(2)
 
-      if (mustRebuildClip) {
-        const vFilters: string[] = ['scale=1280:720:flags=lanczos', 'setsar=1']
-        if (dur > clipDur) {
-          // Smooth elastic slow-down up to 2.15x (eliminates frozen frames even on longest JA shots)
-          const maxSlowDur = clipDur * 2.15
-          const stretchDur = Math.min(dur, maxSlowDur)
-          const ptsFactor = stretchDur / clipDur
-          vFilters.push(`setpts=${ptsFactor.toFixed(5)}*PTS`)
-          if (dur > stretchDur + 0.04) {
-            const padExtra = dur - stretchDur + 0.25
-            vFilters.push(`tpad=stop_mode=clone:stop_duration=${padExtra.toFixed(3)}`)
-          }
-        }
-        vFilters.push('fps=24')
-        if (SCENE_START_CLIPS.has(clipNum)) {
-          vFilters.push(`fade=t=in:st=0:d=${clipNum === 1 ? '0.60' : '0.30'}`)
-        }
-        if (clipNum === 30) {
-          vFilters.push(`fade=t=out:st=${(dur - 2.2).toFixed(2)}:d=2.2`)
-        } else if (SCENE_END_CLIPS.has(clipNum)) {
-          vFilters.push(`fade=t=out:st=${(dur - 0.30).toFixed(2)}:d=0.30`)
-        }
+        const overlayChain = [
+          `[1:v]format=rgba,fade=t=in:st=0.45:d=0.70:alpha=1,fade=t=out:st=3.50:d=0.65:alpha=1[c1]`,
+          `[2:v]format=rgba,fade=t=in:st=4.35:d=0.70:alpha=1,fade=t=out:st=9.90:d=0.70:alpha=1[c2]`,
+          `[3:v]format=rgba,fade=t=in:st=10.75:d=0.55:alpha=1[c3]`,
+          `[base][c1]overlay=0:0:shortest=1[v1]`,
+          `[v1][c2]overlay=0:0:shortest=1[v2]`,
+          `[v2][c3]overlay=0:0:shortest=1,fade=t=out:st=${fadeOutStart}:d=1.60[vout]`,
+        ]
+
+        // Full-Motion Clip 30 with gentle 1.35x dreamlike slow-motion + Next Chapters Title Sequence
         runFfmpeg(
           [
             '-i', clipPath,
-            '-t', dur.toFixed(3),
-            '-vf', vFilters.join(','),
+            '-loop', '1', '-t', durStr, '-i', card1Png,
+            '-loop', '1', '-t', durStr, '-i', card2Png,
+            '-loop', '1', '-t', durStr, '-i', card3Png,
+            '-filter_complex',
+            [
+              `[0:v]scale=1280:720:flags=lanczos,setsar=1,setpts=${ptsFactor}*PTS,fps=24,trim=0:${durStr},setpts=PTS-STARTPTS[base]`,
+              ...overlayChain,
+            ].join(';'),
+            '-map', '[vout]',
+            '-t', durStr,
             '-an',
             '-c:v', 'libx264',
             '-preset', 'fast',
@@ -257,45 +655,26 @@ function buildLanguage(lang: Lang) {
             '-pix_fmt', 'yuv420p',
             fmMp4,
           ],
-          `${lang}-fm-${n}`
+          `${lang}-fm-30-titles`
         )
-      }
 
-      const mustRebuildEx =
-        FORCE_VIDEO ||
-        clipNum === 12 ||
-        !existsSync(exMp4) ||
-        Math.abs(probeDuration(exMp4) - dur) > 0.15
-
-      if (mustRebuildEx) {
+        // Express 4K Clip 30 with subtle zoom-out still + identical Next Chapters Title Sequence
         const stillPath = join(BUILD, 'stills', `${n}.png`)
         const totalFrames = Math.max(24, Math.round(dur * 24))
-        const moveType = clipNum % 4
-        let zpExpr = ''
-        if (moveType === 1) {
-          zpExpr = `zoompan=z='1.0+0.06*(on/${totalFrames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
-        } else if (moveType === 2) {
-          zpExpr = `zoompan=z='1.06-0.06*(on/${totalFrames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
-        } else if (moveType === 3) {
-          zpExpr = `zoompan=z='1.06':x='(iw-iw/zoom)*(0.2+0.6*(on/${totalFrames}))':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
-        } else {
-          zpExpr = `zoompan=z='1.06':x='(iw-iw/zoom)*(0.8-0.6*(on/${totalFrames}))':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
-        }
-        const exFilters = ['scale=1920:1080:flags=lanczos', zpExpr, 'setsar=1']
-        if (SCENE_START_CLIPS.has(clipNum)) {
-          exFilters.push(`fade=t=in:st=0:d=${clipNum === 1 ? '0.60' : '0.30'}`)
-        }
-        if (clipNum === 30) {
-          exFilters.push(`fade=t=out:st=${(dur - 2.2).toFixed(2)}:d=2.2`)
-        } else if (SCENE_END_CLIPS.has(clipNum)) {
-          exFilters.push(`fade=t=out:st=${(dur - 0.30).toFixed(2)}:d=0.30`)
-        }
+        const zpExpr = `zoompan=z='1.06-0.06*(on/${totalFrames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
         runFfmpeg(
           [
-            '-loop', '1',
-            '-i', stillPath,
-            '-t', dur.toFixed(3),
-            '-vf', exFilters.join(','),
+            '-loop', '1', '-t', durStr, '-i', stillPath,
+            '-loop', '1', '-t', durStr, '-i', card1Png,
+            '-loop', '1', '-t', durStr, '-i', card2Png,
+            '-loop', '1', '-t', durStr, '-i', card3Png,
+            '-filter_complex',
+            [
+              `[0:v]scale=1920:1080:flags=lanczos,${zpExpr},setsar=1,trim=0:${durStr},setpts=PTS-STARTPTS[base]`,
+              ...overlayChain,
+            ].join(';'),
+            '-map', '[vout]',
+            '-t', durStr,
             '-an',
             '-c:v', 'libx264',
             '-preset', 'fast',
@@ -303,8 +682,110 @@ function buildLanguage(lang: Lang) {
             '-pix_fmt', 'yuv420p',
             exMp4,
           ],
-          `${lang}-ex-${n}`
+          `${lang}-ex-30-titles`
         )
+
+        // Export QA preview frames for all 3 title cards
+        const qaDir = join(BASE, 'qa')
+        mkdirSync(qaDir, { recursive: true })
+        for (const [label, ts] of [
+          ['card1', '2.0'],
+          ['card2', '7.0'],
+          ['card3', '11.5'],
+        ] as const) {
+          runFfmpeg(
+            ['-ss', ts, '-i', fmMp4, '-frames:v', '1', '-q:v', '2', join(qaDir, `clip30-${lang}-${label}.png`)],
+            `${lang}-qa-${label}`
+          )
+        }
+      } else {
+        // Check if we need to (re)render FM / EX video segment
+        const mustRebuildClip =
+          FORCE_VIDEO ||
+          (clipNum === 12 && lang === 'en') ||
+          (dur > 16.5) ||
+          !existsSync(fmMp4) ||
+          Math.abs(probeDuration(fmMp4) - dur) > 0.15
+
+        if (mustRebuildClip) {
+          const vFilters: string[] = ['scale=1280:720:flags=lanczos', 'setsar=1']
+          if (dur > clipDur) {
+            // Smooth elastic slow-down up to 2.15x (eliminates frozen frames even on longest JA shots)
+            const maxSlowDur = clipDur * 2.15
+            const stretchDur = Math.min(dur, maxSlowDur)
+            const ptsFactor = stretchDur / clipDur
+            vFilters.push(`setpts=${ptsFactor.toFixed(5)}*PTS`)
+            if (dur > stretchDur + 0.04) {
+              const padExtra = dur - stretchDur + 0.25
+              vFilters.push(`tpad=stop_mode=clone:stop_duration=${padExtra.toFixed(3)}`)
+            }
+          }
+          vFilters.push('fps=24')
+          if (SCENE_START_CLIPS.has(clipNum)) {
+            vFilters.push(`fade=t=in:st=0:d=${clipNum === 1 ? '0.60' : '0.30'}`)
+          }
+          if (SCENE_END_CLIPS.has(clipNum)) {
+            vFilters.push(`fade=t=out:st=${(dur - 0.30).toFixed(2)}:d=0.30`)
+          }
+          runFfmpeg(
+            [
+              '-i', clipPath,
+              '-t', dur.toFixed(3),
+              '-vf', vFilters.join(','),
+              '-an',
+              '-c:v', 'libx264',
+              '-preset', 'fast',
+              '-crf', '18',
+              '-pix_fmt', 'yuv420p',
+              fmMp4,
+            ],
+            `${lang}-fm-${n}`
+          )
+        }
+
+        const mustRebuildEx =
+          FORCE_VIDEO ||
+          clipNum === 12 ||
+          !existsSync(exMp4) ||
+          Math.abs(probeDuration(exMp4) - dur) > 0.15
+
+        if (mustRebuildEx) {
+          const stillPath = join(BUILD, 'stills', `${n}.png`)
+          const totalFrames = Math.max(24, Math.round(dur * 24))
+          const moveType = clipNum % 4
+          let zpExpr = ''
+          if (moveType === 1) {
+            zpExpr = `zoompan=z='1.0+0.06*(on/${totalFrames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
+          } else if (moveType === 2) {
+            zpExpr = `zoompan=z='1.06-0.06*(on/${totalFrames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
+          } else if (moveType === 3) {
+            zpExpr = `zoompan=z='1.06':x='(iw-iw/zoom)*(0.2+0.6*(on/${totalFrames}))':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
+          } else {
+            zpExpr = `zoompan=z='1.06':x='(iw-iw/zoom)*(0.8-0.6*(on/${totalFrames}))':y='ih/2-(ih/zoom/2)':d=${totalFrames}:s=1280x720:fps=24`
+          }
+          const exFilters = ['scale=1920:1080:flags=lanczos', zpExpr, 'setsar=1']
+          if (SCENE_START_CLIPS.has(clipNum)) {
+            exFilters.push(`fade=t=in:st=0:d=${clipNum === 1 ? '0.60' : '0.30'}`)
+          }
+          if (SCENE_END_CLIPS.has(clipNum)) {
+            exFilters.push(`fade=t=out:st=${(dur - 0.30).toFixed(2)}:d=0.30`)
+          }
+          runFfmpeg(
+            [
+              '-loop', '1',
+              '-i', stillPath,
+              '-t', dur.toFixed(3),
+              '-vf', exFilters.join(','),
+              '-an',
+              '-c:v', 'libx264',
+              '-preset', 'fast',
+              '-crf', '18',
+              '-pix_fmt', 'yuv420p',
+              exMp4,
+            ],
+            `${lang}-ex-${n}`
+          )
+        }
       }
 
       plans.push({ clipNum, start: cursor, end: cursor + dur, dur, voWav, fmMp4, exMp4 })
