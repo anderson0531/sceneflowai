@@ -40,7 +40,14 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
-import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
+import { resolveGenerationQuote } from '@/lib/credits/resolveGenerationQuote'
+import { logProviderCost } from '@/lib/credits/costTracking'
+import {
+  executeMeteredProviderCall,
+  inferVendorFromProviderOrModel,
+  recordProviderRunFinish,
+  recordProviderRunStart,
+} from '@/lib/credits/meteredGateway'
 import Project from '../../../../models/Project'
 import { ensureDatabaseConnection } from '../../../../config/database'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
@@ -621,7 +628,9 @@ export async function POST(req: NextRequest) {
 async function postGenerateImage(req: NextRequest) {
   let userId: string | null = null
   let creditsCharged = 0
-  const CREDIT_COST = IMAGE_CREDITS.FAL_KLING_IMAGE // 12 credits per image
+  let activeHoldId: string | null = null
+  let activeRunId: string | null = null
+  let activeRequiredCredits: number = IMAGE_CREDITS.IMAGEN_4
   const routeStart = Date.now()
   /** Nothing downstream of the image call can run if the image itself overruns. */
   const imageDeadlineAt = resolveImageDeadlineAt(routeStart, ROUTE_TIME_BUDGET_MS)
@@ -637,20 +646,6 @@ async function postGenerateImage(req: NextRequest) {
         { success: false, error: 'Authentication required', code: 'AUTH_REQUIRED' },
         { status: 401 }
       )
-    }
-
-    // 2. Pre-check credit balance
-    const hasEnoughCredits = await CreditService.ensureCredits(userId, CREDIT_COST)
-    if (!hasEnoughCredits) {
-      const breakdown = await CreditService.getCreditBreakdown(userId)
-      return NextResponse.json({
-        success: false,
-        error: 'Insufficient credits',
-        code: 'INSUFFICIENT_CREDITS',
-        required: CREDIT_COST,
-        balance: breakdown.total_credits,
-        suggestedTopUp: { pack: 'quick_fix', name: 'Quick Fix', price: 25, credits: 2000 }
-      }, { status: 402 })
     }
 
     const body = await req.json()
@@ -687,6 +682,7 @@ async function postGenerateImage(req: NextRequest) {
       /** Express draft beat frames — eligible for the flash image model. */
       animaticDraft = false,
       skipLikenessValidation = false,
+      failFastOnRateLimit: requestedFailFastOnRateLimit,
       /** Pre-resolved look from an Express run — skips per-beat re-derivation. */
       lookbook: passedLookbook,
       generationMode = 'default',
@@ -1030,45 +1026,47 @@ async function postGenerateImage(req: NextRequest) {
             const bookendImageSize: '1K' | '2K' =
               String(effectiveImageSize) === '2K' || String(effectiveImageSize) === '4K' ? '2K' : '1K'
 
-            const editResult = await editImageWithGeminiStudio({
-              sourceImage: resolvedStillUrl,
-              instruction,
-              referenceImages: bookendReferenceImages.length > 0 ? bookendReferenceImages : undefined,
-              aspectRatio: '16:9',
-              imageSize: bookendImageSize,
-              modelTier: resolvedModelTier,
-              editIntent: 'keyframeStart',
-              segmentDurationSeconds: durationSeconds,
-              negativePrompt: mergeBeatFrameNegativePrompt(
-                !isPhotorealisticArtStyle(artStyle) ? getArtStyleNegativeTerms(artStyle) : undefined
-              ),
-              deadlineAt: imageDeadlineAt,
-              signal: req.signal,
+            activeRequiredCredits = IMAGE_CREDITS.FRAME_GENERATION
+            const meteredStartFrame = await executeMeteredProviderCall({
+              userId: userId!,
+              projectId: projectId || null,
+              route: '/api/scene/generate-image',
+              provider: 'vertex',
+              model: resolvedModelTier === 'eco' ? GEMINI_IMAGE_MODELS.flash : GEMINI_IMAGE_MODELS.pro,
+              operation: 'beat_start_frame',
+              quoteInput: {
+                kind: 'still',
+                imageCount: 1,
+                floorCredits: IMAGE_CREDITS.FRAME_GENERATION,
+              },
+              meta: { label: 'beat_start_frame', sceneIndex, beatIndex: effectiveBeatIndex },
+              execute: async () => {
+                const editResult = await editImageWithGeminiStudio({
+                  sourceImage: resolvedStillUrl,
+                  instruction,
+                  referenceImages: bookendReferenceImages.length > 0 ? bookendReferenceImages : undefined,
+                  aspectRatio: '16:9',
+                  imageSize: bookendImageSize,
+                  modelTier: resolvedModelTier,
+                  editIntent: 'keyframeStart',
+                  segmentDurationSeconds: durationSeconds,
+                  negativePrompt: mergeBeatFrameNegativePrompt(
+                    !isPhotorealisticArtStyle(artStyle) ? getArtStyleNegativeTerms(artStyle) : undefined
+                  ),
+                  deadlineAt: imageDeadlineAt,
+                  signal: req.signal,
+                })
+
+                return await uploadImageToBlob(
+                  editResult.imageBase64,
+                  `projects/${projectId}/scenes/${sceneIndex}/beats/${beat.beatId || effectiveBeatIndex}-start-${Date.now()}.png`
+                )
+              },
             })
-
-            const imageUrl = await uploadImageToBlob(
-              editResult.imageBase64,
-              `projects/${projectId}/scenes/${sceneIndex}/beats/${beat.beatId || effectiveBeatIndex}-start-${Date.now()}.png`
-            )
-
-            try {
-              await quoteAndCharge({
-                userId: userId!,
-                projectId: projectId || null,
-                quoteInput: {
-                  kind: 'still',
-                  imageCount: 1,
-                  floorCredits: IMAGE_CREDITS.FRAME_GENERATION,
-                },
-                meta: { label: 'beat_start_frame', sceneIndex, beatIndex: effectiveBeatIndex },
-              })
-            } catch (chargeError: unknown) {
-              console.error('[Scene Image] Failed to charge start-frame credits:', chargeError)
-            }
 
             return NextResponse.json({
               success: true,
-              imageUrl,
+              imageUrl: meteredStartFrame.result,
               prompt: instruction,
               frameType: 'beat',
               frameRole: 'action-start',
@@ -1076,7 +1074,7 @@ async function postGenerateImage(req: NextRequest) {
               model: 'vertex-gemini',
               provider: 'vertex-gemini',
               storage: 'vercel-blob',
-              creditsCharged: IMAGE_CREDITS.FRAME_GENERATION,
+              creditsCharged: meteredStartFrame.creditsCharged,
             })
           }
         }
@@ -1168,45 +1166,47 @@ async function postGenerateImage(req: NextRequest) {
           const bookendImageSize: '1K' | '2K' =
             String(effectiveImageSize) === '2K' || String(effectiveImageSize) === '4K' ? '2K' : '1K'
 
-          const editResult = await editImageWithGeminiStudio({
-            sourceImage: resolvedStartUrl,
-            instruction,
-            referenceImages: bookendReferenceImages.length > 0 ? bookendReferenceImages : undefined,
-            aspectRatio: '16:9',
-            imageSize: bookendImageSize,
-            modelTier: resolvedModelTier,
-            editIntent: 'keyframeEnd',
-            segmentDurationSeconds: durationSeconds,
-            negativePrompt: mergeBeatFrameNegativePrompt(
-              !isPhotorealisticArtStyle(artStyle) ? getArtStyleNegativeTerms(artStyle) : undefined
-            ),
-            deadlineAt: imageDeadlineAt,
-            signal: req.signal,
+          activeRequiredCredits = IMAGE_CREDITS.FRAME_GENERATION
+          const meteredEndFrame = await executeMeteredProviderCall({
+            userId: userId!,
+            projectId: projectId || null,
+            route: '/api/scene/generate-image',
+            provider: 'vertex',
+            model: resolvedModelTier === 'eco' ? GEMINI_IMAGE_MODELS.flash : GEMINI_IMAGE_MODELS.pro,
+            operation: 'beat_end_frame',
+            quoteInput: {
+              kind: 'still',
+              imageCount: 1,
+              floorCredits: IMAGE_CREDITS.FRAME_GENERATION,
+            },
+            meta: { label: 'beat_end_frame', sceneIndex, beatIndex: effectiveBeatIndex },
+            execute: async () => {
+              const editResult = await editImageWithGeminiStudio({
+                sourceImage: resolvedStartUrl,
+                instruction,
+                referenceImages: bookendReferenceImages.length > 0 ? bookendReferenceImages : undefined,
+                aspectRatio: '16:9',
+                imageSize: bookendImageSize,
+                modelTier: resolvedModelTier,
+                editIntent: 'keyframeEnd',
+                segmentDurationSeconds: durationSeconds,
+                negativePrompt: mergeBeatFrameNegativePrompt(
+                  !isPhotorealisticArtStyle(artStyle) ? getArtStyleNegativeTerms(artStyle) : undefined
+                ),
+                deadlineAt: imageDeadlineAt,
+                signal: req.signal,
+              })
+
+              return await uploadImageToBlob(
+                editResult.imageBase64,
+                `projects/${projectId}/scenes/${sceneIndex}/beats/${beat.beatId || effectiveBeatIndex}-end-${Date.now()}.png`
+              )
+            },
           })
-
-          const imageUrl = await uploadImageToBlob(
-            editResult.imageBase64,
-            `projects/${projectId}/scenes/${sceneIndex}/beats/${beat.beatId || effectiveBeatIndex}-end-${Date.now()}.png`
-          )
-
-          try {
-            await quoteAndCharge({
-              userId: userId!,
-              projectId: projectId || null,
-              quoteInput: {
-                kind: 'still',
-                imageCount: 1,
-                floorCredits: IMAGE_CREDITS.FRAME_GENERATION,
-              },
-              meta: { label: 'beat_end_frame', sceneIndex, beatIndex: effectiveBeatIndex },
-            })
-          } catch (chargeError: unknown) {
-            console.error('[Scene Image] Failed to charge end-frame credits:', chargeError)
-          }
 
           return NextResponse.json({
             success: true,
-            imageUrl,
+            imageUrl: meteredEndFrame.result,
             prompt: instruction,
             frameType: 'beat',
             frameRole: 'end',
@@ -1214,7 +1214,7 @@ async function postGenerateImage(req: NextRequest) {
             model: 'vertex-gemini',
             provider: 'vertex-gemini',
             storage: 'vercel-blob',
-            creditsCharged: IMAGE_CREDITS.FRAME_GENERATION,
+            creditsCharged: meteredEndFrame.creditsCharged,
           })
         }
       }
@@ -3115,7 +3115,81 @@ async function postGenerateImage(req: NextRequest) {
     const rateLimitBackoffMs = [5000, 15000, 30000]
 
     promptForResponse = stripReferenceImageMappingBlock(optimizedPrompt)
-    
+
+    // Pre-validate creative Kling provider availability BEFORE reserving credits
+    if (isCreativeStillGeneration(stillGenerationMode) && !getKlingFallbackProvider()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: CREATIVE_KLING_UNAVAILABLE_MESSAGE,
+          code: CREATIVE_KLING_UNAVAILABLE_CODE,
+        },
+        { status: 422 }
+      )
+    }
+
+    // Compute actual effective credit cost for this tier/resolution and reserve atomically BEFORE generation
+    const isPlannedProStill =
+      !useFlashDraftTier &&
+      (resolvedGen.storyboardQuality === 'final' ||
+        resolvedModelTier === 'designer' ||
+        resolvedModelTier === 'director' ||
+        forceDesignerImagePath)
+    const is4KImage = String(effectiveImageSize) === '4K'
+    const plannedFloorCredits = isCreativeStillGeneration(stillGenerationMode)
+      ? IMAGE_CREDITS.FAL_KLING_IMAGE
+      : is4KImage
+        ? IMAGE_CREDITS.PRO_IMAGE_4K
+        : isPlannedProStill
+          ? IMAGE_CREDITS.FINAL_FRAME_GENERATION
+          : IMAGE_CREDITS.IMAGEN_4
+    const plannedModelId = isCreativeStillGeneration(stillGenerationMode)
+      ? 'kling-omni-image'
+      : is4KImage || isPlannedProStill
+        ? GEMINI_IMAGE_MODELS.pro
+        : GEMINI_IMAGE_MODELS.flash
+    const plannedQuote = await resolveGenerationQuote({
+      kind: 'still',
+      model: plannedModelId,
+      resolution: is4KImage ? '4k' : '1080p',
+      imageCount: 1,
+      floorCredits: plannedFloorCredits,
+    })
+    activeRequiredCredits = plannedQuote.credits
+    const reservation = await CreditService.reserveCredits({
+      userId: userId!,
+      amount: plannedQuote.credits,
+      reason: 'ai_usage',
+      provider: isCreativeStillGeneration(stillGenerationMode) ? 'kling' : 'vertex',
+      operation: plannedQuote.operation,
+      projectId: projectId || null,
+      ref: projectId || null,
+      ttlSeconds: 900,
+      meta: {
+        route: '/api/scene/generate-image',
+        sceneIndex,
+        beatId: beatId ?? null,
+        frameType,
+        model: plannedModelId,
+        imageSize: effectiveImageSize,
+      },
+    })
+    activeHoldId = reservation.holdId
+    activeRunId = await recordProviderRunStart({
+      userId: userId!,
+      projectId: projectId || null,
+      route: '/api/scene/generate-image',
+      provider: isCreativeStillGeneration(stillGenerationMode) ? 'kling' : 'vertex',
+      model: plannedModelId,
+      operation: plannedQuote.operation,
+      credentialSource: 'platform',
+      holdId: activeHoldId,
+      estimatedCogsUsd: plannedQuote.cogsUsd,
+      unitsBilled: 1,
+      unitType: 'per_image',
+      meta: { sceneIndex, beatId: beatId ?? null, frameType, imageSize: effectiveImageSize },
+    })
+
     while (generationAttempt < maxGenerationAttempts) {
       try {
         generationAttempt++
@@ -3745,7 +3819,10 @@ async function postGenerateImage(req: NextRequest) {
               referenceImages: vertexReferenceImages,
               ...(isBeatFrame ? {} : { negativePrompt: finalNegativePrompt }),
               ...(effectiveImageTier ? { modelTier: effectiveImageTier } : {}),
-              failFastOnRateLimit: !!skipLikenessValidation,
+              failFastOnRateLimit:
+                requestedFailFastOnRateLimit === false
+                  ? false
+                  : Boolean(requestedFailFastOnRateLimit ?? skipLikenessValidation),
               requireAllReferenceImages: allReferenceImages.length > 0,
               policyMaxAttempts: resolveVertexStillPolicyAttempts(stillGenerationMode),
               skipProductionStillFraming: isBeatFrame,
@@ -3939,50 +4016,79 @@ async function postGenerateImage(req: NextRequest) {
     const basedOnDirectionHash = sceneData ? generateDirectionHash(sceneData) : undefined
     const basedOnReferencesHash = sceneData ? generateImageSourceHash(sceneData) : undefined
 
-    // 3. Charge credits after successful generation
-    try {
-      const isProStill =
-        generationModelId.toLowerCase().includes('pro') ||
-        resolvedGen.storyboardQuality === 'final'
-      const effectiveFloorCredits =
-        generationProvider === 'kling'
-          ? IMAGE_CREDITS.FAL_KLING_IMAGE
-          : effectiveImageSize === '4K'
-            ? IMAGE_CREDITS.PRO_IMAGE_4K
-            : isProStill
-              ? IMAGE_CREDITS.FINAL_FRAME_GENERATION
-              : CREDIT_COST
-      const charged = await quoteAndCharge({
-        userId: userId!,
-        projectId: projectId || null,
-        quoteInput: {
-          kind: 'still',
-          model: generationModelId,
-          resolution: effectiveImageSize === '4K' ? '4k' : '1080p',
-          imageCount: 1,
-          floorCredits: effectiveFloorCredits,
-        },
-        meta: {
-          label: generationProvider === 'kling' ? 'kling_image_generate' : 'vertex_image_generate',
-          sceneIndex,
-          model: generationModelId,
-          provider: generationProvider,
-          stillPolicyMode: stillGenerationMode ?? 'auto',
-        },
-      })
-      creditsCharged = charged.credits
-      console.log(`[Scene Image] Charged ${creditsCharged} credits to user ${userId}`)
-    } catch (chargeError: any) {
-      console.error('[Scene Image] Failed to charge credits:', chargeError)
-      // Don't fail the request if credit charge fails - image was already generated
+    // 3. Settle escrowed credits on success (fail-closed)
+    const isProStill =
+      generationModelId.toLowerCase().includes('pro') ||
+      resolvedGen.storyboardQuality === 'final'
+    const isFinal4K = String(effectiveImageSize) === '4K'
+    const effectiveFloorCredits =
+      generationProvider === 'kling'
+        ? IMAGE_CREDITS.FAL_KLING_IMAGE
+        : isFinal4K
+          ? IMAGE_CREDITS.PRO_IMAGE_4K
+          : isProStill
+            ? IMAGE_CREDITS.FINAL_FRAME_GENERATION
+            : IMAGE_CREDITS.IMAGEN_4
+    const finalQuote = await resolveGenerationQuote({
+      kind: 'still',
+      model: generationModelId,
+      resolution: isFinal4K ? '4k' : '1080p',
+      imageCount: 1,
+      floorCredits: effectiveFloorCredits,
+    })
+    const settlementMeta = {
+      label: generationProvider === 'kling' ? 'kling_image_generate' : 'vertex_image_generate',
+      sceneIndex,
+      model: generationModelId,
+      provider: generationProvider,
+      stillPolicyMode: stillGenerationMode ?? 'auto',
     }
+    const captured = await CreditService.captureHold({
+      holdId: activeHoldId!,
+      finalAmount: finalQuote.credits,
+      reason: 'ai_usage',
+      ref: projectId || null,
+      meta: settlementMeta,
+    })
+    activeHoldId = null
+    creditsCharged = captured.charged
+
+    const settledRunId = activeRunId
+    activeRunId = null
+    await recordProviderRunFinish({
+      runId: settledRunId,
+      status: 'succeeded',
+      unitsBilled: 1,
+      unitType: 'per_image',
+      estimatedCogsUsd: finalQuote.cogsUsd,
+      ledgerId: captured.ledgerId,
+      chargedCredits: creditsCharged,
+      httpStatus: 200,
+      meta: settlementMeta,
+    })
+    await logProviderCost({
+      userId: userId!,
+      operation: finalQuote.operation,
+      provider: 'sceneflow-ai',
+      model: generationModelId,
+      creditsCharged,
+      providerCostUsd: finalQuote.cogsUsd,
+      marginPercent: 0,
+      imageCount: 1,
+      projectId: projectId || undefined,
+      byok: false,
+      resolution: isFinal4K ? '4k' : '1080p',
+      vendor: inferVendorFromProviderOrModel(generationProvider, generationModelId),
+      timestamp: new Date(),
+    })
+    console.log(`[Scene Image] Charged ${creditsCharged} credits to user ${userId}`)
 
     // Get updated balance for response
     let newBalance: number | undefined
     try {
       const breakdown = await CreditService.getCreditBreakdown(userId!)
       newBalance = breakdown.total_credits
-    } catch (e) {
+    } catch {
       // Ignore balance lookup errors
     }
 
@@ -4001,7 +4107,7 @@ async function postGenerateImage(req: NextRequest) {
       // AI intelligence info
       usedAIIntelligence,
       // Credit info
-      creditsCharged: CREDIT_COST,
+      creditsCharged,
       creditsBalance: newBalance,
       prompt: promptForResponse,
       frameType: isDialogueFrame ? 'dialogue' : isCustomFrame ? 'custom' : isBeatFrame ? 'beat' : 'establishing',
@@ -4019,6 +4125,56 @@ async function postGenerateImage(req: NextRequest) {
 
     return NextResponse.json(response)
   } catch (error: any) {
+    // Release any pending credit hold and finalize telemetry on failure
+    if (activeHoldId || activeRunId) {
+      const errMsg = String(error?.message || '')
+      const isQuota =
+        errMsg.includes('quota') ||
+        errMsg.includes('Quota exceeded') ||
+        errMsg.includes('RESOURCE_EXHAUSTED') ||
+        errMsg.includes('429')
+      const errCode = isQuota
+        ? 'RATE_LIMITED'
+        : String(error?.code || error?.name || 'IMAGE_GENERATION_FAILED').slice(0, 128)
+      if (activeHoldId) {
+        await CreditService.releaseHold({
+          holdId: activeHoldId,
+          reason: errCode,
+        }).catch((relErr: unknown) =>
+          console.error('[Scene Image] Failed to release credit hold on error:', relErr)
+        )
+        activeHoldId = null
+      }
+      if (activeRunId) {
+        await recordProviderRunFinish({
+          runId: activeRunId,
+          status: isQuota ? 'rate_limited' : 'failed',
+          httpStatus: isQuota ? 429 : 500,
+          errorCode: errCode,
+          estimatedCogsUsd: 0,
+          chargedCredits: 0,
+        })
+        activeRunId = null
+      }
+    }
+
+    if (error?.message === 'INSUFFICIENT_CREDITS') {
+      const breakdown = userId
+        ? await CreditService.getCreditBreakdown(userId).catch(() => ({ total_credits: 0 }))
+        : { total_credits: 0 }
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Insufficient credits',
+          code: 'INSUFFICIENT_CREDITS',
+          required: activeRequiredCredits,
+          balance: breakdown.total_credits,
+          suggestedTopUp: { pack: 'quick_fix', name: 'Quick Fix', price: 25, credits: 2000 },
+        },
+        { status: 402 }
+      )
+    }
+
     console.error('[Scene Image] Error:', error)
     console.error('[Scene Image] Error stack:', error.stack)
     console.error('[Scene Image] Error details:', {

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { UserProviderConfig } from '@/models/UserProviderConfig'
-import { AIProvider } from '@/services/ai-providers/BaseAIProviderAdapter'
+import type { AIProvider } from '@/services/ai-providers/BaseAIProviderAdapter'
 import { EncryptionService } from '@/services/EncryptionService'
+import { validateKlingByokCredential } from '@/lib/byok/resolveProviderCredential'
 
-const KLING_PROVIDER = AIProvider.KLING
+const KLING_PROVIDER = 'KLING' as AIProvider
 
 function getKeyHint(apiKey: string): string {
   const trimmed = apiKey.trim()
@@ -19,8 +20,10 @@ function normalizeApiKey(raw: unknown): string {
 }
 
 async function requireUserId(): Promise<string | null> {
-  const session = await getServerSession(authOptions as any)
-  return (session?.user as any)?.id || null
+  const session = (await getServerSession(authOptions as any)) as {
+    user?: { id?: string }
+  } | null
+  return session?.user?.id || null
 }
 
 export async function GET() {
@@ -45,6 +48,8 @@ export async function GET() {
         keyHint = decrypted.keyHint
       } else if (typeof decrypted?.apiKey === 'string' && decrypted.apiKey) {
         keyHint = getKeyHint(decrypted.apiKey)
+      } else if (typeof decrypted?.accessKey === 'string' && decrypted.accessKey) {
+        keyHint = getKeyHint(decrypted.accessKey)
       }
     } catch {
       // Return status only. Never return the stored key.
@@ -78,17 +83,45 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const apiKey = normalizeApiKey(body?.apiKey)
-    if (apiKey.length < 8) {
-      return NextResponse.json({ error: 'Kling API key is required' }, { status: 400 })
+    const accessKey = normalizeApiKey(body?.accessKey)
+    const secretKey = normalizeApiKey(body?.secretKey)
+
+    const hasAccessSecret = Boolean(accessKey || secretKey)
+    if (!apiKey && !hasAccessSecret) {
+      return NextResponse.json(
+        { error: 'Kling API key or Access Key + Secret Key is required' },
+        { status: 400 }
+      )
     }
 
-    const keyHint = getKeyHint(apiKey)
-    const encryptedCredentials = EncryptionService.encrypt(
-      JSON.stringify({
-        apiKey,
-        keyHint,
-      })
+    const validation = await validateKlingByokCredential(
+      hasAccessSecret ? { accessKey, secretKey } : { apiKey }
     )
+    if (!validation.ok) {
+      return NextResponse.json(
+        { error: validation.error || 'Kling credential validation failed' },
+        { status: 400 }
+      )
+    }
+
+    const validatedAt = new Date().toISOString()
+    const keyHint = hasAccessSecret ? getKeyHint(accessKey) : getKeyHint(apiKey)
+    const payload = hasAccessSecret
+      ? {
+          mode: 'access_secret',
+          accessKey,
+          secretKey,
+          keyHint,
+          validatedAt,
+        }
+      : {
+          mode: 'api_key',
+          apiKey,
+          keyHint,
+          validatedAt,
+        }
+
+    const encryptedCredentials = EncryptionService.encrypt(JSON.stringify(payload))
 
     const [config, created] = await UserProviderConfig.findOrCreate({
       where: {

@@ -11,6 +11,17 @@ import {
   resolveVoiceSettings,
   type ElevenLabsVoiceSettings,
 } from './voicePresets'
+import { fetchWithRetry } from '@/lib/utils/retry'
+
+const ELEVENLABS_TTS_BACKOFF_SCHEDULE_MS = [1500, 4000, 10000]
+const ELEVENLABS_TTS_MAX_RETRY_DELAY_MS = 30_000
+
+function isRetryableElevenLabsError(error: any, status?: number): boolean {
+  if (error?.name === 'AbortError' || error?.code === 'ABORT_ERR' || error?.code === 'TIMEOUT') {
+    return false
+  }
+  return status === 429 || status === 502 || status === 503 || status === 504
+}
 
 export interface SynthesizeElevenLabsMp3Params {
   text: string
@@ -45,32 +56,46 @@ async function requestElevenLabsMp3(args: {
     args.voiceId
   )}?output_format=mp3_44100_128`
 
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), args.timeoutMs)
-
   let response: Response
   try {
-    response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'xi-api-key': args.apiKey,
-        'Content-Type': 'application/json',
-        Accept: 'audio/mpeg',
+    response = await fetchWithRetry(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'xi-api-key': args.apiKey,
+          'Content-Type': 'application/json',
+          Accept: 'audio/mpeg',
+        },
+        body: JSON.stringify({
+          text: args.text,
+          model_id: args.modelId,
+          voice_settings: args.voice_settings,
+        }),
       },
-      signal: controller.signal,
-      body: JSON.stringify({
-        text: args.text,
-        model_id: args.modelId,
-        voice_settings: args.voice_settings,
-      }),
-    })
-  } catch (err) {
-    if (err instanceof Error && err.name === 'AbortError') {
+      {
+        maxRetries: 3,
+        backoffScheduleMs: ELEVENLABS_TTS_BACKOFF_SCHEDULE_MS,
+        maxDelayMs: ELEVENLABS_TTS_MAX_RETRY_DELAY_MS,
+        maxRetryAfterMs: ELEVENLABS_TTS_MAX_RETRY_DELAY_MS,
+        timeoutMs: args.timeoutMs,
+        operationName: 'ElevenLabs TTS',
+        isRetryable: isRetryableElevenLabsError,
+      }
+    )
+  } catch (err: any) {
+    if (err?.code === 'TIMEOUT' || (err instanceof Error && err.name === 'AbortError')) {
       throw new Error(`ElevenLabs TTS timed out after ${args.timeoutMs}ms`)
     }
+    if (typeof err?.status === 'number') {
+      const error = new Error(
+        `ElevenLabs TTS failed: HTTP ${err.status} ${String(err.message || '').slice(0, 400)}`
+      ) as Error & { status?: number; modelId?: string }
+      error.status = err.status
+      error.modelId = args.modelId
+      throw error
+    }
     throw err
-  } finally {
-    clearTimeout(timer)
   }
 
   if (!response.ok) {

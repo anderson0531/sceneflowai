@@ -1,9 +1,11 @@
 import { readFileSync } from 'fs'
 import path from 'path'
-import { describe, expect, it } from 'vitest'
+import { NextRequest } from 'next/server'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
   ADDON_CREDIT_SHELF_LIFE_DAYS,
   EXPLORER_CREDIT_SHELF_LIFE_DAYS,
+  applyCreditRestore,
   applyCreditSpend,
   applyPackGrant,
   applySubscriptionGrant,
@@ -18,6 +20,7 @@ import { passModelSavingsToNewPurchases } from '@/lib/credits/creditSchedulePoli
 import { VIDEO_CREDIT_SCHEDULE_POLICY } from '@/lib/credits/videoEnginePricing'
 import { PRICING_LANDING_COPY } from '@/config/landing/pricingLandingCopy'
 import { TIER_CATALOG } from '@/lib/billing/tierCatalog'
+import { GET as subscriptionCreditsCronGet } from '@/app/api/cron/subscription-credits/route'
 
 const NOW = new Date('2026-10-06T00:00:00.000Z')
 
@@ -310,5 +313,215 @@ describe('subscription credit cron does not mint a free month', () => {
     expect(body).toContain('expireDueCredits')
     expect(body).not.toContain('included_credits_monthly')
     expect(service).toContain('applySubscriptionGrant')
+  })
+})
+
+describe('canonical payment dedup, mid-cycle upgrades, lot-source restore & cron auth', () => {
+  const originalCronSecret = process.env.CRON_SECRET
+
+  afterEach(() => {
+    if (originalCronSecret === undefined) {
+      delete process.env.CRON_SECRET
+    } else {
+      process.env.CRON_SECRET = originalCronSecret
+    }
+  })
+
+  it('blocks duplicate subscription grants by canonical whop_payment ref even >10 minutes later', () => {
+    const first = applySubscriptionGrant({
+      lots: [],
+      credits: 4500,
+      now: NOW,
+      expiresAt: daysFrom(30),
+      ref: 'whop_payment:pay_abc123',
+    })
+    expect(first.duplicate).toBe(false)
+    expect(first.granted).toBe(4500)
+
+    const threeHoursLater = new Date(NOW.getTime() + 3 * 60 * 60 * 1000)
+    const duplicateByRef = applySubscriptionGrant({
+      lots: first.lots,
+      credits: 4500,
+      now: threeHoursLater,
+      expiresAt: daysFrom(30),
+      ref: 'whop_payment:pay_abc123',
+    })
+    expect(duplicateByRef.duplicate).toBe(true)
+    expect(duplicateByRef.granted).toBe(0)
+    expect(duplicateByRef.droppedSubscription).toBe(0)
+    expect(duplicateByRef.endingBalance).toBe(4500)
+
+    const duplicateByPaymentId = applySubscriptionGrant({
+      lots: first.lots,
+      credits: 4500,
+      now: threeHoursLater,
+      expiresAt: daysFrom(30),
+      paymentId: 'pay_abc123',
+    })
+    expect(duplicateByPaymentId.duplicate).toBe(true)
+    expect(duplicateByPaymentId.granted).toBe(0)
+    expect(duplicateByPaymentId.endingBalance).toBe(4500)
+  })
+
+  it('preserves unused lower-tier subscription credits on mid-cycle upgrade and spends them first (FEFO)', () => {
+    const oldExpiresAt = daysFrom(14)
+    const starterLot = createLot({
+      source: 'subscription',
+      credits: 4500,
+      purchasedAt: daysFrom(-16),
+      expiresAt: oldExpiresAt,
+      id: 'starter-cycle',
+      ref: 'whop_payment:pay_starter_1',
+    })
+    starterLot.remaining = 1200
+
+    const upgrade = applySubscriptionGrant({
+      lots: [starterLot],
+      credits: 10000,
+      now: NOW,
+      expiresAt: daysFrom(30),
+      paymentId: 'pay_pro_upgrade_1',
+      preserveUnusedOnUpgrade: true,
+    })
+
+    expect(upgrade.duplicate).toBe(false)
+    expect(upgrade.droppedSubscription).toBe(0)
+    expect(upgrade.carriedOverSubscription).toBe(1200)
+    expect(upgrade.granted).toBe(10000)
+    expect(upgrade.endingBalance).toBe(11200)
+    expect(upgrade.lots.filter((lot) => lot.source === 'subscription')).toHaveLength(2)
+    expect(upgrade.lots.find((lot) => lot.id === 'starter-cycle')?.expiresAt).toBe(
+      oldExpiresAt.toISOString()
+    )
+    expect(upgrade.intents.some((intent) => intent.meta.kind === 'upgrade_carryover')).toBe(true)
+    expect(upgrade.intents.some((intent) => intent.meta.kind === 'no_rollover')).toBe(false)
+
+    // FEFO spends the carried-over starter lot (expiring in 14d) before the new Pro lot (30d).
+    const spent = applyCreditSpend({
+      lots: upgrade.lots,
+      amount: 1500,
+      now: NOW,
+      reason: 'ai_usage',
+    })
+    expect(spent.ok).toBe(true)
+    expect(spent.usedSubscription).toBe(1500)
+    expect(spent.endingBalance).toBe(9700)
+    expect(spent.lots.find((lot) => lot.id === 'starter-cycle')).toBeUndefined()
+    expect(spent.lots).toHaveLength(1)
+    expect(spent.lots[0].remaining).toBe(9700)
+
+    // On a same-tier renewal, even if preserveUnusedOnUpgrade is true, unused credits still drop (no_rollover).
+    const sameTierRenewal = applySubscriptionGrant({
+      lots: [starterLot],
+      credits: 4500,
+      now: NOW,
+      expiresAt: daysFrom(30),
+      paymentId: 'pay_starter_2',
+      preserveUnusedOnUpgrade: true,
+    })
+    expect(sameTierRenewal.droppedSubscription).toBe(1200)
+    expect(sameTierRenewal.carriedOverSubscription).toBe(0)
+    expect(sameTierRenewal.endingBalance).toBe(4500)
+    expect(sameTierRenewal.intents.some((intent) => intent.meta.kind === 'no_rollover')).toBe(true)
+  })
+
+  it('restores exhausted 30-day subscription credits with original subscription source & expiry instead of 365-day addon', () => {
+    const subExpires = daysFrom(15)
+    const subLot = createLot({
+      source: 'subscription',
+      credits: 500,
+      purchasedAt: daysFrom(-15),
+      expiresAt: subExpires,
+      id: 'sub-lot-1',
+      ref: 'whop_payment:pay_sub_1',
+    })
+
+    // Exhaust the entire 30-day subscription lot (removing it from active lots).
+    const spent = applyCreditSpend({
+      lots: [subLot],
+      amount: 500,
+      now: NOW,
+      reason: 'ai_usage',
+    })
+    expect(spent.ok).toBe(true)
+    expect(spent.lots).toHaveLength(0)
+
+    // Restore with original lot provenance — must recreate a subscription lot expiring at subExpires, NOT a 365d addon!
+    const restored = applyCreditRestore({
+      lots: spent.lots,
+      amount: 500,
+      now: NOW,
+      restoreEntries: [
+        {
+          lotId: 'sub-lot-1',
+          source: 'subscription',
+          amount: 500,
+          expiresAt: subExpires,
+          purchasedAt: daysFrom(-15),
+          ref: 'whop_payment:pay_sub_1',
+        },
+      ],
+    })
+    expect(restored.endingBalance).toBe(500)
+    expect(restored.lots).toHaveLength(1)
+    expect(restored.lots[0].source).toBe('subscription')
+    expect(restored.lots[0].expiresAt).toBe(subExpires.toISOString())
+    expect(restored.lots[0].id).toBe('sub-lot-1')
+    expect(restored.intents[0].creditType).toBe('subscription')
+
+    // Direct source + expiresAt shorthand also preserves subscription source & expiry.
+    const restoredShorthand = applyCreditRestore({
+      lots: [],
+      amount: 200,
+      now: NOW,
+      source: 'subscription',
+      expiresAt: subExpires,
+    })
+    expect(restoredShorthand.lots).toHaveLength(1)
+    expect(restoredShorthand.lots[0].source).toBe('subscription')
+    expect(restoredShorthand.lots[0].expiresAt).toBe(subExpires.toISOString())
+
+    // Already-expired provenance entries are not resurrected into 365-day add-on lots.
+    const expiredRestore = applyCreditRestore({
+      lots: [],
+      amount: 200,
+      now: NOW,
+      restoreEntries: [
+        {
+          source: 'subscription',
+          amount: 200,
+          expiresAt: daysFrom(-1),
+        },
+      ],
+    })
+    expect(expiredRestore.lots).toHaveLength(0)
+    expect(expiredRestore.endingBalance).toBe(0)
+  })
+
+  it('fails closed on subscription-credits cron when CRON_SECRET is missing or auth header is invalid', async () => {
+    delete process.env.CRON_SECRET
+    const missingSecretRes = await subscriptionCreditsCronGet(
+      new NextRequest('https://sceneflowai.studio/api/cron/subscription-credits')
+    )
+    expect(missingSecretRes.status).toBe(500)
+
+    process.env.CRON_SECRET = 'super-secret-cron-token'
+    const missingAuthRes = await subscriptionCreditsCronGet(
+      new NextRequest('https://sceneflowai.studio/api/cron/subscription-credits')
+    )
+    expect(missingAuthRes.status).toBe(401)
+
+    const wrongAuthRes = await subscriptionCreditsCronGet(
+      new NextRequest('https://sceneflowai.studio/api/cron/subscription-credits', {
+        headers: { authorization: 'Bearer wrong-token' },
+      })
+    )
+    expect(wrongAuthRes.status).toBe(401)
+  })
+
+  it('aligns pricing copy with 12-month add-on pack validity independent of membership pause/cancel', () => {
+    const copy = JSON.stringify(PRICING_LANDING_COPY)
+    expect(copy).not.toContain('while your membership stays active')
+    expect(copy).toContain('Add-On packs last 12 months from purchase')
   })
 })

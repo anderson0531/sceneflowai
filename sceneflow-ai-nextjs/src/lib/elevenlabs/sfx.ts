@@ -7,6 +7,17 @@
  */
 
 import { uploadToGCS } from '@/lib/storage/gcsAssets'
+import { fetchWithRetry } from '@/lib/utils/retry'
+
+const ELEVENLABS_SFX_BACKOFF_SCHEDULE_MS = [1500, 4000, 10000]
+const ELEVENLABS_SFX_MAX_RETRY_DELAY_MS = 30_000
+
+function isRetryableElevenLabsSfxError(error: any, status?: number): boolean {
+  if (error?.name === 'AbortError' || error?.code === 'ABORT_ERR' || error?.code === 'TIMEOUT') {
+    return false
+  }
+  return status === 429 || status === 502 || status === 503 || status === 504
+}
 
 export interface GenerateElevenLabsSfxParams {
   /** Required: descriptive prompt of the sound effect (e.g. "thunder crack"). */
@@ -64,15 +75,37 @@ export async function generateElevenLabsSfx(
     body.duration_seconds = clampedDuration
   }
 
-  const response = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
-    method: 'POST',
-    headers: {
-      'xi-api-key': apiKey,
-      'Content-Type': 'application/json',
-      Accept: 'audio/mpeg',
-    },
-    body: JSON.stringify(body),
-  })
+  let response: Response
+  try {
+    response = await fetchWithRetry(
+      'https://api.elevenlabs.io/v1/sound-generation',
+      {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
+          Accept: 'audio/mpeg',
+        },
+        body: JSON.stringify(body),
+      },
+      {
+        maxRetries: 3,
+        backoffScheduleMs: ELEVENLABS_SFX_BACKOFF_SCHEDULE_MS,
+        maxDelayMs: ELEVENLABS_SFX_MAX_RETRY_DELAY_MS,
+        maxRetryAfterMs: ELEVENLABS_SFX_MAX_RETRY_DELAY_MS,
+        timeoutMs: 90_000,
+        operationName: 'ElevenLabs SFX',
+        isRetryable: isRetryableElevenLabsSfxError,
+      }
+    )
+  } catch (err: any) {
+    if (typeof err?.status === 'number') {
+      throw new Error(
+        `ElevenLabs sound-generation failed: HTTP ${err.status} ${String(err.message || '').slice(0, 200)}`
+      )
+    }
+    throw err
+  }
 
   if (!response.ok) {
     const errText = await response.text().catch(() => '')

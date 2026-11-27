@@ -6,7 +6,13 @@
  */
 
 import { AsyncLocalStorage } from 'node:async_hooks'
+import { GoogleAuth } from 'google-auth-library'
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
+import {
+  ByokRateLimitError,
+  parseGoogleServiceAccountJson,
+  type ResolvedVertexCredential,
+} from '@/lib/byok/resolveProviderCredential'
 import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
 import { escalateImagePromptForRetry } from '@/lib/generation/imagePolicyEscalation'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
@@ -298,8 +304,51 @@ async function sleepRateLimitBackoff(
   await new Promise((r) => setTimeout(r, delay))
 }
 
-function getVertexImageConfig() {
-  const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
+const byokImageAuthClientCache = new Map<string, Promise<any>>()
+
+async function getByokServiceAccountAccessToken(serviceAccountJson: string): Promise<{
+  accessToken: string
+  projectId: string
+}> {
+  const parsed = parseGoogleServiceAccountJson(serviceAccountJson)
+  if (!parsed) {
+    throw new Error('Invalid BYOK Google Service Account JSON for image generation')
+  }
+  const cacheKey = `${parsed.project_id}:${parsed.client_email}`
+  let clientPromise = byokImageAuthClientCache.get(cacheKey)
+  if (!clientPromise) {
+    const auth = new GoogleAuth({
+      credentials: parsed,
+      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+    })
+    clientPromise = auth.getClient().catch((err) => {
+      byokImageAuthClientCache.delete(cacheKey)
+      throw err
+    })
+    byokImageAuthClientCache.set(cacheKey, clientPromise)
+  }
+  const client = await clientPromise
+  const tokenResponse = await client.getAccessToken()
+  if (!tokenResponse?.token) {
+    throw new Error('Failed to mint OAuth2 access token for BYOK service account')
+  }
+  return { accessToken: tokenResponse.token, projectId: parsed.project_id }
+}
+
+let platformImageProjectRotationIndex = 0
+
+export function getConfiguredVertexImageProjectIds(): string[] {
+  const fromList = (process.env.VERTEX_PROJECT_IDS || '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+  if (fromList.length > 0) return fromList
+  const fallback = (process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID || '').trim()
+  return fallback ? [fallback] : []
+}
+
+function getVertexImageConfig(triedProjectIds?: ReadonlySet<string>) {
+  const projectIds = getConfiguredVertexImageProjectIds()
   // Only the image-specific variable pins a region. VERTEX_LOCATION is set for
   // text and Cloud SQL on every deployment, so treating it as a pin would keep
   // image traffic regional everywhere and defeat the global default below.
@@ -309,10 +358,34 @@ function getVertexImageConfig() {
     process.env.VERTEX_LOCATION ||
     process.env.GCP_REGION ||
     'us-central1'
-  if (!projectId) {
+  if (projectIds.length === 0) {
     throw new Error('VERTEX_PROJECT_ID or GCP_PROJECT_ID must be configured for image generation')
   }
-  return { projectId, location, regionPinned: Boolean(pinnedLocation) }
+  let projectId: string
+  if (projectIds.length === 1) {
+    projectId = projectIds[0]
+  } else {
+    const untried = triedProjectIds?.size
+      ? projectIds.filter((id) => !triedProjectIds.has(id))
+      : projectIds
+    const pool = untried.length > 0 ? untried : projectIds
+    const idx = platformImageProjectRotationIndex % pool.length
+    platformImageProjectRotationIndex = (platformImageProjectRotationIndex + 1) % 100_000
+    projectId = pool[idx]
+  }
+  return {
+    projectId,
+    projectIds,
+    location,
+    regionPinned: Boolean(pinnedLocation),
+  }
+}
+
+function resolveImageBucketNamespace(options: {
+  bucketNamespace?: string
+  byokCredential?: ResolvedVertexCredential
+}): string {
+  return options.bucketNamespace ?? options.byokCredential?.bucketNamespace ?? 'platform'
 }
 
 /**
@@ -393,7 +466,15 @@ export interface GenerateVertexImageOptions {
    * Combined with the per-attempt timeout so Vertex stops when the child is cancelled.
    */
   signal?: AbortSignal
+  /** Optional resolved BYOK Google credential (API key or Service Account JSON). */
+  byokCredential?: ResolvedVertexCredential
+  /** Isolated dispatch bucket namespace ('platform' or 'byok:<hash>'). */
+  bucketNamespace?: string
+  /** Internal: platform project IDs already tried on 429 in this request. */
+  _triedProjectIds?: ReadonlySet<string>
 }
+
+export type VertexImageOptions = GenerateVertexImageOptions
 
 export interface VertexImageResult {
   imageBase64: string
@@ -580,7 +661,8 @@ export function countPromptImageTokens(usageMetadata: unknown): number | null {
 function logPromptImageTokenUsage(
   usageMetadata: unknown,
   model: string,
-  referenceImages?: VertexReferenceImage[]
+  referenceImages?: VertexReferenceImage[],
+  bucketNamespace: string = 'platform'
 ): void {
   const referenceCount = referenceImages?.length ?? 0
   if (referenceCount <= 0) return
@@ -598,7 +680,7 @@ function logPromptImageTokenUsage(
       perRef != null ? `, perRef=${perRef}` : ''
     }, model=${model})`
   )
-  recordVertexRollingTokens('image', imageTokens + 800)
+  recordVertexRollingTokens('image', imageTokens + 800, Date.now(), bucketNamespace)
   if (imageTokens === 0) {
     console.warn(
       `[Vertex Gemini Image] 0 IMAGE tokens with ${referenceCount} reference(s) attached — Vertex dropped the parts`
@@ -637,6 +719,8 @@ async function runWithinImageLease<T>(
   if (options.signal?.aborted) throwAbortedByClient()
   if (options.deadlineAt != null && Date.now() >= options.deadlineAt) return fn()
 
+  const bucketNamespace = resolveImageBucketNamespace(options)
+  const isByok = options.byokCredential?.source === 'byok'
   const maxWaitMs =
     options.deadlineAt != null ? Math.max(0, options.deadlineAt - Date.now()) : undefined
   const estimatedTokens = Math.max(800, (options.referenceImages?.length ?? 0) * 1120 + 800)
@@ -654,12 +738,27 @@ async function runWithinImageLease<T>(
         maxWaitMs,
         signal: options.signal,
         estimatedTokens,
+        bucketNamespace,
+        ...(isByok && options.byokCredential?.recommendedConcurrency
+          ? { maxInFlight: options.byokCredential.recommendedConcurrency }
+          : {}),
       })
     } catch (err) {
       if (options.signal?.aborted || (err instanceof Error && err.name === 'AbortError')) {
         throwAbortedByClient()
       }
       if (err instanceof VertexDispatchDeferredError) {
+        if (isByok) {
+          throw new ByokRateLimitError(
+            `BYOK Google image quota deferred (429): retry after ${Math.max(1, Math.ceil(err.retryAfterMs / 1000))}s`,
+            {
+              provider: 'vertex',
+              status: 429,
+              retryAfterMs: err.retryAfterMs,
+              bucketNamespace,
+            }
+          )
+        }
         const marker = hasIdentityReferenceImages(options)
           ? IDENTITY_REF_RATE_LIMIT_EXHAUSTED
           : RATE_LIMIT_FAILED_FAST
@@ -716,8 +815,13 @@ async function generateVertexGeminiImageAttempt(
   if (deadlinePassed(options.deadlineAt)) {
     throw new Error(`Vertex Gemini Image error: ${IMAGE_DEADLINE_EXCEEDED}`)
   }
+  const bucketNamespace = resolveImageBucketNamespace(options)
+  const byokCred = options.byokCredential?.source === 'byok' ? options.byokCredential : undefined
+  const isByok = Boolean(byokCred)
+
   const tier = options.modelTier || 'designer'
   const useFlashFallback =
+    !isByok &&
     tier !== 'eco' &&
     canFallbackToEcoTier(options) &&
     proModelRateLimitedUntil != null &&
@@ -731,17 +835,57 @@ async function generateVertexGeminiImageAttempt(
       process.env.VERTEX_GEMINI_IMAGE_PRO_MODEL || GEMINI_IMAGE_TIER_CONFIG.designer.model
   }
 
-  const { projectId, location, regionPinned } = getVertexImageConfig()
-  const { endpoint, effectiveLocation } = resolveVertexGeminiImageEndpoint({
-    model,
-    projectId,
-    regionalLocation: location,
-    regionPinned,
-  })
+  let endpoint: string
+  let effectiveLocation: string
+  let activePlatformProjectId: string | undefined
+  let platformProjectIds: string[] = []
+  let useApiKeyAuth = false
+
+  if (byokCred?.mode === 'byok_api_key' && byokCred.apiKey) {
+    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+      byokCred.apiKey
+    )}`
+    effectiveLocation = 'gemini-api-byok'
+    useApiKeyAuth = true
+  } else if (byokCred?.mode === 'byok_service_account' && byokCred.serviceAccountJson) {
+    const parsedSa = parseGoogleServiceAccountJson(byokCred.serviceAccountJson)
+    const byokProjectId = byokCred.projectId || parsedSa?.project_id
+    if (!byokProjectId) {
+      throw new Error('BYOK Google Service Account is missing project_id')
+    }
+    const pinnedLocation = process.env.VERTEX_IMAGE_LOCATION?.trim()
+    const location =
+      pinnedLocation ||
+      process.env.VERTEX_LOCATION ||
+      process.env.GCP_REGION ||
+      'us-central1'
+    const resolved = resolveVertexGeminiImageEndpoint({
+      model,
+      projectId: byokProjectId,
+      regionalLocation: location,
+      regionPinned: Boolean(pinnedLocation),
+    })
+    endpoint = resolved.endpoint
+    effectiveLocation = resolved.effectiveLocation
+  } else {
+    const { projectId, projectIds, location, regionPinned } = getVertexImageConfig(
+      options._triedProjectIds
+    )
+    activePlatformProjectId = projectId
+    platformProjectIds = projectIds
+    const resolved = resolveVertexGeminiImageEndpoint({
+      model,
+      projectId,
+      regionalLocation: location,
+      regionPinned,
+    })
+    endpoint = resolved.endpoint
+    effectiveLocation = resolved.effectiveLocation
+  }
 
   if (retryCount === 0) {
     console.log(
-      `[Vertex Gemini Image] Generating (tier=${tier}, model=${model}, refs=${options.referenceImages?.length ?? 0}, aspect=${options.aspectRatio ?? 'unset'})`
+      `[Vertex Gemini Image] Generating (tier=${tier}, model=${model}, refs=${options.referenceImages?.length ?? 0}, aspect=${options.aspectRatio ?? 'unset'}, bucket=${bucketNamespace})`
     )
   }
 
@@ -749,6 +893,8 @@ async function generateVertexGeminiImageAttempt(
     console.log(
       `[Vertex Gemini Image] Using global endpoint for ${model} (routes to the region with spare capacity)`
     )
+  } else if (effectiveLocation === 'gemini-api-byok') {
+    console.log(`[Vertex Gemini Image] Using BYOK Gemini Developer API endpoint for ${model}`)
   } else {
     console.log(
       `[Vertex Gemini Image] Using pinned region ${effectiveLocation} for ${model} (VERTEX_IMAGE_LOCATION set)`
@@ -768,7 +914,7 @@ async function generateVertexGeminiImageAttempt(
   const prepSignal = combineAbortSignals(prepController.signal, options.signal)
 
   let parts: Awaited<ReturnType<typeof buildMultimodalParts>>
-  let accessToken: string
+  let accessToken = ''
   try {
     throwIfImageAborted(prepSignal, options.signal, model)
     parts = await awaitWithAbort(
@@ -781,7 +927,17 @@ async function generateVertexGeminiImageAttempt(
       prepSignal
     )
     throwIfImageAborted(prepSignal, options.signal, model)
-    accessToken = await awaitWithAbort(getVertexAIAuthToken(), prepSignal)
+    if (!useApiKeyAuth) {
+      if (byokCred?.mode === 'byok_service_account' && byokCred.serviceAccountJson) {
+        const minted = await awaitWithAbort(
+          getByokServiceAccountAccessToken(byokCred.serviceAccountJson),
+          prepSignal
+        )
+        accessToken = minted.accessToken
+      } else {
+        accessToken = await awaitWithAbort(getVertexAIAuthToken(), prepSignal)
+      }
+    }
     throwIfImageAborted(prepSignal, options.signal, model)
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
@@ -829,7 +985,7 @@ async function generateVertexGeminiImageAttempt(
       const vertexStartedAt = Date.now()
       try {
         throwIfImageAborted(requestSignal, options.signal, model)
-        await paceOutboundVertexFetch('image', { signal: requestSignal })
+        await paceOutboundVertexFetch('image', { signal: requestSignal, bucketNamespace })
         throwIfImageAborted(requestSignal, options.signal, model)
         const leaseAttempt = imageLeaseHeld.getStore()
         if (leaseAttempt) {
@@ -838,18 +994,23 @@ async function generateVertexGeminiImageAttempt(
               800,
               (options.referenceImages?.length ?? 0) * 1120 + 800
             )
-            recordNestedVertexDispatchAttempt('image', attemptTokens)
+            recordNestedVertexDispatchAttempt('image', attemptTokens, Date.now(), bucketNamespace)
           }
           leaseAttempt.providerRequestSent = true
           leaseAttempt.providerAttemptCount += 1
         }
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+        if (!useApiKeyAuth) {
+          headers.Authorization = `Bearer ${accessToken}`
+          if (!isByok) {
+            Object.assign(headers, priorityPaygoHeaders())
+          }
+        }
         return await fetch(endpoint, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-            ...priorityPaygoHeaders(),
-          },
+          headers,
           body: JSON.stringify(requestBody),
           signal: requestSignal,
         })
@@ -875,7 +1036,9 @@ async function generateVertexGeminiImageAttempt(
         console.warn(
           `[Vertex Gemini Image] ${model} timed out after ${providerTimeoutFor(model, options.deadlineAt)}ms, falling back to ${GEMINI_IMAGE_TIER_CONFIG.eco.model}`
         )
-        proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
+        if (!isByok) {
+          proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
+        }
         return generateVertexGeminiImage({ ...options, modelTier: 'eco' }, 0)
       }
       if (model.includes('pro-image') && referenceCountExceedsEcoCap(options.referenceImages)) {
@@ -897,11 +1060,37 @@ async function generateVertexGeminiImageAttempt(
 
   if (!response.ok) {
     const errorText = await response.text()
+    const retryAfterMs = response.status === 429 ? parseRetryAfterMs(response) : null
     if (response.status === 429) {
-      const retryAfterMs = parseRetryAfterMs(response)
-      await noteImageGenerationCooldown(
+      const effectiveCooldown =
         retryAfterMs != null ? Math.max(getImageAdmissionCooldownMs(), retryAfterMs) : undefined
-      )
+      if (bucketNamespace !== 'platform') {
+        await noteImageGenerationCooldown(effectiveCooldown, bucketNamespace)
+      } else {
+        await noteImageGenerationCooldown(effectiveCooldown)
+      }
+
+      // Platform multi-project rotation on 429: try an untried project in VERTEX_PROJECT_IDS
+      if (
+        !isByok &&
+        !options.failFastOnRateLimit &&
+        activePlatformProjectId &&
+        platformProjectIds.length > 1 &&
+        !deadlinePassed(options.deadlineAt)
+      ) {
+        const nextTried = new Set(options._triedProjectIds ?? [])
+        nextTried.add(activePlatformProjectId)
+        const remainingProjects = platformProjectIds.filter((id) => !nextTried.has(id))
+        if (remainingProjects.length > 0) {
+          console.warn(
+            `[Vertex Gemini Image] 429 on project ${activePlatformProjectId}; rotating to another project in VERTEX_PROJECT_IDS (${remainingProjects.length} remaining)`
+          )
+          return generateVertexGeminiImage(
+            { ...options, _triedProjectIds: nextTried },
+            retryCount
+          )
+        }
+      }
     }
     if (response.status === 429 && options.failFastOnRateLimit) {
       // The shared admission pause, not an immediate re-admit, keeps the next
@@ -910,6 +1099,17 @@ async function generateVertexGeminiImageAttempt(
       console.warn(
         `[Vertex Gemini Image] Rate limit on ${model} — failing fast without eco fallback; pausing new admits`
       )
+      if (isByok) {
+        throw new ByokRateLimitError(
+          `BYOK Google image rate limited (429) on ${model}: ${errorText.slice(0, 200)}`,
+          {
+            provider: 'vertex',
+            status: 429,
+            retryAfterMs: retryAfterMs ?? undefined,
+            bucketNamespace,
+          }
+        )
+      }
       throw new Error(
         `Vertex Gemini Image error ${response.status}: ${
           hasIdentityReferenceImages(options)
@@ -932,11 +1132,22 @@ async function generateVertexGeminiImageAttempt(
         console.warn(
           `[Vertex Gemini Image] Rate limit on ${model} with reference images — failing fast without eco fallback; pausing new admits`
         )
+        if (isByok) {
+          throw new ByokRateLimitError(
+            `BYOK Google image rate limited (429) on ${model} after ${retryCount + 1} attempt(s): ${errorText.slice(0, 200)}`,
+            {
+              provider: 'vertex',
+              status: 429,
+              retryAfterMs: retryAfterMs ?? undefined,
+              bucketNamespace,
+            }
+          )
+        }
         throw new Error(
           `Vertex Gemini Image error ${response.status}: ${IDENTITY_REF_RATE_LIMIT_EXHAUSTED} after ${retryCount + 1} attempt(s): ${errorText}`
         )
       }
-      if (!useFlashFallback) {
+      if (!isByok && !useFlashFallback) {
         proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
         return generateVertexGeminiImage(options, 0)
       }
@@ -951,6 +1162,17 @@ async function generateVertexGeminiImageAttempt(
         await sleepWithBackoff(retryCount)
       }
       return generateVertexGeminiImage(options, retryCount + 1)
+    }
+    if (response.status === 429 && isByok) {
+      throw new ByokRateLimitError(
+        `BYOK Google image rate limited (429) on ${model} after ${retryCount + 1} attempt(s): ${errorText.slice(0, 200)}`,
+        {
+          provider: 'vertex',
+          status: 429,
+          retryAfterMs: retryAfterMs ?? undefined,
+          bucketNamespace,
+        }
+      )
     }
     // Pro preview models require allowlist access; fall back to GA flash-image model
     if (
@@ -985,13 +1207,14 @@ async function generateVertexGeminiImageAttempt(
     throw new Error(`Vertex Gemini Image error ${response.status}: ${errorText}`)
   }
 
-  if (model.includes('pro-image')) proModelRateLimitedUntil = null
+  if (!isByok && model.includes('pro-image')) proModelRateLimitedUntil = null
 
   const data = await response.json()
   logPromptImageTokenUsage(
     data.usageMetadata ?? data.usage_metadata,
     model,
-    options.referenceImages
+    options.referenceImages,
+    bucketNamespace
   )
   if (data.promptFeedback?.blockReason) {
     const escalated = escalateEcoRefusalToPro(
@@ -1075,6 +1298,8 @@ export interface VertexImageEditOptions {
   failFastOnRateLimit?: boolean
   deadlineAt?: number
   signal?: AbortSignal
+  byokCredential?: ResolvedVertexCredential
+  bucketNamespace?: string
 }
 
 export async function editVertexImage(options: VertexImageEditOptions): Promise<VertexImageResult> {
@@ -1157,5 +1382,7 @@ export async function editVertexImage(options: VertexImageEditOptions): Promise<
     failFastOnRateLimit: options.failFastOnRateLimit,
     deadlineAt: options.deadlineAt,
     signal: options.signal,
+    byokCredential: options.byokCredential,
+    bucketNamespace: options.bucketNamespace,
   })
 }

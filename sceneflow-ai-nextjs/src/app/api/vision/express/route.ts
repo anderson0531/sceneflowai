@@ -43,6 +43,10 @@ interface ExpressRequest {
   dialogueOnly?: boolean
   framesOnly?: boolean
   selectedFrameKeys?: string[]
+  /** Optional bounded concurrency override (clamped 1..6; 1 = strictly sequential). */
+  concurrencyOverride?: number
+  /** Optional override for Vertex 429 fail-fast behavior (false during sequential recovery). */
+  failFastOnRateLimit?: boolean
 }
 
 function injectResolvedScenesIntoProject(project: any, resolvedScenes: any[]): void {
@@ -192,15 +196,31 @@ export async function POST(req: NextRequest) {
     dialogueOnly = false,
     framesOnly = false,
     selectedFrameKeys,
+    concurrencyOverride: rawConcurrencyOverride,
+    failFastOnRateLimit: rawFailFastOnRateLimit,
   } = body || {}
+
+  const concurrencyOverride =
+    typeof rawConcurrencyOverride === 'number' && Number.isFinite(rawConcurrencyOverride)
+      ? Math.max(1, Math.min(6, Math.floor(rawConcurrencyOverride)))
+      : undefined
+  const failFastOnRateLimit =
+    typeof rawFailFastOnRateLimit === 'boolean'
+      ? rawFailFastOnRateLimit
+      : concurrencyOverride === 1
+        ? false
+        : undefined
 
   if (!projectId) {
     return NextResponse.json({ error: 'projectId is required' }, { status: 400 })
   }
 
-  // Auth check
-  const session = await getServerSession(authOptions)
-  const userId = session?.user?.id || session?.user?.email
+  // Auth check (supports user session OR authenticated internal worker calls)
+  const internalSecret = process.env.INTERNAL_JOB_SECRET || 'sceneflow-internal'
+  const isInternalJob = req.headers.get('x-internal-job') === internalSecret
+  const internalUserId = isInternalJob ? req.headers.get('x-user-id')?.trim() : undefined
+  const session = internalUserId ? null : await getServerSession(authOptions)
+  const userId = internalUserId || session?.user?.id || session?.user?.email
   if (!userId) {
     return NextResponse.json(
       { error: 'Authentication required' },
@@ -269,7 +289,10 @@ export async function POST(req: NextRequest) {
       ? body.artStyle
       : projectGlobalArtStyle || artStyle || 'photorealistic'
 
-  const options: ExpressOptions = {
+  const options: ExpressOptions & {
+    concurrencyOverride?: number
+    failFastOnRateLimit?: boolean
+  } = {
     projectId,
     language,
     artStyle: effectiveArtStyle,
@@ -291,6 +314,8 @@ export async function POST(req: NextRequest) {
     ...(Array.isArray(sceneIndices) && sceneIndices.length > 0
       ? { sceneIndices }
       : {}),
+    ...(concurrencyOverride !== undefined ? { concurrencyOverride } : {}),
+    ...(typeof failFastOnRateLimit === 'boolean' ? { failFastOnRateLimit } : {}),
   }
 
   const encoder = new TextEncoder()

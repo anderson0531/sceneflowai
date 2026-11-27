@@ -11,8 +11,69 @@ import {
 } from '@/lib/billing/tierCatalog'
 import { ensureCreditLotsTable } from '@/lib/database/migrateCreditLots'
 import { assignBalances, loadUserLots, saveUserLots } from '@/lib/credits/creditLotStore'
-import { applyPackGrant, applySubscriptionGrant, expireDueLots } from '@/lib/credits/creditLots'
+import {
+  applyPackGrant,
+  applySubscriptionGrant,
+  expireDueLots,
+  normalizePaymentRef,
+  type CreditLot,
+} from '@/lib/credits/creditLots'
 import { writeLedgerIntents } from '@/services/CreditService'
+
+const SUBSCRIPTION_EXPIRY_GRACE_MS = 48 * 60 * 60 * 1000
+const CANONICAL_PAYMENT_REF_PREFIXES = ['whop_payment:', 'whop_pay_', 'paddle_'] as const
+
+function normalizeCanonicalPaymentRef(
+  paymentId?: string | null,
+  ref?: string | null
+): string | null {
+  if (ref && CANONICAL_PAYMENT_REF_PREFIXES.some((prefix) => ref.startsWith(prefix))) {
+    return ref.startsWith('whop_pay_') ? normalizePaymentRef(ref) : ref
+  }
+  if (paymentId && paymentId.trim()) {
+    return normalizePaymentRef(paymentId)
+  }
+  return ref ?? null
+}
+
+function isCanonicalPaymentRef(ref: string | null | undefined): ref is string {
+  return Boolean(ref && CANONICAL_PAYMENT_REF_PREFIXES.some((prefix) => ref.startsWith(prefix)))
+}
+
+function candidatePaymentRefs(ref: string): string[] {
+  const refs = new Set<string>([ref])
+  if (ref.startsWith('whop_payment:')) {
+    const raw = ref.slice('whop_payment:'.length)
+    if (raw) {
+      refs.add(`whop_pay_${raw}`)
+      refs.add(raw)
+    }
+  } else if (ref.startsWith('whop_pay_')) {
+    const raw = ref.slice('whop_pay_'.length)
+    if (raw) {
+      refs.add(`whop_payment:${raw}`)
+      refs.add(raw)
+    }
+  }
+  return [...refs]
+}
+
+async function hasProcessedPaymentLedger(
+  userId: string,
+  ref: string | null | undefined,
+  tx?: any
+): Promise<boolean> {
+  if (!isCanonicalPaymentRef(ref)) return false
+  const refs = candidatePaymentRefs(ref)
+  const existing = await CreditLedger.findOne({
+    where: {
+      user_id: userId,
+      ref: refs.length === 1 ? refs[0] : { [Op.in]: refs },
+    },
+    ...(tx ? { transaction: tx } : {}),
+  })
+  return Boolean(existing)
+}
 
 export interface SubscriptionDetails {
   tier: SubscriptionTier | null
@@ -80,12 +141,13 @@ export class SubscriptionService {
   }
 
   /**
-   * Drop subscription and pack lots whose shelf life has ended.
+   * Drop subscription and pack lots whose shelf life has ended, and transition
+   * active subscriptions whose billing period ended more than 48 hours ago to `expired`.
    * Does not grant a new month. The next allotment arrives with a renewal payment.
    */
   static async expireDueCredits(
     userId: string
-  ): Promise<{ expiredSubscription: number; expiredPack: number }> {
+  ): Promise<{ expiredSubscription: number; expiredPack: number; subscriptionExpired?: boolean }> {
     await ensureCreditLotsTable()
     const resolvedUser = await resolveUser(userId)
     const userUuid = resolvedUser.id
@@ -96,12 +158,24 @@ export class SubscriptionService {
       const now = new Date()
       const loaded = await loadUserLots(user, now, tx)
       const expired = expireDueLots(loaded.lots, now)
+
+      const subscriptionEndDate = user.subscription_end_date
+        ? new Date(user.subscription_end_date)
+        : null
+      const shouldExpireStatus = Boolean(
+        user.subscription_status === 'active' &&
+          subscriptionEndDate &&
+          !Number.isNaN(subscriptionEndDate.getTime()) &&
+          subscriptionEndDate.getTime() < now.getTime() - SUBSCRIPTION_EXPIRY_GRACE_MS
+      )
+
       if (
         expired.expiredSubscription === 0 &&
         expired.expiredPack === 0 &&
-        !loaded.materialized
+        !loaded.materialized &&
+        !shouldExpireStatus
       ) {
-        return { expiredSubscription: 0, expiredPack: 0 }
+        return { expiredSubscription: 0, expiredPack: 0, subscriptionExpired: false }
       }
 
       const starting = loaded.lots.reduce((sum, lot) => sum + lot.remaining, 0)
@@ -115,7 +189,10 @@ export class SubscriptionService {
           next,
           reason: 'subscription_expiry',
           creditType: 'subscription',
-          meta: { expired_credits: expired.expiredSubscription },
+          meta: {
+            expired_credits: expired.expiredSubscription,
+            ...(shouldExpireStatus ? { subscription_status_expired: true } : {}),
+          },
         })
         balance = next
       }
@@ -132,8 +209,38 @@ export class SubscriptionService {
         balance = next
       }
 
-      await saveUserLots(userUuid, expired.lots, tx)
-      assignBalances(user, expired.lots, now)
+      let finalLots = expired.lots
+      if (shouldExpireStatus) {
+        // Also clear any lingering subscription lots if the subscription itself has passed grace expiry.
+        const lingeringSubCredits = finalLots
+          .filter((lot) => lot.source === 'subscription')
+          .reduce((sum, lot) => sum + lot.remaining, 0)
+        if (lingeringSubCredits > 0) {
+          const next = balance - lingeringSubCredits
+          intents.push({
+            delta: -lingeringSubCredits,
+            prev: balance,
+            next,
+            reason: 'subscription_expiry',
+            creditType: 'subscription',
+            meta: {
+              expired_credits: lingeringSubCredits,
+              subscription_status_expired: true,
+            },
+          })
+          balance = next
+          finalLots = finalLots.filter((lot) => lot.source !== 'subscription')
+          expired.expiredSubscription += lingeringSubCredits
+        }
+        user.subscription_status = 'expired'
+      }
+
+      await saveUserLots(userUuid, finalLots, tx)
+      assignBalances(user, finalLots, now)
+      if (shouldExpireStatus) {
+        user.subscription_credits_monthly = 0
+        user.subscription_credits_expires_at = null
+      }
       if (intents.length > 0) {
         await writeLedgerIntents(
           userUuid,
@@ -146,6 +253,7 @@ export class SubscriptionService {
       return {
         expiredSubscription: expired.expiredSubscription,
         expiredPack: expired.expiredPack,
+        subscriptionExpired: shouldExpireStatus,
       }
     })
   }
@@ -171,29 +279,46 @@ export class SubscriptionService {
   static async purchaseAddonCredits(
     userId: string,
     packSize: number,
-    amountPaid: number
-  ): Promise<void> {
+    amountPaid: number,
+    options?: {
+      paymentId?: string
+      ref?: string
+      source?: string
+    }
+  ): Promise<{ deduplicated: boolean } | void> {
     await ensureCreditLotsTable()
     const resolvedUser = await resolveUser(userId)
     const userUuid = resolvedUser.id
+    const canonicalRef = normalizeCanonicalPaymentRef(options?.paymentId, options?.ref)
     return await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
 
+      if (await hasProcessedPaymentLedger(userUuid, canonicalRef, tx)) {
+        return { deduplicated: true }
+      }
+
       const now = new Date()
       const { lots } = await loadUserLots(user, now, tx)
+      const lotRef = canonicalRef || `addon_purchase_${now.getTime()}`
       const granted = applyPackGrant({
         lots,
         source: 'addon',
         credits: packSize,
         now,
-        ref: `addon_purchase_${now.getTime()}`,
-        meta: { pack_size: packSize, amount_paid_usd: amountPaid },
+        ref: lotRef,
+        meta: {
+          pack_size: packSize,
+          amount_paid_usd: amountPaid,
+          ...(options?.source ? { source: options.source } : {}),
+          ...(options?.paymentId ? { payment_id: options.paymentId } : {}),
+        },
       })
       await saveUserLots(userUuid, granted.lots, tx)
       assignBalances(user, granted.lots, now)
-      await writeLedgerIntents(userUuid, granted.intents, tx, granted.lots.at(-1)?.ref)
+      await writeLedgerIntents(userUuid, granted.intents, tx, lotRef)
       await user.save({ transaction: tx })
+      return { deduplicated: false }
     })
   }
 
@@ -310,14 +435,27 @@ export class SubscriptionService {
   /**
    * Grant Explorer one-time purchase (750 addon credits)
    */
-  static async grantExplorerPurchase(userId: string): Promise<void> {
-    return this.grantOneTimeTier(userId, 'explorer')
+  static async grantExplorerPurchase(
+    userId: string,
+    options?: {
+      paymentId?: string
+      ref?: string
+    }
+  ): Promise<{ deduplicated: boolean } | void> {
+    return this.grantOneTimeTier(userId, 'explorer', options)
   }
 
   /**
    * Grant one-time tier credits from catalog
    */
-  static async grantOneTimeTier(userId: string, tierName: string): Promise<void> {
+  static async grantOneTimeTier(
+    userId: string,
+    tierName: string,
+    options?: {
+      paymentId?: string
+      ref?: string
+    }
+  ): Promise<{ deduplicated: boolean } | void> {
     const normalizedTier = normalizeTierName(tierName)
     if (!normalizedTier || !TIER_CATALOG[normalizedTier].isOneTime) {
       throw new Error(`Invalid one-time tier: ${tierName}`)
@@ -325,6 +463,7 @@ export class SubscriptionService {
 
     const creditsToGrant = TIER_CATALOG[normalizedTier].credits
     const amountPaid = TIER_CATALOG[normalizedTier].priceUsd
+    const canonicalRef = normalizeCanonicalPaymentRef(options?.paymentId, options?.ref)
 
     await ensureCreditLotsTable()
     const resolvedUser = await resolveUser(userId)
@@ -332,6 +471,10 @@ export class SubscriptionService {
     return await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
+
+      if (await hasProcessedPaymentLedger(userUuid, canonicalRef, tx)) {
+        return { deduplicated: true }
+      }
 
       const purchased = user.one_time_tiers_purchased || []
       if (
@@ -343,20 +486,26 @@ export class SubscriptionService {
 
       const now = new Date()
       const { lots } = await loadUserLots(user, now, tx)
+      const lotRef = canonicalRef || `${normalizedTier}_purchase`
       const granted = applyPackGrant({
         lots,
         source: normalizedTier === 'explorer' ? 'explorer' : 'addon',
         credits: creditsToGrant,
         now,
-        ref: `${normalizedTier}_purchase`,
-        meta: { tier: normalizedTier, amount_paid: amountPaid },
+        ref: lotRef,
+        meta: {
+          tier: normalizedTier,
+          amount_paid: amountPaid,
+          ...(options?.paymentId ? { payment_id: options.paymentId } : {}),
+        },
       })
       user.one_time_tiers_purchased = [...purchased, normalizedTier]
       user.payment_provider = user.payment_provider || 'whop'
       await saveUserLots(userUuid, granted.lots, tx)
       assignBalances(user, granted.lots, now)
-      await writeLedgerIntents(userUuid, granted.intents, tx, `${normalizedTier}_purchase`)
+      await writeLedgerIntents(userUuid, granted.intents, tx, lotRef)
       await user.save({ transaction: tx })
+      return { deduplicated: false }
     })
   }
 
@@ -368,8 +517,11 @@ export class SubscriptionService {
     amount: number,
     reason: string,
     ref: string
-  ): Promise<void> {
-    return this.purchaseAddonCredits(userId, amount, amount / 100)
+  ): Promise<{ deduplicated: boolean } | void> {
+    return this.purchaseAddonCredits(userId, amount, amount / 100, {
+      ref,
+      source: reason,
+    })
   }
 
   /**
@@ -384,8 +536,11 @@ export class SubscriptionService {
       billingPeriodEnd?: Date
       source?: string
       grantCredits?: boolean
+      paymentId?: string
+      ref?: string
+      preserveUnusedOnUpgrade?: boolean
     } = {}
-  ): Promise<void> {
+  ): Promise<{ deduplicated: boolean } | void> {
     const normalizedTier = normalizeTierName(tierName)
     if (!normalizedTier || TIER_CATALOG[normalizedTier].isOneTime) {
       throw new Error(`Invalid subscription tier: ${tierName}`)
@@ -410,10 +565,15 @@ export class SubscriptionService {
     const userUuid = resolvedUser.id
     const creditsToGrant =
       options.grantCredits === false ? 0 : getTierCredits(normalizedTier)
+    const canonicalRef = normalizeCanonicalPaymentRef(options.paymentId, options.ref)
 
     return await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
+
+      if (creditsToGrant > 0 && (await hasProcessedPaymentLedger(userUuid, canonicalRef, tx))) {
+        return { deduplicated: true }
+      }
 
       const now = new Date()
       const endDate = options.billingPeriodEnd || (() => {
@@ -422,38 +582,109 @@ export class SubscriptionService {
         return date
       })()
 
-      user.subscription_tier_id = tier.id
-      user.subscription_status = 'active'
-      user.subscription_start_date = user.subscription_start_date || now
-      user.subscription_end_date = endDate
-      user.payment_provider = 'whop'
+      // Capture previous subscription state before mutating so mid-cycle upgrades preserve unused credits.
+      const prevStatus = user.subscription_status
+      const prevTierId = user.subscription_tier_id
+      const prevEndDate = user.subscription_end_date ? new Date(user.subscription_end_date) : null
+      const hasActiveUnexpiredPrevPeriod = Boolean(
+        prevStatus === 'active' &&
+          prevEndDate &&
+          !Number.isNaN(prevEndDate.getTime()) &&
+          prevEndDate.getTime() > now.getTime()
+      )
 
-      if (options.whopMembershipId) {
-        user.whop_membership_id = options.whopMembershipId
-      }
-      if (options.whopUserId) {
-        user.whop_user_id = options.whopUserId
+      let prevTierCredits = 0
+      if (hasActiveUnexpiredPrevPeriod && prevTierId && prevTierId !== tier.id) {
+        try {
+          const prevTier = await SubscriptionTier.findByPk(prevTierId, { transaction: tx })
+          prevTierCredits = Number(prevTier?.included_credits_monthly || 0)
+        } catch {
+          prevTierCredits = 0
+        }
       }
 
       if (creditsToGrant > 0) {
         const { lots } = await loadUserLots(user, now, tx)
+        const existingUnexpiredSubLots = lots.filter(
+          (lot) =>
+            lot.source === 'subscription' &&
+            lot.remaining > 0 &&
+            new Date(lot.expiresAt).getTime() > now.getTime()
+        )
+        const existingMaxGranted = existingUnexpiredSubLots.reduce(
+          (max, lot) => Math.max(max, lot.granted),
+          0
+        )
+        const isMidCycleUpgrade =
+          existingUnexpiredSubLots.length > 0 &&
+          ((existingMaxGranted > 0 && creditsToGrant > existingMaxGranted) ||
+            (hasActiveUnexpiredPrevPeriod &&
+              prevTierCredits > 0 &&
+              creditsToGrant > prevTierCredits))
+        const preserveUnusedOnUpgrade =
+          options.preserveUnusedOnUpgrade !== undefined
+            ? options.preserveUnusedOnUpgrade
+            : isMidCycleUpgrade
+
+        const lotRef = canonicalRef || `whop_${normalizedTier}_${now.getTime()}`
         const granted = applySubscriptionGrant({
           lots,
           credits: creditsToGrant,
           now,
           expiresAt: endDate,
-          ref: `whop_${normalizedTier}_${now.getTime()}`,
+          ref: lotRef,
+          paymentId: options.paymentId,
+          preserveUnusedOnUpgrade,
+          isMidCycleUpgrade: preserveUnusedOnUpgrade && isMidCycleUpgrade,
           meta: {
             tier: normalizedTier,
             source: options.source || 'whop_webhook',
+            ...(options.paymentId ? { payment_id: options.paymentId } : {}),
           },
         })
+
+        if (granted.duplicate) {
+          return { deduplicated: true }
+        }
+
+        user.subscription_tier_id = tier.id
+        user.subscription_status = 'active'
+        user.subscription_start_date = user.subscription_start_date || now
+        user.subscription_end_date = endDate
+        user.payment_provider = 'whop'
+
+        if (options.whopMembershipId) {
+          user.whop_membership_id = options.whopMembershipId
+        }
+        if (options.whopUserId) {
+          user.whop_user_id = options.whopUserId
+        }
+
         await saveUserLots(userUuid, granted.lots, tx)
         assignBalances(user, granted.lots, now)
-        await writeLedgerIntents(userUuid, granted.intents, tx, `whop_${normalizedTier}`)
+        await writeLedgerIntents(
+          userUuid,
+          granted.intents,
+          tx,
+          canonicalRef || `whop_${normalizedTier}`
+        )
+      } else {
+        user.subscription_tier_id = tier.id
+        user.subscription_status = 'active'
+        user.subscription_start_date = user.subscription_start_date || now
+        user.subscription_end_date = endDate
+        user.payment_provider = 'whop'
+
+        if (options.whopMembershipId) {
+          user.whop_membership_id = options.whopMembershipId
+        }
+        if (options.whopUserId) {
+          user.whop_user_id = options.whopUserId
+        }
       }
 
       await user.save({ transaction: tx })
+      return { deduplicated: false }
     })
   }
 
@@ -468,13 +699,24 @@ export class SubscriptionService {
       whopMembershipId?: string
       whopUserId?: string
       source?: string
+      paymentId?: string
+      ref?: string
     } = {}
-  ): Promise<void> {
+  ): Promise<{ deduplicated: boolean } | void> {
     const normalizedOffer = normalizeCharterOfferId(offerId)
     if (!normalizedOffer) {
       throw new Error(`Invalid charter offer: ${offerId}`)
     }
     const offer = CHARTER_OFFER_CATALOG[normalizedOffer]
+    const canonicalRef = normalizeCanonicalPaymentRef(options.paymentId, options.ref)
+
+    if (canonicalRef) {
+      const resolvedUser = await resolveUser(userId)
+      if (await hasProcessedPaymentLedger(resolvedUser.id, canonicalRef)) {
+        return { deduplicated: true }
+      }
+    }
+
     const now = new Date()
     const endDate = new Date(now.getTime() + offer.durationDays * 24 * 60 * 60 * 1000)
 
@@ -485,6 +727,14 @@ export class SubscriptionService {
       source: options.source || `charter_${normalizedOffer}`,
       grantCredits: false,
     })
+
+    if (canonicalRef) {
+      return await this.purchaseAddonCredits(userId, offer.credits, offer.priceUsd, {
+        paymentId: options.paymentId,
+        ref: canonicalRef,
+        source: options.source || `charter_${normalizedOffer}`,
+      })
+    }
 
     await this.purchaseAddonCredits(userId, offer.credits, offer.priceUsd)
   }
@@ -535,22 +785,210 @@ export class SubscriptionService {
   }
 
   /**
-   * Record a refund — flag account; full credit clawback handled manually if needed
+   * Record a refund and claw back unused credits from matching credit lot(s).
+   * Deactivates the subscription when a subscription/charter payment is refunded.
    */
-  static async recordRefund(userId: string, paymentId: string): Promise<void> {
+  static async recordRefund(
+    userId: string,
+    paymentId: string,
+    options: {
+      membershipId?: string
+      isSubscriptionRefund?: boolean
+      refundAmountCredits?: number
+      planId?: string
+      tierName?: string | null
+      addonPackId?: string | null
+      charterOfferId?: string | null
+      source?: string
+    } = {}
+  ): Promise<{
+    clawedBackCredits: number
+    subscriptionDeactivated: boolean
+    deduplicated?: boolean
+  }> {
+    await ensureCreditLotsTable()
     const resolvedUser = await resolveUser(userId)
     const userUuid = resolvedUser.id
+    const refundRef = `refund_${paymentId}`
 
-    await CreditLedger.create({
-      user_id: userUuid,
-      delta_credits: 0,
-      prev_balance: 0,
-      new_balance: 0,
-      reason: 'adjustment',
-      credit_type: 'addon',
-      ref: `refund_${paymentId}`,
-      meta: { payment_id: paymentId, action: 'refund_recorded' },
-    } as any)
+    return await sequelize.transaction(async (tx) => {
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
+      if (!user) throw new Error('User not found')
+
+      const alreadyRecorded = await CreditLedger.findOne({
+        where: { user_id: userUuid, ref: refundRef },
+        transaction: tx,
+      })
+      if (alreadyRecorded) {
+        return {
+          clawedBackCredits: 0,
+          subscriptionDeactivated: false,
+          deduplicated: true,
+        }
+      }
+
+      const now = new Date()
+      const { lots } = await loadUserLots(user, now, tx)
+      const startingBalance = lots
+        .filter((lot) => lot.remaining > 0)
+        .reduce((sum, lot) => sum + lot.remaining, 0)
+      const expired = expireDueLots(lots, now)
+
+      let runningBalance = startingBalance
+      const expiryLedgerIntents: Parameters<typeof writeLedgerIntents>[1] = []
+      if (expired.expiredSubscription > 0) {
+        const next = runningBalance - expired.expiredSubscription
+        expiryLedgerIntents.push({
+          delta: -expired.expiredSubscription,
+          prev: runningBalance,
+          next,
+          reason: 'subscription_expiry',
+          creditType: 'subscription',
+          meta: { expired_credits: expired.expiredSubscription },
+        })
+        runningBalance = next
+      }
+      if (expired.expiredPack > 0) {
+        const next = runningBalance - expired.expiredPack
+        expiryLedgerIntents.push({
+          delta: -expired.expiredPack,
+          prev: runningBalance,
+          next,
+          reason: 'adjustment',
+          creditType: 'addon',
+          meta: { kind: 'pack_expiry', expired_credits: expired.expiredPack },
+        })
+        runningBalance = next
+      }
+
+      const workingLots: CreditLot[] = expired.lots.map((lot) => ({ ...lot }))
+      const canonicalPaymentRef = normalizeCanonicalPaymentRef(paymentId, null)
+      const matchRefSet = new Set<string>(
+        canonicalPaymentRef ? candidatePaymentRefs(canonicalPaymentRef) : [paymentId]
+      )
+      matchRefSet.add(paymentId)
+
+      const matchedByRef = workingLots.filter(
+        (lot) => lot.remaining > 0 && Boolean(lot.ref && matchRefSet.has(lot.ref))
+      )
+
+      const normalizedTier = options.tierName ? normalizeTierName(options.tierName) : null
+      let isSubRefund = Boolean(
+        options.isSubscriptionRefund ||
+          options.charterOfferId ||
+          (normalizedTier && !TIER_CATALOG[normalizedTier].isOneTime) ||
+          (options.membershipId &&
+            user.whop_membership_id &&
+            options.membershipId === user.whop_membership_id) ||
+          matchedByRef.some((lot) => lot.source === 'subscription')
+      )
+
+      let targetLots: CreditLot[] = matchedByRef
+      if (targetLots.length === 0) {
+        if (isSubRefund) {
+          targetLots = workingLots
+            .filter((lot) => lot.source === 'subscription' && lot.remaining > 0)
+            .sort((a, b) => (a.purchasedAt < b.purchasedAt ? 1 : -1))
+        } else if (options.refundAmountCredits && options.refundAmountCredits > 0) {
+          const packLots = workingLots
+            .filter((lot) => lot.source !== 'subscription' && lot.remaining > 0)
+            .sort((a, b) => (a.purchasedAt < b.purchasedAt ? 1 : -1))
+          const exactGrantMatch = packLots.find(
+            (lot) => lot.granted === options.refundAmountCredits
+          )
+          targetLots = exactGrantMatch ? [exactGrantMatch] : packLots.slice(0, 1)
+        }
+      }
+
+      let cap =
+        options.refundAmountCredits && options.refundAmountCredits > 0
+          ? options.refundAmountCredits
+          : Number.POSITIVE_INFINITY
+      let clawedBackSubscription = 0
+      let clawedBackAddon = 0
+
+      for (const lot of targetLots) {
+        if (cap <= 0) break
+        const deduct = Math.min(lot.remaining, cap)
+        if (deduct <= 0) continue
+        lot.remaining -= deduct
+        if (Number.isFinite(cap)) cap -= deduct
+        if (lot.source === 'subscription') {
+          clawedBackSubscription += deduct
+          isSubRefund = true
+        } else {
+          clawedBackAddon += deduct
+        }
+      }
+
+      const clawedBackTotal = clawedBackSubscription + clawedBackAddon
+      const remainingLots = workingLots.filter((lot) => lot.remaining > 0)
+
+      let subscriptionDeactivated = false
+      if (isSubRefund && user.subscription_status === 'active') {
+        user.subscription_status = 'cancelled'
+        subscriptionDeactivated = true
+      }
+
+      await saveUserLots(userUuid, remainingLots, tx)
+      assignBalances(user, remainingLots, now)
+
+      if (expiryLedgerIntents.length > 0) {
+        await writeLedgerIntents(
+          userUuid,
+          expiryLedgerIntents,
+          tx,
+          `credit_expiry_${now.toISOString().slice(0, 10)}`
+        )
+      }
+
+      const prevBalance = runningBalance
+      const newBalance = Math.max(0, prevBalance - clawedBackTotal)
+      const creditType: 'subscription' | 'addon' | null =
+        clawedBackSubscription > 0 && clawedBackAddon === 0
+          ? 'subscription'
+          : clawedBackAddon > 0 && clawedBackSubscription === 0
+            ? 'addon'
+            : clawedBackTotal === 0
+              ? isSubRefund
+                ? 'subscription'
+                : 'addon'
+              : null
+
+      await CreditLedger.create(
+        {
+          user_id: userUuid,
+          delta_credits: -clawedBackTotal,
+          prev_balance: prevBalance,
+          new_balance: newBalance,
+          reason: 'adjustment',
+          credit_type: creditType,
+          ref: refundRef,
+          meta: {
+            payment_id: paymentId,
+            membership_id: options.membershipId || null,
+            plan_id: options.planId || null,
+            tier_name: normalizedTier,
+            addon_pack_id: options.addonPackId || null,
+            charter_offer_id: options.charterOfferId || null,
+            source: options.source || 'whop_refund',
+            action: 'refund_clawback',
+            clawed_back_credits: clawedBackTotal,
+            clawed_back_subscription: clawedBackSubscription,
+            clawed_back_addon: clawedBackAddon,
+            subscription_deactivated: subscriptionDeactivated,
+          },
+        } as any,
+        { transaction: tx }
+      )
+
+      await user.save({ transaction: tx })
+      return {
+        clawedBackCredits: clawedBackTotal,
+        subscriptionDeactivated,
+        deduplicated: false,
+      }
+    })
   }
 
   /**

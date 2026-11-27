@@ -16,7 +16,7 @@ import {
   type KlingLongTakeJobPayload,
 } from '@/lib/kling/longTakeOrchestrator'
 import { getKlingLongTakeCredits } from '@/lib/credits/creditCosts'
-import { CreditService } from '@/services/CreditService'
+import { settleAsyncJobBilling } from '@/lib/credits/meteredGateway'
 import type { KlingQuality } from '@/lib/kling/types'
 import { runAudienceResonance, type RunChunk } from '@/lib/script/audienceResonance/runner'
 import { localeDirective } from '@/lib/prompts/localeDirective'
@@ -36,6 +36,7 @@ import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import { runReferenceExpressStep } from '@/lib/jobs/referenceExpressWorker'
 import { getReferenceExpressMaxAttempts } from '@/lib/jobs/referenceExpressWorkerState'
 import { runScenePolishStep } from '@/lib/jobs/scenePolishWorker'
+import { runProductionAgentWindowStep } from '@/lib/jobs/productionAgentWorker'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -116,6 +117,9 @@ export const processGenerationJob = inngest.createFunction(
     }
     if (jobType === 'script_generation') {
       return { ok: true, delegated: 'generate-script-v2' }
+    }
+    if (jobType === 'production_agent') {
+      return { ok: true, delegated: 'process-production-agent' }
     }
 
     await step.run('mark-processing', async () => {
@@ -266,12 +270,32 @@ export const processKlingLongTake = inngest.createFunction(
     triggers: [{ event: 'generation/job.queued', if: 'event.data.jobType == "kling_long_take"' }],
   },
   async ({ event, step }) => {
-    const { jobId, userId, projectId, payload } = event.data as {
+    const {
+      jobId,
+      userId,
+      projectId,
+      payload,
+      holdId: eventHoldId,
+      runId: eventRunId,
+      credentialSource: eventCredentialSource,
+    } = event.data as {
       jobId: string
       userId: string
       projectId: string
-      payload: KlingLongTakeJobPayload
+      payload: KlingLongTakeJobPayload & {
+        holdId?: string | null
+        runId?: string | null
+        credentialSource?: 'platform' | 'byok'
+      }
+      holdId?: string | null
+      runId?: string | null
+      credentialSource?: 'platform' | 'byok'
     }
+
+    const holdId = eventHoldId ?? payload.holdId ?? null
+    const runId = eventRunId ?? payload.runId ?? null
+    const credentialSource = eventCredentialSource ?? payload.credentialSource ?? 'platform'
+    let billingSettled = false
 
     const longTakePayload: KlingLongTakeJobPayload = {
       ...payload,
@@ -283,6 +307,13 @@ export const processKlingLongTake = inngest.createFunction(
     const plan = planKlingLongTake({
       targetSeconds: longTakePayload.targetSeconds,
       model: longTakePayload.model,
+    })
+
+    const longTakeCredits = getKlingLongTakeCredits({
+      model: longTakePayload.model,
+      quality: (longTakePayload.quality as KlingQuality) || 'pro',
+      plan,
+      masterSeconds: plan.totalSeconds,
     })
 
     await step.run('mark-processing', async () => {
@@ -398,6 +429,33 @@ export const processKlingLongTake = inngest.createFunction(
         throw new Error(lipData?.error || 'Kling lip-sync failed')
       }
 
+      // Settle/capture credits BEFORE persisting completed assetUrl onto Project.metadata
+      // so a billing failure or insufficient balance never delivers an unbilled asset.
+      await step.run('settle-credits', async () => {
+        await settleAsyncJobBilling({
+          userId,
+          holdId,
+          runId,
+          idempotencyKey: `kling_long_take:${jobId}`,
+          credits: longTakeCredits,
+          provider: 'kling',
+          model: String(longTakePayload.model),
+          operation: 'kling_long_take',
+          estimatedCogsUsd: Number((longTakeCredits * 0.005).toFixed(4)),
+          projectId,
+          segmentId: longTakePayload.segmentId,
+          credentialSource,
+          succeeded: true,
+          providerRequestId: lipsync.taskId,
+          meta: {
+            beatId: longTakePayload.beatId,
+            totalSeconds: plan.totalSeconds,
+            jobId,
+          },
+        })
+      })
+      billingSettled = true
+
       const finalized = await step.run('finalize-master', async () =>
         finalizeLongTakeMaster({
           payload: longTakePayload,
@@ -409,20 +467,6 @@ export const processKlingLongTake = inngest.createFunction(
           },
         })
       )
-
-      await step.run('charge-credits', async () => {
-        const credits = getKlingLongTakeCredits({
-          model: longTakePayload.model,
-          quality: (longTakePayload.quality as KlingQuality) || 'pro',
-          plan,
-          masterSeconds: plan.totalSeconds,
-        })
-        await CreditService.charge(userId, credits, 'ai_usage', projectId, {
-          operation: 'kling_long_take',
-          segmentId: longTakePayload.segmentId,
-          beatId: longTakePayload.beatId,
-        })
-      })
 
       await step.run('complete', async () => {
         await updateGenerationJob(jobId, {
@@ -450,6 +494,27 @@ export const processKlingLongTake = inngest.createFunction(
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Long-take job failed'
       await step.run('fail', async () => {
+        if (!billingSettled && (holdId || runId)) {
+          await settleAsyncJobBilling({
+            userId,
+            holdId,
+            runId,
+            idempotencyKey: `kling_long_take:${jobId}:release`,
+            credits: 0,
+            provider: 'kling',
+            model: String(longTakePayload.model),
+            operation: 'kling_long_take',
+            estimatedCogsUsd: 0,
+            projectId,
+            segmentId: longTakePayload.segmentId,
+            credentialSource,
+            succeeded: false,
+            errorCode: 'KLING_LONG_TAKE_FAILED',
+            meta: { jobId, error: message.slice(0, 200) },
+          }).catch((releaseErr) =>
+            console.error('[processKlingLongTake] Failed to release billing hold on error:', releaseErr)
+          )
+        }
         await updateGenerationJob(jobId, { status: 'failed', error: message })
         await notifyUser({
           userId,
@@ -781,6 +846,48 @@ export const processScenePolish = inngest.createFunction(
   }
 )
 
+/**
+ * Durable Server-Side Production Agent.
+ *
+ * Advances a `production_agent` job one bounded window step at a time,
+ * persisting cursor + telemetry in Postgres (`GenerationJob.payload._worker`)
+ * and suspending via `step.sleep` on HTTP 429 cooldowns with zero Vercel compute cost.
+ */
+export const processProductionAgent = inngest.createFunction(
+  {
+    id: 'process-production-agent',
+    retries: 2,
+    triggers: [{ event: 'production/agent.requested' }],
+  },
+  async ({ event, step }) => {
+    const { jobId, projectId } = event.data as {
+      jobId: string
+      userId: string
+      projectId: string
+    }
+
+    const maxSteps = 500
+    for (let i = 0; i < maxSteps; i++) {
+      const outcome = await step.run(`agent-step-${i}`, async () =>
+        runProductionAgentWindowStep(jobId)
+      )
+
+      if (outcome.done) {
+        return { ok: !outcome.error, projectId, ...outcome }
+      }
+
+      if (outcome.retryInMs && outcome.retryInMs > 0) {
+        await step.sleep(`rate-limit-cooldown-${i}`, `${outcome.retryInMs}ms`)
+        continue
+      }
+
+      await step.sleep(`agent-gap-${i}`, '1000ms')
+    }
+
+    return { ok: false, projectId, error: 'Production Agent exceeded its step budget' }
+  }
+)
+
 export const inngestFunctions = [
   processGenerationJob,
   processBatchGenerationJob,
@@ -789,4 +896,5 @@ export const inngestFunctions = [
   processBlueprintGuidedRevise,
   processReferenceExpress,
   processScenePolish,
+  processProductionAgent,
 ]

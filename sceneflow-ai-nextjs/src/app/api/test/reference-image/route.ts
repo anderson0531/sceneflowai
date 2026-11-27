@@ -18,12 +18,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { downloadImageAsBase64 } from '@/lib/storage/gcs'
 import { generateLinkingDescription } from '@/lib/imagen/promptOptimizer'
 import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from '@/lib/vertexai/safety'
+import { requireAdminSession } from '@/lib/admin/requireAdmin'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   try {
+    const admin = await requireAdminSession()
+    if (!admin.authorized) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden: admin access required' },
+        { status: 403 }
+      )
+    }
+
     const body = await req.json()
     const { 
       gcsUri,              // GCS URI of the reference image
@@ -208,6 +217,14 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
+  const admin = await requireAdminSession()
+  if (!admin.authorized) {
+    return NextResponse.json(
+      { success: false, error: 'Forbidden: admin access required' },
+      { status: 403 }
+    )
+  }
+
   return NextResponse.json({
     endpoint: '/api/test/reference-image',
     method: 'POST',

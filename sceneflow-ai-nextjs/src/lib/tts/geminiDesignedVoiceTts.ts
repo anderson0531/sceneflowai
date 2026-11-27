@@ -1,4 +1,5 @@
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
+import { fetchWithRetry } from '@/lib/utils/retry'
 import {
   DESIGNED_VOICE_TTS_MODEL,
   DESIGNED_VOICE_TYPE,
@@ -399,6 +400,16 @@ function readInlineAudio(payload: unknown): Buffer | null {
   return null
 }
 
+const DESIGNED_VOICE_SYNTH_BACKOFF_SCHEDULE_MS = [1500, 4000, 10000]
+const DESIGNED_VOICE_SYNTH_MAX_RETRY_DELAY_MS = 30_000
+
+function isRetryableDesignedVoiceSynthError(error: any, status?: number): boolean {
+  if (error?.name === 'AbortError' || error?.code === 'ABORT_ERR' || error?.code === 'TIMEOUT') {
+    return false
+  }
+  return status === 429 || status === 502 || status === 503 || status === 504
+}
+
 async function synthesizeOnce(args: {
   text: string
   voiceId: string
@@ -406,17 +417,41 @@ async function synthesizeOnce(args: {
 }): Promise<{ status: number; audio: Buffer | null; detail: string }> {
   const headers = await vertexHeaders()
   const url = `https://aiplatform.googleapis.com/v1/projects/${vertexProjectId()}/locations/global/publishers/google/models/${DESIGNED_VOICE_TTS_MODEL}:generateContent`
-  const response = await fetch(url, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(
-      buildDesignedVoiceSynthesisBody({
-        text: args.text,
-        voiceId: args.voiceId,
-        style: args.style,
-      })
-    ),
-  })
+  let response: Response
+  try {
+    response = await fetchWithRetry(
+      url,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(
+          buildDesignedVoiceSynthesisBody({
+            text: args.text,
+            voiceId: args.voiceId,
+            style: args.style,
+          })
+        ),
+      },
+      {
+        maxRetries: 3,
+        backoffScheduleMs: DESIGNED_VOICE_SYNTH_BACKOFF_SCHEDULE_MS,
+        maxDelayMs: DESIGNED_VOICE_SYNTH_MAX_RETRY_DELAY_MS,
+        maxRetryAfterMs: DESIGNED_VOICE_SYNTH_MAX_RETRY_DELAY_MS,
+        timeoutMs: 90_000,
+        operationName: 'Gemini Designed Voice TTS',
+        isRetryable: isRetryableDesignedVoiceSynthError,
+      }
+    )
+  } catch (err: any) {
+    if (typeof err?.status === 'number') {
+      return {
+        status: err.status,
+        audio: null,
+        detail: String(err.message || ''),
+      }
+    }
+    throw err
+  }
   if (!response.ok) {
     const detail = await response.text().catch(() => '')
     return { status: response.status, audio: null, detail }

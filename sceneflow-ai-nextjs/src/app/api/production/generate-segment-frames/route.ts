@@ -69,6 +69,18 @@ import {
   parseStillGenerationMode,
 } from '@/lib/generation/stillPolicy'
 import type { PrioritizedReferenceImage } from '@/lib/vision/referenceLimits'
+import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
+
+function isValidInternalFrameRequest(req: NextRequest): boolean {
+  const jobSecret = process.env.INTERNAL_JOB_SECRET || 'sceneflow-internal'
+  const apiSecret = process.env.INTERNAL_API_SECRET?.trim()
+  const jobHeader = req.headers.get('x-internal-job')?.trim()
+  const apiKeyHeader = req.headers.get('x-internal-api-key')?.trim()
+  if (jobHeader && jobHeader === jobSecret) return true
+  if (apiSecret && apiKeyHeader && apiKeyHeader === apiSecret) return true
+  return false
+}
 
 export const maxDuration = 120 // 2 minutes for potentially generating both frames
 export const runtime = 'nodejs'
@@ -502,11 +514,28 @@ export async function POST(req: NextRequest) {
       ? `${stripAllCues(rawEffectivePrompt)}. ${expressionCue}`
       : stripAllCues(rawEffectivePrompt)
 
-    // Get user session for authentication
+    // Get user session or internal worker auth
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const isInternalCall = isValidInternalFrameRequest(req)
+    let billingUserId: string | null = session?.user?.id || session?.user?.email || null
+
+    if (!billingUserId && isInternalCall && projectId) {
+      try {
+        await ensureDatabaseConnection('production/generate-segment-frames-owner')
+        const ownerProj = await Project.findByPk(projectId, { attributes: ['id', 'user_id'] })
+        if (ownerProj?.user_id) {
+          billingUserId = String(ownerProj.user_id)
+        }
+      } catch (ownerErr) {
+        console.warn('[Generate Frames] Could not resolve project owner for internal call:', ownerErr)
+      }
+    }
+
+    if (!billingUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const { executeMeteredProviderCall } = await import('@/lib/credits/meteredGateway')
 
     // Validate required fields
     if (!sceneId || !segmentId || !actionPrompt) {
@@ -1023,97 +1052,131 @@ Render this scene in ${selectedStyle.name} style.`
       }
       
       const studioPrompt = geminiPrompt
+      const useCreativeStart = isCreativeStillGeneration(stillGenerationMode)
 
-      if (isCreativeStillGeneration(stillGenerationMode)) {
-        if (!getKlingFallbackProvider()) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: CREATIVE_KLING_UNAVAILABLE_MESSAGE,
-              code: CREATIVE_KLING_UNAVAILABLE_CODE,
-            },
-            { status: 422 }
-          )
-        }
-        const klingRefs: PrioritizedReferenceImage[] = []
-        for (const c of charPool) {
-          const consistentWardrobe = formatConsistentWardrobeDescription({
-            description: c.wardrobe,
-            accessories: c.wardrobeAccessories,
-          })
-          if (c.referenceUrl) {
-            klingRefs.push({
-              imageUrl: c.referenceUrl,
-              name: c.name,
-              role: 'identity',
-              refRole: 'identity',
-              characterName: c.name,
-              ...(consistentWardrobe && !c.hasDualReferences
-                ? { wardrobeDescription: consistentWardrobe }
-                : {}),
-            })
-          }
-          if (c.hasDualReferences && c.wardrobeReferenceUrl) {
-            klingRefs.push({
-              imageUrl: c.wardrobeReferenceUrl,
-              name: `${c.name} wardrobe`,
-              role: 'wardrobe',
-              refRole: 'wardrobe',
-              characterName: c.name,
-            })
-          }
-        }
-        for (const loc of locationRefs) {
-          if (loc.imageUrl) {
-            klingRefs.push({
-              imageUrl: loc.imageUrl,
-              name: loc.name,
-              role: 'location',
-              locationName: loc.name,
-            })
-          }
-        }
-        for (const obj of objectReferences) {
-          if (obj.imageUrl) {
-            klingRefs.push({
-              imageUrl: obj.imageUrl,
-              name: obj.name,
-              role: 'prop-other',
-              propName: obj.name,
-            })
-          }
-        }
-        const klingResult = await generateKlingOmniStill({
-          prompt: geminiPrompt,
-          selectedReferences: klingRefs,
-          projectId,
-          resolution: modelTier === 'eco' ? '1k' : '2k',
-        })
-        startImageDataUrl = klingResult.imageBase64
-      } else {
-        const studioReferenceImages = await overlayLocationScaleOnReferenceImages(
-          allReferenceImages.length > 0
-            ? await cropIdentityReferenceImagesForPro(allReferenceImages)
-            : allReferenceImages
+      if (useCreativeStart && !getKlingFallbackProvider()) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: CREATIVE_KLING_UNAVAILABLE_MESSAGE,
+            code: CREATIVE_KLING_UNAVAILABLE_CODE,
+          },
+          { status: 422 }
         )
-        const result = await generateImageWithGeminiStudio({
-          prompt: studioPrompt,
-          aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
-          imageSize: modelTier === 'eco' ? '1K' : '2K',
-          referenceImages: studioReferenceImages.length > 0 ? studioReferenceImages : undefined,
-          modelTier,
-          thinkingLevel,
-          negativePrompt: mergedNegativePrompt
-        })
-        startImageDataUrl = result.imageBase64
       }
-      
-      // Upload to blob storage
-      generatedStartFrameUrl = await uploadImageToBlob(
-        startImageDataUrl,
-        `scenes/${sceneId}/segments/${segmentId}/start-frame-${Date.now()}.png`
-      )
-      
+
+      const startFrameModel = useCreativeStart
+        ? 'kling-omni-image'
+        : modelTier === 'eco'
+          ? GEMINI_IMAGE_MODELS.flash
+          : GEMINI_IMAGE_MODELS.pro
+      const startFloorCredits = useCreativeStart
+        ? IMAGE_CREDITS.FAL_KLING_IMAGE
+        : modelTier === 'eco'
+          ? IMAGE_CREDITS.FRAME_GENERATION
+          : IMAGE_CREDITS.FINAL_FRAME_GENERATION
+
+      const meteredStart = await executeMeteredProviderCall({
+        userId: billingUserId,
+        projectId: projectId || null,
+        sceneId,
+        segmentId,
+        route: '/api/production/generate-segment-frames',
+        provider: useCreativeStart ? 'kling' : 'vertex',
+        model: startFrameModel,
+        operation: 'segment_start_frame',
+        quoteInput: {
+          kind: 'still',
+          model: startFrameModel,
+          resolution: modelTier === 'eco' ? '720p' : '1080p',
+          imageCount: 1,
+          floorCredits: startFloorCredits,
+        },
+        meta: { segmentId, framePosition: 'start', modelTier },
+        execute: async () => {
+          if (useCreativeStart) {
+            const klingRefs: PrioritizedReferenceImage[] = []
+            for (const c of charPool) {
+              const consistentWardrobe = formatConsistentWardrobeDescription({
+                description: c.wardrobe,
+                accessories: c.wardrobeAccessories,
+              })
+              if (c.referenceUrl) {
+                klingRefs.push({
+                  imageUrl: c.referenceUrl,
+                  name: c.name,
+                  role: 'identity',
+                  refRole: 'identity',
+                  characterName: c.name,
+                  ...(consistentWardrobe && !c.hasDualReferences
+                    ? { wardrobeDescription: consistentWardrobe }
+                    : {}),
+                })
+              }
+              if (c.hasDualReferences && c.wardrobeReferenceUrl) {
+                klingRefs.push({
+                  imageUrl: c.wardrobeReferenceUrl,
+                  name: `${c.name} wardrobe`,
+                  role: 'wardrobe',
+                  refRole: 'wardrobe',
+                  characterName: c.name,
+                })
+              }
+            }
+            for (const loc of locationRefs) {
+              if (loc.imageUrl) {
+                klingRefs.push({
+                  imageUrl: loc.imageUrl,
+                  name: loc.name,
+                  role: 'location',
+                  locationName: loc.name,
+                })
+              }
+            }
+            for (const obj of objectReferences) {
+              if (obj.imageUrl) {
+                klingRefs.push({
+                  imageUrl: obj.imageUrl,
+                  name: obj.name,
+                  role: 'prop-other',
+                  propName: obj.name,
+                })
+              }
+            }
+            const klingResult = await generateKlingOmniStill({
+              prompt: geminiPrompt,
+              selectedReferences: klingRefs,
+              projectId,
+              resolution: modelTier === 'eco' ? '1k' : '2k',
+            })
+            startImageDataUrl = klingResult.imageBase64
+          } else {
+            const studioReferenceImages = await overlayLocationScaleOnReferenceImages(
+              allReferenceImages.length > 0
+                ? await cropIdentityReferenceImagesForPro(allReferenceImages)
+                : allReferenceImages
+            )
+            const result = await generateImageWithGeminiStudio({
+              prompt: studioPrompt,
+              aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
+              imageSize: modelTier === 'eco' ? '1K' : '2K',
+              referenceImages: studioReferenceImages.length > 0 ? studioReferenceImages : undefined,
+              modelTier,
+              thinkingLevel,
+              negativePrompt: mergedNegativePrompt
+            })
+            startImageDataUrl = result.imageBase64
+          }
+
+          // Upload to blob storage
+          return await uploadImageToBlob(
+            startImageDataUrl,
+            `scenes/${sceneId}/segments/${segmentId}/start-frame-${Date.now()}.png`
+          )
+        },
+      })
+
+      generatedStartFrameUrl = meteredStart.result
       console.log('[Generate Frames] Start frame generated:', generatedStartFrameUrl)
       } // End of else block for generating new start frame
     }
@@ -1270,29 +1333,51 @@ Render this scene in ${selectedStyle.name} style.`
       // End keyframe = directed edit of start frame only (no identity/object refs — manual edit handles those)
       console.log('[Generate Frames] End frame via edit API (keyframeEnd, no reference images)')
 
-      const endResult = await editImageWithGeminiStudio({
-        sourceImage: startFrameReference,
-        instruction: endFramePrompt,
-        referenceImage: resolveEndFrameEditReferenceImage({
-          characters,
-          startFrameReference: String(startFrameReference),
-        }),
-        aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
-        imageSize: modelTier === 'eco' ? '1K' : '2K',
-        editIntent: 'keyframeEnd',
-        segmentDurationSeconds: duration,
-        modelTier,
-        thinkingLevel,
-        negativePrompt: mergedNegativePrompt,
+      const endFrameModel =
+        modelTier === 'eco' ? GEMINI_IMAGE_MODELS.flash : GEMINI_IMAGE_MODELS.pro
+      const meteredEnd = await executeMeteredProviderCall({
+        userId: billingUserId,
+        projectId: projectId || null,
+        sceneId,
+        segmentId,
+        route: '/api/production/generate-segment-frames',
+        provider: 'vertex',
+        model: endFrameModel,
+        operation: 'segment_end_frame',
+        quoteInput: {
+          kind: 'still',
+          model: endFrameModel,
+          imageCount: 1,
+          floorCredits: IMAGE_CREDITS.FRAME_GENERATION,
+        },
+        meta: { segmentId, framePosition: 'end', modelTier },
+        execute: async () => {
+          const endResult = await editImageWithGeminiStudio({
+            sourceImage: startFrameReference,
+            instruction: endFramePrompt!,
+            referenceImage: resolveEndFrameEditReferenceImage({
+              characters,
+              startFrameReference: String(startFrameReference),
+            }),
+            aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
+            imageSize: modelTier === 'eco' ? '1K' : '2K',
+            editIntent: 'keyframeEnd',
+            segmentDurationSeconds: duration,
+            modelTier,
+            thinkingLevel,
+            negativePrompt: mergedNegativePrompt,
+          })
+          const endImageDataUrl = endResult.imageBase64
+
+          // Upload to blob storage
+          return await uploadImageToBlob(
+            endImageDataUrl,
+            `scenes/${sceneId}/segments/${segmentId}/end-frame-${Date.now()}.png`
+          )
+        },
       })
-      const endImageDataUrl = endResult.imageBase64
 
-      // Upload to blob storage
-      generatedEndFrameUrl = await uploadImageToBlob(
-        endImageDataUrl,
-        `scenes/${sceneId}/segments/${segmentId}/end-frame-${Date.now()}.png`
-      )
-
+      generatedEndFrameUrl = meteredEnd.result
       console.log('[Generate Frames] End frame generated:', generatedEndFrameUrl)
     }
 
@@ -1334,6 +1419,18 @@ Render this scene in ${selectedStyle.name} style.`
     console.error('[Generate Frames] Error:', error)
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+    if (errorMessage === 'INSUFFICIENT_CREDITS') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Insufficient credits',
+          code: 'INSUFFICIENT_CREDITS',
+          required: IMAGE_CREDITS.FRAME_GENERATION,
+        },
+        { status: 402 }
+      )
+    }
 
     if (
       error instanceof ContentPolicyExhaustedError ||

@@ -11,11 +11,15 @@ import {
   normalizeCharterOfferId,
   normalizeTierName,
 } from '@/lib/billing/tierCatalog'
+import { isWebhookEventProcessed } from '@/lib/billing/webhookIdempotency'
 import {
-  isWebhookEventProcessed,
-  markWebhookEventProcessed,
-} from '@/lib/billing/webhookIdempotency'
-import { verifyWebhookEventViaWhopApi } from '@/lib/billing/whopReconcile'
+  canonicalWhopPaymentKey,
+  claimWebhookEvent,
+  extractBillingPeriodEndFromPayload,
+  legacyWhopPaymentKey,
+  releaseWebhookEventClaim,
+  verifyWebhookEventViaWhopApi,
+} from '@/lib/billing/whopReconcile'
 import { SubscriptionService } from '@/services/SubscriptionService'
 
 export const runtime = 'nodejs'
@@ -37,8 +41,12 @@ function extractMetadata(event: WhopWebhookEvent): {
   showcaseOrderId?: string
 } {
   const data = event.data || {}
+  const paymentObj = data.payment as Record<string, unknown> | undefined
+  const membershipObj = data.membership as Record<string, unknown> | undefined
   const metadata: Record<string, unknown> =
     (data.metadata as Record<string, unknown> | undefined) ||
+    (paymentObj?.metadata as Record<string, unknown> | undefined) ||
+    (membershipObj?.metadata as Record<string, unknown> | undefined) ||
     ((data.checkout_configuration as Record<string, unknown> | undefined)?.metadata as
       | Record<string, unknown>
       | undefined) ||
@@ -87,41 +95,78 @@ function extractMetadata(event: WhopWebhookEvent): {
   }
 }
 
-function extractBillingPeriodEnd(data: Record<string, unknown>): Date | undefined {
-  const membership = data.membership as Record<string, unknown> | undefined
-  const candidates = [
-    data.renewal_period_end,
-    data.renewal_period_end_at,
-    data.expires_at,
-    membership?.renewal_period_end,
-    membership?.expires_at,
-  ]
-  for (const value of candidates) {
-    if (typeof value !== 'string' && typeof value !== 'number') continue
-    const date = new Date(value)
-    if (!Number.isNaN(date.getTime()) && date.getTime() > Date.now()) return date
-  }
-  return undefined
-}
-
 function extractPlanId(event: WhopWebhookEvent): string | undefined {
   const data = event.data || {}
+  const paymentObj = data.payment as Record<string, unknown> | undefined
+  const membershipObj = data.membership as Record<string, unknown> | undefined
   const plan =
     (data.plan as Record<string, unknown> | undefined) ||
-    (data.membership as Record<string, unknown> | undefined)?.plan
+    membershipObj?.plan ||
+    paymentObj?.plan
 
   if (typeof plan === 'string') return plan
-  if (plan && typeof plan === 'object' && typeof plan.id === 'string') {
-    return plan.id
+  if (plan && typeof plan === 'object' && typeof (plan as Record<string, unknown>).id === 'string') {
+    return (plan as Record<string, unknown>).id as string
   }
 
   if (typeof data.plan_id === 'string') return data.plan_id
+  if (typeof paymentObj?.plan_id === 'string') return paymentObj.plan_id
+  if (typeof membershipObj?.plan_id === 'string') return membershipObj.plan_id
   return undefined
 }
 
-async function fulfillExplorerPurchase(userId: string): Promise<void> {
+function extractPaymentId(event: WhopWebhookEvent): string | undefined {
+  const data = event.data || {}
+  const paymentObj = data.payment as Record<string, unknown> | undefined
+  if (typeof data.payment_id === 'string' && data.payment_id.trim()) {
+    return data.payment_id.trim()
+  }
+  if (typeof paymentObj?.id === 'string' && paymentObj.id.trim()) {
+    return paymentObj.id.trim()
+  }
+  if (
+    typeof data.id === 'string' &&
+    data.id.trim() &&
+    (event.type === 'payment.succeeded' ||
+      event.type === 'payment_succeeded' ||
+      event.type === 'payment.failed' ||
+      event.type === 'payment_failed' ||
+      data.id.startsWith('pay_'))
+  ) {
+    return data.id.trim()
+  }
+  return undefined
+}
+
+function extractMembershipId(event: WhopWebhookEvent): string | undefined {
+  const data = event.data || {}
+  const membershipObj = data.membership as Record<string, unknown> | undefined
+  const paymentObj = data.payment as Record<string, unknown> | undefined
+  if (typeof data.membership_id === 'string' && data.membership_id.trim()) {
+    return data.membership_id.trim()
+  }
+  if (typeof membershipObj?.id === 'string' && membershipObj.id.trim()) {
+    return membershipObj.id.trim()
+  }
+  if (typeof paymentObj?.membership_id === 'string' && paymentObj.membership_id.trim()) {
+    return paymentObj.membership_id.trim()
+  }
+  if (
+    typeof data.id === 'string' &&
+    data.id.trim() &&
+    (data.id.startsWith('mem_') || event.type.startsWith('membership'))
+  ) {
+    return data.id.trim()
+  }
+  return undefined
+}
+
+async function fulfillExplorerPurchase(userId: string, paymentId?: string): Promise<void> {
   try {
-    await SubscriptionService.grantExplorerPurchase(userId)
+    await SubscriptionService.grantExplorerPurchase(
+      userId,
+      paymentId ? { paymentId } : undefined
+    )
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
     if (message.includes('already purchased')) {
@@ -158,13 +203,16 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
     (normalizedMetaAddon ? ADDON_PACK_CATALOG[normalizedMetaAddon] : null) ||
     (planId ? getAddonPackFromWhopPlanId(planId) : null)
 
-  const membershipId =
-    typeof event.data?.id === 'string' ? event.data.id : undefined
+  const paymentId = extractPaymentId(event)
+  const membershipId = extractMembershipId(event)
   const whopUserId =
     typeof event.data?.user_id === 'string' ? event.data.user_id : undefined
+  const billingPeriodEnd = extractBillingPeriodEndFromPayload(event.data)
 
   console.log(`[Whop Webhook] Processing ${eventType}`, {
     eventId: event.id,
+    paymentId: paymentId || null,
+    membershipId: membershipId || null,
     userId: metadataUserId,
     tier: resolvedTier,
     charterOffer: resolvedCharterOffer?.id || null,
@@ -181,8 +229,7 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
         showcaseOrderId &&
         (orderKind === 'express_blueprint_pass' || orderKind === 'express_film_balance')
       ) {
-        const paymentId =
-          typeof event.data?.id === 'string' ? event.data.id : event.id
+        const showcasePaymentId = paymentId || event.id
         const {
           fulfillExpressBlueprintPassOrder,
           fulfillExpressFilmBalanceOrder,
@@ -190,12 +237,12 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
         if (orderKind === 'express_blueprint_pass') {
           await fulfillExpressBlueprintPassOrder({
             orderId: showcaseOrderId,
-            whopPaymentId: paymentId,
+            whopPaymentId: showcasePaymentId,
           })
         } else {
           await fulfillExpressFilmBalanceOrder({
             orderId: showcaseOrderId,
-            whopPaymentId: paymentId,
+            whopPaymentId: showcasePaymentId,
           })
         }
         break
@@ -213,22 +260,28 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
             whopMembershipId: membershipId,
             whopUserId,
             source: eventType,
+            paymentId,
           }
         )
       } else if (resolvedAddonPack) {
         await SubscriptionService.purchaseAddonCredits(
           metadataUserId,
           resolvedAddonPack.credits,
-          resolvedAddonPack.priceUsd
+          resolvedAddonPack.priceUsd,
+          {
+            paymentId,
+            source: eventType,
+          }
         )
       } else if (resolvedTier && isOneTimeTier(resolvedTier)) {
-        await fulfillExplorerPurchase(metadataUserId)
+        await fulfillExplorerPurchase(metadataUserId, paymentId)
       } else if (resolvedTier) {
         await SubscriptionService.activateSubscription(metadataUserId, resolvedTier, {
           whopMembershipId: membershipId,
           whopUserId,
-          billingPeriodEnd: extractBillingPeriodEnd(event.data),
+          billingPeriodEnd,
           source: eventType,
+          paymentId,
         })
       }
       break
@@ -250,12 +303,14 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
         return
       }
       if (isOneTimeTier(resolvedTier)) {
-        await fulfillExplorerPurchase(metadataUserId)
+        await fulfillExplorerPurchase(metadataUserId, paymentId)
       } else {
         await SubscriptionService.activateSubscription(metadataUserId, resolvedTier, {
           whopMembershipId: membershipId,
           whopUserId,
+          billingPeriodEnd,
           source: eventType,
+          paymentId,
         })
       }
       break
@@ -281,11 +336,27 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
     case 'refund.created':
     case 'refund_created': {
       if (metadataUserId) {
-        const paymentId =
-          typeof event.data?.payment_id === 'string'
-            ? event.data.payment_id
-            : event.id
-        await SubscriptionService.recordRefund(metadataUserId, paymentId)
+        const refundPaymentId = paymentId || event.id
+        const isSubscriptionRefund = Boolean(
+          resolvedCharterOffer ||
+            (resolvedTier && !isOneTimeTier(resolvedTier)) ||
+            membershipId
+        )
+        const refundAmountCredits = resolvedCharterOffer
+          ? resolvedCharterOffer.credits
+          : resolvedAddonPack
+            ? resolvedAddonPack.credits
+            : undefined
+        await SubscriptionService.recordRefund(metadataUserId, refundPaymentId, {
+          membershipId,
+          isSubscriptionRefund,
+          refundAmountCredits,
+          planId,
+          tierName: resolvedTier,
+          addonPackId: resolvedAddonPack?.id || null,
+          charterOfferId: resolvedCharterOffer?.id || null,
+          source: eventType,
+        })
       }
       break
     }
@@ -306,7 +377,7 @@ export async function POST(req: NextRequest) {
     const webhookSecret = process.env.WHOP_WEBHOOK_SECRET
     if (webhookSecret) {
       const client = getWhopClient()
-      event = client.webhooks.unwrap(rawBody, { headers }) as WhopWebhookEvent
+      event = client.webhooks.unwrap(rawBody, { headers }) as unknown as WhopWebhookEvent
     } else if (
       process.env.NODE_ENV === 'development' ||
       process.env.DEMO_MODE === 'true'
@@ -332,13 +403,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 })
     }
 
-    if (await isWebhookEventProcessed(event.id)) {
+    // Atomically claim event.id BEFORE processing to eliminate TOCTOU race conditions.
+    const eventClaim = await claimWebhookEvent('whop', event.id, event.type, rawBody)
+    if (!eventClaim.claimed) {
       console.log(`[Whop Webhook] Duplicate event skipped: ${event.id}`)
       return NextResponse.json({ success: true, duplicate: true })
     }
 
-    await processWhopEvent(event)
-    await markWebhookEventProcessed('whop', event.id, event.type, rawBody)
+    // For payment fulfillment events, also claim the canonical `whop_payment:<id>` key
+    // shared with whopReconcile so webhook + reconcile can never double-grant.
+    let claimedPaymentKey: string | null = null
+    if (event.type === 'payment.succeeded' || event.type === 'payment_succeeded') {
+      const paymentId = extractPaymentId(event)
+      if (paymentId) {
+        const legacyKey = legacyWhopPaymentKey(paymentId)
+        if (await isWebhookEventProcessed(legacyKey)) {
+          console.log(`[Whop Webhook] Payment already processed via legacy key: ${legacyKey}`)
+          return NextResponse.json({ success: true, duplicate: true })
+        }
+        const paymentKey = canonicalWhopPaymentKey(paymentId)
+        const paymentClaim = await claimWebhookEvent('whop', paymentKey, event.type, rawBody)
+        if (!paymentClaim.claimed) {
+          console.log(`[Whop Webhook] Duplicate payment skipped: ${paymentKey}`)
+          return NextResponse.json({ success: true, duplicate: true })
+        }
+        claimedPaymentKey = paymentKey
+      }
+    }
+
+    try {
+      await processWhopEvent(event)
+    } catch (processingError) {
+      if (claimedPaymentKey) {
+        await releaseWebhookEventClaim(claimedPaymentKey)
+      }
+      await releaseWebhookEventClaim(event.id)
+      throw processingError
+    }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

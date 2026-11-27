@@ -53,6 +53,20 @@ export interface ProductionChapterGroup {
   sceneIndices: number[]
 }
 
+export interface RateLimitedProductionItem {
+  kind: 'audio' | 'still' | 'clip'
+  sceneIndex: number
+  key: string // beatId, segmentId, or audio line key
+  retryAfterSec?: number
+  message?: string
+}
+
+export interface StageStepResult {
+  count: number
+  rateLimitedItems?: RateLimitedProductionItem[]
+  failedItems?: Array<{ key: string; message: string }>
+}
+
 export interface ProductionBuilderOptions {
   scopeMode: ProductionSceneScopeMode
   chapterId?: string
@@ -75,7 +89,15 @@ export interface ProductionBuilderOptions {
   previsIncludeAudio?: boolean
   /** Optional granular sub-toggle for Stage 1 Pre-Vis (defaults to true) */
   previsIncludeStills?: boolean
+  /** Execution concurrency profile ('adaptive' default; callers with BYOK or active cooldown pass 'sequential') */
+  executionProfile?: 'adaptive' | 'sequential'
+  /** Maximum Phase 2 sequential recovery passes for rate-limited (429) items (default 3) */
+  maxRateLimitRecoveryPasses?: number
+  /** Run Pre-Vis stills THEN audio sequentially per scene to avoid 12-way double bursts (default true) */
+  coordinatePrevisLanes?: boolean
 }
+
+export type ProductionAgentOptions = ProductionBuilderOptions
 
 export interface ProductionSceneReadinessSummary {
   sceneIndex: number
@@ -144,6 +166,10 @@ export interface ProductionAgentTelemetry {
   masterStreamUrl?: string
   promoStreamUrl?: string
   screeningUrl?: string
+  rateLimitedEvents?: number
+  sequentialRecoveryPasses?: number
+  recoveredAfterRateLimit?: number
+  downgradedToSequential?: boolean
   errors: string[]
 }
 
@@ -181,8 +207,14 @@ export interface ProductionAgentDeps {
   /** Step 1c: Run Scene Audio Agent (dialogue, narration, music, SFX) */
   runSceneAudio: (
     sceneIndex: number,
-    options: { language: string; missingOnly: boolean }
-  ) => Promise<number>
+    options: {
+      language: string
+      missingOnly: boolean
+      concurrencyOverride?: number
+      failFastOnRateLimit?: boolean
+      onlyKeys?: string[]
+    }
+  ) => Promise<number | StageStepResult>
   /** Step 1d: Run Stills Agent (keyframes) */
   runSceneStills: (
     sceneIndex: number,
@@ -192,8 +224,11 @@ export interface ProductionAgentDeps {
       includeEndFrames: boolean
       missingOnly: boolean
       generationMode?: 'standard' | 'creative'
+      concurrencyOverride?: number
+      failFastOnRateLimit?: boolean
+      onlyKeys?: string[]
     }
-  ) => Promise<number>
+  ) => Promise<number | StageStepResult>
   /** Step 2a: Ensure segments exist for the scene and return current shot descriptors */
   ensureSceneSegments: (sceneIndex: number) => Promise<ProductionAgentShotDescriptor[]>
   /** Step 2b: Optimize shot direction (and rewrite for Google Safety compliance when policyCompliance=true) */
@@ -602,6 +637,81 @@ export function estimateProductionAgentRun(
 }
 
 /**
+ * Detect HTTP 429 / rate-limit / RESOURCE_EXHAUSTED errors across stills, audio, and video clips.
+ */
+export function isRateLimitProductionError(error: unknown): boolean {
+  if (!error) return false
+  if (typeof error === 'object') {
+    const e = error as { status?: number; isByokRateLimit?: boolean; name?: string; message?: string }
+    if (e.status === 429 || e.isByokRateLimit === true || e.name === 'ByokRateLimitError') {
+      return true
+    }
+  }
+  const msg = error instanceof Error ? error.message : String(error)
+  const lower = msg.toLowerCase()
+  return (
+    lower.includes('429') ||
+    lower.includes('rate limit') ||
+    lower.includes('rate-limit') ||
+    lower.includes('too many requests') ||
+    lower.includes('too_many_requests') ||
+    lower.includes('resource_exhausted') ||
+    lower.includes('quota exceeded')
+  )
+}
+
+function extractRetryAfterSec(error: unknown): number | undefined {
+  if (error && typeof error === 'object') {
+    const e = error as { retryAfterSec?: number; retryAfterMs?: number }
+    if (typeof e.retryAfterSec === 'number' && Number.isFinite(e.retryAfterSec) && e.retryAfterSec > 0) {
+      return Math.ceil(e.retryAfterSec)
+    }
+    if (typeof e.retryAfterMs === 'number' && Number.isFinite(e.retryAfterMs) && e.retryAfterMs > 0) {
+      return Math.ceil(e.retryAfterMs / 1000)
+    }
+  }
+  const msg = error instanceof Error ? error.message : String(error ?? '')
+  const match = msg.match(/(\d+)\s*(?:seconds?|secs?|\bs\b)/i)
+  if (match) {
+    const parsed = parseInt(match[1], 10)
+    if (Number.isFinite(parsed) && parsed > 0) return parsed
+  }
+  return undefined
+}
+
+function normalizeStageStepResult(raw: number | StageStepResult | undefined | null): StageStepResult {
+  if (typeof raw === 'number') {
+    return { count: raw }
+  }
+  if (raw && typeof raw === 'object') {
+    return {
+      count: typeof raw.count === 'number' ? raw.count : 0,
+      rateLimitedItems: Array.isArray(raw.rateLimitedItems) ? raw.rateLimitedItems : undefined,
+      failedItems: Array.isArray(raw.failedItems) ? raw.failedItems : undefined,
+    }
+  }
+  return { count: 0 }
+}
+
+async function sleepAbortable(ms: number, signal?: AbortSignal): Promise<void> {
+  if (ms <= 0 || process.env.VITEST) return
+  if (signal?.aborted) {
+    throw new Error('Production Agent cancelled by user')
+  }
+  await new Promise<void>((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(timer)
+      reject(new Error('Production Agent cancelled by user'))
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
+/**
  * Execute the Autonomous Production Agent across the selected scenes and stages.
  */
 export async function runProductionAgent(
@@ -610,6 +720,8 @@ export async function runProductionAgent(
 ): Promise<ProductionAgentTelemetry> {
   const orderedStages = normalizeProductionStages(options.stages)
   const sceneIndices = [...options.selectedSceneIndices].sort((a, b) => a - b)
+  const maxRecoveryPasses = Math.max(0, options.maxRateLimitRecoveryPasses ?? 3)
+  const coordinatePrevisLanes = options.coordinatePrevisLanes !== false
 
   const telemetry: ProductionAgentTelemetry = {
     scenesCompleted: 0,
@@ -621,7 +733,24 @@ export async function runProductionAgent(
     failedShotsRerun: 0,
     creativeFallbacksUsed: 0,
     scenesRendered: 0,
+    rateLimitedEvents: 0,
+    sequentialRecoveryPasses: 0,
+    recoveredAfterRateLimit: 0,
+    downgradedToSequential: false,
     errors: [],
+  }
+
+  let isSequentialMode = options.executionProfile === 'sequential'
+  let rollingRateLimitCount = 0
+
+  const noteRateLimitEvent = (count = 1) => {
+    if (count <= 0) return
+    rollingRateLimitCount += count
+    telemetry.rateLimitedEvents = (telemetry.rateLimitedEvents ?? 0) + count
+    if (!isSequentialMode && rollingRateLimitCount >= 2) {
+      isSequentialMode = true
+      telemetry.downgradedToSequential = true
+    }
   }
 
   const checkAborted = () => {
@@ -652,9 +781,13 @@ export async function runProductionAgent(
     Math.min(99, Math.max(4, Math.round((completedSteps / totalSteps) * 100)))
 
   // =========================================================================
-  // STAGE 1: PRE-VIS (Direction + Continuity References + Audio + Stills)
+  // STAGE 1: PRE-VIS (Direction + Continuity References + Stills + Audio)
   // =========================================================================
   if (orderedStages.includes('previs')) {
+    const previsRateLimitedQueue: RateLimitedProductionItem[] = []
+    const includeEndFrames =
+      orderedStages.includes('clips') || options.creativeClipPolicyFallback
+
     for (const sceneIndex of sceneIndices) {
       checkAborted()
       const sceneNumber = sceneIndex + 1
@@ -681,28 +814,91 @@ export async function runProductionAgent(
           checkAborted()
         }
 
-        const includeEndFrames =
-          orderedStages.includes('clips') || options.creativeClipPolicyFallback
+        const runStillsStep = async () => {
+          if (!wantStills) return
+          const stepOpts = {
+            language: options.language,
+            quality: options.quality,
+            includeEndFrames,
+            missingOnly: options.missingOnly,
+            generationMode: 'standard' as const,
+            ...(isSequentialMode
+              ? { concurrencyOverride: 1, failFastOnRateLimit: false }
+              : {}),
+          }
+          try {
+            const res = normalizeStageStepResult(await deps.runSceneStills(sceneIndex, stepOpts))
+            telemetry.stillsGenerated += res.count
+            if (res.rateLimitedItems?.length) {
+              noteRateLimitEvent(res.rateLimitedItems.length)
+              previsRateLimitedQueue.push(...res.rateLimitedItems)
+            }
+            if (res.failedItems?.length) {
+              for (const f of res.failedItems) {
+                telemetry.errors.push(`Scene ${sceneNumber} Still (${f.key}): ${f.message}`)
+              }
+            }
+          } catch (stillErr) {
+            if (isRateLimitProductionError(stillErr)) {
+              noteRateLimitEvent(1)
+              previsRateLimitedQueue.push({
+                kind: 'still',
+                sceneIndex,
+                key: 'scene-all',
+                retryAfterSec: extractRetryAfterSec(stillErr),
+                message: stillErr instanceof Error ? stillErr.message : String(stillErr),
+              })
+            } else {
+              throw stillErr
+            }
+          }
+        }
 
-        const [audioCount, stillCount] = await Promise.all([
-          wantAudio
-            ? deps.runSceneAudio(sceneIndex, {
-                language: options.language,
-                missingOnly: options.missingOnly,
+        const runAudioStep = async () => {
+          if (!wantAudio) return
+          const stepOpts = {
+            language: options.language,
+            missingOnly: options.missingOnly,
+            ...(isSequentialMode
+              ? { concurrencyOverride: 1, failFastOnRateLimit: false }
+              : {}),
+          }
+          try {
+            const res = normalizeStageStepResult(await deps.runSceneAudio(sceneIndex, stepOpts))
+            telemetry.audioTracksGenerated += res.count
+            if (res.rateLimitedItems?.length) {
+              noteRateLimitEvent(res.rateLimitedItems.length)
+              previsRateLimitedQueue.push(...res.rateLimitedItems)
+            }
+            if (res.failedItems?.length) {
+              for (const f of res.failedItems) {
+                telemetry.errors.push(`Scene ${sceneNumber} Audio (${f.key}): ${f.message}`)
+              }
+            }
+          } catch (audioErr) {
+            if (isRateLimitProductionError(audioErr)) {
+              noteRateLimitEvent(1)
+              previsRateLimitedQueue.push({
+                kind: 'audio',
+                sceneIndex,
+                key: 'scene-all',
+                retryAfterSec: extractRetryAfterSec(audioErr),
+                message: audioErr instanceof Error ? audioErr.message : String(audioErr),
               })
-            : Promise.resolve(0),
-          wantStills
-            ? deps.runSceneStills(sceneIndex, {
-                language: options.language,
-                quality: options.quality,
-                includeEndFrames,
-                missingOnly: options.missingOnly,
-                generationMode: 'standard',
-              })
-            : Promise.resolve(0),
-        ])
-        telemetry.audioTracksGenerated += audioCount
-        telemetry.stillsGenerated += stillCount
+            } else {
+              throw audioErr
+            }
+          }
+        }
+
+        if (coordinatePrevisLanes) {
+          // Coordinated Pre-Vis lanes: run stills THEN audio sequentially per scene
+          await runStillsStep()
+          checkAborted()
+          await runAudioStep()
+        } else {
+          await Promise.all([runAudioStep(), runStillsStep()])
+        }
         checkAborted()
 
         completedSteps += 1
@@ -727,6 +923,114 @@ export async function runProductionAgent(
           itemError: msg,
           telemetry: { ...telemetry },
         })
+      }
+    }
+
+    // Phase 2 Automatic Sequential 429 Recovery Pass for Pre-Vis
+    if (previsRateLimitedQueue.length > 0) {
+      let pending = [...previsRateLimitedQueue]
+      for (let passNumber = 1; passNumber <= maxRecoveryPasses && pending.length > 0; passNumber++) {
+        checkAborted()
+        telemetry.sequentialRecoveryPasses = (telemetry.sequentialRecoveryPasses ?? 0) + 1
+        const maxRetryAfterSec = Math.max(0, ...pending.map((item) => item.retryAfterSec ?? 0))
+        const cooldownMs = Math.min(180_000, Math.max(30_000, maxRetryAfterSec * 1000) * passNumber)
+
+        deps.onProgress({
+          stage: 'previs',
+          subtitle: `Pre-Vis sequential 429 recovery pass ${passNumber}/${maxRecoveryPasses} (${pending.length} item${pending.length === 1 ? '' : 's'})`,
+          progressPct: computePct(),
+          telemetry: { ...telemetry },
+        })
+
+        await sleepAbortable(cooldownMs, deps.signal)
+        checkAborted()
+
+        const nextPending: RateLimitedProductionItem[] = []
+        for (let i = 0; i < pending.length; i++) {
+          checkAborted()
+          const item = pending[i]
+          const sceneNumber = item.sceneIndex + 1
+          const onlyKeys = item.key && item.key !== 'scene-all' ? [item.key] : undefined
+
+          try {
+            if (item.kind === 'still') {
+              const res = normalizeStageStepResult(
+                await deps.runSceneStills(item.sceneIndex, {
+                  language: options.language,
+                  quality: options.quality,
+                  includeEndFrames,
+                  missingOnly: options.missingOnly,
+                  generationMode: 'standard',
+                  concurrencyOverride: 1,
+                  failFastOnRateLimit: false,
+                  ...(onlyKeys ? { onlyKeys } : {}),
+                })
+              )
+              if (res.rateLimitedItems?.length) {
+                noteRateLimitEvent(res.rateLimitedItems.length)
+                nextPending.push(...res.rateLimitedItems)
+              } else if (res.failedItems?.length) {
+                for (const f of res.failedItems) {
+                  telemetry.errors.push(`Scene ${sceneNumber} Still (${f.key}): ${f.message}`)
+                }
+              } else {
+                telemetry.stillsGenerated += Math.max(1, res.count)
+                telemetry.recoveredAfterRateLimit = (telemetry.recoveredAfterRateLimit ?? 0) + 1
+              }
+            } else if (item.kind === 'audio') {
+              const res = normalizeStageStepResult(
+                await deps.runSceneAudio(item.sceneIndex, {
+                  language: options.language,
+                  missingOnly: options.missingOnly,
+                  concurrencyOverride: 1,
+                  failFastOnRateLimit: false,
+                  ...(onlyKeys ? { onlyKeys } : {}),
+                })
+              )
+              if (res.rateLimitedItems?.length) {
+                noteRateLimitEvent(res.rateLimitedItems.length)
+                nextPending.push(...res.rateLimitedItems)
+              } else if (res.failedItems?.length) {
+                for (const f of res.failedItems) {
+                  telemetry.errors.push(`Scene ${sceneNumber} Audio (${f.key}): ${f.message}`)
+                }
+              } else {
+                telemetry.audioTracksGenerated += Math.max(1, res.count)
+                telemetry.recoveredAfterRateLimit = (telemetry.recoveredAfterRateLimit ?? 0) + 1
+              }
+            }
+          } catch (recErr) {
+            if (isRateLimitProductionError(recErr)) {
+              noteRateLimitEvent(1)
+              nextPending.push({
+                ...item,
+                retryAfterSec: extractRetryAfterSec(recErr) ?? item.retryAfterSec,
+                message: recErr instanceof Error ? recErr.message : String(recErr),
+              })
+            } else {
+              telemetry.errors.push(
+                `Scene ${sceneNumber} ${item.kind} (${item.key}): ${
+                  recErr instanceof Error ? recErr.message : 'Recovery failed'
+                }`
+              )
+            }
+          }
+
+          if (i + 1 < pending.length) {
+            await sleepAbortable(3_000, deps.signal)
+          }
+        }
+        pending = nextPending
+      }
+
+      // Record any still-rate-limited items cleanly in telemetry.errors
+      for (const unrecovered of pending) {
+        const sceneNumber = unrecovered.sceneIndex + 1
+        telemetry.errors.push(
+          `Scene ${sceneNumber} ${unrecovered.kind} (${unrecovered.key}): Rate limited after ${maxRecoveryPasses} sequential recovery pass(es)${
+            unrecovered.message ? ` — ${unrecovered.message}` : ''
+          }`
+        )
       }
     }
 
@@ -783,12 +1087,129 @@ export async function runProductionAgent(
   }
 
   // =========================================================================
-  // STAGE 2 & 3: CLIPS (with Self-Healing Policy Ladder) & PER-SCENE RENDERS
+  // STAGE 2 & 3: CLIPS (with Self-Healing Policy Ladder + 429 Recovery) & PER-SCENE RENDERS
   // =========================================================================
   const runClips = orderedStages.includes('clips')
   const runScenes = orderedStages.includes('scenes')
 
+  interface QueuedRateLimitedClip {
+    item: RateLimitedProductionItem
+    shot: ProductionAgentShotDescriptor
+    sourceMethod: VideoSourceMethod
+  }
+
+  const runClipsRecoveryQueue = async (queue: QueuedRateLimitedClip[]): Promise<number> => {
+    if (queue.length === 0) return 0
+    let pending = [...queue]
+    let unrecoveredCount = 0
+
+    for (let passNumber = 1; passNumber <= maxRecoveryPasses && pending.length > 0; passNumber++) {
+      checkAborted()
+      telemetry.sequentialRecoveryPasses = (telemetry.sequentialRecoveryPasses ?? 0) + 1
+      const maxRetryAfterSec = Math.max(0, ...pending.map((q) => q.item.retryAfterSec ?? 0))
+      const cooldownMs = Math.min(180_000, Math.max(30_000, maxRetryAfterSec * 1000) * passNumber)
+
+      deps.onProgress({
+        stage: 'clips',
+        subtitle: `Clips sequential 429 recovery pass ${passNumber}/${maxRecoveryPasses} (${pending.length} clip${pending.length === 1 ? '' : 's'})`,
+        progressPct: computePct(),
+        telemetry: { ...telemetry },
+      })
+
+      await sleepAbortable(cooldownMs, deps.signal)
+      checkAborted()
+
+      const nextPending: QueuedRateLimitedClip[] = []
+      for (let i = 0; i < pending.length; i++) {
+        checkAborted()
+        const entry = pending[i]
+        const sceneNumber = entry.item.sceneIndex + 1
+
+        try {
+          telemetry.failedShotsRerun += 1
+          await deps.generateSegmentClip({
+            sceneIndex: entry.item.sceneIndex,
+            segmentId: entry.shot.segmentId,
+            beatId: entry.shot.beatId,
+            mode: 'standard',
+            quality: options.quality,
+            sourceMethod: entry.sourceMethod,
+            startFrameUrl: entry.shot.startFrameUrl,
+            endFrameUrl: entry.shot.endFrameUrl,
+            durationSec: entry.shot.durationSec,
+          })
+          telemetry.clipsGenerated += 1
+          telemetry.recoveredAfterRateLimit = (telemetry.recoveredAfterRateLimit ?? 0) + 1
+        } catch (recErr) {
+          if (isRateLimitProductionError(recErr)) {
+            noteRateLimitEvent(1)
+            nextPending.push({
+              ...entry,
+              item: {
+                ...entry.item,
+                retryAfterSec: extractRetryAfterSec(recErr) ?? entry.item.retryAfterSec,
+                message: recErr instanceof Error ? recErr.message : String(recErr),
+              },
+            })
+          } else if (isPolicyViolationError(recErr) && options.creativeClipPolicyFallback) {
+            // Only escalate to Creative Clips if a genuine content policy violation occurs
+            try {
+              await deps.generateSegmentClip({
+                sceneIndex: entry.item.sceneIndex,
+                segmentId: entry.shot.segmentId,
+                beatId: entry.shot.beatId,
+                mode: 'creative',
+                quality: options.quality,
+                sourceMethod: 'frame',
+                startFrameUrl: entry.shot.startFrameUrl,
+                endFrameUrl: entry.shot.endFrameUrl,
+                durationSec: entry.shot.durationSec,
+              })
+              telemetry.clipsGenerated += 1
+              telemetry.creativeFallbacksUsed += 1
+              telemetry.recoveredAfterRateLimit = (telemetry.recoveredAfterRateLimit ?? 0) + 1
+            } catch (creativeErr) {
+              unrecoveredCount += 1
+              telemetry.errors.push(
+                `Scene ${sceneNumber} Shot ${entry.shot.sequenceIndex + 1} (Creative fallback): ${
+                  creativeErr instanceof Error ? creativeErr.message : 'Creative clip failed'
+                }`
+              )
+            }
+          } else {
+            unrecoveredCount += 1
+            telemetry.errors.push(
+              `Scene ${sceneNumber} Shot ${entry.shot.sequenceIndex + 1}: ${
+                recErr instanceof Error ? recErr.message : 'Clip recovery failed'
+              }`
+            )
+          }
+        }
+
+        if (i + 1 < pending.length) {
+          await sleepAbortable(15_000, deps.signal)
+        }
+      }
+      pending = nextPending
+    }
+
+    for (const unrecovered of pending) {
+      unrecoveredCount += 1
+      const sceneNumber = unrecovered.item.sceneIndex + 1
+      telemetry.errors.push(
+        `Scene ${sceneNumber} Shot ${unrecovered.shot.sequenceIndex + 1}: Rate limited after ${maxRecoveryPasses} sequential recovery pass(es)${
+          unrecovered.item.message ? ` — ${unrecovered.item.message}` : ''
+        }`
+      )
+    }
+
+    return unrecoveredCount
+  }
+
   if (runClips || runScenes) {
+    const deferredClipsQueue: QueuedRateLimitedClip[] = []
+    const recoverPerScene = runScenes || options.checkpointMode === 'scene_checkpoint'
+
     for (let idx = 0; idx < sceneIndices.length; idx++) {
       checkAborted()
       const sceneIndex = sceneIndices[idx]
@@ -808,11 +1229,18 @@ export async function runProductionAgent(
         try {
           const shots = await deps.ensureSceneSegments(sceneIndex)
           let sceneClipErrors = 0
+          const sceneRateLimitedClips: QueuedRateLimitedClip[] = []
 
-          for (const shot of shots) {
+          for (let shotIdx = 0; shotIdx < shots.length; shotIdx++) {
+            const shot = shots[shotIdx]
             checkAborted()
             if (options.missingOnly && shot.hasClip && !shot.policyBlocked) {
               continue
+            }
+
+            if (isSequentialMode && shotIdx > 0) {
+              await sleepAbortable(15_000, deps.signal)
+              checkAborted()
             }
 
             // Proactive Shot Direction Optimization when requested
@@ -853,10 +1281,18 @@ export async function runProductionAgent(
               continue
             } catch (firstErr) {
               checkAborted()
+              let lastErr: unknown = firstErr
               const isPolicyErr = isPolicyViolationError(firstErr)
+              const isFirstRateLimit = isRateLimitProductionError(firstErr)
 
-              // Attempt 2: Optimize Shot Direction for Safety Compliance (or transient retry) + Rerun
+              if (isFirstRateLimit) {
+                noteRateLimitEvent(1)
+              }
+
+              // Attempt 2: Optimize Shot Direction for Safety Compliance (or transient/429 retry) + Rerun
               let recoveredOnSecondAttempt = false
+              let queuedForRecovery = false
+
               if (isPolicyErr && targetBeatId && options.optimizeShotDirection) {
                 try {
                   deps.onProgress({
@@ -886,13 +1322,27 @@ export async function runProductionAgent(
                   telemetry.clipsGenerated += 1
                   recoveredOnSecondAttempt = true
                 } catch (secondErr) {
-                  // Check if still policy-blocked for Creative fallback
-                  if (
+                  lastErr = secondErr
+                  if (isRateLimitProductionError(secondErr)) {
+                    noteRateLimitEvent(1)
+                    sceneRateLimitedClips.push({
+                      item: {
+                        kind: 'clip',
+                        sceneIndex,
+                        key: shot.segmentId,
+                        retryAfterSec: extractRetryAfterSec(secondErr),
+                        message: secondErr instanceof Error ? secondErr.message : String(secondErr),
+                      },
+                      shot,
+                      sourceMethod: 'reference',
+                    })
+                    queuedForRecovery = true
+                  } else if (
                     isPolicyViolationError(secondErr) &&
                     options.creativeClipPolicyFallback
                   ) {
                     // Proceed to Attempt 3 (Creative Clips fallback) below
-                  } else if (!options.creativeClipPolicyFallback) {
+                  } else {
                     sceneClipErrors += 1
                     telemetry.errors.push(
                       `Scene ${sceneNumber} Shot ${shot.sequenceIndex + 1}: ${
@@ -904,25 +1354,17 @@ export async function runProductionAgent(
                 }
               } else if (!isPolicyErr && options.autoRerunFailedShots) {
                 try {
-                  const errMsg =
-                    firstErr instanceof Error ? firstErr.message : String(firstErr ?? '')
-                  const isRateLimit =
-                    errMsg.includes('429') ||
-                    errMsg.toLowerCase().includes('rate limit') ||
-                    errMsg.toLowerCase().includes('resource_exhausted')
-                  if (isRateLimit) {
-                    const retryMatch = errMsg.match(/(\d+)\s*seconds?/i)
-                    const waitSec = retryMatch ? Math.max(15, parseInt(retryMatch[1], 10)) : 60
-                    const cooldownMs =
-                      process.env.VITEST ? 0 : Math.min(90_000, waitSec * 1_000)
-                    if (cooldownMs > 0) {
+                  if (isFirstRateLimit) {
+                    const waitSec = Math.max(15, extractRetryAfterSec(firstErr) ?? 60)
+                    const cooldownMs = Math.min(90_000, waitSec * 1_000)
+                    if (!process.env.VITEST && cooldownMs > 0) {
                       deps.onProgress({
                         stage: 'clips',
                         subtitle: `Scene ${sceneNumber} · Shot ${shot.sequenceIndex + 1}: Rate limited — cooling down ${waitSec}s before rerun`,
                         progressPct: computePct(),
                         telemetry: { ...telemetry },
                       })
-                      await new Promise((resolve) => setTimeout(resolve, cooldownMs))
+                      await sleepAbortable(cooldownMs, deps.signal)
                       checkAborted()
                     }
                   }
@@ -941,7 +1383,22 @@ export async function runProductionAgent(
                   telemetry.clipsGenerated += 1
                   recoveredOnSecondAttempt = true
                 } catch (retryErr) {
-                  if (
+                  lastErr = retryErr
+                  if (isRateLimitProductionError(retryErr)) {
+                    noteRateLimitEvent(1)
+                    sceneRateLimitedClips.push({
+                      item: {
+                        kind: 'clip',
+                        sceneIndex,
+                        key: shot.segmentId,
+                        retryAfterSec: extractRetryAfterSec(retryErr),
+                        message: retryErr instanceof Error ? retryErr.message : String(retryErr),
+                      },
+                      shot,
+                      sourceMethod: defaultSourceMethod,
+                    })
+                    queuedForRecovery = true
+                  } else if (
                     !isPolicyViolationError(retryErr) ||
                     !options.creativeClipPolicyFallback
                   ) {
@@ -954,14 +1411,28 @@ export async function runProductionAgent(
                     continue
                   }
                 }
+              } else if (isFirstRateLimit) {
+                // Queue 429 clips for Phase 2 sequential recovery — NEVER escalate to Kling Creative!
+                sceneRateLimitedClips.push({
+                  item: {
+                    kind: 'clip',
+                    sceneIndex,
+                    key: shot.segmentId,
+                    retryAfterSec: extractRetryAfterSec(firstErr),
+                    message: firstErr instanceof Error ? firstErr.message : String(firstErr),
+                  },
+                  shot,
+                  sourceMethod: defaultSourceMethod,
+                })
+                queuedForRecovery = true
               }
 
-              if (recoveredOnSecondAttempt) {
+              if (recoveredOnSecondAttempt || queuedForRecovery) {
                 continue
               }
 
-              // Attempt 3: Escalate to Creative Clips (Kling Omni F2V) when Google content policy still blocks the shot
-              if (options.creativeClipPolicyFallback) {
+              // Attempt 3: Escalate to Creative Clips (Kling Omni F2V) ONLY when Google content policy blocks the shot
+              if (options.creativeClipPolicyFallback && isPolicyViolationError(lastErr)) {
                 try {
                   deps.onProgress({
                     stage: 'clips',
@@ -1006,10 +1477,18 @@ export async function runProductionAgent(
                 sceneClipErrors += 1
                 telemetry.errors.push(
                   `Scene ${sceneNumber} Shot ${shot.sequenceIndex + 1}: ${
-                    firstErr instanceof Error ? firstErr.message : 'Clip failed'
+                    lastErr instanceof Error ? lastErr.message : 'Clip failed'
                   }`
                 )
               }
+            }
+          }
+
+          if (sceneRateLimitedClips.length > 0) {
+            if (recoverPerScene) {
+              sceneClipErrors += await runClipsRecoveryQueue(sceneRateLimitedClips)
+            } else {
+              deferredClipsQueue.push(...sceneRateLimitedClips)
             }
           }
 
@@ -1128,6 +1607,10 @@ export async function runProductionAgent(
           return telemetry
         }
       }
+    }
+
+    if (deferredClipsQueue.length > 0) {
+      await runClipsRecoveryQueue(deferredClipsQueue)
     }
   } else {
     telemetry.scenesCompleted = sceneIndices.length

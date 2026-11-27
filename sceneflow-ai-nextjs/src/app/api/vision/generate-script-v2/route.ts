@@ -20,8 +20,16 @@ import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { buildCharacterDialogueExamples } from '@/lib/character/characterNamingPrompt'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
-import { generateText } from '@/lib/vertexai/gemini'
-import { getScriptGenerationModel } from '@/lib/config/modelConfig'
+import { generateText, generateTextCacheAware } from '@/lib/vertexai/gemini'
+import { getScriptGenerationModel, type GeminiThinkingLevel } from '@/lib/config/modelConfig'
+import { buildVoiceFingerprintPromptBlock } from '@/lib/blueprint/continuityManifest'
+import {
+  createEmptyContinuityLedger,
+  formatContinuityLedgerBlock,
+  selectAdaptiveThinkingLevelForChunk,
+  updateContinuityLedgerDeterministic,
+  type ContinuityLedger,
+} from '@/lib/script/continuityLedger'
 import { getSettingsForFormat, getScriptProgressStatuses, buildScriptConstraintPrompt } from '@/lib/script/scriptGenerationRules'
 import {
   extractBlueprintBeats,
@@ -964,6 +972,8 @@ export async function POST(request: NextRequest) {
         }, 5000)
 
         let chunkResults: any[][] = []
+        let rollingLedger: ContinuityLedger = createEmptyContinuityLedger()
+        let activeCacheResourceName: string | undefined
         try {
           const indexedChunks = prioritizedChunks.map((chunk, chunkIndex) => ({
             chunk,
@@ -980,12 +990,27 @@ export async function POST(request: NextRequest) {
               Array.isArray(completedChunks[chunkIndex]) &&
               completedChunks[chunkIndex].length > 0
             ) {
+              rollingLedger = updateContinuityLedgerDeterministic(
+                rollingLedger,
+                completedChunks[chunkIndex]
+              )
               return completedChunks[chunkIndex]
             }
+            const ledgerSnapshot = rollingLedger
             // One failed chunk must cost its own scenes, not the whole script.
             return generateSceneChunk(sharedContext, chunk, {
               storyBeats,
               totalScenes: plannedScenes,
+              chunkIndex,
+              totalChunks: indexedChunks.length,
+              continuityLedger: ledgerSnapshot,
+              projectId,
+              cacheResourceName: activeCacheResourceName,
+              onCacheCreated: (resourceName) => {
+                if (!activeCacheResourceName && resourceName) {
+                  activeCacheResourceName = resourceName
+                }
+              },
               onChunkScenes: (count) => {
                 scenesGenerated += count
                 chunksDone++
@@ -994,6 +1019,7 @@ export async function POST(request: NextRequest) {
               .then((scenes) => {
                 if (scenes.length > 0) {
                   completedChunks[chunkIndex] = scenes
+                  rollingLedger = updateContinuityLedgerDeterministic(rollingLedger, scenes)
                   emitGenerationProgress(
                     `Building scenes ${scenesGenerated} of ${expectedTotalScenes}...`,
                     true
@@ -1793,6 +1819,7 @@ Full Blueprint runtime: ~${Math.floor(targetDuration / 60)} minutes across the w
 Synopsis:
 ${treatment.synopsis || treatment.content}
 ${characterList}
+${buildVoiceFingerprintPromptBlock(characters)}
 ${characters.length > 0 ? `\n${buildCharacterDialogueExamples(characters)}` : ''}
 ${storyBeatsText}
 ${decompositionBlock}
@@ -1863,7 +1890,7 @@ ${narrationSection}
 SCENE ARC → BEATS (PLAN BEFORE YOU WRITE):
 • Before writing beats[], write "movements": 2–${MAX_SCENE_MOVEMENTS} ordered dramatic movements that carry the scene from its opening state to its closing state.
 • Each movement is ONE sentence of plain narrative prose naming WHO does WHAT and HOW the situation changes — not camera language, not a shot list.
-• Movements read end-to-end as the scene's description. Example for a three-movement scene: "Elena steps onto the rain-slick station platform searching the crowd." / "Marcus intercepts her by the ticket booth, convinced she brought the confidential dossier." / "Elena reveals the folder is empty and Marcus realizes they were both set up."
+• Movements read end-to-end as the scene's description. Example for a three-movement scene: "[Character A] steps onto the rain-slick station platform searching the crowd." / "[Character B] intercepts them by the ticket booth, convinced they brought the missing ledger." / "[Character A] reveals the satchel is empty and [Character B] realizes they were both misled."
 • Then write beats[]. EVERY beat MUST carry "movementIndex": the 0-based index of the movement it dramatizes.
 • Beats must be in movement order: all of movement 0's beats, then all of movement 1's beats, and so on. Never interleave, never skip a movement, never leave a movement with zero beats.
 • Spread beats across movements roughly in proportion to each movement's dramatic weight. A ${TARGET_BEATS_PER_SCENE}-beat scene with 4 movements is about ${Math.round(TARGET_BEATS_PER_SCENE / 4)} beats each — not ${TARGET_BEATS_PER_SCENE - 4} beats on one movement and 1 on the rest.
@@ -1953,6 +1980,9 @@ function buildSceneChunkPrompt(
     storyBeats: any[]
     totalScenes: number
     shortfallNote?: string
+    continuityLedger?: ContinuityLedger
+    /** When Vertex explicit caching holds shared.storyBlock + shared.craftBlock, omit them from dynamic prompt */
+    omitStaticSharedPrefix?: boolean
   }
 ): string {
   const sceneNumberEnd = chunk.sceneNumberStart + chunk.sceneCount - 1
@@ -2066,10 +2096,21 @@ SCHEMA RULES:
 • Number the assigned scenes from ${chunk.sceneNumberStart} through ${sceneNumberEnd}, in order, with no gaps. Continuation scenes past that range are allowed when a logical scene splits, numbered after ${sceneNumberEnd}.
 • Return ONLY valid JSON - no markdown, no explanations.`
 
+  const ledgerBlock = formatContinuityLedgerBlock(opts.continuityLedger)
+
+  if (opts.omitStaticSharedPrefix) {
+    return `${ledgerBlock}${assignment}
+
+${schema}
+${opts.shortfallNote ? `\n${opts.shortfallNote}\n` : ''}
+Now write scenes ${chunk.sceneNumberStart}–${sceneNumberEnd}.
+${shared.languageBlock}`
+  }
+
   return `${shared.persona} for the following production.
 
 ${shared.storyBlock}
-
+${ledgerBlock}
 ${assignment}
 ${shared.craftBlock}
 
@@ -2117,12 +2158,19 @@ async function generateSceneChunk(
   ctx: {
     storyBeats: any[]
     totalScenes: number
+    chunkIndex?: number
+    totalChunks?: number
+    continuityLedger?: ContinuityLedger
+    projectId?: string
+    cacheResourceName?: string
+    onCacheCreated?: (resourceName: string) => void
     onChunkScenes?: (count: number) => void
     depth?: number
   }
 ): Promise<any[]> {
   const depth = ctx.depth ?? 0
   let best: any[] = []
+  let localLedger = ctx.continuityLedger
 
   for (let attempt = 1; attempt <= MAX_CHUNK_ATTEMPTS; attempt++) {
     const label = `${describeChunk(chunk)}${attempt > 1 ? ` (retry ${attempt - 1})` : ''}`
@@ -2131,16 +2179,31 @@ async function generateSceneChunk(
         ? `PREVIOUS ATTEMPT FAILED: you returned ${best.length} scene(s) instead of ${chunk.sceneCount}. Return all ${chunk.sceneCount} scenes this time. Find the ${chunk.sceneCount} distinct dramatic units inside this Blueprint beat — separate locations, time jumps, or turns — and write each as its own scene.`
         : undefined
 
-    const prompt = buildSceneChunkPrompt(shared, chunk, {
+    const dynamicPrompt = buildSceneChunkPrompt(shared, chunk, {
       storyBeats: ctx.storyBeats,
       totalScenes: ctx.totalScenes,
       shortfallNote,
+      continuityLedger: localLedger,
+      omitStaticSharedPrefix: true,
+    })
+
+    const thinkingLevel = selectAdaptiveThinkingLevelForChunk({
+      chunkIndex: ctx.chunkIndex ?? 0,
+      totalChunks: ctx.totalChunks ?? 1,
+      beatTitle: chunk.blueprintBeatTitle,
+      isRetry: attempt > 1 || depth > 0,
     })
 
     let text = ''
     let truncated = false
     try {
-      const result = await callGemini(prompt, label)
+      const result = await callGemini(dynamicPrompt, label, {
+        shared,
+        thinkingLevel,
+        projectId: ctx.projectId,
+        cacheResourceName: ctx.cacheResourceName,
+        onCacheCreated: ctx.onCacheCreated,
+      })
       text = result.text
       truncated = result.truncated
     } catch (err: any) {
@@ -2154,19 +2217,24 @@ async function generateSceneChunk(
 
     if (scenes.length > best.length) best = scenes
 
-    // A truncated response cannot be fixed by asking again — the slice is too
-    // large for one response. Split it instead.
-    if (truncated && depth < 1) {
+    // Recursive halving down to 1 scene eliminates MAX_TOKENS truncation corruption on dense features.
+    if (truncated && chunk.sceneCount > 1 && depth < 4) {
       const halves = halveChunk(chunk)
       if (halves) {
         console.warn(
-          `[Script Gen V2] ${label} truncated; splitting into ${halves[0].sceneCount}+${halves[1].sceneCount} scenes`
+          `[Script Gen V2] ${label} truncated (depth=${depth}); splitting into ${halves[0].sceneCount}+${halves[1].sceneCount} scenes`
         )
         const recovered: any[] = []
         for (const half of halves) {
-          recovered.push(
-            ...(await generateSceneChunk(shared, half, { ...ctx, depth: depth + 1 }))
-          )
+          const halfScenes = await generateSceneChunk(shared, half, {
+            ...ctx,
+            continuityLedger: localLedger,
+            depth: depth + 1,
+          })
+          recovered.push(...halfScenes)
+          if (halfScenes.length > 0 && localLedger) {
+            localLedger = updateContinuityLedgerDeterministic(localLedger, halfScenes)
+          }
         }
         if (recovered.length > best.length) best = recovered
         break
@@ -2333,27 +2401,61 @@ function parseChunkResponse(response: string): { scenes: any[] } {
  * Swallowing it made truncated scripts look like successful ones.
  */
 async function callGemini(
-  prompt: string,
-  label: string
+  dynamicPrompt: string,
+  label: string,
+  opts?: {
+    shared?: SharedScriptContext
+    thinkingLevel?: GeminiThinkingLevel
+    projectId?: string
+    cacheResourceName?: string
+    onCacheCreated?: (resourceName: string) => void
+  }
 ): Promise<{ text: string; truncated: boolean }> {
-  console.log(`[Generate Script V2] Calling Vertex AI Gemini (${label})...`)
-  const result = await generateText(prompt, {
-    model: getScriptGenerationModel(),
-    temperature: 0.7,
-    // On Gemini 3 the thinking budget shares maxOutputTokens, and thinkingLevel
-    // 'high' on a writing task takes a real slice of it. A chunk emits roughly
-    // 6k tokens, so the headroom costs no memory — the response stays a fraction
-    // of the old single-pass one — but it keeps thinking from truncating scenes.
-    maxOutputTokens: 32768,
-    timeoutMs: 180000,       // 180s timeout for large script generation (increased from default 90s)
-    thinkingLevel: 'high',
-  })
+  const thinkingLevel = opts?.thinkingLevel ?? 'high'
+  console.log(`[Generate Script V2] Calling Vertex AI Gemini (${label}, thinking=${thinkingLevel})...`)
+
+  const result = opts?.shared
+    ? await generateTextCacheAware(dynamicPrompt, {
+        model: getScriptGenerationModel(),
+        temperature: 0.7,
+        maxOutputTokens: 32768,
+        timeoutMs: 180000,
+        thinkingLevel,
+        surface: 'script_chunk',
+        projectId: opts.projectId,
+        cacheZone: 'batch_script',
+        sceneflowProjectId: opts.projectId,
+        cacheResourceName: opts.cacheResourceName,
+        cacheTtlMinutes: 20,
+        systemInstruction: `${opts.shared.persona} for the following production.`,
+        cacheContextParts: [
+          { text: opts.shared.storyBlock },
+          { text: opts.shared.craftBlock },
+        ],
+      })
+    : await generateText(dynamicPrompt, {
+        model: getScriptGenerationModel(),
+        temperature: 0.7,
+        maxOutputTokens: 32768,
+        timeoutMs: 180000,
+        thinkingLevel,
+        surface: 'script_chunk',
+        projectId: opts?.projectId,
+      })
+
+  const createdCacheResourceName =
+    'cacheEntry' in result && result.cacheEntry
+      ? (result.cacheEntry as { resourceName?: string }).resourceName
+      : undefined
+  if (createdCacheResourceName && opts?.onCacheCreated) {
+    opts.onCacheCreated(createdCacheResourceName)
+  }
 
   const text = result.text || ''
   const truncated = result.finishReason === 'MAX_TOKENS'
 
   console.log(
-    `[Gemini Response] ${label}: ${text.length} chars, finishReason=${result.finishReason ?? 'unknown'}`
+    `[Gemini Response] ${label}: ${text.length} chars, finishReason=${result.finishReason ?? 'unknown'}, cached=${Boolean('usedCache' in result && result.usedCache)}`
   )
   if (truncated) {
     console.warn(`[Gemini Response] ${label} hit the output token ceiling — response is incomplete`)

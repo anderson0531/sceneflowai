@@ -3,6 +3,8 @@ import User from './User'
 import AIPricing from './AIPricing'
 import CreditLedger from './CreditLedger'
 import CreditLotRow from './CreditLot'
+import CreditHold from './CreditHold'
+import ProviderApiRun from './ProviderApiRun'
 import AIUsage from './AIUsage'
 import Project from './Project'
 import Series from './Series'
@@ -213,6 +215,8 @@ export {
   AIPricing,
   CreditLedger,
   CreditLotRow,
+  CreditHold,
+  ProviderApiRun,
   AIUsage,
   CreditPricing,
   PlatformInfraCost,
@@ -259,6 +263,8 @@ export default {
   AIPricing,
   CreditLedger,
   CreditLotRow,
+  CreditHold,
+  ProviderApiRun,
   AIUsage,
   CreditPricing,
   PlatformInfraCost,

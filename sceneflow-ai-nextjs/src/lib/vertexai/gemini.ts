@@ -2,13 +2,20 @@
  * Vertex AI Gemini Client
  */
 
+import { GoogleAuth } from 'google-auth-library'
 import { getVertexAIAuthToken } from './client'
-import { fetchWithRetry } from '../utils/retry'
+import { fetchWithRetry, fullJitterDelayMs, parseRetryAfterMs } from '../utils/retry'
+import {
+  ByokRateLimitError,
+  parseGoogleServiceAccountJson,
+  type ResolvedVertexCredential,
+} from '@/lib/byok/resolveProviderCredential'
 import {
   getNextGeminiFallbackModel,
   isGeminiQuotaError,
 } from './geminiTextFallback'
 import { recordModelDowngrade } from './modelTelemetry'
+import { recordLlmTelemetry } from './llmTelemetry'
 import { priorityPaygoHeaders } from './priorityPaygo'
 import { 
   getDefaultGeminiSafetySettings, 
@@ -31,15 +38,57 @@ export interface VertexGeminiConfig {
   location?: string
 }
 
-function getConfig(): { projectId: string; location: string } {
-  const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
+const byokGeminiAuthClientCache = new Map<string, Promise<any>>()
+
+async function getByokGeminiAccessToken(serviceAccountJson: string): Promise<{
+  accessToken: string
+  projectId: string
+}> {
+  const parsed = parseGoogleServiceAccountJson(serviceAccountJson)
+  if (!parsed) {
+    throw new Error('Invalid BYOK Google Service Account JSON for Gemini text generation')
+  }
+  const cacheKey = `${parsed.project_id}:${parsed.client_email}`
+  let clientPromise = byokGeminiAuthClientCache.get(cacheKey)
+  if (!clientPromise) {
+    const auth = new GoogleAuth({
+      credentials: parsed,
+      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+    })
+    clientPromise = auth.getClient().catch((err) => {
+      byokGeminiAuthClientCache.delete(cacheKey)
+      throw err
+    })
+    byokGeminiAuthClientCache.set(cacheKey, clientPromise)
+  }
+  const client = await clientPromise
+  const tokenResponse = await client.getAccessToken()
+  if (!tokenResponse?.token) {
+    throw new Error('Failed to mint OAuth2 access token for BYOK service account')
+  }
+  return { accessToken: tokenResponse.token, projectId: parsed.project_id }
+}
+
+function getPlatformProjectIds(): string[] {
+  const fromList = (process.env.VERTEX_PROJECT_IDS || '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+  if (fromList.length > 0) return fromList
+  const fallback = (process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID || '').trim()
+  return fallback ? [fallback] : []
+}
+
+function getConfig(): { projectId: string; projectIds: string[]; location: string } {
+  const projectIds = getPlatformProjectIds()
+  const projectId = projectIds[0]
   const location = process.env.VERTEX_LOCATION || process.env.GCP_REGION || 'us-central1'
   
   if (!projectId) {
     throw new Error('VERTEX_PROJECT_ID or GCP_PROJECT_ID must be configured for Vertex AI')
   }
   
-  return { projectId, location }
+  return { projectId, projectIds, location }
 }
 
 // =============================================================================
@@ -93,7 +142,17 @@ export interface TextGenerationOptions {
   disableModelFallback?: boolean
   /** Optional AbortSignal to cancel the Vertex request and any retry sleeps. */
   signal?: AbortSignal
+  /** Logical workflow surface for LLM telemetry (e.g. 'blueprint', 'script_chunk', 'audience_resonance'). */
+  surface?: string
+  /** Optional project ID for unit-economics telemetry attribution. */
+  projectId?: string
+  /** Optional user ID for unit-economics telemetry attribution. */
+  userId?: string
+  /** Optional resolved BYOK Google credential (API key or Service Account JSON). */
+  byokCredential?: ResolvedVertexCredential
 }
+
+export type GenerateTextOptions = TextGenerationOptions
 
 export interface TextGenerationResult {
   text: string
@@ -107,15 +166,43 @@ export interface TextGenerationResult {
   downgraded?: boolean
   usageMetadata?: {
     promptTokenCount?: number
+    cachedContentTokenCount?: number
     candidatesTokenCount?: number
     totalTokenCount?: number
     thoughtsTokenCount?: number
   }
 }
 
+/**
+ * Resolve Gemini 3 thinking_level from explicit thinkingLevel or legacy numeric thinkingBudget.
+ * Prevents callers passing thinkingBudget (e.g. 1024 for thorough rigor) from silently
+ * collapsing to 'LOW' on Gemini 3 models.
+ */
+export function resolveGemini3ThinkingLevel(
+  thinkingLevel?: GeminiThinkingLevel,
+  thinkingBudget?: number
+): 'LOW' | 'MEDIUM' | 'HIGH' {
+  const validLevels = ['LOW', 'MEDIUM', 'HIGH'] as const
+  if (thinkingLevel) {
+    if (thinkingLevel === 'minimal') return 'LOW'
+    const upper = thinkingLevel.toUpperCase()
+    return (validLevels as readonly string[]).includes(upper)
+      ? (upper as 'LOW' | 'MEDIUM' | 'HIGH')
+      : 'LOW'
+  }
+  if (typeof thinkingBudget === 'number') {
+    if (thinkingBudget <= 0) return 'LOW'
+    if (thinkingBudget >= 1024) return 'HIGH'
+    if (thinkingBudget >= 256) return 'MEDIUM'
+  }
+  return 'LOW'
+}
+
 type InternalTextGenerationOptions = TextGenerationOptions & {
   /** Preserved across fallbacks so the result can report the original ask. */
   _requestedModel?: string
+  /** Internal: platform project IDs already tried on 429 for the current model. */
+  _triedProjectIds?: ReadonlySet<string>
 }
 
 /**
@@ -133,6 +220,10 @@ export async function generateText(
   try {
     return await generateTextWithModel(prompt, { ...options, model }, model)
   } catch (err) {
+    if (err instanceof ByokRateLimitError) {
+      // Never fall back to platform credentials when BYOK hits 429
+      throw err
+    }
     if (isGeminiQuotaError(err) && !options.disableModelFallback) {
       const nextModel = getNextGeminiFallbackModel(model)
       if (nextModel) {
@@ -146,6 +237,7 @@ export async function generateText(
           ...options,
           model: nextModel,
           _requestedModel: requestedModel,
+          _triedProjectIds: undefined,
         }
         if (nextModel.includes('2.5')) {
           fallbackOptions.thinkingLevel = 'low'
@@ -162,33 +254,26 @@ async function generateTextWithModel(
   options: InternalTextGenerationOptions,
   resolvedModel: string
 ): Promise<TextGenerationResult> {
-  const { projectId, location: defaultLocation } = getConfig();
+  const byokCred = options.byokCredential?.source === 'byok' ? options.byokCredential : undefined
+  const isByok = Boolean(byokCred)
 
   const model = normalizeGeminiTextModel(resolvedModel);
   const isGemini3 = model.includes('gemini-3');
   const isPreview = model.includes('preview');
-
-  const location = isGemini3 ? 'global' : (options.location || defaultLocation);
   const apiVersion = isPreview ? 'v1beta1' : 'v1';
 
-  const baseUrl = location === 'global' 
-    ? 'https://aiplatform.googleapis.com' 
-    : `https://${location}-aiplatform.googleapis.com`;
+  const requestStartTime = Date.now();
 
-  const endpoint = `${baseUrl}/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
-  
-  const accessToken = await getVertexAIAuthToken();
-  
   // 2. CONSTRUCT CLEAN THINKING CONFIG
   const isThinkingModel = model.includes('gemini-3') || model.includes('gemini-2.5');
-  const isMinimal = options.thinkingLevel === 'minimal' || options.thinkingBudget === 0;
   const thinking_config: any = { include_thoughts: false };
 
   if (isThinkingModel) {
     if (isGemini3) {
-      const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
-      const level = isMinimal ? 'LOW' : (options.thinkingLevel || 'LOW').toUpperCase();
-      thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
+      thinking_config.thinking_level = resolveGemini3ThinkingLevel(
+        options.thinkingLevel,
+        options.thinkingBudget
+      );
     } else {
       const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
       const budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
@@ -204,7 +289,9 @@ async function generateTextWithModel(
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generation_config: {
       temperature: options.temperature ?? 0.7,
-      top_p: 0.95,
+      top_p: options.topP ?? 0.95,
+      ...(typeof options.topK === 'number' ? { top_k: options.topK } : {}),
+      ...(typeof options.seed === 'number' ? { seed: options.seed } : {}),
       max_output_tokens: options.maxOutputTokens ?? 8192,
       response_mime_type: options.responseMimeType ?? 'application/json',
       ...(isThinkingModel ? { thinking_config } : {})
@@ -218,38 +305,158 @@ async function generateTextWithModel(
   };
 
   if (options.systemInstruction) {
-    requestBody.system_instruction = {
-      role: 'system',
-      parts: [{ text: options.systemInstruction }],
-    };
+    requestBody.system_instruction =
+      byokCred?.mode === 'byok_api_key'
+        ? { parts: [{ text: options.systemInstruction }] }
+        : {
+            role: 'system',
+            parts: [{ text: options.systemInstruction }],
+          };
   }
 
-  console.log(`[Vertex Gemini] Requesting ${model} via ${location} (${apiVersion})`);
-  
   const timeoutToUse = options.timeoutMs || 90000
   const maxRetries = options.maxRetries ?? 3
 
-  const response = await fetchWithRetry(
-    endpoint,
-    {
-      method: 'POST',
-      headers: { 
-        'Authorization': `Bearer ${accessToken}`, 
-        'Content-Type': 'application/json',
-        ...priorityPaygoHeaders()
-      },
-      body: JSON.stringify(requestBody),
-      ...(options.signal ? { signal: options.signal } : {}),
-    },
-    { maxRetries, timeoutMs: timeoutToUse, signal: options.signal }
-  );
+  // Resolve target execution list: BYOK (single credential, zero fallback to platform)
+  // vs platform (rotates across VERTEX_PROJECT_IDS on 429 before model downgrade).
+  let response: Response | undefined
+  if (byokCred?.mode === 'byok_api_key' && byokCred.apiKey) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+      byokCred.apiKey
+    )}`
+    console.log(`[Vertex Gemini] Requesting ${model} via BYOK Gemini Developer API`)
+    try {
+      response = await fetchWithRetry(
+        endpoint,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+          ...(options.signal ? { signal: options.signal } : {}),
+        },
+        { maxRetries, timeoutMs: timeoutToUse, signal: options.signal }
+      )
+    } catch (err: any) {
+      if (err?.status === 429 || isGeminiQuotaError(err)) {
+        throw new ByokRateLimitError(
+          `BYOK Gemini API rate limited (429) on ${model}: ${err?.message || 'quota exceeded'}`,
+          {
+            provider: 'vertex',
+            status: 429,
+            retryAfterMs: typeof err?.retryAfterMs === 'number' ? err.retryAfterMs : undefined,
+            bucketNamespace: byokCred.bucketNamespace,
+          }
+        )
+      }
+      throw err
+    }
+  } else if (byokCred?.mode === 'byok_service_account' && byokCred.serviceAccountJson) {
+    const minted = await getByokGeminiAccessToken(byokCred.serviceAccountJson)
+    const projectId = byokCred.projectId || minted.projectId
+    const defaultLocation = process.env.VERTEX_LOCATION || process.env.GCP_REGION || 'us-central1'
+    const location = isGemini3 ? 'global' : (options.location || defaultLocation)
+    const baseUrl =
+      location === 'global'
+        ? 'https://aiplatform.googleapis.com'
+        : `https://${location}-aiplatform.googleapis.com`
+    const endpoint = `${baseUrl}/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+    console.log(`[Vertex Gemini] Requesting ${model} via BYOK Vertex SA (${projectId}/${location})`)
+    try {
+      response = await fetchWithRetry(
+        endpoint,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${minted.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+          ...(options.signal ? { signal: options.signal } : {}),
+        },
+        { maxRetries, timeoutMs: timeoutToUse, signal: options.signal }
+      )
+    } catch (err: any) {
+      if (err?.status === 429 || isGeminiQuotaError(err)) {
+        throw new ByokRateLimitError(
+          `BYOK Vertex AI rate limited (429) on ${model}: ${err?.message || 'quota exceeded'}`,
+          {
+            provider: 'vertex',
+            status: 429,
+            retryAfterMs: typeof err?.retryAfterMs === 'number' ? err.retryAfterMs : undefined,
+            bucketNamespace: byokCred.bucketNamespace,
+          }
+        )
+      }
+      throw err
+    }
+  } else {
+    const { projectIds, location: defaultLocation } = getConfig()
+    const location = isGemini3 ? 'global' : (options.location || defaultLocation)
+    const baseUrl =
+      location === 'global'
+        ? 'https://aiplatform.googleapis.com'
+        : `https://${location}-aiplatform.googleapis.com`
+    const accessToken = await getVertexAIAuthToken()
+
+    const tried = new Set(options._triedProjectIds ?? [])
+    const orderedProjects = projectIds.filter((id) => !tried.has(id))
+    const candidates = orderedProjects.length > 0 ? orderedProjects : projectIds
+
+    let lastErr: unknown
+    for (let pIdx = 0; pIdx < candidates.length; pIdx++) {
+      const projectId = candidates[pIdx]
+      const endpoint = `${baseUrl}/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+      console.log(`[Vertex Gemini] Requesting ${model} via ${location} (${apiVersion})`)
+      try {
+        response = await fetchWithRetry(
+          endpoint,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+              ...priorityPaygoHeaders(),
+            },
+            body: JSON.stringify(requestBody),
+            ...(options.signal ? { signal: options.signal } : {}),
+          },
+          { maxRetries, timeoutMs: timeoutToUse, signal: options.signal }
+        )
+        break
+      } catch (err: any) {
+        lastErr = err
+        const is429 = err?.status === 429 || isGeminiQuotaError(err)
+        if (is429 && pIdx + 1 < candidates.length) {
+          console.warn(
+            `[Vertex Gemini] 429 on project ${projectId} for ${model}; rotating to next project in VERTEX_PROJECT_IDS`
+          )
+          continue
+        }
+        throw err
+      }
+    }
+    if (!response) {
+      throw lastErr || new Error(`Vertex AI request failed for ${model}`)
+    }
+  }
 
   const isOk = response.ok;
   const status = response.status;
 
   if (!isOk) {
-    const errorText = await response.text(); 
-    
+    const errorText = await response.text();
+    if (status === 429 && isByok && byokCred) {
+      throw new ByokRateLimitError(
+        `BYOK Gemini rate limited (429) on ${model}: ${errorText.slice(0, 200)}`,
+        {
+          provider: 'vertex',
+          status: 429,
+          retryAfterMs: parseRetryAfterMs(response.headers?.get?.('retry-after')) ?? undefined,
+          bucketNamespace: byokCred.bucketNamespace,
+        }
+      )
+    }
+
     if (status === 404 && isGemini3 && !options.disableModelFallback) {
       // Chain 3.5 → 3.1-lite → 2.5 instead of leaping straight to 2.5.
       const fallbackModel = getNextGeminiFallbackModel(model)
@@ -278,11 +485,27 @@ async function generateTextWithModel(
     .map((part: any) => part.text).join('').trim();
 
   const requestedModelId = options._requestedModel || model;
+  const finishReason = data.candidates?.[0]?.finishReason;
+
+  recordLlmTelemetry({
+    surface: options.surface || 'general',
+    providerBackend: 'vertex',
+    requestedModel: requestedModelId,
+    servedModel: model,
+    downgraded: requestedModelId !== model,
+    usedCache: Boolean(data.usageMetadata?.cachedContentTokenCount),
+    usageMetadata: data.usageMetadata,
+    latencyMs: Date.now() - requestStartTime,
+    finishReason,
+    status: 'success',
+    projectId: options.projectId,
+    userId: options.userId,
+  });
 
   return {
     text,
     safetyRatings: data.candidates?.[0]?.safetyRatings,
-    finishReason: data.candidates?.[0]?.finishReason,
+    finishReason,
     modelId: model,
     requestedModelId,
     downgraded: requestedModelId !== model,
@@ -294,7 +517,8 @@ export async function streamText(
   prompt: string,
   options: TextGenerationOptions = {}
 ): Promise<Response> {
-  const { projectId, location: defaultLocation } = getConfig();
+  const byokCred = options.byokCredential?.source === 'byok' ? options.byokCredential : undefined
+  const isByok = Boolean(byokCred)
 
   // 1. RESOLVE MODEL & DYNAMIC LOCATION
   const model = normalizeGeminiTextModel(
@@ -302,17 +526,7 @@ export async function streamText(
   );
   const isGemini3 = model.includes('gemini-3');
   const isPreview = model.includes('preview');
-
-  const location = isGemini3 ? 'global' : (options.location || defaultLocation);
   const apiVersion = isPreview ? 'v1beta1' : 'v1';
-
-  const baseUrl = location === 'global' 
-    ? 'https://aiplatform.googleapis.com' 
-    : `https://${location}-aiplatform.googleapis.com`;
-
-  const endpoint = `${baseUrl}/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:streamGenerateContent`;
-
-  const accessToken = await getVertexAIAuthToken();
 
   // 2. CONSTRUCT CLEAN THINKING CONFIG
   const isThinkingModel = model.includes('gemini-3') || model.includes('gemini-2.5');
@@ -353,27 +567,135 @@ export async function streamText(
   };
 
   if (options.systemInstruction) {
-    requestBody.system_instruction = {
-      role: 'system',
-      parts: [{ text: options.systemInstruction }],
-    };
+    requestBody.system_instruction =
+      byokCred?.mode === 'byok_api_key'
+        ? { parts: [{ text: options.systemInstruction }] }
+        : {
+            role: 'system',
+            parts: [{ text: options.systemInstruction }],
+          };
   }
 
-  console.log(`[Vertex Gemini Streaming] Requesting ${model} via ${location} (${apiVersion})`);
+  // Resolve target endpoints + auth headers
+  let targets: Array<{ endpoint: string; headers: Record<string, string>; label: string }> = []
+  if (byokCred?.mode === 'byok_api_key' && byokCred.apiKey) {
+    targets = [
+      {
+        endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${encodeURIComponent(
+          byokCred.apiKey
+        )}`,
+        headers: { 'Content-Type': 'application/json' },
+        label: 'BYOK Gemini Developer API',
+      },
+    ]
+  } else if (byokCred?.mode === 'byok_service_account' && byokCred.serviceAccountJson) {
+    const minted = await getByokGeminiAccessToken(byokCred.serviceAccountJson)
+    const projectId = byokCred.projectId || minted.projectId
+    const defaultLocation = process.env.VERTEX_LOCATION || process.env.GCP_REGION || 'us-central1'
+    const location = isGemini3 ? 'global' : (options.location || defaultLocation)
+    const baseUrl =
+      location === 'global'
+        ? 'https://aiplatform.googleapis.com'
+        : `https://${location}-aiplatform.googleapis.com`
+    targets = [
+      {
+        endpoint: `${baseUrl}/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:streamGenerateContent`,
+        headers: {
+          Authorization: `Bearer ${minted.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        label: `BYOK Vertex SA (${projectId}/${location})`,
+      },
+    ]
+  } else {
+    const { projectIds, location: defaultLocation } = getConfig()
+    const location = isGemini3 ? 'global' : (options.location || defaultLocation)
+    const baseUrl =
+      location === 'global'
+        ? 'https://aiplatform.googleapis.com'
+        : `https://${location}-aiplatform.googleapis.com`
+    const accessToken = await getVertexAIAuthToken()
+    targets = projectIds.map((projectId) => ({
+      endpoint: `${baseUrl}/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:streamGenerateContent`,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        ...priorityPaygoHeaders(),
+      },
+      label: `${location} (${apiVersion})`,
+    }))
+  }
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      ...priorityPaygoHeaders()
-    },
-    body: JSON.stringify(requestBody)
-  });
+  // Initial HTTP handshake with jittered 429 Retry-After handling (up to 2 retries)
+  const MAX_STREAM_429_RETRIES = 2
+  let response: Response | undefined
+  let lastErrorText = ''
+  let lastRetryAfterMs: number | null = null
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Vertex AI Streaming error ${response.status}: ${errorText}`);
+  for (let attempt = 0; attempt <= MAX_STREAM_429_RETRIES; attempt++) {
+    const target = targets[attempt % targets.length]
+    console.log(`[Vertex Gemini Streaming] Requesting ${model} via ${target.label}`)
+    response = await fetch(target.endpoint, {
+      method: 'POST',
+      headers: target.headers,
+      body: JSON.stringify(requestBody),
+      ...(options.signal ? { signal: options.signal } : {}),
+    })
+
+    if (response.status !== 429) {
+      break
+    }
+
+    lastRetryAfterMs = parseRetryAfterMs(response.headers?.get?.('retry-after'))
+    lastErrorText = await response.text().catch(() => '')
+
+    if (attempt < MAX_STREAM_429_RETRIES) {
+      const delayMs = fullJitterDelayMs({
+        attempt,
+        baseMs: 2_000,
+        capMs: 15_000,
+        retryAfterMs: lastRetryAfterMs ?? 0,
+      })
+      console.warn(
+        `[Vertex Gemini Streaming] 429 on handshake (attempt ${attempt + 1}/${MAX_STREAM_429_RETRIES + 1}); retrying in ${delayMs}ms`
+      )
+      await new Promise<void>((resolve, reject) => {
+        if (options.signal?.aborted) {
+          const aborted = new Error('Operation aborted')
+          aborted.name = 'AbortError'
+          reject(aborted)
+          return
+        }
+        const timer = setTimeout(() => {
+          options.signal?.removeEventListener('abort', onAbort)
+          resolve()
+        }, delayMs)
+        const onAbort = () => {
+          clearTimeout(timer)
+          const aborted = new Error('Operation aborted')
+          aborted.name = 'AbortError'
+          reject(aborted)
+        }
+        options.signal?.addEventListener('abort', onAbort, { once: true })
+      })
+    }
+  }
+
+  if (!response || !response.ok) {
+    const status = response?.status ?? 500
+    const errorText = status === 429 && lastErrorText ? lastErrorText : await response?.text().catch(() => '') ?? ''
+    if (status === 429 && isByok && byokCred) {
+      throw new ByokRateLimitError(
+        `BYOK Gemini Streaming rate limited (429) on ${model}: ${errorText.slice(0, 200)}`,
+        {
+          provider: 'vertex',
+          status: 429,
+          retryAfterMs: lastRetryAfterMs ?? undefined,
+          bucketNamespace: byokCred.bucketNamespace,
+        }
+      )
+    }
+    throw new Error(`Vertex AI Streaming error ${status}: ${errorText}`);
   }
 
   // Return the raw stream directly
@@ -792,8 +1114,13 @@ export async function generateTextCacheAware(
     return contextPrefix ? `${contextPrefix}\n\n${prompt}` : prompt
   }
 
-  // ── Fast path: caching disabled or not requested ──
-  if (!cacheZone || !isVertexCachingEnabled() || options.skipCache) {
+  // ── Fast path: caching disabled, BYOK, or not requested ──
+  if (
+    !cacheZone ||
+    !isVertexCachingEnabled() ||
+    options.skipCache ||
+    options.byokCredential?.source === 'byok'
+  ) {
     const result = await generateText(buildFullPrompt(), standardOptions)
     return { ...result, usedCache: false }
   }
@@ -818,10 +1145,28 @@ export async function generateTextCacheAware(
           timeoutMs: standardOptions.timeoutMs,
           seed: standardOptions.seed,
         })
+        const servedModel = standardOptions.model || getGeminiTextModel('flash')
+        recordLlmTelemetry({
+          surface: standardOptions.surface || cacheZone || 'cached_general',
+          providerBackend: 'vertex',
+          requestedModel: servedModel,
+          servedModel,
+          downgraded: false,
+          usedCache: true,
+          usageMetadata: cachedResult.usageMetadata,
+          latencyMs: Date.now() - _cacheStartTime,
+          finishReason: cachedResult.finishReason,
+          status: 'success',
+          projectId: standardOptions.projectId || sceneflowProjectId,
+          userId: standardOptions.userId,
+        })
         return {
           text: cachedResult.text,
           finishReason: cachedResult.finishReason,
           safetyRatings: cachedResult.safetyRatings,
+          modelId: servedModel,
+          requestedModelId: servedModel,
+          downgraded: false,
           usedCache: true,
           cacheEntry: cachedResult.cacheEntry,
           usageMetadata: cachedResult.usageMetadata,
@@ -867,10 +1212,28 @@ export async function generateTextCacheAware(
           timeoutMs: standardOptions.timeoutMs,
           seed: standardOptions.seed,
         })
+        const servedModel = standardOptions.model || getGeminiTextModel('flash')
+        recordLlmTelemetry({
+          surface: standardOptions.surface || cacheZone || 'cached_general',
+          providerBackend: 'vertex',
+          requestedModel: servedModel,
+          servedModel,
+          downgraded: false,
+          usedCache: true,
+          usageMetadata: cachedResult.usageMetadata,
+          latencyMs: Date.now() - _cacheStartTime,
+          finishReason: cachedResult.finishReason,
+          status: 'success',
+          projectId: standardOptions.projectId || sceneflowProjectId,
+          userId: standardOptions.userId,
+        })
         return {
           text: cachedResult.text,
           finishReason: cachedResult.finishReason,
           safetyRatings: cachedResult.safetyRatings,
+          modelId: servedModel,
+          requestedModelId: servedModel,
+          downgraded: false,
           usedCache: true,
           cacheEntry: cachedResult.cacheEntry,
           usageMetadata: cachedResult.usageMetadata,

@@ -1,12 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { generateImageWithGemini } from '@/lib/gemini/imageClient';
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig';
+import { IMAGE_CREDITS } from '@/lib/credits/creditCosts';
+import { executeMeteredProviderCall } from '@/lib/credits/meteredGateway';
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id || session?.user?.email || null;
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     const { prompt, options } = await req.json();
     
     if (!prompt) {
@@ -18,9 +31,8 @@ export async function POST(req: NextRequest) {
 
     // Use Vertex AI for image generation (pay-as-you-go, no free tier limits)
     const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID;
-    const location = process.env.VERTEX_LOCATION || process.env.GCP_REGION || 'us-central1';
     
-    if (!projectId) {
+    if (!projectId && !options?.forceOpenAI) {
       console.error('Vertex AI not configured (VERTEX_PROJECT_ID required)');
       return NextResponse.json(
         { error: 'Vertex AI not configured' },
@@ -52,59 +64,162 @@ export async function POST(req: NextRequest) {
       
       console.log('🎨 Enhanced prompt created:', enhancedPrompt);
 
-      // If caller requests OpenAI directly, use it immediately
+      // If caller requests OpenAI directly, use it immediately under credit escrow
       if (options?.forceOpenAI) {
         const openaiKey = process.env.OPENAI_API_KEY
         if (!openaiKey) {
           return NextResponse.json({ success: false, error: 'OPENAI_API_KEY not configured', traceId }, { status: 500 })
         }
-        const openaiResp = await fetch('https://api.openai.com/v1/images/generations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
-          body: JSON.stringify({
-            model: 'gpt-image-1',
-            prompt: enhancedPrompt,
-            size: 'auto',
-            quality: 'high',
-            n: 1
-          })
+        const meteredOpenAI = await executeMeteredProviderCall({
+          userId,
+          projectId: options?.projectId ?? null,
+          route: '/api/generate-image',
+          provider: 'openai',
+          model: 'gpt-image-1',
+          operation: 'generate_image',
+          flatCredits: IMAGE_CREDITS.IMAGEN_4,
+          estimatedCogsUsd: 0.04,
+          meta: { traceId, forceOpenAI: true },
+          execute: async () => {
+            const openaiResp = await fetch('https://api.openai.com/v1/images/generations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+              body: JSON.stringify({
+                model: 'gpt-image-1',
+                prompt: enhancedPrompt,
+                size: 'auto',
+                quality: 'high',
+                n: 1
+              })
+            })
+            if (!openaiResp.ok) {
+              throw new Error(`OpenAI image generation failed (${openaiResp.status})`)
+            }
+            const oj = await openaiResp.json()
+            const b64 = oj?.data?.[0]?.b64_json
+            if (typeof b64 !== 'string' || b64.length <= 50) {
+              throw new Error('OpenAI image generation returned empty payload')
+            }
+            return `data:image/png;base64,${b64}`
+          },
         })
-        if (openaiResp.ok) {
-          const oj = await openaiResp.json()
-          const b64 = oj?.data?.[0]?.b64_json
-          if (typeof b64 === 'string' && b64.length > 50) {
-            const openaiImage = `data:image/png;base64,${b64}`
-            return NextResponse.json({ success: true, imageUrl: openaiImage, images: [{ dataUrl: openaiImage, mimeType: 'image/png' }], prompt: enhancedPrompt, model: 'gpt-image-1', provider: 'openai', traceId })
-          }
-        }
-        return NextResponse.json({ success: false, error: 'OpenAI image generation failed', traceId }, { status: 500 })
+        const openaiImage = meteredOpenAI.result
+        return NextResponse.json({
+          success: true,
+          imageUrl: openaiImage,
+          images: [{ dataUrl: openaiImage, mimeType: 'image/png' }],
+          prompt: enhancedPrompt,
+          model: 'gpt-image-1',
+          provider: 'openai',
+          creditsCharged: meteredOpenAI.creditsCharged,
+          traceId,
+        })
       }
 
       // Gemini Image on Vertex (Imagen endpoints were retired 2026-06-30)
-      let imageUrl = '';
-      const images: { dataUrl: string; mimeType: string }[] = [];
       const selectedModel = GEMINI_IMAGE_MODELS.flash;
-      let providerUsed: 'vertex-gemini' | 'openai' | 'none' = 'none';
-      let primaryStatus = 0;
-      let primaryBodyText: string | undefined;
 
-      try {
-        const dataUrl = await generateImageWithGemini(enhancedPrompt, {
-          aspectRatio: '16:9',
-          numberOfImages: 1,
-          quality: 'fast',
-        });
+      const metered = await executeMeteredProviderCall({
+        userId,
+        projectId: options?.projectId ?? null,
+        route: '/api/generate-image',
+        provider: 'vertex',
+        model: selectedModel,
+        operation: 'generate_image',
+        quoteInput: {
+          kind: 'still',
+          model: selectedModel,
+          imageCount: 1,
+          floorCredits: IMAGE_CREDITS.IMAGEN_4,
+        },
+        meta: { traceId },
+        execute: async () => {
+          let imageUrl = '';
+          const images: { dataUrl: string; mimeType: string }[] = [];
+          let providerUsed: 'vertex-gemini' | 'openai' | 'none' = 'none';
+          let primaryStatus = 0;
+          let primaryBodyText: string | undefined;
 
-        const match = dataUrl.match(/^data:([^;]+);base64,/);
-        if (match) {
-          imageUrl = dataUrl;
-          images.push({ dataUrl, mimeType: match[1] });
-          providerUsed = 'vertex-gemini';
-          primaryStatus = 200;
-        }
-      } catch (imageError) {
-        primaryBodyText = imageError instanceof Error ? imageError.message : String(imageError);
-        console.error('🎨 Vertex Gemini Image request failed:', primaryBodyText);
+          try {
+            const dataUrl = await generateImageWithGemini(enhancedPrompt, {
+              aspectRatio: '16:9',
+              numberOfImages: 1,
+              quality: 'fast',
+            });
+
+            const match = dataUrl.match(/^data:([^;]+);base64,/);
+            if (match) {
+              imageUrl = dataUrl;
+              images.push({ dataUrl, mimeType: match[1] });
+              providerUsed = 'vertex-gemini';
+              primaryStatus = 200;
+            }
+          } catch (imageError) {
+            primaryBodyText = imageError instanceof Error ? imageError.message : String(imageError);
+            console.error('🎨 Vertex Gemini Image request failed:', primaryBodyText);
+          }
+
+          if (!imageUrl) {
+            // Fallback to OpenAI if Vertex AI fails
+            try {
+              const openaiKey = process.env.OPENAI_API_KEY
+              if (openaiKey) {
+                const openaiResp = await fetch('https://api.openai.com/v1/images/generations', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${openaiKey}`
+                  },
+                  body: JSON.stringify({
+                    model: 'gpt-image-1',
+                    prompt: enhancedPrompt,
+                    size: 'auto',
+                    quality: 'high',
+                    n: 1
+                  })
+                })
+                if (openaiResp.ok) {
+                  const oj = await openaiResp.json()
+                  const b64 = oj?.data?.[0]?.b64_json
+                  if (typeof b64 === 'string' && b64.length > 50) {
+                    imageUrl = `data:image/png;base64,${b64}`
+                    images.push({ dataUrl: imageUrl, mimeType: 'image/png' })
+                    providerUsed = 'openai'
+                  }
+                }
+              }
+            } catch (e) {
+              console.error('🎨 OpenAI fallback failed:', e);
+            }
+          }
+
+          return { imageUrl, images, providerUsed, primaryStatus, primaryBodyText }
+        },
+        resolveSettlement: (res) => {
+          if (!res.imageUrl || res.providerUsed === 'none') {
+            return { skipCharge: true, estimatedCogsUsd: 0 }
+          }
+          return {
+            finalCredits: IMAGE_CREDITS.IMAGEN_4,
+            estimatedCogsUsd: 0.04,
+            meta: { providerUsed: res.providerUsed },
+          }
+        },
+      })
+
+      const { imageUrl, images, providerUsed, primaryStatus, primaryBodyText } = metered.result
+
+      if (providerUsed === 'openai') {
+        return NextResponse.json({
+          success: true,
+          imageUrl,
+          images,
+          prompt: enhancedPrompt,
+          model: 'gpt-image-1',
+          provider: 'openai',
+          creditsCharged: metered.creditsCharged,
+          traceId,
+        })
       }
 
       const payload = {
@@ -119,54 +234,32 @@ export async function POST(req: NextRequest) {
       } as const;
 
       if (!imageUrl) {
-        // Fallback to OpenAI if Vertex AI fails
-        try {
-          const openaiKey = process.env.OPENAI_API_KEY
-          if (openaiKey) {
-            const openaiResp = await fetch('https://api.openai.com/v1/images/generations', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${openaiKey}`
-              },
-              body: JSON.stringify({
-                model: 'gpt-image-1',
-                prompt: enhancedPrompt,
-                size: 'auto',
-                quality: 'high',
-                n: 1
-              })
-            })
-            if (openaiResp.ok) {
-              const oj = await openaiResp.json()
-              const b64 = oj?.data?.[0]?.b64_json
-              if (typeof b64 === 'string' && b64.length > 50) {
-                const openaiImage = `data:image/png;base64,${b64}`
-                return NextResponse.json({
-                  success: true,
-                  imageUrl: openaiImage,
-                  images: [{ dataUrl: openaiImage, mimeType: 'image/png' }],
-                  prompt: enhancedPrompt,
-                  model: 'gpt-image-1',
-                  provider: 'openai',
-                  traceId
-                })
-              }
-            }
-          }
-        } catch (e) {
-          console.error('🎨 OpenAI fallback failed:', e);
-        }
-
-        // Return placeholder if all providers fail
+        // Return placeholder if all providers fail (hold was released with 0 charge)
         const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='675' viewBox='0 0 1200 675' fill='none'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#0f172a'/><stop offset='100%' stop-color='#1e293b'/></linearGradient></defs><rect width='1200' height='675' fill='url(#g)'/><g fill='#64748b'><rect x='80' y='120' width='1040' height='435' rx='16' ry='16' fill-opacity='0.25' stroke='#334155' stroke-width='2'/><text x='600' y='300' font-family='Inter, system-ui, -apple-system' font-size='42' text-anchor='middle' fill='#cbd5e1'>Thumbnail Preview</text><text x='600' y='360' font-family='Inter, system-ui, -apple-system' font-size='20' text-anchor='middle' fill='#94a3b8'>Image will appear here once generated</text></g></svg>`
         const placeholder = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
         return NextResponse.json({ success: true, ...payload, imageUrl: placeholder, images: [{ dataUrl: placeholder, mimeType: 'image/svg+xml' }], providerUsed, message: 'Placeholder returned: no image bytes from providers', primaryBodyText })
       }
 
-      return NextResponse.json({ success: true, ...payload, providerUsed });
+      return NextResponse.json({
+        success: true,
+        ...payload,
+        providerUsed,
+        creditsCharged: metered.creditsCharged,
+      });
       
     } catch (imagenError) {
+      if (imagenError instanceof Error && imagenError.message === 'INSUFFICIENT_CREDITS') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Insufficient credits',
+            code: 'INSUFFICIENT_CREDITS',
+            required: IMAGE_CREDITS.IMAGEN_4,
+          },
+          { status: 402 }
+        );
+      }
+
       console.error('🎨 Image generation error:', imagenError);
       
       return NextResponse.json({

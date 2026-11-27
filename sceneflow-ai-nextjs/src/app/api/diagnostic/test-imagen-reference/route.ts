@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateVertexImage } from '@/lib/vertexai/vertexImageClient'
+import { requireAdminSession } from '@/lib/admin/requireAdmin'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -7,6 +8,14 @@ export const maxDuration = 120
 
 export async function POST(req: NextRequest) {
   try {
+    const admin = await requireAdminSession()
+    if (!admin.authorized) {
+      return NextResponse.json(
+        { error: 'Forbidden: admin access required' },
+        { status: 403 }
+      )
+    }
+
     const { imageUrl, gcsUri, characterName, sceneDescription } = await req.json()
 
     if (!characterName || !sceneDescription) {

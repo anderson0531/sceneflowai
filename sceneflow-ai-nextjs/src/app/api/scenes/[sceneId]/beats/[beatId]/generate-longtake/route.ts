@@ -33,6 +33,12 @@ import {
 import type { KlingLongTakeJobPayload } from '@/lib/kling/longTakeOrchestrator'
 import { resolveBeatElementSelection } from '@/lib/vision/resolveBeatVideoReferences'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
+import { CreditService } from '@/services/CreditService'
+import { getKlingLongTakeCredits } from '@/lib/credits/creditCosts'
+import {
+  recordProviderRunFinish,
+  recordProviderRunStart,
+} from '@/lib/credits/meteredGateway'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -267,12 +273,66 @@ export async function POST(
     const hasCharacterRefs = elementSources.length > 0 || !!startFrameUrl
     const faceConsistency = body.faceConsistency ?? hasCharacterRefs
 
-    const payload: Omit<KlingLongTakeJobPayload, 'generationJobId' | 'userId' | 'projectId'> = {
+    const quality = body.klingQuality || 'pro'
+    const reservedCredits = getKlingLongTakeCredits({
+      model,
+      quality,
+      plan,
+      masterSeconds: targetSeconds,
+    })
+    const estimatedCogsUsd = Number(
+      Math.max(0.5, plan.totalSeconds * (quality === '4k' ? 0.42 : 0.14) + 1.0).toFixed(2)
+    )
+    const userId = String(session.user.id)
+
+    // Reserve a 45-minute credit hold BEFORE enqueueing the Inngest long-take job
+    const reservation = await CreditService.reserveCredits({
+      userId,
+      amount: reservedCredits,
+      reason: 'ai_usage',
+      provider: 'kling',
+      operation: 'kling_long_take',
+      projectId: body.projectId,
+      ref: `longtake:${body.segmentId}`,
+      ttlSeconds: 2700,
+      meta: {
+        route: '/api/scenes/[sceneId]/beats/[beatId]/generate-longtake',
+        sceneId,
+        beatId,
+        segmentId: body.segmentId,
+        model,
+        quality,
+        targetSeconds,
+        plan,
+        estimatedCogsUsd,
+      },
+    })
+
+    const runId = await recordProviderRunStart({
+      userId,
+      projectId: body.projectId,
+      route: '/api/scenes/[sceneId]/beats/[beatId]/generate-longtake',
+      provider: 'kling',
+      model,
+      operation: 'kling_long_take',
+      credentialSource: 'platform',
+      holdId: reservation.holdId,
+      estimatedCogsUsd,
+      unitsBilled: plan.totalSeconds,
+      unitType: 'per_second',
+      meta: { sceneId, beatId, segmentId: body.segmentId, quality, plan },
+    })
+
+    const payload: Omit<KlingLongTakeJobPayload, 'generationJobId' | 'userId' | 'projectId'> & {
+      holdId: string
+      runId: string | null
+      reservedCredits: number
+    } = {
       sceneId,
       beatId,
       segmentId: body.segmentId,
       model,
-      quality: body.klingQuality || 'pro',
+      quality,
       targetSeconds,
       prompt,
       negativePrompt: body.negativePrompt || compiled.negativePrompt,
@@ -283,20 +343,62 @@ export async function POST(
       resolution: body.resolution || '1080p',
       faceConsistency,
       aspectRatio: body.aspectRatio || '16:9',
+      holdId: reservation.holdId,
+      runId,
+      reservedCredits,
     }
 
-    const { job } = await createGenerationJob({
-      userId: String(session.user.id),
-      projectId: body.projectId,
-      jobType: 'kling_long_take',
-      payload: payload as unknown as Record<string, unknown>,
-    })
+    let job: Awaited<ReturnType<typeof createGenerationJob>>['job']
+    let dispatched = false
+    try {
+      const created = await createGenerationJob({
+        userId,
+        projectId: body.projectId,
+        jobType: 'kling_long_take',
+        payload: payload as unknown as Record<string, unknown>,
+      })
+      job = created.job
+      dispatched = created.dispatched
+    } catch (enqueueError) {
+      await CreditService.releaseHold({
+        holdId: reservation.holdId,
+        reason: 'inngest_enqueue_failed',
+      }).catch((e: unknown) => console.error('[GenerateLongTake] Failed to release hold:', e))
+      await recordProviderRunFinish({
+        runId,
+        status: 'failed',
+        errorCode: 'INNGEST_ENQUEUE_FAILED',
+        estimatedCogsUsd: 0,
+        chargedCredits: 0,
+      })
+      throw enqueueError
+    }
+
+    if (!dispatched) {
+      await CreditService.releaseHold({
+        holdId: reservation.holdId,
+        reason: 'inngest_not_dispatched',
+      }).catch((e: unknown) => console.error('[GenerateLongTake] Failed to release hold:', e))
+      await recordProviderRunFinish({
+        runId,
+        status: 'failed',
+        errorCode: 'INNGEST_NOT_DISPATCHED',
+        estimatedCogsUsd: 0,
+        chargedCredits: 0,
+      })
+      return NextResponse.json(
+        { error: 'Failed to dispatch long-take job to worker queue', code: 'QUEUE_DISPATCH_FAILED' },
+        { status: 503 }
+      )
+    }
 
     return NextResponse.json(
       {
         success: true,
         status: 'QUEUED',
         jobId: job.id,
+        holdId: reservation.holdId,
+        reservedCredits,
         plan,
         estimatedSeconds,
         warnings: plan.warnings,
@@ -304,6 +406,12 @@ export async function POST(
       { status: 202 }
     )
   } catch (error) {
+    if (error instanceof Error && error.message === 'INSUFFICIENT_CREDITS') {
+      return NextResponse.json(
+        { error: 'Insufficient credits', code: 'INSUFFICIENT_CREDITS' },
+        { status: 402 }
+      )
+    }
     console.error('[GenerateLongTake] Error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to enqueue long-take job' },

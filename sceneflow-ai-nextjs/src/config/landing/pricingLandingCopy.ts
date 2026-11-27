@@ -75,7 +75,7 @@ export const PRICING_LANDING_COPY = {
       {
         title: '2. Finish Client Slates on Demand With 12-Month Add-On Packs',
         description:
-          'Active monthly subscribers purchase $25 (2,000 cr) or $100 (9,000 cr) packs anytime—and Operator Pro & Agency Scale unlock the $250 Bulk Pack (25,000 cr at $0.010/cr). Add-On packs last 12 months while your membership stays active.',
+          'Active monthly subscribers purchase $25 (2,000 cr) or $100 (9,000 cr) packs anytime—and Operator Pro & Agency Scale unlock the $250 Bulk Pack (25,000 cr at $0.010/cr). Add-On packs last 12 months from purchase.',
       },
       {
         title: '3. Elastic Vault Expansion (+$15/mo per 100 GB) & $19/mo Pause-to-Vault',

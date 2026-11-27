@@ -5,7 +5,7 @@ export async function migrateCreditLedger() {
   try {
     // Runs inside the credit charge transaction path, so skip the DDL once the
     // column is there rather than paying for it on every cold start.
-    if (await hasColumns('credit_ledger', ['credit_type'])) {
+    if (await hasColumns('credit_ledger', ['credit_type', 'idempotency_key'])) {
       return
     }
 
@@ -37,7 +37,23 @@ export async function migrateCreditLedger() {
       console.log('credit_type column note:', error.message)
     }
 
-    console.log('✅ Migration completed: Added credit_type column to credit_ledger table')
+    // Step 3: Add idempotency_key column + partial unique index for deduplication
+    try {
+      await sequelize.query(`
+        ALTER TABLE credit_ledger
+        ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(255) DEFAULT NULL;
+      `)
+      await sequelize.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_credit_ledger_idempotency_key
+        ON credit_ledger (idempotency_key)
+        WHERE idempotency_key IS NOT NULL;
+      `)
+      console.log('✓ Added idempotency_key column and unique index to credit_ledger')
+    } catch (error: any) {
+      console.log('idempotency_key column note:', error.message)
+    }
+
+    console.log('✅ Migration completed: Updated credit_ledger table')
   } catch (error) {
     console.error('❌ Migration error:', error)
     throw error

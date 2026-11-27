@@ -1,11 +1,11 @@
 /**
  * Provider-cost quote for SceneFlow credits.
  *
- * Face value is $0.01 per credit. Studio is the tightest paid rate at $0.008
- * per credit, so a fully spent Studio balance must still cover list COGS.
+ * Face value is $0.01 per credit. Studio is $599 / 45,000 credits ($0.013311
+ * per credit), aligned with `src/lib/billing/tierCatalog.ts`.
  *
- * credits = max(ceil(providerUsd * markup / 0.01), ceil(providerUsd / 0.008))
- * Default markup is 2.0 (100% above list cost at face value, ~38% gross margin on Studio).
+ * credits = max(ceil(providerUsd * markup / 0.01), ceil(providerUsd / STUDIO_CASH_PER_CREDIT_USD))
+ * Default markup is 2.0 (100% above list cost at face value).
  *
  * Live charges prefer a published credit_pricing row. These seeds are the
  * fallback when that table is empty or unreachable.
@@ -13,7 +13,7 @@
 
 export const DEFAULT_MARKUP = 2.0
 export const CREDIT_FACE_USD = 0.01
-export const STUDIO_CASH_PER_CREDIT_USD = 0.008
+export const STUDIO_CASH_PER_CREDIT_USD = 599 / 45000 // $0.013311/cr (Studio $599 / 45,000 cr)
 export const REFERENCE_IMAGE_ADDON_CREDITS = 5
 
 export const OMNI_MODEL_ID = 'gemini-omni-1.2-flash'

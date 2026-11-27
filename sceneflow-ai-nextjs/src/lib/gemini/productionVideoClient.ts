@@ -48,8 +48,15 @@ import {
 } from '@/lib/gemini/vertexRateLimit'
 import {
   acquireVertexDispatchSlot,
+  getBucketCooldownRemainingMs,
+  noteVideoGenerationCooldown,
   VertexDispatchDeferredError,
 } from '@/lib/vertexai/vertexDispatchBucket'
+import {
+  ByokRateLimitError,
+  parseGoogleServiceAccountJson,
+  type ResolvedVertexCredential,
+} from '@/lib/byok/resolveProviderCredential'
 
 // ============================================================================
 // Types
@@ -67,7 +74,13 @@ export interface ProductionVideoOptions extends VideoGenerationOptions {
    * Failover will not call the same endpoint again.
    */
   triedEndpoints?: ReadonlySet<string>
+  /** Optional resolved BYOK Vertex Service Account credential. */
+  byokCredential?: ResolvedVertexCredential
+  /** Isolated dispatch bucket namespace ('platform' or 'byok:<hash>'). */
+  bucketNamespace?: string
 }
+
+export type ProductionVideoRequest = ProductionVideoOptions
 
 export interface ProductionVideoResult extends VideoGenerationResult {
   /** Which provider was used */
@@ -406,12 +419,111 @@ export async function generateProductionVideo(
   const { forceProvider, forceRegion, forceProjectId, triedEndpoints, ...videoOptions } = options
   const tried = triedEndpoints ?? new Set<string>()
   const quotaLocations = quotaLocationsForRequest(videoOptions)
+  const byokCred = options.byokCredential?.source === 'byok' ? options.byokCredential : undefined
+  const bucketNamespace =
+    options.bucketNamespace ?? options.byokCredential?.bucketNamespace ?? 'platform'
   
   console.log('[Production Video] Starting video generation...')
   console.log('[Production Video] Configured regions:', getConfiguredRegions())
   console.log('[Production Video] Quota locations:', quotaLocations)
   console.log('[Production Video] Configured projects:', getConfiguredProjectIds().length)
+  console.log('[Production Video] Bucket namespace:', bucketNamespace)
   console.log('[Production Video] Note: Gemini API does not support video - Vertex AI only')
+
+  // Check distributed Redis cooldown BEFORE attempting dispatch so all Vercel isolates share cooldown state
+  const distributedCooldownMs = await getBucketCooldownRemainingMs('video', bucketNamespace)
+  if (distributedCooldownMs > 0) {
+    const retryAfterSec = Math.max(1, Math.ceil(distributedCooldownMs / 1000))
+    console.warn(
+      `[Production Video] Distributed cooldown active for ${bucketNamespace} (${retryAfterSec}s remaining)`
+    )
+    if (byokCred) {
+      throw new ByokRateLimitError(
+        `BYOK Vertex video cooldown active (${retryAfterSec}s remaining)`,
+        {
+          provider: 'vertex',
+          status: 429,
+          retryAfterMs: distributedCooldownMs,
+          bucketNamespace,
+        }
+      )
+    }
+    const remembered = rememberedLimitError(quotaLocations)
+    const projectId = getConfiguredProjectIds()[0] || ''
+    return failoverVideoResult(
+      remembered || `Vertex AI error 429: rate limit — retry after ${retryAfterSec} seconds`,
+      projectId,
+      quotaLocations[0] || 'global'
+    )
+  }
+
+  // Dedicated BYOK Service Account execution path — never falls back to platform projects on 429
+  if (byokCred) {
+    if (byokCred.mode !== 'byok_service_account' || !byokCred.serviceAccountJson) {
+      return {
+        status: 'FAILED',
+        error:
+          'BYOK Vertex video generation requires a Google Cloud Service Account JSON credential.',
+        provider: 'vertex',
+      }
+    }
+    const parsedSa = parseGoogleServiceAccountJson(byokCred.serviceAccountJson)
+    const byokProjectId = byokCred.projectId || parsedSa?.project_id || ''
+    const byokRegion =
+      quotaLocations.length === 1 && quotaLocations[0] === 'global'
+        ? 'global'
+        : forceRegion || quotaLocations[0] || 'us-central1'
+
+    try {
+      await acquireVertexDispatchSlot('video', { bucketNamespace })
+    } catch (err) {
+      if (err instanceof VertexDispatchDeferredError) {
+        throw new ByokRateLimitError(
+          `BYOK Vertex video dispatch deferred (${Math.max(1, Math.ceil(err.retryAfterMs / 1000))}s)`,
+          {
+            provider: 'vertex',
+            status: 429,
+            retryAfterMs: err.retryAfterMs,
+            bucketNamespace,
+          }
+        )
+      }
+      throw err
+    }
+
+    const originalLocation = process.env.VEO_LOCATION
+    try {
+      process.env.VEO_LOCATION = byokRegion
+      const result = await generateVideoWithVeo(prompt, {
+        ...videoOptions,
+        byokCredential: byokCred,
+        bucketNamespace,
+      })
+
+      if (result.status === 'FAILED' && isVertexRateLimitMessage(result.error)) {
+        await noteVideoGenerationCooldown(RATE_LIMIT_CONFIG.RATE_LIMIT_COOLDOWN_MS, bucketNamespace)
+        throw new ByokRateLimitError(
+          result.error || 'BYOK Vertex video rate limited (429)',
+          {
+            provider: 'vertex',
+            status: 429,
+            retryAfterMs: RATE_LIMIT_CONFIG.RATE_LIMIT_COOLDOWN_MS,
+            bucketNamespace,
+          }
+        )
+      }
+
+      return {
+        ...result,
+        provider: 'vertex',
+        region: byokRegion,
+        projectId: byokProjectId,
+        wasFailover: false,
+      }
+    } finally {
+      if (originalLocation) process.env.VEO_LOCATION = originalLocation
+    }
+  }
   
   // Studio/Gemini API path retired — always Vertex for Veo (incl. EXT)
   if (forceProvider === 'gemini') {
@@ -482,7 +594,7 @@ export async function generateProductionVideo(
         process.env.VEO_LOCATION = region
 
         try {
-          await acquireVertexDispatchSlot('video')
+          await acquireVertexDispatchSlot('video', { bucketNamespace })
         } catch (err) {
           if (err instanceof VertexDispatchDeferredError) {
             const retryAfterSeconds = Math.max(1, Math.ceil(err.retryAfterMs / 1000))
@@ -502,7 +614,10 @@ export async function generateProductionVideo(
 
         incrementRequestCount(projectId, region)
         
-        const result = await generateVideoWithVeo(prompt, videoOptions)
+        const result = await generateVideoWithVeo(prompt, {
+          ...videoOptions,
+          bucketNamespace,
+        })
         
         if (result.status === 'FAILED' && isVertexRateLimitMessage(result.error)) {
           // 429 / too_many_requests is a short cooldown even when the body says "quota".
@@ -516,6 +631,10 @@ export async function generateProductionVideo(
           nextTried.add(endpointKey(projectId, region))
           const nextEndpoint = selectBestEndpoint(nextTried, quotaLocations)
           if (!nextEndpoint) {
+            await noteVideoGenerationCooldown(
+              RATE_LIMIT_CONFIG.RATE_LIMIT_COOLDOWN_MS,
+              bucketNamespace
+            )
             return failoverVideoResult(result.error, projectId, region)
           }
 
@@ -624,13 +743,14 @@ export async function waitForProductionVideoCompletion(
   operationName: string,
   provider: 'vertex' | 'gemini',
   maxWaitSeconds: number = 240,
-  pollIntervalSeconds: number = 10
+  pollIntervalSeconds: number = 10,
+  opts?: { byokCredential?: ResolvedVertexCredential }
 ): Promise<ProductionVideoResult> {
   if (provider === 'gemini') {
     const result = await waitForGeminiVideoCompletion(operationName, maxWaitSeconds, pollIntervalSeconds)
     return { ...result, provider: 'gemini' }
   } else {
-    const result = await waitForVideoCompletion(operationName, maxWaitSeconds, pollIntervalSeconds)
+    const result = await waitForVideoCompletion(operationName, maxWaitSeconds, pollIntervalSeconds, opts)
     return { ...result, provider: 'vertex' }
   }
 }
@@ -640,12 +760,13 @@ export async function waitForProductionVideoCompletion(
  */
 export async function downloadProductionVideo(
   videoUrl: string,
-  provider: 'vertex' | 'gemini'
+  provider: 'vertex' | 'gemini',
+  opts?: { byokCredential?: ResolvedVertexCredential }
 ): Promise<Buffer | null> {
   if (provider === 'gemini') {
     return downloadGeminiVideoFile(videoUrl)
   } else {
-    return downloadVideoFile(videoUrl)
+    return downloadVideoFile(videoUrl, opts)
   }
 }
 

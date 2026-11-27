@@ -25,56 +25,73 @@ export function autoDetectFilmStructure(
   const resolved = resolveBlueprintProductionFormat(format)
   const intent = contentIntent ?? profile?.intent
 
-  const instructionalPatterns = /\b(tutorial|how-to|guide|lesson|learn|teach|step-by-step|instructions|training|course|module|explain|explainer|walkthrough|demonstration)\b/i
-  if (
-    instructionalPatterns.test(content) ||
+  const explicitNonFictionFormat =
     resolved === 'education' ||
     resolved === 'training' ||
     resolved === 'explainer' ||
-    profile?.engine === 'educational'
-  ) {
-    return {
-      structure: 'instructional',
-      confidence: 0.9,
-      reason: 'Content has educational/instructional focus',
-    }
-  }
-
-  const salesDemoPatterns = /\b(demo|product|sales|pitch|walkthrough|tour|feature|benefit|roi|conversion|prospect|lead|explainer|case study|advertisement|ad\b)\b/i
-  const commercialFormats = ['product_demo', 'explainer', 'case_study', 'advertisement']
-  if (
-    salesDemoPatterns.test(content) ||
-    commercialFormats.includes(resolved) ||
-    profile?.intent === 'commercial'
-  ) {
-    return {
-      structure: 'instructional',
-      confidence: 0.85,
-      reason: 'Content suits commercial/demo format',
-    }
-  }
-
-  const newsPatterns = /\b(news|report|breaking|investigate|coverage|headline|anchor|correspondent|journalism|update)\b/i
-  if (newsPatterns.test(content) || resolved === 'news' || profile?.engine === 'news') {
-    return {
-      structure: 'mini_doc',
-      confidence: 0.85,
-      reason: 'Content suits news/reporting format',
-    }
-  }
-
-  const documentaryPatterns = /\b(documentary|real|authentic|behind-the-scenes|journey|explore|discover|reveal|interview|profile|portrait|day-in-the-life|story of|true story|podcast)\b/i
-  if (
-    documentaryPatterns.test(content) ||
+    resolved === 'product_demo' ||
+    resolved === 'case_study' ||
+    resolved === 'advertisement' ||
+    resolved === 'news' ||
     resolved === 'documentary' ||
     resolved === 'podcast' ||
-    resolved === 'interview' ||
-    profile?.engine === 'documentary'
-  ) {
-    return {
-      structure: 'mini_doc',
-      confidence: 0.85,
-      reason: 'Content suits documentary/podcast/mini-doc format',
+    resolved === 'interview'
+
+  const isExplicitFiction =
+    intent === 'fiction' && !explicitNonFictionFormat
+
+  if (!isExplicitFiction) {
+    const instructionalPatterns = /\b(tutorial|how-to|guide|lesson|learn|teach|step-by-step|instructions|training|course|module|explain|explainer|walkthrough|demonstration)\b/i
+    if (
+      instructionalPatterns.test(content) ||
+      resolved === 'education' ||
+      resolved === 'training' ||
+      resolved === 'explainer' ||
+      profile?.engine === 'educational'
+    ) {
+      return {
+        structure: 'instructional',
+        confidence: 0.9,
+        reason: 'Content has educational/instructional focus',
+      }
+    }
+
+    const salesDemoPatterns = /\b(demo|product|sales|pitch|walkthrough|tour|feature|benefit|roi|conversion|prospect|lead|explainer|case study|advertisement|ad\b)\b/i
+    const commercialFormats = ['product_demo', 'explainer', 'case_study', 'advertisement']
+    if (
+      salesDemoPatterns.test(content) ||
+      commercialFormats.includes(resolved) ||
+      profile?.intent === 'commercial'
+    ) {
+      return {
+        structure: 'instructional',
+        confidence: 0.85,
+        reason: 'Content suits commercial/demo format',
+      }
+    }
+
+    const newsPatterns = /\b(news|report|breaking|investigate|coverage|headline|anchor|correspondent|journalism|update)\b/i
+    if (newsPatterns.test(content) || resolved === 'news' || profile?.engine === 'news') {
+      return {
+        structure: 'mini_doc',
+        confidence: 0.85,
+        reason: 'Content suits news/reporting format',
+      }
+    }
+
+    const documentaryPatterns = /\b(documentary|real|authentic|behind-the-scenes|journey|explore|discover|reveal|interview|profile|portrait|day-in-the-life|story of|true story|podcast)\b/i
+    if (
+      documentaryPatterns.test(content) ||
+      resolved === 'documentary' ||
+      resolved === 'podcast' ||
+      resolved === 'interview' ||
+      profile?.engine === 'documentary'
+    ) {
+      return {
+        structure: 'mini_doc',
+        confidence: 0.85,
+        reason: 'Content suits documentary/podcast/mini-doc format',
+      }
     }
   }
 

@@ -88,6 +88,19 @@ export default async function AdminPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Link
+            href="/dashboard/settings/admin"
+            className="rounded-xl border border-cyan-500/40 p-5 bg-cyan-950/20 transition-colors hover:border-cyan-400/70 hover:bg-cyan-950/35"
+          >
+            <div className="flex items-center gap-2 font-semibold text-white mb-1.5">
+              <Wrench className="w-4 h-4 text-cyan-400" />
+              <h2>Model Intelligence Advisor, Rate Cards &amp; Finance</h2>
+            </div>
+            <p className="text-gray-300 text-sm">
+              Run automated model upgrade research, Golden Bake-Offs, live Vertex probes, canary routing, and LLM COGS analytics.
+            </p>
+          </Link>
+
+          <Link
             href="/admin/dol/credits"
             className="rounded-xl border border-gray-800 p-5 bg-gray-900/70 transition-colors hover:border-cyan-500/40 hover:bg-gray-900"
           >

@@ -11,6 +11,7 @@
  */
 
 import { generateVertexGeminiImage } from '@/lib/vertexai/vertexImageClient'
+import type { ResolvedVertexCredential } from '@/lib/byok/resolveProviderCredential'
 import {
   DEFAULT_IMAGE_QUALITY,
   geminiImageTierForQuality,
@@ -65,6 +66,9 @@ interface ImageGenerationOptions {
   deadlineAt?: number
   /** Parent generate-image abort — forwarded to Vertex so disconnect stops the model call. */
   signal?: AbortSignal
+  /** Optional server-resolved BYOK credential (isolated rate-limit bucket). */
+  byokCredential?: ResolvedVertexCredential
+  bucketNamespace?: string
 }
 
 const NO_PEOPLE_INSTRUCTION =
@@ -109,6 +113,8 @@ export async function generateImageWithGemini(
     ...(options.negativePrompt ? { negativePrompt: options.negativePrompt } : {}),
     ...(options.deadlineAt ? { deadlineAt: options.deadlineAt } : {}),
     ...(options.signal ? { signal: options.signal } : {}),
+    ...(options.byokCredential ? { byokCredential: options.byokCredential } : {}),
+    ...(options.bucketNamespace ? { bucketNamespace: options.bucketNamespace } : {}),
     modelTier,
     ...(hasReferenceImages
       ? {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  STUDIO_CASH_PER_CREDIT_USD,
   creditsForProviderUsd,
   klingQuotesFromParsed,
   omniQuotesFromParsed,
@@ -150,7 +151,7 @@ describe('quoteGenerationCredits', () => {
 
   it('enforces the Studio floor when an override would underbill', () => {
     const credits = creditsForProviderUsd(1.52, 1.8, 1, 10)
-    expect(credits).toBe(Math.ceil(1.52 / 0.008))
+    expect(credits).toBe(Math.ceil(Number((1.52 / STUDIO_CASH_PER_CREDIT_USD).toFixed(6))))
   })
 })
 

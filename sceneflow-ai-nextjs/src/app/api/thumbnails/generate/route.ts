@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import OpenAI from 'openai'
 import { GoogleAuth } from 'google-auth-library'
 import { CreditService } from '@/services/CreditService'
+import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { executeMeteredProviderCall } from '@/lib/credits/meteredGateway'
 import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 import { resolveVertexGeminiImageEndpoint } from '@/lib/vertexai/vertexImageClient'
 
@@ -9,7 +13,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 300
 
 export interface ThumbnailGenerationRequest {
-  userId: string
+  userId?: string
   ideas: Array<{
     id: string
     thumbnail_prompt: string
@@ -45,7 +49,16 @@ function placeholderDataUrl(): string {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const { userId, ideas }: ThumbnailGenerationRequest = await request.json()
+    const session = await getServerSession(authOptions)
+    const userId = session?.user?.id || session?.user?.email || null
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      )
+    }
+
+    const { ideas }: ThumbnailGenerationRequest = await request.json()
     const url = new URL(request.url)
     const byok = url.searchParams.get('byok') === '1'
     const forceOpenAI = url.searchParams.get('forceOpenAI') === '1'
@@ -53,7 +66,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const debug = url.searchParams.get('debug') === '1'
     const hq = url.searchParams.get('hq') === '1'
 
-    if (!userId || !ideas || !Array.isArray(ideas)) {
+    if (!ideas || !Array.isArray(ideas)) {
       return NextResponse.json({ success: false, error: 'Invalid request data' }, { status: 400 })
     }
 
@@ -158,8 +171,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const model = 'gpt-image-1'
     const primarySize = hq ? '1536x1024' : '1024x1024'
     const variant = hq ? 'hd_1536x1024' : 'standard_1024x1024'
-    const price = await CreditService.getPricing('openai', 'images', model, variant)
-    const estCredits = CreditService.usdToCredits(Number(price.price_usd))
+    let priceUsd = hq ? 0.08 : 0.04
+    try {
+      const price = await CreditService.getPricing('openai', 'images', model, variant)
+      priceUsd = Number(price.price_usd)
+    } catch {
+      // Fallback to baseline OpenAI image pricing if AIPricing seed is absent
+    }
+    const estCredits = Math.max(IMAGE_CREDITS.IMAGEN_4, CreditService.usdToCredits(priceUsd))
 
     // Strip any caller-provided size/aspect directives to avoid provider overrides
     const sanitizePrompt = (p: string): string => {
@@ -191,16 +210,22 @@ Requirements:
 Concept: ${cleaned}`
 
       try {
-        // Ensure sufficient credits
-        const hasCredits = await CreditService.ensureCredits(userId, estCredits)
-        if (!hasCredits) {
-          thumbnails[idea.id] = { success: false, error: 'INSUFFICIENT_CREDITS' }
-          continue
-        }
-
-        // If cached, charge and return cached
+        // If cached, atomically reserve & capture (no external provider call)
         if (cached) {
-          await CreditService.charge(userId, estCredits, 'ai_usage', null, { provider: 'openai', model, category: 'images', variant })
+          const hold = await CreditService.reserveCredits({
+            userId,
+            amount: estCredits,
+            reason: 'ai_usage',
+            provider: 'openai',
+            operation: 'thumbnail_cached',
+            meta: { provider: 'openai', model, category: 'images', variant, cached: true },
+          })
+          await CreditService.captureHold({
+            holdId: hold.holdId,
+            finalAmount: estCredits,
+            reason: 'ai_usage',
+            meta: { provider: 'openai', model, category: 'images', variant, cached: true },
+          })
           thumbnails[idea.id] = { success: true, imageUrl: cached }
           continue
         }
@@ -210,60 +235,68 @@ Concept: ${cleaned}`
           continue
         }
 
-        // Call OpenAI Images API
-        const resp = await fetch('https://api.openai.com/v1/images/generations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openaiKey}`
-          },
-          body: JSON.stringify({
-            model,
-            prompt: youtubePrompt,
-            size: primarySize,
-            quality: 'high',
-            n: 1
-          })
-        })
-        if (!resp.ok) {
-          let body = ''
-          try { body = await resp.text() } catch {}
-          thumbnails[idea.id] = { success: false, error: `OpenAI error: ${body || resp.status}` }
-          continue
-        }
-        const json = await resp.json().catch(() => ({} as any))
-        const b64 = json?.data?.[0]?.b64_json
-        if (!b64) {
-          thumbnails[idea.id] = { success: false, error: 'No image returned from OpenAI' }
-          continue
-        }
-        const dataUrl = `data:image/png;base64,${b64}`
-
-        // Charge and log usage
-        await CreditService.charge(userId, estCredits, 'ai_usage', json?.created?.toString?.() || null, { provider: 'openai', model, category: 'images', variant })
-        await CreditService.logUsage({
-          user_id: userId,
+        // Reserve credits before OpenAI call, record provider_api_runs, capture on success, release on error
+        const metered = await executeMeteredProviderCall({
+          userId,
           route: '/api/thumbnails/generate',
           provider: 'openai',
           model,
-          category: 'images',
-          request_id: json?.created?.toString?.() || null,
-          byok: false,
-          input_tokens: 0,
-          output_tokens: 0,
-          image_count: 1,
-          cogs_usd: Number(price.price_usd),
-          markup_multiplier: Number(process.env.MARKUP_MULTIPLIER ?? '4'),
-          charged_credits: estCredits,
-          status: 'success'
-        } as any)
+          operation: 'thumbnail_generate',
+          flatCredits: estCredits,
+          estimatedCogsUsd: priceUsd,
+          meta: { category: 'images', variant, ideaId: idea.id },
+          execute: async () => {
+            const resp = await fetch('https://api.openai.com/v1/images/generations', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${openaiKey}`
+              },
+              body: JSON.stringify({
+                model,
+                prompt: youtubePrompt,
+                size: primarySize,
+                quality: 'high',
+                n: 1
+              })
+            })
+            if (!resp.ok) {
+              let body = ''
+              try { body = await resp.text() } catch {}
+              throw new Error(`OpenAI error: ${body || resp.status}`)
+            }
+            const json = await resp.json().catch(() => ({} as any))
+            const b64 = json?.data?.[0]?.b64_json
+            if (!b64) {
+              throw new Error('No image returned from OpenAI')
+            }
+            return {
+              dataUrl: `data:image/png;base64,${b64}`,
+              requestId: json?.created?.toString?.() || undefined,
+            }
+          },
+          resolveSettlement: (res) => ({
+            finalCredits: estCredits,
+            estimatedCogsUsd: priceUsd,
+            providerRequestId: res.requestId,
+          }),
+        })
 
-        thumbnails[idea.id] = { success: true, imageUrl: dataUrl }
-        cache.set(cacheKey, dataUrl)
+        thumbnails[idea.id] = { success: true, imageUrl: metered.result.dataUrl }
+        cache.set(cacheKey, metered.result.dataUrl)
         await new Promise(r => setTimeout(r, 80))
       } catch (err: any) {
-        thumbnails[idea.id] = { success: false, error: err?.message || 'Generation failed' }
+        const msg = err?.message || 'Generation failed'
+        thumbnails[idea.id] = { success: false, error: msg }
       }
+    }
+
+    const entries = Object.values(thumbnails)
+    if (entries.length > 0 && entries.every((e) => !e.success && e.error === 'INSUFFICIENT_CREDITS')) {
+      return NextResponse.json(
+        { success: false, error: 'Insufficient credits', code: 'INSUFFICIENT_CREDITS', thumbnails },
+        { status: 402 }
+      )
     }
 
     return NextResponse.json({ success: true, thumbnails })

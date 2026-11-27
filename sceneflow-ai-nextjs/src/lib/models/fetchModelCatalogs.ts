@@ -105,6 +105,84 @@ async function fetchVertex(): Promise<ModelCatalogSnapshot> {
   }
 }
 
+export interface RichCatalogModel {
+  /** Full Gateway ID (e.g. 'google/gemini-3.8-flash' or 'anthropic/claude-sonnet-4.6') */
+  id: string
+  /** Normalized short ID (e.g. 'gemini-3.8-flash') */
+  shortId: string
+  provider: string
+  contextWindow?: number
+  maxOutputTokens?: number
+  /** USD per 1M input tokens */
+  inputPer1MUsd?: number
+  /** USD per 1M cached input tokens */
+  cachedInputPer1MUsd?: number
+  /** USD per 1M output tokens */
+  outputPer1MUsd?: number
+  tags?: string[]
+}
+
+function parsePerMillionPrice(raw: unknown): number | undefined {
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n < 0) return undefined
+  // Gateway pricing fields may be USD-per-token (e.g. 0.0000003) or USD-per-1M-tokens.
+  // Any positive number < 0.01 is per-token; multiply by 1,000,000.
+  if (n > 0 && n < 0.01) return Number((n * 1_000_000).toFixed(4))
+  return Number(n.toFixed(4))
+}
+
+/**
+ * Parse rich model metadata (pricing + context window) from Vercel AI Gateway `/v1/models`.
+ */
+export function parseRichGatewayModels(payload: unknown): RichCatalogModel[] {
+  const list = Array.isArray(payload)
+    ? payload
+    : payload && typeof payload === 'object' && Array.isArray((payload as any).data)
+      ? (payload as any).data
+      : []
+
+  const results: RichCatalogModel[] = []
+  for (const item of list) {
+    if (!item || typeof item !== 'object') continue
+    const rawId = typeof item.id === 'string' ? item.id.trim() : ''
+    if (!rawId) continue
+    const slash = rawId.indexOf('/')
+    const provider = slash > 0 ? rawId.slice(0, slash).toLowerCase() : String(item.owned_by || 'unknown').toLowerCase()
+    const shortId = slash > 0 ? rawId.slice(slash + 1) : rawId
+    const pricing = (item.pricing && typeof item.pricing === 'object' ? item.pricing : {}) as Record<string, unknown>
+
+    results.push({
+      id: rawId,
+      shortId,
+      provider,
+      contextWindow: Number.isFinite(Number(item.context_window)) ? Number(item.context_window) : undefined,
+      maxOutputTokens: Number.isFinite(Number(item.max_tokens)) ? Number(item.max_tokens) : undefined,
+      inputPer1MUsd: parsePerMillionPrice(pricing.input ?? pricing.prompt),
+      cachedInputPer1MUsd: parsePerMillionPrice(pricing.input_cache_read ?? pricing.cached_input),
+      outputPer1MUsd: parsePerMillionPrice(pricing.output ?? pricing.completion),
+      tags: Array.isArray(item.tags) ? item.tags.map(String) : undefined,
+    })
+  }
+  return results
+}
+
+export async function fetchRichGatewayCatalog(): Promise<{
+  status: 'ok' | 'unavailable'
+  error?: string
+  models: RichCatalogModel[]
+}> {
+  try {
+    const payload = await readJson('https://ai-gateway.vercel.sh/v1/models')
+    return { status: 'ok', models: parseRichGatewayModels(payload) }
+  } catch (error) {
+    return {
+      status: 'unavailable',
+      error: error instanceof Error ? error.message : 'Rich Gateway catalog fetch failed',
+      models: [],
+    }
+  }
+}
+
 export async function fetchModelCatalogs(): Promise<ModelCatalogSnapshot[]> {
   return Promise.all([fetchGateway(), fetchGeminiDeveloper(), fetchVertex()])
 }

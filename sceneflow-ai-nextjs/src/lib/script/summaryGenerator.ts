@@ -22,9 +22,15 @@ Return ONLY the summary text (no JSON, no formatting, no explanations).`
 
   try {
     console.log('[Summary Gen] Calling Vertex AI Gemini...')
-    const text = await generateText(prompt, { })
+    const result = await generateText(prompt, {
+      temperature: 0.3,
+      thinkingLevel: 'minimal',
+      responseMimeType: 'text/plain',
+      maxOutputTokens: 512,
+      surface: 'script_summary',
+    })
     
-    return text?.trim() || `${scenes.length} scenes completed. The story continues.`
+    return result.text?.trim() || `${scenes.length} scenes completed. The story continues.`
   } catch (error) {
     console.warn('[Summary Gen] Failed to generate summary:', error)
     // Fallback: return a simple summary based on scene count

@@ -4,6 +4,7 @@
  */
 
 import { generateImageWithGemini as generateImageWithVertexGemini } from '@/lib/gemini/imageClient.vertex'
+import type { ResolvedVertexCredential } from '@/lib/byok/resolveProviderCredential'
 
 interface ReferenceImage {
   referenceId: number
@@ -27,6 +28,9 @@ interface ImageGenerationOptions {
   deadlineAt?: number
   /** Parent generate-image abort — forwarded to Vertex. */
   signal?: AbortSignal
+  /** Optional server-resolved BYOK credential (isolated rate-limit bucket). */
+  byokCredential?: ResolvedVertexCredential
+  bucketNamespace?: string
 }
 
 /**

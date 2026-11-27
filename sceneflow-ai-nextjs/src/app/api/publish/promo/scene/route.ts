@@ -77,6 +77,9 @@ import {
   removePromoSceneFromScenes,
   upsertPromoSceneInScenes,
 } from '@/lib/publish/buildPromoScene'
+import { CreditService } from '@/services/CreditService'
+import { AUDIO_CREDITS, TEXT_CREDITS } from '@/lib/credits/creditCosts'
+import { executeMeteredProviderCall } from '@/lib/credits/meteredGateway'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
@@ -618,8 +621,23 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'plan') {
-      const plan = await planPromoTrailerWithModel(planInput)
-      const analysis = await reviewPlan(plan.beatPlan)
+      const meteredPlan = await executeMeteredProviderCall({
+        userId: ownerUserId,
+        projectId,
+        route: '/api/publish/promo/scene',
+        provider: 'vertex',
+        model: getGeminiTextModel('flash'),
+        operation: 'promo_plan',
+        flatCredits: TEXT_CREDITS.GEMINI_FLASH,
+        estimatedCogsUsd: 0.02,
+        meta: { action: 'plan', targetDurationSec },
+        execute: async () => {
+          const plan = await planPromoTrailerWithModel(planInput)
+          const analysis = await reviewPlan(plan.beatPlan)
+          return { plan, analysis }
+        },
+      })
+      const { plan, analysis } = meteredPlan.result
       const savedMetadata = await commitPromoMetadataMutation(projectId, (latestMeta) =>
         mergePromoPublishing(
           latestMeta,
@@ -647,6 +665,7 @@ export async function POST(request: NextRequest) {
         source: plan.source,
         analysis,
         publishing: readPublishingState(savedMetadata),
+        creditsCharged: meteredPlan.creditsCharged,
       })
     }
 
@@ -893,34 +912,51 @@ export async function POST(request: NextRequest) {
       const shotInputs = buildNarrationPlanningInputsFromBeats(scene.beats, {
         promoBeatPlan: plan.beatPlan,
       })
-      const plannedCues = await planShotAlignedNarrationCuesWithModel({
-        title: project.title || 'Untitled',
-        logline: typeof project.description === 'string' ? project.description : undefined,
-        genre: typeof project.genre === 'string' ? project.genre : undefined,
-        sceneHeading: scene.heading,
-        isPromo: true,
-        audienceText,
-        campaignStrategyText: campaignStrategyText || undefined,
-        directorNotes:
-          typeof body.directorNotes === 'string' ? body.directorNotes.trim() : undefined,
-        language,
-        beats: scene.beats,
-        shots: shotInputs,
-        speakerType: body.speakerType === 'character' ? 'character' : 'narrator',
-        characterId: body.characterId,
-        characterName: body.characterName,
-        allowOverDialogue: false,
-      })
+      const narrationCreditCost =
+        TEXT_CREDITS.GEMINI_FLASH +
+        Math.max(1, languagesToGenerate.length) * AUDIO_CREDITS.ELEVENLABS_SFX
+      const meteredNarration = await executeMeteredProviderCall({
+        userId: ownerUserId,
+        projectId,
+        route: '/api/publish/promo/scene',
+        provider: 'vertex',
+        model: DEFAULT_GEMINI_TTS_MODEL,
+        operation: 'promo_narration',
+        flatCredits: narrationCreditCost,
+        estimatedCogsUsd: Number((0.02 + Math.max(1, languagesToGenerate.length) * 0.04).toFixed(3)),
+        meta: { action: 'narration', languages: languagesToGenerate },
+        execute: async () => {
+          const plannedCues = await planShotAlignedNarrationCuesWithModel({
+            title: project.title || 'Untitled',
+            logline: typeof project.description === 'string' ? project.description : undefined,
+            genre: typeof project.genre === 'string' ? project.genre : undefined,
+            sceneHeading: scene.heading,
+            isPromo: true,
+            audienceText,
+            campaignStrategyText: campaignStrategyText || undefined,
+            directorNotes:
+              typeof body.directorNotes === 'string' ? body.directorNotes.trim() : undefined,
+            language,
+            beats: scene.beats,
+            shots: shotInputs,
+            speakerType: body.speakerType === 'character' ? 'character' : 'narrator',
+            characterId: body.characterId,
+            characterName: body.characterName,
+            allowOverDialogue: false,
+          })
 
-      const synthesizedCues = await synthesizeCuesForLanguages({
-        cues: plannedCues,
-        languages: languagesToGenerate,
-        beats: scene.beats,
-        characters,
-        narrationVoice,
-        contextSummary: `${project.title || 'Untitled'}: ${campaignStrategyText || ''}`.trim(),
-        forceRegenerate: true,
+          return await synthesizeCuesForLanguages({
+            cues: plannedCues,
+            languages: languagesToGenerate,
+            beats: scene.beats,
+            characters,
+            narrationVoice,
+            contextSummary: `${project.title || 'Untitled'}: ${campaignStrategyText || ''}`.trim(),
+            forceRegenerate: true,
+          })
+        },
       })
+      const synthesizedCues = meteredNarration.result
 
       scene.sceneNarrationCues = synthesizedCues
       scene.narrationCuesAuthoritative = true
@@ -999,6 +1035,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'music') {
+      const musicCredits = AUDIO_CREDITS.MUSIC_TRACK
+      const canAffordMusic = await CreditService.ensureCredits(ownerUserId, musicCredits)
+      if (!canAffordMusic) {
+        return NextResponse.json(
+          {
+            error: 'Insufficient credits',
+            code: 'INSUFFICIENT_CREDITS',
+            required: musicCredits,
+          },
+          { status: 402 }
+        )
+      }
+
       const musicPrompt =
         typeof promoScene.music === 'string' && promoScene.music.trim()
           ? promoScene.music
@@ -1079,6 +1128,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
   } catch (error) {
+    if (error instanceof Error && error.message === 'INSUFFICIENT_CREDITS') {
+      return NextResponse.json(
+        { error: 'Insufficient credits', code: 'INSUFFICIENT_CREDITS' },
+        { status: 402 }
+      )
+    }
     console.error('[Promo Scene] Error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Promo scene failed' },

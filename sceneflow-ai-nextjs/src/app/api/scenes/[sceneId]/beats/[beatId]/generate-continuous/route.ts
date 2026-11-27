@@ -23,6 +23,9 @@ import {
 } from '@/lib/video/generateSegmentVideo'
 import { isVertexContentPolicyError } from '@/lib/generation/contentPolicy'
 import { evaluateGenerationErrorForApi } from '@/lib/errors/generationErrorServerEvaluator'
+import { CreditService } from '@/services/CreditService'
+import { resolveGenerationQuote } from '@/lib/credits/resolveGenerationQuote'
+import { executeMeteredProviderCall } from '@/lib/credits/meteredGateway'
 
 export const maxDuration = 300
 export const runtime = 'nodejs'
@@ -146,6 +149,34 @@ export async function POST(
         ? (matchedScene as { imageUrl: string }).imageUrl.trim()
         : undefined
 
+    // Pre-check total chain credit requirement before starting part 0
+    let estimatedChainCredits = 0
+    for (let i = 0; i < chainSegments.length; i++) {
+      const seg = chainSegments[i]
+      const segDuration = Math.max(3, Math.round(seg.endTime - seg.startTime) || 8)
+      const q = await resolveGenerationQuote({
+        kind: 'clip',
+        provider: chainVideoProvider === 'kling' ? 'kling' : 'google_vertex',
+        resolution: resolution || (qualityTier === 'premium' ? '1080p' : '720p'),
+        durationSeconds: segDuration,
+        audio: true,
+        referenceImageCount: i === 0 && resolvedRefs.urlList.length > 0 ? resolvedRefs.labeledRefs.length : 0,
+      })
+      estimatedChainCredits += q.credits
+    }
+    const canAffordChain = await CreditService.ensureCredits(dbUserId, estimatedChainCredits)
+    if (!canAffordChain) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Insufficient credits',
+          code: 'INSUFFICIENT_CREDITS',
+          required: estimatedChainCredits,
+        },
+        { status: 402 }
+      )
+    }
+
     const parts: Array<{
       segmentId: string
       partIndex: number
@@ -154,8 +185,12 @@ export async function POST(
       veoVideoRefExpiry?: string
       durationProbed?: number | null
       method: string
+      generationProvider?: string
+      fallbackModelFamily?: string
+      wasPolicyFallback?: boolean
     }> = []
 
+    let totalCreditsCharged = 0
     let previousVeoRef: string | undefined
     let previousAssetUrl: string | undefined
     let previousLastFrameUrl: string | undefined
@@ -185,51 +220,75 @@ export async function POST(
             undefined
           : undefined
 
-      const result = await generateSegmentVideoCore({
-        segmentId: segment.segmentId,
+      const segmentDuration = Math.max(3, Math.round(segment.endTime - segment.startTime) || 8)
+      const segmentResolution = resolution || (qualityTier === 'premium' ? '1080p' : '720p')
+      const meteredPart = await executeMeteredProviderCall({
+        userId: dbUserId,
         projectId,
         sceneId,
-        userId: dbUserId,
-        prompt,
-        negativePrompt: compiled.negativePrompt,
-        genType: method === 'T2V' ? 'T2V' : 'I2V',
-        generationMethod: method,
-        startFrameUrl,
-        referenceImages:
-          method === 'REF'
-            ? resolvedRefs.labeledRefs.map((ref) => ({
-                url: ref.url,
-                type: ref.type,
-                name: ref.name,
-                role: ref.role,
-                refRole: ref.refRole,
-                characterName: ref.characterName,
-                propName: ref.propName,
-                locationName: ref.locationName,
-                promptToken: ref.promptToken,
-                subjectOrdinal: ref.subjectOrdinal,
-                wardrobeDescription: ref.wardrobeDescription,
-                identityTraits: ref.identityTraits,
-              }))
-            : undefined,
-        previousSegmentVeoRef: previousVeoRef,
-        previousSegmentAssetUrl: previousAssetUrl,
-        previousSegmentLastFrameUrl: previousLastFrameUrl,
-        sceneImageUrl,
-        segmentIndex: segment.sequenceIndex,
-        totalSegments: allSegments.length,
-        duration: Math.round(segment.endTime - segment.startTime),
-        aspectRatio: aspectRatio || '16:9',
-        resolution: resolution || (qualityTier === 'premium' ? '1080p' : '720p'),
-        qualityTier,
-        guidePrompt,
-        requireVeoRefForExt: i > 0 && method === 'EXT' && chainVideoProvider === 'vertex',
-        videoProvider: chainVideoProvider,
-        existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
-        existingStemSourceHash: segment.stemSeparation?.sourceHash,
-        existingStemStatus: segment.stemSeparation?.status,
-        existingStemJobId: segment.stemSeparation?.jobId,
+        segmentId: segment.segmentId,
+        route: '/api/scenes/[sceneId]/beats/[beatId]/generate-continuous',
+        provider: chainVideoProvider === 'kling' ? 'kling' : 'vertex',
+        model: chainVideoProvider === 'kling' ? 'kling-v3-omni' : 'gemini-omni-1.2-flash',
+        operation: 'continuous_video_segment',
+        quoteInput: {
+          kind: 'clip',
+          provider: chainVideoProvider === 'kling' ? 'kling' : 'google_vertex',
+          resolution: segmentResolution,
+          durationSeconds: segmentDuration,
+          audio: true,
+          referenceImageCount: method === 'REF' ? resolvedRefs.labeledRefs.length : 0,
+        },
+        meta: { beatId, partIndex: i, method },
+        execute: () =>
+          generateSegmentVideoCore({
+            segmentId: segment.segmentId,
+            projectId,
+            sceneId,
+            userId: dbUserId,
+            prompt,
+            negativePrompt: compiled.negativePrompt,
+            genType: method === 'T2V' ? 'T2V' : 'I2V',
+            generationMethod: method,
+            startFrameUrl,
+            referenceImages:
+              method === 'REF'
+                ? resolvedRefs.labeledRefs.map((ref) => ({
+                    url: ref.url,
+                    type: ref.type,
+                    name: ref.name,
+                    role: ref.role,
+                    refRole: ref.refRole,
+                    characterName: ref.characterName,
+                    propName: ref.propName,
+                    locationName: ref.locationName,
+                    promptToken: ref.promptToken,
+                    subjectOrdinal: ref.subjectOrdinal,
+                    wardrobeDescription: ref.wardrobeDescription,
+                    identityTraits: ref.identityTraits,
+                  }))
+                : undefined,
+            previousSegmentVeoRef: previousVeoRef,
+            previousSegmentAssetUrl: previousAssetUrl,
+            previousSegmentLastFrameUrl: previousLastFrameUrl,
+            sceneImageUrl,
+            segmentIndex: segment.sequenceIndex,
+            totalSegments: allSegments.length,
+            duration: segmentDuration,
+            aspectRatio: aspectRatio || '16:9',
+            resolution: segmentResolution,
+            qualityTier,
+            guidePrompt,
+            requireVeoRefForExt: i > 0 && method === 'EXT' && chainVideoProvider === 'vertex',
+            videoProvider: chainVideoProvider,
+            existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
+            existingStemSourceHash: segment.stemSeparation?.sourceHash,
+            existingStemStatus: segment.stemSeparation?.status,
+            existingStemJobId: segment.stemSeparation?.jobId,
+          }),
       })
+      const result = meteredPart.result
+      totalCreditsCharged += meteredPart.creditsCharged
 
       parts.push({
         segmentId: segment.segmentId,
@@ -262,8 +321,19 @@ export async function POST(
       parts,
       combinedAssetUrl: lastPart?.assetUrl,
       extensionCount: Math.max(0, parts.length - 1),
+      creditsCharged: totalCreditsCharged,
     })
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'INSUFFICIENT_CREDITS') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Insufficient credits',
+          code: 'INSUFFICIENT_CREDITS',
+        },
+        { status: 402 }
+      )
+    }
     if (error instanceof SegmentVideoRateLimitError) {
       return NextResponse.json(
         {

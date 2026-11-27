@@ -427,10 +427,55 @@ export function buildExpressBeatRefPayload(
   return payload
 }
 
+export type ExpressOptionsWithOverrides = ExpressOptions & {
+  concurrencyOverride?: number
+  failFastOnRateLimit?: boolean
+}
+
+function resolveExpressConcurrencyOverride(options: ExpressOptionsWithOverrides): number | undefined {
+  const raw = options.concurrencyOverride
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return undefined
+  return Math.max(1, Math.min(6, Math.floor(raw)))
+}
+
+function resolveExpressFailFastOnRateLimit(options: ExpressOptionsWithOverrides): boolean | undefined {
+  if (typeof options.failFastOnRateLimit === 'boolean') {
+    return options.failFastOnRateLimit
+  }
+  const concurrency = resolveExpressConcurrencyOverride(options)
+  if (concurrency === 1) return false
+  return undefined
+}
+
+function extractRetryAfterSecFromError(err: unknown): number | undefined {
+  if (err && typeof err === 'object') {
+    const rec = err as { retryAfterSec?: number; retryAfterMs?: number; payload?: { retryAfterSec?: number; retryAfterSeconds?: number } }
+    if (typeof rec.retryAfterSec === 'number' && Number.isFinite(rec.retryAfterSec) && rec.retryAfterSec > 0) {
+      return Math.ceil(rec.retryAfterSec)
+    }
+    if (typeof rec.retryAfterMs === 'number' && Number.isFinite(rec.retryAfterMs) && rec.retryAfterMs > 0) {
+      return Math.ceil(rec.retryAfterMs / 1000)
+    }
+    if (typeof rec.payload?.retryAfterSec === 'number' && rec.payload.retryAfterSec > 0) {
+      return Math.ceil(rec.payload.retryAfterSec)
+    }
+    if (typeof rec.payload?.retryAfterSeconds === 'number' && rec.payload.retryAfterSeconds > 0) {
+      return Math.ceil(rec.payload.retryAfterSeconds)
+    }
+  }
+  const msg = err instanceof Error ? err.message : String(err ?? '')
+  const match = msg.match(/(\d+)\s*(?:seconds?|secs?)/i)
+  if (match) {
+    const sec = parseInt(match[1], 10)
+    if (Number.isFinite(sec) && sec > 0) return sec
+  }
+  return undefined
+}
+
 export interface RunExpressParams {
   /** Already-loaded project. The orchestrator mutates `metadata.visionPhase.script` in-memory. */
   project: any
-  options: ExpressOptions
+  options: ExpressOptionsWithOverrides
   baseUrl: string
   authCookie?: string
   emit: ExpressEmit
@@ -646,24 +691,47 @@ function isRateLimitError(err: unknown): boolean {
 
 function recordRateLimitedFailure(
   failures: ExpressRateLimitedFailure[],
-  entry: ExpressRateLimitedFailure
+  entry: ExpressRateLimitedFailure & {
+    frameKey?: string
+    message?: string
+    retryAfterSec?: number
+  }
 ): void {
-  failures.push(entry)
+  failures.push({
+    ...entry,
+    ...(entry.error && !entry.message ? { message: entry.error } : {}),
+  } as ExpressRateLimitedFailure)
+}
+
+function resolveBeatFrameKey(
+  scene: any,
+  sceneIndex: number,
+  beatIdx: number,
+  frameRole: 'start' | 'action-start' | 'end'
+): string {
+  const beat = getSceneBeats(scene)[beatIdx]
+  if (beat?.beatId) {
+    return beatFrameSlotKey(beat.beatId, frameRole)
+  }
+  return expressFrameNodeKey(sceneIndex, { beatIndex: beatIdx, frameRole })
 }
 
 function buildAdaptiveBeatPoolOptions(
   emit: ExpressEmit,
-  _options: ExpressOptions,
+  options: ExpressOptionsWithOverrides,
   signal?: AbortSignal,
   onBeatFailed?: AdaptiveBeatPoolOptions['onBeatFailed']
 ): AdaptiveBeatPoolOptions {
+  const concurrencyOverride = resolveExpressConcurrencyOverride(options)
+  const effectiveConcurrency = concurrencyOverride ?? FRAME_AGENT_STILL_CONCURRENCY
   return {
-    initialConcurrency: FRAME_AGENT_STILL_CONCURRENCY,
-    maxConcurrency: FRAME_AGENT_STILL_CONCURRENCY,
+    initialConcurrency: effectiveConcurrency,
+    maxConcurrency: effectiveConcurrency,
     minConcurrency: 1,
     maxAttempts: 1,
     postShotDelayMs: getSceneExpressPostShotDelayMs(),
-    initialLaunchStaggerMs: getSceneExpressInitialStaggerMs(),
+    initialLaunchStaggerMs:
+      effectiveConcurrency === 1 ? 0 : getSceneExpressInitialStaggerMs(),
     isRetryable: isExpressBeatPoolRetryable,
     isCanaryAbort: isExpressImageCanaryAbortError,
     onConcurrencyChange: (max, reason) => {
@@ -762,6 +830,9 @@ async function emitOrphanBeatFailures(
         phase: 'image',
         beatIndex: beatIdx,
         frameRole,
+        frameKey: resolveBeatFrameKey(ctx.scene, sceneIndex, beatIdx, frameRole),
+        message: lastError,
+        retryAfterSec: extractRetryAfterSecFromError(err),
         error: lastError,
       })
     }
@@ -1031,13 +1102,17 @@ function sceneNeedsBeatImages(scene: any, options: ExpressOptions): boolean {
   }) > 0
 }
 
-function stillGenerationFields(options: ExpressOptions): Record<string, unknown> {
-  return options.stillGenerationMode
-    ? {
-        stillGenerationMode: options.stillGenerationMode,
-        stillPolicyMode: options.stillGenerationMode,
-      }
-    : {}
+function stillGenerationFields(options: ExpressOptionsWithOverrides): Record<string, unknown> {
+  const failFast = resolveExpressFailFastOnRateLimit(options)
+  return {
+    ...(options.stillGenerationMode
+      ? {
+          stillGenerationMode: options.stillGenerationMode,
+          stillPolicyMode: options.stillGenerationMode,
+        }
+      : {}),
+    ...(typeof failFast === 'boolean' ? { failFastOnRateLimit: failFast } : {}),
+  }
 }
 
 function logImageLaneAdmission(
@@ -1199,11 +1274,12 @@ async function generateSingleBeatImage(
         : {}),
       modelTier: imageParams.modelTier,
       animaticDraft: imageParams.animaticDraft,
-      skipLikenessValidation: true,
+      skipLikenessValidation:
+        resolveExpressFailFastOnRateLimit(options) === false ? false : true,
       ...stillGenerationFields(options),
       ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
       ...(ctx.signal ? { signal: ctx.signal } : {}),
-    })
+    } as Parameters<typeof generateSceneImage>[0])
   }, ctx.signal)
   await persistBeatFrame(scene, beatIdx, result, imageParams.storyboardQuality)
   safeEmit(emit, {
@@ -1299,11 +1375,14 @@ async function generateSingleBeatActionStartImage(
       useAIPrompt: false,
       modelTier: imageParams.modelTier,
       animaticDraft: imageParams.animaticDraft,
-      skipLikenessValidation: imageParams.skipLikenessValidation,
+      skipLikenessValidation:
+        resolveExpressFailFastOnRateLimit(options) === false
+          ? false
+          : imageParams.skipLikenessValidation,
       ...stillGenerationFields(options),
       ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
       ...(ctx.signal ? { signal: ctx.signal } : {}),
-    })
+    } as Parameters<typeof generateSceneImage>[0])
   }, ctx.signal)
 
   await persistBeatActionStartFrame(scene, beatIdx, result, imageParams.storyboardQuality)
@@ -1408,6 +1487,9 @@ async function runSupplementalActionStartFrames(
           phase: 'image',
           beatIndex: beatIdx,
           frameRole: 'action-start',
+          frameKey: resolveBeatFrameKey(ctx.scene, sceneIndex, beatIdx, 'action-start'),
+          message: failure.error,
+          retryAfterSec: extractRetryAfterSecFromError(err),
           error: failure.error,
         })
       }
@@ -1503,11 +1585,14 @@ async function generateSingleBeatEndImage(
       useAIPrompt: false,
       modelTier: imageParams.modelTier,
       animaticDraft: imageParams.animaticDraft,
-      skipLikenessValidation: imageParams.skipLikenessValidation,
+      skipLikenessValidation:
+        resolveExpressFailFastOnRateLimit(options) === false
+          ? false
+          : imageParams.skipLikenessValidation,
       ...stillGenerationFields(options),
       ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
       ...(ctx.signal ? { signal: ctx.signal } : {}),
-    })
+    } as Parameters<typeof generateSceneImage>[0])
   }, ctx.signal)
 
   await persistBeatEndFrame(scene, beatIdx, result, imageParams.storyboardQuality)
@@ -1620,6 +1705,9 @@ async function runSupplementalEndFrames(
           phase: 'image',
           beatIndex: beatIdx,
           frameRole: 'end',
+          frameKey: resolveBeatFrameKey(ctx.scene, sceneIndex, beatIdx, 'end'),
+          message: failure.error,
+          retryAfterSec: extractRetryAfterSecFromError(err),
           error: failure.error,
         })
       }
@@ -1709,6 +1797,9 @@ async function runBeatImages(
             phase: 'image',
             beatIndex: beatIdx,
             frameRole: 'start',
+            frameKey: resolveBeatFrameKey(ctx.scene, sceneIndex, beatIdx, 'start'),
+            message: failure.error,
+            retryAfterSec: extractRetryAfterSecFromError(err),
             error: failure.error,
           })
         }
@@ -2915,9 +3006,11 @@ export async function runExpress(
   const storySpine = summarizeScenesForLookbook(scenes)
 
   const postShotDelayMs = getSceneExpressPostShotDelayMs()
+  const imageLaneConcurrency =
+    resolveExpressConcurrencyOverride(options) ?? FRAME_AGENT_STILL_CONCURRENCY
   const trafficCop = new ExpressTrafficCop({
     laneMax: {
-      image: FRAME_AGENT_STILL_CONCURRENCY,
+      image: imageLaneConcurrency,
     },
     ...(postShotDelayMs > 0
       ? {

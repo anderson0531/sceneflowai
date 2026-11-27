@@ -10,12 +10,13 @@ export interface CreditLedgerAttributes {
   reason: 'ai_usage' | 'refund' | 'purchase' | 'adjustment' | 'hold_release' | 'subscription_allocation' | 'addon_purchase' | 'subscription_expiry' | 'byok_platform_fee'
   credit_type: 'subscription' | 'addon' | null // Track which type of credits were used
   ref: string | null
+  idempotency_key: string | null
   meta: any | null
   created_at: Date
   updated_at: Date
 }
 
-export interface CreditLedgerCreationAttributes extends Optional<CreditLedgerAttributes, 'id' | 'created_at' | 'updated_at' | 'ref' | 'meta' | 'credit_type'> {}
+export interface CreditLedgerCreationAttributes extends Optional<CreditLedgerAttributes, 'id' | 'created_at' | 'updated_at' | 'ref' | 'idempotency_key' | 'meta' | 'credit_type'> {}
 
 export class CreditLedger extends Model<CreditLedgerAttributes, CreditLedgerCreationAttributes> implements CreditLedgerAttributes {
   declare id: string
@@ -26,6 +27,7 @@ export class CreditLedger extends Model<CreditLedgerAttributes, CreditLedgerCrea
   declare reason: 'ai_usage' | 'refund' | 'purchase' | 'adjustment' | 'hold_release' | 'subscription_allocation' | 'addon_purchase' | 'subscription_expiry' | 'byok_platform_fee'
   declare credit_type: 'subscription' | 'addon' | null
   declare ref: string | null
+  declare idempotency_key: string | null
   declare meta: any | null
   declare created_at: Date
   declare updated_at: Date
@@ -69,6 +71,11 @@ CreditLedger.init(
     ref: {
       type: DataTypes.STRING(255),
       allowNull: true,
+    },
+    idempotency_key: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: null,
     },
     meta: {
       type: DataTypes.JSONB,

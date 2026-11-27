@@ -54,8 +54,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const fallbackExpiry = new Date(Date.now() + 24 * 24 * 60 * 60 * 1000).toISOString()
-    if (isDatabaseUnavailableError(error)) {
+    if (
+      process.env.ALLOW_DEMO_CREDIT_FALLBACK === 'true' &&
+      process.env.NODE_ENV !== 'production'
+    ) {
+      const fallbackExpiry = new Date(Date.now() + 24 * 24 * 60 * 60 * 1000).toISOString()
       return NextResponse.json({
         subscription_credits: 18450,
         subscription_expires_at: fallbackExpiry,
@@ -68,15 +71,12 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({
-      subscription_credits: 18450,
-      subscription_expires_at: fallbackExpiry,
-      addon_credits: 5000,
-      total_credits: 23450,
-      subscription_credits_monthly: 25000,
-      subscription_plan: 'studio_pro',
-      subscription_expires: fallbackExpiry,
-      demoFallback: true,
-    })
+    return NextResponse.json(
+      {
+        error: 'Credits service temporarily unavailable',
+        code: isDatabaseUnavailableError(error) ? 'DATABASE_UNAVAILABLE' : 'CREDITS_UNAVAILABLE',
+      },
+      { status: 503 }
+    )
   }
 }

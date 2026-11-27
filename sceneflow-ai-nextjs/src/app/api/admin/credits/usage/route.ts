@@ -1,175 +1,190 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'
+import { Op } from 'sequelize'
+import { requireAdminSession } from '@/lib/admin/requireAdmin'
+import { AIUsage } from '@/models'
 
-// In-memory storage for demo (would be replaced with database in production)
-// This tracks API calls made to Google and ElevenLabs
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
-interface UsageRecord {
-  timestamp: Date;
-  provider: 'google' | 'elevenlabs';
-  service: string;
-  count: number;
-  metadata?: Record<string, unknown>;
+function periodToDays(period: string): number {
+  if (period === 'today') return 1
+  if (period === 'month') return 30
+  return 7
 }
 
-// Mock usage data - in production this would come from a database
-const usageRecords: UsageRecord[] = [];
-
-// Cost estimates per operation (in USD)
-const COST_ESTIMATES: Record<string, Record<string, number>> = {
-  google: {
-    'gemini-text': 0.00001,      // per token (roughly $0.01 per 1K tokens)
-    'imagen-3': 0.04,            // per image
-    'veo-2': 0.10,               // per second of video
-  },
-  elevenlabs: {
-    'voice-synthesis': 0.0003,   // per character ($0.30 per 1K chars)
-    'sound-effects': 0.10,       // per generation
-  }
-};
-
-// Helper to generate mock data for the selected period
-function generateMockData(period: string) {
-  const now = new Date();
-  let days = 1;
-  
-  switch (period) {
-    case 'today':
-      days = 1;
-      break;
-    case 'week':
-      days = 7;
-      break;
-    case 'month':
-      days = 30;
-      break;
-  }
-
-  const multiplier = period === 'today' ? 1 : period === 'week' ? 7 : 30;
-  
-  // Generate realistic-looking usage data
-  const geminiTokens = Math.floor(Math.random() * 500000 * multiplier) + 100000 * multiplier;
-  const imagenImages = Math.floor(Math.random() * 200 * multiplier) + 50 * multiplier;
-  const veoSeconds = Math.floor(Math.random() * 100 * multiplier) + 20 * multiplier;
-  const voiceChars = Math.floor(Math.random() * 50000 * multiplier) + 10000 * multiplier;
-  const sfxCount = Math.floor(Math.random() * 50 * multiplier) + 10 * multiplier;
-
-  const googleCost = 
-    (geminiTokens * COST_ESTIMATES.google['gemini-text']) +
-    (imagenImages * COST_ESTIMATES.google['imagen-3']) +
-    (veoSeconds * COST_ESTIMATES.google['veo-2']);
-
-  const elevenlabsCost =
-    (voiceChars * COST_ESTIMATES.elevenlabs['voice-synthesis']) +
-    (sfxCount * COST_ESTIMATES.elevenlabs['sound-effects']);
-
-  const breakdown = [
-    { 
-      provider: 'Google', 
-      service: 'Gemini Text Generation', 
-      count: geminiTokens, 
-      estimatedCost: geminiTokens * COST_ESTIMATES.google['gemini-text'],
-      lastUsed: '2 min ago' 
-    },
-    { 
-      provider: 'Google', 
-      service: 'Imagen 3 (Images)', 
-      count: imagenImages, 
-      estimatedCost: imagenImages * COST_ESTIMATES.google['imagen-3'],
-      lastUsed: '5 min ago' 
-    },
-    { 
-      provider: 'Google', 
-      service: 'Veo 2 (Video)', 
-      count: veoSeconds, 
-      estimatedCost: veoSeconds * COST_ESTIMATES.google['veo-2'],
-      lastUsed: '1 hour ago' 
-    },
-    { 
-      provider: 'ElevenLabs', 
-      service: 'Voice Synthesis', 
-      count: voiceChars, 
-      estimatedCost: voiceChars * COST_ESTIMATES.elevenlabs['voice-synthesis'],
-      lastUsed: '10 min ago' 
-    },
-    { 
-      provider: 'ElevenLabs', 
-      service: 'Sound Effects', 
-      count: sfxCount, 
-      estimatedCost: sfxCount * COST_ESTIMATES.elevenlabs['sound-effects'],
-      lastUsed: '30 min ago' 
-    },
-  ];
-
-  // Generate daily usage for charts
-  const dailyUsage = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    dailyUsage.push({
-      date: date.toISOString().split('T')[0],
-      google: Math.floor(Math.random() * 50) + 10,
-      elevenlabs: Math.floor(Math.random() * 20) + 5,
-      totalCost: Math.random() * (googleCost + elevenlabsCost) / days,
-    });
-  }
-
-  return {
-    totalEstimatedCost: googleCost + elevenlabsCost,
-    googleCost,
-    elevenlabsCost,
-    breakdown,
-    dailyUsage,
-    period,
-  };
+function formatRelativeTime(date: Date | null): string {
+  if (!date) return 'No usage'
+  const diffMin = Math.max(0, Math.floor((Date.now() - date.getTime()) / 60_000))
+  if (diffMin < 1) return 'Just now'
+  if (diffMin < 60) return `${diffMin} min ago`
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24) return `${diffHr} hr ago`
+  return `${Math.floor(diffHr / 24)}d ago`
 }
 
+/**
+ * GET /api/admin/credits/usage
+ * Real Postgres-backed COGS & usage breakdown from `ai_usage` (replaces legacy mock data).
+ */
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const period = searchParams.get('period') || 'week';
+  const session = await requireAdminSession()
+  if (!session.authorized) {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 401 })
+  }
+
+  const { searchParams } = new URL(request.url)
+  const period = searchParams.get('period') || 'week'
+  const days = periodToDays(period)
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 
   try {
-    // In production, this would query a database
-    const data = generateMockData(period);
-    
-    return NextResponse.json(data);
+    const rows = await AIUsage.findAll({
+      where: {
+        created_at: { [Op.gte]: since },
+      },
+      order: [['created_at', 'DESC']],
+      limit: 10_000,
+    })
+
+    const breakdownMap = new Map<
+      string,
+      {
+        provider: string
+        service: string
+        count: number
+        estimatedCost: number
+        lastUsedDate: Date | null
+      }
+    >()
+
+    const dailyMap = new Map<
+      string,
+      { date: string; google: number; elevenlabs: number; totalCost: number }
+    >()
+
+    for (let i = days - 1; i >= 0; i -= 1) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const key = d.toISOString().split('T')[0]
+      dailyMap.set(key, { date: key, google: 0, elevenlabs: 0, totalCost: 0 })
+    }
+
+    let googleCost = 0
+    let elevenlabsCost = 0
+    let totalEstimatedCost = 0
+
+    for (const row of rows as any[]) {
+      const cogs = Number(row.cogs_usd || 0)
+      const model = String(row.model || 'unknown')
+      const category = String(row.category || 'other')
+      const meta = (row.meta || {}) as Record<string, unknown>
+      const opLower = String(meta.operation || '').toLowerCase()
+      const vendorLower = String(meta.vendor || '').toLowerCase()
+      const modelLower = model.toLowerCase()
+      const isEleven =
+        vendorLower === 'elevenlabs' ||
+        modelLower.includes('eleven') ||
+        opLower.includes('eleven')
+      const isKling =
+        vendorLower === 'kling' || modelLower.includes('kling') || opLower.includes('kling')
+      const isFal = vendorLower === 'fal' || modelLower.includes('fal') || opLower.includes('fal')
+      const isOpenAI =
+        vendorLower === 'openai' ||
+        row.provider === 'openai' ||
+        modelLower.includes('gpt-image') ||
+        modelLower.includes('dall')
+      const isAggregator = vendorLower === 'aggregator' || opLower.includes('aggregator')
+      const isCloudRun = vendorLower === 'cloud_run' || opLower.includes('render')
+      const providerLabel = isEleven
+        ? 'ElevenLabs'
+        : isKling
+          ? 'Kling AI'
+          : isFal
+            ? 'Fal AI'
+            : isAggregator
+              ? 'Video Aggregator'
+              : isOpenAI
+                ? 'OpenAI'
+                : isCloudRun
+                  ? 'GCP Cloud Run'
+                  : meta.providerBackend === 'ai_gateway'
+                    ? 'Vercel AI Gateway'
+                    : 'Google Vertex AI'
+
+      const serviceLabel =
+        category === 'text'
+          ? `LLM Text (${model})`
+          : category === 'video'
+            ? `Video (${model})`
+            : category === 'images'
+              ? `Image (${model})`
+              : category === 'tts'
+                ? `Audio / TTS (${model})`
+                : `Other (${model})`
+
+      const key = `${providerLabel}::${serviceLabel}`
+      const existing = breakdownMap.get(key) ?? {
+        provider: providerLabel,
+        service: serviceLabel,
+        count: 0,
+        estimatedCost: 0,
+        lastUsedDate: null,
+      }
+
+      const units =
+        category === 'text'
+          ? Number(row.input_tokens || 0) + Number(row.output_tokens || 0)
+          : category === 'images'
+            ? Math.max(1, Number(row.image_count || 1))
+            : 1
+
+      existing.count += units
+      existing.estimatedCost += cogs
+      const rowDate = row.created_at ? new Date(row.created_at) : null
+      if (rowDate && (!existing.lastUsedDate || rowDate > existing.lastUsedDate)) {
+        existing.lastUsedDate = rowDate
+      }
+      breakdownMap.set(key, existing)
+
+      totalEstimatedCost += cogs
+      if (isEleven) elevenlabsCost += cogs
+      else googleCost += cogs
+
+      if (rowDate) {
+        const dayKey = rowDate.toISOString().split('T')[0]
+        const dayEntry = dailyMap.get(dayKey)
+        if (dayEntry) {
+          if (isEleven) dayEntry.elevenlabs += 1
+          else dayEntry.google += 1
+          dayEntry.totalCost = Number((dayEntry.totalCost + cogs).toFixed(4))
+        }
+      }
+    }
+
+    const breakdown = Array.from(breakdownMap.values())
+      .map((item) => ({
+        provider: item.provider,
+        service: item.service,
+        count: item.count,
+        estimatedCost: Number(item.estimatedCost.toFixed(4)),
+        lastUsed: formatRelativeTime(item.lastUsedDate),
+      }))
+      .sort((a, b) => b.estimatedCost - a.estimatedCost)
+
+    return NextResponse.json({
+      source: 'database',
+      totalEstimatedCost: Number(totalEstimatedCost.toFixed(4)),
+      googleCost: Number(googleCost.toFixed(4)),
+      elevenlabsCost: Number(elevenlabsCost.toFixed(4)),
+      breakdown,
+      dailyUsage: Array.from(dailyMap.values()),
+      period,
+    })
   } catch (error) {
-    console.error('Failed to fetch credit usage:', error);
+    console.error('Failed to fetch real credit usage:', error)
     return NextResponse.json(
       { error: 'Failed to fetch credit usage' },
       { status: 500 }
-    );
-  }
-}
-
-// POST endpoint to record new usage
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { provider, service, count, metadata } = body;
-
-    if (!provider || !service || !count) {
-      return NextResponse.json(
-        { error: 'Missing required fields: provider, service, count' },
-        { status: 400 }
-      );
-    }
-
-    const record: UsageRecord = {
-      timestamp: new Date(),
-      provider,
-      service,
-      count,
-      metadata,
-    };
-
-    usageRecords.push(record);
-
-    return NextResponse.json({ success: true, record });
-  } catch (error) {
-    console.error('Failed to record usage:', error);
-    return NextResponse.json(
-      { error: 'Failed to record usage' },
-      { status: 500 }
-    );
+    )
   }
 }

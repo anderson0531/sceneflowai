@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { UserProviderConfig } from '@/models/UserProviderConfig'
-import { AIProvider } from '@/services/ai-providers/BaseAIProviderAdapter'
+import type { AIProvider } from '@/services/ai-providers/BaseAIProviderAdapter'
 import { EncryptionService } from '@/services/EncryptionService'
+import {
+  parseGoogleServiceAccountJson,
+  validateGoogleByokCredential,
+} from '@/lib/byok/resolveProviderCredential'
 
-const VERTEX_PROVIDER = AIProvider.GOOGLE_VEO
+const VERTEX_PROVIDER = 'GOOGLE_VEO' as AIProvider
 
 function getKeyHint(apiKey: string): string {
   const trimmed = apiKey.trim()
@@ -13,18 +17,34 @@ function getKeyHint(apiKey: string): string {
   return `${trimmed.slice(0, 4)}••••${trimmed.slice(-4)}`
 }
 
+function maskProjectId(projectId: string | undefined): string | undefined {
+  if (!projectId) return undefined
+  const trimmed = projectId.trim()
+  if (!trimmed) return undefined
+  if (trimmed.length <= 8) return `${trimmed.slice(0, 2)}••••`
+  return `${trimmed.slice(0, 4)}••••${trimmed.slice(-4)}`
+}
+
+function getServiceAccountHint(projectId?: string, clientEmail?: string): string {
+  if (clientEmail && clientEmail.includes('@')) {
+    const [local, domain] = clientEmail.split('@')
+    const shortLocal = local.length > 6 ? `${local.slice(0, 4)}••` : local
+    return `${shortLocal}@${domain}`
+  }
+  const maskedProject = maskProjectId(projectId)
+  return maskedProject ? `SA (${maskedProject})` : 'Service Account'
+}
+
 function normalizeApiKey(raw: unknown): string {
   if (typeof raw !== 'string') return ''
   return raw.trim()
 }
 
-function isLikelyGoogleApiKey(apiKey: string): boolean {
-  return /^AIza[0-9A-Za-z_-]{20,}$/.test(apiKey)
-}
-
 async function requireUserId(): Promise<string | null> {
-  const session = await getServerSession(authOptions as any)
-  return (session?.user as any)?.id || null
+  const session = (await getServerSession(authOptions as any)) as {
+    user?: { id?: string }
+  } | null
+  return session?.user?.id || null
 }
 
 export async function GET() {
@@ -46,12 +66,27 @@ export async function GET() {
     }
 
     let keyHint = 'Configured'
+    let mode: 'byok_api_key' | 'byok_service_account' | undefined
+    let maskedProjectId: string | undefined
     try {
       const decrypted = JSON.parse(EncryptionService.decrypt(config.encrypted_credentials))
+      if (decrypted?.mode === 'byok_service_account' || decrypted?.serviceAccountJson) {
+        mode = 'byok_service_account'
+        const rawProjectId =
+          typeof decrypted?.projectId === 'string' && decrypted.projectId
+            ? decrypted.projectId
+            : parseGoogleServiceAccountJson(decrypted.serviceAccountJson)?.project_id
+        maskedProjectId = maskProjectId(rawProjectId)
+      } else if (decrypted?.mode === 'byok_api_key' || decrypted?.apiKey) {
+        mode = 'byok_api_key'
+      }
+
       if (typeof decrypted?.keyHint === 'string' && decrypted.keyHint) {
         keyHint = decrypted.keyHint
       } else if (typeof decrypted?.apiKey === 'string' && decrypted.apiKey) {
         keyHint = getKeyHint(decrypted.apiKey)
+      } else if (mode === 'byok_service_account') {
+        keyHint = getServiceAccountHint(maskedProjectId)
       }
     } catch {
       // Do not fail read status if payload format changed; return safe state only.
@@ -61,6 +96,8 @@ export async function GET() {
       success: true,
       configured: Boolean(config.is_valid),
       keyHint,
+      mode,
+      projectId: maskedProjectId,
       updatedAt: config.updated_at,
     })
   } catch (error) {
@@ -85,23 +122,60 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const apiKey = normalizeApiKey(body?.apiKey)
-    if (!apiKey) {
-      return NextResponse.json({ error: 'Vertex AI key is required' }, { status: 400 })
-    }
-    if (!isLikelyGoogleApiKey(apiKey)) {
+    const rawServiceAccount = body?.serviceAccountJson
+    const hasServiceAccount =
+      rawServiceAccount !== undefined &&
+      rawServiceAccount !== null &&
+      (typeof rawServiceAccount !== 'string' || rawServiceAccount.trim().length > 0)
+
+    if (!apiKey && !hasServiceAccount) {
       return NextResponse.json(
-        { error: 'Invalid Vertex AI key format' },
+        { error: 'Vertex AI API key or Service Account JSON is required' },
         { status: 400 }
       )
     }
 
-    const keyHint = getKeyHint(apiKey)
-    const encryptedCredentials = EncryptionService.encrypt(
-      JSON.stringify({
+    const validation = await validateGoogleByokCredential(
+      hasServiceAccount ? { serviceAccountJson: rawServiceAccount } : { apiKey }
+    )
+    if (!validation.ok || !validation.mode) {
+      return NextResponse.json(
+        { error: validation.error || 'Vertex AI credential validation failed' },
+        { status: 400 }
+      )
+    }
+
+    const validatedAt = new Date().toISOString()
+    let keyHint: string
+    let storedPayload: Record<string, unknown>
+    let maskedProjectId: string | undefined
+
+    if (validation.mode === 'byok_service_account') {
+      const normalizedSa =
+        typeof rawServiceAccount === 'string'
+          ? rawServiceAccount.trim()
+          : JSON.stringify(rawServiceAccount)
+      const projectId = validation.projectId
+      maskedProjectId = maskProjectId(projectId)
+      keyHint = getServiceAccountHint(projectId, validation.clientEmail)
+      storedPayload = {
+        mode: 'byok_service_account',
+        serviceAccountJson: normalizedSa,
+        projectId,
+        keyHint,
+        validatedAt,
+      }
+    } else {
+      keyHint = getKeyHint(apiKey)
+      storedPayload = {
+        mode: 'byok_api_key',
         apiKey,
         keyHint,
-      })
-    )
+        validatedAt,
+      }
+    }
+
+    const encryptedCredentials = EncryptionService.encrypt(JSON.stringify(storedPayload))
 
     const [config, created] = await UserProviderConfig.findOrCreate({
       where: {
@@ -126,6 +200,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       configured: true,
+      mode: validation.mode,
+      projectId: maskedProjectId,
       keyHint,
       updatedAt: config.updated_at,
     })

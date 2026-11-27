@@ -12,6 +12,17 @@ import {
   normalizeBlueprintGeminiVoiceId,
 } from '@/lib/tts/blueprintTtsConstants'
 import { buildGeminiTtsAdvancedVoiceOptions } from '@/lib/tts/geminiTtsSafety'
+import { fetchWithRetry } from '@/lib/utils/retry'
+
+const GEMINI_TTS_BACKOFF_SCHEDULE_MS = [1500, 4000, 10000]
+const GEMINI_TTS_MAX_RETRY_DELAY_MS = 30_000
+
+function isRetryableTtsHttpError(error: any, status?: number): boolean {
+  if (error?.name === 'AbortError' || error?.code === 'ABORT_ERR' || error?.code === 'TIMEOUT') {
+    return false
+  }
+  return status === 429 || status === 502 || status === 503 || status === 504
+}
 
 export {
   DEFAULT_BLUEPRINT_GEMINI_VOICE,
@@ -109,24 +120,35 @@ export async function synthesizeGeminiFlashMp3(
     payload.advancedVoiceOptions = advancedVoiceOptions
   }
 
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
-
   let response: Response
   try {
-    response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    })
-  } catch (err) {
-    if (err instanceof Error && err.name === 'AbortError') {
+    response = await fetchWithRetry(
+      url,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      },
+      {
+        maxRetries: 3,
+        backoffScheduleMs: GEMINI_TTS_BACKOFF_SCHEDULE_MS,
+        maxDelayMs: GEMINI_TTS_MAX_RETRY_DELAY_MS,
+        maxRetryAfterMs: GEMINI_TTS_MAX_RETRY_DELAY_MS,
+        timeoutMs,
+        operationName: 'Gemini Flash TTS',
+        isRetryable: isRetryableTtsHttpError,
+      }
+    )
+  } catch (err: any) {
+    if (err?.code === 'TIMEOUT' || (err instanceof Error && err.name === 'AbortError')) {
       throw new Error(`Gemini TTS timed out after ${timeoutMs}ms`)
     }
+    if (typeof err?.status === 'number') {
+      throw new Error(
+        `Gemini TTS failed: HTTP ${err.status} ${String(err.message || '').slice(0, 400)}`
+      )
+    }
     throw err
-  } finally {
-    clearTimeout(timer)
   }
 
   if (!response.ok) {

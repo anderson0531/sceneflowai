@@ -223,7 +223,7 @@ function buildKnowledgeIndex(): IndexedDoc[] {
       `Starter — Filmmaker & Pre-Vis ($${TIER_CATALOG.starter.priceUsd}/mo): ${TIER_CATALOG.starter.credits.toLocaleString()} cr/mo, ${TIER_CATALOG.starter.storageGb} GB Vault, ${TIER_CATALOG.starter.maxProjects} projects, ${TIER_CATALOG.starter.voiceCloneSlots} voice clones, live-action hybrid mixing.`,
       `Operator Pro ($${TIER_CATALOG.pro.priceUsd}/mo): ${TIER_CATALOG.pro.credits.toLocaleString()} cr/mo, ${TIER_CATALOG.pro.storageGb} GB Client Vault, ${TIER_CATALOG.pro.collaborationSeats} team seats, 4K Veo 3.1, 100% White-Label Client Portals, Vertex AI BYOK, $250 Bulk Pack ($0.010/cr).`,
       `Agency Scale Studio ($${TIER_CATALOG.studio.priceUsd}/mo): ${TIER_CATALOG.studio.credits.toLocaleString()} cr/mo, ${TIER_CATALOG.studio.storageGb} GB Vault, ${TIER_CATALOG.studio.collaborationSeats} team seats, Custom Domain white-label portals, Multi-PM RBAC, Kanban SLA & 1-Click Draft Purge.`,
-      `Credit expiry: Monthly plan credits are spent FIRST. Subscriber Add-On packs remain valid for 12 months (${ADDON_CREDIT_SHELF_LIFE_DAYS} days) from purchase and spend soonest-expiring first. Pause-to-Vault is $19/mo.`,
+      `Credit expiry: Credits expiring soonest are always spent first (FEFO)—typically your monthly subscription allotment, or an older pack nearing expiry so you never waste expiring credits. Subscriber Add-On packs remain valid for 12 months (${ADDON_CREDIT_SHELF_LIFE_DAYS} days) from purchase. Pause-to-Vault is $19/mo.`,
     ].join('\n'),
     keywords: [
       'price',

@@ -4,16 +4,28 @@ import { DOLVideoRequest } from '@/services/DOL/VideoGenerationService';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { CreditService } from '@/services/CreditService';
+import { SubscriptionService } from '@/services/SubscriptionService';
+import { normalizeTierName } from '@/lib/billing/tierCatalog';
 import { canUseVeoMax, TOP_UP_PACKS, type VideoQuality, type PlanTier } from '@/lib/credits/creditCosts';
-import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration';
 import { resolveGenerationQuote } from '@/lib/credits/resolveGenerationQuote';
+import { executeMeteredProviderCall } from '@/lib/credits/meteredGateway';
+import { resolveVertexCredentialForUser } from '@/lib/byok/resolveProviderCredential';
 
-// Helper to determine user's plan tier from credits
+// Helper to determine user's plan tier from subscription tier (with single-counted credit fallback)
 async function getUserPlanTier(userId: string): Promise<PlanTier> {
   try {
+    const subscription = await SubscriptionService.getUserSubscription(userId);
+    const tierName = subscription.tier?.name ? normalizeTierName(subscription.tier.name) : null;
+    if (tierName === 'enterprise') return 'enterprise';
+    if (tierName === 'studio') return 'studio';
+    if (tierName === 'pro') return 'pro';
+    if (tierName === 'starter' || tierName === 'hobbyist') return 'starter';
+    if (tierName === 'explorer') return 'trial';
+
     const breakdown = await CreditService.getCreditBreakdown(userId);
-    const total = breakdown.total_credits + breakdown.subscription_credits;
-    if (total >= 50000) return 'studio';
+    // total_credits already includes subscription_credits + addon_credits (do NOT double-count)
+    const total = breakdown.total_credits;
+    if (total >= 45000) return 'studio';
     if (total >= 10000) return 'pro';
     if (total >= 3000) return 'starter';
     return 'trial';
@@ -23,8 +35,6 @@ async function getUserPlanTier(userId: string): Promise<PlanTier> {
 }
 
 export async function POST(request: NextRequest) {
-  let creditsCharged = 0;
-  
   try {
     // 1. Authenticate user
     const session = await getServerSession(authOptions);
@@ -47,17 +57,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Never trust client-supplied body.userKeyUsed; DOL service executes with platform credentials
+    await resolveVertexCredentialForUser(userId).catch(() => ({ source: 'platform' as const }));
+    const userKeyUsed = false;
+
     // 2. Determine video quality and credit cost
     const quality: VideoQuality = body.quality === 'max' ? 'max' : 'fast';
     const durationSeconds = Number(body.duration) || 6;
-    const preview = await resolveGenerationQuote({
-      kind: 'clip',
-      provider: 'google_vertex',
+    const quoteInput = {
+      kind: 'clip' as const,
+      provider: 'google_vertex' as const,
+      model: quality === 'max' ? 'veo-3.1-generate-001' : 'veo-3.1-fast-generate-001',
       resolution: quality === 'max' ? '4k' : '1080p',
       durationSeconds,
       audio: true,
-      userKeyUsed: body.userKeyUsed === true,
-    });
+      userKeyUsed,
+    };
+    const preview = await resolveGenerationQuote(quoteInput);
     const creditCost = preview.credits;
 
     // 3. Check plan restrictions for Veo Max
@@ -72,22 +88,6 @@ export async function POST(request: NextRequest) {
           suggestion: 'Select "Fast" quality or upgrade to Pro plan for production-quality video.'
         }, { status: 403 });
       }
-    }
-
-    // 4. Pre-check credit balance
-    const hasEnoughCredits = await CreditService.ensureCredits(userId, creditCost);
-    if (!hasEnoughCredits) {
-      const breakdown = await CreditService.getCreditBreakdown(userId);
-      return NextResponse.json({
-        error: 'Insufficient credits',
-        code: 'INSUFFICIENT_CREDITS',
-        required: creditCost,
-        balance: breakdown.total_credits,
-        quality,
-        suggestedTopUp: creditCost <= TOP_UP_PACKS.quick_fix.credits
-          ? { pack: 'quick_fix', name: TOP_UP_PACKS.quick_fix.name, price: TOP_UP_PACKS.quick_fix.price, credits: TOP_UP_PACKS.quick_fix.credits }
-          : { pack: 'scene_pack', name: TOP_UP_PACKS.scene_pack.name, price: TOP_UP_PACKS.scene_pack.price, credits: TOP_UP_PACKS.scene_pack.credits }
-      }, { status: 402 });
     }
 
     // Create DOL video request
@@ -111,27 +111,35 @@ export async function POST(request: NextRequest) {
 
     console.log('🎬 DOL Video API: Processing request...');
 
-    // Generate video using DOL
-    const result = await dolVideoService.generateVideo(dolRequest);
-
-    // 5. Charge credits after successful generation start
+    // 4 & 5. Atomically reserve credits before generation, capture on success (fail-closed), release on error
+    let metered;
     try {
-      const charged = await quoteAndCharge({
+      metered = await executeMeteredProviderCall({
         userId,
-        quoteInput: {
-          kind: 'clip',
-          provider: 'google_vertex',
-          resolution: quality === 'max' ? '4k' : '1080p',
-          durationSeconds,
-          audio: true,
-          userKeyUsed: body.userKeyUsed === true,
-        },
+        projectId: body.projectId ?? null,
+        route: '/api/dol/video/generate',
+        provider: 'vertex',
+        model: quoteInput.model,
+        operation: quality === 'max' ? 'veo_max' : 'veo_fast',
+        quoteInput,
         meta: { label: quality === 'max' ? 'veo_max' : 'veo_fast', duration: durationSeconds },
+        execute: () => dolVideoService.generateVideo(dolRequest),
       });
-      creditsCharged = charged.credits;
-      console.log(`[DOL Video] Charged ${creditCost} credits (${quality}) to user ${userId}`);
-    } catch (chargeError: any) {
-      console.error('[DOL Video] Failed to charge credits:', chargeError);
+    } catch (err: any) {
+      if (err?.message === 'INSUFFICIENT_CREDITS') {
+        const breakdown = await CreditService.getCreditBreakdown(userId).catch(() => ({ total_credits: 0 }));
+        return NextResponse.json({
+          error: 'Insufficient credits',
+          code: 'INSUFFICIENT_CREDITS',
+          required: creditCost,
+          balance: breakdown.total_credits,
+          quality,
+          suggestedTopUp: creditCost <= TOP_UP_PACKS.quick_fix.credits
+            ? { pack: 'quick_fix', name: TOP_UP_PACKS.quick_fix.name, price: TOP_UP_PACKS.quick_fix.price, credits: TOP_UP_PACKS.quick_fix.credits }
+            : { pack: 'scene_pack', name: TOP_UP_PACKS.scene_pack.name, price: TOP_UP_PACKS.scene_pack.price, credits: TOP_UP_PACKS.scene_pack.credits }
+        }, { status: 402 });
+      }
+      throw err;
     }
 
     // Get updated balance
@@ -139,15 +147,15 @@ export async function POST(request: NextRequest) {
     try {
       const breakdown = await CreditService.getCreditBreakdown(userId);
       newBalance = breakdown.total_credits;
-    } catch (e) {
+    } catch {
       // Ignore
     }
 
     return NextResponse.json({
       success: true,
-      result,
+      result: metered.result,
       message: 'Video generation started successfully',
-      creditsCharged: creditCost,
+      creditsCharged: metered.creditsCharged,
       creditsBalance: newBalance
     });
 

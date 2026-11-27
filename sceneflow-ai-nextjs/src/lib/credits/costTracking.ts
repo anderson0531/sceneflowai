@@ -16,6 +16,7 @@ import { CREDIT_EXCHANGE_RATE, PROVIDER_COSTS_USD } from './creditCosts'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { ensurePricingAdminSchema } from './rateCardStore'
 import { isUuid } from '@/lib/auth/isUuid'
+import { resolveUser } from '@/lib/userHelper'
 
 // =============================================================================
 // TYPES
@@ -49,6 +50,7 @@ export interface ProviderCostLog {
   requestId?: string
   byok?: boolean
   resolution?: string | null
+  vendor?: string
 }
 
 export interface MarginAlert {
@@ -193,20 +195,32 @@ export async function logProviderCost(log: ProviderCostLog): Promise<void> {
     log.marginPercent = calculateMargin(log.creditsCharged, log.providerCostUsd)
     await ensurePricingAdminSchema()
 
-    if (!isUuid(log.userId)) {
+    let resolvedUserId = log.userId
+    if (!isUuid(resolvedUserId)) {
+      try {
+        const u = await resolveUser(resolvedUserId)
+        if (u?.id && isUuid(u.id)) {
+          resolvedUserId = u.id
+        }
+      } catch {
+        // Fallback handled below
+      }
+    }
+    if (!isUuid(resolvedUserId)) {
       console.warn(
-        `[CostTracking] Skipping ai_usage insert: user_id is not a UUID (${log.userId})`
+        `[CostTracking] Skipping ai_usage insert: user_id could not be resolved to UUID (${log.userId})`
       )
       return
     }
 
-    // Log to AIUsage table (existing table, add cost fields to meta)
+    // Log to AIUsage table (existing table, include request_id & vendor in meta)
     await AIUsage.create({
-      user_id: log.userId,
+      user_id: resolvedUserId,
       route: `/api/costs/${log.operation.replace(/_/g, '/')}`,
       provider: log.provider as any,
       category: mapOperationToCategory(log.operation),
       model: log.model,
+      request_id: log.requestId ? log.requestId.slice(0, 128) : null,
       input_tokens: log.inputTokens || 0,
       output_tokens: log.outputTokens || 0,
       cogs_usd: log.providerCostUsd,
@@ -215,6 +229,7 @@ export async function logProviderCost(log: ProviderCostLog): Promise<void> {
       image_count: log.imageCount || 0,
       meta: {
         operation: log.operation,
+        vendor: log.vendor ?? null,
         creditsCharged: log.creditsCharged,
         marginPercent: log.marginPercent,
         imageCount: log.imageCount,

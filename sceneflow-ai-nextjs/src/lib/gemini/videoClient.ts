@@ -31,13 +31,46 @@ import {
 } from '@/lib/gemini/omniVideoInteractions'
 import { parseVertexRetryAfterSeconds } from '@/lib/gemini/vertexRateLimit'
 import { fullJitterDelayMs } from '@/lib/utils/retry'
-import { paceOutboundVertexFetch } from '@/lib/vertexai/vertexDispatchBucket'
+import {
+  noteVideoGenerationCooldown,
+  paceOutboundVertexFetch,
+} from '@/lib/vertexai/vertexDispatchBucket'
+import {
+  ByokRateLimitError,
+  parseGoogleServiceAccountJson,
+  type ResolvedVertexCredential,
+} from '@/lib/byok/resolveProviderCredential'
 
 /**
  * Get Google OAuth2 Bearer token for Vertex AI
- * Uses JWT client directly for better serverless compatibility
+ * Uses JWT client directly for better serverless compatibility.
+ * Supports optional BYOK Service Account credentials.
  */
-async function getVertexAccessToken(): Promise<string> {
+async function getVertexAccessToken(
+  byokCredential?: ResolvedVertexCredential
+): Promise<string> {
+  if (byokCredential?.source === 'byok') {
+    if (byokCredential.mode !== 'byok_service_account' || !byokCredential.serviceAccountJson) {
+      throw new Error(
+        'Vertex AI Veo video generation requires a Google Cloud Service Account JSON when using BYOK (API keys do not support Vertex AI Veo endpoints).'
+      )
+    }
+    const credentials = parseGoogleServiceAccountJson(byokCredential.serviceAccountJson)
+    if (!credentials) {
+      throw new Error('Invalid BYOK Google Service Account JSON for video generation')
+    }
+    const jwtClient = new JWT({
+      email: credentials.client_email,
+      key: credentials.private_key,
+      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+    })
+    const tokenResponse = await jwtClient.getAccessToken()
+    if (!tokenResponse?.token) {
+      throw new Error('Failed to obtain BYOK Vertex AI access token - empty response')
+    }
+    return tokenResponse.token
+  }
+
   const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
   
   console.log('[Vertex AI Auth] GOOGLE_APPLICATION_CREDENTIALS_JSON exists:', !!credentialsJson);
@@ -177,7 +210,7 @@ interface ReferenceImage {
   type?: 'style' | 'character'  // Alternative type field name (maps to referenceType)
 }
 
-interface VideoGenerationOptions {
+export interface VideoGenerationOptions {
   aspectRatio?: '16:9' | '9:16'
   resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
   durationSeconds?: VeoClipDuration
@@ -197,9 +230,13 @@ interface VideoGenerationOptions {
   sourceVideoUrl?: string // URL of video to extend (EXT mode) - Veo handles frame continuity automatically (legacy)
   sourceVideo?: string // Gemini Files API reference (e.g., "files/xxx") for video extension (EXT mode)
   quality?: VeoQualityTier | 'standard' // lite | fast | premium (standard → premium)
+  /** Optional resolved BYOK Vertex Service Account credential. */
+  byokCredential?: ResolvedVertexCredential
+  /** Isolated dispatch bucket namespace ('platform' or 'byok:<hash>'). */
+  bucketNamespace?: string
 }
 
-interface VideoGenerationResult {
+export interface VideoGenerationResult {
   status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
   operationName?: string
   videoUrl?: string
@@ -227,6 +264,22 @@ async function urlToBase64(url: string): Promise<{ base64: string; mimeType: str
   }
 }
 
+function resolveVideoProjectId(byokCredential?: ResolvedVertexCredential): string {
+  if (byokCredential?.source === 'byok') {
+    const parsed = byokCredential.serviceAccountJson
+      ? parseGoogleServiceAccountJson(byokCredential.serviceAccountJson)
+      : null
+    const projectId = byokCredential.projectId || parsed?.project_id
+    if (!projectId) {
+      throw new Error('BYOK Google Service Account is missing project_id for video generation')
+    }
+    return projectId
+  }
+  const project = process.env.VERTEX_PROJECT_ID
+  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
+  return project
+}
+
 /**
  * Generate video using Gemini Omni Flash via Vertex AI Interactions API
  */
@@ -237,8 +290,11 @@ async function generateVideoWithOmniInteractions(
   quality: VeoQualityTier | 'standard',
   stabilityDuration: VeoClipDuration
 ): Promise<VideoGenerationResult> {
-  const project = process.env.VERTEX_PROJECT_ID
-  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
+  const byokCredential =
+    options.byokCredential?.source === 'byok' ? options.byokCredential : undefined
+  const bucketNamespace =
+    options.bucketNamespace ?? options.byokCredential?.bucketNamespace ?? 'platform'
+  const project = resolveVideoProjectId(byokCredential)
 
   const location = getVertexLocation(model)
   const apiBase = getVertexApiBaseUrl(project, location, 'v1beta1')
@@ -292,8 +348,8 @@ async function generateVideoWithOmniInteractions(
     buildOptions: typeof omniBuildOptions
   ): Promise<Response> => {
     assertOmniReferenceImagesAttached(bodyToPost.input, buildOptions)
-    const accessToken = await getVertexAccessToken()
-    await paceOutboundVertexFetch('video')
+    const accessToken = await getVertexAccessToken(byokCredential)
+    await paceOutboundVertexFetch('video', { bucketNamespace })
     return fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -377,6 +433,23 @@ async function generateVideoWithOmniInteractions(
     if (!response.ok) {
       const errorText = await response.text()
       console.error('[Omni Video] Error response:', errorText)
+      if (response.status === 429 && byokCredential) {
+        const retryAfterSec = parseVertexRetryAfterSeconds(
+          response.headers.get('retry-after'),
+          errorText
+        )
+        const cooldownMs = Math.max(15_000, retryAfterSec * 1000)
+        await noteVideoGenerationCooldown(cooldownMs, bucketNamespace)
+        throw new ByokRateLimitError(
+          `BYOK Vertex Omni video rate limited (429): ${errorText.slice(0, 200)}`,
+          {
+            provider: 'vertex',
+            status: 429,
+            retryAfterMs: cooldownMs,
+            bucketNamespace,
+          }
+        )
+      }
       return { status: 'FAILED', error: formatInteractionsHttpError(response.status, errorText) }
     }
 
@@ -426,6 +499,9 @@ async function generateVideoWithOmniInteractions(
       estimatedWaitSeconds: 120,
     }
   } catch (error: unknown) {
+    if (error instanceof ByokRateLimitError) {
+      throw error
+    }
     const message = error instanceof Error ? error.message : 'Failed to initiate Omni video generation'
     console.error('[Omni Video] Request error:', error)
     return { status: 'FAILED', error: message }
@@ -436,10 +512,12 @@ async function generateVideoWithOmniInteractions(
  * Poll Vertex AI Interactions API for Omni video generation status
  */
 async function checkOmniInteractionStatus(
-  operationName: string
+  operationName: string,
+  opts?: { byokCredential?: ResolvedVertexCredential }
 ): Promise<VideoGenerationResult> {
-  const project = process.env.VERTEX_PROJECT_ID
-  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
+  const byokCredential =
+    opts?.byokCredential?.source === 'byok' ? opts.byokCredential : undefined
+  const project = resolveVideoProjectId(byokCredential)
 
   const location = getVertexLocation(VEO_MODELS.omni)
   const apiBase = getVertexApiBaseUrl(project, location, 'v1beta1')
@@ -449,7 +527,7 @@ async function checkOmniInteractionStatus(
   console.log('[Omni Video] Checking interaction status:', interactionId, 'at', location)
 
   try {
-    const accessToken = await getVertexAccessToken()
+    const accessToken = await getVertexAccessToken(byokCredential)
     const response = await fetch(endpoint, {
       method: 'GET',
       headers: {
@@ -528,8 +606,12 @@ export async function generateVideoWithVeo(
   prompt: string,
   options: VideoGenerationOptions = {}
 ): Promise<VideoGenerationResult> {
+  const byokCredential =
+    options.byokCredential?.source === 'byok' ? options.byokCredential : undefined
+  const bucketNamespace =
+    options.bucketNamespace ?? options.byokCredential?.bucketNamespace ?? 'platform'
   // Vertex AI endpoint config
-  const project = process.env.VERTEX_PROJECT_ID
+  const project = resolveVideoProjectId(byokCredential)
   // Select model based on quality tier (default: fast for cost efficiency)
   const quality = options.quality || DEFAULT_VIDEO_QUALITY
   const hasReferenceImages =
@@ -544,7 +626,6 @@ export async function generateVideoWithVeo(
   const usingOmni = isOmniVideoModel(model)
   const stabilityDuration: VeoClipDuration = usingOmni ? 10 : 8
   const location = getVertexLocation(model)
-  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
 
   // Gemini Omni Flash requires the Interactions API (not predictLongRunning)
   if (usingOmni) {
@@ -783,8 +864,8 @@ export async function generateVideoWithVeo(
   }
 
   try {
-    const accessToken = await getVertexAccessToken();
-    await paceOutboundVertexFetch('video')
+    const accessToken = await getVertexAccessToken(byokCredential);
+    await paceOutboundVertexFetch('video', { bucketNamespace })
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -797,6 +878,23 @@ export async function generateVideoWithVeo(
     if (!response.ok) {
       const errorText = await response.text()
       console.error('[Veo Video] Error response:', errorText)
+      if (response.status === 429 && byokCredential) {
+        const retryAfterSec = parseVertexRetryAfterSeconds(
+          response.headers.get('retry-after'),
+          errorText
+        )
+        const cooldownMs = Math.max(15_000, retryAfterSec * 1000)
+        await noteVideoGenerationCooldown(cooldownMs, bucketNamespace)
+        throw new ByokRateLimitError(
+          `BYOK Vertex Veo rate limited (429): ${errorText.slice(0, 200)}`,
+          {
+            provider: 'vertex',
+            status: 429,
+            retryAfterMs: cooldownMs,
+            bucketNamespace,
+          }
+        )
+      }
       let errorMsg = `Vertex AI error ${response.status}: ${errorText}`
       try {
         const parsed = JSON.parse(errorText) as unknown
@@ -852,6 +950,9 @@ export async function generateVideoWithVeo(
       estimatedWaitSeconds: 120 // Veo typically takes 1-3 minutes
     };
   } catch (error: any) {
+    if (error instanceof ByokRateLimitError) {
+      throw error
+    }
     console.error('[Veo Video] Request error:', error)
     return {
       status: 'FAILED',
@@ -865,16 +966,18 @@ export async function generateVideoWithVeo(
  * For Veo predictLongRunning, we use fetchPredictOperation endpoint
  */
 export async function checkVideoGenerationStatus(
-  operationName: string
+  operationName: string,
+  opts?: { byokCredential?: ResolvedVertexCredential }
 ): Promise<VideoGenerationResult> {
   // Omni Flash interactions are polled via GET .../interactions/{id}
   if (isOmniInteractionOperation(operationName)) {
-    return checkOmniInteractionStatus(operationName)
+    return checkOmniInteractionStatus(operationName, opts)
   }
 
+  const byokCredential =
+    opts?.byokCredential?.source === 'byok' ? opts.byokCredential : undefined
   // Veo predictLongRunning operations use regional endpoints (not global)
-  const project = process.env.VERTEX_PROJECT_ID
-  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
+  const project = resolveVideoProjectId(byokCredential)
 
   // Extract model from operation name if present, otherwise use default (fast)
   // Format: projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{opId}
@@ -904,7 +1007,7 @@ export async function checkVideoGenerationStatus(
   console.log('[Veo Video] Operation ID:', opId)
 
   try {
-    const accessToken = await getVertexAccessToken();
+    const accessToken = await getVertexAccessToken(byokCredential);
     
     // fetchPredictOperation requires POST with the operation ID in the body
     const response = await fetch(endpoint, {
@@ -1115,11 +1218,13 @@ export async function checkVideoGenerationStatus(
  * Download a video file from Gemini Files API
  */
 export async function downloadVideoFile(
-  fileName: string
+  fileName: string,
+  opts?: { byokCredential?: ResolvedVertexCredential }
 ): Promise<Buffer | null> {
-  const project = process.env.VERTEX_PROJECT_ID
+  const byokCredential =
+    opts?.byokCredential?.source === 'byok' ? opts.byokCredential : undefined
+  const project = resolveVideoProjectId(byokCredential)
   const location = getVertexLocation(VEO_MODELS.fast)
-  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
   // Extract file name from file: prefix if present
   const cleanName = fileName.startsWith('file:') ? fileName.substring(5) : fileName
   const host = getVertexHostname(location)
@@ -1127,7 +1232,7 @@ export async function downloadVideoFile(
   const endpoint = `https://${host}/v1/projects/${project}/locations/${location}/files/${cleanName}:download`
 
   try {
-    const accessToken = await getVertexAccessToken();
+    const accessToken = await getVertexAccessToken(byokCredential);
     const response = await fetch(endpoint, {
       method: 'GET',
       headers: {
@@ -1152,13 +1257,14 @@ export async function downloadVideoFile(
 export async function waitForVideoCompletion(
   operationName: string,
   maxWaitSeconds: number = 300,
-  pollIntervalSeconds: number = 10
+  pollIntervalSeconds: number = 10,
+  opts?: { byokCredential?: ResolvedVertexCredential }
 ): Promise<VideoGenerationResult> {
   const startTime = Date.now()
   const maxWaitMs = maxWaitSeconds * 1000
 
   while (Date.now() - startTime < maxWaitMs) {
-    const status = await checkVideoGenerationStatus(operationName)
+    const status = await checkVideoGenerationStatus(operationName, opts)
 
     if (status.status === 'COMPLETED' || status.status === 'FAILED') {
       return status

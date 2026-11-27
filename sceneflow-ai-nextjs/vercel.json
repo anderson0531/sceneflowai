@@ -90,6 +90,9 @@
     "src/app/api/cron/subscription-credits/route.ts": {
       "maxDuration": 120
     },
+    "src/app/api/cron/credit-audit/route.ts": {
+      "maxDuration": 120
+    },
     "src/app/api/segments/[segmentId]/upload-video/route.ts": {
       "maxDuration": 60
     },
@@ -126,6 +129,18 @@
     "src/app/api/admin/diagnostics/gemini-models/route.ts": {
       "maxDuration": 120
     },
+    "src/app/api/admin/models/intelligence/route.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/admin/models/bake-off/route.ts": {
+      "maxDuration": 180
+    },
+    "src/app/api/cron/model-intelligence/route.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/blueprint/pitch-takes/route.ts": {
+      "maxDuration": 60
+    },
     "src/app/api/scenes/[sceneId]/generate-segments/route.ts": {
       "maxDuration": 300
     },
@@ -144,6 +159,14 @@
     {
       "path": "/api/cron/subscription-credits",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/credit-audit",
+      "schedule": "15 * * * *"
+    },
+    {
+      "path": "/api/cron/model-intelligence",
+      "schedule": "0 5 * * 1"
     }
   ]
 }

@@ -5,6 +5,10 @@
 
 import jwt from 'jsonwebtoken'
 import {
+  ByokRateLimitError,
+  type ResolvedKlingCredential,
+} from '@/lib/byok/resolveProviderCredential'
+import {
   getKlingApiBaseUrl,
   getKlingCapabilities,
   getKlingDefaultModel,
@@ -93,8 +97,36 @@ function truncatePrompt(text: string, max = 2500): string {
   return text.length > max ? text.slice(0, max) : text
 }
 
+function hasResolvedKlingCredentials(byokCredential?: ResolvedKlingCredential): boolean {
+  if (byokCredential?.source === 'byok') {
+    return Boolean(
+      (byokCredential.accessKey && byokCredential.secretKey) || byokCredential.apiKey
+    )
+  }
+  return hasDirectKlingCredentials()
+}
+
 /** Exported for unit tests */
-export function buildKlingAuthHeader(): string {
+export function buildKlingAuthHeader(byokCredential?: ResolvedKlingCredential): string {
+  if (byokCredential?.source === 'byok') {
+    const accessKey = byokCredential.accessKey?.trim()
+    const secretKey = byokCredential.secretKey?.trim()
+    if (accessKey && secretKey) {
+      const now = Math.floor(Date.now() / 1000)
+      const token = jwt.sign(
+        { iss: accessKey, exp: now + 1800, nbf: now - 5 },
+        secretKey,
+        { algorithm: 'HS256', header: { alg: 'HS256', typ: 'JWT' } }
+      )
+      return `Bearer ${token}`
+    }
+    const apiKey = byokCredential.apiKey?.trim()
+    if (apiKey) {
+      return `Bearer ${apiKey}`
+    }
+    throw new Error('BYOK Kling credentials are incomplete')
+  }
+
   const apiKey = process.env.KLING_API_KEY?.trim()
   if (apiKey) {
     return `Bearer ${apiKey}`
@@ -152,7 +184,10 @@ export function parseKlingWebhookPayload(body: unknown): KlingWebhookPayload | n
   }
 }
 
-async function resolveImageForKling(source: string): Promise<string> {
+async function resolveImageForKling(
+  source: string,
+  byokCredential?: ResolvedKlingCredential
+): Promise<string> {
   if (source.startsWith('http://') || source.startsWith('https://')) {
     return source
   }
@@ -165,7 +200,7 @@ async function resolveImageForKling(source: string): Promise<string> {
   const res = await fetch(`${baseUrl}/images/upload`, {
     method: 'POST',
     headers: {
-      Authorization: buildKlingAuthHeader(),
+      Authorization: buildKlingAuthHeader(byokCredential),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -175,6 +210,13 @@ async function resolveImageForKling(source: string): Promise<string> {
   })
 
   if (!res.ok) {
+    if (res.status === 429 && byokCredential?.source === 'byok') {
+      throw new ByokRateLimitError(`BYOK Kling image upload rate limited (429)`, {
+        provider: 'kling',
+        status: 429,
+        bucketNamespace: byokCredential.bucketNamespace,
+      })
+    }
     throw new Error(`Kling image upload failed: ${res.status}`)
   }
 
@@ -185,30 +227,57 @@ async function resolveImageForKling(source: string): Promise<string> {
   return json.data.url
 }
 
-async function klingRequest(path: string, body: Record<string, unknown>): Promise<KlingTaskResponse> {
+async function klingRequest(
+  path: string,
+  body: Record<string, unknown>,
+  byokCredential?: ResolvedKlingCredential
+): Promise<KlingTaskResponse> {
   const baseUrl = getKlingApiBaseUrl()
   const res = await fetch(`${baseUrl}${path}`, {
     method: 'POST',
     headers: {
-      Authorization: buildKlingAuthHeader(),
+      Authorization: buildKlingAuthHeader(byokCredential),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
   })
 
-  const json = (await res.json()) as KlingTaskResponse
+  const json = (await res.json().catch(() => ({}))) as KlingTaskResponse
+  if (res.status === 429 && byokCredential?.source === 'byok') {
+    throw new ByokRateLimitError(
+      json.message || 'BYOK Kling API rate limited (429)',
+      {
+        provider: 'kling',
+        status: 429,
+        bucketNamespace: byokCredential.bucketNamespace,
+      }
+    )
+  }
   if (!res.ok || (json.code != null && json.code !== 0)) {
     throw new Error(json.message || `Kling API error: ${res.status}`)
   }
   return json
 }
 
-async function klingGet(path: string): Promise<KlingTaskResponse> {
+async function klingGet(
+  path: string,
+  byokCredential?: ResolvedKlingCredential
+): Promise<KlingTaskResponse> {
   const baseUrl = getKlingApiBaseUrl()
   const res = await fetch(`${baseUrl}${path}`, {
-    headers: { Authorization: buildKlingAuthHeader() },
+    headers: { Authorization: buildKlingAuthHeader(byokCredential) },
   })
-  const json = (await res.json()) as KlingTaskResponse
+  const json = (await res.json().catch(() => ({}))) as KlingTaskResponse
+  if (res.status === 429 && byokCredential?.source === 'byok') {
+    throw new ByokRateLimitError(
+      json.message || 'BYOK Kling API rate limited (429)',
+      {
+        provider: 'kling',
+        status: 429,
+        bucketNamespace: byokCredential.bucketNamespace,
+      }
+    )
+  }
   if (!res.ok || (json.code != null && json.code !== 0)) {
     throw new Error(json.message || `Kling API error: ${res.status}`)
   }
@@ -219,9 +288,10 @@ export async function pollKlingTask(
   taskId: string,
   endpoint: 'text2video' | 'image2video' | 'video-extend' | 'lip-sync',
   maxWaitSec = 300,
-  intervalMs = 5000
+  intervalMs = 5000,
+  byokCredential?: ResolvedKlingCredential
 ): Promise<string> {
-  const result = await pollKlingTaskResult(taskId, endpoint, maxWaitSec, intervalMs)
+  const result = await pollKlingTaskResult(taskId, endpoint, maxWaitSec, intervalMs, byokCredential)
   return result.videoUrl
 }
 
@@ -229,12 +299,13 @@ export async function pollKlingTaskResult(
   taskId: string,
   endpoint: 'text2video' | 'image2video' | 'video-extend' | 'lip-sync',
   maxWaitSec = 300,
-  intervalMs = 5000
+  intervalMs = 5000,
+  byokCredential?: ResolvedKlingCredential
 ): Promise<KlingPollResult> {
   const deadline = Date.now() + maxWaitSec * 1000
 
   while (Date.now() < deadline) {
-    const json = await klingGet(`/videos/${endpoint}/${taskId}`)
+    const json = await klingGet(`/videos/${endpoint}/${taskId}`, byokCredential)
     const status = json.data?.task_status
 
     if (status === 'succeed') {
@@ -445,13 +516,16 @@ export function buildKlingElementMultiBody(
   return body
 }
 
-export async function pollKlingElementTask(taskId: string): Promise<string> {
+export async function pollKlingElementTask(
+  taskId: string,
+  byokCredential?: ResolvedKlingCredential
+): Promise<string> {
   const deadline = Date.now() + getKlingElementPollTimeoutSec() * 1000
   const intervalMs = getKlingElementPollIntervalMs()
   const pollPath = getKlingElementPollPath(taskId)
 
   while (Date.now() < deadline) {
-    const json = await klingGet(pollPath)
+    const json = await klingGet(pollPath, byokCredential)
     const elementId = json.data?.element_id
     if (elementId) return elementId
 
@@ -472,19 +546,19 @@ export async function pollKlingElementTask(taskId: string): Promise<string> {
 
 /** Multi-image bind element (identity frontal + wardrobe refer images). */
 export async function registerKlingElementMulti(
-  input: KlingElementMultiInput
+  input: KlingElementMultiInput & { byokCredential?: ResolvedKlingCredential }
 ): Promise<string> {
-  const frontal = await resolveImageForKling(input.frontalImageUrl)
+  const frontal = await resolveImageForKling(input.frontalImageUrl, input.byokCredential)
   const refers: string[] = []
   for (const url of input.referImageUrls.slice(0, 3)) {
-    refers.push(await resolveImageForKling(url))
+    refers.push(await resolveImageForKling(url, input.byokCredential))
   }
   if (refers.length < 1) {
     throw new Error('Multi-image element requires at least one refer image')
   }
 
   const body = buildKlingElementMultiBody(input, { frontal, refers })
-  const create = await klingRequest(getKlingElementEndpoint(), body)
+  const create = await klingRequest(getKlingElementEndpoint(), body, input.byokCredential)
 
   const immediateId = create.data?.element_id
   if (immediateId) return immediateId
@@ -494,29 +568,38 @@ export async function registerKlingElementMulti(
     throw new Error('Kling element registration completed without element_id or task_id')
   }
 
-  return pollKlingElementTask(taskId)
+  return pollKlingElementTask(taskId, input.byokCredential)
 }
 
-export async function registerKlingElement(imageUrl: string, name?: string): Promise<string> {
-  const resolved = await resolveImageForKling(imageUrl)
-  const create = await klingRequest(getKlingElementEndpoint(), {
-    image: resolved,
-    name: name?.slice(0, 128) || 'sceneflow-element',
-  })
+export async function registerKlingElement(
+  imageUrl: string,
+  name?: string,
+  byokCredential?: ResolvedKlingCredential
+): Promise<string> {
+  const resolved = await resolveImageForKling(imageUrl, byokCredential)
+  const create = await klingRequest(
+    getKlingElementEndpoint(),
+    {
+      image: resolved,
+      name: name?.slice(0, 128) || 'sceneflow-element',
+    },
+    byokCredential
+  )
   const elementId = create.data?.element_id
   if (elementId) return elementId
 
   const taskId = create.data?.task_id
-  if (taskId) return pollKlingElementTask(taskId)
+  if (taskId) return pollKlingElementTask(taskId, byokCredential)
 
   throw new Error('Kling element registration completed without element_id')
 }
 
 export async function submitKlingVideo(
-  input: KlingVideoInput,
-  options?: { webhookUrl?: string }
+  input: KlingVideoInput & { byokCredential?: ResolvedKlingCredential },
+  options?: { webhookUrl?: string; byokCredential?: ResolvedKlingCredential }
 ): Promise<KlingSubmitResult> {
-  if (!hasDirectKlingCredentials()) {
+  const byokCredential = options?.byokCredential ?? input.byokCredential
+  if (!hasResolvedKlingCredentials(byokCredential)) {
     throw new Error('Direct Kling credentials are not configured')
   }
 
@@ -525,7 +608,7 @@ export async function submitKlingVideo(
   for (const entry of imageList) {
     resolvedList.push({
       ...entry,
-      url: await resolveImageForKling(entry.url),
+      url: await resolveImageForKling(entry.url, byokCredential),
     })
   }
 
@@ -535,7 +618,7 @@ export async function submitKlingVideo(
   }
 
   const { body, endpoint } = buildKlingVideoBody(withWebhook, resolvedList)
-  const create = await klingRequest(`/videos/${endpoint}`, body)
+  const create = await klingRequest(`/videos/${endpoint}`, body, byokCredential)
   const taskId = create.data?.task_id
   if (!taskId) {
     throw new Error('Kling video task created without task_id')
@@ -548,13 +631,18 @@ export async function submitKlingVideo(
   }
 }
 
-export async function runKlingVideo(input: KlingVideoInput): Promise<Buffer> {
-  const submit = await submitKlingVideo(input)
+export async function runKlingVideo(
+  input: KlingVideoInput & { byokCredential?: ResolvedKlingCredential },
+  options?: { byokCredential?: ResolvedKlingCredential }
+): Promise<Buffer> {
+  const byokCredential = options?.byokCredential ?? input.byokCredential
+  const submit = await submitKlingVideo(input, { byokCredential })
   const polled = await pollKlingTaskResult(
     submit.taskId,
     submit.endpoint,
     getKlingSegmentPollTimeoutSec(),
-    getKlingPollIntervalMs()
+    getKlingPollIntervalMs(),
+    byokCredential
   )
   const res = await fetch(polled.videoUrl)
   if (!res.ok) throw new Error(`Kling video download failed: ${res.status}`)
@@ -569,6 +657,7 @@ export interface KlingExtendInput {
   webhookUrl?: string
   /** Intentionally ignored — model/mode inherited from parent video */
   model?: string
+  byokCredential?: ResolvedKlingCredential
 }
 
 export interface BuildKlingExtendBodyResult {
@@ -606,12 +695,12 @@ export function buildKlingExtendBody(input: KlingExtendInput): BuildKlingExtendB
 export async function submitKlingVideoExtend(
   input: KlingExtendInput
 ): Promise<KlingSubmitResult> {
-  if (!hasDirectKlingCredentials()) {
+  if (!hasResolvedKlingCredentials(input.byokCredential)) {
     throw new Error('Direct Kling credentials are not configured')
   }
 
   const { body } = buildKlingExtendBody(input)
-  const create = await klingRequest('/videos/video-extend', body)
+  const create = await klingRequest('/videos/video-extend', body, input.byokCredential)
   const taskId = create.data?.task_id
   if (!taskId) {
     throw new Error('Kling video-extend task created without task_id')
@@ -629,7 +718,13 @@ export async function runKlingVideoExtend(input: KlingExtendInput): Promise<{
   videoId?: string
 }> {
   const submit = await submitKlingVideoExtend(input)
-  const polled = await pollKlingTaskResult(submit.taskId, 'video-extend')
+  const polled = await pollKlingTaskResult(
+    submit.taskId,
+    'video-extend',
+    300,
+    5000,
+    input.byokCredential
+  )
   const res = await fetch(polled.videoUrl)
   if (!res.ok) throw new Error(`Kling extend download failed: ${res.status}`)
   return {
@@ -642,8 +737,9 @@ export async function submitKlingLipSync(input: {
   videoUrl: string
   audioUrl: string
   webhookUrl?: string
+  byokCredential?: ResolvedKlingCredential
 }): Promise<KlingSubmitResult> {
-  if (!hasDirectKlingCredentials()) {
+  if (!hasResolvedKlingCredentials(input.byokCredential)) {
     throw new Error('Direct Kling credentials are not configured')
   }
 
@@ -657,7 +753,7 @@ export async function submitKlingLipSync(input: {
     body.callback_url = input.webhookUrl
   }
 
-  const create = await klingRequest('/videos/lip-sync', body)
+  const create = await klingRequest('/videos/lip-sync', body, input.byokCredential)
   const taskId = create.data?.task_id
   if (!taskId) throw new Error('Kling lip-sync task created without task_id')
 
@@ -668,13 +764,17 @@ export async function submitKlingLipSync(input: {
   }
 }
 
-export async function runKlingLipSync(videoUrl: string, audioUrl: string): Promise<Buffer> {
-  if (!hasDirectKlingCredentials()) {
+export async function runKlingLipSync(
+  videoUrl: string,
+  audioUrl: string,
+  byokCredential?: ResolvedKlingCredential
+): Promise<Buffer> {
+  if (!hasResolvedKlingCredentials(byokCredential)) {
     throw new Error('Direct Kling credentials are not configured')
   }
 
-  const submit = await submitKlingLipSync({ videoUrl, audioUrl })
-  const outUrl = await pollKlingTask(submit.taskId, 'lip-sync')
+  const submit = await submitKlingLipSync({ videoUrl, audioUrl, byokCredential })
+  const outUrl = await pollKlingTask(submit.taskId, 'lip-sync', 300, 5000, byokCredential)
   const res = await fetch(outUrl)
   if (!res.ok) throw new Error(`Kling lip-sync download failed: ${res.status}`)
   return Buffer.from(await res.arrayBuffer())
@@ -739,13 +839,14 @@ export function extractKlingImageUrl(data: unknown): string | undefined {
 export async function pollKlingOmniImageTask(
   taskId: string,
   maxWaitSec = getKlingElementPollTimeoutSec(),
-  intervalMs = getKlingElementPollIntervalMs()
+  intervalMs = getKlingElementPollIntervalMs(),
+  byokCredential?: ResolvedKlingCredential
 ): Promise<string> {
   const deadline = Date.now() + maxWaitSec * 1000
   const path = `/images/omni-image/${encodeURIComponent(taskId)}`
 
   while (Date.now() < deadline) {
-    const json = await klingGet(path)
+    const json = await klingGet(path, byokCredential)
     const status = json.data?.task_status
 
     if (status === 'succeed') {
@@ -770,14 +871,15 @@ export async function submitKlingOmniImage(input: {
   imageList?: Array<{ image: string }>
   resolution?: KlingOmniImageResolution
   aspectRatio?: string
+  byokCredential?: ResolvedKlingCredential
 }): Promise<{ taskId: string }> {
-  if (!hasDirectKlingCredentials()) {
+  if (!hasResolvedKlingCredentials(input.byokCredential)) {
     throw new Error('Direct Kling credentials are not configured')
   }
 
   const resolvedImages: Array<{ image: string }> = []
   for (const entry of input.imageList ?? []) {
-    resolvedImages.push({ image: await resolveImageForKling(entry.image) })
+    resolvedImages.push({ image: await resolveImageForKling(entry.image, input.byokCredential) })
   }
 
   const body = buildKlingOmniImageBody({
@@ -787,7 +889,7 @@ export async function submitKlingOmniImage(input: {
     resolution: input.resolution,
     aspectRatio: input.aspectRatio,
   })
-  const create = await klingRequest('/images/omni-image', body)
+  const create = await klingRequest('/images/omni-image', body, input.byokCredential)
   const taskId = create.data?.task_id
   if (!taskId) {
     throw new Error('Kling omni-image task created without task_id')
@@ -801,9 +903,15 @@ export async function runKlingOmniImage(input: {
   imageList?: Array<{ image: string }>
   resolution?: KlingOmniImageResolution
   aspectRatio?: string
+  byokCredential?: ResolvedKlingCredential
 }): Promise<Buffer> {
   const submit = await submitKlingOmniImage(input)
-  const imageUrl = await pollKlingOmniImageTask(submit.taskId)
+  const imageUrl = await pollKlingOmniImageTask(
+    submit.taskId,
+    getKlingElementPollTimeoutSec(),
+    getKlingElementPollIntervalMs(),
+    input.byokCredential
+  )
   const res = await fetch(imageUrl)
   if (!res.ok) throw new Error(`Kling omni-image download failed: ${res.status}`)
   return Buffer.from(await res.arrayBuffer())

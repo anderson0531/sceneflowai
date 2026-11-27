@@ -34,6 +34,20 @@ import { formatReferenceCatalogForPrompt } from '@/lib/referenceLibrary/projecti
 import { loadBlueprintARFromMetadata, type AudienceDefinition } from '@/lib/types/audienceResonance'
 import { enforceEnsembleFamilyConsistency } from '@/lib/character/characterFamily'
 import { sanitizeBlueprintCharactersAndBeats } from '@/lib/character/ageStageContinuity'
+import { enforceNameEntropyOnTreatment } from '@/lib/character/nameEntropyGuard'
+import { attachContinuityManifestToTreatment } from '@/lib/blueprint/continuityManifest'
+import {
+  buildCreativeEntropySeed,
+  formatEntropyDirectiveBlock,
+  isSparseSynopsis,
+  loadRecentUserCharacterNames,
+} from '@/lib/treatment/creativeEntropy'
+import {
+  auditFirstTakeReadiness,
+  runShowrunnerPreCompilation,
+  type ShowrunnerPitchTake,
+} from '@/lib/treatment/showrunnerPipeline'
+import { isAdminEmail } from '@/lib/adminUtils'
 import {
   buildCharacterLocalizationPromptBlock,
   composeStandingAppearanceFromAttributes,
@@ -74,6 +88,10 @@ interface FilmTreatmentRequest {
   storyLocale?: string
   projectId?: string
   seriesId?: string
+  /** 'auto' (default) runs Showrunner Room stages 1-2 for sparse fiction inputs; 'skip' compiles directly */
+  firstTakeMode?: 'auto' | 'skip'
+  /** Optional Stage 1 Director's Take selected interactively by the creator */
+  chosenTake?: ShowrunnerPitchTake
   /** Dev-only: override thinking budget for A/B validation (NODE_ENV=development only) */
   debugThinkingBudget?: number
 }
@@ -528,6 +546,60 @@ export async function POST(request: NextRequest) {
 
     const lockedArtStyle = serializeArtStyleValue(effectiveArtStyleSpec)
 
+    // Load recent creator cast names for cross-project name diversity + run Showrunner Room Stages 1-2
+    // when generating fresh fiction from a sparse synopsis (or with an interactive chosenTake).
+    const recentProjectNames =
+      contentIntent === 'fiction' && !lockedLibrary
+        ? await loadRecentUserCharacterNames(session?.user?.id)
+        : []
+
+    let creativeBriefBlock = ''
+    let showrunnerMeta: Record<string, unknown> | undefined
+    const shouldRunShowrunnerRoom =
+      contentIntent === 'fiction' &&
+      !lockedLibrary &&
+      rigor !== 'fast' &&
+      body.firstTakeMode !== 'skip' &&
+      (Boolean(body.chosenTake) || isSparseSynopsis(input))
+
+    if (shouldRunShowrunnerRoom) {
+      try {
+        console.log('[Film Treatment] Running Showrunner Room Stages 1-2 for First-Take originality...')
+        const pre = await runShowrunnerPreCompilation({
+          input,
+          genre,
+          tone,
+          targetAudience,
+          format,
+          recentProjectNames,
+          chosenTake: body.chosenTake,
+          projectId: body.projectId,
+          userId: session?.user?.id,
+          isAdmin: Boolean(session?.user?.email && isAdminEmail(session.user.email)),
+        })
+        creativeBriefBlock = pre.creativeBriefBlock
+        showrunnerMeta = {
+          seedId: pre.entropySeed.seedId,
+          selectedTakeTitle: pre.selectedTake.workingTitle,
+          selectedTakeAngle: pre.selectedTake.angleLabel,
+          castForged: pre.bible.cast.length,
+          locationsForged: pre.bible.locations.length,
+        }
+      } catch (srErr) {
+        console.warn('[Film Treatment] Showrunner pre-compilation fallback to entropy directive:', srErr)
+      }
+    }
+
+    if (!creativeBriefBlock && contentIntent === 'fiction' && !lockedLibrary) {
+      const entropySeed = buildCreativeEntropySeed({
+        input,
+        genre,
+        tone,
+        recentProjectNames,
+      })
+      creativeBriefBlock = formatEntropyDirectiveBlock(entropySeed)
+    }
+
     const context = { 
       targetAudience, 
       keyMessage, 
@@ -558,6 +630,11 @@ export async function POST(request: NextRequest) {
       referenceCatalogBlock,
       lockedLibrary,
       localizationBlock,
+      creativeBriefBlock,
+      recentProjectNames,
+      showrunnerMeta,
+      projectId: body.projectId,
+      userId: session?.user?.id,
       audienceDefinition: resolvedAudienceDefinition,
     }
 
@@ -655,18 +732,32 @@ async function generateFilmTreatment(
     seriesContinuityBlock: context?.seriesContinuityBlock,
     referenceCatalogBlock: context?.referenceCatalogBlock,
     localizationBlock: context?.localizationBlock,
+    creativeBriefBlock: context?.creativeBriefBlock,
   }) + retryHint + strictJsonPromptSuffix
 
   const thinkingBudget = context?.thinkingBudget ?? getThinkingBudgetForRigor(context?.rigor || 'thorough')
-  console.log(`[Film Treatment] Calling Vertex AI Gemini (thinkingBudget=${thinkingBudget})...`)
+  const thinkingLevel =
+    context?.rigor === 'fast'
+      ? 'minimal'
+      : context?.rigor === 'balanced'
+        ? 'medium'
+        : 'high'
+  // Stage 3 compilation uses 0.45 when Showrunner Room already locked the creative leaps,
+  // or 0.65 for direct generation so we never collapse into temperature 0.3 boilerplate.
+  const compilationTemperature = context?.showrunnerMeta ? 0.45 : 0.65
+  console.log(`[Film Treatment] Calling Vertex AI Gemini (thinkingLevel=${thinkingLevel}, temp=${compilationTemperature})...`)
   
   const generation = await generateText(prompt, {
     model: getGeminiProductModel('blueprint'),
-    temperature: 0.3,
-    topP: 0.9,
+    temperature: compilationTemperature,
+    topP: 0.95,
     responseMimeType: 'application/json',
     maxOutputTokens: TREATMENT_MAX_OUTPUT_TOKENS,
     thinkingBudget,
+    thinkingLevel,
+    surface: 'blueprint',
+    projectId: context?.projectId,
+    userId: context?.userId,
   })
 
   if (!generation?.text) {
@@ -917,6 +1008,43 @@ async function generateFilmTreatment(
         }
       })
     }
+
+    // Stage 4A: Deterministic Name Entropy Guard (skip if Series Bible locked cast)
+    let guardedBound: any = bound
+    if (!locked && context?.contentIntent === 'fiction') {
+      const entropyResult = enforceNameEntropyOnTreatment(bound as any, {
+        userInput: input,
+        recentProjectNames: Array.isArray(context?.recentProjectNames)
+          ? context.recentProjectNames
+          : [],
+      })
+      guardedBound = entropyResult.treatment
+      if (entropyResult.report.remapped && entropyResult.report.remapped.length > 0) {
+        console.log(
+          '[Film Treatment] Name Entropy Guard remapped:',
+          entropyResult.report.remapped
+        )
+      }
+    }
+
+    // Stage 4B: Attach Canonical Continuity Manifest (char_01, loc_01, prop_01 + voiceFingerprints)
+    const { treatment: manifested } = attachContinuityManifestToTreatment(guardedBound)
+
+    // Stage 4C: First-Take Quality & Continuity Readiness Audit
+    const readiness = auditFirstTakeReadiness(manifested, {
+      userInput: input,
+      requestedTone: context?.tone,
+      recentProjectNames: Array.isArray(context?.recentProjectNames)
+        ? context.recentProjectNames
+        : [],
+      targetMinutes: context?.targetMinutes || 30,
+    })
+    ;(manifested as any).firstTakeReadiness = readiness
+    if (context?.showrunnerMeta) {
+      ;(manifested as any).showrunnerMeta = context.showrunnerMeta
+    }
+
+    Object.assign(bound as any, manifested)
 
     console.log('[Film Treatment] narrative_reasoning fields present:', !!((parsed as any).character_focus || (parsed as any).story_strengths))
     if ((parsed as any).character_focus || (parsed as any).story_strengths) {

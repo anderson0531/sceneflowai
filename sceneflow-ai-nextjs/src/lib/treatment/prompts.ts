@@ -83,7 +83,7 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
   
   "character_descriptions": [
     {
-      "name": "SINGLE INDIVIDUAL FULL NAME (NEVER a group). If person appears at multiple ages/eras (>=10 yrs apart), create separate entries named 'Full Name (Age NN)', e.g. 'John Miller (Age 16)', 'John Miller (Age 32)', 'John Miller (Age 62)'",
+      "name": "SINGLE INDIVIDUAL FULL NAME (NEVER a group). If person appears at multiple ages/eras (>=10 yrs apart), create separate entries named '[Full Name] (Age NN)', e.g. '[Character] (Age 16)', '[Character] (Age 32)', '[Character] (Age 62)'",
       "role": "protagonist | supporting | antagonist",
       "subject": "Full name with title/nickname reflecting cultural background",
       "age": "Exact biological age for THIS entry in English (e.g. '16' or '32' or '62') — NEVER a multi-decade span like '16-62'",
@@ -98,6 +98,7 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
       "appearance": "2-3 vivid English sentences of standing physical appearance (no clothing) for casting continuity",
       "defaultWardrobe": "Primary outfit/attire appropriate to role, setting, AND cultural background in English",
       "wardrobeAccessories": "Consistent accessories worn throughout in English",
+      "voiceFingerprint": "Distinctive speech cadence, vocabulary level, syntactic rhythm, and verbal tells so this character sounds unmistakable in dialogue",
       "description": "Role in narrative + playable behavioral contradiction, vocal cadence, and dynamic with other characters",
       "familyRelationships": [
         {
@@ -186,9 +187,9 @@ OUTPUT RULES - CRITICAL:
 
 9. **BEAT SHEET CRAFT ("THEREFORE / BUT" RULE)**: Never write a flat, episodic "and then" list of events. Every beat in "beats" MUST be causally linked to the beat before and after it ("Because of X, THEREFORE Y happens; BUT complication Z forces a new choice"). Each beat's "synopsis" must establish: (a) entering friction/objective, (b) concrete visual action on screen, and (c) the dramatic turn or value shift at the end of the beat.
 
-10. **INDIVIDUAL CHARACTERS ONLY — NEVER GROUPS**: Every entry in "character_descriptions" and every beat's "characters" array MUST be a single named individual person — NEVER a collective/plural group ("John's Friends", "Neighbors", "The Brothers", "Parents", "Factory Workers"). If a couple or duo matters, create two separate individual characters.
+10. **INDIVIDUAL CHARACTERS ONLY — NEVER GROUPS**: Every entry in "character_descriptions" and every beat's "characters" array MUST be a single named individual person — NEVER a collective/plural group ("Friends", "Neighbors", "The Brothers", "Parents", "Factory Workers"). If a couple or duo matters, create two separate individual characters.
 
-11. **MULTI-AGE / MULTI-ERA LIFE STAGES = SEPARATE "(Age NN)" CHARACTERS + PER-BEAT HIGHLIGHTS**: Production Stage locks ONE base face reference image per character card and uses Wardrobes ONLY for outfit changes at that same biological age. Whenever a character appears at meaningfully different ages or time periods (>= 10 years apart — especially in Video Memoirs, biographies, and flashback stories), you MUST create SEPARATE entries in "character_descriptions" named "Full Name (Age NN)" (e.g. "John Miller (Age 16)", "John Miller (Age 32)", "John Miller (Age 62)"), keeping core genetic traits (ethnicity, eyeColor, facial bone structure) identical while adapting biological age, hair/skin aging, and period defaultWardrobe. Populate every beat's "characters" array with the exact individual character names (including the era-matched "(Age NN)" variant) featured in that beat.`
+11. **MULTI-AGE / MULTI-ERA LIFE STAGES = SEPARATE "(Age NN)" CHARACTERS + PER-BEAT HIGHLIGHTS**: Production Stage locks ONE base face reference image per character card and uses Wardrobes ONLY for outfit changes at that same biological age. Whenever a character appears at meaningfully different ages or time periods (>= 10 years apart — especially in Video Memoirs, biographies, and flashback stories), you MUST create SEPARATE entries in "character_descriptions" named "[Full Name] (Age NN)", keeping core genetic traits (ethnicity, eyeColor, facial bone structure) identical while adapting biological age, hair/skin aging, and period defaultWardrobe. Populate every beat's "characters" array with the exact individual character names (including the era-matched "(Age NN)" variant) featured in that beat.`
 
 /**
  * Default length posture.
@@ -236,8 +237,10 @@ export function buildTreatmentPrompt(opts: {
   seriesContinuityBlock?: string
   /** Cultural localization & family genetics directive block */
   localizationBlock?: string
+  /** Pre-forged Showrunner Room creative brief (Stage 1 Pitch + Stage 2 Cast & World Bible) */
+  creativeBriefBlock?: string
 }) {
-  const { input, coreConcept, targetMinutes, autoScope, advisoryScopeLabel, styleHint, context, beatStructure, persona, contentIntent, rigor = 'thorough', storyLocale, properNouns, referenceCatalogBlock, seriesContinuityBlock, localizationBlock } = opts
+  const { input, coreConcept, targetMinutes, autoScope, advisoryScopeLabel, styleHint, context, beatStructure, persona, contentIntent, rigor = 'thorough', storyLocale, properNouns, referenceCatalogBlock, seriesContinuityBlock, localizationBlock, creativeBriefBlock } = opts
   const productionType = getSeriesProductionProfile(opts.format)
   const format = resolveBlueprintProductionFormat(opts.format)
   const intent = resolveContentIntentFromMetadata({
@@ -259,7 +262,9 @@ Start from a long-form assumption: unless the input clearly describes something 
     : `TARGET RUNTIME: ~${targetMinutes} minutes (±10%). Shape beat "minutes" so they sum to roughly this target.`
   const formatBlock = getFormatBlock(format)
   const formatSpecifics = getFormatSpecificBlocks(format, intent)
-  const structureBlock = beatStructure ? `\nBEAT STRUCTURE:\n- Use the ${beatStructure.label} structure.\n- Produce beats matching these titles IN ORDER (adapt wording if needed, keep intent):\n${beatStructure.beats.map((b,i)=>`  ${i+1}. ${b.title}`).join('\n')}\n` : ''
+  const structureBlock = beatStructure
+    ? `\nMACRO ACT / PHASE STRUCTURE:\n- Use the ${beatStructure.label} phases as macro narrative containers IN ORDER:\n${beatStructure.beats.map((b, i) => `  ${i + 1}. ${b.title}`).join('\n')}\n- For long-form stories (20+ min or auto scope), expand these macro phases into 12–24 concrete, story-specific dramatic beats with original evocative titles (do NOT just output 3–6 generic textbook labels).\n`
+    : ''
   const personaBlock = persona === 'Director'
     ? '\nVOICE: Write as a concise, confident director offering clear, actionable guidance.'
     : persona === 'Narrator'
@@ -327,7 +332,7 @@ ${intent === 'fiction' && localizationBlock ? `\n${localizationBlock}\n` : ''}
 ${formatSpecifics.optimizationBlock}
 ${antiFictionBlock}
 
-${seriesContinuityBlock ? `\n${seriesContinuityBlock}\n` : ''}${referenceCatalogBlock ? `\n${referenceCatalogBlock}\n` : ''}${libraryRules ? `\n${libraryRules}\n` : ''}
+${seriesContinuityBlock ? `\n${seriesContinuityBlock}\n` : ''}${referenceCatalogBlock ? `\n${referenceCatalogBlock}\n` : ''}${libraryRules ? `\n${libraryRules}\n` : ''}${creativeBriefBlock ? `\n${creativeBriefBlock}\n` : ''}
 
 INPUT:
 ${input}
@@ -433,9 +438,9 @@ export function buildScoringAwareChecklist(opts: {
   contentIntent?: ContentIntent
 }): string {
   const intent = opts.contentIntent ?? resolveContentIntent(opts.genre)
-  const genre = opts.genre || (intent === 'fiction' ? 'drama' : 'documentary')
-  const targetAudience = opts.targetAudience || 'millennials-25-34'
-  const tone = opts.tone || (intent === 'fiction' ? 'dark-gritty' : 'inspirational')
+  const genre = opts.genre?.trim() || (intent === 'fiction' ? 'drama' : 'documentary')
+  const targetAudience = opts.targetAudience?.trim() || 'discerning general audiences'
+  const tone = opts.tone?.trim() || (intent === 'fiction' ? 'cinematic and story-authentic' : 'clear and engaging')
 
   if (intent === 'informational') {
     return buildInformationalChecklist(genre, targetAudience, tone)
@@ -455,48 +460,42 @@ export function buildScoringAwareChecklist(opts: {
 =============================================================================
 QUALITY GATE CHECKLIST - MUST PASS ALL ITEMS
 =============================================================================
-This treatment will be scored. To achieve 80+ on first generation, ENSURE:
+This treatment will be scored. To achieve 85+ on first generation, ENSURE:
 
 AXIS 1: CONCEPT ORIGINALITY (25% of score)
-[ ] HOOK/TWIST: Logline MUST contain an unexpected element, dramatic irony, or compelling twist
-    BAD: "A man goes on a journey to find himself"
-    GOOD: "A burned-out detective discovers his missing daughter was erased from all records—including his own memory"
-[ ] AVOID CLICHÉS: Do NOT use these tired tropes without subversion:
+[ ] HOOK/TWIST: Logline MUST contain an unexpected premise engine, dramatic irony, or vivid hook rooted directly in the creator's world — NEVER fall back to generic noir-detective or corporate-cover-up templates unless the prompt explicitly asks for one.
+[ ] AVOID CLICHÉS: Do NOT use tired tropes without fresh subversion:
     - Chosen one prophecy (unless subverted)
-    - Love at first sight (unless complicated)  
-    - Mentor dies to motivate hero (unless meaningful)
-    - It was all a dream/simulation reveal
-[ ] UNIQUE ANGLE: Setting or premise must have a distinctive, entertaining engine
+    - Love at first sight (unless complicated)
+    - Mentor dies solely to motivate hero
+    - "It was all a dream/simulation" reveal
+    - Generic burned-out loner haunted by an unnamed past case
+[ ] SPECIFIC WORLD TEXTURE: Ground the premise in a tactile, unmistakable milieu (specific profession, season, local rules, sensory world).
 
 AXIS 2: CHARACTER DEPTH & INTERPERSONAL FRICTION (25% of score)
-[ ] PROTAGONIST GOAL vs. NEED: State clearly what they visibly pursue (externalGoal) and how it collides with their emotional need (internalNeed)
-    EXAMPLE: "The protagonist must expose the cover-up before the election closes the investigation window"
-[ ] PROTAGONIST FLAW & CONTRADICTION: State their internal weakness and playable behavioral contradiction that creates active obstacles
-    EXAMPLE: "Their refusal to trust allies leaves them isolated when evidence surfaces"
-[ ] ANTAGONIST & FOILS: Name or describe the opposing force with a believable counter-agenda, plus supporting characters who challenge rather than serve as passive sounding boards
-    EXAMPLE: "A city official whose career depends on burying the truth"
-[ ] THE "GHOST": Include past trauma or secret that haunts the protagonist
-    EXAMPLE: "Haunted by a case they failed to solve years ago"
-    This is CRITICAL for ${targetAudience} resonance.
+[ ] PROTAGONIST GOAL vs. NEED: State clearly what they visibly pursue (externalGoal) and how it collides with their deeper emotional truth (internalNeed)
+[ ] PROTAGONIST FLAW & CONTRADICTION: Give them a playable behavioral contradiction that creates active obstacles of their own making
+[ ] ANTAGONIST & FOILS: Define a believable opposing force with a coherent counter-agenda, plus supporting characters who challenge rather than act as passive sounding boards
+[ ] FORMATIVE BACKSTORY: Ground key characters in specific lived experience relevant to THIS story's world and tone (not generic trauma boilerplate)
+[ ] DISTINCT VOICES: Every principal character must have a recognizable voiceFingerprint (cadence, diction, verbal tells)
 
 AXIS 3: PACING, STRUCTURE & CAUSAL BEATS (20% of score)
-[ ] THREE ACTS: Treatment MUST have clear Setup, Confrontation, Resolution
+[ ] THREE ACTS / CLEAR ESCALATION: Clear Setup, Escalating Confrontation, and Earned Resolution
 [ ] CAUSAL BEAT PROGRESSION ("THEREFORE / BUT"): Every beat must be triggered by a consequence ("THEREFORE") or complication ("BUT") of the prior beat — never an episodic "and then" list
 [ ] VISUAL SET-PIECES & TURNS: Each beat synopsis must describe concrete visual on-screen action and end on a clear shift in power, trust, danger, or revelation
-[ ] INCITING INCIDENT: In first 25% of story, something disrupts ordinary world
-    EXAMPLE: "When a cryptic letter arrives revealing [secret]..."
-[ ] MIDPOINT TURN: Include a major revelation or reversal at the story's midpoint that raises the cost of failure
-[ ] LOW POINT/ALL IS LOST: Before the climax, protagonist hits rock bottom where their old strategy fails
+[ ] INCITING INCIDENT: Early disruption that permanently alters the protagonist's status quo
+[ ] MIDPOINT TURN: Major revelation or reversal at the story's midpoint that raises the cost of failure
+[ ] LOW POINT/ALL IS LOST: Before the climax, protagonist's old strategy fails completely
 
 AXIS 4: GENRE FIDELITY (15% of score) - ${genre.toUpperCase()}
 [ ] ESSENTIAL CONVENTIONS: ${genreConventions}
-[ ] TONE KEYWORDS: Include 3+ of these words/concepts: ${toneKeywords}
-[ ] CONSISTENT TONE: All elements should reinforce ${tone} atmosphere
+[ ] TONE DIRECTION: ${toneKeywords}
+[ ] CONSISTENT TONE: All elements must authentically reinforce the requested "${tone}" atmosphere
 
-AXIS 5: COMMERCIAL VIABILITY (15% of score) - ${targetAudience.toUpperCase()}
-[ ] PROTAGONIST AGE: Should resonate with ${demographicThemes.ageRange}
-[ ] DEMOGRAPHIC THEMES: Include themes like: ${demographicThemes.themes}
-[ ] MARKETABLE LOGLINE: One sentence that could go on a movie poster
+AXIS 5: AUDIENCE RESONANCE (15% of score) - ${targetAudience.toUpperCase()}
+[ ] AUDIENCE FIT: ${demographicThemes.ageRange}
+[ ] THEMATIC RESONANCE: ${demographicThemes.themes}
+[ ] MARKETABLE LOGLINE: One vivid, poster-ready sentence that captures what makes THIS specific story unmissable
 
 =============================================================================
 PRE-GENERATION SELF-CHECK
@@ -504,10 +503,9 @@ PRE-GENERATION SELF-CHECK
 Before outputting, verify:
 1. Can you state the protagonist's GOAL and colliding NEED in one sentence? → If no, add it
 2. Can you state the protagonist's FLAW and behavioral contradiction? → If no, add it
-3. Is there a clear "When [event] happens, [protagonist] must..." structure? → If no, fix it
-4. Does every beat connect via THEREFORE / BUT with a visual turn instead of "and then"? → If no, rewrite the beats
-5. Does the logline have a HOOK that makes you want to know more? → If no, add a twist
-6. Are character names culturally authentic to their ethnicity? → If not, fix them
+3. Does every beat connect via THEREFORE / BUT with a concrete visual turn instead of "and then"? → If no, rewrite the beats
+4. Does the logline feel genuinely fresh and specific to THIS premise rather than a stock genre template? → If no, sharpen it
+5. Are character names culturally authentic, phonetically distinct, and free of overused AI defaults? → If not, fix them
 =============================================================================
 `
 }
@@ -604,67 +602,104 @@ AXIS 5: AUDIENCE ENGAGEMENT (15%)
 `
 }
 
-function getDemographicThemes(demographic: string): { ageRange: string; themes: string } {
+export function getDemographicThemes(demographic: string): { ageRange: string; themes: string } {
+  const normalized = (demographic || '').trim().toLowerCase()
   const map: Record<string, { ageRange: string; themes: string }> = {
-    'gen-z-18-24': { 
-      ageRange: '18-24 year olds', 
-      themes: 'identity crisis, social media pressure, climate anxiety, mental health, authenticity vs. performance' 
+    'gen-z-18-24': {
+      ageRange: '18-24 year olds',
+      themes: 'identity formation, authenticity vs. performance, community belonging, finding one\'s voice',
     },
-    'millennials-25-34': { 
-      ageRange: '25-34 year olds', 
-      themes: 'burnout, student debt, quarter-life crisis, work-life balance, digital isolation, imposter syndrome' 
+    'millennials-25-34': {
+      ageRange: '25-34 year olds',
+      themes: 'ambition vs. fulfillment, chosen family, career inflection points, redefining success',
     },
-    'gen-x-35-54': { 
-      ageRange: '35-54 year olds', 
-      themes: 'midlife reflection, aging parents, career plateau, divorce/reinvention, legacy concerns' 
+    'gen-x-35-54': {
+      ageRange: '35-54 year olds',
+      themes: 'midlife reinvention, family responsibility, mentorship, legacy, second acts',
     },
-    'boomers-55+': { 
-      ageRange: '55-70 year olds', 
-      themes: 'retirement, mortality awareness, grandchildren, legacy, second chances, reflection on life choices' 
+    'boomers-55+': {
+      ageRange: '55-70+ year olds',
+      themes: 'legacy, reconciliation, second chances, intergenerational bonds, reflection on life choices',
     },
-    'teens-13-17': { 
-      ageRange: '14-17 year olds', 
-      themes: 'first love, identity formation, peer pressure, family conflict, rebellion, self-discovery' 
+    'teens-13-17': {
+      ageRange: '13-17 year olds',
+      themes: 'coming of age, loyalty, independence, self-discovery, belonging',
     },
-    'family-all-ages': { 
-      ageRange: 'all ages (relatable to kids and adults)', 
-      themes: 'adventure, teamwork, love, courage, friendship, good vs evil, wonder' 
+    'family-all-ages': {
+      ageRange: 'all ages (engaging for both kids and adults)',
+      themes: 'adventure, teamwork, heart, courage, friendship, wonder',
     },
-    'mature-21+': { 
-      ageRange: '21-45 year olds', 
-      themes: 'moral ambiguity, complex relationships, trauma, addiction, existential questions' 
-    }
+    'mature-21+': {
+      ageRange: 'adult audiences (21+)',
+      themes: 'moral complexity, high-stakes human choices, loyalty, consequence, truth',
+    },
   }
-  return map[demographic] || map['millennials-25-34']
+
+  if (map[normalized]) return map[normalized]
+  if (/\b(family|all ages|kids|children|four-quadrant)\b/i.test(normalized)) return map['family-all-ages']
+  if (/\b(teen|ya|young adult|high school|13-17)\b/i.test(normalized)) return map['teens-13-17']
+  if (/\b(gen.?z|18-24|college)\b/i.test(normalized)) return map['gen-z-18-24']
+  if (/\b(millennial|25-34)\b/i.test(normalized)) return map['millennials-25-34']
+  if (/\b(gen.?x|35-54|midlife)\b/i.test(normalized)) return map['gen-x-35-54']
+  if (/\b(boomer|senior|55\+|60\+|retiree)\b/i.test(normalized)) return map['boomers-55+']
+  if (/\b(mature|adult|21\+|r-rated)\b/i.test(normalized)) return map['mature-21+']
+
+  // Free-text or unspecified audience: honor the creator's exact description without forcing millennial burnout
+  return {
+    ageRange: demographic?.trim()
+      ? `Resonate authentically with ${demographic.trim()} (cast protagonist age organically to fit the premise)`
+      : 'Cast protagonist age organically to serve the premise and emotional truth of the story',
+    themes: 'Draw themes organically from the story\'s central conflict, world, and character stakes',
+  }
 }
 
-function getToneKeywords(tone: string): string {
+export function getToneKeywords(tone: string): string {
+  const normalized = (tone || '').trim().toLowerCase()
   const map: Record<string, string> = {
-    'dark-gritty': 'visceral, shadowy, tense, burdened, raw, harsh, unforgiving, bleak',
-    'light-comedic': 'playful, witty, charming, absurd, quirky, delightful, amusing',
-    'inspirational': 'uplifting, triumph, hope, perseverance, courage, transformation, breakthrough',
-    'suspenseful': 'tense, edge, anticipation, danger, uncertainty, looming, breathless',
-    'heartwarming': 'touching, emotional, tender, bond, love, connection, healing',
-    'satirical': 'ironic, biting, critique, absurd, exaggerated, commentary, parody',
-    'melancholic': 'wistful, bittersweet, loss, reflection, longing, nostalgia, regret',
-    'whimsical': 'magical, fantastical, playful, wonder, curious, enchanting, dreamlike',
-    'intense': 'gripping, powerful, relentless, confrontation, explosive, urgent, fierce',
-    'nostalgic': 'reminiscent, era, memory, classic, throwback, sentimental, retro'
+    'dark-gritty': 'Reinforce dark, gritty atmosphere: visceral, shadowy, tense, raw, high-consequence',
+    'light-comedic': 'Reinforce light comedic atmosphere: playful, witty, charming, crisp timing, buoyant',
+    'inspirational': 'Reinforce inspirational atmosphere: uplifting, resilient, hopeful, breakthrough, earned triumph',
+    'suspenseful': 'Reinforce suspenseful atmosphere: taut, anticipatory, ticking-clock tension, escalating dread',
+    'heartwarming': 'Reinforce heartwarming atmosphere: tender, human, emotionally generous, grounded warmth',
+    'satirical': 'Reinforce satirical atmosphere: sharp irony, biting social observation, escalated absurdity',
+    'melancholic': 'Reinforce melancholic atmosphere: wistful, bittersweet, reflective, quiet longing',
+    'whimsical': 'Reinforce whimsical atmosphere: imaginative, playful wonder, lyrical, surprising charm',
+    'intense': 'Reinforce intense atmosphere: gripping, urgent, relentless momentum, high emotional pressure',
+    'nostalgic': 'Reinforce nostalgic atmosphere: evocative period texture, memory, bittersweet familiarity',
   }
-  return map[tone] || map['dark-gritty']
+
+  if (map[normalized]) return map[normalized]
+  if (/\b(dark|gritty|noir|bleak|grim)\b/i.test(normalized)) return map['dark-gritty']
+  if (/\b(comed|funny|playful|light|witty|humorous)\b/i.test(normalized)) return map['light-comedic']
+  if (/\b(inspir|uplift|hopeful|triumph)\b/i.test(normalized)) return map['inspirational']
+  if (/\b(suspense|thrill|tense)\b/i.test(normalized)) return map['suspenseful']
+  if (/\b(warm|heart|tender|cozy|romantic)\b/i.test(normalized)) return map['heartwarming']
+  if (/\b(satir|ironic|parody)\b/i.test(normalized)) return map['satirical']
+  if (/\b(melanchol|bittersweet|poignant)\b/i.test(normalized)) return map['melancholic']
+  if (/\b(whimsic|magical|fantastical|wonder)\b/i.test(normalized)) return map['whimsical']
+  if (/\b(intense|urgent|fierce|kinetic)\b/i.test(normalized)) return map['intense']
+  if (/\b(nostalg|retro|vintage)\b/i.test(normalized)) return map['nostalgic']
+
+  // Never silently inject dark-gritty keywords for free-text tones like "Cinematic" or "Warm"
+  return `Commit authentically to a "${tone?.trim() || 'cinematic, emotionally vivid'}" atmosphere through concrete visual imagery, pacing, and dialogue texture`
 }
 
-function getGenreConventions(genre: string): string {
+export function getGenreConventions(genre: string): string {
+  const normalized = (genre || '').trim().toLowerCase()
   const map: Record<string, string> = {
     'drama': 'emotional core, character transformation, personal stakes, cathartic resolution',
     'thriller': 'clear stakes, ticking clock, escalating tension, twist/reveal, suspenseful pacing',
-    'horror': 'atmosphere of dread, clear threat, isolation, escalating scares, survivor archetype',
-    'comedy': 'clear comedic premise, setup/payoff structure, likeable protagonist, stakes despite humor',
-    'sci-fi': 'world-building consistency, technology driving plot, human element amidst spectacle',
-    'romance': 'meet-cute, obstacles to love, emotional vulnerability, satisfying resolution',
-    'action': 'clear hero goal, escalating set-pieces, physical stakes, villain with motivation',
-    'fantasy': 'consistent magic system, world-building, quest or chosen one structure',
-    'mystery': 'central question, clues and red herrings, satisfying revelation',
+    'horror': 'atmosphere of dread, clear threat, escalating scares, vulnerability and survival stakes',
+    'comedy': 'clear comedic premise, escalating comic complications, endearing protagonist, real stakes beneath the humor',
+    'sci-fi': 'world-building consistency, speculative premise driving human conflict, tactile technology/rules',
+    'scifi': 'world-building consistency, speculative premise driving human conflict, tactile technology/rules',
+    'science fiction': 'world-building consistency, speculative premise driving human conflict, tactile technology/rules',
+    'romance': 'magnetic chemistry, meaningful obstacles to intimacy, emotional vulnerability, earned payoff',
+    'action': 'clear objective, kinetic escalating set-pieces, physical stakes, worthy adversary',
+    'fantasy': 'consistent world/magic rules with real cost, wonder, character-driven stakes',
+    'mystery': 'compelling central question, fair-play clues and misdirection, earned revelation',
+    'adventure': 'vivid sense of place, escalating physical/moral trials, camaraderie, discovery',
+    'animation': 'expressive visual storytelling, silhouette clarity, emotional heart, imaginative set-pieces',
     'documentary': 'clear thesis, compelling subjects, narrative arc despite non-fiction',
     'education': 'clear learning objectives, scaffolded complexity, instructor credibility, practical examples, assessment checkpoints',
     'training': 'task-oriented modules, step-by-step demonstrations, hands-on practice, measurable competency goals',
@@ -678,7 +713,11 @@ function getGenreConventions(genre: string): string {
     case_study: 'customer context, challenge, solution, measurable results, social proof',
     advertisement: 'hook in first 3 seconds, emotional appeal, brand message, memorable CTA',
   }
-  return map[genre.toLowerCase()] || map['drama']
+  if (map[normalized]) return map[normalized]
+  for (const [key, value] of Object.entries(map)) {
+    if (normalized.includes(key)) return value
+  }
+  return `Honor the defining craft expectations of ${genre || 'cinematic storytelling'}: specific world stakes, character transformation, and visual momentum`
 }
 
 

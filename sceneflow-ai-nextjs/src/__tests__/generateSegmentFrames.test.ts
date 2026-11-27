@@ -1,6 +1,16 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/models/Project', () => ({ default: {} }))
+vi.mock('@/models/Project', () => ({
+  default: {
+    belongsTo: vi.fn(),
+    hasMany: vi.fn(),
+    findByPk: vi.fn(),
+  },
+}))
+vi.mock('@/lib/auth', () => ({ authOptions: {} }))
+vi.mock('@/lib/credits/meteredGateway', () => ({
+  executeMeteredProviderCall: vi.fn(),
+}))
 vi.mock('../../config/database', () => ({
   ensureDatabaseConnection: vi.fn(),
 }))

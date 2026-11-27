@@ -218,7 +218,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         label: 'Live Credit Vault Meter',
         locationTag: 'Top Global Header',
         summary:
-          'Displays your combined Monthly Subscription + Top-Up Vault balance. Monthly credits are always spent first.',
+          'Displays your combined Monthly Subscription + Top-Up Vault balance. Credits expiring soonest are always spent first (FEFO)—typically your monthly subscription allotment, or an older pack nearing expiry so you never waste expiring credits.',
         proTip: 'Click the credit badge anytime to inspect per-feature usage or top up credits without leaving your workflow.',
         actionLabel: 'View Plans & Credits',
         actionHref: '/dashboard/settings/billing',
@@ -1125,7 +1125,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
     estimatedTime: '2 mins',
     screenshotSrc: '/images/help/credits-byok-screenshot.svg',
     screenshotAlt: 'SceneFlow Billing, Plans (Explorer, Hobbyist, Starter, Operator Pro, Studio), Credit Pool breakdown, and Vertex AI BYOK',
-    summary: `SceneFlow uses a transparent dual-pool credit system: Monthly Subscription credits are spent first, while Subscriber Add-On packs remain valid for ${Math.round(ADDON_CREDIT_SHELF_LIFE_DAYS / 30)} months (${ADDON_CREDIT_SHELF_LIFE_DAYS} days) from purchase (Explorer trial credits expire after ${EXPLORER_CREDIT_SHELF_LIFE_DAYS} days). Operator Pro and Studio subscribers can also connect their own Google Vertex AI API key (BYOK).`,
+    summary: `SceneFlow uses a transparent FEFO (First-Expiring, First-Out) dual-pool credit system: credits expiring soonest are always spent first—typically your Monthly Subscription allotment, or an older pack nearing expiry so you never waste expiring credits. Subscriber Add-On packs remain valid for ${Math.round(ADDON_CREDIT_SHELF_LIFE_DAYS / 30)} months (${ADDON_CREDIT_SHELF_LIFE_DAYS} days) from purchase (Explorer trial credits expire after ${EXPLORER_CREDIT_SHELF_LIFE_DAYS} days). Operator Pro and Studio subscribers can also connect their own Google Vertex AI API key (BYOK).`,
     hotspots: [
       {
         id: 'bill-dual-pool',
@@ -1136,7 +1136,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         label: 'Dual Credit Pool (Monthly + 12-Month Add-On Vault)',
         locationTag: 'Top Credit Vault Banner',
         summary:
-          'Your monthly subscription credits replenish every billing cycle and are always consumed FIRST. Subscriber Add-On packs ($25 / $100 / $250) sit in your reserve vault for 12 months from purchase and spend soonest-expiry-first.',
+          'Credits expiring soonest are always spent first (FEFO)—typically your monthly subscription allotment, or an older pack nearing expiry so you never waste expiring credits. Subscriber Add-On packs ($25 / $100 / $250) last 12 months from purchase.',
         proTip: 'If a big episode render needs extra headroom mid-month, grab a 12-month Add-On pack without changing your base plan.',
       },
       {
@@ -1217,7 +1217,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
       },
       {
         question: 'How long do Add-On credit packs and Explorer credits last?',
-        answer: `Monthly plan credits refresh each billing cycle and are spent first. Subscriber Add-On packs remain valid for 12 months (${ADDON_CREDIT_SHELF_LIFE_DAYS} days) from purchase and spend soonest-expiring first. One-time Explorer trial credits are valid for ${EXPLORER_CREDIT_SHELF_LIFE_DAYS} days.`,
+        answer: `Credits expiring soonest are always spent first (FEFO)—typically your monthly subscription allotment, or an older pack nearing expiry so you never waste expiring credits. Monthly plan credits refresh each billing cycle, Subscriber Add-On packs remain valid for 12 months (${ADDON_CREDIT_SHELF_LIFE_DAYS} days) from purchase, and one-time Explorer trial credits are valid for ${EXPLORER_CREDIT_SHELF_LIFE_DAYS} days.`,
         fixActionLabel: 'Open Billing & Credit Vault',
         fixActionHref: '/dashboard/settings/billing',
       },
@@ -1957,7 +1957,7 @@ export const HELP_KNOWLEDGE_ARTICLES: HelpKnowledgeArticle[] = [
     readTime: '3 min read',
     tags: ['credits', 'billing', 'plans', 'byok', 'vertex ai', 'top up', 'expiry'],
     bullets: [
-      `Monthly subscription credits are always spent FIRST. Subscriber Add-On packs remain valid for 12 months (${ADDON_CREDIT_SHELF_LIFE_DAYS} days) from purchase and spend soonest-expiring first (Explorer trial credits expire after ${EXPLORER_CREDIT_SHELF_LIFE_DAYS} days).`,
+      `Credits expiring soonest are always spent first (FEFO)—typically your monthly subscription allotment, or an older pack nearing expiry so you never waste expiring credits. Subscriber Add-On packs remain valid for 12 months (${ADDON_CREDIT_SHELF_LIFE_DAYS} days) from purchase (Explorer trial credits expire after ${EXPLORER_CREDIT_SHELF_LIFE_DAYS} days).`,
       `Plans: Explorer ($${TIER_CATALOG.explorer.priceUsd} one-time · ${TIER_CATALOG.explorer.credits.toLocaleString()} cr), Hobbyist ($${TIER_CATALOG.hobbyist.priceUsd}/mo · ${TIER_CATALOG.hobbyist.credits.toLocaleString()} cr), Starter ($${TIER_CATALOG.starter.priceUsd}/mo · ${TIER_CATALOG.starter.credits.toLocaleString()} cr), Operator Pro ($${TIER_CATALOG.pro.priceUsd}/mo · ${TIER_CATALOG.pro.credits.toLocaleString()} cr), and Studio ($${TIER_CATALOG.studio.priceUsd}/mo · ${TIER_CATALOG.studio.credits.toLocaleString()} cr).`,
       'Operator Pro and Studio subscribers can connect their own Google Vertex AI API key in Settings → BYOK Settings (/dashboard/settings/byok).',
     ],

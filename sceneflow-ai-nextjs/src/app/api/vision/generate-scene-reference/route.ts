@@ -9,6 +9,9 @@ import {
   isPhotorealisticArtStyle,
 } from '@/lib/artStyle/globalArtStyle'
 import { getArtStyleNegativeTerms, resolveProjectArtStyle } from '@/lib/vision/artStyle'
+import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { executeMeteredProviderCall } from '@/lib/credits/meteredGateway'
+import { GEMINI_IMAGE_MODELS } from '@/lib/config/modelConfig'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -93,23 +96,42 @@ Environment only. No people, no characters, no human figures. Empty scene showin
         ? `${negativePrompt}, ${getArtStyleNegativeTerms(effectiveArtStyle)}`
         : negativePrompt
 
-    // Generate image using Gemini 3.0 with personGeneration: 'dont_allow'
-    const base64Image = await generateImageWithGemini(enhancedPrompt, {
-      aspectRatio: aspectRatio,
-      numberOfImages: 1,
-      imageSize: '2K',
-      personGeneration: 'dont_allow',  // Critical: ensures no people in scene reference
-      negativePrompt: mergedNegativePrompt,
+    // Generate image using Gemini 3.0 with personGeneration: 'dont_allow' under credit escrow
+    const metered = await executeMeteredProviderCall({
+      userId: String(session.user.id),
+      projectId: body.projectId || null,
+      route: '/api/vision/generate-scene-reference',
+      provider: 'vertex',
+      model: GEMINI_IMAGE_MODELS.pro,
+      operation: 'scene_reference',
+      quoteInput: {
+        kind: 'reference',
+        model: GEMINI_IMAGE_MODELS.pro,
+        resolution: '1080p',
+        imageCount: 1,
+        floorCredits: IMAGE_CREDITS.SCENE_REFERENCE,
+      },
+      meta: { name, sourceSceneNumber, aspectRatio },
+      execute: async () => {
+        const base64Image = await generateImageWithGemini(enhancedPrompt, {
+          aspectRatio: aspectRatio,
+          numberOfImages: 1,
+          imageSize: '2K',
+          personGeneration: 'dont_allow',  // Critical: ensures no people in scene reference
+          negativePrompt: mergedNegativePrompt,
+        })
+
+        console.log('[Scene Reference Generation] Image generated, uploading to storage...')
+
+        // Upload to blob storage
+        return await uploadReferenceLibraryBase64Image(
+          base64Image,
+          `scene-references/${name.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.png`
+        )
+      },
     })
 
-    console.log('[Scene Reference Generation] Image generated, uploading to storage...')
-
-    // Upload to blob storage
-    const imageUrl = await uploadReferenceLibraryBase64Image(
-      base64Image,
-      `scene-references/${name.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.png`
-    )
-
+    const imageUrl = metered.result
     console.log('[Scene Reference Generation] Upload complete:', imageUrl)
 
     return NextResponse.json({
@@ -118,9 +140,20 @@ Environment only. No people, no characters, no human figures. Empty scene showin
       name,
       description,
       sourceSceneNumber,
+      creditsCharged: metered.creditsCharged,
     })
 
   } catch (error: any) {
+    if (error?.message === 'INSUFFICIENT_CREDITS') {
+      return NextResponse.json(
+        {
+          error: 'Insufficient credits',
+          code: 'INSUFFICIENT_CREDITS',
+          required: IMAGE_CREDITS.SCENE_REFERENCE,
+        },
+        { status: 402 }
+      )
+    }
     console.error('[Scene Reference Generation] Error:', error)
     return NextResponse.json(
       { 

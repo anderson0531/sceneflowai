@@ -20,6 +20,10 @@ export interface RetryOptions {
   initialDelayMs?: number
   /** Maximum delay cap in milliseconds (default: 30000) */
   maxDelayMs?: number
+  /** Optional explicit per-attempt base delay schedule in ms (jittered and capped by maxDelayMs) */
+  backoffScheduleMs?: number[]
+  /** Maximum cap in milliseconds when honoring HTTP Retry-After headers (default: 120000) */
+  maxRetryAfterMs?: number
   /** Custom function to determine if error is retryable */
   isRetryable?: (error: any, status?: number) => boolean
   /** Operation name for logging */
@@ -45,6 +49,39 @@ const DEFAULT_RETRY_OPTIONS = {
   maxRetries: 3,
   initialDelayMs: 1000,
   maxDelayMs: 30000,
+}
+
+export const MAX_RETRY_AFTER_CAP_MS = 120_000
+
+/**
+ * Parse an HTTP `Retry-After` header (delta-seconds like `"60"` or HTTP-date format)
+ * into a non-negative delay in milliseconds, capped at `MAX_RETRY_AFTER_CAP_MS` (120s).
+ * Returns `null` if the header is missing or unparseable.
+ */
+export function parseRetryAfterMs(
+  header: string | null | undefined,
+  nowMs: number = Date.now()
+): number | null {
+  if (!header || typeof header !== 'string') return null
+  const trimmed = header.trim()
+  if (!trimmed) return null
+
+  // Delta-seconds (integer or decimal >= 0)
+  if (/^\d+(?:\.\d+)?$/.test(trimmed)) {
+    const seconds = Number(trimmed)
+    if (!Number.isFinite(seconds) || seconds < 0) return null
+    return Math.min(MAX_RETRY_AFTER_CAP_MS, Math.round(seconds * 1000))
+  }
+
+  // HTTP-date format (e.g., "Wed, 21 Oct 2026 07:28:00 GMT")
+  const parsedDateMs = Date.parse(trimmed)
+  if (Number.isFinite(parsedDateMs)) {
+    const deltaMs = parsedDateMs - nowMs
+    if (deltaMs <= 0) return 0
+    return Math.min(MAX_RETRY_AFTER_CAP_MS, Math.round(deltaMs))
+  }
+
+  return null
 }
 
 function createCallerAbortError(): Error {
@@ -172,6 +209,8 @@ export async function withRetry<T>(
     maxRetries = DEFAULT_RETRY_OPTIONS.maxRetries,
     initialDelayMs = DEFAULT_RETRY_OPTIONS.initialDelayMs,
     maxDelayMs = DEFAULT_RETRY_OPTIONS.maxDelayMs,
+    backoffScheduleMs,
+    maxRetryAfterMs,
     isRetryable = isRetryableError,
     operationName = 'Operation',
     signal,
@@ -205,12 +244,41 @@ export async function withRetry<T>(
         throw error
       }
       
-      // Calculate backoff delay
-      const delay = calculateBackoffDelay(attempt, initialDelayMs, maxDelayMs)
+      // Calculate backoff delay (honoring explicit schedule if provided)
+      let backoffDelay: number
+      if (Array.isArray(backoffScheduleMs) && backoffScheduleMs.length > 0) {
+        const base = Math.max(
+          0,
+          backoffScheduleMs[Math.min(attempt, backoffScheduleMs.length - 1)]
+        )
+        const jitterFactor = 0.75 + Math.random() * 0.5
+        backoffDelay = Math.min(maxDelayMs, Math.round(base * jitterFactor))
+      } else {
+        backoffDelay = calculateBackoffDelay(attempt, initialDelayMs, maxDelayMs)
+      }
+
+      // Honor explicit server Retry-After on 429 / 503 (or error.retryAfterMs)
+      const rawRetryAfterMs =
+        typeof error?.retryAfterMs === 'number' && Number.isFinite(error.retryAfterMs)
+          ? Math.max(0, error.retryAfterMs)
+          : status === 429 || status === 503
+            ? parseRetryAfterMs(error?.response?.headers?.get?.('retry-after'))
+            : null
+
+      const retryAfterCap = Math.min(
+        MAX_RETRY_AFTER_CAP_MS,
+        maxRetryAfterMs ?? Math.max(maxDelayMs, MAX_RETRY_AFTER_CAP_MS)
+      )
+      const boundedRetryAfterMs =
+        rawRetryAfterMs !== null ? Math.min(retryAfterCap, rawRetryAfterMs) : null
+      const delay =
+        boundedRetryAfterMs !== null
+          ? Math.max(backoffDelay, boundedRetryAfterMs)
+          : backoffDelay
       
       console.warn(
         `[Retry] ${operationName} failed (attempt ${attempt + 1}/${maxRetries + 1}), ` +
-        `retrying in ${delay}ms... Error: ${error.message?.substring(0, 100)}`
+        `retrying in ${delay}ms${boundedRetryAfterMs !== null ? ` (Retry-After: ${boundedRetryAfterMs}ms)` : ''}... Error: ${error.message?.substring(0, 100)}`
       )
       
       // Wait before retrying (abort-aware)
@@ -288,10 +356,17 @@ export async function fetchWithRetry(
         response.status === 503 ||
         response.status === 504
       ) {
+        const retryAfterMs =
+          response.status === 429 || response.status === 503
+            ? parseRetryAfterMs(response.headers?.get?.('retry-after'))
+            : null
         const errorText = await response.text()
         const error: any = new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`)
         error.status = response.status
         error.response = response
+        if (retryAfterMs !== null) {
+          error.retryAfterMs = retryAfterMs
+        }
         throw error
       }
       

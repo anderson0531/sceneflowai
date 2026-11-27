@@ -21,6 +21,7 @@ export type BlueprintContinuitySubSection = 'all' | 'cast' | 'locations' | 'prop
 
 export interface BlueprintCastItem {
   id?: string
+  canonicalId?: string
   name: string
   role: string
   subject?: string
@@ -39,6 +40,7 @@ export interface BlueprintCastItem {
   appearance?: string
   description: string
   voiceDescription?: string
+  voiceFingerprint?: string
   samePersonGroupId?: string
   familyRelationships?: CharacterFamilyRelationship[]
   externalGoal?: string
@@ -295,6 +297,7 @@ export function resolveBlueprintContinuity(
     )
     cast.push({
       id: c.id || shared?.id || c.libraryCharacterId,
+      canonicalId: asString(c.canonicalId || shared?.canonicalId) || undefined,
       name: shared?.name || name || `Character ${idx + 1}`,
       role: asString(c.role || shared?.role, 'supporting'),
       subject: asString(c.subject || shared?.name || name),
@@ -313,6 +316,7 @@ export function resolveBlueprintContinuity(
       appearance: asString(c.appearance || shared?.appearance || shared?.appearanceDescription),
       description: asString(c.description || shared?.description),
       voiceDescription: asString(c.voiceDescription || shared?.voiceDescription) || undefined,
+      voiceFingerprint: asString(c.voiceFingerprint || shared?.voiceFingerprint) || undefined,
       samePersonGroupId: asString(c.samePersonGroupId || shared?.samePersonGroupId) || undefined,
       familyRelationships: Array.isArray(c.familyRelationships)
         ? c.familyRelationships
@@ -600,6 +604,9 @@ export function buildVisionPhaseContinuityFromVariant(
     return {
       ...(prev || {}),
       id: prev?.id || c.id || `char-bp-${idx + 1}`,
+      ...(c.canonicalId || prev?.canonicalId
+        ? { canonicalId: c.canonicalId || prev?.canonicalId }
+        : {}),
       name: c.name,
       role: c.role || prev?.role || 'supporting',
       subject: c.subject || prev?.subject || c.name,
@@ -621,6 +628,9 @@ export function buildVisionPhaseContinuityFromVariant(
       description: c.description || prev?.description || '',
       ...(c.voiceDescription || prev?.voiceDescription
         ? { voiceDescription: c.voiceDescription || prev?.voiceDescription }
+        : {}),
+      ...(c.voiceFingerprint || prev?.voiceFingerprint
+        ? { voiceFingerprint: c.voiceFingerprint || prev?.voiceFingerprint }
         : {}),
       ...(c.samePersonGroupId || prev?.samePersonGroupId
         ? { samePersonGroupId: c.samePersonGroupId || prev?.samePersonGroupId }

@@ -392,8 +392,10 @@ import {
 } from '@/components/vision/ProductionAgentDock'
 import {
   runProductionAgent,
+  isRateLimitProductionError,
   type ProductionBuilderOptions,
   type ProductionAgentShotDescriptor,
+  type RateLimitedProductionItem,
 } from '@/lib/production/runProductionAgent'
 import { useStore } from '@/store/useStore'
 import { resolveProjectArtStyle, resolveProjectAspectRatio, toVideoAspectRatio } from '@/lib/vision/artStyle'
@@ -19296,8 +19298,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     async (
       sceneIndex: number,
       language: string,
-      options?: import('@/components/vision/ExpressSceneConfirmDialog').ExpressSceneConfirmOptions
-    ) => {
+      options?: import('@/components/vision/ExpressSceneConfirmDialog').ExpressSceneConfirmOptions & {
+        concurrencyOverride?: number
+        failFastOnRateLimit?: boolean
+      }
+    ): Promise<
+      | {
+          count: number
+          rateLimitedFailures: Array<{
+            sceneIndex: number
+            frameKey?: string
+            beatIndex?: number
+            frameRole?: 'start' | 'action-start' | 'end'
+            message?: string
+            error?: string
+            retryAfterSec?: number
+          }>
+          failedItems: Array<{ key: string; message: string }>
+        }
+      | undefined
+    > => {
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
       if (expressRunningRef.current || isExpressRunning) return
 
@@ -19728,6 +19748,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ...(options?.selectedFrameKeys?.length
               ? { selectedFrameKeys: options.selectedFrameKeys }
               : {}),
+            ...(typeof options?.concurrencyOverride === 'number'
+              ? { concurrencyOverride: options.concurrencyOverride }
+              : {}),
+            ...(typeof options?.failFastOnRateLimit === 'boolean'
+              ? { failFastOnRateLimit: options.failFastOnRateLimit }
+              : {}),
             storyboardQuality: imageTier,
             imageQuality,
             stillGenerationMode: generationMode,
@@ -19740,7 +19766,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           setExpressBeatFrameOverlay(null)
           if (reportMissingReferenceImages(response.status, errText, sceneIndex)) return
           toast.error(`Stills Agent failed: ${response.status} ${errText.slice(0, 120)}`)
-          return
+          if (response.status === 429) {
+            return {
+              count: 0,
+              rateLimitedFailures: [
+                {
+                  sceneIndex,
+                  frameKey: 'scene-all',
+                  message: errText.slice(0, 200) || 'Rate limited (429)',
+                },
+              ],
+              failedItems: [],
+            }
+          }
+          return {
+            count: 0,
+            rateLimitedFailures: [],
+            failedItems: [
+              {
+                key: 'scene-all',
+                message: `Stills Agent failed: ${response.status} ${errText.slice(0, 120)}`,
+              },
+            ],
+          }
         }
 
         const reader = response.body.getReader()
@@ -19754,6 +19802,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let failedScenes = 0
         let regulatorToastShown = false
         let rateLimitedFailureCount = 0
+        let succeededImageCount = 0
+        let capturedRateLimitedFailures: Array<{
+          sceneIndex: number
+          frameKey?: string
+          beatIndex?: number
+          frameRole?: 'start' | 'action-start' | 'end'
+          message?: string
+          error?: string
+          retryAfterSec?: number
+        }> = []
+        const capturedFailedItems: Array<{ key: string; message: string }> = []
         let scenePersisted = false
         let lastSceneError: string | undefined
         let degradedToastShown = false
@@ -19813,6 +19872,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       }
                     }
                     if (event.phase === 'image' && event.imageUrl) {
+                      succeededImageCount += 1
                       applyExpressSceneImage(event.sceneIndex, event.imageUrl, {
                         dialogueIndex: event.dialogueIndex,
                         beatIndex: event.beatIndex,
@@ -19870,6 +19930,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         beatIndex: event.beatIndex,
                         frameRole: event.frameRole ?? 'start',
                       })
+                      if (!event.rateLimited) {
+                        const curScene = (scriptRef.current?.script?.scenes?.[event.sceneIndex] ??
+                          sceneRecord) as Record<string, unknown>
+                        capturedFailedItems.push({
+                          key: slotKeyFromBeat(curScene, event.beatIndex, event.frameRole ?? 'start'),
+                          message: phaseError,
+                        })
+                      }
                     }
                   }
                   break
@@ -19930,7 +19998,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   receivedComplete = true
                   successScenes = event.successScenes ?? 0
                   failedScenes = event.failedScenes ?? 0
-                  rateLimitedFailureCount = event.rateLimitedFailures?.length ?? 0
+                  capturedRateLimitedFailures = Array.isArray(event.rateLimitedFailures)
+                    ? event.rateLimitedFailures
+                    : []
+                  rateLimitedFailureCount = capturedRateLimitedFailures.length
                   finishBeatFrameOverlay()
                   break
                 case 'error':
@@ -19973,6 +20044,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           toast.success(`Scene ${sceneIndex + 1} Stills Agent complete`)
         } else if (failedScenes > 0 && lastSceneError) {
           toast.error(lastSceneError.slice(0, 200))
+        }
+
+        return {
+          count: succeededImageCount,
+          rateLimitedFailures: capturedRateLimitedFailures,
+          failedItems: capturedFailedItems,
         }
       } catch (err: any) {
         const aborted =
@@ -21192,43 +21269,59 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               // Non-fatal if references already exist
             }
           },
-          runSceneAudio: async (sceneIndex, { language: lang, missingOnly }) => {
+          runSceneAudio: async (
+            sceneIndex,
+            { language: lang, missingOnly, concurrencyOverride, onlyKeys }
+          ) => {
             const currentScenes =
               scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
             const scene = currentScenes[sceneIndex]
-            if (!scene) return 0
+            if (!scene) return { count: 0, rateLimitedItems: [], failedItems: [] }
             let generatedCount = 0
+            const onlyKeySet = onlyKeys?.length ? new Set(onlyKeys) : null
+            const rateLimitedItems: RateLimitedProductionItem[] = []
+            const failedItems: Array<{ key: string; message: string }> = []
 
-            const audioTasks: Array<() => Promise<void>> = []
+            const audioTasks: Array<{ key: string; run: () => Promise<void> }> = []
 
             const hasNarration =
               Boolean(scene?.narration) &&
+              (!onlyKeySet || onlyKeySet.has('narration')) &&
               (!missingOnly ||
+                Boolean(onlyKeySet) ||
                 !(
                   scene?.narrationAudio?.[lang]?.url ||
                   (lang === 'en' && scene?.narrationAudioUrl)
                 ))
             if (hasNarration) {
-              audioTasks.push(async () => {
-                await handleGenerateSceneAudio(sceneIndex, 'narration', undefined, undefined, lang)
-                generatedCount += 1
+              audioTasks.push({
+                key: 'narration',
+                run: async () => {
+                  await handleGenerateSceneAudio(sceneIndex, 'narration', undefined, undefined, lang)
+                  generatedCount += 1
+                },
               })
             }
 
             const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
             const dialogueAudio = scene?.dialogueAudio?.[lang] || []
             for (let dIdx = 0; dIdx < dialogue.length; dIdx++) {
+              const lineKey = `dialogue:${dIdx}`
+              if (onlyKeySet && !onlyKeySet.has(lineKey)) continue
               const existingUrl = dialogueAudio[dIdx]?.audioUrl
-              if (missingOnly && existingUrl) continue
+              if (missingOnly && !onlyKeySet && existingUrl) continue
               const speaker = dialogue[dIdx]?.character
-              audioTasks.push(async () => {
-                await handleGenerateSceneAudio(sceneIndex, 'dialogue', speaker, dIdx, lang)
-                generatedCount += 1
+              audioTasks.push({
+                key: lineKey,
+                run: async () => {
+                  await handleGenerateSceneAudio(sceneIndex, 'dialogue', speaker, dIdx, lang)
+                  generatedCount += 1
+                },
               })
             }
 
-            // Execute TTS audio lines with bounded concurrency (6x) instead of 1x serial
-            const AUDIO_CONCURRENCY = 6
+            // Bounded concurrency (default 3 for background agent, 1 during sequential recovery)
+            const AUDIO_CONCURRENCY = Math.max(1, Math.min(6, concurrencyOverride ?? 3))
             let cursor = 0
             await Promise.all(
               Array.from({ length: Math.min(AUDIO_CONCURRENCY, audioTasks.length) }, async () => {
@@ -21236,32 +21329,84 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   const task = audioTasks[cursor++]
                   if (!task) break
                   try {
-                    await task()
-                  } catch {
-                    // Individual line failure does not abort remaining scene audio
+                    await task.run()
+                  } catch (err) {
+                    const message = err instanceof Error ? err.message : String(err ?? 'Audio generation failed')
+                    if (isRateLimitProductionError(err)) {
+                      const retryMatch = message.match(/(\d+)\s*(?:seconds?|secs?)/i)
+                      rateLimitedItems.push({
+                        kind: 'audio',
+                        sceneIndex,
+                        key: task.key,
+                        retryAfterSec: retryMatch ? parseInt(retryMatch[1], 10) : undefined,
+                        message,
+                      })
+                    } else {
+                      failedItems.push({ key: task.key, message })
+                    }
                   }
                 }
               })
             )
-            return generatedCount
+            return {
+              count: generatedCount,
+              rateLimitedItems,
+              failedItems,
+            }
           },
           runSceneStills: async (
             sceneIndex,
-            { language: lang, quality, includeEndFrames, missingOnly, generationMode }
+            {
+              language: lang,
+              quality,
+              includeEndFrames,
+              missingOnly,
+              generationMode,
+              concurrencyOverride,
+              failFastOnRateLimit,
+              onlyKeys,
+            }
           ) => {
             const currentScenes =
               scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
             const scene = currentScenes[sceneIndex]
-            if (!scene) return 0
+            if (!scene) return { count: 0, rateLimitedItems: [], failedItems: [] }
             const beats = getSceneBeats(scene)
-            await handleExpressSceneGenerate(sceneIndex, lang, {
-              scope: missingOnly ? 'missing' : 'selected',
+            const expressOutcome = await handleExpressSceneGenerate(sceneIndex, lang, {
+              scope: onlyKeys?.length ? 'selected' : missingOnly ? 'missing' : 'selected',
               includeEndFrames,
-              selectedFrameKeys: [],
+              selectedFrameKeys: onlyKeys ?? [],
               quality,
               generationMode: generationMode ?? 'standard',
+              concurrencyOverride,
+              failFastOnRateLimit,
             })
-            return Math.max(1, beats.length)
+
+            const rateLimitedItems: RateLimitedProductionItem[] = (
+              expressOutcome?.rateLimitedFailures ?? []
+            ).map((failure) => {
+              const role = failure.frameRole ?? 'start'
+              const resolvedKey =
+                failure.frameKey ||
+                (typeof failure.beatIndex === 'number' && beats[failure.beatIndex]?.beatId
+                  ? beatFrameSlotKey(beats[failure.beatIndex].beatId!, role)
+                  : typeof failure.beatIndex === 'number'
+                    ? `beat-${failure.beatIndex}:${role}`
+                    : 'scene-all')
+              return {
+                kind: 'still',
+                sceneIndex: failure.sceneIndex ?? sceneIndex,
+                key: resolvedKey,
+                retryAfterSec: failure.retryAfterSec,
+                message: failure.message ?? failure.error,
+              }
+            })
+
+            return {
+              count: expressOutcome?.count ?? (rateLimitedItems.length === 0 ? Math.max(1, beats.length) : 0),
+              rateLimitedItems,
+              failedItems: expressOutcome?.failedItems ?? [],
+            }
           },
           ensureSceneSegments: async (sceneIndex) => {
             const currentScenes =

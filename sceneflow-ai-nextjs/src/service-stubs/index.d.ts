@@ -42,7 +42,13 @@ declare module '@/services/AsyncJobManager' { export const AsyncJobManager: any 
 
 declare module '@/services/SparkStudioService' { export const SparkStudioService: any; export type Editframe = any; export type EditframeOptions = any }
 
-declare module '@/services/CreditService' { export const CreditService: any }
+declare module '@/services/CreditService' {
+  export const CreditService: any
+  export const CREDIT_VALUE_USD: number
+  export const MARKUP_MULTIPLIER: number
+  export function ensureWhopMigrationRan(): Promise<void>
+  export function writeLedgerIntents(...args: any[]): Promise<string[]>
+}
 
 declare module '@/services/llmGateway' { export const llmGateway: any }
 

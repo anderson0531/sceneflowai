@@ -56,9 +56,27 @@ import { audioSourceFingerprintForSpoken } from '../../../../lib/audio/beatAudio
 import { characterStateHash } from '../../../../lib/tts/characterStateHash'
 import { CreditService } from '../../../../services/CreditService'
 import { AUDIO_CREDITS, ANIMATIC_CREDITS } from '../../../../lib/credits/creditCosts'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import {
+  recordProviderRunFinish,
+  recordProviderRunStart,
+} from '@/lib/credits/meteredGateway'
 
 export const maxDuration = 180
 export const runtime = 'nodejs'
+
+function isValidInternalAudioRequest(req: NextRequest): boolean {
+  const jobSecret = process.env.INTERNAL_JOB_SECRET || 'sceneflow-internal'
+  const apiSecret = process.env.INTERNAL_API_SECRET?.trim()
+  const inngestKey = process.env.INNGEST_SIGNING_KEY?.trim()
+  const jobHeader = req.headers.get('x-internal-job')?.trim()
+  const apiKeyHeader = req.headers.get('x-internal-api-key')?.trim()
+  if (jobHeader && jobHeader === jobSecret) return true
+  if (apiSecret && apiKeyHeader && apiKeyHeader === apiSecret) return true
+  if (inngestKey && apiKeyHeader && apiKeyHeader === inngestKey) return true
+  return false
+}
 
 interface VoiceConfig {
   provider: 'google' | 'elevenlabs'
@@ -135,7 +153,21 @@ interface AudioGenerationRequest {
 
 export async function POST(req: NextRequest) {
   const startedAtMs = Date.now()
+  let activeHoldId: string | null = null
+  let activeRunId: string | null = null
   try {
+    // Enforce authentication: require user session OR valid internal job/API secret
+    const session = await getServerSession(authOptions)
+    const sessionUserId = session?.user?.id || session?.user?.email || null
+    const isInternalCall = isValidInternalAudioRequest(req)
+
+    if (!sessionUserId && !isInternalCall) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      )
+    }
+
     const parsed = (await req.json()) as AudioGenerationRequest & {
       text: string
       skipDbUpdate?: boolean
@@ -462,6 +494,7 @@ export async function POST(req: NextRequest) {
     let usedVoiceId: string
     let didFallback = false
     let blobUrl: string
+    let billingUserId: string | null = sessionUserId
 
     if (cached) {
       console.log('[Scene Audio] Reusing cached audio for identical character state:', cached.url)
@@ -470,6 +503,73 @@ export async function POST(req: NextRequest) {
       usedVoiceId = finalVoiceConfig.voiceId
       blobUrl = cached.url
     } else {
+      if (!billingUserId) {
+        const meta = await getCachedProjectAudioMeta(projectId)
+        billingUserId = meta?.userId ?? null
+      }
+
+      const estBaseAudioCredits =
+        finalVoiceConfig.provider === 'elevenlabs'
+          ? Math.max(
+              AUDIO_CREDITS.DIALOGUE_PER_LINE,
+              Math.ceil((textForTts.length / 1000) * AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS)
+            )
+          : Math.max(
+              AUDIO_CREDITS.DIALOGUE_PER_LINE,
+              Math.ceil(textForTts.length / 250) * AUDIO_CREDITS.DIALOGUE_PER_LINE
+            )
+      const estTranslationCredits =
+        language !== 'en' && !skipTranslation
+          ? Math.max(
+              ANIMATIC_CREDITS.TRANSLATION_PER_1K_CHARS,
+              Math.ceil((text.length / 1000) * ANIMATIC_CREDITS.TRANSLATION_PER_1K_CHARS)
+            )
+          : 0
+      const estTotalAudioCredits = estBaseAudioCredits + estTranslationCredits
+      const estCogsUsd =
+        finalVoiceConfig.provider === 'elevenlabs'
+          ? Math.max(0.01, (textForTts.length / 1000) * 0.35)
+          : Math.max(0.002, (textForTts.length / 1000) * 0.03)
+
+      // Pre-reserve credits atomically BEFORE dispatching paid TTS synthesis
+      if (billingUserId && estTotalAudioCredits > 0) {
+        const reservation = await CreditService.reserveCredits({
+          userId: billingUserId,
+          amount: estTotalAudioCredits,
+          reason: 'ai_usage',
+          provider: finalVoiceConfig.provider === 'elevenlabs' ? 'elevenlabs' : 'vertex',
+          operation: 'scene_audio_synthesis',
+          projectId,
+          ref: projectId,
+          ttlSeconds: 600,
+          meta: {
+            route: '/api/vision/generate-scene-audio',
+            sceneIndex,
+            dialogueIndex,
+            lineId,
+            audioType,
+            language,
+            charCount: textForTts.length,
+          },
+        })
+        activeHoldId = reservation.holdId
+      }
+
+      activeRunId = await recordProviderRunStart({
+        userId: billingUserId,
+        projectId,
+        route: '/api/vision/generate-scene-audio',
+        provider: finalVoiceConfig.provider === 'elevenlabs' ? 'elevenlabs' : 'vertex',
+        model: finalVoiceConfig.provider === 'elevenlabs' ? 'elevenlabs-tts' : 'gemini-tts',
+        operation: 'scene_audio_synthesis',
+        credentialSource: 'platform',
+        holdId: activeHoldId,
+        estimatedCogsUsd: estCogsUsd,
+        unitsBilled: textForTts.length,
+        unitType: 'chars',
+        meta: { sceneIndex, dialogueIndex, lineId, audioType, language },
+      })
+
       const synthesis = await generateAudio(
         optimized.text,
         finalVoiceConfig,
@@ -547,43 +647,135 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Step 8: Charge credits when fresh paid TTS synthesis ran (skip cached hits and free Edge fallback)
-    if (!cached && usedProvider !== 'edge') {
-      try {
-        const meta = await getCachedProjectAudioMeta(projectId)
-        const ownerUserId = meta?.userId ?? null
-        if (ownerUserId) {
-          const baseAudioCredits =
-            usedProvider === 'elevenlabs'
-              ? Math.max(
-                  AUDIO_CREDITS.DIALOGUE_PER_LINE,
-                  Math.ceil((textForTts.length / 1000) * AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS)
-                )
-              : Math.max(
-                  AUDIO_CREDITS.DIALOGUE_PER_LINE,
-                  Math.ceil(textForTts.length / 250) * AUDIO_CREDITS.DIALOGUE_PER_LINE
-                )
-          const translationCredits =
-            language !== 'en' && !skipTranslation
-              ? Math.max(
-                  ANIMATIC_CREDITS.TRANSLATION_PER_1K_CHARS,
-                  Math.ceil((text.length / 1000) * ANIMATIC_CREDITS.TRANSLATION_PER_1K_CHARS)
-                )
-              : 0
-          const totalAudioCredits = baseAudioCredits + translationCredits
-          await CreditService.charge(ownerUserId, totalAudioCredits, 'ai_usage', projectId, {
-            operation: 'scene_audio_synthesis',
-            provider: usedProvider,
-            audioType,
-            sceneIndex,
-            dialogueIndex,
-            lineId,
-            language,
-            charCount: textForTts.length,
+    // Step 8: Settle escrowed credits when fresh TTS ran (capture for paid TTS, release if fell back to free Edge TTS)
+    if (!cached) {
+      const translationCredits =
+        language !== 'en' && !skipTranslation
+          ? Math.max(
+              ANIMATIC_CREDITS.TRANSLATION_PER_1K_CHARS,
+              Math.ceil((text.length / 1000) * ANIMATIC_CREDITS.TRANSLATION_PER_1K_CHARS)
+            )
+          : 0
+
+      if (usedProvider === 'edge') {
+        const settledRunId = activeRunId
+        activeRunId = null
+        if (activeHoldId) {
+          if (translationCredits > 0) {
+            const captured = await CreditService.captureHold({
+              holdId: activeHoldId,
+              finalAmount: translationCredits,
+              reason: 'ai_usage',
+              ref: projectId,
+              meta: {
+                operation: 'scene_audio_translation_only',
+                provider: 'edge',
+                audioType,
+                sceneIndex,
+                dialogueIndex,
+                lineId,
+                language,
+              },
+            })
+            activeHoldId = null
+            await recordProviderRunFinish({
+              runId: settledRunId,
+              status: 'succeeded',
+              estimatedCogsUsd: 0.005,
+              ledgerId: captured.ledgerId,
+              chargedCredits: captured.charged,
+              httpStatus: 200,
+              meta: { provider: 'edge', fallback: true },
+            })
+          } else {
+            await CreditService.releaseHold({
+              holdId: activeHoldId,
+              reason: 'free_edge_tts_fallback',
+              meta: { sceneIndex, dialogueIndex, lineId },
+            })
+            activeHoldId = null
+            await recordProviderRunFinish({
+              runId: settledRunId,
+              status: 'succeeded',
+              estimatedCogsUsd: 0,
+              chargedCredits: 0,
+              httpStatus: 200,
+              meta: { provider: 'edge', fallback: true },
+            })
+          }
+        } else {
+          await recordProviderRunFinish({
+            runId: settledRunId,
+            status: 'succeeded',
+            estimatedCogsUsd: 0,
+            chargedCredits: 0,
+            httpStatus: 200,
+            meta: { provider: 'edge', fallback: true },
           })
         }
-      } catch (chargeErr) {
-        console.warn('[Scene Audio] Non-blocking credit charge failed:', chargeErr)
+      } else {
+        const baseAudioCredits =
+          usedProvider === 'elevenlabs'
+            ? Math.max(
+                AUDIO_CREDITS.DIALOGUE_PER_LINE,
+                Math.ceil((textForTts.length / 1000) * AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS)
+              )
+            : Math.max(
+                AUDIO_CREDITS.DIALOGUE_PER_LINE,
+                Math.ceil(textForTts.length / 250) * AUDIO_CREDITS.DIALOGUE_PER_LINE
+              )
+        const totalAudioCredits = baseAudioCredits + translationCredits
+        const finalCogsUsd =
+          usedProvider === 'elevenlabs'
+            ? Math.max(0.01, (textForTts.length / 1000) * 0.35)
+            : Math.max(0.002, (textForTts.length / 1000) * 0.03)
+        const settleMeta = {
+          operation: 'scene_audio_synthesis',
+          provider: usedProvider,
+          audioType,
+          sceneIndex,
+          dialogueIndex,
+          lineId,
+          language,
+          charCount: textForTts.length,
+        }
+        let ledgerId: string | null = null
+        let chargedCredits = 0
+        if (activeHoldId) {
+          const captured = await CreditService.captureHold({
+            holdId: activeHoldId,
+            finalAmount: totalAudioCredits,
+            reason: 'ai_usage',
+            ref: projectId,
+            meta: settleMeta,
+          })
+          activeHoldId = null
+          ledgerId = captured.ledgerId
+          chargedCredits = captured.charged
+        } else if (billingUserId && totalAudioCredits > 0) {
+          const charged = await CreditService.charge(
+            billingUserId,
+            totalAudioCredits,
+            'ai_usage',
+            projectId,
+            settleMeta
+          )
+          ledgerId = charged?.ledgerId ?? null
+          chargedCredits = totalAudioCredits
+        }
+        const settledRunId = activeRunId
+        activeRunId = null
+        await recordProviderRunFinish({
+          runId: settledRunId,
+          status: 'succeeded',
+          unitsBilled: textForTts.length,
+          unitType: 'chars',
+          estimatedCogsUsd: finalCogsUsd,
+          ledgerId,
+          chargedCredits,
+          httpStatus: 200,
+          meta: settleMeta,
+        })
       }
     }
 
@@ -615,6 +807,47 @@ export async function POST(req: NextRequest) {
       fallback: didFallback,
     })
   } catch (error: any) {
+    // Release any pending hold and record failed/rate-limited telemetry
+    if (activeHoldId || activeRunId) {
+      const isRateLimit = error instanceof GoogleTtsRateLimitedError
+      const errCode = isRateLimit
+        ? 'RATE_LIMITED'
+        : error instanceof GoogleTtsBlockedError
+          ? 'VERTEX_TTS_CONTENT_POLICY'
+          : String(error?.code || error?.name || 'AUDIO_GENERATION_FAILED').slice(0, 128)
+      if (activeHoldId) {
+        await CreditService.releaseHold({
+          holdId: activeHoldId,
+          reason: errCode,
+        }).catch((relErr) =>
+          console.error('[Scene Audio] Failed to release credit hold on error:', relErr)
+        )
+        activeHoldId = null
+      }
+      if (activeRunId) {
+        await recordProviderRunFinish({
+          runId: activeRunId,
+          status: isRateLimit ? 'rate_limited' : 'failed',
+          httpStatus: isRateLimit ? 429 : 500,
+          errorCode: errCode,
+          estimatedCogsUsd: 0,
+          chargedCredits: 0,
+        })
+        activeRunId = null
+      }
+    }
+
+    if (error?.message === 'INSUFFICIENT_CREDITS') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Insufficient credits',
+          code: 'INSUFFICIENT_CREDITS',
+        },
+        { status: 402 }
+      )
+    }
+
     if (error instanceof GoogleTtsBlockedError) {
       return NextResponse.json(
         {

@@ -20,8 +20,20 @@ import { buildAggregatorRouteProbeResult, buildRoutingTrace } from '@/lib/aggreg
 import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS, VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import { logProviderCost } from '@/lib/credits/costTracking'
-import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
 import { resolveGenerationQuote } from '@/lib/credits/resolveGenerationQuote'
+import {
+  executeMeteredProviderCall,
+  inferVendorFromProviderOrModel,
+  recordProviderRunFinish,
+  recordProviderRunStart,
+} from '@/lib/credits/meteredGateway'
+import {
+  resolveKlingCredentialForUser,
+  resolveVertexCredentialForUser,
+} from '@/lib/byok/resolveProviderCredential'
+import { CreditHold } from '@/models'
+import { updateKlingJob } from '@/lib/kling/jobStore'
+import { updateAggregatorJob } from '@/lib/aggregator/jobStore'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { applyBeatsToScene, isBeatExcluded, isBeatFirstPipelineEnabled, getSceneBeats } from '@/lib/script/beatMigration'
@@ -186,8 +198,17 @@ export async function POST(
   { params }: { params: Promise<{ segmentId: string }> }
 ) {
   let requestBody: Partial<GenerateAssetRequest> = {}
+  let activeHoldId: string | null = null
+  let activeRunId: string | null = null
+  let activeHoldCredits = 0
+  let activeHoldCogsUsd = 0
+  let activeHoldModel = 'unknown'
+  let activeHoldOperation = 'segment_video'
+  let activeDbUserId: string | null = null
+  let activeSegmentId = ''
   try {
     const { segmentId } = await params
+    activeSegmentId = segmentId
     requestBody = await req.json()
     const body = requestBody as GenerateAssetRequest
     const clientPrompt = body.prompt?.trim() || ''
@@ -252,9 +273,7 @@ export async function POST(
       clipLanguage,
       includeCaptions,
       routeProbe,
-      userKeyUsed: userKeyUsedBody,
     } = body
-    const userKeyUsed = userKeyUsedBody === true
     const clientRequestedCaptions = /\bInclude clear on-screen captions\b/i.test(clientPrompt)
     const effectiveIncludeCaptions =
       includeCaptions !== undefined ? includeCaptions === true : clientRequestedCaptions
@@ -270,6 +289,7 @@ export async function POST(
     } catch {
       // Keep the session key. Provenance/cost inserts skip non-UUID values.
     }
+    activeDbUserId = dbUserId
     let resolvedGenerationMethod = generationMethod as VideoGenerationMethod | undefined
 
     const resolvedVideoProvider =
@@ -278,6 +298,18 @@ export async function POST(
         : videoProvider === 'kling'
           ? 'kling'
           : 'vertex'
+
+    // Never trust client-supplied body.userKeyUsed. Resolve credentials server-side;
+    // keep userKeyUsed=false until the downstream provider client actually executes with BYOK credentials.
+    const [resolvedVertexCred, resolvedKlingCred] = await Promise.all([
+      resolveVertexCredentialForUser(dbUserId).catch(() => ({ source: 'platform' as const })),
+      resolvedVideoProvider === 'kling'
+        ? resolveKlingCredentialForUser(dbUserId).catch(() => ({ source: 'platform' as const }))
+        : Promise.resolve({ source: 'platform' as const }),
+    ])
+    void resolvedVertexCred
+    void resolvedKlingCred
+    const userKeyUsed = false
 
     if (
       routeProbe === true &&
@@ -1101,17 +1133,62 @@ export async function POST(
       const previewCredits = previewQuote
         ? previewQuote.credits
         : getAggregatorCreditsForModel(videoModel || '', previewDuration)
-      const hasPreviewCredits = await CreditService.ensureCredits(dbUserId, previewCredits)
-      if (!hasPreviewCredits) {
-        return NextResponse.json(
-          {
-            error: 'Insufficient credits',
-            code: 'INSUFFICIENT_CREDITS',
-            required: previewCredits,
-          },
-          { status: 402 }
-        )
-      }
+      const aggPreviewModel =
+        resolvedVideoProvider === 'aggregator' ? getAggregatorModel(videoModel || '') : null
+      const previewCogsUsd = previewQuote
+        ? previewQuote.cogsUsd
+        : (aggPreviewModel?.costPerSecondUsd ?? 0.08) * Math.max(4, previewDuration)
+      const previewModelId =
+        previewQuote?.model ||
+        (resolvedVideoProvider === 'kling'
+          ? klingModel || 'kling-v3-omni'
+          : videoModel || 'gemini-omni-1.2-flash')
+      const previewOperation =
+        previewQuote?.operation ||
+        (resolvedVideoProvider === 'aggregator' ? 'aggregator_video' : 'segment_video')
+
+      // Atomically reserve credits via escrow hold BEFORE calling external video provider
+      const reservation = await CreditService.reserveCredits({
+        userId: dbUserId,
+        amount: previewCredits,
+        reason: userKeyUsed ? 'byok_platform_fee' : 'ai_usage',
+        provider: resolvedVideoProvider,
+        operation: previewOperation,
+        projectId,
+        ref: projectId,
+        ttlSeconds: 1800,
+        meta: {
+          route: '/api/segments/[segmentId]/generate-asset',
+          segmentId,
+          sceneId,
+          projectId,
+          duration: previewDuration,
+          model: previewModelId,
+          billingCogsUsd: previewCogsUsd,
+          billingOperation: previewOperation,
+          credentialSource: userKeyUsed ? 'byok' : 'platform',
+        },
+      })
+      activeHoldId = reservation.holdId
+      activeHoldCredits = previewCredits
+      activeHoldCogsUsd = previewCogsUsd
+      activeHoldModel = previewModelId
+      activeHoldOperation = previewOperation
+
+      activeRunId = await recordProviderRunStart({
+        userId: dbUserId,
+        projectId,
+        route: '/api/segments/[segmentId]/generate-asset',
+        provider: inferVendorFromProviderOrModel(resolvedVideoProvider, previewModelId),
+        model: previewModelId,
+        operation: previewOperation,
+        credentialSource: userKeyUsed ? 'byok' : 'platform',
+        holdId: activeHoldId,
+        estimatedCogsUsd: previewCogsUsd,
+        unitsBilled: previewDuration,
+        unitType: 'per_second',
+        meta: { segmentId, sceneId, genType },
+      })
 
       const videoResult = await runInVideoGenerationGate(() => generateSegmentVideoCore({
         segmentId,
@@ -1199,133 +1276,168 @@ export async function POST(
       const billedDuration = requestedVideoDurationSeconds ?? duration ?? 10
       const billedUserId = dbUserId
 
-      if (generationProvider === 'kling') {
-        await quoteAndCharge({
-          userId: billedUserId,
-          projectId,
-          segmentId,
-          quoteInput: {
-            kind: 'clip',
-            provider: 'kling',
-            model: videoResult.klingModel || klingModel,
-            resolution: klingQuality === 'std' ? '720p' : klingQuality === '4k' ? '4k' : resolution || '1080p',
-            durationSeconds: billedDuration,
-            audio: sound !== false,
-            referenceImageCount,
-            userKeyUsed,
-          },
-          meta: {
-            generationProvider: 'kling',
-            klingModel: videoResult.klingModel || klingModel,
-            ...(videoResult.wasVeoFallback ? { wasVeoFallback: true } : {}),
-          },
-        })
+      // Compute final billable credits & COGS from the actual execution provider/model
+      let finalCredits = previewCredits
+      let finalCogsUsd = previewCogsUsd
+      let finalOperation = previewOperation
+      let finalModel = previewModelId
+      let finalResolution: string | null = responseResolution ?? resolution ?? null
+      let finalMeta: Record<string, unknown> = {
+        segmentId,
+        generationProvider: generationProvider ?? resolvedVideoProvider,
       }
 
-      if (wasPolicyFallback && generationProvider !== 'kling') {
-        const klingCredits =
+      if (generationProvider === 'kling') {
+        const finalQuote = await resolveGenerationQuote({
+          kind: 'clip',
+          provider: 'kling',
+          model: videoResult.klingModel || klingModel,
+          resolution:
+            klingQuality === 'std'
+              ? '720p'
+              : klingQuality === '4k'
+                ? '4k'
+                : resolution || '1080p',
+          durationSeconds: billedDuration,
+          audio: sound !== false,
+          referenceImageCount,
+          userKeyUsed,
+        })
+        finalCredits = finalQuote.credits
+        finalCogsUsd = finalQuote.cogsUsd
+        finalOperation = finalQuote.operation
+        finalModel = finalQuote.model
+        finalResolution = finalQuote.resolution
+        finalMeta = {
+          ...finalMeta,
+          klingModel: videoResult.klingModel || klingModel,
+          ...(videoResult.wasVeoFallback ? { wasVeoFallback: true } : {}),
+        }
+      } else if (wasPolicyFallback) {
+        finalCredits =
           billedDuration >= 8
             ? VIDEO_CREDITS.KLING_VIDEO_10S
             : VIDEO_CREDITS.KLING_VIDEO_5S
-        await CreditService.charge(billedUserId, klingCredits, 'ai_usage', projectId, {
+        finalCogsUsd = billedDuration >= 8 ? 1.1 : 0.65
+        finalOperation = 'fal_kling_video'
+        finalModel = 'fal-kling'
+        finalMeta = {
+          ...finalMeta,
           operation: 'fal_kling_video',
-          segmentId,
           generationProvider: generationProvider ?? 'fal',
-        })
-        await logProviderCost({
-          userId: billedUserId,
-          operation: 'fal_kling_video',
-          provider: 'sceneflow-ai',
-          model: 'fal-kling',
-          creditsCharged: klingCredits,
-          providerCostUsd: billedDuration >= 8 ? 1.1 : 0.65,
-          marginPercent: 0,
-          videoDurationSec: billedDuration,
-          projectId,
-          segmentId,
-          timestamp: new Date(),
-        })
-      }
-
-      if (generationProvider === 'aggregator' && videoModel) {
+        }
+      } else if (generationProvider === 'aggregator' && videoModel) {
         const creditsModelId = billingModelId ?? videoModel
-        const aggCredits = getAggregatorCreditsForModel(creditsModelId, billedDuration)
         const aggModel = getAggregatorModel(creditsModelId)
-        await CreditService.charge(billedUserId, aggCredits, 'ai_usage', projectId, {
+        finalCredits = getAggregatorCreditsForModel(creditsModelId, billedDuration)
+        finalCogsUsd = (aggModel?.costPerSecondUsd ?? 0.08) * Math.max(4, billedDuration)
+        finalOperation = 'aggregator_video'
+        finalModel = creditsModelId
+        finalMeta = {
+          ...finalMeta,
           operation: 'aggregator_video',
-          segmentId,
           videoModel: creditsModelId,
-          generationProvider: 'aggregator',
           ...(modelUpgraded ? { modelUpgraded: true, selectedVideoModel: videoModel } : {}),
+        }
+      } else if (generationProvider === 'vertex') {
+        const finalQuote = await resolveGenerationQuote({
+          kind: 'clip',
+          provider: 'google_vertex',
+          model: responseVideoModel || videoModel || undefined,
+          resolution: resolution || (qualityTier === 'premium' ? '1080p' : '720p'),
+          durationSeconds: billedDuration,
+          audio: true,
+          referenceImageCount,
+          userKeyUsed,
         })
-        await logProviderCost({
-          userId: billedUserId,
-          operation: 'aggregator_video',
-          provider: 'sceneflow-ai',
-          model: creditsModelId,
-          creditsCharged: aggCredits,
-          providerCostUsd: (aggModel?.costPerSecondUsd ?? 0.08) * Math.max(4, billedDuration),
-          marginPercent: 0,
-          videoDurationSec: billedDuration,
-          projectId,
-          segmentId,
-          timestamp: new Date(),
-        })
+        finalCredits = finalQuote.credits
+        finalCogsUsd = finalQuote.cogsUsd
+        finalOperation = finalQuote.operation
+        finalModel = finalQuote.model
+        finalResolution = finalQuote.resolution
+        finalMeta = {
+          ...finalMeta,
+          qualityTier: qualityTier || 'fast',
+        }
       }
 
-      if (generationProvider === 'vertex' && !wasPolicyFallback) {
-        await quoteAndCharge({
-          userId: billedUserId,
-          projectId,
-          segmentId,
-          quoteInput: {
-            kind: 'clip',
-            provider: 'google_vertex',
-            model: responseVideoModel || videoModel || undefined,
-            resolution: resolution || (qualityTier === 'premium' ? '1080p' : '720p'),
-            durationSeconds: billedDuration,
-            audio: true,
-            referenceImageCount,
-            userKeyUsed,
-          },
-          meta: {
-            generationProvider: 'vertex',
-            qualityTier: qualityTier || 'fast',
-          },
-        })
-      }
+      // Fail-closed hold capture on sync success
+      const captured = await CreditService.captureHold({
+        holdId: activeHoldId,
+        finalAmount: finalCredits,
+        reason: userKeyUsed ? 'byok_platform_fee' : 'ai_usage',
+        ref: projectId,
+        meta: finalMeta,
+      })
+      activeHoldId = null
 
-    } else if (genType === 'T2I') {
-      // Image generation using Gemini API
-      const base64Image = await generateImageWithGemini(prompt, {
-        aspectRatio: '16:9',
-        numberOfImages: 1,
-        imageSize: '2K',
-        // TODO: Add reference images support when available
+      const settledRunId = activeRunId
+      activeRunId = null
+      await recordProviderRunFinish({
+        runId: settledRunId,
+        status: 'succeeded',
+        unitsBilled: billedDuration,
+        unitType: 'per_second',
+        estimatedCogsUsd: finalCogsUsd,
+        ledgerId: captured.ledgerId,
+        chargedCredits: captured.charged,
+        httpStatus: 200,
+        meta: finalMeta,
       })
 
-      assetUrl = await uploadImageToBlob(
-        base64Image,
-        `segments/${segmentId}-${Date.now()}.png`
-      )
-      assetType = 'image'
+      await logProviderCost({
+        userId: billedUserId,
+        operation: finalOperation,
+        provider: 'sceneflow-ai',
+        model: finalModel,
+        creditsCharged: captured.charged,
+        providerCostUsd: finalCogsUsd,
+        marginPercent: 0,
+        videoDurationSec: billedDuration,
+        projectId,
+        sceneId,
+        segmentId,
+        byok: userKeyUsed,
+        resolution: finalResolution,
+        vendor: inferVendorFromProviderOrModel(generationProvider ?? resolvedVideoProvider, finalModel),
+        timestamp: new Date(),
+      })
 
-      try {
-        await quoteAndCharge({
-          userId: dbUserId,
-          projectId,
-          segmentId,
-          quoteInput: {
-            kind: 'still',
-            imageCount: 1,
-            floorCredits: IMAGE_CREDITS.IMAGEN_4,
-            userKeyUsed,
-          },
-          meta: { label: 'segment_still' },
-        })
-      } catch (chargeError: unknown) {
-        console.error('[Segment Asset Generation] Failed to charge still credits:', chargeError)
-      }
+    } else if (genType === 'T2I') {
+      // Image generation using Gemini API under credit escrow (fail-closed)
+      const meteredStill = await executeMeteredProviderCall({
+        userId: dbUserId,
+        projectId,
+        sceneId,
+        segmentId,
+        route: '/api/segments/[segmentId]/generate-asset',
+        provider: 'vertex',
+        model: 'gemini-3.1-flash-image',
+        operation: 'segment_still',
+        quoteInput: {
+          kind: 'still',
+          imageCount: 1,
+          floorCredits: IMAGE_CREDITS.IMAGEN_4,
+          userKeyUsed: false,
+        },
+        meta: { label: 'segment_still', segmentId },
+        execute: async () => {
+          const base64Image = await generateImageWithGemini(prompt, {
+            aspectRatio: '16:9',
+            numberOfImages: 1,
+            imageSize: '2K',
+            // TODO: Add reference images support when available
+          })
+
+          return await uploadImageToBlob(
+            base64Image,
+            `segments/${segmentId}-${Date.now()}.png`
+          )
+        },
+      })
+
+      assetUrl = meteredStill.result
+      assetType = 'image'
 
     } else {
       return NextResponse.json(
@@ -1378,6 +1490,34 @@ export async function POST(
     console.error('[Segment Asset Generation] Error:', error)
 
     if (error instanceof SegmentVideoKlingAsyncError) {
+      // Keep hold PENDING for the Kling completion webhook and bind holdId/runId to jobId
+      if (activeHoldId) {
+        const asyncBillingMeta = {
+          klingJobId: error.jobId,
+          billingHoldId: activeHoldId,
+          billingRunId: activeRunId,
+          billingUserId: activeDbUserId,
+          billingCredits: activeHoldCredits,
+          billingCogsUsd: activeHoldCogsUsd,
+          billingModel: error.modelName || activeHoldModel,
+          billingOperation: activeHoldOperation,
+          segmentId: activeSegmentId || (await params).segmentId,
+          projectId: requestBody.projectId ?? null,
+          sceneId: requestBody.sceneId ?? null,
+        }
+        await CreditHold.update(
+          {
+            ref: `kling_job:${error.jobId}`,
+            meta: asyncBillingMeta,
+          },
+          { where: { id: activeHoldId } }
+        ).catch((e) =>
+          console.error('[Segment Asset Generation] Failed to bind Kling async hold metadata:', e)
+        )
+        await updateKlingJob(error.jobId, asyncBillingMeta as any).catch((e) =>
+          console.warn('[Segment Asset Generation] Failed to attach billing metadata to Kling job:', e)
+        )
+      }
       return NextResponse.json(
         {
           success: true,
@@ -1391,18 +1531,36 @@ export async function POST(
       )
     }
 
-    if (error instanceof SegmentVideoKlingNotConfiguredError) {
-      return NextResponse.json(
-        {
-          error: error.message,
-          code: 'KLING_NOT_CONFIGURED',
-          routingTrace: buildRoutingTrace('kling', 'vertex'),
-        },
-        { status: 503 }
-      )
-    }
-
     if (error instanceof SegmentVideoAggregatorAsyncError) {
+      // Keep hold PENDING for the Aggregator completion webhook and bind holdId/runId to jobId
+      if (activeHoldId) {
+        const asyncBillingMeta = {
+          aggregatorJobId: error.jobId,
+          aggregatorVendor: error.vendor,
+          billingHoldId: activeHoldId,
+          billingRunId: activeRunId,
+          billingUserId: activeDbUserId,
+          billingCredits: activeHoldCredits,
+          billingCogsUsd: activeHoldCogsUsd,
+          billingModel: requestBody.videoModel || activeHoldModel,
+          billingOperation: 'aggregator_video',
+          segmentId: activeSegmentId || (await params).segmentId,
+          projectId: requestBody.projectId ?? null,
+          sceneId: requestBody.sceneId ?? null,
+        }
+        await CreditHold.update(
+          {
+            ref: `agg_job:${error.jobId}`,
+            meta: asyncBillingMeta,
+          },
+          { where: { id: activeHoldId } }
+        ).catch((e) =>
+          console.error('[Segment Asset Generation] Failed to bind Aggregator async hold metadata:', e)
+        )
+        await updateAggregatorJob(error.jobId, asyncBillingMeta as any).catch((e) =>
+          console.warn('[Segment Asset Generation] Failed to attach billing metadata to Aggregator job:', e)
+        )
+      }
       return NextResponse.json(
         {
           success: true,
@@ -1414,6 +1572,60 @@ export async function POST(
           videoModel: requestBody.videoModel,
         },
         { status: 202 }
+      )
+    }
+
+    // Any non-async failure: release pending hold and record failed/rate-limited telemetry
+    if (activeHoldId || activeRunId) {
+      const errMsg = String(error?.message || '')
+      const isRateLimit =
+        error instanceof SegmentVideoRateLimitError ||
+        Boolean(classifyVertexRateLimitHttp(errMsg))
+      const errCode = isRateLimit
+        ? 'RATE_LIMITED'
+        : String(error?.code || error?.name || 'PROVIDER_ERROR').slice(0, 128)
+      if (activeHoldId) {
+        await CreditService.releaseHold({
+          holdId: activeHoldId,
+          reason: errCode,
+          meta: { segmentId: activeSegmentId },
+        }).catch((relErr: unknown) =>
+          console.error('[Segment Asset Generation] Failed to release credit hold:', relErr)
+        )
+        activeHoldId = null
+      }
+      if (activeRunId) {
+        await recordProviderRunFinish({
+          runId: activeRunId,
+          status: isRateLimit ? 'rate_limited' : 'failed',
+          httpStatus: isRateLimit ? 429 : 500,
+          errorCode: errCode,
+          estimatedCogsUsd: 0,
+          chargedCredits: 0,
+        })
+        activeRunId = null
+      }
+    }
+
+    if (error?.message === 'INSUFFICIENT_CREDITS') {
+      return NextResponse.json(
+        {
+          error: 'Insufficient credits',
+          code: 'INSUFFICIENT_CREDITS',
+          required: activeHoldCredits || undefined,
+        },
+        { status: 402 }
+      )
+    }
+
+    if (error instanceof SegmentVideoKlingNotConfiguredError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: 'KLING_NOT_CONFIGURED',
+          routingTrace: buildRoutingTrace('kling', 'vertex'),
+        },
+        { status: 503 }
       )
     }
 

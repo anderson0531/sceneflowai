@@ -184,6 +184,73 @@ export function materializeLegacyLots(input: {
   return lots
 }
 
+export interface CreditRestoreEntry {
+  lotId?: string
+  source: CreditLotSource
+  amount: number
+  expiresAt: string | Date
+  purchasedAt?: string | Date
+  ref?: string | null
+}
+
+const GENERIC_SUBSCRIPTION_REFS = new Set([
+  'renewal',
+  'legacy_subscription',
+  'subscription',
+  'subscription_allocation',
+])
+
+export function normalizePaymentRef(paymentId: string): string {
+  const trimmed = paymentId.trim()
+  if (trimmed.startsWith('whop_payment:')) return trimmed
+  if (trimmed.startsWith('whop_pay_')) return `whop_payment:${trimmed.slice('whop_pay_'.length)}`
+  if (trimmed.startsWith('paddle_')) return trimmed
+  return `whop_payment:${trimmed}`
+}
+
+function paymentRefVariants(value: string): string[] {
+  const trimmed = value.trim()
+  if (!trimmed) return []
+  const variants = new Set<string>([trimmed])
+  if (trimmed.startsWith('whop_payment:')) {
+    const raw = trimmed.slice('whop_payment:'.length)
+    if (raw) {
+      variants.add(raw)
+      variants.add(`whop_pay_${raw}`)
+    }
+  } else if (trimmed.startsWith('whop_pay_')) {
+    const raw = trimmed.slice('whop_pay_'.length)
+    if (raw) {
+      variants.add(raw)
+      variants.add(`whop_payment:${raw}`)
+    }
+  } else {
+    variants.add(`whop_payment:${trimmed}`)
+    variants.add(`whop_pay_${trimmed}`)
+  }
+  return [...variants]
+}
+
+export function hasDuplicateSubscriptionRef(
+  lots: CreditLot[],
+  ref?: string | null,
+  paymentId?: string | null
+): boolean {
+  const candidates = new Set<string>()
+  if (paymentId && paymentId.trim()) {
+    for (const v of paymentRefVariants(paymentId)) candidates.add(v)
+  }
+  if (ref && ref.trim() && !GENERIC_SUBSCRIPTION_REFS.has(ref.trim().toLowerCase())) {
+    for (const v of paymentRefVariants(ref)) candidates.add(v)
+  }
+  if (candidates.size === 0) return false
+  return lots.some(
+    (lot) =>
+      lot.source === 'subscription' &&
+      Boolean(lot.ref && candidates.has(lot.ref.trim()))
+  )
+}
+
 export function hasRecentSubscriptionGrant(
   lots: CreditLot[],
   granted: number,
@@ -316,12 +383,16 @@ export function applySubscriptionGrant(input: {
   now: Date
   expiresAt: Date
   ref?: string | null
+  paymentId?: string | null
+  preserveUnusedOnUpgrade?: boolean
+  isMidCycleUpgrade?: boolean
   meta?: Record<string, unknown>
 }): {
   lots: CreditLot[]
   intents: CreditLedgerIntent[]
   duplicate: boolean
   droppedSubscription: number
+  carriedOverSubscription: number
   granted: number
   startingBalance: number
   endingBalance: number
@@ -329,7 +400,7 @@ export function applySubscriptionGrant(input: {
   const startingBalance = sumLots(input.lots.filter((lot) => lot.remaining > 0))
   const expired = expireDueLots(input.lots, input.now)
   const expiry = expiryIntents(startingBalance, expired.expiredSubscription, expired.expiredPack)
-  let lots = expired.lots
+  const lots = expired.lots
   let balance = expiry.balance
   const intents = [...expiry.intents]
 
@@ -339,29 +410,51 @@ export function applySubscriptionGrant(input: {
       intents,
       duplicate: false,
       droppedSubscription: 0,
+      carriedOverSubscription: 0,
       granted: 0,
       startingBalance,
       endingBalance: balance,
     }
   }
 
-  if (hasRecentSubscriptionGrant(lots, input.credits, input.now)) {
+  // Canonical payment-ID / ref deduplication applies regardless of the 10-minute window.
+  if (
+    hasDuplicateSubscriptionRef(input.lots, input.ref, input.paymentId) ||
+    hasRecentSubscriptionGrant(lots, input.credits, input.now)
+  ) {
     return {
       lots,
       intents,
       duplicate: true,
       droppedSubscription: 0,
+      carriedOverSubscription: 0,
       granted: 0,
       startingBalance,
       endingBalance: balance,
     }
   }
 
+  const existingSubLots = lots.filter((lot) => lot.source === 'subscription')
+  const existingMaxGranted = existingSubLots.reduce(
+    (max, lot) => Math.max(max, lot.granted),
+    0
+  )
+  const shouldPreserveUnused =
+    existingSubLots.length > 0 &&
+    (input.isMidCycleUpgrade === true ||
+      (input.preserveUnusedOnUpgrade === true && input.credits > existingMaxGranted))
+
   let droppedSubscription = 0
+  let carriedOverSubscription = 0
   const kept: CreditLot[] = []
   for (const lot of lots) {
     if (lot.source === 'subscription') {
-      droppedSubscription += lot.remaining
+      if (shouldPreserveUnused) {
+        carriedOverSubscription += lot.remaining
+        kept.push({ ...lot })
+      } else {
+        droppedSubscription += lot.remaining
+      }
       continue
     }
     kept.push(lot)
@@ -379,12 +472,15 @@ export function applySubscriptionGrant(input: {
     balance = next
   }
 
+  const effectiveRef =
+    input.ref ?? (input.paymentId ? normalizePaymentRef(input.paymentId) : null)
+
   const grant = createLot({
     source: 'subscription',
     credits: input.credits,
     purchasedAt: input.now,
     expiresAt: input.expiresAt,
-    ref: input.ref,
+    ref: effectiveRef,
   })
   kept.push(grant)
   const endingBalance = balance + input.credits
@@ -396,6 +492,12 @@ export function applySubscriptionGrant(input: {
     creditType: 'subscription',
     meta: {
       ...(input.meta || {}),
+      ...(carriedOverSubscription > 0
+        ? {
+            kind: 'upgrade_carryover',
+            carried_over_credits: carriedOverSubscription,
+          }
+        : {}),
       expires_at: input.expiresAt.toISOString(),
       rollover: false,
     },
@@ -406,6 +508,7 @@ export function applySubscriptionGrant(input: {
     intents,
     duplicate: false,
     droppedSubscription,
+    carriedOverSubscription,
     granted: input.credits,
     startingBalance,
     endingBalance,
@@ -462,12 +565,21 @@ export function applyPackGrant(input: {
   }
 }
 
-/** Put credits back onto the soonest-expiring lots, up to each lot's original grant. */
+/**
+ * Put credits back onto matching original lots (when provenance is supplied) or
+ * onto the soonest-expiring lots up to each lot's original grant.
+ * Falls back to a 12-month add-on lot only when no original lot provenance is provided.
+ */
 export function applyCreditRestore(input: {
   lots: CreditLot[]
   amount: number
   now: Date
   meta?: Record<string, unknown>
+  restoreEntries?: CreditRestoreEntry[]
+  source?: CreditLotSource
+  expiresAt?: string | Date
+  purchasedAt?: string | Date
+  ref?: string | null
 }): {
   lots: CreditLot[]
   intents: CreditLedgerIntent[]
@@ -477,40 +589,128 @@ export function applyCreditRestore(input: {
   const expired = expireDueLots(input.lots, input.now)
   const startingBalance = sumLots(input.lots.filter((lot) => lot.remaining > 0))
   const expiry = expiryIntents(startingBalance, expired.expiredSubscription, expired.expiredPack)
-  let left = input.amount
   const active = expired.lots.slice().sort(compareSpendOrder).map((lot) => ({ ...lot }))
-  for (const lot of active) {
-    if (left <= 0) break
-    const room = Math.max(0, lot.granted - lot.remaining)
-    const put = Math.min(room, left)
-    lot.remaining += put
-    left -= put
+
+  let left = Math.max(0, input.amount)
+  let restoredTotal = 0
+  let restoredSubscription = 0
+  let restoredAddon = 0
+
+  const provenanceEntries: CreditRestoreEntry[] =
+    input.restoreEntries && input.restoreEntries.length > 0
+      ? input.restoreEntries
+      : input.source && input.expiresAt
+        ? [
+            {
+              source: input.source,
+              amount: left,
+              expiresAt: input.expiresAt,
+              purchasedAt: input.purchasedAt,
+              ref: input.ref,
+            },
+          ]
+        : []
+
+  if (provenanceEntries.length > 0) {
+    for (const entry of provenanceEntries) {
+      if (left <= 0) break
+      if (entry.amount <= 0) continue
+      const put = Math.min(entry.amount, left)
+      left -= put
+
+      const expDate =
+        entry.expiresAt instanceof Date ? entry.expiresAt : new Date(entry.expiresAt)
+      if (Number.isNaN(expDate.getTime()) || expDate.getTime() <= input.now.getTime()) {
+        // Do not resurrect already-expired lots into 365-day add-on credits.
+        continue
+      }
+
+      const expIso = expDate.toISOString()
+      const matched =
+        (entry.lotId ? active.find((lot) => lot.id === entry.lotId) : undefined) ??
+        active.find((lot) => lot.source === entry.source && lot.expiresAt === expIso)
+
+      if (matched) {
+        matched.remaining += put
+        if (matched.remaining > matched.granted) {
+          matched.granted = matched.remaining
+        }
+      } else {
+        const purchasedDate = entry.purchasedAt
+          ? entry.purchasedAt instanceof Date
+            ? entry.purchasedAt
+            : new Date(entry.purchasedAt)
+          : input.now
+        active.push(
+          createLot({
+            id: entry.lotId,
+            source: entry.source,
+            credits: put,
+            purchasedAt: Number.isNaN(purchasedDate.getTime()) ? input.now : purchasedDate,
+            expiresAt: expDate,
+            ref: entry.ref ?? 'credit_restore',
+          })
+        )
+      }
+
+      restoredTotal += put
+      if (entry.source === 'subscription') restoredSubscription += put
+      else restoredAddon += put
+    }
   }
+
+  // Fallback for legacy callers (or any unattributed remainder when partial provenance was passed).
   if (left > 0) {
-    active.push(
-      createLot({
-        source: 'addon',
-        credits: left,
-        purchasedAt: input.now,
-        expiresAt: shelfLifeExpiresAt('addon', input.now),
-        ref: 'credit_restore',
-      })
-    )
+    for (const lot of active) {
+      if (left <= 0) break
+      const room = Math.max(0, lot.granted - lot.remaining)
+      const put = Math.min(room, left)
+      if (put <= 0) continue
+      lot.remaining += put
+      left -= put
+      restoredTotal += put
+      if (lot.source === 'subscription') restoredSubscription += put
+      else restoredAddon += put
+    }
+    if (left > 0) {
+      active.push(
+        createLot({
+          source: 'addon',
+          credits: left,
+          purchasedAt: input.now,
+          expiresAt: shelfLifeExpiresAt('addon', input.now),
+          ref: 'credit_restore',
+        })
+      )
+      restoredTotal += left
+      restoredAddon += left
+      left = 0
+    }
   }
-  const endingBalance = expiry.balance + input.amount
+
+  const endingBalance = expiry.balance + restoredTotal
+  const creditType: 'subscription' | 'addon' | null =
+    restoredSubscription > 0 && restoredAddon === 0
+      ? 'subscription'
+      : restoredAddon > 0 && restoredSubscription === 0
+        ? 'addon'
+        : null
+
+  const intents: CreditLedgerIntent[] = [...expiry.intents]
+  if (restoredTotal > 0) {
+    intents.push({
+      delta: restoredTotal,
+      prev: expiry.balance,
+      next: endingBalance,
+      reason: 'refund',
+      creditType,
+      meta: { ...(input.meta || {}), kind: 'credit_restore' },
+    })
+  }
+
   return {
     lots: active.filter((lot) => lot.remaining > 0),
-    intents: [
-      ...expiry.intents,
-      {
-        delta: input.amount,
-        prev: expiry.balance,
-        next: endingBalance,
-        reason: 'refund',
-        creditType: null,
-        meta: { ...(input.meta || {}), kind: 'credit_restore' },
-      },
-    ],
+    intents,
     startingBalance,
     endingBalance,
   }

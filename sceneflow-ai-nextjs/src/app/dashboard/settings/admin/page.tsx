@@ -7,6 +7,7 @@ import { CreditRecalculateCard } from '@/components/admin/CreditRecalculateCard'
 import { FinanceReportCard } from '@/components/admin/FinanceReportCard'
 import { LaunchEmailCard } from '@/components/admin/LaunchEmailCard'
 import { OriginalsSeedCard } from '@/components/admin/OriginalsSeedCard'
+import { ModelIntelligenceAdvisorCard } from '@/components/admin/ModelIntelligenceAdvisorCard'
 import { ModelVersionsCard } from '@/components/admin/ModelVersionsCard'
 import { PricingRateCard } from '@/components/admin/PricingRateCard'
 import { SocialPublishingOAuthCard } from '@/components/admin/SocialPublishingOAuthCard'
@@ -34,9 +35,10 @@ export default async function AdminPage() {
 
       {/* Admin Function Cards */}
       <div className="grid grid-cols-1 gap-6">
+        <ModelIntelligenceAdvisorCard />
+        <ModelVersionsCard />
         <SocialPublishingOAuthCard />
         <SupportEscalationsCard />
-        <ModelVersionsCard />
         <PricingRateCard />
         <FinanceReportCard />
         <CreditGrantCard />

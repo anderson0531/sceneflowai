@@ -13,6 +13,7 @@ import {
 import { NARRATION_CHUNK_BYTES } from '@/lib/tts/blueprintTtsConstants'
 import { CreditService } from '@/services/CreditService'
 import { AUDIO_CREDITS } from '@/lib/credits/creditCosts'
+import { executeMeteredProviderCall } from '@/lib/credits/meteredGateway'
 import {
   CONCURRENCY_DEFAULTS,
   processWithConcurrency,
@@ -66,10 +67,14 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     const userId = session?.user?.id || session?.user?.email || null
 
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      )
+    }
+
     if (saveToBlob) {
-      if (!session?.user?.id) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
       if (!body.projectId || typeof body.projectId !== 'string') {
         return NextResponse.json(
           { error: 'projectId is required when saveToBlob is true' },
@@ -98,44 +103,51 @@ export async function POST(request: NextRequest) {
         typeof (body as { prompt?: string }).prompt === 'string'
           ? (body as { prompt?: string }).prompt
           : undefined
-      // Gemini path, so the same UTF-8 byte ceiling applies.
-      const chunks = chunkNarrationText(text, NARRATION_CHUNK_BYTES)
-      const results = await processWithConcurrency<Buffer>(
-        chunks.map((chunk, index) => ({
-          id: index,
-          execute: () =>
-            synthesizeGeminiFlashMp3({
-              text: chunk,
-              voiceId: geminiVoice,
-              directorNotes,
-            }),
-        })),
-        CONCURRENCY_DEFAULTS.AUDIO_GENERATION,
-        undefined,
-        false
+      const geminiTtsCredits = Math.max(
+        AUDIO_CREDITS.VOICE_PREVIEW,
+        Math.ceil(text.length / 500) * AUDIO_CREDITS.DIALOGUE_PER_LINE
       )
-      const failed = results.find((result) => result.status === 'rejected')
-      if (failed) {
-        throw failed.error ?? new Error('TTS chunk failed')
-      }
-      const buffers = results.map((result) => result.value!)
-      const buffer = buffers.length === 1 ? buffers[0]! : Buffer.concat(buffers)
-
-      if (userId) {
-        try {
-          const geminiTtsCredits = Math.max(
-            AUDIO_CREDITS.VOICE_PREVIEW,
-            Math.ceil(text.length / 500) * AUDIO_CREDITS.DIALOGUE_PER_LINE
+      const metered = await executeMeteredProviderCall({
+        userId,
+        projectId: body.projectId || null,
+        sceneId: body.sceneId,
+        route: '/api/tts/elevenlabs',
+        provider: 'vertex',
+        model: 'gemini-tts',
+        operation: 'gemini_tts_narration',
+        flatCredits: geminiTtsCredits,
+        estimatedCogsUsd: Math.max(0.002, (text.length / 1000) * 0.02),
+        meta: {
+          audioType: audioType || 'blueprint',
+          voiceId: geminiVoice,
+          charCount: text.length,
+        },
+        execute: async () => {
+          // Gemini path, so the same UTF-8 byte ceiling applies.
+          const chunks = chunkNarrationText(text, NARRATION_CHUNK_BYTES)
+          const results = await processWithConcurrency<Buffer>(
+            chunks.map((chunk, index) => ({
+              id: index,
+              execute: () =>
+                synthesizeGeminiFlashMp3({
+                  text: chunk,
+                  voiceId: geminiVoice,
+                  directorNotes,
+                }),
+            })),
+            CONCURRENCY_DEFAULTS.AUDIO_GENERATION,
+            undefined,
+            false
           )
-          await CreditService.charge(userId, geminiTtsCredits, 'ai_usage', body.projectId || null, {
-            operation: 'gemini_tts_narration',
-            audioType: audioType || 'blueprint',
-            charCount: text.length,
-          })
-        } catch (chargeErr) {
-          console.warn('[ElevenLabs TTS] Non-blocking Gemini TTS credit charge failed:', chargeErr)
-        }
-      }
+          const failed = results.find((result) => result.status === 'rejected')
+          if (failed) {
+            throw failed.error ?? new Error('TTS chunk failed')
+          }
+          const buffers = results.map((result) => result.value!)
+          return buffers.length === 1 ? buffers[0]! : Buffer.concat(buffers)
+        },
+      })
+      const buffer = metered.result
 
       if (saveToBlob) {
         const projectId = body.projectId as string
@@ -157,6 +169,7 @@ export async function POST(request: NextRequest) {
           voiceName: body.voiceName,
           byteLength: buffer.length,
           provider: 'gemini',
+          creditsCharged: metered.creditsCharged,
         })
       }
 
@@ -169,33 +182,39 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const buffer = await synthesizeElevenLabsMp3({
-      text,
-      voiceId,
-      stability: body.stability,
-      similarityBoost: body.similarityBoost,
-      style: body.style,
-      useSpeakerBoost: body.useSpeakerBoost,
-      speed: body.speed,
-      modelId: body.modelId,
-      delivery,
+    const elevenLabsCredits = Math.max(
+      AUDIO_CREDITS.VOICE_PREVIEW,
+      Math.ceil((text.length / 1000) * AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS)
+    )
+    const meteredElevenLabs = await executeMeteredProviderCall({
+      userId,
+      projectId: body.projectId || null,
+      sceneId: body.sceneId,
+      route: '/api/tts/elevenlabs',
+      provider: 'elevenlabs',
+      model: body.modelId || 'eleven_multilingual_v2',
+      operation: 'elevenlabs_tts',
+      flatCredits: elevenLabsCredits,
+      estimatedCogsUsd: Math.max(0.01, (text.length / 1000) * 0.35),
+      meta: {
+        audioType: audioType || 'tts',
+        voiceId,
+        charCount: text.length,
+      },
+      execute: () =>
+        synthesizeElevenLabsMp3({
+          text,
+          voiceId,
+          stability: body.stability,
+          similarityBoost: body.similarityBoost,
+          style: body.style,
+          useSpeakerBoost: body.useSpeakerBoost,
+          speed: body.speed,
+          modelId: body.modelId,
+          delivery,
+        }),
     })
-
-    if (userId) {
-      try {
-        const elevenLabsCredits = Math.max(
-          AUDIO_CREDITS.VOICE_PREVIEW,
-          Math.ceil((text.length / 1000) * AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS)
-        )
-        await CreditService.charge(userId, elevenLabsCredits, 'ai_usage', body.projectId || null, {
-          operation: 'elevenlabs_tts',
-          audioType: audioType || 'tts',
-          charCount: text.length,
-        })
-      } catch (chargeErr) {
-        console.warn('[ElevenLabs TTS] Non-blocking credit charge failed:', chargeErr)
-      }
-    }
+    const buffer = meteredElevenLabs.result
 
     if (saveToBlob) {
       const projectId = body.projectId as string
@@ -216,6 +235,7 @@ export async function POST(request: NextRequest) {
         voiceId,
         voiceName: body.voiceName,
         byteLength: buffer.length,
+        creditsCharged: meteredElevenLabs.creditsCharged,
       })
     }
 
@@ -228,6 +248,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
+    if (message === 'INSUFFICIENT_CREDITS') {
+      return NextResponse.json(
+        { error: 'Insufficient credits', code: 'INSUFFICIENT_CREDITS' },
+        { status: 402 }
+      )
+    }
     console.error('[ElevenLabs TTS] Error:', message)
     return NextResponse.json(
       { error: message || 'TTS generation failed' },
