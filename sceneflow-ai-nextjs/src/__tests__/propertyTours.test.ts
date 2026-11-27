@@ -128,10 +128,13 @@ describe('Property Tour Hosting Policy, Embed URLs & Standalone Routing', () => 
 
     const demoTour = buildPublicDemoPropertyTourDTO('demo')
     expect(demoTour.status).toBe('published')
-    expect(demoTour.blueprintRooms.length).toBeGreaterThanOrEqual(3)
+    expect(demoTour.rooms.length).toBeGreaterThanOrEqual(3)
+    expect(demoTour.rooms[0].perspectives.N.variants[0]?.imageUrl).toContain(
+      '/images/property-tours/demo/'
+    )
 
     const publicDir = path.resolve(__dirname, '../../public')
-    for (const room of demoTour.blueprintRooms) {
+    for (const room of demoTour.rooms) {
       for (const dir of ['N', 'E', 'S', 'W'] as const) {
         const p = room.perspectives[dir]
         if (p.originalImageUrl?.startsWith('/')) {

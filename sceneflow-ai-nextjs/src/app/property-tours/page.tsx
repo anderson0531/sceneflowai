@@ -106,7 +106,7 @@ export default function PublicPropertyToursPage() {
   const [tour, setTour] = useState<PropertyTourDTO>(() => buildPublicDemoPropertyTourDTO('demo'))
   const [activeTab, setActiveTab] = useState<PublicWorkspaceTab>('player')
   const [selectedRoomId, setSelectedRoomId] = useState<string>(
-    () => buildPublicDemoPropertyTourDTO('demo').blueprintRooms[0]?.id || ''
+    () => buildPublicDemoPropertyTourDTO('demo').rooms[0]?.id || ''
   )
   const [newRoomName, setNewRoomName] = useState('')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
@@ -135,8 +135,8 @@ export default function PublicPropertyToursPage() {
 
   const selectedRoom: PropertyRoom | undefined = useMemo(
     () =>
-      tour.blueprintRooms.find((r) => r.id === selectedRoomId) || tour.blueprintRooms[0],
-    [tour.blueprintRooms, selectedRoomId]
+      tour.rooms.find((r) => r.id === selectedRoomId) || tour.rooms[0],
+    [tour.rooms, selectedRoomId]
   )
 
   const handleCopy = useCallback(async (key: string, value: string) => {
@@ -169,7 +169,7 @@ export default function PublicPropertyToursPage() {
         const dataUrl = await compressPhotoToDataUrl(file)
         setTour((prev) => ({
           ...prev,
-          blueprintRooms: prev.blueprintRooms.map((room) => {
+          rooms: prev.rooms.map((room) => {
             if (room.id !== roomId) return room
             const existing = room.perspectives[dir]
             return {
@@ -259,7 +259,7 @@ export default function PublicPropertyToursPage() {
         availableLifestyles: prev.availableLifestyles.includes(genLifestyle)
           ? prev.availableLifestyles
           : [...prev.availableLifestyles, genLifestyle],
-        blueprintRooms: prev.blueprintRooms.map((r) => {
+        rooms: prev.rooms.map((r) => {
           if (r.id !== room.id) return r
           const prevP = r.perspectives[dir]
           const filtered = prevP.variants.filter(
@@ -366,20 +366,20 @@ export default function PublicPropertyToursPage() {
       id: `local-room-${Date.now()}`,
       name: trimmed,
       roomType: 'living',
-      orderIndex: tour.blueprintRooms.length,
+      orderIndex: tour.rooms.length,
     })
     setTour((prev) => ({
       ...prev,
-      blueprintRooms: [...prev.blueprintRooms, created],
+      rooms: [...prev.rooms, created],
     }))
     setSelectedRoomId(created.id)
     setNewRoomName('')
-  }, [newRoomName, tour.blueprintRooms.length])
+  }, [newRoomName, tour.rooms.length])
 
   const handleResetDemo = useCallback(() => {
     const fresh = buildPublicDemoPropertyTourDTO('demo')
     setTour(fresh)
-    setSelectedRoomId(fresh.blueprintRooms[0]?.id || '')
+    setSelectedRoomId(fresh.rooms[0]?.id || '')
     setPublishedSlug(null)
     setStagingMessage(null)
     setStagingError(null)
@@ -673,7 +673,7 @@ export default function PublicPropertyToursPage() {
 
             {/* Room Selector + Add Room */}
             <div className="flex flex-wrap items-center gap-2">
-              {tour.blueprintRooms.map((room) => (
+              {tour.rooms.map((room) => (
                 <button
                   key={room.id}
                   type="button"

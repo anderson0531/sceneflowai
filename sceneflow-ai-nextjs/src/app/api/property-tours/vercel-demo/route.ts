@@ -229,11 +229,16 @@ async function handlePublishTour(request: NextRequest, body: Record<string, any>
     )
   }
 
-  const incoming = body.tour as PropertyTourDTO | undefined
-  if (!incoming || !incoming.title || !Array.isArray(incoming.blueprintRooms)) {
+  const incoming = body.tour as (PropertyTourDTO & { blueprintRooms?: PropertyRoom[] }) | undefined
+  const incomingRooms = Array.isArray(incoming?.rooms)
+    ? incoming.rooms
+    : Array.isArray(incoming?.blueprintRooms)
+      ? incoming.blueprintRooms
+      : null
+  if (!incoming || !incoming.title || !incomingRooms) {
     return NextResponse.json({ error: 'Invalid property tour payload.' }, { status: 400 })
   }
-  if (incoming.blueprintRooms.length > 20) {
+  if (incomingRooms.length > 20) {
     return NextResponse.json({ error: 'Demo tours are limited to 20 rooms.' }, { status: 400 })
   }
 
@@ -243,7 +248,7 @@ async function handlePublishTour(request: NextRequest, body: Record<string, any>
 
   // Persist any local browser data:image/... URLs to Vercel Blob CDN
   const persistedRooms: PropertyRoom[] = []
-  for (const room of incoming.blueprintRooms) {
+  for (const room of incomingRooms) {
     const updatedPerspectives = { ...room.perspectives }
     for (const dir of COMPASS_DIRECTIONS) {
       const p = room.perspectives[dir]
@@ -290,7 +295,7 @@ async function handlePublishTour(request: NextRequest, body: Record<string, any>
     publishedAt: now,
     updatedAt: now,
     createdAt: incoming.createdAt || now,
-    blueprintRooms: persistedRooms,
+    rooms: persistedRooms,
   }
 
   await savePublishedTourToVercelBlob(publishedTour)

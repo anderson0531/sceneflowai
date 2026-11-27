@@ -67,11 +67,16 @@ export async function loadPublishedTourFromVercelBlob(
       signal: AbortSignal.timeout(8_000),
     })
     if (!response.ok) return null
-    const parsed = (await response.json()) as PropertyTourDTO
-    if (!parsed || !parsed.slug || !Array.isArray(parsed.blueprintRooms)) {
+    const parsed = (await response.json()) as PropertyTourDTO & { blueprintRooms?: PropertyTourDTO['rooms'] }
+    const normalizedRooms = Array.isArray(parsed?.rooms)
+      ? parsed.rooms
+      : Array.isArray(parsed?.blueprintRooms)
+        ? parsed.blueprintRooms
+        : null
+    if (!parsed || !parsed.slug || !normalizedRooms) {
       return null
     }
-    return parsed
+    return { ...parsed, rooms: normalizedRooms }
   } catch (err) {
     console.warn('[VercelBlobStore] Failed to load published tour:', safeSlug, err)
     return null
