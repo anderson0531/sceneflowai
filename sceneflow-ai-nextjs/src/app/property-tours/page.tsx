@@ -7,6 +7,7 @@ import {
   Building2,
   Camera,
   Check,
+  CloudUpload,
   Code2,
   Compass,
   Copy,
@@ -14,12 +15,13 @@ import {
   Eye,
   EyeOff,
   Layers,
-  Lock,
+  Loader2,
   Palette,
   Plus,
   RotateCcw,
   Sparkles,
   Upload,
+  Wand2,
 } from 'lucide-react'
 import { InteractivePropertyPlayer } from '@/components/property-tours/InteractivePropertyPlayer'
 import {
@@ -31,8 +33,14 @@ import {
 import {
   COMPASS_DIRECTIONS,
   createDefaultRoom,
+  PROPERTY_LIFESTYLE_PRESETS,
+  PROPERTY_LIGHTING_PRESETS,
+  PROPERTY_STYLE_PRESETS,
   type CompassDirection,
+  type PropertyLifestyleId,
+  type PropertyLightingId,
   type PropertyRoom,
+  type PropertyStyleId,
   type PropertyTourDTO,
 } from '@/lib/propertyTours/types'
 
@@ -54,6 +62,46 @@ const DIRECTION_LABELS: Record<CompassDirection, string> = {
   W: 'West (90° Left)',
 }
 
+/**
+ * Resize a user's smartphone photo client-side (max 1440px JPEG) so it previews instantly
+ * and uploads cleanly to Vercel AI Gateway + Vercel Blob without hitting serverless body limits.
+ */
+async function compressPhotoToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('Failed to read image file'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('Unsupported image format'))
+      img.onload = () => {
+        const maxDim = 1440
+        let { width, height } = img
+        if (width > maxDim || height > maxDim) {
+          if (width >= height) {
+            height = Math.round((height * maxDim) / width)
+            width = maxDim
+          } else {
+            width = Math.round((width * maxDim) / height)
+            height = maxDim
+          }
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(String(reader.result || ''))
+          return
+        }
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', 0.84))
+      }
+      img.src = String(reader.result || '')
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function PublicPropertyToursPage() {
   const [tour, setTour] = useState<PropertyTourDTO>(() => buildPublicDemoPropertyTourDTO('demo'))
   const [activeTab, setActiveTab] = useState<PublicWorkspaceTab>('player')
@@ -64,12 +112,26 @@ export default function PublicPropertyToursPage() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
+  // Vercel AI Gateway staging state (100% Vercel-native, zero GCP)
+  const [genStyle, setGenStyle] = useState<PropertyStyleId>('modern_coastal')
+  const [genLighting, setGenLighting] = useState<PropertyLightingId>('daylight')
+  const [genLifestyle, setGenLifestyle] = useState<PropertyLifestyleId>('architectural')
+  const [stagingDir, setStagingDir] = useState<CompassDirection | 'ALL' | null>(null)
+  const [stagingMessage, setStagingMessage] = useState<string | null>(null)
+  const [stagingError, setStagingError] = useState<string | null>(null)
+
+  // Vercel Blob publish state (100% Vercel-native, zero GCP)
+  const [publishing, setPublishing] = useState(false)
+  const [publishedSlug, setPublishedSlug] = useState<string | null>(null)
+  const [publishError, setPublishError] = useState<string | null>(null)
+
   const origin =
     typeof window !== 'undefined' && window.location?.origin
       ? window.location.origin
       : 'https://sceneflowai.studio'
 
-  const embedUrls = useMemo(() => buildPropertyTourUrls('demo', origin), [origin])
+  const activeSlug = publishedSlug || 'demo'
+  const embedUrls = useMemo(() => buildPropertyTourUrls(activeSlug, origin), [activeSlug, origin])
 
   const selectedRoom: PropertyRoom | undefined = useMemo(
     () =>
@@ -101,46 +163,201 @@ export default function PublicPropertyToursPage() {
   )
 
   const handleLocalPhotoDrop = useCallback(
-    (roomId: string, dir: CompassDirection, file: File | null) => {
+    async (roomId: string, dir: CompassDirection, file: File | null) => {
       if (!file) return
-      const objectUrl = URL.createObjectURL(file)
+      try {
+        const dataUrl = await compressPhotoToDataUrl(file)
+        setTour((prev) => ({
+          ...prev,
+          blueprintRooms: prev.blueprintRooms.map((room) => {
+            if (room.id !== roomId) return room
+            const existing = room.perspectives[dir]
+            return {
+              ...room,
+              perspectives: {
+                ...room.perspectives,
+                [dir]: {
+                  ...existing,
+                  originalImageUrl: dataUrl,
+                  variants: existing.variants.filter((v) => v.style !== 'as_is'),
+                },
+              },
+            }
+          }),
+        }))
+        setStagingMessage(`Loaded ${dir} wall photo (${file.name}). Click "AI Stage Wall" to generate a Before/After vision on Vercel!`)
+        setStagingError(null)
+      } catch (err: any) {
+        setStagingError(err?.message || 'Could not load image file')
+      }
+    },
+    []
+  )
+
+  const stageSingleWallOnVercel = useCallback(
+    async (
+      room: PropertyRoom,
+      dir: CompassDirection,
+      anchorOverrideUrl?: string | null
+    ): Promise<string | null> => {
+      const perspective = room.perspectives[dir]
+      const originalUrl = perspective.originalImageUrl || ''
+      const northPerspective = room.perspectives.N
+      const existingNorthVariant = northPerspective.variants.find(
+        (v) => v.style === genStyle && v.lighting === genLighting
+      )
+      const anchorUrl =
+        dir === 'N'
+          ? null
+          : anchorOverrideUrl ||
+            existingNorthVariant?.imageUrl ||
+            northPerspective.variants[0]?.imageUrl ||
+            northPerspective.originalImageUrl ||
+            null
+
+      const res = await fetch('/api/property-tours/vercel-demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'stage-photo',
+          roomName: room.name,
+          roomType: room.roomType,
+          roomDescription: room.description,
+          direction: dir,
+          style: genStyle,
+          lighting: genLighting,
+          lifestyle: genLifestyle,
+          originalImageUrl: originalUrl,
+          anchorImageUrl: anchorUrl,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.imageUrl) {
+        throw new Error(data?.error || `Staging failed for ${dir} wall`)
+      }
+
+      const newVariant = {
+        id: `vercel-${room.id}-${dir}-${genStyle}-${genLighting}-${Date.now()}`,
+        style: genStyle,
+        lighting: genLighting,
+        lifestyle: genLifestyle,
+        imageUrl: data.imageUrl as string,
+        isVirtuallyModified: true,
+        promptSummary: String(data.promptSummary || 'Vercel AI Gateway staged plate'),
+        generatedAt: new Date().toISOString(),
+        creditsUsed: 0,
+      }
+
       setTour((prev) => ({
         ...prev,
-        blueprintRooms: prev.blueprintRooms.map((room) => {
-          if (room.id !== roomId) return room
-          const existing = room.perspectives[dir]
+        availableStyles: prev.availableStyles.includes(genStyle)
+          ? prev.availableStyles
+          : [...prev.availableStyles, genStyle],
+        availableLighting: prev.availableLighting.includes(genLighting)
+          ? prev.availableLighting
+          : [...prev.availableLighting, genLighting],
+        availableLifestyles: prev.availableLifestyles.includes(genLifestyle)
+          ? prev.availableLifestyles
+          : [...prev.availableLifestyles, genLifestyle],
+        blueprintRooms: prev.blueprintRooms.map((r) => {
+          if (r.id !== room.id) return r
+          const prevP = r.perspectives[dir]
+          const filtered = prevP.variants.filter(
+            (v) => !(v.style === genStyle && v.lighting === genLighting && v.lifestyle === genLifestyle)
+          )
           return {
-            ...room,
+            ...r,
             perspectives: {
-              ...room.perspectives,
+              ...r.perspectives,
               [dir]: {
-                ...existing,
-                originalImageUrl: objectUrl,
-                variants: existing.variants.length
-                  ? existing.variants.map((v, idx) =>
-                      idx === 0 ? { ...v, imageUrl: objectUrl, isVirtuallyModified: false } : v
-                    )
-                  : [
-                      {
-                        id: `local-${roomId}-${dir}-${Date.now()}`,
-                        style: 'as_is',
-                        lighting: 'daylight',
-                        lifestyle: 'architectural',
-                        imageUrl: objectUrl,
-                        isVirtuallyModified: false,
-                        promptSummary: `Uploaded local photo (${file.name})`,
-                        generatedAt: new Date().toISOString(),
-                        creditsUsed: 0,
-                      },
-                    ],
+                ...prevP,
+                variants: [newVariant, ...filtered],
               },
             },
           }
         }),
       }))
+
+      return data.imageUrl as string
     },
-    []
+    [genStyle, genLighting, genLifestyle]
   )
+
+  const handleStageWall = useCallback(
+    async (dir: CompassDirection) => {
+      if (!selectedRoom || stagingDir) return
+      setStagingDir(dir)
+      setStagingError(null)
+      setStagingMessage(`Generating ${dir} wall via Vercel AI Gateway...`)
+      try {
+        await stageSingleWallOnVercel(selectedRoom, dir)
+        setStagingMessage(
+          `Generated ${dir} wall (${genStyle.replace(/_/g, ' ')} · ${genLighting.replace(/_/g, ' ')}) on Vercel! Switch to "Live Interactive Player" to drag the Before/After slider.`
+        )
+      } catch (err: any) {
+        setStagingError(err?.message || 'Vercel AI Gateway staging failed')
+      } finally {
+        setStagingDir(null)
+      }
+    },
+    [selectedRoom, stagingDir, stageSingleWallOnVercel, genStyle, genLighting]
+  )
+
+  const handleStageAllWalls = useCallback(async () => {
+    if (!selectedRoom || stagingDir) return
+    setStagingDir('ALL')
+    setStagingError(null)
+    try {
+      let northAnchorUrl: string | null = null
+      for (const dir of COMPASS_DIRECTIONS) {
+        setStagingMessage(
+          dir === 'N'
+            ? 'Generating North (Anchor Wall) via Vercel AI Gateway...'
+            : `Generating ${dir} wall (cross-angle locked to North Anchor)...`
+        )
+        const generatedUrl = await stageSingleWallOnVercel(selectedRoom, dir, northAnchorUrl)
+        if (dir === 'N' && generatedUrl) {
+          northAnchorUrl = generatedUrl
+        }
+      }
+      setStagingMessage(
+        `All 4 cross-angle locked N/E/S/W walls generated for "${selectedRoom.name}" via Vercel AI Gateway + Vercel Blob!`
+      )
+    } catch (err: any) {
+      setStagingError(err?.message || 'Cross-angle generation interrupted')
+    } finally {
+      setStagingDir(null)
+    }
+  }, [selectedRoom, stagingDir, stageSingleWallOnVercel])
+
+  const handlePublishToVercelBlob = useCallback(async () => {
+    if (publishing) return
+    setPublishing(true)
+    setPublishError(null)
+    try {
+      const res = await fetch('/api/property-tours/vercel-demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'publish-tour',
+          tour,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.slug) {
+        throw new Error(data?.error || 'Failed to publish tour to Vercel Blob')
+      }
+      setPublishedSlug(String(data.slug))
+      if (data.tour) {
+        setTour(data.tour as PropertyTourDTO)
+      }
+      setActiveTab('embed')
+    } catch (err: any) {
+      setPublishError(err?.message || 'Publishing failed')
+    } finally {
+      setPublishing(false)
+    }
+  }, [publishing, tour])
 
   const handleAddLocalRoom = useCallback(() => {
     const trimmed = newRoomName.trim()
@@ -163,11 +380,14 @@ export default function PublicPropertyToursPage() {
     const fresh = buildPublicDemoPropertyTourDTO('demo')
     setTour(fresh)
     setSelectedRoomId(fresh.blueprintRooms[0]?.id || '')
+    setPublishedSlug(null)
+    setStagingMessage(null)
+    setStagingError(null)
   }, [])
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      {/* Standalone Public Header (No Login Required) */}
+      {/* Standalone Public Header (No Login Required · 100% Vercel-Native) */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
@@ -188,11 +408,11 @@ export default function PublicPropertyToursPage() {
                     Interactive Property Explorer
                   </span>
                   <span className="hidden sm:inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
-                    Public Live Demo · No Login
+                    Vercel-Native · No Login Required
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 hidden sm:block">
-                  N/E/S/W Architectural Perspectives · Instant AI Renovation &amp; Twilight Staging · White-Label Embed
+                  N/E/S/W Perspectives · Vercel AI Gateway Staging · Vercel Blob White-Label Hosting
                 </p>
               </div>
             </div>
@@ -200,20 +420,26 @@ export default function PublicPropertyToursPage() {
 
           <div className="flex items-center gap-2">
             <Link
-              href="/tour/demo"
+              href={`/tour/${encodeURIComponent(activeSlug)}`}
               target="_blank"
               className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
             >
               <ExternalLink className="h-3.5 w-3.5 text-cyan-400" />
-              Standalone /tour/demo
+              Standalone /tour/{activeSlug === 'demo' ? 'demo' : 'live'}
             </Link>
-            <Link
-              href="/dashboard/property-tours"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-cyan-400 transition-colors"
+            <button
+              type="button"
+              onClick={handlePublishToVercelBlob}
+              disabled={publishing}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-bold text-slate-950 hover:bg-cyan-400 disabled:opacity-60 transition-colors"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              Agency Cloud Studio
-            </Link>
+              {publishing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CloudUpload className="h-3.5 w-3.5" />
+              )}
+              {publishing ? 'Publishing...' : 'Publish Shareable Link'}
+            </button>
           </div>
         </div>
 
@@ -242,7 +468,7 @@ export default function PublicPropertyToursPage() {
               }`}
             >
               <Camera className="h-3.5 w-3.5" />
-              2. Try Your Own N/E/S/W Photos (Sandbox)
+              2. N/E/S/W Photos &amp; Vercel AI Staging
             </button>
             <button
               type="button"
@@ -261,6 +487,12 @@ export default function PublicPropertyToursPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-6">
+        {publishError && (
+          <div className="rounded-xl border border-rose-500/40 bg-rose-950/40 px-4 py-3 text-xs text-rose-200">
+            {publishError}
+          </div>
+        )}
+
         {activeTab === 'player' && (
           <>
             {/* Quick Buyer Guidance Banner */}
@@ -281,16 +513,16 @@ export default function PublicPropertyToursPage() {
                   2. Drag Before / After Slider
                 </div>
                 <p className="mt-1 text-xs text-slate-400">
-                  Click <strong className="text-white">Compare</strong> inside the player (especially in <strong className="text-white">Chef&apos;s Kitchen Remodel</strong>) to wipe between the raw MLS photo and the AI remodel.
+                  Click <strong className="text-white">Compare</strong> inside the player (try <strong className="text-white">Chef&apos;s Kitchen Remodel</strong>) to wipe between the raw MLS photo and the AI remodel.
                 </p>
               </div>
               <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3.5">
                 <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
                   <Palette className="h-4 w-4" />
-                  3. Test Live White-Label Rebranding
+                  3. Rebrand &amp; Publish on Vercel
                 </div>
                 <p className="mt-1 text-xs text-slate-400">
-                  Use the live brokerage switcher below the player to rebrand the header, accent color, and hide SceneFlow attribution in real time.
+                  Customize the brokerage branding below or drop your own photos in Tab 2, then click <strong className="text-white">Publish Shareable Link</strong> to host on Vercel Blob.
                 </p>
               </div>
             </div>
@@ -408,28 +640,34 @@ export default function PublicPropertyToursPage() {
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-cyan-500/20 bg-cyan-950/20 p-5">
               <div>
                 <h1 className="text-lg font-bold text-white">
-                  N/E/S/W Room Blueprint Sandbox (Zero Login Required)
+                  N/E/S/W Blueprint Studio — Powered by Vercel AI Gateway &amp; Vercel Blob
                 </h1>
                 <p className="mt-1 text-xs text-slate-300 max-w-2xl">
-                  Drop 1 to 4 smartphone photos (<strong className="text-white">North, East, South, West</strong>) from any property right here in your browser to test how your listing feels inside the Interactive Explorer Player. Sign into the Agency Cloud Studio when you are ready to run cross-angle AI renovation staging and publish a shareable link.
+                  Upload 1–4 real smartphone photos (<strong className="text-white">North, East, South, West</strong>), run live cross-angle AI virtual staging via <strong className="text-cyan-300">Vercel AI Gateway</strong>, and publish a permanent shareable white-label link on <strong className="text-cyan-300">Vercel Blob</strong> — zero login and zero GCP required.
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setActiveTab('player')}
-                  className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-400 transition-colors"
-                >
-                  <Compass className="h-4 w-4" />
-                  Preview in Player
-                </button>
-                <Link
-                  href="/dashboard/property-tours"
                   className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
                 >
-                  <Lock className="h-3.5 w-3.5 text-amber-400" />
-                  Cloud AI Staging &amp; Publish
-                </Link>
+                  <Compass className="h-4 w-4 text-cyan-400" />
+                  Preview in Player
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePublishToVercelBlob}
+                  disabled={publishing}
+                  className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-400 disabled:opacity-60 transition-colors"
+                >
+                  {publishing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CloudUpload className="h-4 w-4" />
+                  )}
+                  Publish Live Link
+                </button>
               </div>
             </div>
 
@@ -471,21 +709,104 @@ export default function PublicPropertyToursPage() {
               </div>
             </div>
 
-            {/* 4-Wall N/E/S/W Upload Grid */}
+            {/* Vercel AI Gateway Cross-Angle Staging Bar */}
+            {selectedRoom && (
+              <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 space-y-3">
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="min-w-[170px] flex-1">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                      Design Vision Style
+                    </label>
+                    <select
+                      value={genStyle}
+                      onChange={(e) => setGenStyle(e.target.value as PropertyStyleId)}
+                      className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+                    >
+                      {PROPERTY_STYLE_PRESETS.filter((s) => s.id !== 'as_is').map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="min-w-[140px] flex-1">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                      Lighting / Time of Day
+                    </label>
+                    <select
+                      value={genLighting}
+                      onChange={(e) => setGenLighting(e.target.value as PropertyLightingId)}
+                      className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+                    >
+                      {PROPERTY_LIGHTING_PRESETS.map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="min-w-[150px] flex-1">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                      Lifestyle Staging
+                    </label>
+                    <select
+                      value={genLifestyle}
+                      onChange={(e) => setGenLifestyle(e.target.value as PropertyLifestyleId)}
+                      className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+                    >
+                      {PROPERTY_LIFESTYLE_PRESETS.map((ls) => (
+                        <option key={ls.id} value={ls.id}>
+                          {ls.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleStageAllWalls}
+                    disabled={stagingDir !== null}
+                    className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-teal-400 px-4 py-2 text-xs font-bold text-slate-950 hover:opacity-95 disabled:opacity-60 transition-opacity"
+                  >
+                    {stagingDir === 'ALL' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-4 w-4" />
+                    )}
+                    {stagingDir === 'ALL'
+                      ? 'Generating N→E→S→W...'
+                      : 'Generate Cross-Angle N→E→S→W'}
+                  </button>
+                </div>
+
+                {stagingMessage && (
+                  <div className="rounded-lg border border-cyan-500/30 bg-cyan-950/30 px-3 py-2 text-xs text-cyan-200">
+                    {stagingMessage}
+                  </div>
+                )}
+                {stagingError && (
+                  <div className="rounded-lg border border-rose-500/30 bg-rose-950/30 px-3 py-2 text-xs text-rose-200">
+                    {stagingError}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 4-Wall N/E/S/W Upload & AI Stage Grid */}
             {selectedRoom && (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {COMPASS_DIRECTIONS.map((dir) => {
                   const perspective = selectedRoom.perspectives[dir]
-                  const previewImg =
-                    perspective.variants[0]?.imageUrl || perspective.originalImageUrl || ''
+                  const stagedImg = perspective.variants[0]?.imageUrl || ''
+                  const previewImg = stagedImg || perspective.originalImageUrl || ''
                   const inputKey = `${selectedRoom.id}-${dir}`
+                  const isWallGenerating = stagingDir === dir || stagingDir === 'ALL'
 
                   return (
                     <div
                       key={dir}
                       className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80"
                     >
-                      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
                         <div className="flex items-center gap-2">
                           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/15 text-xs font-bold text-cyan-300 border border-cyan-500/30">
                             {dir}
@@ -495,18 +816,33 @@ export default function PublicPropertyToursPage() {
                               {DIRECTION_LABELS[dir]}
                             </div>
                             <div className="text-[11px] text-slate-400">
-                              {perspective.label}
+                              {perspective.label || `${dir} Wall`}
                             </div>
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => fileInputRefs.current[inputKey]?.click()}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-white/10"
-                        >
-                          <Upload className="h-3 w-3 text-cyan-400" />
-                          Replace Photo
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => fileInputRefs.current[inputKey]?.click()}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-white/10"
+                          >
+                            <Upload className="h-3 w-3 text-cyan-400" />
+                            Upload Photo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleStageWall(dir)}
+                            disabled={stagingDir !== null}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/15 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-200 hover:bg-cyan-500/25 disabled:opacity-50"
+                          >
+                            {isWallGenerating ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Sparkles className="h-3 w-3" />
+                            )}
+                            AI Stage Wall
+                          </button>
+                        </div>
                         <input
                           ref={(el) => {
                             fileInputRefs.current[inputKey] = el
@@ -514,23 +850,30 @@ export default function PublicPropertyToursPage() {
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) =>
-                            handleLocalPhotoDrop(
+                          onChange={(e) => {
+                            void handleLocalPhotoDrop(
                               selectedRoom.id,
                               dir,
                               e.target.files?.[0] || null
                             )
-                          }
+                          }}
                         />
                       </div>
 
                       <div className="relative aspect-video bg-slate-950">
                         {previewImg ? (
-                          <img
-                            src={previewImg}
-                            alt={`${selectedRoom.name} ${dir}`}
-                            className="h-full w-full object-cover"
-                          />
+                          <>
+                            <img
+                              src={previewImg}
+                              alt={`${selectedRoom.name} ${dir}`}
+                              className="h-full w-full object-cover"
+                            />
+                            <div className="absolute bottom-2 left-2 rounded-full bg-black/75 px-2.5 py-1 text-[10px] font-semibold text-slate-200 backdrop-blur-sm">
+                              {stagedImg
+                                ? `AI Vision (${perspective.variants.length} variant${perspective.variants.length === 1 ? '' : 's'})`
+                                : 'Original Smartphone Photo'}
+                            </div>
+                          </>
                         ) : (
                           <button
                             type="button"
@@ -556,19 +899,38 @@ export default function PublicPropertyToursPage() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Embed & Standalone Links */}
             <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-6 space-y-5">
-              <div>
-                <h2 className="text-base font-bold text-white">
-                  Standalone &amp; Frameless Embed Links
-                </h2>
-                <p className="mt-1 text-xs text-slate-400">
-                  Every published tour works both as a standalone white-label microsite (<code className="text-cyan-300">/tour/[slug]</code>) and as a frameless MLS/brokerage iframe embed (<code className="text-cyan-300">?embed=1</code>) with <code className="text-cyan-300">frame-ancestors *</code> enabled.
-                </p>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-bold text-white">
+                    {publishedSlug
+                      ? 'Your Published Vercel Blob Tour is Live!'
+                      : 'Standalone & Frameless Embed Links'}
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {publishedSlug
+                      ? 'Stored directly on Vercel Blob CDN — share this white-label link or embed it in any MLS/brokerage site right now.'
+                      : 'Every tour works as a standalone white-label microsite (/tour/[slug]) and as a frameless iframe embed (?embed=1) with frame-ancestors * enabled.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handlePublishToVercelBlob}
+                  disabled={publishing}
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-bold text-slate-950 hover:bg-cyan-400 disabled:opacity-60"
+                >
+                  {publishing ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CloudUpload className="h-3.5 w-3.5" />
+                  )}
+                  {publishedSlug ? 'Republish' : 'Publish Custom'}
+                </button>
               </div>
 
               <div className="space-y-3">
                 <div>
                   <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Live Demo Standalone URL (Zero Login)
+                    Standalone White-Label URL (Zero Login)
                   </label>
                   <div className="mt-1 flex items-center gap-2">
                     <input
@@ -705,10 +1067,10 @@ export default function PublicPropertyToursPage() {
               <div className="pt-1">
                 <Link
                   href="/dashboard/property-tours"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 text-xs font-bold text-slate-950 hover:bg-cyan-400 transition-colors"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  Open Agency Cloud Studio to Generate &amp; Publish Listings
+                  <Sparkles className="h-4 w-4 text-cyan-400" />
+                  Open Full Agency Cloud Dashboard (Multi-Listing Billing)
                 </Link>
               </div>
             </div>

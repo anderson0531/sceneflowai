@@ -4,6 +4,10 @@ import React, { Suspense, useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { Building2, Compass, RefreshCw } from 'lucide-react'
 import { InteractivePropertyPlayer } from '@/components/property-tours/InteractivePropertyPlayer'
+import {
+  buildPublicDemoPropertyTourDTO,
+  isPublicDemoTourSlug,
+} from '@/lib/propertyTours/hostingPolicy'
 import type { PropertyTourDTO } from '@/lib/propertyTours/types'
 
 function PropertyTourSkeleton({ isEmbed }: { isEmbed: boolean }) {
@@ -57,8 +61,11 @@ function StandalonePropertyTourInner() {
   const isPreview =
     searchParams.get('preview') === '1' || searchParams.get('preview')?.toLowerCase() === 'true'
 
-  const [tour, setTour] = useState<PropertyTourDTO | null>(null)
-  const [loading, setLoading] = useState(true)
+  const isBuiltInDemo = isPublicDemoTourSlug(slug)
+  const [tour, setTour] = useState<PropertyTourDTO | null>(() =>
+    isBuiltInDemo ? buildPublicDemoPropertyTourDTO(slug) : null
+  )
+  const [loading, setLoading] = useState(!isBuiltInDemo)
   const [unavailableMessage, setUnavailableMessage] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
 
@@ -66,6 +73,14 @@ function StandalonePropertyTourInner() {
     if (!slug) {
       setLoading(false)
       setUnavailableMessage('This property tour is currently paused or unavailable')
+      return
+    }
+
+    // Built-in demo renders instantaneously on Vercel with zero API/DB dependency
+    if (isPublicDemoTourSlug(slug)) {
+      setTour(buildPublicDemoPropertyTourDTO(slug))
+      setLoading(false)
+      setUnavailableMessage(null)
       return
     }
 
