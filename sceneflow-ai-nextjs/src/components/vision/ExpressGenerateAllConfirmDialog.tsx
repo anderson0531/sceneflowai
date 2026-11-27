@@ -26,7 +26,16 @@ import {
   type ExpressSceneConfirmOptions,
   type ExpressSceneScope,
 } from '@/components/vision/ExpressSceneConfirmDialog'
-import { IMAGE_CREDITS, VIDEO_CREDITS } from '@/lib/credits/creditCosts'
+import { AUDIO_CREDITS, IMAGE_CREDITS, VIDEO_CREDITS } from '@/lib/credits/creditCosts'
+import {
+  GEMINI_PRO_STILL_MODEL_ID,
+  GEMINI_STILL_MODEL_ID,
+  quoteGenerationCredits,
+  quoteOperationFromRateCard,
+} from '@/lib/credits/quoteGenerationCredits'
+import { useLiveRateCard } from '@/hooks/useLiveRateCard'
+import { StoryboardQualityToggle } from './StoryboardQualityToggle'
+import type { StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
 import {
   enumerateStoryboardFrameSlots,
   filterStoryboardSlotsForExpressChecklist,
@@ -46,6 +55,7 @@ interface ExpressGenerateAllConfirmDialogProps {
   segmentDurationSeconds?: number
   isRunning?: boolean
   defaultIncludeSfx?: boolean
+  defaultQuality?: StoryboardQuality
   onConfirm: (options: ExpressGenerateAllConfirmOptions) => void
 }
 
@@ -74,13 +84,17 @@ export function ExpressGenerateAllConfirmDialog({
   segmentDurationSeconds,
   isRunning = false,
   defaultIncludeSfx = false,
+  defaultQuality = 'draft',
   onConfirm,
 }: ExpressGenerateAllConfirmDialogProps) {
   const t = useTranslations('production.expressGenerateAll')
+  const tScene = useTranslations('production.expressScene')
   const tCommon = useTranslations('common')
+  const { rateCard } = useLiveRateCard()
   const [audioScope, setAudioScope] = useState<ExpressAudioScope>('missing')
   const [includeSfx, setIncludeSfx] = useState<boolean>(defaultIncludeSfx)
   const [frameScope, setFrameScope] = useState<ExpressSceneScope>('missing')
+  const [frameQuality, setFrameQuality] = useState<StoryboardQuality>(defaultQuality)
   const [selectedAudioIds, setSelectedAudioIds] = useState<string[]>([])
   const [selectedFrameKeys, setSelectedFrameKeys] = useState<string[]>([])
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
@@ -101,8 +115,9 @@ export function ExpressGenerateAllConfirmDialog({
     setAudioScope('missing')
     setIncludeSfx(defaultIncludeSfx)
     setFrameScope('missing')
+    setFrameQuality(defaultQuality)
     setDurationPreset('auto')
-  }, [open, defaultIncludeSfx])
+  }, [open, defaultIncludeSfx, defaultQuality])
 
   useEffect(() => {
     if (!open) return
@@ -118,14 +133,100 @@ export function ExpressGenerateAllConfirmDialog({
 
   const selectedAudioSet = useMemo(() => new Set(selectedAudioIds), [selectedAudioIds])
   const selectedFrameSet = useMemo(() => new Set(selectedFrameKeys), [selectedFrameKeys])
-  const selectedSfxCount = useMemo(
-    () => audioItems.filter((item) => item.kind === 'sfx' && selectedAudioSet.has(item.id)).length,
-    [audioItems, selectedAudioSet]
-  )
+  const selectedAudioCounts = useMemo(() => {
+    let sfx = 0
+    let spoken = 0
+    let music = 0
+    for (const item of audioItems) {
+      if (!selectedAudioSet.has(item.id)) continue
+      if (item.kind === 'sfx') sfx += 1
+      else if (item.kind === 'music') music += 1
+      else spoken += 1
+    }
+    return { sfx, spoken, music }
+  }, [audioItems, selectedAudioSet])
 
+  const selectedSfxCount = selectedAudioCounts.sfx
   const autoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
-  const sfxCreditTotal = selectedSfxCount * VIDEO_CREDITS.VEO_LITE
-  const frameCreditTotal = selectedFrameKeys.length * IMAGE_CREDITS.FAL_KLING_IMAGE
+
+  const creditEstimate = useMemo(() => {
+    const perFrame =
+      frameQuality === 'final'
+        ? quoteGenerationCredits({
+            kind: 'still',
+            model: GEMINI_PRO_STILL_MODEL_ID,
+            resolution: '2k',
+            rateCard,
+            floorCredits: IMAGE_CREDITS.FINAL_FRAME_GENERATION,
+          }).credits
+        : quoteGenerationCredits({
+            kind: 'still',
+            model: GEMINI_STILL_MODEL_ID,
+            rateCard,
+            floorCredits: IMAGE_CREDITS.IMAGEN_4,
+          }).credits
+    const sfxPerClip = quoteOperationFromRateCard({
+      operation: 'veo_lite_sfx',
+      units: 1,
+      rateCard,
+      floorCredits: VIDEO_CREDITS.VEO_LITE,
+    }).credits
+    const geminiTtsPerLine = quoteOperationFromRateCard({
+      operation: 'gemini_tts',
+      units: 0.15,
+      rateCard,
+      floorCredits: AUDIO_CREDITS.DIALOGUE_PER_LINE,
+    }).credits
+    const elevenLabsTtsPerLine = quoteOperationFromRateCard({
+      operation: 'elevenlabs_tts',
+      units: 0.15,
+      rateCard,
+      floorCredits: AUDIO_CREDITS.DIALOGUE_PER_LINE,
+    }).credits
+    const ttsPerLine = Math.max(geminiTtsPerLine, elevenLabsTtsPerLine)
+    const musicPerCue = quoteOperationFromRateCard({
+      operation: 'lyria_music',
+      units: 1,
+      rateCard,
+      floorCredits: AUDIO_CREDITS.MUSIC_TRACK,
+    }).credits
+
+    const sfx =
+      selectedAudioCounts.sfx > 0
+        ? quoteOperationFromRateCard({
+            operation: 'veo_lite_sfx',
+            units: selectedAudioCounts.sfx,
+            rateCard,
+            floorCredits: VIDEO_CREDITS.VEO_LITE * selectedAudioCounts.sfx,
+          }).credits
+        : 0
+    const spoken = selectedAudioCounts.spoken * ttsPerLine
+    const music =
+      selectedAudioCounts.music > 0
+        ? quoteOperationFromRateCard({
+            operation: 'lyria_music',
+            units: selectedAudioCounts.music,
+            rateCard,
+            floorCredits: AUDIO_CREDITS.MUSIC_TRACK * selectedAudioCounts.music,
+          }).credits
+        : 0
+    const frames = selectedFrameKeys.length * perFrame
+
+    return {
+      perFrame,
+      sfxPerClip,
+      ttsPerLine,
+      musicPerCue,
+      sfx,
+      spoken,
+      music,
+      frames,
+      total: sfx + spoken + music + frames,
+    }
+  }, [frameQuality, rateCard, selectedAudioCounts, selectedFrameKeys.length])
+
+  const sfxCreditTotal = creditEstimate.sfx
+  const frameCreditTotal = creditEstimate.frames
   const autoSecondsLabel = Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)
 
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
@@ -212,7 +313,7 @@ export function ExpressGenerateAllConfirmDialog({
               </div>
               {hasSfxItems && !includeSfx && (
                 <p className="text-[11px] text-slate-400 mb-2">
-                  SFX is optional — leaving it off saves {VIDEO_CREDITS.VEO_LITE} credits per shot for Pre-Vis production.
+                  SFX is optional — leaving it off saves {creditEstimate.sfxPerClip} credits per shot for Pre-Vis production.
                 </p>
               )}
               {audioItems.length === 0 ? (
@@ -292,6 +393,18 @@ export function ExpressGenerateAllConfirmDialog({
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                {tScene('quality')}
+              </p>
+              <StoryboardQualityToggle
+                value={frameQuality}
+                onChange={setFrameQuality}
+                draftLabel={tScene('qualityDraft')}
+                finalLabel={tScene('qualityFinal')}
+                disabled={isRunning}
+              />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
                 {t('scope')}
               </p>
               <div className="inline-flex rounded-md border border-amber-600/40 overflow-hidden">
@@ -353,12 +466,42 @@ export function ExpressGenerateAllConfirmDialog({
                   {t('imageCredits', {
                     credits: frameCreditTotal,
                     count: selectedFrameKeys.length,
-                    perFrame: IMAGE_CREDITS.FAL_KLING_IMAGE,
+                    perFrame: creditEstimate.perFrame,
                   })}
                 </p>
               )}
             </div>
           </section>
+
+          {!nothingSelected && (
+            <div className="rounded-md border border-sky-700/40 bg-sky-950/20 px-3 py-2 text-[11px] text-sky-200/90 space-y-0.5">
+              <div className="font-semibold text-sky-100">
+                Estimated total: ~{creditEstimate.total.toLocaleString()} credits
+              </div>
+              <div className="text-sky-300/75 flex flex-wrap gap-x-3 gap-y-0.5">
+                {selectedFrameKeys.length > 0 && (
+                  <span>
+                    Frames ({selectedFrameKeys.length} × {creditEstimate.perFrame}): ~{creditEstimate.frames} cr
+                  </span>
+                )}
+                {selectedAudioCounts.spoken > 0 && (
+                  <span>
+                    TTS ({selectedAudioCounts.spoken} {selectedAudioCounts.spoken === 1 ? 'line' : 'lines'} × {creditEstimate.ttsPerLine}): ~{creditEstimate.spoken} cr
+                  </span>
+                )}
+                {selectedAudioCounts.music > 0 && (
+                  <span>
+                    Music ({selectedAudioCounts.music} {selectedAudioCounts.music === 1 ? 'cue' : 'cues'} × {creditEstimate.musicPerCue}): ~{creditEstimate.music} cr
+                  </span>
+                )}
+                {selectedAudioCounts.sfx > 0 && (
+                  <span>
+                    SFX ({selectedAudioCounts.sfx} {selectedAudioCounts.sfx === 1 ? 'shot' : 'shots'} × {creditEstimate.sfxPerClip}): ~{creditEstimate.sfx} cr
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="shrink-0">
@@ -383,10 +526,7 @@ export function ExpressGenerateAllConfirmDialog({
                   scope: frameScope,
                   includeEndFrames: false,
                   selectedFrameKeys,
-                  // Express All is the "get this scene started" action, so its
-                  // frames are storyboard coverage. Upgrading to Final is a
-                  // deliberate second pass, chosen in Express Frames.
-                  quality: 'draft',
+                  quality: frameQuality,
                 },
               })
             }

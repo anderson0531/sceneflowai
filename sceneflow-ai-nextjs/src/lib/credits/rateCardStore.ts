@@ -8,8 +8,13 @@ import { CreditPricing } from '@/models'
 import { sequelize } from '@/config/database'
 import { hasColumns, hasTables } from '@/lib/database/schemaProbe'
 import {
+  CREDIT_FACE_USD,
   DEFAULT_MARKUP,
+  getSeededRateCardMap,
+  REFERENCE_IMAGE_ADDON_CREDITS,
   SEEDED_PROVIDER_RATES,
+  STUDIO_CASH_PER_CREDIT_USD,
+  type LiveRateCardSnapshot,
   type SeededProviderRate,
 } from './quoteGenerationCredits'
 
@@ -53,7 +58,7 @@ export async function ensurePricingAdminSchema(): Promise<void> {
           notes TEXT,
           resolution VARCHAR(20),
           has_audio BOOLEAN,
-          markup DECIMAL(6, 3) DEFAULT 1.800,
+          markup DECIMAL(6, 3) DEFAULT 2.000,
           credits_override INTEGER,
           source_url TEXT,
           fetched_at TIMESTAMPTZ,
@@ -260,4 +265,77 @@ export async function publishRate(id: string): Promise<RateCardRow> {
     rate_status: 'published',
   } as never)
   return modelToRateCardRow(row)
+}
+
+/**
+ * Build a unified live rate-card snapshot merging all active `published` DB rows
+ * in `credit_pricing` over `SEEDED_PROVIDER_RATES`.
+ * Used by `GET /api/credits/rate-card` so every budget calculator, estimator, and
+ * confirmation dialog stays in lock-step with Admin Rate Card publishes.
+ */
+export async function getPublishedRateCardSnapshot(): Promise<LiveRateCardSnapshot> {
+  const rates = getSeededRateCardMap()
+  let publishedCount = 0
+  let latestEffective = 0
+
+  try {
+    await ensurePricingAdminSchema()
+    const now = new Date()
+    const rows = await CreditPricing.findAll({
+      where: {
+        operation: { [Op.in]: SEEDED_PROVIDER_RATES.map((s) => s.operation) },
+        is_active: true,
+        rate_status: 'published',
+        effective_from: { [Op.lte]: now },
+        [Op.or]: [{ effective_to: null }, { effective_to: { [Op.gte]: now } }],
+      } as never,
+      order: [['effective_from', 'DESC']],
+    })
+
+    const seen = new Set<string>()
+    for (const row of rows) {
+      if (seen.has(row.operation)) continue
+      seen.add(row.operation)
+      const parsed = modelToRateCardRow(row)
+      if (parsed.usdPerUnit > 0) {
+        rates[parsed.operation] = {
+          usdPerUnit: parsed.usdPerUnit,
+          markup: parsed.markup || DEFAULT_MARKUP,
+          creditsPerUnitOverride: parsed.creditsPerUnitOverride,
+          model: parsed.model,
+          source: 'published',
+        }
+        publishedCount += 1
+        if (parsed.effectiveFrom) {
+          const ts = new Date(parsed.effectiveFrom).getTime()
+          if (ts > latestEffective) latestEffective = ts
+        }
+      }
+    }
+
+    return {
+      version: latestEffective > 0 ? `db:${latestEffective}` : 'seed',
+      updatedAt: latestEffective > 0 ? new Date(latestEffective).toISOString() : now.toISOString(),
+      isLive: true,
+      defaultMarkup: DEFAULT_MARKUP,
+      creditFaceUsd: CREDIT_FACE_USD,
+      studioCashPerCreditUsd: STUDIO_CASH_PER_CREDIT_USD,
+      referenceImageAddonCredits: REFERENCE_IMAGE_ADDON_CREDITS,
+      rates,
+      publishedCount,
+    }
+  } catch (error) {
+    console.warn('[rateCardStore] Falling back to seeded snapshot:', error)
+    return {
+      version: 'seed',
+      updatedAt: new Date().toISOString(),
+      isLive: false,
+      defaultMarkup: DEFAULT_MARKUP,
+      creditFaceUsd: CREDIT_FACE_USD,
+      studioCashPerCreditUsd: STUDIO_CASH_PER_CREDIT_USD,
+      referenceImageAddonCredits: REFERENCE_IMAGE_ADDON_CREDITS,
+      rates,
+      publishedCount: 0,
+    }
+  }
 }

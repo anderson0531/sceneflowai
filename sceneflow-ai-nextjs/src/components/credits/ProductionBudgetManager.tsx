@@ -21,6 +21,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { byokMediaCredits } from '@/lib/credits/creditCosts'
+import { useLiveRateCard } from '@/hooks/useLiveRateCard'
 import {
   actualPlanningTargets,
   applyMethodDefaults,
@@ -275,6 +276,7 @@ export function ProductionBudgetManager({
   onSetBudget,
 }: ProductionBudgetManagerProps) {
   const t = useTranslations('production.budgetManager')
+  const { rateCard, isLive } = useLiveRateCard()
 
   const scope = useMemo(
     () =>
@@ -372,6 +374,7 @@ export function ProductionBudgetManager({
         observedVideoTakesAvg: scope.observedVideoTakesAvg ?? undefined,
         creditsBudget,
         hasByokKeys: hasByokKeys || byokExcludeMedia,
+        rateCard,
       }),
     [
       scope,
@@ -385,14 +388,15 @@ export function ProductionBudgetManager({
       byokExcludeMedia,
       creditsBudget,
       hasByokKeys,
+      rateCard,
     ]
   )
 
-  const frameUnit = getFrameUnitCost(frameQuality)
-  const videoUnit = getVideoUnitCost(videoQuality, scope.segmentDurationSec)
+  const frameUnit = getFrameUnitCost(frameQuality, rateCard)
+  const videoUnit = getVideoUnitCost(videoQuality, scope.segmentDurationSec, { rateCard })
   const videoOn = videoQuality !== 'none'
-  const draftClipCost = getVideoUnitCost('draft', scope.segmentDurationSec)
-  const finalClipCost = getVideoUnitCost('final', scope.segmentDurationSec)
+  const draftClipCost = getVideoUnitCost('draft', scope.segmentDurationSec, { rateCard })
+  const finalClipCost = getVideoUnitCost('final', scope.segmentDurationSec, { rateCard })
   const upscaleClipCost =
     draftClipCost + topazMinutes(1, scope.segmentDurationSec) * TOPAZ_CREDITS_PER_MINUTE
   const finalPremium = Math.max(0, finalClipCost - draftClipCost)
@@ -412,17 +416,18 @@ export function ProductionBudgetManager({
         topazCredits: estimate.topaz.credits,
         intelligenceCredits: estimate.intelligence.credits,
         videoOn,
+        rateCard,
       }),
     [
       scope.sceneActuals,
       frameIterations,
       videoIterations,
-      frameUnit,
-      videoUnit,
+      billedFrameUnit,
+      billedVideoUnit,
       estimate.topaz.credits,
       estimate.intelligence.credits,
       videoOn,
-      byokExcludeMedia,
+      rateCard,
     ]
   )
   const actualTargets = actualPlanningTargets(scope.sceneActuals, videoOn)
@@ -517,7 +522,14 @@ export function ProductionBudgetManager({
             <Calculator className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">{t('title')}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-white">{t('title')}</h2>
+              {isLive && (
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  Live rate card
+                </span>
+              )}
+            </div>
             <p className="text-sm text-gray-400">
               {projectTitle ? t('subtitleWithTitle', { title: projectTitle }) : t('subtitle')}
             </p>
@@ -785,7 +797,7 @@ export function ProductionBudgetManager({
                 >
                   {t(`quality.${q}`)}
                   <div className="text-xs text-cyan-400/80 mt-1">
-                    {t('creditsPerFrame', { credits: getFrameUnitCost(q) })}
+                    {t('creditsPerFrame', { credits: getFrameUnitCost(q, rateCard) })}
                   </div>
                 </button>
               ))}
@@ -818,7 +830,7 @@ export function ProductionBudgetManager({
                     {q === 'none'
                       ? t('creditsZero')
                       : t('creditsPerClip', {
-                          credits: getVideoUnitCost(q, scope.segmentDurationSec),
+                          credits: getVideoUnitCost(q, scope.segmentDurationSec, { rateCard }),
                           seconds: scope.segmentDurationSec,
                         })}
                   </div>

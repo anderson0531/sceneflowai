@@ -34,15 +34,19 @@ export async function GET() {
   const stored = await listRateCardRows()
   const seeds = SEEDED_PROVIDER_RATES.map((seed) => {
     const row = seedToRateCardRow(seed)
+    const isVideo = seed.metric === 'per_second'
+    const isImage = seed.metric === 'per_image'
     const quote = quoteGenerationCredits({
-      kind: seed.metric === 'per_image' ? 'still' : 'clip',
+      kind: isImage ? 'still' : isVideo ? 'clip' : 'audio',
       provider: seed.provider,
       model: seed.model,
       resolution: seed.resolution,
       audio: seed.audio !== false,
+      operationOverride: isImage || isVideo ? undefined : seed.operation,
       durationSeconds: 10,
       imageCount: 1,
-      floorCredits: seed.metric === 'per_image' ? 10 : undefined,
+      units: 1,
+      floorCredits: isImage ? 10 : undefined,
     })
     return {
       ...row,

@@ -21,7 +21,9 @@ import {
   type ExpressAudioItem,
   type ExpressAudioScope,
 } from '@/lib/audio/buildExpressAudioItems'
-import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
+import { AUDIO_CREDITS, VIDEO_CREDITS } from '@/lib/credits/creditCosts'
+import { quoteOperationFromRateCard } from '@/lib/credits/quoteGenerationCredits'
+import { useLiveRateCard } from '@/hooks/useLiveRateCard'
 
 export type { ExpressAudioScope } from '@/lib/audio/buildExpressAudioItems'
 
@@ -64,6 +66,7 @@ export function ExpressAudioConfirmDialog({
 }: ExpressAudioConfirmDialogProps) {
   const t = useTranslations('production.expressAudio')
   const tCommon = useTranslations('common')
+  const { rateCard } = useLiveRateCard()
   const [scope, setScope] = useState<ExpressAudioScope>('missing')
   const [includeSfx, setIncludeSfx] = useState<boolean>(defaultIncludeSfx)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -83,12 +86,81 @@ export function ExpressAudioConfirmDialog({
   }, [open, scope, items, includeSfx])
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
-  const selectedSfxCount = useMemo(
-    () => items.filter((item) => item.kind === 'sfx' && selectedSet.has(item.id)).length,
-    [items, selectedSet]
-  )
+  const selectedCounts = useMemo(() => {
+    let sfx = 0
+    let spoken = 0
+    let music = 0
+    for (const item of items) {
+      if (!selectedSet.has(item.id)) continue
+      if (item.kind === 'sfx') sfx += 1
+      else if (item.kind === 'music') music += 1
+      else spoken += 1
+    }
+    return { sfx, spoken, music }
+  }, [items, selectedSet])
+
+  const selectedSfxCount = selectedCounts.sfx
   const autoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
-  const creditTotal = selectedSfxCount * VIDEO_CREDITS.VEO_LITE
+
+  const audioCreditEstimate = useMemo(() => {
+    const sfxPerClip = quoteOperationFromRateCard({
+      operation: 'veo_lite_sfx',
+      units: 1,
+      rateCard,
+      floorCredits: VIDEO_CREDITS.VEO_LITE,
+    }).credits
+    const geminiTtsPerLine = quoteOperationFromRateCard({
+      operation: 'gemini_tts',
+      units: 0.15,
+      rateCard,
+      floorCredits: AUDIO_CREDITS.DIALOGUE_PER_LINE,
+    }).credits
+    const elevenLabsTtsPerLine = quoteOperationFromRateCard({
+      operation: 'elevenlabs_tts',
+      units: 0.15,
+      rateCard,
+      floorCredits: AUDIO_CREDITS.DIALOGUE_PER_LINE,
+    }).credits
+    const ttsPerLine = Math.max(geminiTtsPerLine, elevenLabsTtsPerLine)
+    const musicPerCue = quoteOperationFromRateCard({
+      operation: 'lyria_music',
+      units: 1,
+      rateCard,
+      floorCredits: AUDIO_CREDITS.MUSIC_TRACK,
+    }).credits
+
+    const sfx =
+      selectedCounts.sfx > 0
+        ? quoteOperationFromRateCard({
+            operation: 'veo_lite_sfx',
+            units: selectedCounts.sfx,
+            rateCard,
+            floorCredits: VIDEO_CREDITS.VEO_LITE * selectedCounts.sfx,
+          }).credits
+        : 0
+    const spoken = selectedCounts.spoken * ttsPerLine
+    const music =
+      selectedCounts.music > 0
+        ? quoteOperationFromRateCard({
+            operation: 'lyria_music',
+            units: selectedCounts.music,
+            rateCard,
+            floorCredits: AUDIO_CREDITS.MUSIC_TRACK * selectedCounts.music,
+          }).credits
+        : 0
+
+    return {
+      sfxPerClip,
+      ttsPerLine,
+      musicPerCue,
+      sfx,
+      spoken,
+      music,
+      total: sfx + spoken + music,
+    }
+  }, [selectedCounts, rateCard])
+
+  const creditTotal = audioCreditEstimate.sfx
   const autoSecondsLabel = Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)
 
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
@@ -169,7 +241,7 @@ export function ExpressAudioConfirmDialog({
             </div>
             {hasSfxItems && !includeSfx && (
               <p className="text-[11px] text-slate-400 mb-2">
-                SFX is optional — leaving it off saves {VIDEO_CREDITS.VEO_LITE} credits per shot for Pre-Vis production.
+                SFX is optional — leaving it off saves {audioCreditEstimate.sfxPerClip} credits per shot for Pre-Vis production.
               </p>
             )}
             {items.length === 0 ? (
@@ -252,10 +324,35 @@ export function ExpressAudioConfirmDialog({
                 {t('sfxCredits', {
                   credits: creditTotal,
                   hint: t('creditHint', {
-                    credits: VIDEO_CREDITS.VEO_LITE,
+                    credits: audioCreditEstimate.sfxPerClip,
                   }),
                 })}
               </p>
+            </div>
+          )}
+
+          {selectedIds.length > 0 && (
+            <div className="rounded-md border border-violet-700/40 bg-violet-950/20 px-3 py-2 text-[11px] text-violet-200/90 space-y-0.5">
+              <div className="font-semibold text-violet-100">
+                Estimated audio credits: ~{audioCreditEstimate.total.toLocaleString()} credits
+              </div>
+              <div className="text-violet-300/75 flex flex-wrap gap-x-3 gap-y-0.5">
+                {selectedCounts.spoken > 0 && (
+                  <span>
+                    TTS ({selectedCounts.spoken} {selectedCounts.spoken === 1 ? 'line' : 'lines'} × {audioCreditEstimate.ttsPerLine}): ~{audioCreditEstimate.spoken} cr
+                  </span>
+                )}
+                {selectedCounts.music > 0 && (
+                  <span>
+                    Music ({selectedCounts.music} {selectedCounts.music === 1 ? 'cue' : 'cues'} × {audioCreditEstimate.musicPerCue}): ~{audioCreditEstimate.music} cr
+                  </span>
+                )}
+                {selectedCounts.sfx > 0 && (
+                  <span>
+                    SFX ({selectedCounts.sfx} {selectedCounts.sfx === 1 ? 'shot' : 'shots'} × {audioCreditEstimate.sfxPerClip}): ~{audioCreditEstimate.sfx} cr
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>

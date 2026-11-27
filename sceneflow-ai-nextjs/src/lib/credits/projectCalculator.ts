@@ -11,12 +11,13 @@
 import {
   CREDIT_EXCHANGE_RATE,
   IMAGE_CREDITS,
+  VIDEO_CREDITS,
   AUDIO_CREDITS,
-  UPSCALE_CREDITS,
   TEXT_CREDITS,
   BLUEPRINT_CREDITS,
   SUBSCRIPTION_TIERS,
   TOPUP_PACKS,
+  PROVIDER_COSTS_USD,
   calculateProjectCost as baseCostCalculation,
   estimateStorageSize,
   PLATFORM_OVERHEAD_COSTS,
@@ -25,17 +26,25 @@ import {
 } from './creditCosts';
 
 import {
+  GEMINI_PRO_STILL_MODEL_ID,
+  GEMINI_STILL_MODEL_ID,
+  quoteGenerationCredits,
+  quoteOperationFromRateCard,
+  type RateCardMap,
+} from './quoteGenerationCredits';
+
+import {
   SCENEFLOW_ENGINE_ID,
-  estimateVideoClipCredits,
+  estimateVideoClipQuote,
   normalizeVideoParameters,
   type SceneFlowQualityTierId,
   type VideoEngineId,
 } from './videoEnginePricing';
 
+import { TIER_CATALOG } from '@/lib/billing/tierCatalog';
+
 import {
-  STORAGE_LIMITS,
   VOICE_LIMITS,
-  PROJECT_LIMITS,
 } from './guardrails';
 
 // =============================================================================
@@ -69,6 +78,14 @@ export interface VideoParameters {
    * Enables Hybrid Documentary Memoirs (e.g. 0.30 = 30% AI re-enactment clips + 70% family photos).
    */
   hybridVideoShare?: number;
+  /** Optional average continuity reference images per clip (default 0) */
+  avgReferenceImages?: number;
+  /** Alias for avgReferenceImages */
+  referenceImageCount?: number;
+  /** Optional native audio flag (default true) */
+  audio?: boolean;
+  /** Optional Kling voice control flag */
+  voiceControl?: boolean;
 }
 
 export interface ImageParameters {
@@ -102,6 +119,8 @@ export interface AudioParameters {
   soundEffects: number;
   /** Background music tracks */
   musicTracks: number;
+  /** Optional TTS provider ('gemini' | 'elevenlabs', defaults to 'elevenlabs') */
+  ttsProvider?: 'gemini' | 'elevenlabs';
 }
 
 export interface VoiceParameters {
@@ -121,7 +140,7 @@ export interface StorageParameters {
 export interface UpscaleParameters {
   /** Minutes of video to upscale */
   upscaleMinutes: number;
-  /** Use instant processing (1.5x cost) */
+  /** Use instant processing (2x cost) */
   useInstant: boolean;
 }
 
@@ -139,6 +158,12 @@ export interface FullProjectParameters {
 export interface ProjectCostOptions {
   /** When true, image and video credits are the 20% BYOK platform fee. */
   byokExcludeMedia?: boolean;
+  /** Optional live published Admin Rate Card map */
+  rateCard?: RateCardMap;
+  /** Optional average continuity reference images per clip */
+  avgReferenceImages?: number;
+  /** Optional TTS provider override ('gemini' | 'elevenlabs') */
+  ttsProvider?: 'gemini' | 'elevenlabs';
 }
 
 // =============================================================================
@@ -222,7 +247,14 @@ export interface DetailedCostBreakdown {
 // STRATEGY COMPARISON TYPES
 // =============================================================================
 
-export type SubscriptionTierName = 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise';
+export type SubscriptionTierName =
+  | 'explorer'
+  | 'hobbyist'
+  | 'starter'
+  | 'pro'
+  | 'studio'
+  | 'enterprise'
+  | 'trial';
 
 export interface SubscriptionStrategy {
   tier: SubscriptionTierName;
@@ -280,6 +312,23 @@ export function calculateDetailedProjectCost(
   options: ProjectCostOptions = {}
 ): DetailedCostBreakdown {
   const byokExcludeMedia = Boolean(options.byokExcludeMedia)
+  const rateCard = options.rateCard
+  const referenceImageCount = Math.max(
+    0,
+    Math.round(
+      Number(
+        options.avgReferenceImages ??
+          params.video?.avgReferenceImages ??
+          params.video?.referenceImageCount ??
+          0
+      ) || 0
+    )
+  )
+
+  const rawAudioMinutes =
+    params.audio?.totalMinutes !== undefined
+      ? Math.max(0, Number(params.audio.totalMinutes) || 0)
+      : 4
 
   // Ensure all params have valid numeric values to prevent NaN
   const safeParams = {
@@ -312,13 +361,14 @@ export function calculateDetailedProjectCost(
       model: params.images?.model || 'imagen4',
     },
     audio: {
-      totalMinutes: Math.max(1, Number(params.audio?.totalMinutes) || 4),
-      dialogueLines: Number(params.audio?.dialogueLines) || 0,
-      soundEffects: Number(params.audio?.soundEffects) || 0,
-      musicTracks: Number(params.audio?.musicTracks) || 0,
+      totalMinutes: rawAudioMinutes,
+      dialogueLines: Math.max(0, Number(params.audio?.dialogueLines) || 0),
+      soundEffects: Math.max(0, Number(params.audio?.soundEffects) || 0),
+      musicTracks: Math.max(0, Number(params.audio?.musicTracks) || 0),
+      ttsProvider: options.ttsProvider ?? params.audio?.ttsProvider ?? 'elevenlabs',
     },
     voice: {
-      voiceClones: Number(params.voice?.voiceClones) || 0,
+      voiceClones: Math.max(0, Number(params.voice?.voiceClones) || 0),
       voiceMinutes: Math.max(0, Number(params.voice?.voiceMinutes) || 0),
     },
     storage: {
@@ -386,8 +436,13 @@ export function calculateDetailedProjectCost(
     ].filter((item) => item.quantity > 0),
   };
 
-  // Video costs — engine-aware (Kling per-second, Veo per-clip, aggregator per-model)
-  const clipEstimate = estimateVideoClipCredits(safeParams.video);
+  // Video costs — engine-aware (Kling, Vertex Omni, Veo, Aggregator) + live rateCard + refs
+  const clipEstimate = estimateVideoClipQuote(safeParams.video, {
+    rateCard,
+    referenceImageCount,
+    audio: params.video?.audio,
+    voiceControl: params.video?.voiceControl,
+  });
   const totalSegments = safeParams.scenes.count * safeParams.scenes.segmentsPerScene;
   const rawHybridShare = params.video?.hybridVideoShare;
   const hybridVideoShare =
@@ -415,14 +470,46 @@ export function calculateDetailedProjectCost(
     ],
   };
 
-  // Image costs — production role rates
+  // Image costs — production role rates (live rateCard override when published/passed)
+  const draftStillQuote = quoteGenerationCredits({
+    kind: 'still',
+    model: GEMINI_STILL_MODEL_ID,
+    rateCard,
+    floorCredits: IMAGE_CREDITS.FRAME_GENERATION,
+  });
+  const finalStillQuote = quoteGenerationCredits({
+    kind: 'still',
+    model: GEMINI_PRO_STILL_MODEL_ID,
+    rateCard,
+    floorCredits: IMAGE_CREDITS.FAL_KLING_IMAGE,
+  });
+  const headshotQuote = quoteGenerationCredits({
+    kind: 'reference',
+    model: GEMINI_PRO_STILL_MODEL_ID,
+    rateCard,
+    floorCredits: IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT,
+  });
+
+  const draftUnitCredits =
+    rateCard && rateCard.gemini_still
+      ? draftStillQuote.credits
+      : IMAGE_CREDITS.FRAME_GENERATION;
+  const finalUnitCredits =
+    rateCard && rateCard.gemini_pro_still_2k
+      ? finalStillQuote.credits
+      : IMAGE_CREDITS.FAL_KLING_IMAGE;
+  const headshotUnitCredits =
+    rateCard && rateCard.gemini_pro_still_2k
+      ? headshotQuote.credits
+      : IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT;
+
   const draftFrameQty =
     safeParams.images.keyFrames * (1 + safeParams.images.retakesPerFrame);
-  const draftCredits = draftFrameQty * IMAGE_CREDITS.FRAME_GENERATION;
+  const draftCredits = draftFrameQty * draftUnitCredits;
   const finalQty = safeParams.images.finalImages;
-  const finalCredits = finalQty * IMAGE_CREDITS.FAL_KLING_IMAGE;
+  const finalCredits = finalQty * finalUnitCredits;
   const headshotQty = safeParams.images.characterHeadshots;
-  const headshotCredits = headshotQty * IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT;
+  const headshotCredits = headshotQty * headshotUnitCredits;
   const imageCreditsRaw = draftCredits + finalCredits + headshotCredits;
   const totalImages = draftFrameQty + finalQty + headshotQty;
 
@@ -436,68 +523,102 @@ export function calculateDetailedProjectCost(
       {
         name: 'Draft / Beat frames',
         quantity: draftFrameQty,
-        creditsEach: IMAGE_CREDITS.FRAME_GENERATION,
+        creditsEach: draftUnitCredits,
         totalCredits: draftCredits,
       },
       {
         name: 'Final storyboard / scene images',
         quantity: finalQty,
-        creditsEach: IMAGE_CREDITS.FAL_KLING_IMAGE,
+        creditsEach: finalUnitCredits,
         totalCredits: finalCredits,
       },
       {
         name: 'Character reference headshots',
         quantity: headshotQty,
-        creditsEach: IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT,
+        creditsEach: headshotUnitCredits,
         totalCredits: headshotCredits,
       },
     ].filter((item) => item.quantity > 0),
   };
 
-  // Audio costs
-  const dialogueCredits = safeParams.audio.dialogueLines * AUDIO_CREDITS.DIALOGUE_PER_LINE;
-  const sfxCredits = safeParams.audio.soundEffects * AUDIO_CREDITS.SOUND_EFFECT;
-  const musicCredits = safeParams.audio.musicTracks * AUDIO_CREDITS.MUSIC_TRACK;
-  const ttsMinutes = Math.ceil(safeParams.audio.totalMinutes);
-  const ttsCredits = ttsMinutes * AUDIO_CREDITS.TTS_PER_MINUTE;
-  const audioCredits = dialogueCredits + sfxCredits + musicCredits + ttsCredits;
-  
+  // Audio costs — TTS counted ONCE (deduplicating audio.totalMinutes, voice.voiceMinutes, and dialogueLines)
+  const dialogueEstimatedMinutes =
+    safeParams.audio.dialogueLines > 0
+      ? Math.ceil((safeParams.audio.dialogueLines * 80) / 1000)
+      : 0;
+  const totalTtsMinutes = Math.ceil(
+    Math.max(safeParams.audio.totalMinutes, safeParams.voice.voiceMinutes) ||
+      dialogueEstimatedMinutes
+  );
+  const ttsOperation =
+    safeParams.audio.ttsProvider === 'gemini' ? 'gemini_tts' : 'elevenlabs_tts';
+  const ttsFloorPerMin =
+    safeParams.audio.ttsProvider === 'gemini'
+      ? 10
+      : AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS;
+  const ttsUnitQuote = quoteOperationFromRateCard({
+    operation: ttsOperation,
+    units: 1,
+    rateCard,
+    floorCredits: ttsFloorPerMin,
+  });
+  const ttsCredits = totalTtsMinutes * ttsUnitQuote.credits;
+  const ttsProviderUsd = totalTtsMinutes * ttsUnitQuote.providerUsd;
+
+  // SFX quoted at live Veo Lite SFX rate (>= 75 cr floor, fixing 5x under-estimate)
+  const sfxUnitQuote = quoteOperationFromRateCard({
+    operation: 'veo_lite_sfx',
+    units: 1,
+    rateCard,
+    floorCredits: VIDEO_CREDITS.VEO_LITE,
+  });
+  const sfxCredits = safeParams.audio.soundEffects * sfxUnitQuote.credits;
+  const sfxProviderUsd = safeParams.audio.soundEffects * sfxUnitQuote.providerUsd;
+
+  // Background music quoted at live Lyria Music rate (>= 25 cr floor)
+  const musicUnitQuote = quoteOperationFromRateCard({
+    operation: 'lyria_music',
+    units: 1,
+    rateCard,
+    floorCredits: AUDIO_CREDITS.MUSIC_TRACK,
+  });
+  const musicCredits = safeParams.audio.musicTracks * musicUnitQuote.credits;
+  const musicProviderUsd = safeParams.audio.musicTracks * musicUnitQuote.providerUsd;
+
+  const audioCredits = ttsCredits + sfxCredits + musicCredits;
+
   const audio: CategoryCost = {
     credits: audioCredits,
     usdCost: audioCredits / CREDIT_EXCHANGE_RATE,
     items: [
       {
-        name: 'Dialogue lines',
-        quantity: safeParams.audio.dialogueLines,
-        creditsEach: AUDIO_CREDITS.DIALOGUE_PER_LINE,
-        totalCredits: dialogueCredits,
+        name:
+          safeParams.audio.ttsProvider === 'gemini'
+            ? 'TTS narration & dialogue (Gemini)'
+            : 'TTS narration & dialogue (ElevenLabs)',
+        quantity: totalTtsMinutes,
+        creditsEach: ttsUnitQuote.credits,
+        totalCredits: ttsCredits,
       },
       {
-        name: 'Sound effects',
+        name: 'Sound effects (Veo Lite SFX)',
         quantity: safeParams.audio.soundEffects,
-        creditsEach: AUDIO_CREDITS.SOUND_EFFECT,
+        creditsEach: sfxUnitQuote.credits,
         totalCredits: sfxCredits,
       },
       {
-        name: 'Music tracks',
+        name: 'Music tracks (Lyria)',
         quantity: safeParams.audio.musicTracks,
-        creditsEach: AUDIO_CREDITS.MUSIC_TRACK,
+        creditsEach: musicUnitQuote.credits,
         totalCredits: musicCredits,
       },
-      {
-        name: 'TTS minutes',
-        quantity: ttsMinutes,
-        creditsEach: AUDIO_CREDITS.TTS_PER_MINUTE,
-        totalCredits: ttsCredits,
-      },
-    ],
+    ].filter((item) => item.quantity > 0),
   };
 
-  // Voice clone costs
+  // Voice clone setup costs (TTS minutes already counted once in audio above)
   const voiceCloneCredits = safeParams.voice.voiceClones * VOICE_LIMITS.CLONE_CREATION_CREDITS;
-  const voiceAudioCredits = Math.ceil(safeParams.voice.voiceMinutes) * AUDIO_CREDITS.TTS_PER_MINUTE;
-  const voiceTotalCredits = voiceCloneCredits + voiceAudioCredits;
-  
+  const voiceTotalCredits = voiceCloneCredits;
+
   const voiceClones: CategoryCost = {
     credits: voiceTotalCredits,
     usdCost: voiceTotalCredits / CREDIT_EXCHANGE_RATE,
@@ -508,13 +629,7 @@ export function calculateDetailedProjectCost(
         creditsEach: VOICE_LIMITS.CLONE_CREATION_CREDITS,
         totalCredits: voiceCloneCredits,
       },
-      {
-        name: 'Voice audio minutes',
-        quantity: Math.ceil(safeParams.voice.voiceMinutes),
-        creditsEach: AUDIO_CREDITS.TTS_PER_MINUTE,
-        totalCredits: voiceAudioCredits,
-      },
-    ],
+    ].filter((item) => item.quantity > 0),
   };
 
   // Storage costs (addon-based, recurring)
@@ -536,10 +651,14 @@ export function calculateDetailedProjectCost(
     ],
   };
 
-  // Upscale costs
-  const upscaleCreditsPerMinute = UPSCALE_CREDITS.PER_MINUTE;
-  const upscaleMultiplier = safeParams.upscale.useInstant ? 1.5 : 1;
-  const upscaleCredits = Math.ceil(safeParams.upscale.upscaleMinutes * upscaleCreditsPerMinute * upscaleMultiplier);
+  // Upscale costs (Topaz 50 cr/min, 2x instant multiplier)
+  const upscaleCreditsPerMinute = VIDEO_CREDITS.TOPAZ_UPSCALE_PER_MIN;
+  const upscaleMultiplier = safeParams.upscale.useInstant
+    ? VIDEO_CREDITS.TOPAZ_UPSCALE_INSTANT_MULTIPLIER
+    : 1;
+  const upscaleCredits = Math.ceil(
+    safeParams.upscale.upscaleMinutes * upscaleCreditsPerMinute * upscaleMultiplier
+  );
   
   const upscale: CategoryCost = {
     credits: upscaleCredits,
@@ -569,9 +688,9 @@ export function calculateDetailedProjectCost(
 
   // Estimated storage (actual bytes)
   const estimatedStorageBytes = estimateStorageSize(
-    totalTakes * 8, // 8 seconds per segment
+    totalTakes * safeParams.video.segmentDuration,
     totalImages,
-    Math.ceil(safeParams.audio.totalMinutes + safeParams.voice.voiceMinutes)
+    totalTtsMinutes
   );
 
   // Calculate platform overhead costs (moderation, payment, etc.)
@@ -582,7 +701,7 @@ export function calculateDetailedProjectCost(
     framesPerScene: Math.ceil(
       Math.max(1, safeParams.images.keyFrames) / safeParams.scenes.count
     ),
-    voiceoverMinutes: safeParams.voice.voiceMinutes,
+    voiceoverMinutes: totalTtsMinutes,
     uploadedImages: 0, // Estimate; actual uploads tracked separately
     exportMinutes: safeParams.video.totalMinutes,
   });
@@ -602,13 +721,23 @@ export function calculateDetailedProjectCost(
     totalOverhead: moderationCost.totalCost + paymentTotalFee,
   };
 
-  // Calculate margin analysis
-  // Provider costs are approximated based on our known rates
-  const providerCosts = 
-    (byokExcludeMedia ? 0 : totalTakes * 0.75) + // Veo Fast at ~$0.75/8s (approximate)
-    (byokExcludeMedia ? 0 : draftFrameQty * 0.04 + finalQty * 0.05 + headshotQty * 0.06) +
-    (Math.ceil(safeParams.audio.totalMinutes + safeParams.voice.voiceMinutes) * 0.35) + // ElevenLabs ~$0.35/min
-    (safeParams.upscale.upscaleMinutes * 0.20); // Topaz ~$0.20/min
+  // Dynamic margin analysis — real provider COGS from live rate card / engine selection
+  const videoProviderUsd = byokExcludeMedia ? 0 : totalTakes * clipEstimate.providerUsd;
+  const imageProviderUsd = byokExcludeMedia
+    ? 0
+    : draftFrameQty * draftStillQuote.providerUsd +
+      finalQty * finalStillQuote.providerUsd +
+      headshotQty * headshotQuote.providerUsd;
+  const audioProviderUsd = ttsProviderUsd + sfxProviderUsd + musicProviderUsd;
+  const upscaleProviderUsd =
+    safeParams.upscale.upscaleMinutes * PROVIDER_COSTS_USD.topaz_upscale_min;
+  const renderProviderUsd = PROVIDER_COSTS_USD.ffmpeg_render;
+  const providerCosts =
+    videoProviderUsd +
+    imageProviderUsd +
+    audioProviderUsd +
+    upscaleProviderUsd +
+    renderProviderUsd;
 
   const marginAnalysis = {
     grossRevenue: totalUsdCost,
@@ -715,6 +844,14 @@ function calculateOptimalTopUps(creditsNeeded: number): { name: string; quantity
   return packs;
 }
 
+const CANONICAL_STRATEGY_TIERS = [
+  'explorer',
+  'hobbyist',
+  'starter',
+  'pro',
+  'studio',
+] as const;
+
 /**
  * Compare different payment strategies for a project
  */
@@ -734,17 +871,20 @@ export function compareStrategies(
     totalCreditsNeeded,
     packs: payAsYouGoPacks,
     totalCost: payAsYouGoTotalCost,
-    effectiveCreditsPerDollar: payAsYouGoTotalCredits / payAsYouGoTotalCost,
+    effectiveCreditsPerDollar:
+      payAsYouGoTotalCost > 0 ? payAsYouGoTotalCredits / payAsYouGoTotalCost : 0,
   };
   
-  // Subscription strategies
+  // Subscription strategies using canonical TIER_CATALOG / SUBSCRIPTION_TIERS
   const subscriptions: SubscriptionStrategy[] = [];
   let bestSubscription: SubscriptionStrategy | null = null;
   
-  for (const [tierKey, tier] of Object.entries(SUBSCRIPTION_TIERS)) {
-    if (tier.price === 0) continue; // Skip enterprise for now
+  for (const tierKey of CANONICAL_STRATEGY_TIERS) {
+    const tier = SUBSCRIPTION_TIERS[tierKey];
+    const catalogTier = TIER_CATALOG[tierKey];
+    if (!tier || !catalogTier || tier.price <= 0) continue;
     
-    const tierName = tierKey as SubscriptionTierName;
+    const tierName: SubscriptionTierName = tierKey;
     const additionalCreditsNeeded = Math.max(0, totalCreditsNeeded - tier.credits);
     const topUpPacks = additionalCreditsNeeded > 0 
       ? calculateOptimalTopUps(additionalCreditsNeeded) 
@@ -753,21 +893,23 @@ export function compareStrategies(
     const totalMonthlyCost = tier.price + topUpCost;
     const totalCreditsAvailable = tier.credits + topUpPacks.reduce((sum, pack) => sum + pack.credits, 0);
     
-    // Generate warnings
+    // Generate warnings from canonical TIER_CATALOG limits (never undefined)
     const warnings: string[] = [];
     
     // Check scene limits
-    if (params.scenes.count > PROJECT_LIMITS.MAX_SCENES_PER_PROJECT[tierName]) {
-      warnings.push(`Exceeds scene limit (${PROJECT_LIMITS.MAX_SCENES_PER_PROJECT[tierName]} max)`);
+    const maxScenes = catalogTier.maxScenesPerProject;
+    if (params.scenes.count > maxScenes) {
+      warnings.push(`Exceeds scene limit (${maxScenes} max)`);
     }
     
     // Check voice clone limits
-    if (params.voice.voiceClones > VOICE_LIMITS.MAX_VOICE_CLONES[tierName]) {
-      warnings.push(`Exceeds voice clone limit (${VOICE_LIMITS.MAX_VOICE_CLONES[tierName]} max)`);
+    const maxVoiceClones = catalogTier.voiceCloneSlots;
+    if (params.voice.voiceClones > maxVoiceClones) {
+      warnings.push(`Exceeds voice clone limit (${maxVoiceClones} max)`);
     }
     
     // Check storage limits
-    const tierStorageGB = STORAGE_LIMITS.TIER_STORAGE[tierName] / (1024 * 1024 * 1024);
+    const tierStorageGB = catalogTier.storageGb;
     if (params.storage.expectedStorageGB > tierStorageGB) {
       warnings.push(`Needs additional storage (${tierStorageGB}GB included)`);
     }
@@ -781,7 +923,8 @@ export function compareStrategies(
       topUpPacks,
       topUpCost,
       totalMonthlyCost,
-      effectiveCreditsPerDollar: totalCreditsAvailable / totalMonthlyCost,
+      effectiveCreditsPerDollar:
+        totalMonthlyCost > 0 ? totalCreditsAvailable / totalMonthlyCost : 0,
       savings: payAsYouGoTotalCost - totalMonthlyCost,
       recommended: false,
       warnings,
@@ -830,13 +973,18 @@ export function compareStrategies(
 /**
  * Recommend the best plan for given usage patterns
  */
-export function recommendPlan(params: FullProjectParameters): {
+export function recommendPlan(
+  params: FullProjectParameters,
+  options: ProjectCostOptions = {}
+): {
   recommendedTier: SubscriptionTierName;
+  name: string;
+  price: number;
   reason: string;
   monthlyCost: number;
   includesTopUps: boolean;
 } {
-  const comparison = compareStrategies(params);
+  const comparison = compareStrategies(params, options);
   
   // Find recommended strategy
   const recommended = comparison.subscriptions.find(s => s.recommended);
@@ -844,6 +992,8 @@ export function recommendPlan(params: FullProjectParameters): {
   if (!recommended) {
     return {
       recommendedTier: 'starter',
+      name: SUBSCRIPTION_TIERS.starter.name,
+      price: SUBSCRIPTION_TIERS.starter.price,
       reason: 'Best value for most users',
       monthlyCost: SUBSCRIPTION_TIERS.starter.price,
       includesTopUps: false,
@@ -852,6 +1002,8 @@ export function recommendPlan(params: FullProjectParameters): {
   
   return {
     recommendedTier: recommended.tier,
+    name: recommended.tierName,
+    price: recommended.monthlyPrice,
     reason: recommended.savings > 0 
       ? `Save $${recommended.savings.toFixed(2)}/month vs pay-as-you-go`
       : 'Best fit for your project size',

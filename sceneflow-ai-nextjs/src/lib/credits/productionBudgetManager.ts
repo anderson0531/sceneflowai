@@ -7,19 +7,32 @@
  */
 
 import {
+  AUDIO_CREDITS,
   BLUEPRINT_CREDITS,
   IMAGE_CREDITS,
+  RENDER_CREDITS,
   TEXT_CREDITS,
   VIDEO_CREDITS,
   byokMediaCredits,
 } from '@/lib/credits/creditCosts'
-import { OMNI_MODEL_ID, quoteGenerationCredits } from '@/lib/credits/quoteGenerationCredits'
+import {
+  GEMINI_PRO_STILL_MODEL_ID,
+  GEMINI_STILL_MODEL_ID,
+  OMNI_MODEL_ID,
+  VEO_FAST_MODEL_ID,
+  VEO_PREMIUM_MODEL_ID,
+  quoteGenerationCredits,
+  quoteOperationFromRateCard,
+  type RateCardMap,
+} from '@/lib/credits/quoteGenerationCredits'
 import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { BEAT_START_STILL_SLOT, stillVersionCount } from '@/lib/storyboard/mediaVersions'
 import {
+  estimateVideoClipCredits,
   SCENEFLOW_ENGINE_ID,
+  type BudgetVideoEngineId,
   type SceneFlowQualityTierId,
   type VideoEngineId,
 } from '@/lib/credits/videoEnginePricing'
@@ -108,24 +121,91 @@ export const PRODUCTION_METHODS: Record<ProductionMethodId, ProductionMethodDefa
 
 export const DEFAULT_PRODUCTION_METHOD: ProductionMethodId = 'animatic_first'
 
-export function getFrameUnitCost(quality: FrameQuality): number {
-  return FRAME_QUALITY_RATES[quality]
+export interface VideoUnitCostOptions {
+  engine?: BudgetVideoEngineId
+  referenceImageCount?: number
+  audio?: boolean
+  voiceControl?: boolean
+  rateCard?: RateCardMap
+}
+
+export function getFrameUnitCost(
+  quality: FrameQuality,
+  rateCard?: RateCardMap
+): number {
+  const floorCredits = FRAME_QUALITY_RATES[quality]
+  const operation = quality === 'final' ? 'gemini_pro_still_2k' : 'gemini_still'
+  if (!rateCard || !rateCard[operation]) {
+    return floorCredits
+  }
+  return quoteGenerationCredits({
+    kind: 'still',
+    model: quality === 'final' ? GEMINI_PRO_STILL_MODEL_ID : GEMINI_STILL_MODEL_ID,
+    rateCard,
+    floorCredits,
+  }).credits
 }
 
 export function getVideoUnitCost(
   quality: VideoQuality,
-  segmentDurationSec: number
+  segmentDurationSec: number,
+  options?: VideoUnitCostOptions
 ): number {
   if (quality === 'none') return 0
   const duration = Math.min(15, Math.max(3, Math.round(segmentDurationSec) || 10))
-  return quoteGenerationCredits({
-    kind: 'clip',
-    provider: 'google_vertex',
-    model: OMNI_MODEL_ID,
-    resolution: quality === 'draft' ? '720p' : '1080p',
-    durationSeconds: duration,
-    audio: true,
-  }).credits
+  const engine: BudgetVideoEngineId = options?.engine ?? 'vertex_omni'
+  const referenceImageCount = Math.max(0, Math.round(options?.referenceImageCount ?? 0))
+  const audio = options?.audio ?? true
+  const voiceControl = options?.voiceControl ?? false
+  const rateCard = options?.rateCard
+
+  if (engine === 'vertex_omni') {
+    return quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'google_vertex',
+      model: OMNI_MODEL_ID,
+      resolution: quality === 'draft' ? '720p' : '1080p',
+      durationSeconds: duration,
+      audio,
+      referenceImageCount,
+      rateCard,
+    }).credits
+  }
+
+  if (engine === 'veo') {
+    return quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'google_vertex',
+      model: quality === 'final' ? VEO_PREMIUM_MODEL_ID : VEO_FAST_MODEL_ID,
+      resolution: '1080p',
+      durationSeconds: duration,
+      audio,
+      referenceImageCount,
+      rateCard,
+    }).credits
+  }
+
+  return estimateVideoClipCredits(
+    {
+      engine,
+      qualityTier: quality === 'draft' ? 'standard' : 'cinematic',
+      segmentDuration: duration,
+      totalMinutes: 1,
+      veoQuality: 'fast',
+    },
+    {
+      rateCard,
+      referenceImageCount,
+      audio,
+      voiceControl,
+      resolution:
+        engine === 'natural-dialogue'
+          ? quality === 'draft'
+            ? '720p'
+            : '1080p'
+          : undefined,
+    }
+  ).creditsEach
 }
 
 export function intelligencePackageCredits(scenes: number): number {
@@ -162,6 +242,22 @@ export interface ProductionBudgetPlanInput {
   observedVideoTakesAvg?: number
   creditsBudget?: number
   hasByokKeys?: boolean
+  /** Optional video engine override (defaults to `vertex_omni` for backward compatibility) */
+  engine?: BudgetVideoEngineId
+  /** Average continuity reference images attached per clip (default 0) */
+  avgReferenceImages?: number
+  /** Optional live Admin Rate Card map */
+  rateCard?: RateCardMap
+  /** Optional TTS narration/dialogue minutes */
+  ttsMinutes?: number
+  /** Optional TTS provider ('gemini' | 'elevenlabs', defaults to 'gemini') */
+  ttsProvider?: 'gemini' | 'elevenlabs'
+  /** Optional Lyria background music tracks */
+  musicTracks?: number
+  /** Optional Veo Lite SFX clips */
+  soundEffects?: number
+  /** Optional cloud MP4 render minutes */
+  renderMinutes?: number
 }
 
 export interface CategoryLine {
@@ -176,6 +272,8 @@ export interface ProductionBudgetEstimate {
   videos: CategoryLine
   topaz: CategoryLine
   intelligence: CategoryLine
+  audio?: CategoryLine
+  render?: CategoryLine
   plannedTotal: number
   /** Iterations used for remaining work after blending with observed takes. */
   effectiveFrameIterations: number
@@ -209,9 +307,15 @@ export function estimateProductionBudget(
   const frameIterations = clampNonNeg(input.frameIterations)
   const videoIterations =
     input.videoQuality === 'none' ? 0 : clampNonNeg(input.videoIterations)
+  const rateCard = input.rateCard
+  const avgReferenceImages = Math.max(0, Math.round(input.avgReferenceImages ?? 0))
 
-  const frameUnit = getFrameUnitCost(input.frameQuality)
-  const videoUnit = getVideoUnitCost(input.videoQuality, duration)
+  const frameUnit = getFrameUnitCost(input.frameQuality, rateCard)
+  const videoUnit = getVideoUnitCost(input.videoQuality, duration, {
+    engine: input.engine,
+    referenceImageCount: avgReferenceImages,
+    rateCard,
+  })
   const frameQty = beats * frameIterations
   const videoQty = beats * videoIterations
 
@@ -223,13 +327,62 @@ export function estimateProductionBudget(
     ? intelligencePackageCredits(scenes)
     : 0
 
+  // Optional Audio (TTS + Lyria music + Veo Lite SFX) and Cloud Render line items
+  const ttsMinutes = Math.max(0, Math.ceil(clampNonNeg(input.ttsMinutes ?? 0)))
+  const musicTracks = Math.max(0, Math.floor(clampNonNeg(input.musicTracks ?? 0)))
+  const soundEffects = Math.max(0, Math.floor(clampNonNeg(input.soundEffects ?? 0)))
+  const renderMinutes = Math.max(0, Math.ceil(clampNonNeg(input.renderMinutes ?? 0)))
+
+  const ttsCredits =
+    ttsMinutes > 0
+      ? quoteOperationFromRateCard({
+          operation: input.ttsProvider === 'elevenlabs' ? 'elevenlabs_tts' : 'gemini_tts',
+          units: ttsMinutes,
+          rateCard,
+          floorCredits:
+            ttsMinutes *
+            (input.ttsProvider === 'elevenlabs'
+              ? AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS
+              : 10),
+        }).credits
+      : 0
+  const musicCredits =
+    musicTracks > 0
+      ? quoteOperationFromRateCard({
+          operation: 'lyria_music',
+          units: musicTracks,
+          rateCard,
+          floorCredits: musicTracks * AUDIO_CREDITS.MUSIC_TRACK,
+        }).credits
+      : 0
+  const sfxCredits =
+    soundEffects > 0
+      ? quoteOperationFromRateCard({
+          operation: 'veo_lite_sfx',
+          units: soundEffects,
+          rateCard,
+          floorCredits: soundEffects * VIDEO_CREDITS.VEO_LITE,
+        }).credits
+      : 0
+  const audioCredits = roundCredits(ttsCredits + musicCredits + sfxCredits)
+  const audioItemsQty = ttsMinutes + musicTracks + soundEffects
+  const renderCredits =
+    renderMinutes > 0
+      ? roundCredits(renderMinutes * RENDER_CREDITS.PER_MINUTE + RENDER_CREDITS.MP4_EXPORT)
+      : 0
+
   const framesCredits = byok ? byokMediaCredits(roundCredits(framesRaw)) : roundCredits(framesRaw)
   const videosCredits = byok ? byokMediaCredits(roundCredits(videosRaw)) : roundCredits(videosRaw)
   const topazCredits = roundCredits(topazRaw)
   const intelligenceCredits = roundCredits(intelligenceRaw)
 
   const plannedTotal =
-    framesCredits + videosCredits + topazCredits + intelligenceCredits
+    framesCredits +
+    videosCredits +
+    topazCredits +
+    intelligenceCredits +
+    audioCredits +
+    renderCredits
 
   const creditsUsed = roundCredits(input.creditsUsed ?? 0)
   const creditsBudget = roundCredits(input.creditsBudget ?? 0)
@@ -261,12 +414,16 @@ export function estimateProductionBudget(
   // when forecasting to complete — only unpaid media remaining + intelligence if unused project.
   const remainingIntelligence =
     creditsUsed <= 0 && input.intelligenceEnabled ? intelligenceCredits : 0
+  const remainingAudio = creditsUsed <= 0 ? audioCredits : 0
+  const remainingRender = renderCredits
 
   const costToComplete =
     remainingFrameCredits +
     remainingVideoCredits +
     remainingTopaz +
-    remainingIntelligence
+    remainingIntelligence +
+    remainingAudio +
+    remainingRender
 
   const forecastTotal =
     creditsUsed > 0 ? creditsUsed + costToComplete : plannedTotal
@@ -308,6 +465,24 @@ export function estimateProductionBudget(
       unitCost: intelligenceCredits,
       quantity: input.intelligenceEnabled ? 1 : 0,
     },
+    ...(audioItemsQty > 0
+      ? {
+          audio: {
+            credits: audioCredits,
+            unitCost: audioItemsQty > 0 ? Math.round(audioCredits / audioItemsQty) : 0,
+            quantity: audioItemsQty,
+          },
+        }
+      : {}),
+    ...(renderMinutes > 0
+      ? {
+          render: {
+            credits: renderCredits,
+            unitCost: RENDER_CREDITS.PER_MINUTE,
+            quantity: renderMinutes,
+          },
+        }
+      : {}),
     plannedTotal,
     effectiveFrameIterations,
     effectiveVideoIterations,
@@ -797,6 +972,9 @@ export function rollupProductionBudget(args: {
   topazCredits: number
   intelligenceCredits: number
   videoOn: boolean
+  audioCredits?: number
+  renderCredits?: number
+  rateCard?: RateCardMap
 }): BudgetRollup {
   const frameIterations = clampNonNeg(args.frameIterations)
   const videoIterations = args.videoOn ? clampNonNeg(args.videoIterations) : 0
@@ -846,12 +1024,15 @@ export function rollupProductionBudget(args: {
   const mediaCredits = chapters.reduce((sum, chapter) => sum + chapter.credits, 0)
   const topazCredits = roundCredits(args.topazCredits)
   const intelligenceCredits = roundCredits(args.intelligenceCredits)
+  const audioCredits = roundCredits(args.audioCredits ?? 0)
+  const renderCredits = roundCredits(args.renderCredits ?? 0)
   return {
     chapters,
     mediaCredits,
     topazCredits,
     intelligenceCredits,
-    masterCredits: mediaCredits + topazCredits + intelligenceCredits,
+    masterCredits:
+      mediaCredits + topazCredits + intelligenceCredits + audioCredits + renderCredits,
     completedStillActual: averages.still,
     completedClipActual: averages.clip,
     completedSceneCount: averages.sceneCount,

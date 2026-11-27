@@ -1,4 +1,5 @@
 import type { AggregatorModelEntry } from './types'
+import { creditsForProviderUsd, DEFAULT_MARKUP } from '@/lib/credits/quoteGenerationCredits'
 
 /** SceneFlow-facing catalog — matched dynamically to Renderful slugs at runtime. */
 export const AGGREGATOR_MODEL_REGISTRY: AggregatorModelEntry[] = [
@@ -121,11 +122,12 @@ export function listAggregatorModelsForMethod(
 
 export function getAggregatorCreditsForModel(
   modelId: string,
-  durationSeconds: number
+  durationSeconds: number,
+  markup: number = DEFAULT_MARKUP
 ): number {
   const model = getAggregatorModel(modelId) || getAggregatorModel(getDefaultAggregatorModelId())
   const costPerSec = model?.costPerSecondUsd ?? 0.08
   const baseUsd = costPerSec * Math.max(4, durationSeconds)
-  // ~100 credits per $0.01 at platform margin
-  return Math.max(120, Math.round(baseUsd * 100 * 10))
+  // Unified credit formula: 2.0x markup at $0.01/credit face value (enforcing Studio cash floor)
+  return Math.max(40, creditsForProviderUsd(baseUsd, markup, null, Math.max(4, durationSeconds)))
 }

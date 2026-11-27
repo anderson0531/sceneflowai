@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { RateCardService } from '../../../../services/RateCardService'
+import { getPublishedRateCardSnapshot } from '@/lib/credits/rateCardStore'
 
 /**
  * GET /api/pricing/rate-card
- * Get all active rate cards for display
+ * Get all active rate cards for display (plus live published credit_pricing snapshot)
  */
 export async function GET(req: NextRequest) {
   try {
-    const rates = await RateCardService.getAllActiveRates()
+    const [rates, liveSnapshot] = await Promise.all([
+      RateCardService.getAllActiveRates(),
+      getPublishedRateCardSnapshot(),
+    ])
     
     return NextResponse.json({
       success: true,
@@ -21,6 +25,7 @@ export async function GET(req: NextRequest) {
         unit_description: rate.unit_description,
         provider_cost_usd: Number(rate.provider_cost_usd),
       })),
+      liveSnapshot,
     })
   } catch (error: any) {
     console.error('[Rate Card API] Error:', error)
@@ -32,7 +37,10 @@ export async function GET(req: NextRequest) {
         const { migrateRateCard } = await import('../../../../lib/database/migrateRateCard')
         await migrateRateCard()
         // Retry the query after migration
-        const rates = await RateCardService.getAllActiveRates()
+        const [rates, liveSnapshot] = await Promise.all([
+          RateCardService.getAllActiveRates(),
+          getPublishedRateCardSnapshot(),
+        ])
         return NextResponse.json({
           success: true,
           rates: rates.map(rate => ({
@@ -45,6 +53,7 @@ export async function GET(req: NextRequest) {
             unit_description: rate.unit_description,
             provider_cost_usd: Number(rate.provider_cost_usd),
           })),
+          liveSnapshot,
         })
       } catch (migrationError) {
         console.error('[Rate Card API] Migration failed:', migrationError)

@@ -7,12 +7,23 @@
  * lowering the credits an existing operation costs while old balances remain.
  */
 
+import { type VideoQuality } from './creditCosts'
 import {
-  getKlingCreditsForGeneration,
-  type VideoQuality,
-} from './creditCosts'
-import { getAggregatorCreditsForModel } from '@/lib/aggregator/modelRegistry'
-import { OMNI_MODEL_ID, quoteGenerationCredits } from './quoteGenerationCredits'
+  getAggregatorCreditsForModel,
+  getAggregatorModel,
+  getDefaultAggregatorModelId,
+} from '@/lib/aggregator/modelRegistry'
+import {
+  creditsForProviderUsd,
+  DEFAULT_MARKUP,
+  OMNI_MODEL_ID,
+  quoteGenerationCredits,
+  REFERENCE_IMAGE_ADDON_CREDITS,
+  VEO_FAST_MODEL_ID,
+  VEO_PREMIUM_MODEL_ID,
+  type RateCardMap,
+  type VideoResolution,
+} from './quoteGenerationCredits'
 import { SAVINGS_DELIVERED_AS } from './creditSchedulePolicy'
 
 export const VIDEO_CREDIT_SCHEDULE_POLICY = SAVINGS_DELIVERED_AS
@@ -28,6 +39,9 @@ export type AlternativeEngineId =
   | 'lowest-cost'
 
 export type VideoEngineId = typeof SCENEFLOW_ENGINE_ID | AlternativeEngineId
+
+/** Extended engine ids supported by live rate-card estimators and budget planners. */
+export type BudgetVideoEngineId = VideoEngineId | 'vertex_omni' | 'veo' | 'aggregator'
 
 export type EngineSelection =
   | { engineId: typeof SCENEFLOW_ENGINE_ID; qualityTierId: SceneFlowQualityTierId }
@@ -109,10 +123,33 @@ export interface NormalizedVideoParameters {
   totalMinutes: number
   /** Legacy Veo flat-rate quality when engine maps from veo_fast / veo_quality_4k */
   veoQuality: VideoQuality
+  /** Optional average continuity reference images attached per clip */
+  referenceImageCount?: number
+  /** Optional native audio flag (defaults to true) */
+  audio?: boolean
+  /** Optional Kling voice control flag */
+  voiceControl?: boolean
+}
+
+export interface VideoClipEstimateOptions {
+  /** Live published Admin Rate Card map (from `useLiveRateCard()` or server snapshot) */
+  rateCard?: RateCardMap
+  /** Continuity reference images attached per clip (+5 cr/ref add-on) */
+  referenceImageCount?: number
+  /** Whether native audio generation is enabled (default true) */
+  audio?: boolean
+  /** Kling voice control / video-ref mode */
+  voiceControl?: boolean
+  /** Explicit resolution override (e.g. '720p', '1080p', '4k') */
+  resolution?: VideoResolution
+  /** Explicit aggregator model id when engine === 'aggregator' */
+  aggregatorModelId?: string
 }
 
 export interface VideoClipEstimate {
   creditsEach: number
+  providerUsd: number
+  operation: string
   label: string
   providerLabel: string
 }
@@ -147,10 +184,24 @@ export function normalizeVideoParameters(
     qualityTier?: SceneFlowQualityTierId
     segmentDuration?: number
     totalMinutes?: number
+    referenceImageCount?: number
+    avgReferenceImages?: number
+    audio?: boolean
+    voiceControl?: boolean
   }> | null
 ): NormalizedVideoParameters {
   const segmentDuration = Math.max(3, Number(video?.segmentDuration) || 8)
   const totalMinutes = Math.max(1, Number(video?.totalMinutes) || 4)
+  const rawRefCount = video?.referenceImageCount ?? video?.avgReferenceImages
+  const referenceImageCount =
+    typeof rawRefCount === 'number' && Number.isFinite(rawRefCount) && rawRefCount > 0
+      ? Math.round(rawRefCount)
+      : undefined
+  const extras = {
+    ...(referenceImageCount !== undefined ? { referenceImageCount } : {}),
+    ...(video?.audio !== undefined ? { audio: Boolean(video.audio) } : {}),
+    ...(video?.voiceControl !== undefined ? { voiceControl: Boolean(video.voiceControl) } : {}),
+  }
 
   if (video?.model === 'veo_fast' || video?.model === 'veo_quality_4k') {
     const legacy = legacyModelToEngineSelection(video.model)
@@ -160,6 +211,7 @@ export function normalizeVideoParameters(
       segmentDuration,
       totalMinutes,
       veoQuality: legacy.veoQuality,
+      ...extras,
     }
   }
 
@@ -175,6 +227,7 @@ export function normalizeVideoParameters(
     segmentDuration,
     totalMinutes,
     veoQuality: 'fast',
+    ...extras,
   }
 }
 
@@ -201,9 +254,116 @@ export function snapSegmentDurationForEngine(
   return 10
 }
 
-export function estimateVideoClipCredits(
-  video: NormalizedVideoParameters
+export type VideoClipQuoteInput = Omit<NormalizedVideoParameters, 'engine'> & {
+  engine: BudgetVideoEngineId
+}
+
+/**
+ * Full engine-aware video clip quote returning both credits and live provider COGS (USD).
+ * Responds dynamically to published Admin Rate Card updates (`options.rateCard`) across
+ * Kling (`sceneflow`), Vertex Omni (`vertex_omni` / `natural-dialogue`), Veo (`veo`),
+ * and Aggregator (`aggregator` / alternative models).
+ */
+export function estimateVideoClipQuote(
+  video: VideoClipQuoteInput,
+  options?: VideoClipEstimateOptions
 ): VideoClipEstimate {
+  const rateCard = options?.rateCard
+  const referenceImageCount = Math.max(
+    0,
+    Math.round(options?.referenceImageCount ?? video.referenceImageCount ?? 0)
+  )
+  const audio = options?.audio ?? video.audio ?? true
+  const voiceControl = options?.voiceControl ?? video.voiceControl ?? false
+
+  if (video.engine === 'vertex_omni') {
+    const duration = Math.min(15, Math.max(3, Math.round(video.segmentDuration) || 10))
+    const resolution: VideoResolution =
+      options?.resolution ??
+      (video.veoQuality === 'max' || video.qualityTier === 'ultra-4k'
+        ? '4k'
+        : video.qualityTier === 'standard'
+          ? '720p'
+          : '1080p')
+    const quote = quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'google_vertex',
+      model: OMNI_MODEL_ID,
+      resolution,
+      durationSeconds: duration,
+      audio,
+      referenceImageCount,
+      rateCard,
+    })
+    return {
+      creditsEach: quote.credits,
+      providerUsd: quote.providerUsd,
+      operation: quote.operation,
+      label: `Vertex Omni (${resolution === '4k' ? '4K' : resolution}) ${duration}s`,
+      providerLabel: 'Vertex / Omni',
+    }
+  }
+
+  if (video.engine === 'veo') {
+    const duration = snapSegmentDurationForEngine(video.segmentDuration, {
+      engineId: 'natural-dialogue',
+    })
+    const isPremium =
+      video.veoQuality === 'max' ||
+      video.qualityTier === 'ultra-4k' ||
+      options?.resolution === '4k'
+    const resolution: VideoResolution =
+      options?.resolution ?? (isPremium ? '4k' : '1080p')
+    const model = isPremium ? VEO_PREMIUM_MODEL_ID : VEO_FAST_MODEL_ID
+    const quote = quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'google_vertex',
+      model,
+      resolution,
+      durationSeconds: duration,
+      audio,
+      referenceImageCount,
+      rateCard,
+    })
+    return {
+      creditsEach: quote.credits,
+      providerUsd: quote.providerUsd,
+      operation: quote.operation,
+      label: `Veo 3.1 (${isPremium ? (resolution === '4k' ? '4K' : 'Premium') : 'Fast'}) ${duration}s`,
+      providerLabel: 'Vertex / Veo',
+    }
+  }
+
+  if (video.engine === 'aggregator') {
+    const modelId = options?.aggregatorModelId ?? getDefaultAggregatorModelId()
+    const duration = video.segmentDuration <= 7 ? 5 : 10
+    const billableSeconds = Math.max(4, duration)
+    const model = getAggregatorModel(modelId) || getAggregatorModel(getDefaultAggregatorModelId())
+    const opKey = `aggregator_${modelId}`
+    const appliedRate = rateCard?.[opKey] ?? rateCard?.[modelId]
+    const usdPerSec = appliedRate?.usdPerUnit ?? model?.costPerSecondUsd ?? 0.08
+    const markup = appliedRate?.markup ?? DEFAULT_MARKUP
+    const providerUsd = usdPerSec * billableSeconds
+    const baseCredits = appliedRate
+      ? Math.max(
+          40,
+          creditsForProviderUsd(
+            providerUsd,
+            markup,
+            appliedRate.creditsPerUnitOverride,
+            billableSeconds
+          )
+        )
+      : getAggregatorCreditsForModel(modelId, duration, markup)
+    return {
+      creditsEach: baseCredits + referenceImageCount * REFERENCE_IMAGE_ADDON_CREDITS,
+      providerUsd,
+      operation: opKey,
+      label: `${model?.label ?? 'Aggregator'} ${duration}s`,
+      providerLabel: 'Aggregator',
+    }
+  }
+
   const selection = toEngineSelection(video.engine, video.qualityTier)
   const duration = snapSegmentDurationForEngine(video.segmentDuration, selection)
 
@@ -211,13 +371,24 @@ export function estimateVideoClipCredits(
     const tier =
       SCENEFLOW_QUALITY_TIERS.find((t) => t.id === selection.qualityTierId) ??
       SCENEFLOW_QUALITY_TIERS.find((t) => t.id === 'cinematic')!
-    const creditsEach = getKlingCreditsForGeneration({
+    const resolution: VideoResolution =
+      options?.resolution ??
+      (tier.klingQuality === '4k' ? '4k' : tier.klingQuality === 'std' ? '720p' : '1080p')
+    const quote = quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'kling',
       model: SCENEFLOW_DEFAULT_MODEL,
-      quality: tier.klingQuality,
-      durationSeconds: duration,
+      resolution,
+      durationSeconds: Math.max(3, duration),
+      audio,
+      voiceControl,
+      referenceImageCount,
+      rateCard,
     })
     return {
-      creditsEach,
+      creditsEach: quote.credits,
+      providerUsd: quote.providerUsd,
+      operation: quote.operation,
       label: `SceneFlow ${tier.label} ${duration}s`,
       providerLabel: 'Kling',
     }
@@ -226,42 +397,82 @@ export function estimateVideoClipCredits(
   const alt = ALTERNATIVE_ENGINES.find((e) => e.id === selection.engineId)
   if (!alt) {
     const tier = SCENEFLOW_QUALITY_TIERS.find((t) => t.id === 'cinematic')!
-    const creditsEach = getKlingCreditsForGeneration({
+    const quote = quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'kling',
       model: SCENEFLOW_DEFAULT_MODEL,
-      quality: tier.klingQuality,
-      durationSeconds: duration,
+      resolution: options?.resolution ?? '1080p',
+      durationSeconds: Math.max(3, duration),
+      audio,
+      voiceControl,
+      referenceImageCount,
+      rateCard,
     })
     return {
-      creditsEach,
+      creditsEach: quote.credits,
+      providerUsd: quote.providerUsd,
+      operation: quote.operation,
       label: `SceneFlow ${tier.label} ${duration}s`,
       providerLabel: 'Kling',
     }
   }
 
   if (alt.provider === 'vertex') {
-    const resolution = video.veoQuality === 'max' ? '4k' : '1080p'
-    const creditsEach = quoteGenerationCredits({
+    const resolution: VideoResolution =
+      options?.resolution ?? (video.veoQuality === 'max' ? '4k' : '1080p')
+    const quote = quoteGenerationCredits({
       kind: 'clip',
       provider: 'google_vertex',
       model: OMNI_MODEL_ID,
       resolution,
       durationSeconds: duration,
-      audio: true,
-    }).credits
-    const qualityLabel = video.veoQuality === 'max' ? '4K' : '1080p'
+      audio,
+      referenceImageCount,
+      rateCard,
+    })
+    const qualityLabel = resolution === '4k' ? '4K' : resolution
     return {
-      creditsEach,
+      creditsEach: quote.credits,
+      providerUsd: quote.providerUsd,
+      operation: quote.operation,
       label: `Omni Natural-Dialogue (${qualityLabel}) ${duration}s`,
       providerLabel: 'Vertex / Omni',
     }
   }
 
-  const creditsEach = getAggregatorCreditsForModel(alt.videoModel!, duration)
+  const modelId = options?.aggregatorModelId ?? alt.videoModel!
+  const billableSeconds = Math.max(4, duration)
+  const model = getAggregatorModel(modelId) || getAggregatorModel(getDefaultAggregatorModelId())
+  const opKey = `aggregator_${modelId}`
+  const appliedRate = rateCard?.[opKey] ?? rateCard?.[modelId]
+  const usdPerSec = appliedRate?.usdPerUnit ?? model?.costPerSecondUsd ?? 0.08
+  const markup = appliedRate?.markup ?? DEFAULT_MARKUP
+  const providerUsd = usdPerSec * billableSeconds
+  const baseCredits = appliedRate
+    ? Math.max(
+        40,
+        creditsForProviderUsd(
+          providerUsd,
+          markup,
+          appliedRate.creditsPerUnitOverride,
+          billableSeconds
+        )
+      )
+    : getAggregatorCreditsForModel(modelId, duration, markup)
   return {
-    creditsEach,
+    creditsEach: baseCredits + referenceImageCount * REFERENCE_IMAGE_ADDON_CREDITS,
+    providerUsd,
+    operation: opKey,
     label: `${alt.label} ${duration}s`,
     providerLabel: 'Aggregator',
   }
+}
+
+export function estimateVideoClipCredits(
+  video: VideoClipQuoteInput,
+  options?: VideoClipEstimateOptions
+): VideoClipEstimate {
+  return estimateVideoClipQuote(video, options)
 }
 
 export function buildCreditsBudgetParams(

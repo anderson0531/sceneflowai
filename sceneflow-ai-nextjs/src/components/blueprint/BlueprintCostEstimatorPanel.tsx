@@ -27,6 +27,7 @@ import {
   type VideoEngineId,
 } from '@/lib/credits/videoEnginePricing'
 import { ClientQuoteMarginPanel } from '@/components/credits/ClientQuoteMarginPanel'
+import { useLiveRateCard } from '@/hooks/useLiveRateCard'
 import { cn } from '@/lib/utils'
 
 interface BlueprintCostEstimatorPanelProps {
@@ -42,6 +43,8 @@ export function BlueprintCostEstimatorPanel({
   projectMetadata,
   onProjectMetadataPatched,
 }: BlueprintCostEstimatorPanelProps) {
+  const { rateCard } = useLiveRateCard()
+
   const clientOrder = (projectMetadata?.clientOrder || null) as Record<
     string,
     unknown
@@ -106,6 +109,7 @@ export function BlueprintCostEstimatorPanel({
         treatment,
         visionPhase,
         sunkCreditsUsed: sunkCredits,
+        rateCard,
         options: {
           productionMode,
           engine,
@@ -122,6 +126,7 @@ export function BlueprintCostEstimatorPanel({
       treatment,
       visionPhase,
       sunkCredits,
+      rateCard,
       productionMode,
       engine,
       qualityTier,

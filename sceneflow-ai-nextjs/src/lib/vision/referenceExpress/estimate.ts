@@ -10,7 +10,13 @@
  * Client-safe — `creditCosts` and `window` are constants and pure functions.
  */
 
-import { getCreditCost, IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import {
+  GEMINI_PRO_STILL_MODEL_ID,
+  GEMINI_STILL_MODEL_ID,
+  quoteGenerationCredits,
+  type RateCardMap,
+} from '@/lib/credits/quoteGenerationCredits'
 import {
   DEFAULT_REFERENCE_EXPRESS_CONCURRENCY,
   forEachReferenceExpressWindow,
@@ -26,6 +32,7 @@ export const SECONDS_PER_ITEM: Record<ReferenceExpressKind, number> = {
 }
 
 export const CAST_ITEM_CREDITS = IMAGE_CREDITS.CHARACTER_IDENTITY_WITH_ENHANCE
+export const LOCATION_ITEM_CREDITS = IMAGE_CREDITS.SCENE_REFERENCE
 
 export type ReferenceExpressEstimate = {
   itemCount: number
@@ -33,8 +40,28 @@ export type ReferenceExpressEstimate = {
   credits: number
 }
 
-const creditsForKind = (kind: ReferenceExpressKind): number =>
-  kind === 'cast' ? CAST_ITEM_CREDITS : getCreditCost('IMAGE_GENERATION')
+const creditsForKind = (kind: ReferenceExpressKind, rateCard?: RateCardMap): number => {
+  if (kind === 'cast') {
+    return CAST_ITEM_CREDITS
+  }
+  if (kind === 'location') {
+    // Location plates execute at Gemini 3 Pro Image 2K (IMAGE_CREDITS.SCENE_REFERENCE = 30 cr floor),
+    // matching generateLocationReferenceImage in generateReferenceImage.ts.
+    return quoteGenerationCredits({
+      kind: 'reference',
+      model: GEMINI_PRO_STILL_MODEL_ID,
+      resolution: '2k',
+      rateCard,
+      floorCredits: IMAGE_CREDITS.SCENE_REFERENCE,
+    }).credits
+  }
+  return quoteGenerationCredits({
+    kind: 'reference',
+    model: GEMINI_STILL_MODEL_ID,
+    rateCard,
+    floorCredits: IMAGE_CREDITS.IMAGEN_4,
+  }).credits
+}
 
 /**
  * Walks the items the way the worker will: cast portraits one at a time, and
@@ -54,18 +81,20 @@ export function estimateReferenceExpressSeconds(
 }
 
 export function estimateReferenceExpressCredits(
-  items: Array<Pick<ReferenceExpressItem, 'kind'>>
+  items: Array<Pick<ReferenceExpressItem, 'kind'>>,
+  rateCard?: RateCardMap
 ): number {
-  return items.reduce((total, item) => total + creditsForKind(item.kind), 0)
+  return items.reduce((total, item) => total + creditsForKind(item.kind, rateCard), 0)
 }
 
 export function estimateReferenceExpress(
-  items: ReferenceExpressWindowItem[]
+  items: ReferenceExpressWindowItem[],
+  rateCard?: RateCardMap
 ): ReferenceExpressEstimate {
   return {
     itemCount: items.length,
     seconds: estimateReferenceExpressSeconds(items),
-    credits: estimateReferenceExpressCredits(items),
+    credits: estimateReferenceExpressCredits(items, rateCard),
   }
 }
 

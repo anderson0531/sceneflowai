@@ -66,6 +66,7 @@ import {
   type SceneFlowQualityTierId,
 } from '@/lib/credits/videoEnginePricing'
 import { ClientQuoteMarginPanel } from './ClientQuoteMarginPanel'
+import { useLiveRateCard } from '@/hooks/useLiveRateCard'
 
 // =============================================================================
 // TYPES
@@ -149,6 +150,7 @@ export function ProjectCostCalculator({
   initialByokExcludeMedia = false,
 }: ProjectCostCalculatorProps) {
   const t = useTranslations('production.budget')
+  const { rateCard } = useLiveRateCard()
 
   const presetLabel = useCallback((name: string) => {
     const key = PRESET_NAME_TO_KEY[name]
@@ -284,8 +286,8 @@ export function ProjectCostCalculator({
   )
 
   const clipEstimate = useMemo(
-    () => estimateVideoClipCredits(normalizedVideo),
-    [normalizedVideo]
+    () => estimateVideoClipCredits(normalizedVideo, { rateCard }),
+    [normalizedVideo, rateCard]
   )
 
   const totalClipCount = useMemo(() => {
@@ -338,7 +340,7 @@ export function ProjectCostCalculator({
         }
       : params;
     
-    const baseComparison = compareStrategies(adjustedParams, { byokExcludeMedia });
+    const baseComparison = compareStrategies(adjustedParams, { byokExcludeMedia, rateCard });
     
     // If animatic mode, zero out video and add MP4 render costs
     if (productionType === 'animatic') {
@@ -388,7 +390,7 @@ export function ProjectCostCalculator({
     }
     
     return baseComparison;
-  }, [params, productionType, languageVersions, byokExcludeMedia, t])
+  }, [params, productionType, languageVersions, byokExcludeMedia, rateCard, t])
   const breakdown = comparison.projectCost
 
   // Calculate additional language credits separately for display
@@ -689,7 +691,8 @@ export function ProjectCostCalculator({
                       engine: SCENEFLOW_ENGINE_ID,
                       qualityTier: tier.id,
                       segmentDuration: normalizedVideo.segmentDuration,
-                    })
+                    }),
+                    { rateCard }
                   )
                   const isSelected =
                     (params.video.engine ?? SCENEFLOW_ENGINE_ID) === SCENEFLOW_ENGINE_ID &&
@@ -760,7 +763,8 @@ export function ProjectCostCalculator({
                           ...params.video,
                           engine: engine.id,
                           segmentDuration: normalizedVideo.segmentDuration,
-                        })
+                        }),
+                        { rateCard }
                       )
                       const isSelected = params.video.engine === engine.id
                       const providerLabel =

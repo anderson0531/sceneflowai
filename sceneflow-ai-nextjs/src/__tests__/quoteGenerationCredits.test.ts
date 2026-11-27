@@ -80,10 +80,17 @@ describe('quoteGenerationCredits', () => {
     expect(veoPremium.credits * 0.008).toBeGreaterThan(veoPremium.providerUsd)
   })
 
-  it('tiers image stills between Flash 1K, Pro 2K, and Pro 4K', () => {
+  it('tiers image stills between Flash 1K, Flash 2K, Pro 2K, and Pro 4K', () => {
     const flash = quoteGenerationCredits({
       kind: 'still',
       model: 'gemini-3.1-flash-image',
+      imageCount: 1,
+      floorCredits: 10,
+    })
+    const flash2k = quoteGenerationCredits({
+      kind: 'still',
+      model: 'gemini-3.1-flash-image',
+      resolution: '2K',
       imageCount: 1,
       floorCredits: 10,
     })
@@ -102,9 +109,13 @@ describe('quoteGenerationCredits', () => {
       floorCredits: 50,
     })
     expect(flash.operation).toBe('gemini_still')
-    expect(flash.credits).toBe(10)
+    expect(flash.providerUsd).toBeCloseTo(0.067, 3)
+    expect(flash.credits).toBe(14)
+    expect(flash2k.operation).toBe('gemini_flash_still_2k')
+    expect(flash2k.providerUsd).toBeCloseTo(0.101, 3)
+    expect(flash2k.credits).toBe(21)
     expect(pro2k.operation).toBe('gemini_pro_still_2k')
-    expect(pro2k.providerUsd).toBeCloseTo(0.14, 3)
+    expect(pro2k.providerUsd).toBeCloseTo(0.134, 3)
     expect(pro2k.credits).toBe(30)
     expect(pro4k.operation).toBe('gemini_pro_still_4k')
     expect(pro4k.providerUsd).toBeCloseTo(0.24, 3)
@@ -143,10 +154,51 @@ describe('quoteGenerationCredits', () => {
     const quote = quoteGenerationCredits({
       kind: 'still',
       imageCount: 1,
-      floorCredits: 12,
+      floorCredits: 20,
     })
-    expect(quote.credits).toBe(12)
-    expect(quote.cogsUsd).toBeCloseTo(0.04, 5)
+    expect(quote.credits).toBe(20)
+    expect(quote.cogsUsd).toBeCloseTo(0.067, 5)
+  })
+
+  it('supports live RateCardMap overrides, Veo 4K, and Kling 1080p Voice Control', () => {
+    const veo4k = quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'google_vertex',
+      model: 'veo-3.1-generate-001',
+      resolution: '4k',
+      durationSeconds: 8,
+    })
+    expect(veo4k.operation).toBe('veo_premium_4k')
+    expect(veo4k.providerUsd).toBeCloseTo(4.8, 2)
+    expect(veo4k.credits).toBe(960)
+
+    const klingVoice = quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'kling',
+      resolution: '1080p',
+      audio: true,
+      voiceControl: true,
+      durationSeconds: 10,
+    })
+    expect(klingVoice.operation).toBe('kling_omni_1080p_voice')
+    expect(klingVoice.credits).toBe(448)
+
+    const overridden = quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'kling',
+      resolution: '1080p',
+      audio: true,
+      durationSeconds: 10,
+      rateCard: {
+        kling_omni_1080p_audio: {
+          usdPerUnit: 0.2,
+          markup: 2.0,
+          source: 'published',
+        },
+      },
+    })
+    expect(overridden.source).toBe('rate_card')
+    expect(overridden.credits).toBe(400)
   })
 
   it('enforces the Studio floor when an override would underbill', () => {

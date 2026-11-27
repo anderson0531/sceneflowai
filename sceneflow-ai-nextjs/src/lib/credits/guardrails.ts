@@ -13,7 +13,7 @@
  * @see SCENEFLOW_AI_DESIGN_DOCUMENT.md Section 2.1.1
  */
 
-import { SUBSCRIPTION_TIERS, GUARDRAILS as CREDIT_GUARDRAILS } from './creditCosts';
+import { SUBSCRIPTION_TIERS, GUARDRAILS as CREDIT_GUARDRAILS, VIDEO_CREDITS } from './creditCosts';
 
 // =============================================================================
 // DOWNLOAD GUARDRAILS
@@ -192,7 +192,7 @@ export const UPSCALE_QUEUE = {
   } as const,
   
   /** Instant upscale credit multiplier (skip queue) */
-  INSTANT_MULTIPLIER: 1.5, // 50% premium for instant processing
+  INSTANT_MULTIPLIER: VIDEO_CREDITS.TOPAZ_UPSCALE_INSTANT_MULTIPLIER, // 2x cost for instant processing
   
   /** Maximum queue depth before rejecting new requests */
   MAX_QUEUE_DEPTH: 100,

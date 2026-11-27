@@ -13,7 +13,14 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Zap, AlertCircle, Loader, Image as ImageIcon, Volume2, FileText, Languages, Brush } from 'lucide-react'
-import { IMAGE_CREDITS, AUDIO_CREDITS } from '@/lib/credits/creditCosts'
+import { IMAGE_CREDITS, AUDIO_CREDITS, VIDEO_CREDITS } from '@/lib/credits/creditCosts'
+import {
+  GEMINI_PRO_STILL_MODEL_ID,
+  GEMINI_STILL_MODEL_ID,
+  quoteGenerationCredits,
+  quoteOperationFromRateCard,
+} from '@/lib/credits/quoteGenerationCredits'
+import { useLiveRateCard } from '@/hooks/useLiveRateCard'
 import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { getArtStylePresetName } from '@/lib/treatment/blueprintFoundation'
@@ -73,6 +80,7 @@ export function ExpressConfirmDialog({
 }: ExpressConfirmDialogProps) {
   const t = useTranslations('production.express')
   const tCommon = useTranslations('common')
+  const { rateCard } = useLiveRateCard()
   const [includeMusic, setIncludeMusic] = useState(false)
   const [missingFramesOnly, setMissingFramesOnly] = useState(false)
   const [regenerate, setRegenerate] = useState(false)
@@ -172,23 +180,61 @@ export function ExpressConfirmDialog({
 
   const estimatedCredits = useMemo(() => {
     const imageFrameCount = effectiveDialogueFrameCount
-    const image = imageFrameCount * IMAGE_CREDITS.IMAGEN_4
-    // Soft estimate for audio: 80 credits per ~1k chars; assume ~250 chars/line.
+    const perFrame =
+      storyboardQuality === 'final'
+        ? quoteGenerationCredits({
+            kind: 'still',
+            model: GEMINI_PRO_STILL_MODEL_ID,
+            resolution: '2k',
+            rateCard,
+            floorCredits: IMAGE_CREDITS.FINAL_FRAME_GENERATION,
+          }).credits
+        : quoteGenerationCredits({
+            kind: 'still',
+            model: GEMINI_STILL_MODEL_ID,
+            rateCard,
+            floorCredits: IMAGE_CREDITS.IMAGEN_4,
+          }).credits
+    const image = imageFrameCount * perFrame
+    // Soft estimate for audio: live TTS rate per ~1k chars (floor 80 cr); assume ~250 chars/line.
     // narration counts once per scene; dialogue counts per line.
     const dialoguePerScene = stats.total > 0 ? stats.totalDialogue / stats.total : 0
     const approxCharsPerScene =
       (1 /* narration sentence */ + dialoguePerScene) * 250
+    const ttsPer1k = quoteOperationFromRateCard({
+      operation: 'elevenlabs_tts',
+      units: 1,
+      rateCard,
+      floorCredits: AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS,
+    }).credits
     const audio =
-      Math.ceil((approxCharsPerScene / 1000) * AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS) *
+      Math.ceil((approxCharsPerScene / 1000) * ttsPer1k) *
       effectiveAudioScenes
-    const music = includeMusic ? stats.scenesWithMusic * AUDIO_CREDITS.ELEVENLABS_MUSIC : 0
-    return { image, audio, music, sfx: 0, total: image + audio + music }
+    const perMusicTrack = quoteOperationFromRateCard({
+      operation: 'lyria_music',
+      units: 1,
+      rateCard,
+      floorCredits: AUDIO_CREDITS.MUSIC_TRACK,
+    }).credits
+    const music = includeMusic ? stats.scenesWithMusic * perMusicTrack : 0
+    const perSfxClip = quoteOperationFromRateCard({
+      operation: 'veo_lite_sfx',
+      units: 1,
+      rateCard,
+      floorCredits: VIDEO_CREDITS.VEO_LITE,
+    }).credits
+    const includeSFX = false
+    const sfx = includeSFX && stats.totalSfxCues > 0 ? stats.totalSfxCues * perSfxClip : 0
+    return { perFrame, image, audio, music, sfx, total: image + audio + music + sfx }
   }, [
     effectiveDialogueFrameCount,
     effectiveAudioScenes,
+    storyboardQuality,
+    rateCard,
     stats.total,
     stats.totalDialogue,
     stats.scenesWithMusic,
+    stats.totalSfxCues,
     includeMusic,
   ])
 
@@ -420,7 +466,7 @@ export function ExpressConfirmDialog({
                 {t('costImages', {
                   credits: estimatedCredits.image,
                   frames: effectiveDialogueFrameCount,
-                  perFrame: IMAGE_CREDITS.IMAGEN_4,
+                  perFrame: estimatedCredits.perFrame,
                 })}
               </div>
               <div>· {t('costAudio', { credits: estimatedCredits.audio })}</div>

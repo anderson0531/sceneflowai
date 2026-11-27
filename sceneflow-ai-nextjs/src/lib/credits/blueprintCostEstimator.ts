@@ -15,11 +15,20 @@ import {
   planSceneDecomposition,
 } from '@/lib/script/sceneDecomposition'
 import {
+  AUDIO_CREDITS,
   byokMediaCredits,
   creditsToUsd,
   IMAGE_CREDITS,
   TEXT_CREDITS,
+  VIDEO_CREDITS,
 } from './creditCosts'
+import {
+  GEMINI_PRO_STILL_MODEL_ID,
+  GEMINI_STILL_MODEL_ID,
+  quoteGenerationCredits,
+  quoteOperationFromRateCard,
+  type RateCardMap,
+} from './quoteGenerationCredits'
 import {
   buildCreditsBudgetParams,
   estimateVideoClipCredits,
@@ -51,6 +60,18 @@ export interface BlueprintEstimatorOptions {
   byokExcludeMedia: boolean
   /** Optional Creator target credit budget for live variance tracking */
   targetBudgetCredits?: number
+  /** Include per-scene Lyria background music (default true) */
+  includeMusic?: boolean
+  /** Include per-scene Veo Lite SFX (default true) */
+  includeSfx?: boolean
+  /** Optional SFX clips per scene when includeSfx is enabled (default 1) */
+  sfxPerScene?: number
+  /** Optional TTS provider ('gemini' | 'elevenlabs', default 'gemini') */
+  ttsProvider?: 'gemini' | 'elevenlabs'
+  /** Optional average continuity reference images per clip (auto-derived as 2 when refs exist) */
+  avgReferenceImages?: number
+  /** Optional live published Admin Rate Card map */
+  rateCard?: RateCardMap
 }
 
 export interface BlueprintChapterCostBreakdown {
@@ -220,8 +241,10 @@ export function estimateBlueprintProjectCost(input: {
   visionPhase?: Record<string, unknown> | null
   sunkCreditsUsed?: number
   options?: Partial<BlueprintEstimatorOptions>
+  rateCard?: RateCardMap
 }): BlueprintCostEstimateResult {
   const treatment = input.treatment || {}
+  const rateCard = input.rateCard ?? input.options?.rateCard
   const rawBeats = extractBlueprintBeats(treatment) as Array<
     Record<string, unknown>
   >
@@ -255,6 +278,10 @@ export function estimateBlueprintProjectCost(input: {
     input.options?.includeBeatStoryboardStills ?? true
   )
   const includeShareAudio = Boolean(input.options?.includeShareAudio ?? true)
+  const includeMusic = input.options?.includeMusic !== false
+  const includeSfx = input.options?.includeSfx !== false
+  const sfxPerScene = Math.max(0, Number(input.options?.sfxPerScene ?? 1) || 0)
+  const ttsProvider = input.options?.ttsProvider ?? 'gemini'
   const byokExcludeMedia = Boolean(input.options?.byokExcludeMedia ?? false)
 
   const totalMinutes =
@@ -264,24 +291,74 @@ export function estimateBlueprintProjectCost(input: {
       Number(treatment.estimatedDurationMinutes || treatment.durationMinutes || 3)
     )
 
+  const hasContinuityRefs =
+    (Array.isArray(treatment.character_descriptions) &&
+      treatment.character_descriptions.length > 0) ||
+    (Array.isArray(treatment.scene_descriptions) &&
+      treatment.scene_descriptions.length > 0) ||
+    (Array.isArray(input.visionPhase?.characters) &&
+      (input.visionPhase!.characters as unknown[]).length > 0)
+  const referenceImageCount =
+    input.options?.avgReferenceImages !== undefined
+      ? Math.max(0, Math.round(input.options.avgReferenceImages))
+      : hasContinuityRefs
+        ? 2
+        : 0
+
   const normalizedVideo = normalizeVideoParameters({
     engine,
     qualityTier,
     segmentDuration: AVG_BEAT_SECONDS,
     totalMinutes,
+    referenceImageCount,
   })
-  const clipEstimate = estimateVideoClipCredits(normalizedVideo)
+  const clipEstimate = estimateVideoClipCredits(normalizedVideo, {
+    rateCard,
+    referenceImageCount,
+  })
   const effectiveClipCredits = byokExcludeMedia
     ? byokMediaCredits(clipEstimate.creditsEach)
     : clipEstimate.creditsEach
 
+  const rawFrameUnitCredits = quoteGenerationCredits({
+    kind: 'still',
+    model: GEMINI_STILL_MODEL_ID,
+    rateCard,
+    floorCredits: IMAGE_CREDITS.FRAME_GENERATION,
+  }).credits
   const frameUnitCredits = byokExcludeMedia
-    ? byokMediaCredits(IMAGE_CREDITS.FRAME_GENERATION)
-    : IMAGE_CREDITS.FRAME_GENERATION
+    ? byokMediaCredits(rawFrameUnitCredits)
+    : rawFrameUnitCredits
 
-  const refUnitCredits = byokExcludeMedia
-    ? byokMediaCredits(IMAGE_CREDITS.SCENE_REFERENCE)
-    : IMAGE_CREDITS.SCENE_REFERENCE
+  // Role-specific continuity reference costing (cast 45 cr, location 30 cr, prop live Flash Image)
+  const rawCastRefCredits = quoteGenerationCredits({
+    kind: 'reference',
+    model: GEMINI_PRO_STILL_MODEL_ID,
+    rateCard,
+    floorCredits: IMAGE_CREDITS.CHARACTER_IDENTITY_WITH_ENHANCE,
+  }).credits
+  const rawLocationRefCredits = quoteGenerationCredits({
+    kind: 'reference',
+    model: GEMINI_PRO_STILL_MODEL_ID,
+    rateCard,
+    floorCredits: IMAGE_CREDITS.SCENE_REFERENCE,
+  }).credits
+  const rawPropRefCredits = quoteGenerationCredits({
+    kind: 'reference',
+    model: GEMINI_STILL_MODEL_ID,
+    rateCard,
+    floorCredits: IMAGE_CREDITS.IMAGEN_4,
+  }).credits
+
+  const castRefUnitCredits = byokExcludeMedia
+    ? byokMediaCredits(rawCastRefCredits)
+    : rawCastRefCredits
+  const locationRefUnitCredits = byokExcludeMedia
+    ? byokMediaCredits(rawLocationRefCredits)
+    : rawLocationRefCredits
+  const propRefUnitCredits = byokExcludeMedia
+    ? byokMediaCredits(rawPropRefCredits)
+    : rawPropRefCredits
 
   const sunkBlueprintCredits = Math.max(
     0,
@@ -293,8 +370,37 @@ export function estimateBlueprintProjectCost(input: {
     input.visionPhase
   )
   const continuityReferenceCredits = Math.round(
-    ungeneratedReferences.total * refUnitCredits * Math.min(1.25, retakeMultiplier)
+    (ungeneratedReferences.cast * castRefUnitCredits +
+      ungeneratedReferences.locations * locationRefUnitCredits +
+      ungeneratedReferences.props * propRefUnitCredits) *
+      Math.min(1.25, retakeMultiplier)
   )
+
+  // Live rate-card audio unit quotes
+  const ttsUnitCredits = quoteOperationFromRateCard({
+    operation: ttsProvider === 'elevenlabs' ? 'elevenlabs_tts' : 'gemini_tts',
+    units: 1,
+    rateCard,
+    floorCredits:
+      ttsProvider === 'elevenlabs' ? AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS : 10,
+  }).credits
+  const musicUnitCredits = includeMusic
+    ? quoteOperationFromRateCard({
+        operation: 'lyria_music',
+        units: 1,
+        rateCard,
+        floorCredits: AUDIO_CREDITS.MUSIC_TRACK,
+      }).credits
+    : 0
+  const sfxUnitCredits =
+    includeSfx && sfxPerScene > 0
+      ? quoteOperationFromRateCard({
+          operation: 'veo_lite_sfx',
+          units: 1,
+          rateCard,
+          floorCredits: VIDEO_CREDITS.VEO_LITE,
+        }).credits
+      : 0
 
   // Chapter-by-Chapter breakdown (1 Blueprint Beat === 1 Production Stage Chapter)
   let unillustratedBeats = 0
@@ -336,9 +442,16 @@ export function estimateBlueprintProjectCost(input: {
         aiVideoShots * effectiveClipCredits * retakeMultiplier
       )
 
-      // Script generation (~10 cr/chapter) + per-scene TTS/music/SFX (~14 cr/scene) + MP4 render (~15 cr/min)
+      // Script generation (~15 cr/chapter) + realistic per-scene audio (TTS + Lyria music + Veo Lite SFX) + MP4 render (~15 cr/min)
       const scriptCredits = TEXT_CREDITS.GEMINI_PRO || 10
-      const sceneAudioCredits = entry.targetScenes * 14
+      const chapterTtsMinutes = Math.max(1, Math.ceil(entry.minutes))
+      const chapterTtsCredits = chapterTtsMinutes * ttsUnitCredits
+      const chapterMusicCredits = entry.targetScenes * musicUnitCredits
+      const chapterSfxCredits = Math.round(
+        entry.targetScenes * sfxPerScene * sfxUnitCredits
+      )
+      const sceneAudioCredits =
+        chapterTtsCredits + chapterMusicCredits + chapterSfxCredits
       const renderCredits = Math.ceil(entry.minutes * 15)
       const audioAndScriptCredits =
         scriptCredits + sceneAudioCredits + renderCredits
@@ -476,6 +589,7 @@ export function estimateBlueprintMarginSummary(input: {
   estimate: BlueprintCostEstimateResult
   clientPriceUsd: number
   includedRevisionRounds?: number
+  rateCard?: RateCardMap
 }): ClientQuoteMarginAnalysis {
   return calculateClientQuoteMargin({
     baseProjectCredits: input.estimate.totalEstimatedCredits,

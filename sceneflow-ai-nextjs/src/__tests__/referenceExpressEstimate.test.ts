@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { getCreditCost, IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { quoteGenerationCredits } from '@/lib/credits/quoteGenerationCredits'
 import {
   CAST_ITEM_CREDITS,
+  LOCATION_ITEM_CREDITS,
   SECONDS_PER_ITEM,
   estimateReferenceExpress,
   estimateReferenceExpressSeconds,
@@ -10,6 +12,12 @@ import {
 } from '@/lib/vision/referenceExpress/estimate'
 
 const IMAGE_CREDIT = getCreditCost('IMAGE_GENERATION')
+const PROP_CREDIT = quoteGenerationCredits({
+  kind: 'reference',
+  model: 'gemini-3.1-flash-image',
+  imageCount: 1,
+  floorCredits: IMAGE_CREDIT,
+}).credits
 
 describe('a Reference Express run quotes itself before the click', () => {
   it('charges cast more than a single image, because it generates twice', () => {
@@ -39,7 +47,9 @@ describe('a Reference Express run quotes itself before the click', () => {
     expect(estimate.seconds).toBe(
       SECONDS_PER_ITEM.cast + SECONDS_PER_ITEM.location + SECONDS_PER_ITEM.prop
     )
-    expect(estimate.credits).toBe(CAST_ITEM_CREDITS + IMAGE_CREDIT * 7)
+    expect(estimate.credits).toBe(
+      CAST_ITEM_CREDITS + LOCATION_ITEM_CREDITS + PROP_CREDIT * 6
+    )
   })
 
   it('quotes a serial run when concurrency is turned off', () => {

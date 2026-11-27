@@ -39,7 +39,7 @@ export function PricingRateCard() {
   const [errors, setErrors] = useState<string[]>([])
   const [operation, setOperation] = useState('omni_1080p')
   const [usdPerUnit, setUsdPerUnit] = useState('0.152')
-  const [markup, setMarkup] = useState('1.8')
+  const [markup, setMarkup] = useState('2.0')
   const [override, setOverride] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -165,7 +165,22 @@ export function PricingRateCard() {
           <select
             className="mt-1 w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
             value={operation}
-            onChange={(event) => setOperation(event.target.value)}
+            onChange={(event) => {
+              const nextOp = event.target.value
+              setOperation(nextOp)
+              const activeRow =
+                rows.find((r) => r.operation === nextOp && r.rateStatus === 'published') ||
+                seeds.find((s) => s.operation === nextOp)
+              if (activeRow) {
+                setUsdPerUnit(String(activeRow.usdPerUnit))
+                setMarkup(String(activeRow.markup ?? 2.0))
+                setOverride(
+                  activeRow.creditsPerUnitOverride != null
+                    ? String(activeRow.creditsPerUnitOverride)
+                    : ''
+                )
+              }
+            }}
           >
             {seeds.map((seed) => (
               <option key={seed.operation} value={seed.operation}>{seed.operation}</option>

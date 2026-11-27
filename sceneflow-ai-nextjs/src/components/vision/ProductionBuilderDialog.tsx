@@ -43,6 +43,7 @@ import {
   type ProductionStageId,
 } from '@/lib/production/runProductionAgent'
 import type { VideoGenerationQuality } from '@/lib/video/videoGenerationPolicy'
+import { useLiveRateCard } from '@/hooks/useLiveRateCard'
 
 export interface ProductionBuilderLaunchContext {
   scopeMode?: ProductionSceneScopeMode
@@ -212,10 +213,29 @@ export function ProductionBuilderDialog({
   const [previsIncludeAudio, setPrevisIncludeAudio] = useState<boolean>(true)
   const [previsIncludeStills, setPrevisIncludeStills] = useState<boolean>(true)
 
+  const { rateCard } = useLiveRateCard()
+
   const chapters = useMemo(() => groupScenesIntoChapters(scenes), [scenes])
 
   const sceneSummaries = useMemo(
-    () => summarizeProductionScenes(scenes, sceneProductionState, language),
+    () =>
+      summarizeProductionScenes(scenes, sceneProductionState, language).map((summary) => {
+        const rawScene = scenes[summary.sceneIndex]
+        const hasRefs = Boolean(
+          (Array.isArray(rawScene?.characters) && rawScene.characters.length > 0) ||
+            (Array.isArray(rawScene?.dialogue) && rawScene.dialogue.length > 0) ||
+            rawScene?.location ||
+            rawScene?.locationRefId ||
+            rawScene?.imageUrl ||
+            (Array.isArray(rawScene?.beats) &&
+              rawScene.beats.some(
+                (b: any) =>
+                  (Array.isArray(b?.characterIds) && b.characterIds.length > 0) ||
+                  Boolean(b?.locationRefId)
+              ))
+        )
+        return { ...summary, hasReferences: hasRefs }
+      }),
     [scenes, sceneProductionState, language]
   )
 
@@ -353,8 +373,8 @@ export function ProductionBuilderDialog({
   )
 
   const estimate = useMemo(
-    () => estimateProductionAgentRun(sceneSummaries, builderOptions),
-    [sceneSummaries, builderOptions]
+    () => estimateProductionAgentRun(sceneSummaries, builderOptions, rateCard),
+    [sceneSummaries, builderOptions, rateCard]
   )
 
   const selectedSceneSet = useMemo(

@@ -19,6 +19,12 @@ import { StoryboardQualityToggle } from './StoryboardQualityToggle'
 import { StoryboardGenerationModeToggle } from './StoryboardGenerationModeToggle'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import {
+  GEMINI_PRO_STILL_MODEL_ID,
+  GEMINI_STILL_MODEL_ID,
+  quoteGenerationCredits,
+} from '@/lib/credits/quoteGenerationCredits'
+import { useLiveRateCard } from '@/hooks/useLiveRateCard'
+import {
   enumerateStoryboardFrameSlots,
   filterStoryboardSlotsForExpressChecklist,
 } from '@/lib/storyboard/types'
@@ -172,6 +178,7 @@ export function ExpressSceneConfirmDialog({
 }: ExpressSceneConfirmDialogProps) {
   const t = useTranslations('production.expressScene')
   const tCommon = useTranslations('common')
+  const { rateCard } = useLiveRateCard()
   const [scope, setScope] = useState<ExpressSceneScope>('missing')
   const [quality, setQuality] = useState<StoryboardQuality>(defaultQuality)
   const [generationMode, setGenerationMode] = useState<StillGenerationMode>(defaultGenerationMode)
@@ -199,9 +206,10 @@ export function ExpressSceneConfirmDialog({
       estimateReferenceExpress(
         drawableReferences
           .map((requirement) => estimateItemForRequirement(requirement))
-          .filter((item): item is NonNullable<typeof item> => !!item)
+          .filter((item): item is NonNullable<typeof item> => !!item),
+        rateCard
       ),
-    [drawableReferences]
+    [drawableReferences, rateCard]
   )
 
   const sceneBeats = useMemo(() => getSceneBeats(scene), [scene])
@@ -267,7 +275,34 @@ export function ExpressSceneConfirmDialog({
     })
   }
 
-  const creditTotal = selectedFrameKeys.length * IMAGE_CREDITS.FAL_KLING_IMAGE
+  const perFrameCredits = useMemo(() => {
+    if (generationMode === 'creative') {
+      return quoteGenerationCredits({
+        kind: 'still',
+        model: GEMINI_PRO_STILL_MODEL_ID,
+        resolution: '2k',
+        rateCard,
+        floorCredits: IMAGE_CREDITS.FAL_KLING_IMAGE,
+      }).credits
+    }
+    if (quality === 'final') {
+      return quoteGenerationCredits({
+        kind: 'still',
+        model: GEMINI_PRO_STILL_MODEL_ID,
+        resolution: '2k',
+        rateCard,
+        floorCredits: IMAGE_CREDITS.FINAL_FRAME_GENERATION,
+      }).credits
+    }
+    return quoteGenerationCredits({
+      kind: 'still',
+      model: GEMINI_STILL_MODEL_ID,
+      rateCard,
+      floorCredits: IMAGE_CREDITS.IMAGEN_4,
+    }).credits
+  }, [quality, generationMode, rateCard])
+
+  const creditTotal = selectedFrameKeys.length * perFrameCredits
   const nothingSelected = selectedFrameKeys.length === 0
 
   return (
@@ -566,7 +601,7 @@ export function ExpressSceneConfirmDialog({
                 {t('imageCredits', {
                   credits: creditTotal,
                   count: selectedFrameKeys.length,
-                  perFrame: IMAGE_CREDITS.FAL_KLING_IMAGE,
+                  perFrame: perFrameCredits,
                 })}
               </p>
             )}

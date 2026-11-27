@@ -14,9 +14,17 @@
  *  5. Promo    — Autonomous theatrical trailer cut + narration + score
  */
 
-import { IMAGE_CREDITS, AUDIO_CREDITS } from '@/lib/credits/creditCosts'
+import { IMAGE_CREDITS, AUDIO_CREDITS, VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import {
-  estimateVideoAgentCredits,
+  GEMINI_PRO_STILL_MODEL_ID,
+  GEMINI_STILL_MODEL_ID,
+  OMNI_MODEL_ID,
+  quoteGenerationCredits,
+  quoteOperationFromRateCard,
+  type RateCardMap,
+} from '@/lib/credits/quoteGenerationCredits'
+import {
+  resolveVideoGeneration,
   type VideoGenerationMode,
   type VideoGenerationQuality,
   type VideoSourceMethod,
@@ -95,6 +103,10 @@ export interface ProductionBuilderOptions {
   maxRateLimitRecoveryPasses?: number
   /** Run Pre-Vis stills THEN audio sequentially per scene to avoid 12-way double bursts (default true) */
   coordinatePrevisLanes?: boolean
+  /** Optional live rate card snapshot rates for credit estimation */
+  rateCard?: RateCardMap
+  /** Optional average reference image count per clip for clip estimation */
+  averageReferenceImageCount?: number
 }
 
 export type ProductionAgentOptions = ProductionBuilderOptions
@@ -114,6 +126,10 @@ export interface ProductionSceneReadinessSummary {
   totalClipsCount: number
   policyBlockedClipsCount: number
   hasRenderedSceneMp4: boolean
+  /** Optional hint that the scene carries cast/location references for clip quoting */
+  hasReferences?: boolean
+  /** Optional explicit average reference image count for clip quoting */
+  referenceImageCount?: number
 }
 
 export interface ProductionRunEstimate {
@@ -530,14 +546,41 @@ export function summarizeProductionScenes(
   })
 }
 
+function resolveAverageClipReferenceCount(
+  chosen: ProductionSceneReadinessSummary[],
+  options: ProductionBuilderOptions
+): number {
+  if (
+    typeof options.averageReferenceImageCount === 'number' &&
+    Number.isFinite(options.averageReferenceImageCount) &&
+    options.averageReferenceImageCount >= 0
+  ) {
+    return Math.round(options.averageReferenceImageCount)
+  }
+  if (chosen.length === 0) return 0
+  const withExplicitCount = chosen.filter(
+    (s) => typeof s.referenceImageCount === 'number' && Number.isFinite(s.referenceImageCount)
+  )
+  if (withExplicitCount.length > 0) {
+    const total = withExplicitCount.reduce(
+      (sum, s) => sum + Math.max(0, s.referenceImageCount ?? 0),
+      0
+    )
+    return Math.round(total / withExplicitCount.length)
+  }
+  return chosen.some((s) => s.hasReferences === true) ? 2 : 0
+}
+
 /**
  * Estimate credit cost, autonomous runtime, and active Director hours saved for a
  * Production Builder configuration.
  */
 export function estimateProductionAgentRun(
   summaries: ProductionSceneReadinessSummary[],
-  options: ProductionBuilderOptions
+  options: ProductionBuilderOptions,
+  rateCard?: RateCardMap
 ): ProductionRunEstimate {
+  const effectiveRateCard = rateCard ?? options.rateCard
   const selectedSet = new Set(options.selectedSceneIndices)
   const chosen = summaries.filter((s) => selectedSet.has(s.sceneIndex))
   const stages = new Set(options.stages)
@@ -577,21 +620,59 @@ export function estimateProductionAgentRun(
     ? chosen.filter((s) => (options.missingOnly ? !s.hasRenderedSceneMp4 : true)).length
     : 0
 
-  const previsImageCredits = stillsToGenerate * IMAGE_CREDITS.IMAGEN_4
-  const previsAudioCredits =
-    audioScenesToGenerate *
-    (AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS + AUDIO_CREDITS.ELEVENLABS_SFX)
+  const stillUnitCredits =
+    options.quality === 'final'
+      ? quoteGenerationCredits({
+          kind: 'still',
+          model: GEMINI_PRO_STILL_MODEL_ID,
+          resolution: '2k',
+          rateCard: effectiveRateCard,
+          floorCredits: IMAGE_CREDITS.FINAL_FRAME_GENERATION,
+        }).credits
+      : quoteGenerationCredits({
+          kind: 'still',
+          model: GEMINI_STILL_MODEL_ID,
+          rateCard: effectiveRateCard,
+          floorCredits: IMAGE_CREDITS.IMAGEN_4,
+        }).credits
+  const previsImageCredits = stillsToGenerate * stillUnitCredits
+
+  const ttsPerSceneCredits = quoteOperationFromRateCard({
+    operation: 'elevenlabs_tts',
+    units: 1,
+    rateCard: effectiveRateCard,
+    floorCredits: AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS,
+  }).credits
+  const sfxCredits =
+    audioScenesToGenerate > 0
+      ? quoteOperationFromRateCard({
+          operation: 'veo_lite_sfx',
+          units: audioScenesToGenerate,
+          rateCard: effectiveRateCard,
+          floorCredits: VIDEO_CREDITS.VEO_LITE * audioScenesToGenerate,
+        }).credits
+      : 0
+  const previsAudioCredits = audioScenesToGenerate * ttsPerSceneCredits + sfxCredits
   const previsCredits = stages.has('previs')
     ? previsImageCredits + previsAudioCredits
     : 0
 
-  const clipsCredits = stages.has('clips')
-    ? estimateVideoAgentCredits({
-        count: clipsToGenerate,
-        quality: options.quality,
-        mode: 'standard',
-      })
-    : 0
+  const clipReferenceCount = resolveAverageClipReferenceCount(chosen, options)
+  const clipPolicy = resolveVideoGeneration({ quality: options.quality, mode: 'standard' })
+  const perClipCredits =
+    stages.has('clips') && clipsToGenerate > 0
+      ? quoteGenerationCredits({
+          kind: 'clip',
+          provider: 'google_vertex',
+          model: OMNI_MODEL_ID,
+          resolution: clipPolicy.resolution,
+          durationSeconds: 10,
+          audio: true,
+          referenceImageCount: clipReferenceCount,
+          rateCard: effectiveRateCard,
+        }).credits
+      : 0
+  const clipsCredits = stages.has('clips') ? clipsToGenerate * perClipCredits : 0
 
   const scenesCredits = stages.has('scenes') ? scenesToRender * 15 : 0
   const masterCredits = stages.has('master') && sceneCount > 0 ? 25 : 0

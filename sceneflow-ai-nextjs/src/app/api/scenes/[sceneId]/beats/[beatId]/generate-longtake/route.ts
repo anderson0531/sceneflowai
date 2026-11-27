@@ -35,6 +35,7 @@ import { resolveBeatElementSelection } from '@/lib/vision/resolveBeatVideoRefere
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { CreditService } from '@/services/CreditService'
 import { getKlingLongTakeCredits } from '@/lib/credits/creditCosts'
+import { getPublishedRateCardSnapshot } from '@/lib/credits/rateCardStore'
 import {
   recordProviderRunFinish,
   recordProviderRunStart,
@@ -274,14 +275,24 @@ export async function POST(
     const faceConsistency = body.faceConsistency ?? hasCharacterRefs
 
     const quality = body.klingQuality || 'pro'
+    const rateCardSnapshot = await getPublishedRateCardSnapshot()
     const reservedCredits = getKlingLongTakeCredits({
       model,
       quality,
       plan,
       masterSeconds: targetSeconds,
+      rateCard: rateCardSnapshot.rates,
     })
+    const klingOp =
+      quality === '4k'
+        ? 'kling_omni_4k'
+        : quality === 'std'
+          ? 'kling_omni_720p_audio'
+          : 'kling_omni_1080p_audio'
+    const klingUsdPerSec =
+      rateCardSnapshot.rates[klingOp]?.usdPerUnit ?? (quality === '4k' ? 0.42 : 0.14)
     const estimatedCogsUsd = Number(
-      Math.max(0.5, plan.totalSeconds * (quality === '4k' ? 0.42 : 0.14) + 1.0).toFixed(2)
+      Math.max(0.5, plan.totalSeconds * klingUsdPerSec + 1.0).toFixed(2)
     )
     const userId = String(session.user.id)
 

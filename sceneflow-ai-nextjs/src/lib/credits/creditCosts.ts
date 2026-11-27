@@ -149,22 +149,22 @@ export const IMAGE_CREDITS = {
 
 export const VIDEO_CREDITS = {
   /** 
-   * Veo 3.1 Fast (1080p) - ~$0.75/8s → 150 credits ($1.50, ~50% margin)
+   * Veo 3.1 Fast (1080p) - $0.15/s × 8s = $1.20 → 240 credits ($2.40, 50% margin)
    * Per 8-second clip
    */
-  VEO_FAST: 150,
+  VEO_FAST: 240,
 
   /**
-   * Veo 3.1 Lite (720p) - ~$0.40/8s → 75 credits ($0.75, ~50% margin)
+   * Veo 3.1 Lite (720p) - $0.05/s × 8s = $0.40 → 75 credits ($0.75, ~47% margin)
    * Per 8-second clip. Used for storyboard / action-beat SFX extraction.
    */
   VEO_LITE: 75,
   
   /** 
-   * Veo 3.1 Quality (4K) - ~$1.30/8s → 250 credits ($2.50, ~48% margin)
+   * Veo 3.1 Quality (4K) - $0.60/s × 8s = $4.80 → 960 credits ($9.60, 50% margin)
    * Per 8-second clip. Pro/Studio only.
    */
-  VEO_QUALITY_4K: 250,
+  VEO_QUALITY_4K: 960,
   
   /** 
    * Fast revision of existing scene (cheaper, uses caching)
@@ -172,7 +172,7 @@ export const VIDEO_CREDITS = {
   VEO_REVISION: 100,
 
   /**
-   * Fal-hosted Kling policy fallback video (~$0.50–0.80/5s) → 180 credits
+   * Fal-hosted Kling policy fallback video (~$0.70–1.40/10s) → 180 / 320 credits
    */
   FAL_KLING_VIDEO_5S: 180,
   FAL_KLING_VIDEO_10S: 320,
@@ -180,10 +180,10 @@ export const VIDEO_CREDITS = {
   KLING_VIDEO_5S: 180,
   KLING_VIDEO_10S: 320,
 
-  /** Direct Kling primary — v3 omni pro 10s */
+  /** Direct Kling primary — v3 omni (synced to SEEDED_PROVIDER_RATES 10s audio rates) */
   KLING_V3_OMNI_PRO_10S: 280,
-  KLING_V3_OMNI_STD_10S: 200,
-  KLING_V3_OMNI_4K_10S: 380,
+  KLING_V3_OMNI_STD_10S: 224,
+  KLING_V3_OMNI_4K_10S: 840,
   KLING_LIPSYNC_10S: 240,
 
   /** Multiplatform aggregator video (Renderful/Pollo) — baseline 8s clip */
@@ -210,6 +210,9 @@ export function getKlingCreditsForGeneration(args: {
   durationSeconds?: number
   operation?: 'video' | 'lipsync'
   audio?: boolean
+  voiceControl?: boolean
+  referenceImageCount?: number
+  rateCard?: import('./quoteGenerationCredits').RateCardMap
 }): number {
   const duration = Math.max(3, args.durationSeconds ?? 10)
   const quality = args.quality ?? 'pro'
@@ -232,6 +235,9 @@ export function getKlingCreditsForGeneration(args: {
     resolution,
     durationSeconds: duration,
     audio: args.audio !== false,
+    voiceControl: args.voiceControl,
+    referenceImageCount: args.referenceImageCount,
+    rateCard: args.rateCard,
   }).credits
 }
 
@@ -240,6 +246,7 @@ export function getKlingLongTakeCredits(args: {
   quality?: KlingCreditQuality
   plan: { baseSeconds: number; extensions: number; totalSeconds: number }
   masterSeconds?: number
+  rateCard?: import('./quoteGenerationCredits').RateCardMap
 }): number {
   const quality = args.quality ?? 'pro'
   const model = args.model || 'kling-v3-omni'
@@ -247,17 +254,20 @@ export function getKlingLongTakeCredits(args: {
     model,
     quality,
     durationSeconds: args.plan.baseSeconds,
+    rateCard: args.rateCard,
   })
   const perExtend = getKlingCreditsForGeneration({
     model,
     quality,
     durationSeconds: 5,
+    rateCard: args.rateCard,
   })
   const stitchMinutes = Math.max(1, Math.ceil(args.plan.totalSeconds / 60))
   const stitch = RENDER_CREDITS.PER_MINUTE * stitchMinutes
   const lipsync = getKlingCreditsForGeneration({
     operation: 'lipsync',
     durationSeconds: args.masterSeconds ?? args.plan.totalSeconds,
+    rateCard: args.rateCard,
   })
   return base + perExtend * args.plan.extensions + stitch + lipsync
 }
@@ -773,15 +783,21 @@ export function estimateProjectCredits(params: {
 // =============================================================================
 
 export const PROVIDER_COSTS_USD = {
-  imagen_4: 0.04,
-  veo_fast_8s: 0.75,
-  veo_lite_8s: 0.40,
-  veo_quality_4k_8s: 1.30,
+  imagen_4: 0.067, // Gemini 3.1 Flash Image 1K ($0.067/img; 2K = $0.101)
+  gemini_pro_2k: 0.134, // Gemini 3 Pro Image 1K/2K
+  gemini_pro_4k: 0.24, // Gemini 3 Pro Image 4K
+  veo_fast_8s: 1.20, // Veo 3.1 Fast ($0.15/s × 8s)
+  veo_lite_8s: 0.40, // Veo 3.1 Lite ($0.05/s × 8s)
+  veo_quality_4k_8s: 4.80, // Veo 3.1 Quality 4K ($0.60/s × 8s)
   fal_kling_image: 0.05,
-  fal_kling_video_5s: 0.65,
-  fal_kling_video_10s: 1.10,
+  fal_kling_video_5s: 0.70, // Fal Kling 2.6 Pro audio ($0.14/s × 5s)
+  fal_kling_video_10s: 1.40, // Fal Kling 2.6 Pro audio ($0.14/s × 10s)
   topaz_upscale_min: 0.20,
-  elevenlabs_1k_chars: 0.35,
+  elevenlabs_1k_chars: 0.08, // ElevenLabs Multilingual v2/v3/v4 API list ($0.08/1k; Turbo $0.04/1k)
+  elevenlabs_sfx: 0.12, // ElevenLabs SFX API (~200 EL credits)
+  elevenlabs_music_min: 0.15, // ElevenLabs Music API (~900 EL credits/min)
+  lyria_music: 0.08, // Google Lyria 3 Pro ($0.08/song)
+  gemini_tts_1k_chars: 0.02, // Google Gemini Flash TTS (~$0.02/1k chars)
   ffmpeg_render: 0.05,
 } as const;
 
@@ -1044,14 +1060,27 @@ export function getRecommendedStrategy(
 // =============================================================================
 
 export const UPSCALE_CREDITS = {
-  PER_MINUTE: 20, // Topaz AI upscale cost per minute
+  PER_MINUTE: 50, // Synced with VIDEO_CREDITS.TOPAZ_UPSCALE_PER_MIN
+  INSTANT_MULTIPLIER: 2, // Synced with VIDEO_CREDITS.TOPAZ_UPSCALE_INSTANT_MULTIPLIER
 } as const;
 
+/**
+ * Synced with canonical `src/lib/billing/tierCatalog.ts` (lowercase keys for
+ * calculators & plan recommendation + UPPERCASE aliases for legacy callers).
+ */
 export const SUBSCRIPTION_TIERS = {
-  TRIAL: { credits: 1500, price: 4.99 },
-  STARTER: { credits: 4500, price: 49 },
-  PRO: { credits: 15000, price: 149 },
-  STUDIO: { credits: 75000, price: 599 },
+  explorer: { name: 'Explorer', credits: 750, price: 9 },
+  hobbyist: { name: 'Hobbyist', credits: 2000, price: 29 },
+  starter: { name: 'Starter', credits: 4500, price: 59 },
+  pro: { name: 'Pro', credits: 10000, price: 149 },
+  studio: { name: 'Studio', credits: 45000, price: 599 },
+  // Legacy UPPERCASE aliases
+  TRIAL: { name: 'Explorer', credits: 750, price: 9 },
+  EXPLORER: { name: 'Explorer', credits: 750, price: 9 },
+  HOBBYIST: { name: 'Hobbyist', credits: 2000, price: 29 },
+  STARTER: { name: 'Starter', credits: 4500, price: 59 },
+  PRO: { name: 'Pro', credits: 10000, price: 149 },
+  STUDIO: { name: 'Studio', credits: 45000, price: 599 },
 } as const;
 
 /**
