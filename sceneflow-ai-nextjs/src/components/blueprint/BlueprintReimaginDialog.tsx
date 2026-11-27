@@ -18,8 +18,14 @@ import {
   Layers,
   Upload,
   RefreshCw,
-  Zap
+  Zap,
+  Compass,
+  Building2,
 } from 'lucide-react'
+import {
+  buildPropertyShowcaseBlueprintPrompt,
+  DEFAULT_PROPERTY_SHOWCASE_TEMPLATE,
+} from '@/lib/propertyTours/blueprintTemplate'
 import {
   resolveContentIntent,
   resolveContentIntentFromMetadata,
@@ -168,6 +174,56 @@ export function BlueprintReimaginDialog({
   const [synopsisDraft, setSynopsisDraft] = useState('')
   const [ideationSession, setIdeationSession] = useState(0)
   const [treatmentImportOpen, setTreatmentImportOpen] = useState(false)
+  const [propertyTemplateOpen, setPropertyTemplateOpen] = useState(false)
+  const [propTitle, setPropTitle] = useState(DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.propertyTitle)
+  const [propAddress, setPropAddress] = useState(DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.propertyAddress)
+  const [propPrice, setPropPrice] = useState(DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.priceDisplay)
+  const [propAgent, setPropAgent] = useState(DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.agentName)
+  const [propAgency, setPropAgency] = useState(DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.agencyName)
+  const [propSpacesText, setPropSpacesText] = useState(
+    DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.spaces.join(', ')
+  )
+
+  const applyPropertyShowcaseTemplate = () => {
+    const spaces = propSpacesText
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    const prompt = buildPropertyShowcaseBlueprintPrompt({
+      propertyTitle: propTitle.trim() || DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.propertyTitle,
+      propertyAddress: propAddress.trim() || DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.propertyAddress,
+      priceDisplay: propPrice.trim() || DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.priceDisplay,
+      agentName: propAgent.trim() || DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.agentName,
+      agencyName: propAgency.trim() || DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.agencyName,
+      spaces: spaces.length > 0 ? spaces : DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.spaces,
+    })
+    setSynopsis(prompt)
+    setContentType('commercial')
+    setGenre('Luxury Property Showcase')
+    setTone('Consultative Luxury Real Estate Advisor')
+    setDuration('featurette')
+    setAspectRatio('16:9')
+    setProductionFormat('demo')
+    setAudienceDef(
+      createAudienceDefinition({
+        description: DEFAULT_PROPERTY_SHOWCASE_TEMPLATE.targetBuyer,
+        source: 'blueprint',
+      })
+    )
+    if (!existingVariant) {
+      setLockedSynopsis({
+        synopsis: prompt,
+        genre: 'Luxury Property Showcase',
+        tone: 'Consultative Luxury Real Estate Advisor',
+      })
+      setSynopsisDraft('')
+      setIdeationSession((session) => session + 1)
+    }
+    setPropertyTemplateOpen(false)
+    toast.success(
+      'Property Showcase Blueprint Template applied! Ready for 30+ min N/E/S/W Production & 1-click Property Explorer publish.'
+    )
+  }
 
   // Apply an imported script or treatment. Create mode confirms the synopsis immediately.
   // Reimagine mode prefills description, content type, genre, and tone.
@@ -377,6 +433,105 @@ export function BlueprintReimaginDialog({
               </button>
             </div>
           )}
+
+          {/* Property Showcase Blueprint Template (30+ Min Interactive Property Explorer) */}
+          <div className="rounded-xl border border-teal-500/30 bg-teal-950/20 px-3.5 py-2.5 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-teal-200 flex items-center gap-1.5">
+                  <Compass className="h-3.5 w-3.5 text-teal-400 shrink-0" />
+                  Property Showcase Blueprint Template (30+ Min Interactive Tour)
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Pre-structures N/E/S/W walls, Events, Redesigns, Additions &amp; expert EN/ES/JA agent sales narration for 1-click publish to <span className="text-teal-300">/tour/[slug]</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPropertyTemplateOpen((v) => !v)}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-teal-500/40 bg-teal-500/15 px-3 py-1.5 text-xs font-semibold text-teal-100 hover:bg-teal-500/25 transition-colors"
+              >
+                <Building2 className="h-3.5 w-3.5 text-teal-300" />
+                {propertyTemplateOpen ? 'Hide Template' : 'Use Property Template'}
+              </button>
+            </div>
+
+            {propertyTemplateOpen && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 border-t border-teal-500/20 pt-3">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+                    Property Title
+                  </label>
+                  <Input
+                    value={propTitle}
+                    onChange={(e) => setPropTitle(e.target.value)}
+                    className="h-8 bg-slate-950 border-slate-700 text-xs text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+                    List Price
+                  </label>
+                  <Input
+                    value={propPrice}
+                    onChange={(e) => setPropPrice(e.target.value)}
+                    className="h-8 bg-slate-950 border-slate-700 text-xs text-white"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+                    Address
+                  </label>
+                  <Input
+                    value={propAddress}
+                    onChange={(e) => setPropAddress(e.target.value)}
+                    className="h-8 bg-slate-950 border-slate-700 text-xs text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+                    Listing Advisor (Sales Host)
+                  </label>
+                  <Input
+                    value={propAgent}
+                    onChange={(e) => setPropAgent(e.target.value)}
+                    className="h-8 bg-slate-950 border-slate-700 text-xs text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+                    White-Label Brokerage
+                  </label>
+                  <Input
+                    value={propAgency}
+                    onChange={(e) => setPropAgency(e.target.value)}
+                    className="h-8 bg-slate-950 border-slate-700 text-xs text-white"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+                    Property Spaces (comma-separated)
+                  </label>
+                  <Input
+                    value={propSpacesText}
+                    onChange={(e) => setPropSpacesText(e.target.value)}
+                    className="h-8 bg-slate-950 border-slate-700 text-xs text-white"
+                  />
+                </div>
+                <div className="sm:col-span-2 flex justify-end pt-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={applyPropertyShowcaseTemplate}
+                    className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-xs"
+                  >
+                    <Compass className="h-3.5 w-3.5 mr-1.5" />
+                    Apply 30+ Min Property Showcase Template
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {isReimaginMode ? (
           <div className="space-y-3">

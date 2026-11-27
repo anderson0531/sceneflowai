@@ -8,6 +8,7 @@ import {
   ChevronRight,
   ChevronUp,
   Clapperboard,
+  Compass,
   ExternalLink,
   Film,
   Filter,
@@ -40,6 +41,7 @@ import {
   PackageShipDialog,
   type PackageShipTarget,
 } from '@/components/publishing/PackageShipDialog'
+import { PublishToPropertyExplorerDialog } from '@/components/production/PublishToPropertyExplorerDialog'
 import { cn } from '@/lib/utils'
 import { FinalCutStreamsPanel } from '@/components/final-cut/FinalCutStreamsPanel'
 import { StreamLocalizePanel } from '@/components/production/StreamLocalizePanel'
@@ -1048,6 +1050,7 @@ export function ProductionStreamsManager({
   const [preVisDialogLanguage, setPreVisDialogLanguage] = useState<string>('en')
   const [preVisCombineDefault, setPreVisCombineDefault] = useState<boolean>(true)
   const [packageShipOpen, setPackageShipOpen] = useState(false)
+  const [propertyExplorerOpen, setPropertyExplorerOpen] = useState(false)
   const [packageShipTarget, setPackageShipTarget] = useState<PackageShipTarget | null>(null)
   const [quickPreview, setQuickPreview] = useState<QuickPreviewState | null>(null)
   const [filters, setFilters] = useState<StreamExplorerFilters>(DEFAULT_STREAM_EXPLORER_FILTERS)
@@ -1386,6 +1389,17 @@ export function ProductionStreamsManager({
               >
                 <Clapperboard className="w-4 h-4 mr-1.5 text-cyan-300" />
                 Render &amp; Stitch Pre-Vis
+              </Button>
+            ) : null}
+            {projectScenes.length > 0 ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-teal-500/45 bg-teal-950/40 text-teal-200 hover:bg-teal-900/50"
+                onClick={() => setPropertyExplorerOpen(true)}
+              >
+                <Compass className="w-4 h-4 mr-1.5 text-teal-300" />
+                Publish to Property Explorer
               </Button>
             ) : null}
             <Button
@@ -2055,6 +2069,18 @@ export function ProductionStreamsManager({
         streams={displayStreams}
         sceneProductionState={mergedSceneProductionState}
         onSaveMetadata={onSaveMetadata}
+      />
+
+      <PublishToPropertyExplorerDialog
+        open={propertyExplorerOpen}
+        onClose={() => setPropertyExplorerOpen(false)}
+        projectId={projectId}
+        projectTitle={projectTitle}
+        userId={userId}
+        script={script}
+        metadata={effectiveMetadata}
+        sceneProductionState={mergedSceneProductionState}
+        streams={displayStreams}
       />
     </div>
   )
