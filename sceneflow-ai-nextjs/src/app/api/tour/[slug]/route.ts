@@ -5,6 +5,10 @@ import { authOptions } from '@/lib/auth'
 import { PropertyTour, PropertyTourLead, User } from '@/models'
 import { resolveUser } from '@/lib/userHelper'
 import { ensurePropertyToursSchema } from '@/lib/database/migratePropertyTours'
+import {
+  buildPublicDemoPropertyTourDTO,
+  isPublicDemoTourSlug,
+} from '@/lib/propertyTours/hostingPolicy'
 import type { PropertyLeadInquiryType } from '@/models/PropertyTourLead'
 
 export const runtime = 'nodejs'
@@ -67,6 +71,18 @@ export async function GET(
 ) {
   try {
     const { slug } = await context.params
+
+    // Built-in public demo slugs always resolve instantaneously with zero login & zero DB dependency
+    if (isPublicDemoTourSlug(slug)) {
+      return NextResponse.json(
+        { tour: buildPublicDemoPropertyTourDTO(slug) },
+        {
+          status: 200,
+          headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+        }
+      )
+    }
+
     await ensurePropertyToursSchema()
 
     const tour = await PropertyTour.findOne({ where: { slug } })
@@ -123,6 +139,37 @@ export async function POST(
 ) {
   try {
     const { slug } = await context.params
+
+    // Allow interactive buyer lead capture testing on built-in public demo without DB dependency
+    if (isPublicDemoTourSlug(slug)) {
+      const body = (await request.json().catch(() => ({}))) as Record<string, any>
+      if (typeof body.website === 'string' && body.website.trim().length > 0) {
+        return NextResponse.json({
+          success: true,
+          leadId: 'filtered',
+          message: 'Thank you! Your inquiry has been sent.',
+        })
+      }
+      const buyerName = String(body.buyerName || '').trim().slice(0, 160)
+      const buyerEmail = String(body.buyerEmail || '').trim().toLowerCase().slice(0, 255)
+      if (!buyerName || !buyerEmail || !EMAIL_PATTERN.test(buyerEmail)) {
+        return NextResponse.json(
+          { error: 'Please provide your name and a valid email address.' },
+          { status: 400 }
+        )
+      }
+      return NextResponse.json(
+        {
+          success: true,
+          leadId: `demo-${crypto.randomUUID().slice(0, 8)}`,
+          demoMode: true,
+          message:
+            'Demo inquiry received! In a published agency tour, this lead is saved to your dashboard and emailed directly to your listing advisor.',
+        },
+        { status: 201 }
+      )
+    }
+
     await ensurePropertyToursSchema()
 
     const tour = await PropertyTour.findOne({ where: { slug } })

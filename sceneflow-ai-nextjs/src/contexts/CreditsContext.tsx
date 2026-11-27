@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 
 interface CreditBreakdown {
@@ -31,7 +32,13 @@ interface CreditsProviderProps {
 }
 
 export function CreditsProvider({ children }: CreditsProviderProps) {
+  const pathname = usePathname()
   const { data: session, status } = useSession()
+  const isStandalonePublicPlayer =
+    pathname?.startsWith('/tour/') ||
+    pathname?.startsWith('/embed/') ||
+    pathname === '/property-tours' ||
+    pathname?.startsWith('/property-tours/')
   const [credits, setCredits] = useState<CreditBreakdown | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -109,15 +116,19 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
     }
   }, [])
 
-  // Initial fetch when authenticated
+  // Initial fetch when authenticated (skip on standalone public/white-label players)
   useEffect(() => {
+    if (isStandalonePublicPlayer) {
+      setIsLoading(false)
+      return
+    }
     if (status === 'authenticated') {
       refreshCredits()
     } else if (status === 'unauthenticated') {
       setCredits(null)
       setIsLoading(false)
     }
-  }, [status, refreshCredits])
+  }, [status, refreshCredits, isStandalonePublicPlayer])
 
   // Poll credits every 60 seconds when user is active (tab is visible)
   useEffect(() => {

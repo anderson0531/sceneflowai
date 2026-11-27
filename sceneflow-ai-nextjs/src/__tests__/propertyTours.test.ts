@@ -10,9 +10,11 @@ import {
 import {
   buildPropertyPerspectivePrompt,
   buildPropertyTourUrls,
+  buildPublicDemoPropertyTourDTO,
   buildSampleDemoRooms,
   EXTRA_ACTIVE_LISTING_MONTHLY_CREDITS,
   getIncludedActiveListingSlots,
+  isPublicDemoTourSlug,
   slugifyPropertyTitle,
 } from '@/lib/propertyTours/hostingPolicy'
 import { isPublicRoute } from '@/constants/publicRoutes'
@@ -29,29 +31,29 @@ describe('Interactive Property Explorer — Schema, Compass & Asset Resolution',
 
   it('resolves exact style+lighting+lifestyle match, respects showOriginal, and falls back gracefully', () => {
     const rooms = buildSampleDemoRooms()
-    const kitchenNorth = rooms[0].perspectives.N
+    const greatRoomNorth = rooms[0].perspectives.N
 
-    const exact = resolvePerspectiveAsset(kitchenNorth, {
-      style: 'chefs_remodel',
+    const exact = resolvePerspectiveAsset(greatRoomNorth, {
+      style: 'modern_coastal',
       lighting: 'twilight',
       lifestyle: 'entertaining',
     })
     expect(exact.isOriginal).toBe(false)
     expect(exact.isVirtuallyModified).toBe(true)
-    expect(exact.variant?.id).toBe('var-k-n-remodel-twilight')
+    expect(exact.variant?.id).toBe('var-gr-n-coastal-twilight')
 
-    const original = resolvePerspectiveAsset(kitchenNorth, {
-      style: 'chefs_remodel',
+    const original = resolvePerspectiveAsset(greatRoomNorth, {
+      style: 'modern_coastal',
       lighting: 'twilight',
       lifestyle: 'entertaining',
       showOriginal: true,
     })
     expect(original.isOriginal).toBe(true)
     expect(original.isVirtuallyModified).toBe(false)
-    expect(original.imageUrl).toBe(kitchenNorth.originalImageUrl)
+    expect(original.imageUrl).toBe(greatRoomNorth.originalImageUrl)
 
     // Fallback when requested lifestyle does not exist for a style
-    const fallback = resolvePerspectiveAsset(kitchenNorth, {
+    const fallback = resolvePerspectiveAsset(greatRoomNorth, {
       style: 'modern_coastal',
       lighting: 'golden_hour',
       lifestyle: 'family_gathering',
@@ -117,9 +119,31 @@ describe('Property Tour Hosting Policy, Embed URLs & Standalone Routing', () => 
     expect(urls.iframeCode).toContain('?embed=1')
   })
 
-  it('treats /tour/[slug] as a standalone public route and permits iframe embedding in next.config.mjs', () => {
+  it('treats /property-tours and /tour/[slug] as public routes (not behind login) and serves bundled demo assets', () => {
+    expect(isPublicRoute('/property-tours')).toBe(true)
+    expect(isPublicRoute('/tour/demo')).toBe(true)
     expect(isPublicRoute('/tour/418-ocean-crest')).toBe(true)
     expect(isPublicRoute('/dashboard/property-tours')).toBe(false)
+    expect(isPublicDemoTourSlug('demo')).toBe(true)
+
+    const demoTour = buildPublicDemoPropertyTourDTO('demo')
+    expect(demoTour.status).toBe('published')
+    expect(demoTour.blueprintRooms.length).toBeGreaterThanOrEqual(3)
+
+    const publicDir = path.resolve(__dirname, '../../public')
+    for (const room of demoTour.blueprintRooms) {
+      for (const dir of ['N', 'E', 'S', 'W'] as const) {
+        const p = room.perspectives[dir]
+        if (p.originalImageUrl?.startsWith('/')) {
+          expect(fs.existsSync(path.join(publicDir, p.originalImageUrl))).toBe(true)
+        }
+        for (const v of p.variants) {
+          if (v.imageUrl.startsWith('/')) {
+            expect(fs.existsSync(path.join(publicDir, v.imageUrl))).toBe(true)
+          }
+        }
+      }
+    }
 
     const nextConfigSrc = fs.readFileSync(
       path.resolve(__dirname, '../../next.config.mjs'),

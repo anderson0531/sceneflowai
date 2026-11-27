@@ -17,6 +17,7 @@ import {
   type PropertyLightingId,
   type PropertyRoom,
   type PropertyStyleId,
+  type PropertyTourDTO,
 } from './types'
 
 export const EXTRA_ACTIVE_LISTING_MONTHLY_CREDITS = 150 // $1.50/mo face value per extra active listing
@@ -128,54 +129,68 @@ export function buildPropertyTourUrls(slug: string, baseUrl?: string): {
   return { shareUrl, embedUrl, iframeCode }
 }
 
+export const PUBLIC_DEMO_TOUR_SLUGS = ['demo', 'malibu-oceanfront-demo'] as const
+
+export function isPublicDemoTourSlug(slug: string): boolean {
+  const normalized = (slug || '').trim().toLowerCase()
+  return (PUBLIC_DEMO_TOUR_SLUGS as readonly string[]).includes(normalized)
+}
+
 /**
  * Creates a rich, immediately playable Interactive Demo Property Tour using
- * SceneFlow's existing hosted architectural/showcase visuals so users can test
- * N/E/S/W compass navigation, Before/After slider, and Style/Lighting toggles in 1 click.
+ * bundled photorealistic architectural plates in `/images/property-tours/demo/`
+ * so buyers & agencies can test N/E/S/W compass navigation, Before/After slider,
+ * and Style/Lighting toggles with ZERO login and ZERO database dependency.
  */
 export function buildSampleDemoRooms(): PropertyRoom[] {
   const now = new Date().toISOString()
-  // Reuse verified public images already bundled in SceneFlow so the demo works 100% offline/out-of-box
-  const coastalBase = '/images/use-cases/real-estate-luxury.webp'
-  const fallbackHero = '/landing/key-features/screenshots/new-series.png'
+
+  const greatRoomNOriginal = '/images/property-tours/demo/great-room-n-original.jpg'
+  const greatRoomNCoastal = '/images/property-tours/demo/great-room-n-coastal.jpg'
+  const greatRoomECoastal = '/images/property-tours/demo/great-room-e-coastal.jpg'
+  const greatRoomSCoastal = '/images/property-tours/demo/great-room-s-coastal.jpg'
+  const greatRoomWCoastal = '/images/property-tours/demo/great-room-w-coastal.jpg'
+  const kitchenNOriginal = '/images/property-tours/demo/kitchen-n-original.jpg'
+  const kitchenNRemodel = '/images/property-tours/demo/kitchen-n-remodel.jpg'
+  const poolNTwilight = '/images/property-tours/demo/pool-n-twilight.jpg'
 
   return [
     {
-      id: 'room-kitchen-demo',
-      name: "Oceanfront Chef's Kitchen",
-      roomType: 'kitchen',
+      id: 'room-great-room-demo',
+      name: 'Oceanfront Great Room',
+      roomType: 'living',
       orderIndex: 0,
-      description: 'Open-concept coastal kitchen with 12-foot island and panoramic glass sliders.',
-      renovationEstimateUsd: 85000,
+      description: 'Panoramic coastal living room with 14-foot glass sliders, white oak plank floors, and exposed cedar beams.',
+      renovationEstimateUsd: 42000,
       anchorDirection: 'N',
       narrationAudioUrl: null,
-      narrationScript: 'Welcome to the oceanfront kitchen — toggle between As-Is, Modern Coastal, and Twilight Entertaining across all four walls.',
+      narrationScript: 'Rotate N → E → S → W across all four architectural walls, or drag the Compare slider to reveal the vacant original photo.',
       perspectives: {
         N: {
           direction: 'N',
-          label: 'North — Main Island & Ocean Sliders',
-          originalImageUrl: coastalBase,
+          label: 'North — Panoramic Ocean & Infinity Pool View',
+          originalImageUrl: greatRoomNOriginal,
           transitionToNextVideoUrl: null,
           variants: [
             {
-              id: 'var-k-n-coastal-day',
+              id: 'var-gr-n-coastal-day',
               style: 'modern_coastal',
               lighting: 'daylight',
               lifestyle: 'architectural',
-              imageUrl: coastalBase,
+              imageUrl: greatRoomNCoastal,
               isVirtuallyModified: true,
-              promptSummary: 'Modern Coastal daylight remodel with Calacatta waterfall island',
+              promptSummary: 'Modern Coastal Luxury staging preserving exact glass sliders, oak planks, and Pacific horizon',
               generatedAt: now,
               creditsUsed: 30,
             },
             {
-              id: 'var-k-n-remodel-twilight',
-              style: 'chefs_remodel',
+              id: 'var-gr-n-coastal-twilight',
+              style: 'modern_coastal',
               lighting: 'twilight',
               lifestyle: 'entertaining',
-              imageUrl: coastalBase,
+              imageUrl: poolNTwilight,
               isVirtuallyModified: true,
-              promptSummary: "Chef's Remodel at twilight staged for evening entertaining",
+              promptSummary: 'Twilight entertaining view opening directly onto illuminated oceanfront terrace',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -183,18 +198,18 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
         },
         E: {
           direction: 'E',
-          label: 'East — Wine Wall & Breakfast Nook',
-          originalImageUrl: coastalBase,
+          label: 'East — Limestone Fireplace & Built-In Oak Shelving',
+          originalImageUrl: greatRoomNOriginal,
           transitionToNextVideoUrl: null,
           variants: [
             {
-              id: 'var-k-e-coastal-day',
+              id: 'var-gr-e-coastal-day',
               style: 'modern_coastal',
               lighting: 'daylight',
               lifestyle: 'architectural',
-              imageUrl: coastalBase,
+              imageUrl: greatRoomECoastal,
               isVirtuallyModified: true,
-              promptSummary: 'Cross-angle locked East wall matching North oak & marble palette',
+              promptSummary: 'Cross-angle locked East wall matching North white oak planks & exposed cedar beams',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -202,18 +217,18 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
         },
         S: {
           direction: 'S',
-          label: 'South — Great Room Sightline',
-          originalImageUrl: coastalBase,
+          label: 'South — Floating Staircase & Sculptural Foyer',
+          originalImageUrl: greatRoomNOriginal,
           transitionToNextVideoUrl: null,
           variants: [
             {
-              id: 'var-k-s-coastal-day',
+              id: 'var-gr-s-coastal-day',
               style: 'modern_coastal',
               lighting: 'daylight',
               lifestyle: 'architectural',
-              imageUrl: coastalBase,
+              imageUrl: greatRoomSCoastal,
               isVirtuallyModified: true,
-              promptSummary: 'Cross-angle locked South sightline into living room',
+              promptSummary: 'Cross-angle locked South foyer wall with matching custom white oak millwork',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -221,18 +236,118 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
         },
         W: {
           direction: 'W',
-          label: 'West — Butler Pantry & Espresso Bar',
-          originalImageUrl: coastalBase,
+          label: 'West — Open Dining & Chef Kitchen Sightline',
+          originalImageUrl: greatRoomNOriginal,
           transitionToNextVideoUrl: null,
           variants: [
             {
-              id: 'var-k-w-coastal-day',
+              id: 'var-gr-w-coastal-day',
               style: 'modern_coastal',
               lighting: 'daylight',
               lifestyle: 'architectural',
-              imageUrl: coastalBase,
+              imageUrl: greatRoomWCoastal,
               isVirtuallyModified: true,
-              promptSummary: 'Cross-angle locked West wall custom cabinetry',
+              promptSummary: 'Cross-angle locked West sightline into dining room and quartzite kitchen island',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+      },
+    },
+    {
+      id: 'room-kitchen-demo',
+      name: "Chef's Kitchen Remodel",
+      roomType: 'kitchen',
+      orderIndex: 1,
+      description: 'Compare the dated cherry/granite existing kitchen against a bespoke Taj Mahal quartzite & rift-cut oak remodel.',
+      renovationEstimateUsd: 95000,
+      anchorDirection: 'N',
+      narrationAudioUrl: null,
+      narrationScript: 'Slide Before / After to see how a $95K architectural remodel transforms the existing footprint without moving a single wall.',
+      perspectives: {
+        N: {
+          direction: 'N',
+          label: 'North — Waterfall Quartzite Center Island',
+          originalImageUrl: kitchenNOriginal,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-k-n-remodel-day',
+              style: 'chefs_remodel',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              imageUrl: kitchenNRemodel,
+              isVirtuallyModified: true,
+              promptSummary: "Chef's Remodel: bookmatched Taj Mahal quartzite island, rift-cut oak cabinetry, unlacquered brass",
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-k-n-coastal-day',
+              style: 'modern_coastal',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              imageUrl: kitchenNRemodel,
+              isVirtuallyModified: true,
+              promptSummary: 'Modern Coastal kitchen remodel preserving exact window and island geometry',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+        E: {
+          direction: 'E',
+          label: 'East — Open Dining & Living Transition',
+          originalImageUrl: kitchenNOriginal,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-k-e-remodel-day',
+              style: 'chefs_remodel',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              imageUrl: greatRoomWCoastal,
+              isVirtuallyModified: true,
+              promptSummary: 'Cross-angle locked East kitchen-to-dining sightline',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+        S: {
+          direction: 'S',
+          label: 'South — Hearth & Great Room View',
+          originalImageUrl: kitchenNOriginal,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-k-s-remodel-day',
+              style: 'chefs_remodel',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              imageUrl: greatRoomECoastal,
+              isVirtuallyModified: true,
+              promptSummary: 'Cross-angle locked South view toward limestone fireplace',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+        W: {
+          direction: 'W',
+          label: 'West — Ocean Terrace Access',
+          originalImageUrl: kitchenNOriginal,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-k-w-remodel-day',
+              style: 'chefs_remodel',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              imageUrl: greatRoomNCoastal,
+              isVirtuallyModified: true,
+              promptSummary: 'Cross-angle locked West view opening to ocean terrace',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -244,17 +359,17 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
       id: 'room-terrace-demo',
       name: 'Infinity Pool & Twilight Terrace',
       roomType: 'backyard_pool',
-      orderIndex: 1,
-      description: 'Zero-edge pool deck with sunken fire lounge and outdoor kitchen.',
-      renovationEstimateUsd: 120000,
+      orderIndex: 2,
+      description: 'Zero-edge oceanfront pool deck with sunken cedar firepit lounge and resort-grade twilight lighting.',
+      renovationEstimateUsd: 125000,
       anchorDirection: 'N',
       narrationAudioUrl: null,
-      narrationScript: 'Step onto the infinity terrace and preview golden-hour lounging or twilight entertaining.',
+      narrationScript: 'Experience twilight entertaining on the infinity terrace with glowing underwater lighting and sunken fire lounge.',
       perspectives: {
         N: {
           direction: 'N',
-          label: 'North — Infinity Edge & Horizon',
-          originalImageUrl: coastalBase,
+          label: 'North — Infinity Edge, Firepit & Pacific Sunset',
+          originalImageUrl: greatRoomNOriginal,
           transitionToNextVideoUrl: null,
           variants: [
             {
@@ -262,9 +377,20 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'modern_coastal',
               lighting: 'twilight',
               lifestyle: 'entertaining',
-              imageUrl: coastalBase,
+              imageUrl: poolNTwilight,
               isVirtuallyModified: true,
-              promptSummary: 'Twilight infinity pool deck with glowing underwater lights & fire lounge',
+              promptSummary: 'Twilight infinity pool deck with glowing underwater lights, cedar firepit & pergola dining',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-t-n-coastal-day',
+              style: 'modern_coastal',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              imageUrl: poolNTwilight,
+              isVirtuallyModified: true,
+              promptSummary: 'Oceanfront infinity pool terrace & outdoor entertaining lounge',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -272,26 +398,117 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
         },
         E: {
           direction: 'E',
-          label: 'East — Outdoor Dining Pergola',
-          originalImageUrl: fallbackHero,
+          label: 'East — Indoor-Outdoor Glass Pavilion',
+          originalImageUrl: greatRoomNOriginal,
           transitionToNextVideoUrl: null,
-          variants: [],
+          variants: [
+            {
+              id: 'var-t-e-coastal-day',
+              style: 'modern_coastal',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              imageUrl: greatRoomNCoastal,
+              isVirtuallyModified: true,
+              promptSummary: 'Indoor-outdoor seamless glass transition from terrace into Great Room',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
         },
         S: {
           direction: 'S',
-          label: 'South — Glass Facade View Back to Villa',
-          originalImageUrl: coastalBase,
+          label: 'South — Chef Kitchen & Serving Bar',
+          originalImageUrl: kitchenNOriginal,
           transitionToNextVideoUrl: null,
-          variants: [],
+          variants: [
+            {
+              id: 'var-t-s-coastal-day',
+              style: 'modern_coastal',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              imageUrl: kitchenNRemodel,
+              isVirtuallyModified: true,
+              promptSummary: 'Direct sightline back to interior entertaining kitchen',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
         },
         W: {
           direction: 'W',
-          label: 'West — Sunset Firepit Lounge',
-          originalImageUrl: coastalBase,
+          label: 'West — Sunset Coastal Lounge',
+          originalImageUrl: greatRoomNOriginal,
           transitionToNextVideoUrl: null,
-          variants: [],
+          variants: [
+            {
+              id: 'var-t-w-coastal-twilight',
+              style: 'modern_coastal',
+              lighting: 'twilight',
+              lifestyle: 'entertaining',
+              imageUrl: poolNTwilight,
+              isVirtuallyModified: true,
+              promptSummary: 'Sunset firepit & twilight horizon deck',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
         },
       },
     },
   ]
+}
+
+/**
+ * Full zero-DB, zero-login PropertyTourDTO used by `/property-tours` and `/tour/demo`.
+ */
+export function buildPublicDemoPropertyTourDTO(slug: string = 'demo'): PropertyTourDTO {
+  const now = new Date().toISOString()
+  const rooms = buildSampleDemoRooms()
+  return {
+    id: 'public-demo-malibu-742',
+    userId: 'public-demo',
+    producerProfileId: null,
+    slug,
+    title: '742 Oceanfront Terrace — Modern Coastal Estate',
+    propertyAddress: '742 Oceanfront Terrace, Malibu, CA 90265',
+    propertySpecs: {
+      priceUsd: 8450000,
+      beds: 5,
+      baths: 6.5,
+      sqft: 6240,
+      lotSize: '0.68 Acres',
+      yearBuilt: 2024,
+      mlsNumber: 'MLS #26-841920',
+      propertyType: 'Oceanfront Architectural Estate',
+    },
+    status: 'published',
+    hostingTier: 'standard',
+    monthlyHostingCredits: EXTRA_ACTIVE_LISTING_MONTHLY_CREDITS,
+    publishedAt: now,
+    hostingRenewedAt: now,
+    branding: {
+      agencyName: 'Pacific Crest Luxury Estates',
+      logoUrl: null,
+      primaryColor: '#06b6d4',
+      agentName: 'Elena Vance',
+      agentTitle: 'Senior Architectural Advisor · DRE #02148930',
+      agentEmail: 'elena@pacificcrestestates.example',
+      agentPhone: '(310) 555-0194',
+      agentPhotoUrl: null,
+      ctaLabel: 'Schedule Private Showing',
+      ctaUrl: null,
+      hideSceneFlowBranding: false,
+      disclosureText: 'Virtually Staged · Concept Visualization (Toggle "As-Is" for Original)',
+    },
+    defaultRoomId: rooms[0].id,
+    availableStyles: ['as_is', 'modern_coastal', 'chefs_remodel'],
+    availableLighting: ['daylight', 'golden_hour', 'twilight'],
+    availableLifestyles: ['architectural', 'quiet_morning', 'entertaining'],
+    blueprintRooms: rooms,
+    viewCount: 1428,
+    leadCount: 27,
+    totalGenerationCredits: 360,
+    createdAt: now,
+    updatedAt: now,
+  }
 }
