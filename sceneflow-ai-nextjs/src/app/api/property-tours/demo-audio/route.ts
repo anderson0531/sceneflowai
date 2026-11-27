@@ -8,8 +8,10 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const ROOM_KEY_TO_ID: Record<string, string> = {
+  aerial: 'room-aerial-demo',
   'great-room': 'room-great-room-demo',
   kitchen: 'room-kitchen-demo',
+  'primary-suite': 'room-primary-suite-demo',
   terrace: 'room-terrace-demo',
 }
 

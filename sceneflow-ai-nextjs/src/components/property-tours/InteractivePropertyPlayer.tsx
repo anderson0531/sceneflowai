@@ -15,6 +15,7 @@ import {
   Film,
   Globe,
   Hammer,
+  HeartHandshake,
   Home,
   Image as ImageIcon,
   Info,
@@ -32,8 +33,11 @@ import {
   Phone,
   Play,
   Send,
+  Settings2,
+  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  Subtitles,
   Sun,
   Sunset,
   UserCheck,
@@ -73,6 +77,102 @@ export interface InteractivePropertyPlayerProps {
 }
 
 type InquiryType = 'schedule_showing' | 'renovation_quote' | 'financing_info' | 'general'
+type BuyerLifestyleProfile = 'explorer' | 'entertainer' | 'family' | 'executive' | 'investor'
+type PrimaryExploreTab = 'original' | 'redesign' | 'events' | 'additions' | 'lifestyle'
+type DisplayLocaleUnit = 'usd_sqft' | 'eur_sqm' | 'jpy_sqm'
+
+const BUYER_LIFESTYLE_MATCHES: Array<{
+  id: BuyerLifestyleProfile
+  label: string
+  decisionCues: string[]
+  recommendation: string
+  ctaText: string
+  targetRoomMatch: RegExp
+  targetEvent?: PropertyEventId
+  targetAddition?: PropertyAdditionId
+  targetStyle?: PropertyStyleId
+  targetLighting?: PropertyLightingId
+}> = [
+  {
+    id: 'explorer',
+    label: 'All Spaces',
+    decisionCues: ['4-wall N/E/S/W compass', '1-tap Original Compare', 'Guided 30s Intro'],
+    recommendation:
+      'Free buyer-controlled exploration — steer N/E/S/W angles, compare unedited photos, or launch a 30s guided intro.',
+    ctaText: 'Start 30s Intro',
+    targetRoomMatch: /great|living|aerial/i,
+  },
+  {
+    id: 'entertainer',
+    label: 'Entertainer',
+    decisionCues: ['Indoor-outdoor flow for 35+ guests', '+ Wine Bar concept ($40K–$60K)', 'Twilight firepit deck'],
+    recommendation:
+      'Recommended: Sunset Cocktail Party in the Great Room + Glass Wine Bar addition + Twilight Infinity Terrace.',
+    ctaText: 'Preview Party Flow',
+    targetRoomMatch: /great|living/i,
+    targetEvent: 'cocktail_party',
+    targetLighting: 'twilight',
+  },
+  {
+    id: 'family',
+    label: 'Growing Family',
+    decisionCues: ['Open kitchen-to-pool sightlines', '5 Beds · 6.5 Baths privacy', 'Multi-gen Guest Casita option'],
+    recommendation:
+      'Recommended: Sunday Family Gathering in the Great Room, open remodeled Kitchen sightlines, and optional Guest Casita.',
+    ctaText: 'Preview Family Living',
+    targetRoomMatch: /great|living/i,
+    targetEvent: 'family_gathering',
+    targetLighting: 'golden_hour',
+  },
+  {
+    id: 'executive',
+    label: 'Remote Executive',
+    decisionCues: ['Acoustic Primary Suite separation', 'Golden morning natural light', 'Detached ADU private studio'],
+    recommendation:
+      'Recommended: Serene Primary Ocean Suite plus detached Glass Guest Casita ADU ideal as a quiet oceanfront studio.',
+    ctaText: 'Preview Executive Suite',
+    targetRoomMatch: /primary|suite|office/i,
+    targetStyle: 'modern_coastal',
+    targetLighting: 'golden_hour',
+  },
+  {
+    id: 'investor',
+    label: 'Equity & Investor',
+    decisionCues: ['Kitchen remodel appraisal lift', 'Detached ADU dual-key appeal', 'Malibu coastal scarcity'],
+    recommendation:
+      'Recommended: Chef Kitchen Remodel (est. $85K–$110K concept) + Detached Guest Casita ADU for dual-key rental appeal.',
+    ctaText: 'Preview Equity Upside',
+    targetRoomMatch: /kitchen/i,
+    targetStyle: 'chefs_remodel',
+    targetLighting: 'daylight',
+  },
+]
+
+function formatLocalizedListingPrice(priceUsd?: number | null, unit: DisplayLocaleUnit = 'usd_sqft'): string | null {
+  if (priceUsd == null || !Number.isFinite(priceUsd) || priceUsd <= 0) return null
+  if (unit === 'eur_sqm') {
+    const eur = Math.round(priceUsd * 0.92)
+    return `~€${new Intl.NumberFormat('de-DE').format(eur)}`
+  }
+  if (unit === 'jpy_sqm') {
+    const jpy = Math.round((priceUsd * 152) / 1_000_000) * 1_000_000
+    return `~¥${new Intl.NumberFormat('ja-JP').format(jpy)}`
+  }
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(priceUsd)
+}
+
+function formatLocalizedArea(sqft?: number | null, unit: DisplayLocaleUnit = 'usd_sqft'): { value: string; label: string } | null {
+  if (sqft == null || !Number.isFinite(sqft) || sqft <= 0) return null
+  if (unit === 'eur_sqm' || unit === 'jpy_sqm') {
+    const sqm = Math.round(sqft * 0.092903)
+    return { value: new Intl.NumberFormat('en-US').format(sqm), label: 'm²' }
+  }
+  return { value: new Intl.NumberFormat('en-US').format(Math.round(sqft)), label: 'Sq Ft' }
+}
 
 const COMPASS_FULL_LABELS: Record<CompassDirection, string> = {
   N: 'North',
@@ -255,6 +355,15 @@ export function InteractivePropertyPlayer({
   const [guideLanguage, setGuideLanguage] = useState<PropertyLanguageCode>('en')
   const [isGuidePlaying, setIsGuidePlaying] = useState(false)
   const [activeMusicTrackId, setActiveMusicTrackId] = useState<string>('off')
+  const [buyerProfile, setBuyerProfile] = useState<BuyerLifestyleProfile>('explorer')
+  const [autoTourActive, setAutoTourActive] = useState(false)
+  const [disclosureModalOpen, setDisclosureModalOpen] = useState(false)
+  const [exploreTab, setExploreTab] = useState<PrimaryExploreTab>('redesign')
+  const [tourControlsOpen, setTourControlsOpen] = useState(false)
+  const [captionsEnabled, setCaptionsEnabled] = useState(false)
+  const [displayUnit, setDisplayUnit] = useState<DisplayLocaleUnit>('usd_sqft')
+  const [smartIntroDismissed, setSmartIntroDismissed] = useState(false)
+  const [quickViewOriginal, setQuickViewOriginal] = useState(false)
 
   const guideAudioRef = useRef<HTMLAudioElement | null>(null)
   const musicAudioRef = useRef<HTMLAudioElement | null>(null)
@@ -309,13 +418,24 @@ export function InteractivePropertyPlayer({
         lifestyle: selectedLifestyle,
         event: selectedEvent,
         addition: selectedAddition,
-        showOriginal: selectedStyle === 'as_is' && selectedEvent === 'none' && selectedAddition === 'none',
+        showOriginal:
+          quickViewOriginal ||
+          (selectedStyle === 'as_is' && selectedEvent === 'none' && selectedAddition === 'none'),
       }),
-    [activePerspective, selectedStyle, selectedLighting, selectedLifestyle, selectedEvent, selectedAddition]
+    [
+      activePerspective,
+      selectedStyle,
+      selectedLighting,
+      selectedLifestyle,
+      selectedEvent,
+      selectedAddition,
+      quickViewOriginal,
+    ]
   )
 
   const activeGuideTrack = useMemo(() => {
-    if (!activeRoom || guideMode === 'off') return null
+    if (!activeRoom) return null
+    if (guideMode === 'off' && !captionsEnabled) return null
     if (guideMode === 'agent_sync') {
       return (
         activeRoom.agentSyncByLanguage?.[guideLanguage] ||
@@ -333,7 +453,7 @@ export function InteractivePropertyPlayer({
         ? { script: activeRoom.narrationScript, audioUrl: activeRoom.narrationAudioUrl }
         : null)
     )
-  }, [activeRoom, guideMode, guideLanguage])
+  }, [activeRoom, guideMode, guideLanguage, captionsEnabled])
 
   const activeMusicTrack = useMemo(
     () => musicTracks.find((m) => m.id === activeMusicTrackId) ?? null,
@@ -422,6 +542,80 @@ export function InteractivePropertyPlayer({
     musicEl.play().catch(() => {})
   }, [activeMusicTrack, isGuidePlaying])
 
+  const activeBuyerMatch = useMemo(
+    () => BUYER_LIFESTYLE_MATCHES.find((m) => m.id === buyerProfile) ?? BUYER_LIFESTYLE_MATCHES[0],
+    [buyerProfile]
+  )
+
+  const handleChangeLanguage = useCallback((lang: PropertyLanguageCode) => {
+    setGuideLanguage(lang)
+    setDisplayUnit(lang === 'es' ? 'eur_sqm' : lang === 'ja' ? 'jpy_sqm' : 'usd_sqft')
+  }, [])
+
+  const startSmartIntro = useCallback(() => {
+    setSmartIntroDismissed(true)
+    setQuickViewOriginal(false)
+    setCaptionsEnabled(true)
+    setGuideMode('narration')
+    setAutoTourActive(true)
+    const aerialOrFirst =
+      sortedRooms.find((r) => /aerial|arrival|great/i.test(r.name)) ?? sortedRooms[0]
+    if (aerialOrFirst) {
+      setActiveRoomId(aerialOrFirst.id)
+      setDirection(aerialOrFirst.anchorDirection ?? 'N')
+    }
+  }, [sortedRooms])
+
+  const applyLifestyleRecommendation = useCallback(
+    (profileId: BuyerLifestyleProfile) => {
+      setSmartIntroDismissed(true)
+      setQuickViewOriginal(false)
+      setBuyerProfile(profileId)
+      const match = BUYER_LIFESTYLE_MATCHES.find((m) => m.id === profileId)
+      if (!match) return
+      if (profileId === 'explorer') {
+        setAutoTourActive(false)
+        setSelectedEvent('none')
+        setSelectedAddition('none')
+        return
+      }
+      setAutoTourActive(false)
+      const targetRoom =
+        sortedRooms.find((r) => match.targetRoomMatch.test(r.name)) ?? sortedRooms[0]
+      if (targetRoom) {
+        setActiveRoomId(targetRoom.id)
+        setDirection(targetRoom.anchorDirection ?? 'N')
+      }
+      setSlideDir(0)
+      setSelectedEvent(match.targetEvent ?? 'none')
+      setSelectedAddition(match.targetAddition ?? 'none')
+      if (match.targetStyle) setSelectedStyle(match.targetStyle)
+      if (match.targetLighting) setSelectedLighting(match.targetLighting)
+    },
+    [sortedRooms, startSmartIntro]
+  )
+
+  // Guided Auto-Tour loop: smoothly rotates N->E->S->W and advances rooms every 6s
+  useEffect(() => {
+    if (!autoTourActive || compareMode) return
+    const timer = setInterval(() => {
+      setDirection((prevDir) => {
+        if (prevDir === 'W' && sortedRooms.length > 1) {
+          const curIdx = sortedRooms.findIndex((r) => r.id === activeRoom?.id)
+          const nextRoom = sortedRooms[(curIdx + 1) % sortedRooms.length]
+          if (nextRoom) {
+            setActiveRoomId(nextRoom.id)
+            setSlideDir(0)
+            return nextRoom.anchorDirection ?? 'N'
+          }
+        }
+        setSlideDir(1)
+        return getNextClockwiseDirection(prevDir)
+      })
+    }, 6000)
+    return () => clearInterval(timer)
+  }, [autoTourActive, compareMode, sortedRooms, activeRoom?.id])
+
   const toggleGuidePlayPause = useCallback(() => {
     if (guideMode === 'off') {
       setGuideMode('narration')
@@ -470,6 +664,8 @@ export function InteractivePropertyPlayer({
 
   const navigateToDirection = useCallback(
     (next: CompassDirection) => {
+      setSmartIntroDismissed(true)
+      setAutoTourActive(false)
       setDirection((prev) => {
         if (prev === next) return prev
         setSlideDir(getRotationSign(prev, next))
@@ -480,6 +676,8 @@ export function InteractivePropertyPlayer({
   )
 
   const rotateClockwise = useCallback(() => {
+    setSmartIntroDismissed(true)
+    setAutoTourActive(false)
     setDirection((prev) => {
       setSlideDir(1)
       return getNextClockwiseDirection(prev)
@@ -487,6 +685,8 @@ export function InteractivePropertyPlayer({
   }, [])
 
   const rotateCounterClockwise = useCallback(() => {
+    setSmartIntroDismissed(true)
+    setAutoTourActive(false)
     setDirection((prev) => {
       setSlideDir(-1)
       return getPrevClockwiseDirection(prev)
@@ -495,6 +695,8 @@ export function InteractivePropertyPlayer({
 
   const handleSelectRoom = useCallback(
     (room: PropertyRoom) => {
+      setSmartIntroDismissed(true)
+      setAutoTourActive(false)
       setSlideDir(0)
       setActiveRoomId(room.id)
       setDirection(room.anchorDirection ?? 'N')
@@ -610,6 +812,27 @@ export function InteractivePropertyPlayer({
     [compareMode, rotateClockwise, rotateCounterClockwise]
   )
 
+  const activeEventLabel =
+    selectedEvent !== 'none'
+      ? PROPERTY_EVENT_PRESETS.find((e) => e.id === selectedEvent)?.label
+      : null
+  const activeAdditionLabel =
+    selectedAddition !== 'none'
+      ? PROPERTY_ADDITION_PRESETS.find((a) => a.id === selectedAddition)?.label
+      : null
+  const activeVisionPlainLabel =
+    activeAdditionLabel ||
+    activeEventLabel ||
+    (quickViewOriginal ? 'Unedited Original Photo' : activeStylePreset.label)
+
+  const buyerContextSummary = [
+    activeRoom?.name ? `Space: ${activeRoom.name} (${COMPASS_FULL_LABELS[direction]})` : null,
+    `Vision: ${activeVisionPlainLabel}`,
+    buyerProfile !== 'explorer' ? `Buyer Profile: ${activeBuyerMatch.label}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!buyerName.trim() || !buyerEmail.trim()) {
@@ -628,8 +851,9 @@ export function InteractivePropertyPlayer({
           buyerPhone: buyerPhone.trim() || undefined,
           inquiryType,
           selectedRoomName: activeRoom?.name || undefined,
-          selectedStyle: activeStylePreset.label,
-          message: buyerMessage.trim() || undefined,
+          selectedStyle: activeVisionPlainLabel,
+          message:
+            [buyerContextSummary, buyerMessage.trim()].filter(Boolean).join('\n\n') || undefined,
           website: '',
         }),
       })
@@ -654,18 +878,18 @@ export function InteractivePropertyPlayer({
   }
 
   const specs = tour.propertySpecs || {}
-  const formattedPrice = formatCurrencyFull(specs.priceUsd)
-  const formattedSqft = formatNumber(specs.sqft)
+  const formattedPrice = formatLocalizedListingPrice(specs.priceUsd, displayUnit)
+  const formattedArea = formatLocalizedArea(specs.sqft, displayUnit)
   const hasSpecsStrip = Boolean(
     formattedPrice ||
       specs.beds ||
       specs.baths ||
-      formattedSqft ||
+      formattedArea ||
       tour.propertyAddress ||
       specs.mlsNumber
   )
 
-  const stageKey = `${activeRoom?.id ?? 'none'}-${direction}-${resolved.variant?.id ?? (resolved.isOriginal ? 'orig' : 'empty')}-${selectedStyle}-${selectedLighting}-${selectedLifestyle}-${selectedEvent}-${selectedAddition}`
+  const stageKey = `${activeRoom?.id ?? 'none'}-${direction}-${resolved.variant?.id ?? (resolved.isOriginal ? 'orig' : 'empty')}-${selectedStyle}-${selectedLighting}-${selectedLifestyle}-${selectedEvent}-${selectedAddition}-${quickViewOriginal ? 'orig' : 'ai'}`
 
   const showMotionVideo = Boolean(resolved.motionVideoUrl && preferMotion && !compareMode)
 
@@ -830,11 +1054,14 @@ export function InteractivePropertyPlayer({
                 <strong className="text-white">{specs.baths}</strong> Baths
               </span>
             )}
-            {formattedSqft && (
+            {formattedArea && (
               <span className="inline-flex items-center gap-1">
                 <Home className="h-3.5 w-3.5 text-slate-400" />
-                <strong className="text-white">{formattedSqft}</strong> Sq Ft
+                <strong className="text-white">{formattedArea.value}</strong> {formattedArea.label}
               </span>
+            )}
+            {displayUnit !== 'usd_sqft' && (
+              <span className="text-[10px] text-slate-400">(Approx. localized)</span>
             )}
             {specs.mlsNumber && (
               <span className="text-slate-400">MLS #{specs.mlsNumber}</span>
@@ -981,27 +1208,87 @@ export function InteractivePropertyPlayer({
             </>
           )}
 
-          {/* Top-Left: MLS Compliance Disclosure Pill (auto-hidden when viewing Original) */}
-          <div className="absolute left-2.5 top-2.5 z-20 flex max-w-[58%] items-center gap-1.5 sm:left-4 sm:top-4 sm:max-w-none">
+          {/* Top-Left: Clickable AI Visualization & Architectural Accuracy Disclosure Pill (concise on mobile) */}
+          <div
+            className="absolute left-2.5 top-2.5 z-20 flex max-w-[44%] items-center gap-1.5 sm:left-4 sm:top-4 sm:max-w-[52%]"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
             {!resolved.isOriginal && resolved.isVirtuallyModified && (
-              <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-2.5 py-1 text-[10px] sm:px-3 sm:text-[11px] font-medium text-white backdrop-blur-md shadow-md">
+              <button
+                type="button"
+                onClick={() => setDisclosureModalOpen(true)}
+                title="View AI Visualization & Architectural Accuracy Disclosure"
+                className="inline-flex min-w-0 items-center gap-1 sm:gap-1.5 rounded-full border border-white/25 bg-black/75 px-2 py-1 text-[10px] sm:px-3 sm:text-[11px] font-medium text-white backdrop-blur-md shadow-md hover:bg-black/90 transition-colors"
+              >
                 <Sparkles className="h-3 w-3 shrink-0" style={{ color: brandColor }} />
-                <span className="truncate">{disclosureText}</span>
-              </div>
+                <span className="sm:hidden truncate">AI-Enhanced</span>
+                <span className="hidden sm:inline truncate">{disclosureText}</span>
+                <Info className="h-3 w-3 shrink-0 text-slate-300" />
+              </button>
             )}
             {resolved.isOriginal && resolved.imageUrl && (
-              <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-emerald-400/30 bg-black/70 px-2.5 py-1 text-[10px] sm:px-3 sm:text-[11px] font-medium text-emerald-200 backdrop-blur-md">
-                <ImageIcon className="h-3 w-3 shrink-0 text-emerald-400" />
-                <span className="truncate">Original Photo</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => setDisclosureModalOpen(true)}
+                className="inline-flex min-w-0 items-center gap-1 sm:gap-1.5 rounded-full border border-emerald-400/35 bg-black/75 px-2 py-1 text-[10px] sm:px-3 sm:text-[11px] font-medium text-emerald-200 backdrop-blur-md hover:bg-black/90 transition-colors"
+              >
+                <ShieldCheck className="h-3 w-3 shrink-0 text-emerald-400" />
+                <span className="sm:hidden truncate">Original</span>
+                <span className="hidden sm:inline truncate">Verified Original Photo</span>
+              </button>
             )}
           </div>
 
-          {/* Top-Right Stage Action Pills: Compare Original + Motion/Still Toggle */}
+          {/* Top-Right Stage Action Pills: Auto-Tour (sm+) + 1-Tap Original + Compare + Motion/Still */}
           <div
             className="absolute right-2.5 top-2.5 z-20 flex items-center gap-1.5 sm:right-4 sm:top-4 sm:gap-2"
             onPointerDown={(e) => e.stopPropagation()}
           >
+            {!compareMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSmartIntroDismissed(true)
+                  setAutoTourActive((v) => !v)
+                }}
+                aria-pressed={autoTourActive}
+                title={autoTourActive ? 'Pause guided auto-walkthrough' : 'Resume guided tour'}
+                className={`hidden sm:inline-flex items-center gap-1 rounded-full border px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-semibold backdrop-blur-md transition-colors ${
+                  autoTourActive
+                    ? 'border-emerald-400 bg-emerald-500/25 text-emerald-100'
+                    : 'border-white/20 bg-black/70 text-white hover:bg-black/85'
+                }`}
+              >
+                {autoTourActive ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                <span className="hidden md:inline">
+                  {autoTourActive ? 'Pause Tour' : 'Guided Tour'}
+                </span>
+              </button>
+            )}
+
+            {activePerspective?.originalImageUrl && !compareMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSmartIntroDismissed(true)
+                  setQuickViewOriginal((v) => !v)
+                }}
+                aria-pressed={quickViewOriginal}
+                title="One-tap toggle to inspect the unedited original property photo"
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-semibold backdrop-blur-md transition-colors ${
+                  quickViewOriginal
+                    ? 'border-emerald-400 bg-emerald-500/25 text-emerald-100'
+                    : 'border-white/20 bg-black/70 text-white hover:bg-black/85'
+                }`}
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">
+                  {quickViewOriginal ? 'Viewing Original' : 'View Original'}
+                </span>
+                <span className="sm:hidden">{quickViewOriginal ? 'AI' : 'Orig'}</span>
+              </button>
+            )}
+
             {resolved.motionVideoUrl && !compareMode && (
               <button
                 type="button"
@@ -1026,7 +1313,11 @@ export function InteractivePropertyPlayer({
             {canCompare && (
               <button
                 type="button"
-                onClick={() => setCompareMode((c) => !c)}
+                onClick={() => {
+                  setSmartIntroDismissed(true)
+                  setQuickViewOriginal(false)
+                  setCompareMode((c) => !c)
+                }}
                 aria-pressed={compareMode}
                 className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-semibold backdrop-blur-md transition-all shadow-md"
                 style={
@@ -1045,10 +1336,45 @@ export function InteractivePropertyPlayer({
               >
                 <SlidersHorizontal className="h-3.5 w-3.5" />
                 <span className="sm:hidden">{compareMode ? 'Exit' : 'Compare'}</span>
-                <span className="hidden sm:inline">{compareMode ? 'Exit Compare' : 'Compare Original'}</span>
+                <span className="hidden sm:inline">{compareMode ? 'Exit Compare' : 'Compare'}</span>
               </button>
             )}
           </div>
+
+          {/* Desktop Non-Blocking 30-Second Smart Intro Hook (on mobile, renders below stage so the room photo stays unobstructed) */}
+          {!smartIntroDismissed && !compareMode && !isEmbed && guideMode === 'off' && !autoTourActive && (
+            <div
+              onPointerDown={(e) => e.stopPropagation()}
+              className="hidden sm:flex absolute left-1/2 bottom-20 z-20 w-[92%] max-w-lg -translate-x-1/2 rounded-2xl border border-white/20 bg-slate-950/90 px-4 py-2.5 backdrop-blur-md shadow-2xl items-center justify-between gap-3"
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-white">
+                  30-Second Smart Intro or Explore Freely
+                </p>
+                <p className="text-[11px] text-slate-300">
+                  Preview signature spaces &amp; Before/After highlights, or steer any wall yourself.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={startSmartIntro}
+                  className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-950 transition-transform hover:brightness-110"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  <Play className="h-3 w-3" />
+                  30s Intro
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSmartIntroDismissed(true)}
+                  className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-[11px] font-semibold text-slate-200 hover:bg-white/10"
+                >
+                  Explore Freely
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Left / Right Rotate Arrows on Stage (hidden on mobile; swipe + compass handle navigation cleanly) */}
           {!compareMode && (
@@ -1120,15 +1446,18 @@ export function InteractivePropertyPlayer({
             </div>
           )}
 
-          {guideMode === 'narration' && activeGuideTrack && !compareMode && (
+          {(guideMode === 'narration' || (guideMode === 'off' && captionsEnabled)) &&
+            activeGuideTrack &&
+            !compareMode && (
             <div
               onPointerDown={(e) => e.stopPropagation()}
               className="hidden sm:block absolute left-1/2 bottom-20 z-20 w-[90%] max-w-2xl -translate-x-1/2 rounded-xl border border-white/15 bg-black/80 px-4 py-2.5 text-center backdrop-blur-md shadow-xl"
             >
               <div className="flex items-center justify-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-cyan-300 mb-1">
-                <Mic className="h-3 w-3" />
+                {guideMode === 'narration' ? <Mic className="h-3 w-3" /> : <Subtitles className="h-3 w-3" />}
                 <span>
-                  Audio Narration · {PROPERTY_LANGUAGE_PRESETS.find((l) => l.code === guideLanguage)?.nativeLabel}
+                  {guideMode === 'narration' ? 'Audio Narration' : 'Silent Captions'} ·{' '}
+                  {PROPERTY_LANGUAGE_PRESETS.find((l) => l.code === guideLanguage)?.nativeLabel}
                 </span>
                 <button
                   type="button"
@@ -1136,7 +1465,7 @@ export function InteractivePropertyPlayer({
                   className="ml-1 inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white hover:bg-white/20"
                 >
                   {isGuidePlaying ? <Pause className="h-2.5 w-2.5" /> : <Play className="h-2.5 w-2.5" />}
-                  {isGuidePlaying ? 'Pause' : 'Play'}
+                  {isGuidePlaying ? 'Pause' : 'Listen'}
                 </button>
               </div>
               <p className="text-xs leading-relaxed text-white">{activeGuideTrack.script}</p>
@@ -1175,7 +1504,7 @@ export function InteractivePropertyPlayer({
                       color: '#ffffff',
                     }}
                   >
-                    Est. Remodel ~{formatCurrencyCompact(activeRoom.renovationEstimateUsd)}
+                    Illustrative Remodel Concept
                   </span>
                 ) : null}
               </div>
@@ -1239,8 +1568,36 @@ export function InteractivePropertyPlayer({
         </div>
       </div>
 
-      {/* Mobile Below-Stage Guide Strip (never covers the room photo on small screens) */}
-      {guideMode !== 'off' && activeGuideTrack && !compareMode && (
+      {/* Mobile Below-Stage 30-Second Smart Intro Hook (keeps mobile architectural canvas 100% unobstructed) */}
+      {!smartIntroDismissed && !compareMode && !isEmbed && guideMode === 'off' && !autoTourActive && (
+        <div className="sm:hidden border-t border-white/10 bg-slate-900/95 px-3 py-2 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-white truncate">30s Smart Intro</p>
+            <p className="text-[10px] text-slate-400 truncate">Guided highlights or steer freely</p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={startSmartIntro}
+              className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold text-slate-950"
+              style={{ backgroundColor: brandColor }}
+            >
+              <Play className="h-3 w-3" />
+              Intro
+            </button>
+            <button
+              type="button"
+              onClick={() => setSmartIntroDismissed(true)}
+              className="rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-semibold text-slate-200"
+            >
+              Explore
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Below-Stage Guide & Silent Captions Strip (never covers the room photo on small screens) */}
+      {(guideMode !== 'off' || captionsEnabled) && activeGuideTrack && !compareMode && (
         <div className="sm:hidden border-t border-white/10 bg-slate-900/95 px-3 py-2.5">
           <div className="flex items-start gap-3">
             {guideMode === 'agent_sync' && activeGuideTrack.posterImageUrl && (
@@ -1271,16 +1628,28 @@ export function InteractivePropertyPlayer({
                   />
                   {guideMode === 'agent_sync'
                     ? `${tour.branding?.agentName || 'Advisor'} · Agent Sync`
-                    : `Narration · ${PROPERTY_LANGUAGE_PRESETS.find((l) => l.code === guideLanguage)?.nativeLabel}`}
+                    : guideMode === 'narration'
+                      ? `Narration · ${PROPERTY_LANGUAGE_PRESETS.find((l) => l.code === guideLanguage)?.nativeLabel}`
+                      : `Silent Captions · ${PROPERTY_LANGUAGE_PRESETS.find((l) => l.code === guideLanguage)?.nativeLabel}`}
                 </span>
-                <button
-                  type="button"
-                  onClick={toggleGuidePlayPause}
-                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-white"
-                >
-                  {isGuidePlaying ? <Pause className="h-2.5 w-2.5" /> : <Play className="h-2.5 w-2.5" />}
-                  {isGuidePlaying ? 'Pause' : 'Play'}
-                </button>
+                {guideMode !== 'off' ? (
+                  <button
+                    type="button"
+                    onClick={toggleGuidePlayPause}
+                    className="shrink-0 inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-white"
+                  >
+                    {isGuidePlaying ? <Pause className="h-2.5 w-2.5" /> : <Play className="h-2.5 w-2.5" />}
+                    {isGuidePlaying ? 'Pause' : 'Play'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setCaptionsEnabled(false)}
+                    className="shrink-0 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-300"
+                  >
+                    Hide CC
+                  </button>
+                )}
               </div>
               <p className="text-xs leading-relaxed text-slate-200">{activeGuideTrack.script}</p>
             </div>
@@ -1288,346 +1657,661 @@ export function InteractivePropertyPlayer({
         </div>
       )}
 
-      {/* Zero-Latency Instant Toggle Control Dock (Single-Line Swipe Rails on Mobile, Wrapped on Desktop) */}
+      {/* Streamlined 2-Row Primary Control Bar + Compact Expandable Tour Controls Drawer */}
       <div
         className={`z-20 border-t border-white/10 bg-slate-950/95 backdrop-blur-xl ${
-          isEmbed ? 'px-2.5 py-2 space-y-2 sm:px-3 sm:py-2.5' : 'px-3 py-3 space-y-2.5 sm:px-6 sm:py-4 sm:space-y-3.5'
+          isEmbed ? 'px-2.5 py-2 space-y-2 sm:px-3 sm:py-2.5' : 'px-3 py-2.5 space-y-2 sm:px-6 sm:py-3.5 sm:space-y-2.5'
         }`}
       >
-        {/* Row 1: Room Selector Rail */}
-        {sortedRooms.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <span className="shrink-0 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 mr-0.5">
-              Spaces
-            </span>
-            {sortedRooms.map((room) => {
-              const isSelected = room.id === activeRoom?.id
-              const compactEst = formatCurrencyCompact(room.renovationEstimateUsd)
-              return (
-                <button
-                  key={room.id}
-                  type="button"
-                  onClick={() => handleSelectRoom(room)}
-                  aria-pressed={isSelected}
-                  className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
-                    isSelected
-                      ? 'text-slate-950 shadow-sm'
-                      : 'border-white/10 bg-white/5 text-slate-300 hover:border-white/25 hover:bg-white/10 hover:text-white'
-                  }`}
-                  style={
-                    isSelected
-                      ? { backgroundColor: brandColor, borderColor: brandColor }
-                      : undefined
-                  }
-                >
-                  <span>{room.name}</span>
-                  {compactEst && (
-                    <span
-                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                        isSelected ? 'bg-black/20 text-slate-950' : 'bg-white/10 text-slate-300'
-                      }`}
-                    >
-                      ~{compactEst}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Row 2: Redesign & Lighting Instant Pills */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
-          {/* Redesign Styles */}
-          <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap">
-            <span className="shrink-0 mr-0.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-              Redesign
-            </span>
-            {availableStylePresets.map((preset) => {
-              const isActive =
-                selectedStyle === preset.id && selectedEvent === 'none' && selectedAddition === 'none'
-              const hasVariantForStyle =
-                preset.id === 'as_is'
-                  ? Boolean(activePerspective?.originalImageUrl)
-                  : Boolean(activePerspective?.variants?.some((v) => v.style === preset.id))
-              return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => {
-                    setSlideDir(0)
-                    setSelectedEvent('none')
-                    setSelectedAddition('none')
-                    setSelectedStyle(preset.id)
-                  }}
-                  aria-pressed={isActive}
-                  className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 sm:py-1 text-xs font-medium transition-all ${
-                    isActive
-                      ? 'text-white shadow-sm'
-                      : 'border-white/10 bg-slate-900/80 text-slate-300 hover:border-white/25 hover:text-white'
-                  }`}
-                  style={
-                    isActive
-                      ? {
-                          borderColor: brandColor,
-                          backgroundColor: `${brandColor}28`,
-                        }
-                      : undefined
-                  }
-                >
-                  <span>{preset.label}</span>
-                  {hasVariantForStyle && (
-                    <span
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{
-                        backgroundColor: isActive ? brandColor : 'rgba(148, 163, 184, 0.7)',
-                      }}
-                    />
-                  )}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Lighting */}
-          <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:hidden">
-              Light
-            </span>
-            <div className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-slate-900/80 p-0.5">
-              {availableLightingPresets.map((preset) => {
-                const isActive = selectedLighting === preset.id
-                const Icon =
-                  preset.id === 'daylight' ? Sun : preset.id === 'golden_hour' ? Sunset : Moon
+        {/* PRIMARY ROW 1: Spaces Rail + Compact Tour Controls Drawer Toggle */}
+        <div className="flex items-center justify-between gap-2">
+          {sortedRooms.length > 0 && (
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2 overflow-x-auto whitespace-nowrap pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <span className="shrink-0 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 mr-0.5">
+                Spaces
+              </span>
+              {sortedRooms.map((room) => {
+                const isSelected = room.id === activeRoom?.id
                 return (
                   <button
-                    key={preset.id}
+                    key={room.id}
                     type="button"
                     onClick={() => {
-                      setSlideDir(0)
-                      setSelectedLighting(preset.id)
+                      setSmartIntroDismissed(true)
+                      handleSelectRoom(room)
                     }}
-                    aria-pressed={isActive}
-                    className={`shrink-0 inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
-                      isActive ? 'text-slate-950 font-semibold' : 'text-slate-300 hover:text-white'
+                    aria-pressed={isSelected}
+                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                      isSelected
+                        ? 'text-slate-950 shadow-sm'
+                        : 'border-white/10 bg-white/5 text-slate-300 hover:border-white/25 hover:bg-white/10 hover:text-white'
                     }`}
-                    style={isActive ? { backgroundColor: brandColor } : undefined}
+                    style={
+                      isSelected
+                        ? { backgroundColor: brandColor, borderColor: brandColor }
+                        : undefined
+                    }
                   >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span>{preset.shortLabel}</span>
+                    <span>{room.name}</span>
                   </button>
                 )
               })}
             </div>
-          </div>
+          )}
+
+          {/* Compact Tour Controls Popover/Drawer Trigger (Lighting, Guide, CC, Language, Units, Music) */}
+          <button
+            type="button"
+            onClick={() => setTourControlsOpen((open) => !open)}
+            aria-expanded={tourControlsOpen}
+            className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold transition-all ${
+              tourControlsOpen
+                ? 'border-cyan-400 bg-cyan-500/20 text-cyan-100'
+                : 'border-white/15 bg-white/5 text-slate-200 hover:border-white/30 hover:bg-white/10'
+            }`}
+          >
+            <Settings2 className="h-3.5 w-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">Tour Controls</span>
+            <span className="sm:hidden">Controls</span>
+            <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-300">
+              {guideLanguage.toUpperCase()}
+              {captionsEnabled ? '·CC' : ''}
+            </span>
+          </button>
         </div>
 
-        {/* Row 3: Events (Parties, Family Gatherings) + Architectural Additions */}
-        <div className="flex flex-col gap-2 border-t border-white/5 pt-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:pt-2.5">
-          {/* Events */}
-          <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap">
-            <span className="shrink-0 mr-0.5 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-amber-400/90">
-              <PartyPopper className="h-3 w-3" />
-              Events
-            </span>
-            {availableEventPresets.map((preset) => {
-              const isActive = selectedEvent === preset.id
-              const hasEventPlate =
-                preset.id === 'none' ||
-                Boolean(activePerspective?.variants?.some((v) => v.event === preset.id))
-              return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => {
-                    setSlideDir(0)
-                    setSelectedAddition('none')
-                    setSelectedEvent(preset.id)
-                  }}
-                  aria-pressed={isActive}
-                  className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 sm:py-1 text-xs font-medium transition-all ${
-                    isActive
-                      ? 'border-amber-400 bg-amber-500/20 text-amber-100 shadow-sm'
-                      : 'border-white/10 bg-slate-900/80 text-slate-300 hover:border-white/25 hover:text-white'
-                  }`}
-                >
-                  <span>{preset.shortLabel}</span>
-                  {preset.id !== 'none' && hasEventPlate && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                  )}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Additions */}
-          <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap">
-            <span className="shrink-0 mr-0.5 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-emerald-400/90">
-              <Hammer className="h-3 w-3" />
-              Additions
-            </span>
-            {availableAdditionPresets.map((preset) => {
-              const isActive = selectedAddition === preset.id
-              const hasAdditionPlate =
-                preset.id === 'none' ||
-                Boolean(activePerspective?.variants?.some((v) => v.addition === preset.id))
-              return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => {
-                    setSlideDir(0)
-                    setSelectedEvent('none')
-                    setSelectedAddition(preset.id)
-                  }}
-                  aria-pressed={isActive}
-                  className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 sm:py-1 text-xs font-medium transition-all ${
-                    isActive
-                      ? 'border-emerald-400 bg-emerald-500/20 text-emerald-100 shadow-sm'
-                      : 'border-white/10 bg-slate-900/80 text-slate-300 hover:border-white/25 hover:text-white'
-                  }`}
-                >
-                  <span>{preset.shortLabel}</span>
-                  {preset.id !== 'none' && hasAdditionPlate && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Row 4: Guide Mode (In-Scene Agent Sync vs Narration in EN / ES / JA) + Ambient Music */}
-        <div className="flex flex-col gap-2 border-t border-white/5 pt-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:pt-2.5">
-          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap">
-            <span className="shrink-0 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-cyan-400/90">
-              Guide
-            </span>
-            <div className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-slate-900/80 p-0.5">
-              <button
-                type="button"
-                onClick={() => setGuideMode('off')}
-                aria-pressed={guideMode === 'off'}
-                className={`shrink-0 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-all ${
-                  guideMode === 'off' ? 'bg-white/15 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <VolumeX className="h-3.5 w-3.5" />
-                Silent
-              </button>
-              <button
-                type="button"
-                onClick={() => setGuideMode('narration')}
-                aria-pressed={guideMode === 'narration'}
-                className={`shrink-0 inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
-                  guideMode === 'narration'
-                    ? 'text-slate-950 font-semibold'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-                style={guideMode === 'narration' ? { backgroundColor: brandColor } : undefined}
-              >
-                <Mic className="h-3.5 w-3.5" />
-                Narration
-              </button>
-              <button
-                type="button"
-                onClick={() => setGuideMode('agent_sync')}
-                aria-pressed={guideMode === 'agent_sync'}
-                className={`shrink-0 inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
-                  guideMode === 'agent_sync'
-                    ? 'text-slate-950 font-semibold'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-                style={guideMode === 'agent_sync' ? { backgroundColor: brandColor } : undefined}
-              >
-                <UserCheck className="h-3.5 w-3.5" />
-                <span>Agent Sync</span>
-              </button>
-            </div>
-
-            {/* Language Selector (English / Spanish / Japanese) */}
-            <div className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-slate-900/80 p-0.5">
-              <Globe className="ml-1.5 h-3.5 w-3.5 text-slate-400 shrink-0" />
-              {availableLanguages.map((lang) => {
-                const isActive = guideLanguage === lang.code
-                return (
-                  <button
-                    key={lang.code}
-                    type="button"
-                    onClick={() => {
-                      setGuideLanguage(lang.code)
-                      if (guideMode === 'off') setGuideMode('narration')
-                    }}
-                    aria-pressed={isActive}
-                    className={`shrink-0 rounded-md px-2 py-1 text-xs font-medium transition-all ${
-                      isActive
-                        ? 'bg-white/15 text-white font-semibold'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {lang.nativeLabel}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Ambient Music Track Selector */}
-          {musicTracks.length > 0 && (
+        {/* PRIMARY ROW 2: Explore Mode Switcher (Original / Redesign / Events / Additions / Lifestyle) + Contextual Sub-Pills */}
+        <div className="space-y-2 border-t border-white/5 pt-2">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            {/* Mode Tabs */}
             <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <span className="shrink-0 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                <Music className="h-3 w-3 text-cyan-400" />
-                Music
+              <span className="shrink-0 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 mr-0.5">
+                Explore
               </span>
               <div className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-slate-900/80 p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setActiveMusicTrackId('off')}
-                  aria-pressed={activeMusicTrackId === 'off'}
-                  className={`shrink-0 rounded-md px-2 py-1 text-xs font-medium transition-all ${
-                    activeMusicTrackId === 'off'
-                      ? 'bg-white/15 text-white'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Off
-                </button>
-                {musicTracks.map((track) => {
-                  const isActive = activeMusicTrackId === track.id
+                {(
+                  [
+                    { id: 'original', label: 'As-Is Original' },
+                    { id: 'redesign', label: 'Redesign' },
+                    { id: 'events', label: 'Events' },
+                    { id: 'additions', label: 'Additions' },
+                    { id: 'lifestyle', label: 'Lifestyle Match' },
+                  ] as Array<{ id: PrimaryExploreTab; label: string }>
+                ).map((tab) => {
+                  const isActive = exploreTab === tab.id
                   return (
                     <button
-                      key={track.id}
+                      key={tab.id}
                       type="button"
-                      onClick={() => setActiveMusicTrackId(track.id)}
+                      onClick={() => {
+                        setSmartIntroDismissed(true)
+                        setExploreTab(tab.id)
+                        if (tab.id === 'original') {
+                          setQuickViewOriginal(false)
+                          setSelectedEvent('none')
+                          setSelectedAddition('none')
+                          setSelectedStyle('as_is')
+                        } else if (tab.id === 'redesign') {
+                          setQuickViewOriginal(false)
+                          setSelectedEvent('none')
+                          setSelectedAddition('none')
+                          if (selectedStyle === 'as_is') {
+                            const firstAiStyle = availableStylePresets.find((s) => s.id !== 'as_is')
+                            if (firstAiStyle) setSelectedStyle(firstAiStyle.id)
+                          }
+                        } else if (tab.id === 'events') {
+                          setQuickViewOriginal(false)
+                          setSelectedAddition('none')
+                          if (selectedEvent === 'none') {
+                            const firstEvt = availableEventPresets.find((e) => e.id !== 'none')
+                            if (firstEvt) setSelectedEvent(firstEvt.id)
+                          }
+                        } else if (tab.id === 'additions') {
+                          setQuickViewOriginal(false)
+                          setSelectedEvent('none')
+                          if (selectedAddition === 'none') {
+                            const firstAdd = availableAdditionPresets.find((a) => a.id !== 'none')
+                            if (firstAdd) setSelectedAddition(firstAdd.id)
+                          }
+                        }
+                      }}
                       aria-pressed={isActive}
-                      title={track.mood}
-                      className={`shrink-0 inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+                      className={`shrink-0 rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                         isActive
-                          ? 'bg-cyan-500/20 text-cyan-200 font-semibold'
-                          : 'text-slate-400 hover:text-white'
+                          ? 'text-slate-950 shadow-sm'
+                          : 'text-slate-300 hover:text-white'
                       }`}
+                      style={isActive ? { backgroundColor: brandColor } : undefined}
                     >
-                      {isActive && <Volume2 className="h-3 w-3 text-cyan-300" />}
-                      {track.label}
+                      {tab.label}
                     </button>
                   )
                 })}
               </div>
             </div>
+
+            {/* Active Mode Contextual Sub-Pills (Only 1 category visible at a time to eliminate clutter) */}
+            {exploreTab === 'original' && (
+              <div className="flex items-center gap-2 text-[11px] text-emerald-300 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+                <span>Inspecting unedited original listing photography.</span>
+                {canCompare && (
+                  <button
+                    type="button"
+                    onClick={() => setCompareMode(true)}
+                    className="shrink-0 rounded-md border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-500/25"
+                  >
+                    Open Split Compare
+                  </button>
+                )}
+              </div>
+            )}
+
+            {exploreTab === 'redesign' && (
+              <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {availableStylePresets
+                  .filter((p) => p.id !== 'as_is')
+                  .map((preset) => {
+                    const isActive =
+                      !quickViewOriginal &&
+                      selectedStyle === preset.id &&
+                      selectedEvent === 'none' &&
+                      selectedAddition === 'none'
+                    const hasVariantForStyle = Boolean(
+                      activePerspective?.variants?.some((v) => v.style === preset.id)
+                    )
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => {
+                          setSlideDir(0)
+                          setQuickViewOriginal(false)
+                          setSelectedEvent('none')
+                          setSelectedAddition('none')
+                          setSelectedStyle(preset.id)
+                        }}
+                        aria-pressed={isActive}
+                        className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-all ${
+                          isActive
+                            ? 'text-white shadow-sm'
+                            : 'border-white/10 bg-slate-900/80 text-slate-300 hover:border-white/25 hover:text-white'
+                        }`}
+                        style={
+                          isActive
+                            ? {
+                                borderColor: brandColor,
+                                backgroundColor: `${brandColor}28`,
+                              }
+                            : undefined
+                        }
+                      >
+                        <span>{preset.label}</span>
+                        {hasVariantForStyle && (
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{
+                              backgroundColor: isActive ? brandColor : 'rgba(148, 163, 184, 0.7)',
+                            }}
+                          />
+                        )}
+                      </button>
+                    )
+                  })}
+              </div>
+            )}
+
+            {exploreTab === 'events' && (
+              <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {availableEventPresets.map((preset) => {
+                  const isActive = !quickViewOriginal && selectedEvent === preset.id
+                  const hasEventPlate =
+                    preset.id === 'none' ||
+                    Boolean(activePerspective?.variants?.some((v) => v.event === preset.id))
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        setSlideDir(0)
+                        setQuickViewOriginal(false)
+                        setSelectedAddition('none')
+                        setSelectedEvent(preset.id)
+                      }}
+                      aria-pressed={isActive}
+                      className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-all ${
+                        isActive
+                          ? 'border-amber-400 bg-amber-500/20 text-amber-100 shadow-sm'
+                          : 'border-white/10 bg-slate-900/80 text-slate-300 hover:border-white/25 hover:text-white'
+                      }`}
+                    >
+                      <PartyPopper className="h-3 w-3 text-amber-400/90" />
+                      <span>{preset.shortLabel}</span>
+                      {preset.id !== 'none' && hasEventPlate && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {exploreTab === 'additions' && (
+              <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {availableAdditionPresets.map((preset) => {
+                  const isActive = !quickViewOriginal && selectedAddition === preset.id
+                  const hasAdditionPlate =
+                    preset.id === 'none' ||
+                    Boolean(activePerspective?.variants?.some((v) => v.addition === preset.id))
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        setSlideDir(0)
+                        setQuickViewOriginal(false)
+                        setSelectedEvent('none')
+                        setSelectedAddition(preset.id)
+                      }}
+                      aria-pressed={isActive}
+                      className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-all ${
+                        isActive
+                          ? 'border-emerald-400 bg-emerald-500/20 text-emerald-100 shadow-sm'
+                          : 'border-white/10 bg-slate-900/80 text-slate-300 hover:border-white/25 hover:text-white'
+                      }`}
+                    >
+                      <Hammer className="h-3 w-3 text-emerald-400/90" />
+                      <span>{preset.shortLabel}</span>
+                      {preset.estimatedCostRange && (
+                        <span className="text-[10px] text-emerald-300/90">
+                          ({preset.estimatedCostRange})
+                        </span>
+                      )}
+                      {preset.id !== 'none' && hasAdditionPlate && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {exploreTab === 'lifestyle' && (
+              <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {BUYER_LIFESTYLE_MATCHES.map((match) => {
+                  const isSelected = buyerProfile === match.id
+                  return (
+                    <button
+                      key={match.id}
+                      type="button"
+                      onClick={() => applyLifestyleRecommendation(match.id)}
+                      aria-pressed={isSelected}
+                      className={`shrink-0 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all ${
+                        isSelected
+                          ? 'border-violet-400 bg-violet-500/20 text-violet-100'
+                          : 'border-white/10 bg-white/5 text-slate-300 hover:border-white/25 hover:text-white'
+                      }`}
+                    >
+                      <HeartHandshake className="h-3 w-3 text-violet-300" />
+                      {match.label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Additions Illustrative Cost Range Disclaimer */}
+          {exploreTab === 'additions' && selectedAddition !== 'none' && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-500/25 bg-emerald-950/20 px-3 py-1.5 text-[11px] text-emerald-100">
+              <span>
+                <strong>Illustrative Concept Cost Range:</strong> Shown ranges are non-binding concept estimates only — subject to local zoning, lot coverage, setbacks, HOA review, and licensed contractor bids.
+              </span>
+            </div>
+          )}
+
+          {/* Lifestyle Matcher Decision Cues Card */}
+          {exploreTab === 'lifestyle' && (
+            <div className="flex flex-col gap-2 rounded-lg border border-violet-500/25 bg-violet-950/25 px-3 py-2 text-[11px] text-violet-100 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {activeBuyerMatch.decisionCues.map((cue) => (
+                    <span
+                      key={cue}
+                      className="rounded-full border border-violet-400/35 bg-violet-500/20 px-2 py-0.5 text-[10px] font-semibold text-violet-100"
+                    >
+                      ✓ {cue}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-slate-200">{activeBuyerMatch.recommendation}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  buyerProfile === 'explorer'
+                    ? startSmartIntro()
+                    : applyLifestyleRecommendation(buyerProfile)
+                }
+                className="shrink-0 self-start sm:self-center rounded-md bg-violet-500/35 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-violet-500/50"
+              >
+                {activeBuyerMatch.ctaText}
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Footer Attribution (ONLY shown when hideSceneFlowBranding is false) */}
-        {!hideSceneFlowBranding && (
-          <div className="flex items-center justify-between border-t border-white/5 pt-2 text-[11px] text-slate-500">
-            <span>Use ← / → keys or swipe to rotate N · E · S · W perspectives</span>
-            <span className="inline-flex items-center gap-1 text-slate-400">
-              <Sparkles className="h-3 w-3 text-cyan-400" />
-              Powered by SceneFlow Studio
+        {/* EXPANDABLE COMPACT TOUR CONTROLS DRAWER (Lighting, Guide, Silent CC, Language, Localized Units/Currency, Music) */}
+        <AnimatePresence initial={false}>
+          {tourControlsOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden border-t border-white/10"
+            >
+              <div className="pt-2.5 pb-1 grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-3 text-xs">
+                {/* Lighting */}
+                <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Lighting
+                  </span>
+                  <div className="inline-flex items-center gap-1">
+                    {availableLightingPresets.map((preset) => {
+                      const isActive = selectedLighting === preset.id
+                      const Icon =
+                        preset.id === 'daylight' ? Sun : preset.id === 'golden_hour' ? Sunset : Moon
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => {
+                            setSlideDir(0)
+                            setSelectedLighting(preset.id)
+                          }}
+                          aria-pressed={isActive}
+                          className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-all ${
+                            isActive ? 'text-slate-950 font-semibold' : 'text-slate-300 hover:text-white'
+                          }`}
+                          style={isActive ? { backgroundColor: brandColor } : undefined}
+                        >
+                          <Icon className="h-3 w-3" />
+                          <span>{preset.shortLabel}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Guide Mode & Silent Captions */}
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400">
+                    Guide &amp; CC
+                  </span>
+                  <div className="inline-flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setGuideMode('off')}
+                      aria-pressed={guideMode === 'off'}
+                      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium ${
+                        guideMode === 'off' ? 'bg-white/15 text-white' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <VolumeX className="h-3 w-3" />
+                      Off
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGuideMode('narration')}
+                      aria-pressed={guideMode === 'narration'}
+                      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium ${
+                        guideMode === 'narration' ? 'text-slate-950 font-semibold' : 'text-slate-300 hover:text-white'
+                      }`}
+                      style={guideMode === 'narration' ? { backgroundColor: brandColor } : undefined}
+                    >
+                      <Mic className="h-3 w-3" />
+                      Voice
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGuideMode('agent_sync')}
+                      aria-pressed={guideMode === 'agent_sync'}
+                      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium ${
+                        guideMode === 'agent_sync' ? 'text-slate-950 font-semibold' : 'text-slate-300 hover:text-white'
+                      }`}
+                      style={guideMode === 'agent_sync' ? { backgroundColor: brandColor } : undefined}
+                    >
+                      <UserCheck className="h-3 w-3" />
+                      Agent
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCaptionsEnabled((v) => !v)}
+                      aria-pressed={captionsEnabled}
+                      title="Toggle Silent Captions (browse quietly in transit or offices)"
+                      className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-semibold ${
+                        captionsEnabled
+                          ? 'border-cyan-400/60 bg-cyan-500/20 text-cyan-200'
+                          : 'border-white/10 bg-white/5 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Subtitles className="h-3 w-3" />
+                      CC
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSmartIntroDismissed(true)
+                        setAutoTourActive((v) => !v)
+                      }}
+                      aria-pressed={autoTourActive}
+                      title="Toggle Guided Auto-Tour"
+                      className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-semibold ${
+                        autoTourActive
+                          ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-200'
+                          : 'border-white/10 bg-white/5 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {autoTourActive ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                      Auto
+                    </button>
+                  </div>
+                </div>
+
+                {/* Language + Localized Units/Currency */}
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2">
+                  <div className="inline-flex items-center gap-1">
+                    <Globe className="h-3.5 w-3.5 text-slate-400" />
+                    {availableLanguages.map((lang) => {
+                      const isActive = guideLanguage === lang.code
+                      return (
+                        <button
+                          key={lang.code}
+                          type="button"
+                          onClick={() => handleChangeLanguage(lang.code)}
+                          aria-pressed={isActive}
+                          className={`rounded-md px-2 py-1 text-[11px] font-medium ${
+                            isActive
+                              ? 'bg-white/15 text-white font-semibold'
+                              : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {lang.nativeLabel}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="inline-flex items-center gap-1 border-l border-white/10 pl-2">
+                    {(
+                      [
+                        { id: 'usd_sqft', label: 'USD·ft²' },
+                        { id: 'eur_sqm', label: 'EUR·m²' },
+                        { id: 'jpy_sqm', label: 'JPY·m²' },
+                      ] as Array<{ id: DisplayLocaleUnit; label: string }>
+                    ).map((u) => (
+                      <button
+                        key={u.id}
+                        type="button"
+                        onClick={() => setDisplayUnit(u.id)}
+                        aria-pressed={displayUnit === u.id}
+                        className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                          displayUnit === u.id
+                            ? 'bg-cyan-500/25 text-cyan-200'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {u.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Ambient Music Track Selector */}
+                {musicTracks.length > 0 && (
+                  <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 md:col-span-2 lg:col-span-3">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                      <Music className="h-3.5 w-3.5 text-cyan-400" />
+                      Ambient Music (Auto-Ducks for Voice)
+                    </span>
+                    <div className="inline-flex items-center gap-1 overflow-x-auto whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => setActiveMusicTrackId('off')}
+                        aria-pressed={activeMusicTrackId === 'off'}
+                        className={`rounded-md px-2 py-1 text-[11px] font-medium ${
+                          activeMusicTrackId === 'off'
+                            ? 'bg-white/15 text-white'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        Off
+                      </button>
+                      {musicTracks.map((track) => {
+                        const isActive = activeMusicTrackId === track.id
+                        return (
+                          <button
+                            key={track.id}
+                            type="button"
+                            onClick={() => setActiveMusicTrackId(track.id)}
+                            aria-pressed={isActive}
+                            title={track.mood}
+                            className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium ${
+                              isActive
+                                ? 'bg-cyan-500/20 text-cyan-200 font-semibold'
+                                : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            {isActive && <Volume2 className="h-3 w-3 text-cyan-300" />}
+                            {track.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Persistent AI Visualization & Architectural Accuracy Disclaimer + Optional Attribution */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2 text-[10px] sm:text-[11px] text-slate-400">
+          <button
+            type="button"
+            onClick={() => setDisclosureModalOpen(true)}
+            className="inline-flex items-center gap-1.5 text-left hover:text-white transition-colors"
+          >
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
+            <span>
+              <strong className="text-slate-200">AI-Enhanced Visualization:</strong> Grounded in actual property photos, dimensions &amp; features. Tap for full disclosure.
             </span>
-          </div>
-        )}
+          </button>
+          {!hideSceneFlowBranding && (
+            <span className="inline-flex items-center gap-1 text-slate-400 shrink-0">
+              <Sparkles className="h-3 w-3 text-cyan-400" />
+              SceneFlow Immersive Tour™
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* AI Visualization & Architectural Grounding Disclosure Modal */}
+      <AnimatePresence>
+        {disclosureModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+            onClick={() => setDisclosureModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label="AI Visualization and Architectural Accuracy Disclosure"
+              className="w-full max-w-lg rounded-2xl border border-white/15 bg-slate-950 p-5 sm:p-6 text-white shadow-2xl space-y-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/15 text-cyan-400">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-white">
+                      AI Visualization &amp; Property Accuracy Disclosure
+                    </h3>
+                    <p className="text-[11px] text-slate-400">
+                      Transparency &amp; MLS Compliance Notice
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDisclosureModalOpen(false)}
+                  aria-label="Close disclosure"
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="space-y-2.5 text-xs leading-relaxed text-slate-300">
+                <p>
+                  This interactive tour is <strong className="text-white">AI-enhanced for buyer visualization and inspiration</strong>, grounded directly in actual VSP/broker-captured property photography, licensed exterior &amp; aerial captures (with compliant official map/neighborhood embeds where enabled), structural room dimensions, window placements, sightlines, and existing architectural features.
+                </p>
+                <p>
+                  <strong className="text-white">Inspect Unaltered Photos Anytime:</strong> Tap{' '}
+                  <span className="text-cyan-300 font-semibold">View Original</span>, select{' '}
+                  <span className="text-cyan-300 font-semibold">As-Is Original</span>, or open{' '}
+                  <span className="text-cyan-300 font-semibold">Compare</span> to inspect raw, unedited listing photography side-by-side.
+                </p>
+                <p>
+                  <strong className="text-white">Illustrative Remodel &amp; Addition Concept Ranges:</strong> Virtually staged furnishings, interior redesigns, live event scenarios, structural additions (e.g., wine bar, outdoor kitchen, infinity pool, Guest Casita / ADU), and displayed concept cost ranges are non-binding visualizations only and subject to independent inspection, local zoning/permitting, setbacks, HOA rules, and licensed contractor bids.
+                </p>
+                <p>
+                  <strong className="text-white">Exported Clips &amp; Social Snapshots:</strong> Any exported clips, stills, or social teasers generated from AI-enhanced scenes carry an unmistakable AI-enhanced / illustrative visualization disclosure notice where applicable.
+                </p>
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => setDisclosureModalOpen(false)}
+                  className="rounded-lg px-4 py-2 text-xs font-bold text-slate-950"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  Got It — Return to Tour
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* White-Label Built-In Lead Capture Drawer */}
       <AnimatePresence>
@@ -1674,21 +2358,29 @@ export function InteractivePropertyPlayer({
 
               {/* Drawer Body */}
               <div className="flex-1 overflow-y-auto p-5">
-                {/* Active Viewing Context Pill */}
-                <div className="mb-5 rounded-xl border border-white/10 bg-slate-900/90 p-3 text-xs">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    Attached Viewing Context
+                {/* Plain-Language Context Shared with Advisor */}
+                <div className="mb-5 rounded-xl border border-cyan-500/25 bg-slate-900/90 p-3.5 text-xs space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-300">
+                    Context Shared with Your Advisor
                   </p>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                    <span className="rounded-md bg-white/10 px-2 py-0.5 font-medium text-white">
+                  <p className="text-xs leading-relaxed text-slate-200">
+                    {buyerContextSummary}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    <span className="rounded-md bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white">
                       {activeRoom?.name || 'Property Overview'}
                     </span>
                     <span
-                      className="rounded-md px-2 py-0.5 font-medium text-white"
+                      className="rounded-md px-2 py-0.5 text-[11px] font-medium text-white"
                       style={{ backgroundColor: `${brandColor}30`, color: brandColor }}
                     >
-                      {activeStylePreset.label}
+                      {activeVisionPlainLabel}
                     </span>
+                    {buyerProfile !== 'explorer' && (
+                      <span className="rounded-md border border-violet-400/35 bg-violet-500/20 px-2 py-0.5 text-[11px] font-medium text-violet-200">
+                        {activeBuyerMatch.label}
+                      </span>
+                    )}
                   </div>
                 </div>
 

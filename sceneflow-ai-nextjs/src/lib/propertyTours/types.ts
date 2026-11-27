@@ -267,6 +267,7 @@ export const PROPERTY_EVENT_PRESETS: readonly PropertyOptionPreset<PropertyEvent
 
 export interface PropertyAdditionPreset extends PropertyOptionPreset<PropertyAdditionId> {
   estimatedCostUsd?: number
+  estimatedCostRange?: string
 }
 
 export const PROPERTY_ADDITION_PRESETS: readonly PropertyAdditionPreset[] = [
@@ -279,36 +280,41 @@ export const PROPERTY_ADDITION_PRESETS: readonly PropertyAdditionPreset[] = [
   {
     id: 'wine_cellar_bar',
     label: '+ Glass Wine Wall & Bar',
-    shortLabel: '+ Wine Bar ($48K)',
+    shortLabel: '+ Wine Bar (Est. $40K–$60K)',
     estimatedCostUsd: 48000,
+    estimatedCostRange: 'Est. $40K–$60K',
     promptGuidance: 'Architectural addition: floor-to-ceiling frameless glass climate-controlled wine cellar wall with backlit oak racking alongside a stone wet bar and unlacquered brass fixtures.',
   },
   {
     id: 'outdoor_kitchen',
     label: '+ Pergola & Outdoor Kitchen',
-    shortLabel: '+ Outdoor Kitchen ($68K)',
+    shortLabel: '+ Outdoor Kitchen (Est. $55K–$85K)',
     estimatedCostUsd: 68000,
+    estimatedCostRange: 'Est. $55K–$85K',
     promptGuidance: 'Architectural addition: custom cedar slatted pergola shading a built-in stainless grill island, quartzite bar seating, pizza oven, and warm string lighting.',
   },
   {
     id: 'glass_sunroom',
     label: '+ Glass Sunroom Pavilion',
-    shortLabel: '+ Glass Sunroom ($95K)',
+    shortLabel: '+ Glass Sunroom (Est. $80K–$120K)',
     estimatedCostUsd: 95000,
+    estimatedCostRange: 'Est. $80K–$120K',
     promptGuidance: 'Architectural addition: steel-and-glass conservatory sunroom extension with skylights and retractable pocket doors blending interior living into the garden.',
   },
   {
     id: 'infinity_pool',
     label: '+ Infinity Pool & Fire Lounge',
-    shortLabel: '+ Pool & Firepit ($125K)',
+    shortLabel: '+ Pool & Firepit (Est. $110K–$150K)',
     estimatedCostUsd: 125000,
+    estimatedCostRange: 'Est. $110K–$150K',
     promptGuidance: 'Architectural addition: zero-edge infinity pool and integrated spa with glowing underwater lighting, travertine coping, and sunken cedar firepit lounge.',
   },
   {
     id: 'adu_casita',
     label: '+ Detached Guest Casita / ADU',
-    shortLabel: '+ Guest Casita ($185K)',
+    shortLabel: '+ Guest Casita (Est. $165K–$220K)',
     estimatedCostUsd: 185000,
+    estimatedCostRange: 'Est. $165K–$220K',
     promptGuidance: 'Architectural addition: sleek detached modern coastal Guest Casita / ADU pavilion with cedar soffits, retractable black-framed glass walls, and private lounge terrace.',
   },
 ] as const

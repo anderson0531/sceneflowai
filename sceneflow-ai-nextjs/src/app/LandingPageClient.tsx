@@ -8,6 +8,7 @@ import StudioGuidedTourSection from '@/components/landing/StudioGuidedTourSectio
 import ProductionExamplesSection from '@/components/landing/ProductionExamplesSection'
 import { LongformCinemaCraftShowcase } from '@/components/showcase/LongformCinemaCraftShowcase'
 import { VideoServicesSpotlightSection } from '@/components/landing/VideoServicesSpotlightSection'
+import { ImmersiveTourSpotlightSection } from '@/components/landing/ImmersiveTourSpotlightSection'
 import KeyFeaturesSection from '@/components/landing/KeyFeaturesSection'
 import StudioAcademyGuaranteeStrip from '@/components/landing/StudioAcademyGuaranteeStrip'
 import PricingCredits from '@/components/landing/PricingCredits'
@@ -55,6 +56,9 @@ export default function LandingPageClient() {
 
       {/* 5. Video Business Engine & Monthly Profit Estimator */}
       <VideoServicesSpotlightSection />
+
+      {/* 5b. SceneFlow Immersive Tour — 60+ Min Agent-Directed Living Property Explorer */}
+      <ImmersiveTourSpotlightSection />
 
       {/* 6. Curated Studio Capabilities Explorer */}
       <KeyFeaturesSection />

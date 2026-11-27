@@ -5,6 +5,7 @@ import {
   createDefaultRoom,
   getNextClockwiseDirection,
   getPrevClockwiseDirection,
+  PROPERTY_ADDITION_PRESETS,
   resolvePerspectiveAsset,
 } from '@/lib/propertyTours/types'
 import {
@@ -33,7 +34,8 @@ describe('Interactive Property Explorer — Schema, Compass & Asset Resolution',
 
   it('resolves exact style+lighting+lifestyle match, respects showOriginal, and falls back gracefully', () => {
     const rooms = buildSampleDemoRooms()
-    const greatRoomNorth = rooms[0].perspectives.N
+    const greatRoom = rooms.find((r) => r.id === 'room-great-room-demo')!
+    const greatRoomNorth = greatRoom.perspectives.N
 
     const exact = resolvePerspectiveAsset(greatRoomNorth, {
       style: 'modern_coastal',
@@ -130,13 +132,21 @@ describe('Property Tour Hosting Policy, Embed URLs & Standalone Routing', () => 
 
     const demoTour = buildPublicDemoPropertyTourDTO('demo')
     expect(demoTour.status).toBe('published')
-    expect(demoTour.rooms.length).toBeGreaterThanOrEqual(3)
-    expect(demoTour.rooms[0].perspectives.N.variants[0]?.imageUrl).toContain(
-      '/images/property-tours/demo/'
+    expect(demoTour.rooms.length).toBeGreaterThanOrEqual(5)
+
+    const greatRoom = demoTour.rooms.find((r) => r.id === 'room-great-room-demo')!
+    const terraceRoom = demoTour.rooms.find((r) => r.id === 'room-terrace-demo')!
+    const aerialRoom = demoTour.rooms.find((r) => r.id === 'room-aerial-demo')!
+    const primarySuiteRoom = demoTour.rooms.find((r) => r.id === 'room-primary-suite-demo')!
+    expect(aerialRoom.perspectives.N.variants[0]?.imageUrl).toBe(
+      '/images/property-tours/demo/aerial-coastal-approach.jpg'
+    )
+    expect(primarySuiteRoom.perspectives.N.variants[0]?.imageUrl).toBe(
+      '/images/property-tours/demo/primary-suite-ocean.jpg'
     )
 
     // Verify Events (Cocktail Party, Family Gathering) & Additions (Wine Bar, Guest Casita) resolve accurately
-    const partyAsset = resolvePerspectiveAsset(demoTour.rooms[0].perspectives.N, {
+    const partyAsset = resolvePerspectiveAsset(greatRoom.perspectives.N, {
       style: 'modern_coastal',
       lighting: 'daylight',
       lifestyle: 'architectural',
@@ -144,7 +154,7 @@ describe('Property Tour Hosting Policy, Embed URLs & Standalone Routing', () => 
     })
     expect(partyAsset.imageUrl).toBe('/images/property-tours/demo/great-room-event-party.jpg')
 
-    const familyAsset = resolvePerspectiveAsset(demoTour.rooms[0].perspectives.N, {
+    const familyAsset = resolvePerspectiveAsset(greatRoom.perspectives.N, {
       style: 'modern_coastal',
       lighting: 'daylight',
       lifestyle: 'architectural',
@@ -152,7 +162,7 @@ describe('Property Tour Hosting Policy, Embed URLs & Standalone Routing', () => 
     })
     expect(familyAsset.imageUrl).toBe('/images/property-tours/demo/great-room-event-family.jpg')
 
-    const wineBarAsset = resolvePerspectiveAsset(demoTour.rooms[0].perspectives.N, {
+    const wineBarAsset = resolvePerspectiveAsset(greatRoom.perspectives.N, {
       style: 'modern_coastal',
       lighting: 'daylight',
       lifestyle: 'architectural',
@@ -160,7 +170,7 @@ describe('Property Tour Hosting Policy, Embed URLs & Standalone Routing', () => 
     })
     expect(wineBarAsset.imageUrl).toBe('/images/property-tours/demo/addition-wine-bar.jpg')
 
-    const aduAsset = resolvePerspectiveAsset(demoTour.rooms[2].perspectives.N, {
+    const aduAsset = resolvePerspectiveAsset(terraceRoom.perspectives.N, {
       style: 'modern_coastal',
       lighting: 'daylight',
       lifestyle: 'architectural',
@@ -297,5 +307,14 @@ describe('Property Tour Hosting Policy, Embed URLs & Standalone Routing', () => 
       addition: 'adu_casita',
     })
     expect(aduPlate.imageUrl).toBe('https://cdn.example.com/pool-adu.jpg')
+  })
+
+  it('frames all structural addition presets with illustrative cost ranges rather than fixed quotes', () => {
+    const paidAdditions = PROPERTY_ADDITION_PRESETS.filter((p) => p.id !== 'none')
+    expect(paidAdditions.length).toBeGreaterThanOrEqual(4)
+    for (const preset of paidAdditions) {
+      expect(preset.estimatedCostRange).toBeTruthy()
+      expect(preset.estimatedCostRange).toMatch(/Est\.\s*\$\d+K–\$\d+K/)
+    }
   })
 })

@@ -19,6 +19,7 @@ import {
   Palette,
   Plus,
   RotateCcw,
+  ShieldCheck,
   Sparkles,
   Terminal,
   Upload,
@@ -417,14 +418,14 @@ export default function PublicPropertyToursPage() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="truncate text-xs sm:text-sm font-bold tracking-tight text-white">
-                    Property Explorer
+                    SceneFlow Immersive Tour™
                   </span>
                   <span className="hidden md:inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
-                    Vercel-Native · No Login
+                    60+ Min Living Property Explorer · No Login
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 hidden lg:block">
-                  N/E/S/W Perspectives · Events, Redesign &amp; Additions · EN/ES/JA Agent Sync &amp; Narration
+                  Agent-Directed · Buyer-Controlled · Aerials, N/E/S/W, Redesigns, Additions, Events, Lifestyle Match &amp; EN/ES/JA Sync
                 </p>
               </div>
             </div>
@@ -539,34 +540,59 @@ export default function PublicPropertyToursPage() {
             </div>
 
             {/* Quick Buyer Guidance Banner (below player on mobile so room hero loads immediately) */}
-            <div className="order-2 sm:order-1 grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-3">
-              <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3 sm:p-3.5">
-                <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
-                  <Compass className="h-4 w-4 shrink-0" />
-                  1. Swipe or Tap N · E · S · W Walls
+            <div className="order-2 sm:order-1 space-y-2.5">
+              <div className="rounded-xl border border-cyan-500/20 bg-gradient-to-r from-slate-900/90 via-cyan-950/25 to-slate-900/90 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-bold text-white">
+                    Beyond 360° Cameras &amp; Static Listing Photos — Spend an Hour Immersing Yourself in the Property
+                  </p>
+                  <p className="text-[11px] text-slate-300 mt-0.5">
+                    SceneFlow Blueprint &amp; Production builds 60+ minutes of aerials, N/E/S/W architectural rooms, AI remodels, structural additions, live events &amp; multilingual agent sales narration — delivered in one interactive buyer-controlled portal.
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  Swipe across the room, tap the N/E/S/W compass, or use arrow keys to inspect all 4 perspectives with zero fisheye distortion.
-                </p>
+                <span className="shrink-0 self-start sm:self-center rounded-full border border-cyan-500/35 bg-cyan-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-200">
+                  5 Spaces · EN / ES / JA
+                </span>
               </div>
-              <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3 sm:p-3.5">
-                <div className="flex items-center gap-2 text-xs font-semibold text-amber-300">
-                  <Layers className="h-4 w-4 shrink-0" />
-                  2. Toggle Redesign, Events &amp; Additions
+
+              <div className="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-3">
+                <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3 sm:p-3.5">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
+                    <Compass className="h-4 w-4 shrink-0" />
+                    1. Aerial Arrival &amp; 4-Wall N/E/S/W Explorer
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Start with <strong className="text-white">Coastal Aerial &amp; Arrival</strong> (grounded in licensed exterior &amp; aerial captures with compliant neighborhood context), then swipe rooms or launch the <strong className="text-white">30s Intro</strong>.
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  Preview <strong className="text-white">Cocktail Party</strong>, <strong className="text-white">Family Gathering</strong>, <strong className="text-white">+ Wine Bar</strong>, or <strong className="text-white">+ Guest Casita</strong>, and tap <strong className="text-white">Compare</strong> for Before/After.
-                </p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3 sm:p-3.5">
-                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
-                  <Palette className="h-4 w-4 shrink-0" />
-                  3. Agent Sync vs. EN / ES / JA Narration
+                <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3 sm:p-3.5">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-amber-300">
+                    <Layers className="h-4 w-4 shrink-0" />
+                    2. Lifestyle Match, Redesigns &amp; Add-Ons
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Pick a <strong className="text-white">Lifestyle Match</strong> (Entertainer, Family, Executive, Investor), toggle Events &amp; Additions, or drag <strong className="text-white">Compare</strong> for Before/After.
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  Turn on <strong className="text-white">Narration</strong> or <strong className="text-white">Agent Sync</strong> in English, Español, or 日本語 alongside ambient music with automatic voice ducking.
-                </p>
+                <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3 sm:p-3.5">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
+                    <Palette className="h-4 w-4 shrink-0" />
+                    3. Agent Sync vs. EN / ES / JA Narration
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Switch between <strong className="text-white">Narration</strong> and <strong className="text-white">Agent Sync</strong> in English, Español, or 日本語 with ambient music &amp; automatic voice ducking.
+                  </p>
+                </div>
               </div>
+            </div>
+
+            {/* Explicit AI Visualization & Property Grounding Disclaimer */}
+            <div className="order-4 flex items-start gap-2.5 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-[11px] sm:text-xs text-slate-400">
+              <ShieldCheck className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
+              <p className="leading-relaxed">
+                <strong className="text-slate-200">AI Visualization &amp; Property Accuracy Disclosure:</strong>{' '}
+                SceneFlow Immersive Tour™ scenes are AI-enhanced for visualization and buyer inspiration, grounded in actual property photography, structural dimensions, and existing architectural features. Use <strong className="text-white">Original (As-Is)</strong> or <strong className="text-white">Compare Original</strong> at any time to inspect unaltered listing photos. Renovation and addition estimates are illustrative and subject to local permitting and contractor bids.
+              </p>
             </div>
 
             {/* Live White-Label Rebrand Bar */}
@@ -833,6 +859,19 @@ export default function PublicPropertyToursPage() {
                   </button>
                 </div>
 
+                {/* Pre-Render Production Credit Guardrail */}
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-[11px] text-slate-300">
+                  <span>
+                    <strong className="text-emerald-300">Pre-Render Credit Estimate:</strong>{' '}
+                    Single wall <span className="font-mono text-white">~30 cr</span> · All 4 N→E→S→W walls{' '}
+                    <span className="font-mono text-white">~120 cr</span> · Full 60-Min Cinema + EN/ES/JA pack{' '}
+                    <span className="font-mono text-white">~5,500–9,000 cr</span>
+                  </span>
+                  <span className="text-[10px] font-semibold text-cyan-300">
+                    0 cr marginal viewer playback cost
+                  </span>
+                </div>
+
                 {stagingMessage && (
                   <div className="rounded-lg border border-cyan-500/30 bg-cyan-950/30 px-3 py-2 text-xs text-cyan-200">
                     {stagingMessage}
@@ -1061,43 +1100,31 @@ export default function PublicPropertyToursPage() {
               </div>
             </div>
 
-            {/* Dual Monetization Economics Card */}
+            {/* Dual-Layer VSP Commercial Terms + Pre-Render Production Estimator */}
             <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-6 space-y-5">
-              <div>
-                <h2 className="text-base font-bold text-white">
-                  White-Label Agency Unit Economics
-                </h2>
-                <p className="mt-1 text-xs text-slate-400">
-                  Fixed-cost N/E/S/W Blueprint generation replaces $500–$1,500 360° photography shoots and unpredictable dynamic world-model streaming costs with a recurring white-label SaaS product.
-                </p>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-base font-bold text-white">
+                    Dual-Layer VSP Commercial Inputs (Hosting Slots vs. AI Credits)
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-400">
+                    SceneFlow cleanly separates <strong className="text-slate-200">Layer 1 (Platform Subscription &amp; Active Listing Hosting Slots)</strong> from <strong className="text-slate-200">Layer 2 (Vertex AI / AI Gateway Production Credits)</strong> — zero marginal AI cost on viewer playback.
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full border border-amber-400/40 bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-200">
+                  Illustrative Sample Portal Only
+                </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-white/10 bg-slate-950 p-4">
-                  <div className="text-[11px] uppercase tracking-wider text-slate-400">
-                    Fixed Creation Cost
+              {/* Layer 1: Hosting Slot Metering */}
+              <div className="rounded-xl border border-white/10 bg-slate-950 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-xs font-semibold text-cyan-300">
+                    Layer 1 · Active Hosted Listing Slots (Idempotent Monthly Access)
                   </div>
-                  <div className="mt-1 text-xl font-bold text-white">~360 cr</div>
-                  <div className="text-[11px] text-emerald-400">
-                    ~$3.60 for 3 rooms × 4 walls (2K)
-                  </div>
-                </div>
-                <div className="rounded-xl border border-white/10 bg-slate-950 p-4">
-                  <div className="text-[11px] uppercase tracking-wider text-slate-400">
-                    Extra Active Listing
-                  </div>
-                  <div className="mt-1 text-xl font-bold text-white">
-                    {EXTRA_ACTIVE_LISTING_MONTHLY_CREDITS} cr/mo
-                  </div>
-                  <div className="text-[11px] text-cyan-400">
-                    $1.50/mo wholesale · Retail $49–$149/mo
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-slate-950 p-4">
-                <div className="text-xs font-semibold text-white mb-2.5">
-                  Included Active Published Listing Slots by Plan
+                  <span className="text-[11px] font-semibold text-slate-300">
+                    Extra Slot Add-On: {EXTRA_ACTIVE_LISTING_MONTHLY_CREDITS} cr/mo
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
                   {[
@@ -1117,6 +1144,47 @@ export default function PublicPropertyToursPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Layer 2: Pre-Render Production Credit Estimator */}
+              <div className="rounded-xl border border-white/10 bg-slate-950 p-4 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-xs font-semibold text-emerald-300">
+                    Layer 2 · Pre-Render AI Production Credit Estimates (Before Generating)
+                  </div>
+                  <span className="text-[10px] text-slate-400">0 cr marginal playback cost</span>
+                </div>
+                <div className="space-y-1.5 text-xs">
+                  {[
+                    {
+                      config: 'Stills + Virtual Staging Pass (3–5 rooms × 4 walls)',
+                      credits: '~360–600 cr',
+                    },
+                    {
+                      config: 'Multi-Angle Motion + Events & Additions Pack',
+                      credits: '~2,400–4,200 cr',
+                    },
+                    {
+                      config: 'Full 60-Min Cinema + EN / ES / JA Narration & Agent Sync',
+                      credits: '~5,500–9,000 cr',
+                    },
+                  ].map((row) => (
+                    <div
+                      key={row.config}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2"
+                    >
+                      <span className="text-slate-300">{row.config}</span>
+                      <span className="shrink-0 font-mono font-bold text-white">{row.credits}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-amber-500/25 bg-amber-950/15 px-3.5 py-2.5 text-[11px] text-slate-300">
+                <strong className="text-amber-200">Illustrative Sample Portal Only:</strong>{' '}
+                Downstream brokerage pricing, client bundles, and agency margins are determined
+                entirely and independently by each VSP. SceneFlow bills strictly on VSP platform
+                access, active hosting slots, and AI production credits.
               </div>
 
               <div className="pt-1">

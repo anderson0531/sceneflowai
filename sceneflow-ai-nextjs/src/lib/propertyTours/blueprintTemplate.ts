@@ -81,7 +81,7 @@ export function buildPropertyShowcaseBlueprintPrompt(
   }
   if (cfg.includeAdditions) {
     experienceModes.push(
-      '- ARCHITECTURAL ADDITIONS: Glass Wine Cellar & Wet Bar (+$48K), Pergola & Outdoor Kitchen (+$68K), Infinity Pool & Firepit (+$125K), and Detached Guest Casita / ADU (+$185K).'
+      '- ARCHITECTURAL ADDITIONS (ILLUSTRATIVE CONCEPT RANGES): Glass Wine Cellar & Wet Bar (Est. $40K–$60K), Pergola & Outdoor Kitchen (Est. $55K–$80K), Infinity Pool & Firepit (Est. $110K–$150K), and Detached Guest Casita / ADU (Est. $165K–$220K) — always framed as illustrative concepts subject to permitting and bids.'
     )
   }
 
@@ -114,7 +114,8 @@ export function buildPropertyShowcaseBlueprintPrompt(
     'Example: "EXT. INFINITY POOL TERRACE - GOLDEN HOUR [ROOM: Infinity Pool & Twilight Terrace] [WALL: N] [ADDITION: adu_casita]"',
     '',
     'VISUAL & AUDIO CONTINUITY RULES:',
-    '- Lock flooring, millwork, ceiling beams, and Listing Advisor wardrobe across all 30+ minutes of clips.',
+    '- Ground exterior aerials, curb appeal, lot lines, and neighborhood context using licensed VSP/broker drone & exterior photography (plus compliant official map/neighborhood embeds with required attribution where enabled — never unauthorized scraped map imagery).',
+    '- Lock flooring, millwork, ceiling beams, and Listing Advisor wardrobe across all 60+ minutes of clips.',
     '- Use 24mm tilt-shift architectural framing with straight verticals and zero fisheye distortion.',
     '- Pair daytime architectural clips with Coastal Acoustic ambient music and twilight/event clips with Twilight Lounge score (ducked under agent narration).',
   ]

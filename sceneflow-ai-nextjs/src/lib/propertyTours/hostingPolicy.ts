@@ -165,6 +165,8 @@ export function isPublicDemoTourSlug(slug: string): boolean {
 export function buildSampleDemoRooms(): PropertyRoom[] {
   const now = new Date().toISOString()
 
+  const aerialApproach = '/images/property-tours/demo/aerial-coastal-approach.jpg'
+  const primarySuiteOcean = '/images/property-tours/demo/primary-suite-ocean.jpg'
   const greatRoomNOriginal = '/images/property-tours/demo/great-room-n-original.jpg'
   const greatRoomNCoastal = '/images/property-tours/demo/great-room-n-coastal.jpg'
   const greatRoomECoastal = '/images/property-tours/demo/great-room-e-coastal.jpg'
@@ -181,10 +183,174 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
 
   return [
     {
+      id: 'room-aerial-demo',
+      name: 'Coastal Aerial & Arrival',
+      roomType: 'exterior',
+      orderIndex: 0,
+      description: 'Drone-like golden-hour coastal approach showcasing cliffside positioning, infinity pool cantilever, and private arrival court.',
+      renovationEstimateUsd: null,
+      anchorDirection: 'N',
+      narrationAudioUrl: '/api/property-tours/demo-audio?room=aerial&mode=narration&lang=en',
+      narrationScript:
+        'Welcome to 742 Oceanfront Terrace in Malibu — a 6,240 square foot coastal estate perched on 0.68 acres above the Pacific. Take your time exploring over 60 minutes of agent-directed rooms, redesigns, additions, and live lifestyle visions grounded in actual property photography and dimensions.',
+      narrationByLanguage: {
+        en: {
+          script:
+            'Welcome to 742 Oceanfront Terrace in Malibu — a 6,240 square foot coastal estate perched on 0.68 acres above the Pacific. Take your time exploring every space, redesign, addition, and live lifestyle vision grounded in actual property photography and dimensions.',
+          audioUrl: '/api/property-tours/demo-audio?room=aerial&mode=narration&lang=en',
+        },
+        es: {
+          script:
+            'Bienvenidos a 742 Oceanfront Terrace en Malibú: una residencia costera de 580 metros cuadrados sobre un lote privilegiado frente al Pacífico. Explore cada espacio, rediseño y ampliación a su propio ritmo, todo basado en fotografías y dimensiones reales.',
+          audioUrl: '/api/property-tours/demo-audio?room=aerial&mode=narration&lang=es',
+        },
+        ja: {
+          script:
+            'マリブの742オーシャンフロント・テラスへようこそ。太平洋を望む希少な海沿いの邸宅を、ご自身のペースで心ゆくまでご探索ください。すべてのAIビジュアライゼーションは実際の物件写真と寸法に基づいています。',
+          audioUrl: '/api/property-tours/demo-audio?room=aerial&mode=narration&lang=ja',
+        },
+      },
+      agentSyncByLanguage: {
+        en: {
+          script:
+            'Welcome to your private walkthrough of 742 Oceanfront Terrace. Select your Lifestyle Match below — Entertainer, Family, Executive, or Investor — and explore every wall, remodel, and expansion possibility at your own pace.',
+          audioUrl: '/api/property-tours/demo-audio?room=aerial&mode=agent&lang=en',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+        es: {
+          script:
+            'Bienvenidos a su recorrido privado por 742 Oceanfront Terrace. Seleccione su estilo de vida abajo — Anfitrión, Familia, Ejecutivo o Inversionista — y explore cada espacio y rediseño sin límites.',
+          audioUrl: '/api/property-tours/demo-audio?room=aerial&mode=agent&lang=es',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+        ja: {
+          script:
+            '742オーシャンフロント・テラスのプライベート内覧へようこそ。下のライフスタイル・マッチングからお好みの暮らし方を選び、リデザインや増築プランをご体感ください。',
+          audioUrl: '/api/property-tours/demo-audio?room=aerial&mode=agent&lang=ja',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+      },
+      perspectives: {
+        N: {
+          direction: 'N',
+          label: 'North — Golden-Hour Drone Approach & Ocean Bluff',
+          originalImageUrl: aerialApproach,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-aer-n-golden',
+              style: 'modern_coastal',
+              lighting: 'golden_hour',
+              lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
+              imageUrl: aerialApproach,
+              isVirtuallyModified: true,
+              promptSummary: 'Drone-like golden-hour coastal aerial approach overlooking Malibu bluff & infinity pool',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-aer-n-twilight',
+              style: 'modern_coastal',
+              lighting: 'twilight',
+              lifestyle: 'entertaining',
+              event: 'none',
+              addition: 'infinity_pool',
+              imageUrl: poolNTwilight,
+              isVirtuallyModified: true,
+              promptSummary: 'Twilight architectural exterior & illuminated infinity edge',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-aer-n-adu',
+              style: 'modern_coastal',
+              lighting: 'golden_hour',
+              lifestyle: 'architectural',
+              event: 'none',
+              addition: 'adu_casita',
+              imageUrl: additionAduCasita,
+              isVirtuallyModified: true,
+              promptSummary: 'Aerial lot expansion: Detached Guest Casita / ADU Pool Pavilion (+$185K)',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+        E: {
+          direction: 'E',
+          label: 'East — Poolside Guest Casita Pad & Bluff Edge',
+          originalImageUrl: aerialApproach,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-aer-e-casita',
+              style: 'modern_coastal',
+              lighting: 'golden_hour',
+              lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
+              imageUrl: additionAduCasita,
+              isVirtuallyModified: true,
+              promptSummary: 'East bluff expansion pad with poolside pavilion & coastal views',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+        S: {
+          direction: 'S',
+          label: 'South — Sculptural Entry Foyer & Arrival Court',
+          originalImageUrl: greatRoomSCoastal,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-aer-s-entry',
+              style: 'modern_coastal',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
+              imageUrl: greatRoomSCoastal,
+              isVirtuallyModified: true,
+              promptSummary: 'Architectural entry foyer & floating staircase arrival',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+        W: {
+          direction: 'W',
+          label: 'West — Sunset Pacific Horizon & Twilight Deck',
+          originalImageUrl: aerialApproach,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-aer-w-twilight',
+              style: 'modern_coastal',
+              lighting: 'twilight',
+              lifestyle: 'entertaining',
+              event: 'none',
+              addition: 'none',
+              imageUrl: poolNTwilight,
+              isVirtuallyModified: true,
+              promptSummary: 'West sunset orientation overlooking Pacific horizon',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+      },
+    },
+    {
       id: 'room-great-room-demo',
       name: 'Oceanfront Great Room',
       roomType: 'living',
-      orderIndex: 0,
+      orderIndex: 1,
       description: 'Panoramic coastal living room with 14-foot glass sliders, white oak plank floors, and exposed cedar beams.',
       renovationEstimateUsd: 42000,
       anchorDirection: 'N',
@@ -452,7 +618,7 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
       id: 'room-kitchen-demo',
       name: "Chef's Kitchen Remodel",
       roomType: 'kitchen',
-      orderIndex: 1,
+      orderIndex: 2,
       description: 'Compare the dated cherry/granite existing kitchen against a bespoke Taj Mahal quartzite & rift-cut oak remodel.',
       renovationEstimateUsd: 95000,
       anchorDirection: 'N',
@@ -626,10 +792,161 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
       },
     },
     {
+      id: 'room-primary-suite-demo',
+      name: 'Primary Ocean Suite',
+      roomType: 'primary_suite',
+      orderIndex: 3,
+      description: 'Retractable oceanfront glass walls opening onto a private cliffside sunrise balcony with wide-plank white oak and exposed cedar beams.',
+      renovationEstimateUsd: 52000,
+      anchorDirection: 'N',
+      narrationAudioUrl: '/api/property-tours/demo-audio?room=primary-suite&mode=narration&lang=en',
+      narrationScript:
+        'Wake up above the Pacific in the Primary Ocean Suite. Retractable floor-to-ceiling black-framed sliders open onto a private cantilevered balcony while wide-plank white oak and exposed cedar beams deliver resort calm.',
+      narrationByLanguage: {
+        en: {
+          script:
+            'Wake up above the Pacific in the Primary Ocean Suite. Retractable floor-to-ceiling black-framed sliders open onto a private cantilevered balcony while wide-plank white oak and exposed cedar beams deliver resort calm.',
+          audioUrl: '/api/property-tours/demo-audio?room=primary-suite&mode=narration&lang=en',
+        },
+        es: {
+          script:
+            'Despierte sobre el Pacífico en la Suite Principal. Sus puertas retráctiles de cristal se abren hacia una terraza privada frente al mar, mientras el roble blanco y las vigas de cedro crean serenidad de resort.',
+          audioUrl: '/api/property-tours/demo-audio?room=primary-suite&mode=narration&lang=es',
+        },
+        ja: {
+          script:
+            '太平洋の朝日で目覚めるプライマリー・オーシャンスイートです。全開するガラス扉の先にはプライベートテラスが広がり、ホワイトオークとシダー材の梁が極上の安らぎをもたらします。',
+          audioUrl: '/api/property-tours/demo-audio?room=primary-suite&mode=narration&lang=ja',
+        },
+      },
+      agentSyncByLanguage: {
+        en: {
+          script:
+            'This Primary Suite offers complete acoustic privacy from the entertaining wing, with morning ocean breezes and unobstructed bluff views right from bed.',
+          audioUrl: '/api/property-tours/demo-audio?room=primary-suite&mode=agent&lang=en',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+        es: {
+          script:
+            'Esta Suite Principal ofrece privacidad acústica total respecto al área social, con brisa marina matutina y vistas despejadas al acantilado.',
+          audioUrl: '/api/property-tours/demo-audio?room=primary-suite&mode=agent&lang=es',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+        ja: {
+          script:
+            'このプライマリー・スイートはリビング棟から静かに独立しており、毎朝穏やかな海風と絶景に包まれて目覚めることができます。',
+          audioUrl: '/api/property-tours/demo-audio?room=primary-suite&mode=agent&lang=ja',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+      },
+      perspectives: {
+        N: {
+          direction: 'N',
+          label: 'North — Private Ocean Balcony & Sunrise View',
+          originalImageUrl: greatRoomNOriginal,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-ps-n-coastal-day',
+              style: 'modern_coastal',
+              lighting: 'golden_hour',
+              lifestyle: 'quiet_morning',
+              event: 'none',
+              addition: 'none',
+              imageUrl: primarySuiteOcean,
+              isVirtuallyModified: true,
+              promptSummary: 'Modern Coastal Primary Ocean Suite with private sunrise Pacific balcony',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-ps-n-japandi',
+              style: 'japandi_zen',
+              lighting: 'daylight',
+              lifestyle: 'quiet_morning',
+              event: 'none',
+              addition: 'none',
+              imageUrl: primarySuiteOcean,
+              isVirtuallyModified: true,
+              promptSummary: 'Organic Japandi serene morning sanctuary overlooking the Pacific',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+        E: {
+          direction: 'E',
+          label: 'East — Limestone Hearth & Lounge Reading Corner',
+          originalImageUrl: greatRoomNOriginal,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-ps-e-hearth',
+              style: 'modern_coastal',
+              lighting: 'daylight',
+              lifestyle: 'quiet_morning',
+              event: 'none',
+              addition: 'none',
+              imageUrl: greatRoomECoastal,
+              isVirtuallyModified: true,
+              promptSummary: 'Suite lounge hearth wall in matching limestone & white oak',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+        S: {
+          direction: 'S',
+          label: 'South — Private Gallery & Dressing Entry',
+          originalImageUrl: greatRoomSCoastal,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-ps-s-entry',
+              style: 'modern_coastal',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
+              imageUrl: greatRoomSCoastal,
+              isVirtuallyModified: true,
+              promptSummary: 'Private architectural gallery hallway leading into primary suite',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+        W: {
+          direction: 'W',
+          label: 'West — Coastal Bluff & Terrace Overlook',
+          originalImageUrl: aerialApproach,
+          transitionToNextVideoUrl: null,
+          variants: [
+            {
+              id: 'var-ps-w-bluff',
+              style: 'modern_coastal',
+              lighting: 'golden_hour',
+              lifestyle: 'quiet_morning',
+              event: 'none',
+              addition: 'none',
+              imageUrl: aerialApproach,
+              isVirtuallyModified: true,
+              promptSummary: 'Sweeping west coastline perspective from private bluff terrace',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+          ],
+        },
+      },
+    },
+    {
       id: 'room-terrace-demo',
       name: 'Infinity Pool & Guest Casita Terrace',
       roomType: 'backyard_pool',
-      orderIndex: 2,
+      orderIndex: 4,
       description: 'Zero-edge oceanfront pool deck with sunken cedar firepit lounge and optional detached Guest Casita / ADU.',
       renovationEstimateUsd: 125000,
       anchorDirection: 'N',
@@ -858,9 +1175,10 @@ export function buildPublicDemoPropertyTourDTO(slug: string = 'demo'): PropertyT
       ctaLabel: 'Schedule Private Showing',
       ctaUrl: null,
       hideSceneFlowBranding: false,
-      disclosureText: 'Virtually Staged · Concept Visualization (Toggle "As-Is" for Original)',
+      disclosureText:
+        'AI-Enhanced Visualization · Grounded in Actual Property Photos & Dimensions',
     },
-    defaultRoomId: rooms[0].id,
+    defaultRoomId: rooms[1]?.id ?? rooms[0].id,
     availableStyles: ['as_is', 'modern_coastal', 'chefs_remodel', 'japandi_zen', 'old_money_estate'],
     availableLighting: ['daylight', 'golden_hour', 'twilight'],
     availableLifestyles: ['architectural', 'quiet_morning', 'entertaining', 'family_gathering'],
