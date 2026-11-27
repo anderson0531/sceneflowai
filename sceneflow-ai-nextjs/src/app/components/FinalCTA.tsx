@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { NotifyCapture } from '@/components/landing/NotifyCapture'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
+import { openPrelaunchAccessModal } from '@/components/landing/PrelaunchAccessModal'
 import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 
 export function FinalCTA() {
@@ -32,15 +33,28 @@ export function FinalCTA() {
           <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">{t('subtitle')}</p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href={getSignupUrlForTier('explorer')}
-              className="inline-flex items-center justify-center w-full sm:w-auto rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 px-8 py-3.5 text-base font-semibold text-slate-950 shadow-lg shadow-cyan-500/25 hover:brightness-110 transition-all"
-            >
-              {prelaunchOnly
-                ? (t.has('requestPreLaunchAccess') ? t('requestPreLaunchAccess') : 'Request Pre-Launch Access')
-                : localizeUsdText(t('cta'), locale)}
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
+            {prelaunchOnly ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!openPrelaunchAccessModal({ tier: 'explorer', source: 'final-cta' })) {
+                    window.location.href = getSignupUrlForTier('explorer')
+                  }
+                }}
+                className="inline-flex items-center justify-center w-full sm:w-auto rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 px-8 py-3.5 text-base font-semibold text-slate-950 shadow-lg shadow-cyan-500/25 hover:brightness-110 transition-all cursor-pointer"
+              >
+                {t.has('requestPreLaunchAccess') ? t('requestPreLaunchAccess') : 'Request Pre-Launch Access'}
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </button>
+            ) : (
+              <Link
+                href={getSignupUrlForTier('explorer')}
+                className="inline-flex items-center justify-center w-full sm:w-auto rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 px-8 py-3.5 text-base font-semibold text-slate-950 shadow-lg shadow-cyan-500/25 hover:brightness-110 transition-all"
+              >
+                {localizeUsdText(t('cta'), locale)}
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Link>
+            )}
             <Link
               href="#studio-tour"
               className="inline-flex items-center justify-center w-full sm:w-auto rounded-xl border border-purple-500/40 px-8 py-3.5 text-base font-semibold text-purple-200 hover:bg-purple-500/10 transition-colors"

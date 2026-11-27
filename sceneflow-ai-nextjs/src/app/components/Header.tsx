@@ -21,6 +21,8 @@ import {
   navigateToDashboard,
 } from '@/lib/auth/postLoginRedirect'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
+import { openPrelaunchAccessModal } from '@/components/landing/PrelaunchAccessModal'
 import { LanguageSelector } from './LanguageSelector'
 import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 import { useTranslations } from 'next-intl'
@@ -50,8 +52,12 @@ export function Header() {
     { id: 'trust-safety', label: t('trustSafety') },
   ] as const
 
+  const prelaunchOnly = isPrelaunchAccessModeEnabled()
   const loginUrl = getLoginUrl({ returnUrl: getDashboardUrl(), mode: 'login' })
   const signupUrl = getSignupUrlForTier('explorer')
+  const primaryGuestCtaLabel = prelaunchOnly
+    ? (t.has('requestAccess') ? t('requestAccess') : 'Request Access')
+    : t('startProject')
 
   // Scroll progress tracking + active section highlight for mobile quick-jump rail
   useEffect(() => {
@@ -140,8 +146,11 @@ export function Header() {
   }
 
   const goToSignup = () => {
-    window.location.href = signupUrl
     setIsMobileMenuOpen(false)
+    if (prelaunchOnly && openPrelaunchAccessModal({ tier: 'explorer', source: 'header' })) {
+      return
+    }
+    window.location.href = signupUrl
   }
 
   // Redirect legacy auth query params on landing to dedicated /login page
@@ -327,11 +336,11 @@ export function Header() {
                     {t('signIn')}
                   </Button>
                   <Button 
-                    title={t('startProject')}
+                    title={primaryGuestCtaLabel}
                     onClick={goToSignup}
                     className="whitespace-nowrap bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-xs 2xl:text-sm font-medium"
                   >
-                    {t('startProject')}
+                    {primaryGuestCtaLabel}
                   </Button>
                 </>
               )}
@@ -357,7 +366,7 @@ export function Header() {
                     onClick={goToSignup}
                     className="hidden md:inline-flex px-3.5 py-1.5 text-xs bg-sf-primary hover:bg-sf-accent text-sf-background font-semibold rounded-lg"
                   >
-                    {t('startProject')}
+                    {primaryGuestCtaLabel}
                   </Button>
                 ) : (
                   <Button
@@ -505,7 +514,7 @@ export function Header() {
                           onClick={goToSignup} 
                           className="w-full px-4 bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
-                          {t('startProject')}
+                          {primaryGuestCtaLabel}
                         </Button>
                       </>
                     )}

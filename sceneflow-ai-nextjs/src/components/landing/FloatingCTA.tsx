@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent';
 import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess';
+import { openPrelaunchAccessModal } from '@/components/landing/PrelaunchAccessModal';
 import { localizeUsdText } from '@/lib/i18n/landingCurrency';
 
 const SIGNUP_URL = getSignupUrlForTier('explorer');
@@ -95,18 +96,34 @@ export default function FloatingCTA() {
                 {t('seePricing')}
               </span>
             </button>
-            <Link
-              href={SIGNUP_URL}
-              title={prelaunchOnly ? (t.has('requestAccess') ? t('requestAccess') : 'Request Access') : localizeUsdText(t('tryNine'), locale)}
-              className="flex-1 min-w-0 min-h-[44px] flex items-center justify-center gap-1.5 px-2.5 py-2 bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 text-slate-950 font-semibold rounded-xl shadow-lg shadow-cyan-500/25 transition-all"
-            >
-              <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
-                {prelaunchOnly
-                  ? (t.has('requestAccess') ? t('requestAccess') : 'Request Access')
-                  : localizeUsdText(t('tryNine'), locale)}
-              </span>
-              <ArrowRight className="w-4 h-4 shrink-0" />
-            </Link>
+            {prelaunchOnly ? (
+              <button
+                type="button"
+                title={t.has('requestAccess') ? t('requestAccess') : 'Request Access'}
+                onClick={() => {
+                  if (!openPrelaunchAccessModal({ tier: 'explorer', source: 'floating-cta' })) {
+                    window.location.href = SIGNUP_URL;
+                  }
+                }}
+                className="flex-1 min-w-0 min-h-[44px] flex items-center justify-center gap-1.5 px-2.5 py-2 bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 text-slate-950 font-semibold rounded-xl shadow-lg shadow-cyan-500/25 transition-all cursor-pointer"
+              >
+                <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
+                  {t.has('requestAccess') ? t('requestAccess') : 'Request Access'}
+                </span>
+                <ArrowRight className="w-4 h-4 shrink-0" />
+              </button>
+            ) : (
+              <Link
+                href={SIGNUP_URL}
+                title={localizeUsdText(t('tryNine'), locale)}
+                className="flex-1 min-w-0 min-h-[44px] flex items-center justify-center gap-1.5 px-2.5 py-2 bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 text-slate-950 font-semibold rounded-xl shadow-lg shadow-cyan-500/25 transition-all"
+              >
+                <span className="text-xs min-[390px]:text-sm leading-tight whitespace-normal text-center">
+                  {localizeUsdText(t('tryNine'), locale)}
+                </span>
+                <ArrowRight className="w-4 h-4 shrink-0" />
+              </Link>
+            )}
             <button
               type="button"
               onClick={handleDismiss}

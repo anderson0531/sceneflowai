@@ -21,6 +21,10 @@ import { resolveClientPortalLocale } from '@/lib/intake/clientPortalCopy'
 
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
 const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPopup'), { ssr: false })
+const PrelaunchAccessModal = dynamic(
+  () => import('@/components/landing/PrelaunchAccessModal'),
+  { ssr: false }
+)
 
 export default function LandingPageClient() {
   const locale = useLocale()
@@ -31,6 +35,7 @@ export default function LandingPageClient() {
       <PersistLandingLocale />
       <Header />
       <FloatingCTA />
+      {prelaunchOnly ? <PrelaunchAccessModal /> : null}
       {prelaunchOnly ? <ExitIntentPopup /> : null}
 
       {/* 1. Full-Bleed Cinematic 6-Genre Dubbed Trailer Showcase */}

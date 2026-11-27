@@ -7,6 +7,7 @@ import { ArrowRight, Briefcase, Compass, Loader2, Maximize2, Pause, Play, Volume
 import { useStudioLandingCopy } from '@/components/landing/useStudioLandingCopy'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
+import { openPrelaunchAccessModal } from '@/components/landing/PrelaunchAccessModal'
 import { localizeUsdText } from '@/lib/i18n/landingCurrency'
 import {
   openTwoModesOnPhoneOrTheater,
@@ -558,9 +559,12 @@ export function ImaginePossibilitiesHero() {
                 type="button"
                 title={primaryHeroCtaLabel}
                 onClick={() => {
+                  if (prelaunchOnly && openPrelaunchAccessModal({ tier: 'explorer', source: 'hero' })) {
+                    return
+                  }
                   window.location.href = getSignupUrlForTier('explorer')
                 }}
-                className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl sm:rounded-full bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition-all hover:brightness-110 sm:w-auto sm:text-base"
+                className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl sm:rounded-full bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition-all hover:brightness-110 sm:w-auto sm:text-base cursor-pointer"
               >
                 <span className="whitespace-normal leading-tight">{primaryHeroCtaLabel}</span>
                 <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />

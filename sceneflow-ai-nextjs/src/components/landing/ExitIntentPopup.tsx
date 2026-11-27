@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Sparkles, Gift, ArrowRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { openPrelaunchAccessModal } from '@/components/landing/PrelaunchAccessModal'
 
 const STORAGE_KEY = 'sceneflow_exit_intent_shown'
 const MIN_TIME_ON_PAGE = 10000 // 10 seconds before showing popup
@@ -103,14 +104,27 @@ export default function ExitIntentPopup({
     setIsSubmitting(true)
 
     try {
-      // Submit to waitlist API
-      const res = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      })
+      // Submit directly to Pre-Launch Access Requests (and mirror to launch waitlist)
+      const [accessRes] = await Promise.all([
+        fetch('/api/access-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            requestType: 'initial_access',
+            email: email.trim(),
+            requestedTier: 'explorer',
+            requestedCredits: 750,
+            source: 'exit-intent',
+          }),
+        }),
+        fetch('/api/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim(), source: 'exit-intent' }),
+        }).catch(() => null),
+      ])
 
-      if (res.ok) {
+      if (accessRes.ok) {
         setSubmitted(true)
         // Mark as converted
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -126,7 +140,7 @@ export default function ExitIntentPopup({
     }
   }
 
-  const handleCTAClick = () => {
+  const handleCTAClick = (e?: React.MouseEvent) => {
     // Mark as converted
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -137,6 +151,9 @@ export default function ExitIntentPopup({
       // Ignore
     }
     setIsVisible(false)
+    if (openPrelaunchAccessModal({ tier: 'explorer', source: 'exit-intent' })) {
+      e?.preventDefault()
+    }
   }
 
   return (

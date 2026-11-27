@@ -8,6 +8,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { MobileDisclosure } from '@/components/landing/MobileDisclosure'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
+import { openPrelaunchAccessModal } from '@/components/landing/PrelaunchAccessModal'
 
 const SECTION_ID = 'trust-safety'
 
@@ -148,13 +149,28 @@ export function TrustSafeguardSection() {
             <FileSearch className="w-4 h-4" />
             {t('ctaPolicy')}
           </Link>
-          <Link
-            href={signupUrl}
-            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 text-slate-950 font-semibold shadow-lg shadow-cyan-500/25 hover:brightness-110 transition-all"
-          >
-            {prelaunchOnly ? 'Request Pre-Launch Access' : t('ctaStudio')}
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          {prelaunchOnly ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (!openPrelaunchAccessModal({ tier: 'explorer', source: 'trust-safeguard' })) {
+                  window.location.href = signupUrl
+                }
+              }}
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 text-slate-950 font-semibold shadow-lg shadow-cyan-500/25 hover:brightness-110 transition-all cursor-pointer"
+            >
+              Request Pre-Launch Access
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <Link
+              href={signupUrl}
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 text-slate-950 font-semibold shadow-lg shadow-cyan-500/25 hover:brightness-110 transition-all"
+            >
+              {t('ctaStudio')}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          )}
         </div>
       </div>
     </section>

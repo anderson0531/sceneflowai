@@ -22,6 +22,8 @@ import {
 } from 'lucide-react'
 import { getBillingUrl } from '@/lib/billing/billingUrls'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { isPrelaunchAccessModeEnabled } from '@/lib/billing/prelaunchAccess'
+import { openPrelaunchAccessModal } from '@/components/landing/PrelaunchAccessModal'
 import { PricingTierGrid } from '@/components/landing/PricingTierGrid'
 import { MobileDisclosure } from '@/components/landing/MobileDisclosure'
 import { PRICING_LANDING_COPY } from '@/config/landing/pricingLandingCopy'
@@ -36,16 +38,20 @@ export function PricingCredits() {
   const locale = useLocale()
   const t = useTranslations('pricing')
   const { data: session } = useSession()
+  const prelaunchOnly = isPrelaunchAccessModeEnabled()
 
   const handlePlanClick = useCallback(
     (tierName: string) => {
+      if (prelaunchOnly && openPrelaunchAccessModal({ tier: tierName, source: 'pricing-grid' })) {
+        return
+      }
       if (session?.user) {
         window.location.href = getBillingUrl({ tier: tierName, isAuthenticated: true })
         return
       }
       window.location.href = getSignupUrlForTier(tierName)
     },
-    [session]
+    [session, prelaunchOnly]
   )
 
   const trustBadges = (t.raw('trustBadges') as string[]) || PRICING_LANDING_COPY.trustBadges

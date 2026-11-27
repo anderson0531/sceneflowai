@@ -115,7 +115,7 @@ describe('Pre-Launch Access Flag & Tier Presets', () => {
   it('maps tier presets to accurate default credits and durations', () => {
     expect(getDefaultCreditsForTier('explorer')).toBe(750)
     expect(getDefaultCreditsForTier('starter')).toBe(4500)
-    expect(getDefaultCreditsForTier('pro')).toBe(15000)
+    expect(getDefaultCreditsForTier('pro')).toBe(10000)
     expect(getDefaultCreditsForTier('founding_operator')).toBe(18000)
     expect(getDefaultDurationDaysForTier('founding_operator')).toBe(90)
     expect(getPrelaunchTierPreset('founding_operator').dbTierName).toBe('pro')
@@ -378,5 +378,86 @@ describe('UI Pre-Launch Wiring Invariants', () => {
     )
     expect(adminPageSrc).toContain('isAdminEmail')
     expect(adminAccessPageSrc).toContain('isAdminEmail')
+  })
+
+  it('activates PrelaunchAccessModal on the landing page across all primary CTAs', () => {
+    const landingSrc = fs.readFileSync(path.join(root, 'app/LandingPageClient.tsx'), 'utf8')
+    expect(landingSrc).toContain('PrelaunchAccessModal')
+
+    const wiredFiles = [
+      'components/landing/ImaginePossibilitiesHero.tsx',
+      'components/landing/PricingCredits.tsx',
+      'components/landing/StudioAcademyGuaranteeStrip.tsx',
+      'components/landing/TrustSafeguardSection.tsx',
+      'components/landing/FloatingCTA.tsx',
+      'components/landing/ExitIntentPopup.tsx',
+      'app/components/FinalCTA.tsx',
+      'app/components/Header.tsx',
+    ]
+
+    for (const rel of wiredFiles) {
+      const src = fs.readFileSync(path.join(root, rel), 'utf8')
+      expect(src).toContain('openPrelaunchAccessModal')
+    }
+  })
+
+  it('accepts unauthenticated landing page submissions and silently ignores bot honeypot payloads', async () => {
+    mockGetServerSession.mockResolvedValue(null)
+    mockSubmitPrelaunchAccessRequest.mockClear()
+    mockSubmitPrelaunchAccessRequest.mockResolvedValueOnce({
+      id: 'req-landing-1',
+      email: 'guest@studio.com',
+      requested_tier: 'pro',
+      requested_credits: 10000,
+      request_type: 'initial_access',
+      status: 'pending',
+    })
+
+    const { POST } = await import('@/app/api/access-requests/route')
+
+    // 1. Legitimate unauthenticated landing visitor submission
+    const res = await POST(
+      new NextRequest('https://sceneflowai.studio/api/access-requests', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'guest@studio.com',
+          fullName: 'Jordan Lee',
+          companyName: 'Sunset Films',
+          useCase: 'agency',
+          requestedTier: 'pro',
+          requestedCredits: 10000,
+          projectDetails: 'Client ad campaign',
+          source: 'pricing-grid',
+          website: '',
+        }),
+      })
+    )
+    expect(res.status).toBe(200)
+    expect(mockSubmitPrelaunchAccessRequest).toHaveBeenCalledTimes(1)
+    expect(mockSubmitPrelaunchAccessRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'guest@studio.com',
+        userId: null,
+        fullName: 'Jordan Lee',
+        companyName: 'Sunset Films',
+        useCase: 'agency',
+        requestedTier: 'pro',
+        requestedCredits: 10000,
+      })
+    )
+
+    // 2. Honeypot bot payload silently dropped
+    mockSubmitPrelaunchAccessRequest.mockClear()
+    const botRes = await POST(
+      new NextRequest('https://sceneflowai.studio/api/access-requests', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'bot@spam.example',
+          website: 'https://spam.example',
+        }),
+      })
+    )
+    expect(botRes.status).toBe(200)
+    expect(mockSubmitPrelaunchAccessRequest).not.toHaveBeenCalled()
   })
 })
