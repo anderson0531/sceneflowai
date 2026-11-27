@@ -20,6 +20,7 @@ import {
   Plus,
   RotateCcw,
   Sparkles,
+  Terminal,
   Upload,
   Wand2,
 } from 'lucide-react'
@@ -33,10 +34,14 @@ import {
 import {
   COMPASS_DIRECTIONS,
   createDefaultRoom,
+  PROPERTY_ADDITION_PRESETS,
+  PROPERTY_EVENT_PRESETS,
   PROPERTY_LIFESTYLE_PRESETS,
   PROPERTY_LIGHTING_PRESETS,
   PROPERTY_STYLE_PRESETS,
   type CompassDirection,
+  type PropertyAdditionId,
+  type PropertyEventId,
   type PropertyLifestyleId,
   type PropertyLightingId,
   type PropertyRoom,
@@ -44,7 +49,7 @@ import {
   type PropertyTourDTO,
 } from '@/lib/propertyTours/types'
 
-type PublicWorkspaceTab = 'player' | 'sandbox' | 'embed'
+type PublicWorkspaceTab = 'player' | 'sandbox' | 'embed' | 'script'
 
 const BRAND_SWATCHES = [
   { name: 'Coastal Cyan', hex: '#06b6d4' },
@@ -116,6 +121,8 @@ export default function PublicPropertyToursPage() {
   const [genStyle, setGenStyle] = useState<PropertyStyleId>('modern_coastal')
   const [genLighting, setGenLighting] = useState<PropertyLightingId>('daylight')
   const [genLifestyle, setGenLifestyle] = useState<PropertyLifestyleId>('architectural')
+  const [genEvent, setGenEvent] = useState<PropertyEventId>('none')
+  const [genAddition, setGenAddition] = useState<PropertyAdditionId>('none')
   const [stagingDir, setStagingDir] = useState<CompassDirection | 'ALL' | null>(null)
   const [stagingMessage, setStagingMessage] = useState<string | null>(null)
   const [stagingError, setStagingError] = useState<string | null>(null)
@@ -227,6 +234,8 @@ export default function PublicPropertyToursPage() {
           style: genStyle,
           lighting: genLighting,
           lifestyle: genLifestyle,
+          event: genEvent,
+          addition: genAddition,
           originalImageUrl: originalUrl,
           anchorImageUrl: anchorUrl,
         }),
@@ -237,10 +246,12 @@ export default function PublicPropertyToursPage() {
       }
 
       const newVariant = {
-        id: `vercel-${room.id}-${dir}-${genStyle}-${genLighting}-${Date.now()}`,
+        id: `vercel-${room.id}-${dir}-${genStyle}-${genEvent}-${genAddition}-${Date.now()}`,
         style: genStyle,
         lighting: genLighting,
         lifestyle: genLifestyle,
+        event: genEvent,
+        addition: genAddition,
         imageUrl: data.imageUrl as string,
         isVirtuallyModified: true,
         promptSummary: String(data.promptSummary || 'Vercel AI Gateway staged plate'),
@@ -280,7 +291,7 @@ export default function PublicPropertyToursPage() {
 
       return data.imageUrl as string
     },
-    [genStyle, genLighting, genLifestyle]
+    [genStyle, genLighting, genLifestyle, genEvent, genAddition]
   )
 
   const handleStageWall = useCallback(
@@ -386,107 +397,129 @@ export default function PublicPropertyToursPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen overflow-x-clip bg-slate-950 text-slate-100">
       {/* Standalone Public Header (No Login Required · 100% Vercel-Native) */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/95 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:px-6 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+              aria-label="Back to SceneFlow Studio"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 sm:px-2.5 text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors shrink-0"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              SceneFlow
+              <span className="hidden sm:inline">SceneFlow</span>
             </Link>
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
                 <Compass className="h-4 w-4" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold tracking-tight text-white">
-                    Interactive Property Explorer
+                  <span className="truncate text-xs sm:text-sm font-bold tracking-tight text-white">
+                    Property Explorer
                   </span>
-                  <span className="hidden sm:inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
-                    Vercel-Native · No Login Required
+                  <span className="hidden md:inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
+                    Vercel-Native · No Login
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 hidden sm:block">
-                  N/E/S/W Perspectives · Vercel AI Gateway Staging · Vercel Blob White-Label Hosting
+                <p className="text-[11px] text-slate-400 hidden lg:block">
+                  N/E/S/W Perspectives · Events, Redesign &amp; Additions · EN/ES/JA Agent Sync &amp; Narration
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Link
               href={`/tour/${encodeURIComponent(activeSlug)}`}
               target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
+              className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 sm:px-3 text-[11px] sm:text-xs font-semibold text-white hover:bg-white/10 transition-colors whitespace-nowrap"
             >
-              <ExternalLink className="h-3.5 w-3.5 text-cyan-400" />
-              Standalone /tour/{activeSlug === 'demo' ? 'demo' : 'live'}
+              <ExternalLink className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+              <span className="sm:hidden">Full Tour</span>
+              <span className="hidden sm:inline">
+                Standalone /tour/{activeSlug === 'demo' ? 'demo' : 'live'}
+              </span>
             </Link>
             <button
               type="button"
               onClick={handlePublishToVercelBlob}
               disabled={publishing}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-bold text-slate-950 hover:bg-cyan-400 disabled:opacity-60 transition-colors"
+              className="inline-flex items-center gap-1 rounded-lg bg-cyan-500 px-2.5 py-1.5 sm:px-3 text-[11px] sm:text-xs font-bold text-slate-950 hover:bg-cyan-400 disabled:opacity-60 transition-colors whitespace-nowrap"
             >
               {publishing ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
               ) : (
-                <CloudUpload className="h-3.5 w-3.5" />
+                <CloudUpload className="h-3.5 w-3.5 shrink-0" />
               )}
-              {publishing ? 'Publishing...' : 'Publish Shareable Link'}
+              <span className="sm:hidden">{publishing ? 'Saving...' : 'Publish'}</span>
+              <span className="hidden sm:inline">
+                {publishing ? 'Publishing...' : 'Publish Shareable Link'}
+              </span>
             </button>
           </div>
         </div>
 
-        {/* Workspace Mode Tabs */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 border-t border-white/5">
-          <div className="flex items-center gap-1 overflow-x-auto py-2">
+        {/* Workspace Mode Tabs (single-line swipe rail on mobile) */}
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 border-t border-white/5">
+          <div className="flex items-center gap-1 overflow-x-auto py-1.5 sm:py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               type="button"
               onClick={() => setActiveTab('player')}
-              className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors whitespace-nowrap ${
+              className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 rounded-lg px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap ${
                 activeTab === 'player'
                   ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
                   : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'
               }`}
             >
               <Compass className="h-3.5 w-3.5" />
-              1. Live Interactive Player
+              <span>1. Live Player</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('sandbox')}
-              className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors whitespace-nowrap ${
+              className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 rounded-lg px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap ${
                 activeTab === 'sandbox'
                   ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
                   : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'
               }`}
             >
               <Camera className="h-3.5 w-3.5" />
-              2. N/E/S/W Photos &amp; Vercel AI Staging
+              <span className="sm:hidden">2. Photos &amp; AI</span>
+              <span className="hidden sm:inline">2. N/E/S/W Photos &amp; Vercel AI Staging</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('embed')}
-              className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors whitespace-nowrap ${
+              className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 rounded-lg px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap ${
                 activeTab === 'embed'
                   ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
                   : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'
               }`}
             >
               <Code2 className="h-3.5 w-3.5" />
-              3. Embed Code &amp; White-Label SaaS
+              <span className="sm:hidden">3. Embed &amp; SaaS</span>
+              <span className="hidden sm:inline">3. Embed Code &amp; White-Label SaaS</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('script')}
+              className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 rounded-lg px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap ${
+                activeTab === 'script'
+                  ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'
+              }`}
+            >
+              <Terminal className="h-3.5 w-3.5" />
+              <span className="sm:hidden">4. Media Script</span>
+              <span className="hidden sm:inline">4. Media Script (Clips · EN/ES/JA · Music)</span>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-6">
+      <main className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-6 space-y-4 sm:space-y-6">
         {publishError && (
           <div className="rounded-xl border border-rose-500/40 bg-rose-950/40 px-4 py-3 text-xs text-rose-200">
             {publishError}
@@ -494,46 +527,50 @@ export default function PublicPropertyToursPage() {
         )}
 
         {activeTab === 'player' && (
-          <>
-            {/* Quick Buyer Guidance Banner */}
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3.5">
-                <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
-                  <Compass className="h-4 w-4" />
-                  1. Rotate N · E · S · W Walls
-                </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  Click the compass ring, press <kbd className="rounded bg-white/10 px-1 py-0.5 text-[10px] text-white">←</kbd>{' '}
-                  <kbd className="rounded bg-white/10 px-1 py-0.5 text-[10px] text-white">→</kbd>, or swipe across the room to inspect all 4 architectural perspectives with zero fisheye distortion.
-                </p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3.5">
-                <div className="flex items-center gap-2 text-xs font-semibold text-amber-300">
-                  <Layers className="h-4 w-4" />
-                  2. Drag Before / After Slider
-                </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  Click <strong className="text-white">Compare</strong> inside the player (try <strong className="text-white">Chef&apos;s Kitchen Remodel</strong>) to wipe between the raw MLS photo and the AI remodel.
-                </p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3.5">
-                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
-                  <Palette className="h-4 w-4" />
-                  3. Rebrand &amp; Publish on Vercel
-                </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  Customize the brokerage branding below or drop your own photos in Tab 2, then click <strong className="text-white">Publish Shareable Link</strong> to host on Vercel Blob.
-                </p>
-              </div>
+          <div className="flex flex-col gap-4 sm:gap-6">
+            {/* Live Standalone White-Label Player (FIRST above the fold on mobile, 2nd on desktop) */}
+            <div className="order-1 sm:order-2 -mx-3 sm:mx-0 overflow-hidden sm:rounded-2xl border-y sm:border border-white/15 bg-black shadow-2xl">
+              <InteractivePropertyPlayer
+                tour={tour}
+                isEmbed={false}
+                isPreview={false}
+                embeddedInPage
+              />
             </div>
 
-            {/* Live Standalone White-Label Player */}
-            <div className="overflow-hidden rounded-2xl border border-white/15 bg-black shadow-2xl">
-              <InteractivePropertyPlayer tour={tour} isEmbed={false} isPreview={false} />
+            {/* Quick Buyer Guidance Banner (below player on mobile so room hero loads immediately) */}
+            <div className="order-2 sm:order-1 grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-3">
+              <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3 sm:p-3.5">
+                <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
+                  <Compass className="h-4 w-4 shrink-0" />
+                  1. Swipe or Tap N · E · S · W Walls
+                </div>
+                <p className="mt-1 text-xs text-slate-400">
+                  Swipe across the room, tap the N/E/S/W compass, or use arrow keys to inspect all 4 perspectives with zero fisheye distortion.
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3 sm:p-3.5">
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-300">
+                  <Layers className="h-4 w-4 shrink-0" />
+                  2. Toggle Redesign, Events &amp; Additions
+                </div>
+                <p className="mt-1 text-xs text-slate-400">
+                  Preview <strong className="text-white">Cocktail Party</strong>, <strong className="text-white">Family Gathering</strong>, <strong className="text-white">+ Wine Bar</strong>, or <strong className="text-white">+ Guest Casita</strong>, and tap <strong className="text-white">Compare</strong> for Before/After.
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3 sm:p-3.5">
+                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
+                  <Palette className="h-4 w-4 shrink-0" />
+                  3. Agent Sync vs. EN / ES / JA Narration
+                </div>
+                <p className="mt-1 text-xs text-slate-400">
+                  Turn on <strong className="text-white">Narration</strong> or <strong className="text-white">Agent Sync</strong> in English, Español, or 日本語 alongside ambient music with automatic voice ducking.
+                </p>
+              </div>
             </div>
 
             {/* Live White-Label Rebrand Bar */}
-            <section className="rounded-2xl border border-white/10 bg-slate-900/80 p-5">
+            <section className="order-3 rounded-2xl border border-white/10 bg-slate-900/80 p-4 sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
                 <div>
                   <h2 className="text-sm font-bold text-white flex items-center gap-2">
@@ -632,7 +669,7 @@ export default function PublicPropertyToursPage() {
                 </div>
               </div>
             </section>
-          </>
+          </div>
         )}
 
         {activeTab === 'sandbox' && (
@@ -672,22 +709,24 @@ export default function PublicPropertyToursPage() {
             </div>
 
             {/* Room Selector + Add Room */}
-            <div className="flex flex-wrap items-center gap-2">
-              {tour.rooms.map((room) => (
-                <button
-                  key={room.id}
-                  type="button"
-                  onClick={() => setSelectedRoomId(room.id)}
-                  className={`rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors ${
-                    selectedRoom?.id === room.id
-                      ? 'border-cyan-500 bg-cyan-500/15 text-white'
-                      : 'border-white/10 bg-slate-900/80 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {room.name}
-                </button>
-              ))}
-              <div className="flex items-center gap-1.5 ml-auto">
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap">
+                {tour.rooms.map((room) => (
+                  <button
+                    key={room.id}
+                    type="button"
+                    onClick={() => setSelectedRoomId(room.id)}
+                    className={`shrink-0 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors ${
+                      selectedRoom?.id === room.id
+                        ? 'border-cyan-500 bg-cyan-500/15 text-white'
+                        : 'border-white/10 bg-slate-900/80 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {room.name}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5 sm:ml-auto w-full sm:w-auto">
                 <input
                   type="text"
                   value={newRoomName}
@@ -696,12 +735,12 @@ export default function PublicPropertyToursPage() {
                     if (e.key === 'Enter') handleAddLocalRoom()
                   }}
                   placeholder="Add room (e.g. Primary Suite)"
-                  className="rounded-lg border border-white/10 bg-slate-900 px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none"
+                  className="min-w-0 flex-1 sm:w-52 rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={handleAddLocalRoom}
-                  className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10"
+                  className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Add
@@ -711,11 +750,11 @@ export default function PublicPropertyToursPage() {
 
             {/* Vercel AI Gateway Cross-Angle Staging Bar */}
             {selectedRoom && (
-              <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 space-y-3">
-                <div className="flex flex-wrap items-end gap-3">
-                  <div className="min-w-[170px] flex-1">
+              <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-3.5 sm:p-4 space-y-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
+                  <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Design Vision Style
+                      Redesign Style
                     </label>
                     <select
                       value={genStyle}
@@ -729,9 +768,9 @@ export default function PublicPropertyToursPage() {
                       ))}
                     </select>
                   </div>
-                  <div className="min-w-[140px] flex-1">
+                  <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Lighting / Time of Day
+                      Lighting
                     </label>
                     <select
                       value={genLighting}
@@ -745,18 +784,34 @@ export default function PublicPropertyToursPage() {
                       ))}
                     </select>
                   </div>
-                  <div className="min-w-[150px] flex-1">
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Lifestyle Staging
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300 mb-1">
+                      Event Scenario
                     </label>
                     <select
-                      value={genLifestyle}
-                      onChange={(e) => setGenLifestyle(e.target.value as PropertyLifestyleId)}
+                      value={genEvent}
+                      onChange={(e) => setGenEvent(e.target.value as PropertyEventId)}
                       className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
                     >
-                      {PROPERTY_LIFESTYLE_PRESETS.map((ls) => (
-                        <option key={ls.id} value={ls.id}>
-                          {ls.label}
+                      {PROPERTY_EVENT_PRESETS.map((ev) => (
+                        <option key={ev.id} value={ev.id}>
+                          {ev.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-emerald-300 mb-1">
+                      Architectural Addition
+                    </label>
+                    <select
+                      value={genAddition}
+                      onChange={(e) => setGenAddition(e.target.value as PropertyAdditionId)}
+                      className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+                    >
+                      {PROPERTY_ADDITION_PRESETS.map((add) => (
+                        <option key={add.id} value={add.id}>
+                          {add.label}
                         </option>
                       ))}
                     </select>
@@ -765,7 +820,7 @@ export default function PublicPropertyToursPage() {
                     type="button"
                     onClick={handleStageAllWalls}
                     disabled={stagingDir !== null}
-                    className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-teal-400 px-4 py-2 text-xs font-bold text-slate-950 hover:opacity-95 disabled:opacity-60 transition-opacity"
+                    className="w-full sm:col-span-2 lg:col-span-1 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-teal-400 px-4 py-2.5 lg:py-2 text-xs font-bold text-slate-950 hover:opacity-95 disabled:opacity-60 transition-opacity"
                   >
                     {stagingDir === 'ALL' ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -774,7 +829,7 @@ export default function PublicPropertyToursPage() {
                     )}
                     {stagingDir === 'ALL'
                       ? 'Generating N→E→S→W...'
-                      : 'Generate Cross-Angle N→E→S→W'}
+                      : 'Generate N→E→S→W'}
                   </button>
                 </div>
 
@@ -1072,6 +1127,87 @@ export default function PublicPropertyToursPage() {
                   <Sparkles className="h-4 w-4 text-cyan-400" />
                   Open Full Agency Cloud Dashboard (Multi-Listing Billing)
                 </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'script' && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-cyan-500/25 bg-slate-900/90 p-6 space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    <Terminal className="h-4 w-4 text-cyan-400" />
+                    All-in-One Media Production Script (`scripts/generate-property-tour-media.ts`)
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-300 max-w-3xl">
+                    Run one command to generate every asset supporting <strong className="text-white">Events</strong>, <strong className="text-white">Redesigns</strong>, <strong className="text-white">Additions</strong>, <strong className="text-white">In-Scene Agent Lip-Sync vs. Narration (EN / ES / JA)</strong>, and <strong className="text-white">Ambient Music</strong> — with optional direct upload to Vercel Blob CDN.
+                  </p>
+                </div>
+                <a
+                  href="/media/property-tours/demo/property-tour-media-manifest.json"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/15 px-3 py-2 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/25"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Inspect 30-Job Manifest JSON
+                </a>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {[
+                  {
+                    key: 'cmd-openai',
+                    title: '1. Studio EN/ES/JA Voice (OpenAI HD) + Music + Clip Manifest + Vercel Blob',
+                    cmd: 'npx tsx scripts/generate-property-tour-media.ts --tts=openai --music=synth --clips=manifest --upload-blob',
+                    note: 'Uses OPENAI_API_KEY (tts-1-hd: nova for Narration, shimmer for Agent Elena) across EN, ES, and JA + uploads MP3s & WAV loops to Vercel Blob.',
+                  },
+                  {
+                    key: 'cmd-elevenlabs',
+                    title: '2. Cloned Agent Voice (ElevenLabs Multilingual v2) + Music + Clips',
+                    cmd: 'npx tsx scripts/generate-property-tour-media.ts --tts=elevenlabs --music=synth --clips=fal --upload-blob',
+                    note: 'Uses ELEVENLABS_API_KEY (eleven_multilingual_v2) for cloned listing advisor voice across English, Spanish, and Japanese + queues 30 Kling/Lip-Sync clip jobs.',
+                  },
+                  {
+                    key: 'cmd-free',
+                    title: '3. Free Local Synth + Edge Neural TTS (Zero API Cost)',
+                    cmd: 'npm run property-tours:generate-media',
+                    note: 'Generates 18 neural MP3 voice tracks via edge-tts-universal + 2 stereo ambient WAV music loops + complete 30-job video & lip-sync manifest.',
+                  },
+                  {
+                    key: 'cmd-dryrun',
+                    title: '4. Dry-Run Preview & Cost Estimator',
+                    cmd: 'npx tsx scripts/generate-property-tour-media.ts --dry-run',
+                    note: 'Lists all 18 EN/ES/JA dialogue tracks, 2 ambient music loops, 12 N→E→S→W pan clips, Event/Addition motion loops, and 9 In-Scene Agent lip-sync clips without spending credits.',
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.key}
+                    className="rounded-xl border border-white/10 bg-slate-950 p-4 space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-white">{item.title}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(item.key, item.cmd)}
+                        className="inline-flex items-center gap-1 rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-semibold text-white hover:bg-white/10"
+                      >
+                        {copiedKey === item.key ? (
+                          <Check className="h-3 w-3 text-emerald-400" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                        Copy
+                      </button>
+                    </div>
+                    <pre className="overflow-x-auto rounded-lg bg-black/70 p-2.5 text-[11px] text-cyan-300 font-mono">
+                      {item.cmd}
+                    </pre>
+                    <p className="text-[11px] text-slate-400">{item.note}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

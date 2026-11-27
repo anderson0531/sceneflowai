@@ -9,10 +9,14 @@
  */
 
 import {
+  PROPERTY_ADDITION_PRESETS,
+  PROPERTY_EVENT_PRESETS,
   PROPERTY_LIFESTYLE_PRESETS,
   PROPERTY_LIGHTING_PRESETS,
   PROPERTY_STYLE_PRESETS,
   type CompassDirection,
+  type PropertyAdditionId,
+  type PropertyEventId,
   type PropertyLifestyleId,
   type PropertyLightingId,
   type PropertyRoom,
@@ -64,6 +68,8 @@ export function buildPropertyPerspectivePrompt(args: {
   style: PropertyStyleId
   lighting: PropertyLightingId
   lifestyle: PropertyLifestyleId
+  event?: PropertyEventId
+  addition?: PropertyAdditionId
   isAnchor: boolean
   hasOriginalPhoto: boolean
   hasAnchorReference: boolean
@@ -75,6 +81,12 @@ export function buildPropertyPerspectivePrompt(args: {
     PROPERTY_LIGHTING_PRESETS.find((l) => l.id === args.lighting) ?? PROPERTY_LIGHTING_PRESETS[0]
   const lifestylePreset =
     PROPERTY_LIFESTYLE_PRESETS.find((ls) => ls.id === args.lifestyle) ?? PROPERTY_LIFESTYLE_PRESETS[0]
+  const eventPreset = args.event && args.event !== 'none'
+    ? PROPERTY_EVENT_PRESETS.find((e) => e.id === args.event)
+    : undefined
+  const additionPreset = args.addition && args.addition !== 'none'
+    ? PROPERTY_ADDITION_PRESETS.find((a) => a.id === args.addition)
+    : undefined
 
   const compassNames: Record<CompassDirection, string> = {
     N: 'North wall (primary hero perspective)',
@@ -85,10 +97,18 @@ export function buildPropertyPerspectivePrompt(args: {
 
   const lines: string[] = [
     `Architectural luxury real estate photograph of the ${args.room.name} (${compassNames[args.direction]}).`,
-    `DESIGN STYLE (${stylePreset.label}): ${stylePreset.promptGuidance}`,
+    `REDESIGN STYLE (${stylePreset.label}): ${stylePreset.promptGuidance}`,
     `LIGHTING (${lightingPreset.label}): ${lightingPreset.promptGuidance}`,
     `LIFESTYLE STAGING (${lifestylePreset.label}): ${lifestylePreset.promptGuidance}`,
   ]
+
+  if (eventPreset) {
+    lines.push(`LIVE EVENT SCENARIO (${eventPreset.label}): ${eventPreset.promptGuidance}`)
+  }
+
+  if (additionPreset) {
+    lines.push(`ARCHITECTURAL ADDITION (${additionPreset.label}): ${additionPreset.promptGuidance}`)
+  }
 
   if (args.hasOriginalPhoto) {
     lines.push(
@@ -150,6 +170,11 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
   const greatRoomECoastal = '/images/property-tours/demo/great-room-e-coastal.jpg'
   const greatRoomSCoastal = '/images/property-tours/demo/great-room-s-coastal.jpg'
   const greatRoomWCoastal = '/images/property-tours/demo/great-room-w-coastal.jpg'
+  const greatRoomEventParty = '/images/property-tours/demo/great-room-event-party.jpg'
+  const greatRoomEventFamily = '/images/property-tours/demo/great-room-event-family.jpg'
+  const additionWineBar = '/images/property-tours/demo/addition-wine-bar.jpg'
+  const additionAduCasita = '/images/property-tours/demo/addition-adu-cabana.jpg'
+  const agentPresenterPoster = '/images/property-tours/demo/agent-elena-presenter.jpg'
   const kitchenNOriginal = '/images/property-tours/demo/kitchen-n-original.jpg'
   const kitchenNRemodel = '/images/property-tours/demo/kitchen-n-remodel.jpg'
   const poolNTwilight = '/images/property-tours/demo/pool-n-twilight.jpg'
@@ -163,8 +188,49 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
       description: 'Panoramic coastal living room with 14-foot glass sliders, white oak plank floors, and exposed cedar beams.',
       renovationEstimateUsd: 42000,
       anchorDirection: 'N',
-      narrationAudioUrl: null,
-      narrationScript: 'Rotate N → E → S → W across all four architectural walls, or drag the Compare slider to reveal the vacant original photo.',
+      narrationAudioUrl: '/api/property-tours/demo-audio?room=great-room&mode=narration&lang=en',
+      narrationScript:
+        'Welcome to the Oceanfront Great Room at 742 Oceanfront Terrace. Rotate across all four walls, drag the Before and After slider to compare the vacant space against our Modern Coastal redesign, or preview a Family Gathering, Sunset Cocktail Party, or Glass Wine Bar addition.',
+      narrationByLanguage: {
+        en: {
+          script:
+            'Welcome to the Oceanfront Great Room at 742 Oceanfront Terrace. Rotate across all four walls, compare the vacant original against our Modern Coastal redesign, or preview a Family Gathering, Sunset Cocktail Party, or Glass Wine Bar addition.',
+          audioUrl: '/api/property-tours/demo-audio?room=great-room&mode=narration&lang=en',
+        },
+        es: {
+          script:
+            'Bienvenidos al Gran Salón frente al océano en 742 Oceanfront Terrace. Gire por las cuatro paredes, compare el espacio original con el rediseño Costero Moderno, o visualice una reunión familiar, un cóctel al atardecer o una cava de vinos de vidrio.',
+          audioUrl: '/api/property-tours/demo-audio?room=great-room&mode=narration&lang=es',
+        },
+        ja: {
+          script:
+            '742オーシャンフロント・テラスのオーシャンフロント・グレートルームへようこそ。東西南北の4方向を自由に切り替え、空室状態とモダンコースタルのリデザインを比較したり、家族の集まりやサンセットパーティー、ワインバー増築をプレビューできます。',
+          audioUrl: '/api/property-tours/demo-audio?room=great-room&mode=narration&lang=ja',
+        },
+      },
+      agentSyncByLanguage: {
+        en: {
+          script:
+            'Hi, I am Elena Vance with Pacific Crest Estates. Standing right here in the Oceanfront Great Room, notice how the 14-foot glass sliders open directly to the Pacific horizon. Tap Events or Additions below to see how effortlessly this room transforms for your lifestyle.',
+          audioUrl: '/api/property-tours/demo-audio?room=great-room&mode=agent&lang=en',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+        es: {
+          script:
+            'Hola, soy Elena Vance de Pacific Crest Estates. Desde este Gran Salón con puertas de cristal de cuatro metros, el océano Pacífico se convierte en parte de su hogar. Pruebe los botones de Eventos y Adiciones para imaginar su próxima celebración aquí.',
+          audioUrl: '/api/property-tours/demo-audio?room=great-room&mode=agent&lang=es',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+        ja: {
+          script:
+            'パシフィック・クレスト・エステートのエレナ・ヴァンスです。高さ4メートルのガラス扉の向こうに太平洋が広がるこのグレートルームで、下のイベントや増築オプションを切り替えて、理想の暮らしを体感してみてください。',
+          audioUrl: '/api/property-tours/demo-audio?room=great-room&mode=agent&lang=ja',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+      },
       perspectives: {
         N: {
           direction: 'N',
@@ -177,9 +243,76 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'modern_coastal',
               lighting: 'daylight',
               lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
               imageUrl: greatRoomNCoastal,
               isVirtuallyModified: true,
               promptSummary: 'Modern Coastal Luxury staging preserving exact glass sliders, oak planks, and Pacific horizon',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-gr-n-event-party',
+              style: 'modern_coastal',
+              lighting: 'twilight',
+              lifestyle: 'entertaining',
+              event: 'cocktail_party',
+              addition: 'none',
+              imageUrl: greatRoomEventParty,
+              isVirtuallyModified: true,
+              promptSummary: 'Sunset Cocktail Party with guests mingling near open oceanfront glass sliders',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-gr-n-event-family',
+              style: 'modern_coastal',
+              lighting: 'golden_hour',
+              lifestyle: 'family_gathering',
+              event: 'family_gathering',
+              addition: 'none',
+              imageUrl: greatRoomEventFamily,
+              isVirtuallyModified: true,
+              promptSummary: 'Warm Sunday multi-generational Family Gathering in sunlit Oceanfront Great Room',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-gr-n-add-winebar',
+              style: 'modern_coastal',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              event: 'none',
+              addition: 'wine_cellar_bar',
+              imageUrl: additionWineBar,
+              isVirtuallyModified: true,
+              promptSummary: 'Architectural Addition (+$48K): Floor-to-ceiling glass wine cellar & Taj Mahal quartzite wet bar',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-gr-n-add-adu',
+              style: 'modern_coastal',
+              lighting: 'golden_hour',
+              lifestyle: 'architectural',
+              event: 'none',
+              addition: 'adu_casita',
+              imageUrl: additionAduCasita,
+              isVirtuallyModified: true,
+              promptSummary: 'Architectural Addition (+$185K): Detached glass-wall Poolside Guest Casita / ADU Pavilion',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-gr-n-add-pool',
+              style: 'modern_coastal',
+              lighting: 'twilight',
+              lifestyle: 'entertaining',
+              event: 'none',
+              addition: 'infinity_pool',
+              imageUrl: poolNTwilight,
+              isVirtuallyModified: true,
+              promptSummary: 'Architectural Addition (+$125K): Zero-edge Infinity Pool & sunken cedar firepit terrace',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -188,6 +321,8 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'modern_coastal',
               lighting: 'twilight',
               lifestyle: 'entertaining',
+              event: 'none',
+              addition: 'none',
               imageUrl: poolNTwilight,
               isVirtuallyModified: true,
               promptSummary: 'Twilight entertaining view opening directly onto illuminated oceanfront terrace',
@@ -207,9 +342,37 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'modern_coastal',
               lighting: 'daylight',
               lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
               imageUrl: greatRoomECoastal,
               isVirtuallyModified: true,
               promptSummary: 'Cross-angle locked East wall matching North white oak planks & exposed cedar beams',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-gr-e-event-family',
+              style: 'modern_coastal',
+              lighting: 'golden_hour',
+              lifestyle: 'family_gathering',
+              event: 'family_gathering',
+              addition: 'none',
+              imageUrl: greatRoomEventFamily,
+              isVirtuallyModified: true,
+              promptSummary: 'Family Gathering around the lit limestone fireplace',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-gr-e-add-winebar',
+              style: 'modern_coastal',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              event: 'none',
+              addition: 'wine_cellar_bar',
+              imageUrl: additionWineBar,
+              isVirtuallyModified: true,
+              promptSummary: 'Glass Wine Cellar & Wet Bar Addition on East entertaining wall',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -226,9 +389,24 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'modern_coastal',
               lighting: 'daylight',
               lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
               imageUrl: greatRoomSCoastal,
               isVirtuallyModified: true,
               promptSummary: 'Cross-angle locked South foyer wall with matching custom white oak millwork',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-gr-s-event-party',
+              style: 'modern_coastal',
+              lighting: 'twilight',
+              lifestyle: 'entertaining',
+              event: 'cocktail_party',
+              addition: 'none',
+              imageUrl: greatRoomEventParty,
+              isVirtuallyModified: true,
+              promptSummary: 'Evening cocktail party flow from foyer into great room',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -245,9 +423,24 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'modern_coastal',
               lighting: 'daylight',
               lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
               imageUrl: greatRoomWCoastal,
               isVirtuallyModified: true,
               promptSummary: 'Cross-angle locked West sightline into dining room and quartzite kitchen island',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-gr-w-add-winebar',
+              style: 'modern_coastal',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              event: 'none',
+              addition: 'wine_cellar_bar',
+              imageUrl: additionWineBar,
+              isVirtuallyModified: true,
+              promptSummary: 'Glass Wine Cellar & Brass Wet Bar flanking the dining room',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -263,8 +456,49 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
       description: 'Compare the dated cherry/granite existing kitchen against a bespoke Taj Mahal quartzite & rift-cut oak remodel.',
       renovationEstimateUsd: 95000,
       anchorDirection: 'N',
-      narrationAudioUrl: null,
-      narrationScript: 'Slide Before / After to see how a $95K architectural remodel transforms the existing footprint without moving a single wall.',
+      narrationAudioUrl: '/api/property-tours/demo-audio?room=kitchen&mode=narration&lang=en',
+      narrationScript:
+        'Step into the kitchen and drag the Compare slider to see how a ninety-five thousand dollar architectural redesign transforms older cherry cabinets into bookmatched Taj Mahal quartzite and rift-cut white oak without moving a single structural wall.',
+      narrationByLanguage: {
+        en: {
+          script:
+            'Step into the kitchen and drag the Compare slider to see how a ninety-five thousand dollar architectural redesign transforms older cherry cabinets into bookmatched Taj Mahal quartzite and rift-cut white oak without moving a single structural wall.',
+          audioUrl: '/api/property-tours/demo-audio?room=kitchen&mode=narration&lang=en',
+        },
+        es: {
+          script:
+            'Entre a la cocina y deslice el comparador para ver cómo un rediseño arquitectónico transforma los gabinetes antiguos en una isla de cuarcita Taj Mahal y roble blanco a medida, sin mover una sola pared estructural.',
+          audioUrl: '/api/property-tours/demo-audio?room=kitchen&mode=narration&lang=es',
+        },
+        ja: {
+          script:
+            'キッチンへようこそ。比較スライダーを動かすと、構造壁を一切動かさずに、既存のキッチンをタージマハル・クォーツァイトのアイランドとホワイトオーク特注キャビネットへ刷新したビフォー・アフターをご確認いただけます。',
+          audioUrl: '/api/property-tours/demo-audio?room=kitchen&mode=narration&lang=ja',
+        },
+      },
+      agentSyncByLanguage: {
+        en: {
+          script:
+            'Here in the kitchen, buyers often struggle to picture the potential behind older cabinetry. With one click, you can compare the existing layout directly against a turn-key Chef Remodel or add a climate-controlled glass wine wall.',
+          audioUrl: '/api/property-tours/demo-audio?room=kitchen&mode=agent&lang=en',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+        es: {
+          script:
+            'En esta cocina, muchos compradores dudan al ver muebles antiguos. Con un solo clic, aquí pueden comparar el diseño actual con una remodelación de chef o añadir una cava de vinos iluminada.',
+          audioUrl: '/api/property-tours/demo-audio?room=kitchen&mode=agent&lang=es',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+        ja: {
+          script:
+            'キッチンでは既存の設備から改装後をイメージしにくいものですが、ワンクリックでシェフ仕様のリモデルやガラス張りワインセラー増築をリアルに比較できます。',
+          audioUrl: '/api/property-tours/demo-audio?room=kitchen&mode=agent&lang=ja',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+      },
       perspectives: {
         N: {
           direction: 'N',
@@ -277,6 +511,8 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'chefs_remodel',
               lighting: 'daylight',
               lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
               imageUrl: kitchenNRemodel,
               isVirtuallyModified: true,
               promptSummary: "Chef's Remodel: bookmatched Taj Mahal quartzite island, rift-cut oak cabinetry, unlacquered brass",
@@ -288,9 +524,37 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'modern_coastal',
               lighting: 'daylight',
               lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
               imageUrl: kitchenNRemodel,
               isVirtuallyModified: true,
               promptSummary: 'Modern Coastal kitchen remodel preserving exact window and island geometry',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-k-n-add-winebar',
+              style: 'chefs_remodel',
+              lighting: 'daylight',
+              lifestyle: 'architectural',
+              event: 'none',
+              addition: 'wine_cellar_bar',
+              imageUrl: additionWineBar,
+              isVirtuallyModified: true,
+              promptSummary: 'Kitchen Extension (+$48K): Illuminated floor-to-ceiling wine wall & brass wet bar',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-k-n-event-party',
+              style: 'chefs_remodel',
+              lighting: 'twilight',
+              lifestyle: 'entertaining',
+              event: 'cocktail_party',
+              addition: 'none',
+              imageUrl: greatRoomEventParty,
+              isVirtuallyModified: true,
+              promptSummary: 'Evening Cocktail Party entertaining flow from kitchen island to terrace',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -307,6 +571,8 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'chefs_remodel',
               lighting: 'daylight',
               lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
               imageUrl: greatRoomWCoastal,
               isVirtuallyModified: true,
               promptSummary: 'Cross-angle locked East kitchen-to-dining sightline',
@@ -326,6 +592,8 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'chefs_remodel',
               lighting: 'daylight',
               lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
               imageUrl: greatRoomECoastal,
               isVirtuallyModified: true,
               promptSummary: 'Cross-angle locked South view toward limestone fireplace',
@@ -345,6 +613,8 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'chefs_remodel',
               lighting: 'daylight',
               lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
               imageUrl: greatRoomNCoastal,
               isVirtuallyModified: true,
               promptSummary: 'Cross-angle locked West view opening to ocean terrace',
@@ -357,14 +627,55 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
     },
     {
       id: 'room-terrace-demo',
-      name: 'Infinity Pool & Twilight Terrace',
+      name: 'Infinity Pool & Guest Casita Terrace',
       roomType: 'backyard_pool',
       orderIndex: 2,
-      description: 'Zero-edge oceanfront pool deck with sunken cedar firepit lounge and resort-grade twilight lighting.',
+      description: 'Zero-edge oceanfront pool deck with sunken cedar firepit lounge and optional detached Guest Casita / ADU.',
       renovationEstimateUsd: 125000,
       anchorDirection: 'N',
-      narrationAudioUrl: null,
-      narrationScript: 'Experience twilight entertaining on the infinity terrace with glowing underwater lighting and sunken fire lounge.',
+      narrationAudioUrl: '/api/property-tours/demo-audio?room=terrace&mode=narration&lang=en',
+      narrationScript:
+        'Out on the Infinity Pool Terrace, experience blue-hour twilight entertaining around the sunken cedar firepit, or toggle the Guest Casita addition to visualize a detached glass-walled poolside ADU overlooking the Pacific.',
+      narrationByLanguage: {
+        en: {
+          script:
+            'Out on the Infinity Pool Terrace, experience blue-hour twilight entertaining around the sunken cedar firepit, or toggle the Guest Casita addition to visualize a detached glass-walled poolside ADU overlooking the Pacific.',
+          audioUrl: '/api/property-tours/demo-audio?room=terrace&mode=narration&lang=en',
+        },
+        es: {
+          script:
+            'En la terraza de la piscina infinita, disfrute del atardecer junto al fogón de cedro o active la adición de Casita de Invitados para visualizar un pabellón acristalado independiente frente al Pacífico.',
+          audioUrl: '/api/property-tours/demo-audio?room=terrace&mode=narration&lang=es',
+        },
+        ja: {
+          script:
+            'インフィニティプール・テラスでは、トワイライトのファイヤーピットを囲む優雅なひとときや、太平洋を望む独立型ガラス張りゲストカシータ（ADU）増築プランをその場でプレビューできます。',
+          audioUrl: '/api/property-tours/demo-audio?room=terrace&mode=narration&lang=ja',
+        },
+      },
+      agentSyncByLanguage: {
+        en: {
+          script:
+            'This oceanfront lot has over point-six-eight acres of usable coastal pad—giving you room not just for this zero-edge infinity pool, but for a detached glass Guest Casita or outdoor chef pavilion.',
+          audioUrl: '/api/property-tours/demo-audio?room=terrace&mode=agent&lang=en',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+        es: {
+          script:
+            'Este terreno frente al mar ofrece espacio excepcional no solo para la piscina infinita, sino también para construir una casita independiente de cristal o un pabellón de cocina exterior.',
+          audioUrl: '/api/property-tours/demo-audio?room=terrace&mode=agent&lang=es',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+        ja: {
+          script:
+            'ゆとりある海沿いの敷地には、インフィニティプールだけでなく独立したゲストカシータやアウトドアキッチンを増築できる十分なポテンシャルがあります。',
+          audioUrl: '/api/property-tours/demo-audio?room=terrace&mode=agent&lang=ja',
+          posterImageUrl: agentPresenterPoster,
+          videoUrl: null,
+        },
+      },
       perspectives: {
         N: {
           direction: 'N',
@@ -377,9 +688,50 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'modern_coastal',
               lighting: 'twilight',
               lifestyle: 'entertaining',
+              event: 'none',
+              addition: 'none',
               imageUrl: poolNTwilight,
               isVirtuallyModified: true,
               promptSummary: 'Twilight infinity pool deck with glowing underwater lights, cedar firepit & pergola dining',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-t-n-add-adu',
+              style: 'modern_coastal',
+              lighting: 'golden_hour',
+              lifestyle: 'architectural',
+              event: 'none',
+              addition: 'adu_casita',
+              imageUrl: additionAduCasita,
+              isVirtuallyModified: true,
+              promptSummary: 'Architectural Addition (+$185K): Detached Glass Guest Casita / ADU Pool Pavilion & Outdoor Kitchen',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-t-n-add-outdoor-kitchen',
+              style: 'modern_coastal',
+              lighting: 'golden_hour',
+              lifestyle: 'entertaining',
+              event: 'none',
+              addition: 'outdoor_kitchen',
+              imageUrl: additionAduCasita,
+              isVirtuallyModified: true,
+              promptSummary: 'Architectural Addition (+$68K): Cedar Pergola & Built-In Outdoor Chef Kitchen',
+              generatedAt: now,
+              creditsUsed: 30,
+            },
+            {
+              id: 'var-t-n-event-party',
+              style: 'modern_coastal',
+              lighting: 'twilight',
+              lifestyle: 'entertaining',
+              event: 'cocktail_party',
+              addition: 'none',
+              imageUrl: greatRoomEventParty,
+              isVirtuallyModified: true,
+              promptSummary: 'Sunset Cocktail Party flowing seamlessly from Great Room to Infinity Terrace',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -388,6 +740,8 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'modern_coastal',
               lighting: 'daylight',
               lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
               imageUrl: poolNTwilight,
               isVirtuallyModified: true,
               promptSummary: 'Oceanfront infinity pool terrace & outdoor entertaining lounge',
@@ -398,18 +752,20 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
         },
         E: {
           direction: 'E',
-          label: 'East — Indoor-Outdoor Glass Pavilion',
+          label: 'East — Detached Guest Casita / ADU Pad',
           originalImageUrl: greatRoomNOriginal,
           transitionToNextVideoUrl: null,
           variants: [
             {
               id: 'var-t-e-coastal-day',
               style: 'modern_coastal',
-              lighting: 'daylight',
+              lighting: 'golden_hour',
               lifestyle: 'architectural',
-              imageUrl: greatRoomNCoastal,
+              event: 'none',
+              addition: 'none',
+              imageUrl: additionAduCasita,
               isVirtuallyModified: true,
-              promptSummary: 'Indoor-outdoor seamless glass transition from terrace into Great Room',
+              promptSummary: 'Poolside Guest Casita & Outdoor Lounge Pavilion',
               generatedAt: now,
               creditsUsed: 30,
             },
@@ -426,6 +782,8 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'modern_coastal',
               lighting: 'daylight',
               lifestyle: 'architectural',
+              event: 'none',
+              addition: 'none',
               imageUrl: kitchenNRemodel,
               isVirtuallyModified: true,
               promptSummary: 'Direct sightline back to interior entertaining kitchen',
@@ -445,6 +803,8 @@ export function buildSampleDemoRooms(): PropertyRoom[] {
               style: 'modern_coastal',
               lighting: 'twilight',
               lifestyle: 'entertaining',
+              event: 'none',
+              addition: 'none',
               imageUrl: poolNTwilight,
               isVirtuallyModified: true,
               promptSummary: 'Sunset firepit & twilight horizon deck',
@@ -501,9 +861,26 @@ export function buildPublicDemoPropertyTourDTO(slug: string = 'demo'): PropertyT
       disclosureText: 'Virtually Staged · Concept Visualization (Toggle "As-Is" for Original)',
     },
     defaultRoomId: rooms[0].id,
-    availableStyles: ['as_is', 'modern_coastal', 'chefs_remodel'],
+    availableStyles: ['as_is', 'modern_coastal', 'chefs_remodel', 'japandi_zen', 'old_money_estate'],
     availableLighting: ['daylight', 'golden_hour', 'twilight'],
-    availableLifestyles: ['architectural', 'quiet_morning', 'entertaining'],
+    availableLifestyles: ['architectural', 'quiet_morning', 'entertaining', 'family_gathering'],
+    availableEvents: ['none', 'family_gathering', 'cocktail_party', 'private_dinner', 'holiday_celebration'],
+    availableAdditions: ['none', 'wine_cellar_bar', 'outdoor_kitchen', 'infinity_pool', 'adu_casita'],
+    availableLanguages: ['en', 'es', 'ja'],
+    musicTracks: [
+      {
+        id: 'coastal_ambient',
+        label: 'Coastal Acoustic',
+        mood: 'Warm daytime architectural guitar & ocean breeze pad',
+        audioUrl: '/media/property-tours/demo/music-coastal-ambient.wav',
+      },
+      {
+        id: 'twilight_lounge',
+        label: 'Twilight Lounge',
+        mood: 'Deep sunset piano & warm Rhodes chords for evening entertaining',
+        audioUrl: '/media/property-tours/demo/music-twilight-lounge.wav',
+      },
+    ],
     rooms,
     viewCount: 1428,
     leadCount: 27,

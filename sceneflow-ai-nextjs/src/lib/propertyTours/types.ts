@@ -34,6 +34,8 @@ export type PropertyStyleId =
   | 'chefs_remodel'
   | 'luxury_contemporary'
   | 'mediterranean_villa'
+  | 'japandi_zen'
+  | 'old_money_estate'
 
 export type PropertyLightingId = 'daylight' | 'golden_hour' | 'twilight'
 
@@ -42,6 +44,38 @@ export type PropertyLifestyleId =
   | 'quiet_morning'
   | 'entertaining'
   | 'family_gathering'
+
+export type PropertyEventId =
+  | 'none'
+  | 'family_gathering'
+  | 'cocktail_party'
+  | 'private_dinner'
+  | 'holiday_celebration'
+
+export type PropertyAdditionId =
+  | 'none'
+  | 'wine_cellar_bar'
+  | 'outdoor_kitchen'
+  | 'infinity_pool'
+  | 'glass_sunroom'
+  | 'adu_casita'
+
+export type PropertyLanguageCode = 'en' | 'es' | 'ja'
+export type PropertyGuideMode = 'off' | 'narration' | 'agent_sync'
+
+export interface PropertyRoomLocalizedTrack {
+  script: string
+  audioUrl?: string | null
+  videoUrl?: string | null
+  posterImageUrl?: string | null
+}
+
+export interface PropertyMusicTrack {
+  id: string
+  label: string
+  mood: string
+  audioUrl: string | null
+}
 
 export interface PropertySpecs {
   priceUsd?: number | null
@@ -74,6 +108,8 @@ export interface PropertyVariantAsset {
   style: PropertyStyleId
   lighting: PropertyLightingId
   lifestyle: PropertyLifestyleId
+  event?: PropertyEventId
+  addition?: PropertyAdditionId
   imageUrl: string
   motionVideoUrl?: string | null
   isVirtuallyModified: boolean
@@ -102,6 +138,10 @@ export interface PropertyRoom {
   perspectives: Record<CompassDirection, PropertyPerspective>
   narrationAudioUrl?: string | null
   narrationScript?: string | null
+  /** Localized voiceover narration (English, Spanish, Japanese) */
+  narrationByLanguage?: Partial<Record<PropertyLanguageCode, PropertyRoomLocalizedTrack>>
+  /** Localized in-scene agent lip-sync presenter tracks (video + fallback poster + audio) */
+  agentSyncByLanguage?: Partial<Record<PropertyLanguageCode, PropertyRoomLocalizedTrack>>
 }
 
 export interface PropertyTourDTO {
@@ -122,6 +162,10 @@ export interface PropertyTourDTO {
   availableStyles: PropertyStyleId[]
   availableLighting: PropertyLightingId[]
   availableLifestyles: PropertyLifestyleId[]
+  availableEvents?: PropertyEventId[]
+  availableAdditions?: PropertyAdditionId[]
+  availableLanguages?: PropertyLanguageCode[]
+  musicTracks?: PropertyMusicTrack[]
   rooms: PropertyRoom[]
   viewCount: number
   leadCount: number
@@ -173,6 +217,129 @@ export const PROPERTY_STYLE_PRESETS: readonly PropertyOptionPreset<PropertyStyle
     label: 'Mediterranean Villa',
     shortLabel: 'Villa',
     promptGuidance: 'Refined Mediterranean estate aesthetic: hand-troweled warm stucco, aged oak ceiling beams, terracotta and honed travertine textures, arched accents, olive tree accents.',
+  },
+  {
+    id: 'japandi_zen',
+    label: 'Organic Japandi',
+    shortLabel: 'Japandi',
+    promptGuidance: 'Serene Japandi architectural redesign: pale slatted ash wood joinery, low-profile sculptural oak furniture, textured lime plaster, shoji-inspired soft diffused light, quiet minimalist harmony.',
+  },
+  {
+    id: 'old_money_estate',
+    label: 'European Estate',
+    shortLabel: 'European',
+    promptGuidance: 'Timeless European estate redesign: herringbone white oak floors, refined wall paneling, Calacatta Viola marble hearth, antique brass chandeliers, heirloom linen and velvet seating.',
+  },
+] as const
+
+export const PROPERTY_EVENT_PRESETS: readonly PropertyOptionPreset<PropertyEventId>[] = [
+  {
+    id: 'none',
+    label: 'No Event',
+    shortLabel: 'Quiet Space',
+    promptGuidance: 'Empty of people; pure architectural staging without event activity.',
+  },
+  {
+    id: 'family_gathering',
+    label: 'Family Gathering',
+    shortLabel: 'Family Gathering',
+    promptGuidance: 'Warm Sunday multi-generational family gathering relaxing naturally across the seating and hearth, golden sunlight, joyful authentic everyday home life.',
+  },
+  {
+    id: 'cocktail_party',
+    label: 'Sunset Cocktail Party',
+    shortLabel: 'Cocktail Party',
+    promptGuidance: 'Upscale twilight cocktail party with stylishly dressed guests mingling with champagne flutes, warm candlelit surfaces, glowing recessed and patio lights, effortless luxury hosting.',
+  },
+  {
+    id: 'private_dinner',
+    label: 'Private Chef Dinner',
+    shortLabel: 'Chef Dinner',
+    promptGuidance: 'Intimate private chef dinner party around a beautifully set long table with tapered candles, crystal stemware, floral runner, and guests enjoying evening conversation.',
+  },
+  {
+    id: 'holiday_celebration',
+    label: 'Holiday Celebration',
+    shortLabel: 'Holiday Party',
+    promptGuidance: 'Elegant tastefully decorated holiday celebration with warm white garlands, glowing fireplace, champagne toast, and festive architectural warmth.',
+  },
+] as const
+
+export interface PropertyAdditionPreset extends PropertyOptionPreset<PropertyAdditionId> {
+  estimatedCostUsd?: number
+}
+
+export const PROPERTY_ADDITION_PRESETS: readonly PropertyAdditionPreset[] = [
+  {
+    id: 'none',
+    label: 'Existing Footprint',
+    shortLabel: 'Existing',
+    promptGuidance: 'No structural additions; preserve existing room footprint and boundaries.',
+  },
+  {
+    id: 'wine_cellar_bar',
+    label: '+ Glass Wine Wall & Bar',
+    shortLabel: '+ Wine Bar ($48K)',
+    estimatedCostUsd: 48000,
+    promptGuidance: 'Architectural addition: floor-to-ceiling frameless glass climate-controlled wine cellar wall with backlit oak racking alongside a stone wet bar and unlacquered brass fixtures.',
+  },
+  {
+    id: 'outdoor_kitchen',
+    label: '+ Pergola & Outdoor Kitchen',
+    shortLabel: '+ Outdoor Kitchen ($68K)',
+    estimatedCostUsd: 68000,
+    promptGuidance: 'Architectural addition: custom cedar slatted pergola shading a built-in stainless grill island, quartzite bar seating, pizza oven, and warm string lighting.',
+  },
+  {
+    id: 'glass_sunroom',
+    label: '+ Glass Sunroom Pavilion',
+    shortLabel: '+ Glass Sunroom ($95K)',
+    estimatedCostUsd: 95000,
+    promptGuidance: 'Architectural addition: steel-and-glass conservatory sunroom extension with skylights and retractable pocket doors blending interior living into the garden.',
+  },
+  {
+    id: 'infinity_pool',
+    label: '+ Infinity Pool & Fire Lounge',
+    shortLabel: '+ Pool & Firepit ($125K)',
+    estimatedCostUsd: 125000,
+    promptGuidance: 'Architectural addition: zero-edge infinity pool and integrated spa with glowing underwater lighting, travertine coping, and sunken cedar firepit lounge.',
+  },
+  {
+    id: 'adu_casita',
+    label: '+ Detached Guest Casita / ADU',
+    shortLabel: '+ Guest Casita ($185K)',
+    estimatedCostUsd: 185000,
+    promptGuidance: 'Architectural addition: sleek detached modern coastal Guest Casita / ADU pavilion with cedar soffits, retractable black-framed glass walls, and private lounge terrace.',
+  },
+] as const
+
+export const PROPERTY_LANGUAGE_PRESETS: readonly {
+  code: PropertyLanguageCode
+  label: string
+  nativeLabel: string
+  speechLang: string
+  edgeVoice: string
+}[] = [
+  {
+    code: 'en',
+    label: 'English',
+    nativeLabel: 'English',
+    speechLang: 'en-US',
+    edgeVoice: 'en-US-AriaNeural',
+  },
+  {
+    code: 'es',
+    label: 'Spanish',
+    nativeLabel: 'Español',
+    speechLang: 'es-ES',
+    edgeVoice: 'es-ES-ElviraNeural',
+  },
+  {
+    code: 'ja',
+    label: 'Japanese',
+    nativeLabel: '日本語',
+    speechLang: 'ja-JP',
+    edgeVoice: 'ja-JP-NanamiNeural',
   },
 ] as const
 
@@ -288,6 +455,8 @@ export function resolvePerspectiveAsset(
     style: PropertyStyleId
     lighting: PropertyLightingId
     lifestyle: PropertyLifestyleId
+    event?: PropertyEventId
+    addition?: PropertyAdditionId
     showOriginal?: boolean
   }
 ): {
@@ -307,14 +476,63 @@ export function resolvePerspectiveAsset(
     }
   }
 
-  if (selection.showOriginal || selection.style === 'as_is') {
+  const wantedEvent: PropertyEventId = selection.event ?? 'none'
+  const wantedAddition: PropertyAdditionId = selection.addition ?? 'none'
+
+  if (selection.showOriginal) {
+    if (perspective.originalImageUrl) {
+      return {
+        imageUrl: perspective.originalImageUrl,
+        motionVideoUrl: null,
+        variant: null,
+        isOriginal: true,
+        isVirtuallyModified: false,
+      }
+    }
+  }
+
+  // 0a. If user actively toggled a specific Architectural Addition, prioritize exact addition variant
+  if (wantedAddition !== 'none') {
+    const exactAddition = perspective.variants.find(
+      (v) => (v.addition ?? 'none') === wantedAddition
+    )
+    if (exactAddition) {
+      return {
+        imageUrl: exactAddition.imageUrl,
+        motionVideoUrl: exactAddition.motionVideoUrl ?? null,
+        variant: exactAddition,
+        isOriginal: false,
+        isVirtuallyModified: exactAddition.isVirtuallyModified,
+      }
+    }
+  }
+
+  // 0b. If user actively toggled an Event (Family Gathering, Cocktail Party, etc.), prioritize exact event variant
+  if (wantedEvent !== 'none') {
+    const exactEvent = perspective.variants.find(
+      (v) => (v.event ?? 'none') === wantedEvent
+    )
+    if (exactEvent) {
+      return {
+        imageUrl: exactEvent.imageUrl,
+        motionVideoUrl: exactEvent.motionVideoUrl ?? null,
+        variant: exactEvent,
+        isOriginal: false,
+        isVirtuallyModified: exactEvent.isVirtuallyModified,
+      }
+    }
+  }
+
+  if (selection.style === 'as_is' && wantedAddition === 'none' && wantedEvent === 'none') {
     const exactAsIs = perspective.variants.find(
       (v) =>
         v.style === 'as_is' &&
         v.lighting === selection.lighting &&
-        v.lifestyle === selection.lifestyle
+        v.lifestyle === selection.lifestyle &&
+        (v.event ?? 'none') === 'none' &&
+        (v.addition ?? 'none') === 'none'
     )
-    if (!selection.showOriginal && exactAsIs) {
+    if (exactAsIs) {
       return {
         imageUrl: exactAsIs.imageUrl,
         motionVideoUrl: exactAsIs.motionVideoUrl ?? null,
@@ -334,8 +552,14 @@ export function resolvePerspectiveAsset(
     }
   }
 
+  // Prefer base (non-event, non-addition) variants when user selected no event & no addition
+  const baseVariants = perspective.variants.filter(
+    (v) => (v.event ?? 'none') === 'none' && (v.addition ?? 'none') === 'none'
+  )
+  const pool = baseVariants.length > 0 ? baseVariants : perspective.variants
+
   // 1. Exact match on Style + Lighting + Lifestyle
-  const exact = perspective.variants.find(
+  const exact = pool.find(
     (v) =>
       v.style === selection.style &&
       v.lighting === selection.lighting &&
@@ -352,7 +576,7 @@ export function resolvePerspectiveAsset(
   }
 
   // 2. Match Style + Lighting (any lifestyle)
-  const styleLighting = perspective.variants.find(
+  const styleLighting = pool.find(
     (v) => v.style === selection.style && v.lighting === selection.lighting
   )
   if (styleLighting) {
@@ -366,7 +590,7 @@ export function resolvePerspectiveAsset(
   }
 
   // 3. Match Style only
-  const styleOnly = perspective.variants.find((v) => v.style === selection.style)
+  const styleOnly = pool.find((v) => v.style === selection.style)
   if (styleOnly) {
     return {
       imageUrl: styleOnly.imageUrl,
@@ -378,8 +602,8 @@ export function resolvePerspectiveAsset(
   }
 
   // 4. Fallback to first generated variant or original photo
-  if (perspective.variants[0]) {
-    const first = perspective.variants[0]
+  if (pool[0]) {
+    const first = pool[0]
     return {
       imageUrl: first.imageUrl,
       motionVideoUrl: first.motionVideoUrl ?? null,

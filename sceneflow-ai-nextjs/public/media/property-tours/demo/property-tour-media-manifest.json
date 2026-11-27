@@ -1,0 +1,374 @@
+{
+  "generatedAt": "2026-11-27T10:20:47.241Z",
+  "tourId": "public-demo-malibu-742",
+  "tourTitle": "742 Oceanfront Terrace — Modern Coastal Estate",
+  "languages": [
+    "en",
+    "es",
+    "ja"
+  ],
+  "totalVideoJobs": 30,
+  "estimatedCostSummary": {
+    "voiceTracksEdgeTts": "$0.00 (18 neural MP3 tracks across EN/ES/JA via edge-tts-universal)",
+    "voiceTracksElevenLabs": "~$0.45 (18 tracks via eleven_multilingual_v2)",
+    "ambientMusicSynth": "$0.00 (2 seamless 16s stereo loops)",
+    "videoClipsKlingFast": "~$8.40 (30 clips @ ~$0.28/clip)"
+  },
+  "videoAndLipSyncJobs": [
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-great-room-demo",
+      "roomName": "Oceanfront Great Room",
+      "transition": "N->E",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/great-room-n-coastal.jpg",
+      "endFrame": "/images/property-tours/demo/great-room-e-coastal.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Oceanfront Great Room from N wall to E wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-great-room-n-to-e.mp4"
+    },
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-great-room-demo",
+      "roomName": "Oceanfront Great Room",
+      "transition": "E->S",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/great-room-e-coastal.jpg",
+      "endFrame": "/images/property-tours/demo/great-room-s-coastal.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Oceanfront Great Room from E wall to S wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-great-room-e-to-s.mp4"
+    },
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-great-room-demo",
+      "roomName": "Oceanfront Great Room",
+      "transition": "S->W",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/great-room-s-coastal.jpg",
+      "endFrame": "/images/property-tours/demo/great-room-w-coastal.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Oceanfront Great Room from S wall to W wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-great-room-s-to-w.mp4"
+    },
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-great-room-demo",
+      "roomName": "Oceanfront Great Room",
+      "transition": "W->N",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/great-room-w-coastal.jpg",
+      "endFrame": "/images/property-tours/demo/great-room-n-coastal.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Oceanfront Great Room from W wall to N wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-great-room-w-to-n.mp4"
+    },
+    {
+      "type": "event_motion_loop",
+      "roomId": "room-great-room-demo",
+      "event": "family_gathering",
+      "recommendedModel": "kling-2.1-pro-i2v",
+      "durationSec": 5,
+      "sourceImage": "/images/property-tours/demo/great-room-event-family.jpg",
+      "prompt": "Subtle cinematic architectural motion inside Oceanfront Great Room: Warm Sunday multi-generational family gathering relaxing naturally across the seating and hearth, golden sunlight, joyful authentic everyday home life. Gentle ambient movement, flickering candlelight/fireplace, soft ocean breeze, locked tripod camera.",
+      "outputFile": "clip-great-room-event-family_gathering.mp4"
+    },
+    {
+      "type": "event_motion_loop",
+      "roomId": "room-great-room-demo",
+      "event": "cocktail_party",
+      "recommendedModel": "kling-2.1-pro-i2v",
+      "durationSec": 5,
+      "sourceImage": "/images/property-tours/demo/great-room-event-party.jpg",
+      "prompt": "Subtle cinematic architectural motion inside Oceanfront Great Room: Upscale twilight cocktail party with stylishly dressed guests mingling with champagne flutes, warm candlelit surfaces, glowing recessed and patio lights, effortless luxury hosting. Gentle ambient movement, flickering candlelight/fireplace, soft ocean breeze, locked tripod camera.",
+      "outputFile": "clip-great-room-event-cocktail_party.mp4"
+    },
+    {
+      "type": "addition_showcase_clip",
+      "roomId": "room-great-room-demo",
+      "addition": "wine_cellar_bar",
+      "estimatedCostUsd": 48000,
+      "recommendedModel": "veo-3.1-fast-i2v",
+      "durationSec": 5,
+      "sourceImage": "/images/property-tours/demo/addition-wine-bar.jpg",
+      "prompt": "Slow luxury real estate slider push-in showcasing + Glass Wine Wall & Bar in Oceanfront Great Room. Architectural addition: floor-to-ceiling frameless glass climate-controlled wine cellar wall with backlit oak racking alongside a stone wet bar and unlacquered brass fixtures. Shimmering water/lighting reflections, architectural precision.",
+      "outputFile": "clip-great-room-addition-wine_cellar_bar.mp4"
+    },
+    {
+      "type": "addition_showcase_clip",
+      "roomId": "room-great-room-demo",
+      "addition": "adu_casita",
+      "estimatedCostUsd": 185000,
+      "recommendedModel": "veo-3.1-fast-i2v",
+      "durationSec": 5,
+      "sourceImage": "/images/property-tours/demo/addition-adu-cabana.jpg",
+      "prompt": "Slow luxury real estate slider push-in showcasing + Detached Guest Casita / ADU in Oceanfront Great Room. Architectural addition: sleek detached modern coastal Guest Casita / ADU pavilion with cedar soffits, retractable black-framed glass walls, and private lounge terrace. Shimmering water/lighting reflections, architectural precision.",
+      "outputFile": "clip-great-room-addition-adu_casita.mp4"
+    },
+    {
+      "type": "addition_showcase_clip",
+      "roomId": "room-great-room-demo",
+      "addition": "infinity_pool",
+      "estimatedCostUsd": 125000,
+      "recommendedModel": "veo-3.1-fast-i2v",
+      "durationSec": 5,
+      "sourceImage": "/images/property-tours/demo/pool-n-twilight.jpg",
+      "prompt": "Slow luxury real estate slider push-in showcasing + Infinity Pool & Fire Lounge in Oceanfront Great Room. Architectural addition: zero-edge infinity pool and integrated spa with glowing underwater lighting, travertine coping, and sunken cedar firepit lounge. Shimmering water/lighting reflections, architectural precision.",
+      "outputFile": "clip-great-room-addition-infinity_pool.mp4"
+    },
+    {
+      "type": "in_scene_agent_lipsync",
+      "roomId": "room-great-room-demo",
+      "roomName": "Oceanfront Great Room",
+      "language": "en",
+      "recommendedModel": "fal-ai/kling-video/lipsync or omnihuman-1 / sync-lipsync-2",
+      "presenterKeyframe": "/images/property-tours/demo/agent-elena-presenter.jpg",
+      "audioFile": "agent-great-room-en.mp3",
+      "script": "Hi, I am Elena Vance with Pacific Crest Estates. Standing right here in the Oceanfront Great Room, notice how the 14-foot glass sliders open directly to the Pacific horizon. Tap Events or Additions below to see how effortlessly this room transforms for your lifestyle.",
+      "outputFile": "agent-sync-great-room-en.mp4"
+    },
+    {
+      "type": "in_scene_agent_lipsync",
+      "roomId": "room-great-room-demo",
+      "roomName": "Oceanfront Great Room",
+      "language": "es",
+      "recommendedModel": "fal-ai/kling-video/lipsync or omnihuman-1 / sync-lipsync-2",
+      "presenterKeyframe": "/images/property-tours/demo/agent-elena-presenter.jpg",
+      "audioFile": "agent-great-room-es.mp3",
+      "script": "Hola, soy Elena Vance de Pacific Crest Estates. Desde este Gran Salón con puertas de cristal de cuatro metros, el océano Pacífico se convierte en parte de su hogar. Pruebe los botones de Eventos y Adiciones para imaginar su próxima celebración aquí.",
+      "outputFile": "agent-sync-great-room-es.mp4"
+    },
+    {
+      "type": "in_scene_agent_lipsync",
+      "roomId": "room-great-room-demo",
+      "roomName": "Oceanfront Great Room",
+      "language": "ja",
+      "recommendedModel": "fal-ai/kling-video/lipsync or omnihuman-1 / sync-lipsync-2",
+      "presenterKeyframe": "/images/property-tours/demo/agent-elena-presenter.jpg",
+      "audioFile": "agent-great-room-ja.mp3",
+      "script": "パシフィック・クレスト・エステートのエレナ・ヴァンスです。高さ4メートルのガラス扉の向こうに太平洋が広がるこのグレートルームで、下のイベントや増築オプションを切り替えて、理想の暮らしを体感してみてください。",
+      "outputFile": "agent-sync-great-room-ja.mp4"
+    },
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-kitchen-demo",
+      "roomName": "Chef's Kitchen Remodel",
+      "transition": "N->E",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/kitchen-n-remodel.jpg",
+      "endFrame": "/images/property-tours/demo/great-room-w-coastal.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Chef's Kitchen Remodel from N wall to E wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-kitchen-n-to-e.mp4"
+    },
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-kitchen-demo",
+      "roomName": "Chef's Kitchen Remodel",
+      "transition": "E->S",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/great-room-w-coastal.jpg",
+      "endFrame": "/images/property-tours/demo/great-room-e-coastal.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Chef's Kitchen Remodel from E wall to S wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-kitchen-e-to-s.mp4"
+    },
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-kitchen-demo",
+      "roomName": "Chef's Kitchen Remodel",
+      "transition": "S->W",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/great-room-e-coastal.jpg",
+      "endFrame": "/images/property-tours/demo/great-room-n-coastal.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Chef's Kitchen Remodel from S wall to W wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-kitchen-s-to-w.mp4"
+    },
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-kitchen-demo",
+      "roomName": "Chef's Kitchen Remodel",
+      "transition": "W->N",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/great-room-n-coastal.jpg",
+      "endFrame": "/images/property-tours/demo/kitchen-n-remodel.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Chef's Kitchen Remodel from W wall to N wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-kitchen-w-to-n.mp4"
+    },
+    {
+      "type": "event_motion_loop",
+      "roomId": "room-kitchen-demo",
+      "event": "cocktail_party",
+      "recommendedModel": "kling-2.1-pro-i2v",
+      "durationSec": 5,
+      "sourceImage": "/images/property-tours/demo/great-room-event-party.jpg",
+      "prompt": "Subtle cinematic architectural motion inside Chef's Kitchen Remodel: Upscale twilight cocktail party with stylishly dressed guests mingling with champagne flutes, warm candlelit surfaces, glowing recessed and patio lights, effortless luxury hosting. Gentle ambient movement, flickering candlelight/fireplace, soft ocean breeze, locked tripod camera.",
+      "outputFile": "clip-kitchen-event-cocktail_party.mp4"
+    },
+    {
+      "type": "addition_showcase_clip",
+      "roomId": "room-kitchen-demo",
+      "addition": "wine_cellar_bar",
+      "estimatedCostUsd": 48000,
+      "recommendedModel": "veo-3.1-fast-i2v",
+      "durationSec": 5,
+      "sourceImage": "/images/property-tours/demo/addition-wine-bar.jpg",
+      "prompt": "Slow luxury real estate slider push-in showcasing + Glass Wine Wall & Bar in Chef's Kitchen Remodel. Architectural addition: floor-to-ceiling frameless glass climate-controlled wine cellar wall with backlit oak racking alongside a stone wet bar and unlacquered brass fixtures. Shimmering water/lighting reflections, architectural precision.",
+      "outputFile": "clip-kitchen-addition-wine_cellar_bar.mp4"
+    },
+    {
+      "type": "in_scene_agent_lipsync",
+      "roomId": "room-kitchen-demo",
+      "roomName": "Chef's Kitchen Remodel",
+      "language": "en",
+      "recommendedModel": "fal-ai/kling-video/lipsync or omnihuman-1 / sync-lipsync-2",
+      "presenterKeyframe": "/images/property-tours/demo/agent-elena-presenter.jpg",
+      "audioFile": "agent-kitchen-en.mp3",
+      "script": "Here in the kitchen, buyers often struggle to picture the potential behind older cabinetry. With one click, you can compare the existing layout directly against a turn-key Chef Remodel or add a climate-controlled glass wine wall.",
+      "outputFile": "agent-sync-kitchen-en.mp4"
+    },
+    {
+      "type": "in_scene_agent_lipsync",
+      "roomId": "room-kitchen-demo",
+      "roomName": "Chef's Kitchen Remodel",
+      "language": "es",
+      "recommendedModel": "fal-ai/kling-video/lipsync or omnihuman-1 / sync-lipsync-2",
+      "presenterKeyframe": "/images/property-tours/demo/agent-elena-presenter.jpg",
+      "audioFile": "agent-kitchen-es.mp3",
+      "script": "En esta cocina, muchos compradores dudan al ver muebles antiguos. Con un solo clic, aquí pueden comparar el diseño actual con una remodelación de chef o añadir una cava de vinos iluminada.",
+      "outputFile": "agent-sync-kitchen-es.mp4"
+    },
+    {
+      "type": "in_scene_agent_lipsync",
+      "roomId": "room-kitchen-demo",
+      "roomName": "Chef's Kitchen Remodel",
+      "language": "ja",
+      "recommendedModel": "fal-ai/kling-video/lipsync or omnihuman-1 / sync-lipsync-2",
+      "presenterKeyframe": "/images/property-tours/demo/agent-elena-presenter.jpg",
+      "audioFile": "agent-kitchen-ja.mp3",
+      "script": "キッチンでは既存の設備から改装後をイメージしにくいものですが、ワンクリックでシェフ仕様のリモデルやガラス張りワインセラー増築をリアルに比較できます。",
+      "outputFile": "agent-sync-kitchen-ja.mp4"
+    },
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-terrace-demo",
+      "roomName": "Infinity Pool & Guest Casita Terrace",
+      "transition": "N->E",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/pool-n-twilight.jpg",
+      "endFrame": "/images/property-tours/demo/addition-adu-cabana.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Infinity Pool & Guest Casita Terrace from N wall to E wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-terrace-n-to-e.mp4"
+    },
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-terrace-demo",
+      "roomName": "Infinity Pool & Guest Casita Terrace",
+      "transition": "E->S",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/addition-adu-cabana.jpg",
+      "endFrame": "/images/property-tours/demo/kitchen-n-remodel.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Infinity Pool & Guest Casita Terrace from E wall to S wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-terrace-e-to-s.mp4"
+    },
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-terrace-demo",
+      "roomName": "Infinity Pool & Guest Casita Terrace",
+      "transition": "S->W",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/kitchen-n-remodel.jpg",
+      "endFrame": "/images/property-tours/demo/pool-n-twilight.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Infinity Pool & Guest Casita Terrace from S wall to W wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-terrace-s-to-w.mp4"
+    },
+    {
+      "type": "room_pan_transition",
+      "roomId": "room-terrace-demo",
+      "roomName": "Infinity Pool & Guest Casita Terrace",
+      "transition": "W->N",
+      "recommendedModel": "kling-2.1-master-ftv (or veo-3.1-fast)",
+      "durationSec": 4,
+      "startFrame": "/images/property-tours/demo/pool-n-twilight.jpg",
+      "endFrame": "/images/property-tours/demo/pool-n-twilight.jpg",
+      "prompt": "Smooth stabilized 24mm gimbal pan turning 90 degrees clockwise inside Infinity Pool & Guest Casita Terrace from W wall to N wall. Preserve exact architectural geometry, white oak floors, cedar beams, and natural lighting with zero morphing.",
+      "outputFile": "clip-terrace-w-to-n.mp4"
+    },
+    {
+      "type": "event_motion_loop",
+      "roomId": "room-terrace-demo",
+      "event": "cocktail_party",
+      "recommendedModel": "kling-2.1-pro-i2v",
+      "durationSec": 5,
+      "sourceImage": "/images/property-tours/demo/great-room-event-party.jpg",
+      "prompt": "Subtle cinematic architectural motion inside Infinity Pool & Guest Casita Terrace: Upscale twilight cocktail party with stylishly dressed guests mingling with champagne flutes, warm candlelit surfaces, glowing recessed and patio lights, effortless luxury hosting. Gentle ambient movement, flickering candlelight/fireplace, soft ocean breeze, locked tripod camera.",
+      "outputFile": "clip-terrace-event-cocktail_party.mp4"
+    },
+    {
+      "type": "addition_showcase_clip",
+      "roomId": "room-terrace-demo",
+      "addition": "adu_casita",
+      "estimatedCostUsd": 185000,
+      "recommendedModel": "veo-3.1-fast-i2v",
+      "durationSec": 5,
+      "sourceImage": "/images/property-tours/demo/addition-adu-cabana.jpg",
+      "prompt": "Slow luxury real estate slider push-in showcasing + Detached Guest Casita / ADU in Infinity Pool & Guest Casita Terrace. Architectural addition: sleek detached modern coastal Guest Casita / ADU pavilion with cedar soffits, retractable black-framed glass walls, and private lounge terrace. Shimmering water/lighting reflections, architectural precision.",
+      "outputFile": "clip-terrace-addition-adu_casita.mp4"
+    },
+    {
+      "type": "in_scene_agent_lipsync",
+      "roomId": "room-terrace-demo",
+      "roomName": "Infinity Pool & Guest Casita Terrace",
+      "language": "en",
+      "recommendedModel": "fal-ai/kling-video/lipsync or omnihuman-1 / sync-lipsync-2",
+      "presenterKeyframe": "/images/property-tours/demo/agent-elena-presenter.jpg",
+      "audioFile": "agent-terrace-en.mp3",
+      "script": "This oceanfront lot has over point-six-eight acres of usable coastal pad—giving you room not just for this zero-edge infinity pool, but for a detached glass Guest Casita or outdoor chef pavilion.",
+      "outputFile": "agent-sync-terrace-en.mp4"
+    },
+    {
+      "type": "in_scene_agent_lipsync",
+      "roomId": "room-terrace-demo",
+      "roomName": "Infinity Pool & Guest Casita Terrace",
+      "language": "es",
+      "recommendedModel": "fal-ai/kling-video/lipsync or omnihuman-1 / sync-lipsync-2",
+      "presenterKeyframe": "/images/property-tours/demo/agent-elena-presenter.jpg",
+      "audioFile": "agent-terrace-es.mp3",
+      "script": "Este terreno frente al mar ofrece espacio excepcional no solo para la piscina infinita, sino también para construir una casita independiente de cristal o un pabellón de cocina exterior.",
+      "outputFile": "agent-sync-terrace-es.mp4"
+    },
+    {
+      "type": "in_scene_agent_lipsync",
+      "roomId": "room-terrace-demo",
+      "roomName": "Infinity Pool & Guest Casita Terrace",
+      "language": "ja",
+      "recommendedModel": "fal-ai/kling-video/lipsync or omnihuman-1 / sync-lipsync-2",
+      "presenterKeyframe": "/images/property-tours/demo/agent-elena-presenter.jpg",
+      "audioFile": "agent-terrace-ja.mp3",
+      "script": "ゆとりある海沿いの敷地には、インフィニティプールだけでなく独立したゲストカシータやアウトドアキッチンを増築できる十分なポテンシャルがあります。",
+      "outputFile": "agent-sync-terrace-ja.mp4"
+    }
+  ],
+  "redesignPromptTemplates": [
+    {
+      "roomId": "room-great-room-demo",
+      "roomName": "Oceanfront Great Room",
+      "redesignPromptExample": "Architectural luxury real estate photograph of the Oceanfront Great Room (North wall (primary hero perspective)).\nREDESIGN STYLE (Organic Japandi): Serene Japandi architectural redesign: pale slatted ash wood joinery, low-profile sculptural oak furniture, textured lime plaster, shoji-inspired soft diffused light, quiet minimalist harmony.\nLIGHTING (Golden Hour): Warm late-afternoon golden-hour sun casting rich amber light beams across floors and walls, soft inviting luxury glow.\nLIFESTYLE STAGING (Architectural Clean): Magazine-grade architectural photography with no people; staged furniture, fresh botanicals, spotless surfaces.\nARCHITECTURAL GROUNDING (Reference Image 1 = real property photo): Strictly preserve the exact room geometry, window placements, ceiling height, walls, structural columns, doorways, and camera perspective from Reference Image 1. Do NOT invent non-existent rooms, move structural walls, or warp proportions.\nROOM CONTEXT: Panoramic coastal living room with 14-foot glass sliders, white oak plank floors, and exposed cedar beams.\nCAMERA & QUALITY: Shot on 24mm tilt-shift architectural lens, straight verticals, photorealistic editorial real estate photography, ultra-sharp textures, zero watermarks, zero text overlays, zero fisheye distortion."
+    },
+    {
+      "roomId": "room-kitchen-demo",
+      "roomName": "Chef's Kitchen Remodel",
+      "redesignPromptExample": "Architectural luxury real estate photograph of the Chef's Kitchen Remodel (North wall (primary hero perspective)).\nREDESIGN STYLE (Organic Japandi): Serene Japandi architectural redesign: pale slatted ash wood joinery, low-profile sculptural oak furniture, textured lime plaster, shoji-inspired soft diffused light, quiet minimalist harmony.\nLIGHTING (Golden Hour): Warm late-afternoon golden-hour sun casting rich amber light beams across floors and walls, soft inviting luxury glow.\nLIFESTYLE STAGING (Architectural Clean): Magazine-grade architectural photography with no people; staged furniture, fresh botanicals, spotless surfaces.\nARCHITECTURAL GROUNDING (Reference Image 1 = real property photo): Strictly preserve the exact room geometry, window placements, ceiling height, walls, structural columns, doorways, and camera perspective from Reference Image 1. Do NOT invent non-existent rooms, move structural walls, or warp proportions.\nROOM CONTEXT: Compare the dated cherry/granite existing kitchen against a bespoke Taj Mahal quartzite & rift-cut oak remodel.\nCAMERA & QUALITY: Shot on 24mm tilt-shift architectural lens, straight verticals, photorealistic editorial real estate photography, ultra-sharp textures, zero watermarks, zero text overlays, zero fisheye distortion."
+    },
+    {
+      "roomId": "room-terrace-demo",
+      "roomName": "Infinity Pool & Guest Casita Terrace",
+      "redesignPromptExample": "Architectural luxury real estate photograph of the Infinity Pool & Guest Casita Terrace (North wall (primary hero perspective)).\nREDESIGN STYLE (Organic Japandi): Serene Japandi architectural redesign: pale slatted ash wood joinery, low-profile sculptural oak furniture, textured lime plaster, shoji-inspired soft diffused light, quiet minimalist harmony.\nLIGHTING (Golden Hour): Warm late-afternoon golden-hour sun casting rich amber light beams across floors and walls, soft inviting luxury glow.\nLIFESTYLE STAGING (Architectural Clean): Magazine-grade architectural photography with no people; staged furniture, fresh botanicals, spotless surfaces.\nARCHITECTURAL GROUNDING (Reference Image 1 = real property photo): Strictly preserve the exact room geometry, window placements, ceiling height, walls, structural columns, doorways, and camera perspective from Reference Image 1. Do NOT invent non-existent rooms, move structural walls, or warp proportions.\nROOM CONTEXT: Zero-edge oceanfront pool deck with sunken cedar firepit lounge and optional detached Guest Casita / ADU.\nCAMERA & QUALITY: Shot on 24mm tilt-shift architectural lens, straight verticals, photorealistic editorial real estate photography, ultra-sharp textures, zero watermarks, zero text overlays, zero fisheye distortion."
+    }
+  ]
+}

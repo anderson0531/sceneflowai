@@ -13,6 +13,8 @@ import {
 import {
   COMPASS_DIRECTIONS,
   type CompassDirection,
+  type PropertyAdditionId,
+  type PropertyEventId,
   type PropertyLifestyleId,
   type PropertyLightingId,
   type PropertyRoom,
@@ -152,6 +154,8 @@ async function handleStagePhoto(request: NextRequest, body: Record<string, any>)
   const style = (body.style || 'modern_coastal') as PropertyStyleId
   const lighting = (body.lighting || 'daylight') as PropertyLightingId
   const lifestyle = (body.lifestyle || 'architectural') as PropertyLifestyleId
+  const event = (body.event || 'none') as PropertyEventId
+  const addition = (body.addition || 'none') as PropertyAdditionId
   const customInstructions =
     typeof body.customInstructions === 'string'
       ? body.customInstructions.trim().slice(0, 400)
@@ -189,6 +193,8 @@ async function handleStagePhoto(request: NextRequest, body: Record<string, any>)
     style,
     lighting,
     lifestyle,
+    event,
+    addition,
     isAnchor,
     hasOriginalPhoto: Boolean(originalResolved),
     hasAnchorReference: Boolean(!isAnchor && anchorResolved),

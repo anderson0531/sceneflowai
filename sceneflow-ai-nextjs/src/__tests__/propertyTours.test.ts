@@ -133,7 +133,53 @@ describe('Property Tour Hosting Policy, Embed URLs & Standalone Routing', () => 
       '/images/property-tours/demo/'
     )
 
+    // Verify Events (Cocktail Party, Family Gathering) & Additions (Wine Bar, Guest Casita) resolve accurately
+    const partyAsset = resolvePerspectiveAsset(demoTour.rooms[0].perspectives.N, {
+      style: 'modern_coastal',
+      lighting: 'daylight',
+      lifestyle: 'architectural',
+      event: 'cocktail_party',
+    })
+    expect(partyAsset.imageUrl).toBe('/images/property-tours/demo/great-room-event-party.jpg')
+
+    const familyAsset = resolvePerspectiveAsset(demoTour.rooms[0].perspectives.N, {
+      style: 'modern_coastal',
+      lighting: 'daylight',
+      lifestyle: 'architectural',
+      event: 'family_gathering',
+    })
+    expect(familyAsset.imageUrl).toBe('/images/property-tours/demo/great-room-event-family.jpg')
+
+    const wineBarAsset = resolvePerspectiveAsset(demoTour.rooms[0].perspectives.N, {
+      style: 'modern_coastal',
+      lighting: 'daylight',
+      lifestyle: 'architectural',
+      addition: 'wine_cellar_bar',
+    })
+    expect(wineBarAsset.imageUrl).toBe('/images/property-tours/demo/addition-wine-bar.jpg')
+
+    const aduAsset = resolvePerspectiveAsset(demoTour.rooms[2].perspectives.N, {
+      style: 'modern_coastal',
+      lighting: 'daylight',
+      lifestyle: 'architectural',
+      addition: 'adu_casita',
+    })
+    expect(aduAsset.imageUrl).toBe('/images/property-tours/demo/addition-adu-cabana.jpg')
+
+    // Verify EN / ES / JA Narration & In-Scene Agent Sync scripts exist on every room
+    for (const room of demoTour.rooms) {
+      for (const lang of ['en', 'es', 'ja'] as const) {
+        expect(room.narrationByLanguage?.[lang]?.script?.length).toBeGreaterThan(20)
+        expect(room.agentSyncByLanguage?.[lang]?.script?.length).toBeGreaterThan(20)
+      }
+    }
+
     const publicDir = path.resolve(__dirname, '../../public')
+    for (const track of demoTour.musicTracks || []) {
+      if (track.audioUrl?.startsWith('/')) {
+        expect(fs.existsSync(path.join(publicDir, track.audioUrl))).toBe(true)
+      }
+    }
     for (const room of demoTour.rooms) {
       for (const dir of ['N', 'E', 'S', 'W'] as const) {
         const p = room.perspectives[dir]

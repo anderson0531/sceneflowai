@@ -48,7 +48,8 @@
                 "landing:publish-hero-public": "node scripts/publish-hero-public-assets.mjs",
                 "landing:transcode-hero": "npx tsx scripts/transcode-landing-videos.ts",
                 "landing:setup-hero-cdn": "bash scripts/setup-landing-video-cdn.sh",
-                "tts:calibrate-voices": "tsx scripts/calibrate-gemini-voices.ts"
+                "tts:calibrate-voices": "tsx scripts/calibrate-gemini-voices.ts",
+                "property-tours:generate-media": "tsx scripts/generate-property-tour-media.ts"
         },
         "dependencies": {
                 "@ai-sdk/google": "^3.0.57",
