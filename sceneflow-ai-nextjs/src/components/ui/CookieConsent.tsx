@@ -408,7 +408,14 @@ export function CookieConsent() {
     return () => window.removeEventListener(UI_LOCALE_CHANGE_EVENT, onLocaleChange)
   }, [pathname])
 
+  const isEmbeddedOrWhiteLabelRoute =
+    pathname?.startsWith('/tour/') || pathname?.startsWith('/embed/')
+
   useEffect(() => {
+    if (isEmbeddedOrWhiteLabelRoute) {
+      setShowBanner(false)
+      return
+    }
     // Check if user has already consented
     const stored = localStorage.getItem(COOKIE_CONSENT_KEY)
     if (!stored) {
@@ -424,7 +431,7 @@ export function CookieConsent() {
         setShowBanner(true)
       }
     }
-  }, [])
+  }, [isEmbeddedOrWhiteLabelRoute])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -465,7 +472,7 @@ export function CookieConsent() {
     saveConsent(preferences)
   }
 
-  if (!showBanner) return null
+  if (isEmbeddedOrWhiteLabelRoute || !showBanner) return null
 
   const copy = COOKIE_CONSENT_COPY[locale] ?? COOKIE_CONSENT_COPY.en
   const dir = getLocaleDirection(locale)

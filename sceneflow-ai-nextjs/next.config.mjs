@@ -241,6 +241,15 @@ const nextConfig = {
         ],
       },
       {
+        source: "/tour/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors *;",
+          },
+        ],
+      },
+      {
         source: "/dashboard/:path*",
         headers: [
           {

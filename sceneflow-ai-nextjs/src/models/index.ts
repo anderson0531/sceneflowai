@@ -5,6 +5,9 @@ import CreditLedger from './CreditLedger'
 import CreditLotRow from './CreditLot'
 import CreditHold from './CreditHold'
 import ProviderApiRun from './ProviderApiRun'
+import PropertyTour from './PropertyTour'
+import PropertyTourLead from './PropertyTourLead'
+import PropertyTourHostingEvent from './PropertyTourHostingEvent'
 import AIUsage from './AIUsage'
 import Project from './Project'
 import Series from './Series'
@@ -217,6 +220,9 @@ export {
   CreditLotRow,
   CreditHold,
   ProviderApiRun,
+  PropertyTour,
+  PropertyTourLead,
+  PropertyTourHostingEvent,
   AIUsage,
   CreditPricing,
   PlatformInfraCost,
@@ -265,6 +271,9 @@ export default {
   CreditLotRow,
   CreditHold,
   ProviderApiRun,
+  PropertyTour,
+  PropertyTourLead,
+  PropertyTourHostingEvent,
   AIUsage,
   CreditPricing,
   PlatformInfraCost,

@@ -27,6 +27,7 @@ import {
   Coins,
   Library,
   GraduationCap,
+  Compass,
   PanelLeftClose,
   PanelLeft,
   // Icons for sections
@@ -341,6 +342,18 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                   <span>{tNav(item.labelKey)}</span>
                 </Link>
               ))}
+              <Link
+                href="/dashboard/property-tours"
+                className={cn(
+                  'flex items-center gap-2 py-2 text-sm font-medium rounded-lg transition-colors',
+                  pathname?.startsWith('/dashboard/property-tours')
+                    ? 'bg-sf-primary/15 text-gray-900 dark:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                )}
+              >
+                <Compass className="w-4 h-4 text-teal-500" />
+                <span>{tNav.has('propertyTours') ? tNav('propertyTours') : 'Property Tours'}</span>
+              </Link>
               <Link
                 href="/dashboard/help"
                 className={cn(

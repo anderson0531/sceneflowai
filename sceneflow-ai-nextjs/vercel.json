@@ -149,6 +149,9 @@
     },
     "src/app/api/sfx/extract-clip-audio/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/property-tours/[tourId]/generate-room/route.ts": {
+      "maxDuration": 300
     }
   },
   "crons": [
